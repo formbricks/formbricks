@@ -1238,7 +1238,7 @@ checksums:
     environments/surveys/edit/edit_link: 40ba9e15beac77a46c5baf30be84ac54
     environments/surveys/edit/edit_recall: 38a4a7378d02453e35d06f2532eef318
     environments/surveys/edit/edit_translations: 2b21bea4b53e88342559272701e9fbf3
-    environments/surveys/edit/enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey: 71977f91ec151b61ee3528ac2618afed
+    environments/surveys/edit/enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey: c70466147d49dcbb3686452f35c46428
     environments/surveys/edit/enable_recaptcha_to_protect_your_survey_from_spam: 4483a5763718d201ac97caa1e1216e13
     environments/surveys/edit/enable_spam_protection: e1fb0dd0723044bf040b92d8fc58015d
     environments/surveys/edit/end_screen_card: 6146c2bcb87291e25ecb03abd2d9a479

@@ -1323,7 +1323,7 @@
         "edit_link": "Modifier le lien",
         "edit_recall": "Modifier le rappel",
         "edit_translations": "Modifier les traductions {lang}",
-        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permettre aux participants de changer la langue de l'enquête à tout moment pendant celle-ci.",
+        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permettre aux répondants de changer de langue à tout moment. Nécessite au moins 2 langues actives.",
         "enable_recaptcha_to_protect_your_survey_from_spam": "La protection contre le spam utilise reCAPTCHA v3 pour filtrer les réponses indésirables.",
         "enable_spam_protection": "Protection contre le spam",
         "end_screen_card": "Carte de fin d'écran",

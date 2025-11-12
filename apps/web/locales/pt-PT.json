@@ -1323,7 +1323,7 @@
         "edit_link": "Editar link",
         "edit_recall": "Editar Lembrete",
         "edit_translations": "Editar traduções {lang}",
-        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permitir aos participantes mudar a língua do inquérito a qualquer momento durante o inquérito.",
+        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permitir que os inquiridos mudem de idioma a qualquer momento. Necessita de pelo menos 2 idiomas ativos.",
         "enable_recaptcha_to_protect_your_survey_from_spam": "A proteção contra spam usa o reCAPTCHA v3 para filtrar as respostas de spam.",
         "enable_spam_protection": "Proteção contra spam",
         "end_screen_card": "Cartão de ecrã final",

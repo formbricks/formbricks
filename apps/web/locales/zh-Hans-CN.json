@@ -1323,7 +1323,7 @@
         "edit_link": "编辑 链接",
         "edit_recall": "编辑 调用",
         "edit_translations": "编辑 {lang} 翻译",
-        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "启用 参与者 在 调查 过程中 的 任何 时间 点 切换 调查 语言。",
+        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "允许受访者在调查过程中随时切换语言。需要至少启用两种语言。",
         "enable_recaptcha_to_protect_your_survey_from_spam": "垃圾 邮件 保护 使用 reCAPTCHA v3 来 过滤 掉 垃圾 响应 。",
         "enable_spam_protection": "垃圾 邮件 保护",
         "end_screen_card": "结束 屏幕 卡片",

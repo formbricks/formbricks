@@ -203,8 +203,9 @@ export function Survey({
   const getShowSurveyCloseButton = (offset: number) => {
     return offset === 0 && localSurvey.type !== "link";
   };
+  const enabledLanguages = localSurvey.languages.filter((lang) => lang.enabled);
   const getShowLanguageSwitch = (offset: number) => {
-    return localSurvey.showLanguageSwitch && localSurvey.languages.length > 0 && offset <= 0;
+    return localSurvey.showLanguageSwitch && enabledLanguages.length > 1 && offset <= 0;
   };
 
   const onFileUpload = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {

@@ -1323,7 +1323,7 @@
         "edit_link": "編集 リンク",
         "edit_recall": "リコールを編集",
         "edit_translations": "{lang} 翻訳を編集",
-        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "回答者がフォームの途中でいつでも言語を切り替えられるようにします。",
+        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "回答者がいつでも言語を切り替えられるようにします。最低2つのアクティブな言語が必要です。",
         "enable_recaptcha_to_protect_your_survey_from_spam": "スパム対策はreCAPTCHA v3を使用してスパム回答をフィルタリングします。",
         "enable_spam_protection": "スパム対策",
         "end_screen_card": "終了画面カード",

@@ -1323,7 +1323,7 @@
         "edit_link": "Edit link",
         "edit_recall": "Edit Recall",
         "edit_translations": "Edit {lang} translations",
-        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Enable participants to switch the survey language at any point during the survey.",
+        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Allow respondents to switch language at any time. Needs min. 2 active languages.",
         "enable_recaptcha_to_protect_your_survey_from_spam": "Spam protection uses reCAPTCHA v3 to filter out the spam responses.",
         "enable_spam_protection": "Spam protection",
         "end_screen_card": "End screen card",

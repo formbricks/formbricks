@@ -1323,7 +1323,7 @@
         "edit_link": "編輯 連結",
         "edit_recall": "編輯回憶",
         "edit_translations": "編輯 '{'language'}' 翻譯",
-        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "允許參與者在問卷中的任何時間點切換問卷語言。",
+        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "允許受訪者隨時切換語言。需要至少啟用兩種語言。",
         "enable_recaptcha_to_protect_your_survey_from_spam": "垃圾郵件保護使用 reCAPTCHA v3 過濾垃圾回應。",
         "enable_spam_protection": "垃圾郵件保護",
         "end_screen_card": "結束畫面卡片",
