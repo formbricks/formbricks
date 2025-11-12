@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -51,7 +50,7 @@ const ZGeneratePersonalSurveyLinkAction = z.object({
 
 export const generatePersonalSurveyLinkAction = authenticatedActionClient
   .schema(ZGeneratePersonalSurveyLinkAction)
-  .action(async ({ ctx, parsedInput }) => {
+  .action(async ({ parsedInput }) => {
     // Check if contact has already responded to this survey
     const existingResponse = await prisma.response.findFirst({
       where: {
@@ -82,10 +81,12 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
       if (result.error.type === "bad_request") {
-        throw new InvalidInputError(result.error.message || "Invalid request");
+        const errorMessage = result.error.details?.[0]?.issue || "Invalid request";
+        throw new InvalidInputError(errorMessage);
       }
       // For other error types, throw a generic error
-      throw new Error(result.error.message || "Failed to generate personal survey link");
+      const errorMessage = result.error.details?.[0]?.issue || "Failed to generate personal survey link";
+      throw new Error(errorMessage);
     }
 
     return {
