@@ -2,11 +2,11 @@
 
 import { useTranslation } from "react-i18next";
 import {
-  TShuffleOption,
-  TSurveyMatrixQuestion,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyRankingQuestion,
-} from "@formbricks/types/surveys/types";
+  TSurveyMatrixElement,
+  TSurveyMultipleChoiceElement,
+  TSurveyRankingElement,
+} from "@formbricks/types/surveys/elements";
+import { TShuffleOption } from "@formbricks/types/surveys/types";
 import {
   Select,
   SelectContent,
@@ -31,7 +31,7 @@ interface ShuffleOptionSelectProps {
   shuffleOption: TShuffleOption | undefined;
   updateQuestion: (
     questionIdx: number,
-    updatedAttributes: Partial<TSurveyMatrixQuestion | TSurveyMultipleChoiceQuestion | TSurveyRankingQuestion>
+    updatedAttributes: Partial<TSurveyMatrixElement | TSurveyMultipleChoiceElement | TSurveyRankingElement>
   ) => void;
   questionIdx: number;
   shuffleOptionsTypes: ShuffleOptionsTypes;

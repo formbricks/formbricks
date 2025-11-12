@@ -4,11 +4,8 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { JSX, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  TSurvey,
-  TSurveyOpenTextQuestion,
-  TSurveyOpenTextQuestionInputType,
-} from "@formbricks/types/surveys/types";
+import { TSurveyOpenTextElement, TSurveyOpenTextElementInputType } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -20,9 +17,9 @@ import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyOpenTextQuestion;
+  question: TSurveyOpenTextElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyOpenTextQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyOpenTextElement>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
@@ -57,7 +54,7 @@ export const OpenQuestionForm = ({
 
   const [showCharLimits, setShowCharLimits] = useState(question.inputType === "text");
 
-  const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
+  const handleInputChange = (inputType: TSurveyOpenTextElementInputType) => {
     const updatedAttributes = {
       inputType: inputType,
       placeholder: createI18nString(getPlaceholderByInputType(inputType), surveyLanguageCodes),
@@ -238,7 +235,7 @@ export const OpenQuestionForm = ({
   );
 };
 
-const getPlaceholderByInputType = (inputType: TSurveyOpenTextQuestionInputType) => {
+const getPlaceholderByInputType = (inputType: TSurveyOpenTextElementInputType) => {
   switch (inputType) {
     case "email":
       return "example@email.com";

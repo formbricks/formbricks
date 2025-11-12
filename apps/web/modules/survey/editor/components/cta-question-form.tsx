@@ -2,7 +2,9 @@
 
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
+import { TI18nString } from "@formbricks/types/i18n";
+import { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Input } from "@/modules/ui/components/input";
@@ -12,9 +14,9 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface CTAQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyCTAQuestion;
+  question: TSurveyCTAElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyCTAQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyCTAElement>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -22,6 +24,8 @@ interface CTAQuestionFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
+  buttonLabel?: TI18nString;
+  backButtonLabel?: TI18nString;
 }
 
 export const CTAQuestionForm = ({
@@ -36,6 +40,8 @@ export const CTAQuestionForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
+  buttonLabel,
+  backButtonLabel,
 }: CTAQuestionFormProps): JSX.Element => {
   const { t } = useTranslation();
   const options = [
@@ -106,7 +112,7 @@ export const CTAQuestionForm = ({
           {questionIdx !== 0 && (
             <QuestionFormInput
               id="backButtonLabel"
-              value={question.backButtonLabel}
+              value={backButtonLabel}
               label={t("environments.surveys.edit.back_button_label")}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
@@ -122,7 +128,7 @@ export const CTAQuestionForm = ({
           )}
           <QuestionFormInput
             id="buttonLabel"
-            value={question.buttonLabel}
+            value={buttonLabel}
             label={t("environments.surveys.edit.next_button_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}

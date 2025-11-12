@@ -3,7 +3,9 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
+import { TI18nString } from "@formbricks/types/i18n";
+import { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -14,9 +16,9 @@ import { Label } from "@/modules/ui/components/label";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyRatingQuestion;
+  question: TSurveyRatingElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyRatingElement>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
@@ -24,6 +26,7 @@ interface RatingQuestionFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
+  buttonLabel?: TI18nString;
 }
 
 export const RatingQuestionForm = ({
@@ -37,6 +40,7 @@ export const RatingQuestionForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
+  buttonLabel,
 }: RatingQuestionFormProps) => {
   const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -115,7 +119,7 @@ export const RatingQuestionForm = ({
                   updateQuestion(questionIdx, { scale: option.value, isColorCodingEnabled: false });
                   return;
                 }
-                updateQuestion(questionIdx, { scale: option.value });
+                updateQuestion(questionIdx, { scale: option.value as "number" | "smiley" | "star" });
               }}
             />
           </div>
@@ -134,7 +138,9 @@ export const RatingQuestionForm = ({
               ]}
               /* disabled={survey.status !== "draft"} */
               defaultValue={question.range || 5}
-              onSelect={(option) => updateQuestion(questionIdx, { range: option.value })}
+              onSelect={(option) =>
+                updateQuestion(questionIdx, { range: option.value as TSurveyRatingElement["range"] })
+              }
             />
           </div>
         </div>
@@ -180,7 +186,7 @@ export const RatingQuestionForm = ({
           <div className="flex-1">
             <QuestionFormInput
               id="buttonLabel"
-              value={question.buttonLabel}
+              value={buttonLabel}
               label={t("environments.surveys.edit.next_button_label")}
               localSurvey={localSurvey}
               questionIdx={questionIdx}

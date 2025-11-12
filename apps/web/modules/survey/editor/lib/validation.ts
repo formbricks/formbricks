@@ -6,18 +6,20 @@ import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TInputFieldConfig,
+  TSurveyAddressElement,
+  TSurveyCTAElement,
+  TSurveyConsentElement,
+  TSurveyContactInfoElement,
+  TSurveyElement,
+  TSurveyMatrixElement,
+  TSurveyMultipleChoiceElement,
+  TSurveyOpenTextElement,
+  TSurveyPictureSelectionElement,
+} from "@formbricks/types/surveys/elements";
+import {
   TSurvey,
-  TSurveyAddressQuestion,
-  TSurveyCTAQuestion,
-  TSurveyConsentQuestion,
-  TSurveyContactInfoQuestion,
   TSurveyEndScreenCard,
   TSurveyLanguage,
-  TSurveyMatrixQuestion,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyOpenTextQuestion,
-  TSurveyPictureSelectionQuestion,
-  TSurveyQuestion,
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
@@ -38,13 +40,13 @@ export const isLabelValidForAllLanguages = (
   return languages.every((language) => label?.[language] && getTextContent(label[language]).length > 0);
 };
 
-// Validation logic for multiple choice questions
+// Validation logic for multiple choice elements
 const handleI18nCheckForMultipleChoice = (
-  question: TSurveyMultipleChoiceQuestion,
+  element: TSurveyMultipleChoiceElement,
   languages: TSurveyLanguage[]
 ): boolean => {
   const invalidLangCodes = findLanguageCodesForDuplicateLabels(
-    question.choices.map((choice) => choice.label),
+    element.choices.map((choice) => choice.label),
     languages
   );
 
@@ -52,21 +54,21 @@ const handleI18nCheckForMultipleChoice = (
     return false;
   }
 
-  return question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
+  return element.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
 };
 
 const handleI18nCheckForMatrixLabels = (
-  question: TSurveyMatrixQuestion,
+  element: TSurveyMatrixElement,
   languages: TSurveyLanguage[]
 ): boolean => {
-  const rowsAndColumns = [...question.rows, ...question.columns];
+  const rowsAndColumns = [...element.rows, ...element.columns];
 
   const invalidRowsLangCodes = findLanguageCodesForDuplicateLabels(
-    question.rows.map((row) => row.label),
+    element.rows.map((row) => row.label),
     languages
   );
   const invalidColumnsLangCodes = findLanguageCodesForDuplicateLabels(
-    question.columns.map((column) => column.label),
+    element.columns.map((column) => column.label),
     languages
   );
 
@@ -78,15 +80,15 @@ const handleI18nCheckForMatrixLabels = (
 };
 
 const handleI18nCheckForContactAndAddressFields = (
-  question: TSurveyContactInfoQuestion | TSurveyAddressQuestion,
+  element: TSurveyContactInfoElement | TSurveyAddressElement,
   languages: TSurveyLanguage[]
 ): boolean => {
   let fields: TInputFieldConfig[] = [];
-  if (question.type === "contactInfo") {
-    const { firstName, lastName, phone, email, company } = question;
+  if (element.type === "contactInfo") {
+    const { firstName, lastName, phone, email, company } = element;
     fields = [firstName, lastName, phone, email, company];
-  } else if (question.type === "address") {
-    const { addressLine1, addressLine2, city, state, zip, country } = question;
+  } else if (element.type === "address") {
+    const { addressLine1, addressLine2, city, state, zip, country } = element;
     fields = [addressLine1, addressLine2, city, state, zip, country];
   }
   return fields.every((field) => {
@@ -99,70 +101,61 @@ const handleI18nCheckForContactAndAddressFields = (
 
 // Validation rules
 export const validationRules = {
-  openText: (question: TSurveyOpenTextQuestion, languages: TSurveyLanguage[]) => {
-    return question.placeholder &&
-      getLocalizedValue(question.placeholder, "default").trim() !== "" &&
+  openText: (element: TSurveyOpenTextElement, languages: TSurveyLanguage[]) => {
+    return element.placeholder &&
+      getLocalizedValue(element.placeholder, "default").trim() !== "" &&
       languages.length > 1
-      ? isLabelValidForAllLanguages(question.placeholder, languages)
+      ? isLabelValidForAllLanguages(element.placeholder, languages)
       : true;
   },
-  multipleChoiceMulti: (question: TSurveyMultipleChoiceQuestion, languages: TSurveyLanguage[]) => {
-    return handleI18nCheckForMultipleChoice(question, languages);
+  multipleChoiceMulti: (element: TSurveyMultipleChoiceElement, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForMultipleChoice(element, languages);
   },
-  multipleChoiceSingle: (question: TSurveyMultipleChoiceQuestion, languages: TSurveyLanguage[]) => {
-    return handleI18nCheckForMultipleChoice(question, languages);
+  multipleChoiceSingle: (element: TSurveyMultipleChoiceElement, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForMultipleChoice(element, languages);
   },
-  consent: (question: TSurveyConsentQuestion, languages: TSurveyLanguage[]) => {
-    return isLabelValidForAllLanguages(question.label, languages);
+  consent: (element: TSurveyConsentElement, languages: TSurveyLanguage[]) => {
+    return isLabelValidForAllLanguages(element.label, languages);
   },
-  pictureSelection: (question: TSurveyPictureSelectionQuestion) => {
-    return question.choices.length >= 2;
+  pictureSelection: (element: TSurveyPictureSelectionElement) => {
+    return element.choices.length >= 2;
   },
-  cta: (question: TSurveyCTAQuestion, languages: TSurveyLanguage[]) => {
-    return !question.required && question.dismissButtonLabel
-      ? isLabelValidForAllLanguages(question.dismissButtonLabel, languages)
+  cta: (element: TSurveyCTAElement, languages: TSurveyLanguage[]) => {
+    return !element.required && element.dismissButtonLabel
+      ? isLabelValidForAllLanguages(element.dismissButtonLabel, languages)
       : true;
   },
-  matrix: (question: TSurveyMatrixQuestion, languages: TSurveyLanguage[]) => {
-    return handleI18nCheckForMatrixLabels(question, languages);
+  matrix: (element: TSurveyMatrixElement, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForMatrixLabels(element, languages);
   },
-  contactInfo: (question: TSurveyContactInfoQuestion, languages: TSurveyLanguage[]) => {
-    return handleI18nCheckForContactAndAddressFields(question, languages);
+  contactInfo: (element: TSurveyContactInfoElement, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForContactAndAddressFields(element, languages);
   },
-  address: (question: TSurveyAddressQuestion, languages: TSurveyLanguage[]) => {
-    return handleI18nCheckForContactAndAddressFields(question, languages);
+  address: (element: TSurveyAddressElement, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForContactAndAddressFields(element, languages);
   },
   // Assuming headline is of type TI18nString
-  defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[], isFirstQuestion: boolean) => {
-    // headline and subheader are default for every question
-    const isHeadlineValid = isLabelValidForAllLanguages(question.headline, languages);
+  defaultValidation: (element: TSurveyElement, languages: TSurveyLanguage[]) => {
+    // headline and subheader are default for every element
+    const isHeadlineValid = isLabelValidForAllLanguages(element.headline, languages);
     const isSubheaderValid =
-      question.subheader &&
-      getLocalizedValue(question.subheader, "default").trim() !== "" &&
+      element.subheader &&
+      getLocalizedValue(element.subheader, "default").trim() !== "" &&
       languages.length > 1
-        ? isLabelValidForAllLanguages(question.subheader, languages)
+        ? isLabelValidForAllLanguages(element.subheader, languages)
         : true;
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
-    //question specific fields
-    let fieldsToValidate = ["buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
-
-    // Remove backButtonLabel from validation if it is the first question
-    if (isFirstQuestion) {
-      fieldsToValidate = fieldsToValidate.filter((field) => field !== "backButtonLabel");
-    }
-
-    if ((question.type === "nps" || question.type === "rating") && question.required) {
-      fieldsToValidate = fieldsToValidate.filter((field) => field !== "buttonLabel");
-    }
+    // Element specific fields (note: buttonLabel and backButtonLabel are now block-level, not element-level)
+    let fieldsToValidate = ["upperLabel", "lowerLabel"];
 
     for (const field of fieldsToValidate) {
       if (
-        question[field] &&
-        typeof question[field][defaultLanguageCode] !== "undefined" &&
-        question[field][defaultLanguageCode].trim() !== ""
+        element[field] &&
+        typeof element[field][defaultLanguageCode] !== "undefined" &&
+        element[field][defaultLanguageCode].trim() !== ""
       ) {
-        isValid = isValid && isLabelValidForAllLanguages(question[field], languages);
+        isValid = isValid && isLabelValidForAllLanguages(element[field], languages);
       }
     }
 
@@ -171,38 +164,33 @@ export const validationRules = {
 };
 
 // Main validation function
-export const validateQuestion = (
-  question: TSurveyQuestion,
-  surveyLanguages: TSurveyLanguage[],
-  isFirstQuestion: boolean
-): boolean => {
-  const specificValidation = validationRules[question.type];
+export const validateElement = (element: TSurveyElement, surveyLanguages: TSurveyLanguage[]): boolean => {
+  const specificValidation = validationRules[element.type];
   const defaultValidation = validationRules.defaultValidation;
 
-  const specificValidationResult = specificValidation ? specificValidation(question, surveyLanguages) : true;
-  const defaultValidationResult = defaultValidation(question, surveyLanguages, isFirstQuestion);
+  const specificValidationResult = specificValidation ? specificValidation(element, surveyLanguages) : true;
+  const defaultValidationResult = defaultValidation(element, surveyLanguages);
 
   // Return true only if both specific and default validation pass
   return specificValidationResult && defaultValidationResult;
 };
 
-export const validateSurveyQuestionsInBatch = (
-  question: TSurveyQuestion,
-  invalidQuestions: string[] | null,
-  surveyLanguages: TSurveyLanguage[],
-  isFirstQuestion: boolean
+export const validateSurveyElementsInBatch = (
+  element: TSurveyElement,
+  invalidElements: string[] | null,
+  surveyLanguages: TSurveyLanguage[]
 ) => {
-  if (invalidQuestions === null) {
+  if (invalidElements === null) {
     return [];
   }
 
-  if (validateQuestion(question, surveyLanguages, isFirstQuestion)) {
-    return invalidQuestions.filter((id) => id !== question.id);
-  } else if (!invalidQuestions.includes(question.id)) {
-    return [...invalidQuestions, question.id];
+  if (validateElement(element, surveyLanguages)) {
+    return invalidElements.filter((id) => id !== element.id);
+  } else if (!invalidElements.includes(element.id)) {
+    return [...invalidElements, element.id];
   }
 
-  return invalidQuestions;
+  return invalidElements;
 };
 
 const isContentValid = (content: Record<string, string> | undefined, surveyLanguages: TSurveyLanguage[]) => {

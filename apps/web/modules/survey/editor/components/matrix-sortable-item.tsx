@@ -6,18 +6,19 @@ import { GripVerticalIcon, TrashIcon } from "lucide-react";
 import type { JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
-import { TSurvey, TSurveyMatrixQuestion, TSurveyMatrixQuestionChoice } from "@formbricks/types/surveys/types";
+import { TSurveyMatrixElement, TSurveyMatrixElementChoice } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface MatrixSortableItemProps {
-  choice: TSurveyMatrixQuestionChoice;
+  choice: TSurveyMatrixElementChoice;
   type: "row" | "column";
   index: number;
   localSurvey: TSurvey;
-  question: TSurveyMatrixQuestion;
+  question: TSurveyMatrixElement;
   questionIdx: number;
   updateMatrixLabel: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
   onDelete: (index: number) => void;

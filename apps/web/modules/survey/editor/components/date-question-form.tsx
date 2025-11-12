@@ -4,7 +4,8 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyDateElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -14,9 +15,9 @@ import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyDateQuestion;
+  question: TSurveyDateElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyDateQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyDateElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;

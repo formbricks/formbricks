@@ -2,7 +2,8 @@
 
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurvey, TSurveyAddressQuestion, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyAddressElement, TSurveyContactInfoElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Switch } from "@/modules/ui/components/switch";
@@ -21,7 +22,7 @@ interface QuestionToggleTableProps {
   isInvalid: boolean;
   updateQuestion: (
     questionIdx: number,
-    updatedAttributes: Partial<TSurveyContactInfoQuestion | TSurveyAddressQuestion>
+    updatedAttributes: Partial<TSurveyContactInfoElement | TSurveyAddressElement>
   ) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;

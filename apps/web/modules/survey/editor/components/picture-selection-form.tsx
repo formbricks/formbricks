@@ -5,7 +5,8 @@ import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -17,9 +18,9 @@ import { Switch } from "@/modules/ui/components/switch";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyPictureSelectionQuestion;
+  question: TSurveyPictureSelectionElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyPictureSelectionQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyPictureSelectionElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;

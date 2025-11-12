@@ -32,14 +32,15 @@ export const AdvancedSettings = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <ConditionalLogic
+      {/* TODO: Re-enable ConditionalLogic in post-MVP */}
+      {/* <ConditionalLogic
         question={question}
         updateQuestion={updateQuestion}
         updateBlockLogic={updateBlockLogic}
         updateBlockLogicFallback={updateBlockLogicFallback}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-      />
+      /> */}
 
       <UpdateQuestionId
         question={question}

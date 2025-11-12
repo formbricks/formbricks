@@ -10,7 +10,6 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import {
   TSurvey,
   TSurveyEndScreenCard,
-  TSurveyQuestion,
   TSurveyQuestionChoice,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
@@ -43,10 +42,10 @@ interface QuestionFormInputProps {
   value: TI18nString | undefined;
   localSurvey: TSurvey;
   questionIdx: number;
-  updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
+  updateQuestion?: (questionIdx: number, data: Partial<TSurveyElement>) => void;
   updateSurvey?: (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyQuestionChoice>) => void;
-  updateMatrixLabel?: (index: number, type: "row" | "column", data: Partial<TSurveyQuestion>) => void;
+  updateMatrixLabel?: (index: number, type: "row" | "column", data: Partial<TSurveyElement>) => void;
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;

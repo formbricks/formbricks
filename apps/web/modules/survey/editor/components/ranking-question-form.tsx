@@ -8,7 +8,8 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurvey, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyRankingElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -19,9 +20,9 @@ import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-sele
 
 interface RankingQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyRankingQuestion;
+  question: TSurveyRankingElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyRankingQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyRankingElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
