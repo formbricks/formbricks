@@ -4,8 +4,8 @@ import { Project } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { cn } from "@/lib/cn";
+import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { Button } from "@/modules/ui/components/button";
-import { replacePresetPlaceholders } from "../lib/utils";
 import { TemplateTags } from "./template-tags";
 
 interface TemplateProps {

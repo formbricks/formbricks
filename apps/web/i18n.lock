@@ -2511,7 +2511,6 @@ checksums:
     templates/preview_survey_question_2_choice_2_label: 1af148222f327f28cf0db6513de5989e
     templates/preview_survey_question_2_headline: 5cfb173d156555227fbc2c97ad921e72
     templates/preview_survey_welcome_card_headline: 8778dc41547a2778d0f9482da989fc00
-    templates/preview_survey_welcome_card_html: 5fc24f7cfeba1af9a3fc3ddb6fb67de4
     templates/prioritize_features_description: 1eae41fad0e3947f803d8539081e59ec
     templates/prioritize_features_name: 4ca59ff1f9c319aaa68c3106d820fd6a
     templates/prioritize_features_question_1_choice_1: 7c0b2da44eacc271073d4f15caaa86c8

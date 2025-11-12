@@ -38,7 +38,7 @@ import {
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
 import { createI18nString } from "@/lib/i18n/utils";
-import { replaceQuestionPresetPlaceholders } from "@/lib/utils/templates";
+import { replaceElementPresetPlaceholders } from "@/lib/utils/templates";
 
 export type TQuestion = {
   id: string;
@@ -346,7 +346,7 @@ export const universalQuestionPresets = {
 
 export const getQuestionDefaults = (id: string, project: any, t: TFunction) => {
   const questionType = getQuestionTypes(t).find((questionType) => questionType.id === id);
-  return replaceQuestionPresetPlaceholders(questionType?.preset, project);
+  return replaceElementPresetPlaceholders(questionType?.preset, project);
 };
 
 export const getTSurveyQuestionTypeEnumName = (id: string, t: TFunction) => {

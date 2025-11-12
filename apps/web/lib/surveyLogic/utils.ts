@@ -8,7 +8,7 @@ import {
 } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import { TActionCalculate, TSurveyVariable } from "@formbricks/types/surveys/types";
+import { TActionCalculate, TSurveyLogicAction, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
@@ -625,7 +625,7 @@ const getRightOperandValue = (
 
 export const performActions = (
   survey: TJsEnvironmentStateSurvey,
-  actions: TSurveyBlockLogicAction[],
+  actions: TSurveyBlockLogicAction[] | TSurveyLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
 ): {

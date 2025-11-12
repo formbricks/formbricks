@@ -28,7 +28,7 @@ export const TemplateContainerWithPreview = ({
   const initialTemplate = customSurveyTemplate(t);
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    initialTemplate.preset.questions[0]?.id || initialTemplate.preset.blocks[0]?.elements[0]?.id || ""
+    initialTemplate.preset.blocks[0]?.elements[0]?.id || ""
   );
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
 
@@ -58,9 +58,7 @@ export const TemplateContainerWithPreview = ({
             userId={userId}
             templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {
-              setActiveQuestionId(
-                template.preset.questions[0]?.id || template.preset.blocks[0]?.elements[0]?.id || ""
-              );
+              setActiveQuestionId(template.preset.blocks[0]?.elements[0]?.id || "");
               setActiveTemplate(template);
             }}
           />
