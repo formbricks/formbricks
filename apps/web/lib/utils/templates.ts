@@ -1,31 +1,8 @@
 import type { TProject } from "@formbricks/types/project";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
-import type { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import type { TTemplate } from "@formbricks/types/templates";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-
-export const replaceQuestionPresetPlaceholders = (
-  question: TSurveyQuestion,
-  project: TProject
-): TSurveyQuestion => {
-  if (!project) return question;
-  const newQuestion = structuredClone(question);
-  const defaultLanguageCode = "default";
-  if (newQuestion.headline) {
-    newQuestion.headline[defaultLanguageCode] = getLocalizedValue(
-      newQuestion.headline,
-      defaultLanguageCode
-    ).replace("$[projectName]", project.name);
-  }
-  if (newQuestion.subheader) {
-    newQuestion.subheader[defaultLanguageCode] = getLocalizedValue(
-      newQuestion.subheader,
-      defaultLanguageCode
-    )?.replace("$[projectName]", project.name);
-  }
-  return newQuestion;
-};
 
 export const replaceElementPresetPlaceholders = (
   element: TSurveyElement,
@@ -63,13 +40,6 @@ export const replacePresetPlaceholders = (template: TTemplate, project: any) => 
       ...block,
       elements: block.elements.map((element) => replaceElementPresetPlaceholders(element, project)),
     }));
-  }
-
-  // Handle questions for backward compatibility
-  if (preset.questions && preset.questions.length > 0) {
-    preset.questions = preset.questions.map((question) => {
-      return replaceQuestionPresetPlaceholders(question, project);
-    });
   }
 
   return { ...template, preset };

@@ -15,12 +15,7 @@ import {
   createBlockChoiceJumpLogic,
   createBlockJumpLogic,
 } from "@/app/lib/survey-block-builder";
-import {
-  buildSurvey,
-  getDefaultEndingCard,
-  getDefaultSurveyPreset,
-  hiddenFieldsDefault,
-} from "@/app/lib/survey-builder";
+import { buildSurvey, getDefaultSurveyPreset, hiddenFieldsDefault } from "@/app/lib/survey-builder";
 import { createI18nString } from "@/lib/i18n/utils";
 
 const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
@@ -36,6 +31,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
       channels: ["app", "website", "link"],
       description: t("templates.card_abandonment_survey_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -179,6 +175,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
       channels: ["app", "website"],
       description: t("templates.site_abandonment_survey_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -319,6 +316,7 @@ const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
       channels: ["app", "link"],
       description: t("templates.product_market_fit_superhuman_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -417,6 +415,7 @@ const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
 };
 
 const onboardingSegmentation = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.onboarding_segmentation"),
@@ -424,6 +423,8 @@ const onboardingSegmentation = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.onboarding_segmentation_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -508,6 +509,7 @@ const churnSurvey = (t: TFunction): TTemplate => {
       channels: ["app", "link"],
       description: t("templates.churn_survey_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -633,6 +635,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
       channels: ["app", "link"],
       description: t("templates.earned_advocacy_score_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -727,6 +730,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
 };
 
 const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.usability_score_name"),
@@ -734,6 +738,8 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.usability_rating_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -916,6 +922,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
       channels: ["link", "app"],
       description: t("templates.improve_trial_conversion_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1058,6 +1065,7 @@ const reviewPrompt = (t: TFunction): TTemplate => {
       channels: ["link", "app"],
       description: t("templates.review_prompt_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1145,6 +1153,7 @@ const reviewPrompt = (t: TFunction): TTemplate => {
 };
 
 const interviewPrompt = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.interview_prompt_name"),
@@ -1152,6 +1161,8 @@ const interviewPrompt = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.interview_prompt_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1189,6 +1200,7 @@ const improveActivationRate = (t: TFunction): TTemplate => {
       channels: ["link"],
       description: t("templates.improve_activation_rate_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1305,6 +1317,7 @@ const improveActivationRate = (t: TFunction): TTemplate => {
 };
 
 const employeeSatisfaction = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.employee_satisfaction_name"),
@@ -1312,6 +1325,8 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link"],
       description: t("templates.employee_satisfaction_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1413,6 +1428,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
 };
 
 const uncoverStrengthsAndWeaknesses = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.uncover_strengths_and_weaknesses_name"),
@@ -1420,6 +1436,8 @@ const uncoverStrengthsAndWeaknesses = (t: TFunction): TTemplate => {
       industries: ["saas", "other"],
       channels: ["app", "link"],
       description: t("templates.uncover_strengths_and_weaknesses_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1481,6 +1499,7 @@ const uncoverStrengthsAndWeaknesses = (t: TFunction): TTemplate => {
 };
 
 const productMarketFitShort = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.product_market_fit_short_name"),
@@ -1488,6 +1507,8 @@ const productMarketFitShort = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.product_market_fit_short_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1527,6 +1548,7 @@ const productMarketFitShort = (t: TFunction): TTemplate => {
 };
 
 const marketAttribution = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.market_attribution_name"),
@@ -1534,6 +1556,8 @@ const marketAttribution = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce"],
       channels: ["website", "app", "link"],
       description: t("templates.market_attribution_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1563,6 +1587,7 @@ const marketAttribution = (t: TFunction): TTemplate => {
 };
 
 const changingSubscriptionExperience = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.changing_subscription_experience_name"),
@@ -1570,6 +1595,8 @@ const changingSubscriptionExperience = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.changing_subscription_experience_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1616,6 +1643,7 @@ const changingSubscriptionExperience = (t: TFunction): TTemplate => {
 };
 
 const identifyCustomerGoals = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.identify_customer_goals_name"),
@@ -1623,6 +1651,8 @@ const identifyCustomerGoals = (t: TFunction): TTemplate => {
       industries: ["saas", "other"],
       channels: ["app", "website"],
       description: t("templates.identify_customer_goals_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1650,6 +1680,7 @@ const identifyCustomerGoals = (t: TFunction): TTemplate => {
 };
 
 const featureChaser = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.feature_chaser_name"),
@@ -1657,6 +1688,8 @@ const featureChaser = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.feature_chaser_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1699,6 +1732,7 @@ const featureChaser = (t: TFunction): TTemplate => {
 };
 
 const fakeDoorFollowUp = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.fake_door_follow_up_name"),
@@ -1706,6 +1740,8 @@ const fakeDoorFollowUp = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce"],
       channels: ["app", "website"],
       description: t("templates.fake_door_follow_up_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1763,6 +1799,7 @@ const feedbackBox = (t: TFunction): TTemplate => {
       channels: ["app"],
       description: t("templates.feedback_box_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1848,6 +1885,7 @@ const feedbackBox = (t: TFunction): TTemplate => {
 const integrationSetupSurvey = (t: TFunction): TTemplate => {
   const reusableElementIds = [createId(), createId(), createId()];
   const block3Id = createId(); // Pre-generate ID for Block 3 (referenced by Block 1 logic)
+  const localSurvey = getDefaultSurveyPreset(t);
 
   return buildSurvey(
     {
@@ -1856,6 +1894,8 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.integration_setup_survey_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1938,6 +1978,7 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
 };
 
 const newIntegrationSurvey = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.new_integration_survey_name"),
@@ -1945,6 +1986,8 @@ const newIntegrationSurvey = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.new_integration_survey_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -1974,6 +2017,7 @@ const newIntegrationSurvey = (t: TFunction): TTemplate => {
 };
 
 const docsFeedback = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.docs_feedback_name"),
@@ -1981,6 +2025,8 @@ const docsFeedback = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app", "website", "link"],
       description: t("templates.docs_feedback_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2028,6 +2074,7 @@ const docsFeedback = (t: TFunction): TTemplate => {
 };
 
 const nps = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.nps_name"),
@@ -2035,6 +2082,8 @@ const nps = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link", "website"],
       description: t("templates.nps_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2067,6 +2116,7 @@ const nps = (t: TFunction): TTemplate => {
 };
 
 const customerSatisfactionScore = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.csat_name"),
@@ -2074,6 +2124,8 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link", "website"],
       description: t("templates.csat_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2278,6 +2330,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
   ];
   const block3Id = createId(); // Pre-generate IDs for blocks referenced by logic
   const block4Id = createId();
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.collect_feedback_name"),
@@ -2285,6 +2338,8 @@ const collectFeedback = (t: TFunction): TTemplate => {
       industries: ["other", "eCommerce"],
       channels: ["website", "link"],
       description: t("templates.collect_feedback_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2462,6 +2517,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
 };
 
 const identifyUpsellOpportunities = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.identify_upsell_opportunities_name"),
@@ -2469,6 +2525,8 @@ const identifyUpsellOpportunities = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.identify_upsell_opportunities_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2496,6 +2554,7 @@ const identifyUpsellOpportunities = (t: TFunction): TTemplate => {
 };
 
 const prioritizeFeatures = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.prioritize_features_name"),
@@ -2503,6 +2562,8 @@ const prioritizeFeatures = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.prioritize_features_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2560,6 +2621,7 @@ const prioritizeFeatures = (t: TFunction): TTemplate => {
 };
 
 const gaugeFeatureSatisfaction = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.gauge_feature_satisfaction_name"),
@@ -2567,6 +2629,8 @@ const gaugeFeatureSatisfaction = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.gauge_feature_satisfaction_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2596,14 +2660,13 @@ const gaugeFeatureSatisfaction = (t: TFunction): TTemplate => {
           t,
         }),
       ],
-      endings: [getDefaultEndingCard([], t)],
-      hiddenFields: hiddenFieldsDefault,
     },
     t
   );
 };
 
 const marketSiteClarity = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.market_site_clarity_name"),
@@ -2611,6 +2674,8 @@ const marketSiteClarity = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["website"],
       description: t("templates.market_site_clarity_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2661,6 +2726,7 @@ const marketSiteClarity = (t: TFunction): TTemplate => {
 };
 
 const customerEffortScore = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.customer_effort_score_name"),
@@ -2668,6 +2734,8 @@ const customerEffortScore = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.customer_effort_score_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2703,6 +2771,7 @@ const customerEffortScore = (t: TFunction): TTemplate => {
 };
 
 const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.career_development_survey_name"),
@@ -2710,6 +2779,8 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.career_development_survey_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2818,6 +2889,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
 };
 
 const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.professional_development_survey_name"),
@@ -2825,6 +2897,8 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.professional_development_survey_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -2935,6 +3009,7 @@ const rateCheckoutExperience = (t: TFunction): TTemplate => {
       channels: ["website", "app"],
       description: t("templates.rate_checkout_experience_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -3029,6 +3104,7 @@ const measureSearchExperience = (t: TFunction): TTemplate => {
       channels: ["app", "website"],
       description: t("templates.measure_search_experience_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -3123,6 +3199,7 @@ const evaluateContentQuality = (t: TFunction): TTemplate => {
       channels: ["website"],
       description: t("templates.evaluate_content_quality_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -3220,6 +3297,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
       channels: ["app", "website"],
       description: t("templates.measure_task_accomplishment_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -3436,6 +3514,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
       channels: ["website"],
       description: t("templates.identify_sign_up_barriers_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -3631,6 +3710,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
 };
 
 const buildProductRoadmap = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.build_product_roadmap_name"),
@@ -3638,6 +3718,8 @@ const buildProductRoadmap = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.build_product_roadmap_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -3686,6 +3768,7 @@ const understandPurchaseIntention = (t: TFunction): TTemplate => {
       channels: ["website", "link", "app"],
       description: t("templates.understand_purchase_intention_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -3761,6 +3844,7 @@ const improveNewsletterContent = (t: TFunction): TTemplate => {
       channels: ["link"],
       description: t("templates.improve_newsletter_content_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -3866,6 +3950,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
   const block6Id = createId();
   const block7Id = createId();
   const block8Id = createId();
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.evaluate_a_product_idea_name"),
@@ -3873,6 +3958,8 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
       industries: ["saas", "other"],
       channels: ["link", "app"],
       description: t("templates.evaluate_a_product_idea_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -4026,6 +4113,7 @@ const understandLowEngagement = (t: TFunction): TTemplate => {
       channels: ["link"],
       description: t("templates.understand_low_engagement_description"),
       endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -4143,6 +4231,7 @@ const understandLowEngagement = (t: TFunction): TTemplate => {
 };
 
 const employeeWellBeing = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.employee_well_being_name"),
@@ -4150,6 +4239,8 @@ const employeeWellBeing = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.employee_well_being_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -4213,6 +4304,7 @@ const employeeWellBeing = (t: TFunction): TTemplate => {
 };
 
 const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.long_term_retention_check_in_name"),
@@ -4220,6 +4312,8 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
       industries: ["saas", "other"],
       channels: ["app", "link"],
       description: t("templates.long_term_retention_check_in_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -4373,6 +4467,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
 };
 
 const professionalDevelopmentGrowth = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.professional_development_growth_survey_name"),
@@ -4380,6 +4475,8 @@ const professionalDevelopmentGrowth = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.professional_development_growth_survey_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -4443,6 +4540,7 @@ const professionalDevelopmentGrowth = (t: TFunction): TTemplate => {
 };
 
 const recognitionAndReward = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.recognition_and_reward_survey_name"),
@@ -4450,6 +4548,8 @@ const recognitionAndReward = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.recognition_and_reward_survey_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -4513,6 +4613,7 @@ const recognitionAndReward = (t: TFunction): TTemplate => {
 };
 
 const alignmentAndEngagement = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.alignment_and_engagement_survey_name"),
@@ -4520,6 +4621,8 @@ const alignmentAndEngagement = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.alignment_and_engagement_survey_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -4582,6 +4685,7 @@ const alignmentAndEngagement = (t: TFunction): TTemplate => {
 };
 
 const supportiveWorkCulture = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
       name: t("templates.supportive_work_culture_survey_name"),
@@ -4589,6 +4693,8 @@ const supportiveWorkCulture = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.supportive_work_culture_survey_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
           name: "Block 1",
@@ -4710,7 +4816,6 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
     preset: {
       ...getDefaultSurveyPreset(t),
       name: t("templates.custom_survey_name"),
-      questions: [],
       blocks: [
         {
           id: createId(),
@@ -4735,18 +4840,17 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
   };
 };
 
-export const previewSurvey = (projectName: string, t: TFunction) => {
+export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
   return {
     id: "cltxxaa6x0000g8hacxdxejeu",
     createdAt: new Date(),
     updatedAt: new Date(),
     name: t("templates.preview_survey_name"),
-    type: "link",
+    type: "link" as const,
     environmentId: "cltwumfcz0009echxg02fh7oa",
     createdBy: "cltwumfbz0000echxysz6ptvq",
-    status: "inProgress",
+    status: "inProgress" as const,
     welcomeCard: {
-      html: createI18nString(t("templates.preview_survey_welcome_card_html"), []),
       enabled: false,
       headline: createI18nString(t("templates.preview_survey_welcome_card_headline"), []),
       timeToFinish: false,
@@ -4754,7 +4858,6 @@ export const previewSurvey = (projectName: string, t: TFunction) => {
     },
     styling: null,
     segment: null,
-    questions: [],
     blocks: [
       {
         id: createId(),
@@ -4821,7 +4924,6 @@ export const previewSurvey = (projectName: string, t: TFunction) => {
     autoComplete: 50,
     isVerifyEmailEnabled: false,
     isSingleResponsePerEmailEnabled: false,
-    redirectUrl: null,
     projectOverwrites: null,
     surveyClosedMessage: null,
     singleUse: {
@@ -4835,5 +4937,6 @@ export const previewSurvey = (projectName: string, t: TFunction) => {
     followUps: [],
     isBackButtonHidden: false,
     metadata: {},
-  } as TSurvey;
+    questions: [], // Required for build-time type checking (Zod defaults to [] at runtime)
+  };
 };

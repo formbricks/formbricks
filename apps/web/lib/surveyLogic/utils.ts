@@ -647,8 +647,6 @@ export const performActions = (
         requiredQuestionIds.push(action.target);
         break;
       case "jumpToBlock":
-      case "jumpToQuestion":
-        // Backward compatibility: handle old question-level logic (jumpToQuestion)
         if (!jumpTarget) {
           jumpTarget = action.target;
         }
