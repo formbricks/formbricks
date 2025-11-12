@@ -17,8 +17,8 @@ import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -73,14 +73,19 @@ export const AddChannelMappingModal = ({
     },
   };
 
+  const questions = useMemo(
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
+    [selectedSurvey]
+  );
+
   useEffect(() => {
     if (selectedSurvey) {
-      const questionIds = selectedSurvey.questions.map((question) => question.id);
+      const questionIds = questions.map((question) => question.id);
       if (!selectedIntegration) {
         setSelectedQuestions(questionIds);
       }
     }
-  }, [selectedIntegration, selectedSurvey]);
+  }, [questions, selectedIntegration, selectedSurvey]);
 
   useEffect(() => {
     if (selectedIntegration) {
@@ -269,7 +274,7 @@ export const AddChannelMappingModal = ({
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
                     <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                        {replaceHeadlineRecall(selectedSurvey, "default")?.questions?.map((question) => (
+                        {questions.map((question) => (
                           <div key={question.id} className="my-1 flex items-center space-x-2">
                             <label htmlFor={question.id} className="flex cursor-pointer items-center">
                               <Checkbox
@@ -283,7 +288,11 @@ export const AddChannelMappingModal = ({
                                 }}
                               />
                               <span className="ml-2">
-                                {getTextContent(getLocalizedValue(question.headline, "default"))}
+                                {getTextContent(
+                                  recallToHeadline(question.headline, selectedSurvey, false, "default")[
+                                    "default"
+                                  ]
+                                )}
                               </span>
                             </label>
                           </div>
