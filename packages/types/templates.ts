@@ -1,13 +1,7 @@
 import { z } from "zod";
 import { ZProjectConfigChannel, ZProjectConfigIndustry } from "./project";
 import { ZSurveyBlocks } from "./surveys/blocks";
-import {
-  ZSurveyEndings,
-  ZSurveyHiddenFields,
-  ZSurveyQuestions,
-  ZSurveyStyling,
-  ZSurveyWelcomeCard,
-} from "./surveys/types";
+import { ZSurveyEndings, ZSurveyHiddenFields, ZSurveyStyling, ZSurveyWelcomeCard } from "./surveys/types";
 
 export const ZTemplateRole = z.enum([
   "productManager",
@@ -29,7 +23,6 @@ export const ZTemplate = z.object({
     name: z.string(),
     welcomeCard: ZSurveyWelcomeCard,
     blocks: ZSurveyBlocks.default([]),
-    questions: ZSurveyQuestions.default([]),
     endings: ZSurveyEndings,
     hiddenFields: ZSurveyHiddenFields,
   }),
@@ -39,7 +32,7 @@ export type TTemplate = z.infer<typeof ZTemplate>;
 
 export const ZXMTemplate = z.object({
   name: z.string(),
-  questions: ZSurveyQuestions,
+  blocks: ZSurveyBlocks,
   endings: ZSurveyEndings,
   styling: ZSurveyStyling,
 });
