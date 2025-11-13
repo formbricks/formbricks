@@ -151,13 +151,26 @@ export const PreviewSurvey = ({
         return;
       if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;
 
+      if (newQuestionId === "start") {
+        setBlockId("start");
+        return;
+      }
+
       // Convert questionId to blockId and set it directly
       const block = survey.blocks.find((b) => b.elements.some((e) => e.id === newQuestionId));
       if (block) {
         setBlockId(block.id);
+        return;
+      }
+
+      // check the endings
+      const ending = survey.endings.find((e) => e.id === newQuestionId);
+      if (ending) {
+        setBlockId(ending.id);
+        return;
       }
     },
-    [survey.welcomeCard.enabled, survey.blocks]
+    [survey.welcomeCard.enabled, survey.blocks, survey.endings]
   );
 
   useEffect(() => {

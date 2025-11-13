@@ -109,7 +109,7 @@ export const SurveyEditor = ({
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
 
-      // Set first element from first block, or first question for legacy surveys
+      // Set first element from first block
       const firstBlock = survey.blocks[0];
       if (firstBlock) {
         setActiveQuestionId(firstBlock.elements?.[0]?.id);

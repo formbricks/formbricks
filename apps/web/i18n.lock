@@ -1103,9 +1103,9 @@ checksums:
     environments/surveys/edit/add: 5196f5cd4ba3a6ac8edef91345e17f66
     environments/surveys/edit/add_a_delay_or_auto_close_the_survey: b5fa358bf3ff324014060eb0baf6dd2f
     environments/surveys/edit/add_a_four_digit_pin: 953cb3673d2135923e3b4474d33ffb2c
-    environments/surveys/edit/add_a_new_question_to_your_survey: 65f3a4f0d5132eab7aeaed1ad28df56c
     environments/surveys/edit/add_a_variable_to_calculate: c202b50c12fc6f71f06eaf6f1b61e961
     environments/surveys/edit/add_action_below: 46cdbf9a77391aa89593908e508f7af0
+    environments/surveys/edit/add_block: ae8fbf8fdb5c6be7e4951a6cdd486473
     environments/surveys/edit/add_choice_below: abf0416f7a78df61869de63d9766683c
     environments/surveys/edit/add_color_coding: db738f7be21e08c5dc878c09fdf95e44
     environments/surveys/edit/add_color_coding_description: da15c619aa00084ad18f30766906527f
@@ -1126,7 +1126,6 @@ checksums:
     environments/surveys/edit/add_other: de75bd3d40f3b5effdbe1c8d536f936b
     environments/surveys/edit/add_photo_or_video: 7fd213e807ad060e415d1d4195397473
     environments/surveys/edit/add_pin: 1bc282dd7eaea51301655d3e8dd3a9fb
-    environments/surveys/edit/add_question: 10336b52895385f7390540ad5bb4e208
     environments/surveys/edit/add_question_below: 58e64eb2e013f1175ea0dcf79149109f
     environments/surveys/edit/add_row: a613cef4caf1f0e05697c8de5164e2a3
     environments/surveys/edit/add_variable: 23f97e23aba763cc58934df4fa13ffc1
@@ -1154,6 +1153,8 @@ checksums:
     environments/surveys/edit/automatically_mark_the_survey_as_complete_after: c6ede2a5515a4ca72b36aec2583f43aa
     environments/surveys/edit/back_button_label: 25af945e77336724b5276de291cc92d9
     environments/surveys/edit/background_styling: 4e1e6fd2ec767bbff8767f6c0f68a731
+    environments/surveys/edit/block_deleted: c682259eb138ad84f8b4441abfd9b572
+    environments/surveys/edit/block_duplicated: dc9e9fab2b1cd91f6c265324b34c6376
     environments/surveys/edit/bold: 4d7306bc355ed2befd6a9237c5452ee6
     environments/surveys/edit/brand_color: 84ddb5736deb9f5c081ffe4962a6c63e
     environments/surveys/edit/brightness: 45425b6db1872225bfff71cf619d0e64
@@ -1198,6 +1199,7 @@ checksums:
     environments/surveys/edit/character_limit_toggle_title: fdc45bcc6335e5116aec895fecda0d87
     environments/surveys/edit/checkbox_label: 12a07d6bdf38e283a2e95892ec49b7f8
     environments/surveys/edit/choose_the_actions_which_trigger_the_survey: 773b311a148a112243f3b139506b9987
+    environments/surveys/edit/choose_the_first_question_on_your_block: bdece06ca04f89d0c445ba1554dd5b80
     environments/surveys/edit/choose_where_to_run_the_survey: ad87bcae97c445f1fd9ac110ea24f117
     environments/surveys/edit/city: 1831f32e1babbb29af27fac3053504a2
     environments/surveys/edit/close_survey_on_response_limit: 256d0bccdbcbb3d20e39aabc5b376e5e
@@ -1226,6 +1228,7 @@ checksums:
     environments/surveys/edit/date_format: e95dfc41ac944874868487457ddc057a
     environments/surveys/edit/days_before_showing_this_survey_again: 8b4623eab862615fa60064400008eb23
     environments/surveys/edit/decide_how_often_people_can_answer_this_survey: 58427b0f0a7a258c24fa2acd9913e95e
+    environments/surveys/edit/delete_block: c00617cb0724557e486304276063807a
     environments/surveys/edit/delete_choice: fd750208d414b9ad8c980c161a0199e1
     environments/surveys/edit/disable_the_visibility_of_survey_progress: 2af631010114307ac2a91612559c9618
     environments/surveys/edit/display_an_estimate_of_completion_time_for_survey: 03f0a816569399c1c61d08dbc913de06
@@ -1237,6 +1240,7 @@ checksums:
     environments/surveys/edit/does_not_include_all_of: c18c1a71e6d96c681a3e95c7bd6c9482
     environments/surveys/edit/does_not_include_one_of: 91090d2e0667faf654f6a81d9857440f
     environments/surveys/edit/does_not_start_with: 9395869b54cdfb353a51a7e0864f4fd7
+    environments/surveys/edit/duplicate_block: d4ea4afb5fc5b18a81cbe0302fa05997
     environments/surveys/edit/edit_link: 40ba9e15beac77a46c5baf30be84ac54
     environments/surveys/edit/edit_recall: 38a4a7378d02453e35d06f2532eef318
     environments/surveys/edit/edit_translations: 2b21bea4b53e88342559272701e9fbf3
