@@ -1,19 +1,27 @@
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyQuestion, TSurveyQuestionTypeEnum, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 
-interface OptionIdsProps {
+interface OptionIdsQuestionProps {
+  type: "question";
   question: TSurveyQuestion;
   selectedLanguageCode: string;
 }
 
-export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) => {
+interface OptionIdsVariablesProps {
+  type: "variables";
+  variables: TSurveyVariable[];
+}
+
+type OptionIdsProps = OptionIdsQuestionProps | OptionIdsVariablesProps;
+
+export const OptionIds = (props: OptionIdsProps) => {
   const { t } = useTranslation();
 
-  const renderChoiceIds = () => {
+  const renderChoiceIds = (question: TSurveyQuestion, selectedLanguageCode: string) => {
     switch (question.type) {
       case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
       case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
@@ -59,10 +67,31 @@ export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) =>
     }
   };
 
+  const renderVariableIds = (variables: TSurveyVariable[]) => {
+    return (
+      <div className="flex flex-col gap-2">
+        {variables.map((variable) => (
+          <div key={variable.id}>
+            <IdBadge id={variable.id} label={variable.name} />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  if (props.type === "variables") {
+    return (
+      <div className="space-y-3">
+        <Label className="text-sm font-medium text-gray-700">{t("common.variable_ids")}</Label>
+        <div className="w-full">{renderVariableIds(props.variables)}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium text-gray-700">{t("common.option_ids")}</Label>
-      <div className="w-full">{renderChoiceIds()}</div>
+      <div className="w-full">{renderChoiceIds(props.question, props.selectedLanguageCode)}</div>
     </div>
   );
 };
