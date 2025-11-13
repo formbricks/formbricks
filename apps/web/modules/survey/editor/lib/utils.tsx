@@ -594,7 +594,7 @@ export const getMatchValueProps = (
       const questionOptions = openTextQuestions.map((question) => {
         return {
           icon: getQuestionIconMapping(t)[question.type],
-          label: getTextContent(getLocalizedValue(question.headline, "default")),
+          label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
             type: "question",
@@ -691,7 +691,7 @@ export const getMatchValueProps = (
       const questionOptions = allowedQuestions.map((question) => {
         return {
           icon: getQuestionIconMapping(t)[question.type],
-          label: getTextContent(getLocalizedValue(question.headline, "default")),
+          label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
             type: "question",
@@ -765,7 +765,7 @@ export const getMatchValueProps = (
       const questionOptions = allowedQuestions.map((question) => {
         return {
           icon: getQuestionIconMapping(t)[question.type],
-          label: getTextContent(getLocalizedValue(question.headline, "default")),
+          label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
             type: "question",
@@ -845,7 +845,7 @@ export const getMatchValueProps = (
     const questionOptions = allowedQuestions.map((question) => {
       return {
         icon: getQuestionIconMapping(t)[question.type],
-        label: getTextContent(getLocalizedValue(question.headline, "default")),
+        label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
           type: "question",

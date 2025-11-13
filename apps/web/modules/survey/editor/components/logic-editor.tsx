@@ -4,7 +4,6 @@ import { ArrowRightIcon } from "lucide-react";
 import { ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
@@ -49,7 +48,7 @@ export function LogicEditor({
       const ques = localSurvey.questions[i];
       options.push({
         icon: QUESTIONS_ICON_MAP[ques.type],
-        label: getTextContent(getLocalizedValue(ques.headline, "default")),
+        label: getLocalizedValue(ques.headline, "default"),
         value: ques.id,
       });
     }
@@ -58,8 +57,7 @@ export function LogicEditor({
       options.push({
         label:
           ending.type === "endScreen"
-            ? getTextContent(getLocalizedValue(ending.headline, "default")) ||
-              t("environments.surveys.edit.end_screen_card")
+            ? getLocalizedValue(ending.headline, "default") || t("environments.surveys.edit.end_screen_card")
             : ending.label || t("environments.surveys.edit.redirect_thank_you_card"),
         value: ending.id,
       });

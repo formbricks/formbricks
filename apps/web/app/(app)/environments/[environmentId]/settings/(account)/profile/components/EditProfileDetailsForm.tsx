@@ -215,7 +215,7 @@ export const EditProfileDetailsForm = ({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
-                      className="min-w-[var(--radix-dropdown-menu-trigger-width)] bg-white text-slate-700"
+                      className="min-w-[var(--radix-dropdown-menu-trigger-width)] bg-slate-50 text-slate-700"
                       align="start">
                       <DropdownMenuRadioGroup value={field.value} onValueChange={field.onChange}>
                         {appLanguages.map((lang) => (

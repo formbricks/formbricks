@@ -1,13 +1,12 @@
 "use client";
 
 import { Environment, Project } from "@prisma/client";
-import { motion } from "framer-motion";
+import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
@@ -29,6 +28,33 @@ interface PreviewSurveyProps {
 
 let surveyNameTemp: string;
 
+const previewParentContainerVariant: Variants = {
+  expanded: {
+    position: "fixed",
+    height: "100%",
+    width: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backdropFilter: "blur(15px)",
+    left: 0,
+    top: 0,
+    zIndex: 1040,
+    transition: {
+      ease: "easeIn",
+      duration: 0.001,
+    },
+  },
+  shrink: {
+    display: "none",
+    position: "fixed",
+    backgroundColor: "rgba(0, 0, 0, 0.0)",
+    backdropFilter: "blur(0px)",
+    transition: {
+      duration: 0,
+    },
+    zIndex: -1,
+  },
+};
+
 let setQuestionId = (_: string) => {};
 
 export const PreviewSurvey = ({
@@ -46,8 +72,44 @@ export const PreviewSurvey = ({
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
+  const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
+  const [shrink, setShrink] = useState(false);
   const { projectOverwrites } = survey || {};
+  const previewScreenVariants: Variants = {
+    expanded: {
+      right: "5%",
+      bottom: "10%",
+      top: "12%",
+      width: "40%",
+      position: "fixed",
+      height: "80%",
+      zIndex: 1050,
+      boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
+      transition: {
+        ease: "easeInOut",
+        duration: shrink ? 0.3 : 0,
+      },
+    },
+    expanded_with_fixed_positioning: {
+      zIndex: 1050,
+      position: "fixed",
+      top: "5%",
+      right: "5%",
+      bottom: "10%",
+      width: "90%",
+      height: "90%",
+      transition: {
+        ease: "easeOut",
+        duration: 0.4,
+      },
+    },
+    shrink: {
+      display: "relative",
+      width: ["95%"],
+      height: ["95%"],
+    },
+  };
 
   const { placement: surveyPlacement } = projectOverwrites || {};
   const { darkOverlay: surveyDarkOverlay } = projectOverwrites || {};
@@ -164,40 +226,22 @@ export const PreviewSurvey = ({
   };
 
   return (
-    <div
-      className="flex h-full w-full flex-col items-center justify-items-center p-2 py-4"
-      id="survey-preview">
+    <div className="flex h-full w-full flex-col items-center justify-items-center py-4" id="survey-preview">
       <motion.div
-        className={cn(
-          "z-50 flex h-full w-fit items-center justify-center",
-          isFullScreenPreview && "h-full w-full bg-zinc-500/50 backdrop-blur-md"
-        )}
-        style={{
-          position: isFullScreenPreview ? "fixed" : "absolute",
-          zIndex: 50,
-          left: isFullScreenPreview ? 0 : undefined,
-          top: isFullScreenPreview ? 0 : undefined,
-        }}
-        transition={{
-          ease: "easeInOut",
-          delay: 1.5,
-        }}
+        variants={previewParentContainerVariant}
+        animate={isFullScreenPreview ? "expanded" : "shrink"}
       />
       <motion.div
         layout
-        style={{
-          left: isFullScreenPreview ? "2.5%" : undefined,
-          top: isFullScreenPreview ? 0 : undefined,
-        }}
-        transition={{
-          duration: 0.8,
-          ease: "easeInOut",
-          type: "spring",
-        }}
-        className={cn(
-          "z-50 flex h-[95%] w-full items-center justify-center overflow-hidden rounded-lg border border-slate-300",
-          isFullScreenPreview && "absolute z-50 h-[95%] w-[95%]"
-        )}>
+        variants={previewScreenVariants}
+        animate={
+          isFullScreenPreview
+            ? previewPosition === "relative"
+              ? "expanded"
+              : "expanded_with_fixed_positioning"
+            : "shrink"
+        }
+        className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300">
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
@@ -272,9 +316,13 @@ export const PreviewSurvey = ({
                   className="h-3 w-3 cursor-pointer rounded-full bg-emerald-500"
                   onClick={() => {
                     if (isFullScreenPreview) {
-                      setIsFullScreenPreview(false);
+                      setShrink(true);
+                      setPreviewPosition("relative");
+                      setTimeout(() => setIsFullScreenPreview(false), 300);
                     } else {
+                      setShrink(false);
                       setIsFullScreenPreview(true);
+                      setTimeout(() => setPreviewPosition("fixed"), 300);
                     }
                   }}
                   aria-label={isFullScreenPreview ? "Shrink Preview" : "Expand Preview"}></button>
@@ -291,14 +339,18 @@ export const PreviewSurvey = ({
                     <ShrinkIcon
                       className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                       onClick={() => {
-                        setIsFullScreenPreview(false);
+                        setShrink(true);
+                        setPreviewPosition("relative");
+                        setTimeout(() => setIsFullScreenPreview(false), 300);
                       }}
                     />
                   ) : (
                     <ExpandIcon
                       className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                       onClick={() => {
+                        setShrink(false);
                         setIsFullScreenPreview(true);
+                        setTimeout(() => setPreviewPosition("fixed"), 300);
                       }}
                     />
                   )}

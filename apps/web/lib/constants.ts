@@ -175,7 +175,6 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
   "ro-RO",
   "ja-JP",
   "zh-Hans-CN",
-  "es-ES",
 ];
 
 // Billing constants

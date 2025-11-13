@@ -13,7 +13,6 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import {
   ERRORS,
@@ -123,7 +122,7 @@ export const AddIntegrationModal = ({
     const questions = selectedSurvey
       ? replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((q) => ({
           id: q.id,
-          name: getTextContent(getLocalizedValue(q.headline, "default")),
+          name: getLocalizedValue(q.headline, "default"),
           type: q.type,
         }))
       : [];

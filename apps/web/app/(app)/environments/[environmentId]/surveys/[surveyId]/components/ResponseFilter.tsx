@@ -217,13 +217,11 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     setFilterValue(selectedFilter);
   }, [selectedFilter]);
 
-  const activeFilterCount = filterValue.filter.length + (filterValue.responseStatus === "all" ? 0 : 1);
-
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <PopoverTriggerButton isOpen={isOpen}>
-          Filter <b>{activeFilterCount > 0 && `(${activeFilterCount})`}</b>
+          Filter <b>{filterValue.filter.length > 0 && `(${filterValue.filter.length})`}</b>
         </PopoverTriggerButton>
       </PopoverTrigger>
       <PopoverContent

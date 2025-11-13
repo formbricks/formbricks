@@ -3,7 +3,6 @@
 import { HandshakeIcon, Undo2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TSurveyEndings } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import {
   Select,
@@ -42,7 +41,7 @@ export const EndingCardSelector = ({ endings, value, onChange }: EndingCardSelec
               {/* Custom endings */}
               {endingCards.map((ending) => (
                 <SelectItem key={ending.id} value={ending.id}>
-                  {getTextContent(getLocalizedValue(ending.headline, "default"))}
+                  {getLocalizedValue(ending.headline, "default")}
                 </SelectItem>
               ))}
             </SelectGroup>

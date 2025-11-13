@@ -18,7 +18,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -141,9 +140,9 @@ export const FollowUpModal = ({
 
     return [
       ...openTextAndContactQuestions.map((question) => ({
-        label: getTextContent(
-          recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]
-        ),
+        label: recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[
+          selectedLanguageCode
+        ],
         id: question.id,
         type:
           question.type === TSurveyQuestionTypeEnum.OpenText
@@ -518,9 +517,7 @@ export const FollowUpModal = ({
                                   const getEndingLabel = (): string => {
                                     if (ending.type === "endScreen") {
                                       return (
-                                        getTextContent(
-                                          getLocalizedValue(ending.headline, selectedLanguageCode)
-                                        ) || "Ending"
+                                        getLocalizedValue(ending.headline, selectedLanguageCode) || "Ending"
                                       );
                                     }
 
