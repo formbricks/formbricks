@@ -58,9 +58,33 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
   };
 
   useEffect(() => {
+    // If script is already loaded, mark this instance as ready
+    if (window.formbricksSurveys && !isScriptLoaded) {
+      setIsScriptLoaded(true);
+      hasLoadedRef.current = true;
+      return;
+    }
+
     // Prevent duplicate loads across multiple renders or component instances
     if (hasLoadedRef.current || isLoadingScript) {
-      return;
+      // Another instance is loading - poll for completion
+      const checkInterval = setInterval(() => {
+        if (window.formbricksSurveys) {
+          setIsScriptLoaded(true);
+          hasLoadedRef.current = true;
+          clearInterval(checkInterval);
+        }
+      }, 50); // Check every 50ms
+
+      // Cleanup interval after 10 seconds to prevent infinite polling
+      const timeout = setTimeout(() => {
+        clearInterval(checkInterval);
+      }, 10000);
+
+      return () => {
+        clearInterval(checkInterval);
+        clearTimeout(timeout);
+      };
     }
 
     const loadScript = async () => {
@@ -74,7 +98,8 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
           console.error("Failed to load the surveys package: ", error);
         }
       } else {
-        renderInline();
+        setIsScriptLoaded(true);
+        hasLoadedRef.current = true;
       }
     };
 
