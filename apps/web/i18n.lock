@@ -398,6 +398,7 @@ checksums:
     common/user_id: 37f5ba37f71cb50607af32a6a203b1d4
     common/user_not_found: 5903581136ac6c1c1351a482a6d8fdf7
     common/variable: c13db5775ba9791b1522cc55c9c7acce
+    common/variable_ids: 44bf93b70703b7699fa9f21bc6c8eed4
     common/variables: ffd3eec5497af36d7b4e4185bad1313a
     common/verified_email: d4a9e5e47d622c6ef2fede44233076c7
     common/video: 8050c90e4289b105a0780f0fdda6ff66
@@ -915,15 +916,12 @@ checksums:
     environments/settings/billing/manage_subscription: 31cafd367fc70d656d8dd979d537dc96
     environments/settings/billing/monthly: 818f1192e32bb855597f930d3e78806e
     environments/settings/billing/monthly_identified_users: 0795735f6b241d31edac576a77dd7e55
-    environments/settings/billing/per_month: 64e96490ee2d7811496cf04adae30aa4
-    environments/settings/billing/per_year: bf02408d157486e53c15a521a5645617
     environments/settings/billing/plan_upgraded_successfully: 52e2a258cc9ca8a512c288bf6f18cf37
     environments/settings/billing/premium_support_with_slas: 2e33d4442c16bfececa6cae7b2081e5d
     environments/settings/billing/remove_branding: 88b6b818750e478bfa153b33dd658280
     environments/settings/billing/startup: 4c4ac5a0b9dc62100bca6c6465f31c4c
     environments/settings/billing/startup_description: 964fcb2c77f49b80266c94606e3f4506
     environments/settings/billing/switch_plan: fb3e1941051a4273ca29224803570f4b
-    environments/settings/billing/switch_plan_confirmation_text: 910a6df56964619975c6ed5651a55db7
     environments/settings/billing/team_access_roles: 1cc4af14e589f6c09ab92a4f21958049
     environments/settings/billing/unable_to_upgrade_plan: 50fc725609411d139e534c85eeb2879e
     environments/settings/billing/unlimited_miu: 29c3f5bd01c2a09fdf1d3601665ce90f
