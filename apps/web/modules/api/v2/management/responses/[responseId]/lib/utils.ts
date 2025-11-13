@@ -1,4 +1,4 @@
-import { Response, Survey } from "@prisma/client";
+import { Response, Survey } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { Result, okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";

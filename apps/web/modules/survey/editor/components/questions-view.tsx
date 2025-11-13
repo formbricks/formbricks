@@ -11,10 +11,10 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Language, Project } from "@prisma/client";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Language, Project } from "@formbricks/database/generated/client";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TConditionGroup,

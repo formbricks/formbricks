@@ -1,4 +1,4 @@
-import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
+import { ActionClass, Environment, OrganizationRole } from "@formbricks/database/generated/client";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";

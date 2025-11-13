@@ -3,12 +3,12 @@
 
 datasource db {
   provider   = "postgresql"
-  url        = env("DATABASE_URL")
   extensions = [pgvector(map: "vector")]
 }
 
 generator client {
-  provider        = "prisma-client-js"
+  provider        = "prisma-client"
+  output          = "./src/generated"
   previewFeatures = ["postgresqlExtensions"]
 }
 

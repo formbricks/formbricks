@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import {
   OperationNotAllowedError,

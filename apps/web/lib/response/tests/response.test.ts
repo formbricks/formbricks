@@ -12,9 +12,9 @@ import {
   mockTags,
 } from "./__mocks__/data.mock";
 import { prisma } from "@/lib/__mocks__/database";
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
+import { Prisma } from "@formbricks/database/generated/client";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";

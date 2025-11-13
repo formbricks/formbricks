@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSurveyQuota } from "@formbricks/types/quota";

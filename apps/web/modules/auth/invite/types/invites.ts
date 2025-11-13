@@ -1,4 +1,4 @@
-import { Invite } from "@prisma/client";
+import { Invite } from "@formbricks/database/generated/client";
 
 export interface InviteWithCreator
   extends Pick<Invite, "id" | "expiresAt" | "organizationId" | "role" | "teamIds"> {

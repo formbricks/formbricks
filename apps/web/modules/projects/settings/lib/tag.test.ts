@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/generated/client";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";

@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
-import { OrganizationRole, Prisma, WidgetPlacement } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { OrganizationRole, Prisma, WidgetPlacement } from "@formbricks/database/generated/client";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "../constants";
 import {

@@ -1,12 +1,12 @@
 "use client";
 
-import { Project } from "@prisma/client";
 import { isEqual } from "lodash";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Project } from "@formbricks/database/generated/client";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSegment } from "@formbricks/types/segment";
 import {

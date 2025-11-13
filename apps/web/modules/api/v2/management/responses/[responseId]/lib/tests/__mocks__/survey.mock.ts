@@ -1,4 +1,4 @@
-import { Survey } from "@prisma/client";
+import { Survey } from "@formbricks/database/generated/client";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const survey: Pick<Survey, "id" | "questions"> = {

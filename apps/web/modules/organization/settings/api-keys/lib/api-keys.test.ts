@@ -1,6 +1,6 @@
-import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { ApiKey, ApiKeyPermission, Prisma } from "@formbricks/database/generated/client";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import {

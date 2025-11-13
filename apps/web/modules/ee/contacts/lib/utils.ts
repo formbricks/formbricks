@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@formbricks/database/generated/client";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { TContactWithAttributes, TTransformPersonInput } from "@/modules/ee/contacts/types/contact";
 

@@ -1,4 +1,4 @@
-import { ProjectTeamPermission, TeamUserRole } from "@prisma/client";
+import { ProjectTeamPermission, TeamUserRole } from "@formbricks/database/generated/client";
 
 export const TeamPermissionMapping = {
   [ProjectTeamPermission.read]: "Read",

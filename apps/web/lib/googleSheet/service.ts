@@ -1,6 +1,6 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { Prisma } from "@formbricks/database/generated/client";
 import { ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import {

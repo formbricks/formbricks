@@ -1,9 +1,9 @@
 "use client";
 
-import { Project } from "@prisma/client";
 import { Variants, motion } from "framer-motion";
 import { Fragment, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Project } from "@formbricks/database/generated/client";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";

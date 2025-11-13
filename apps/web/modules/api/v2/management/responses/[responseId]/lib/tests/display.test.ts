@@ -1,7 +1,7 @@
 import { displayId, mockDisplay } from "./__mocks__/display.mock";
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/generated/client";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { deleteDisplay } from "../display";
 

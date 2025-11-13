@@ -1,5 +1,5 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@formbricks/database/generated/client";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";

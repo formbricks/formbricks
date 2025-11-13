@@ -1,4 +1,4 @@
-import { OrganizationRole, Team, TeamUserRole } from "@prisma/client";
+import { OrganizationRole, Team, TeamUserRole } from "@formbricks/database/generated/client";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 
 /**

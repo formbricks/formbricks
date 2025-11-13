@@ -1,6 +1,6 @@
-import { type ActionClass } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { type ActionClass } from "@formbricks/database/generated/client";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { getActionClasses } from "./action-class";

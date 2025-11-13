@@ -1,6 +1,6 @@
-import type { Team } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
+import type { Team } from "@formbricks/database/generated/client";
 
 extendZodWithOpenApi(z);
 

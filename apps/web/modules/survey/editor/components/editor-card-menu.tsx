@@ -1,10 +1,10 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { Project } from "@prisma/client";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Project } from "@formbricks/database/generated/client";
 import {
   TSurvey,
   TSurveyEndScreenCard,

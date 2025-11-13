@@ -1,5 +1,5 @@
-import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { Organization } from "@formbricks/database/generated/client";
 import * as constants from "@/lib/constants";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import * as licenseModule from "./license";

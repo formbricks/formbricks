@@ -1,6 +1,6 @@
-import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
+import { PipelineTriggers, Webhook } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";

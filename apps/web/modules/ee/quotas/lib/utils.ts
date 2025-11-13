@@ -1,5 +1,5 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";

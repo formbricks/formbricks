@@ -1,5 +1,5 @@
-import { PipelineTriggers } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { PipelineTriggers } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { TPipelineInput } from "@/app/lib/types/pipelines";

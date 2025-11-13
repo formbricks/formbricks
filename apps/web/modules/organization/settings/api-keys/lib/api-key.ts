@@ -1,8 +1,8 @@
 import "server-only";
-import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { randomBytes } from "node:crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { ApiKey, ApiKeyPermission, Prisma } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";

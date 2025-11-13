@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
 import { describe, expect, test } from "vitest";
+import { Prisma } from "@formbricks/database/generated/client";
 import { TGetFilter } from "@/modules/api/v2/types/api-filter";
 import { buildCommonFilterQuery, pickCommonFilter } from "../utils";
 

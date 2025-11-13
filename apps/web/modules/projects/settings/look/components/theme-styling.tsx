@@ -1,13 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Project } from "@prisma/client";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Project } from "@formbricks/database/generated/client";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { previewSurvey } from "@/app/lib/templates";

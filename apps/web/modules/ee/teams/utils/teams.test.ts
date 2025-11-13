@@ -1,5 +1,5 @@
-import { ProjectTeamPermission, TeamUserRole } from "@prisma/client";
 import { describe, expect, test } from "vitest";
+import { ProjectTeamPermission, TeamUserRole } from "@formbricks/database/generated/client";
 import { TeamPermissionMapping, TeamRoleMapping, getTeamAccessFlags, getTeamPermissionFlags } from "./teams";
 
 describe("TeamPermissionMapping", () => {

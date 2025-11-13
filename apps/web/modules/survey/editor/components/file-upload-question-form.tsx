@@ -1,12 +1,12 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
 import { PlusIcon, XCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Project } from "@formbricks/database/generated/client";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";

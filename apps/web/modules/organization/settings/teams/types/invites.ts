@@ -1,5 +1,5 @@
-import { Invite } from "@prisma/client";
 import { z } from "zod";
+import { Invite } from "@formbricks/database/generated/client";
 import { ZInvite } from "@formbricks/database/zod/invites";
 import { ZUserName } from "@formbricks/types/user";
 

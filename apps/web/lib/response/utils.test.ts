@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
 import { describe, expect, test } from "vitest";
+import { Prisma } from "@formbricks/database/generated/client";
 import { TResponse } from "@formbricks/types/responses";
 import {
   TSurvey,

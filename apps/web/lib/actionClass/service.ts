@@ -1,9 +1,9 @@
 "use server";
 
 import "server-only";
-import { ActionClass, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { ActionClass, Prisma } from "@formbricks/database/generated/client";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";

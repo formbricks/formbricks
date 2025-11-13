@@ -1,5 +1,5 @@
-import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma, Webhook } from "@formbricks/database/generated/client";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TWebhookInput, ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";

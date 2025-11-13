@@ -2,11 +2,11 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Project } from "@formbricks/database/generated/client";
 import { cn } from "@/lib/cn";
 import {
   getCXQuestionTypes,

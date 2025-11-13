@@ -11,7 +11,7 @@ export default defineConfig({
       formats: ["cjs"],
     },
     rollupOptions: {
-      external: ["@prisma/client", "yaml", "zod", "zod-openapi"],
+      external: ["@formbricks/database/generated/client", "yaml", "zod", "zod-openapi"],
       output: {
         exports: "named",
       },

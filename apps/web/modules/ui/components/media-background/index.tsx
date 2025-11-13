@@ -1,10 +1,10 @@
 "use client";
 
-import { SurveyType } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SurveyType } from "@formbricks/database/generated/client";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 

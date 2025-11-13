@@ -1,13 +1,13 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Language } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Language } from "@formbricks/database/generated/client";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";

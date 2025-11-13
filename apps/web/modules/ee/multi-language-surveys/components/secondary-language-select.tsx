@@ -1,7 +1,7 @@
 "use client";
 
-import { Language } from "@prisma/client";
 import { useTranslation } from "react-i18next";
+import { Language } from "@formbricks/database/generated/client";
 import type { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageToggle } from "./language-toggle";

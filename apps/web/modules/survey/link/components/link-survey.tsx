@@ -1,8 +1,8 @@
 "use client";
 
-import { Project, Response } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { Project, Response } from "@formbricks/database/generated/client";
 import { TResponseData, TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";

@@ -1,6 +1,6 @@
-import type { Contact } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
+import type { Contact } from "@formbricks/database/generated/client";
 
 extendZodWithOpenApi(z);
 

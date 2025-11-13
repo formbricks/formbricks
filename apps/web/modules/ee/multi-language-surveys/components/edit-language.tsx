@@ -1,12 +1,12 @@
 "use client";
 
-import { Language } from "@prisma/client";
 import { TFunction } from "i18next";
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Language } from "@formbricks/database/generated/client";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import type { TProject } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";

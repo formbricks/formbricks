@@ -1,5 +1,5 @@
-import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma, Webhook } from "@formbricks/database/generated/client";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { captureTelemetry } from "@/lib/telemetry";
 import { getWebhooksQuery } from "@/modules/api/v2/management/webhooks/lib/utils";

@@ -20,6 +20,9 @@
     "./types/*": {
       "import": "./types/*.ts"
     },
+    "./generated/*": {
+      "import": "./src/generated/*.ts"
+    },
     "./zod/*": {
       "import": "./zod/*.ts"
     }
@@ -44,18 +47,21 @@
   "dependencies": {
     "@formbricks/logger": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",
-    "@prisma/client": "6.14.0",
+    "@prisma/adapter-pg": "6.20.0-integration-next.8",
+    "@prisma/client": "6.20.0-integration-next.8",
     "zod": "3.24.4",
     "zod-openapi": "4.2.4"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
+    "dotenv": "16.5.0",
     "dotenv-cli": "8.0.0",
     "glob": "11.0.2",
-    "prisma": "6.14.0",
+    "prisma": "6.20.0-integration-next.8",
     "prisma-json-types-generator": "3.5.4",
     "ts-node": "10.9.2",
+    "tsx": "4.20.6",
     "vite": "6.4.1",
     "vite-plugin-dts": "4.5.3"
   }

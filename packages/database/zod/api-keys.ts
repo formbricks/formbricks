@@ -1,5 +1,10 @@
-import { type ApiKey, type ApiKeyEnvironment, ApiKeyPermission, EnvironmentType } from "@prisma/client";
 import { z } from "zod";
+import {
+  type ApiKey,
+  type ApiKeyEnvironment,
+  ApiKeyPermission,
+  EnvironmentType,
+} from "@formbricks/database/generated/client";
 import { ZOrganizationAccess } from "../../types/api-key";
 
 export const ZApiKeyPermission = z.nativeEnum(ApiKeyPermission);

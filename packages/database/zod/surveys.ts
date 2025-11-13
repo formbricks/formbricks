@@ -1,6 +1,6 @@
-import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
+import { SurveyStatus, SurveyType } from "@formbricks/database/generated/client";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
 import {
   ZSurveyEnding,

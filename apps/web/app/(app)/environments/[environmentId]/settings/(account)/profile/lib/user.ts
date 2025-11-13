@@ -1,6 +1,6 @@
-import { User } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { User } from "@formbricks/database/generated/client";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 

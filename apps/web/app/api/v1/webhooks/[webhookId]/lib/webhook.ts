@@ -1,5 +1,5 @@
-import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma, Webhook } from "@formbricks/database/generated/client";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";

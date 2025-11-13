@@ -1,8 +1,8 @@
 "use client";
 
-import { PipelineTriggers } from "@prisma/client";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { PipelineTriggers } from "@formbricks/database/generated/client";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 
 interface TriggerCheckboxGroupProps {

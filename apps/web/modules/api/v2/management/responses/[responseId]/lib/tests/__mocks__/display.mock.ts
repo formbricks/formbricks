@@ -1,4 +1,4 @@
-import { Display } from "@prisma/client";
+import { Display } from "@formbricks/database/generated/client";
 
 export const mockDisplay: Display = {
   id: "jcvb2vzt7ok3ftjsds4gt1gm",

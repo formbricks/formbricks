@@ -1,10 +1,10 @@
 "use client";
 
-import { Project } from "@prisma/client";
 import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { Project } from "@formbricks/database/generated/client";
 import { TSurveySingleUse } from "@formbricks/types/surveys/types";
 import footerLogo from "../lib/footerlogo.svg";
 

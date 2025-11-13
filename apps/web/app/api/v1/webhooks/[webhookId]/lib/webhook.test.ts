@@ -1,7 +1,7 @@
-import { Prisma, Webhook } from "@prisma/client";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma, Webhook } from "@formbricks/database/generated/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { deleteWebhook, getWebhook } from "./webhook";
 

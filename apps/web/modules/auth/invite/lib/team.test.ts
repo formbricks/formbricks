@@ -1,6 +1,6 @@
-import { OrganizationRole, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { OrganizationRole, Prisma } from "@formbricks/database/generated/client";
 import { DatabaseError } from "@formbricks/types/errors";
 import { createTeamMembership } from "./team";
 

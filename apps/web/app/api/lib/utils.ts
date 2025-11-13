@@ -1,4 +1,4 @@
-import { Organization } from "@prisma/client";
+import { Organization } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";

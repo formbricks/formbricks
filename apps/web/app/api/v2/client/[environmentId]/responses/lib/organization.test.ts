@@ -1,6 +1,6 @@
-import { Organization } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Organization } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { getOrganizationBillingByEnvironmentId } from "./organization";
 

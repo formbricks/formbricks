@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/__mocks__/database";
-import { ActionClass, Prisma, Survey } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
+import { ActionClass, Prisma, Survey } from "@formbricks/database/generated/client";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TActionClass } from "@formbricks/types/action-classes";

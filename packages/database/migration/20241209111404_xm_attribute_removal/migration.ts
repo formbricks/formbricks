@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
-import { Prisma } from "@prisma/client";
 import { logger } from "@formbricks/logger";
+import { Prisma } from "../../src/generated/client";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export const xmAttributeRemoval: MigrationScript = {

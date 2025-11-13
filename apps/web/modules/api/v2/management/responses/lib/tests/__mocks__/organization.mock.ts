@@ -1,4 +1,4 @@
-import { Organization } from "@prisma/client";
+import { Organization } from "@formbricks/database/generated/client";
 
 export const organizationId = "zo6u7apbattt8dquvzbgjjwb";
 export const environmentId = "oh5cq6yu418itha55vsuj47e";

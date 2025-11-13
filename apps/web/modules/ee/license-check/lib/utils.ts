@@ -1,5 +1,5 @@
 import "server-only";
-import { Organization } from "@prisma/client";
+import { Organization } from "@formbricks/database/generated/client";
 import {
   AUDIT_LOG_ENABLED,
   IS_FORMBRICKS_CLOUD,

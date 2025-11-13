@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/generated/client";
 import { TAccount, TAccountInput, ZAccountInput } from "@formbricks/types/account";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";

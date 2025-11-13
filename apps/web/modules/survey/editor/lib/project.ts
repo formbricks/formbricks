@@ -1,6 +1,6 @@
-import { Language, Prisma, Project } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Language, Prisma, Project } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 

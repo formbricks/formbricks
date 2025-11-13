@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
 import { isAfter, isBefore, isSameDay } from "date-fns";
+import { Prisma } from "@formbricks/database/generated/client";
 import { TDisplay } from "@formbricks/types/displays";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse, TResponseFilterCriteria, TResponseUpdateInput } from "@formbricks/types/responses";

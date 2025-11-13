@@ -1,7 +1,7 @@
 "use client";
 
-import { Language } from "@prisma/client";
 import { useTranslation } from "react-i18next";
+import { Language } from "@formbricks/database/generated/client";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import type { TUserLocale } from "@formbricks/types/user";
 import { Label } from "@/modules/ui/components/label";

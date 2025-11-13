@@ -1,6 +1,6 @@
 import "server-only";
-import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma, Response } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { getSurvey } from "@/lib/survey/service";

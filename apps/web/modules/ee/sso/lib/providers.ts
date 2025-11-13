@@ -1,7 +1,7 @@
-import type { IdentityProvider } from "@prisma/client";
 import AzureAD from "next-auth/providers/azure-ad";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import type { IdentityProvider } from "@formbricks/database/generated/client";
 import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,

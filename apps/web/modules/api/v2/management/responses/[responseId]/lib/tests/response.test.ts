@@ -1,7 +1,7 @@
 import { response, responseId, responseInput, survey } from "./__mocks__/response.mock";
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/generated/client";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok, okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyQuota } from "@formbricks/types/quota";

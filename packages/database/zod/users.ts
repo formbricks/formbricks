@@ -1,6 +1,6 @@
-import { OrganizationRole, User } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
+import { OrganizationRole, User } from "@formbricks/database/generated/client";
 import { ZUserEmail, ZUserName } from "../../types/user";
 
 extendZodWithOpenApi(z);

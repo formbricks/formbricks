@@ -1,6 +1,6 @@
-import type { IdentityProvider, Organization } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
+import type { IdentityProvider, Organization } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 import { createAccount } from "@/lib/account/service";

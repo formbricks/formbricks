@@ -1,6 +1,6 @@
-import { Contact, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Contact, Prisma } from "@formbricks/database/generated/client";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import {
   buildContactWhereClause,

@@ -1,11 +1,11 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { ActionClass, OrganizationRole } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ActionClass, OrganizationRole } from "@formbricks/database/generated/client";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";

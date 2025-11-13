@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@formbricks/database/generated/browser";
 import {
   TResponse,
   TResponseDataValue,

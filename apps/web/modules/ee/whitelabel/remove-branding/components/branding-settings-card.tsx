@@ -1,4 +1,4 @@
-import { Project } from "@prisma/client";
+import { Project } from "@formbricks/database/generated/client";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";

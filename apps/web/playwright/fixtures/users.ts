@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Page } from "playwright";
 import { TestInfo } from "playwright/test";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/generated/client";
 
 export const login = async (user: Prisma.UserGetPayload<{ include: { memberships: true } }>, page: Page) => {
   const csrfToken = await page

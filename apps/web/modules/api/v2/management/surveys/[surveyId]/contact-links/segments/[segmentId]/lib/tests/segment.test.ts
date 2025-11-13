@@ -1,6 +1,6 @@
-import { Segment } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Segment } from "@formbricks/database/generated/client";
 import { getSegment } from "../segment";
 
 // Mock dependencies

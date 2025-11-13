@@ -1,5 +1,5 @@
-import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { ActionClass, Prisma } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";

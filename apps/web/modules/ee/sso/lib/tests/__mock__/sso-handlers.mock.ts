@@ -1,5 +1,5 @@
-import { Organization } from "@prisma/client";
 import type { Account } from "next-auth";
+import { Organization } from "@formbricks/database/generated/client";
 import type { TUser } from "@formbricks/types/user";
 
 // Mock user data

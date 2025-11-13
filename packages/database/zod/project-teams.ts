@@ -1,6 +1,6 @@
-import { type ProjectTeam, ProjectTeamPermission } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
+import { type ProjectTeam, ProjectTeamPermission } from "@formbricks/database/generated/client";
 
 extendZodWithOpenApi(z);
 

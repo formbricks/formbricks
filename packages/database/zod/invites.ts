@@ -1,5 +1,5 @@
-import { type Invite } from "@prisma/client";
 import { z } from "zod";
+import { type Invite } from "@formbricks/database/generated/client";
 
 export const ZInvite = z.object({
   id: z.string(),

@@ -1,6 +1,6 @@
-import { Prisma, Webhook } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Prisma, Webhook } from "@formbricks/database/generated/client";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ZWebhookUpdateSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";

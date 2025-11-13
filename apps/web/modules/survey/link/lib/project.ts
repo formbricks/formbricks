@@ -1,7 +1,7 @@
 import "server-only";
-import { Prisma, Project } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma, Project } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";

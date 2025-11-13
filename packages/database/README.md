@@ -133,7 +133,7 @@ Run these commands from the `packages/database` directory:
 
 ```typescript
 import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 

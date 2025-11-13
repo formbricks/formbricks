@@ -1,6 +1,6 @@
-import { Organization } from "@prisma/client";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { Organization } from "@formbricks/database/generated/client";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";

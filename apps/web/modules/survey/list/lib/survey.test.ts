@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";

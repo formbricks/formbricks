@@ -1,12 +1,13 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
+import { PrismaClient } from "./generated/client";
+
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+});
 
 const prismaClientSingleton = (): PrismaClient => {
-  return new PrismaClient({
-    datasources: { db: { url: process.env.DATABASE_URL } },
-    ...(process.env.DEBUG === "1" && {
-      log: ["query", "info"],
-    }),
-  });
+  return new PrismaClient({ adapter });
 };
 
 type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;

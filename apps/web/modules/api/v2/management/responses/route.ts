@@ -1,5 +1,5 @@
-import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
+import { Response } from "@formbricks/database/generated/client";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";

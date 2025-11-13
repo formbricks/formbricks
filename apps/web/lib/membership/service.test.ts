@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/generated/client";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { createMembership, getMembershipByUserIdOrganizationId } from "./service";

@@ -1,4 +1,4 @@
-import { PipelineTriggers } from "@prisma/client";
+import { PipelineTriggers } from "@formbricks/database/generated/client";
 import { TResponse } from "@formbricks/types/responses";
 
 export interface TPipelineInput {

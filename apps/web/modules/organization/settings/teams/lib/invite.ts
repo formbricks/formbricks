@@ -1,7 +1,7 @@
-import { Invite, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Invite, Prisma } from "@formbricks/database/generated/client";
 import {
   DatabaseError,
   InvalidInputError,

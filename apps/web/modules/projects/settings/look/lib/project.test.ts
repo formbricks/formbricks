@@ -1,6 +1,6 @@
-import { Prisma, Project } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma, Project } from "@formbricks/database/generated/client";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getProjectByEnvironmentId } from "./project";
 

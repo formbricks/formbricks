@@ -1,8 +1,8 @@
 import "server-only";
-import { Organization, Team } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Organization, Team } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { DEFAULT_TEAM_ID } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";

@@ -1,4 +1,4 @@
-import { Organization, Response } from "@prisma/client";
+import { Organization, Response } from "@formbricks/database/generated/client";
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
 
 export const responseInput: Omit<Response, "id"> = {

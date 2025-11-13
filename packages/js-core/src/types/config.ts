@@ -1,5 +1,12 @@
 /* eslint-disable import/no-extraneous-dependencies -- required for Prisma types */
-import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
+import {
+  ActionClass,
+  Language,
+  Project,
+  Segment,
+  Survey,
+  SurveyLanguage,
+} from "../../../database/src/generated/client";
 
 export type TEnvironmentStateSurvey = Pick<
   Survey,

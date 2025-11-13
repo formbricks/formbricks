@@ -1,6 +1,6 @@
-import { WebhookSource } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { WebhookSource } from "@formbricks/database/generated/client";
 import { captureTelemetry } from "@/lib/telemetry";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { createWebhook, getWebhooks } from "../webhook";

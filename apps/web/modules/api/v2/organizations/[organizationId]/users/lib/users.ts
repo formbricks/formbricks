@@ -1,5 +1,5 @@
-import { OrganizationRole, Prisma, TeamUserRole } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { OrganizationRole, Prisma, TeamUserRole } from "@formbricks/database/generated/client";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { captureTelemetry } from "@/lib/telemetry";

@@ -1,6 +1,5 @@
 "use client";
 
-import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
 import { TrashIcon } from "lucide-react";
 import Link from "next/link";
@@ -9,6 +8,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { PipelineTriggers, Webhook } from "@formbricks/database/generated/client";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";

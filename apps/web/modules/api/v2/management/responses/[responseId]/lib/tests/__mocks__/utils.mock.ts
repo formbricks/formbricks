@@ -1,4 +1,4 @@
-import { Response, Survey } from "@prisma/client";
+import { Response, Survey } from "@formbricks/database/generated/client";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const environmentId = "u8qa6u0tlxb6160pi2jb8s4p";

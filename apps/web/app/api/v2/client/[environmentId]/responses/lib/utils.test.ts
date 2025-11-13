@@ -1,5 +1,5 @@
-import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { Organization } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
