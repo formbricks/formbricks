@@ -2,6 +2,7 @@ import { type Response } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import {
   IMPRINT_URL,
   IS_FORMBRICKS_CLOUD,
@@ -10,15 +11,12 @@ import {
   RECAPTCHA_SITE_KEY,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { findMatchingLocale } from "@/lib/utils/locale";
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
-import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
 import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
-import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
+import { TEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 
 interface SurveyRendererProps {
@@ -34,8 +32,25 @@ interface SurveyRendererProps {
   singleUseResponse?: Pick<Response, "id" | "finished">;
   contactId?: string;
   isPreview: boolean;
+  // New props - pre-fetched in parent
+  environmentContext: TEnvironmentContextForLinkSurvey;
+  locale: TUserLocale;
+  isMultiLanguageAllowed: boolean;
+  responseCount?: number;
 }
 
+/**
+ * Renders link survey with pre-fetched data from parent.
+ *
+ * This function receives all necessary data as props to avoid additional
+ * database queries. The parent (page.tsx) fetches data in parallel stages
+ * to minimize latency for users geographically distant from servers.
+ *
+ * @param environmentContext - Pre-fetched project and organization data
+ * @param locale - User's locale from Accept-Language header
+ * @param isMultiLanguageAllowed - Calculated from organization billing plan
+ * @param responseCount - Conditionally fetched if showResponseCount is enabled
+ */
 export const renderSurvey = async ({
   survey,
   searchParams,
@@ -43,6 +58,10 @@ export const renderSurvey = async ({
   singleUseResponse,
   contactId,
   isPreview,
+  environmentContext,
+  locale,
+  isMultiLanguageAllowed,
+  responseCount,
 }: SurveyRendererProps) => {
   const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
@@ -51,13 +70,8 @@ export const renderSurvey = async ({
     notFound();
   }
 
-  const { project, organizationBilling } = await getEnvironmentContextForLinkSurvey(survey.environmentId);
-
-  const [locale, isMultiLanguageAllowed, responseCount] = await Promise.all([
-    findMatchingLocale(),
-    getMultiLanguagePermission(organizationBilling.plan),
-    survey.welcomeCard.showResponseCount ? getResponseCountBySurveyId(survey.id) : Promise.resolve(undefined),
-  ]);
+  // Extract project from pre-fetched context
+  const { project } = environmentContext;
 
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
 

@@ -57,11 +57,15 @@ export const SurveyClientWrapper = ({
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const startAt = searchParams.get("startAt");
 
+  // Extract survey properties outside useMemo to create stable references
+  const welcomeCardEnabled = survey.welcomeCard.enabled;
+  const surveyQuestions = survey.questions;
+
   // Validate startAt parameter against survey questions
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
-    if (survey.welcomeCard.enabled && startAt === "start") return true;
-    const isValid = survey.questions.some((q) => q.id === startAt);
+    if (welcomeCardEnabled && startAt === "start") return true;
+    const isValid = surveyQuestions.some((q) => q.id === startAt);
 
     // Clean up invalid startAt from URL to prevent confusion
     if (!isValid && typeof window !== "undefined") {
@@ -71,7 +75,7 @@ export const SurveyClientWrapper = ({
     }
 
     return isValid;
-  }, [survey, startAt]);
+  }, [welcomeCardEnabled, surveyQuestions, startAt]);
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
   const [autoFocus, setAutoFocus] = useState(false);
@@ -91,7 +95,7 @@ export const SurveyClientWrapper = ({
       if (answer) fieldsRecord[field] = answer;
     });
     return fieldsRecord;
-  }, [searchParams, survey.hiddenFields.fieldIds]);
+  }, [searchParams, JSON.stringify(survey.hiddenFields.fieldIds || [])]);
 
   // Include verified email in hidden fields if available
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {

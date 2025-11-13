@@ -216,7 +216,7 @@ export const getExistingContactResponse = reactCache((surveyId: string, contactI
       },
     });
 
-    return response;
+    return response ?? undefined;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

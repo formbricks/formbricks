@@ -18,7 +18,7 @@ import { validateInputs } from "@/lib/utils/validate";
 
 type TProjectForLinkSurvey = Pick<Project, "id" | "name" | "styling" | "logo" | "linkSurveyBranding">;
 
-interface TEnvironmentContextForLinkSurvey {
+export interface TEnvironmentContextForLinkSurvey {
   project: TProjectForLinkSurvey;
   organizationId: string;
   organizationBilling: TOrganizationBilling;

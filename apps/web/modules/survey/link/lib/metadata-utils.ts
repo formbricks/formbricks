@@ -68,7 +68,7 @@ export const getBasicSurveyMetadata = async (
   let description = descriptionFromMetadata || "Please complete this survey.";
 
   // Get OG image from link metadata if available
-  const { ogImage } = metadata;
+  const ogImage = metadata?.ogImage;
 
   if (!titleFromMetadata) {
     if (IS_FORMBRICKS_CLOUD) {
