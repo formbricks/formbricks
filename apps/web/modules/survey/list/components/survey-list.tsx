@@ -10,6 +10,7 @@ import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getSurveysAction } from "@/modules/survey/list/actions";
+import { initialFilters } from "@/modules/survey/list/lib/constants";
 import { getFormattedFilters } from "@/modules/survey/list/lib/utils";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { Button } from "@/modules/ui/components/button";
@@ -27,14 +28,6 @@ interface SurveysListProps {
   locale: TUserLocale;
   initialSurveys: TSurvey[];
 }
-
-export const initialFilters: TSurveyFilters = {
-  name: "",
-  createdBy: [],
-  status: [],
-  type: [],
-  sortBy: "relevance",
-};
 
 export const SurveysList = ({
   environmentId,

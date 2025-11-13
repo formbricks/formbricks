@@ -8,7 +8,7 @@ import { useDebounce } from "react-use";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { SortOption } from "@/modules/survey/list/components/sort-option";
-import { initialFilters } from "@/modules/survey/list/components/survey-list";
+import { initialFilters } from "@/modules/survey/list/lib/constants";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
