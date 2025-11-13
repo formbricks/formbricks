@@ -58,7 +58,8 @@
 
 /* Chrome, Edge, and Safari */
 *::-webkit-scrollbar {
-  width: 10px;
+  width: 7px;
+  height: 7px;
 }
 
 *::-webkit-scrollbar-track {
@@ -67,11 +68,11 @@
 
 *::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
-  border: 3px solid #cbd5e1;
+  border: 1px solid #cbd5e1;
 }
 
 .filter-scrollbar::-webkit-scrollbar {
-  height: 10px;
+  height: 7px;
 }
 
 .filter-scrollbar::-webkit-scrollbar-thumb {
