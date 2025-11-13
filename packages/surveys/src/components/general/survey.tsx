@@ -59,6 +59,7 @@ export function Survey({
   getSetIsError,
   getSetIsResponseSendingFinished,
   getSetQuestionId,
+  getSetBlockId,
   getSetResponseData,
   responseCount,
   startAtQuestionId,
@@ -315,13 +316,21 @@ export function Survey({
     if (getSetQuestionId) {
       getSetQuestionId((value: string) => {
         // Convert question ID to block ID
-        const block = findBlockByElementId(localSurvey, value);
+        const block = findBlockByElementId(survey, value);
         if (block) {
           setBlockId(block.id);
         }
       });
     }
-  }, [getSetQuestionId, localSurvey]);
+  }, [getSetQuestionId, survey]);
+
+  useEffect(() => {
+    if (getSetBlockId) {
+      getSetBlockId((value: string) => {
+        setBlockId(value);
+      });
+    }
+  }, [getSetBlockId]);
 
   useEffect(() => {
     if (getSetResponseData) {
