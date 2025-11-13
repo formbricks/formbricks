@@ -1689,7 +1689,7 @@
         "last_name": "姓氏",
         "not_completed": "未完成 ⏳",
         "os": "作業系統",
-        "person_attributes": "人員屬性",
+        "person_attributes": "提交時的個人屬性",
         "phone": "電話",
         "respondent_skipped_questions": "回應者跳過這些問題。",
         "response_deleted_successfully": "回應已成功刪除。",

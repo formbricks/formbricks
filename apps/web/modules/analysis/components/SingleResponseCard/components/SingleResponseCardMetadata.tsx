@@ -72,7 +72,7 @@ export const SingleResponseCardMetadata = ({ response, locale }: SingleResponseC
         </div>
       )}
       <p className="py-1 font-semibold text-slate-700">
-        {t("environments.surveys.responses.person_attributes")} at time of submission
+        {t("environments.surveys.responses.person_attributes")}
       </p>
       {Object.keys(response.contactAttributes || {}).map((key) => (
         <p

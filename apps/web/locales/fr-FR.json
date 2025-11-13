@@ -1689,7 +1689,7 @@
         "last_name": "Nom de famille",
         "not_completed": "Non terminé ⏳",
         "os": "Système d'exploitation",
-        "person_attributes": "Attributs de la personne",
+        "person_attributes": "Attributs de la personne au moment de la soumission",
         "phone": "Téléphone",
         "respondent_skipped_questions": "Le répondant a sauté ces questions.",
         "response_deleted_successfully": "Réponse supprimée avec succès.",

@@ -1689,7 +1689,7 @@
         "last_name": "Nachname",
         "not_completed": "Nicht abgeschlossen ⏳",
         "os": "Betriebssystem",
-        "person_attributes": "Personenattribute",
+        "person_attributes": "Personenattribute zum Zeitpunkt der Einreichung",
         "phone": "Telefon",
         "respondent_skipped_questions": "Der Befragte hat diese Fragen übersprungen.",
         "response_deleted_successfully": "Antwort erfolgreich gelöscht.",

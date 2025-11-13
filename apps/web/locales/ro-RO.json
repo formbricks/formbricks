@@ -1689,7 +1689,7 @@
         "last_name": "Nume de familie",
         "not_completed": "Necompletat ⏳",
         "os": "SO",
-        "person_attributes": "Atribute persoană",
+        "person_attributes": "Atributele persoanei la momentul trimiterii",
         "phone": "Telefon",
         "respondent_skipped_questions": "Respondenții au sărit peste aceste întrebări.",
         "response_deleted_successfully": "Răspuns șters cu succes.",

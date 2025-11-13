@@ -1689,7 +1689,7 @@
         "last_name": "Apelido",
         "not_completed": "Não Concluído ⏳",
         "os": "SO",
-        "person_attributes": "Atributos da pessoa",
+        "person_attributes": "Atributos da pessoa no momento da submissão",
         "phone": "Telefone",
         "respondent_skipped_questions": "O respondente saltou estas perguntas.",
         "response_deleted_successfully": "Resposta eliminada com sucesso.",

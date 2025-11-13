@@ -1689,7 +1689,7 @@
         "last_name": "姓",
         "not_completed": "未完了 ⏳",
         "os": "OS",
-        "person_attributes": "人物属性",
+        "person_attributes": "回答時の個人属性",
         "phone": "電話",
         "respondent_skipped_questions": "回答者はこれらの質問をスキップしました。",
         "response_deleted_successfully": "回答を正常に削除しました。",

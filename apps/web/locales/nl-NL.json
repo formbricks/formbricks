@@ -1689,7 +1689,7 @@
         "last_name": "Achternaam",
         "not_completed": "Niet voltooid ⏳",
         "os": "Besturingssysteem",
-        "person_attributes": "Persoonsattributen",
+        "person_attributes": "Persoonskenmerken op het moment van indiening",
         "phone": "Telefoon",
         "respondent_skipped_questions": "Respondent heeft deze vragen overgeslagen.",
         "response_deleted_successfully": "Reactie is succesvol verwijderd.",

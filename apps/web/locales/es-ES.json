@@ -1689,7 +1689,7 @@
         "last_name": "Apellido",
         "not_completed": "No completado ⏳",
         "os": "Sistema operativo",
-        "person_attributes": "Atributos de persona",
+        "person_attributes": "Atributos de la persona en el momento del envío",
         "phone": "Teléfono",
         "respondent_skipped_questions": "El encuestado omitió estas preguntas.",
         "response_deleted_successfully": "Respuesta eliminada correctamente.",

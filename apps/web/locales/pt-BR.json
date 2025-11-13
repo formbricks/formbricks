@@ -1689,7 +1689,7 @@
         "last_name": "Sobrenome",
         "not_completed": "Não Concluído ⏳",
         "os": "sistema operacional",
-        "person_attributes": "Atributos da pessoa",
+        "person_attributes": "Atributos da pessoa no momento do envio",
         "phone": "Celular",
         "respondent_skipped_questions": "Respondente pulou essas perguntas.",
         "response_deleted_successfully": "Resposta deletada com sucesso.",

@@ -1689,7 +1689,7 @@
         "last_name": "Last Name",
         "not_completed": "Not Completed ⏳",
         "os": "OS",
-        "person_attributes": "Person attributes",
+        "person_attributes": "Person attributes at time of submission",
         "phone": "Phone",
         "respondent_skipped_questions": "Respondent skipped these questions.",
         "response_deleted_successfully": "Response deleted successfully.",
