@@ -1,10 +1,7 @@
 import { useCallback, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCalElement } from "@formbricks/types/surveys/elements";
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { CalEmbed } from "@/components/general/cal-embed";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
@@ -18,38 +15,25 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface CalQuestionProps {
   question: TSurveyCalElement;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
   value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  autoFocusEnabled: boolean;
   currentQuestionId: string;
-  isBackButtonHidden: boolean;
   fullSizeCards: boolean;
 }
 
 export function CalQuestion({
   question,
-  buttonLabel,
-  backButtonLabel,
   value,
   onChange,
   onSubmit,
-  onBack,
-  isFirstQuestion,
-  isLastQuestion,
   languageCode,
   ttc,
   setTtc,
   currentQuestionId,
-  isBackButtonHidden,
   fullSizeCards,
 }: Readonly<CalQuestionProps>) {
   const { t } = useTranslation();
@@ -58,7 +42,6 @@ export function CalQuestion({
   const [errorMessage, setErrorMessage] = useState("");
   const scrollableRef = useRef<ScrollableContainerHandle>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
-  const isCurrent = question.id === currentQuestionId;
   const onSuccessfulBooking = useCallback(() => {
     onChange({ [question.id]: "booked" });
     const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -105,24 +88,6 @@ export function CalQuestion({
           />
           <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
           {errorMessage ? <span className="fb-text-red-500">{errorMessage}</span> : null}
-        </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-          <SubmitButton
-            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
-            isLastQuestion={isLastQuestion}
-            tabIndex={isCurrent ? 0 : -1}
-          />
-
-          <div />
-          {!isFirstQuestion && !isBackButtonHidden && (
-            <BackButton
-              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
-              onClick={() => {
-                onBack();
-              }}
-              tabIndex={isCurrent ? 0 : -1}
-            />
-          )}
         </div>
       </form>
     </ScrollableContainer>

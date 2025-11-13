@@ -537,7 +537,7 @@ export const QuestionsView = ({
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
     const updatedQuestion = addMultiLanguageLabels(question, languageSymbols);
 
-    const blockName = getBlockName(index ?? questions.length);
+    const blockName = getBlockName(index ?? localSurvey.blocks.length);
     const newBlock = {
       name: blockName,
       elements: [{ ...updatedQuestion, isDraft: true }],

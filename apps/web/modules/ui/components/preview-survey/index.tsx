@@ -191,7 +191,7 @@ export const PreviewSurvey = ({
       setPreviewMode(storePreviewMode);
     }, 10);
 
-    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    setQuestionId(survey.welcomeCard.enabled ? "start" : questions[0]?.id);
   };
 
   useEffect(() => {

@@ -1,9 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
-import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyContactInfoElement } from "@formbricks/types/surveys/elements";
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { Input } from "@/components/general/input";
 import { Label } from "@/components/general/label";
@@ -15,41 +12,29 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface ContactInfoQuestionProps {
   question: TSurveyContactInfoElement;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
   value?: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
   autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: string;
   autoFocusEnabled: boolean;
-  isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
 }
 
 export function ContactInfoQuestion({
   question,
-  buttonLabel,
-  backButtonLabel,
   value,
   onChange,
   onSubmit,
-  onBack,
-  isFirstQuestion,
-  isLastQuestion,
   languageCode,
   ttc,
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
-  isBackButtonHidden,
   dir = "auto",
   fullSizeCards,
 }: Readonly<ContactInfoQuestionProps>) {
@@ -184,24 +169,6 @@ export function ContactInfoQuestion({
               )
             );
           })}
-        </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-          <SubmitButton
-            tabIndex={isCurrent ? 0 : -1}
-            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
-            isLastQuestion={isLastQuestion}
-          />
-          {!isFirstQuestion && !isBackButtonHidden && (
-            <BackButton
-              tabIndex={isCurrent ? 0 : -1}
-              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
-              onClick={() => {
-                const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedttc);
-                onBack();
-              }}
-            />
-          )}
         </div>
       </form>
     </ScrollableContainer>

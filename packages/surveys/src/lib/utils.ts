@@ -242,3 +242,39 @@ export const getFirstElementIdInBlock = (
   const block = survey.blocks.find((b) => b.id === blockId);
   return block?.elements[0]?.id;
 };
+
+/**
+ * Gets a block by its ID.
+ * @param survey The survey object
+ * @param blockId The block ID to find
+ * @returns The block or undefined if not found
+ */
+export const getBlockById = (survey: TJsEnvironmentStateSurvey, blockId: string) => {
+  return survey.blocks.find((b) => b.id === blockId);
+};
+
+/**
+ * Gets the next block ID after the current block.
+ * @param survey The survey object
+ * @param currentBlockId The current block ID
+ * @returns The next block ID or undefined if current block is last
+ */
+export const getNextBlockId = (
+  survey: TJsEnvironmentStateSurvey,
+  currentBlockId: string
+): string | undefined => {
+  const currentIndex = survey.blocks.findIndex((b) => b.id === currentBlockId);
+  if (currentIndex === -1) return undefined;
+  return survey.blocks[currentIndex + 1]?.id;
+};
+
+/**
+ * Gets all element IDs in a block.
+ * @param survey The survey object
+ * @param blockId The block ID
+ * @returns Array of element IDs in the block
+ */
+export const getElementIdsInBlock = (survey: TJsEnvironmentStateSurvey, blockId: string): string[] => {
+  const block = getBlockById(survey, blockId);
+  return block?.elements.map((e) => e.id) ?? [];
+};

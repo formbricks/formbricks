@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker, { DatePickerProps } from "react-date-picker";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
@@ -18,21 +15,15 @@ import "../../styles/date-picker.css";
 
 interface DateQuestionProps {
   question: TSurveyDateElement;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
   value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
   autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
-  isBackButtonHidden: boolean;
   fullSizeCards: boolean;
 }
 
@@ -87,19 +78,13 @@ function CalendarCheckIcon() {
 
 export function DateQuestion({
   question,
-  buttonLabel,
-  backButtonLabel,
   value,
   onSubmit,
-  onBack,
-  isFirstQuestion,
-  isLastQuestion,
   onChange,
   languageCode,
   setTtc,
   ttc,
   currentQuestionId,
-  isBackButtonHidden,
   fullSizeCards,
 }: Readonly<DateQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
@@ -275,24 +260,6 @@ export function DateQuestion({
               showLeadingZeros={false}
             />
           </div>
-        </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-          <SubmitButton
-            tabIndex={isCurrent ? 0 : -1}
-            isLastQuestion={isLastQuestion}
-            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
-          />
-          {!isFirstQuestion && !isBackButtonHidden && (
-            <BackButton
-              tabIndex={isCurrent ? 0 : -1}
-              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
-              onClick={() => {
-                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedTtcObj);
-                onBack();
-              }}
-            />
-          )}
         </div>
       </form>
     </ScrollableContainer>

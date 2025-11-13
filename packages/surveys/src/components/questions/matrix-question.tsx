@@ -1,10 +1,7 @@
 import { type JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
-import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMatrixElement, TSurveyMatrixElementChoice } from "@formbricks/types/surveys/elements";
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
@@ -15,37 +12,25 @@ import { getShuffledRowIndices } from "@/lib/utils";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixElement;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
   value: Record<string, string>;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: string;
-  isBackButtonHidden: boolean;
   fullSizeCards: boolean;
 }
 
 export function MatrixQuestion({
   question,
-  buttonLabel,
-  backButtonLabel,
   value,
   onChange,
   onSubmit,
-  onBack,
-  isFirstQuestion,
-  isLastQuestion,
   languageCode,
   ttc,
   setTtc,
   currentQuestionId,
-  isBackButtonHidden,
   fullSizeCards,
 }: Readonly<MatrixQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
@@ -104,12 +89,6 @@ export function MatrixQuestion({
     },
     [ttc, question.id, startTime, value, onSubmit, setTtc]
   );
-
-  const handleBackButtonClick = useCallback(() => {
-    const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-    setTtc(updatedTtc);
-    onBack();
-  }, [ttc, question.id, startTime, onBack, setTtc]);
 
   const columnsHeaders = useMemo(
     () =>
@@ -201,20 +180,6 @@ export function MatrixQuestion({
               ))}
             </tbody>
           </table>
-        </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-          <SubmitButton
-            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
-            isLastQuestion={isLastQuestion}
-            tabIndex={isCurrent ? 0 : -1}
-          />
-          {!isFirstQuestion && !isBackButtonHidden && (
-            <BackButton
-              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
-              onClick={handleBackButtonClick}
-              tabIndex={isCurrent ? 0 : -1}
-            />
-          )}
         </div>
       </form>
     </ScrollableContainer>

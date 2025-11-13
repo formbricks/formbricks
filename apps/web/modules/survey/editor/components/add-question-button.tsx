@@ -50,7 +50,6 @@ export const AddQuestionButton = ({ addQuestion, project, isCxMode }: AddQuestio
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="justify-left flex flex-col" ref={parent}>
-        {/* <hr className="py-1 text-slate-600" /> */}
         {availableQuestionTypes.map((questionType) => (
           <button
             type="button"

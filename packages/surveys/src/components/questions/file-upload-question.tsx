@@ -1,65 +1,49 @@
 import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { BackButton } from "../buttons/back-button";
 import { FileInput } from "../general/file-input";
 import { Subheader } from "../general/subheader";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadElement;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
   value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
   surveyId: string;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
-  isBackButtonHidden: boolean;
   fullSizeCards: boolean;
 }
 
 export function FileUploadQuestion({
   question,
-  buttonLabel,
-  backButtonLabel,
   value,
   onChange,
   onSubmit,
-  onBack,
-  isFirstQuestion,
-  isLastQuestion,
   surveyId,
   onFileUpload,
   languageCode,
   ttc,
   setTtc,
   currentQuestionId,
-  isBackButtonHidden,
   fullSizeCards,
 }: Readonly<FileUploadQuestionProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
-  const isCurrent = question.id === currentQuestionId;
 
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards}>
@@ -110,22 +94,6 @@ export function FileUploadQuestion({
             : {})}
           {...(question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
         />
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-          <SubmitButton
-            tabIndex={isCurrent ? 0 : -1}
-            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
-            isLastQuestion={isLastQuestion}
-          />
-          {!isFirstQuestion && !isBackButtonHidden && (
-            <BackButton
-              tabIndex={isCurrent ? 0 : -1}
-              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
-              onClick={() => {
-                onBack();
-              }}
-            />
-          )}
-        </div>
       </form>
     </ScrollableContainer>
   );

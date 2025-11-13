@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
@@ -14,40 +11,28 @@ import { cn, getShuffledChoicesIds } from "@/lib/utils";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceElement;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
   value?: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
-  isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
 }
 
 export function MultipleChoiceSingleQuestion({
   question,
-  buttonLabel,
-  backButtonLabel,
   value,
   onChange,
   onSubmit,
-  onBack,
-  isFirstQuestion,
-  isLastQuestion,
   languageCode,
   ttc,
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
-  isBackButtonHidden,
   dir = "auto",
   fullSizeCards,
 }: Readonly<MultipleChoiceSingleProps>) {
@@ -91,7 +76,7 @@ export function MultipleChoiceSingleQuestion({
   );
 
   useEffect(() => {
-    if (isFirstQuestion && !value) {
+    if (!value) {
       const prefillAnswer = new URLSearchParams(window.location.search).get(question.id);
       if (prefillAnswer) {
         if (otherOption && prefillAnswer === getLocalizedValue(otherOption.label, languageCode)) {
@@ -104,7 +89,7 @@ export function MultipleChoiceSingleQuestion({
     const isOtherSelected =
       value !== undefined && !questionChoices.some((choice) => choice?.label[languageCode] === value);
     setOtherSelected(isOtherSelected);
-  }, [isFirstQuestion, languageCode, otherOption, question.id, questionChoices, value]);
+  }, [languageCode, otherOption, question.id, questionChoices, value]);
 
   useEffect(() => {
     // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
@@ -316,24 +301,6 @@ export function MultipleChoiceSingleQuestion({
               ) : null}
             </div>
           </fieldset>
-        </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-          <SubmitButton
-            tabIndex={isCurrent ? 0 : -1}
-            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
-            isLastQuestion={isLastQuestion}
-          />
-          {!isFirstQuestion && !isBackButtonHidden && (
-            <BackButton
-              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
-              tabIndex={isCurrent ? 0 : -1}
-              onClick={() => {
-                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedTtcObj);
-                onBack();
-              }}
-            />
-          )}
         </div>
       </form>
     </ScrollableContainer>
