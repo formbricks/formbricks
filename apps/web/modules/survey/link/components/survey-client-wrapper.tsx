@@ -68,10 +68,10 @@ export const SurveyClientWrapper = ({
     const isValid = surveyQuestions.some((q) => q.id === startAt);
 
     // Clean up invalid startAt from URL to prevent confusion
-    if (!isValid && typeof window !== "undefined") {
-      const url = new URL(window.location.href);
+    if (!isValid && typeof globalThis.window !== "undefined") {
+      const url = new URL(globalThis.location.href);
       url.searchParams.delete("startAt");
-      window.history.replaceState({}, "", url.toString());
+      globalThis.history.replaceState({}, "", url.toString());
     }
 
     return isValid;
@@ -82,7 +82,7 @@ export const SurveyClientWrapper = ({
 
   // Enable autofocus only when not in iframe
   useEffect(() => {
-    if (window.self === window.top) {
+    if (globalThis.self === globalThis.top) {
       setAutoFocus(true);
     }
   }, []);
@@ -90,10 +90,10 @@ export const SurveyClientWrapper = ({
   // Extract hidden fields from URL parameters
   const hiddenFieldsRecord = useMemo(() => {
     const fieldsRecord: Record<string, string> = {};
-    survey.hiddenFields.fieldIds?.forEach((field) => {
+    for (const field of survey.hiddenFields.fieldIds || []) {
       const answer = searchParams.get(field);
       if (answer) fieldsRecord[field] = answer;
-    });
+    }
     return fieldsRecord;
   }, [searchParams, JSON.stringify(survey.hiddenFields.fieldIds || [])]);
 
