@@ -74,7 +74,7 @@ spec:
       {{- end }}
       {{- if .Values.deployment.securityContext }}
       securityContext:
-        {{ toYaml .Values.deployment.securityContext | indent 8 }}
+        {{ toYaml .Values.deployment.securityContext | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds | default 30 }}
       containers:

@@ -51,7 +51,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
             <div className="space-y-4">
               <WidgetStatusIndicator environment={environment} />
               {!environment.appSetupCompleted ? (
-                <Alert variant="outbound">
+                <Alert variant="info">
                   <AlertTitle>{t("environments.project.app-connection.setup_alert_title")}</AlertTitle>
                   <AlertDescription>
                     {t("environments.project.app-connection.setup_alert_description")}

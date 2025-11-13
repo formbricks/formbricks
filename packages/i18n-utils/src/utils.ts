@@ -10,6 +10,7 @@ export interface TIso639Language {
     "ro-RO": string;
     "ja-JP": string;
     "zh-Hans-CN": string;
+    "nl-NL": string;
   };
 }
 
@@ -26,6 +27,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Afar",
       "ja-JP": "アファール語",
       "zh-Hans-CN": "阿法尔语",
+      "nl-NL": "Afar",
     },
   },
   {
@@ -40,6 +42,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Abcásio",
       "ja-JP": "アブハズ語",
       "zh-Hans-CN": "阿布哈兹语",
+      "nl-NL": "Abchazisch",
     },
   },
   {
@@ -54,6 +57,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Avestan",
       "ja-JP": "アヴェスタン語",
       "zh-Hans-CN": "阿维斯陀语",
+      "nl-NL": "Avestisch",
     },
   },
   {
@@ -68,6 +72,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Afrikaans",
       "ja-JP": "アフリカーンス語",
       "zh-Hans-CN": "阿非利堪斯语（南非荷兰语）",
+      "nl-NL": "Afrikaans",
     },
   },
   {
@@ -82,6 +87,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Akan",
       "ja-JP": "アカン語",
       "zh-Hans-CN": "阿坎语",
+      "nl-NL": "Akan",
     },
   },
   {
@@ -96,6 +102,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Amharic",
       "ja-JP": "アムハラ語",
       "zh-Hans-CN": "阿姆哈拉语",
+      "nl-NL": "Amhaars",
     },
   },
   {
@@ -110,6 +117,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Aragoneză",
       "ja-JP": "アラゴニス語",
       "zh-Hans-CN": "阿拉贡语",
+      "nl-NL": "Aragonees",
     },
   },
   {
@@ -124,6 +132,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Arabic",
       "ja-JP": "アラビア語",
       "zh-Hans-CN": "阿拉伯语",
+      "nl-NL": "Arabisch",
     },
   },
   {
@@ -138,6 +147,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Assamese",
       "ja-JP": "アッサム語",
       "zh-Hans-CN": "阿萨姆语",
+      "nl-NL": "Assamees",
     },
   },
   {
@@ -152,6 +162,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Avaric",
       "ja-JP": "アヴァリック語",
       "zh-Hans-CN": "阿瓦尔语",
+      "nl-NL": "Avarisch",
     },
   },
   {
@@ -166,6 +177,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Aymara",
       "ja-JP": "アイマラ語",
       "zh-Hans-CN": "艾马拉语",
+      "nl-NL": "Aymara",
     },
   },
   {
@@ -180,6 +192,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Azerbaijani",
       "ja-JP": "アゼルバイジャン語",
       "zh-Hans-CN": "阿塞拜疆语",
+      "nl-NL": "Azerbeidzjaans",
     },
   },
   {
@@ -194,6 +207,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Bashkir",
       "ja-JP": "バシキール語",
       "zh-Hans-CN": "巴什基尔语",
+      "nl-NL": "Basjkiers",
     },
   },
   {
@@ -208,6 +222,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Belarusian",
       "ja-JP": "ベラルーシ語",
       "zh-Hans-CN": "白俄罗斯语",
+      "nl-NL": "Wit-Russisch",
     },
   },
   {
@@ -222,6 +237,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Bulgarian",
       "ja-JP": "ブルガリア語",
       "zh-Hans-CN": "保加利亚语",
+      "nl-NL": "Bulgaars",
     },
   },
   {
@@ -236,6 +252,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Bihari languages",
       "ja-JP": "ビハリ語",
       "zh-Hans-CN": "比哈里语",
+      "nl-NL": "Bihari-talen",
     },
   },
   {
@@ -250,6 +267,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Bislama",
       "ja-JP": "ビスラマ語",
       "zh-Hans-CN": "比斯拉马语",
+      "nl-NL": "Bislama",
     },
   },
   {
@@ -264,6 +282,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Bambara",
       "ja-JP": "バンバラ語",
       "zh-Hans-CN": "班巴拉语",
+      "nl-NL": "Bambara",
     },
   },
   {
@@ -278,6 +297,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Bengali",
       "ja-JP": "ベンガル語",
       "zh-Hans-CN": "孟加拉语",
+      "nl-NL": "Bengalees",
     },
   },
   {
@@ -292,6 +312,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tibetan",
       "ja-JP": "チベット語",
       "zh-Hans-CN": "藏语",
+      "nl-NL": "Tibetaans",
     },
   },
   {
@@ -306,6 +327,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Breton",
       "ja-JP": "ブレトン語",
       "zh-Hans-CN": "布列塔尼语",
+      "nl-NL": "Bretons",
     },
   },
   {
@@ -320,6 +342,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Bosnian",
       "ja-JP": "ボスニア語",
       "zh-Hans-CN": "波斯尼亚语",
+      "nl-NL": "Bosnisch",
     },
   },
   {
@@ -334,6 +357,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Catalan; Valencian",
       "ja-JP": "カタロニア語；バレンシア語",
       "zh-Hans-CN": "加泰罗尼亚语；瓦伦西亚语",
+      "nl-NL": "Catalaans; Valenciaans",
     },
   },
   {
@@ -348,6 +372,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tchechen",
       "ja-JP": "チェチェン語",
       "zh-Hans-CN": "车臣语",
+      "nl-NL": "Tsjetsjeens",
     },
   },
   {
@@ -362,6 +387,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Chamorro",
       "ja-JP": "チャモロ語",
       "zh-Hans-CN": "查莫罗语",
+      "nl-NL": "Chamorro",
     },
   },
   {
@@ -376,6 +402,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Corsican",
       "ja-JP": "コルシカ語",
       "zh-Hans-CN": "科西嘉语",
+      "nl-NL": "Corsicaans",
     },
   },
   {
@@ -390,6 +417,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Cree",
       "ja-JP": "クリー語",
       "zh-Hans-CN": "克里语",
+      "nl-NL": "Cree",
     },
   },
   {
@@ -404,6 +432,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tcheco",
       "ja-JP": "チェコ語",
       "zh-Hans-CN": "捷克语",
+      "nl-NL": "Tsjechisch",
     },
   },
   {
@@ -422,6 +451,7 @@ export const iso639Languages: TIso639Language[] = [
         "Sânscrito eclesiástico; Antigo eslavônico; Sânscrito eclesiástico; Antigo búlgaro; Antigo sânscrito eclesiástico",
       "ja-JP": "キリル文字の古教会斯拉夫語；古教会斯拉夫語；古教会斯拉夫語；古保加利亞語；古教会斯拉夫語",
       "zh-Hans-CN": "教会斯拉夫语；古教会斯拉夫语；古保加利亚语",
+      "nl-NL": "Kerkslavisch; Oudslavisch; Oudbulgaars",
     },
   },
   {
@@ -436,6 +466,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tchuvasche",
       "ja-JP": "チュバシャ語",
       "zh-Hans-CN": "楚瓦什语",
+      "nl-NL": "Tsjoevasjisch",
     },
   },
   {
@@ -450,6 +481,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Galês",
       "ja-JP": "ウェールズ語",
       "zh-Hans-CN": "威尔士语",
+      "nl-NL": "Welsh",
     },
   },
   {
@@ -464,6 +496,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Danish",
       "ja-JP": "デンマーク語",
       "zh-Hans-CN": "丹麦语",
+      "nl-NL": "Deens",
     },
   },
   {
@@ -478,6 +511,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "German",
       "ja-JP": "ドイツ語",
       "zh-Hans-CN": "德语",
+      "nl-NL": "Duits",
     },
   },
   {
@@ -492,6 +526,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Divehi; Dhivehi; Maldiviano",
       "ja-JP": "ディベヒ語；ディベヒ語；マルディブ語",
       "zh-Hans-CN": "迪维希语；马尔代夫语",
+      "nl-NL": "Divehi; Dhivehi; Maldivisch",
     },
   },
   {
@@ -506,6 +541,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Dzongkha",
       "ja-JP": "ゾング語",
       "zh-Hans-CN": "宗喀语",
+      "nl-NL": "Dzongkha",
     },
   },
   {
@@ -520,6 +556,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ewe",
       "ja-JP": "エヴェ語",
       "zh-Hans-CN": "埃维语",
+      "nl-NL": "Ewe",
     },
   },
   {
@@ -534,6 +571,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Grec modern (după 1453)",
       "ja-JP": "ギリシャ語（現代，1453-）",
       "zh-Hans-CN": "希腊语（现代，1453-）",
+      "nl-NL": "Grieks, Modern (na 1453)",
     },
   },
   {
@@ -548,6 +586,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Engleză",
       "ja-JP": "英語",
       "zh-Hans-CN": "英语",
+      "nl-NL": "Engels",
     },
   },
   {
@@ -562,6 +601,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Esperanto",
       "ja-JP": "エスペラント語",
       "zh-Hans-CN": "世界语",
+      "nl-NL": "Esperanto",
     },
   },
   {
@@ -576,6 +616,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Spaniol; Castilian",
       "ja-JP": "スペイン語；カスティーリャ語",
       "zh-Hans-CN": "西班牙语；卡斯蒂利亚语",
+      "nl-NL": "Spaans; Castiliaans",
     },
   },
   {
@@ -590,6 +631,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Estonian",
       "ja-JP": "エストニア語",
       "zh-Hans-CN": "爱沙尼亚语",
+      "nl-NL": "Estisch",
     },
   },
   {
@@ -604,6 +646,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Basque",
       "ja-JP": "バスク語",
       "zh-Hans-CN": "巴斯克语",
+      "nl-NL": "Baskisch",
     },
   },
   {
@@ -618,6 +661,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Persian",
       "ja-JP": "ペルシア語",
       "zh-Hans-CN": "波斯语",
+      "nl-NL": "Perzisch",
     },
   },
   {
@@ -632,6 +676,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Fulah",
       "ja-JP": "フラ語",
       "zh-Hans-CN": "富拉语",
+      "nl-NL": "Fulah",
     },
   },
   {
@@ -646,6 +691,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Finlandeză",
       "ja-JP": "フィンランド語",
       "zh-Hans-CN": "芬兰语",
+      "nl-NL": "Fins",
     },
   },
   {
@@ -660,6 +706,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Fijian",
       "ja-JP": "フィジー語",
       "zh-Hans-CN": "斐济语",
+      "nl-NL": "Fijiaans",
     },
   },
   {
@@ -674,6 +721,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Feroe",
       "ja-JP": "フェロー語",
       "zh-Hans-CN": "法罗语",
+      "nl-NL": "Faeröers",
     },
   },
   {
@@ -688,6 +736,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Franceză",
       "ja-JP": "フランス語",
       "zh-Hans-CN": "法语",
+      "nl-NL": "Frans",
     },
   },
   {
@@ -702,6 +751,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Frisian",
       "ja-JP": "西フリジア語",
       "zh-Hans-CN": "西弗里斯兰语",
+      "nl-NL": "West-Fries",
     },
   },
   {
@@ -716,6 +766,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Irlandeză",
       "ja-JP": "アイルランド語",
       "zh-Hans-CN": "爱尔兰语",
+      "nl-NL": "Iers",
     },
   },
   {
@@ -730,6 +781,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Gaélic; Gaélic scoțian",
       "ja-JP": "ゲール語；スコットランド語",
       "zh-Hans-CN": "盖尔语；苏格兰盖尔语",
+      "nl-NL": "Gaelisch; Schots-Gaelisch",
     },
   },
   {
@@ -744,6 +796,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Galician",
       "ja-JP": "ガリシア語",
       "zh-Hans-CN": "加利西亚语",
+      "nl-NL": "Galicisch",
     },
   },
   {
@@ -758,6 +811,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Guaraní",
       "ja-JP": "ガラナ語",
       "zh-Hans-CN": "瓜拉尼语",
+      "nl-NL": "Guaraní",
     },
   },
   {
@@ -772,6 +826,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Gujarati",
       "ja-JP": "グジャラート語",
       "zh-Hans-CN": "古吉拉特语",
+      "nl-NL": "Gujarati",
     },
   },
   {
@@ -786,6 +841,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Manx",
       "ja-JP": "マンク語",
       "zh-Hans-CN": "曼岛语",
+      "nl-NL": "Manx",
     },
   },
   {
@@ -800,6 +856,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Hausa",
       "ja-JP": "ハウサ語",
       "zh-Hans-CN": "豪萨语",
+      "nl-NL": "Hausa",
     },
   },
   {
@@ -814,6 +871,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ebraică",
       "ja-JP": "ヘブライ語",
       "zh-Hans-CN": "希伯来语",
+      "nl-NL": "Hebreeuws",
     },
   },
   {
@@ -828,6 +886,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Hindi",
       "ja-JP": "ヒンディー語",
       "zh-Hans-CN": "印地语",
+      "nl-NL": "Hindi",
     },
   },
   {
@@ -842,6 +901,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Hiri Motu",
       "ja-JP": "ヒリモト語",
       "zh-Hans-CN": "希里莫图语",
+      "nl-NL": "Hiri Motu",
     },
   },
   {
@@ -856,6 +916,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Croată",
       "ja-JP": "クロアチア語",
       "zh-Hans-CN": "克罗地亚语",
+      "nl-NL": "Croatisch",
     },
   },
   {
@@ -870,6 +931,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Haitian; Haitian Creole",
       "ja-JP": "ハイチ語；ハイチクリオール語",
       "zh-Hans-CN": "海地语；海地克里奥尔语",
+      "nl-NL": "Haitiaans; Creools haïtiaans",
     },
   },
   {
@@ -884,6 +946,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Maghiară",
       "ja-JP": "ハンガリー語",
       "zh-Hans-CN": "匈牙利语",
+      "nl-NL": "Hongaars",
     },
   },
   {
@@ -898,6 +961,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Armenian",
       "ja-JP": "アルメニア語",
       "zh-Hans-CN": "亚美尼亚语",
+      "nl-NL": "Armeens",
     },
   },
   {
@@ -912,6 +976,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Herero",
       "ja-JP": "ヒェロ語",
       "zh-Hans-CN": "赫雷罗语",
+      "nl-NL": "Herero",
     },
   },
   {
@@ -926,6 +991,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Interlingua (International Auxiliary Language Association)",
       "ja-JP": "国際語（国際輔助語言協会）",
       "zh-Hans-CN": "国际语（国际辅助语言协会）",
+      "nl-NL": "Interlingua (Association internationale des langues auxiliaires)",
     },
   },
   {
@@ -940,6 +1006,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Indonesian",
       "ja-JP": "インドネシア語",
       "zh-Hans-CN": "印尼语",
+      "nl-NL": "Indonesisch",
     },
   },
   {
@@ -954,6 +1021,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Interlingue; Occidental",
       "ja-JP": "国際語；西方語",
       "zh-Hans-CN": "国际语；西方语",
+      "nl-NL": "Interlingue; Occidental",
     },
   },
   {
@@ -968,6 +1036,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Igbo",
       "ja-JP": "イグボ語",
       "zh-Hans-CN": "伊博语",
+      "nl-NL": "Igbo",
     },
   },
   {
@@ -982,6 +1051,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Sichuan Yi; Nuosu",
       "ja-JP": "四川彝語；諾蘇語",
       "zh-Hans-CN": "彝语；诺苏语",
+      "nl-NL": "Sichuan Yi; Nuosu",
     },
   },
   {
@@ -996,6 +1066,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Inupiaq",
       "ja-JP": "イヌピアク語",
       "zh-Hans-CN": "依努皮克语",
+      "nl-NL": "Inupiaq",
     },
   },
   {
@@ -1010,6 +1081,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ido",
       "ja-JP": "イド語",
       "zh-Hans-CN": "伊多语",
+      "nl-NL": "Ido",
     },
   },
   {
@@ -1024,6 +1096,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Islandeză",
       "ja-JP": "アイスランド語",
       "zh-Hans-CN": "冰岛语",
+      "nl-NL": "Isländisch",
     },
   },
   {
@@ -1038,6 +1111,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Italian",
       "ja-JP": "イタリア語",
       "zh-Hans-CN": "意大利语",
+      "nl-NL": "Italiaans",
     },
   },
   {
@@ -1052,6 +1126,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Inuktitut",
       "ja-JP": "イヌクティトット語",
       "zh-Hans-CN": "因纽特语",
+      "nl-NL": "Inuktitut",
     },
   },
   {
@@ -1066,6 +1141,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Japoneză",
       "ja-JP": "日本語",
       "zh-Hans-CN": "日语",
+      "nl-NL": "Japans",
     },
   },
   {
@@ -1080,6 +1156,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Javaneză",
       "ja-JP": "ジャワ語",
       "zh-Hans-CN": "爪哇语",
+      "nl-NL": "Javaans",
     },
   },
   {
@@ -1094,6 +1171,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Georgian",
       "ja-JP": "ジョージア語",
       "zh-Hans-CN": "格鲁吉亚语",
+      "nl-NL": "Georgisch",
     },
   },
   {
@@ -1108,6 +1186,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kongo",
       "ja-JP": "コンゴ語",
       "zh-Hans-CN": "刚果语",
+      "nl-NL": "Kongo",
     },
   },
   {
@@ -1122,6 +1201,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kikuyu; Gikuyu",
       "ja-JP": "キクユ語；ギクユ語",
       "zh-Hans-CN": "吉库尤语",
+      "nl-NL": "Kikuyu; Gikuyu",
     },
   },
   {
@@ -1136,6 +1216,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kuanyama; Kwanyama",
       "ja-JP": "カワヤマ語；カワヤマ語",
       "zh-Hans-CN": "宽亚玛语；宽亚玛语",
+      "nl-NL": "Kuanyama; Kwanyama",
     },
   },
   {
@@ -1150,6 +1231,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kazah",
       "ja-JP": "カザフ語",
       "zh-Hans-CN": "哈萨克语",
+      "nl-NL": "Kazachs",
     },
   },
   {
@@ -1164,6 +1246,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kalaallisut; Greenlandic",
       "ja-JP": "カラリスット語（グリーンランド語）",
       "zh-Hans-CN": "格陵兰语",
+      "nl-NL": "Kalaallisut; Groenlands",
     },
   },
   {
@@ -1178,6 +1261,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Khmer central",
       "ja-JP": "中央高棉語",
       "zh-Hans-CN": "中央高棉语",
+      "nl-NL": "Khmer central",
     },
   },
   {
@@ -1192,6 +1276,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kannada",
       "ja-JP": "カナダ語",
       "zh-Hans-CN": "卡纳达语",
+      "nl-NL": "Kannada",
     },
   },
   {
@@ -1206,6 +1291,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Coreeană",
       "ja-JP": "韓国語",
       "zh-Hans-CN": "韩语",
+      "nl-NL": "Koreaans",
     },
   },
   {
@@ -1220,6 +1306,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kanuri",
       "ja-JP": "カヌリ語",
       "zh-Hans-CN": "卡努里语",
+      "nl-NL": "Kanuri",
     },
   },
   {
@@ -1234,6 +1321,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kashmiri",
       "ja-JP": "カシュミール語",
       "zh-Hans-CN": "克什米尔语",
+      "nl-NL": "Kashmiri",
     },
   },
   {
@@ -1248,6 +1336,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kurdish",
       "ja-JP": "クルド語",
       "zh-Hans-CN": "库尔德语",
+      "nl-NL": "Kurdish",
     },
   },
   {
@@ -1262,6 +1351,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Komi",
       "ja-JP": "コミ語",
       "zh-Hans-CN": "科米语",
+      "nl-NL": "Komi",
     },
   },
   {
@@ -1276,6 +1366,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Cornish",
       "ja-JP": "コーンウェル語",
       "zh-Hans-CN": "康沃尔语",
+      "nl-NL": "Cornish",
     },
   },
   {
@@ -1290,6 +1381,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kirghiz; Kyrgyz",
       "ja-JP": "キルギス語；キルギス語",
       "zh-Hans-CN": "吉尔吉斯语",
+      "nl-NL": "Kirghiz; Kyrgyz",
     },
   },
   {
@@ -1304,6 +1396,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Latină",
       "ja-JP": "ラテン語",
       "zh-Hans-CN": "拉丁语",
+      "nl-NL": "Latin",
     },
   },
   {
@@ -1318,6 +1411,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Luxembourgish; Letzeburgesch",
       "ja-JP": "ルクセンブルグ語；ルクセンブルグ語",
       "zh-Hans-CN": "卢森堡语",
+      "nl-NL": "Luxembourgish; Letzeburgesch",
     },
   },
   {
@@ -1332,6 +1426,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ganda",
       "ja-JP": "ガンダ語",
       "zh-Hans-CN": "卢干达语",
+      "nl-NL": "Ganda",
     },
   },
   {
@@ -1346,6 +1441,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Limburgan; Limburger; Limburgish",
       "ja-JP": "リムブルガン語；リムブルガン語；リムブルガン語",
       "zh-Hans-CN": "林堡语",
+      "nl-NL": "Limburgan; Limburger; Limburgish",
     },
   },
   {
@@ -1360,6 +1456,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Lingala",
       "ja-JP": "リンガラ語",
       "zh-Hans-CN": "林加拉语",
+      "nl-NL": "Lingala",
     },
   },
   {
@@ -1374,6 +1471,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Lao",
       "ja-JP": "ラオ語",
       "zh-Hans-CN": "老挝语",
+      "nl-NL": "Lao",
     },
   },
   {
@@ -1388,6 +1486,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Lituaniană",
       "ja-JP": "リトアニア語",
       "zh-Hans-CN": "立陶宛语",
+      "nl-NL": "Lithuanian",
     },
   },
   {
@@ -1402,6 +1501,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Luba-Katanga",
       "ja-JP": "ルバ・カタンガ語",
       "zh-Hans-CN": "卢巴-加丹加语",
+      "nl-NL": "Luba-Katanga",
     },
   },
   {
@@ -1416,6 +1516,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Letonă",
       "ja-JP": "ラトビア語",
       "zh-Hans-CN": "拉脱维亚语",
+      "nl-NL": "Latvian",
     },
   },
   {
@@ -1430,6 +1531,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Malagasy",
       "ja-JP": "マラガシア語",
       "zh-Hans-CN": "马达加斯加语",
+      "nl-NL": "Malagasy",
     },
   },
   {
@@ -1444,6 +1546,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Marshallese",
       "ja-JP": "マーシャル諸島語",
       "zh-Hans-CN": "马绍尔语",
+      "nl-NL": "Marshallese",
     },
   },
   {
@@ -1458,6 +1561,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Maori",
       "ja-JP": "マオリ語",
       "zh-Hans-CN": "毛利语",
+      "nl-NL": "Maori",
     },
   },
   {
@@ -1472,6 +1576,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Macedonian",
       "ja-JP": "マケドニア語",
       "zh-Hans-CN": "马其顿语",
+      "nl-NL": "Macedonian",
     },
   },
   {
@@ -1486,6 +1591,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Malayalam",
       "ja-JP": "マラヤラム語",
       "zh-Hans-CN": "马拉雅拉姆语",
+      "nl-NL": "Malayalam",
     },
   },
   {
@@ -1500,6 +1606,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Mongol",
       "ja-JP": "モンゴル語",
       "zh-Hans-CN": "蒙古语",
+      "nl-NL": "Mongolian",
     },
   },
   {
@@ -1514,6 +1621,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Marathi",
       "ja-JP": "マラーティ語",
       "zh-Hans-CN": "马拉地语",
+      "nl-NL": "Marathi",
     },
   },
   {
@@ -1528,6 +1636,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Malay",
       "ja-JP": "マレー語",
       "zh-Hans-CN": "马来语",
+      "nl-NL": "Malay",
     },
   },
   {
@@ -1542,6 +1651,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Maltese",
       "ja-JP": "マルタ語",
       "zh-Hans-CN": "马耳他语",
+      "nl-NL": "Maltese",
     },
   },
   {
@@ -1556,6 +1666,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Birman",
       "ja-JP": "ビルマ語",
       "zh-Hans-CN": "缅甸语",
+      "nl-NL": "Burmese",
     },
   },
   {
@@ -1570,6 +1681,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Nauru",
       "ja-JP": "ナウル語",
       "zh-Hans-CN": "瑙鲁语",
+      "nl-NL": "Nauru",
     },
   },
   {
@@ -1584,6 +1696,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Bokmål, Norueguês; Bokmål Norueguês",
       "ja-JP": "ノルウェー語（ブークモール）",
       "zh-Hans-CN": "书面挪威语（博克马尔）",
+      "nl-NL": "Bokmål, Norwegian; Norwegian Bokmål",
     },
   },
   {
@@ -1598,6 +1711,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ndebele, Nord; Nord Ndebele",
       "ja-JP": "ナンデベレ語 北方言；北ナンデベレ語",
       "zh-Hans-CN": "北恩德贝勒语",
+      "nl-NL": "Ndebele, North; North Ndebele",
     },
   },
   {
@@ -1612,6 +1726,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Nepali",
       "ja-JP": "ネパール語",
       "zh-Hans-CN": "尼泊尔语",
+      "nl-NL": "Nepali",
     },
   },
   {
@@ -1626,6 +1741,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ndonga",
       "ja-JP": "ンドンガ語",
       "zh-Hans-CN": "恩敦加语",
+      "nl-NL": "Ndonga",
     },
   },
   {
@@ -1640,6 +1756,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Olandeză; Flamandă",
       "ja-JP": "オランダ語；フラマン語",
       "zh-Hans-CN": "荷兰语；弗拉芒语",
+      "nl-NL": "Nederlands; Vlaams",
     },
   },
   {
@@ -1654,6 +1771,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Norvegian Nynorsk; Nynorsk, Norvegian",
       "ja-JP": "ノルウェー語（ニーノシュク）",
       "zh-Hans-CN": "新挪威语（尼诺斯克）",
+      "nl-NL": "Norwegian Nynorsk; Nynorsk, Norwegian",
     },
   },
   {
@@ -1668,6 +1786,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Norvegian",
       "ja-JP": "ノルウェー語",
       "zh-Hans-CN": "挪威语",
+      "nl-NL": "Norwegisch",
     },
   },
   {
@@ -1682,6 +1801,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ndebele, Sud; Sud Ndebele",
       "ja-JP": "ナンデベレ語",
       "zh-Hans-CN": "南恩德贝勒语",
+      "nl-NL": "Ndebele, South; South Ndebele",
     },
   },
   {
@@ -1696,6 +1816,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Navajo; Navaho",
       "ja-JP": "ナバホ語",
       "zh-Hans-CN": "纳瓦霍语",
+      "nl-NL": "Navajo; Navaho",
     },
   },
   {
@@ -1710,6 +1831,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Chichewa; Chewa; Nyanja",
       "ja-JP": "チェワ語",
       "zh-Hans-CN": "齐切瓦语；契瓦语；尼扬加语",
+      "nl-NL": "Chichewa; Chewa; Nyanja",
     },
   },
   {
@@ -1724,6 +1846,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Occitano (pós 1500)",
       "ja-JP": "オック語（1500年以降）",
       "zh-Hans-CN": "奥克语（1500年后）",
+      "nl-NL": "Occitano (pós 1500)",
     },
   },
   {
@@ -1738,6 +1861,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ojibwa",
       "ja-JP": "オジブワ語",
       "zh-Hans-CN": "奥吉布瓦语",
+      "nl-NL": "Ojibwa",
     },
   },
   {
@@ -1752,6 +1876,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Oromo",
       "ja-JP": "オロモ語",
       "zh-Hans-CN": "奥罗莫语",
+      "nl-NL": "Oromo",
     },
   },
   {
@@ -1766,6 +1891,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Oriya",
       "ja-JP": "オリヤ語",
       "zh-Hans-CN": "奥里亚语",
+      "nl-NL": "Oriya",
     },
   },
   {
@@ -1780,6 +1906,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ossetian; Ossetic",
       "ja-JP": "オセティア語",
       "zh-Hans-CN": "奥塞梯语",
+      "nl-NL": "Ossetian; Ossetic",
     },
   },
   {
@@ -1794,6 +1921,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Panjabi; Punjabi",
       "ja-JP": "パンジャブ語",
       "zh-Hans-CN": "旁遮普语",
+      "nl-NL": "Panjabi; Punjabi",
     },
   },
   {
@@ -1808,6 +1936,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Pali",
       "ja-JP": "パーリ語",
       "zh-Hans-CN": "巴利语",
+      "nl-NL": "Pali",
     },
   },
   {
@@ -1822,6 +1951,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Polish",
       "ja-JP": "ポーランド語",
       "zh-Hans-CN": "波兰语",
+      "nl-NL": "Polnisch",
     },
   },
   {
@@ -1836,6 +1966,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Pushto; Pashto",
       "ja-JP": "パシュトゥー語",
       "zh-Hans-CN": "普什图语",
+      "nl-NL": "Pushto; Pashto",
     },
   },
   {
@@ -1850,6 +1981,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Portuguese",
       "ja-JP": "ポルトガル語",
       "zh-Hans-CN": "葡萄牙语",
+      "nl-NL": "Portugees",
     },
   },
   {
@@ -1864,6 +1996,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Quechua",
       "ja-JP": "ケチュア語",
       "zh-Hans-CN": "克丘亚语",
+      "nl-NL": "Quechua",
     },
   },
   {
@@ -1878,6 +2011,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Romansh",
       "ja-JP": "ロマンシュ語",
       "zh-Hans-CN": "罗曼什语",
+      "nl-NL": "Romansh",
     },
   },
   {
@@ -1892,6 +2026,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Rundi",
       "ja-JP": "ルンデ語",
       "zh-Hans-CN": "隆迪语（基隆迪语）",
+      "nl-NL": "Rundi",
     },
   },
   {
@@ -1906,6 +2041,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Română; Moldovenească; Moldovenească",
       "ja-JP": "ルーマニア語",
       "zh-Hans-CN": "罗马尼亚语；摩尔多瓦语",
+      "nl-NL": "Roemeens; Moldavisch",
     },
   },
   {
@@ -1920,6 +2056,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Rusă",
       "ja-JP": "ロシア語",
       "zh-Hans-CN": "俄语",
+      "nl-NL": "Russisch",
     },
   },
   {
@@ -1934,6 +2071,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Kinyarwanda",
       "ja-JP": "キニャランダ語",
       "zh-Hans-CN": "卢旺达语",
+      "nl-NL": "Kinyarwanda",
     },
   },
   {
@@ -1948,6 +2086,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Sanskrit",
       "ja-JP": "サンスクリット語",
       "zh-Hans-CN": "梵语",
+      "nl-NL": "Sanskrit",
     },
   },
   {
@@ -1962,6 +2101,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Sardo",
       "ja-JP": "サルデーニャ語",
       "zh-Hans-CN": "撒丁尼亚语",
+      "nl-NL": "Sardo",
     },
   },
   {
@@ -1976,6 +2116,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Sindhi",
       "ja-JP": "シンディ語",
       "zh-Hans-CN": "信德语",
+      "nl-NL": "Sindhi",
     },
   },
   {
@@ -1990,6 +2131,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Sami do Norte",
       "ja-JP": "北サミ語",
       "zh-Hans-CN": "北萨米语",
+      "nl-NL": "Sami do Norte",
     },
   },
   {
@@ -2004,6 +2146,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Sango",
       "ja-JP": "サンゴ語",
       "zh-Hans-CN": "桑戈语",
+      "nl-NL": "Sango",
     },
   },
   {
@@ -2018,6 +2161,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Sinhala; Sinhalese",
       "ja-JP": "シンハラ語",
       "zh-Hans-CN": "僧伽罗语",
+      "nl-NL": "Sinhala; Sinhalese",
     },
   },
   {
@@ -2032,6 +2176,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Slovacă",
       "ja-JP": "スロバキア語",
       "zh-Hans-CN": "斯洛伐克语",
+      "nl-NL": "Slovak",
     },
   },
   {
@@ -2046,6 +2191,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Slovină",
       "ja-JP": "スロベニア語",
       "zh-Hans-CN": "斯洛文尼亚语",
+      "nl-NL": "Slovinščina",
     },
   },
   {
@@ -2060,6 +2206,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Samoan",
       "ja-JP": "サモア語",
       "zh-Hans-CN": "萨摩亚语",
+      "nl-NL": "Samoaans",
     },
   },
   {
@@ -2074,6 +2221,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Shona",
       "ja-JP": "ショナ語",
       "zh-Hans-CN": "修纳语",
+      "nl-NL": "Shona",
     },
   },
   {
@@ -2088,6 +2236,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Somali",
       "ja-JP": "ソマリ語",
       "zh-Hans-CN": "索马里语",
+      "nl-NL": "Somali",
     },
   },
   {
@@ -2102,6 +2251,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Albaneză",
       "ja-JP": "アルバニア語",
       "zh-Hans-CN": "阿尔巴尼亚语",
+      "nl-NL": "Albanees",
     },
   },
   {
@@ -2116,6 +2266,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Serbian",
       "ja-JP": "セルビア語",
       "zh-Hans-CN": "塞尔维亚语",
+      "nl-NL": "Servisch",
     },
   },
   {
@@ -2130,6 +2281,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Swati",
       "ja-JP": "スワティ語",
       "zh-Hans-CN": "斯瓦蒂语",
+      "nl-NL": "Swati",
     },
   },
   {
@@ -2144,6 +2296,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Sotho, Sud",
       "ja-JP": "ソト語",
       "zh-Hans-CN": "南索托语",
+      "nl-NL": "Sotho, Zuid",
     },
   },
   {
@@ -2158,6 +2311,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Sundanese",
       "ja-JP": "スンダ語",
       "zh-Hans-CN": "巽他语",
+      "nl-NL": "Sundanees",
     },
   },
   {
@@ -2172,6 +2326,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Suedeză",
       "ja-JP": "スウェーデン語",
       "zh-Hans-CN": "瑞典语",
+      "nl-NL": "Zweeds",
     },
   },
   {
@@ -2186,6 +2341,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Swahili",
       "ja-JP": "スワヒリ語",
       "zh-Hans-CN": "斯瓦希里语",
+      "nl-NL": "Swahili",
     },
   },
   {
@@ -2200,6 +2356,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tamil",
       "ja-JP": "タミル語",
       "zh-Hans-CN": "泰米尔语",
+      "nl-NL": "Tamil",
     },
   },
   {
@@ -2214,6 +2371,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Telugu",
       "ja-JP": "テルグ語",
       "zh-Hans-CN": "泰卢固语",
+      "nl-NL": "Telugu",
     },
   },
   {
@@ -2228,6 +2386,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tadjik",
       "ja-JP": "タジク語",
       "zh-Hans-CN": "塔吉克语",
+      "nl-NL": "Tadjik",
     },
   },
   {
@@ -2242,6 +2401,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Thai",
       "ja-JP": "タイ語",
       "zh-Hans-CN": "泰语",
+      "nl-NL": "Thai",
     },
   },
   {
@@ -2256,6 +2416,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tigrinya",
       "ja-JP": "ティグリニャ語",
       "zh-Hans-CN": "提格利尼亚语",
+      "nl-NL": "Tigrinya",
     },
   },
   {
@@ -2270,6 +2431,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Turcoman",
       "ja-JP": "トルクメン語",
       "zh-Hans-CN": "土库曼语",
+      "nl-NL": "Turkmen",
     },
   },
   {
@@ -2284,6 +2446,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tagalog",
       "ja-JP": "タガログ語",
       "zh-Hans-CN": "他加禄语",
+      "nl-NL": "Tagalog",
     },
   },
   {
@@ -2298,6 +2461,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tswana",
       "ja-JP": "ツワナ語",
       "zh-Hans-CN": "茨瓦纳语",
+      "nl-NL": "Tswana",
     },
   },
   {
@@ -2312,6 +2476,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tonga (Tonga-Inseln)",
       "ja-JP": "トンガ語",
       "zh-Hans-CN": "东加语",
+      "nl-NL": "Tonga (Tonga-Inseln)",
     },
   },
   {
@@ -2326,6 +2491,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Türkçe",
       "ja-JP": "トルコ語",
       "zh-Hans-CN": "土耳其语",
+      "nl-NL": "Türkçe",
     },
   },
   {
@@ -2340,6 +2506,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tsonga",
       "ja-JP": "ツォンガ語",
       "zh-Hans-CN": "聪加语",
+      "nl-NL": "Tsonga",
     },
   },
   {
@@ -2354,6 +2521,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tatar",
       "ja-JP": "タタール語",
       "zh-Hans-CN": "鞑靼语",
+      "nl-NL": "Tatar",
     },
   },
   {
@@ -2368,6 +2536,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Twi",
       "ja-JP": "ツワ語",
       "zh-Hans-CN": "特威语",
+      "nl-NL": "Twi",
     },
   },
   {
@@ -2382,6 +2551,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Tahitian",
       "ja-JP": "タヒチ語",
       "zh-Hans-CN": "大溪地语",
+      "nl-NL": "Tahitian",
     },
   },
   {
@@ -2396,6 +2566,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Uighur; Uyghur",
       "ja-JP": "ウイグル語",
       "zh-Hans-CN": "维吾尔语",
+      "nl-NL": "Uighur; Uyghur",
     },
   },
   {
@@ -2410,6 +2581,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Ucrainian",
       "ja-JP": "ウクライナ語",
       "zh-Hans-CN": "乌克兰语",
+      "nl-NL": "Ukrainisch",
     },
   },
   {
@@ -2424,6 +2596,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Urdu",
       "ja-JP": "ウルドゥー語",
       "zh-Hans-CN": "乌尔都语",
+      "nl-NL": "Urdu",
     },
   },
   {
@@ -2438,6 +2611,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Uzbek",
       "ja-JP": "ウズベク語",
       "zh-Hans-CN": "乌兹别克语",
+      "nl-NL": "Usbekisch",
     },
   },
   {
@@ -2452,6 +2626,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Venda",
       "ja-JP": "ヴェンダ語",
       "zh-Hans-CN": "文达语",
+      "nl-NL": "Venda",
     },
   },
   {
@@ -2466,6 +2641,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Vietnamese",
       "ja-JP": "ベトナム語",
       "zh-Hans-CN": "越南语",
+      "nl-NL": "Vietnamesisch",
     },
   },
   {
@@ -2480,6 +2656,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Volapük",
       "ja-JP": "ヴォラプキ語",
       "zh-Hans-CN": "沃拉普克语",
+      "nl-NL": "Volapük",
     },
   },
   {
@@ -2494,6 +2671,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Valão",
       "ja-JP": "ワロン語",
       "zh-Hans-CN": "瓦隆语",
+      "nl-NL": "Wallonisch",
     },
   },
   {
@@ -2508,6 +2686,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Wolof",
       "ja-JP": "ウォロフ語",
       "zh-Hans-CN": "沃洛夫语",
+      "nl-NL": "Wolof",
     },
   },
   {
@@ -2522,6 +2701,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Xhosa",
       "ja-JP": "コサ語",
       "zh-Hans-CN": "科萨语",
+      "nl-NL": "Xhosa",
     },
   },
   {
@@ -2536,6 +2716,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Yiddish",
       "ja-JP": "イディッシュ語",
       "zh-Hans-CN": "意第绪语",
+      "nl-NL": "Jiddisch",
     },
   },
   {
@@ -2550,6 +2731,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Yoruba",
       "ja-JP": "ヨルバ語",
       "zh-Hans-CN": "约鲁巴语",
+      "nl-NL": "Yoruba",
     },
   },
   {
@@ -2564,6 +2746,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Zhuang; Chuang",
       "ja-JP": "壮語",
       "zh-Hans-CN": "壮语",
+      "nl-NL": "Zhuang; Chuang",
     },
   },
   {
@@ -2578,6 +2761,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Chinês (Simplificado)",
       "ja-JP": "中国語（簡体字）",
       "zh-Hans-CN": "简体中文",
+      "nl-NL": "Chinees (Vereenvoudigd)",
     },
   },
   {
@@ -2592,6 +2776,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Chinês (Tradicional)",
       "ja-JP": "中国語（繁体字）",
       "zh-Hans-CN": "繁体中文",
+      "nl-NL": "Chinees (Traditioneel)",
     },
   },
   {
@@ -2606,6 +2791,7 @@ export const iso639Languages: TIso639Language[] = [
       "ro-RO": "Zulu",
       "ja-JP": "ズールー語",
       "zh-Hans-CN": "祖鲁语",
+      "nl-NL": "Zulu",
     },
   },
 ];
