@@ -98,8 +98,13 @@ export const SurveysList = ({
     // Check if filters have actually changed from initial state
     const filtersChanged = JSON.stringify(filters) !== JSON.stringify(initialFiltersRef.current);
 
-    // Only fetch if filters changed OR user explicitly triggered refresh
+    // If filters were reset to initial state, restore server-provided data (no network call needed)
     if (!filtersChanged && !refreshTrigger) {
+      // Only restore if current surveys differ from initial surveys
+      if (JSON.stringify(surveys) !== JSON.stringify(initialSurveys)) {
+        setSurveys(initialSurveys);
+        setHasMore(initialSurveys.length >= surveysLimit);
+      }
       return;
     }
 
@@ -122,6 +127,7 @@ export const SurveysList = ({
       }
     };
     fetchFilteredSurveys();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [environmentId, surveysLimit, filters, refreshTrigger]);
 
   const fetchNextPage = useCallback(async () => {
