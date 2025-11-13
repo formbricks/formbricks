@@ -3,9 +3,13 @@
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TI18nString, TSurveyQuestionId, TSurveySummary } from "@formbricks/types/surveys/types";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyQuestionId,
+  TSurveyQuestionTypeEnum,
+  TSurveySummary,
+} from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import {
   SelectedFilterValue,
@@ -29,7 +33,7 @@ import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/
 import { constructToastMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { SkeletonLoader } from "@/modules/ui/components/skeleton-loader";
 import { AddressSummary } from "./AddressSummary";
 
@@ -103,12 +107,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
       ) : summary.length === 0 ? (
         <SkeletonLoader type="summary" />
       ) : responseCount === 0 ? (
-        <EmptySpaceFiller
-          type="response"
-          environment={environment}
-          noWidgetRequired={survey.type === "link"}
-          emptyMessage={t("environments.surveys.summary.no_responses_found")}
-        />
+        <EmptyState text={t("environments.surveys.summary.no_responses_found")} />
       ) : (
         summary.map((questionSummary) => {
           if (questionSummary.type === TSurveyQuestionTypeEnum.OpenText) {

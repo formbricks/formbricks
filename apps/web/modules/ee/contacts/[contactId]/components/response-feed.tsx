@@ -12,7 +12,7 @@ import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 
 interface ResponseTimelineProps {
   surveys: TSurvey[];
@@ -50,7 +50,7 @@ export const ResponseFeed = ({
   return (
     <>
       {fetchedResponses.length === 0 ? (
-        <EmptySpaceFiller type="response" environment={environment} />
+        <EmptyState />
       ) : (
         fetchedResponses.map((response) => (
           <ResponseSurveyCard
