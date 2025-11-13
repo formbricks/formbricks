@@ -4,8 +4,8 @@ import { LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import type { TSurvey } from "@/modules/survey/list/types/surveys";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -45,16 +45,6 @@ export const GeneratePersonalLinkModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingSurveys, setIsFetchingSurveys] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      fetchSurveys();
-    } else {
-      // Reset state when modal closes
-      setSelectedSurveyId("");
-      setSurveys([]);
-    }
-  }, [open, environmentId]);
-
   const fetchSurveys = async () => {
     setIsFetchingSurveys(true);
     try {
@@ -72,6 +62,17 @@ export const GeneratePersonalLinkModal = ({
       setIsFetchingSurveys(false);
     }
   };
+
+  useEffect(() => {
+    if (open) {
+      fetchSurveys();
+    } else {
+      // Reset state when modal closes
+      setSelectedSurveyId("");
+      setSurveys([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, environmentId]);
 
   const handleGenerate = async () => {
     if (!selectedSurveyId) {
@@ -124,7 +125,7 @@ export const GeneratePersonalLinkModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <LinkIcon />
+          <LinkIcon className="h-4 w-4" />
           <DialogTitle>{t("environments.contacts.generate_personal_link")}</DialogTitle>
           <DialogDescription>
             {t("environments.contacts.generate_personal_link_description")}
@@ -138,7 +139,7 @@ export const GeneratePersonalLinkModal = ({
               <Select
                 value={selectedSurveyId}
                 onValueChange={setSelectedSurveyId}
-                disabled={isFetchingSurveys || isLoading}>
+                disabled={isFetchingSurveys || isLoading || surveys.length === 0}>
                 <SelectTrigger id="survey-select">
                   <SelectValue
                     placeholder={
