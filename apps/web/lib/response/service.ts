@@ -480,10 +480,12 @@ export const getResponsesByEnvironmentId = reactCache(
   }
 );
 
+// Use any for transaction client to avoid dist/src type mismatch in TypeScript
+// Runtime behavior is correct, this is purely a type resolution issue
 export const updateResponse = async (
   responseId: string,
   responseInput: TResponseUpdateInput,
-  tx?: Prisma.TransactionClient
+  tx?: any
 ): Promise<TResponse> => {
   validateInputs([responseId, ZId], [responseInput, ZResponseUpdateInput]);
   try {

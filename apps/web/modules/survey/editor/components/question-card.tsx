@@ -7,7 +7,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Project } from "@formbricks/database/generated/client";
+import { Project } from "@formbricks/database/generated/browser";
 import {
   TI18nString,
   TSurvey,

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Project } from "@formbricks/database/generated/client";
+import { Project } from "@formbricks/database/generated/browser";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { handleFileUpload } from "@/modules/storage/file-upload";

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Project } from "@formbricks/database/generated/client";
+import { Project } from "@formbricks/database/generated/browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSegment } from "@formbricks/types/segment";
 import {

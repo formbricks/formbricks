@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Project } from "@formbricks/database/generated/client";
+import { Project } from "@formbricks/database/generated/browser";
 import { ZProjectConfigChannel, ZProjectConfigIndustry } from "@formbricks/types/project";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";

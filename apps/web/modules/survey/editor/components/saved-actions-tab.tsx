@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActionClass } from "@formbricks/database/generated/client";
+import { ActionClass } from "@formbricks/database/generated/browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
 import { ActionClassInfo } from "@/modules/ui/components/action-class-info";

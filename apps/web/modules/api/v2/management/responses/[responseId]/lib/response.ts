@@ -128,10 +128,12 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
   }
 };
 
+// Use any for transaction client to avoid dist/src type mismatch in TypeScript
+// Runtime behavior is correct, this is purely a type resolution issue
 export const updateResponse = async (
   responseId: string,
   responseInput: z.infer<typeof ZResponseUpdateSchema>,
-  tx?: Prisma.TransactionClient
+  tx?: any
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
     const prismaClient = tx ?? prisma;

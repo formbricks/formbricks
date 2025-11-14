@@ -20,7 +20,7 @@ export const GET = withV1ApiWrapper({
         (permission) => permission.environmentId
       );
 
-      const attributes = await getContactAttributes(environmentIds);
+      const attributes = await getContactAttributes(environmentIds as string[]);
       return {
         response: responses.successResponse(attributes),
       };

@@ -16,7 +16,7 @@ export const GET = withV1ApiWrapper({
         (permission) => permission.environmentId
       );
 
-      const actionClasses = await getActionClasses(environmentIds);
+      const actionClasses = await getActionClasses(environmentIds as string[]);
 
       return {
         response: responses.successResponse(actionClasses),

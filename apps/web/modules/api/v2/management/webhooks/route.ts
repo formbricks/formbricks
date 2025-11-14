@@ -27,7 +27,7 @@ export const GET = async (request: NextRequest) =>
         (permission) => permission.environmentId
       );
 
-      const res = await getWebhooks(environemntIds, query);
+      const res = await getWebhooks(environemntIds as string[], query);
 
       if (res.ok) {
         return responses.successResponse(res.data);

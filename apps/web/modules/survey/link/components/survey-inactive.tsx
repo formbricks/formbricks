@@ -1,7 +1,7 @@
 import { CalendarClockIcon, CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Project } from "@formbricks/database/generated/client";
+import { Project } from "@formbricks/database/generated/browser";
 import { TSurveyClosedMessage } from "@formbricks/types/surveys/types";
 import { getTranslate } from "@/lingodotdev/server";
 import { Button } from "@/modules/ui/components/button";

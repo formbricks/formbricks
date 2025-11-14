@@ -1,4 +1,4 @@
-import { ProjectTeamPermission, TeamUserRole } from "@formbricks/database/generated/client";
+import { ProjectTeamPermission, TeamUserRole } from "@formbricks/database/generated/browser";
 
 export const TeamPermissionMapping = {
   [ProjectTeamPermission.read]: "Read",

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Environment, Project } from "@formbricks/database/generated/client";
+import { Environment, Project } from "@formbricks/database/generated/browser";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";

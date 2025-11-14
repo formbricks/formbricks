@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
-import { type ProjectTeam, ProjectTeamPermission } from "@formbricks/database/generated/client";
+import { type ProjectTeam, ProjectTeamPermission } from "@formbricks/database/generated/browser";
 
 extendZodWithOpenApi(z);
 

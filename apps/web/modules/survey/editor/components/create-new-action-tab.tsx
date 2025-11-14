@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { ActionClass } from "@formbricks/database/generated/client";
+import { ActionClass } from "@formbricks/database/generated/browser";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ActionNameDescriptionFields } from "@/modules/ui/components/action-name-description-fields";

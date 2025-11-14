@@ -7,7 +7,7 @@ import {
   Language,
   OrganizationRole,
   Project,
-} from "@formbricks/database/generated/client";
+} from "@formbricks/database/generated/browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";

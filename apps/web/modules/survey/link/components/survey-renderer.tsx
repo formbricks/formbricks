@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { type Response } from "@formbricks/database/generated/client";
+import { type Response } from "@formbricks/database/generated/browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   IMPRINT_URL,

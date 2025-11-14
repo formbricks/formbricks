@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Invite } from "@formbricks/database/generated/client";
+import { Invite } from "@formbricks/database/generated/browser";
 import { ZInvite } from "@formbricks/database/zod/invites";
 import { ZUserName } from "@formbricks/types/user";
 

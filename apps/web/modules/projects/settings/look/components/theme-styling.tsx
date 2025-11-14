@@ -7,7 +7,7 @@ import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Project } from "@formbricks/database/generated/client";
+import { Project } from "@formbricks/database/generated/browser";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { previewSurvey } from "@/app/lib/templates";

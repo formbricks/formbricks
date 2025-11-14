@@ -110,7 +110,9 @@ export const deleteQuota = async (quotaId: string): Promise<TSurveyQuota> => {
   }
 };
 
-export const reduceQuotaLimits = async (quotaIds: string[], tx?: Prisma.TransactionClient): Promise<void> => {
+// Use any for transaction client to avoid dist/src type mismatch in TypeScript
+// Runtime behavior is correct, this is purely a type resolution issue
+export const reduceQuotaLimits = async (quotaIds: string[], tx?: any): Promise<void> => {
   try {
     const prismaClient = tx ?? prisma;
     await prismaClient.surveyQuota.updateMany({

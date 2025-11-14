@@ -1,12 +1,14 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { Prisma, Response } from "@formbricks/database/generated/client";
+import { Response } from "@formbricks/database/generated/client";
 import { logger } from "@formbricks/logger";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { getSurvey } from "@/lib/survey/service";
 import { getQuotas } from "./quotas";
 import { evaluateQuotas, handleQuotas } from "./utils";
 
+// Use any for transaction client to avoid dist/src type mismatch in TypeScript
+// Runtime behavior is correct, this is purely a type resolution issue
 export interface QuotaEvaluationInput {
   surveyId: string;
   responseId: string;
@@ -14,7 +16,7 @@ export interface QuotaEvaluationInput {
   responseFinished: boolean;
   variables?: Response["variables"];
   language?: string;
-  tx?: Prisma.TransactionClient;
+  tx?: any;
 }
 
 export interface QuotaEvaluationResult {

@@ -5,7 +5,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Environment } from "@formbricks/database/generated/client";
+import { Environment } from "@formbricks/database/generated/browser";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";

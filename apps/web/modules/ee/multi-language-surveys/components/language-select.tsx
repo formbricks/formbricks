@@ -3,7 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Language } from "@formbricks/database/generated/client";
+import { Language } from "@formbricks/database/generated/browser";
 import { TIso639Language, iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";

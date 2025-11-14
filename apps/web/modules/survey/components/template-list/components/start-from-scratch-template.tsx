@@ -2,7 +2,7 @@
 
 import { PlusCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Project } from "@formbricks/database/generated/client";
+import { Project } from "@formbricks/database/generated/browser";
 import { TTemplate } from "@formbricks/types/templates";
 import { customSurveyTemplate } from "@/app/lib/templates";
 import { cn } from "@/lib/cn";

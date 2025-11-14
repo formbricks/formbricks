@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { Project } from "@formbricks/database/generated/client";
+import { Project } from "@formbricks/database/generated/browser";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";

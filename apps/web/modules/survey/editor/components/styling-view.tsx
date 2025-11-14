@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Project } from "@formbricks/database/generated/client";
+import { Project } from "@formbricks/database/generated/browser";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { defaultStyling } from "@/lib/styling/constants";

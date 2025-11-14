@@ -19,7 +19,7 @@ const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: true,
-  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
+  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty", "@prisma/client"],
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
   },
@@ -113,6 +113,15 @@ const nextConfig = {
     config.resolve.fallback = {
       http: false, // Prevents Next.js from trying to bundle 'http'
       https: false,
+      // Externalize Node.js built-in modules used by Prisma
+      "node:async_hooks": false,
+      "node:buffer": false,
+      "node:crypto": false,
+      "node:events": false,
+      "node:fs": false,
+      "node:path": false,
+      "node:stream": false,
+      "node:util": false,
     };
     return config;
   },

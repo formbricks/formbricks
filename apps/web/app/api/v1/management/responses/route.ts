@@ -49,7 +49,11 @@ export const GET = withV1ApiWrapper({
         const environmentIds = authentication.environmentPermissions.map(
           (permission) => permission.environmentId
         );
-        const environmentResponses = await getResponsesByEnvironmentIds(environmentIds, limit, offset);
+        const environmentResponses = await getResponsesByEnvironmentIds(
+          environmentIds as string[],
+          limit,
+          offset
+        );
         allResponses.push(...environmentResponses);
       }
       return {

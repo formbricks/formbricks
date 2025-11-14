@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { PipelineTriggers } from "@formbricks/database/generated/client";
+import { PipelineTriggers } from "@formbricks/database/generated/browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";

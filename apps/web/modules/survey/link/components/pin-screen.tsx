@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Project, Response } from "@formbricks/database/generated/client";
+import { Project, Response } from "@formbricks/database/generated/browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";

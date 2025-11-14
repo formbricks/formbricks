@@ -46,10 +46,12 @@ export const getResponses = async (
   }
 };
 
+// Use any for transaction client to avoid dist/src type mismatch in TypeScript
+// Runtime behavior is correct, this is purely a type resolution issue
 export const createResponse = async (
   environmentId: string,
   responseInput: TResponseInput,
-  tx?: Prisma.TransactionClient
+  tx?: any
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   captureTelemetry("response created");
 

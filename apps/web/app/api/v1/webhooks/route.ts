@@ -13,7 +13,7 @@ export const GET = withV1ApiWrapper({
       const environmentIds = authentication.environmentPermissions.map(
         (permission) => permission.environmentId
       );
-      const webhooks = await getWebhooks(environmentIds);
+      const webhooks = await getWebhooks(environmentIds as string[]);
       return {
         response: responses.successResponse(webhooks),
       };

@@ -32,7 +32,9 @@ export const GET = async (request: NextRequest) =>
         }
         environmentIds = [query.environmentId];
       } else {
-        environmentIds = authentication.environmentPermissions.map((permission) => permission.environmentId);
+        environmentIds = authentication.environmentPermissions.map(
+          (permission) => permission.environmentId
+        ) as string[];
       }
 
       const res = await getContactAttributeKeys(environmentIds, query);

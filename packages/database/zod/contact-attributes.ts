@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
-import type { ContactAttribute } from "@formbricks/database/generated/client";
+import type { ContactAttribute } from "@formbricks/database/generated/browser";
 
 extendZodWithOpenApi(z);
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Language, Project } from "@formbricks/database/generated/client";
+import { Language, Project } from "@formbricks/database/generated/browser";
 import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
 export const ZSurvey = z.object({

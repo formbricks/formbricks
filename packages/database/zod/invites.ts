@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type Invite } from "@formbricks/database/generated/client";
+import { type Invite } from "@formbricks/database/generated/browser";
 
 export const ZInvite = z.object({
   id: z.string(),

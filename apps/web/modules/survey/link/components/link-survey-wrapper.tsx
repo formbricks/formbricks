@@ -1,5 +1,5 @@
 import { type JSX, useState } from "react";
-import { Project, SurveyType } from "@formbricks/database/generated/client";
+import { Project, SurveyType } from "@formbricks/database/generated/browser";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";

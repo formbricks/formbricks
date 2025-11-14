@@ -2,7 +2,7 @@
 
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { Webhook } from "@formbricks/database/generated/client";
+import { Webhook } from "@formbricks/database/generated/browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";

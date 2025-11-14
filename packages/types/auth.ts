@@ -1,5 +1,5 @@
-import { ApiKeyPermission, EnvironmentType } from "@prisma/client";
 import { z } from "zod";
+import { ApiKeyPermission, EnvironmentType } from "@formbricks/database/generated/browser";
 import { ZOrganizationAccess } from "./api-key";
 import { ZUser } from "./user";
 

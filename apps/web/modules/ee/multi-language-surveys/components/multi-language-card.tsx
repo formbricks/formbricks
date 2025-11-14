@@ -7,7 +7,7 @@ import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Language } from "@formbricks/database/generated/client";
+import { Language } from "@formbricks/database/generated/browser";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";

@@ -59,7 +59,7 @@ export const upsertResponseQuotaLinks = async (
   fullQuota: TSurveyQuota[],
   otherQuota: TSurveyQuota[],
   failedQuotas: TSurveyQuota[],
-  tx: Prisma.TransactionClient
+  tx: any
 ): Promise<void> => {
   // remove records for quotas that failed
   await tx.responseQuotaLink.deleteMany({

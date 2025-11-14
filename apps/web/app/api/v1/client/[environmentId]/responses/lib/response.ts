@@ -78,10 +78,7 @@ export const createResponseWithQuotaEvaluation = async (
   return txResponse;
 };
 
-export const createResponse = async (
-  responseInput: TResponseInput,
-  tx: Prisma.TransactionClient
-): Promise<TResponse> => {
+export const createResponse = async (responseInput: TResponseInput, tx: any): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 

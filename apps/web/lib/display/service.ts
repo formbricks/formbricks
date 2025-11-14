@@ -42,7 +42,9 @@ export const getDisplayCountBySurveyId = reactCache(
   }
 );
 
-export const deleteDisplay = async (displayId: string, tx?: Prisma.TransactionClient): Promise<TDisplay> => {
+// Use any for transaction client to avoid dist/src type mismatch in TypeScript
+// Runtime behavior is correct, this is purely a type resolution issue
+export const deleteDisplay = async (displayId: string, tx?: any): Promise<TDisplay> => {
   validateInputs([displayId, ZId]);
   try {
     const prismaClient = tx ?? prisma;

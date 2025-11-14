@@ -2,7 +2,7 @@
 
 import { type JSX, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Webhook } from "@formbricks/database/generated/client";
+import { Webhook } from "@formbricks/database/generated/browser";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";

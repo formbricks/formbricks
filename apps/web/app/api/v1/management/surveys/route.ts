@@ -27,7 +27,7 @@ export const GET = withV1ApiWrapper({
       const environmentIds = authentication.environmentPermissions.map(
         (permission) => permission.environmentId
       );
-      const surveys = await getSurveys(environmentIds, limit, offset);
+      const surveys = await getSurveys(environmentIds as string[], limit, offset);
 
       return {
         response: responses.successResponse(surveys),

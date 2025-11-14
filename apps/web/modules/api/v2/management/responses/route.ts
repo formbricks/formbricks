@@ -35,7 +35,7 @@ export const GET = async (request: NextRequest) =>
       );
 
       const environmentResponses: Response[] = [];
-      const res = await getResponses(environmentIds, query);
+      const res = await getResponses(environmentIds as string[], query);
 
       if (!res.ok) {
         return handleApiError(request, res.error);

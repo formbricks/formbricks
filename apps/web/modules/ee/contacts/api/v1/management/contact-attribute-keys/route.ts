@@ -25,7 +25,7 @@ export const GET = withV1ApiWrapper({
         (permission) => permission.environmentId
       );
 
-      const contactAttributeKeys = await getContactAttributeKeys(environmentIds);
+      const contactAttributeKeys = await getContactAttributeKeys(environmentIds as string[]);
 
       return {
         response: responses.successResponse(contactAttributeKeys),

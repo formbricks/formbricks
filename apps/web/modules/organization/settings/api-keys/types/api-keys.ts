@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { ApiKey, ApiKeyPermission } from "@formbricks/database/generated/client";
+import { ApiKey } from "@formbricks/database/generated/browser";
+import { ApiKeyPermission } from "@formbricks/database/generated/enums";
 import { ZApiKey, ZApiKeyEnvironment } from "@formbricks/database/zod/api-keys";
 import { ZOrganizationAccess } from "@formbricks/types/api-key";
 import { ZEnvironment } from "@formbricks/types/environment";

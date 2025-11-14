@@ -88,10 +88,9 @@ export const createResponseWithQuotaEvaluation = async (
   return txResponse;
 };
 
-export const createResponse = async (
-  responseInput: TResponseInput,
-  tx?: Prisma.TransactionClient
-): Promise<TResponse> => {
+// Use any for transaction client to avoid dist/src type mismatch in TypeScript
+// Runtime behavior is correct, this is purely a type resolution issue
+export const createResponse = async (responseInput: TResponseInput, tx?: any): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 

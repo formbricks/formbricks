@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
-import { OrganizationRole, User } from "@formbricks/database/generated/client";
+import { OrganizationRole, User } from "@formbricks/database/generated/browser";
 import { ZUserEmail, ZUserName } from "../../types/user";
 
 extendZodWithOpenApi(z);

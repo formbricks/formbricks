@@ -25,6 +25,10 @@ export type TApiV1Authentication = TAuthenticationApiKey | Session | null;
 export type TApiKeyAuthentication = TAuthenticationApiKey | null;
 export type TSessionAuthentication = Session | null;
 
+// Helper type to properly narrow NonNullable<TApiKeyAuthentication> to TAuthenticationApiKey
+// This ensures TypeScript properly infers nested properties like environmentPermissions
+export type TNonNullableApiKeyAuthentication = NonNullable<TApiKeyAuthentication> & TAuthenticationApiKey;
+
 // Interface for handler function parameters
 export interface THandlerParams<TProps = unknown> {
   req?: NextRequest;
@@ -272,6 +276,15 @@ const getRouteType = (
  *
  */
 export const withV1ApiWrapper: {
+  // More specific overload for TAuthenticationApiKey (non-null) - must come first for proper type inference
+  <TResult extends { response: Response }, TProps = unknown>(
+    params: TWithV1ApiWrapperParams<TResult, TProps> & {
+      handler: (
+        params: THandlerParams<TProps> & { authentication: TAuthenticationApiKey }
+      ) => Promise<TResult>;
+    }
+  ): (req: NextRequest, props: TProps) => Promise<Response>;
+
   <TResult extends { response: Response }, TProps = unknown>(
     params: TWithV1ApiWrapperParams<TResult, TProps> & {
       handler: (

@@ -4,7 +4,7 @@ import {
   type ApiKeyEnvironment,
   ApiKeyPermission,
   EnvironmentType,
-} from "@formbricks/database/generated/client";
+} from "@formbricks/database/generated/browser";
 import { ZOrganizationAccess } from "../../types/api-key";
 
 export const ZApiKeyPermission = z.nativeEnum(ApiKeyPermission);
