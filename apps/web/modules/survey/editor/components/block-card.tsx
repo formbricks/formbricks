@@ -16,11 +16,11 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AddQuestionToBlockButton } from "@/modules/survey/editor/components/add-question-to-block-button";
 import { AddressQuestionForm } from "@/modules/survey/editor/components/address-question-form";
 import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-settings";
 import { BlockMenu } from "@/modules/survey/editor/components/block-menu";
+import { BlockSettings } from "@/modules/survey/editor/components/block-settings";
 import { CalQuestionForm } from "@/modules/survey/editor/components/cal-question-form";
 import { ConsentQuestionForm } from "@/modules/survey/editor/components/consent-question-form";
 import { ContactInfoQuestionForm } from "@/modules/survey/editor/components/contact-info-question-form";
@@ -130,25 +130,6 @@ export const BlockCard = ({
 
   const [openAdvanced, setOpenAdvanced] = useState(blockLogic.length > 0);
   const [parent] = useAutoAnimate();
-
-  // Get button labels from the block
-  const blockButtonLabel = block.buttonLabel;
-  const blockBackButtonLabel = block.backButtonLabel;
-
-  const updateEmptyButtonLabels = (
-    labelKey: "buttonLabel" | "backButtonLabel",
-    labelValue: TI18nString,
-    skipBlockIndex: number
-  ) => {
-    // Update button labels for all blocks except the one at skipBlockIndex
-    localSurvey.blocks.forEach((block, index) => {
-      if (index === skipBlockIndex) return;
-      const currentLabel = block[labelKey];
-      if (!currentLabel || currentLabel[selectedLanguageCode]?.trim() === "") {
-        updateBlockButtonLabel(index, labelKey, labelValue);
-      }
-    });
-  };
 
   const style = {
     transition: transition ?? "transform 100ms ease",
@@ -266,14 +247,7 @@ export const BlockCard = ({
           };
 
           const handleRequiredToggle = () => {
-            // Fix for NPS and Rating element having missing translations when buttonLabel is not removed
-            if (!element.required && (element.type === "nps" || element.type === "rating")) {
-              // Remove buttonLabel from the block when making NPS/Rating required
-              updateBlockButtonLabel(blockIdx, "buttonLabel", undefined);
-              updateQuestion(questionIdx, { required: true });
-            } else {
-              updateQuestion(questionIdx, { required: !element.required });
-            }
+            updateQuestion(questionIdx, { required: !element.required });
           };
 
           return (
@@ -422,14 +396,12 @@ export const BlockCard = ({
                       question={element}
                       questionIdx={questionIdx}
                       updateQuestion={updateQuestion}
-                      lastQuestion={lastQuestion}
                       selectedLanguageCode={selectedLanguageCode}
                       setSelectedLanguageCode={setSelectedLanguageCode}
                       isInvalid={isInvalid}
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
                       isExternalUrlsAllowed={isExternalUrlsAllowed}
-                      buttonLabel={blockButtonLabel}
                     />
                   ) : element.type === TSurveyElementTypeEnum.CTA ? (
                     <CTAQuestionForm
@@ -600,41 +572,7 @@ export const BlockCard = ({
                         element.type !== TSurveyElementTypeEnum.Rating &&
                         element.type !== TSurveyElementTypeEnum.CTA ? (
                           <div className="mt-2 flex space-x-2">
-                            {questionIdx !== 0 && (
-                              <QuestionFormInput
-                                id="backButtonLabel"
-                                value={blockBackButtonLabel}
-                                label={t("environments.surveys.edit.back_button_label")}
-                                localSurvey={localSurvey}
-                                questionIdx={questionIdx}
-                                maxLength={48}
-                                placeholder={t("common.back")}
-                                isInvalid={isInvalid}
-                                updateQuestion={updateQuestion}
-                                selectedLanguageCode={selectedLanguageCode}
-                                setSelectedLanguageCode={setSelectedLanguageCode}
-                                locale={locale}
-                                onBlur={(e) => {
-                                  if (!blockBackButtonLabel) return;
-                                  let translatedBackButtonLabel = {
-                                    ...blockBackButtonLabel,
-                                    [selectedLanguageCode]: e.target.value,
-                                  };
-                                  updateBlockButtonLabel(
-                                    blockIdx,
-                                    "backButtonLabel",
-                                    translatedBackButtonLabel
-                                  );
-                                  updateEmptyButtonLabels(
-                                    "backButtonLabel",
-                                    translatedBackButtonLabel,
-                                    blockIdx
-                                  );
-                                }}
-                                isStorageConfigured={isStorageConfigured}
-                              />
-                            )}
-                            <div className="w-full">
+                            {/* <div className="w-full">
                               <QuestionFormInput
                                 id="buttonLabel"
                                 value={blockButtonLabel}
@@ -666,11 +604,11 @@ export const BlockCard = ({
                                 }}
                                 locale={locale}
                                 isStorageConfigured={isStorageConfigured}
-                              />
-                            </div>
+                              /> */}
+                            {/* </div> */}
                           </div>
                         ) : null}
-                        {(element.type === TSurveyElementTypeEnum.Rating ||
+                        {/* {(element.type === TSurveyElementTypeEnum.Rating ||
                           element.type === TSurveyElementTypeEnum.NPS) &&
                           questionIdx !== 0 && (
                             <div className="mt-4">
@@ -707,7 +645,7 @@ export const BlockCard = ({
                                 isStorageConfigured={isStorageConfigured}
                               />
                             </div>
-                          )}
+                          )} */}
 
                         <AdvancedSettings
                           // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the question type to the respective element type in all the question forms.
@@ -764,9 +702,24 @@ export const BlockCard = ({
           );
         })}
 
+        {/* Block Settings */}
+        <div className="px-4 pb-4">
+          <BlockSettings
+            localSurvey={localSurvey}
+            block={block}
+            blockIndex={blockIdx}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            updateBlockButtonLabel={updateBlockButtonLabel}
+            locale={locale}
+            isStorageConfigured={isStorageConfigured}
+            isLastBlock={blockIdx === totalBlocks - 1}
+          />
+        </div>
+
         {/* Add Question to Block button */}
 
-        <div className="p-4">
+        <div className="p-4 pt-0">
           <AddQuestionToBlockButton
             localSurvey={localSurvey}
             setLocalSurvey={setLocalSurvey}
