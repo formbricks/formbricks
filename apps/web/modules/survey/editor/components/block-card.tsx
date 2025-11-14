@@ -76,7 +76,7 @@ interface BlockCardProps {
   duplicateBlock: (blockId: string) => void;
   deleteBlock: (blockId: string) => void;
   moveBlock: (blockId: string, direction: "up" | "down") => void;
-  addElementToBlock: (element: TSurveyElement, questionIdx: number) => void;
+  addElementToBlock: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   totalBlocks: number;
 }
 
@@ -339,6 +339,8 @@ export const BlockCard = ({
                         survey={localSurvey}
                         cardIdx={questionIdx}
                         lastCard={lastQuestion && elementIndex === lastElementIndex}
+                        blockId={block.id}
+                        elementIdx={elementIndex}
                         duplicateCard={duplicateQuestion}
                         deleteCard={deleteQuestion}
                         moveCard={moveQuestion}
@@ -348,7 +350,6 @@ export const BlockCard = ({
                           buttonLabel: block.buttonLabel,
                           backButtonLabel: block.backButtonLabel,
                         }}
-                        blockId={block.id}
                         project={project}
                         updateCard={updateQuestion}
                         addCard={addQuestion}
@@ -443,8 +444,6 @@ export const BlockCard = ({
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
                       isExternalUrlsAllowed={isExternalUrlsAllowed}
-                      buttonLabel={blockButtonLabel}
-                      backButtonLabel={blockBackButtonLabel}
                     />
                   ) : element.type === TSurveyElementTypeEnum.Rating ? (
                     <RatingQuestionForm

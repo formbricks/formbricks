@@ -156,9 +156,8 @@ export type TSurveyNPSElement = z.infer<typeof ZSurveyNPSElement>;
 // CTA Element
 export const ZSurveyCTAElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.CTA),
-  buttonUrl: z.string().optional(),
-  buttonExternal: z.boolean(),
-  dismissButtonLabel: ZI18nString.optional(),
+  buttonUrl: ZUrl,
+  ctaButtonLabel: ZI18nString,
 });
 
 export type TSurveyCTAElement = z.infer<typeof ZSurveyCTAElement>;

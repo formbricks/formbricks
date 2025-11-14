@@ -555,59 +555,29 @@ export const QuestionsView = ({
     internalQuestionIdMap[question.id] = createId();
   };
 
-  const _addElementToBlock = (question: TSurveyElement, questionIdx: number) => {
+  const _addElementToBlock = (question: TSurveyElement, blockId: string, afterElementIdx: number) => {
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
     const updatedQuestion = addMultiLanguageLabels(question, languageSymbols);
 
-    // Find which block this question belongs to
-    const currentQuestion = questions[questionIdx];
-    if (!currentQuestion) return;
-
-    const { blockId, blockIndex } = findElementLocation(localSurvey, currentQuestion.id);
-    if (!blockId || blockIndex === -1) return;
-
-    const block = localSurvey.blocks[blockIndex];
-    const elementIndexInBlock = block.elements.findIndex((el) => el.id === currentQuestion.id);
-
-    // Add the new element after the current element in the same block
-    const result = addElementToBlock(localSurvey, blockId, {
-      ...updatedQuestion,
-      isDraft: true,
-    });
+    const targetIndex = afterElementIdx + 1;
+    const result = addElementToBlock(
+      localSurvey,
+      blockId,
+      {
+        ...updatedQuestion,
+        isDraft: true,
+      },
+      targetIndex
+    );
 
     if (!result.ok) {
       toast.error(result.error.message);
       return;
     }
 
-    // Now move the newly added element to the correct position (after the current element)
-    const newElementId = updatedQuestion.id;
-    const newBlock = result.data.blocks[blockIndex];
-    const newElementIndex = newBlock.elements.findIndex((el) => el.id === newElementId);
-
-    // If we need to move the element (it was added at the end but should be after current element)
-    let finalSurvey = result.data;
-    if (newElementIndex !== elementIndexInBlock + 1) {
-      // Move the element to the correct position
-      const reorderedElements = [...newBlock.elements];
-      const [movedElement] = reorderedElements.splice(newElementIndex, 1);
-      reorderedElements.splice(elementIndexInBlock + 1, 0, movedElement);
-
-      const updatedBlocks = [...finalSurvey.blocks];
-      updatedBlocks[blockIndex] = {
-        ...newBlock,
-        elements: reorderedElements,
-      };
-
-      finalSurvey = {
-        ...finalSurvey,
-        blocks: updatedBlocks,
-      };
-    }
-
-    setLocalSurvey(finalSurvey);
-    setActiveQuestionId(newElementId);
-    internalQuestionIdMap[newElementId] = createId();
+    setLocalSurvey(result.data);
+    setActiveQuestionId(updatedQuestion.id);
+    internalQuestionIdMap[updatedQuestion.id] = createId();
   };
 
   const addEndingCard = (index: number) => {

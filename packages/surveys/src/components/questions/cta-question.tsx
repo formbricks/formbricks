@@ -1,53 +1,33 @@
 import { useState } from "preact/hooks";
-import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { LinkIcon } from "@/components/icons/link-icon";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface CTAQuestionProps {
   question: TSurveyCTAElement;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
   value: string;
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
-  isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
-  fullSizeCards: boolean;
 }
 
 export function CTAQuestion({
   question,
-  buttonLabel,
-  backButtonLabel,
-  onSubmit,
   onChange,
-  onBack,
-  isFirstQuestion,
-  isLastQuestion,
   languageCode,
   ttc,
   setTtc,
-  autoFocusEnabled,
   currentQuestionId,
-  isBackButtonHidden,
   onOpenExternalURL,
-  fullSizeCards,
 }: Readonly<CTAQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -56,74 +36,41 @@ export function CTAQuestion({
 
   return (
     <div key={question.id}>
-      <ScrollableContainer fullSizeCards={fullSizeCards}>
-        <div>
-          {isMediaAvailable ? (
-            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-          ) : null}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
-          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-            <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
-              <SubmitButton
-                buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
-                isLastQuestion={isLastQuestion}
-                focus={isCurrent ? autoFocusEnabled : false}
-                tabIndex={isCurrent ? 0 : -1}
-                onClick={() => {
-                  if (question.buttonExternal && question.buttonUrl) {
-                    if (onOpenExternalURL) {
-                      onOpenExternalURL(question.buttonUrl);
-                    } else {
-                      window.open(question.buttonUrl, "_blank")?.focus();
-                    }
-                  }
-                  const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                  setTtc(updatedTtcObj);
-                  onSubmit({ [question.id]: "clicked" }, updatedTtcObj);
-                  onChange({ [question.id]: "clicked" });
-                }}
-                type="button"
-              />
-              {!question.required && (
-                <button
-                  dir="auto"
-                  type="button"
-                  tabIndex={isCurrent ? 0 : -1}
-                  onClick={() => {
-                    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                    setTtc(updatedTtcObj);
-                    onSubmit({ [question.id]: "" }, updatedTtcObj);
-                    onChange({ [question.id]: "" });
-                  }}
-                  className="fb-text-heading focus:fb-ring-focus fb-mr-4 fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
-                  {getLocalizedValue(question.dismissButtonLabel, languageCode) || "Skip"}
-                </button>
-              )}
-            </div>
-            {!isFirstQuestion && !isBackButtonHidden && (
-              <BackButton
-                tabIndex={isCurrent ? 0 : -1}
-                backButtonLabel={
-                  backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined
+      <div>
+        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
+            <button
+              dir="auto"
+              type="button"
+              tabIndex={isCurrent ? 0 : -1}
+              onClick={() => {
+                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                setTtc(updatedTtcObj);
+                onChange({ [question.id]: "clicked" });
+
+                if (onOpenExternalURL) {
+                  onOpenExternalURL(question.buttonUrl);
+                } else {
+                  window.open(question.buttonUrl, "_blank")?.focus();
                 }
-                onClick={() => {
-                  const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                  setTtc(updatedTtcObj);
-                  onBack();
-                }}
-              />
-            )}
+              }}
+              className="fb-text-heading focus:fb-ring-focus fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
+              {getLocalizedValue(question.ctaButtonLabel, languageCode)}
+              <LinkIcon className="fb-ml-2 fb-h-4 fb-w-4" />
+            </button>
           </div>
         </div>
-      </ScrollableContainer>
+      </div>
     </div>
   );
 }

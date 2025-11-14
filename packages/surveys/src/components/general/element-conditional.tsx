@@ -25,7 +25,6 @@ interface ElementConditionalProps {
   element: TSurveyElement;
   value: TResponseDataValue;
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   isFirstElement: boolean;
@@ -41,7 +40,6 @@ interface ElementConditionalProps {
   isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards: boolean;
   formRef?: (ref: HTMLFormElement | null) => void; // Callback to expose the form element
 }
 
@@ -49,10 +47,6 @@ export function ElementConditional({
   element,
   value,
   onChange,
-  onSubmit,
-  onBack,
-  isFirstElement,
-  isLastElement,
   languageCode,
   prefilledElementValue,
   skipPrefilled,
@@ -62,10 +56,8 @@ export function ElementConditional({
   onFileUpload,
   autoFocusEnabled,
   currentElementId,
-  isBackButtonHidden,
   onOpenExternalURL,
   dir,
-  fullSizeCards,
   formRef,
 }: ElementConditionalProps) {
   // Ref to the container div, used to find and expose the form element inside
@@ -100,13 +92,11 @@ export function ElementConditional({
 
   useEffect(() => {
     if (value === undefined && (prefilledElementValue || prefilledElementValue === "")) {
-      if (skipPrefilled) {
-        onSubmit({ [element.id]: prefilledElementValue }, { [element.id]: 0 });
-      } else {
+      if (!skipPrefilled) {
         onChange({ [element.id]: prefilledElementValue });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- we want to run this only once when the question renders for the first time
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- we want to run this only once when the element renders for the first time
   }, []);
 
   return (
@@ -123,7 +113,6 @@ export function ElementConditional({
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
           dir={dir}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ? (
         <MultipleChoiceSingleQuestion
@@ -137,7 +126,6 @@ export function ElementConditional({
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
           dir={dir}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ? (
         <MultipleChoiceMultiQuestion
@@ -151,7 +139,6 @@ export function ElementConditional({
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
           dir={dir}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.NPS ? (
         <NPSQuestion
@@ -165,7 +152,6 @@ export function ElementConditional({
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
           dir={dir}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.CTA ? (
         <CTAQuestion
@@ -173,18 +159,12 @@ export function ElementConditional({
           question={element}
           value={typeof value === "string" ? value : ""}
           onChange={onChange}
-          onSubmit={onSubmit}
-          onBack={onBack}
-          isFirstQuestion={isFirstElement}
-          isLastQuestion={isLastElement}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
-          isBackButtonHidden={isBackButtonHidden}
           onOpenExternalURL={onOpenExternalURL}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.Rating ? (
         <RatingQuestion
@@ -198,7 +178,6 @@ export function ElementConditional({
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
           dir={dir}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.Consent ? (
         <ConsentQuestion
@@ -212,7 +191,6 @@ export function ElementConditional({
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
           dir={dir}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.Date ? (
         <DateQuestion
@@ -225,7 +203,6 @@ export function ElementConditional({
           setTtc={setTtc}
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.PictureSelection ? (
         <PictureSelectionQuestion
@@ -239,7 +216,6 @@ export function ElementConditional({
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
           dir={dir}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.FileUpload ? (
         <FileUploadQuestion
@@ -254,7 +230,6 @@ export function ElementConditional({
           setTtc={setTtc}
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.Cal ? (
         <CalQuestion
@@ -262,12 +237,10 @@ export function ElementConditional({
           question={element}
           value={typeof value === "string" ? value : ""}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
           currentQuestionId={currentElementId}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.Matrix ? (
         <MatrixQuestion
@@ -278,7 +251,6 @@ export function ElementConditional({
           ttc={ttc}
           setTtc={setTtc}
           currentQuestionId={currentElementId}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.Address ? (
         <AddressQuestion
@@ -291,7 +263,6 @@ export function ElementConditional({
           currentQuestionId={currentElementId}
           autoFocusEnabled={autoFocusEnabled}
           dir={dir}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.Ranking ? (
         <RankingQuestion
@@ -303,7 +274,6 @@ export function ElementConditional({
           setTtc={setTtc}
           autoFocusEnabled={autoFocusEnabled}
           currentQuestionId={currentElementId}
-          fullSizeCards={fullSizeCards}
         />
       ) : element.type === TSurveyElementTypeEnum.ContactInfo ? (
         <ContactInfoQuestion
@@ -316,7 +286,6 @@ export function ElementConditional({
           currentQuestionId={currentElementId}
           autoFocusEnabled={autoFocusEnabled}
           dir={dir}
-          fullSizeCards={fullSizeCards}
         />
       ) : null}
     </div>

@@ -1,4 +1,4 @@
-import { useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -63,8 +63,6 @@ export function BlockConditional({
   // Refs to store form elements for each element so we can trigger their validation
   const elementFormRefs = useRef<Map<string, HTMLFormElement>>(new Map());
 
-  const hasCTAElement = block.elements.some((element) => element.type === TSurveyElementTypeEnum.CTA);
-
   // Handle change for an individual element
   const handleElementChange = (elementId: string, responseData: TResponseData) => {
     // If user moved to a different element, we should track it
@@ -73,6 +71,37 @@ export function BlockConditional({
     }
     onChange(responseData);
   };
+
+  // Handle skipPrefilled at block level
+  useEffect(() => {
+    if (skipPrefilled && prefilledResponseData) {
+      // Check if ALL elements in this block have prefilled values
+      const allElementsPrefilled = block.elements.every(
+        (element) => prefilledResponseData[element.id] !== undefined
+      );
+
+      if (allElementsPrefilled) {
+        // Auto-populate all prefilled values
+        const prefilledData: TResponseData = {};
+        const prefilledTtc: TResponseTtc = {};
+
+        block.elements.forEach((element) => {
+          prefilledData[element.id] = prefilledResponseData[element.id];
+          prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
+        });
+
+        // Update state with prefilled data
+        onChange(prefilledData);
+        setTtc({ ...ttc, ...prefilledTtc });
+
+        // Auto-submit the entire block (skip to next)
+        setTimeout(() => {
+          onSubmit(prefilledData, prefilledTtc);
+        }, 0);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run once when block mounts
+  }, []);
 
   const handleBlockSubmit = (e?: Event) => {
     if (e) {
@@ -179,11 +208,10 @@ export function BlockConditional({
                     element={element}
                     value={value[element.id]}
                     onChange={(responseData) => handleElementChange(element.id, responseData)}
-                    onSubmit={hasCTAElement ? onSubmit : () => {}}
-                    onBack={hasCTAElement ? onBack : () => {}}
+                    onBack={() => {}}
                     onFileUpload={onFileUpload}
-                    isFirstElement={hasCTAElement ? isFirstBlock : false}
-                    isLastElement={hasCTAElement ? isLastBlock : false}
+                    isFirstElement={false}
+                    isLastElement={false}
                     languageCode={languageCode}
                     prefilledElementValue={prefilledResponseData?.[element.id]}
                     skipPrefilled={skipPrefilled}
@@ -192,10 +220,9 @@ export function BlockConditional({
                     surveyId={surveyId}
                     autoFocusEnabled={autoFocusEnabled && isFirstElement}
                     currentElementId={currentElementId}
-                    isBackButtonHidden={hasCTAElement ? isBackButtonHidden : true}
+                    isBackButtonHidden={true}
                     onOpenExternalURL={onOpenExternalURL}
                     dir={dir}
-                    fullSizeCards={false} // Individual elements within block shouldn't be full size
                     formRef={(ref) => {
                       if (ref) {
                         elementFormRefs.current.set(element.id, ref);
@@ -209,33 +236,31 @@ export function BlockConditional({
             })}
           </div>
 
-          {!hasCTAElement && (
-            <div
-              className={cn(
-                "fb-flex fb-w-full fb-flex-row-reverse fb-justify-between",
-                fullSizeCards ? "fb-sticky fb-bottom-0 fb-bg-white" : ""
-              )}>
-              <div>
-                <SubmitButton
-                  buttonLabel={
-                    block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined
-                  }
-                  isLastQuestion={isLastBlock}
-                  onClick={handleBlockSubmit}
-                  tabIndex={0}
-                />
-              </div>
-              {!isFirstBlock && !isBackButtonHidden && (
-                <BackButton
-                  backButtonLabel={
-                    block.backButtonLabel ? getLocalizedValue(block.backButtonLabel, languageCode) : undefined
-                  }
-                  onClick={onBack}
-                  tabIndex={0}
-                />
-              )}
+          <div
+            className={cn(
+              "fb-flex fb-w-full fb-flex-row-reverse fb-justify-between",
+              fullSizeCards ? "fb-sticky fb-bottom-0 fb-bg-white" : ""
+            )}>
+            <div>
+              <SubmitButton
+                buttonLabel={
+                  block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined
+                }
+                isLastQuestion={isLastBlock}
+                onClick={handleBlockSubmit}
+                tabIndex={0}
+              />
             </div>
-          )}
+            {!isFirstBlock && !isBackButtonHidden && (
+              <BackButton
+                backButtonLabel={
+                  block.backButtonLabel ? getLocalizedValue(block.backButtonLabel, languageCode) : undefined
+                }
+                onClick={onBack}
+                tabIndex={0}
+              />
+            )}
+          </div>
         </div>
       </ScrollableContainer>
     </div>

@@ -39,7 +39,7 @@ interface BlocksDroppableProps {
   duplicateBlock: (blockId: string) => void;
   deleteBlock: (blockId: string) => void;
   moveBlock: (blockId: string, direction: "up" | "down") => void;
-  addElementToBlock: (element: TSurveyElement, questionIdx: number) => void;
+  addElementToBlock: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
 }
 
 export const BlocksDroppable = ({

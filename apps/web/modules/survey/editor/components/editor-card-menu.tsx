@@ -4,7 +4,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { Project } from "@prisma/client";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
@@ -41,13 +40,14 @@ interface EditorCardMenuProps {
   cardIdx: number;
   lastCard: boolean;
   blockId?: string;
+  elementIdx?: number; // Index of element within its block
   duplicateCard: (cardIdx: number) => void;
   deleteCard: (cardIdx: number) => void;
   moveCard: (cardIdx: number, up: boolean) => void;
   card: EditorCardMenuSurveyElement | TSurveyEndScreenCard | TSurveyRedirectUrlCard;
   updateCard: (cardIdx: number, updatedAttributes: any) => void;
   addCard: (question: any, index?: number) => void;
-  addCardToBlock?: (element: TSurveyElement, questionIdx: number) => void;
+  addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   cardType: "question" | "ending";
   project?: Project;
   isCxMode?: boolean;
@@ -58,6 +58,7 @@ export const EditorCardMenu = ({
   cardIdx,
   lastCard,
   blockId,
+  elementIdx,
   duplicateCard,
   deleteCard,
   moveCard,
@@ -138,21 +139,10 @@ export const EditorCardMenu = ({
       required: true,
     };
 
-    // If addCardToBlock is available, we need to check for restricted types
-    if (addCardToBlock && blockId) {
-      // Check if the current question is CTA or Cal.com (these must be alone)
-      if (card.type === TSurveyElementTypeEnum.CTA || card.type === TSurveyElementTypeEnum.Cal) {
-        toast.error("CTA and Cal.com questions must be alone in a block");
-        return;
-      }
-
-      // Check if trying to add CTA or Cal.com to a block that already has questions
-      if (type === TSurveyElementTypeEnum.CTA || type === TSurveyElementTypeEnum.Cal) {
-        toast.error("CTA and Cal.com questions must be alone in a block");
-        return;
-      }
-
-      addCardToBlock(newQuestion as TSurveyElement, cardIdx + 1);
+    // Add question to block or as new block
+    if (addCardToBlock && blockId && elementIdx !== undefined) {
+      // Pass blockId and element index within the block
+      addCardToBlock(newQuestion as TSurveyElement, blockId, elementIdx);
     } else {
       addCard(newQuestion, cardIdx + 1);
     }

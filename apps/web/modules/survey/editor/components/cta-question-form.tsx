@@ -2,15 +2,12 @@
 
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { OptionsSwitch } from "@/modules/ui/components/options-switch";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface CTAQuestionFormProps {
   localSurvey: TSurvey;
@@ -24,8 +21,6 @@ interface CTAQuestionFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
 }
 
 export const CTAQuestionForm = ({
@@ -40,17 +35,8 @@ export const CTAQuestionForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
-  buttonLabel,
-  backButtonLabel,
 }: CTAQuestionFormProps): JSX.Element => {
   const { t } = useTranslation();
-  const options = [
-    {
-      value: "internal",
-      label: t("environments.surveys.edit.button_to_continue_in_survey"),
-    },
-    { value: "external", label: t("environments.surveys.edit.button_to_link_to_external_url") },
-  ];
 
   return (
     <form>
@@ -86,49 +72,12 @@ export const CTAQuestionForm = ({
           isExternalUrlsAllowed={isExternalUrlsAllowed}
         />
       </div>
-      <div className="mt-3">
-        <TooltipRenderer
-          shouldRender={!isExternalUrlsAllowed && !question.buttonExternal}
-          tooltipContent={t("environments.surveys.edit.external_urls_paywall_tooltip")}>
-          <OptionsSwitch
-            options={options.map((opt) => ({
-              ...opt,
-              disabled: opt.value === "external" && !isExternalUrlsAllowed && !question.buttonExternal,
-            }))}
-            currentOption={question.buttonExternal ? "external" : "internal"}
-            handleOptionChange={(e) => {
-              const canSwitchToExternal =
-                e !== "external" || isExternalUrlsAllowed || question.buttonExternal;
-              if (canSwitchToExternal) {
-                updateQuestion(questionIdx, { buttonExternal: e === "external" });
-              }
-            }}
-          />
-        </TooltipRenderer>
-      </div>
 
-      <div className="mt-2 flex justify-between gap-8">
-        <div className="flex w-full space-x-2">
-          {questionIdx !== 0 && (
-            <QuestionFormInput
-              id="backButtonLabel"
-              value={backButtonLabel}
-              label={t("environments.surveys.edit.back_button_label")}
-              localSurvey={localSurvey}
-              questionIdx={questionIdx}
-              maxLength={48}
-              placeholder={"Back"}
-              isInvalid={isInvalid}
-              updateQuestion={updateQuestion}
-              selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-              locale={locale}
-              isStorageConfigured={isStorageConfigured}
-            />
-          )}
+      <div className="mt-3 flex-1">
+        <div className="mt-2 flex flex-col gap-2">
           <QuestionFormInput
-            id="buttonLabel"
-            value={buttonLabel}
+            id="ctaButtonLabel"
+            value={question.ctaButtonLabel}
             label={t("environments.surveys.edit.next_button_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
@@ -141,13 +90,9 @@ export const CTAQuestionForm = ({
             locale={locale}
             isStorageConfigured={isStorageConfigured}
           />
-        </div>
-      </div>
 
-      {question.buttonExternal && (
-        <div className="mt-3 flex-1">
-          <Label htmlFor="buttonLabel">{t("environments.surveys.edit.button_url")}</Label>
-          <div className="mt-2">
+          <div>
+            <Label htmlFor="buttonLabel">{t("environments.surveys.edit.button_url")}</Label>
             <Input
               id="buttonUrl"
               name="buttonUrl"
@@ -157,26 +102,7 @@ export const CTAQuestionForm = ({
             />
           </div>
         </div>
-      )}
-
-      {!question.required && (
-        <div className="mt-2">
-          <QuestionFormInput
-            id="dismissButtonLabel"
-            value={question.dismissButtonLabel}
-            label={t("environments.surveys.edit.skip_button_label")}
-            localSurvey={localSurvey}
-            questionIdx={questionIdx}
-            placeholder={"skip"}
-            isInvalid={isInvalid}
-            updateQuestion={updateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-          />
-        </div>
-      )}
+      </div>
     </form>
   );
 };

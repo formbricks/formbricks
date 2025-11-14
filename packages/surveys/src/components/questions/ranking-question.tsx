@@ -7,10 +7,6 @@ import type { TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-// import {
-//   ScrollableContainer,
-//   type ScrollableContainerHandle,
-// } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
@@ -24,7 +20,6 @@ interface RankingQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
-  fullSizeCards: boolean;
 }
 
 export function RankingQuestion({
@@ -36,7 +31,6 @@ export function RankingQuestion({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
-  // fullSizeCards,
 }: Readonly<RankingQuestionProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
@@ -50,7 +44,6 @@ export function RankingQuestion({
   }, [question.shuffleOption, question.choices.length]);
 
   const [parent] = useAutoAnimate();
-  // const scrollableRef = useRef<ScrollableContainerHandle>(null);
 
   const [error, setError] = useState<string | null>(null);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -126,13 +119,6 @@ export function RankingQuestion({
 
     if (hasIncompleteRanking) {
       setError(t("errors.please_rank_all_items_before_submitting"));
-      // Scroll to bottom to show the error message
-      // setTimeout(() => {
-      //   if (scrollableRef.current?.scrollToBottom) {
-      //     scrollableRef.current.scrollToBottom();
-      //   }
-      // }, 100);
-
       return;
     }
 
@@ -141,11 +127,9 @@ export function RankingQuestion({
     onChange({
       [question.id]: sortedItems.map((item) => getLocalizedValue(item.label, languageCode)),
     });
-    // Note: onSubmit prop is () => {} in multi-element blocks, called by block instead
   };
 
   return (
-    // <ScrollableContainer ref={scrollableRef} fullSizeCards={fullSizeCards}>
     <form onSubmit={handleSubmit} className="fb-w-full">
       {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
       <Headline
@@ -279,6 +263,5 @@ export function RankingQuestion({
       </div>
       {error ? <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div> : null}
     </form>
-    // </ScrollableContainer>
   );
 }

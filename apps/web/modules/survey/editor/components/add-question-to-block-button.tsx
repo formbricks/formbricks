@@ -7,7 +7,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { addElementToBlock } from "@/modules/survey/editor/lib/blocks";
@@ -46,21 +45,7 @@ export const AddQuestionToBlockButton = ({
   const availableQuestionTypes = isCxMode ? getCXQuestionNameMap(t) : getQuestionNameMap(t);
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
 
-  // Check if block contains CTA or Cal.com question (these must be alone)
-  const hasRestrictedType = block.elements.some(
-    (element) => element.type === TSurveyElementTypeEnum.CTA || element.type === TSurveyElementTypeEnum.Cal
-  );
-
   const handleAddQuestion = (questionType: string) => {
-    // Check if adding this type would violate restrictions
-    if (questionType === TSurveyElementTypeEnum.CTA || questionType === TSurveyElementTypeEnum.Cal) {
-      if (block.elements.length > 0) {
-        toast.error("CTA and Cal.com questions must be alone in a block");
-        setOpen(false);
-        return;
-      }
-    }
-
     // Get language symbols and add multi-language support
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
 
@@ -90,8 +75,8 @@ export const AddQuestionToBlockButton = ({
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild disabled={hasRestrictedType}>
-        <Button variant="secondary" disabled={hasRestrictedType}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="secondary">
           <PlusIcon className="h-4 w-4" />
           <div>
             <p className="text-sm font-medium text-slate-900">Add question to block</p>
