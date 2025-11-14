@@ -7,7 +7,6 @@ import type { TSurveyOpenTextElement } from "@formbricks/types/surveys/elements"
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
@@ -22,7 +21,6 @@ interface OpenTextQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: string;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards: boolean;
 }
 
 export function OpenTextQuestion({
@@ -35,7 +33,6 @@ export function OpenTextQuestion({
   autoFocusEnabled,
   currentQuestionId,
   dir = "auto",
-  fullSizeCards,
 }: Readonly<OpenTextQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [currentLength, setCurrentLength] = useState(value.length || 0);
@@ -98,89 +95,85 @@ export function OpenTextQuestion({
   const computedDir = !value ? dir : "auto";
 
   return (
-    <ScrollableContainer fullSizeCards={fullSizeCards}>
-      <form key={question.id} onSubmit={handleOnSubmit} className="fb-w-full">
-        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <Subheader
-          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-          questionId={question.id}
-        />
-        <div className="fb-mt-4">
-          {question.longAnswer === false ? (
-            <input
-              ref={inputRef as RefObject<HTMLInputElement>}
-              autoFocus={isCurrent ? autoFocusEnabled : undefined}
-              tabIndex={isCurrent ? 0 : -1}
-              name={question.id}
-              id={question.id}
-              placeholder={getLocalizedValue(question.placeholder, languageCode)}
-              dir={computedDir}
-              step="any"
-              required={question.required}
-              value={value ? value : ""}
-              type={question.inputType}
-              onInput={(e) => {
-                const input = e.currentTarget;
-                handleInputChange(input.value);
-                input.setCustomValidity("");
-              }}
-              className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
-              pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
-              title={
-                question.inputType === "phone"
-                  ? t("errors.please_enter_a_valid_phone_number")
-                  : question.inputType === "email"
-                    ? t("errors.please_enter_a_valid_email_address")
-                    : question.inputType === "url"
-                      ? t("errors.please_enter_a_valid_url")
-                      : undefined
-              }
-              minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
-              maxLength={
-                question.inputType === "text"
-                  ? question.charLimit?.max
-                  : question.inputType === "phone"
-                    ? 30
+    <form key={question.id} onSubmit={handleOnSubmit} className="fb-w-full">
+      {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />
+      <div className="fb-mt-4">
+        {question.longAnswer === false ? (
+          <input
+            ref={inputRef as RefObject<HTMLInputElement>}
+            autoFocus={isCurrent ? autoFocusEnabled : undefined}
+            tabIndex={isCurrent ? 0 : -1}
+            name={question.id}
+            id={question.id}
+            placeholder={getLocalizedValue(question.placeholder, languageCode)}
+            dir={computedDir}
+            step="any"
+            required={question.required}
+            value={value ? value : ""}
+            type={question.inputType}
+            onInput={(e) => {
+              const input = e.currentTarget;
+              handleInputChange(input.value);
+              input.setCustomValidity("");
+            }}
+            className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
+            pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
+            title={
+              question.inputType === "phone"
+                ? t("errors.please_enter_a_valid_phone_number")
+                : question.inputType === "email"
+                  ? t("errors.please_enter_a_valid_email_address")
+                  : question.inputType === "url"
+                    ? t("errors.please_enter_a_valid_url")
                     : undefined
-              }
-            />
-          ) : (
-            <textarea
-              ref={inputRef as RefObject<HTMLTextAreaElement>}
-              rows={3}
-              autoFocus={isCurrent ? autoFocusEnabled : undefined}
-              name={question.id}
-              tabIndex={isCurrent ? 0 : -1}
-              aria-label="textarea"
-              id={question.id}
-              placeholder={getLocalizedValue(question.placeholder, languageCode, true)}
-              dir={dir}
-              required={question.required}
-              value={value}
-              onInput={(e) => {
-                handleInputChange(e.currentTarget.value);
-              }}
-              className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
-              title={
-                question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number") : undefined
-              }
-              minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
-              maxLength={question.inputType === "text" ? question.charLimit?.max : undefined}
-            />
-          )}
-          {question.inputType === "text" && question.charLimit?.max !== undefined && (
-            <span
-              className={`fb-text-xs ${currentLength >= question.charLimit?.max ? "fb-text-red-500 font-semibold" : "text-neutral-400"}`}>
-              {currentLength}/{question.charLimit?.max}
-            </span>
-          )}
-        </div>
-      </form>
-    </ScrollableContainer>
+            }
+            minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
+            maxLength={
+              question.inputType === "text"
+                ? question.charLimit?.max
+                : question.inputType === "phone"
+                  ? 30
+                  : undefined
+            }
+          />
+        ) : (
+          <textarea
+            ref={inputRef as RefObject<HTMLTextAreaElement>}
+            rows={3}
+            autoFocus={isCurrent ? autoFocusEnabled : undefined}
+            name={question.id}
+            tabIndex={isCurrent ? 0 : -1}
+            aria-label="textarea"
+            id={question.id}
+            placeholder={getLocalizedValue(question.placeholder, languageCode, true)}
+            dir={dir}
+            required={question.required}
+            value={value}
+            onInput={(e) => {
+              handleInputChange(e.currentTarget.value);
+            }}
+            className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
+            title={question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number") : undefined}
+            minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
+            maxLength={question.inputType === "text" ? question.charLimit?.max : undefined}
+          />
+        )}
+        {question.inputType === "text" && question.charLimit?.max !== undefined && (
+          <span
+            className={`fb-text-xs ${currentLength >= question.charLimit?.max ? "fb-text-red-500 font-semibold" : "text-neutral-400"}`}>
+            {currentLength}/{question.charLimit?.max}
+          </span>
+        )}
+      </div>
+    </form>
   );
 }

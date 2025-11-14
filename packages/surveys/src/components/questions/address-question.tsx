@@ -7,7 +7,6 @@ import { Input } from "@/components/general/input";
 import { Label } from "@/components/general/label";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
@@ -21,7 +20,6 @@ interface AddressQuestionProps {
   currentQuestionId: string;
   autoFocusEnabled: boolean;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards: boolean;
 }
 
 export function AddressQuestion({
@@ -34,7 +32,6 @@ export function AddressQuestion({
   currentQuestionId,
   autoFocusEnabled,
   dir = "auto",
-  fullSizeCards,
 }: Readonly<AddressQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -106,65 +103,61 @@ export function AddressQuestion({
   );
 
   return (
-    <ScrollableContainer fullSizeCards={fullSizeCards}>
-      <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
-        <div>
-          {isMediaAvailable ? (
-            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-          ) : null}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
+    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
+      <div>
+        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
 
-          <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
-            {fields.map((field, index) => {
-              const isFieldRequired = () => {
-                if (field.required) {
-                  return true;
-                }
+        <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
+          {fields.map((field, index) => {
+            const isFieldRequired = () => {
+              if (field.required) {
+                return true;
+              }
 
-                // if all fields are optional and the question is required, then the fields should be required
-                if (
-                  fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
-                  question.required
-                ) {
-                  return true;
-                }
+              // if all fields are optional and the question is required, then the fields should be required
+              if (
+                fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
+                question.required
+              ) {
+                return true;
+              }
 
-                return false;
-              };
+              return false;
+            };
 
-              return (
-                field.show && (
-                  <div className="fb-space-y-1">
-                    <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
-                    <Input
-                      id={field.id}
-                      key={field.id}
-                      required={isFieldRequired()}
-                      value={safeValue[index] || ""}
-                      type={field.id === "email" ? "email" : "text"}
-                      onChange={(e) => {
-                        handleChange(field.id, e.currentTarget.value);
-                      }}
-                      ref={index === 0 ? addressRef : null}
-                      tabIndex={isCurrent ? 0 : -1}
-                      aria-label={field.label}
-                      dir={!safeValue[index] ? dir : "auto"}
-                    />
-                  </div>
-                )
-              );
-            })}
-          </div>
+            return (
+              field.show && (
+                <div className="fb-space-y-1">
+                  <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
+                  <Input
+                    id={field.id}
+                    key={field.id}
+                    required={isFieldRequired()}
+                    value={safeValue[index] || ""}
+                    type={field.id === "email" ? "email" : "text"}
+                    onChange={(e) => {
+                      handleChange(field.id, e.currentTarget.value);
+                    }}
+                    ref={index === 0 ? addressRef : null}
+                    tabIndex={isCurrent ? 0 : -1}
+                    aria-label={field.label}
+                    dir={!safeValue[index] ? dir : "auto"}
+                  />
+                </div>
+              )
+            );
+          })}
         </div>
-      </form>
-    </ScrollableContainer>
+      </div>
+    </form>
   );
 }

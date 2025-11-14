@@ -7,6 +7,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ElementConditional } from "@/components/general/element-conditional";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -165,77 +166,78 @@ export function BlockConditional({
 
   return (
     <div className={cn("fb-space-y-6", fullSizeCards ? "fb-h-full" : "")}>
-      {/* Scrollable container for multiple elements */}
-      <div
-        className={cn(
-          "fb-space-y-6",
-          fullSizeCards ? "fb-h-full fb-overflow-y-auto" : "fb-max-h-[60vh] fb-overflow-y-auto"
-        )}>
-        {block.elements.map((element, index) => {
-          const isFirstElement = index === 0;
+      {/* Scrollable container for the entire block */}
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
+        <div className="fb-space-y-6">
+          <div className="fb-space-y-6">
+            {block.elements.map((element, index) => {
+              const isFirstElement = index === 0;
 
-          return (
-            <div key={element.id} className={cn(index < block.elements.length - 1 ? "fb-pb-4" : "")}>
-              <ElementConditional
-                element={element}
-                value={value[element.id]}
-                onChange={(responseData) => handleElementChange(element.id, responseData)}
-                onSubmit={hasCTAElement ? onSubmit : () => {}}
-                onBack={hasCTAElement ? onBack : () => {}}
-                onFileUpload={onFileUpload}
-                isFirstElement={hasCTAElement ? isFirstBlock : false}
-                isLastElement={hasCTAElement ? isLastBlock : false}
-                languageCode={languageCode}
-                prefilledElementValue={prefilledResponseData?.[element.id]}
-                skipPrefilled={skipPrefilled}
-                ttc={ttc}
-                setTtc={setTtc}
-                surveyId={surveyId}
-                autoFocusEnabled={autoFocusEnabled && isFirstElement}
-                currentElementId={currentElementId}
-                isBackButtonHidden={hasCTAElement ? isBackButtonHidden : true}
-                onOpenExternalURL={onOpenExternalURL}
-                dir={dir}
-                fullSizeCards={false} // Individual elements within block shouldn't be full size
-                formRef={(ref) => {
-                  if (ref) {
-                    elementFormRefs.current.set(element.id, ref);
-                  } else {
-                    elementFormRefs.current.delete(element.id);
-                  }
-                }}
-              />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Block-level navigation buttons - only render if NOT a CTA block */}
-      {!hasCTAElement && (
-        <div
-          className={cn(
-            "fb-flex fb-w-full fb-flex-row-reverse fb-justify-between fb-px-4",
-            fullSizeCards ? "fb-sticky fb-bottom-0 fb-bg-white" : ""
-          )}>
-          <div>
-            <SubmitButton
-              buttonLabel={block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined}
-              isLastQuestion={isLastBlock}
-              onClick={handleBlockSubmit}
-              tabIndex={0}
-            />
+              return (
+                <div key={element.id}>
+                  <ElementConditional
+                    element={element}
+                    value={value[element.id]}
+                    onChange={(responseData) => handleElementChange(element.id, responseData)}
+                    onSubmit={hasCTAElement ? onSubmit : () => {}}
+                    onBack={hasCTAElement ? onBack : () => {}}
+                    onFileUpload={onFileUpload}
+                    isFirstElement={hasCTAElement ? isFirstBlock : false}
+                    isLastElement={hasCTAElement ? isLastBlock : false}
+                    languageCode={languageCode}
+                    prefilledElementValue={prefilledResponseData?.[element.id]}
+                    skipPrefilled={skipPrefilled}
+                    ttc={ttc}
+                    setTtc={setTtc}
+                    surveyId={surveyId}
+                    autoFocusEnabled={autoFocusEnabled && isFirstElement}
+                    currentElementId={currentElementId}
+                    isBackButtonHidden={hasCTAElement ? isBackButtonHidden : true}
+                    onOpenExternalURL={onOpenExternalURL}
+                    dir={dir}
+                    fullSizeCards={false} // Individual elements within block shouldn't be full size
+                    formRef={(ref) => {
+                      if (ref) {
+                        elementFormRefs.current.set(element.id, ref);
+                      } else {
+                        elementFormRefs.current.delete(element.id);
+                      }
+                    }}
+                  />
+                </div>
+              );
+            })}
           </div>
-          {!isFirstBlock && !isBackButtonHidden && (
-            <BackButton
-              backButtonLabel={
-                block.backButtonLabel ? getLocalizedValue(block.backButtonLabel, languageCode) : undefined
-              }
-              onClick={onBack}
-              tabIndex={0}
-            />
+
+          {!hasCTAElement && (
+            <div
+              className={cn(
+                "fb-flex fb-w-full fb-flex-row-reverse fb-justify-between",
+                fullSizeCards ? "fb-sticky fb-bottom-0 fb-bg-white" : ""
+              )}>
+              <div>
+                <SubmitButton
+                  buttonLabel={
+                    block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined
+                  }
+                  isLastQuestion={isLastBlock}
+                  onClick={handleBlockSubmit}
+                  tabIndex={0}
+                />
+              </div>
+              {!isFirstBlock && !isBackButtonHidden && (
+                <BackButton
+                  backButtonLabel={
+                    block.backButtonLabel ? getLocalizedValue(block.backButtonLabel, languageCode) : undefined
+                  }
+                  onClick={onBack}
+                  tabIndex={0}
+                />
+              )}
+            </div>
           )}
         </div>
-      )}
+      </ScrollableContainer>
     </div>
   );
 }

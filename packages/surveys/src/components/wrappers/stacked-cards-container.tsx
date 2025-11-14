@@ -69,14 +69,13 @@ export function StackedCardsContainer({
       // Back button is clicked
       setNextBlockIdx(currentBlockIdx);
       setCurrentBlockIdx(blockIdxTemp);
-      setPrevBlockIdx(visitedBlocks[visitedBlocks.length - 2]);
-      setVisitedBlocks((prev) => {
-        if (prev.length > 0) {
-          const newStack = prev.slice(0, -1);
-          return newStack;
-        }
-        return prev;
-      });
+
+      // Compute new visited stack and safe previous index
+      const newStack = visitedBlocks.length > 0 ? visitedBlocks.slice(0, -1) : [];
+      const safePrevIdx = newStack.length > 0 ? newStack[newStack.length - 1] : Math.max(0, blockIdxTemp - 1);
+
+      setPrevBlockIdx(safePrevIdx);
+      setVisitedBlocks(newStack);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when blockIdxTemp changes
   }, [blockIdxTemp]);

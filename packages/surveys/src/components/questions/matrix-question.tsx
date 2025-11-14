@@ -5,7 +5,6 @@ import type { TSurveyMatrixElement, TSurveyMatrixElementChoice } from "@formbric
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
@@ -18,7 +17,6 @@ interface MatrixQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: string;
-  fullSizeCards: boolean;
 }
 
 export function MatrixQuestion({
@@ -29,7 +27,6 @@ export function MatrixQuestion({
   ttc,
   setTtc,
   currentQuestionId,
-  fullSizeCards,
 }: Readonly<MatrixQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -102,83 +99,81 @@ export function MatrixQuestion({
   );
 
   return (
-    <ScrollableContainer fullSizeCards={fullSizeCards}>
-      <form key={question.id} onSubmit={handleSubmit} className="fb-w-full">
-        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <Subheader subheader={getLocalizedValue(question.subheader, languageCode)} questionId={question.id} />
-        <div className="fb-overflow-x-auto fb-py-4">
-          <table className="fb-no-scrollbar fb-min-w-full fb-table-auto fb-border-collapse fb-text-sm">
-            <thead>
-              <tr>
-                <th className="fb-px-4 fb-py-2" />
-                {columnsHeaders}
-              </tr>
-            </thead>
-            <tbody>
-              {questionRows.map((row, rowIndex) => (
-                <tr key={`row-${rowIndex.toString()}`} className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
-                  <th
-                    scope="row"
-                    className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
-                    dir="auto">
-                    {getLocalizedValue(row.label, languageCode)}
-                  </th>
-                  {question.columns.map((column, columnIndex) => (
-                    <td
-                      key={`column-${columnIndex.toString()}`}
-                      tabIndex={isCurrent ? 0 : -1}
-                      className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
-                      onClick={() => {
+    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full">
+      {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader subheader={getLocalizedValue(question.subheader, languageCode)} questionId={question.id} />
+      <div className="fb-overflow-x-auto fb-py-4">
+        <table className="fb-no-scrollbar fb-min-w-full fb-table-auto fb-border-collapse fb-text-sm">
+          <thead>
+            <tr>
+              <th className="fb-px-4 fb-py-2" />
+              {columnsHeaders}
+            </tr>
+          </thead>
+          <tbody>
+            {questionRows.map((row, rowIndex) => (
+              <tr key={`row-${rowIndex.toString()}`} className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
+                <th
+                  scope="row"
+                  className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
+                  dir="auto">
+                  {getLocalizedValue(row.label, languageCode)}
+                </th>
+                {question.columns.map((column, columnIndex) => (
+                  <td
+                    key={`column-${columnIndex.toString()}`}
+                    tabIndex={isCurrent ? 0 : -1}
+                    className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
+                    onClick={() => {
+                      handleSelect(
+                        getLocalizedValue(column.label, languageCode),
+                        getLocalizedValue(row.label, languageCode)
+                      );
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === " ") {
+                        e.preventDefault();
                         handleSelect(
                           getLocalizedValue(column.label, languageCode),
                           getLocalizedValue(row.label, languageCode)
                         );
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === " ") {
-                          e.preventDefault();
-                          handleSelect(
-                            getLocalizedValue(column.label, languageCode),
-                            getLocalizedValue(row.label, languageCode)
-                          );
+                      }
+                    }}
+                    dir="auto">
+                    <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
+                      <input
+                        dir="auto"
+                        type="radio"
+                        tabIndex={-1}
+                        required={question.required}
+                        id={`row${rowIndex.toString()}-column${columnIndex.toString()}`}
+                        name={getLocalizedValue(row.label, languageCode)}
+                        value={getLocalizedValue(column.label, languageCode)}
+                        checked={
+                          typeof value === "object" && !Array.isArray(value)
+                            ? value[getLocalizedValue(row.label, languageCode)] ===
+                              getLocalizedValue(column.label, languageCode)
+                            : false
                         }
-                      }}
-                      dir="auto">
-                      <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
-                        <input
-                          dir="auto"
-                          type="radio"
-                          tabIndex={-1}
-                          required={question.required}
-                          id={`row${rowIndex.toString()}-column${columnIndex.toString()}`}
-                          name={getLocalizedValue(row.label, languageCode)}
-                          value={getLocalizedValue(column.label, languageCode)}
-                          checked={
-                            typeof value === "object" && !Array.isArray(value)
-                              ? value[getLocalizedValue(row.label, languageCode)] ===
-                                getLocalizedValue(column.label, languageCode)
-                              : false
-                          }
-                          aria-label={`${getLocalizedValue(row.label, languageCode)} – ${getLocalizedValue(
-                            column.label,
-                            languageCode
-                          )}`}
-                          className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
-                        />
-                      </div>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </form>
-    </ScrollableContainer>
+                        aria-label={`${getLocalizedValue(row.label, languageCode)} – ${getLocalizedValue(
+                          column.label,
+                          languageCode
+                        )}`}
+                        className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                      />
+                    </div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </form>
   );
 }
