@@ -45,7 +45,7 @@ interface QuestionFormInputProps {
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyElement>) => void;
   updateSurvey?: (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyQuestionChoice>) => void;
-  updateMatrixLabel?: (index: number, type: "row" | "column", data: Partial<TSurveyElement>) => void;
+  updateMatrixLabel?: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;

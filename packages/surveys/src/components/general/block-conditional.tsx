@@ -78,19 +78,47 @@ export function BlockConditional({
       e.preventDefault();
     }
 
-    // First, programmatically trigger validation on all question forms
+    // Validate all forms and check for custom validation rules
     let firstInvalidForm: HTMLFormElement | null = null;
 
     for (const element of block.elements) {
       const form = elementFormRefs.current.get(element.id);
       if (form) {
-        // Check if form is valid using native validation
+        // Check HTML5 validity first
         if (!form.checkValidity()) {
           if (!firstInvalidForm) {
             firstInvalidForm = form;
           }
           form.reportValidity();
-        } else if (element.required) {
+          continue;
+        }
+
+        // Custom validation for ranking questions
+        if (element.type === TSurveyElementTypeEnum.Ranking) {
+          const response = value[element.id];
+          const rankingElement = element;
+
+          // Check if ranking is incomplete
+          const hasIncompleteRanking =
+            (rankingElement.required &&
+              (!Array.isArray(response) || response.length !== rankingElement.choices.length)) ||
+            (!rankingElement.required &&
+              Array.isArray(response) &&
+              response.length > 0 &&
+              response.length < rankingElement.choices.length);
+
+          if (hasIncompleteRanking) {
+            // Trigger the ranking form's submit to show the error message
+            form.requestSubmit();
+            if (!firstInvalidForm) {
+              firstInvalidForm = form;
+            }
+            continue;
+          }
+        }
+
+        // For other element types, check if required fields are empty
+        if (element.required) {
           const response = value[element.id];
           const isEmpty =
             response === undefined ||
@@ -100,12 +128,11 @@ export function BlockConditional({
             (typeof response === "object" && !Array.isArray(response) && Object.keys(response).length === 0);
 
           if (isEmpty) {
+            form.requestSubmit();
             if (!firstInvalidForm) {
               firstInvalidForm = form;
             }
-            // Dispatch a submit event to trigger the form's onSubmit handler
-            form.requestSubmit();
-            return;
+            continue;
           }
         }
       }
@@ -148,11 +175,7 @@ export function BlockConditional({
           const isFirstElement = index === 0;
 
           return (
-            <div
-              key={element.id}
-              className={cn(
-                index < block.elements.length - 1 ? "fb-border-b fb-border-slate-200 fb-pb-4" : ""
-              )}>
+            <div key={element.id} className={cn(index < block.elements.length - 1 ? "fb-pb-4" : "")}>
               <ElementConditional
                 element={element}
                 value={value[element.id]}

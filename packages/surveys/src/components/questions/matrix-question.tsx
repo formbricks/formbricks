@@ -14,7 +14,6 @@ interface MatrixQuestionProps {
   question: TSurveyMatrixElement;
   value: Record<string, string>;
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -26,7 +25,6 @@ export function MatrixQuestion({
   question,
   value,
   onChange,
-  onSubmit,
   languageCode,
   ttc,
   setTtc,
@@ -85,9 +83,8 @@ export function MatrixQuestion({
       e.preventDefault();
       const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
       setTtc(updatedTtc);
-      onSubmit({ [question.id]: value }, updatedTtc);
     },
-    [ttc, question.id, startTime, value, onSubmit, setTtc]
+    [ttc, question.id, startTime, setTtc]
   );
 
   const columnsHeaders = useMemo(

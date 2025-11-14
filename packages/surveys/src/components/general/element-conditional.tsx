@@ -87,7 +87,14 @@ export function ElementConditional({
     choices: TSurveyQuestionChoice[]
   ): string[] => {
     return value
-      .map((label) => choices.find((choice) => getLocalizedValue(choice.label, languageCode) === label)?.id)
+      .map((entry) => {
+        // First check if entry is already a valid choice ID
+        if (choices.some((c) => c.id === entry)) {
+          return entry;
+        }
+        // Otherwise, treat it as a localized label and find the choice by label
+        return choices.find((choice) => getLocalizedValue(choice.label, languageCode) === entry)?.id;
+      })
       .filter((id): id is TSurveyQuestionChoice["id"] => id !== undefined);
   };
 
@@ -110,7 +117,6 @@ export function ElementConditional({
           question={element}
           value={typeof value === "string" ? value : ""}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -125,7 +131,6 @@ export function ElementConditional({
           question={element}
           value={typeof value === "string" ? value : undefined}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -140,7 +145,6 @@ export function ElementConditional({
           question={element}
           value={Array.isArray(value) ? value : []}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -155,7 +159,6 @@ export function ElementConditional({
           question={element}
           value={typeof value === "number" ? value : undefined}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -189,7 +192,6 @@ export function ElementConditional({
           question={element}
           value={typeof value === "number" ? value : undefined}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -204,7 +206,6 @@ export function ElementConditional({
           question={element}
           value={typeof value === "string" ? value : ""}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -219,7 +220,6 @@ export function ElementConditional({
           question={element}
           value={typeof value === "string" ? value : ""}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -233,7 +233,6 @@ export function ElementConditional({
           question={element}
           value={Array.isArray(value) ? value : []}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -249,7 +248,6 @@ export function ElementConditional({
           question={element}
           value={Array.isArray(value) ? value : []}
           onChange={onChange}
-          onSubmit={onSubmit}
           onFileUpload={onFileUpload}
           languageCode={languageCode}
           ttc={ttc}
@@ -276,7 +274,6 @@ export function ElementConditional({
           question={element}
           value={typeof value === "object" && !Array.isArray(value) ? value : {}}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -288,7 +285,6 @@ export function ElementConditional({
           question={element}
           value={Array.isArray(value) ? value : undefined}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -302,7 +298,6 @@ export function ElementConditional({
           question={element}
           value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, element.choices) : []}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}
@@ -315,7 +310,6 @@ export function ElementConditional({
           question={element}
           value={Array.isArray(value) ? value : undefined}
           onChange={onChange}
-          onSubmit={onSubmit}
           languageCode={languageCode}
           ttc={ttc}
           setTtc={setTtc}

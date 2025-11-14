@@ -26,7 +26,6 @@ interface RatingQuestionProps {
   question: TSurveyRatingElement;
   value?: number;
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -40,7 +39,6 @@ export function RatingQuestion({
   question,
   value,
   onChange,
-  onSubmit,
   languageCode,
   ttc,
   setTtc,
@@ -58,14 +56,7 @@ export function RatingQuestion({
     onChange({ [question.id]: number });
     const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
-    setTimeout(() => {
-      onSubmit(
-        {
-          [question.id]: number,
-        },
-        updatedTtcObj
-      );
-    }, 250);
+    // Note: onSubmit prop is () => {} in multi-element blocks, called by block instead
   };
 
   function HiddenRadioInput({ number, id }: { number: number; id?: string }) {
@@ -112,7 +103,6 @@ export function RatingQuestion({
           e.preventDefault();
           const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
           setTtc(updatedTtcObj);
-          onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
         }}
         className="fb-w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}

@@ -13,7 +13,6 @@ interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceElement;
   value?: string;
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -27,7 +26,6 @@ export function MultipleChoiceSingleQuestion({
   question,
   value,
   onChange,
-  onSubmit,
   languageCode,
   ttc,
   setTtc,
@@ -109,7 +107,6 @@ export function MultipleChoiceSingleQuestion({
           e.preventDefault();
           const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
           setTtc(updatedTtcObj);
-          onSubmit({ [question.id]: value }, updatedTtcObj);
         }}
         className="fb-w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}

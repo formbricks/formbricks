@@ -15,7 +15,6 @@ interface AddressQuestionProps {
   question: TSurveyAddressElement;
   value?: string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -29,7 +28,6 @@ export function AddressQuestion({
   question,
   value,
   onChange,
-  onSubmit,
   languageCode,
   ttc,
   setTtc,
@@ -95,12 +93,6 @@ export function AddressQuestion({
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = safeValue.length === 6 && safeValue.every((item) => item.trim() === "");
-    if (containsAllEmptyStrings) {
-      onSubmit({ [question.id]: [] }, updatedTtc);
-    } else {
-      onSubmit({ [question.id]: safeValue }, updatedTtc);
-    }
   };
 
   const addressRef = useCallback(

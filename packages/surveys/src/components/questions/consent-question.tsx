@@ -12,7 +12,6 @@ interface ConsentQuestionProps {
   question: TSurveyConsentElement;
   value: string;
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -26,7 +25,6 @@ export function ConsentQuestion({
   question,
   value,
   onChange,
-  onSubmit,
   languageCode,
   ttc,
   setTtc,
@@ -59,7 +57,6 @@ export function ConsentQuestion({
           e.preventDefault();
           const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
           setTtc(updatedTtcObj);
-          onSubmit({ [question.id]: value }, updatedTtcObj);
         }}>
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
         <Headline

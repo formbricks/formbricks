@@ -14,7 +14,6 @@ interface ContactInfoQuestionProps {
   question: TSurveyContactInfoElement;
   value?: string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
@@ -29,7 +28,6 @@ export function ContactInfoQuestion({
   question,
   value,
   onChange,
-  onSubmit,
   languageCode,
   ttc,
   setTtc,
@@ -90,12 +88,6 @@ export function ContactInfoQuestion({
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = safeValue.length === 5 && safeValue.every((item) => item.trim() === "");
-    if (containsAllEmptyStrings) {
-      onSubmit({ [question.id]: [] }, updatedTtc);
-    } else {
-      onSubmit({ [question.id]: safeValue }, updatedTtc);
-    }
   };
 
   const contactInfoRef = useCallback(

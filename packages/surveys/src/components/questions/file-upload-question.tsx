@@ -16,7 +16,6 @@ interface FileUploadQuestionProps {
   question: TSurveyFileUploadElement;
   value: string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   surveyId: string;
   languageCode: string;
@@ -31,7 +30,6 @@ export function FileUploadQuestion({
   question,
   value,
   onChange,
-  onSubmit,
   surveyId,
   onFileUpload,
   languageCode,
@@ -54,15 +52,9 @@ export function FileUploadQuestion({
           const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
           setTtc(updatedTtcObj);
           if (question.required) {
-            if (value && value.length > 0) {
-              onSubmit({ [question.id]: value }, updatedTtcObj);
-            } else {
+            if (!(value && value.length > 0)) {
               alert(t("errors.please_upload_a_file"));
             }
-          } else if (value) {
-            onSubmit({ [question.id]: value }, updatedTtcObj);
-          } else {
-            onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
           }
         }}
         className="fb-w-full">

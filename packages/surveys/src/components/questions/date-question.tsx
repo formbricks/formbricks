@@ -17,7 +17,6 @@ interface DateQuestionProps {
   question: TSurveyDateElement;
   value: string;
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
@@ -79,7 +78,6 @@ function CalendarCheckIcon() {
 export function DateQuestion({
   question,
   value,
-  onSubmit,
   onChange,
   languageCode,
   setTtc,
@@ -139,7 +137,6 @@ export function DateQuestion({
           }
           const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
           setTtc(updatedTtcObj);
-          onSubmit({ [question.id]: value }, updatedTtcObj);
         }}
         className="fb-w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}

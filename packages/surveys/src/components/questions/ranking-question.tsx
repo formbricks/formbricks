@@ -19,7 +19,6 @@ interface RankingQuestionProps {
   question: TSurveyRankingElement;
   value: string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -32,7 +31,6 @@ export function RankingQuestion({
   question,
   value,
   onChange,
-  onSubmit,
   languageCode,
   ttc,
   setTtc,
@@ -83,9 +81,16 @@ export function RankingQuestion({
 
       setLocalValue(newLocalValue);
 
+      // Immediately update parent state with the new ranking
+      const sortedLabels = newLocalValue
+        .map((id) => question.choices.find((c) => c.id === id))
+        .filter((item): item is TSurveyQuestionChoice => item !== undefined)
+        .map((item) => getLocalizedValue(item.label, languageCode));
+      onChange({ [question.id]: sortedLabels });
+
       setError(null);
     },
-    [localValue]
+    [localValue, question.choices, question.id, languageCode, onChange]
   );
 
   const handleMove = useCallback(
@@ -100,9 +105,16 @@ export function RankingQuestion({
       newLocalValue.splice(newIndex, 0, movedItem);
       setLocalValue(newLocalValue);
 
+      // Immediately update parent state with the new ranking
+      const sortedLabels = newLocalValue
+        .map((id) => question.choices.find((c) => c.id === id))
+        .filter((item): item is TSurveyQuestionChoice => item !== undefined)
+        .map((item) => getLocalizedValue(item.label, languageCode));
+      onChange({ [question.id]: sortedLabels });
+
       setError(null);
     },
-    [localValue]
+    [localValue, question.choices, question.id, languageCode, onChange]
   );
 
   const handleSubmit = (e: Event) => {
@@ -129,10 +141,7 @@ export function RankingQuestion({
     onChange({
       [question.id]: sortedItems.map((item) => getLocalizedValue(item.label, languageCode)),
     });
-    onSubmit(
-      { [question.id]: sortedItems.map((item) => getLocalizedValue(item.label, languageCode)) },
-      updatedTtcObj
-    );
+    // Note: onSubmit prop is () => {} in multi-element blocks, called by block instead
   };
 
   return (

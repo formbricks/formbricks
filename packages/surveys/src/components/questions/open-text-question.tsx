@@ -15,7 +15,6 @@ interface OpenTextQuestionProps {
   question: TSurveyOpenTextElement;
   value: string;
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
@@ -30,7 +29,6 @@ export function OpenTextQuestion({
   question,
   value,
   onChange,
-  onSubmit,
   languageCode,
   ttc,
   setTtc,
@@ -95,7 +93,6 @@ export function OpenTextQuestion({
 
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    onSubmit({ [question.id]: value }, updatedTtc);
   };
 
   const computedDir = !value ? dir : "auto";
