@@ -492,6 +492,7 @@ checksums:
     environments/actions/add_css_class_or_id: cfc4d88412c5b9ef1157e28db4afdcc5
     environments/actions/add_regular_expression_here: 797fde3681996b85bc63c3550dec1fd4
     environments/actions/add_url: 8eba7972136a42da78a8fa4798da8e87
+    environments/actions/and: 53e8eb67a396fcb5e419bb4cbf0008df
     environments/actions/click: 9c2744de6b5ac7333d9dae1d5cf4a76d
     environments/actions/contains: 41c8c25407527a5336404313f4c8d650
     environments/actions/create_action: 3abcc6dbbca18d3218ba49f90c4a66fd
@@ -522,6 +523,7 @@ checksums:
     environments/actions/limit_to_specific_pages: f8ba95b2fc68d965689594b8a545417c
     environments/actions/matches_regex: 208b4d02b38714b4523923239e4a66b0
     environments/actions/on_all_pages: ccb8ee531a55e21eb8157c36fa75ad9a
+    environments/actions/or: 0208d355f231c386b19390f0bea41b95
     environments/actions/page_filter: fe98a0bcbedb938e58cc3730589caa95
     environments/actions/page_view: 019c12b6739f6f7b1500f96ee275d47c
     environments/actions/select_match_type: b555dce1cb5c61538d3fbd792b2c71a2
