@@ -870,7 +870,6 @@
         "add_tag": "Ajouter une étiquette",
         "count": "Compter",
         "delete_tag_confirmation": "Êtes-vous sûr de vouloir supprimer cette étiquette ?",
-        "empty_message": "Ajoutez une balise à une réponse pour afficher votre liste de balises.",
         "manage_tags": "Gérer les étiquettes",
         "manage_tags_description": "Vous pouvez fusionner et supprimer des balises de réponse.",
         "merge": "Fusionner",
@@ -1825,7 +1824,6 @@
         "filtered_responses_csv": "Réponses filtrées (CSV)",
         "filtered_responses_excel": "Réponses filtrées (Excel)",
         "generating_qr_code": "Génération du code QR",
-        "go_to_setup_checklist": "Allez à la liste de contrôle de configuration 👉",
         "impressions": "Impressions",
         "impressions_tooltip": "Nombre de fois que l'enquête a été consultée.",
         "in_app": {
@@ -1859,7 +1857,6 @@
         },
         "includes_all": "Comprend tous",
         "includes_either": "Comprend soit",
-        "install_widget": "Installer le widget Formbricks",
         "is_equal_to": "Est égal à",
         "is_less_than": "est inférieur à",
         "last_30_days": "30 derniers jours",

@@ -870,7 +870,6 @@
         "add_tag": "Adicionar Tag",
         "count": "Contar",
         "delete_tag_confirmation": "Tem certeza de que quer deletar essa tag?",
-        "empty_message": "Marque uma submissão para encontrar sua lista de tags aqui.",
         "manage_tags": "Gerenciar Tags",
         "manage_tags_description": "Mesclar e remover tags de resposta.",
         "merge": "mesclar",
@@ -1825,7 +1824,6 @@
         "filtered_responses_csv": "Respostas filtradas (CSV)",
         "filtered_responses_excel": "Respostas filtradas (Excel)",
         "generating_qr_code": "Gerando código QR",
-        "go_to_setup_checklist": "Vai para a Lista de Configuração 👉",
         "impressions": "Impressões",
         "impressions_tooltip": "Número de vezes que a pesquisa foi visualizada.",
         "in_app": {
@@ -1859,7 +1857,6 @@
         },
         "includes_all": "Inclui tudo",
         "includes_either": "Inclui ou",
-        "install_widget": "Instalar Widget do Formbricks",
         "is_equal_to": "É igual a",
         "is_less_than": "É menor que",
         "last_30_days": "Últimos 30 dias",

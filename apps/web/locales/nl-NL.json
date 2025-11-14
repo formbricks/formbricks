@@ -870,7 +870,6 @@
         "add_tag": "Label toevoegen",
         "count": "Graaf",
         "delete_tag_confirmation": "Weet u zeker dat u deze tag wilt verwijderen?",
-        "empty_message": "Tag een inzending om hier uw lijst met tags te vinden.",
         "manage_tags": "Beheer tags",
         "manage_tags_description": "Reactietags samenvoegen en verwijderen.",
         "merge": "Samenvoegen",
@@ -1825,7 +1824,6 @@
         "filtered_responses_csv": "Gefilterde reacties (CSV)",
         "filtered_responses_excel": "Gefilterde reacties (Excel)",
         "generating_qr_code": "QR-code genereren",
-        "go_to_setup_checklist": "Ga naar Installatiechecklist 👉",
         "impressions": "Indrukken",
         "impressions_tooltip": "Aantal keren dat de enquête is bekeken.",
         "in_app": {
@@ -1859,7 +1857,6 @@
         },
         "includes_all": "Inclusief alles",
         "includes_either": "Inclusief beide",
-        "install_widget": "Installeer Formbricks-widget",
         "is_equal_to": "Is gelijk aan",
         "is_less_than": "Is minder dan",
         "last_30_days": "Laatste 30 dagen",

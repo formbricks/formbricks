@@ -870,7 +870,6 @@
         "add_tag": "Añadir etiqueta",
         "count": "Recuento",
         "delete_tag_confirmation": "¿Estás seguro de que quieres eliminar esta etiqueta?",
-        "empty_message": "Etiqueta un envío para encontrar tu lista de etiquetas aquí.",
         "manage_tags": "Gestionar etiquetas",
         "manage_tags_description": "Fusionar y eliminar etiquetas de respuesta.",
         "merge": "Fusionar",
@@ -1825,7 +1824,6 @@
         "filtered_responses_csv": "Respuestas filtradas (CSV)",
         "filtered_responses_excel": "Respuestas filtradas (Excel)",
         "generating_qr_code": "Generando código QR",
-        "go_to_setup_checklist": "Ir a la lista de configuración 👉",
         "impressions": "Impresiones",
         "impressions_tooltip": "Número de veces que se ha visto la encuesta.",
         "in_app": {
@@ -1859,7 +1857,6 @@
         },
         "includes_all": "Incluye todo",
         "includes_either": "Incluye cualquiera",
-        "install_widget": "Instalar widget de Formbricks",
         "is_equal_to": "Es igual a",
         "is_less_than": "Es menor que",
         "last_30_days": "Últimos 30 días",

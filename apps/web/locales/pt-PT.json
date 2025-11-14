@@ -870,7 +870,6 @@
         "add_tag": "Adicionar Etiqueta",
         "count": "Contagem",
         "delete_tag_confirmation": "Tem a certeza de que deseja eliminar esta etiqueta?",
-        "empty_message": "Crie etiquetas para as suas submissões e veja-as aqui",
         "manage_tags": "Gerir Etiquetas",
         "manage_tags_description": "Junte e remova etiquetas de resposta",
         "merge": "Fundir",
@@ -1825,7 +1824,6 @@
         "filtered_responses_csv": "Respostas filtradas (CSV)",
         "filtered_responses_excel": "Respostas filtradas (Excel)",
         "generating_qr_code": "A gerar código QR",
-        "go_to_setup_checklist": "Ir para a Lista de Verificação de Configuração 👉",
         "impressions": "Impressões",
         "impressions_tooltip": "Número de vezes que o inquérito foi visualizado.",
         "in_app": {
@@ -1859,7 +1857,6 @@
         },
         "includes_all": "Inclui tudo",
         "includes_either": "Inclui qualquer um",
-        "install_widget": "Instalar Widget Formbricks",
         "is_equal_to": "É igual a",
         "is_less_than": "É menos que",
         "last_30_days": "Últimos 30 dias",

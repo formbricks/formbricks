@@ -870,7 +870,6 @@
         "add_tag": "新增標籤",
         "count": "計數",
         "delete_tag_confirmation": "您確定要刪除此標籤嗎？",
-        "empty_message": "標記提交內容，在此處找到您的標籤清單。",
         "manage_tags": "管理標籤",
         "manage_tags_description": "合併和移除回應標籤。",
         "merge": "合併",
@@ -1825,7 +1824,6 @@
         "filtered_responses_csv": "篩選回應 (CSV)",
         "filtered_responses_excel": "篩選回應 (Excel)",
         "generating_qr_code": "正在生成 QR code",
-        "go_to_setup_checklist": "前往設定檢查清單 👉",
         "impressions": "曝光數",
         "impressions_tooltip": "問卷已檢視的次數。",
         "in_app": {
@@ -1859,7 +1857,6 @@
         },
         "includes_all": "包含全部",
         "includes_either": "包含其中一個",
-        "install_widget": "安裝 Formbricks 小工具",
         "is_equal_to": "等於",
         "is_less_than": "小於",
         "last_30_days": "過去 30 天",

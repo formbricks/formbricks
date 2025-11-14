@@ -870,7 +870,6 @@
         "add_tag": "添加 标签",
         "count": "数量",
         "delete_tag_confirmation": "您 确定 要 删除 此 标签 吗？",
-        "empty_message": "标记一个提交以在此处找到您的标签列表。",
         "manage_tags": "管理标签",
         "manage_tags_description": "合并 和 删除 response 标签。",
         "merge": "合并",
@@ -1825,7 +1824,6 @@
         "filtered_responses_csv": "过滤 反馈 （CSV）",
         "filtered_responses_excel": "过滤 反馈 （Excel）",
         "generating_qr_code": "正在生成二维码",
-        "go_to_setup_checklist": "前往 设置 检查列表 👉",
         "impressions": "印象",
         "impressions_tooltip": "调查 被 查看 的 次数",
         "in_app": {
@@ -1859,7 +1857,6 @@
         },
         "includes_all": "包括所有 ",
         "includes_either": "包含 任意一个",
-        "install_widget": "安装 Formbricks 小组件",
         "is_equal_to": "等于",
         "is_less_than": "少于",
         "last_30_days": "最近 30 天",

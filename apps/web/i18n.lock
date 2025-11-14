@@ -809,7 +809,6 @@ checksums:
     environments/project/tags/add_tag: 2cfa04ceea966149f2b5d40d9c131141
     environments/project/tags/count: 9c5848662eb8024ddf360f7e4001a968
     environments/project/tags/delete_tag_confirmation: a9fb98064cd156242899643f3d2ef032
-    environments/project/tags/empty_message: da71bd7c7b5bf634469d20e010d25503
     environments/project/tags/manage_tags: 2761d558b82b6104befbc240ae2379c6
     environments/project/tags/manage_tags_description: ce7cc42da3646fba960502d7e4e49cd2
     environments/project/tags/merge: 95051c859b8778be51226b43be6f1075
@@ -1716,7 +1715,6 @@ checksums:
     environments/surveys/summary/filtered_responses_csv: aad66a98be6a09cac8bef9e4db4a75cf
     environments/surveys/summary/filtered_responses_excel: 06e57bae9e41979fd7fc4b8bfe3466f9
     environments/surveys/summary/generating_qr_code: 5026d4a76f995db458195e5215d9bbd9
-    environments/surveys/summary/go_to_setup_checklist: d70bd018d651d01c41ae10370e71d0be
     environments/surveys/summary/impressions: 7fe38d42d68a64d3fd8436a063751584
     environments/surveys/summary/impressions_tooltip: 4d0823cbf360304770c7c5913e33fdc8
     environments/surveys/summary/in_app/connection_description: 9710bbf8048a8a5c3b2b56db9d946b73
@@ -1748,7 +1746,6 @@ checksums:
     environments/surveys/summary/in_app/title: a2d1b633244d0e0504ec6f8f561c7a6b
     environments/surveys/summary/includes_all: b0e3679282417c62d511c258362f860e
     environments/surveys/summary/includes_either: 186d6923c1693e80d7b664b8367d4221
-    environments/surveys/summary/install_widget: 55d403de32e3d0da7513ab199f1d1934
     environments/surveys/summary/is_equal_to: f4aab30ef188eb25dcc0e392cf8e86bb
     environments/surveys/summary/is_less_than: 6109d595ba21497c59b1c91d7fd09a13
     environments/surveys/summary/last_30_days: a738894cfc5e592052f1e16787744568
