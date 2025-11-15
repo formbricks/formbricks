@@ -104,7 +104,7 @@ export const GeneratePersonalLinkModal = ({
           await navigator.clipboard.writeText(response.data.surveyUrl);
           toast.success(t("common.copied_to_clipboard"));
           setOpen(false);
-        } catch (clipboardError) {
+        } catch (_clipboardError) {
           // If clipboard fails, still show success but with the URL
           toast.success(t("environments.contacts.personal_link_generated"));
         }
@@ -117,6 +117,12 @@ export const GeneratePersonalLinkModal = ({
       setIsLoading(false);
     }
   };
+
+  const selectPlaceholder = isFetchingSurveys
+    ? t("common.loading")
+    : surveys.length === 0
+      ? t("environments.contacts.no_published_surveys")
+      : t("environments.contacts.select_a_survey");
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -138,15 +144,7 @@ export const GeneratePersonalLinkModal = ({
                 onValueChange={setSelectedSurveyId}
                 disabled={isFetchingSurveys || isLoading || surveys.length === 0}>
                 <SelectTrigger id="survey-select">
-                  <SelectValue
-                    placeholder={
-                      isFetchingSurveys
-                        ? t("common.loading")
-                        : surveys.length === 0
-                          ? t("environments.contacts.no_published_surveys")
-                          : t("environments.contacts.select_a_survey")
-                    }
-                  />
+                  <SelectValue placeholder={selectPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {surveys.map((survey) => (
