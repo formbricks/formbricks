@@ -75,11 +75,8 @@ export const SingleResponseCardMetadata = ({ response, locale }: SingleResponseC
         {t("environments.surveys.responses.person_attributes")}
       </p>
       {Object.keys(response.contactAttributes || {}).map((key) => (
-        <p
-          key={key}
-          className="truncate"
-          title={`${key}: ${response.contactAttributes && response.contactAttributes[key]}`}>
-          {key}: {response.contactAttributes && response.contactAttributes[key]}
+        <p key={key} className="truncate" title={`${key}: ${response.contactAttributes?.[key]}`}>
+          {key}: {response.contactAttributes?.[key]}
         </p>
       ))}
     </div>

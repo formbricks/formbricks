@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -33,6 +34,7 @@ export const ResponseFeed = ({
   locale,
   projectPermission,
 }: ResponseTimelineProps) => {
+  const { t } = useTranslation();
   const [fetchedResponses, setFetchedResponses] = useState(responses);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export const ResponseFeed = ({
   return (
     <>
       {fetchedResponses.length === 0 ? (
-        <EmptyState />
+        <EmptyState text={t("environments.contacts.no_responses_found")} />
       ) : (
         fetchedResponses.map((response) => (
           <ResponseSurveyCard
