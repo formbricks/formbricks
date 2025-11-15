@@ -1,16 +1,21 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import {
+  getOrganizationIdFromContactId,
+  getOrganizationIdFromEnvironmentId,
+  getProjectIdFromContactId,
+  getProjectIdFromEnvironmentId,
+} from "@/lib/utils/helper";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getSurveys } from "@/modules/survey/list/lib/survey";
 
 const ZGetPublishedLinkSurveysAction = z.object({
-  environmentId: z.string().cuid2(),
+  environmentId: ZId,
 });
 
 export const getPublishedLinkSurveysAction = authenticatedActionClient
@@ -34,7 +39,6 @@ export const getPublishedLinkSurveysAction = authenticatedActionClient
 
     const surveys = await getSurveys(parsedInput.environmentId);
 
-    // Filter for published link surveys (status: "inProgress", type: "link")
     const publishedLinkSurveys = surveys.filter(
       (survey) => survey.status === "inProgress" && survey.type === "link"
     );
@@ -43,31 +47,32 @@ export const getPublishedLinkSurveysAction = authenticatedActionClient
   });
 
 const ZGeneratePersonalSurveyLinkAction = z.object({
-  contactId: z.string().cuid2(),
-  surveyId: z.string().cuid2(),
+  contactId: ZId,
+  surveyId: ZId,
   expirationDays: z.number().optional(),
 });
 
 export const generatePersonalSurveyLinkAction = authenticatedActionClient
   .schema(ZGeneratePersonalSurveyLinkAction)
-  .action(async ({ parsedInput }) => {
-    // Check if contact has already responded to this survey
-    const existingResponse = await prisma.response.findFirst({
-      where: {
-        contactId: parsedInput.contactId,
-        surveyId: parsedInput.surveyId,
-      },
-      select: {
-        id: true,
-      },
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
+    const projectId = await getProjectIdFromContactId(parsedInput.contactId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId,
+        },
+      ],
     });
-
-    if (existingResponse) {
-      throw new InvalidInputError("Contact has already responded to this survey");
-    }
-
-    // Authorization is handled by the getContactSurveyLink function internally
-    // which checks survey and contact existence and permissions
 
     const result = await getContactSurveyLink(
       parsedInput.contactId,
@@ -76,7 +81,6 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
     );
 
     if (!result.ok) {
-      // Convert ApiErrorResponseV2 to appropriate error types
       if (result.error.type === "not_found") {
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
@@ -84,9 +88,8 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
         const errorMessage = result.error.details?.[0]?.issue || "Invalid request";
         throw new InvalidInputError(errorMessage);
       }
-      // For other error types, throw a generic error
       const errorMessage = result.error.details?.[0]?.issue || "Failed to generate personal survey link";
-      throw new Error(errorMessage);
+      throw new InvalidInputError(errorMessage);
     }
 
     return {

@@ -109,12 +109,9 @@ export const GeneratePersonalLinkModal = ({
           toast.success(t("environments.contacts.personal_link_generated"));
         }
       } else {
-        // Log the full response to help debug
-        console.error("Unexpected response structure:", response);
         toast.error(t("common.something_went_wrong_please_try_again"));
       }
     } catch (error) {
-      console.error("Error generating personal link:", error);
       toast.error(error instanceof Error ? error.message : t("common.something_went_wrong_please_try_again"));
     } finally {
       setIsLoading(false);
