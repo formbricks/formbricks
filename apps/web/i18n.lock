@@ -1782,7 +1782,6 @@ checksums:
     environments/surveys/summary/ttc_tooltip: 9b1cbe32cc81111314bd3b6fd050c2e7
     environments/surveys/summary/unknown_question_type: e4152a7457d2b94f48dcc70aaba9922f
     environments/surveys/summary/use_personal_links: da2b3e7e1aaf2ea2bd4efed2dda4247c
-    environments/surveys/summary/waiting_for_response: 0194a84e0850b8e98435632d5331a916
     environments/surveys/summary/whats_next: d920145bfa2147014062f6f2d1d451a4
     environments/surveys/summary/your_survey_is_public: 3f5cb5949a5f4020a3d4d74fdfc95e83
     environments/surveys/summary/youre_not_plugged_in_yet: 9217467742cdcf7edf8d59cc1472ede6
