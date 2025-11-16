@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ZEnvironment = z.object({
-  id: z.string().cuid(), // Matches Prisma schema @default(cuid()) - CUID v1
+  id: z.string().cuid(),
   createdAt: z.date(),
   updatedAt: z.date(),
   type: z.enum(["development", "production"]),
