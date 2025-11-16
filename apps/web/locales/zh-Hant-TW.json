@@ -776,8 +776,8 @@
       "app-connection": {
         "app_connection": "應用程式連線",
         "app_connection_description": "將您的應用程式或網站連接到 Formbricks。",
-        "cache_update_delay_description": "當您對調查、聯絡人、操作或其他資料進行更新時，可能需要長達 5 分鐘這些變更才能顯示在執行 Formbricks SDK 的本地應用程式中。此延遲是因我們目前快取系統的限制。我們正積極重新設計快取，並將在 Formbricks 4.0 中發佈修補程式。",
-        "cache_update_delay_title": "更改將於 5 分鐘後因快取而反映",
+        "cache_update_delay_description": "當您更新問卷調查、聯絡人、操作或其他資料時，這些變更可能需要最多 1 分鐘的時間，才會顯示在執行 Formbricks SDK 的本地應用程式中。",
+        "cache_update_delay_title": "由於快取，變更約需 1 分鐘後才會反映",
         "environment_id": "您的 EnvironmentId",
         "environment_id_description": "此 ID 可唯一識別此 Formbricks 環境。",
         "formbricks_sdk_connected": "Formbricks SDK 已連線",

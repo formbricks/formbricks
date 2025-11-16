@@ -723,8 +723,8 @@ checksums:
     environments/project/api_keys/unable_to_delete_api_key: 1fd76d9a22c5f5f8c241c4891fca8295
     environments/project/app-connection/app_connection: 778d2305e1a9c8efe91c2c7b4af37ae4
     environments/project/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd
-    environments/project/app-connection/cache_update_delay_description: 1cb2c46fdb6762ccb348d21086063a4f
-    environments/project/app-connection/cache_update_delay_title: fef7f99f0228f9e30093574ac7770e7e
+    environments/project/app-connection/cache_update_delay_description: 3368e4a8090b7684117a16c94f0c409c
+    environments/project/app-connection/cache_update_delay_title: 60e4a0fcfbd8850bddf29b5c3f59550c
     environments/project/app-connection/environment_id: 3dba898b081c18cd4cae131765ef411f
     environments/project/app-connection/environment_id_description: 8b4a763d069b000cfa1a2025a13df80c
     environments/project/app-connection/formbricks_sdk_connected: 29e8a40ad6a7fdb5af5ee9451a70a9aa
