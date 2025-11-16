@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEnvironmentState } from "@/app/api/v1/client/[environmentId]/environment/lib/environmentState";
@@ -28,15 +29,38 @@ export const GET = withV1ApiWrapper({
     const params = await props.params;
 
     try {
-      // Simple validation for environmentId (faster than Zod for high-frequency endpoint)
+      // Basic type check for environmentId
       if (typeof params.environmentId !== "string") {
         return {
           response: responses.badRequestResponse("Environment ID is required", undefined, true),
         };
       }
 
+      const environmentId = params.environmentId.trim();
+
+      // Validate CUID v1 format using Zod (matches Prisma schema @default(cuid()))
+      // This catches all invalid formats including:
+      // - null/undefined passed as string "null" or "undefined"
+      // - HTML-encoded placeholders like <environmentId> or %3C...%3E
+      // - Empty or whitespace-only IDs
+      // - Any other invalid CUID v1 format
+      const cuidValidation = z.string().cuid().safeParse(environmentId);
+      if (!cuidValidation.success) {
+        logger.warn(
+          {
+            environmentId: params.environmentId,
+            url: req.url,
+            validationError: cuidValidation.error.errors[0]?.message,
+          },
+          "Invalid CUID v1 format detected"
+        );
+        return {
+          response: responses.badRequestResponse("Invalid environment ID format", undefined, true),
+        };
+      }
+
       // Use optimized environment state fetcher with new caching approach
-      const environmentState = await getEnvironmentState(params.environmentId);
+      const environmentState = await getEnvironmentState(environmentId);
       const { data } = environmentState;
 
       return {
