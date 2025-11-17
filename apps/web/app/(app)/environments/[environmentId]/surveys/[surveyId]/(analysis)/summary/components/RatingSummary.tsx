@@ -86,16 +86,26 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
 
         <TabsContent value="grouped" className="mt-4">
           <div className="px-4 pb-6 pt-4 md:px-6">
-            <div className="flex h-12 w-full overflow-hidden rounded-lg">
+            <div className="flex h-12 w-full overflow-hidden rounded-lg border border-slate-200">
               {questionSummary.choices.map((result, index) => {
                 if (result.percentage === 0) return null;
+                // Calculate opacity based on rating position (higher rating = higher opacity)
+                const range = questionSummary.question.range;
+                const opacity = 0.3 + (result.rating / range) * 0.7; // Range from 30% to 100%
+
                 return (
                   <TooltipProvider key={result.rating} delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
-                          className="relative h-full cursor-pointer transition-opacity hover:opacity-80"
-                          style={{ width: `${result.percentage}%` }}
+                          className="relative h-full cursor-pointer transition-opacity hover:brightness-110"
+                          style={{
+                            width: `${result.percentage}%`,
+                            borderRight:
+                              index < questionSummary.choices.length - 1
+                                ? "1px solid rgb(226, 232, 240)"
+                                : "none",
+                          }}
                           onClick={() =>
                             setFilter(
                               questionSummary.question.id,
@@ -109,6 +119,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                             className={`h-full ${index === 0 ? "rounded-l-lg" : ""} ${
                               index === questionSummary.choices.length - 1 ? "rounded-r-lg" : ""
                             } bg-brand-dark`}
+                            style={{ opacity }}
                           />
                         </button>
                       </TooltipTrigger>

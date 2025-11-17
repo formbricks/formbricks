@@ -137,34 +137,47 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
 
         <TabsContent value="individual" className="mt-4">
           <div className="grid grid-cols-11 gap-2 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-            {questionSummary.choices.map((choice) => (
-              <button
-                key={choice.rating}
-                className="flex cursor-pointer flex-col items-center space-y-2 hover:opacity-80"
-                onClick={() =>
-                  setFilter(
-                    questionSummary.question.id,
-                    questionSummary.question.headline,
-                    questionSummary.question.type,
-                    t("environments.surveys.summary.is_equal_to"),
-                    choice.rating.toString()
-                  )
-                }>
-                <div className="flex h-32 w-full flex-col items-center justify-end">
-                  <div
-                    className="bg-brand-dark w-full transition-all"
-                    style={{ height: `${Math.max(choice.percentage, 2)}%` }}
-                  />
-                </div>
-                <div className="text-center">
-                  <div className="font-semibold text-slate-700">{choice.rating}</div>
-                  <div className="text-xs text-slate-600">{choice.count}</div>
-                  <div className="text-xs text-slate-500">
-                    {convertFloatToNDecimal(choice.percentage, 1)}%
+            {questionSummary.choices.map((choice) => {
+              // Calculate opacity: 0-6 detractors (low opacity), 7-8 passives (medium), 9-10 promoters (high)
+              const opacity =
+                choice.rating <= 6
+                  ? 0.3 + (choice.rating / 6) * 0.3 // 0.3 to 0.6
+                  : choice.rating <= 8
+                    ? 0.6 + ((choice.rating - 6) / 2) * 0.2 // 0.6 to 0.8
+                    : 0.8 + ((choice.rating - 8) / 2) * 0.2; // 0.8 to 1.0
+
+              return (
+                <button
+                  key={choice.rating}
+                  className="flex cursor-pointer flex-col items-center space-y-2 hover:brightness-110"
+                  onClick={() =>
+                    setFilter(
+                      questionSummary.question.id,
+                      questionSummary.question.headline,
+                      questionSummary.question.type,
+                      t("environments.surveys.summary.is_equal_to"),
+                      choice.rating.toString()
+                    )
+                  }>
+                  <div className="flex h-32 w-full flex-col items-center justify-end">
+                    <div
+                      className="bg-brand-dark w-full rounded-t border border-slate-200 transition-all"
+                      style={{
+                        height: `${Math.max(choice.percentage, 2)}%`,
+                        opacity,
+                      }}
+                    />
                   </div>
-                </div>
-              </button>
-            ))}
+                  <div className="text-center">
+                    <div className="font-semibold text-slate-700">{choice.rating}</div>
+                    <div className="text-xs text-slate-600">{choice.count}</div>
+                    <div className="text-xs text-slate-500">
+                      {convertFloatToNDecimal(choice.percentage, 1)}%
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </TabsContent>
       </Tabs>
