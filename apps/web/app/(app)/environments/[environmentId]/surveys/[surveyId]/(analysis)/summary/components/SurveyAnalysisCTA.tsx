@@ -29,7 +29,6 @@ interface SurveyAnalysisCTAProps {
   user: TUser;
   publicDomain: string;
   responseCount: number;
-  displayCount: number;
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
@@ -48,7 +47,6 @@ export const SurveyAnalysisCTA = ({
   user,
   publicDomain,
   responseCount,
-  displayCount,
   segments,
   isContactsEnabled,
   isFormbricksCloud,
@@ -170,7 +168,7 @@ export const SurveyAnalysisCTA = ({
       icon: ListRestart,
       tooltip: t("environments.surveys.summary.reset_survey"),
       onClick: () => setIsResetModalOpen(true),
-      isVisible: !isReadOnly && (responseCount > 0 || displayCount > 0),
+      isVisible: !isReadOnly,
     },
     {
       icon: SquarePenIcon,
