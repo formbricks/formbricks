@@ -26,7 +26,7 @@ const baseProject = {
   darkOverlay: false,
   environments: [
     {
-      id: "prodenv",
+      id: "cmi2sra0j000004l73fvh7lhe",
       createdAt: new Date(),
       updatedAt: new Date(),
       type: "production" as TEnvironment["type"],
@@ -34,7 +34,7 @@ const baseProject = {
       appSetupCompleted: false,
     },
     {
-      id: "devenv",
+      id: "cmi2srt9q000104l7127e67v7",
       createdAt: new Date(),
       updatedAt: new Date(),
       type: "development" as TEnvironment["type"],
