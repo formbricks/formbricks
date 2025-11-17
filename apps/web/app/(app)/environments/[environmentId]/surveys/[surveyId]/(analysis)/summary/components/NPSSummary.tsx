@@ -31,6 +31,16 @@ interface NPSSummaryProps {
   ) => void;
 }
 
+const calculateNPSOpacity = (rating: number): number => {
+  if (rating <= 6) {
+    return 0.3 + (rating / 6) * 0.3;
+  }
+  if (rating <= 8) {
+    return 0.6 + ((rating - 6) / 2) * 0.2;
+  }
+  return 0.8 + ((rating - 8) / 2) * 0.2;
+};
+
 export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"aggregated" | "individual">("aggregated");
@@ -134,12 +144,7 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
           <TooltipProvider delayDuration={200}>
             <div className="grid grid-cols-11 gap-2 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
               {questionSummary.choices.map((choice) => {
-                const opacity =
-                  choice.rating <= 6
-                    ? 0.3 + (choice.rating / 6) * 0.3
-                    : choice.rating <= 8
-                      ? 0.6 + ((choice.rating - 6) / 2) * 0.2
-                      : 0.8 + ((choice.rating - 8) / 2) * 0.2;
+                const opacity = calculateNPSOpacity(choice.rating);
 
                 return (
                   <ClickableBarSegment

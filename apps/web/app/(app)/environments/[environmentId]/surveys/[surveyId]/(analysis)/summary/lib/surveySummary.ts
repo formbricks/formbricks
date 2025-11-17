@@ -532,7 +532,7 @@ export const getQuestionSummary = async (
 
         Object.entries(choiceCountMap).forEach(([label, count]) => {
           values.push({
-            rating: parseInt(label),
+            rating: Number.parseInt(label),
             count,
             percentage:
               totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
@@ -616,7 +616,7 @@ export const getQuestionSummary = async (
 
         // Build choices array with individual score breakdown
         const choices = Object.entries(scoreCountMap).map(([rating, count]) => ({
-          rating: parseInt(rating),
+          rating: Number.parseInt(rating),
           count,
           percentage: data.total > 0 ? convertFloatTo2Decimal((count / data.total) * 100) : 0,
         }));
