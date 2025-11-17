@@ -171,6 +171,7 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       subheader: createI18nString("", []),
       ctaButtonLabel: createI18nString(t("templates.book_interview"), []),
       buttonUrl: "",
+      buttonExternal: true,
     },
   },
   {

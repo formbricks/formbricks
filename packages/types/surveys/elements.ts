@@ -156,8 +156,30 @@ export type TSurveyNPSElement = z.infer<typeof ZSurveyNPSElement>;
 // CTA Element
 export const ZSurveyCTAElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.CTA),
-  buttonUrl: ZUrl,
-  ctaButtonLabel: ZI18nString,
+  buttonExternal: z.boolean().optional().default(false),
+  buttonUrl: z.string().optional(),
+  ctaButtonLabel: ZI18nString.optional(),
+}).superRefine((data, ctx) => {
+  // When buttonExternal is true, buttonUrl is required and must be valid
+  if (data.buttonExternal) {
+    if (!data.buttonUrl || data.buttonUrl.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Button URL is required when external button is enabled",
+        path: ["buttonUrl"],
+      });
+    } else {
+      // Validate URL format only when buttonExternal is true and URL is provided
+      const urlValidation = ZUrl.safeParse(data.buttonUrl);
+      if (!urlValidation.success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please enter a valid URL",
+          path: ["buttonUrl"],
+        });
+      }
+    }
+  }
 });
 
 export type TSurveyCTAElement = z.infer<typeof ZSurveyCTAElement>;

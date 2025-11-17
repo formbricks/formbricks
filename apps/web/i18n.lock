@@ -1158,6 +1158,8 @@ checksums:
     environments/surveys/edit/bold: 4d7306bc355ed2befd6a9237c5452ee6
     environments/surveys/edit/brand_color: 84ddb5736deb9f5c081ffe4962a6c63e
     environments/surveys/edit/brightness: 45425b6db1872225bfff71cf619d0e64
+    environments/surveys/edit/button_external: d2de24e06574622baf1c0cdd1b718b1a
+    environments/surveys/edit/button_external_description: cbd10d494a70b362bfee811e012c45b1
     environments/surveys/edit/button_label: db3cd7c74f393187bd780c5c3d8b9b4f
     environments/surveys/edit/button_url: 6f39f649a165a11873c11ea6403dba90
     environments/surveys/edit/cal_username: a4a9c739af909d975beb1bc4998feae9
@@ -1221,6 +1223,7 @@ checksums:
     environments/surveys/edit/create_group: 4566e056e5217dc02a383105892fe18c
     environments/surveys/edit/create_your_own_survey: e3ddd53e0cfa409ca8dccfb3d77933e7
     environments/surveys/edit/css_selector: 615e9f1b74622df29de28a5b5614c6fe
+    environments/surveys/edit/cta_button_label: ec070ffba38eae24751bb3a4c1e14c81
     environments/surveys/edit/custom_hostname: bc2b1c8de3f9b8ef145b45aeba6ab429
     environments/surveys/edit/darken_or_lighten_background_of_your_choice: 304a64a8050ebf501d195e948cd25b6f
     environments/surveys/edit/date_format: e95dfc41ac944874868487457ddc057a
@@ -1357,7 +1360,6 @@ checksums:
     environments/surveys/edit/is_submitted: 13e774a97ad5f5609555e6f99514e70f
     environments/surveys/edit/italic: 555c60fb1d12ae305136202afa6deb3d
     environments/surveys/edit/jump_to_block: 2fc00bd725c44f98861051c57bb2c392
-    environments/surveys/edit/jump_to_question: 742aabed8845190825418aa429f01b2d
     environments/surveys/edit/keep_current_order: a7c944ad6b3515f2c4f83a2c81f8fc26
     environments/surveys/edit/keep_showing_while_conditions_match: 2574802d87bd6da151c9145aacce7281
     environments/surveys/edit/key: 3d1065ab98a1c2f1210507fd5c7bf515

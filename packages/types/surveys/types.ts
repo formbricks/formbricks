@@ -1364,10 +1364,12 @@ export const ZSurvey = z
           }
 
           if (element.type === TSurveyElementTypeEnum.CTA) {
-            if (!element.required) {
+            // Only validate buttonExternal fields when buttonExternal is true
+            if (element.buttonExternal) {
+              // Validate ctaButtonLabel when buttonExternal is enabled
               elementMultiLangIssue = validateElementLabels(
                 "ctaButtonLabel",
-                element.ctaButtonLabel,
+                element.ctaButtonLabel ?? {},
                 languages,
                 blockIndex,
                 elementIndex
@@ -1378,27 +1380,28 @@ export const ZSurvey = z
                   blockIndex,
                   "elements",
                   elementIndex,
-                  "dismissButtonLabel",
+                  "ctaButtonLabel",
                 ];
                 ctx.addIssue(elementMultiLangIssue);
               }
-            }
 
-            if (!element.buttonUrl || element.buttonUrl.trim() === "") {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: Button URL is required when external button is enabled`,
-                path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
-              });
-            } else {
-              const parsedButtonUrl = getZSafeUrl.safeParse(element.buttonUrl);
-              if (!parsedButtonUrl.success) {
-                const errorMessage = parsedButtonUrl.error.issues[0].message;
+              // Validate buttonUrl when buttonExternal is enabled
+              if (!element.buttonUrl || element.buttonUrl.trim() === "") {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
-                  message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: ${errorMessage}`,
+                  message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: Button URL is required when external button is enabled`,
                   path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
                 });
+              } else {
+                const parsedButtonUrl = getZSafeUrl.safeParse(element.buttonUrl);
+                if (!parsedButtonUrl.success) {
+                  const errorMessage = parsedButtonUrl.error.issues[0].message;
+                  ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: ${errorMessage}`,
+                    path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
+                  });
+                }
               }
             }
           }
