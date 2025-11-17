@@ -86,7 +86,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
 
         <TabsContent value="grouped" className="mt-4">
           <div className="px-4 pb-6 pt-4 md:px-6">
-            <div className="flex h-12 w-full overflow-hidden rounded-lg border border-slate-200">
+            <div className="flex h-12 w-full overflow-hidden rounded-t-lg border border-slate-200">
               {questionSummary.choices.map((result, index) => {
                 if (result.percentage === 0) return null;
                 // Calculate opacity based on rating position (higher rating = higher opacity)
@@ -94,82 +94,60 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                 const opacity = 0.3 + (result.rating / range) * 0.7; // Range from 30% to 100%
 
                 return (
-                  <TooltipProvider key={result.rating} delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          className="relative h-full cursor-pointer transition-opacity hover:brightness-110"
-                          style={{
-                            width: `${result.percentage}%`,
-                            borderRight:
-                              index < questionSummary.choices.length - 1
-                                ? "1px solid rgb(226, 232, 240)"
-                                : "none",
-                          }}
-                          onClick={() =>
-                            setFilter(
-                              questionSummary.question.id,
-                              questionSummary.question.headline,
-                              questionSummary.question.type,
-                              t("environments.surveys.summary.is_equal_to"),
-                              result.rating.toString()
-                            )
-                          }>
-                          <div
-                            className={`relative flex h-full items-center justify-center ${
-                              index === 0 ? "rounded-l-lg" : ""
-                            } ${index === questionSummary.choices.length - 1 ? "rounded-r-lg" : ""} bg-brand-dark`}
-                            style={{ opacity }}>
-                            {result.percentage >= 8 && (
-                              <span
-                                className="relative z-10 text-xs font-semibold text-slate-900"
-                                style={{ opacity: 1 / opacity }}>
-                                {convertFloatToNDecimal(result.percentage, 0)}%
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <RatingResponse
-                              scale={questionSummary.question.scale}
-                              answer={result.rating}
-                              range={questionSummary.question.range}
-                              addColors={questionSummary.question.isColorCodingEnabled}
-                            />
-                          </div>
-                          <div className="text-xs">
-                            {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}{" "}
-                            ({convertFloatToNDecimal(result.percentage, 1)}%)
-                          </div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <button
+                    key={result.rating}
+                    className="relative h-full cursor-pointer transition-opacity hover:brightness-110"
+                    style={{
+                      width: `${result.percentage}%`,
+                      borderRight:
+                        index < questionSummary.choices.length - 1 ? "1px solid rgb(226, 232, 240)" : "none",
+                    }}
+                    onClick={() =>
+                      setFilter(
+                        questionSummary.question.id,
+                        questionSummary.question.headline,
+                        questionSummary.question.type,
+                        t("environments.surveys.summary.is_equal_to"),
+                        result.rating.toString()
+                      )
+                    }>
+                    <div
+                      className={`h-full ${index === 0 ? "rounded-tl-lg" : ""} ${
+                        index === questionSummary.choices.length - 1 ? "rounded-tr-lg" : ""
+                      } bg-brand-dark`}
+                      style={{ opacity }}
+                    />
+                  </button>
                 );
               })}
             </div>
-            <div className="mt-3 flex w-full justify-between px-1">
-              <div className="flex items-center space-x-2">
-                <RatingResponse
-                  scale={questionSummary.question.scale}
-                  answer={1}
-                  range={questionSummary.question.range}
-                  addColors={false}
-                />
-                <span className="text-xs text-slate-500">Low</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-slate-500">High</span>
-                <RatingResponse
-                  scale={questionSummary.question.scale}
-                  answer={questionSummary.question.range}
-                  range={questionSummary.question.range}
-                  addColors={false}
-                />
-              </div>
+            <div className="flex w-full overflow-hidden rounded-b-lg border border-t-0 border-slate-200 bg-slate-50">
+              {questionSummary.choices.map((result, index) => {
+                if (result.percentage === 0) return null;
+
+                return (
+                  <div
+                    key={result.rating}
+                    className="flex flex-col items-center justify-center py-2"
+                    style={{
+                      width: `${result.percentage}%`,
+                      borderRight:
+                        index < questionSummary.choices.length - 1 ? "1px solid rgb(226, 232, 240)" : "none",
+                    }}>
+                    <div className="mb-1 flex items-center justify-center">
+                      <RatingResponse
+                        scale={questionSummary.question.scale}
+                        answer={result.rating}
+                        range={questionSummary.question.range}
+                        addColors={false}
+                      />
+                    </div>
+                    <div className="text-xs font-medium text-slate-600">
+                      {convertFloatToNDecimal(result.percentage, 1)}%
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </TabsContent>
