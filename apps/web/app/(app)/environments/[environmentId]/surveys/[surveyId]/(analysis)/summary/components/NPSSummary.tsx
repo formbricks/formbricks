@@ -171,8 +171,8 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
                   <div className="flex w-full flex-col items-center rounded-b-lg border border-t-0 border-slate-200 bg-slate-50 px-1 py-2">
                     <div className="mb-1.5 text-xs font-medium text-slate-500">{choice.rating}</div>
                     <div className="mb-1 flex items-center space-x-1">
-                      <div className="text-base font-semibold text-slate-700">{choice.count}</div>
-                      <div className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                      <div className="text-base font-medium text-slate-700">{choice.count}</div>
+                      <div className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
                         {convertFloatToNDecimal(choice.percentage, 1)}%
                       </div>
                     </div>
