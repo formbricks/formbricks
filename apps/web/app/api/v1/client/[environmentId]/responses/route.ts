@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
+import { ZEnvironmentId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
@@ -51,7 +51,7 @@ export const POST = withV1ApiWrapper({
     }
 
     const { environmentId } = params;
-    const environmentIdValidation = ZId.safeParse(environmentId);
+    const environmentIdValidation = ZEnvironmentId.safeParse(environmentId);
     const responseInputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
     if (!environmentIdValidation.success) {
