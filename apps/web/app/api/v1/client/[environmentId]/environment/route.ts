@@ -43,7 +43,7 @@ export const GET = withV1ApiWrapper({
         response: responses.successResponse(
           {
             data,
-            expiresAt: new Date(Date.now() + 1000 * 60), // 1 minute for SDK to recheck
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour for SDK to recheck
           },
           true,
           // Cache headers aligned with Redis cache TTL (1 minute)
