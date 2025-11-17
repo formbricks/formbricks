@@ -21,10 +21,8 @@ const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  // First, fetch authentication and environment data (required for all subsequent calls)
   const { session, environment, organization, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
-  // Parallelize independent data fetches that only depend on session/environment
   const [survey, user, tags, isContactsEnabled, responseCount, locale] = await Promise.all([
     getSurvey(params.surveyId),
     getUser(session.user.id),
@@ -46,18 +44,15 @@ const Page = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  // Fetch segments (depends on isContactsEnabled check)
   const segments = isContactsEnabled ? await getSegments(params.environmentId) : [];
 
   const publicDomain = getPublicDomain();
 
-  // Fetch organization billing (depends on organizationId)
   const organizationBilling = await getOrganizationBilling(organization.id);
   if (!organizationBilling) {
     throw new Error(t("common.organization_not_found"));
   }
 
-  // Parallelize quotas check and fetch
   const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
   const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
 
