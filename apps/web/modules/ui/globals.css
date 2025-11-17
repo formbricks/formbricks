@@ -391,7 +391,7 @@ input:focus {
 }
 
 .dark input:focus {
-  --tw-ring-shadow: 0 0 #3b82f6 !important;
+  --tw-ring-shadow: 0 0 var(--formbricks-focus) !important;
 }
 
 @layer utilities {

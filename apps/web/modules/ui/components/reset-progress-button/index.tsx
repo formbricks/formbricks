@@ -14,7 +14,7 @@ export const ResetProgressButton = ({ onClick }: ResetProgressButtonProps) => {
     <Button
       type="button"
       variant="ghost"
-      className="mr-2 h-fit bg-white px-2 py-0 font-sans text-sm text-slate-500 hover:bg-slate-100 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-slate-900 dark:hover:text-gray-200"
+      className="mr-2 h-fit bg-white px-2 py-0 font-sans text-sm text-slate-500 hover:bg-slate-100 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-900 dark:hover:text-gray-200"
       onClick={onClick}>
       {t("common.restart")}
       <Repeat2 className="ml-2 h-4 w-4" />
