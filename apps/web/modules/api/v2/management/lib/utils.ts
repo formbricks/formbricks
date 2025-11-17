@@ -2,8 +2,8 @@ import { Prisma } from "@prisma/client";
 import { TGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export function pickCommonFilter<T extends TGetFilter>(params: T) {
-  const { limit, skip, sortBy, order, startDate, endDate } = params;
-  return { limit, skip, sortBy, order, startDate, endDate };
+  const { limit, skip, sortBy, order, startDate, endDate, filterDateField } = params;
+  return { limit, skip, sortBy, order, startDate, endDate, filterDateField };
 }
 
 type HasFindMany =
@@ -15,19 +15,21 @@ type HasFindMany =
   | Prisma.ContactAttributeKeyFindManyArgs;
 
 export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: TGetFilter): T {
-  const { limit, skip, sortBy, order, startDate, endDate } = params || {};
+  const { limit, skip, sortBy, order, startDate, endDate, filterDateField = "createdAt" } = params || {};
 
   let filteredQuery = {
     ...query,
   };
+
+  const dateField = filterDateField || "createdAt";
 
   if (startDate) {
     filteredQuery = {
       ...filteredQuery,
       where: {
         ...filteredQuery.where,
-        createdAt: {
-          ...((filteredQuery.where?.createdAt as Prisma.DateTimeFilter) ?? {}),
+        [dateField]: {
+          ...((filteredQuery.where?.[dateField] as Prisma.DateTimeFilter) ?? {}),
           gte: startDate,
         },
       },
@@ -39,8 +41,8 @@ export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: 
       ...filteredQuery,
       where: {
         ...filteredQuery.where,
-        createdAt: {
-          ...((filteredQuery.where?.createdAt as Prisma.DateTimeFilter) ?? {}),
+        [dateField]: {
+          ...((filteredQuery.where?.[dateField] as Prisma.DateTimeFilter) ?? {}),
           lte: endDate,
         },
       },
