@@ -86,110 +86,140 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
 
         <TabsContent value="grouped" className="mt-4">
           <div className="px-4 pb-6 pt-4 md:px-6">
-            <div className="flex h-12 w-full overflow-hidden rounded-t-lg border border-slate-200">
-              {questionSummary.choices.map((result, index) => {
-                if (result.percentage === 0) return null;
-                // Calculate opacity based on rating position (higher rating = higher opacity)
-                const range = questionSummary.question.range;
-                const opacity = 0.3 + (result.rating / range) * 0.7; // Range from 30% to 100%
+            {questionSummary.responseCount === 0 ? (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center">
+                <p className="text-sm text-slate-500">
+                  {t("environments.surveys.summary.no_responses_found")}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex h-12 w-full overflow-hidden rounded-t-lg border border-slate-200">
+                  {questionSummary.choices.map((result, index) => {
+                    if (result.percentage === 0) return null;
+                    // Calculate opacity based on rating position (higher rating = higher opacity)
+                    const range = questionSummary.question.range;
+                    const opacity = 0.3 + (result.rating / range) * 0.7; // Range from 30% to 100%
 
-                return (
-                  <button
-                    key={result.rating}
-                    className="relative h-full cursor-pointer transition-opacity hover:brightness-110"
-                    style={{
-                      width: `${result.percentage}%`,
-                      borderRight:
-                        index < questionSummary.choices.length - 1 ? "1px solid rgb(226, 232, 240)" : "none",
-                    }}
-                    onClick={() =>
-                      setFilter(
-                        questionSummary.question.id,
-                        questionSummary.question.headline,
-                        questionSummary.question.type,
-                        t("environments.surveys.summary.is_equal_to"),
-                        result.rating.toString()
-                      )
-                    }>
-                    <div
-                      className={`h-full ${index === 0 ? "rounded-tl-lg" : ""} ${
-                        index === questionSummary.choices.length - 1 ? "rounded-tr-lg" : ""
-                      } bg-brand-dark`}
-                      style={{ opacity }}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex w-full overflow-hidden rounded-b-lg border border-t-0 border-slate-200 bg-slate-50">
-              {questionSummary.choices.map((result, index) => {
-                if (result.percentage === 0) return null;
+                    return (
+                      <button
+                        key={result.rating}
+                        className="relative h-full cursor-pointer transition-opacity hover:brightness-110"
+                        style={{
+                          width: `${result.percentage}%`,
+                          borderRight:
+                            index < questionSummary.choices.length - 1
+                              ? "1px solid rgb(226, 232, 240)"
+                              : "none",
+                        }}
+                        onClick={() =>
+                          setFilter(
+                            questionSummary.question.id,
+                            questionSummary.question.headline,
+                            questionSummary.question.type,
+                            t("environments.surveys.summary.is_equal_to"),
+                            result.rating.toString()
+                          )
+                        }>
+                        <div
+                          className={`h-full ${index === 0 ? "rounded-tl-lg" : ""} ${
+                            index === questionSummary.choices.length - 1 ? "rounded-tr-lg" : ""
+                          } bg-brand-dark`}
+                          style={{ opacity }}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex w-full overflow-hidden rounded-b-lg border border-t-0 border-slate-200 bg-slate-50">
+                  {questionSummary.choices.map((result, index) => {
+                    if (result.percentage === 0) return null;
 
-                return (
-                  <div
-                    key={result.rating}
-                    className="flex flex-col items-center justify-center py-2"
-                    style={{
-                      width: `${result.percentage}%`,
-                      borderRight:
-                        index < questionSummary.choices.length - 1 ? "1px solid rgb(226, 232, 240)" : "none",
-                    }}>
-                    <div className="mb-1 flex items-center justify-center">
-                      <RatingResponse
-                        scale={questionSummary.question.scale}
-                        answer={result.rating}
-                        range={questionSummary.question.range}
-                        addColors={false}
-                      />
-                    </div>
-                    <div className="text-xs font-medium text-slate-600">
-                      {convertFloatToNDecimal(result.percentage, 1)}%
-                    </div>
+                    return (
+                      <div
+                        key={result.rating}
+                        className="flex flex-col items-center justify-center py-2"
+                        style={{
+                          width: `${result.percentage}%`,
+                          borderRight:
+                            index < questionSummary.choices.length - 1
+                              ? "1px solid rgb(226, 232, 240)"
+                              : "none",
+                        }}>
+                        <div className="mb-1 flex items-center justify-center">
+                          <RatingResponse
+                            scale={questionSummary.question.scale}
+                            answer={result.rating}
+                            range={questionSummary.question.range}
+                            addColors={false}
+                          />
+                        </div>
+                        <div className="text-xs font-medium text-slate-600">
+                          {convertFloatToNDecimal(result.percentage, 1)}%
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {questionSummary.question.scale === "star" && (
+                  <div className="mt-3 flex w-full items-center justify-center space-x-3 px-1">
+                    <StarIcon className="h-6 w-6 text-slate-300" />
+                    <span className="text-xs text-slate-500">1 - {questionSummary.question.range}</span>
+                    <StarIcon fill="rgb(250 204 21)" className="h-6 w-6 text-yellow-400" />
                   </div>
-                );
-              })}
-            </div>
+                )}
+              </>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="individual" className="mt-4">
-          <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-            {questionSummary.choices.map((result) => (
-              <button
-                className="w-full cursor-pointer hover:opacity-80"
-                key={result.rating}
-                onClick={() =>
-                  setFilter(
-                    questionSummary.question.id,
-                    questionSummary.question.headline,
-                    questionSummary.question.type,
-                    t("environments.surveys.summary.is_equal_to"),
-                    result.rating.toString()
-                  )
-                }>
-                <div className="text flex justify-between px-2 pb-2">
-                  <div className="mr-8 flex items-center space-x-1">
-                    <div className="font-semibold text-slate-700">
-                      <RatingResponse
-                        scale={questionSummary.question.scale}
-                        answer={result.rating}
-                        range={questionSummary.question.range}
-                        addColors={questionSummary.question.isColorCodingEnabled}
-                      />
+          <div className="px-4 pb-6 pt-4 md:px-6">
+            <div className="space-y-5 text-sm md:text-base">
+              {questionSummary.choices.map((result) => (
+                <button
+                  className="w-full cursor-pointer hover:opacity-80"
+                  key={result.rating}
+                  onClick={() =>
+                    setFilter(
+                      questionSummary.question.id,
+                      questionSummary.question.headline,
+                      questionSummary.question.type,
+                      t("environments.surveys.summary.is_equal_to"),
+                      result.rating.toString()
+                    )
+                  }>
+                  <div className="text flex justify-between px-2 pb-2">
+                    <div className="mr-8 flex items-center space-x-1">
+                      <div className="font-semibold text-slate-700">
+                        <RatingResponse
+                          scale={questionSummary.question.scale}
+                          answer={result.rating}
+                          range={questionSummary.question.range}
+                          addColors={questionSummary.question.isColorCodingEnabled}
+                        />
+                      </div>
+                      <div>
+                        <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                          {convertFloatToNDecimal(result.percentage, 2)}%
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                        {convertFloatToNDecimal(result.percentage, 2)}%
-                      </p>
-                    </div>
+                    <p className="flex w-32 items-end justify-end text-slate-600">
+                      {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}
+                    </p>
                   </div>
-                  <p className="flex w-32 items-end justify-end text-slate-600">
-                    {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}
-                  </p>
-                </div>
-                <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
-              </button>
-            ))}
+                  <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
+                </button>
+              ))}
+            </div>
+            {questionSummary.question.scale === "star" && (
+              <div className="mt-5 flex w-full items-center justify-center space-x-3 px-1">
+                <StarIcon className="h-6 w-6 text-slate-300" />
+                <span className="text-xs text-slate-500">1 - {questionSummary.question.range}</span>
+                <StarIcon fill="rgb(250 204 21)" className="h-6 w-6 text-yellow-400" />
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>
