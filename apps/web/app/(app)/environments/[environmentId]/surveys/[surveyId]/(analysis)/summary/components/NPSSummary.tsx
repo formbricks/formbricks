@@ -78,7 +78,7 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
                 <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
                   <SatisfactionSmiley percentage={questionSummary.promoters.percentage} />
                   <div>
-                    % {t("environments.surveys.summary.promoters")}:{" "}
+                    {t("environments.surveys.summary.promoters")}:{" "}
                     {convertFloatToNDecimal(questionSummary.promoters.percentage, 2)}%
                   </div>
                 </div>
