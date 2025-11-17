@@ -1706,7 +1706,6 @@ checksums:
     environments/surveys/summary/configure_alerts: 05cc642cd9398034d7e68589d22d97cf
     environments/surveys/summary/congrats: 378f06fe96289e527153f8201088ff74
     environments/surveys/summary/connect_your_website_or_app_with_formbricks_to_get_started: d24183c86d08b16d58daa8ad887b2837
-    environments/surveys/summary/csatTooltip: cfa9acb66f9c2089f6ec67321773a610
     environments/surveys/summary/current_count: 6a3e59de8559e88e991e0aeafa9cfeec
     environments/surveys/summary/custom_range: 237e1a55295982bd94e51ea896b83a9a
     environments/surveys/summary/delete_all_existing_responses_and_displays: e346bcbdb1e0dfbce5925e19fdf0cc78
@@ -1765,7 +1764,6 @@ checksums:
     environments/surveys/summary/other_values_found: 48a74ee68c05f7fb162072b50c683b6a
     environments/surveys/summary/overall: 6c6d6533013d4739766af84b2871bca6
     environments/surveys/summary/promoters: 41fbb8d0439227661253a82fda39f521
-    environments/surveys/summary/promotersTooltip: fa4c9517cc40bca6c7d2e6c6d7377ed6
     environments/surveys/summary/qr_code: 48cb2a8c07a3d1647f766f93bb9e9382
     environments/surveys/summary/qr_code_description: 19f48dcf473809f178abf4212657ef14
     environments/surveys/summary/qr_code_download_failed: 2764b5615112800da27eecafc21e3472
