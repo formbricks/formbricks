@@ -116,11 +116,16 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                             )
                           }>
                           <div
-                            className={`h-full ${index === 0 ? "rounded-l-lg" : ""} ${
+                            className={`flex h-full items-center justify-center ${index === 0 ? "rounded-l-lg" : ""} ${
                               index === questionSummary.choices.length - 1 ? "rounded-r-lg" : ""
                             } bg-brand-dark`}
-                            style={{ opacity }}
-                          />
+                            style={{ opacity }}>
+                            {result.percentage >= 8 && (
+                              <span className="text-xs font-medium text-white">
+                                {convertFloatToNDecimal(result.percentage, 0)}%
+                              </span>
+                            )}
+                          </div>
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -145,7 +150,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
               })}
             </div>
             <div className="mt-3 flex w-full justify-between px-1">
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-2">
                 <RatingResponse
                   scale={questionSummary.question.scale}
                   answer={1}
@@ -154,7 +159,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                 />
                 <span className="text-xs text-slate-500">Low</span>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-2">
                 <span className="text-xs text-slate-500">High</span>
                 <RatingResponse
                   scale={questionSummary.question.scale}
