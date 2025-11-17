@@ -26,7 +26,7 @@ export const EnvironmentNotice = async ({ environmentId, subPageUrl }: Environme
         <AlertButton>
           <Link
             href={`${WEBAPP_URL}/environments/${otherEnvironmentId}${subPageUrl}`}
-            className="ml-1 cursor-pointer underline">
+            className="ml-1 cursor-pointer underline dark:bg-black dark:text-blue-400 dark:hover:bg-gray-800 dark:hover:text-blue-500">
             {t("common.switch_to", {
               environment: environment.type === "production" ? "Development" : "Production",
             })}

@@ -6,9 +6,11 @@ import {
   Cog,
   LogOutIcon,
   MessageCircle,
+  MoonIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   RocketIcon,
+  SunIcon,
   UserCircleIcon,
   UserIcon,
 } from "lucide-react";
@@ -24,6 +26,7 @@ import { TUser } from "@formbricks/types/user";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/utils";
 import FBLogo from "@/images/formbricks-wordmark.svg";
+import FBLogos from "@/images/logo-dark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
@@ -64,7 +67,7 @@ export const MainNavigation = ({
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
-
+  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">("light");
   const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
 
   const isOwnerOrManager = isManager || isOwner;
@@ -93,6 +96,21 @@ export const MainNavigation = ({
       setIsCollapsed(true);
     }
   }, [pathname]);
+  // Load theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    if (savedTheme) {
+      setCurrentTheme(savedTheme);
+      document.documentElement.classList.toggle("dark", savedTheme === "dark");
+    }
+  }, []);
+
+  // Handle theme change
+  const handleThemeChange = (theme: "light" | "dark") => {
+    setCurrentTheme(theme);
+    localStorage.setItem("theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  };
 
   const mainNavigation = useMemo(
     () => [
@@ -175,7 +193,12 @@ export const MainNavigation = ({
                     "flex items-center justify-center transition-opacity duration-100",
                     isTextVisible ? "opacity-0" : "opacity-100"
                   )}>
-                  <Image src={FBLogo} width={160} height={30} alt={t("environments.formbricks_logo")} />
+                  <Image
+                    src={currentTheme === "dark" ? FBLogos : FBLogo}
+                    width={160}
+                    height={30}
+                    alt={t("environments.formbricks_logo")}
+                  />
                 </Link>
               )}
               <Button
@@ -183,7 +206,7 @@ export const MainNavigation = ({
                 size="icon"
                 onClick={toggleSidebar}
                 className={cn(
-                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
+                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent dark:bg-slate-800 dark:text-gray-100 dark:hover:bg-slate-700"
                 )}>
                 {isCollapsed ? (
                   <PanelLeftOpenIcon strokeWidth={1.5} />
@@ -283,6 +306,27 @@ export const MainNavigation = ({
                       </DropdownMenuItem>
                     </Link>
                   ))}
+
+                  {/* Theme selection */}
+                  <DropdownMenuItem
+                    onClick={() => handleThemeChange(currentTheme === "light" ? "dark" : "light")}
+                    className="cursor-pointer"
+                    key={"theme-toggle"}>
+                    {currentTheme === "light" ? (
+                      <MoonIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                    ) : (
+                      <SunIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                    )}
+                    {currentTheme === "light" ? (
+                      <div className="flex w-full items-center justify-between">
+                        <span>{t("common.dark_mode")}</span>
+                      </div>
+                    ) : (
+                      <div className="flex w-full items-center justify-between">
+                        <span>{t("common.light_mode")}</span>
+                      </div>
+                    )}
+                  </DropdownMenuItem>
                   {/* Logout */}
                   <DropdownMenuItem
                     onClick={async () => {

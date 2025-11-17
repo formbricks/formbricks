@@ -35,7 +35,7 @@ export const NavigationLink = ({
                   "mb-1 ml-2 rounded-l-md py-2 pl-2 text-sm text-slate-700 hover:text-slate-900",
                   isActive ? activeClass : inactiveClass
                 )}>
-                <Link href={href} className="flex items-center">
+                <Link href={href} className="flex items-center dark:text-gray-100">
                   {children}
                 </Link>
               </li>
@@ -46,14 +46,14 @@ export const NavigationLink = ({
       ) : (
         <li
           className={cn(
-            "mb-1 rounded-l-md py-2 pl-5 text-sm text-slate-600 hover:text-slate-900",
+            "mb-1 rounded-l-md py-2 pl-5 text-sm text-slate-600 hover:text-slate-900 dark:text-gray-100",
             isActive ? activeClass : inactiveClass
           )}>
-          <Link href={href} className="flex items-center">
+          <Link href={href} className="flex items-center dark:text-gray-100">
             {children}
             <span
               className={cn(
-                "ml-2 flex transition-opacity duration-100",
+                "ml-2 flex transition-opacity duration-100 dark:text-gray-100",
                 isTextVisible ? "opacity-0" : "opacity-100"
               )}>
               {linkText}

@@ -16,7 +16,7 @@ const BreadcrumbList = React.forwardRef<HTMLOListElement, React.ComponentPropsWi
     <ol
       ref={ref}
       className={cn(
-        "flex flex-wrap items-center gap-1.5 break-words text-sm text-slate-500 hover:text-slate-700",
+        "flex flex-wrap items-center gap-1.5 break-words text-sm text-slate-500 dark:hover:text-gray-400",
         className
       )}
       {...props}
@@ -36,7 +36,7 @@ const BreadcrumbItem = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex items-center gap-1.5 space-x-1 rounded-md px-1.5 py-1",
-      !isHighlighted && "hover:bg-white hover:outline hover:outline-slate-300",
+      !isHighlighted && "hover:bg-slate-100 hover:outline hover:outline-slate-300 dark:hover:text-white",
       isActive && "bg-slate-100 outline outline-slate-300",
       isHighlighted && "bg-red-800 text-white outline hover:bg-red-700 hover:outline-red-800",
       className
