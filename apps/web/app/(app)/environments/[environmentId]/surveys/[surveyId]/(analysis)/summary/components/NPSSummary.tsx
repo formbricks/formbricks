@@ -68,25 +68,26 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
-      <div className="px-4 pt-4 md:px-6">
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="mb-4 flex items-center space-x-2 rounded-lg bg-slate-100 p-3">
-                <SatisfactionSmiley percentage={questionSummary.promoters.percentage} />
-                <div className="font-semibold text-slate-700">
-                  % {t("environments.surveys.summary.promoters")}:{" "}
-                  {convertFloatToNDecimal(questionSummary.promoters.percentage, 2)}%
+      <QuestionSummaryHeader
+        questionSummary={questionSummary}
+        survey={survey}
+        additionalInfo={
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+                  <SatisfactionSmiley percentage={questionSummary.promoters.percentage} />
+                  <div>
+                    % {t("environments.surveys.summary.promoters")}:{" "}
+                    {convertFloatToNDecimal(questionSummary.promoters.percentage, 2)}%
+                  </div>
                 </div>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              {t("environments.surveys.summary.promotersTooltip")}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+              </TooltipTrigger>
+              <TooltipContent>{t("environments.surveys.summary.promotersTooltip")}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        }
+      />
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "grouped" | "individual")}>
         <div className="px-4 md:px-6">
@@ -139,7 +140,7 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
             {questionSummary.choices.map((choice) => (
               <button
                 key={choice.rating}
-                className="flex flex-col items-center space-y-2 cursor-pointer hover:opacity-80"
+                className="flex cursor-pointer flex-col items-center space-y-2 hover:opacity-80"
                 onClick={() =>
                   setFilter(
                     questionSummary.question.id,
@@ -151,7 +152,7 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
                 }>
                 <div className="flex h-32 w-full flex-col items-center justify-end">
                   <div
-                    className="w-full bg-brand-dark transition-all"
+                    className="bg-brand-dark w-full transition-all"
                     style={{ height: `${Math.max(choice.percentage, 2)}%` }}
                   />
                 </div>
