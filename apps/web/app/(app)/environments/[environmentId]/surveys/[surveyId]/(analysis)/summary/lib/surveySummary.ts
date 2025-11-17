@@ -541,7 +541,6 @@ export const getQuestionSummary = async (
 
         // Calculate CSAT based on range
         let satisfiedCount = 0;
-        const range = question.range;
         if (range === 3) {
           satisfiedCount = choiceCountMap[3] || 0;
         } else if (range === 4) {
@@ -553,8 +552,7 @@ export const getQuestionSummary = async (
         } else if (range === 7) {
           satisfiedCount = (choiceCountMap[6] || 0) + (choiceCountMap[7] || 0);
         } else if (range === 10) {
-          satisfiedCount =
-            (choiceCountMap[8] || 0) + (choiceCountMap[9] || 0) + (choiceCountMap[10] || 0);
+          satisfiedCount = (choiceCountMap[8] || 0) + (choiceCountMap[9] || 0) + (choiceCountMap[10] || 0);
         }
         const satisfiedPercentage =
           totalResponseCount > 0 ? Math.round((satisfiedCount / totalResponseCount) * 100) : 0;
