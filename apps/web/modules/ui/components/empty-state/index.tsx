@@ -1,8 +1,8 @@
 "use client";
 
-type EmptyStateProps = {
+interface EmptyStateProps {
   text: string;
-};
+}
 
 export const EmptyState = ({ text }: EmptyStateProps) => {
   return (
