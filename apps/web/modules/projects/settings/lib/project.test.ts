@@ -155,7 +155,7 @@ describe("project lib", () => {
       vi.mocked(deleteFilesByEnvironmentId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteProject("p1");
       expect(result).toEqual(baseProject);
-      expect(deleteFilesByEnvironmentId).toHaveBeenCalledWith("prodenv");
+      expect(deleteFilesByEnvironmentId).toHaveBeenCalledWith("cmi2sra0j000004l73fvh7lhe");
     });
 
     test("logs error if file deletion fails", async () => {
