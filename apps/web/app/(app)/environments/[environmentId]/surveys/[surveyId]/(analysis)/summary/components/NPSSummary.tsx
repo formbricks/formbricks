@@ -90,8 +90,8 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
       />
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "grouped" | "individual")}>
-        <div className="px-4 md:px-6">
-          <TabsList className="w-full" width="fill">
+        <div className="flex justify-end px-4 md:px-6">
+          <TabsList>
             <TabsTrigger value="grouped" icon={<BarChartHorizontal className="h-4 w-4" />}>
               {t("environments.surveys.summary.grouped")}
             </TabsTrigger>

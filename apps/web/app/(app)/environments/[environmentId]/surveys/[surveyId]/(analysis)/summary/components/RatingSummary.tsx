@@ -1,7 +1,7 @@
 "use client";
 
-import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
-import { useMemo } from "react";
+import { BarChart, BarChartHorizontal, CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   TI18nString,
@@ -13,6 +13,7 @@ import {
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 import { SatisfactionSmiley } from "./SatisfactionSmiley";
@@ -31,6 +32,8 @@ interface RatingSummaryProps {
 
 export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSummaryProps) => {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<"grouped" | "individual">("grouped");
+
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
     if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;
@@ -62,52 +65,118 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                     </div>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>
-                  {t("environments.surveys.summary.csatTooltip")}
-                </TooltipContent>
+                <TooltipContent>{t("environments.surveys.summary.csatTooltip")}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
         }
       />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-        {questionSummary.choices.map((result) => (
-          <button
-            className="w-full cursor-pointer hover:opacity-80"
-            key={result.rating}
-            onClick={() =>
-              setFilter(
-                questionSummary.question.id,
-                questionSummary.question.headline,
-                questionSummary.question.type,
-                t("environments.surveys.summary.is_equal_to"),
-                result.rating.toString()
-              )
-            }>
-            <div className="text flex justify-between px-2 pb-2">
-              <div className="mr-8 flex items-center space-x-1">
-                <div className="font-semibold text-slate-700">
-                  <RatingResponse
-                    scale={questionSummary.question.scale}
-                    answer={result.rating}
-                    range={questionSummary.question.range}
-                    addColors={questionSummary.question.isColorCodingEnabled}
-                  />
-                </div>
-                <div>
-                  <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(result.percentage, 2)}%
+
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "grouped" | "individual")}>
+        <div className="flex justify-end px-4 md:px-6">
+          <TabsList>
+            <TabsTrigger value="grouped" icon={<BarChartHorizontal className="h-4 w-4" />}>
+              {t("environments.surveys.summary.grouped")}
+            </TabsTrigger>
+            <TabsTrigger value="individual" icon={<BarChart className="h-4 w-4" />}>
+              {t("environments.surveys.summary.individual")}
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="grouped" className="mt-4">
+          <div className="px-4 pb-6 pt-4 md:px-6">
+            <div className="flex h-12 w-full overflow-hidden rounded-lg">
+              {questionSummary.choices.map((result, index) => {
+                if (result.percentage === 0) return null;
+                return (
+                  <TooltipProvider key={result.rating} delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          className="relative h-full cursor-pointer transition-opacity hover:opacity-80"
+                          style={{ width: `${result.percentage}%` }}
+                          onClick={() =>
+                            setFilter(
+                              questionSummary.question.id,
+                              questionSummary.question.headline,
+                              questionSummary.question.type,
+                              t("environments.surveys.summary.is_equal_to"),
+                              result.rating.toString()
+                            )
+                          }>
+                          <div
+                            className={`h-full ${index === 0 ? "rounded-l-lg" : ""} ${
+                              index === questionSummary.choices.length - 1 ? "rounded-r-lg" : ""
+                            } bg-brand-dark`}
+                          />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <RatingResponse
+                              scale={questionSummary.question.scale}
+                              answer={result.rating}
+                              range={questionSummary.question.range}
+                              addColors={questionSummary.question.isColorCodingEnabled}
+                            />
+                          </div>
+                          <div className="text-xs">
+                            {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}{" "}
+                            ({convertFloatToNDecimal(result.percentage, 1)}%)
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="individual" className="mt-4">
+          <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+            {questionSummary.choices.map((result) => (
+              <button
+                className="w-full cursor-pointer hover:opacity-80"
+                key={result.rating}
+                onClick={() =>
+                  setFilter(
+                    questionSummary.question.id,
+                    questionSummary.question.headline,
+                    questionSummary.question.type,
+                    t("environments.surveys.summary.is_equal_to"),
+                    result.rating.toString()
+                  )
+                }>
+                <div className="text flex justify-between px-2 pb-2">
+                  <div className="mr-8 flex items-center space-x-1">
+                    <div className="font-semibold text-slate-700">
+                      <RatingResponse
+                        scale={questionSummary.question.scale}
+                        answer={result.rating}
+                        range={questionSummary.question.range}
+                        addColors={questionSummary.question.isColorCodingEnabled}
+                      />
+                    </div>
+                    <div>
+                      <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                        {convertFloatToNDecimal(result.percentage, 2)}%
+                      </p>
+                    </div>
+                  </div>
+                  <p className="flex w-32 items-end justify-end text-slate-600">
+                    {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}
                   </p>
                 </div>
-              </div>
-              <p className="flex w-32 items-end justify-end text-slate-600">
-                {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}
-              </p>
-            </div>
-            <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
-          </button>
-        ))}
-      </div>
+                <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
+              </button>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
       {questionSummary.dismissed && questionSummary.dismissed.count > 0 && (
         <div className="rounded-b-lg border-t bg-white px-6 py-4">
           <div key="dismissed">

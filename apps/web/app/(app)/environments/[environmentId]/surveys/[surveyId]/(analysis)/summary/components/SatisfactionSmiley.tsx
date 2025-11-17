@@ -130,10 +130,10 @@ const SmilingFace = ({ className }: { className?: string }) => (
 
 export const SatisfactionSmiley = ({ percentage, className }: SatisfactionSmileyProps) => {
   if (percentage > 80) {
-    return <SmilingFace className={`h-4 w-4 rounded-full bg-emerald-500 ${className || ""}`} />;
+    return <SmilingFace className={`h-4 w-4 text-emerald-500 ${className || ""}`} />;
   } else if (percentage >= 55) {
-    return <SlightlySmilingFace className={`h-4 w-4 rounded-full bg-orange-500 ${className || ""}`} />;
+    return <SlightlySmilingFace className={`h-4 w-4 text-orange-500 ${className || ""}`} />;
   } else {
-    return <TiredFace className={`h-4 w-4 rounded-full bg-rose-500 ${className || ""}`} />;
+    return <TiredFace className={`h-4 w-4 text-rose-500 ${className || ""}`} />;
   }
 };
