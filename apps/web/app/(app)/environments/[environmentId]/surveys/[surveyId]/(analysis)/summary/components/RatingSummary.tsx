@@ -144,6 +144,26 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                 );
               })}
             </div>
+            <div className="mt-3 flex w-full justify-between px-1">
+              <div className="flex items-center space-x-1">
+                <RatingResponse
+                  scale={questionSummary.question.scale}
+                  answer={1}
+                  range={questionSummary.question.range}
+                  addColors={false}
+                />
+                <span className="text-xs text-slate-500">Low</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <span className="text-xs text-slate-500">High</span>
+                <RatingResponse
+                  scale={questionSummary.question.scale}
+                  answer={questionSummary.question.range}
+                  range={questionSummary.question.range}
+                  addColors={false}
+                />
+              </div>
+            </div>
           </div>
         </TabsContent>
 

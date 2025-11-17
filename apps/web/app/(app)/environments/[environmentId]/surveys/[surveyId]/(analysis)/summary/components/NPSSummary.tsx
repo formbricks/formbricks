@@ -149,7 +149,7 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
               return (
                 <button
                   key={choice.rating}
-                  className="flex cursor-pointer flex-col items-center space-y-2 hover:brightness-110"
+                  className="flex cursor-pointer flex-col items-center hover:brightness-110"
                   onClick={() =>
                     setFilter(
                       questionSummary.question.id,
@@ -161,17 +161,17 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
                   }>
                   <div className="flex h-32 w-full flex-col items-center justify-end">
                     <div
-                      className="bg-brand-dark w-full rounded-t border border-slate-200 transition-all"
+                      className="bg-brand-dark w-full rounded-t-lg border border-slate-200 transition-all"
                       style={{
                         height: `${Math.max(choice.percentage, 2)}%`,
                         opacity,
                       }}
                     />
                   </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-slate-700">{choice.rating}</div>
-                    <div className="text-xs text-slate-600">{choice.count}</div>
-                    <div className="text-xs text-slate-500">
+                  <div className="flex w-full flex-col items-center rounded-b-lg border border-t-0 border-slate-200 bg-slate-50 px-1 py-2">
+                    <div className="mb-1 text-xs font-medium text-slate-500">{choice.rating}</div>
+                    <div className="mb-1 text-base font-semibold text-slate-700">{choice.count}</div>
+                    <div className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
                       {convertFloatToNDecimal(choice.percentage, 1)}%
                     </div>
                   </div>
