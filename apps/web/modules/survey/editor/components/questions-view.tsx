@@ -351,17 +351,13 @@ export const QuestionsView = ({
   };
 
   // Update block logic (block-level property)
-  const updateBlockLogic = (questionIdx: number, logic: TSurveyBlockLogic[]) => {
-    const question = questions[questionIdx];
-    if (!question) return;
-
-    const { blockIndex } = findElementLocation(localSurvey, question.id);
-    if (blockIndex === -1) return;
+  const updateBlockLogic = (blockIdx: number, logic: TSurveyBlockLogic[]) => {
+    if (blockIdx < 0 || blockIdx >= localSurvey.blocks.length) return;
 
     setLocalSurvey((prevSurvey) => {
       const blocks = [...(prevSurvey.blocks ?? [])];
-      blocks[blockIndex] = {
-        ...blocks[blockIndex],
+      blocks[blockIdx] = {
+        ...blocks[blockIdx],
         logic,
       };
       return { ...prevSurvey, blocks };
@@ -369,17 +365,13 @@ export const QuestionsView = ({
   };
 
   // Update block logic fallback (block-level property)
-  const updateBlockLogicFallback = (questionIdx: number, logicFallback: string | undefined) => {
-    const question = questions[questionIdx];
-    if (!question) return;
-
-    const { blockIndex } = findElementLocation(localSurvey, question.id);
-    if (blockIndex === -1) return;
+  const updateBlockLogicFallback = (blockIdx: number, logicFallback: string | undefined) => {
+    if (blockIdx < 0 || blockIdx >= localSurvey.blocks.length) return;
 
     setLocalSurvey((prevSurvey) => {
       const blocks = [...(prevSurvey.blocks ?? [])];
-      blocks[blockIndex] = {
-        ...blocks[blockIndex],
+      blocks[blockIdx] = {
+        ...blocks[blockIdx],
         logicFallback,
       };
       return { ...prevSurvey, blocks };
@@ -580,6 +572,53 @@ export const QuestionsView = ({
     internalQuestionIdMap[updatedQuestion.id] = createId();
   };
 
+  const moveElementToBlock = (elementId: string, targetBlockId: string) => {
+    const updatedSurvey = structuredClone(localSurvey);
+
+    // Find the source block and element
+    let sourceBlock: TSurveyBlock | undefined;
+    let elementToMove: TSurveyElement | undefined;
+    let elementIndexInBlock = -1;
+
+    for (const block of updatedSurvey.blocks) {
+      const idx = block.elements.findIndex((el) => el.id === elementId);
+      if (idx !== -1) {
+        sourceBlock = block;
+        elementToMove = block.elements[idx];
+        elementIndexInBlock = idx;
+        break;
+      }
+    }
+
+    if (!sourceBlock || !elementToMove) {
+      toast.error(t("environments.surveys.edit.element_not_found"));
+      return;
+    }
+
+    // Remove element from source block
+    sourceBlock.elements.splice(elementIndexInBlock, 1);
+
+    // If source block is now empty, delete it
+    if (sourceBlock.elements.length === 0) {
+      const blockIdx = updatedSurvey.blocks.findIndex((b) => b.id === sourceBlock!.id);
+      if (blockIdx !== -1) {
+        updatedSurvey.blocks.splice(blockIdx, 1);
+      }
+    }
+
+    // Add element to target block at the end
+    const targetBlock = updatedSurvey.blocks.find((b) => b.id === targetBlockId);
+    if (!targetBlock) {
+      toast.error(t("environments.surveys.edit.target_block_not_found"));
+      return;
+    }
+
+    targetBlock.elements.push(elementToMove);
+
+    setLocalSurvey(updatedSurvey);
+    setActiveQuestionId(elementId);
+  };
+
   const addEndingCard = (index: number) => {
     const updatedSurvey = structuredClone(localSurvey);
     const newEndingCard = getDefaultEndingCard(localSurvey.languages, t);
@@ -721,27 +760,26 @@ export const QuestionsView = ({
     })
   );
 
-  const onQuestionCardDragEnd = (event: DragEndEvent) => {
+  const onBlockCardDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    // Find source and destination block indices
-    const sourceQuestion = questions.find((q) => q.id === active.id);
-    const destQuestion = questions.find((q) => q.id === over?.id);
+    if (!over) return;
 
-    if (!sourceQuestion || !destQuestion) return;
+    // Check if we're dragging a block (not a question/element)
+    const sourceBlockIndex = localSurvey.blocks.findIndex((b) => b.id === active.id);
+    const destBlockIndex = localSurvey.blocks.findIndex((b) => b.id === over.id);
 
-    const { blockIndex: sourceBlockIndex } = findElementLocation(localSurvey, sourceQuestion.id);
-    const { blockIndex: destBlockIndex } = findElementLocation(localSurvey, destQuestion.id);
+    if (sourceBlockIndex !== -1 && destBlockIndex !== -1) {
+      // We're dragging blocks
+      if (sourceBlockIndex === destBlockIndex) return; // No move needed
 
-    if (sourceBlockIndex === -1 || destBlockIndex === -1) return;
-    if (sourceBlockIndex === destBlockIndex) return; // No move needed
+      const blocks = [...localSurvey.blocks];
+      const [movedBlock] = blocks.splice(sourceBlockIndex, 1);
+      blocks.splice(destBlockIndex, 0, movedBlock);
 
-    // Reorder blocks
-    const blocks = [...(localSurvey.blocks ?? [])];
-    const [movedBlock] = blocks.splice(sourceBlockIndex, 1);
-    blocks.splice(destBlockIndex, 0, movedBlock);
-
-    setLocalSurvey({ ...localSurvey, blocks });
+      setLocalSurvey({ ...localSurvey, blocks });
+      return;
+    }
   };
 
   const onEndingCardDragEnd = (event: DragEndEvent) => {
@@ -777,9 +815,9 @@ export const QuestionsView = ({
       )}
 
       <DndContext
-        id="questions"
+        id="blocks"
         sensors={sensors}
-        onDragEnd={onQuestionCardDragEnd}
+        onDragEnd={onBlockCardDragEnd}
         collisionDetection={closestCorners}>
         <BlocksDroppable
           localSurvey={localSurvey}
@@ -809,6 +847,7 @@ export const QuestionsView = ({
           deleteBlock={deleteBlockById}
           moveBlock={moveBlockById}
           addElementToBlock={_addElementToBlock}
+          moveElementToBlock={moveElementToBlock}
         />
       </DndContext>
 

@@ -4,11 +4,11 @@ import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
+  TSurveyBlock,
   TSurveyBlockLogic,
   TSurveyBlockLogicAction,
   TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import {
   TActionNumberVariableCalculateOperator,
   TActionTextVariableCalculateOperator,
@@ -33,32 +33,27 @@ import {
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { cn } from "@/modules/ui/lib/utils";
 
-interface LogicEditorActions {
+interface LogicEditorActionsProps {
   localSurvey: TSurvey;
   logicItem: TSurveyBlockLogic;
   logicIdx: number;
-  question: TSurveyElement;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
-  questionIdx: number;
+  block: TSurveyBlock;
+  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
+  blockIdx: number;
 }
 
 export function LogicEditorActions({
   localSurvey,
   logicItem,
   logicIdx,
-  question,
+  block,
   updateBlockLogic,
-  questionIdx,
-}: LogicEditorActions) {
+  blockIdx,
+}: LogicEditorActionsProps) {
   const actions = logicItem.actions;
   const { t } = useTranslation();
 
-  // Find the parent block for this question/element to get its logic
-  const parentBlock = localSurvey.blocks?.find((block) =>
-    block.elements.some((element) => element.id === question.id)
-  );
-  const blockLogic = parentBlock?.logic ?? [];
+  const blockLogic = block.logic ?? [];
 
   const handleActionsChange = (
     operation: "remove" | "addBelow" | "duplicate" | "update",
@@ -89,7 +84,7 @@ export function LogicEditorActions({
         break;
     }
 
-    updateBlockLogic(questionIdx, logicCopy);
+    updateBlockLogic(blockIdx, logicCopy);
   };
 
   const handleObjectiveChange = (actionIdx: number, objective: TSurveyBlockLogicActionObjective) => {
@@ -152,7 +147,7 @@ export function LogicEditorActions({
                       id={`action-${idx}-target`}
                       key={`target-${action.id}`}
                       showSearch={false}
-                      options={getActionTargetOptions(action, localSurvey, questionIdx, t)}
+                      options={getActionTargetOptions(action, localSurvey, blockIdx, t)}
                       value={action.target}
                       onChangeValue={(val: string) => {
                         handleValuesChange(idx, {
@@ -219,7 +214,7 @@ export function LogicEditorActions({
                           placeholder: "Value",
                           type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
                         }}
-                        groupedOptions={getActionValueOptions(action.variableId, localSurvey, questionIdx, t)}
+                        groupedOptions={getActionValueOptions(action.variableId, localSurvey, blockIdx, t)}
                         onChangeValue={(val, option, fromInput) => {
                           const fieldType = option?.meta?.type as TActionVariableValueType;
 

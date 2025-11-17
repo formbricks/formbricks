@@ -5,10 +5,11 @@ import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { ConditionalLogic } from "@/modules/survey/editor/components/conditional-logic";
 
 interface BlockSettingsProps {
   localSurvey: TSurvey;
@@ -21,6 +22,8 @@ interface BlockSettingsProps {
     labelKey: "buttonLabel" | "backButtonLabel",
     labelValue: TI18nString | undefined
   ) => void;
+  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isLastBlock: boolean;
@@ -33,12 +36,20 @@ export const BlockSettings = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   updateBlockButtonLabel,
+  updateBlockLogic,
+  updateBlockLogicFallback,
   locale,
   isStorageConfigured,
   isLastBlock,
 }: BlockSettingsProps) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+
+  // Use the first element in the block as a representative for logic
+  const firstElement = block.elements[0];
+  const blockLogic = block.logic ?? [];
+
+  // Auto-open if block has logic configured
+  const [open, setOpen] = useState(blockLogic.length > 0);
 
   const updateEmptyButtonLabels = (
     labelKey: "buttonLabel" | "backButtonLabel",
@@ -66,75 +77,88 @@ export const BlockSettings = ({
           : t("environments.surveys.edit.show_block_settings")}
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
-        <div className="mt-2 flex space-x-2">
-          {blockIndex !== 0 && (
+        <div className="mt-2 space-y-4">
+          <div className="flex space-x-2">
+            {blockIndex !== 0 && (
+              <QuestionFormInput
+                id="backButtonLabel"
+                value={block.backButtonLabel}
+                label={t("environments.surveys.edit.back_button_label")}
+                localSurvey={localSurvey}
+                questionIdx={blockIndex}
+                isInvalid={false}
+                updateQuestion={(_, updatedAttributes) => {
+                  if ("backButtonLabel" in updatedAttributes) {
+                    const backButtonLabel = updatedAttributes.backButtonLabel as TI18nString;
+                    updateBlockButtonLabel(blockIndex, "backButtonLabel", {
+                      ...block.backButtonLabel,
+                      [selectedLanguageCode]: backButtonLabel[selectedLanguageCode],
+                    });
+                  }
+                }}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                placeholder={t("common.back")}
+                locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                onBlur={(e) => {
+                  if (!block.backButtonLabel) return;
+                  const translatedBackButtonLabel = {
+                    ...block.backButtonLabel,
+                    [selectedLanguageCode]: e.target.value,
+                  };
+                  updateBlockButtonLabel(blockIndex, "backButtonLabel", translatedBackButtonLabel);
+                  updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, blockIndex);
+                }}
+              />
+            )}
             <QuestionFormInput
-              id="backButtonLabel"
-              value={block.backButtonLabel}
-              label={t("environments.surveys.edit.back_button_label")}
+              id="buttonLabel"
+              value={block.buttonLabel}
+              label={t("environments.surveys.edit.button_label")}
               localSurvey={localSurvey}
               questionIdx={blockIndex}
               isInvalid={false}
               updateQuestion={(_, updatedAttributes) => {
-                if ("backButtonLabel" in updatedAttributes) {
-                  const backButtonLabel = updatedAttributes.backButtonLabel as TI18nString;
-                  updateBlockButtonLabel(blockIndex, "backButtonLabel", {
-                    ...block.backButtonLabel,
-                    [selectedLanguageCode]: backButtonLabel[selectedLanguageCode],
+                if ("buttonLabel" in updatedAttributes) {
+                  const buttonLabel = updatedAttributes.buttonLabel as TI18nString;
+                  updateBlockButtonLabel(blockIndex, "buttonLabel", {
+                    ...block.buttonLabel,
+                    [selectedLanguageCode]: buttonLabel[selectedLanguageCode],
                   });
                 }
               }}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              placeholder={t("common.back")}
+              placeholder={t("common.next")}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
               onBlur={(e) => {
-                if (!block.backButtonLabel) return;
-                const translatedBackButtonLabel = {
-                  ...block.backButtonLabel,
+                if (!block.buttonLabel) return;
+                const translatedNextButtonLabel = {
+                  ...block.buttonLabel,
                   [selectedLanguageCode]: e.target.value,
                 };
-                updateBlockButtonLabel(blockIndex, "backButtonLabel", translatedBackButtonLabel);
-                updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, blockIndex);
+                updateBlockButtonLabel(blockIndex, "buttonLabel", translatedNextButtonLabel);
+                // Don't propagate to last block
+                const lastBlockIndex = localSurvey.blocks.length - 1;
+                if (blockIndex !== lastBlockIndex && !isLastBlock) {
+                  updateEmptyButtonLabels("buttonLabel", translatedNextButtonLabel, lastBlockIndex);
+                }
               }}
             />
+          </div>
+
+          {/* Conditional Logic */}
+          {firstElement && (
+            <ConditionalLogic
+              localSurvey={localSurvey}
+              block={block}
+              blockIdx={blockIndex}
+              updateBlockLogic={updateBlockLogic}
+              updateBlockLogicFallback={updateBlockLogicFallback}
+            />
           )}
-          <QuestionFormInput
-            id="buttonLabel"
-            value={block.buttonLabel}
-            label={t("environments.surveys.edit.button_label")}
-            localSurvey={localSurvey}
-            questionIdx={blockIndex}
-            isInvalid={false}
-            updateQuestion={(_, updatedAttributes) => {
-              if ("buttonLabel" in updatedAttributes) {
-                const buttonLabel = updatedAttributes.buttonLabel as TI18nString;
-                updateBlockButtonLabel(blockIndex, "buttonLabel", {
-                  ...block.buttonLabel,
-                  [selectedLanguageCode]: buttonLabel[selectedLanguageCode],
-                });
-              }
-            }}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            placeholder={t("common.next")}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            onBlur={(e) => {
-              if (!block.buttonLabel) return;
-              const translatedNextButtonLabel = {
-                ...block.buttonLabel,
-                [selectedLanguageCode]: e.target.value,
-              };
-              updateBlockButtonLabel(blockIndex, "buttonLabel", translatedNextButtonLabel);
-              // Don't propagate to last block
-              const lastBlockIndex = localSurvey.blocks.length - 1;
-              if (blockIndex !== lastBlockIndex && !isLastBlock) {
-                updateEmptyButtonLabels("buttonLabel", translatedNextButtonLabel, lastBlockIndex);
-              }
-            }}
-          />
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

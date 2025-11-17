@@ -20,7 +20,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
-import { getDefaultOperatorForQuestion } from "@/modules/survey/editor/lib/utils";
+import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -95,7 +95,7 @@ export const QuotaModal = ({
           {
             id: createId(),
             leftOperand: { type: "question", value: firstQuestion?.id },
-            operator: firstQuestion ? getDefaultOperatorForQuestion(firstQuestion, t) : "equals",
+            operator: firstQuestion ? getDefaultOperatorForElement(firstQuestion, t) : "equals",
           },
         ],
       },

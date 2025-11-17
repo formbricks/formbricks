@@ -4,13 +4,12 @@ import { ArrowRightIcon } from "lucide-react";
 import { ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
-import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import {
   Select,
@@ -23,11 +22,10 @@ import {
 interface LogicEditorProps {
   localSurvey: TSurvey;
   logicItem: TSurveyBlockLogic;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (questionIdx: number, logicFallback: string | undefined) => void;
-  question: TSurveyElement;
-  questionIdx: number;
+  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
+  block: TSurveyBlock;
+  blockIdx: number;
   logicIdx: number;
   isLast: boolean;
 }
@@ -35,23 +33,17 @@ interface LogicEditorProps {
 export function LogicEditor({
   localSurvey,
   logicItem,
-  updateQuestion,
   updateBlockLogic,
   updateBlockLogicFallback,
-  question,
-  questionIdx,
+  block,
+  blockIdx,
   logicIdx,
   isLast,
 }: LogicEditorProps) {
   const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
 
-  // Find the parent block for this question/element to get its logicFallback
-  const parentBlock = localSurvey.blocks?.find((block) =>
-    block.elements.some((element) => element.id === question.id)
-  );
-
-  const blockLogicFallback = parentBlock?.logicFallback;
+  const blockLogicFallback = block.logicFallback;
 
   const fallbackOptions = useMemo(() => {
     let options: {
@@ -60,33 +52,29 @@ export function LogicEditor({
       value: string;
     }[] = [];
 
-    // Derive questions from blocks
-    const allQuestions = getElementsFromBlocks(localSurvey.blocks);
     const blocks = localSurvey.blocks;
 
     // Track which blocks we've already added to avoid duplicates when a block has multiple elements
     const addedBlockIds = new Set<string>();
 
-    // Iterate over the questions AFTER the current question
-    for (let i = questionIdx + 1; i < allQuestions.length; i++) {
-      const ques = allQuestions[i];
-      const block = blocks.find((b) => b.elements.some((e) => e.id === ques.id));
+    // Iterate over the elements AFTER the current block
+    for (let i = blockIdx + 1; i < blocks.length; i++) {
+      const currentBlock = blocks[i];
 
-      if (!block) continue;
+      if (addedBlockIds.has(currentBlock.id)) continue;
 
-      // Skip if we've already added this block
-      if (addedBlockIds.has(block.id)) continue;
-
-      addedBlockIds.add(block.id);
+      addedBlockIds.add(currentBlock.id);
 
       // Use the first element's headline as the block label
-      const firstElement = block.elements[0];
+      const firstElement = currentBlock.elements[0];
+      if (!firstElement) continue;
+
       options.push({
         icon: QUESTIONS_ICON_MAP[firstElement.type],
         label: getTextContent(
           recallToHeadline(firstElement.headline, localSurvey, false, "default").default ?? ""
         ),
-        value: block.id,
+        value: currentBlock.id,
       });
     }
 
@@ -104,27 +92,25 @@ export function LogicEditor({
     });
 
     return options;
-  }, [localSurvey, questionIdx, QUESTIONS_ICON_MAP, t]);
+  }, [localSurvey, blockIdx, QUESTIONS_ICON_MAP, t]);
 
   return (
     <div className="flex w-full min-w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
       <LogicEditorConditions
         conditions={logicItem.conditions}
-        updateQuestion={updateQuestion}
         updateBlockLogic={updateBlockLogic}
-        question={question}
-        questionIdx={questionIdx}
+        block={block}
+        blockIdx={blockIdx}
         localSurvey={localSurvey}
         logicIdx={logicIdx}
       />
       <LogicEditorActions
         logicItem={logicItem}
         logicIdx={logicIdx}
-        question={question}
-        updateQuestion={updateQuestion}
+        block={block}
         updateBlockLogic={updateBlockLogic}
         localSurvey={localSurvey}
-        questionIdx={questionIdx}
+        blockIdx={blockIdx}
       />
 
       {isLast ? (
@@ -139,7 +125,7 @@ export function LogicEditor({
             autoComplete="true"
             defaultValue={blockLogicFallback || "defaultSelection"}
             onValueChange={(val) => {
-              updateBlockLogicFallback(questionIdx, val === "defaultSelection" ? undefined : val);
+              updateBlockLogicFallback(blockIdx, val === "defaultSelection" ? undefined : val);
             }}>
             <SelectTrigger className="w-auto bg-white">
               <SelectValue />

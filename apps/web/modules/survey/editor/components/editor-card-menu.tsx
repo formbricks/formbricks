@@ -2,7 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { Project } from "@prisma/client";
-import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -48,6 +48,7 @@ interface EditorCardMenuProps {
   updateCard: (cardIdx: number, updatedAttributes: any) => void;
   addCard: (question: any, index?: number) => void;
   addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
+  moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
   cardType: "question" | "ending";
   project?: Project;
   isCxMode?: boolean;
@@ -67,6 +68,7 @@ export const EditorCardMenu = ({
   updateCard,
   addCard,
   addCardToBlock,
+  moveElementToBlock,
   cardType,
   isCxMode = false,
 }: EditorCardMenuProps) => {
@@ -287,6 +289,34 @@ export const EditorCardMenu = ({
                         }}>
                         {QUESTIONS_ICON_MAP[type as TSurveyElementTypeEnum]}
                         <span className="ml-2">{name}</span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            )}
+            {cardType === "question" && moveElementToBlock && survey.blocks.length > 1 && (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
+                  {t("environments.surveys.edit.move_question_to_block")}
+                </DropdownMenuSubTrigger>
+
+                <DropdownMenuSubContent className="ml-2">
+                  {survey.blocks.map((block) => {
+                    // Don't show current block in the list
+                    if (block.id === blockId) return null;
+
+                    const blockName = block.name;
+                    return (
+                      <DropdownMenuItem
+                        key={block.id}
+                        className="min-h-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveElementToBlock(card.id, block.id);
+                        }}
+                        icon={<ArrowRightIcon className="h-4 w-4" />}>
+                        <span className="ml-2">{blockName}</span>
                       </DropdownMenuItem>
                     );
                   })}
