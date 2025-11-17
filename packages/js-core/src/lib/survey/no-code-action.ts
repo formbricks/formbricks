@@ -54,7 +54,8 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
 
   for (const event of noCodePageViewActionClasses) {
     const urlFilters = event.noCodeConfig?.urlFilters ?? [];
-    const isValidUrl = handleUrlFilters(urlFilters);
+    const connector = event.noCodeConfig?.urlFiltersConnector ?? "or";
+    const isValidUrl = handleUrlFilters(urlFilters, connector);
 
     if (isValidUrl) {
       await queue.add(trackNoCodePageViewActionHandler, CommandType.GeneralAction, true, event.name);
@@ -166,7 +167,8 @@ const checkExitIntent = async (e: MouseEvent): Promise<void> => {
   if (e.clientY <= 0 && noCodeExitIntentActionClasses.length > 0) {
     for (const event of noCodeExitIntentActionClasses) {
       const urlFilters = event.noCodeConfig?.urlFilters ?? [];
-      const isValidUrl = handleUrlFilters(urlFilters);
+      const connector = event.noCodeConfig?.urlFiltersConnector ?? "or";
+      const isValidUrl = handleUrlFilters(urlFilters, connector);
 
       if (!isValidUrl) continue;
 
@@ -223,7 +225,8 @@ const checkScrollDepth = async (): Promise<void> => {
 
     for (const event of noCodefiftyPercentScrollActionClasses) {
       const urlFilters = event.noCodeConfig?.urlFilters ?? [];
-      const isValidUrl = handleUrlFilters(urlFilters);
+      const connector = event.noCodeConfig?.urlFiltersConnector ?? "or";
+      const isValidUrl = handleUrlFilters(urlFilters, connector);
 
       if (!isValidUrl) continue;
 

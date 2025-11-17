@@ -34,6 +34,7 @@ const ZActionClassNoCodeConfigBase = z.object({
       rule: ZActionClassPageUrlRule,
     })
   ),
+  urlFiltersConnector: z.enum(["or", "and"]).optional(),
 });
 
 const ZActionClassNoCodeConfigClick = ZActionClassNoCodeConfigBase.extend({

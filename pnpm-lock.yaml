@@ -1374,6 +1374,7 @@ packages:
   '@azure/microsoft-playwright-testing@1.0.0-beta.7':
     resolution: {integrity: sha512-Y6C35LWUfLevHu5NG+7vvFfhpmUrGWKRumcz7/CSCmWlx8RVfWgP6NuL8rIPDuTeJyjaTczNfeg1ppGW26TjBw==}
     engines: {node: '>=18.0.0'}
+    deprecated: This package has been deprecated and will no longer be maintained after March 8, 2026. Upgrade to the replacement package, @azure/playwright, to continue receiving updates.
     peerDependencies:
       '@playwright/test': ^1.43.1
 
