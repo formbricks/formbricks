@@ -1,11 +1,11 @@
 "use client";
 
-import { LinkIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CopyIcon, LinkIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import type { TSurvey } from "@/modules/survey/list/types/surveys";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
   Select,
@@ -33,6 +34,16 @@ interface GeneratePersonalLinkModalProps {
   environmentId: string;
 }
 
+const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    console.warn("Failed to copy to clipboard:", error);
+    return false;
+  }
+};
+
 export const GeneratePersonalLinkModal = ({
   open,
   setOpen,
@@ -41,15 +52,15 @@ export const GeneratePersonalLinkModal = ({
 }: GeneratePersonalLinkModalProps) => {
   const { t } = useTranslation();
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
-  const [selectedSurveyId, setSelectedSurveyId] = useState<string>("");
+  const [selectedSurveyId, setSelectedSurveyId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingSurveys, setIsFetchingSurveys] = useState(false);
+  const [generatedUrl, setGeneratedUrl] = useState("");
 
-  const fetchSurveys = async () => {
+  const fetchSurveys = useCallback(async () => {
     setIsFetchingSurveys(true);
     try {
       const response = await getPublishedLinkSurveysAction({ environmentId });
-
       if (response?.data) {
         setSurveys(response.data);
       } else {
@@ -61,18 +72,29 @@ export const GeneratePersonalLinkModal = ({
     } finally {
       setIsFetchingSurveys(false);
     }
-  };
+  }, [environmentId, t]);
 
   useEffect(() => {
     if (open) {
       fetchSurveys();
     } else {
-      // Reset state when modal closes
       setSelectedSurveyId("");
       setSurveys([]);
+      setGeneratedUrl("");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, environmentId]);
+  }, [open, fetchSurveys]);
+
+  const handleCopyUrl = useCallback(
+    async (url: string) => {
+      const success = await copyToClipboard(url);
+      if (success) {
+        toast.success(t("common.copied_to_clipboard"));
+      } else {
+        toast.error(t("common.failed_to_copy_to_clipboard"));
+      }
+    },
+    [t]
+  );
 
   const handleGenerate = async () => {
     if (!selectedSurveyId) {
@@ -98,18 +120,24 @@ export const GeneratePersonalLinkModal = ({
         return;
       }
 
-      if (response?.data?.surveyUrl) {
-        // Copy to clipboard
-        try {
-          await navigator.clipboard.writeText(response.data.surveyUrl);
-          toast.success(t("common.copied_to_clipboard"));
-          setOpen(false);
-        } catch (_clipboardError) {
-          // If clipboard fails, still show success but with the URL
-          toast.success(t("environments.contacts.personal_link_generated"));
-        }
-      } else {
+      const surveyUrl = response?.data?.surveyUrl;
+      if (!surveyUrl) {
         toast.error(t("common.something_went_wrong_please_try_again"));
+        return;
+      }
+
+      setGeneratedUrl(surveyUrl);
+      const success = await copyToClipboard(surveyUrl);
+
+      if (success) {
+        toast.success(t("common.copied_to_clipboard"));
+      } else {
+        toast.error(
+          t("environments.contacts.personal_link_generated_but_clipboard_failed", {
+            url: surveyUrl,
+          }) || `${t("environments.contacts.personal_link_generated")}: ${surveyUrl}`,
+          { duration: 6000 }
+        );
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("common.something_went_wrong_please_try_again"));
@@ -118,11 +146,14 @@ export const GeneratePersonalLinkModal = ({
     }
   };
 
-  const selectPlaceholder = isFetchingSurveys
-    ? t("common.loading")
-    : surveys.length === 0
-      ? t("environments.contacts.no_published_surveys")
-      : t("environments.contacts.select_a_survey");
+  const getSelectPlaceholder = () => {
+    if (isFetchingSurveys) return t("common.loading");
+    if (surveys.length === 0) return t("environments.contacts.no_published_surveys");
+    return t("environments.contacts.select_a_survey");
+  };
+
+  const isDisabled = isFetchingSurveys || isLoading || surveys.length === 0;
+  const canGenerate = selectedSurveyId && !isDisabled;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -139,12 +170,9 @@ export const GeneratePersonalLinkModal = ({
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="survey-select">{t("common.select_survey")}</Label>
-              <Select
-                value={selectedSurveyId}
-                onValueChange={setSelectedSurveyId}
-                disabled={isFetchingSurveys || isLoading || surveys.length === 0}>
+              <Select value={selectedSurveyId} onValueChange={setSelectedSurveyId} disabled={isDisabled}>
                 <SelectTrigger id="survey-select">
-                  <SelectValue placeholder={selectPlaceholder} />
+                  <SelectValue placeholder={getSelectPlaceholder()} />
                 </SelectTrigger>
                 <SelectContent>
                   {surveys.map((survey) => (
@@ -160,6 +188,24 @@ export const GeneratePersonalLinkModal = ({
                 </p>
               )}
             </div>
+
+            {generatedUrl && (
+              <div className="space-y-2">
+                <Label htmlFor="generated-url">{t("environments.contacts.personal_survey_link")}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="generated-url"
+                    value={generatedUrl}
+                    readOnly
+                    className="flex-1 font-mono text-sm"
+                  />
+                  <Button variant="secondary" onClick={() => handleCopyUrl(generatedUrl)} className="gap-1">
+                    <CopyIcon className="h-4 w-4" />
+                    {t("common.copy")}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </DialogBody>
 
@@ -167,9 +213,7 @@ export const GeneratePersonalLinkModal = ({
           <Button variant="secondary" onClick={() => setOpen(false)} disabled={isLoading}>
             {t("common.cancel")}
           </Button>
-          <Button
-            onClick={handleGenerate}
-            disabled={!selectedSurveyId || isLoading || isFetchingSurveys || surveys.length === 0}>
+          <Button onClick={handleGenerate} disabled={!canGenerate}>
             {isLoading ? t("common.saving") : t("common.generate")}
           </Button>
         </DialogFooter>
