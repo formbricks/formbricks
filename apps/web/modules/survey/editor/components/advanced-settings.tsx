@@ -40,7 +40,9 @@ export const AdvancedSettings = ({
         updateQuestion={updateQuestion}
       />
 
-      {showOptionIds && <OptionIds question={question} selectedLanguageCode={selectedLanguageCode} />}
+      {showOptionIds && (
+        <OptionIds type="question" question={question} selectedLanguageCode={selectedLanguageCode} />
+      )}
     </div>
   );
 };
