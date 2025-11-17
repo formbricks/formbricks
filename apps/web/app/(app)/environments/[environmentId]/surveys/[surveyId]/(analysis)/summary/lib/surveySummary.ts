@@ -539,6 +539,26 @@ export const getQuestionSummary = async (
           });
         });
 
+        // Calculate CSAT based on range
+        let satisfiedCount = 0;
+        const range = question.range;
+        if (range === 3) {
+          satisfiedCount = choiceCountMap[3] || 0;
+        } else if (range === 4) {
+          satisfiedCount = (choiceCountMap[3] || 0) + (choiceCountMap[4] || 0);
+        } else if (range === 5) {
+          satisfiedCount = (choiceCountMap[4] || 0) + (choiceCountMap[5] || 0);
+        } else if (range === 6) {
+          satisfiedCount = (choiceCountMap[5] || 0) + (choiceCountMap[6] || 0);
+        } else if (range === 7) {
+          satisfiedCount = (choiceCountMap[6] || 0) + (choiceCountMap[7] || 0);
+        } else if (range === 10) {
+          satisfiedCount =
+            (choiceCountMap[8] || 0) + (choiceCountMap[9] || 0) + (choiceCountMap[10] || 0);
+        }
+        const satisfiedPercentage =
+          totalResponseCount > 0 ? Math.round((satisfiedCount / totalResponseCount) * 100) : 0;
+
         summary.push({
           type: question.type,
           question,
@@ -547,6 +567,10 @@ export const getQuestionSummary = async (
           choices: values,
           dismissed: {
             count: dismissed,
+          },
+          csat: {
+            satisfiedCount,
+            satisfiedPercentage,
           },
         });
 
@@ -563,10 +587,17 @@ export const getQuestionSummary = async (
           score: 0,
         };
 
+        // Track individual score counts (0-10)
+        const scoreCountMap: Record<number, number> = {};
+        for (let i = 0; i <= 10; i++) {
+          scoreCountMap[i] = 0;
+        }
+
         responses.forEach((response) => {
           const value = response.data[question.id];
           if (typeof value === "number") {
             data.total++;
+            scoreCountMap[value]++;
             if (value >= 9) {
               data.promoters++;
             } else if (value >= 7) {
@@ -584,6 +615,13 @@ export const getQuestionSummary = async (
           data.total > 0
             ? convertFloatTo2Decimal(((data.promoters - data.detractors) / data.total) * 100)
             : 0;
+
+        // Build choices array with individual score breakdown
+        const choices = Object.entries(scoreCountMap).map(([rating, count]) => ({
+          rating: parseInt(rating),
+          count,
+          percentage: data.total > 0 ? convertFloatTo2Decimal((count / data.total) * 100) : 0,
+        }));
 
         summary.push({
           type: question.type,
@@ -607,6 +645,7 @@ export const getQuestionSummary = async (
             count: data.dismissed,
             percentage: data.total > 0 ? convertFloatTo2Decimal((data.dismissed / data.total) * 100) : 0,
           },
+          choices,
         });
         break;
       }

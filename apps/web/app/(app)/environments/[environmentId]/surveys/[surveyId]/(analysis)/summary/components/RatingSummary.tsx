@@ -13,7 +13,9 @@ import {
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { SatisfactionSmiley } from "./SatisfactionSmiley";
 
 interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRating;
@@ -42,11 +44,29 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
         questionSummary={questionSummary}
         survey={survey}
         additionalInfo={
-          <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
-            {getIconBasedOnScale}
-            <div>
-              {t("environments.surveys.summary.overall")}: {questionSummary.average.toFixed(2)}
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+              {getIconBasedOnScale}
+              <div>
+                {t("environments.surveys.summary.overall")}: {questionSummary.average.toFixed(2)}
+              </div>
             </div>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+                    <SatisfactionSmiley percentage={questionSummary.csat.satisfiedPercentage} />
+                    <div>
+                      CSAT: {questionSummary.csat.satisfiedPercentage}%{" "}
+                      {t("environments.surveys.summary.satisfied")}
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t("environments.surveys.summary.csatTooltip")}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         }
       />

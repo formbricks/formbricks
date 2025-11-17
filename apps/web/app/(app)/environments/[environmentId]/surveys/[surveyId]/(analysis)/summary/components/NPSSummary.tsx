@@ -1,5 +1,7 @@
 "use client";
 
+import { BarChart, BarChartHorizontal } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   TI18nString,
@@ -9,8 +11,11 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { SatisfactionSmiley } from "./SatisfactionSmiley";
 
 interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummaryNps;
@@ -26,6 +31,8 @@ interface NPSSummaryProps {
 
 export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryProps) => {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<"grouped" | "individual">("grouped");
+
   const applyFilter = (group: string) => {
     const filters = {
       promoters: {
@@ -62,37 +69,104 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-        {["promoters", "passives", "detractors", "dismissed"].map((group) => (
-          <button
-            className="w-full cursor-pointer hover:opacity-80"
-            key={group}
-            onClick={() => applyFilter(group)}>
-            <div
-              className={`mb-2 flex justify-between ${group === "dismissed" ? "mb-2 border-t bg-white pt-4 text-sm md:text-base" : ""}`}>
-              <div className="mr-8 flex space-x-1">
-                <p
-                  className={`font-semibold capitalize text-slate-700 ${group === "dismissed" ? "" : "text-slate-700"}`}>
-                  {group}
-                </p>
-                <div>
-                  <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(questionSummary[group]?.percentage, 2)}%
-                  </p>
+      <div className="px-4 pt-4 md:px-6">
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="mb-4 flex items-center space-x-2 rounded-lg bg-slate-100 p-3">
+                <SatisfactionSmiley percentage={questionSummary.promoters.percentage} />
+                <div className="font-semibold text-slate-700">
+                  % {t("environments.surveys.summary.promoters")}:{" "}
+                  {convertFloatToNDecimal(questionSummary.promoters.percentage, 2)}%
                 </div>
               </div>
-              <p className="flex w-32 items-end justify-end text-slate-600">
-                {questionSummary[group]?.count}{" "}
-                {questionSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
-              </p>
-            </div>
-            <ProgressBar
-              barColor={group === "dismissed" ? "bg-slate-600" : "bg-brand-dark"}
-              progress={questionSummary[group]?.percentage / 100}
-            />
-          </button>
-        ))}
+            </TooltipTrigger>
+            <TooltipContent>
+              {t("environments.surveys.summary.promotersTooltip")}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
+
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "grouped" | "individual")}>
+        <div className="px-4 md:px-6">
+          <TabsList className="w-full" width="fill">
+            <TabsTrigger value="grouped" icon={<BarChartHorizontal className="h-4 w-4" />}>
+              {t("environments.surveys.summary.grouped")}
+            </TabsTrigger>
+            <TabsTrigger value="individual" icon={<BarChart className="h-4 w-4" />}>
+              {t("environments.surveys.summary.individual")}
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="grouped" className="mt-4">
+          <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+            {["promoters", "passives", "detractors", "dismissed"].map((group) => (
+              <button
+                className="w-full cursor-pointer hover:opacity-80"
+                key={group}
+                onClick={() => applyFilter(group)}>
+                <div
+                  className={`mb-2 flex justify-between ${group === "dismissed" ? "mb-2 border-t bg-white pt-4 text-sm md:text-base" : ""}`}>
+                  <div className="mr-8 flex space-x-1">
+                    <p
+                      className={`font-semibold capitalize text-slate-700 ${group === "dismissed" ? "" : "text-slate-700"}`}>
+                      {group}
+                    </p>
+                    <div>
+                      <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                        {convertFloatToNDecimal(questionSummary[group]?.percentage, 2)}%
+                      </p>
+                    </div>
+                  </div>
+                  <p className="flex w-32 items-end justify-end text-slate-600">
+                    {questionSummary[group]?.count}{" "}
+                    {questionSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
+                  </p>
+                </div>
+                <ProgressBar
+                  barColor={group === "dismissed" ? "bg-slate-600" : "bg-brand-dark"}
+                  progress={questionSummary[group]?.percentage / 100}
+                />
+              </button>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="individual" className="mt-4">
+          <div className="grid grid-cols-11 gap-2 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+            {questionSummary.choices.map((choice) => (
+              <button
+                key={choice.rating}
+                className="flex flex-col items-center space-y-2 cursor-pointer hover:opacity-80"
+                onClick={() =>
+                  setFilter(
+                    questionSummary.question.id,
+                    questionSummary.question.headline,
+                    questionSummary.question.type,
+                    t("environments.surveys.summary.is_equal_to"),
+                    choice.rating.toString()
+                  )
+                }>
+                <div className="flex h-32 w-full flex-col items-center justify-end">
+                  <div
+                    className="w-full bg-brand-dark transition-all"
+                    style={{ height: `${Math.max(choice.percentage, 2)}%` }}
+                  />
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-slate-700">{choice.rating}</div>
+                  <div className="text-xs text-slate-600">{choice.count}</div>
+                  <div className="text-xs text-slate-500">
+                    {convertFloatToNDecimal(choice.percentage, 1)}%
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <div className="flex justify-center pb-4 pt-4">
         <HalfCircle value={questionSummary.score} />
