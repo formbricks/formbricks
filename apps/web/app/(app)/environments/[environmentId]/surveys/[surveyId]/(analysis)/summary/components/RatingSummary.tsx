@@ -116,12 +116,14 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                             )
                           }>
                           <div
-                            className={`flex h-full items-center justify-center ${index === 0 ? "rounded-l-lg" : ""} ${
-                              index === questionSummary.choices.length - 1 ? "rounded-r-lg" : ""
-                            } bg-brand-dark`}
+                            className={`relative flex h-full items-center justify-center ${
+                              index === 0 ? "rounded-l-lg" : ""
+                            } ${index === questionSummary.choices.length - 1 ? "rounded-r-lg" : ""} bg-brand-dark`}
                             style={{ opacity }}>
                             {result.percentage >= 8 && (
-                              <span className="text-xs font-semibold text-slate-900">
+                              <span
+                                className="relative z-10 text-xs font-semibold text-slate-900"
+                                style={{ opacity: 1 / opacity }}>
                                 {convertFloatToNDecimal(result.percentage, 0)}%
                               </span>
                             )}

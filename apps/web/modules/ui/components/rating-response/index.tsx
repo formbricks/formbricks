@@ -33,5 +33,10 @@ export const RatingResponse: React.FC<RatingResponseProps> = ({
   if (scale === "smiley")
     return <RatingSmiley active={false} idx={answer - 1} range={range} addColors={addColors} />;
 
-  return answer;
+  // For number scale, render in a gray box for consistent styling
+  return (
+    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-100 text-base font-semibold text-slate-700">
+      {answer}
+    </div>
+  );
 };
