@@ -121,7 +121,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                             } bg-brand-dark`}
                             style={{ opacity }}>
                             {result.percentage >= 8 && (
-                              <span className="text-xs font-medium text-white">
+                              <span className="text-xs font-semibold text-slate-900">
                                 {convertFloatToNDecimal(result.percentage, 0)}%
                               </span>
                             )}
