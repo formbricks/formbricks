@@ -1,7 +1,7 @@
 import { NextRequest, userAgent } from "next/server";
-import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { ZEnvironmentId } from "@formbricks/types/environment";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
@@ -45,7 +45,7 @@ export const POST = withV1ApiWrapper({
       // - HTML-encoded placeholders like <environmentId> or %3C...%3E
       // - Empty or whitespace-only IDs
       // - Any other invalid CUID v1 format
-      const cuidValidation = z.string().cuid().safeParse(environmentId);
+      const cuidValidation = ZEnvironmentId.safeParse(environmentId);
       if (!cuidValidation.success) {
         logger.warn(
           {

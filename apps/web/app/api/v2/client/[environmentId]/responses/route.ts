@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
+import { ZEnvironmentId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
@@ -43,7 +43,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
 
   const { environmentId } = params;
-  const environmentIdValidation = ZId.safeParse(environmentId);
+  const environmentIdValidation = ZEnvironmentId.safeParse(environmentId);
   const responseInputValidation = ZResponseInputV2.safeParse({ ...responseInput, environmentId });
 
   if (!environmentIdValidation.success) {
