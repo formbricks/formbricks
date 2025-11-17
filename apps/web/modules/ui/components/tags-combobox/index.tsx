@@ -63,9 +63,7 @@ export const TagsCombobox = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button size="sm" aria-expanded={open}>
-          {t("environments.project.tags.add_tag")}
-        </Button>
+        <Button aria-expanded={open}>{t("environments.project.tags.add_tag")}</Button>
       </PopoverTrigger>
       <PopoverContent className="max-h-60 w-[200px] overflow-y-auto p-0">
         <Command

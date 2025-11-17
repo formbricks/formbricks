@@ -51,7 +51,6 @@ const Page = async (props) => {
           airtableArray={airtableArray}
           environmentId={environment.id}
           surveys={surveys}
-          environment={environment}
           webAppUrl={WEBAPP_URL}
           locale={locale}
         />
