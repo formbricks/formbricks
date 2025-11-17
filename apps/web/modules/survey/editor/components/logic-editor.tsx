@@ -111,6 +111,7 @@ export function LogicEditor({
         updateBlockLogic={updateBlockLogic}
         localSurvey={localSurvey}
         blockIdx={blockIdx}
+        isLast={isLast}
       />
 
       {isLast ? (

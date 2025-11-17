@@ -949,14 +949,16 @@ export const getActionTargetOptions = (
   const allElements = localSurvey.blocks?.flatMap((b) => b.elements) ?? [];
 
   // Calculate which elements come after the current block
-  let elementsBeforeCurrentBlock = 0;
-  for (let i = 0; i < blockIdx; i++) {
-    elementsBeforeCurrentBlock += localSurvey.blocks[i].elements.length;
+  let elementsUpToAndIncludingCurrentBlock = 0;
+  for (let i = 0; i <= blockIdx; i++) {
+    elementsUpToAndIncludingCurrentBlock += localSurvey.blocks[i].elements.length;
   }
 
-  // For requireAnswer, show elements after the current block
+  // For requireAnswer, show elements after the current block (not including current block)
   if (action.objective === "requireAnswer") {
-    const elementsAfterCurrentBlock = allElements.filter((_, idx) => idx > elementsBeforeCurrentBlock);
+    const elementsAfterCurrentBlock = allElements.filter(
+      (_, idx) => idx >= elementsUpToAndIncludingCurrentBlock
+    );
     const nonRequiredElements = elementsAfterCurrentBlock.filter((element) => !element.required);
 
     // Return element IDs for requireAnswer

@@ -40,6 +40,7 @@ interface LogicEditorActionsProps {
   block: TSurveyBlock;
   updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
   blockIdx: number;
+  isLast?: boolean;
 }
 
 export function LogicEditorActions({
@@ -49,6 +50,7 @@ export function LogicEditorActions({
   block,
   updateBlockLogic,
   blockIdx,
+  isLast,
 }: LogicEditorActionsProps) {
   const actions = logicItem.actions;
   const { t } = useTranslation();
@@ -111,7 +113,7 @@ export function LogicEditorActions({
         {t("environments.surveys.edit.then")}
       </div>
 
-      <div className="flex grow flex-col gap-y-2 border-b border-slate-200 last:pb-3">
+      <div className={cn("flex grow flex-col gap-y-2 last:pb-3", isLast && "border-b border-slate-200")}>
         {actions?.map((action, idx) => (
           <div className="flex items-center gap-x-2" key={action.id}>
             <div className="flex w-10 shrink-0 items-center justify-end">
