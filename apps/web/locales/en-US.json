@@ -778,8 +778,8 @@
       "app-connection": {
         "app_connection": "App Connection",
         "app_connection_description": "Connect your app or website to Formbricks.",
-        "cache_update_delay_description": "When you make updates to surveys, contacts, actions, or other data, it can take up to 5 minutes for those changes to appear in your local app running the Formbricks SDK. This delay is due to a limitation in our current caching system. We’re actively reworking the cache and will release a fix in Formbricks 4.0.",
-        "cache_update_delay_title": "Changes will be reflected after 5 minutes due to caching",
+        "cache_update_delay_description": "When you make updates to surveys, contacts, actions, or other data, it can take up to 1 minute for those changes to appear in your local app running the Formbricks SDK.",
+        "cache_update_delay_title": "Changes will be reflected after ~1 minute due to caching",
         "environment_id": "Your Environment ID",
         "environment_id_description": "This id uniquely identifies this Formbricks environment.",
         "formbricks_sdk_connected": "Formbricks SDK is connected",

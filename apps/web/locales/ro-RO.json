@@ -778,8 +778,8 @@
       "app-connection": {
         "app_connection": "Conectare aplicație",
         "app_connection_description": "Conectează-ți aplicația sau site-ul la Formbricks.",
-        "cache_update_delay_description": "Când faci actualizări la sondaje, contacte, acțiuni sau alte date, poate dura până la 5 minute pentru ca aceste modificări să apară în aplicația locală care rulează SDK Formbricks. Această întârziere se datorează unei limitări în sistemul nostru actual de caching. Revedem activ cache-ul și vom lansa o soluție în Formbricks 4.0.",
-        "cache_update_delay_title": "Modificările vor fi reflectate după 5 minute datorită memorării în cache",
+        "cache_update_delay_description": "Când efectuați actualizări la sondaje, contacte, acțiuni sau alte date, poate dura până la 1 minut pentru ca aceste modificări să apară în aplicația locală care rulează SDK-ul Formbricks.",
+        "cache_update_delay_title": "Modificările vor fi vizibile după ~1 minut din cauza memoriei cache",
         "environment_id": "ID-ul mediului tău",
         "environment_id_description": "Acest id identifică în mod unic acest mediu Formbricks.",
         "formbricks_sdk_connected": "SDK Formbricks este conectat",

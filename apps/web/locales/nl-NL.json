@@ -778,8 +778,8 @@
       "app-connection": {
         "app_connection": "App-verbinding",
         "app_connection_description": "Verbind uw app of website met Formbricks.",
-        "cache_update_delay_description": "Wanneer u updates aanbrengt in enquêtes, contacten, acties of andere gegevens, kan het tot vijf minuten duren voordat deze wijzigingen worden weergegeven in uw lokale app met de Formbricks SDK. Deze vertraging is te wijten aan een beperking in ons huidige cachingsysteem. We zijn de cache actief aan het herwerken en zullen een oplossing uitbrengen in Formbricks 4.0.",
-        "cache_update_delay_title": "Wijzigingen worden na 5 minuten doorgevoerd vanwege caching",
+        "cache_update_delay_description": "Wanneer je updates maakt aan enquêtes, contacten, acties of andere gegevens, kan het tot 1 minuut duren voordat deze wijzigingen zichtbaar worden in je lokale app die de Formbricks SDK gebruikt.",
+        "cache_update_delay_title": "Wijzigingen worden na ongeveer 1 minuut weergegeven vanwege caching",
         "environment_id": "Uw omgevings-ID",
         "environment_id_description": "Deze ID identificeert op unieke wijze deze Formbricks-omgeving.",
         "formbricks_sdk_connected": "Formbricks SDK is verbonden",

@@ -778,8 +778,8 @@
       "app-connection": {
         "app_connection": "应用程序 连接",
         "app_connection_description": "将您的应用或网站连接到 Formbricks。",
-        "cache_update_delay_description": "当 你 对 调查 、 联系人 、 操作 或 其他 数据 进行 更新 时 ， 可能 需要 最多 5 分钟 更改 才能 显示 在 你 本地 运行 Formbricks SDK 的 应用程序 中 。 这个 延迟 是 由于 我们 当前 缓存 系统 的 限制 。 我们 正在 积极 重新设计 缓存 并 将 在 Formbricks 4.0 中 发布 修复 。",
-        "cache_update_delay_title": "更改 将 在 5 分钟 后 由于 缓存 而 显示",
+        "cache_update_delay_description": "当您更新问卷、联系人、操作或其他数据时，这些更改可能需要最多 1 分钟才能在运行 Formbricks SDK 的本地应用中显示。",
+        "cache_update_delay_title": "由于缓存，变更将在约 1 分钟后生效",
         "environment_id": "你的 环境 ID",
         "environment_id_description": "这个 id 独特地 标识 这个 Formbricks 环境。",
         "formbricks_sdk_connected": "Formbricks SDK 已连接",

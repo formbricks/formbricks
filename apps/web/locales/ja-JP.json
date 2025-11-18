@@ -778,8 +778,8 @@
       "app-connection": {
         "app_connection": "アプリ接続",
         "app_connection_description": "アプリやウェブサイトをFormbricksに接続します。",
-        "cache_update_delay_description": "フォーム・連絡先・アクションなどを更新してから、Formbricks SDK を実行中のローカルアプリに反映されるまで最大5分かかる場合があります。これは現在のキャッシュ方式の制限によるものです。私たちはキャッシュを改修中で、Formbricks 4.0 で修正を提供予定です。",
-        "cache_update_delay_title": "キャッシュのため変更の反映に最大5分かかります",
+        "cache_update_delay_description": "アンケート、連絡先、アクション、またはその他のデータを更新した場合、Formbricks SDKを実行しているローカルアプリにそれらの変更が反映されるまでに最大1分かかることがあります。",
+        "cache_update_delay_title": "キャッシュの影響により、変更が反映されるまでに約1分かかります",
         "environment_id": "あなたのEnvironmentId",
         "environment_id_description": "このIDはこのFormbricks環境を一意に識別します。",
         "formbricks_sdk_connected": "Formbricks SDK は接続されています",
