@@ -117,6 +117,191 @@ Please take a look at our [migration guide](/self-hosting/advanced/migration) fo
    docker compose up -d
    ```
 
+## Optional: Adding MinIO for File Storage
+
+MinIO provides S3-compatible object storage for file uploads in Formbricks. If you want to enable features like image uploads, file uploads in surveys, or custom logos, you can add MinIO to your Docker setup.
+
+<Note>
+  For detailed information about file storage options and configuration, see our [File Uploads
+  Configuration](/self-hosting/configuration/file-uploads) guide.
+</Note>
+
+<Warning>
+  **For production deployments with HTTPS**, use the [one-click setup script](/self-hosting/setup/one-click)
+  which automatically configures MinIO with Traefik, SSL certificates, and a subdomain (required for MinIO in
+  production). The setups below are suitable for local development or testing only.
+</Warning>
+
+### Quick Start: Using docker-compose.dev.yml
+
+The fastest way to test MinIO with Formbricks is to use the included `docker-compose.dev.yml` which already has MinIO pre-configured.
+
+1. **Start MinIO and Services**
+
+   From the repository root:
+
+   ```bash
+   docker compose -f docker-compose.dev.yml up -d
+   ```
+
+   This starts PostgreSQL, Valkey (Redis), MinIO, and Mailhog.
+
+2. **Access MinIO Console**
+
+   Open http://localhost:9001 in your browser.
+
+   Login credentials:
+
+   - Username: `devminio`
+   - Password: `devminio123`
+
+3. **Create Bucket**
+
+   - Click "Buckets" in the left sidebar
+   - Click "Create Bucket"
+   - Name it: `formbricks`
+
+4. **Configure Formbricks**
+
+   Update your `.env` file or environment variables with MinIO configuration:
+
+   ```bash
+   # MinIO S3 Storage
+   S3_ACCESS_KEY="devminio"
+   S3_SECRET_KEY="devminio123"
+   S3_REGION="us-east-1"
+   S3_BUCKET_NAME="formbricks"
+   S3_ENDPOINT_URL="http://localhost:9000"
+   S3_FORCE_PATH_STYLE="1"
+   ```
+
+5. **Verify in MinIO Console**
+
+   After uploading files in Formbricks, view them at http://localhost:9001:
+
+   - Navigate to Buckets → formbricks → Browse
+   - Your uploaded files will appear here
+
+<Note>
+  The `docker-compose.dev.yml` file includes MinIO with console access on port 9001, making it easy to
+  visually verify file uploads. This is the recommended approach for development and testing.
+</Note>
+
+### Manual MinIO Setup (Custom Configuration)
+
+<Note>
+  <strong>Recommended:</strong> If you can, use <code>docker-compose.dev.yml</code> for the fastest path. Use
+  this manual approach only when you need to integrate MinIO into an existing <code>docker-compose.yml</code>{" "}
+  or customize settings.
+</Note>
+
+If you prefer to add MinIO to your own `docker-compose.yml`, follow these steps:
+
+1. **Add the MinIO service**
+
+   Add this service alongside your existing `formbricks` and `postgres` services:
+
+   ```yaml
+   services:
+     # ... your existing services (formbricks, postgres, redis/valkey, etc.)
+
+     minio:
+       image: minio/minio:latest
+       restart: always
+       command: server /data --console-address ":9001"
+       environment:
+         MINIO_ROOT_USER: "formbricks-root"
+         MINIO_ROOT_PASSWORD: "change-this-secure-password"
+       ports:
+         - "9000:9000" # S3 API
+         - "9001:9001" # Web console
+       volumes:
+         - minio-data:/data
+   ```
+
+   <Note>
+     For production pinning, consider using a digest (e.g., <code>minio/minio@sha256:...</code>) and review
+     periodically with <code>docker inspect minio/minio:latest</code>.
+   </Note>
+
+2. **Declare the MinIO volume**
+
+   Add (or extend) your `volumes` block:
+
+   ```yaml
+   volumes:
+     postgres:
+       driver: local
+     redis:
+       driver: local
+     minio-data:
+       driver: local
+   ```
+
+3. **Start services**
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. **Open the MinIO Console & Create a Bucket**
+
+   - Visit **http://localhost:9001**
+   - Log in with:
+     - **Username:** `formbricks-root`
+     - **Password:** `change-this-secure-password`
+   - Go to **Buckets → Create Bucket**
+   - Name it: **`formbricks`**
+
+5. **Configure Formbricks to use MinIO**
+
+   In your `.env` or `formbricks` service environment, set:
+
+   ```bash
+   # MinIO S3 Storage
+   S3_ACCESS_KEY="formbricks-root"
+   S3_SECRET_KEY="change-this-secure-password"
+   S3_REGION="us-east-1"
+   S3_BUCKET_NAME="formbricks"
+   S3_ENDPOINT_URL="http://minio:9000"
+   S3_FORCE_PATH_STYLE="1"
+   ```
+
+   <Note>
+     These credentials should match <code>MINIO_ROOT_USER</code> and <code>MINIO_ROOT_PASSWORD</code> above.
+     For local/dev this is fine. For production, create a dedicated MinIO user with restricted policies.
+   </Note>
+
+6. **Verify uploads**
+
+   After uploading a file in Formbricks, check **http://localhost:9001**:
+
+   - **Buckets → formbricks → Browse**  
+     You should see your uploaded files.
+
+#### Tips & Common Gotchas
+
+- **Connection refused**: Ensure the `minio` container is running and port **9000** is reachable from the Formbricks container (use the internal URL `http://minio:9000`).
+- **Bucket not found**: Create the `formbricks` bucket in the console before uploading.
+- **Auth failed**: Confirm `S3_ACCESS_KEY`/`S3_SECRET_KEY` match MinIO credentials.
+- **Health check**: From the Formbricks container:
+  ```bash
+  docker compose exec formbricks sh -c 'wget -O- http://minio:9000/minio/health/ready'
+  ```
+
+### Production Setup with Traefik
+
+For production deployments, use the [one-click setup script](/self-hosting/setup/one-click) which automatically configures:
+
+- MinIO service with Traefik reverse proxy
+- Dedicated subdomain (e.g., `files.yourdomain.com`) - **required for production**
+- Automatic SSL certificate generation via Let's Encrypt
+- CORS configuration for your domain
+- Rate limiting middleware
+- Secure credential generation
+
+The production setup from [formbricks.sh](https://github.com/formbricks/formbricks/blob/main/docker/formbricks.sh) includes advanced features not covered in this manual setup. For production use, we strongly recommend using the one-click installer.
+
 ## Debug
 
 If you encounter any issues, you can check the logs of the container with this command:

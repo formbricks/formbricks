@@ -113,7 +113,6 @@ export const SurveyDropDownMenu = ({
     setLoading(true);
     try {
       const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
-        environmentId,
         surveyId,
         targetEnvironmentId: environmentId,
       });

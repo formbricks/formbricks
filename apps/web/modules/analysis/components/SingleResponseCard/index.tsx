@@ -143,6 +143,8 @@ export const SingleResponseCard = ({
           environmentTags={environmentTags}
           updateFetchedResponses={updateFetchedResponses}
           isReadOnly={isReadOnly}
+          response={response}
+          locale={locale}
         />
 
         <DeleteDialog

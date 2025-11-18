@@ -137,6 +137,8 @@ export const appLanguages = [
       "ro-RO": "Engleză (SUA)",
       "ja-JP": "英語（米国）",
       "zh-Hans-CN": "英语（美国）",
+      "nl-NL": "Engels (VS)",
+      "es-ES": "Inglés (EE.UU.)",
     },
   },
   {
@@ -151,6 +153,8 @@ export const appLanguages = [
       "ro-RO": "Germană",
       "ja-JP": "ドイツ語",
       "zh-Hans-CN": "德语",
+      "nl-NL": "Duits",
+      "es-ES": "Alemán",
     },
   },
   {
@@ -165,6 +169,8 @@ export const appLanguages = [
       "ro-RO": "Portugheză (Brazilia)",
       "ja-JP": "ポルトガル語（ブラジル）",
       "zh-Hans-CN": "葡萄牙语（巴西）",
+      "nl-NL": "Portugees (Brazilië)",
+      "es-ES": "Portugués (Brasil)",
     },
   },
   {
@@ -179,6 +185,8 @@ export const appLanguages = [
       "ro-RO": "Franceză",
       "ja-JP": "フランス語",
       "zh-Hans-CN": "法语",
+      "nl-NL": "Frans",
+      "es-ES": "Francés",
     },
   },
   {
@@ -193,6 +201,8 @@ export const appLanguages = [
       "ro-RO": "Chineză (Tradicională)",
       "ja-JP": "中国語（繁体字）",
       "zh-Hans-CN": "繁体中文",
+      "nl-NL": "Chinees (Traditioneel)",
+      "es-ES": "Chino (Tradicional)",
     },
   },
   {
@@ -207,6 +217,8 @@ export const appLanguages = [
       "ro-RO": "Portugheză (Portugalia)",
       "ja-JP": "ポルトガル語（ポルトガル）",
       "zh-Hans-CN": "葡萄牙语（葡萄牙）",
+      "nl-NL": "Portugees (Portugal)",
+      "es-ES": "Portugués (Portugal)",
     },
   },
   {
@@ -221,6 +233,8 @@ export const appLanguages = [
       "ro-RO": "Română",
       "ja-JP": "ルーマニア語",
       "zh-Hans-CN": "罗马尼亚语",
+      "nl-NL": "Roemeens",
+      "es-ES": "Rumano",
     },
   },
   {
@@ -235,6 +249,8 @@ export const appLanguages = [
       "ro-RO": "Japoneză",
       "ja-JP": "日本語",
       "zh-Hans-CN": "日语",
+      "nl-NL": "Japans",
+      "es-ES": "Japonés",
     },
   },
   {
@@ -249,6 +265,40 @@ export const appLanguages = [
       "ro-RO": "Chineză (Simplificată)",
       "ja-JP": "中国語（簡体字）",
       "zh-Hans-CN": "简体中文",
+      "nl-NL": "Chinees (Vereenvoudigd)",
+      "es-ES": "Chino (Simplificado)",
+    },
+  },
+  {
+    code: "nl-NL",
+    label: {
+      "en-US": "Dutch",
+      "de-DE": "Niederländisch",
+      "pt-BR": "Holandês",
+      "fr-FR": "Néerlandais",
+      "zh-Hant-TW": "荷蘭語",
+      "pt-PT": "Holandês",
+      "ro-RO": "Olandeză",
+      "ja-JP": "オランダ語",
+      "zh-Hans-CN": "荷兰语",
+      "nl-NL": "Nederlands",
+      "es-ES": "Neerlandés",
+    },
+  },
+  {
+    code: "es-ES",
+    label: {
+      "en-US": "Spanish",
+      "de-DE": "Spanisch",
+      "pt-BR": "Espanhol",
+      "fr-FR": "Espagnol",
+      "zh-Hant-TW": "西班牙語",
+      "pt-PT": "Espanhol",
+      "ro-RO": "Spaniol",
+      "ja-JP": "スペイン語",
+      "zh-Hans-CN": "西班牙语",
+      "nl-NL": "Spaans",
+      "es-ES": "Español",
     },
   },
 ];
