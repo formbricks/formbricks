@@ -109,16 +109,18 @@ const getQuestionIconMapping = (t: TFunction) =>
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   t: TFunction,
-  blockIdx?: number // Optional - if provided, only includes elements from this specific block
+  blockIdx?: number // Optional - if provided, includes elements from this block and all previous blocks
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   const variables = localSurvey.variables ?? [];
 
-  // If blockIdx is provided, only get elements from that block
+  // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
   const allElements =
     blockIdx !== undefined
-      ? (localSurvey.blocks[blockIdx]?.elements ?? [])
+      ? localSurvey.blocks
+          .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
+          .flatMap((block) => block.elements)
       : getElementsFromBlocks(localSurvey.blocks);
 
   const groupedOptions: TComboboxGroupedOption[] = [];
@@ -328,7 +330,7 @@ export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
   t: TFunction,
-  blockIdx?: number // Optional - if provided, only includes elements from this specific block
+  blockIdx?: number // Optional - if provided, includes elements from this block and all previous blocks
 ): {
   show?: boolean;
   showInput?: boolean;
@@ -353,11 +355,13 @@ export const getMatchValueProps = (
     return { show: false, options: [] };
   }
 
-  // If blockIdx is provided, only get elements from that block
+  // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
   let elements =
     blockIdx !== undefined
-      ? (localSurvey.blocks[blockIdx]?.elements ?? [])
+      ? localSurvey.blocks
+          .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
+          .flatMap((block) => block.elements)
       : getElementsFromBlocks(localSurvey.blocks);
 
   let variables = localSurvey.variables ?? [];
@@ -1074,8 +1078,10 @@ export const getActionValueOptions = (
   blockIdx: number,
   t: TFunction
 ): TComboboxGroupedOption[] => {
-  // Get only elements from the current block
-  const allElements = localSurvey.blocks[blockIdx]?.elements ?? [];
+  // Get elements from current block and all previous blocks
+  const allElements = localSurvey.blocks
+    .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
+    .flatMap((block) => block.elements);
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
 
