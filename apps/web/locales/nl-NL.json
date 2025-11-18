@@ -1337,7 +1337,7 @@
         "edit_link": "Link bewerken",
         "edit_recall": "Bewerken Terugroepen",
         "edit_translations": "Bewerk {lang} vertalingen",
-        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Geef deelnemers de mogelijkheid om op elk moment tijdens de enquête van enquêtetaal te wisselen.",
+        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Sta respondenten toe om op elk moment van taal te wisselen. Vereist min. 2 actieve talen.",
         "enable_recaptcha_to_protect_your_survey_from_spam": "Spambeveiliging maakt gebruik van reCAPTCHA v3 om de spamreacties eruit te filteren.",
         "enable_spam_protection": "Spambescherming",
         "end_screen_card": "Eindschermkaart",

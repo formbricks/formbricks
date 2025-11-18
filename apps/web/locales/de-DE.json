@@ -1337,7 +1337,7 @@
         "edit_link": "Bearbeitungslink",
         "edit_recall": "Erinnerung bearbeiten",
         "edit_translations": "{lang} -Übersetzungen bearbeiten",
-        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Teilnehmer können die Umfragesprache jederzeit während der Umfrage ändern.",
+        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Befragten erlauben, die Sprache jederzeit zu wechseln. Benötigt mind. 2 aktive Sprachen.",
         "enable_recaptcha_to_protect_your_survey_from_spam": "Spamschutz verwendet reCAPTCHA v3, um Spam-Antworten herauszufiltern.",
         "enable_spam_protection": "Spamschutz",
         "end_screen_card": "Abschluss-Karte",

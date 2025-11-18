@@ -1504,7 +1504,7 @@ const docsFeedback = (t: TFunction): TTemplate => {
         buildOpenTextQuestion({
           headline: t("templates.docs_feedback_question_2_headline"),
           required: false,
-          inputType: "text",
+          inputType: "url",
           t,
         }),
         buildOpenTextQuestion({

@@ -1337,7 +1337,7 @@
         "edit_link": "Editare legătură",
         "edit_recall": "Editează Referințele",
         "edit_translations": "Editează traducerile {lang}",
-        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permite participanților să schimbe limba sondajului în orice moment în timpul sondajului.",
+        "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permite respondenților să schimbe limba în orice moment. Necesită minimum 2 limbi active.",
         "enable_recaptcha_to_protect_your_survey_from_spam": "Protecția împotriva spamului folosește reCAPTCHA v3 pentru a filtra răspunsurile de spam.",
         "enable_spam_protection": "Protecția împotriva spamului",
         "end_screen_card": "Ecran final card",
