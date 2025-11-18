@@ -21,7 +21,7 @@ export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: 
     ...query,
   };
 
-  const dateField = filterDateField || "createdAt";
+  const dateField = filterDateField;
 
   if (startDate) {
     filteredQuery = {
