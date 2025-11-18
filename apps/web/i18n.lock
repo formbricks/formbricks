@@ -183,6 +183,7 @@ checksums:
     common/error_rate_limit_description: 37791a33a947204662ee9c6544e90f51
     common/error_rate_limit_title: 23ac9419e267e610e1bfd38e1dc35dc0
     common/expand_rows: b6e06327cb8718dfd6651720843e4dad
+    common/failed_to_copy_to_clipboard: de836a7d628d36c832809252f188f784
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
     common/failed_to_load_projects: 0bba9f9b2b38c189706a486a1bb134c3
     common/finish: ffa7a10f71182b48fefed7135bee24fa
@@ -191,6 +192,7 @@ checksums:
     common/full_name: f45991923345e8322c9ff8cd6b7e2b16
     common/gathering_responses: c5914490ed81bd77f13d411739f0c9ef
     common/general: b891e8f15579fc5d97bcaf3637f5ae59
+    common/generate: 0345bf322c191e70d01fd6607ec5c2f8
     common/go_back: b917ea82facb90c88c523b255d29f84b
     common/go_to_dashboard: a6efa97d25e36fedc0af794f6ba610f2
     common/hidden: fa290c6ada5869d744ed35e9cca64699
@@ -560,9 +562,18 @@ checksums:
     environments/contacts/contacts_table_refresh_success: 40951396e88e5c8fdafa0b3bb4fadca8
     environments/contacts/delete_contact_confirmation: 4304d36277daa205b4aa09f5e0d494ab
     environments/contacts/delete_contact_confirmation_with_quotas: 7c0e2e223ca55101270ac2988c53e616
+    environments/contacts/generate_personal_link: 9ac0865f6876d40fe858f94eae781eb8
+    environments/contacts/generate_personal_link_description: b9dbaf9e2d8362505b7e3cfa40f415a6
+    environments/contacts/no_published_link_surveys_available: 9c1abc5b21aba827443cdf87dd6c8bfe
+    environments/contacts/no_published_surveys: bd945b0e2e2328c17615c94143bdd62b
     environments/contacts/no_responses_found: f10190cffdda4ca1bed479acbb89b13f
     environments/contacts/not_provided: a09e4d61bbeb04b927406a50116445e2
+    environments/contacts/personal_link_generated: efb7a0420bd459847eb57bca41a4ab0d
+    environments/contacts/personal_link_generated_but_clipboard_failed: 4eb1e208e729bd5ac00c33f72fc38d53
+    environments/contacts/personal_survey_link: 5b3f1afc53733718c4ed5b1443b6a604
+    environments/contacts/please_select_a_survey: 465aa7048773079c8ffdde8b333b78eb
     environments/contacts/search_contact: 020205a93846ab3e12c203ac4fa97c12
+    environments/contacts/select_a_survey: 1f49086dfb874307aae1136e88c3d514
     environments/contacts/select_attribute: d93fb60eb4fbb42bf13a22f6216fbd79
     environments/contacts/unlock_contacts_description: c5572047f02b4c39e5109f9de715499d
     environments/contacts/unlock_contacts_title: a8b3d7db03eb404d9267fd5cdd6d5ddb
