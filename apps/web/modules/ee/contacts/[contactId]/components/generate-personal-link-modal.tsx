@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import type { TSurvey } from "@/modules/survey/list/types/surveys";
+import { PublishedLinkSurvey } from "@/modules/ee/contacts/lib/surveys";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -25,13 +25,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { generatePersonalSurveyLinkAction, getPublishedLinkSurveysAction } from "../actions";
+import { generatePersonalSurveyLinkAction } from "../actions";
 
 interface GeneratePersonalLinkModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   contactId: string;
-  environmentId: string;
+  publishedLinkSurveys: PublishedLinkSurvey[];
 }
 
 const copyToClipboard = async (text: string): Promise<boolean> => {
@@ -48,41 +48,20 @@ export const GeneratePersonalLinkModal = ({
   open,
   setOpen,
   contactId,
-  environmentId,
+  publishedLinkSurveys,
 }: GeneratePersonalLinkModalProps) => {
   const { t } = useTranslation();
-  const [surveys, setSurveys] = useState<TSurvey[]>([]);
-  const [selectedSurveyId, setSelectedSurveyId] = useState("");
+  const [selectedSurveyId, setSelectedSurveyId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetchingSurveys, setIsFetchingSurveys] = useState(false);
-  const [generatedUrl, setGeneratedUrl] = useState("");
-
-  const fetchSurveys = useCallback(async () => {
-    setIsFetchingSurveys(true);
-    try {
-      const response = await getPublishedLinkSurveysAction({ environmentId });
-      if (response?.data) {
-        setSurveys(response.data);
-      } else {
-        const errorMessage = getFormattedErrorMessage(response);
-        toast.error(errorMessage || t("common.something_went_wrong_please_try_again"));
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("common.something_went_wrong_please_try_again"));
-    } finally {
-      setIsFetchingSurveys(false);
-    }
-  }, [environmentId, t]);
+  const [generatedUrl, setGeneratedUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (open) {
-      fetchSurveys();
     } else {
-      setSelectedSurveyId("");
-      setSurveys([]);
+      setSelectedSurveyId(undefined);
       setGeneratedUrl("");
     }
-  }, [open, fetchSurveys]);
+  }, [open]);
 
   const handleCopyUrl = useCallback(
     async (url: string) => {
@@ -101,25 +80,13 @@ export const GeneratePersonalLinkModal = ({
       toast.error(t("environments.contacts.please_select_a_survey"));
       return;
     }
-
     setIsLoading(true);
-    try {
-      const response = await generatePersonalSurveyLinkAction({
-        contactId,
-        surveyId: selectedSurveyId,
-      });
+    const response = await generatePersonalSurveyLinkAction({
+      contactId,
+      surveyId: selectedSurveyId,
+    });
 
-      if (response?.serverError) {
-        toast.error(response.serverError);
-        return;
-      }
-
-      if (response?.validationErrors) {
-        const errorMessage = getFormattedErrorMessage(response);
-        toast.error(errorMessage || t("common.something_went_wrong_please_try_again"));
-        return;
-      }
-
+    if (response?.data) {
       const surveyUrl = response?.data?.surveyUrl;
       if (!surveyUrl) {
         toast.error(t("common.something_went_wrong_please_try_again"));
@@ -139,20 +106,20 @@ export const GeneratePersonalLinkModal = ({
           { duration: 6000 }
         );
       }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("common.something_went_wrong_please_try_again"));
-    } finally {
-      setIsLoading(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(response);
+      toast.error(errorMessage || t("common.something_went_wrong_please_try_again"));
+      return;
     }
+    setIsLoading(false);
   };
 
   const getSelectPlaceholder = () => {
-    if (isFetchingSurveys) return t("common.loading");
-    if (surveys.length === 0) return t("environments.contacts.no_published_surveys");
+    if (publishedLinkSurveys.length === 0) return t("environments.contacts.no_published_surveys");
     return t("environments.contacts.select_a_survey");
   };
 
-  const isDisabled = isFetchingSurveys || isLoading || surveys.length === 0;
+  const isDisabled = isLoading || publishedLinkSurveys.length === 0;
   const canGenerate = selectedSurveyId && !isDisabled;
 
   return (
@@ -167,7 +134,7 @@ export const GeneratePersonalLinkModal = ({
         </DialogHeader>
 
         <DialogBody>
-          <div className="space-y-4">
+          <div className="m-1 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="survey-select">{t("common.select_survey")}</Label>
               <Select value={selectedSurveyId} onValueChange={setSelectedSurveyId} disabled={isDisabled}>
@@ -175,14 +142,14 @@ export const GeneratePersonalLinkModal = ({
                   <SelectValue placeholder={getSelectPlaceholder()} />
                 </SelectTrigger>
                 <SelectContent>
-                  {surveys.map((survey) => (
+                  {publishedLinkSurveys.map((survey) => (
                     <SelectItem key={survey.id} value={survey.id}>
                       {survey.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {surveys.length === 0 && !isFetchingSurveys && (
+              {publishedLinkSurveys.length === 0 && (
                 <p className="text-sm text-slate-500">
                   {t("environments.contacts.no_published_link_surveys_available")}
                 </p>

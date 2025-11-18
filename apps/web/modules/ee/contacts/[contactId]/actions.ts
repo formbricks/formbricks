@@ -5,46 +5,8 @@ import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import {
-  getOrganizationIdFromContactId,
-  getOrganizationIdFromEnvironmentId,
-  getProjectIdFromContactId,
-  getProjectIdFromEnvironmentId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromContactId, getProjectIdFromContactId } from "@/lib/utils/helper";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
-import { getSurveys } from "@/modules/survey/list/lib/survey";
-
-const ZGetPublishedLinkSurveysAction = z.object({
-  environmentId: ZId,
-});
-
-export const getPublishedLinkSurveysAction = authenticatedActionClient
-  .schema(ZGetPublishedLinkSurveysAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-        },
-      ],
-    });
-
-    const surveys = await getSurveys(parsedInput.environmentId);
-
-    const publishedLinkSurveys = surveys.filter(
-      (survey) => survey.status === "inProgress" && survey.type === "link"
-    );
-
-    return publishedLinkSurveys;
-  });
 
 const ZGeneratePersonalSurveyLinkAction = z.object({
   contactId: ZId,
