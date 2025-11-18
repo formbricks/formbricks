@@ -18,10 +18,6 @@ import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
-import {
-  capturePosthogEnvironmentEvent,
-  sendPlanLimitsReachedEventToPosthogWeekly,
-} from "@/lib/posthogServer";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 
@@ -58,19 +54,7 @@ const checkResponseLimit = async (environmentId: string): Promise<boolean> => {
   const monthlyResponseLimit = organization.billing.limits.monthly.responses;
   const isLimitReached = monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
 
-  if (isLimitReached) {
-    try {
-      await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-        plan: organization.billing.plan,
-        limits: {
-          projects: null,
-          monthly: { responses: monthlyResponseLimit, miu: null },
-        },
-      });
-    } catch (error) {
-      logger.error({ error }, `Error sending plan limits reached event to Posthog`);
-    }
-  }
+  // Limit check completed
 
   return isLimitReached;
 };
@@ -111,10 +95,7 @@ export const GET = withV1ApiWrapper({
       }
 
       if (!environment.appSetupCompleted) {
-        await Promise.all([
-          updateEnvironment(environment.id, { appSetupCompleted: true }),
-          capturePosthogEnvironmentEvent(environmentId, "app setup completed"),
-        ]);
+        await updateEnvironment(environment.id, { appSetupCompleted: true });
       }
 
       // check organization subscriptions and response limits

@@ -56,9 +56,6 @@ vi.mock("@/lib/constants", () => ({
   ITEMS_PER_PAGE: 2,
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
   IS_PRODUCTION: false,
-  IS_POSTHOG_CONFIGURED: false,
-  POSTHOG_API_HOST: "test-posthog-host",
-  POSTHOG_API_KEY: "test-posthog-key",
 }));
 
 const environmentId = "cm123456789012345678901237";

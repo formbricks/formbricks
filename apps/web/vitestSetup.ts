@@ -186,9 +186,6 @@ export const testInputValidation = async (service: Function, ...args: any[]): Pr
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
-  POSTHOG_API_KEY: "mock-posthog-api-key",
-  POSTHOG_HOST: "mock-posthog-host",
-  IS_POSTHOG_CONFIGURED: true,
   ENCRYPTION_KEY: "mock-encryption-key",
   ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
   GITHUB_ID: "mock-github-id",

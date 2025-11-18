@@ -8,7 +8,7 @@ const SurveyEditorEnvironmentLayout = async (props) => {
 
   const { children } = props;
 
-  const { t, session, user, organization } = await environmentIdLayoutChecks(params.environmentId);
+  const { t, session, user } = await environmentIdLayoutChecks(params.environmentId);
 
   if (!session) {
     return redirect(`/auth/login`);
@@ -25,11 +25,7 @@ const SurveyEditorEnvironmentLayout = async (props) => {
   }
 
   return (
-    <EnvironmentIdBaseLayout
-      environmentId={params.environmentId}
-      session={session}
-      user={user}
-      organization={organization}>
+    <EnvironmentIdBaseLayout>
       <div className="flex h-screen flex-col">
         <div className="h-full overflow-y-auto bg-slate-50">{children}</div>
       </div>

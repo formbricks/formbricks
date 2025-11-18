@@ -24,11 +24,7 @@ const EnvLayout = async (props: {
   const layoutData = await getEnvironmentLayoutData(params.environmentId, session.user.id);
 
   return (
-    <EnvironmentIdBaseLayout
-      environmentId={params.environmentId}
-      session={layoutData.session}
-      user={layoutData.user}
-      organization={layoutData.organization}>
+    <EnvironmentIdBaseLayout>
       <EnvironmentStorageHandler environmentId={params.environmentId} />
       <EnvironmentContextWrapper
         environment={layoutData.environment}

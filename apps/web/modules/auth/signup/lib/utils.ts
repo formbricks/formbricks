@@ -1,5 +1,3 @@
-import posthog from "posthog-js";
-
 export const verifyTurnstileToken = async (secretKey: string, token: string): Promise<boolean> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -28,11 +26,4 @@ export const verifyTurnstileToken = async (secretKey: string, token: string): Pr
   } finally {
     clearTimeout(timeoutId);
   }
-};
-
-export const captureFailedSignup = (email: string, name: string) => {
-  posthog.capture("TELEMETRY_FAILED_SIGNUP", {
-    email,
-    name,
-  });
 };

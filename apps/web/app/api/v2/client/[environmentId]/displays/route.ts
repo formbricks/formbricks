@@ -3,7 +3,6 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZDisplayCreateInputV2 } from "@/app/api/v2/client/[environmentId]/displays/types/display";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createDisplay } from "./lib/display";
 
@@ -49,7 +48,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
   try {
     const response = await createDisplay(inputValidation.data);
 
-    await capturePosthogEnvironmentEvent(inputValidation.data.environmentId, "display created");
     return responses.successResponse(response, true);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
