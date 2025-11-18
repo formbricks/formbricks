@@ -51,13 +51,13 @@ export const QuestionSummaryHeader = ({
             {`${questionSummary.responseCount} ${t("common.responses")}`}
           </div>
         )}
-        <IdBadge id={questionSummary.question.id} />
         {additionalInfo}
         {!questionSummary.question.required && (
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             {t("environments.surveys.edit.optional")}
           </div>
         )}
+        <IdBadge id={questionSummary.question.id} />
       </div>
     </div>
   );
