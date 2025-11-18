@@ -126,6 +126,7 @@ checksums:
     common/clear_filters: 8f40ab5af527e4b190da94e7b6221379
     common/clear_selection: af5d720527735d4253e289400d29ec9e
     common/click: 9c2744de6b5ac7333d9dae1d5cf4a76d
+    common/click_to_filter: 527714113ca5fd3504e7d0bd31bca303
     common/clicks: f9e154545f87d8ede27b529e5fdf2015
     common/close: 2c2e22f8424a1031de89063bd0022e16
     common/code: 343bc5386149b97cece2b093c39034b2
@@ -1705,6 +1706,7 @@ checksums:
     environments/surveys/share/social_media/title: 1bf4899b063ee8f02f7188576555828b
     environments/surveys/summary/added_filter_for_responses_where_answer_to_question: 5bddf0d4f771efd06d58441d11fa5091
     environments/surveys/summary/added_filter_for_responses_where_answer_to_question_is_skipped: 74ca713c491cfc33751a5db3de972821
+    environments/surveys/summary/aggregated: 9d4e77225d5952abed414fffd828c078
     environments/surveys/summary/all_responses_csv: 16c0c211853f0839a79f1127ec679ca2
     environments/surveys/summary/all_responses_excel: 8bf18916ab127f16bfcf9f38956710b0
     environments/surveys/summary/all_time: 62258944e7c2e83f3ebf69074b2c2156
@@ -1759,6 +1761,7 @@ checksums:
     environments/surveys/summary/in_app/title: a2d1b633244d0e0504ec6f8f561c7a6b
     environments/surveys/summary/includes_all: b0e3679282417c62d511c258362f860e
     environments/surveys/summary/includes_either: 186d6923c1693e80d7b664b8367d4221
+    environments/surveys/summary/individual: 52ebce389ed97a13b6089802055ed667
     environments/surveys/summary/is_equal_to: f4aab30ef188eb25dcc0e392cf8e86bb
     environments/surveys/summary/is_less_than: 6109d595ba21497c59b1c91d7fd09a13
     environments/surveys/summary/last_30_days: a738894cfc5e592052f1e16787744568
@@ -1771,6 +1774,7 @@ checksums:
     environments/surveys/summary/no_responses_found: f10190cffdda4ca1bed479acbb89b13f
     environments/surveys/summary/other_values_found: 48a74ee68c05f7fb162072b50c683b6a
     environments/surveys/summary/overall: 6c6d6533013d4739766af84b2871bca6
+    environments/surveys/summary/promoters: 41fbb8d0439227661253a82fda39f521
     environments/surveys/summary/qr_code: 48cb2a8c07a3d1647f766f93bb9e9382
     environments/surveys/summary/qr_code_description: 19f48dcf473809f178abf4212657ef14
     environments/surveys/summary/qr_code_download_failed: 2764b5615112800da27eecafc21e3472
@@ -1780,6 +1784,7 @@ checksums:
     environments/surveys/summary/quotas_completed_tooltip: ec5c4dc67eda27c06764354f695db613
     environments/surveys/summary/reset_survey: 8c88ddb81f5f787d183d2e7cb43e7c64
     environments/surveys/summary/reset_survey_warning: 6b44be171d7e2716f234387b100b173d
+    environments/surveys/summary/satisfied: 4d542ba354b85e644acbca5691d2ce45
     environments/surveys/summary/selected_responses_csv: 9cef3faccd54d4f24647791e6359db90
     environments/surveys/summary/selected_responses_excel: a0ade8b2658e887a4a3f2ad3bdb0c686
     environments/surveys/summary/setup_integrations: 70de06d73be671a0cd58a3fd4fa62e53

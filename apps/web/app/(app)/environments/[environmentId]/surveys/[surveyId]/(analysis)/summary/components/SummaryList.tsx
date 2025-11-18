@@ -10,6 +10,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import {
   SelectedFilterValue,
@@ -58,7 +59,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
     const filterObject: SelectedFilterValue = { ...selectedFilter };
     const value = {
       id: questionId,
-      label: getLocalizedValue(label, "default"),
+      label: getTextContent(getLocalizedValue(label, "default")),
       questionType: questionType,
       type: OptionsType.QUESTIONS,
     };
