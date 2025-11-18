@@ -4,7 +4,6 @@ import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -15,12 +14,11 @@ import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { IntegrationModalInputs } from "../lib/types";
 
 interface ManageIntegrationProps {
   airtableIntegration: TIntegrationAirtable;
-  environment: TEnvironment;
   environmentId: string;
   setIsConnected: (data: boolean) => void;
   surveys: TSurvey[];
@@ -29,7 +27,7 @@ interface ManageIntegrationProps {
 }
 
 export const ManageIntegration = (props: ManageIntegrationProps) => {
-  const { airtableIntegration, environment, environmentId, setIsConnected, surveys, airtableArray } = props;
+  const { airtableIntegration, environmentId, setIsConnected, surveys, airtableArray } = props;
   const { t } = useTranslation();
 
   const tableHeaders = [
@@ -132,12 +130,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
         </div>
       ) : (
         <div className="mt-4 w-full">
-          <EmptySpaceFiller
-            type="table"
-            environment={environment}
-            noWidgetRequired={true}
-            emptyMessage={t("environments.integrations.airtable.no_integrations_yet")}
-          />
+          <EmptyState text={t("environments.integrations.airtable.no_integrations_yet")} />
         </div>
       )}
 

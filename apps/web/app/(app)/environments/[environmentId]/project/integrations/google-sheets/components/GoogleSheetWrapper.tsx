@@ -60,7 +60,6 @@ export const GoogleSheetWrapper = ({
             selectedIntegration={selectedIntegration}
           />
           <ManageIntegration
-            environment={environment}
             googleSheetIntegration={googleSheetIntegration}
             setOpenAddIntegrationModal={setIsModalOpen}
             setIsConnected={setIsConnected}

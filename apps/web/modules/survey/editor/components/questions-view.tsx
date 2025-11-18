@@ -3,6 +3,8 @@
 import {
   DndContext,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
   PointerSensor,
   closestCorners,
   useSensor,
@@ -12,7 +14,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { Language, Project } from "@prisma/client";
-import React, { SetStateAction, useEffect, useMemo } from "react";
+import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -38,6 +40,7 @@ import { AddQuestionButton } from "@/modules/survey/editor/components/add-questi
 import { EditEndingCard } from "@/modules/survey/editor/components/edit-ending-card";
 import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
 import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
+import { QuestionCard } from "@/modules/survey/editor/components/question-card";
 import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
 import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
 import { findQuestionUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
@@ -419,6 +422,8 @@ export const QuestionsView = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeQuestionId, setActiveQuestionId]);
 
+  const [activeQuestionDragId, setActiveQuestionDragId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -427,16 +432,29 @@ export const QuestionsView = ({
     })
   );
 
+  const onQuestionCardDragStart = (event: DragStartEvent) => {
+    setActiveQuestionDragId(event.active.id as string);
+  };
+
   const onQuestionCardDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveQuestionDragId(null);
+
+    if (!over || active.id === over.id) {
+      return;
+    }
 
     const newQuestions = Array.from(localSurvey.questions);
     const sourceIndex = newQuestions.findIndex((question) => question.id === active.id);
-    const destinationIndex = newQuestions.findIndex((question) => question.id === over?.id);
+    const destinationIndex = newQuestions.findIndex((question) => question.id === over.id);
     const [reorderedQuestion] = newQuestions.splice(sourceIndex, 1);
     newQuestions.splice(destinationIndex, 0, reorderedQuestion);
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
+  };
+
+  const onQuestionCardDragCancel = () => {
+    setActiveQuestionDragId(null);
   };
 
   const onEndingCardDragEnd = (event: DragEndEvent) => {
@@ -474,7 +492,9 @@ export const QuestionsView = ({
       <DndContext
         id="questions"
         sensors={sensors}
+        onDragStart={onQuestionCardDragStart}
         onDragEnd={onQuestionCardDragEnd}
+        onDragCancel={onQuestionCardDragCancel}
         collisionDetection={closestCorners}>
         <QuestionsDroppable
           localSurvey={localSurvey}
@@ -497,6 +517,44 @@ export const QuestionsView = ({
           isStorageConfigured={isStorageConfigured}
           isExternalUrlsAllowed={isExternalUrlsAllowed}
         />
+        <DragOverlay>
+          {activeQuestionDragId
+            ? (() => {
+                const draggedQuestion = localSurvey.questions.find((q) => q.id === activeQuestionDragId);
+                const draggedQuestionIdx = localSurvey.questions.findIndex(
+                  (q) => q.id === activeQuestionDragId
+                );
+                return draggedQuestion ? (
+                  <div className="rotate-2 opacity-90">
+                    <QuestionCard
+                      localSurvey={localSurvey}
+                      project={project}
+                      question={draggedQuestion}
+                      questionIdx={draggedQuestionIdx}
+                      moveQuestion={moveQuestion}
+                      updateQuestion={updateQuestion}
+                      duplicateQuestion={duplicateQuestion}
+                      selectedLanguageCode={selectedLanguageCode}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
+                      deleteQuestion={deleteQuestion}
+                      activeQuestionId={activeQuestionId}
+                      setActiveQuestionId={setActiveQuestionId}
+                      lastQuestion={draggedQuestionIdx === localSurvey.questions.length - 1}
+                      isInvalid={invalidQuestions ? invalidQuestions.includes(draggedQuestion.id) : false}
+                      addQuestion={addQuestion}
+                      isFormbricksCloud={isFormbricksCloud}
+                      isCxMode={isCxMode}
+                      locale={locale}
+                      responseCount={responseCount}
+                      onAlertTrigger={() => setIsCautionDialogOpen(true)}
+                      isStorageConfigured={isStorageConfigured}
+                      isExternalUrlsAllowed={isExternalUrlsAllowed}
+                    />
+                  </div>
+                ) : null;
+              })()
+            : null}
+        </DragOverlay>
       </DndContext>
 
       <AddQuestionButton addQuestion={addQuestion} project={project} isCxMode={isCxMode} />

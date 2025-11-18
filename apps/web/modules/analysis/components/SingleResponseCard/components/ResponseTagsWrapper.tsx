@@ -1,18 +1,18 @@
 "use client";
 
-import { SettingsIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
+import { TUserLocale } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TagError } from "@/modules/projects/settings/types/tag";
-import { Button } from "@/modules/ui/components/button";
 import { Tag } from "@/modules/ui/components/tag";
 import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
 import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
+import { SingleResponseCardMetadata } from "./SingleResponseCardMetadata";
 
 interface ResponseTagsWrapperProps {
   tags: {
@@ -24,6 +24,8 @@ interface ResponseTagsWrapperProps {
   environmentTags: TTag[];
   updateFetchedResponses: () => void;
   isReadOnly?: boolean;
+  response: TResponse;
+  locale: TUserLocale;
 }
 
 export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
@@ -33,9 +35,10 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   environmentTags,
   updateFetchedResponses,
   isReadOnly,
+  response,
+  locale,
 }) => {
   const { t } = useTranslation();
-  const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = React.useState(false);
   const [tagsState, setTagsState] = useState(tags);
@@ -79,7 +82,6 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
       if (errorMessage?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
         toast.error(t("environments.surveys.responses.tag_already_exists"), {
           duration: 2000,
-          icon: <SettingsIcon className="h-5 w-5 text-orange-500" />,
         });
       } else {
         toast.error(t("environments.surveys.responses.an_error_occurred_creating_the_tag"));
@@ -131,6 +133,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   return (
     <div className="flex items-center justify-between gap-4 border-t border-slate-200 px-6 py-3">
       <div className="flex flex-wrap items-center gap-2">
+        <SingleResponseCardMetadata response={response} locale={locale} />
         {tagsState?.map((tag) => (
           <Tag
             key={tag.tagId}
@@ -157,18 +160,6 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
           />
         )}
       </div>
-
-      {!isReadOnly && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex-shrink-0"
-          onClick={() => {
-            router.push(`/environments/${environmentId}/project/tags`);
-          }}>
-          <SettingsIcon className="h-4 w-4" />
-        </Button>
-      )}
     </div>
   );
 };

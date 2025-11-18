@@ -26,7 +26,7 @@ const baseProject = {
   darkOverlay: false,
   environments: [
     {
-      id: "prodenv",
+      id: "cmi2sra0j000004l73fvh7lhe",
       createdAt: new Date(),
       updatedAt: new Date(),
       type: "production" as TEnvironment["type"],
@@ -34,7 +34,7 @@ const baseProject = {
       appSetupCompleted: false,
     },
     {
-      id: "devenv",
+      id: "cmi2srt9q000104l7127e67v7",
       createdAt: new Date(),
       updatedAt: new Date(),
       type: "development" as TEnvironment["type"],
@@ -155,7 +155,7 @@ describe("project lib", () => {
       vi.mocked(deleteFilesByEnvironmentId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteProject("p1");
       expect(result).toEqual(baseProject);
-      expect(deleteFilesByEnvironmentId).toHaveBeenCalledWith("prodenv");
+      expect(deleteFilesByEnvironmentId).toHaveBeenCalledWith("cmi2sra0j000004l73fvh7lhe");
     });
 
     test("logs error if file deletion fails", async () => {
