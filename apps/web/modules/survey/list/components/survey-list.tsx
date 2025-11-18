@@ -26,7 +26,6 @@ interface SurveysListProps {
   surveysPerPage: number;
   currentProjectChannel: TProjectConfigChannel;
   locale: TUserLocale;
-  initialSurveys: TSurvey[];
 }
 
 export const SurveysList = ({
@@ -37,12 +36,11 @@ export const SurveysList = ({
   surveysPerPage: surveysLimit,
   currentProjectChannel,
   locale,
-  initialSurveys,
 }: SurveysListProps) => {
   const router = useRouter();
-  const [surveys, setSurveys] = useState<TSurvey[]>(initialSurveys);
+  const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(false);
-  const [hasMore, setHasMore] = useState<boolean>(initialSurveys.length >= surveysLimit);
+  const [hasMore, setHasMore] = useState<boolean>(false);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
@@ -54,8 +52,6 @@ export const SurveysList = ({
     [name, JSON.stringify(createdBy), JSON.stringify(status), JSON.stringify(type), sortBy, userId]
   );
   const [parent] = useAutoAnimate();
-  const isInitialMount = useRef(true);
-  const initialFiltersRef = useRef(filters);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -81,25 +77,8 @@ export const SurveysList = ({
   }, [surveyFilters, isFilterInitialized]);
 
   useEffect(() => {
-    // Skip the first render - we already have server-rendered data
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      initialFiltersRef.current = filters;
-      return;
-    }
-
-    // Check if filters have actually changed from initial state
-    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(initialFiltersRef.current);
-
-    // If filters were reset to initial state, restore server-provided data (no network call needed)
-    if (!filtersChanged && !refreshTrigger) {
-      // Only restore if current surveys differ from initial surveys
-      if (JSON.stringify(surveys) !== JSON.stringify(initialSurveys)) {
-        setSurveys(initialSurveys);
-        setHasMore(initialSurveys.length >= surveysLimit);
-      }
-      return;
-    }
+    // Wait for filters to be loaded from localStorage before fetching
+    if (!isFilterInitialized) return;
 
     const fetchFilteredSurveys = async () => {
       setIsFetching(true);
@@ -121,7 +100,7 @@ export const SurveysList = ({
     };
     fetchFilteredSurveys();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environmentId, surveysLimit, filters, refreshTrigger]);
+  }, [environmentId, surveysLimit, filters, refreshTrigger, isFilterInitialized]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
