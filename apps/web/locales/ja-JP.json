@@ -1458,6 +1458,7 @@
         "logic_error_warning": "変更するとロジックエラーが発生します",
         "logic_error_warning_text": "質問の種類を変更すると、この質問のロジック条件が削除されます",
         "long_answer": "長文回答",
+        "long_answer_toggle_description": "回答者が長文の複数行の回答を書けるようにします。",
         "lower_label": "下限ラベル",
         "manage_languages": "言語を管理",
         "matrix_all_fields": "すべてのフィールド",

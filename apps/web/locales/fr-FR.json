@@ -1458,6 +1458,7 @@
         "logic_error_warning": "Changer causera des erreurs logiques",
         "logic_error_warning_text": "Changer le type de question supprimera les conditions logiques de cette question.",
         "long_answer": "Longue réponse",
+        "long_answer_toggle_description": "Permettre aux répondants d'écrire des réponses plus longues et sur plusieurs lignes.",
         "lower_label": "Étiquette inférieure",
         "manage_languages": "Gérer les langues",
         "matrix_all_fields": "Tous les champs",

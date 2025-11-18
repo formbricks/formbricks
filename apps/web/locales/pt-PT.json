@@ -1458,6 +1458,7 @@
         "logic_error_warning": "A alteração causará erros de lógica",
         "logic_error_warning_text": "Alterar o tipo de pergunta irá remover as condições lógicas desta pergunta",
         "long_answer": "Resposta longa",
+        "long_answer_toggle_description": "Permitir que os inquiridos escrevam respostas mais longas e com várias linhas.",
         "lower_label": "Etiqueta Inferior",
         "manage_languages": "Gerir Idiomas",
         "matrix_all_fields": "Todos os campos",

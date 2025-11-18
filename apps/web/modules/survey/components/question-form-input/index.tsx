@@ -25,6 +25,7 @@ import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import {
   determineImageUploaderVisibility,
@@ -310,6 +311,60 @@ export const QuestionFormInput = ({
     return false;
   };
 
+  const getIsRequiredToggleDisabled = (): boolean => {
+    if (!question) return false;
+
+    if (question.type === TSurveyElementTypeEnum.Address) {
+      const allFieldsAreOptional = [
+        question.addressLine1,
+        question.addressLine2,
+        question.city,
+        question.state,
+        question.zip,
+        question.country,
+      ]
+        .filter((field) => field.show)
+        .every((field) => !field.required);
+
+      if (allFieldsAreOptional) {
+        return true;
+      }
+
+      return [
+        question.addressLine1,
+        question.addressLine2,
+        question.city,
+        question.state,
+        question.zip,
+        question.country,
+      ]
+        .filter((field) => field.show)
+        .some((condition) => condition.required === true);
+    }
+
+    if (question.type === TSurveyElementTypeEnum.ContactInfo) {
+      const allFieldsAreOptional = [
+        question.firstName,
+        question.lastName,
+        question.email,
+        question.phone,
+        question.company,
+      ]
+        .filter((field) => field.show)
+        .every((field) => !field.required);
+
+      if (allFieldsAreOptional) {
+        return true;
+      }
+
+      return [question.firstName, question.lastName, question.email, question.phone, question.company]
+        .filter((field) => field.show)
+        .some((condition) => condition.required === true);
+    }
+
+    return false;
+  };
+
   const useRichTextEditor = id === "headline" || id === "subheader" || id === "html";
 
   // For rich text editor fields, we need either updateQuestion or updateSurvey
@@ -321,8 +376,23 @@ export const QuestionFormInput = ({
     return (
       <div className="w-full">
         {label && (
-          <div className="mb-2 mt-3">
+          <div className="mb-2 mt-3 flex items-center justify-between">
             <Label htmlFor={id}>{label}</Label>
+            {id === "headline" && question && updateQuestion && (
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="required-toggle" className="text-sm">
+                  {t("environments.surveys.edit.required")}
+                </Label>
+                <Switch
+                  id="required-toggle"
+                  checked={question.required}
+                  disabled={getIsRequiredToggleDisabled()}
+                  onCheckedChange={(checked) => {
+                    updateQuestion(questionIdx, { required: checked });
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
         <div className="flex flex-col gap-4" ref={animationParent}>
@@ -376,7 +446,9 @@ export const QuestionFormInput = ({
             </div>
 
             {id === "headline" && !isWelcomeCard && (
-              <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_photo_or_video")}>
+              <TooltipRenderer
+                tooltipContent={t("environments.surveys.edit.add_photo_or_video")}
+                delayDuration={100}>
                 <Button
                   variant="secondary"
                   size="icon"
@@ -434,8 +506,23 @@ export const QuestionFormInput = ({
   return (
     <div className="w-full">
       {label && (
-        <div className="mb-2 mt-3">
+        <div className="mb-2 mt-3 flex items-center justify-between">
           <Label htmlFor={id}>{label}</Label>
+          {id === "headline" && question && updateQuestion && (
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="required-toggle" className="text-sm">
+                {t("environments.surveys.edit.required")}
+              </Label>
+              <Switch
+                id="required-toggle"
+                checked={question.required}
+                disabled={getIsRequiredToggleDisabled()}
+                onCheckedChange={(checked) => {
+                  updateQuestion(questionIdx, { required: checked });
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
       <MultiLangWrapper

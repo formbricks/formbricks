@@ -1458,6 +1458,7 @@
         "logic_error_warning": "Änderungen werden zu Logikfehlern führen",
         "logic_error_warning_text": "Das Ändern des Fragetypen entfernt die Logikbedingungen von dieser Frage",
         "long_answer": "Lange Antwort",
+        "long_answer_toggle_description": "Ermöglichen Sie den Befragten, längere Antworten über mehrere Zeilen zu schreiben.",
         "lower_label": "Unteres Label",
         "manage_languages": "Sprachen verwalten",
         "matrix_all_fields": "Alle Felder",

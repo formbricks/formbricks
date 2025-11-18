@@ -38,8 +38,6 @@ import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-qu
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
-import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
 
 interface BlockCardProps {
   localSurvey: TSurvey;
@@ -213,62 +211,6 @@ export const BlockCard = ({
 
               const isInvalid = invalidQuestions ? invalidQuestions.includes(element.id) : false;
               const open = activeQuestionId === element.id;
-
-              const getIsRequiredToggleDisabled = (): boolean => {
-                if (element.type === TSurveyElementTypeEnum.Address) {
-                  const allFieldsAreOptional = [
-                    element.addressLine1,
-                    element.addressLine2,
-                    element.city,
-                    element.state,
-                    element.zip,
-                    element.country,
-                  ]
-                    .filter((field) => field.show)
-                    .every((field) => !field.required);
-
-                  if (allFieldsAreOptional) {
-                    return true;
-                  }
-
-                  return [
-                    element.addressLine1,
-                    element.addressLine2,
-                    element.city,
-                    element.state,
-                    element.zip,
-                    element.country,
-                  ]
-                    .filter((field) => field.show)
-                    .some((condition) => condition.required === true);
-                }
-
-                if (element.type === TSurveyElementTypeEnum.ContactInfo) {
-                  const allFieldsAreOptional = [
-                    element.firstName,
-                    element.lastName,
-                    element.email,
-                    element.phone,
-                    element.company,
-                  ]
-                    .filter((field) => field.show)
-                    .every((field) => !field.required);
-
-                  if (allFieldsAreOptional) {
-                    return true;
-                  }
-
-                  return [element.firstName, element.lastName, element.email, element.phone, element.company]
-                    .filter((field) => field.show)
-                    .some((condition) => condition.required === true);
-                }
-
-                return false;
-              };
-
-              const handleRequiredToggle = () => {
-                updateQuestion(questionIdx, { required: !element.required });
-              };
 
               return (
                 <div key={element.id} className={cn(elementIndex > 0 && "border-t border-slate-200")}>
@@ -608,46 +550,24 @@ export const BlockCard = ({
                         </Collapsible.Root>
                       </div>
                     </Collapsible.CollapsibleContent>
-
-                    {open && (
-                      <div className="mx-4 flex justify-end space-x-6 border-t border-slate-200">
-                        {element.type === "openText" && (
-                          <div className="my-4 flex items-center justify-end space-x-2">
-                            <Label htmlFor="longAnswer">{t("environments.surveys.edit.long_answer")}</Label>
-                            <Switch
-                              id="longAnswer"
-                              disabled={element.inputType !== "text"}
-                              checked={element.longAnswer !== false}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateQuestion(questionIdx, {
-                                  longAnswer:
-                                    typeof element.longAnswer === "undefined" ? false : !element.longAnswer,
-                                });
-                              }}
-                            />
-                          </div>
-                        )}
-                        {
-                          <div className="my-4 flex items-center justify-end space-x-2">
-                            <Label htmlFor="required-toggle">{t("environments.surveys.edit.required")}</Label>
-                            <Switch
-                              id="required-toggle"
-                              checked={element.required}
-                              disabled={getIsRequiredToggleDisabled()}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRequiredToggle();
-                              }}
-                            />
-                          </div>
-                        }
-                      </div>
-                    )}
                   </Collapsible.Root>
                 </div>
               );
             })}
+            <hr className="mb-4 border-dashed border-slate-200" />
+            {/* Add Question to Block button */}
+
+            <div className="p-4 pt-0">
+              <AddQuestionToBlockButton
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                block={block}
+                project={project}
+                isCxMode={isCxMode}
+              />
+            </div>
+
+            <hr className="border-dashed border-slate-200" />
 
             {/* Block Settings */}
             <div className="p-4">
@@ -663,18 +583,6 @@ export const BlockCard = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 isLastBlock={blockIdx === totalBlocks - 1}
-              />
-            </div>
-
-            {/* Add Question to Block button */}
-
-            <div className="p-4 pt-0">
-              <AddQuestionToBlockButton
-                localSurvey={localSurvey}
-                setLocalSurvey={setLocalSurvey}
-                block={block}
-                project={project}
-                isCxMode={isCxMode}
               />
             </div>
           </Collapsible.CollapsibleContent>

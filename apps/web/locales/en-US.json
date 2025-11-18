@@ -1458,6 +1458,7 @@
         "logic_error_warning": "Changing will cause logic errors",
         "logic_error_warning_text": "Changing the question type will remove the logic conditions from this question",
         "long_answer": "Long answer",
+        "long_answer_toggle_description": "Allow respondents to write longer, multi-line answers.",
         "lower_label": "Lower Label",
         "manage_languages": "Manage Languages",
         "matrix_all_fields": "All fields",

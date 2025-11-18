@@ -167,7 +167,7 @@ export const OpenQuestionForm = ({
           />
         </div>
       </div>
-      <div className="mt-3">
+      <div className="mt-6 space-y-6">
         {showCharLimits && (
           <AdvancedOptionToggle
             isChecked={isCharLimitEnabled}
@@ -230,6 +230,21 @@ export const OpenQuestionForm = ({
             </div>
           </AdvancedOptionToggle>
         )}
+        <div className="mt-4">
+          <AdvancedOptionToggle
+            isChecked={question.longAnswer !== false}
+            onToggle={(checked: boolean) => {
+              updateQuestion(questionIdx, {
+                longAnswer: checked,
+              });
+            }}
+            htmlId="longAnswer"
+            title={t("environments.surveys.edit.long_answer")}
+            description={t("environments.surveys.edit.long_answer_toggle_description")}
+            disabled={question.inputType !== "text"}
+            customContainerClass="p-0"
+          />
+        </div>
       </div>
     </form>
   );

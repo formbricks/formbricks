@@ -1458,6 +1458,7 @@
         "logic_error_warning": "Schimbarea va provoca erori de logică",
         "logic_error_warning_text": "Schimbarea tipului de întrebare va elimina condițiile de logică din această întrebare",
         "long_answer": "Răspuns lung",
+        "long_answer_toggle_description": "Permite respondenților să scrie răspunsuri mai lungi, pe mai multe rânduri.",
         "lower_label": "Etichetă inferioară",
         "manage_languages": "Gestionați limbile",
         "matrix_all_fields": "Toate câmpurile",

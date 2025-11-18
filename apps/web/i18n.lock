@@ -1373,6 +1373,7 @@ checksums:
     environments/surveys/edit/logic_error_warning: 542fbb918ffdb29e6f9a4a6196ffb558
     environments/surveys/edit/logic_error_warning_text: f2afad8852a95ed169a39959efbf592c
     environments/surveys/edit/long_answer: 3a97f8d2e90aba6e679917a0c5670c53
+    environments/surveys/edit/long_answer_toggle_description: 86bcdfeb74d9825c2f2d5a215e92d111
     environments/surveys/edit/lower_label: 45985bca022d4370bd6e013af75d5160
     environments/surveys/edit/manage_languages: 9c56d5afee8a73dfc283a452470f3a10
     environments/surveys/edit/matrix_all_fields: 187240509163b2f52a400a565e57c67f
