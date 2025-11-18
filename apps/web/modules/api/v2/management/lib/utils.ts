@@ -29,7 +29,7 @@ export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: 
       where: {
         ...filteredQuery.where,
         [dateField]: {
-          ...((filteredQuery.where?.[dateField] as Prisma.DateTimeFilter) ?? {}),
+          ...(filteredQuery.where?.[dateField] as Prisma.DateTimeFilter),
           gte: startDate,
         },
       },
@@ -42,7 +42,7 @@ export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: 
       where: {
         ...filteredQuery.where,
         [dateField]: {
-          ...((filteredQuery.where?.[dateField] as Prisma.DateTimeFilter) ?? {}),
+          ...(filteredQuery.where?.[dateField] as Prisma.DateTimeFilter),
           lte: endDate,
         },
       },
