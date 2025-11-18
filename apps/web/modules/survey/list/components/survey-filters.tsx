@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
+import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { SortOption } from "@/modules/survey/list/components/sort-option";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import { Button } from "@/modules/ui/components/button";
@@ -160,7 +161,7 @@ export const SurveyFilters = ({
             onClick={() => {
               setSurveyFilters(initialFilters);
               setName(""); // Also clear the search input
-              localStorage.removeItem("surveyFilters");
+              localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
             }}
             className="h-8">
             {t("common.clear_filters")}
