@@ -43,7 +43,7 @@ export const ResponsePage = ({
   initialResponses = [],
 }: ResponsePageProps) => {
   const [responses, setResponses] = useState<TResponseWithQuotas[]>(initialResponses);
-  const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);
   const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(false);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
@@ -58,6 +58,7 @@ export const ResponsePage = ({
   const searchParams = useSearchParams();
 
   const fetchNextPage = useCallback(async () => {
+    if (page === null) return;
     const newPage = page + 1;
 
     let newResponses: TResponseWithQuotas[] = [];
@@ -98,6 +99,11 @@ export const ResponsePage = ({
   useEffect(() => {
     const fetchFilteredResponses = async () => {
       try {
+        // skip call for initial mount
+        if (page === null) {
+          setPage(1);
+          return;
+        }
         setFetchingFirstPage(true);
         let responses: TResponseWithQuotas[] = [];
 
@@ -130,11 +136,6 @@ export const ResponsePage = ({
       fetchFilteredResponses();
     }
   }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
-
-  useEffect(() => {
-    setPage(1);
-    setHasMore(true);
-  }, [filters]);
 
   return (
     <>
