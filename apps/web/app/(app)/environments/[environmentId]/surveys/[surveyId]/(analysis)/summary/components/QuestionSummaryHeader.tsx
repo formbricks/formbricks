@@ -8,6 +8,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 
 interface HeadProps {
   questionSummary: TSurveyQuestionSummary;
@@ -50,6 +51,7 @@ export const QuestionSummaryHeader = ({
             {`${questionSummary.responseCount} ${t("common.responses")}`}
           </div>
         )}
+        <IdBadge id={questionSummary.question.id} />
         {additionalInfo}
         {!questionSummary.question.required && (
           <div className="flex items-center rounded-lg bg-slate-100 p-2">

@@ -11,7 +11,6 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
-import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
@@ -231,9 +230,6 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
           </div>
         </div>
       )}
-      <div className="px-4 pb-4 md:px-6">
-        <IdBadge id={questionSummary.question.id} label={t("common.question_id")} />
-      </div>
     </div>
   );
 };

@@ -10,7 +10,6 @@ import {
   TSurveyQuestionSummaryNps,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { IdBadge } from "@/modules/ui/components/id-badge";
 import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { TooltipProvider } from "@/modules/ui/components/tooltip";
@@ -187,9 +186,6 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
 
       <div className="flex justify-center pb-4 pt-4">
         <HalfCircle value={questionSummary.score} />
-      </div>
-      <div className="px-4 pb-4 md:px-6">
-        <IdBadge id={questionSummary.question.id} label={t("common.question_id")} />
       </div>
     </div>
   );
