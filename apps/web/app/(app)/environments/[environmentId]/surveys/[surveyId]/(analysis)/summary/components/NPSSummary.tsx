@@ -17,7 +17,7 @@ import { TooltipProvider } from "@/modules/ui/components/tooltip";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { ClickableBarSegment } from "./ClickableBarSegment";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
-import { SatisfactionSmiley } from "./SatisfactionSmiley";
+import { SatisfactionIndicator } from "./SatisfactionIndicator";
 
 interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummaryNps;
@@ -85,7 +85,7 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
         survey={survey}
         additionalInfo={
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
-            <SatisfactionSmiley percentage={questionSummary.promoters.percentage} />
+            <SatisfactionIndicator percentage={questionSummary.promoters.percentage} />
             <div>
               {t("environments.surveys.summary.promoters")}:{" "}
               {convertFloatToNDecimal(questionSummary.promoters.percentage, 2)}%

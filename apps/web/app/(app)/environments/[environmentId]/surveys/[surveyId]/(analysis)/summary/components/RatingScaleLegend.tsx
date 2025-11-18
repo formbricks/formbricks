@@ -1,9 +1,10 @@
 "use client";
 
+import { TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 
 interface RatingScaleLegendProps {
-  scale: "number" | "star" | "smiley";
+  scale: TSurveyRatingQuestion["scale"];
   range: number;
 }
 

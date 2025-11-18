@@ -19,7 +19,7 @@ import { TooltipProvider } from "@/modules/ui/components/tooltip";
 import { ClickableBarSegment } from "./ClickableBarSegment";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 import { RatingScaleLegend } from "./RatingScaleLegend";
-import { SatisfactionSmiley } from "./SatisfactionSmiley";
+import { SatisfactionIndicator } from "./SatisfactionIndicator";
 
 interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRating;
@@ -59,7 +59,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
             </div>
 
             <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
-              <SatisfactionSmiley percentage={questionSummary.csat.satisfiedPercentage} />
+              <SatisfactionIndicator percentage={questionSummary.csat.satisfiedPercentage} />
               <div>
                 CSAT: {questionSummary.csat.satisfiedPercentage}%{" "}
                 {t("environments.surveys.summary.satisfied")}
