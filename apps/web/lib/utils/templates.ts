@@ -26,7 +26,7 @@ export const replaceQuestionPresetPlaceholders = (
   return newQuestion;
 };
 
-// replace all occurences of projectName with the actual project name in the current template
+// replace all occurrences of projectName with the actual project name in the current template
 export const replacePresetPlaceholders = (template: TTemplate, project: any) => {
   const preset = structuredClone(template.preset);
   preset.name = preset.name.replace("$[projectName]", project.name);
