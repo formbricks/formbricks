@@ -68,7 +68,7 @@ export const SurveyClientWrapper = ({
     const isValid = surveyQuestions.some((q) => q.id === startAt);
 
     // Clean up invalid startAt from URL to prevent confusion
-    if (!isValid && typeof globalThis.window !== "undefined") {
+    if (!isValid && globalThis.window !== undefined) {
       const url = new URL(globalThis.location.href);
       url.searchParams.delete("startAt");
       globalThis.history.replaceState({}, "", url.toString());
