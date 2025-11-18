@@ -137,9 +137,9 @@ export const renderSurvey = async ({
     return (
       <PinScreen
         surveyId={survey.id}
+        styling={styling}
         publicDomain={publicDomain}
         project={project}
-        emailVerificationStatus={emailVerificationStatus}
         singleUseId={singleUseId}
         singleUseResponse={singleUseResponse}
         IMPRINT_URL={IMPRINT_URL}
@@ -148,11 +148,11 @@ export const renderSurvey = async ({
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
         isEmbed={isEmbed}
-        locale={locale}
         isPreview={isPreview}
         contactId={contactId}
         recaptchaSiteKey={RECAPTCHA_SITE_KEY}
         isSpamProtectionEnabled={isSpamProtectionEnabled}
+        responseCount={responseCount}
       />
     );
   }
