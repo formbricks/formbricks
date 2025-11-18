@@ -45,7 +45,7 @@ export const ResponsePage = ({
   const [responses, setResponses] = useState<TResponseWithQuotas[]>(initialResponses);
   const [page, setPage] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);
-  const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(false);
+  const [isFetchingFirstPage, setIsFetchingFirstPage] = useState<boolean>(false);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const filters = useMemo(
@@ -104,7 +104,7 @@ export const ResponsePage = ({
           setPage(1);
           return;
         }
-        setFetchingFirstPage(true);
+        setIsFetchingFirstPage(true);
         let responses: TResponseWithQuotas[] = [];
 
         const getResponsesActionResponse = await getResponsesAction({
@@ -123,7 +123,7 @@ export const ResponsePage = ({
         }
         setResponses(responses);
       } finally {
-        setFetchingFirstPage(false);
+        setIsFetchingFirstPage(false);
       }
     };
 
