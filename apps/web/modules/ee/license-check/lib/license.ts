@@ -4,7 +4,6 @@ import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { createCacheKey } from "@formbricks/cache";
-import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { env } from "@/lib/env";
@@ -13,6 +12,7 @@ import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
 } from "@/modules/ee/license-check/types/enterprise-license";
+import { collectTelemetryData } from "./telemetry";
 
 // Configuration
 const CONFIG = {
@@ -246,29 +246,48 @@ const handleInitialFailure = async (currentTime: Date) => {
 
 // API functions
 const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpriseLicenseDetails | null> => {
-  if (!env.ENTERPRISE_LICENSE_KEY) return null;
-
   // Skip license checks during build time
   // eslint-disable-next-line turbo/no-undeclared-env-vars -- NEXT_PHASE is a next.js env variable
   if (process.env.NEXT_PHASE === "phase-production-build") {
     return null;
   }
 
+  let telemetryData;
   try {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    // first millisecond of next year => current year is fully included
-    const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
+    telemetryData = await collectTelemetryData(env.ENTERPRISE_LICENSE_KEY || null);
+  } catch (telemetryError) {
+    logger.warn({ error: telemetryError }, "Telemetry collection failed, proceeding with minimal data");
+    telemetryData = {
+      licenseKey: env.ENTERPRISE_LICENSE_KEY || null,
+      usage: null,
+    };
+  }
 
-    const responseCount = await prisma.response.count({
-      where: {
-        createdAt: {
-          gte: startOfYear,
-          lt: startOfNextYear,
-        },
-      },
-    });
+  if (!env.ENTERPRISE_LICENSE_KEY) {
+    try {
+      const proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
+      const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), CONFIG.API.TIMEOUT_MS);
+
+      await fetch(CONFIG.API.ENDPOINT, {
+        body: JSON.stringify(telemetryData),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+        agent,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+    } catch (error) {
+      logger.debug({ error }, "Failed to send telemetry (no license key)");
+    }
+
+    return null;
+  }
+
+  try {
     const proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
     const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
 
@@ -276,10 +295,7 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.API.TIMEOUT_MS);
 
     const res = await fetch(CONFIG.API.ENDPOINT, {
-      body: JSON.stringify({
-        licenseKey: env.ENTERPRISE_LICENSE_KEY,
-        usage: { responseCount },
-      }),
+      body: JSON.stringify(telemetryData),
       headers: { "Content-Type": "application/json" },
       method: "POST",
       agent,
@@ -296,7 +312,6 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     const error = new LicenseApiError(`License check API responded with status: ${res.status}`, res.status);
     trackApiError(error);
 
-    // Retry on specific status codes
     if (retryCount < CONFIG.CACHE.MAX_RETRIES && [429, 502, 503, 504].includes(res.status)) {
       await sleep(CONFIG.CACHE.RETRY_DELAY_MS * Math.pow(2, retryCount));
       return fetchLicenseFromServerInternal(retryCount + 1);
@@ -341,6 +356,10 @@ export const getEnterpriseLicense = reactCache(
     validateConfig();
 
     if (!env.ENTERPRISE_LICENSE_KEY || env.ENTERPRISE_LICENSE_KEY.length === 0) {
+      fetchLicenseFromServerInternal().catch((error) => {
+        logger.debug({ error }, "Background telemetry send failed (no license key)");
+      });
+
       return {
         active: false,
         features: null,
