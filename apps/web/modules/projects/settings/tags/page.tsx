@@ -12,7 +12,7 @@ export const TagsPage = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, environment } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
   const [tags, environmentTagsCount] = await Promise.all([
     getTagsByEnvironmentId(params.environmentId),
@@ -28,7 +28,6 @@ export const TagsPage = async (props) => {
         title={t("environments.project.tags.manage_tags")}
         description={t("environments.project.tags.manage_tags_description")}>
         <EditTagsWrapper
-          environment={environment}
           environmentTags={tags}
           environmentTagsCount={environmentTagsCount}
           isReadOnly={isReadOnly}

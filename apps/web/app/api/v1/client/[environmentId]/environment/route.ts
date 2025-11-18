@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
+import { ZEnvironmentId } from "@formbricks/types/environment";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEnvironmentState } from "@/app/api/v1/client/[environmentId]/environment/lib/environmentState";
 import { responses } from "@/app/lib/api/response";
@@ -28,15 +29,38 @@ export const GET = withV1ApiWrapper({
     const params = await props.params;
 
     try {
-      // Simple validation for environmentId (faster than Zod for high-frequency endpoint)
+      // Basic type check for environmentId
       if (typeof params.environmentId !== "string") {
         return {
           response: responses.badRequestResponse("Environment ID is required", undefined, true),
         };
       }
 
+      const environmentId = params.environmentId.trim();
+
+      // Validate CUID v1 format using Zod (matches Prisma schema @default(cuid()))
+      // This catches all invalid formats including:
+      // - null/undefined passed as string "null" or "undefined"
+      // - HTML-encoded placeholders like <environmentId> or %3C...%3E
+      // - Empty or whitespace-only IDs
+      // - Any other invalid CUID v1 format
+      const cuidValidation = ZEnvironmentId.safeParse(environmentId);
+      if (!cuidValidation.success) {
+        logger.warn(
+          {
+            environmentId: params.environmentId,
+            url: req.url,
+            validationError: cuidValidation.error.errors[0]?.message,
+          },
+          "Invalid CUID v1 format detected"
+        );
+        return {
+          response: responses.badRequestResponse("Invalid environment ID format", undefined, true),
+        };
+      }
+
       // Use optimized environment state fetcher with new caching approach
-      const environmentState = await getEnvironmentState(params.environmentId);
+      const environmentState = await getEnvironmentState(environmentId);
       const { data } = environmentState;
 
       return {
@@ -46,12 +70,12 @@ export const GET = withV1ApiWrapper({
             expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour for SDK to recheck
           },
           true,
-          // Optimized cache headers for Cloudflare CDN and browser caching
-          // max-age=3600: 1hr browser cache (per guidelines)
-          // s-maxage=1800: 30min Cloudflare cache (per guidelines)
-          // stale-while-revalidate=1800: 30min stale serving during revalidation
-          // stale-if-error=3600: 1hr stale serving on origin errors
-          "public, s-maxage=1800, max-age=3600, stale-while-revalidate=1800, stale-if-error=3600"
+          // Cache headers aligned with Redis cache TTL (1 minute)
+          // max-age=60: 1min browser cache
+          // s-maxage=60: 1min Cloudflare CDN cache
+          // stale-while-revalidate=60: 1min stale serving during revalidation
+          // stale-if-error=60: 1min stale serving on origin errors
+          "public, s-maxage=60, max-age=60, stale-while-revalidate=60, stale-if-error=60"
         ),
       };
     } catch (err) {
