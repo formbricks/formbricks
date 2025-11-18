@@ -84,7 +84,7 @@ export const SurveyDropDownMenu = ({
       e.preventDefault();
       setIsDropDownOpen(false);
       // For single-use surveys, this button is disabled, so we just copy the base link
-      const copiedLink = copySurveyLink(surveyLink, undefined);
+      const copiedLink = copySurveyLink(surveyLink);
       navigator.clipboard.writeText(copiedLink);
       toast.success(t("common.copied_to_clipboard"));
     } catch (error) {
