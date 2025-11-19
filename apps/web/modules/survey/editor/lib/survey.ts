@@ -10,6 +10,11 @@ import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 
+export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
+  // Same implementation as updateSurvey
+  return updateSurvey(updatedSurvey);
+};
+
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   try {
     const surveyId = updatedSurvey.id;

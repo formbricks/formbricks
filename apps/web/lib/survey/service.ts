@@ -278,8 +278,13 @@ export const getSurveyCount = reactCache(async (environmentId: string): Promise<
   }
 });
 
-export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
-  validateInputs([updatedSurvey, ZSurvey]);
+export const updateSurveyInternal = async (
+  updatedSurvey: TSurvey,
+  skipValidation: boolean = false
+): Promise<TSurvey> => {
+  if (!skipValidation) {
+    validateInputs([updatedSurvey, ZSurvey]);
+  }
 
   try {
     const surveyId = updatedSurvey.id;
@@ -547,6 +552,15 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     throw error;
   }
+};
+
+export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
+  return updateSurveyInternal(updatedSurvey, false);
+};
+
+// Draft update without validation
+export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
+  return updateSurveyInternal(updatedSurvey, true);
 };
 
 export const createSurvey = async (
