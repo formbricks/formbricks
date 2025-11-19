@@ -1891,8 +1891,9 @@ checksums:
     setup/organization/create/no_membership_found: 6d6e792661c79452984dc671a2590847
     setup/organization/create/no_membership_found_description: ba067dacf419041c8bcdb51ee6b0125b
     setup/organization/create/title: 771924a960b2f7019cf8db55543c0715
-    setup/signup/create_administrator: e5b7e90150ebecf18a248f50a011bb7f
-    setup/signup/this_user_has_all_the_power: 1af3a7367d412d17f0f16c0e104b3520
+    setup/signup/create_administrator: bb44729d41138e400802509641de1d46
+    setup/signup/receive_security_updates: de5127f5847cdd412906607e1402f48d
+    setup/signup/security_updates_consent_description: 4643df07f13cec619e7fd91c8f14d93b
     templates/address: 5a9a8bc26f90d84c90105690a2eb23a1
     templates/address_description: e45b92c5cfff59ae7381e8bfb43b173f
     templates/alignment_and_engagement_survey_description: a959f7abf4c7bc55371381a73d3113aa

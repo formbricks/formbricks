@@ -2036,7 +2036,8 @@
     },
     "signup": {
       "create_administrator": "创建 管理员",
-      "this_user_has_all_the_power": "此 用户 拥有 所有 权力。"
+      "receive_security_updates": "安全更新",
+      "security_updates_consent_description": "仅限安全相关信息，适用隐私政策。"
     }
   },
   "templates": {

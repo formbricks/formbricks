@@ -2036,7 +2036,8 @@
     },
     "signup": {
       "create_administrator": "Créer un administrateur",
-      "this_user_has_all_the_power": "Cet utilisateur a tout le pouvoir."
+      "receive_security_updates": "Mises à jour de sécurité",
+      "security_updates_consent_description": "Informations pertinentes pour la sécurité uniquement, la politique de confidentialité s'applique."
     }
   },
   "templates": {

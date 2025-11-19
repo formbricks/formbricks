@@ -2036,7 +2036,8 @@
     },
     "signup": {
       "create_administrator": "管理者を作成",
-      "this_user_has_all_the_power": "このユーザーはすべての権限を持っています。"
+      "receive_security_updates": "セキュリティアップデート",
+      "security_updates_consent_description": "セキュリティに関連する情報のみ、プライバシーポリシーが適用されます。"
     }
   },
   "templates": {

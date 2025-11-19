@@ -15,8 +15,10 @@ import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
@@ -48,6 +50,7 @@ interface SignupFormProps {
   samlTenant: string;
   samlProduct: string;
   turnstileSiteKey?: string;
+  isAdminAccountCreation?: boolean;
 }
 
 export const SignupForm = ({
@@ -69,6 +72,7 @@ export const SignupForm = ({
   samlTenant,
   samlProduct,
   turnstileSiteKey,
+  isAdminAccountCreation = false,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -76,6 +80,7 @@ export const SignupForm = ({
   const inviteToken = searchParams?.get("inviteToken");
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string>();
+  const [securityUpdatesConsent, setSecurityUpdatesConsent] = useState(true);
 
   const turnstile = useTurnstile();
 
@@ -100,6 +105,47 @@ export const SignupForm = ({
     try {
       if (isTurnstileConfigured && !turnstileToken) {
         throw new Error(t("auth.signup.please_verify_captcha"));
+      }
+
+      if (securityUpdatesConsent && isAdminAccountCreation) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+          const response = await fetch("https://ee.formbricks.com/api/security-updates/consent", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: data.email,
+              name: data.name,
+              consent: true,
+            }),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error("API call failed");
+          }
+        } catch {
+          toast.error(
+            <div>
+              Security list sign up didn&apos;t work, please sign up here manually.{" "}
+              <a
+                href="https://app.formbricks.com/s/cmgeq5ao90n4jvl01s9beewcu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline">
+                Sign up here
+              </a>
+            </div>,
+            { duration: 10000 }
+          );
+          setSecurityUpdatesConsent(false);
+        }
       }
 
       const createUserResponse = await createUserAction({
@@ -224,6 +270,24 @@ export const SignupForm = ({
                   />
                 </div>
                 <PasswordChecks password={form.watch("password")} />
+                {showLogin && isAdminAccountCreation && (
+                  <div className="my-2 flex items-start space-x-2 rounded-md border border-slate-200 bg-slate-100 p-2">
+                    <Checkbox
+                      id="security-updates-consent"
+                      checked={securityUpdatesConsent}
+                      onCheckedChange={(checked) => setSecurityUpdatesConsent(checked === true)}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1 text-left">
+                      <Label htmlFor="security-updates-consent" className="text-sm">
+                        {t("setup.signup.receive_security_updates")}
+                      </Label>
+                      <p className="mt-1 text-xs text-slate-600">
+                        {t("setup.signup.security_updates_consent_description")}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {isTurnstileConfigured && showLogin && turnstileSiteKey && (
@@ -279,15 +343,18 @@ export const SignupForm = ({
         />
       )}
       <TermsPrivacyLinks termsUrl={termsUrl} privacyUrl={privacyUrl} />
-      <div className="mt-9 text-center text-xs">
-        <span className="leading-5 text-slate-500">{t("auth.signup.have_an_account")}</span>
-        <br />
-        <Link
-          href={inviteToken ? `/auth/login?callbackUrl=${callbackUrl}` : "/auth/login"}
-          className="font-semibold text-slate-600 underline hover:text-slate-700">
-          {t("auth.signup.log_in")}
-        </Link>
-      </div>
+
+      {!isAdminAccountCreation && (
+        <div className="mt-9 text-center text-xs">
+          <span className="leading-5 text-slate-500">{t("auth.signup.have_an_account")}</span>
+          <br />
+          <Link
+            href={inviteToken ? `/auth/login?callbackUrl=${callbackUrl}` : "/auth/login"}
+            className="font-semibold text-slate-600 underline hover:text-slate-700">
+            {t("auth.signup.log_in")}
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

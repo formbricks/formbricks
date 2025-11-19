@@ -2035,8 +2035,9 @@
       }
     },
     "signup": {
-      "create_administrator": "建立管理員",
-      "this_user_has_all_the_power": "此使用者擁有所有權限。"
+      "create_administrator": "您是管理員！",
+      "receive_security_updates": "安全性更新",
+      "security_updates_consent_description": "僅限安全相關資訊，適用隱私權政策。"
     }
   },
   "templates": {

@@ -26,7 +26,6 @@ export const TermsPrivacyLinks = ({ termsUrl, privacyUrl }: TermsPrivacyLinksPro
           {t("auth.signup.privacy_policy")}
         </Link>
       )}
-      <hr className="mx-6 mt-3"></hr>
     </div>
   );
 };

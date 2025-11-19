@@ -2036,7 +2036,8 @@
     },
     "signup": {
       "create_administrator": "Creare Administrator",
-      "this_user_has_all_the_power": "Acest utilizator are toată puterea."
+      "receive_security_updates": "Actualizări de securitate",
+      "security_updates_consent_description": "Doar informații relevante pentru securitate, se aplică Politica de confidențialitate."
     }
   },
   "templates": {

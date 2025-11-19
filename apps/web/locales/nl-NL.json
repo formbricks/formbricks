@@ -2035,8 +2035,9 @@
       }
     },
     "signup": {
-      "create_administrator": "Beheerder aanmaken",
-      "this_user_has_all_the_power": "Deze gebruiker heeft alle macht."
+      "create_administrator": "Je bent de beheerder!",
+      "receive_security_updates": "Beveiligingsupdates",
+      "security_updates_consent_description": "Alleen informatie relevant voor de beveiliging, privacybeleid is van toepassing."
     }
   },
   "templates": {
