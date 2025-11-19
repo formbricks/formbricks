@@ -456,14 +456,22 @@ export const importSurveyAction = authenticatedActionClient
       permissions.hasRecaptcha = false;
     }
 
-    // Prepare survey for import
-    let importedSurvey = stripEnterpriseFeatures(validationResult.data, permissions);
-    importedSurvey.name = parsedInput.newName;
-    importedSurvey.segment = null;
-    importedSurvey.environmentId = parsedInput.environmentId;
+    // Prepare survey for import - strip fields that should be auto-generated
+    const { id, createdAt, updatedAt, ...surveyWithoutMetadata } = stripEnterpriseFeatures(
+      validationResult.data,
+      permissions
+    );
+
+    const importedSurvey: TSurveyCreateInput = {
+      ...surveyWithoutMetadata,
+      name: parsedInput.newName,
+      segment: null,
+      environmentId: parsedInput.environmentId,
+      createdBy: ctx.user.id,
+    };
 
     // Create the survey
-    const result = await createSurvey(parsedInput.environmentId, importedSurvey, ctx.user.id);
+    const result = await createSurvey(parsedInput.environmentId, importedSurvey);
 
     return result;
   });
