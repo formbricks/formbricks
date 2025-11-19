@@ -920,6 +920,86 @@ describe("Survey Logic", () => {
       expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, isBookedCondition, "default")).toBe(true);
     });
 
+    test("evaluates isClicked and isNotClicked operators for CTA elements", () => {
+      // Create a survey with a CTA element
+      const ctaSurvey: TJsEnvironmentStateSurvey = {
+        ...mockSurvey,
+        blocks: [
+          ...mockSurvey.blocks,
+          {
+            id: "ctaBlock",
+            name: "CTA Block",
+            elements: [
+              {
+                id: "ctaQuestion",
+                type: TSurveyElementTypeEnum.CTA,
+                headline: { default: "CTA Question" },
+                subheader: { default: "Click the button" },
+                required: false,
+                buttonExternal: true,
+                buttonUrl: "https://example.com",
+                ctaButtonLabel: { default: "Click Me" },
+              },
+            ],
+          },
+        ],
+      };
+
+      // Test isClicked with "clicked" response
+      const clickedData: TResponseData = {
+        ctaQuestion: "clicked",
+      };
+      const isClickedCondition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "isClicked",
+            leftOperand: { type: "question", value: "ctaQuestion" },
+          },
+        ],
+      };
+      expect(evaluateLogic(ctaSurvey, clickedData, mockVariablesData, isClickedCondition, "default")).toBe(
+        true
+      );
+
+      // Test isClicked with "skipped" response (should be false)
+      const skippedData: TResponseData = {
+        ctaQuestion: "skipped",
+      };
+      expect(evaluateLogic(ctaSurvey, skippedData, mockVariablesData, isClickedCondition, "default")).toBe(
+        false
+      );
+
+      // Test isNotClicked with "clicked" response (should be false)
+      const isNotClickedCondition: TConditionGroup = {
+        id: "group2",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition2",
+            operator: "isNotClicked",
+            leftOperand: { type: "question", value: "ctaQuestion" },
+          },
+        ],
+      };
+      expect(evaluateLogic(ctaSurvey, clickedData, mockVariablesData, isNotClickedCondition, "default")).toBe(
+        false
+      );
+
+      // Test isNotClicked with "skipped" response (should be true)
+      expect(evaluateLogic(ctaSurvey, skippedData, mockVariablesData, isNotClickedCondition, "default")).toBe(
+        true
+      );
+
+      // Test isNotClicked with undefined response (should be true)
+      const undefinedData: TResponseData = {};
+      expect(
+        evaluateLogic(ctaSurvey, undefinedData, mockVariablesData, isNotClickedCondition, "default")
+      ).toBe(true);
+    });
+
     test("evaluates matrix questions", () => {
       const matrixCondition: TConditionGroup = {
         id: "group1",

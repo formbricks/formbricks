@@ -409,6 +409,8 @@ const evaluateSingleCondition = (
         return leftValue === "accepted";
       case "isClicked":
         return leftValue === "clicked";
+      case "isNotClicked":
+        return leftValue !== "clicked";
       case "isAfter":
         return new Date(String(leftValue)) > new Date(String(rightValue));
       case "isBefore":

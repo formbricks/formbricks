@@ -1354,6 +1354,7 @@ checksums:
     environments/surveys/edit/is_clicked: 8977b8cc9ff07d2b8bdb81bb41bb55cf
     environments/surveys/edit/is_completely_submitted: 8c8f0c0a9cf81dac16e486b2f5cdbb3b
     environments/surveys/edit/is_empty: dca87bc415341b1cdf9523f3b795a313
+    environments/surveys/edit/is_not_clicked: 04ac5678998edbdf9f431af74bd480da
     environments/surveys/edit/is_not_empty: 8e53d702b296f172386b1277a8699050
     environments/surveys/edit/is_not_set: c1a6fd89387686d3a5426a768bb286e9
     environments/surveys/edit/is_partially_submitted: f5acf840b87d0d42c69d49a5714a86f3
@@ -1914,7 +1915,6 @@ checksums:
     templates/card_abandonment_survey: 705c3dfcc7f6de3a445aaefe0d68c43f
     templates/card_abandonment_survey_description: a3db29212b51402a7659a76248299798
     templates/card_abandonment_survey_question_1_button_label: 6208ac076107506686eb8eae42ac4450
-    templates/card_abandonment_survey_question_1_dismiss_button_label: 17961ce57f78e2cbfded4590014e5e06
     templates/card_abandonment_survey_question_1_headline: d19fc64f80ef192b124f4f9fb070bccc
     templates/card_abandonment_survey_question_1_html: 2a4cbf4a5cc305109d23baa9896a9010
     templates/card_abandonment_survey_question_2_choice_1: 7723bcd15400a40303409716854f88f9
@@ -2001,12 +2001,10 @@ checksums:
     templates/churn_survey_question_2_button_label: 76a8497d7b546628b03bb81d5c1ce995
     templates/churn_survey_question_2_headline: 17d3e7e2ce62af5ef9332c0d208f9172
     templates/churn_survey_question_3_button_label: 43834ccf20c1c7cd49382468abe2edce
-    templates/churn_survey_question_3_dismiss_button_label: b7f28dfa2f58b80b149bb82b392d0291
     templates/churn_survey_question_3_headline: 76444078de5c30666ff65f453f60b420
     templates/churn_survey_question_3_html: 4f723d2aea95570d6fc4559519611b8e
     templates/churn_survey_question_4_headline: c64605fecd9342dffe904d809e9e3762
     templates/churn_survey_question_5_button_label: 03e28ea8c2c970cd1b532fee14b22e2b
-    templates/churn_survey_question_5_dismiss_button_label: b7f28dfa2f58b80b149bb82b392d0291
     templates/churn_survey_question_5_headline: bab9054d83ebc8c67a5bfe7edcb29c85
     templates/churn_survey_question_5_html: da3da01f91e3e922ea4d09c4bd836023
     templates/collect_feedback_description: 450c46ad8406e6ac92940a80ed24c000
@@ -2200,7 +2198,6 @@ checksums:
     templates/evaluate_a_product_idea_description: 734295caa08aac718e9ee01a99c3debe
     templates/evaluate_a_product_idea_name: b0d8039556d686b83dfcd455092b9d9c
     templates/evaluate_a_product_idea_question_1_button_label: 102449dc2f516eb6259c39fa4ed9c56a
-    templates/evaluate_a_product_idea_question_1_dismiss_button_label: b7f28dfa2f58b80b149bb82b392d0291
     templates/evaluate_a_product_idea_question_1_headline: c94096ba66ad74fb3bbfaaa06bd709a0
     templates/evaluate_a_product_idea_question_1_html: bc0dcb887591e018dfeeb65a3a5c4bb9
     templates/evaluate_a_product_idea_question_2_headline: 10a50778c4559554336e7289a48d021c
@@ -2209,7 +2206,6 @@ checksums:
     templates/evaluate_a_product_idea_question_3_headline: 69407cff7b3e2706bdc86cb425e88918
     templates/evaluate_a_product_idea_question_3_placeholder: 3ec4d0b6bb1f26bb2c32e9e8bd377ae3
     templates/evaluate_a_product_idea_question_4_button_label: 89ddbcf710eba274963494f312bdc8a9
-    templates/evaluate_a_product_idea_question_4_dismiss_button_label: b7f28dfa2f58b80b149bb82b392d0291
     templates/evaluate_a_product_idea_question_4_headline: e7e5b5234f617f38f09b2cac639a7ef8
     templates/evaluate_a_product_idea_question_4_html: 8902a0d7738376818d2729644321438f
     templates/evaluate_a_product_idea_question_5_headline: 1d573c2338e6ba5d3cccb09c785bd8c3
@@ -2259,7 +2255,6 @@ checksums:
     templates/feedback_box_question_2_headline: 878b8f17dc18877bfbc07823113cd5d5
     templates/feedback_box_question_2_subheader: 476ff43369a72225b01633e1bce59b95
     templates/feedback_box_question_3_button_label: c631d5b3f14b581c303b782221582fe7
-    templates/feedback_box_question_3_dismiss_button_label: 0d5962c08cdca1a2804dfc4abc308a8f
     templates/feedback_box_question_3_headline: 5cfb173d156555227fbc2c97ad921e72
     templates/feedback_box_question_3_html: 7e5877860eec80971969ae83c89b30f6
     templates/feedback_box_question_4_button_label: 1050569a1ea31d070e0cee55bcab3494
@@ -2284,7 +2279,6 @@ checksums:
     templates/identify_sign_up_barriers_description: 5b2fbee8c425d7a4d0706ec3628cea11
     templates/identify_sign_up_barriers_name: 3bbc5352dfa7a9c237bc2c6b21b608dd
     templates/identify_sign_up_barriers_question_1_button_label: 080fd22c580f56ffdcea6c3d60448b84
-    templates/identify_sign_up_barriers_question_1_dismiss_button_label: 0d5962c08cdca1a2804dfc4abc308a8f
     templates/identify_sign_up_barriers_question_1_headline: c8c247363daf4697e1939aaf8dc5770c
     templates/identify_sign_up_barriers_question_1_html: 51029ae64c19101af608684b6f429eb8
     templates/identify_sign_up_barriers_question_2_headline: f768ea3053b07f6bbcba977f714ec3da
@@ -2307,7 +2301,6 @@ checksums:
     templates/identify_sign_up_barriers_question_8_headline: 1f4ee5675d0d84bf049052be26549037
     templates/identify_sign_up_barriers_question_8_placeholder: 3ec4d0b6bb1f26bb2c32e9e8bd377ae3
     templates/identify_sign_up_barriers_question_9_button_label: 0dd2ae69be4618c1f9e615774a4509ca
-    templates/identify_sign_up_barriers_question_9_dismiss_button_label: b8bf7f2b6e67a523dc4ff5ce009cdb72
     templates/identify_sign_up_barriers_question_9_headline: 54d02e5c8eeb10fed40e2e82f7399f8c
     templates/identify_sign_up_barriers_question_9_html: ed87aa8d325b6063d4150431e9f80ef0
     templates/identify_upsell_opportunities_description: ed6b8dcb162076a380955d7c98482b06
@@ -2344,7 +2337,6 @@ checksums:
     templates/improve_newsletter_content_question_2_headline: abbea0e97841b617a878f1de2c968d0e
     templates/improve_newsletter_content_question_2_placeholder: 3ec4d0b6bb1f26bb2c32e9e8bd377ae3
     templates/improve_newsletter_content_question_3_button_label: 5d5352aba5272de9b1337909d49d4a4c
-    templates/improve_newsletter_content_question_3_dismiss_button_label: 6a6d6f71da4a44cca4fe5ad09f83a9d2
     templates/improve_newsletter_content_question_3_headline: fcd056a1581f5a538aad57641cd0abad
     templates/improve_newsletter_content_question_3_html: 102e73f836fe99b6c333c88c730fa25b
     templates/improve_trial_conversion_description: 3187c4ac1de993326a988c6665d3d4ae
@@ -2359,7 +2351,6 @@ checksums:
     templates/improve_trial_conversion_question_2_button_label: 89ddbcf710eba274963494f312bdc8a9
     templates/improve_trial_conversion_question_2_headline: 05dd4820f60b9d267a9affc7e662f029
     templates/improve_trial_conversion_question_4_button_label: d94a6a11cfdf4ebde4c5332e585e2e96
-    templates/improve_trial_conversion_question_4_dismiss_button_label: b7f28dfa2f58b80b149bb82b392d0291
     templates/improve_trial_conversion_question_4_headline: 9b07341f65574c4165086ec107cebb45
     templates/improve_trial_conversion_question_4_html: 95d13979f92aa0e6c5bce6613ad3b417
     templates/improve_trial_conversion_question_5_button_label: 89ddbcf710eba274963494f312bdc8a9
@@ -2548,7 +2539,6 @@ checksums:
     templates/product_market_fit_superhuman: 48b1b2db74562dea0d00483b29942346
     templates/product_market_fit_superhuman_description: d14c8e7f4eb7c98919de171457d10a31
     templates/product_market_fit_superhuman_question_1_button_label: 5d5352aba5272de9b1337909d49d4a4c
-    templates/product_market_fit_superhuman_question_1_dismiss_button_label: 17961ce57f78e2cbfded4590014e5e06
     templates/product_market_fit_superhuman_question_1_headline: 21a16bc7bc801fdd743ad37354eedbfb
     templates/product_market_fit_superhuman_question_1_html: fa12924d03a014c4a81e770c3eb2175a
     templates/product_market_fit_superhuman_question_2_choice_1: 074b2a608d4bba5706b5c55dae249edf
@@ -2654,7 +2644,6 @@ checksums:
     templates/site_abandonment_survey_description: 46581a9b056f3cbf8c1dc9e630e716b5
     templates/site_abandonment_survey_question_1_html: eec37cddb0c530c72544067712e95670
     templates/site_abandonment_survey_question_2_button_label: 6208ac076107506686eb8eae42ac4450
-    templates/site_abandonment_survey_question_2_dismiss_button_label: 17961ce57f78e2cbfded4590014e5e06
     templates/site_abandonment_survey_question_2_headline: e11a5c95e6a4ba0a3fe9bb0ad1da0b46
     templates/site_abandonment_survey_question_3_choice_1: c86306eb379a1b5f4039e27a0a12caca
     templates/site_abandonment_survey_question_3_choice_2: fee51e29951105d7650c3da72282db6d

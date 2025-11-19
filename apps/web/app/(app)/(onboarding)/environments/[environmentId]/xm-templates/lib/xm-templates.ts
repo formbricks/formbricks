@@ -136,10 +136,10 @@ const starRatingSurvey = (t: TFunction): TXMTemplate => {
             required: true,
             buttonUrl: "https://formbricks.com/github",
             buttonExternal: true,
+            ctaButtonLabel: t("templates.star_rating_survey_question_2_button_label"),
           }),
         ],
         logic: [createBlockJumpLogic(reusableElementIds[1], defaultSurvey.endings[0].id, "isClicked")],
-        buttonLabel: t("templates.star_rating_survey_question_2_button_label"),
         t,
       }),
       buildBlock({
@@ -347,10 +347,10 @@ const smileysRatingSurvey = (t: TFunction): TXMTemplate => {
             required: true,
             buttonUrl: "https://formbricks.com/github",
             buttonExternal: true,
+            ctaButtonLabel: t("templates.smileys_survey_question_2_button_label"),
           }),
         ],
         logic: [createBlockJumpLogic(reusableElementIds[1], defaultSurvey.endings[0].id, "isClicked")],
-        buttonLabel: t("templates.smileys_survey_question_2_button_label"),
         t,
       }),
       buildBlock({
