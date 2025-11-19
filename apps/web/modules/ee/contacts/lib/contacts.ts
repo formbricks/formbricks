@@ -291,10 +291,10 @@ export const createContactsFromCSV = async (
       attributeKeyMap.set(attrKey.key, attrKey.id);
     });
 
-    // Identify missing attribute keys
+    // Identify missing attribute keys (normalize keys to lowercase)
     const csvKeys = new Set<string>();
     csvData.forEach((record) => {
-      Object.keys(record).forEach((key) => csvKeys.add(key));
+      Object.keys(record).forEach((key) => csvKeys.add(key.toLowerCase()));
     });
 
     const missingKeys = Array.from(csvKeys).filter((key) => !attributeKeyMap.has(key));
@@ -328,12 +328,18 @@ export const createContactsFromCSV = async (
 
     // Process contacts in parallel
     const contactPromises = csvData.map(async (record) => {
+      // Normalize record keys to lowercase
+      const normalizedRecord: Record<string, string> = {};
+      Object.entries(record).forEach(([key, value]) => {
+        normalizedRecord[key.toLowerCase()] = value;
+      });
+
       // Skip records without email
-      if (!record.email) {
+      if (!normalizedRecord.email) {
         throw new ValidationError("Email is required for all contacts");
       }
 
-      const existingContact = emailToContactMap.get(record.email);
+      const existingContact = emailToContactMap.get(normalizedRecord.email);
 
       if (existingContact) {
         // Handle duplicates based on duplicateContactsAction
@@ -344,11 +350,11 @@ export const createContactsFromCSV = async (
           case "update": {
             // if the record has a userId, check if it already exists
             const existingUserId = existingUserIds.find(
-              (attr) => attr.value === record.userId && attr.contactId !== existingContact.id
+              (attr) => attr.value === normalizedRecord.userId && attr.contactId !== existingContact.id
             );
-            let recordToProcess = { ...record };
+            let recordToProcess = { ...normalizedRecord };
             if (existingUserId) {
-              const { userId, ...rest } = recordToProcess;
+              const { userid, ...rest } = recordToProcess;
 
               const existingContactUserId = existingContact.attributes.find(
                 (attr) => attr.attributeKey.key === "userId"
@@ -401,11 +407,11 @@ export const createContactsFromCSV = async (
           case "overwrite": {
             // if the record has a userId, check if it already exists
             const existingUserId = existingUserIds.find(
-              (attr) => attr.value === record.userId && attr.contactId !== existingContact.id
+              (attr) => attr.value === normalizedRecord.userId && attr.contactId !== existingContact.id
             );
-            let recordToProcess = { ...record };
+            let recordToProcess = { ...normalizedRecord };
             if (existingUserId) {
-              const { userId, ...rest } = recordToProcess;
+              const { userid, ...rest } = recordToProcess;
               const existingContactUserId = existingContact.attributes.find(
                 (attr) => attr.attributeKey.key === "userId"
               )?.value;

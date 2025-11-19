@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "Actualizare",
       "upload_contacts_modal_pick_different_file": "Selectați un alt fișier",
       "upload_contacts_modal_preview": "Iată o previzualizare a datelor tale.",
-      "upload_contacts_modal_upload_btn": "Încărcați contacte"
+      "upload_contacts_modal_upload_btn": "Încărcați contacte",
+      "upload_contacts_success": "Contactele au fost încărcate cu succes"
     },
     "formbricks_logo": "Logo Formbricks",
     "integrations": {

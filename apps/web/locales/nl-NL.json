@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "Update",
       "upload_contacts_modal_pick_different_file": "Kies een ander bestand",
       "upload_contacts_modal_preview": "Hier ziet u een voorbeeld van uw gegevens.",
-      "upload_contacts_modal_upload_btn": "Contacten uploaden"
+      "upload_contacts_modal_upload_btn": "Contacten uploaden",
+      "upload_contacts_success": "Contacten succesvol geüpload"
     },
     "formbricks_logo": "Formbricks-logo",
     "integrations": {

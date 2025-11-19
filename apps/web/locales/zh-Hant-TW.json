@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "更新",
       "upload_contacts_modal_pick_different_file": "選取不同的檔案",
       "upload_contacts_modal_preview": "這是您的資料預覽。",
-      "upload_contacts_modal_upload_btn": "上傳聯絡人"
+      "upload_contacts_modal_upload_btn": "上傳聯絡人",
+      "upload_contacts_success": "聯絡人已成功上傳"
     },
     "formbricks_logo": "Formbricks 標誌",
     "integrations": {
