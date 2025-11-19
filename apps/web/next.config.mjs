@@ -16,6 +16,7 @@ const getHostname = (url) => {
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
+  basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: true,
@@ -407,7 +408,7 @@ const nextConfig = {
     ];
   },
   env: {
-    NEXTAUTH_URL: process.env.WEBAPP_URL,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path
   },
 };
 

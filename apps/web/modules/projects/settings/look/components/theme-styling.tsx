@@ -38,6 +38,7 @@ interface ThemeStylingProps {
   isUnsplashConfigured: boolean;
   isReadOnly: boolean;
   isStorageConfigured: boolean;
+  publicDomain: string;
 }
 
 export const ThemeStyling = ({
@@ -47,6 +48,7 @@ export const ThemeStyling = ({
   isUnsplashConfigured,
   isReadOnly,
   isStorageConfigured = true,
+  publicDomain,
 }: ThemeStylingProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -200,6 +202,7 @@ export const ThemeStyling = ({
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}
+                publicDomain={publicDomain}
               />
             </div>
           </div>

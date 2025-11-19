@@ -120,6 +120,7 @@
         "AZUREAD_TENANT_ID",
         "AUTH_SSO_DEFAULT_TEAM_ID",
         "AUTH_SKIP_INVITE_FOR_SSO",
+        "BASE_PATH",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
         "CRON_SECRET",
