@@ -3,17 +3,17 @@
 import { Project, Response } from "@prisma/client";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
-import { LinkSurvey } from "@/modules/survey/link/components/link-survey";
+import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
   surveyId: string;
   project: Pick<Project, "styling" | "logo" | "linkSurveyBranding">;
-  emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   publicDomain: string;
@@ -23,11 +23,12 @@ interface PinScreenProps {
   verifiedEmail?: string;
   languageCode: string;
   isEmbed: boolean;
-  locale: string;
   isPreview: boolean;
   contactId?: string;
   recaptchaSiteKey?: string;
   isSpamProtectionEnabled?: boolean;
+  responseCount?: number;
+  styling: TProjectStyling | TSurveyStyling;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -35,7 +36,6 @@ export const PinScreen = (props: PinScreenProps) => {
     surveyId,
     project,
     publicDomain,
-    emailVerificationStatus,
     singleUseId,
     singleUseResponse,
     IMPRINT_URL,
@@ -44,11 +44,12 @@ export const PinScreen = (props: PinScreenProps) => {
     verifiedEmail,
     languageCode,
     isEmbed,
-    locale,
     isPreview,
     contactId,
     recaptchaSiteKey,
     isSpamProtectionEnabled = false,
+    responseCount,
+    styling,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -116,24 +117,24 @@ export const PinScreen = (props: PinScreenProps) => {
   }
 
   return (
-    <LinkSurvey
+    <SurveyClientWrapper
       survey={survey}
       project={project}
-      emailVerificationStatus={emailVerificationStatus}
-      singleUseId={singleUseId}
-      singleUseResponse={singleUseResponse}
+      styling={styling}
       publicDomain={publicDomain}
-      verifiedEmail={verifiedEmail}
+      responseCount={responseCount}
       languageCode={languageCode}
       isEmbed={isEmbed}
-      IMPRINT_URL={IMPRINT_URL}
-      PRIVACY_URL={PRIVACY_URL}
-      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-      locale={locale}
-      isPreview={isPreview}
+      singleUseId={singleUseId}
+      singleUseResponseId={singleUseResponse?.id}
       contactId={contactId}
       recaptchaSiteKey={recaptchaSiteKey}
       isSpamProtectionEnabled={isSpamProtectionEnabled}
+      isPreview={isPreview}
+      verifiedEmail={verifiedEmail}
+      IMPRINT_URL={IMPRINT_URL}
+      PRIVACY_URL={PRIVACY_URL}
+      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
     />
   );
 };

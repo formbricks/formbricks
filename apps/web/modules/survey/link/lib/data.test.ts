@@ -398,7 +398,7 @@ describe("data", () => {
       });
     });
 
-    test("should return null when contact response not found", async () => {
+    test("should return undefined when contact response not found", async () => {
       const surveyId = "survey-1";
       const contactId = "nonexistent-contact";
 
@@ -406,7 +406,7 @@ describe("data", () => {
 
       const result = await getExistingContactResponse(surveyId, contactId)();
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
 
     test("should throw DatabaseError on Prisma error", async () => {
