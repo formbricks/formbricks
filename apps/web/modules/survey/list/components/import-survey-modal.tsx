@@ -153,7 +153,7 @@ export const ImportSurveyModal = ({
           <DialogBody className="space-y-4">
             <div>
               <Label htmlFor="json-file">{t("environments.surveys.import_survey_file_label")}</Label>
-              <div className="mt-2 flex items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-8">
+              <div className="mt-2 flex items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white p-8">
                 <div className="text-center">
                   <div className="mb-2 text-2xl">📄</div>
                   <input
