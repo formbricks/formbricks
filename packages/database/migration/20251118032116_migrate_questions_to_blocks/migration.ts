@@ -65,25 +65,11 @@ interface MigratedSurvey {
   questions: SurveyQuestion[];
 }
 
-// Statistics tracking for invalid logic references
-interface InvalidLogicStats {
-  surveysWithInvalidTargets: Set<string>;
-  surveysWithInvalidFallbacks: Set<string>;
-  totalInvalidTargets: number;
-  totalInvalidFallbacks: number;
-  firstSurveyWithInvalidTarget: string | null;
-  firstSurveyWithInvalidFallback: string | null;
-}
-
 // Statistics tracking for CTA migration
 interface CTAMigrationStats {
   totalCTAElements: number;
   ctaWithExternalLink: number;
   ctaWithoutExternalLink: number;
-  isSkippedLogicRemoved: number;
-  isClickedLogicKept: number;
-  logicRulesRemoved: number;
-  fieldsUpdated: number;
 }
 
 /**
@@ -163,7 +149,6 @@ const migrateCTAQuestion = (question: SurveyQuestion, stats: CTAMigrationStats):
     // Copy buttonLabel to ctaButtonLabel
     if (question.buttonLabel) {
       question.ctaButtonLabel = question.buttonLabel;
-      stats.fieldsUpdated++;
     }
 
     // Ensure buttonUrl and buttonExternal are set
@@ -183,11 +168,7 @@ const migrateCTAQuestion = (question: SurveyQuestion, stats: CTAMigrationStats):
 /**
  * Clean CTA logic from a question's logic array
  */
-const cleanCTALogicFromQuestion = (
-  question: SurveyQuestion,
-  ctaQuestions: Map<string, boolean>,
-  stats: CTAMigrationStats
-): void => {
+const cleanCTALogicFromQuestion = (question: SurveyQuestion, ctaQuestions: Map<string, boolean>): void => {
   if (!question.logic || question.logic.length === 0) return;
 
   const cleanedLogic: SurveyLogic[] = [];
@@ -207,30 +188,17 @@ const cleanCTALogicFromQuestion = (
           ]);
           if (!cleanedConditions?.conditions || cleanedConditions.conditions.length === 0) {
             shouldKeepRule = false;
-            stats.logicRulesRemoved++;
           } else {
             modifiedConditions = cleanedConditions;
           }
         }
-      } else {
+      } else if (conditionReferencesCTA(modifiedConditions, ctaId, "isSkipped")) {
         // CTA with external button - remove isSkipped, keep isClicked
-        const hadIsSkipped = conditionReferencesCTA(modifiedConditions, ctaId, "isSkipped");
-        const hadIsClicked = conditionReferencesCTA(modifiedConditions, ctaId, "isClicked");
-
-        if (hadIsSkipped) {
-          stats.isSkippedLogicRemoved++;
-          const cleanedConditions = removeCtaConditions(modifiedConditions, ctaId, ["isSkipped"]);
-          if (!cleanedConditions?.conditions || cleanedConditions.conditions.length === 0) {
-            shouldKeepRule = false;
-            stats.logicRulesRemoved++;
-          } else {
-            modifiedConditions = cleanedConditions;
-          }
-        }
-
-        if (hadIsClicked && shouldKeepRule) {
-          stats.isClickedLogicKept++;
-          // Keep isClicked as-is
+        const cleanedConditions = removeCtaConditions(modifiedConditions, ctaId, ["isSkipped"]);
+        if (!cleanedConditions?.conditions || cleanedConditions.conditions.length === 0) {
+          shouldKeepRule = false;
+        } else {
+          modifiedConditions = cleanedConditions;
         }
       }
     });
@@ -274,7 +242,7 @@ const processCTAQuestions = (questions: SurveyQuestion[], stats: CTAMigrationSta
 
   // Second pass: clean CTA logic from ALL questions
   questions.forEach((question) => {
-    cleanCTALogicFromQuestion(question, ctaQuestions, stats);
+    cleanCTALogicFromQuestion(question, ctaQuestions);
   });
 };
 
@@ -292,16 +260,12 @@ const getBlockName = (questionIdx: number): string => {
  * @param actions - Array of logic actions
  * @param questionIdToBlockId - Map of question IDs to new block IDs
  * @param endingIds - Set of valid ending card IDs
- * @param surveyId - Survey ID for logging purposes
- * @param stats - Statistics tracker for invalid logic references
  * @returns Updated actions array with jumpToBlock objectives
  */
 const updateLogicActions = (
   actions: LogicAction[],
   questionIdToBlockId: Map<string, string>,
-  endingIds: Set<string>,
-  surveyId: string,
-  stats: InvalidLogicStats
+  endingIds: Set<string>
 ): LogicAction[] => {
   return actions.map((action) => {
     if (action.objective === "jumpToQuestion") {
@@ -327,11 +291,7 @@ const updateLogicActions = (
         };
       }
 
-      // Target is neither a question nor an ending card - track statistics
-      stats.totalInvalidTargets++;
-      stats.surveysWithInvalidTargets.add(surveyId);
-      stats.firstSurveyWithInvalidTarget ??= surveyId;
-
+      // Target is neither a question nor an ending card - keep as is
       return {
         ...action,
         objective: "jumpToBlock",
@@ -349,16 +309,12 @@ const updateLogicActions = (
  * @param fallback - The fallback question ID or ending card ID
  * @param questionIdToBlockId - Map of question IDs to new block IDs
  * @param endingIds - Set of valid ending card IDs
- * @param surveyId - Survey ID for logging purposes
- * @param stats - Statistics tracker for invalid logic references
  * @returns Updated fallback with block ID, unchanged ending card ID, or undefined if invalid
  */
 const updateLogicFallback = (
   fallback: string,
   questionIdToBlockId: Map<string, string>,
-  endingIds: Set<string>,
-  surveyId: string,
-  stats: InvalidLogicStats
+  endingIds: Set<string>
 ): string | undefined => {
   const blockId = questionIdToBlockId.get(fallback);
 
@@ -373,12 +329,8 @@ const updateLogicFallback = (
     return fallback;
   }
 
-  // Fallback is neither a question nor an ending card - track statistics and remove
-  stats.totalInvalidFallbacks++;
-  stats.surveysWithInvalidFallbacks.add(surveyId);
-  stats.firstSurveyWithInvalidFallback ??= surveyId;
-
-  return undefined; // Return undefined to remove the invalid fallback
+  // Fallback is neither a question nor an ending card - remove it
+  return undefined;
 };
 
 /**
@@ -386,14 +338,12 @@ const updateLogicFallback = (
  * Each question becomes a block with a single element
  * @param survey - Survey record with questions
  * @param createIdFn - Function to generate CUIDs for blocks
- * @param invalidLogicStats - Statistics tracker for invalid logic references
  * @param ctaStats - Statistics tracker for CTA migration
  * @returns Migrated survey with blocks and empty questions array
  */
 const migrateQuestionsSurveyToBlocks = (
   survey: SurveyRecord,
   createIdFn: () => string,
-  invalidLogicStats: InvalidLogicStats,
   ctaStats: CTAMigrationStats
 ): MigratedSurvey => {
   // Skip if no questions
@@ -436,24 +386,12 @@ const migrateQuestionsSurveyToBlocks = (
     if (block.logic && block.logic.length > 0) {
       block.logic = block.logic.map((item) => ({
         ...item,
-        actions: updateLogicActions(
-          item.actions,
-          questionIdToBlockId,
-          endingIds,
-          survey.id,
-          invalidLogicStats
-        ),
+        actions: updateLogicActions(item.actions, questionIdToBlockId, endingIds),
       }));
     }
 
     if (block.logicFallback) {
-      block.logicFallback = updateLogicFallback(
-        block.logicFallback,
-        questionIdToBlockId,
-        endingIds,
-        survey.id,
-        invalidLogicStats
-      );
+      block.logicFallback = updateLogicFallback(block.logicFallback, questionIdToBlockId, endingIds);
     }
   }
 
@@ -469,24 +407,11 @@ export const migrateQuestionsToBlocks: MigrationScript = {
   id: "wsm6h7c8jt086g96ob7wda14",
   name: "20251118032116_migrate_questions_to_blocks",
   run: async ({ tx }) => {
-    // Initialize statistics trackers
-    const invalidLogicStats: InvalidLogicStats = {
-      surveysWithInvalidTargets: new Set(),
-      surveysWithInvalidFallbacks: new Set(),
-      totalInvalidTargets: 0,
-      totalInvalidFallbacks: 0,
-      firstSurveyWithInvalidTarget: null,
-      firstSurveyWithInvalidFallback: null,
-    };
-
+    // Initialize CTA statistics tracker
     const ctaStats: CTAMigrationStats = {
       totalCTAElements: 0,
       ctaWithExternalLink: 0,
       ctaWithoutExternalLink: 0,
-      isSkippedLogicRemoved: 0,
-      isClickedLogicKept: 0,
-      logicRulesRemoved: 0,
-      fieldsUpdated: 0,
     };
 
     // 1. Query surveys with questions (also fetch endings for validation)
@@ -509,7 +434,7 @@ export const migrateQuestionsToBlocks: MigrationScript = {
 
     for (const survey of surveys) {
       try {
-        const migrated = migrateQuestionsSurveyToBlocks(survey, createId, invalidLogicStats, ctaStats);
+        const migrated = migrateQuestionsSurveyToBlocks(survey, createId, ctaStats);
         updates.push({
           id: migrated.id,
           blocks: migrated.blocks,
@@ -571,49 +496,11 @@ export const migrateQuestionsToBlocks: MigrationScript = {
 
     // 4. Log CTA migration statistics
     if (ctaStats.totalCTAElements > 0) {
-      logger.info("=== CTA Migration Summary ===");
-      logger.info(`Total CTA elements processed: ${ctaStats.totalCTAElements.toString()}`);
-      logger.info(`  - With external link: ${ctaStats.ctaWithExternalLink.toString()}`);
-      logger.info(`  - Without external link: ${ctaStats.ctaWithoutExternalLink.toString()}`);
-      logger.info(`Fields updated (buttonLabel → ctaButtonLabel): ${ctaStats.fieldsUpdated.toString()}`);
-      logger.info(`isSkipped logic conditions removed: ${ctaStats.isSkippedLogicRemoved.toString()}`);
-      logger.info(`isClicked logic conditions kept: ${ctaStats.isClickedLogicKept.toString()}`);
-      logger.info(`Logic rules removed (became empty): ${ctaStats.logicRulesRemoved.toString()}`);
-    }
-
-    // 5. Log invalid logic statistics summary
-    if (invalidLogicStats.totalInvalidTargets > 0 || invalidLogicStats.totalInvalidFallbacks > 0) {
-      logger.warn("=== Invalid Logic References Summary ===");
-
-      if (invalidLogicStats.totalInvalidTargets > 0) {
-        logger.warn(
-          `Found ${invalidLogicStats.totalInvalidTargets.toString()} invalid logic jump targets in ${invalidLogicStats.surveysWithInvalidTargets.size.toString()} surveys`
-        );
-        if (invalidLogicStats.firstSurveyWithInvalidTarget) {
-          logger.warn(
-            `Example survey with invalid target: ${invalidLogicStats.firstSurveyWithInvalidTarget} (targets kept as-is, may cause validation errors)`
-          );
-        }
-      }
-
-      if (invalidLogicStats.totalInvalidFallbacks > 0) {
-        logger.warn(
-          `Found ${invalidLogicStats.totalInvalidFallbacks.toString()} invalid logic fallbacks in ${invalidLogicStats.surveysWithInvalidFallbacks.size.toString()} surveys`
-        );
-        if (invalidLogicStats.firstSurveyWithInvalidFallback) {
-          logger.warn(
-            `Example survey with invalid fallback: ${invalidLogicStats.firstSurveyWithInvalidFallback} (fallbacks removed, will use sequential flow)`
-          );
-        }
-      }
-
-      logger.warn(
-        "These surveys may need manual review. Invalid targets were kept as-is, invalid fallbacks were removed."
+      logger.info(
+        `CTA elements processed: ${ctaStats.totalCTAElements.toString()} total (${ctaStats.ctaWithExternalLink.toString()} with external link, ${ctaStats.ctaWithoutExternalLink.toString()} without)`
       );
-    } else {
-      logger.info("✓ No invalid logic references found - all surveys migrated cleanly!");
     }
 
-    logger.info("✅ Migration completed successfully!");
+    logger.info("Migration completed successfully");
   },
 };
