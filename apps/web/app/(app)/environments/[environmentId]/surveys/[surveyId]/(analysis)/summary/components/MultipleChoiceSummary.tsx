@@ -19,6 +19,7 @@ import { Button } from "@/modules/ui/components/button";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
+import { EmptyQuestionState } from "./EmptyQuestionState";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MultipleChoiceSummaryProps {
@@ -85,8 +86,12 @@ export const MultipleChoiceSummary = ({
           ) : undefined
         }
       />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-        {results.map((result) => {
+      <div className="px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+        {questionSummary.responseCount === 0 ? (
+          <EmptyQuestionState />
+        ) : (
+          <div className="space-y-5">
+            {results.map((result) => {
           const choiceId = getChoiceIdByValue(result.value, questionSummary.question);
           return (
             <Fragment key={result.value}>
@@ -174,7 +179,9 @@ export const MultipleChoiceSummary = ({
               )}
             </Fragment>
           );
-        })}
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

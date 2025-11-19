@@ -16,6 +16,7 @@ import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { TooltipProvider } from "@/modules/ui/components/tooltip";
 import { ClickableBarSegment } from "./ClickableBarSegment";
+import { EmptyQuestionState } from "./EmptyQuestionState";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 import { RatingScaleLegend } from "./RatingScaleLegend";
 import { SatisfactionIndicator } from "./SatisfactionIndicator";
@@ -84,11 +85,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
           <div className="px-4 pb-6 pt-4 md:px-6">
             {questionSummary.responseCount === 0 ? (
               <>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center">
-                  <p className="text-sm text-slate-500">
-                    {t("environments.surveys.summary.no_responses_found")}
-                  </p>
-                </div>
+                <EmptyQuestionState />
                 <RatingScaleLegend
                   scale={questionSummary.question.scale}
                   range={questionSummary.question.range}

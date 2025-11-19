@@ -209,7 +209,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
 
       {open && (
         <div className="animate-in absolute top-full z-10 mt-1 w-full overflow-auto rounded-md shadow-md outline-none">
-          <CommandList>
+          <CommandList className="max-h-[600px]">
             <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
             {options?.map((data) => (
               <Fragment key={data.header}>

@@ -331,7 +331,7 @@
     "project_not_found": "Project niet gevonden",
     "project_permission_not_found": "Projecttoestemming niet gevonden",
     "projects": "Projecten",
-    "question": "Vraag",
+    "question": "vraag",
     "question_id": "Vraag-ID",
     "questions": "Vragen",
     "quota": "Quotum",
@@ -801,8 +801,11 @@
         "how_to_setup_description": "Volg deze stappen om de Formbricks-widget in uw app in te stellen.",
         "receiving_data": "Gegevens ontvangen 💃🕺",
         "recheck": "Controleer opnieuw",
+        "sdk_connection_details": "SDK-verbindingsdetails",
+        "sdk_connection_details_description": "Uw unieke Environment ID en SDK-verbindings-URL voor integratie van Formbricks met uw applicatie.",
         "setup_alert_description": "Volg deze stapsgewijze handleiding om uw app of website in minder dan 5 minuten te verbinden.",
-        "setup_alert_title": "Hoe te verbinden"
+        "setup_alert_title": "Hoe te verbinden",
+        "webapp_url": "SDK-verbindings-URL"
       },
       "general": {
         "cannot_delete_only_project": "Dit is uw enige project. Het kan niet worden verwijderd. Maak eerst een nieuw project aan.",

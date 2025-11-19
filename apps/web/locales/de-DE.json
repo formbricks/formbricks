@@ -801,8 +801,11 @@
         "how_to_setup_description": "Befolge diese Schritte, um das Formbricks Widget in deiner App einzurichten.",
         "receiving_data": "Daten werden empfangen 💃🕺",
         "recheck": "Erneut prüfen",
+        "sdk_connection_details": "SDK-Verbindungsdetails",
+        "sdk_connection_details_description": "Deine eindeutige Umgebungs-ID und SDK-Verbindungs-URL zur Integration von Formbricks mit deiner Anwendung.",
         "setup_alert_description": "Befolge dieses Schritt-für-Schritt-Tutorial, um deine App oder Website in weniger als 5 Minuten zu verbinden.",
-        "setup_alert_title": "Wie man verbindet"
+        "setup_alert_title": "Wie man verbindet",
+        "webapp_url": "SDK-Verbindungs-URL"
       },
       "general": {
         "cannot_delete_only_project": "Dies ist dein einziges Projekt, es kann nicht gelöscht werden. Erstelle zuerst ein neues Projekt.",

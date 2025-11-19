@@ -236,7 +236,7 @@ export const generateQuestionAndFilterOptions = (
       questionFilterOptions.push({
         type: "Quotas",
         filterOptions: ["Status"],
-        filterComboBoxOptions: ["Screened in", "Screened out (overquota)", "Screened out (not in quota)"],
+        filterComboBoxOptions: ["Screened in", "Screened out (overquota)", "Not in quota"],
         id: quota.id,
       });
     });
@@ -549,7 +549,7 @@ export const getFormattedFilters = (
       const statusMap: Record<string, "screenedIn" | "screenedOut" | "screenedOutNotInQuota"> = {
         "Screened in": "screenedIn",
         "Screened out (overquota)": "screenedOut",
-        "Screened out (not in quota)": "screenedOutNotInQuota",
+        "Not in quota": "screenedOutNotInQuota",
       };
       const op = statusMap[String(filterType.filterComboBoxValue)];
       if (op) filters.quotas[quotaId] = { op };

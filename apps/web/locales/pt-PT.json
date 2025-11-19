@@ -331,7 +331,7 @@
     "project_not_found": "Projeto não encontrado",
     "project_permission_not_found": "Permissão do projeto não encontrada",
     "projects": "Projetos",
-    "question": "Pergunta",
+    "question": "pergunta",
     "question_id": "ID da pergunta",
     "questions": "Perguntas",
     "quota": "Quota",
@@ -801,8 +801,11 @@
         "how_to_setup_description": "Siga estes passos para configurar o widget Formbricks na sua aplicação.",
         "receiving_data": "A receber dados 💃🕺",
         "recheck": "Verificar novamente",
+        "sdk_connection_details": "Detalhes de Conexão SDK",
+        "sdk_connection_details_description": "O seu ID de ambiente único e URL de conexão SDK para integrar o Formbricks com a sua aplicação.",
         "setup_alert_description": "Siga este tutorial passo a passo para conectar a sua app ou site em menos de 5 minutos",
-        "setup_alert_title": "Como conectar"
+        "setup_alert_title": "Como conectar",
+        "webapp_url": "URL de ligação do SDK"
       },
       "general": {
         "cannot_delete_only_project": "Este é o seu único projeto, não pode ser eliminado. Crie um novo projeto primeiro.",

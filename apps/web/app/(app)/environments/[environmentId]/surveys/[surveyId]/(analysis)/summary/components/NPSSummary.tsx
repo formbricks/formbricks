@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/component
 import { TooltipProvider } from "@/modules/ui/components/tooltip";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { ClickableBarSegment } from "./ClickableBarSegment";
+import { EmptyQuestionState } from "./EmptyQuestionState";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 import { SatisfactionIndicator } from "./SatisfactionIndicator";
 
@@ -106,8 +107,12 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
         </div>
 
         <TabsContent value="aggregated" className="mt-4">
-          <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-            {["promoters", "passives", "detractors", "dismissed"].map((group) => (
+          <div className="px-4 pb-6 pt-4 md:px-6">
+            {questionSummary.responseCount === 0 ? (
+              <EmptyQuestionState />
+            ) : (
+              <div className="space-y-5 text-sm md:text-base">
+                {["promoters", "passives", "detractors", "dismissed"].map((group) => (
               <button
                 className="w-full cursor-pointer hover:opacity-80"
                 key={group}
@@ -136,6 +141,8 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
                 />
               </button>
             ))}
+              </div>
+            )}
           </div>
         </TabsContent>
 

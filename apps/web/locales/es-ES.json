@@ -794,6 +794,8 @@
         "cache_update_delay_title": "Los cambios se reflejarán después de ~1 minuto debido al almacenamiento en caché",
         "environment_id": "Tu ID de entorno",
         "environment_id_description": "Este ID identifica de manera única este entorno de Formbricks.",
+        "sdk_connection_details": "Detalles de conexión del SDK",
+        "sdk_connection_details_description": "Tu ID de entorno único y URL de conexión del SDK para integrar Formbricks con tu aplicación.",
         "formbricks_sdk_connected": "El SDK de Formbricks está conectado",
         "formbricks_sdk_not_connected": "El SDK de Formbricks aún no está conectado.",
         "formbricks_sdk_not_connected_description": "Añade el SDK de Formbricks a tu sitio web o aplicación para conectarlo con Formbricks",
@@ -802,7 +804,8 @@
         "receiving_data": "Recibiendo datos 💃🕺",
         "recheck": "Volver a comprobar",
         "setup_alert_description": "Sigue este tutorial paso a paso para conectar tu aplicación o sitio web en menos de 5 minutos.",
-        "setup_alert_title": "Cómo conectar"
+        "setup_alert_title": "Cómo conectar",
+        "webapp_url": "URL de conexión del SDK"
       },
       "general": {
         "cannot_delete_only_project": "Este es tu único proyecto, no se puede eliminar. Crea un proyecto nuevo primero.",

@@ -331,7 +331,7 @@
     "project_not_found": "Proiectul nu a fost găsit",
     "project_permission_not_found": "Permisiunea proiectului nu a fost găsită",
     "projects": "Proiecte",
-    "question": "Întrebare",
+    "question": "întrebare",
     "question_id": "ID întrebare",
     "questions": "Întrebări",
     "quota": "Cotă",
@@ -801,8 +801,11 @@
         "how_to_setup_description": "Urmează acești pași pentru a configura widget-ul Formbricks în aplicația ta.",
         "receiving_data": "Recepționare date 💃🕺",
         "recheck": "Re-verifică",
+        "sdk_connection_details": "Detalii de conexiune SDK",
+        "sdk_connection_details_description": "ID-ul mediului tău unic și URL-ul de conexiune SDK pentru a integra Formbricks cu aplicația ta.",
         "setup_alert_description": "Urmează acest tutorial pas cu pas pentru a-ți conecta aplicația sau site-ul în mai puțin de 5 minute.",
-        "setup_alert_title": "Cum să conectezi"
+        "setup_alert_title": "Cum să conectezi",
+        "webapp_url": "URL de conexiune SDK"
       },
       "general": {
         "cannot_delete_only_project": "Acesta este singurul tău proiect, nu poate fi șters. Creează mai întâi un proiect nou.",

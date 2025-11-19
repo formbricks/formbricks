@@ -17,6 +17,7 @@ import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@/lib/constants";
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { getQuestionResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
@@ -34,7 +35,10 @@ interface FollowUpEmailProps {
 
 export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JSX.Element> {
   const { properties } = props.followUp.action;
-  const { body } = properties;
+  let { body } = properties;
+
+  // Parse recall tags and replace with actual response values
+  body = parseRecallInfo(body, props.response.data);
 
   const questions = props.attachResponseData ? getQuestionResponseMapping(props.survey, props.response) : [];
   const t = await getTranslate();
