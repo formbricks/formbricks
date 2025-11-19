@@ -209,7 +209,7 @@ export const ZSurveyPictureSelectionElement = ZSurveyElementBase.extend({
   allowMulti: z.boolean().optional().default(false),
   choices: z
     .array(ZSurveyPictureChoice)
-    .min(2, { message: "Picture Selection element must have atleast 2 choices" }),
+    .min(2, { message: "Picture Selection element must have a minimum of 2 choices" }),
 });
 
 export type TSurveyPictureSelectionElement = z.infer<typeof ZSurveyPictureSelectionElement>;

@@ -131,6 +131,7 @@ export const BlockCard = ({
   const [openAdvanced, setOpenAdvanced] = useState(blockLogic.length > 0);
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [parent] = useAutoAnimate();
+  const [elementsParent] = useAutoAnimate();
 
   const style = {
     transition: transition ?? "transform 100ms ease",
@@ -201,359 +202,369 @@ export const BlockCard = ({
 
           <Collapsible.CollapsibleContent>
             {/* Render each element in the block */}
-            {block.elements.map((element, elementIndex) => {
-              // Calculate the actual question index in the flattened questions array
-              let questionIdx = 0;
-              for (let i = 0; i < blockIdx; i++) {
-                questionIdx += localSurvey.blocks[i].elements.length;
-              }
-              questionIdx += elementIndex;
+            <div ref={elementsParent}>
+              {block.elements.map((element, elementIndex) => {
+                // Calculate the actual question index in the flattened questions array
+                let questionIdx = 0;
+                for (let i = 0; i < blockIdx; i++) {
+                  questionIdx += localSurvey.blocks[i].elements.length;
+                }
+                questionIdx += elementIndex;
 
-              const isInvalid = invalidQuestions ? invalidQuestions.includes(element.id) : false;
-              const open = activeQuestionId === element.id;
+                const isInvalid = invalidQuestions ? invalidQuestions.includes(element.id) : false;
+                const open = activeQuestionId === element.id;
 
-              return (
-                <div key={element.id} className={cn(elementIndex > 0 && "border-t border-slate-200")}>
-                  <Collapsible.Root
-                    open={open}
-                    onOpenChange={() => {
-                      if (activeQuestionId !== element.id) {
-                        setActiveQuestionId(element.id);
-                      } else {
-                        setActiveQuestionId(null);
-                      }
-                    }}
-                    className="w-full">
-                    <Collapsible.CollapsibleTrigger
-                      asChild
-                      className={cn(
-                        open ? "bg-slate-50" : "",
-                        "flex w-full cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50"
-                      )}
-                      aria-label="Toggle question details">
-                      <div>
-                        <div className="flex grow">
-                          <div className="flex grow items-center gap-3" dir="auto">
-                            <div className="flex items-center text-slate-600">
-                              {QUESTIONS_ICON_MAP[element.type]}
-                            </div>
-                            <div className="flex grow flex-col justify-center">
-                              {hasMultipleElements && (
-                                <p className="mb-1 text-xs font-medium text-slate-500">
-                                  Question {elementIndex + 1}
-                                </p>
-                              )}
-                              <h3 className="text-sm font-semibold">
-                                {recallToHeadline(element.headline, localSurvey, true, selectedLanguageCode)[
-                                  selectedLanguageCode
-                                ]
-                                  ? formatTextWithSlashes(
-                                      getTextContent(
-                                        recallToHeadline(
-                                          element.headline,
-                                          localSurvey,
-                                          true,
-                                          selectedLanguageCode
-                                        )[selectedLanguageCode] ?? ""
+                return (
+                  <div key={element.id} className={cn(elementIndex > 0 && "border-t border-slate-200")}>
+                    <Collapsible.Root
+                      open={open}
+                      onOpenChange={() => {
+                        if (activeQuestionId !== element.id) {
+                          setActiveQuestionId(element.id);
+                        } else {
+                          setActiveQuestionId(null);
+                        }
+                      }}
+                      className="w-full">
+                      <Collapsible.CollapsibleTrigger
+                        asChild
+                        className={cn(
+                          open ? "bg-slate-50" : "",
+                          "flex w-full cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50"
+                        )}
+                        aria-label="Toggle question details">
+                        <div>
+                          <div className="flex grow">
+                            <div className="flex grow items-center gap-3" dir="auto">
+                              <div className="flex items-center text-slate-600">
+                                {QUESTIONS_ICON_MAP[element.type]}
+                              </div>
+                              <div className="flex grow flex-col justify-center">
+                                {hasMultipleElements && (
+                                  <p className="mb-1 text-xs font-medium text-slate-500">
+                                    Question {elementIndex + 1}
+                                  </p>
+                                )}
+                                <h3 className="text-sm font-semibold">
+                                  {recallToHeadline(
+                                    element.headline,
+                                    localSurvey,
+                                    true,
+                                    selectedLanguageCode
+                                  )[selectedLanguageCode]
+                                    ? formatTextWithSlashes(
+                                        getTextContent(
+                                          recallToHeadline(
+                                            element.headline,
+                                            localSurvey,
+                                            true,
+                                            selectedLanguageCode
+                                          )[selectedLanguageCode] ?? ""
+                                        )
                                       )
-                                    )
-                                  : getTSurveyQuestionTypeEnumName(element.type, t)}
-                              </h3>
-                              {!open && (
-                                <p className="mt-1 truncate text-xs text-slate-500">
-                                  {element?.required
-                                    ? t("environments.surveys.edit.required")
-                                    : t("environments.surveys.edit.optional")}
-                                </p>
-                              )}
+                                    : getTSurveyQuestionTypeEnumName(element.type, t)}
+                                </h3>
+                                {!open && (
+                                  <p className="mt-1 truncate text-xs text-slate-500">
+                                    {element?.required
+                                      ? t("environments.surveys.edit.required")
+                                      : t("environments.surveys.edit.optional")}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center space-x-2">
-                          <EditorCardMenu
-                            survey={localSurvey}
-                            cardIdx={questionIdx}
-                            lastCard={lastQuestion && elementIndex === lastElementIndex}
-                            blockId={block.id}
-                            elementIdx={elementIndex}
-                            duplicateCard={duplicateQuestion}
-                            deleteCard={deleteQuestion}
-                            moveCard={moveQuestion}
-                            card={{
-                              ...element,
-                              logic: block.logic,
-                              buttonLabel: block.buttonLabel,
-                              backButtonLabel: block.backButtonLabel,
-                            }}
-                            project={project}
-                            updateCard={updateQuestion}
-                            addCard={addQuestion}
-                            addCardToBlock={addElementToBlock}
-                            moveElementToBlock={moveElementToBlock}
-                            cardType="question"
-                            isCxMode={isCxMode}
-                          />
-                        </div>
-                      </div>
-                    </Collapsible.CollapsibleTrigger>
-                    <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-4"}`}>
-                      {responseCount > 0 &&
-                      [
-                        TSurveyElementTypeEnum.MultipleChoiceSingle,
-                        TSurveyElementTypeEnum.MultipleChoiceMulti,
-                        TSurveyElementTypeEnum.PictureSelection,
-                        TSurveyElementTypeEnum.Rating,
-                        TSurveyElementTypeEnum.NPS,
-                        TSurveyElementTypeEnum.Ranking,
-                        TSurveyElementTypeEnum.Matrix,
-                      ].includes(element.type) ? (
-                        <Alert variant="warning" size="small" className="w-fill" role="alert">
-                          <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
-                          <AlertButton onClick={() => onAlertTrigger()}>{t("common.learn_more")}</AlertButton>
-                        </Alert>
-                      ) : null}
-                      {element.type === TSurveyElementTypeEnum.OpenText ? (
-                        <OpenQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          lastQuestion={lastQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ? (
-                        <MultipleChoiceQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ? (
-                        <MultipleChoiceQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.NPS ? (
-                        <NPSQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.CTA ? (
-                        <CTAQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          lastQuestion={lastQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.Rating ? (
-                        <RatingQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          lastQuestion={lastQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.Consent ? (
-                        <ConsentQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.Date ? (
-                        <DateQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.PictureSelection ? (
-                        <PictureSelectionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.FileUpload ? (
-                        <FileUploadQuestionForm
-                          localSurvey={localSurvey}
-                          project={project}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          isFormbricksCloud={isFormbricksCloud}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.Cal ? (
-                        <CalQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          lastQuestion={lastQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.Matrix ? (
-                        <MatrixQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.Address ? (
-                        <AddressQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.Ranking ? (
-                        <RankingQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : element.type === TSurveyElementTypeEnum.ContactInfo ? (
-                        <ContactInfoQuestionForm
-                          localSurvey={localSurvey}
-                          question={element}
-                          questionIdx={questionIdx}
-                          updateQuestion={updateQuestion}
-                          lastQuestion={lastQuestion}
-                          selectedLanguageCode={selectedLanguageCode}
-                          setSelectedLanguageCode={setSelectedLanguageCode}
-                          isInvalid={isInvalid}
-                          locale={locale}
-                          isStorageConfigured={isStorageConfigured}
-                          isExternalUrlsAllowed={isExternalUrlsAllowed}
-                        />
-                      ) : null}
-                      <div className="mt-4">
-                        <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
-                          <Collapsible.CollapsibleTrigger
-                            className="flex items-center text-sm text-slate-700"
-                            aria-label="Toggle advanced settings">
-                            {openAdvanced ? (
-                              <ChevronDownIcon className="mr-1 h-4 w-3" />
-                            ) : (
-                              <ChevronRightIcon className="mr-2 h-4 w-3" />
-                            )}
-                            {openAdvanced
-                              ? t("environments.surveys.edit.hide_advanced_settings")
-                              : t("environments.surveys.edit.show_advanced_settings")}
-                          </Collapsible.CollapsibleTrigger>
-
-                          <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
-                            {element.type !== TSurveyElementTypeEnum.NPS &&
-                            element.type !== TSurveyElementTypeEnum.Rating &&
-                            element.type !== TSurveyElementTypeEnum.CTA ? (
-                              <div className="mt-2 flex space-x-2"></div>
-                            ) : null}
-                            <AdvancedSettings
-                              // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the question type to the respective element type in all the question forms.
-                              question={element}
-                              questionIdx={questionIdx}
-                              localSurvey={localSurvey}
-                              updateQuestion={updateQuestion}
-                              updateBlockLogic={updateBlockLogic}
-                              updateBlockLogicFallback={updateBlockLogicFallback}
-                              selectedLanguageCode={selectedLanguageCode}
+                          <div className="flex items-center space-x-2">
+                            <EditorCardMenu
+                              survey={localSurvey}
+                              cardIdx={questionIdx}
+                              lastCard={lastQuestion && elementIndex === lastElementIndex}
+                              blockId={block.id}
+                              elementIdx={elementIndex}
+                              duplicateCard={duplicateQuestion}
+                              deleteCard={deleteQuestion}
+                              moveCard={moveQuestion}
+                              card={{
+                                ...element,
+                                logic: block.logic,
+                                buttonLabel: block.buttonLabel,
+                                backButtonLabel: block.backButtonLabel,
+                              }}
+                              project={project}
+                              updateCard={updateQuestion}
+                              addCard={addQuestion}
+                              addCardToBlock={addElementToBlock}
+                              moveElementToBlock={moveElementToBlock}
+                              cardType="question"
+                              isCxMode={isCxMode}
                             />
-                          </Collapsible.CollapsibleContent>
-                        </Collapsible.Root>
-                      </div>
-                    </Collapsible.CollapsibleContent>
-                  </Collapsible.Root>
-                </div>
-              );
-            })}
+                          </div>
+                        </div>
+                      </Collapsible.CollapsibleTrigger>
+                      <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-4"}`}>
+                        {responseCount > 0 &&
+                        [
+                          TSurveyElementTypeEnum.MultipleChoiceSingle,
+                          TSurveyElementTypeEnum.MultipleChoiceMulti,
+                          TSurveyElementTypeEnum.PictureSelection,
+                          TSurveyElementTypeEnum.Rating,
+                          TSurveyElementTypeEnum.NPS,
+                          TSurveyElementTypeEnum.Ranking,
+                          TSurveyElementTypeEnum.Matrix,
+                        ].includes(element.type) ? (
+                          <Alert variant="warning" size="small" className="w-fill" role="alert">
+                            <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
+                            <AlertButton onClick={() => onAlertTrigger()}>
+                              {t("common.learn_more")}
+                            </AlertButton>
+                          </Alert>
+                        ) : null}
+                        {element.type === TSurveyElementTypeEnum.OpenText ? (
+                          <OpenQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            lastQuestion={lastQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ? (
+                          <MultipleChoiceQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ? (
+                          <MultipleChoiceQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.NPS ? (
+                          <NPSQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.CTA ? (
+                          <CTAQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            lastQuestion={lastQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.Rating ? (
+                          <RatingQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            lastQuestion={lastQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.Consent ? (
+                          <ConsentQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.Date ? (
+                          <DateQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.PictureSelection ? (
+                          <PictureSelectionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.FileUpload ? (
+                          <FileUploadQuestionForm
+                            localSurvey={localSurvey}
+                            project={project}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            isFormbricksCloud={isFormbricksCloud}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.Cal ? (
+                          <CalQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            lastQuestion={lastQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.Matrix ? (
+                          <MatrixQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.Address ? (
+                          <AddressQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.Ranking ? (
+                          <RankingQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : element.type === TSurveyElementTypeEnum.ContactInfo ? (
+                          <ContactInfoQuestionForm
+                            localSurvey={localSurvey}
+                            question={element}
+                            questionIdx={questionIdx}
+                            updateQuestion={updateQuestion}
+                            lastQuestion={lastQuestion}
+                            selectedLanguageCode={selectedLanguageCode}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                            isInvalid={isInvalid}
+                            locale={locale}
+                            isStorageConfigured={isStorageConfigured}
+                            isExternalUrlsAllowed={isExternalUrlsAllowed}
+                          />
+                        ) : null}
+                        <div className="mt-4">
+                          <Collapsible.Root
+                            open={openAdvanced}
+                            onOpenChange={setOpenAdvanced}
+                            className="mt-5">
+                            <Collapsible.CollapsibleTrigger
+                              className="flex items-center text-sm text-slate-700"
+                              aria-label="Toggle advanced settings">
+                              {openAdvanced ? (
+                                <ChevronDownIcon className="mr-1 h-4 w-3" />
+                              ) : (
+                                <ChevronRightIcon className="mr-2 h-4 w-3" />
+                              )}
+                              {openAdvanced
+                                ? t("environments.surveys.edit.hide_question_settings")
+                                : t("environments.surveys.edit.show_question_settings")}
+                            </Collapsible.CollapsibleTrigger>
+
+                            <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
+                              {element.type !== TSurveyElementTypeEnum.NPS &&
+                              element.type !== TSurveyElementTypeEnum.Rating &&
+                              element.type !== TSurveyElementTypeEnum.CTA ? (
+                                <div className="mt-2 flex space-x-2"></div>
+                              ) : null}
+                              <AdvancedSettings
+                                // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the question type to the respective element type in all the question forms.
+                                question={element}
+                                questionIdx={questionIdx}
+                                localSurvey={localSurvey}
+                                updateQuestion={updateQuestion}
+                                updateBlockLogic={updateBlockLogic}
+                                updateBlockLogicFallback={updateBlockLogicFallback}
+                                selectedLanguageCode={selectedLanguageCode}
+                              />
+                            </Collapsible.CollapsibleContent>
+                          </Collapsible.Root>
+                        </div>
+                      </Collapsible.CollapsibleContent>
+                    </Collapsible.Root>
+                  </div>
+                );
+              })}
+            </div>
             <hr className="mb-4 border-dashed border-slate-200" />
             {/* Add Question to Block button */}
 
@@ -561,6 +572,7 @@ export const BlockCard = ({
               <AddQuestionToBlockButton
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
+                setActiveQuestionId={setActiveQuestionId}
                 block={block}
                 project={project}
                 isCxMode={isCxMode}

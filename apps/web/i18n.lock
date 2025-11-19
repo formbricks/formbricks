@@ -1127,6 +1127,7 @@ checksums:
     environments/surveys/edit/add_photo_or_video: 7fd213e807ad060e415d1d4195397473
     environments/surveys/edit/add_pin: 1bc282dd7eaea51301655d3e8dd3a9fb
     environments/surveys/edit/add_question_below: 58e64eb2e013f1175ea0dcf79149109f
+    environments/surveys/edit/add_question_to_block: 8589b1042aa93531a836549d6036492c
     environments/surveys/edit/add_row: a613cef4caf1f0e05697c8de5164e2a3
     environments/surveys/edit/add_variable: 23f97e23aba763cc58934df4fa13ffc1
     environments/surveys/edit/address_fields: 9cabb97c3deaff4f6cb3afc3d5cfaf0a
@@ -1242,6 +1243,7 @@ checksums:
     environments/surveys/edit/does_not_include_one_of: 91090d2e0667faf654f6a81d9857440f
     environments/surveys/edit/does_not_start_with: 9395869b54cdfb353a51a7e0864f4fd7
     environments/surveys/edit/duplicate_block: d4ea4afb5fc5b18a81cbe0302fa05997
+    environments/surveys/edit/duplicate_question: 910751de01fdd327165968214717711b
     environments/surveys/edit/edit_link: 40ba9e15beac77a46c5baf30be84ac54
     environments/surveys/edit/edit_recall: 38a4a7378d02453e35d06f2532eef318
     environments/surveys/edit/edit_translations: 2b21bea4b53e88342559272701e9fbf3
@@ -1321,12 +1323,12 @@ checksums:
     environments/surveys/edit/hidden_field_used_in_recall: 70dee46bae18209e8861b654ff9a04ae
     environments/surveys/edit/hidden_field_used_in_recall_ending_card: a985d03d18e33d83521961c9c981d0ee
     environments/surveys/edit/hidden_field_used_in_recall_welcome: 22fef7001d5e60edbf877e7b435c1991
-    environments/surveys/edit/hide_advanced_settings: ffa251d7762030b72c12e92f3c69a9b4
     environments/surveys/edit/hide_back_button: 9f355fb4a8e80485b9de521a952ffeb9
     environments/surveys/edit/hide_back_button_description: caaa30cf43c5611577933a1c9f44b9ee
     environments/surveys/edit/hide_block_settings: c24c3d3892c251792e297cdc036d2fde
     environments/surveys/edit/hide_logo: eef4de2e3fffe8cbe32bff4f6f7250d8
     environments/surveys/edit/hide_progress_bar: 7eefe7db6a051105bded521d94204933
+    environments/surveys/edit/hide_question_settings: 99127cd016db2f7fc80333b36473c0ef
     environments/surveys/edit/hide_the_logo_in_this_specific_survey: 29d4c6c714886e57bc29ad292d0f5a00
     environments/surveys/edit/hostname: 9bdaa7692869999df51bb60d58d9ef62
     environments/surveys/edit/how_funky_do_you_want_your_cards_in_survey_type_derived_surveys: 3cb16b37510c01af20a80f51b598346e
@@ -1490,12 +1492,12 @@ checksums:
     environments/surveys/edit/set_the_global_placement_in_the_look_feel_settings: e34e579e778a918733702edb041ac929
     environments/surveys/edit/settings_saved_successfully: eb109269bc59dd67ae09fd9eb53652d2
     environments/surveys/edit/seven_points: 4ead50fdfda45e8710767e1b1a84bf42
-    environments/surveys/edit/show_advanced_settings: b6f5bbbb84f34e51cd72ccd332e9613e
     environments/surveys/edit/show_block_settings: bad99d99c9908874e45f5c350a88cc79
     environments/surveys/edit/show_button: 6b364aac9d7ac71f34a438607c9693bc
     environments/surveys/edit/show_language_switch: b6915a7f26d7079f2d4d844d74440413
     environments/surveys/edit/show_multiple_times: 5e6e0244c20feca78723c79aa1ddcf62
     environments/surveys/edit/show_only_once: 31858baf60ebcf193c7e35d9084af0af
+    environments/surveys/edit/show_question_settings: a84698a95df0833a35d653edcdbbe501
     environments/surveys/edit/show_survey_maximum_of: 721ed61b01a9fc8ce4becb72823bb72e
     environments/surveys/edit/show_survey_to_users: d5e90fd17babfea978fce826e9df89b0
     environments/surveys/edit/show_to_x_percentage_of_targeted_users: b745169011fa7e8ca475baa5500c5197

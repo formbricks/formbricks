@@ -194,7 +194,9 @@ export const EditorCardMenu = ({
           <ArrowDownIcon />
         </Button>
       </TooltipRenderer>
-      <TooltipRenderer tooltipContent={t("common.duplicate")} triggerClass="disabled:border-none">
+      <TooltipRenderer
+        tooltipContent={t("environments.surveys.edit.duplicate_question")}
+        triggerClass="disabled:border-none">
         <Button
           variant="ghost"
           size="icon"
