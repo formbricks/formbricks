@@ -57,8 +57,8 @@
 }
 
 .dark aside {
-  background-color: #030712 !important; /* Ultra dark gray */
-  border-color: #1f2937 !important;
+  background-color: #030712; /* Ultra dark gray */
+  border-color: #1f2937;
 }
 
 /* Background colors - All made much darker */

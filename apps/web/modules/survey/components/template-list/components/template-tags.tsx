@@ -20,17 +20,17 @@ type NonNullabeChannel = NonNullable<TProjectConfigChannel>;
 export const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   switch (role) {
     case "productManager":
-      return "border-blue-300 bg-blue-50 text-blue-500";
+      return "border-blue-300 bg-blue-50 text-blue-500 dark:border-blue-600 dark:bg-blue-950 dark:text-blue-400";
     case "marketing":
-      return "border-orange-300 bg-orange-50 text-orange-500";
+      return "border-orange-300 bg-orange-50 text-orange-500 dark:border-orange-600 dark:bg-orange-950 dark:text-orange-400";
     case "sales":
-      return "border-emerald-300 bg-emerald-50 text-emerald-500";
+      return "border-emerald-300 bg-emerald-50 text-emerald-500 dark:border-emerald-600 dark:bg-emerald-950 dark:text-emerald-400";
     case "customerSuccess":
-      return "border-violet-300 bg-violet-50 text-violet-500";
+      return "border-violet-300 bg-violet-50 text-violet-500 dark:border-violet-600 dark:bg-violet-950 dark:text-violet-400";
     case "peopleManager":
-      return "border-pink-300 bg-pink-50 text-pink-500";
+      return "border-pink-300 bg-pink-50 text-pink-500 dark:border-pink-600 dark:bg-pink-950 dark:text-pink-400";
     default:
-      return "border-slate-300 bg-slate-50 text-slate-500";
+      return "border-slate-300 bg-slate-50 text-slate-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-400";
   }
 };
 
@@ -94,10 +94,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <div
-        className={cn("rounded border px-1.5 py-0.5 text-xs dark:border dark:bg-blue-50", roleBasedStyling)}>
-        {roleTag}
-      </div>
+      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{roleTag}</div>
       {industryTag && (
         <div
           className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>
