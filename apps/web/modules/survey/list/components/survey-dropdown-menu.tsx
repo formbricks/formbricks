@@ -187,7 +187,7 @@ export const SurveyDropDownMenu = ({
             )}
             {survey.type === "link" && survey.status !== "draft" && (
               <>
-                <DropdownMenuItem disabled={isSingleUseEnabled}>
+                <DropdownMenuItem>
                   <button
                     type="button"
                     className={cn(
@@ -205,7 +205,7 @@ export const SurveyDropDownMenu = ({
                     {t("common.preview_survey")}
                   </button>
                 </DropdownMenuItem>
-                <DropdownMenuItem disabled={isSingleUseEnabled}>
+                <DropdownMenuItem>
                   <button
                     type="button"
                     data-testid="copy-link"
