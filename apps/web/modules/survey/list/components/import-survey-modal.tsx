@@ -1,6 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
+import { FileTextIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -155,7 +156,7 @@ export const ImportSurveyModal = ({
               <Label htmlFor="json-file">{t("environments.surveys.import_survey_file_label")}</Label>
               <div className="mt-2 flex items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white p-8">
                 <div className="text-center">
-                  <div className="mb-2 text-2xl">📄</div>
+                  <FileTextIcon className="mx-auto mb-4 h-12 w-12 text-slate-400" />
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -171,7 +172,7 @@ export const ImportSurveyModal = ({
                     onClick={() => fileInputRef.current?.click()}
                     disabled={loading}
                     loading={loading}>
-                    {t("common.choose_file")}
+                    {t("common.upload")}
                   </Button>
                   <p className="mt-2 text-sm text-slate-500">
                     {t("environments.surveys.or_drag_and_drop_json")}
