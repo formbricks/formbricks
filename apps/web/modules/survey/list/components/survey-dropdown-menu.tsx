@@ -3,6 +3,7 @@
 import {
   ArrowUpFromLineIcon,
   CopyIcon,
+  DownloadIcon,
   EyeIcon,
   LinkIcon,
   MoreVertical,
@@ -24,6 +25,8 @@ import {
   deleteSurveyAction,
   getSurveyAction,
 } from "@/modules/survey/list/actions";
+import { exportSurveyAction } from "@/modules/survey/list/actions";
+import { downloadSurveyJson } from "@/modules/survey/list/lib/download-survey";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -125,6 +128,29 @@ export const SurveyDropDownMenu = ({
     setIsCautionDialogOpen(true);
   };
 
+  const handleExportSurvey = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    try {
+      e.preventDefault();
+      setIsDropDownOpen(false);
+      setLoading(true);
+
+      const result = await exportSurveyAction({ surveyId: survey.id });
+
+      if (result?.data) {
+        const jsonString = JSON.stringify(result.data, null, 2);
+        downloadSurveyJson(survey.name, jsonString);
+        toast.success(t("environments.surveys.survey_exported_successfully"));
+      } else {
+        toast.error(t("environments.surveys.survey_export_error"));
+      }
+    } catch (error) {
+      logger.error(error);
+      toast.error(t("environments.surveys.survey_export_error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
@@ -170,20 +196,33 @@ export const SurveyDropDownMenu = ({
               </>
             )}
             {!isSurveyCreationDeletionDisabled && (
-              <DropdownMenuItem>
-                <button
-                  type="button"
-                  className="flex w-full items-center"
-                  disabled={loading}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsDropDownOpen(false);
-                    setIsCopyFormOpen(true);
-                  }}>
-                  <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                  {t("common.copy")}...
-                </button>
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    disabled={loading}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      setIsCopyFormOpen(true);
+                    }}>
+                    <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
+                    {t("common.copy")}...
+                  </button>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    disabled={loading}
+                    onClick={handleExportSurvey}>
+                    <DownloadIcon className="mr-2 h-4 w-4" />
+                    {t("environments.surveys.export_survey")}
+                  </button>
+                </DropdownMenuItem>
+              </>
             )}
             {survey.type === "link" && survey.status !== "draft" && (
               <>
