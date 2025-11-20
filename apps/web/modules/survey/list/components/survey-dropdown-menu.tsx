@@ -3,6 +3,7 @@
 import {
   ArrowUpFromLineIcon,
   CopyIcon,
+  DownloadIcon,
   EyeIcon,
   LinkIcon,
   MoreVertical,
@@ -22,8 +23,10 @@ import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import {
   copySurveyToOtherEnvironmentAction,
   deleteSurveyAction,
+  exportSurveyAction,
   getSurveyAction,
 } from "@/modules/survey/list/actions";
+import { downloadSurveyJson } from "@/modules/survey/list/lib/download-survey";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -55,7 +58,7 @@ export const SurveyDropDownMenu = ({
   onSurveysCopied,
 }: SurveyDropDownMenuProps) => {
   const { t } = useTranslation();
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
@@ -73,6 +76,7 @@ export const SurveyDropDownMenu = ({
       deleteSurvey(surveyId);
       toast.success(t("environments.surveys.survey_deleted_successfully"));
     } catch (error) {
+      logger.error(error);
       toast.error(t("environments.surveys.error_deleting_survey"));
     } finally {
       setLoading(false);
@@ -83,7 +87,6 @@ export const SurveyDropDownMenu = ({
     try {
       e.preventDefault();
       setIsDropDownOpen(false);
-      // For single-use surveys, this button is disabled, so we just copy the base link
       const copiedLink = copySurveyLink(surveyLink);
       navigator.clipboard.writeText(copiedLink);
       toast.success(t("common.copied_to_clipboard"));
@@ -114,6 +117,7 @@ export const SurveyDropDownMenu = ({
         toast.error(errorMessage);
       }
     } catch (error) {
+      logger.error(error);
       toast.error(t("environments.surveys.survey_duplication_error"));
     }
     setLoading(false);
@@ -123,6 +127,32 @@ export const SurveyDropDownMenu = ({
     e.preventDefault();
     setIsDropDownOpen(false);
     setIsCautionDialogOpen(true);
+  };
+
+  const handleExportSurvey = async () => {
+    const exportPromise = exportSurveyAction({ surveyId: survey.id }).then((result) => {
+      if (result?.data) {
+        downloadSurveyJson(survey.name, JSON.stringify(result.data, null, 2));
+        return result.data;
+      } else if (result?.serverError) {
+        throw new Error(result.serverError);
+      }
+      throw new Error(t("environments.surveys.export_survey_error"));
+    });
+
+    toast.promise(exportPromise, {
+      loading: t("environments.surveys.export_survey_loading"),
+      success: t("environments.surveys.export_survey_success"),
+      error: (err) => err.message || t("environments.surveys.export_survey_error"),
+    });
+
+    try {
+      await exportPromise;
+    } catch (error) {
+      logger.error(error);
+    } finally {
+      setIsDropDownOpen(false);
+    }
   };
 
   return (
@@ -185,6 +215,21 @@ export const SurveyDropDownMenu = ({
                 </button>
               </DropdownMenuItem>
             )}
+
+            <DropdownMenuItem>
+              <button
+                type="button"
+                className="flex w-full items-center"
+                disabled={loading}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleExportSurvey();
+                }}>
+                <DownloadIcon className="mr-2 h-4 w-4" />
+                {t("environments.surveys.export_survey")}
+              </button>
+            </DropdownMenuItem>
+
             {survey.type === "link" && survey.status !== "draft" && (
               <>
                 <DropdownMenuItem>
@@ -229,7 +274,7 @@ export const SurveyDropDownMenu = ({
                   onClick={(e) => {
                     e.preventDefault();
                     setIsDropDownOpen(false);
-                    setDeleteDialogOpen(true);
+                    setIsDeleteDialogOpen(true);
                   }}>
                   <TrashIcon className="mr-2 h-4 w-4" />
                   {t("common.delete")}
@@ -244,7 +289,7 @@ export const SurveyDropDownMenu = ({
         <DeleteDialog
           deleteWhat="Survey"
           open={isDeleteDialogOpen}
-          setOpen={setDeleteDialogOpen}
+          setOpen={setIsDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("environments.surveys.delete_survey_and_responses_warning")}
           isDeleting={loading}
