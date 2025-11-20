@@ -1,6 +1,6 @@
-import { TFunction } from "i18next";
-import { describe, expect, test } from "vitest";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { describe, expect, test, vi } from "vitest";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   addBlock,
@@ -9,470 +9,749 @@ import {
   deleteElementFromBlock,
   duplicateBlock,
   duplicateElementInBlock,
+  findElementLocation,
   isElementIdUnique,
   moveBlock,
+  moveElementInBlock,
   updateBlock,
   updateElementInBlock,
 } from "./blocks";
 
-// Mock translation function
-const mockT: TFunction = ((key: string) => {
-  const translations: Record<string, string> = {
-    "environments.surveys.edit.untitled_block": "Untitled Block",
-  };
-  return translations[key] || key;
-}) as TFunction;
+vi.mock("@paralleldrive/cuid2", () => ({
+  createId: vi.fn(() => "test-cuid-" + Math.random().toString(36).substring(7)),
+}));
 
-// Helper to create a mock survey
-const createMockSurvey = (): TSurvey => ({
-  id: "test-survey-id",
-  name: "Test Survey",
-  type: "link",
-  environmentId: "test-env-id",
-  createdBy: null,
-  status: "draft",
-  welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
-  questions: [],
-  endings: [],
-  hiddenFields: { enabled: false },
-  variables: [],
-  displayOption: "displayOnce",
-  recontactDays: null,
-  displayLimit: null,
-  autoClose: null,
-  delay: 0,
-  displayPercentage: null,
-  autoComplete: null,
-  isVerifyEmailEnabled: false,
-  isSingleResponsePerEmailEnabled: false,
-  projectOverwrites: null,
-  styling: null,
-  surveyClosedMessage: null,
-  singleUse: null,
-  pin: null,
-  languages: [],
-  showLanguageSwitch: null,
-  segment: null,
-  triggers: [],
+const mockT = ((key: string) => key) as never;
+
+const createMockElement = (id: string): TSurveyElement => ({
+  id,
+  type: TSurveyElementTypeEnum.OpenText,
+  headline: { default: "Test Question" },
+  required: false,
+  inputType: "text",
+  longAnswer: true,
+  charLimit: { enabled: false },
+});
+
+const createMockBlock = (id: string, name: string, elements: TSurveyElement[] = []): TSurveyBlock => ({
+  id,
+  name,
+  elements,
+});
+
+const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
+  id: "survey-1",
   createdAt: new Date(),
   updatedAt: new Date(),
-  blocks: [
-    {
-      id: "block-1",
-      name: "Block 1",
-      elements: [
-        {
-          id: "elem-1",
-          type: TSurveyElementTypeEnum.OpenText,
-          headline: { default: "Question 1" },
-          required: true,
-          inputType: "text",
-        } as any,
-        {
-          id: "elem-2",
-          type: TSurveyElementTypeEnum.OpenText,
-          headline: { default: "Question 2" },
-          required: false,
-          inputType: "email",
-        } as any,
-      ],
-    },
-    {
-      id: "block-2",
-      name: "Block 2",
-      elements: [
-        {
-          id: "elem-3",
-          type: TSurveyElementTypeEnum.Rating,
-          headline: { default: "Rate us" },
-          required: true,
-          scale: "star",
-          range: 5,
-        } as any,
-      ],
-    },
-  ],
+  name: "Test Survey",
+  type: "link",
+  environmentId: "env-1",
+  createdBy: null,
+  status: "draft",
+  displayOption: "respondMultiple",
+  autoClose: null,
+  triggers: [],
+  recontactDays: null,
+  displayLimit: null,
+  welcomeCard: {
+    enabled: false,
+    headline: { default: "Welcome" },
+    timeToFinish: false,
+    showResponseCount: false,
+  },
+  questions: [],
+  blocks,
+  endings: [],
+  hiddenFields: { enabled: false, fieldIds: [] },
+  variables: [],
+  styling: null,
+  segment: null,
+  languages: [],
+  displayPercentage: null,
+  isVerifyEmailEnabled: false,
+  isSingleResponsePerEmailEnabled: false,
+  singleUse: null,
+  pin: null,
+  projectOverwrites: null,
+  surveyClosedMessage: null,
   followUps: [],
+  delay: 0,
+  autoComplete: null,
+  showLanguageSwitch: null,
   recaptcha: null,
   isBackButtonHidden: false,
   metadata: {},
 });
 
-describe("Block Utility Functions", () => {
-  describe("isElementIdUnique", () => {
-    test("should return true for unique element ID", () => {
-      const survey = createMockSurvey();
-      const isUnique = isElementIdUnique("new-elem", survey.blocks);
-      expect(isUnique).toBe(true);
-    });
+describe("isElementIdUnique", () => {
+  test("should return true for a unique element ID", () => {
+    const blocks = [
+      createMockBlock("block-1", "Block 1", [createMockElement("q1")]),
+      createMockBlock("block-2", "Block 2", [createMockElement("q2")]),
+    ];
 
-    test("should return false for duplicate element ID", () => {
-      const survey = createMockSurvey();
-      const isUnique = isElementIdUnique("elem-1", survey.blocks);
-      expect(isUnique).toBe(false);
-    });
+    expect(isElementIdUnique("q3", blocks)).toBe(true);
+  });
+
+  test("should return false for a duplicate element ID", () => {
+    const blocks = [
+      createMockBlock("block-1", "Block 1", [createMockElement("q1")]),
+      createMockBlock("block-2", "Block 2", [createMockElement("q2")]),
+    ];
+
+    expect(isElementIdUnique("q1", blocks)).toBe(false);
+    expect(isElementIdUnique("q2", blocks)).toBe(false);
+  });
+
+  test("should return true for empty blocks", () => {
+    expect(isElementIdUnique("q1", [])).toBe(true);
   });
 });
 
-describe("Block Operations", () => {
-  describe("addBlock", () => {
-    test("should add a block to the end by default", () => {
-      const survey = createMockSurvey();
-      const result = addBlock(mockT, survey, { name: "Block 3", elements: [] });
+describe("findElementLocation", () => {
+  test("should find element location correctly", () => {
+    const element1 = createMockElement("q1");
+    const element2 = createMockElement("q2");
+    const block1 = createMockBlock("block-1", "Block 1", [element1]);
+    const block2 = createMockBlock("block-2", "Block 2", [element2]);
+    const survey = createMockSurvey([block1, block2]);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks.length).toBe(3);
-        expect(result.data.blocks[2].name).toBe("Block 3");
-        expect(result.data.blocks[2].id).toBeTruthy();
-      }
-    });
+    const result = findElementLocation(survey, "q2");
 
-    test("should add a block at specific index", () => {
-      const survey = createMockSurvey();
-      const result = addBlock(mockT, survey, { name: "Block 1.5", elements: [] }, 1);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks.length).toBe(3);
-        expect(result.data.blocks[1].name).toBe("Block 1.5");
-      }
-    });
-
-    test("should return error for invalid index", () => {
-      const survey = createMockSurvey();
-      const result = addBlock(mockT, survey, { name: "Block X", elements: [] }, 10);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("Invalid index");
-      }
-    });
-
-    test("should use default name if not provided", () => {
-      const survey = createMockSurvey();
-      const result = addBlock(mockT, survey, { elements: [] });
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[2].name).toBe("Untitled Block");
-      }
-    });
+    expect(result.blockId).toBe("block-2");
+    expect(result.blockIndex).toBe(1);
+    expect(result.elementIndex).toBe(0);
+    expect(result.block).toEqual(block2);
   });
 
-  describe("updateBlock", () => {
-    test("should update block attributes", () => {
-      const survey = createMockSurvey();
-      const result = updateBlock(survey, "block-1", { name: "Updated Block 1" });
+  test("should return null values when element is not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[0].name).toBe("Updated Block 1");
-      }
-    });
+    const result = findElementLocation(survey, "nonexistent");
 
-    test("should return error for non-existent block", () => {
-      const survey = createMockSurvey();
-      const result = updateBlock(survey, "non-existent", { name: "Updated" });
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("not found");
-      }
-    });
+    expect(result.blockId).toBe(null);
+    expect(result.blockIndex).toBe(-1);
+    expect(result.elementIndex).toBe(-1);
+    expect(result.block).toBe(null);
   });
 
-  describe("deleteBlock", () => {
-    test("should delete a block", () => {
-      const survey = createMockSurvey();
-      const result = deleteBlock(survey, "block-1");
+  test("should find element in the middle of multiple elements", () => {
+    const elements = [createMockElement("q1"), createMockElement("q2"), createMockElement("q3")];
+    const block = createMockBlock("block-1", "Block 1", elements);
+    const survey = createMockSurvey([block]);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks.length).toBe(1);
-        expect(result.data.blocks[0].id).toBe("block-2");
-      }
-    });
+    const result = findElementLocation(survey, "q2");
 
-    test("should return error for non-existent block", () => {
-      const survey = createMockSurvey();
-      const result = deleteBlock(survey, "non-existent");
+    expect(result.blockId).toBe("block-1");
+    expect(result.blockIndex).toBe(0);
+    expect(result.elementIndex).toBe(1);
+  });
+});
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("not found");
-      }
-    });
+describe("addBlock", () => {
+  test("should add a block to empty survey", () => {
+    const survey = createMockSurvey([]);
+    const result = addBlock(mockT, survey, { name: "New Block" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks).toHaveLength(1);
+      expect(result.data.blocks[0].name).toBe("New Block");
+      expect(result.data.blocks[0].elements).toEqual([]);
+    }
   });
 
-  describe("duplicateBlock", () => {
-    test("should duplicate a block with new IDs", () => {
-      const survey = createMockSurvey();
-      const result = duplicateBlock(survey, "block-1");
+  test("should append block to end by default", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = addBlock(mockT, survey, { name: "Block 2" });
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks.length).toBe(3);
-        const duplicated = result.data.blocks[1];
-        expect(duplicated.name).toBe("Block 1 (copy)");
-        expect(duplicated.id).not.toBe("block-1");
-        expect(duplicated.elements.length).toBe(2);
-        // Element IDs should be different
-        expect(duplicated.elements[0].id).not.toBe("elem-1");
-      }
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks).toHaveLength(2);
+      expect(result.data.blocks[1].name).toBe("Block 2");
+    }
+  });
+
+  test("should insert block at specific index", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1"),
+      createMockBlock("block-2", "Block 2"),
+    ]);
+    const result = addBlock(mockT, survey, { name: "Block 1.5" }, 1);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks).toHaveLength(3);
+      expect(result.data.blocks[1].name).toBe("Block 1.5");
+      expect(result.data.blocks[0].name).toBe("Block 1");
+      expect(result.data.blocks[2].name).toBe("Block 2");
+    }
+  });
+
+  test("should use default name if not provided", () => {
+    const survey = createMockSurvey([]);
+    const result = addBlock(mockT, survey, {});
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].name).toBe("environments.surveys.edit.untitled_block");
+    }
+  });
+
+  test("should return error for invalid index", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = addBlock(mockT, survey, { name: "Invalid" }, 10);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain("Invalid index");
+    }
+  });
+
+  test("should return error for negative index", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = addBlock(mockT, survey, { name: "Invalid" }, -1);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain("Invalid index");
+    }
+  });
+});
+
+describe("updateBlock", () => {
+  test("should update block name", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Old Name")]);
+    const result = updateBlock(survey, "block-1", { name: "New Name" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].name).toBe("New Name");
+    }
+  });
+
+  test("should update multiple block attributes", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = updateBlock(survey, "block-1", {
+      name: "Updated",
+      buttonLabel: { default: "Next" },
     });
 
-    test("should clear logic on duplicated block", () => {
-      const survey = createMockSurvey();
-      survey.blocks[0].logic = [
-        {
-          id: "logic-1",
-          conditions: { connector: "and", conditions: [] },
-          actions: [],
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].name).toBe("Updated");
+      expect(result.data.blocks[0].buttonLabel).toEqual({ default: "Next" });
+    }
+  });
+
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = updateBlock(survey, "nonexistent", { name: "Updated" });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
+  });
+
+  test("should return error when trying to update id", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = updateBlock(survey, "block-1", { id: "new-id" } as any);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toBe("Block ID cannot be updated");
+    }
+  });
+});
+
+describe("deleteBlock", () => {
+  test("should delete a block", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1"),
+      createMockBlock("block-2", "Block 2"),
+    ]);
+    const result = deleteBlock(survey, "block-1");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks).toHaveLength(1);
+      expect(result.data.blocks[0].id).toBe("block-2");
+    }
+  });
+
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = deleteBlock(survey, "nonexistent");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
+  });
+
+  test("should handle deleting from empty survey", () => {
+    const survey = createMockSurvey([]);
+    const result = deleteBlock(survey, "block-1");
+
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe("duplicateBlock", () => {
+  test("should duplicate a block with new IDs", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [createMockElement("q1"), createMockElement("q2")]),
+    ]);
+    const result = duplicateBlock(survey, "block-1");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks).toHaveLength(2);
+      expect(result.data.blocks[1].name).toBe("Block 1 (copy)");
+      expect(result.data.blocks[1].id).not.toBe("block-1");
+      expect(result.data.blocks[1].elements[0].id).not.toBe("q1");
+      expect(result.data.blocks[1].elements[1].id).not.toBe("q2");
+      expect(result.data.blocks[1].elements[0].isDraft).toBe(true);
+      expect(result.data.blocks[1].elements[1].isDraft).toBe(true);
+    }
+  });
+
+  test("should clear logic when duplicating", () => {
+    const blockWithLogic = createMockBlock("block-1", "Block 1", [createMockElement("q1")]);
+    blockWithLogic.logic = [
+      {
+        id: "logic-1",
+        conditions: {
+          id: "cond-1",
+          connector: "and",
+          conditions: [],
         },
-      ] as any;
+        actions: [],
+      },
+    ];
+    blockWithLogic.logicFallback = "block-2";
 
-      const result = duplicateBlock(survey, "block-1");
+    const survey = createMockSurvey([blockWithLogic]);
+    const result = duplicateBlock(survey, "block-1");
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[1].logic).toBeUndefined();
-      }
-    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[1].logic).toBeUndefined();
+      expect(result.data.blocks[1].logicFallback).toBeUndefined();
+    }
   });
 
-  describe("moveBlock", () => {
-    test("should move block down", () => {
-      const survey = createMockSurvey();
-      const result = moveBlock(survey, "block-1", "down");
+  test("should insert duplicate after original block", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1"),
+      createMockBlock("block-2", "Block 2"),
+      createMockBlock("block-3", "Block 3"),
+    ]);
+    const result = duplicateBlock(survey, "block-2");
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[0].id).toBe("block-2");
-        expect(result.data.blocks[1].id).toBe("block-1");
-      }
-    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks).toHaveLength(4);
+      expect(result.data.blocks[2].name).toBe("Block 2 (copy)");
+      expect(result.data.blocks[1].id).toBe("block-2");
+      expect(result.data.blocks[3].id).toBe("block-3");
+    }
+  });
 
-    test("should move block up", () => {
-      const survey = createMockSurvey();
-      const result = moveBlock(survey, "block-2", "up");
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = duplicateBlock(survey, "nonexistent");
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[0].id).toBe("block-2");
-        expect(result.data.blocks[1].id).toBe("block-1");
-      }
-    });
-
-    test("should return unchanged survey when moving first block up", () => {
-      const survey = createMockSurvey();
-      const result = moveBlock(survey, "block-1", "up");
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[0].id).toBe("block-1");
-      }
-    });
-
-    test("should return unchanged survey when moving last block down", () => {
-      const survey = createMockSurvey();
-      const result = moveBlock(survey, "block-2", "down");
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[1].id).toBe("block-2");
-      }
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
   });
 });
 
-describe("Element Operations", () => {
-  describe("addElementToBlock", () => {
-    test("should add element to block", () => {
-      const survey = createMockSurvey();
-      const newElement = {
-        id: "elem-new",
-        type: TSurveyElementTypeEnum.OpenText,
-        headline: { default: "New Question" },
-        required: false,
-        inputType: "text",
-      } as any;
+describe("moveBlock", () => {
+  test("should move block up", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1"),
+      createMockBlock("block-2", "Block 2"),
+      createMockBlock("block-3", "Block 3"),
+    ]);
+    const result = moveBlock(survey, "block-2", "up");
 
-      const result = addElementToBlock(survey, "block-1", newElement);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[0].elements.length).toBe(3);
-        expect(result.data.blocks[0].elements[2].id).toBe("elem-new");
-        expect(result.data.blocks[0].elements[2].isDraft).toBe(true);
-      }
-    });
-
-    test("should return error for duplicate element ID", () => {
-      const survey = createMockSurvey();
-      const duplicateElement = {
-        id: "elem-1", // Already exists
-        type: TSurveyElementTypeEnum.OpenText,
-        headline: { default: "Duplicate" },
-        required: false,
-        inputType: "text",
-      } as any;
-
-      const result = addElementToBlock(survey, "block-2", duplicateElement);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("already exists");
-      }
-    });
-
-    test("should return error for duplicate element ID within same block", () => {
-      const survey = createMockSurvey();
-      const duplicateElement = {
-        id: "elem-1", // Already exists in block-1
-        type: TSurveyElementTypeEnum.Rating,
-        headline: { default: "Duplicate in same block" },
-        required: false,
-        range: 5,
-        scale: "star",
-      } as any;
-
-      // Try to add to the same block where elem-1 already exists
-      const result = addElementToBlock(survey, "block-1", duplicateElement);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("already exists");
-      }
-    });
-
-    test("should return error for non-existent block", () => {
-      const survey = createMockSurvey();
-      const element = {
-        id: "elem-new",
-        type: TSurveyElementTypeEnum.OpenText,
-        headline: { default: "Question" },
-        required: false,
-        inputType: "text",
-      } as any;
-
-      const result = addElementToBlock(survey, "non-existent", element);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("not found");
-      }
-    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].id).toBe("block-2");
+      expect(result.data.blocks[1].id).toBe("block-1");
+      expect(result.data.blocks[2].id).toBe("block-3");
+    }
   });
 
-  describe("updateElementInBlock", () => {
-    test("should update element attributes", () => {
-      const survey = createMockSurvey();
-      const result = updateElementInBlock(survey, "block-1", "elem-1", {
-        headline: { default: "Updated Question" },
-      });
+  test("should move block down", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1"),
+      createMockBlock("block-2", "Block 2"),
+      createMockBlock("block-3", "Block 3"),
+    ]);
+    const result = moveBlock(survey, "block-2", "down");
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks![0].elements[0].headline.default).toBe("Updated Question");
-      }
-    });
-
-    test("should allow updating element ID to a unique ID", () => {
-      const survey = createMockSurvey();
-      const result = updateElementInBlock(survey, "block-1", "elem-1", {
-        id: "elem-new-id",
-      });
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks![0].elements[0].id).toBe("elem-new-id");
-      }
-    });
-
-    test("should return error when updating element ID to duplicate within same block", () => {
-      const survey = createMockSurvey();
-      const result = updateElementInBlock(survey, "block-1", "elem-1", {
-        id: "elem-2", // elem-2 already exists in block-1
-      });
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("already exists");
-      }
-    });
-
-    test("should return error when updating element ID to duplicate in another block", () => {
-      const survey = createMockSurvey();
-      const result = updateElementInBlock(survey, "block-1", "elem-1", {
-        id: "elem-3", // elem-3 exists in block-2
-      });
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("already exists");
-      }
-    });
-
-    test("should return error for non-existent element", () => {
-      const survey = createMockSurvey();
-      const result = updateElementInBlock(survey, "block-1", "non-existent", {
-        headline: { default: "Updated" },
-      });
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("not found");
-      }
-    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].id).toBe("block-1");
+      expect(result.data.blocks[1].id).toBe("block-3");
+      expect(result.data.blocks[2].id).toBe("block-2");
+    }
   });
 
-  describe("deleteElementFromBlock", () => {
-    test("should delete element from block", () => {
-      const survey = createMockSurvey();
-      const result = deleteElementFromBlock(survey, "block-1", "elem-2");
+  test("should not move first block up", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1"),
+      createMockBlock("block-2", "Block 2"),
+    ]);
+    const result = moveBlock(survey, "block-1", "up");
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[0].elements.length).toBe(1);
-        expect(result.data.blocks[0].elements[0].id).toBe("elem-1");
-      }
-    });
-
-    test("should return error for non-existent element", () => {
-      const survey = createMockSurvey();
-      const result = deleteElementFromBlock(survey, "block-1", "non-existent");
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("not found");
-      }
-    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].id).toBe("block-1");
+      expect(result.data.blocks[1].id).toBe("block-2");
+    }
   });
 
-  describe("duplicateElementInBlock", () => {
-    test("should duplicate element with new ID", () => {
-      const survey = createMockSurvey();
-      const result = duplicateElementInBlock(survey, "block-1", "elem-1");
+  test("should not move last block down", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1"),
+      createMockBlock("block-2", "Block 2"),
+    ]);
+    const result = moveBlock(survey, "block-2", "down");
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[0].elements.length).toBe(3);
-        const duplicated = result.data.blocks![0].elements[1];
-        expect(duplicated.id).not.toBe("elem-1");
-        expect(duplicated.isDraft).toBe(true);
-        expect(duplicated.headline.default).toBe("Question 1");
-      }
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].id).toBe("block-1");
+      expect(result.data.blocks[1].id).toBe("block-2");
+    }
+  });
+
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = moveBlock(survey, "nonexistent", "up");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
+  });
+});
+
+describe("addElementToBlock", () => {
+  test("should add element to block", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const element = createMockElement("q1");
+    const result = addElementToBlock(survey, "block-1", element);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements).toHaveLength(1);
+      expect(result.data.blocks[0].elements[0].id).toBe("q1");
+      expect(result.data.blocks[0].elements[0].isDraft).toBe(true);
+    }
+  });
+
+  test("should append element to end by default", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [createMockElement("q1"), createMockElement("q2")]),
+    ]);
+    const element = createMockElement("q3");
+    const result = addElementToBlock(survey, "block-1", element);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements).toHaveLength(3);
+      expect(result.data.blocks[0].elements[2].id).toBe("q3");
+    }
+  });
+
+  test("should insert element at specific index", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [createMockElement("q1"), createMockElement("q2")]),
+    ]);
+    const element = createMockElement("q1.5");
+    const result = addElementToBlock(survey, "block-1", element, 1);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements).toHaveLength(3);
+      expect(result.data.blocks[0].elements[1].id).toBe("q1.5");
+      expect(result.data.blocks[0].elements[0].id).toBe("q1");
+      expect(result.data.blocks[0].elements[2].id).toBe("q2");
+    }
+  });
+
+  test("should return error for duplicate element ID", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [createMockElement("q1")]),
+      createMockBlock("block-2", "Block 2", [createMockElement("q2")]),
+    ]);
+    const element = createMockElement("q1");
+    const result = addElementToBlock(survey, "block-2", element);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Element ID "q1" already exists');
+    }
+  });
+
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const element = createMockElement("q1");
+    const result = addElementToBlock(survey, "nonexistent", element);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
+  });
+
+  test("should return error for invalid index", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const element = createMockElement("q2");
+    const result = addElementToBlock(survey, "block-1", element, 10);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain("Invalid index");
+    }
+  });
+});
+
+describe("updateElementInBlock", () => {
+  test("should update element headline", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = updateElementInBlock(survey, "block-1", "q1", {
+      headline: { default: "Updated Question" },
     });
 
-    test("should return error for non-existent element", () => {
-      const survey = createMockSurvey();
-      const result = duplicateElementInBlock(survey, "block-1", "non-existent");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements[0].headline).toEqual({ default: "Updated Question" });
+    }
+  });
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain("not found");
-      }
+  test("should update element ID if new ID is unique", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = updateElementInBlock(survey, "block-1", "q1", { id: "q2" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements[0].id).toBe("q2");
+    }
+  });
+
+  test("should return error when updating to duplicate element ID", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [createMockElement("q1"), createMockElement("q2")]),
+    ]);
+    const result = updateElementInBlock(survey, "block-1", "q1", { id: "q2" });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Element ID "q2" already exists');
+    }
+  });
+
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = updateElementInBlock(survey, "nonexistent", "q1", {
+      headline: { default: "Updated" },
     });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
+  });
+
+  test("should return error when element not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = updateElementInBlock(survey, "block-1", "nonexistent", {
+      headline: { default: "Updated" },
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Element with ID "nonexistent" not found');
+    }
+  });
+});
+
+describe("deleteElementFromBlock", () => {
+  test("should delete element from block", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [createMockElement("q1"), createMockElement("q2")]),
+    ]);
+    const result = deleteElementFromBlock(survey, "block-1", "q1");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements).toHaveLength(1);
+      expect(result.data.blocks[0].elements[0].id).toBe("q2");
+    }
+  });
+
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = deleteElementFromBlock(survey, "nonexistent", "q1");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
+  });
+
+  test("should return error when element not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = deleteElementFromBlock(survey, "block-1", "nonexistent");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Element with ID "nonexistent" not found');
+    }
+  });
+});
+
+describe("duplicateElementInBlock", () => {
+  test("should duplicate element with new ID", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = duplicateElementInBlock(survey, "block-1", "q1");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements).toHaveLength(2);
+      expect(result.data.blocks[0].elements[1].id).not.toBe("q1");
+      expect(result.data.blocks[0].elements[1].isDraft).toBe(true);
+      expect(result.data.blocks[0].elements[1].headline).toEqual({ default: "Test Question" });
+    }
+  });
+
+  test("should insert duplicate after original element", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [
+        createMockElement("q1"),
+        createMockElement("q2"),
+        createMockElement("q3"),
+      ]),
+    ]);
+    const result = duplicateElementInBlock(survey, "block-1", "q2");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements).toHaveLength(4);
+      expect(result.data.blocks[0].elements[1].id).toBe("q2");
+      expect(result.data.blocks[0].elements[2].id).not.toBe("q2");
+      expect(result.data.blocks[0].elements[3].id).toBe("q3");
+    }
+  });
+
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = duplicateElementInBlock(survey, "nonexistent", "q1");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
+  });
+
+  test("should return error when element not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = duplicateElementInBlock(survey, "block-1", "nonexistent");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Element with ID "nonexistent" not found');
+    }
+  });
+});
+
+describe("moveElementInBlock", () => {
+  test("should move element up", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [
+        createMockElement("q1"),
+        createMockElement("q2"),
+        createMockElement("q3"),
+      ]),
+    ]);
+    const result = moveElementInBlock(survey, "block-1", "q2", "up");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements[0].id).toBe("q2");
+      expect(result.data.blocks[0].elements[1].id).toBe("q1");
+      expect(result.data.blocks[0].elements[2].id).toBe("q3");
+    }
+  });
+
+  test("should move element down", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [
+        createMockElement("q1"),
+        createMockElement("q2"),
+        createMockElement("q3"),
+      ]),
+    ]);
+    const result = moveElementInBlock(survey, "block-1", "q2", "down");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements[0].id).toBe("q1");
+      expect(result.data.blocks[0].elements[1].id).toBe("q3");
+      expect(result.data.blocks[0].elements[2].id).toBe("q2");
+    }
+  });
+
+  test("should not move first element up", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [createMockElement("q1"), createMockElement("q2")]),
+    ]);
+    const result = moveElementInBlock(survey, "block-1", "q1", "up");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements[0].id).toBe("q1");
+      expect(result.data.blocks[0].elements[1].id).toBe("q2");
+    }
+  });
+
+  test("should not move last element down", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1", [createMockElement("q1"), createMockElement("q2")]),
+    ]);
+    const result = moveElementInBlock(survey, "block-1", "q2", "down");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements[0].id).toBe("q1");
+      expect(result.data.blocks[0].elements[1].id).toBe("q2");
+    }
+  });
+
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = moveElementInBlock(survey, "nonexistent", "q1", "up");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
+  });
+
+  test("should return error when element not found", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = moveElementInBlock(survey, "block-1", "nonexistent", "up");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('Element with ID "nonexistent" not found');
+    }
   });
 });
