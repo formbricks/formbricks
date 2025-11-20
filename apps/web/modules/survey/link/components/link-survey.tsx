@@ -12,7 +12,7 @@ import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getPrefillValue } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
-let setQuestionId = (_: string) => {};
+let setBlockId = (_: string) => {};
 let setResponseData = (_: TResponseData) => {};
 
 interface LinkSurveyProps {
@@ -158,7 +158,11 @@ export const LinkSurvey = ({
   };
 
   const handleResetSurvey = () => {
-    setQuestionId(survey.welcomeCard.enabled ? "start" : questions[0].id);
+    if (survey.welcomeCard.enabled) {
+      setBlockId("start");
+    } else if (survey.blocks[0]) {
+      setBlockId(survey.blocks[0].id);
+    }
     setResponseData({});
   };
 
@@ -191,8 +195,8 @@ export const LinkSurvey = ({
         prefillResponseData={prefillValue}
         skipPrefilled={skipPrefilled}
         responseCount={responseCount}
-        getSetQuestionId={(f: (value: string) => void) => {
-          setQuestionId = f;
+        getSetBlockId={(f: (value: string) => void) => {
+          setBlockId = f;
         }}
         getSetResponseData={(f: (value: TResponseData) => void) => {
           setResponseData = f;

@@ -12,7 +12,6 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 interface BlockConditionalProps {
-  // survey: TJsEnvironmentStateSurvey;
   block: TSurveyBlock;
   value: TResponseData;
   onChange: (responseData: TResponseData) => void;
@@ -36,7 +35,6 @@ interface BlockConditionalProps {
 }
 
 export function BlockConditional({
-  // survey,
   block,
   value,
   onChange,
