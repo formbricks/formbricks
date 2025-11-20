@@ -105,7 +105,7 @@ const starRatingSurvey = (t: TFunction): TXMTemplate => {
                   id: createId(),
                   leftOperand: {
                     value: reusableElementIds[0],
-                    type: "question",
+                    type: "element",
                   },
                   operator: "isLessThanOrEqual",
                   rightOperand: {
@@ -195,7 +195,7 @@ const csatSurvey = (t: TFunction): TXMTemplate => {
                   id: createId(),
                   leftOperand: {
                     value: reusableElementIds[0],
-                    type: "question",
+                    type: "element",
                   },
                   operator: "isLessThanOrEqual",
                   rightOperand: {
@@ -316,7 +316,7 @@ const smileysRatingSurvey = (t: TFunction): TXMTemplate => {
                   id: createId(),
                   leftOperand: {
                     value: reusableElementIds[0],
-                    type: "question",
+                    type: "element",
                   },
                   operator: "isLessThanOrEqual",
                   rightOperand: {

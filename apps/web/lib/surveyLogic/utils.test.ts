@@ -448,7 +448,7 @@ describe("surveyLogic", () => {
         mockSurvey,
         {},
         vars,
-        group({ ...baseCond("equals", "foo"), leftOperand: { type: "question", value: "notfound" } }),
+        group({ ...baseCond("equals", "foo"), leftOperand: { type: "element", value: "notfound" } }),
         "en"
       )
     ).toBe(false);
@@ -854,7 +854,7 @@ describe("surveyLogic", () => {
     // Test number question
     const numberCondition: TSingleCondition = {
       id: "numCond",
-      leftOperand: { type: "question", value: "numQuestion" },
+      leftOperand: { type: "element", value: "numQuestion" },
       operator: "equals",
       rightOperand: { type: "static", value: 42 },
     };
@@ -871,7 +871,7 @@ describe("surveyLogic", () => {
     // Test MC single with recognized choice
     const mcSingleCondition: TSingleCondition = {
       id: "mcCond",
-      leftOperand: { type: "question", value: "mcSingle" },
+      leftOperand: { type: "element", value: "mcSingle" },
       operator: "equals",
       rightOperand: { type: "static", value: "choice1" },
     };
@@ -888,7 +888,7 @@ describe("surveyLogic", () => {
     // Test MC multi
     const mcMultiCondition: TSingleCondition = {
       id: "mcMultiCond",
-      leftOperand: { type: "question", value: "mcMulti" },
+      leftOperand: { type: "element", value: "mcMulti" },
       operator: "includesOneOf",
       rightOperand: { type: "static", value: ["choice1"] },
     };
@@ -905,7 +905,7 @@ describe("surveyLogic", () => {
     // Test matrix question
     const matrixCondition: TSingleCondition = {
       id: "matrixCond",
-      leftOperand: { type: "question", value: "matrixQ", meta: { row: "0" } },
+      leftOperand: { type: "element", value: "matrixQ", meta: { row: "0" } },
       operator: "equals",
       rightOperand: { type: "static", value: "0" },
     };
@@ -939,7 +939,7 @@ describe("surveyLogic", () => {
     // Test with missing question
     const missingQuestionCondition: TSingleCondition = {
       id: "missingCond",
-      leftOperand: { type: "question", value: "nonExistent" },
+      leftOperand: { type: "element", value: "nonExistent" },
       operator: "equals",
       rightOperand: { type: "static", value: "foo" },
     };
@@ -973,7 +973,7 @@ describe("surveyLogic", () => {
     // Test MC single with "other" option
     const otherCondition: TSingleCondition = {
       id: "otherCond",
-      leftOperand: { type: "question", value: "mcSingle" },
+      leftOperand: { type: "element", value: "mcSingle" },
       operator: "equals",
       rightOperand: { type: "static", value: "Unknown option" },
     };
@@ -990,7 +990,7 @@ describe("surveyLogic", () => {
     // Test matrix with invalid row index
     const invalidMatrixCondition: TSingleCondition = {
       id: "invalidMatrixCond",
-      leftOperand: { type: "question", value: "matrixQ", meta: { row: "999" } },
+      leftOperand: { type: "element", value: "matrixQ", meta: { row: "999" } },
       operator: "equals",
       rightOperand: { type: "static", value: "0" },
     };
@@ -1049,7 +1049,7 @@ describe("surveyLogic", () => {
       id: "questionCond",
       leftOperand: { type: "hiddenField", value: "f" },
       operator: "equals",
-      rightOperand: { type: "question", value: "question1" },
+      rightOperand: { type: "element", value: "question1" },
     };
 
     const variableCondition: TSingleCondition = {
@@ -1150,7 +1150,7 @@ describe("surveyLogic", () => {
       objective: "calculate",
       variableId: "numVar",
       operator: "add",
-      value: { type: "question", value: "questionNum" },
+      value: { type: "element", value: "questionNum" },
     };
 
     // Test with hidden field value
@@ -1168,7 +1168,7 @@ describe("surveyLogic", () => {
       objective: "calculate",
       variableId: "textVar",
       operator: "concat",
-      value: { type: "question", value: "questionText" },
+      value: { type: "element", value: "questionText" },
     };
 
     // Test with missing variable
@@ -1186,7 +1186,7 @@ describe("surveyLogic", () => {
       objective: "calculate",
       variableId: "numVar",
       operator: "add",
-      value: { type: "question", value: "nonExistentQuestion" },
+      value: { type: "element", value: "nonExistentQuestion" },
     };
 
     // Test with other math operations
@@ -1348,7 +1348,7 @@ describe("surveyLogic", () => {
 
     const condition: TSingleCondition = {
       id: "numCond",
-      leftOperand: { type: "question", value: "numQuestion" },
+      leftOperand: { type: "element", value: "numQuestion" },
       operator: "equals",
       rightOperand: { type: "static", value: 0 },
     };

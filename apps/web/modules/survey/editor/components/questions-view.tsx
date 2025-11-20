@@ -140,7 +140,7 @@ export const QuestionsView = ({
         updatedCondition.leftOperand = { ...condition.leftOperand, value: updatedId };
       }
 
-      if (condition.rightOperand?.type === "question" && condition.rightOperand?.value === compareId) {
+      if (condition.rightOperand?.type === "element" && condition.rightOperand?.value === compareId) {
         updatedCondition.rightOperand = { ...condition.rightOperand, value: updatedId };
       }
 

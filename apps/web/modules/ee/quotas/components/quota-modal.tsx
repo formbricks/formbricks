@@ -94,7 +94,7 @@ export const QuotaModal = ({
         conditions: [
           {
             id: createId(),
-            leftOperand: { type: "question", value: firstQuestion?.id },
+            leftOperand: { type: "element", value: firstQuestion?.id },
             operator: firstQuestion ? getDefaultOperatorForElement(firstQuestion, t) : "equals",
           },
         ],

@@ -57,9 +57,9 @@ export const ZConnector = z.enum(["and", "or"]);
 export type TConnector = z.infer<typeof ZConnector>;
 
 // Dynamic field types for conditions
-const ZDynamicQuestion = z.object({
-  type: z.literal("question"),
-  value: z.string().min(1, "Conditional Logic: Question id cannot be empty"),
+const ZDynamicElement = z.object({
+  type: z.literal("element"),
+  value: z.string().min(1, "Conditional Logic: Element id cannot be empty"),
   meta: z.record(z.string()).optional(),
 });
 
@@ -76,7 +76,7 @@ const ZDynamicHiddenField = z.object({
   value: z.string().min(1, "Conditional Logic: Hidden field id cannot be empty"),
 });
 
-export const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDynamicHiddenField], {
+export const ZDynamicLogicFieldValue = z.union([ZDynamicElement, ZDynamicVariable, ZDynamicHiddenField], {
   message: "Conditional Logic: Invalid dynamic field value",
 });
 
