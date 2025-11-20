@@ -317,9 +317,7 @@ const ZValidateSurveyImportAction = z.object({
 
 export const validateSurveyImportAction = authenticatedActionClient
   .schema(ZValidateSurveyImportAction)
-  .action(async ({ parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-
+  .action(async ({ ctx, parsedInput }) => {
     // Step 1: Parse and validate payload structure
     const parseResult = parseSurveyPayload(parsedInput.surveyData);
     if ("error" in parseResult) {
@@ -334,11 +332,29 @@ export const validateSurveyImportAction = authenticatedActionClient
 
     const { surveyInput, exportedLanguages, triggers } = parseResult;
 
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId,
+        },
+      ],
+    });
+
     // Trigger validation is now handled by Zod schema validation
 
     const languageCodes = exportedLanguages.map((l) => l.code).filter(Boolean);
     if (languageCodes.length > 0) {
-      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
       const project = await getProject(projectId);
       const existingLanguageCodes = project?.languages.map((l) => l.code) || [];
 
@@ -451,7 +467,6 @@ export const importSurveyAction = authenticatedActionClient
 
       return result;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      throw new Error(errorMessage);
+      throw error;
     }
   });

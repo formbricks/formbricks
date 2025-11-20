@@ -1,6 +1,5 @@
 "use client";
 
-import { createId } from "@paralleldrive/cuid2";
 import { ArrowUpFromLineIcon, CheckIcon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -18,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
@@ -38,7 +36,6 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
   const [validationInfos, setValidationInfos] = useState<string[]>([]);
   const [newName, setNewName] = useState("");
-  const [newId, setNewId] = useState("");
   const [isValid, setIsValid] = useState(false);
 
   const resetState = () => {
@@ -48,7 +45,6 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
     setValidationWarnings([]);
     setValidationInfos([]);
     setNewName("");
-    setNewId("");
     setIsLoading(false);
     setIsValid(false);
   };
@@ -92,7 +88,6 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
 
           if (result.data.valid) {
             setNewName(result.data.surveyName + " (imported)");
-            setNewId(createId());
           }
         } else if (result?.serverError) {
           setValidationErrors([result.serverError]);
@@ -137,6 +132,10 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
   };
 
   const handleImport = async () => {
+    if (!surveyData) {
+      toast.error(t("environments.surveys.import_survey_error"));
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await importSurveyAction({
@@ -166,6 +165,68 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
     }
   };
 
+  const renderUploadSection = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <LoadingSpinner />
+        </div>
+      );
+    }
+
+    if (!fileName) {
+      return (
+        <label
+          htmlFor="import-file"
+          className={cn(
+            "relative flex cursor-pointer flex-col items-center justify-center rounded-lg hover:bg-slate-100"
+          )}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}>
+          <div className="flex flex-col items-center justify-center pb-6 pt-5">
+            <ArrowUpFromLineIcon className="h-6 text-slate-500" />
+            <p className="mt-2 text-center text-sm text-slate-500">
+              <span className="font-semibold">{t("common.upload_input_description")}</span>
+            </p>
+            <p className="text-xs text-slate-400">.json files only</p>
+            <Input
+              id="import-file"
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+        </label>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center gap-4 py-4">
+        <div className="flex items-center gap-2">
+          <CheckIcon className="h-5 w-5 text-green-600" />
+          <span className="text-sm font-medium text-slate-700">{fileName}</span>
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            resetState();
+            document.getElementById("import-file-retry")?.click();
+          }}>
+          {t("environments.contacts.upload_contacts_modal_pick_different_file")}
+        </Button>
+        <Input
+          id="import-file-retry"
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -177,57 +238,7 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
         <div className="py-4">
           <div className="flex flex-col gap-4">
             <div className="rounded-md border-2 border-dashed border-slate-300 bg-slate-50 p-4">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <LoadingSpinner />
-                </div>
-              ) : !fileName ? (
-                <label
-                  htmlFor="import-file"
-                  className={cn(
-                    "relative flex cursor-pointer flex-col items-center justify-center rounded-lg hover:bg-slate-100"
-                  )}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}>
-                  <div className="flex flex-col items-center justify-center pb-6 pt-5">
-                    <ArrowUpFromLineIcon className="h-6 text-slate-500" />
-                    <p className="mt-2 text-center text-sm text-slate-500">
-                      <span className="font-semibold">{t("common.upload_input_description")}</span>
-                    </p>
-                    <p className="text-xs text-slate-400">.json files only</p>
-                    <Input
-                      id="import-file"
-                      type="file"
-                      accept=".json"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                  </div>
-                </label>
-              ) : (
-                <div className="flex flex-col items-center gap-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <CheckIcon className="h-5 w-5 text-green-600" />
-                    <span className="text-sm font-medium text-slate-700">{fileName}</span>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      resetState();
-                      document.getElementById("import-file-retry")?.click();
-                    }}>
-                    {t("environments.contacts.upload_contacts_modal_pick_different_file")}
-                  </Button>
-                  <Input
-                    id="import-file-retry"
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                </div>
-              )}
+              {renderUploadSection()}
             </div>
 
             {validationErrors.length > 0 && (
@@ -268,17 +279,10 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
               </Alert>
             )}
             {isValid && fileName && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="survey-name">{t("environments.surveys.import_survey_name_label")}</Label>
-                  <Input id="survey-name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t("environments.surveys.import_survey_new_id")}</Label>
-                  <IdBadge id={newId} />
-                </div>
-              </>
+              <div className="space-y-2">
+                <Label htmlFor="survey-name">{t("environments.surveys.import_survey_name_label")}</Label>
+                <Input id="survey-name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+              </div>
             )}
           </div>
         </div>
