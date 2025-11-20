@@ -121,8 +121,8 @@ export const generateQuestionAndFilterOptions = (
       } else if (q.type === TSurveyQuestionTypeEnum.Matrix) {
         questionFilterOptions.push({
           type: q.type,
-          filterOptions: q.rows.flatMap((row) => Object.values(row)),
-          filterComboBoxOptions: q.columns.flatMap((column) => Object.values(column)),
+          filterOptions: q.rows.map((row) => getLocalizedValue(row.label, "default")),
+          filterComboBoxOptions: q.columns.map((column) => getLocalizedValue(column.label, "default")),
           id: q.id,
         });
       } else {
