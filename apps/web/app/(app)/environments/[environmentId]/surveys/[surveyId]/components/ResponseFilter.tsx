@@ -13,6 +13,7 @@ import {
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import {
@@ -69,6 +70,12 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [filterValue, setFilterValue] = useState<SelectedFilterValue>(selectedFilter);
 
+  const getDefaultFilterValue = (option?: QuestionFilterOptions): string | undefined => {
+    if (!option || option.filterOptions.length === 0) return undefined;
+    const firstOption = option.filterOptions[0];
+    return typeof firstOption === "object" ? getLocalizedValue(firstOption, "default") : firstOption;
+  };
+
   useEffect(() => {
     // Fetch the initial data for the filter and load it into the state
     const handleInitialData = async () => {
@@ -94,15 +101,18 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   }, [isOpen, setSelectedOptions, survey]);
 
   const handleOnChangeQuestionComboBoxValue = (value: QuestionOption, index: number) => {
+    const matchingFilterOption = selectedOptions.questionFilterOptions.find(
+      (q) => q.type === value.type || q.type === value.questionType
+    );
+    const defaultFilterValue = getDefaultFilterValue(matchingFilterOption);
+
     if (filterValue.filter[index].questionType) {
       // Create a new array and copy existing values from SelectedFilter
       filterValue.filter[index] = {
         questionType: value,
         filterType: {
           filterComboBoxValue: undefined,
-          filterValue: selectedOptions.questionFilterOptions.find(
-            (q) => q.type === value.type || q.type === value.questionType
-          )?.filterOptions[0],
+          filterValue: defaultFilterValue,
         },
       };
       setFilterValue({ filter: [...filterValue.filter], responseStatus: filterValue.responseStatus });
@@ -111,9 +121,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
       filterValue.filter[index].questionType = value;
       filterValue.filter[index].filterType = {
         filterComboBoxValue: undefined,
-        filterValue: selectedOptions.questionFilterOptions.find(
-          (q) => q.type === value.type || q.type === value.questionType
-        )?.filterOptions[0],
+        filterValue: defaultFilterValue,
       };
       setFilterValue({ ...filterValue });
     }
