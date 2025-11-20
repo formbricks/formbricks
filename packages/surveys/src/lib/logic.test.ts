@@ -956,7 +956,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "isClicked",
-            leftOperand: { type: "question", value: "ctaQuestion" },
+            leftOperand: { type: "element", value: "ctaQuestion" },
           },
         ],
       };
@@ -980,7 +980,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "isNotClicked",
-            leftOperand: { type: "question", value: "ctaQuestion" },
+            leftOperand: { type: "element", value: "ctaQuestion" },
           },
         ],
       };
