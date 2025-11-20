@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
@@ -56,7 +55,7 @@ const previewParentContainerVariant: Variants = {
   },
 };
 
-let setQuestionId = (_: string) => {};
+let setBlockId = (_: string) => {};
 
 export const PreviewSurvey = ({
   questionId,
@@ -77,8 +76,6 @@ export const PreviewSurvey = ({
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink, setShrink] = useState(false);
   const { projectOverwrites } = survey || {};
-
-  const questions = useMemo(() => getElementsFromBlocks(survey.blocks), [survey.blocks]);
 
   const previewScreenVariants: Variants = {
     expanded: {
@@ -153,9 +150,27 @@ export const PreviewSurvey = ({
       )
         return;
       if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;
-      setQuestionId(newQuestionId);
+
+      if (newQuestionId === "start") {
+        setBlockId("start");
+        return;
+      }
+
+      // Convert questionId to blockId and set it directly
+      const block = survey.blocks.find((b) => b.elements.some((e) => e.id === newQuestionId));
+      if (block) {
+        setBlockId(block.id);
+        return;
+      }
+
+      // check the endings
+      const ending = survey.endings.find((e) => e.id === newQuestionId);
+      if (ending) {
+        setBlockId(ending.id);
+        return;
+      }
     },
-    [survey.welcomeCard.enabled]
+    [survey.welcomeCard.enabled, survey.blocks, survey.endings]
   );
 
   useEffect(() => {
@@ -169,7 +184,9 @@ export const PreviewSurvey = ({
     if (survey.type === "app" && survey.endings.length === 0) {
       setIsModalOpen(false);
       setTimeout(() => {
-        setQuestionId(questions[0]?.id);
+        if (survey.blocks[0]) {
+          setBlockId(survey.blocks[0].id);
+        }
         setIsModalOpen(true);
       }, 500);
     }
@@ -191,7 +208,11 @@ export const PreviewSurvey = ({
       setPreviewMode(storePreviewMode);
     }, 10);
 
-    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    if (survey.welcomeCard.enabled) {
+      setBlockId("start");
+    } else if (survey.blocks[0]) {
+      setBlockId(survey.blocks[0].id);
+    }
   };
 
   useEffect(() => {
@@ -224,7 +245,7 @@ export const PreviewSurvey = ({
     setPreviewMode(mode);
     requestAnimationFrame(() => {
       if (questionId) {
-        setQuestionId(questionId);
+        updateQuestionId(questionId);
       }
     });
   };
@@ -277,8 +298,8 @@ export const PreviewSurvey = ({
                     styling={styling}
                     isCardBorderVisible={!styling.highlightBorderColor?.light}
                     onClose={handlePreviewModalClose}
-                    getSetQuestionId={(f: (value: string) => void) => {
-                      setQuestionId = f;
+                    getSetBlockId={(f: (value: string) => void) => {
+                      setBlockId = f;
                     }}
                     onFinished={onFinished}
                     isSpamProtectionEnabled={isSpamProtectionEnabled}
@@ -299,8 +320,8 @@ export const PreviewSurvey = ({
                       languageCode={languageCode}
                       responseCount={42}
                       styling={styling}
-                      getSetQuestionId={(f: (value: string) => void) => {
-                        setQuestionId = f;
+                      getSetBlockId={(f: (value: string) => void) => {
+                        setBlockId = f;
                       }}
                       isSpamProtectionEnabled={isSpamProtectionEnabled}
                     />
@@ -381,8 +402,8 @@ export const PreviewSurvey = ({
                   styling={styling}
                   isCardBorderVisible={!styling.highlightBorderColor?.light}
                   onClose={handlePreviewModalClose}
-                  getSetQuestionId={(f: (value: string) => void) => {
-                    setQuestionId = f;
+                  getSetBlockId={(f: (value: string) => void) => {
+                    setBlockId = f;
                   }}
                   onFinished={onFinished}
                   isSpamProtectionEnabled={isSpamProtectionEnabled}
@@ -408,8 +429,8 @@ export const PreviewSurvey = ({
                     languageCode={languageCode}
                     responseCount={42}
                     styling={styling}
-                    getSetQuestionId={(f: (value: string) => void) => {
-                      setQuestionId = f;
+                    getSetBlockId={(f: (value: string) => void) => {
+                      setBlockId = f;
                     }}
                     isSpamProtectionEnabled={isSpamProtectionEnabled}
                   />

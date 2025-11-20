@@ -1,48 +1,41 @@
 import { useCallback, useMemo } from "preact/hooks";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { Progress } from "@/components/general/progress";
-import { calculateElementIdx, getElementsFromSurvey } from "@/lib/utils";
 
 interface ProgressBarProps {
   survey: TJsEnvironmentStateSurvey;
-  questionId: string;
+  blockId: string;
 }
 
-export function ProgressBar({ survey, questionId }: ProgressBarProps) {
-  const questions = useMemo(() => getElementsFromSurvey(survey), [survey]);
-  const currentQuestionIdx = useMemo(
-    () => questions.findIndex((q) => q.id === questionId),
-    [questions, questionId]
+export function ProgressBar({ survey, blockId }: ProgressBarProps) {
+  const currentBlockIdx = useMemo(
+    () => survey.blocks.findIndex((b) => b.id === blockId),
+    [survey.blocks, blockId]
   );
 
   const endingCardIds = useMemo(() => survey.endings.map((ending) => ending.id), [survey.endings]);
 
   const calculateProgress = useCallback(
-    (index: number) => {
+    (blockIndex: number) => {
       let totalCards = survey.blocks.length;
       if (endingCardIds.length > 0) totalCards += 1;
-      let idx = index;
 
-      if (index === -1) idx = 0;
+      if (blockIndex === -1) return 0; // Welcome card
 
-      const elementIdx = calculateElementIdx(survey, idx, totalCards);
-      return elementIdx / totalCards;
+      // Progress is simply block position / total blocks
+      return (blockIndex + 1) / totalCards;
     },
-    [survey, endingCardIds.length]
+    [survey.blocks.length, endingCardIds.length]
   );
 
-  const progressArray = useMemo(() => {
-    return questions.map((_, index) => calculateProgress(index));
-  }, [calculateProgress, questions]);
-
   const progressValue = useMemo(() => {
-    if (questionId === "start") {
+    if (blockId === "start") {
       return 0;
-    } else if (endingCardIds.includes(questionId)) {
+    } else if (endingCardIds.includes(blockId)) {
       return 1;
     }
-    return progressArray[currentQuestionIdx];
-  }, [questionId, endingCardIds, progressArray, currentQuestionIdx]);
+    return calculateProgress(currentBlockIdx);
+  }, [blockId, endingCardIds, calculateProgress, currentBlockIdx]);
 
   return <Progress progress={progressValue} />;
 }

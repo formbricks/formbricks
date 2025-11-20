@@ -19,8 +19,9 @@ import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { findBlocksWithCyclicLogic } from "@formbricks/types/surveys/blocks-validation";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -30,17 +31,20 @@ import { checkForEmptyFallBackValue, extractRecallInfo } from "@/lib/utils/recal
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
 import { AddQuestionButton } from "@/modules/survey/editor/components/add-question-button";
+import { BlocksDroppable } from "@/modules/survey/editor/components/blocks-droppable";
 import { EditEndingCard } from "@/modules/survey/editor/components/edit-ending-card";
 import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
 import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
-import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
 import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
 import {
   addBlock,
+  addElementToBlock,
   deleteBlock,
-  duplicateBlock,
+  deleteElementFromBlock,
+  duplicateBlock as duplicateBlockHelper,
   findElementLocation,
-  moveBlock,
+  moveBlock as moveBlockHelper,
+  moveElementInBlock,
   updateElementInBlock,
 } from "@/modules/survey/editor/lib/blocks";
 import { findQuestionUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
@@ -48,15 +52,15 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
-  validateQuestion,
-  validateSurveyQuestionsInBatch,
+  validateElement,
+  validateSurveyElementsInBatch,
 } from "../lib/validation";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
-  activeQuestionId: TSurveyQuestionId | null;
-  setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
+  activeQuestionId: string | null;
+  setActiveQuestionId: (questionId: string | null) => void;
   project: Project;
   projectLanguages: Language[];
   invalidQuestions: string[] | null;
@@ -229,35 +233,32 @@ export const QuestionsView = ({
     }
   }, [localSurvey.welcomeCard, localSurvey.endings, surveyLanguages, invalidQuestions, setInvalidQuestions]);
 
-  // function to validate individual questions
-  const validateSurveyQuestion = (question: TSurveyQuestion) => {
+  // function to validate individual elements
+  const validateSurveyElement = (element: TSurveyElement) => {
     // prevent this function to execute further if user hasnt still tried to save the survey
     if (invalidQuestions === null) {
       return;
     }
 
-    const firstElement = localSurvey.blocks?.[0]?.elements[0];
-    const isFirstQuestion = firstElement ? question.id === firstElement.id : false;
-
-    if (validateQuestion(question as unknown as TSurveyQuestion, surveyLanguages, isFirstQuestion)) {
+    if (validateElement(element, surveyLanguages)) {
       const blocksWithCyclicLogic = findBlocksWithCyclicLogic(localSurvey.blocks);
 
       for (const blockId of blocksWithCyclicLogic) {
         const block = localSurvey.blocks.find((b) => b.id === blockId);
         if (block) {
-          const questionId = getQuestionIdFromBlockId(block);
-          if (questionId === question.id) {
-            setInvalidQuestions([...invalidQuestions, question.id]);
+          const elementId = getQuestionIdFromBlockId(block);
+          if (elementId === element.id) {
+            setInvalidQuestions([...invalidQuestions, element.id]);
             return;
           }
         }
       }
 
-      setInvalidQuestions(invalidQuestions.filter((id) => id !== question.id));
+      setInvalidQuestions(invalidQuestions.filter((id) => id !== element.id));
       return;
     }
 
-    setInvalidQuestions([...invalidQuestions, question.id]);
+    setInvalidQuestions([...invalidQuestions, element.id]);
     return;
   };
 
@@ -337,12 +338,12 @@ export const QuestionsView = ({
 
       updatedSurvey = result.data;
 
-      // Validate the updated question
-      const updatedQuestion = updatedSurvey.blocks
+      // Validate the updated element
+      const updatedElement = updatedSurvey.blocks
         ?.flatMap((b) => b.elements)
         .find((q) => q.id === (cleanedAttributes.id ?? question.id));
-      if (updatedQuestion) {
-        validateSurveyQuestion(updatedQuestion as unknown as TSurveyQuestion);
+      if (updatedElement) {
+        validateSurveyElement(updatedElement);
       }
     }
 
@@ -466,22 +467,36 @@ export const QuestionsView = ({
       }),
     }));
 
-    // Find and delete the block containing this question
-    const { blockId } = findElementLocation(localSurvey, questionId);
-    if (!blockId) return;
+    // Find the block containing this question
+    const { blockId, blockIndex } = findElementLocation(localSurvey, questionId);
+    if (!blockId || blockIndex === -1) return;
 
-    const result = deleteBlock(updatedSurvey, blockId);
-    if (!result.ok) {
-      toast.error(result.error.message);
-      return;
+    const block = updatedSurvey.blocks[blockIndex];
+
+    // If this is the only element in the block, delete the entire block
+    if (block.elements.length === 1) {
+      const result = deleteBlock(updatedSurvey, blockId);
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      updatedSurvey = result.data;
+    } else {
+      // Otherwise, just remove this element from the block
+      const result = deleteElementFromBlock(updatedSurvey, blockId, questionId);
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      updatedSurvey = result.data;
     }
 
     const firstEndingCard = localSurvey.endings[0];
-    setLocalSurvey(result.data);
+    setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
 
     if (questionId === activeQuestionIdTemp) {
-      const newQuestions = result.data.blocks?.flatMap((b) => b.elements) ?? [];
+      const newQuestions = updatedSurvey.blocks.flatMap((b) => b.elements) ?? [];
       if (questionIdx <= newQuestions.length && newQuestions.length > 0) {
         setActiveQuestionId(newQuestions[questionIdx % newQuestions.length].id);
       } else if (firstEndingCard) {
@@ -496,36 +511,33 @@ export const QuestionsView = ({
     const question = questions[questionIdx];
     if (!question) return;
 
-    const { blockId } = findElementLocation(localSurvey, question.id);
-    if (!blockId) return;
+    const { blockId, blockIndex } = findElementLocation(localSurvey, question.id);
+    if (!blockId || blockIndex === -1) return;
 
-    const result = duplicateBlock(localSurvey, blockId);
+    // Create a duplicate of the element with a new ID
+    const newElementId = createId();
+    const duplicatedElement = { ...question, id: newElementId };
+
+    // Add the duplicated element to the same block
+    const result = addElementToBlock(localSurvey, blockId, duplicatedElement);
 
     if (!result.ok) {
       toast.error(result.error.message);
       return;
     }
 
-    // The duplicated block has new element IDs, find the first one
-    const allBlocks = result.data.blocks ?? [];
-    const { blockIndex } = findElementLocation(localSurvey, question.id);
-    const duplicatedBlock = allBlocks[blockIndex + 1];
-    const newElementId = duplicatedBlock?.elements[0]?.id;
-
-    if (newElementId) {
-      setActiveQuestionId(newElementId);
-      internalQuestionIdMap[newElementId] = createId();
-    }
+    setActiveQuestionId(newElementId);
+    internalQuestionIdMap[newElementId] = createId();
 
     setLocalSurvey(result.data);
     toast.success(t("environments.surveys.edit.question_duplicated"));
   };
 
-  const addQuestion = (question: TSurveyQuestion, index?: number) => {
+  const addQuestion = (question: TSurveyElement, index?: number) => {
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
     const updatedQuestion = addMultiLanguageLabels(question, languageSymbols);
 
-    const blockName = getBlockName(index ?? questions.length);
+    const blockName = getBlockName(index ?? localSurvey.blocks.length);
     const newBlock = {
       name: blockName,
       elements: [{ ...updatedQuestion, isDraft: true }],
@@ -543,6 +555,31 @@ export const QuestionsView = ({
     internalQuestionIdMap[question.id] = createId();
   };
 
+  const _addElementToBlock = (question: TSurveyElement, blockId: string, afterElementIdx: number) => {
+    const languageSymbols = extractLanguageCodes(localSurvey.languages);
+    const updatedQuestion = addMultiLanguageLabels(question, languageSymbols);
+
+    const targetIndex = afterElementIdx + 1;
+    const result = addElementToBlock(
+      localSurvey,
+      blockId,
+      {
+        ...updatedQuestion,
+        isDraft: true,
+      },
+      targetIndex
+    );
+
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
+
+    setLocalSurvey(result.data);
+    setActiveQuestionId(updatedQuestion.id);
+    internalQuestionIdMap[updatedQuestion.id] = createId();
+  };
+
   const addEndingCard = (index: number) => {
     const updatedSurvey = structuredClone(localSurvey);
     const newEndingCard = getDefaultEndingCard(localSurvey.languages, t);
@@ -557,11 +594,87 @@ export const QuestionsView = ({
     const question = questions[questionIndex];
     if (!question) return;
 
-    const { blockId } = findElementLocation(localSurvey, question.id);
-    if (!blockId) return;
+    const { blockId, blockIndex } = findElementLocation(localSurvey, question.id);
+    if (!blockId || blockIndex === -1) return;
 
+    const block = localSurvey.blocks[blockIndex];
+    const elementIndex = block.elements.findIndex((el) => el.id === question.id);
+
+    // If block has multiple elements, move element within the block
+    if (block.elements.length > 1) {
+      // Check if we can move in the desired direction within the block
+      if ((up && elementIndex > 0) || (!up && elementIndex < block.elements.length - 1)) {
+        const direction = up ? "up" : "down";
+        const result = moveElementInBlock(localSurvey, blockId, question.id, direction);
+
+        if (!result.ok) {
+          toast.error(result.error.message);
+          return;
+        }
+
+        setLocalSurvey(result.data);
+        return;
+      }
+      // If we can't move within block, fall through to move the entire block
+    }
+
+    // Move the entire block
     const direction = up ? "up" : "down";
-    const result = moveBlock(localSurvey, blockId, direction);
+    const result = moveBlockHelper(localSurvey, blockId, direction);
+
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
+
+    setLocalSurvey(result.data);
+  };
+
+  // Block-level operations
+  const duplicateBlock = (blockId: string) => {
+    const result = duplicateBlockHelper(localSurvey, blockId);
+
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
+
+    // Find the duplicated block and set the first element as active
+    const blockIndex = localSurvey.blocks.findIndex((b) => b.id === blockId);
+    if (blockIndex !== -1) {
+      const duplicatedBlock = result.data.blocks[blockIndex + 1];
+      if (duplicatedBlock?.elements[0]) {
+        setActiveQuestionId(duplicatedBlock.elements[0].id);
+        internalQuestionIdMap[duplicatedBlock.elements[0].id] = createId();
+      }
+    }
+
+    setLocalSurvey(result.data);
+    toast.success(t("environments.surveys.edit.block_duplicated"));
+  };
+
+  const deleteBlockById = (blockId: string) => {
+    const result = deleteBlock(localSurvey, blockId);
+
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
+
+    // Set active question to the first element of the first remaining block or ending card
+    const newBlocks = result.data.blocks ?? [];
+    if (newBlocks.length > 0 && newBlocks[0].elements.length > 0) {
+      setActiveQuestionId(newBlocks[0].elements[0].id);
+    } else if (result.data.endings[0]) {
+      setActiveQuestionId(result.data.endings[0].id);
+    }
+
+    setLocalSurvey(result.data);
+    toast.success(t("environments.surveys.edit.block_deleted"));
+  };
+
+  const moveBlockById = (blockId: string, direction: "up" | "down") => {
+    const result = moveBlockHelper(localSurvey, blockId, direction);
 
     if (!result.ok) {
       toast.error(result.error.message);
@@ -575,13 +688,12 @@ export const QuestionsView = ({
   useEffect(() => {
     if (!invalidQuestions) return;
     let updatedInvalidQuestions: string[] = invalidQuestions;
-    // Validate each question
-    questions.forEach((question, index) => {
-      updatedInvalidQuestions = validateSurveyQuestionsInBatch(
-        question as unknown as TSurveyQuestion,
+    // Validate each element
+    questions.forEach((element) => {
+      updatedInvalidQuestions = validateSurveyElementsInBatch(
+        element,
         updatedInvalidQuestions,
-        surveyLanguages,
-        index === 0
+        surveyLanguages
       );
     });
 
@@ -669,8 +781,9 @@ export const QuestionsView = ({
         sensors={sensors}
         onDragEnd={onQuestionCardDragEnd}
         collisionDetection={closestCorners}>
-        <QuestionsDroppable
+        <BlocksDroppable
           localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
           project={project}
           moveQuestion={moveQuestion}
           updateQuestion={updateQuestion}
@@ -692,6 +805,10 @@ export const QuestionsView = ({
           onAlertTrigger={() => setIsCautionDialogOpen(true)}
           isStorageConfigured={isStorageConfigured}
           isExternalUrlsAllowed={isExternalUrlsAllowed}
+          duplicateBlock={duplicateBlock}
+          deleteBlock={deleteBlockById}
+          moveBlock={moveBlockById}
+          addElementToBlock={_addElementToBlock}
         />
       </DndContext>
 

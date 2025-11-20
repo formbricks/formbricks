@@ -4,13 +4,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
+  TSurveyConsentElement,
+  TSurveyElementTypeEnum,
+  TSurveyMultipleChoiceElement,
+  TSurveyOpenTextElement,
+} from "@formbricks/types/surveys/elements";
+import {
   TSurvey,
-  TSurveyConsentQuestion,
   TSurveyEndScreenCard,
   TSurveyLanguage,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyOpenTextQuestion,
-  TSurveyQuestionTypeEnum,
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
@@ -285,22 +287,20 @@ describe("validation.isEndingCardValid", () => {
   // });
 });
 
-describe("validation.validateQuestion", () => {
-  const baseQuestionFields = {
-    id: "question1",
+describe("validation.validateElement", () => {
+  const baseElementFields = {
+    id: "element1",
     required: false,
-    logic: [],
   };
 
-  // Test OpenText Question
-  describe("OpenText Question", () => {
-    const openTextQuestionBase: TSurveyOpenTextQuestion = {
-      ...baseQuestionFields,
-      type: TSurveyQuestionTypeEnum.OpenText,
+  // Test OpenText Element
+  describe("OpenText Element", () => {
+    const openTextElementBase: TSurveyOpenTextElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.OpenText,
       headline: { default: "Open Text", en: "Open Text", de: "Offener Text" },
       subheader: { default: "Enter here", en: "Enter here", de: "Hier eingeben" },
       placeholder: { default: "Your answer...", en: "Your answer...", de: "Deine Antwort..." },
-      longAnswer: false,
       inputType: "text",
       charLimit: {
         enabled: true,
@@ -309,39 +309,39 @@ describe("validation.validateQuestion", () => {
       },
     };
 
-    test("should return true for a valid OpenText question", () => {
-      expect(validation.validateQuestion(openTextQuestionBase, surveyLanguagesEnabled, false)).toBe(true);
+    test("should return true for a valid OpenText element", () => {
+      expect(validation.validateElement(openTextElementBase, surveyLanguagesEnabled)).toBe(true);
     });
 
     test("should return false if headline is invalid", () => {
-      const q = { ...openTextQuestionBase, headline: { default: "Open Text", en: "Open Text", de: "" } };
-      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+      const q = { ...openTextElementBase, headline: { default: "Open Text", en: "Open Text", de: "" } };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
     });
 
     test("should return true if placeholder is valid (default not empty, other languages valid)", () => {
       const q = {
-        ...openTextQuestionBase,
+        ...openTextElementBase,
         placeholder: { default: "Type here", en: "Type here", de: "Tippe hier" },
       };
-      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(true);
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
     });
 
     test("should return false if placeholder.default is not empty but other lang is empty", () => {
-      const q = { ...openTextQuestionBase, placeholder: { default: "Type here", en: "Type here", de: "" } };
-      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+      const q = { ...openTextElementBase, placeholder: { default: "Type here", en: "Type here", de: "" } };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
     });
 
     test("should return true if placeholder.default is empty (placeholder validation skipped)", () => {
-      const q = { ...openTextQuestionBase, placeholder: { default: "", en: "Type here", de: "" } };
-      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(true);
+      const q = { ...openTextElementBase, placeholder: { default: "", en: "Type here", de: "" } };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
     });
   });
 
-  // Test MultipleChoiceSingle Question
-  describe("MultipleChoiceSingle Question", () => {
-    const mcSingleQuestionBase: TSurveyMultipleChoiceQuestion = {
-      ...baseQuestionFields,
-      type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+  // Test MultipleChoiceSingle Element
+  describe("MultipleChoiceSingle Element", () => {
+    const mcSingleElementBase: TSurveyMultipleChoiceElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.MultipleChoiceSingle,
       headline: { default: "Single Choice", en: "Single Choice", de: "Einzelauswahl" },
       choices: [
         { id: "c1", label: { default: "Option 1", en: "Option 1", de: "Option 1" } },
@@ -349,47 +349,47 @@ describe("validation.validateQuestion", () => {
       ],
     };
 
-    test("should return true for a valid MultipleChoiceSingle question", () => {
-      expect(validation.validateQuestion(mcSingleQuestionBase, surveyLanguagesEnabled, false)).toBe(true);
+    test("should return true for a valid MultipleChoiceSingle element", () => {
+      expect(validation.validateElement(mcSingleElementBase, surveyLanguagesEnabled)).toBe(true);
     });
 
     test("should return false if a choice label is invalid", () => {
       const q = {
-        ...mcSingleQuestionBase,
+        ...mcSingleElementBase,
         choices: [
           { id: "c1", label: { default: "Option 1", en: "Option 1", de: "Option 1" } },
           { id: "c2", label: { default: "Option 2", en: "Option 2", de: "" } },
         ],
       };
-      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
     });
   });
 
-  // Test Consent Question
-  describe("Consent Question", () => {
-    const consentQuestionBase: TSurveyConsentQuestion = {
-      ...baseQuestionFields,
-      type: TSurveyQuestionTypeEnum.Consent,
+  // Test Consent Element
+  describe("Consent Element", () => {
+    const consentElementBase: TSurveyConsentElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.Consent,
       headline: { default: "Consent", en: "Consent", de: "Zustimmung" },
       label: { default: "I agree", en: "I agree", de: "Ich stimme zu" },
       subheader: { default: "Details...", en: "Details...", de: "Details..." },
     };
 
-    test("should return true for a valid Consent question", () => {
-      expect(validation.validateQuestion(consentQuestionBase, surveyLanguagesEnabled, false)).toBe(true);
+    test("should return true for a valid Consent element", () => {
+      expect(validation.validateElement(consentElementBase, surveyLanguagesEnabled)).toBe(true);
     });
 
     test("should return false if consent label is invalid", () => {
-      const q = { ...consentQuestionBase, label: { default: "I agree", en: "I agree", de: "" } };
-      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+      const q = { ...consentElementBase, label: { default: "I agree", en: "I agree", de: "" } };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
     });
   });
 });
 
-describe("validation.validateSurveyQuestionsInBatch", () => {
-  const q2Valid: TSurveyOpenTextQuestion = {
+describe("validation.validateSurveyElementsInBatch", () => {
+  const q2Valid: TSurveyOpenTextElement = {
     id: "q2",
-    type: TSurveyQuestionTypeEnum.OpenText,
+    type: TSurveyElementTypeEnum.OpenText,
     headline: { default: "Q2", en: "Q2", de: "Q2" },
     inputType: "text",
     charLimit: {
@@ -400,9 +400,9 @@ describe("validation.validateSurveyQuestionsInBatch", () => {
     required: false,
   };
 
-  const q2Invalid: TSurveyOpenTextQuestion = {
+  const q2Invalid: TSurveyOpenTextElement = {
     id: "q2",
-    type: TSurveyQuestionTypeEnum.OpenText,
+    type: TSurveyElementTypeEnum.OpenText,
     headline: { default: "Q2", en: "Q2", de: "" },
     inputType: "text",
     charLimit: {
@@ -413,42 +413,39 @@ describe("validation.validateSurveyQuestionsInBatch", () => {
     required: false,
   };
 
-  test("should return empty array if invalidQuestions is null", () => {
-    expect(validation.validateSurveyQuestionsInBatch(q2Valid, null, surveyLanguagesEnabled, false)).toEqual(
-      []
-    );
+  test("should return empty array if invalidElements is null", () => {
+    expect(validation.validateSurveyElementsInBatch(q2Valid, null, surveyLanguagesEnabled)).toEqual([]);
   });
 
-  test("should add question.id if question is invalid and not already in list", () => {
-    const invalidQuestions = ["q1"];
+  test("should add element.id if element is invalid and not already in list", () => {
+    const invalidElements = ["q1"];
     expect(
-      validation.validateSurveyQuestionsInBatch(q2Invalid, invalidQuestions, surveyLanguagesEnabled, false)
+      validation.validateSurveyElementsInBatch(q2Invalid, invalidElements, surveyLanguagesEnabled)
     ).toEqual(["q1", "q2"]);
   });
 
-  test("should not add question.id if question is invalid but already in list", () => {
-    const invalidQuestions = ["q1", "q2"];
+  test("should not add element.id if element is invalid but already in list", () => {
+    const invalidElements = ["q1", "q2"];
     expect(
-      validation.validateSurveyQuestionsInBatch(q2Invalid, invalidQuestions, surveyLanguagesEnabled, false)
+      validation.validateSurveyElementsInBatch(q2Invalid, invalidElements, surveyLanguagesEnabled)
     ).toEqual(["q1", "q2"]);
   });
 
-  test("should remove question.id if question is valid and in list", () => {
-    const invalidQuestions = ["q1", "q2"];
+  test("should remove element.id if element is valid and in list", () => {
+    const invalidElements = ["q1", "q2"];
     expect(
-      validation.validateSurveyQuestionsInBatch(q2Valid, invalidQuestions, surveyLanguagesEnabled, false)
+      validation.validateSurveyElementsInBatch(q2Valid, invalidElements, surveyLanguagesEnabled)
     ).toEqual(["q1"]);
   });
 
-  test("should not change list if question is valid and not in list", () => {
-    const invalidQuestions = ["q1"];
-    const validateQuestionSpy = vi.spyOn(validation, "validateQuestion");
-    validateQuestionSpy.mockReturnValue(true);
-    const result = validation.validateSurveyQuestionsInBatch(
+  test("should not change list if element is valid and not in list", () => {
+    const invalidElements = ["q1"];
+    const validateElementSpy = vi.spyOn(validation, "validateElement");
+    validateElementSpy.mockReturnValue(true);
+    const result = validation.validateSurveyElementsInBatch(
       q2Valid,
-      [...invalidQuestions],
-      surveyLanguagesEnabled,
-      false
+      [...invalidElements],
+      surveyLanguagesEnabled
     );
     expect(result).toEqual(["q1"]);
   });
@@ -468,14 +465,23 @@ describe("validation.isSurveyValid", () => {
       type: "web",
       environmentId: "env1",
       status: "draft",
-      questions: [
+      questions: [],
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Q1", en: "Q1", de: "Q1" },
-          required: false,
-          inputType: "text",
-          charLimit: 0,
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Q1", en: "Q1", de: "Q1" },
+              required: false,
+              inputType: "text",
+              charLimit: {
+                enabled: false,
+              },
+            },
+          ],
         },
       ],
       endings: [
@@ -500,10 +506,10 @@ describe("validation.isSurveyValid", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
-  test("should return false and toast error if checkForEmptyFallBackValue returns a question", () => {
+  test("should return false and toast error if checkForEmptyFallBackValue returns an element", () => {
     vi.mocked(checkForEmptyFallBackValue).mockReturnValue({
       id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText,
+      type: TSurveyElementTypeEnum.OpenText,
       headline: { default: "Q1", en: "Q1", de: "Q1" },
       inputType: "text",
       charLimit: {

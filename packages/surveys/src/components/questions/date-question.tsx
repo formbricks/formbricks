@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker, { DatePickerProps } from "react-date-picker";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getMonthName, getOrdinalDate } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
@@ -18,22 +14,14 @@ import "../../styles/date-picker.css";
 
 interface DateQuestionProps {
   question: TSurveyDateElement;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
   value: string;
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
   autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: string;
-  isBackButtonHidden: boolean;
-  fullSizeCards: boolean;
 }
 
 function CalendarIcon() {
@@ -87,20 +75,12 @@ function CalendarCheckIcon() {
 
 export function DateQuestion({
   question,
-  buttonLabel,
-  backButtonLabel,
   value,
-  onSubmit,
-  onBack,
-  isFirstQuestion,
-  isLastQuestion,
   onChange,
   languageCode,
   setTtc,
   ttc,
   currentQuestionId,
-  isBackButtonHidden,
-  fullSizeCards,
 }: Readonly<DateQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
@@ -143,158 +123,137 @@ export function DateQuestion({
   }, [selectedDate]);
 
   return (
-    <ScrollableContainer fullSizeCards={fullSizeCards}>
-      <form
-        key={question.id}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (question.required && !value) {
-            setErrorMessage(t("errors.please_select_a_date"));
-            return;
-          }
-          const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-          setTtc(updatedTtcObj);
-          onSubmit({ [question.id]: value }, updatedTtcObj);
-        }}
-        className="fb-w-full">
-        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
-        <Headline
-          headline={getLocalizedValue(question.headline, languageCode)}
-          questionId={question.id}
-          required={question.required}
-        />
-        <Subheader
-          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-          questionId={question.id}
-        />
-        <div id="error-message" className="fb-text-red-600" aria-live="assertive">
-          <span>{errorMessage}</span>
-        </div>
-        <div
-          className={cn("fb-mt-4 fb-w-full", errorMessage && "fb-rounded-lg fb-border-2 fb-border-red-500")}
-          id="date-picker-root">
-          <div className="fb-relative">
-            {!datePickerOpen && (
-              <button
-                onClick={() => {
-                  setDatePickerOpen(true);
-                }}
-                tabIndex={isCurrent ? 0 : -1}
-                type="button"
-                onKeyDown={(e) => {
-                  if (e.key === " ") setDatePickerOpen(true);
-                }}
-                aria-label={
-                  selectedDate
-                    ? t("common.you_have_selected_x_date", { date: formattedDate })
-                    : t("common.select_a_date")
-                }
-                aria-describedby={errorMessage ? "error-message" : undefined}
-                className="focus:fb-outline-brand fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
-                <div className="fb-flex fb-items-center fb-gap-2">
-                  {selectedDate ? (
-                    <div className="fb-flex fb-items-center fb-gap-2">
-                      <CalendarCheckIcon /> <span>{formattedDate}</span>
-                    </div>
-                  ) : (
-                    <div className="fb-flex fb-items-center fb-gap-2">
-                      <CalendarIcon /> <span>{t("common.select_a_date")}</span>
-                    </div>
-                  )}
-                </div>
-              </button>
-            )}
-
-            <DatePicker
-              key={datePickerOpen}
-              value={selectedDate}
-              isOpen={datePickerOpen}
-              onChange={(value) => {
-                const date = value as Date;
-                setSelectedDate(date);
-
-                // Get the timezone offset in minutes and convert it to milliseconds
-                const timezoneOffset = date.getTimezoneOffset() * 60000;
-
-                // Adjust the date by subtracting the timezone offset
-                const adjustedDate = new Date(date.getTime() - timezoneOffset);
-
-                // Format the date as YYYY-MM-DD
-                const dateString = adjustedDate.toISOString().split("T")[0];
-
-                onChange({ [question.id]: dateString });
-              }}
-              minDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
-              maxDate={new Date("3000-12-31")}
-              dayPlaceholder="DD"
-              monthPlaceholder="MM"
-              yearPlaceholder="YYYY"
-              format={question.format ?? "M-d-y"}
-              className={`dp-input-root fb-rounded-custom wrapper-hide ${!datePickerOpen ? "" : "fb-h-[46dvh] sm:fb-h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
-              calendarProps={{
-                className:
-                  "calendar-root !fb-text-heading !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto",
-                tileClassName: ({ date }: { date: Date }) => {
-                  const baseClass =
-                    "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
-                  // active date class (check first to take precedence over today's date)
-                  if (
-                    selectedDate &&
-                    date.getDate() === selectedDate?.getDate() &&
-                    date.getMonth() === selectedDate.getMonth() &&
-                    date.getFullYear() === selectedDate.getFullYear()
-                  ) {
-                    return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-calendar-tile`;
-                  }
-                  // today's date class
-                  if (
-                    date.getDate() === new Date().getDate() &&
-                    date.getMonth() === new Date().getMonth() &&
-                    date.getFullYear() === new Date().getFullYear()
-                  ) {
-                    return `${baseClass} !fb-bg-brand !fb-opacity-50 !fb-border-border-highlight !fb-text-calendar-tile focus:fb-ring-2 focus:fb-bg-slate-200`;
-                  }
-
-                  return `${baseClass} !fb-text-heading`;
-                },
-                formatShortWeekday: (_: any, date: Date) => {
-                  return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
-                },
-                showNeighboringMonth: false,
-              }}
-              clearIcon={null}
-              onCalendarOpen={() => {
+    <form
+      key={question.id}
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (question.required && !value) {
+          setErrorMessage(t("errors.please_select_a_date"));
+          return;
+        }
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+      }}
+      className="fb-w-full">
+      {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />
+      <div id="error-message" className="fb-text-red-600" aria-live="assertive">
+        <span>{errorMessage}</span>
+      </div>
+      <div
+        className={cn("fb-mt-4 fb-w-full", errorMessage && "fb-rounded-lg fb-border-2 fb-border-red-500")}
+        id="date-picker-root">
+        <div className="fb-relative">
+          {!datePickerOpen && (
+            <button
+              onClick={() => {
                 setDatePickerOpen(true);
               }}
-              onCalendarClose={() => {
-                // reset state
-                setDatePickerOpen(false);
-                setSelectedDate(selectedDate);
-              }}
-              calendarIcon={(<CalendarIcon />) as DatePickerProps["calendarIcon"]}
-              showLeadingZeros={false}
-            />
-          </div>
-        </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-          <SubmitButton
-            tabIndex={isCurrent ? 0 : -1}
-            isLastQuestion={isLastQuestion}
-            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
-          />
-          {!isFirstQuestion && !isBackButtonHidden && (
-            <BackButton
               tabIndex={isCurrent ? 0 : -1}
-              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
-              onClick={() => {
-                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedTtcObj);
-                onBack();
+              type="button"
+              onKeyDown={(e) => {
+                if (e.key === " ") setDatePickerOpen(true);
               }}
-            />
+              aria-label={
+                selectedDate
+                  ? t("common.you_have_selected_x_date", { date: formattedDate })
+                  : t("common.select_a_date")
+              }
+              aria-describedby={errorMessage ? "error-message" : undefined}
+              className="focus:fb-outline-brand fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
+              <div className="fb-flex fb-items-center fb-gap-2">
+                {selectedDate ? (
+                  <div className="fb-flex fb-items-center fb-gap-2">
+                    <CalendarCheckIcon /> <span>{formattedDate}</span>
+                  </div>
+                ) : (
+                  <div className="fb-flex fb-items-center fb-gap-2">
+                    <CalendarIcon /> <span>{t("common.select_a_date")}</span>
+                  </div>
+                )}
+              </div>
+            </button>
           )}
+
+          <DatePicker
+            key={datePickerOpen}
+            value={selectedDate}
+            isOpen={datePickerOpen}
+            onChange={(value) => {
+              const date = value as Date;
+              setSelectedDate(date);
+
+              // Get the timezone offset in minutes and convert it to milliseconds
+              const timezoneOffset = date.getTimezoneOffset() * 60000;
+
+              // Adjust the date by subtracting the timezone offset
+              const adjustedDate = new Date(date.getTime() - timezoneOffset);
+
+              // Format the date as YYYY-MM-DD
+              const dateString = adjustedDate.toISOString().split("T")[0];
+
+              onChange({ [question.id]: dateString });
+            }}
+            minDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
+            maxDate={new Date("3000-12-31")}
+            dayPlaceholder="DD"
+            monthPlaceholder="MM"
+            yearPlaceholder="YYYY"
+            format={question.format ?? "M-d-y"}
+            className={`dp-input-root fb-rounded-custom wrapper-hide ${!datePickerOpen ? "" : "fb-h-[46dvh] sm:fb-h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
+            calendarProps={{
+              className:
+                "calendar-root !fb-text-heading !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto",
+              tileClassName: ({ date }: { date: Date }) => {
+                const baseClass =
+                  "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
+                // active date class (check first to take precedence over today's date)
+                if (
+                  selectedDate &&
+                  date.getDate() === selectedDate?.getDate() &&
+                  date.getMonth() === selectedDate.getMonth() &&
+                  date.getFullYear() === selectedDate.getFullYear()
+                ) {
+                  return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-calendar-tile`;
+                }
+                // today's date class
+                if (
+                  date.getDate() === new Date().getDate() &&
+                  date.getMonth() === new Date().getMonth() &&
+                  date.getFullYear() === new Date().getFullYear()
+                ) {
+                  return `${baseClass} !fb-bg-brand !fb-opacity-50 !fb-border-border-highlight !fb-text-calendar-tile focus:fb-ring-2 focus:fb-bg-slate-200`;
+                }
+
+                return `${baseClass} !fb-text-heading`;
+              },
+              formatShortWeekday: (_: any, date: Date) => {
+                return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
+              },
+              showNeighboringMonth: false,
+            }}
+            clearIcon={null}
+            onCalendarOpen={() => {
+              setDatePickerOpen(true);
+            }}
+            onCalendarClose={() => {
+              // reset state
+              setDatePickerOpen(false);
+              setSelectedDate(selectedDate);
+            }}
+            calendarIcon={(<CalendarIcon />) as DatePickerProps["calendarIcon"]}
+            showLeadingZeros={false}
+          />
         </div>
-      </form>
-    </ScrollableContainer>
+      </div>
+    </form>
   );
 }

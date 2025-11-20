@@ -6,12 +6,11 @@ import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import {
-  TSurvey,
-  TSurveyLanguage,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyQuestionChoice,
-  TSurveyRankingQuestion,
-} from "@formbricks/types/surveys/types";
+  TSurveyElementChoice,
+  TSurveyMultipleChoiceElement,
+  TSurveyRankingElement,
+} from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { createI18nString } from "@/lib/i18n/utils";
@@ -21,7 +20,7 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
-  choice: TSurveyQuestionChoice;
+  choice: TSurveyElementChoice;
   choiceIdx: number;
   questionIdx: number;
   updateChoice: (choiceIdx: number, updatedAttributes: { label: TI18nString }) => void;
@@ -32,10 +31,10 @@ interface ChoiceProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   surveyLanguages: TSurveyLanguage[];
-  question: TSurveyMultipleChoiceQuestion | TSurveyRankingQuestion;
+  question: TSurveyMultipleChoiceElement | TSurveyRankingElement;
   updateQuestion: (
     questionIdx: number,
-    updatedAttributes: Partial<TSurveyMultipleChoiceQuestion> | Partial<TSurveyRankingQuestion>
+    updatedAttributes: Partial<TSurveyMultipleChoiceElement> | Partial<TSurveyRankingElement>
   ) => void;
   surveyLanguageCodes: string[];
   locale: TUserLocale;

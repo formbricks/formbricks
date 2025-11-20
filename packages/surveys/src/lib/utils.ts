@@ -2,9 +2,9 @@ import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-h
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/storage";
-import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { type TSurveyElement } from "@formbricks/types/surveys/elements";
-import { type TShuffleOption, type TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
+import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { type TSurveyElement, TSurveyElementChoice } from "@formbricks/types/surveys/elements";
+import { type TShuffleOption } from "@formbricks/types/surveys/types";
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
 export const cn = (...classes: string[]) => {
@@ -41,7 +41,7 @@ export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption):
 };
 
 export const getShuffledChoicesIds = (
-  choices: TSurveyQuestionChoice[],
+  choices: TSurveyElementChoice[],
   shuffleOption: TShuffleOption
 ): string[] => {
   const otherOption = choices.find((choice) => {
@@ -79,10 +79,10 @@ export const calculateElementIdx = (
   currentQustionIdx: number,
   totalCards: number
 ): number => {
-  const questions = getElementsFromSurvey(survey);
+  const questions = getElementsFromSurveyBlocks(survey.blocks);
   const currentQuestion = questions[currentQustionIdx];
   const middleIdx = Math.floor(totalCards / 2);
-  const possibleNextBlockIds = getPossibleNextBlocks(survey, currentQuestion);
+  const possibleNextBlockIds = getPossibleNextBlocks(survey.blocks, currentQuestion);
   const endingCardIds = survey.endings.map((ending) => ending.id);
 
   // Convert block IDs to element IDs (get first element of each block)
@@ -106,9 +106,9 @@ export const calculateElementIdx = (
   return elementIdx;
 };
 
-const getPossibleNextBlocks = (survey: TJsEnvironmentStateSurvey, element: TSurveyElement): string[] => {
+const getPossibleNextBlocks = (blocks: TSurveyBlock[], element: TSurveyElement): string[] => {
   // In the blocks model, logic is stored at the block level
-  const parentBlock = findBlockByElementId(survey, element.id);
+  const parentBlock = findBlockByElementId(blocks, element.id);
   if (!parentBlock?.logic) return [];
 
   const possibleBlockIds: string[] = [];
@@ -197,7 +197,7 @@ export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCo
     }
   }
 
-  const questions = getElementsFromSurvey(survey);
+  const questions = getElementsFromSurveyBlocks(survey.blocks);
   for (const question of questions) {
     const questionHeadline = question.headline[languageCode];
 
@@ -212,11 +212,11 @@ export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCo
 
 /**
  * Derives a flat array of elements from the survey's blocks structure.
- * @param survey The survey object with blocks
+ * @param blocks The blocks array
  * @returns An array of TSurveyElement (pure elements without block-level properties)
  */
-export const getElementsFromSurvey = (survey: TJsEnvironmentStateSurvey): TSurveyElement[] =>
-  survey.blocks.flatMap((block) => block.elements);
+export const getElementsFromSurveyBlocks = (blocks: TSurveyBlock[]): TSurveyElement[] =>
+  blocks.flatMap((block) => block.elements);
 
 /**
  * Finds the parent block that contains the specified element ID.
@@ -225,8 +225,8 @@ export const getElementsFromSurvey = (survey: TJsEnvironmentStateSurvey): TSurve
  * @param elementId The ID of the element to find
  * @returns The parent block or undefined if not found
  */
-export const findBlockByElementId = (survey: TJsEnvironmentStateSurvey, elementId: string) =>
-  survey.blocks.find((b) => b.elements.some((e) => e.id === elementId));
+export const findBlockByElementId = (blocks: TSurveyBlock[], elementId: string) =>
+  blocks.find((block) => block.elements.some((e) => e.id === elementId));
 
 /**
  * Converts a block ID to the first element ID in that block.

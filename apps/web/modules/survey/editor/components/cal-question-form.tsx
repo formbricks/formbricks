@@ -3,7 +3,8 @@
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyCalElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -14,9 +15,9 @@ import { Label } from "@/modules/ui/components/label";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyCalQuestion;
+  question: TSurveyCalElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyCalQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyCalElement>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;

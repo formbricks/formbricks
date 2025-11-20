@@ -9,12 +9,8 @@ import { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import {
-  TShuffleOption,
-  TSurvey,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum, TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
+import { TShuffleOption, TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -26,9 +22,9 @@ import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-sele
 
 interface MultipleChoiceQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyMultipleChoiceQuestion;
+  question: TSurveyMultipleChoiceElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -94,7 +90,7 @@ export const MultipleChoiceQuestionForm = ({
     [question.choices]
   );
 
-  const ensureSpecialChoicesOrder = (choices: TSurveyMultipleChoiceQuestion["choices"]) => {
+  const ensureSpecialChoicesOrder = (choices: TSurveyMultipleChoiceElement["choices"]) => {
     const otherChoice = choices.find((c) => c.id === "other");
     const noneChoice = choices.find((c) => c.id === "none");
     // [regularChoices, otherChoice, noneChoice]
@@ -335,12 +331,12 @@ export const MultipleChoiceQuestionForm = ({
               onClick={() => {
                 updateQuestion(questionIdx, {
                   type:
-                    question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
-                      ? TSurveyQuestionTypeEnum.MultipleChoiceSingle
-                      : TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+                    question.type === TSurveyElementTypeEnum.MultipleChoiceMulti
+                      ? TSurveyElementTypeEnum.MultipleChoiceSingle
+                      : TSurveyElementTypeEnum.MultipleChoiceMulti,
                 });
               }}>
-              {question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
+              {question.type === TSurveyElementTypeEnum.MultipleChoiceSingle
                 ? t("environments.surveys.edit.convert_to_multiple_choice")
                 : t("environments.surveys.edit.convert_to_single_choice")}
             </Button>

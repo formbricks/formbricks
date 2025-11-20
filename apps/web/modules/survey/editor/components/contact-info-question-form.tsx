@@ -4,7 +4,8 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyContactInfoElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -13,9 +14,9 @@ import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-tab
 
 interface ContactInfoQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyContactInfoQuestion;
+  question: TSurveyContactInfoElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyContactInfoQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyContactInfoElement>) => void;
   lastQuestion: boolean;
   isInvalid: boolean;
   selectedLanguageCode: string;

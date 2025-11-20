@@ -2,15 +2,16 @@
 
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyConsentElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyConsentQuestion;
+  question: TSurveyConsentElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyConsentQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyConsentElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;

@@ -4,7 +4,9 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
+import { TI18nString } from "@formbricks/types/i18n";
+import { TSurveyNPSElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -13,9 +15,9 @@ import { Button } from "@/modules/ui/components/button";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyNPSQuestion;
+  question: TSurveyNPSElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyNPSQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyNPSElement>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -23,6 +25,7 @@ interface NPSQuestionFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
+  buttonLabel?: TI18nString;
 }
 
 export const NPSQuestionForm = ({
@@ -37,6 +40,7 @@ export const NPSQuestionForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
+  buttonLabel,
 }: NPSQuestionFormProps): JSX.Element => {
   const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -136,7 +140,7 @@ export const NPSQuestionForm = ({
         <div className="mt-3">
           <QuestionFormInput
             id="buttonLabel"
-            value={question.buttonLabel}
+            value={buttonLabel}
             label={t("environments.surveys.edit.next_button_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}

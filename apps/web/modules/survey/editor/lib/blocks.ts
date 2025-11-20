@@ -411,3 +411,54 @@ export const duplicateElementInBlock = (
     blocks,
   });
 };
+
+/**
+ * Moves an element up or down within a block
+ * @param survey - The survey containing the block
+ * @param blockId - The CUID of the block containing the element
+ * @param elementId - The ID of the element to move
+ * @param direction - Direction to move ("up" or "down")
+ * @returns Result with updated survey (or unchanged if at boundary) or Error
+ */
+export const moveElementInBlock = (
+  survey: TSurvey,
+  blockId: string,
+  elementId: string,
+  direction: "up" | "down"
+): Result<TSurvey, Error> => {
+  const blocks = [...(survey.blocks || [])];
+  const blockIndex = blocks.findIndex((b) => b.id === blockId);
+
+  if (blockIndex === -1) {
+    return err(new Error(`Block with ID "${blockId}" not found`));
+  }
+
+  const block = { ...blocks[blockIndex] };
+  const elements = [...block.elements];
+  const elementIndex = elements.findIndex((e) => e.id === elementId);
+
+  if (elementIndex === -1) {
+    return err(new Error(`Element with ID "${elementId}" not found in block "${blockId}"`));
+  }
+
+  if (direction === "up" && elementIndex === 0) {
+    return ok(survey); // Already at top
+  }
+
+  if (direction === "down" && elementIndex === elements.length - 1) {
+    return ok(survey); // Already at bottom
+  }
+
+  const targetIndex = direction === "up" ? elementIndex - 1 : elementIndex + 1;
+
+  // Swap using destructuring assignment
+  [elements[elementIndex], elements[targetIndex]] = [elements[targetIndex], elements[elementIndex]];
+
+  block.elements = elements;
+  blocks[blockIndex] = block;
+
+  return ok({
+    ...survey,
+    blocks,
+  });
+};

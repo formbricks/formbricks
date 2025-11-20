@@ -1,57 +1,37 @@
 import { useMemo, useRef, useState } from "preact/hooks";
 import { useCallback } from "react";
-import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyAddressElement } from "@formbricks/types/surveys/elements";
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { Input } from "@/components/general/input";
 import { Label } from "@/components/general/label";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface AddressQuestionProps {
   question: TSurveyAddressElement;
-  buttonLabel?: TI18nString;
-  backButtonLabel?: TI18nString;
   value?: string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: string;
   autoFocusEnabled: boolean;
-  isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards: boolean;
 }
 
 export function AddressQuestion({
   question,
-  buttonLabel,
-  backButtonLabel,
   value,
   onChange,
-  onSubmit,
-  onBack,
-  isFirstQuestion,
-  isLastQuestion,
   languageCode,
   ttc,
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
-  isBackButtonHidden,
   dir = "auto",
-  fullSizeCards,
 }: Readonly<AddressQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -110,12 +90,6 @@ export function AddressQuestion({
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = safeValue.length === 6 && safeValue.every((item) => item.trim() === "");
-    if (containsAllEmptyStrings) {
-      onSubmit({ [question.id]: [] }, updatedTtc);
-    } else {
-      onSubmit({ [question.id]: safeValue }, updatedTtc);
-    }
   };
 
   const addressRef = useCallback(
@@ -129,86 +103,61 @@ export function AddressQuestion({
   );
 
   return (
-    <ScrollableContainer fullSizeCards={fullSizeCards}>
-      <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
-        <div>
-          {isMediaAvailable ? (
-            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-          ) : null}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
+    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
+      <div>
+        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
 
-          <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
-            {fields.map((field, index) => {
-              const isFieldRequired = () => {
-                if (field.required) {
-                  return true;
-                }
+        <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
+          {fields.map((field, index) => {
+            const isFieldRequired = () => {
+              if (field.required) {
+                return true;
+              }
 
-                // if all fields are optional and the question is required, then the fields should be required
-                if (
-                  fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
-                  question.required
-                ) {
-                  return true;
-                }
+              // if all fields are optional and the question is required, then the fields should be required
+              if (
+                fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
+                question.required
+              ) {
+                return true;
+              }
 
-                return false;
-              };
+              return false;
+            };
 
-              return (
-                field.show && (
-                  <div className="fb-space-y-1">
-                    <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
-                    <Input
-                      id={field.id}
-                      key={field.id}
-                      required={isFieldRequired()}
-                      value={safeValue[index] || ""}
-                      type={field.id === "email" ? "email" : "text"}
-                      onChange={(e) => {
-                        handleChange(field.id, e.currentTarget.value);
-                      }}
-                      ref={index === 0 ? addressRef : null}
-                      tabIndex={isCurrent ? 0 : -1}
-                      aria-label={field.label}
-                      dir={!safeValue[index] ? dir : "auto"}
-                    />
-                  </div>
-                )
-              );
-            })}
-          </div>
-          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-            <SubmitButton
-              tabIndex={isCurrent ? 0 : -1}
-              buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
-              isLastQuestion={isLastQuestion}
-            />
-            <div />
-            {!isFirstQuestion && !isBackButtonHidden && (
-              <BackButton
-                tabIndex={isCurrent ? 0 : -1}
-                backButtonLabel={
-                  backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined
-                }
-                onClick={() => {
-                  const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                  setTtc(updatedttc);
-                  onBack();
-                }}
-              />
-            )}
-          </div>
+            return (
+              field.show && (
+                <div className="fb-space-y-1">
+                  <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
+                  <Input
+                    id={field.id}
+                    key={field.id}
+                    required={isFieldRequired()}
+                    value={safeValue[index] || ""}
+                    type={field.id === "email" ? "email" : "text"}
+                    onChange={(e) => {
+                      handleChange(field.id, e.currentTarget.value);
+                    }}
+                    ref={index === 0 ? addressRef : null}
+                    tabIndex={isCurrent ? 0 : -1}
+                    aria-label={field.label}
+                    dir={!safeValue[index] ? dir : "auto"}
+                  />
+                </div>
+              )
+            );
+          })}
         </div>
-      </form>
-    </ScrollableContainer>
+      </div>
+    </form>
   );
 }

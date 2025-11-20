@@ -9,7 +9,8 @@ import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -22,9 +23,9 @@ import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyMatrixQuestion;
+  question: TSurveyMatrixElement;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMatrixQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMatrixElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
