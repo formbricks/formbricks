@@ -96,11 +96,17 @@ export const ResponsePage = ({
     }
   }, [searchParams, resetState]);
 
+  // Only fetch if filters are applied (not on initial mount with no filters)
+  const hasFilters =
+    selectedFilter?.responseStatus !== "all" ||
+    (selectedFilter?.filter && selectedFilter.filter.length > 0) ||
+    (dateRange.from && dateRange.to);
+
   useEffect(() => {
     const fetchFilteredResponses = async () => {
       try {
         // skip call for initial mount
-        if (page === null) {
+        if (page === null && !hasFilters) {
           setPage(1);
           return;
         }
@@ -126,11 +132,6 @@ export const ResponsePage = ({
         setIsFetchingFirstPage(false);
       }
     };
-
-    // Only fetch if filters are applied (not on initial mount with no filters)
-    const hasFilters =
-      (selectedFilter && Object.keys(selectedFilter).length > 0) ||
-      (dateRange && (dateRange.from || dateRange.to));
 
     if (hasFilters) {
       fetchFilteredResponses();
