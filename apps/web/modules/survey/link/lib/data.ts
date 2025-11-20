@@ -57,6 +57,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         surveyClosedMessage: true,
         showLanguageSwitch: true,
         recaptcha: true,
+        metadata: true,
 
         // Related data
         languages: {
