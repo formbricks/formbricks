@@ -110,6 +110,7 @@ export const ResponsePage = ({
           setPage(1);
           return;
         }
+        setPage(1);
         setIsFetchingFirstPage(true);
         let responses: TResponseWithQuotas[] = [];
 
@@ -132,10 +133,7 @@ export const ResponsePage = ({
         setIsFetchingFirstPage(false);
       }
     };
-
-    if (hasFilters) {
-      fetchFilteredResponses();
-    }
+    fetchFilteredResponses();
   }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
