@@ -20,18 +20,37 @@ interface SurveyQuestion {
   [key: string]: unknown;
 }
 
-interface Condition {
+// Single condition type (leaf node)
+interface SingleCondition {
   id: string;
-  leftOperand?: { value: string; type: string; meta?: Record<string, unknown> };
-  operator?: string;
+  leftOperand: { value: string; type: string; meta?: Record<string, unknown> };
+  operator: string;
   rightOperand?: { type: string; value: string | number | string[] };
-  conditions?: Condition[];
-  connector?: string;
+  connector?: undefined; // Single conditions don't have connectors
 }
+
+// Condition group type (has nested conditions)
+interface ConditionGroup {
+  id: string;
+  connector: "and" | "or";
+  conditions: Condition[];
+}
+
+// Union type for both
+type Condition = SingleCondition | ConditionGroup;
+
+// Type guards
+const isSingleCondition = (condition: Condition): condition is SingleCondition => {
+  return "leftOperand" in condition && "operator" in condition;
+};
+
+const isConditionGroup = (condition: Condition): condition is ConditionGroup => {
+  return "conditions" in condition && "connector" in condition;
+};
 
 interface SurveyLogic {
   id: string;
-  conditions: Condition;
+  conditions: ConditionGroup; // Logic always starts with a condition group
   actions: LogicAction[];
 }
 
@@ -74,6 +93,7 @@ interface CTAMigrationStats {
 
 /**
  * Check if a condition references a CTA element with a specific operator
+ * Can handle both SingleCondition and ConditionGroup
  */
 const conditionReferencesCTA = (
   condition: Condition | null | undefined,
@@ -82,14 +102,19 @@ const conditionReferencesCTA = (
 ): boolean => {
   if (!condition) return false;
 
-  if (condition.leftOperand?.value === ctaElementId) {
-    if (operator) {
-      return condition.operator === operator;
+  // Check if it's a single condition
+  if (isSingleCondition(condition)) {
+    if (condition.leftOperand.value === ctaElementId) {
+      if (operator) {
+        return condition.operator === operator;
+      }
+      return true;
     }
-    return true;
+    return false;
   }
 
-  if (condition.conditions && Array.isArray(condition.conditions)) {
+  // It's a condition group - check nested conditions
+  if (isConditionGroup(condition)) {
     return condition.conditions.some((c) => conditionReferencesCTA(c, ctaElementId, operator));
   }
 
@@ -100,23 +125,28 @@ const conditionReferencesCTA = (
  * Remove conditions that reference a CTA element with specific operators
  */
 const removeCtaConditions = (
-  conditionGroup: Condition,
+  conditionGroup: ConditionGroup,
   ctaElementId: string,
   operatorsToRemove: string[]
-): Condition | null => {
-  if (!conditionGroup.conditions) return conditionGroup;
-
+): ConditionGroup | null => {
   const filteredConditions = conditionGroup.conditions.filter((condition) => {
-    if (condition.leftOperand?.value === ctaElementId && condition.operator) {
-      return !operatorsToRemove.includes(condition.operator);
+    // Check if it's a single condition referencing the CTA
+    if (isSingleCondition(condition)) {
+      if (condition.leftOperand.value === ctaElementId) {
+        return !operatorsToRemove.includes(condition.operator);
+      }
+      return true;
     }
 
-    if (condition.conditions && Array.isArray(condition.conditions)) {
+    // It's a condition group - recurse
+    if (isConditionGroup(condition)) {
       const cleaned = removeCtaConditions(condition, ctaElementId, operatorsToRemove);
-      if (!cleaned?.conditions || cleaned.conditions.length === 0) {
+      if (!cleaned || cleaned.conditions.length === 0) {
         return false;
       }
+      // Replace the condition with the cleaned version
       Object.assign(condition, cleaned);
+      return true;
     }
 
     return true;
@@ -334,6 +364,53 @@ const updateLogicFallback = (
 };
 
 /**
+ * Convert logic operand types from "question" to "element" recursively (immutable)
+ * @param condition - Condition or condition group to convert
+ * @returns New condition object with "element" type instead of "question"
+ */
+const convertQuestionToElementType = (condition: Condition | null | undefined): Condition | null => {
+  if (!condition) return null;
+
+  // Handle single condition
+  if (isSingleCondition(condition)) {
+    const newCondition: SingleCondition = { ...condition };
+
+    // Update leftOperand if it's of type "question"
+    if (condition.leftOperand.type === "question") {
+      newCondition.leftOperand = {
+        ...condition.leftOperand,
+        type: "element",
+      };
+    }
+
+    // Update rightOperand if it exists and is of type "question"
+    if (condition.rightOperand && condition.rightOperand.type === "question") {
+      newCondition.rightOperand = {
+        ...condition.rightOperand,
+        type: "element",
+      };
+    }
+
+    return newCondition;
+  }
+
+  // Handle condition group
+  if (isConditionGroup(condition)) {
+    const newConditionGroup: ConditionGroup = {
+      ...condition,
+      conditions: condition.conditions.map((nestedCondition) => {
+        const converted = convertQuestionToElementType(nestedCondition);
+        return converted ?? nestedCondition;
+      }),
+    };
+
+    return newConditionGroup;
+  }
+
+  return null;
+};
+
+/**
  * Migrate a survey from questions to blocks structure
  * Each question becomes a block with a single element
  * @param survey - Survey record with questions
@@ -384,10 +461,22 @@ const migrateQuestionsSurveyToBlocks = (
   // Phase 2: Update all logic references
   for (const block of blocks) {
     if (block.logic && block.logic.length > 0) {
-      block.logic = block.logic.map((item) => ({
-        ...item,
-        actions: updateLogicActions(item.actions, questionIdToBlockId, endingIds),
-      }));
+      block.logic = block.logic.map((item) => {
+        // Convert "question" type to "element" type in conditions (immutably)
+        const updatedConditions = convertQuestionToElementType(item.conditions);
+
+        // Since item.conditions is always a ConditionGroup, the result should be too
+        if (!updatedConditions || !isConditionGroup(updatedConditions)) {
+          // This should never happen, but if it does, keep the original
+          return item;
+        }
+
+        return {
+          ...item,
+          conditions: updatedConditions,
+          actions: updateLogicActions(item.actions, questionIdToBlockId, endingIds),
+        };
+      });
     }
 
     if (block.logicFallback) {

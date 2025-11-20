@@ -418,7 +418,7 @@ export const mockSurveyWithLogic: TSurvey = {
             conditions: [
               {
                 id: "swlje0bsnh6lkyk8vqs13oyr",
-                leftOperand: { type: "question", value: "q1" },
+                leftOperand: { type: "element", value: "q1" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "blue" },
               },
@@ -434,13 +434,13 @@ export const mockSurveyWithLogic: TSurvey = {
             conditions: [
               {
                 id: "n74oght3ozqgwm9rifp2fxrr",
-                leftOperand: { type: "question", value: "q1" },
+                leftOperand: { type: "element", value: "q1" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "blue" },
               },
               {
                 id: "fg4c9dwt9qjy8aba7zxbfdqd",
-                leftOperand: { type: "question", value: "q2" },
+                leftOperand: { type: "element", value: "q2" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "pizza" },
               },
@@ -456,13 +456,13 @@ export const mockSurveyWithLogic: TSurvey = {
             conditions: [
               {
                 id: "tmj7p9d3kpz1v4mcgpguqytw",
-                leftOperand: { type: "question", value: "q2" },
+                leftOperand: { type: "element", value: "q2" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "pizza" },
               },
               {
                 id: "rs7v5mmoetff7x8lo1gdsgpr",
-                leftOperand: { type: "question", value: "q3" },
+                leftOperand: { type: "element", value: "q3" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "Inception" },
               },
@@ -480,7 +480,7 @@ export const mockSurveyWithLogic: TSurvey = {
                 id: "ddhaccfqy7rr3d5jdswl8yl8",
                 leftOperand: { type: "variable", value: "siog1dabtpo3l0a3xoxw2922" },
                 operator: "equals",
-                rightOperand: { type: "question", value: "q4" },
+                rightOperand: { type: "element", value: "q4" },
               },
             ],
           },
@@ -502,7 +502,7 @@ export const mockSurveyWithLogic: TSurvey = {
                 id: "ot894j7nwna24i6jo2zpk59o",
                 leftOperand: { type: "variable", value: "km1srr55owtn2r7lkoh5ny1u" },
                 operator: "isLessThan",
-                rightOperand: { type: "question", value: "q5" },
+                rightOperand: { type: "element", value: "q5" },
               },
             ],
           },
@@ -516,7 +516,7 @@ export const mockSurveyWithLogic: TSurvey = {
             conditions: [
               {
                 id: "rb223vmzuuzo3ag1bp2m3i69",
-                leftOperand: { type: "question", value: "q6" },
+                leftOperand: { type: "element", value: "q6" },
                 operator: "includesOneOf",
                 rightOperand: {
                   type: "static",
@@ -525,7 +525,7 @@ export const mockSurveyWithLogic: TSurvey = {
               },
               {
                 id: "ot894j7nwna24i6jo2zpk59o",
-                leftOperand: { type: "question", value: "q1" },
+                leftOperand: { type: "element", value: "q1" },
                 operator: "doesNotEqual",
                 rightOperand: { type: "static", value: "teal" },
               },
@@ -535,7 +535,7 @@ export const mockSurveyWithLogic: TSurvey = {
                 conditions: [
                   {
                     id: "gy6xowchkv8bp1qj7ur79jvc",
-                    leftOperand: { type: "question", value: "q2" },
+                    leftOperand: { type: "element", value: "q2" },
                     operator: "doesNotEqual",
                     rightOperand: { type: "static", value: "pizza" },
                   },
@@ -543,13 +543,13 @@ export const mockSurveyWithLogic: TSurvey = {
                     id: "vxyccgwsbq34s3l0syom7y2w",
                     leftOperand: { type: "hiddenField", value: "name" },
                     operator: "contains",
-                    rightOperand: { type: "question", value: "q2" },
+                    rightOperand: { type: "element", value: "q2" },
                   },
                 ],
               },
               {
                 id: "yunz0k9w0xwparogz2n1twoy",
-                leftOperand: { type: "question", value: "q3" },
+                leftOperand: { type: "element", value: "q3" },
                 operator: "doesNotEqual",
                 rightOperand: { type: "static", value: "Inception" },
               },

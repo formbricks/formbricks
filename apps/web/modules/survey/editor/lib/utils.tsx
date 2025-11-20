@@ -138,7 +138,7 @@ export const getConditionValueOptions = (
           label: `${getTextContent(processedLabel.default ?? "")} (${elementHeadline})`,
           value: `${element.id}.${rowIdx}`,
           meta: {
-            type: "question",
+            type: "element",
             rowIdx: rowIdx.toString(),
           },
         };
@@ -149,7 +149,7 @@ export const getConditionValueOptions = (
         label: elementHeadline,
         value: element.id,
         meta: {
-          type: "question",
+          type: "element",
         },
         children: [
           {
@@ -161,7 +161,7 @@ export const getConditionValueOptions = (
             label: t("environments.surveys.edit.matrix_all_fields", "All fields"),
             value: element.id,
             meta: {
-              type: "question",
+              type: "element",
             },
           },
         ],
@@ -174,7 +174,7 @@ export const getConditionValueOptions = (
         ),
         value: element.id,
         meta: {
-          type: "question",
+          type: "element",
         },
       });
     }
@@ -261,7 +261,7 @@ export const getElementOperatorOptions = (
     options = getLogicRules(t).question[`openText.${inputType}`].options;
   } else if (element.type === TSurveyElementTypeEnum.Matrix && condition) {
     const isMatrixRow =
-      condition.leftOperand.type === "question" && condition.leftOperand?.meta?.row !== undefined;
+      condition.leftOperand.type === "element" && condition.leftOperand?.meta?.row !== undefined;
     options = getLogicRules(t).question[`matrix${isMatrixRow ? ".row" : ""}`].options;
   } else {
     options = getLogicRules(t).question[element.type].options;
@@ -284,7 +284,7 @@ export const getDefaultOperatorForElement = (
 };
 
 export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurvey: TSurvey): string => {
-  if (condition.leftOperand.type === "question") {
+  if (condition.leftOperand.type === "element") {
     const questions = getElementsFromBlocks(localSurvey.blocks);
     const question = questions.find((q) => q.id === condition.leftOperand.value);
     if (question && question.type === TSurveyElementTypeEnum.Matrix) {
@@ -308,7 +308,7 @@ export const getConditionOperatorOptions = (
     return getLogicRules(t)[`variable.${variableType}`].options;
   } else if (condition.leftOperand.type === "hiddenField") {
     return getLogicRules(t).hiddenField.options;
-  } else if (condition.leftOperand.type === "question") {
+  } else if (condition.leftOperand.type === "element") {
     // Derive questions from blocks
     const elements = getElementsFromBlocks(localSurvey.blocks);
     const element = elements.find((question) => {
@@ -370,7 +370,7 @@ export const getMatchValueProps = (
   const selectedElement = elements.find((element) => element.id === condition.leftOperand.value);
   const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.value);
 
-  if (condition.leftOperand.type === "question") {
+  if (condition.leftOperand.type === "element") {
     elements = elements.filter((element) => element.id !== condition.leftOperand.value);
   } else if (condition.leftOperand.type === "variable") {
     variables = variables.filter((variable) => variable.id !== condition.leftOperand.value);
@@ -378,7 +378,7 @@ export const getMatchValueProps = (
     hiddenFields = hiddenFields.filter((field) => field !== condition.leftOperand.value);
   }
 
-  if (condition.leftOperand.type === "question") {
+  if (condition.leftOperand.type === "element") {
     if (selectedElement?.type === TSurveyElementTypeEnum.OpenText) {
       const allowedElementTypes = [TSurveyElementTypeEnum.OpenText];
 
@@ -406,7 +406,7 @@ export const getMatchValueProps = (
           ),
           value: element.id,
           meta: {
-            type: "question",
+            type: "element",
           },
         };
       });
@@ -623,7 +623,7 @@ export const getMatchValueProps = (
           ),
           value: element.id,
           meta: {
-            type: "question",
+            type: "element",
           },
         };
       });
@@ -721,7 +721,7 @@ export const getMatchValueProps = (
           label: getTextContent(processedHeadline.default ?? ""),
           value: element.id,
           meta: {
-            type: "question",
+            type: "element",
           },
         };
       });
@@ -796,7 +796,7 @@ export const getMatchValueProps = (
           label: getTextContent(processedHeadline.default ?? ""),
           value: element.id,
           meta: {
-            type: "question",
+            type: "element",
           },
         };
       });
@@ -877,7 +877,7 @@ export const getMatchValueProps = (
         label: getTextContent(processedHeadline.default ?? ""),
         value: element.id,
         meta: {
-          type: "question",
+          type: "element",
         },
       };
     });
@@ -1120,7 +1120,7 @@ export const getActionValueOptions = (
         label: getTextContent(processedHeadline.default ?? ""),
         value: element.id,
         meta: {
-          type: "question",
+          type: "element",
         },
       };
     });
@@ -1178,7 +1178,7 @@ export const getActionValueOptions = (
         label: getTextContent(getLocalizedValue(element.headline, "default")),
         value: element.id,
         meta: {
-          type: "question",
+          type: "element",
         },
       };
     });
@@ -1230,12 +1230,12 @@ export const getActionValueOptions = (
 
 const isUsedInLeftOperand = (
   leftOperand: TLeftOperand,
-  type: "question" | "hiddenField" | "variable",
+  type: "element" | "hiddenField" | "variable",
   id: string
 ): boolean => {
   switch (type) {
-    case "question":
-      return leftOperand.type === "question" && leftOperand.value === id;
+    case "element":
+      return leftOperand.type === "element" && leftOperand.value === id;
     case "hiddenField":
       return leftOperand.type === "hiddenField" && leftOperand.value === id;
     case "variable":
@@ -1247,12 +1247,12 @@ const isUsedInLeftOperand = (
 
 const isUsedInRightOperand = (
   rightOperand: TRightOperand,
-  type: "question" | "hiddenField" | "variable",
+  type: "element" | "hiddenField" | "variable",
   id: string
 ): boolean => {
   switch (type) {
-    case "question":
-      return rightOperand.type === "question" && rightOperand.value === id;
+    case "element":
+      return rightOperand.type === "element" && rightOperand.value === id;
     case "hiddenField":
       return rightOperand.type === "hiddenField" && rightOperand.value === id;
     case "variable":
@@ -1277,8 +1277,8 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
     } else {
       // It's a TSingleCondition
       return (
-        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "question", questionId)) ||
-        isUsedInLeftOperand(condition.leftOperand, "question", questionId)
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "element", questionId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "element", questionId)
       );
     }
   };
@@ -1329,8 +1329,8 @@ export const isUsedInQuota = (
   if (questionId) {
     return quota.logic.conditions.some(
       (condition) =>
-        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "question", questionId)) ||
-        isUsedInLeftOperand(condition.leftOperand, "question", questionId)
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "element", questionId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "element", questionId)
     );
   }
 
@@ -1441,7 +1441,7 @@ export const findOptionUsedInLogic = (
   };
 
   const isUsedInOperand = (condition: TSingleCondition): boolean => {
-    if (condition.leftOperand.type === "question" && condition.leftOperand.value === questionId) {
+    if (condition.leftOperand.type === "element" && condition.leftOperand.value === questionId) {
       if (checkInLeftOperand) {
         if (condition.leftOperand.meta && Object.entries(condition.leftOperand.meta).length > 0) {
           const optionIdInMeta = Object.values(condition.leftOperand.meta).some(

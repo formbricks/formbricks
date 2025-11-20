@@ -170,7 +170,7 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
 
     const getRecallItemType = () => {
       if (isHiddenField) return "hiddenField";
-      if (isSurveyQuestion) return "question";
+      if (isSurveyQuestion) return "element";
       if (isVariable) return "variable";
     };
 

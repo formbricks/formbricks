@@ -61,7 +61,7 @@ export function createSharedConditionsFactory(
 
   // Handles special update logic for matrix elements, setting appropriate operators and metadata
   const handleMatrixElementUpdate = (resourceId: string, updates: Partial<TSingleCondition>): boolean => {
-    if (updates.leftOperand && updates.leftOperand.type === "question") {
+    if (updates.leftOperand && updates.leftOperand.type === "element") {
       const [elementId, rowId] = updates.leftOperand.value.split(".");
       const element = elements.find((q) => q.id === elementId);
 
@@ -73,7 +73,7 @@ export function createSharedConditionsFactory(
             updateCondition(conditionsCopy, resourceId, {
               leftOperand: {
                 value: elementId,
-                type: "question",
+                type: "element",
                 meta: {
                   row: rowId,
                 },
@@ -112,7 +112,7 @@ export function createSharedConditionsFactory(
       const defaultOperator = elements.length > 0 ? getDefaultOperatorForElement(elements[0], t) : "equals";
       const newCondition: TSingleCondition = {
         id: createId(),
-        leftOperand: { value: defaultLeftOperandValue, type: "question" },
+        leftOperand: { value: defaultLeftOperandValue, type: "element" },
         operator: defaultOperator,
       };
 
@@ -149,7 +149,7 @@ export function createSharedConditionsFactory(
       }
 
       // Check if the operator is correct for the element
-      if (updates.leftOperand?.type === "question" && updates.operator) {
+      if (updates.leftOperand?.type === "element" && updates.operator) {
         const elementId = updates.leftOperand.value.split(".")[0];
         const element = elements.find((q) => q.id === elementId);
 
@@ -219,7 +219,7 @@ export const genericConditionsToQuota = (genericConditions: TQuotaConditionGroup
       leftOperand: {
         type: leftOperand.type,
         value: leftOperand.value,
-        ...(leftOperand.type === "question" && leftOperand.meta && { meta: leftOperand.meta }),
+        ...(leftOperand.type === "element" && leftOperand.meta && { meta: leftOperand.meta }),
       },
       operator: condition.operator,
       rightOperand: condition.rightOperand,
