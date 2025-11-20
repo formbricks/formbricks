@@ -80,7 +80,7 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
 
     loadScript();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [props]);
 
   useEffect(() => {
     if (isScriptLoaded) {
