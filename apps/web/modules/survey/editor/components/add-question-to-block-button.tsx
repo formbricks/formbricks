@@ -1,7 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { Project } from "@prisma/client";
+import { type Project } from "@prisma/client";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";

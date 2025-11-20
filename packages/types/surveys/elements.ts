@@ -126,6 +126,8 @@ export const ZSurveyElementChoice = z.object({
   label: ZI18nString,
 });
 
+export type TSurveyElementChoice = z.infer<typeof ZSurveyElementChoice>;
+
 export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 
