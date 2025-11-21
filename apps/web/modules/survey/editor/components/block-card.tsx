@@ -36,6 +36,7 @@ import { PictureSelectionForm } from "@/modules/survey/editor/components/picture
 import { RankingQuestionForm } from "@/modules/survey/editor/components/ranking-question-form";
 import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-question-form";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
+import { isLabelValidForAllLanguages } from "@/modules/survey/editor/lib/validation";
 import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 
@@ -123,9 +124,26 @@ export const BlockCard = ({
   const hasMultipleElements = block.elements.length > 1;
   const blockLogic = block.logic ?? [];
 
+  // Check if any element in this block is currently active
   const isBlockOpen = block.elements.some((element) => element.id === activeQuestionId);
 
-  const isBlockInvalid = block.elements.some((element) => invalidQuestions?.includes(element.id));
+  const hasInvalidElement = block.elements.some((element) => invalidQuestions?.includes(element.id));
+
+  // Check if button labels have incomplete translations for any enabled language
+  // A button label is invalid if it exists but doesn't have valid text for all enabled languages
+  const hasInvalidButtonLabel =
+    block.buttonLabel !== undefined &&
+    !isLabelValidForAllLanguages(block.buttonLabel, localSurvey.languages ?? []);
+
+  // Check if back button label is invalid
+  // Back button label should exist for all blocks except the first one
+  const hasInvalidBackButtonLabel =
+    blockIdx > 0 &&
+    block.backButtonLabel !== undefined &&
+    !isLabelValidForAllLanguages(block.backButtonLabel, localSurvey.languages ?? []);
+
+  // Block should be highlighted if it has invalid elements OR invalid button labels
+  const isBlockInvalid = hasInvalidElement || hasInvalidButtonLabel || hasInvalidBackButtonLabel;
 
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [openAdvanced, setOpenAdvanced] = useState(blockLogic.length > 0);

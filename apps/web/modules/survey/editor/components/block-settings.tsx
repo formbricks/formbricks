@@ -8,6 +8,7 @@ import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { ConditionalLogic } from "@/modules/survey/editor/components/conditional-logic";
 
@@ -102,11 +103,15 @@ export const BlockSettings = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 onBlur={(e) => {
-                  if (!block.backButtonLabel) return;
-                  const translatedBackButtonLabel = {
-                    ...block.backButtonLabel,
-                    [selectedLanguageCode]: e.target.value,
-                  };
+                  const languageSymbols = extractLanguageCodes(localSurvey.languages ?? []);
+                  const existingLabel = block.backButtonLabel || {};
+                  const translatedBackButtonLabel = addMultiLanguageLabels(
+                    {
+                      ...existingLabel,
+                      [selectedLanguageCode]: e.target.value,
+                    },
+                    languageSymbols
+                  );
                   updateBlockButtonLabel(blockIndex, "backButtonLabel", translatedBackButtonLabel);
                   updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, blockIndex);
                 }}
@@ -121,11 +126,17 @@ export const BlockSettings = ({
               isInvalid={false}
               updateQuestion={(_, updatedAttributes) => {
                 if ("buttonLabel" in updatedAttributes) {
+                  const languageSymbols = extractLanguageCodes(localSurvey.languages ?? []);
                   const buttonLabel = updatedAttributes.buttonLabel as TI18nString;
-                  updateBlockButtonLabel(blockIndex, "buttonLabel", {
-                    ...block.buttonLabel,
-                    [selectedLanguageCode]: buttonLabel[selectedLanguageCode],
-                  });
+                  const existingLabel = block.buttonLabel || {};
+                  const updatedButtonLabel = addMultiLanguageLabels(
+                    {
+                      ...existingLabel,
+                      [selectedLanguageCode]: buttonLabel[selectedLanguageCode],
+                    },
+                    languageSymbols
+                  );
+                  updateBlockButtonLabel(blockIndex, "buttonLabel", updatedButtonLabel);
                 }
               }}
               selectedLanguageCode={selectedLanguageCode}
@@ -134,11 +145,15 @@ export const BlockSettings = ({
               locale={locale}
               isStorageConfigured={isStorageConfigured}
               onBlur={(e) => {
-                if (!block.buttonLabel) return;
-                const translatedNextButtonLabel = {
-                  ...block.buttonLabel,
-                  [selectedLanguageCode]: e.target.value,
-                };
+                const languageSymbols = extractLanguageCodes(localSurvey.languages ?? []);
+                const existingLabel = block.buttonLabel || {};
+                const translatedNextButtonLabel = addMultiLanguageLabels(
+                  {
+                    ...existingLabel,
+                    [selectedLanguageCode]: e.target.value,
+                  },
+                  languageSymbols
+                );
                 updateBlockButtonLabel(blockIndex, "buttonLabel", translatedNextButtonLabel);
                 // Don't propagate to last block
                 const lastBlockIndex = localSurvey.blocks.length - 1;
