@@ -169,7 +169,7 @@ export function OpenTextQuestion({
         )}
         {question.inputType === "text" && question.charLimit?.max !== undefined && (
           <span
-            className={`fb-text-xs ${currentLength >= question.charLimit?.max ? "fb-text-red-500 font-semibold" : "text-neutral-400"}`}>
+            className={`fb-text-xs ${currentLength >= question.charLimit?.max ? "fb-text-red-500 fb-font-semibold" : "fb-text-neutral-400"}`}>
             {currentLength}/{question.charLimit?.max}
           </span>
         )}

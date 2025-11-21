@@ -35,10 +35,11 @@ export function CalQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const onSuccessfulBooking = useCallback(() => {
+    setErrorMessage("");
     onChange({ [question.id]: "booked" });
     const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedttc);
-  }, [onChange, question.id, setTtc, startTime, ttc]);
+  }, [onChange, question.id, setTtc, startTime, ttc, setErrorMessage]);
 
   return (
     <form

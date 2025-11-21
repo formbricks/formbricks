@@ -1199,7 +1199,10 @@ export const ZSurvey = z
         // Validate block button labels
         const defaultLanguageCode = "default";
 
-        if (block.buttonLabel && block.buttonLabel[defaultLanguageCode].trim() !== "") {
+        if (
+          block.buttonLabel?.[defaultLanguageCode] &&
+          block.buttonLabel[defaultLanguageCode].trim() !== ""
+        ) {
           // Validate button label for all enabled languages
           const enabledLanguages = languages.filter((lang) => lang.enabled);
           const languageCodes = enabledLanguages.map((lang) =>
@@ -1224,7 +1227,10 @@ export const ZSurvey = z
           }
         }
 
-        if (block.backButtonLabel && block.backButtonLabel[defaultLanguageCode].trim() !== "") {
+        if (
+          block.backButtonLabel?.[defaultLanguageCode] &&
+          block.backButtonLabel[defaultLanguageCode].trim() !== ""
+        ) {
           // Validate back button label for all enabled languages
           const enabledLanguages = languages.filter((lang) => lang.enabled);
           const languageCodes = enabledLanguages.map((lang) =>
