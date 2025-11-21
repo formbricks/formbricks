@@ -123,19 +123,15 @@ export const BlockCard = ({
   const hasMultipleElements = block.elements.length > 1;
   const blockLogic = block.logic ?? [];
 
-  // Check if any element in this block is currently active
   const isBlockOpen = block.elements.some((element) => element.id === activeQuestionId);
 
-  const hasInvalidElement = block.elements.some((element) => invalidQuestions?.includes(element.id));
+  const isBlockInvalid = block.elements.some((element) => invalidQuestions?.includes(element.id));
 
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [openAdvanced, setOpenAdvanced] = useState(blockLogic.length > 0);
 
   const [parent] = useAutoAnimate();
   const [elementsParent] = useAutoAnimate();
-
-  // Get button labels from the block
-  const blockButtonLabel = block.buttonLabel;
 
   const getElementHeadline = (
     element: TSurveyElement,
@@ -164,11 +160,7 @@ export const BlockCard = ({
     );
   };
 
-  const renderElementForm = (
-    element: TSurveyElement,
-    questionIdx: number,
-    blockButtonLabel?: TI18nString
-  ) => {
+  const renderElementForm = (element: TSurveyElement, questionIdx: number) => {
     switch (element.type) {
       case TSurveyElementTypeEnum.OpenText:
         return (
@@ -223,14 +215,12 @@ export const BlockCard = ({
             question={element}
             questionIdx={questionIdx}
             updateQuestion={updateQuestion}
-            lastQuestion={lastQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
-            buttonLabel={blockButtonLabel}
           />
         );
       case TSurveyElementTypeEnum.CTA:
@@ -430,7 +420,7 @@ export const BlockCard = ({
         {...listeners}
         {...attributes}
         className={cn(
-          hasInvalidElement ? "bg-red-400" : isBlockOpen ? "bg-slate-700" : "bg-slate-400",
+          isBlockInvalid ? "bg-red-400" : isBlockOpen ? "bg-slate-700" : "bg-slate-400",
           "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
           "flex flex-col items-center justify-between gap-2"
         )}>
@@ -463,9 +453,9 @@ export const BlockCard = ({
               </div>
               <div onClick={(e) => e.stopPropagation()}>
                 <BlockMenu
-                  blockIndex={blockIdx}
                   isFirstBlock={blockIdx === 0}
                   isLastBlock={blockIdx === totalBlocks - 1}
+                  isOnlyBlock={totalBlocks === 1}
                   onDuplicate={() => duplicateBlock(block.id)}
                   onDelete={() => deleteBlock(block.id)}
                   onMoveUp={() => moveBlock(block.id, "up")}
@@ -486,13 +476,12 @@ export const BlockCard = ({
                 }
                 questionIdx += elementIndex;
 
-                const isInvalid = invalidQuestions ? invalidQuestions.includes(element.id) : false;
-                const open = activeQuestionId === element.id;
+                const isOpen = activeQuestionId === element.id;
 
                 return (
                   <div key={element.id} className={cn(elementIndex > 0 && "border-t border-slate-200")}>
                     <Collapsible.Root
-                      open={open}
+                      open={isOpen}
                       onOpenChange={() => {
                         if (activeQuestionId !== element.id) {
                           setActiveQuestionId(element.id);
@@ -504,7 +493,7 @@ export const BlockCard = ({
                       <Collapsible.CollapsibleTrigger
                         asChild
                         className={cn(
-                          open ? "bg-slate-50" : "",
+                          isOpen ? "bg-slate-50" : "",
                           "flex w-full cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50"
                         )}
                         aria-label="Toggle question details">
@@ -523,7 +512,7 @@ export const BlockCard = ({
                                 <h3 className="text-sm font-semibold">
                                   {getElementHeadline(element, selectedLanguageCode)}
                                 </h3>
-                                {!open && (
+                                {!isOpen && (
                                   <p className="mt-1 truncate text-xs text-slate-500">
                                     {element?.required
                                       ? t("environments.surveys.edit.required")
@@ -561,7 +550,7 @@ export const BlockCard = ({
                           </div>
                         </div>
                       </Collapsible.CollapsibleTrigger>
-                      <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-4"}`}>
+                      <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
                         {shouldShowCautionAlert(element.type) && (
                           <Alert variant="warning" size="small" className="w-fill" role="alert">
                             <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
@@ -570,7 +559,7 @@ export const BlockCard = ({
                             </AlertButton>
                           </Alert>
                         )}
-                        {renderElementForm(element, questionIdx, blockButtonLabel)}
+                        {renderElementForm(element, questionIdx)}
                         <div className="mt-4">
                           <Collapsible.Root
                             open={openAdvanced}
