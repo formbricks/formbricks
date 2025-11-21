@@ -6,7 +6,9 @@
  */
 export const stripInlineStyles = (html: string): string => {
   // Remove style="..." or style='...' attributes
-  return html.replace(/\s+style\s*=\s*["'][^"']*["']/gi, "");
+  // Use separate patterns for each quote type to avoid ReDoS vulnerability
+  // The pattern [^"]* and [^']* are safe as they don't cause backtracking
+  return html.replace(/\s+style\s*=\s*"[^"]*"/gi, "").replace(/\s+style\s*=\s*'[^']*'/gi, "");
 };
 
 /**
