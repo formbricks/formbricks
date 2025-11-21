@@ -6,13 +6,12 @@ import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
-  TSurvey,
-  TSurveyEndScreenCard,
-  TSurveyQuestionChoice,
-  TSurveyRedirectUrlCard,
-} from "@formbricks/types/surveys/types";
+  TSurveyElement,
+  TSurveyElementChoice,
+  TSurveyElementTypeEnum,
+} from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
@@ -45,7 +44,7 @@ interface QuestionFormInputProps {
   questionIdx: number;
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyElement>) => void;
   updateSurvey?: (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => void;
-  updateChoice?: (choiceIdx: number, data: Partial<TSurveyQuestionChoice>) => void;
+  updateChoice?: (choiceIdx: number, data: Partial<TSurveyElementChoice>) => void;
   updateMatrixLabel?: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
   isInvalid: boolean;
   selectedLanguageCode: string;

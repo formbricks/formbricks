@@ -2,8 +2,11 @@ import { useEffect, useRef } from "preact/hooks";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { type TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
+import {
+  TSurveyElement,
+  TSurveyElementChoice,
+  TSurveyElementTypeEnum,
+} from "@formbricks/types/surveys/elements";
 import { AddressQuestion } from "@/components/questions/address-question";
 import { CalQuestion } from "@/components/questions/cal-question";
 import { ConsentQuestion } from "@/components/questions/consent-question";
@@ -74,10 +77,7 @@ export function ElementConditional({
     }
   }, [formRef]);
 
-  const getResponseValueForRankingQuestion = (
-    value: string[],
-    choices: TSurveyQuestionChoice[]
-  ): string[] => {
+  const getResponseValueForRankingQuestion = (value: string[], choices: TSurveyElementChoice[]): string[] => {
     return value
       .map((entry) => {
         // First check if entry is already a valid choice ID
@@ -87,7 +87,7 @@ export function ElementConditional({
         // Otherwise, treat it as a localized label and find the choice by label
         return choices.find((choice) => getLocalizedValue(choice.label, languageCode) === entry)?.id;
       })
-      .filter((id): id is TSurveyQuestionChoice["id"] => id !== undefined);
+      .filter((id): id is TSurveyElementChoice["id"] => id !== undefined);
   };
 
   useEffect(() => {
@@ -98,6 +98,20 @@ export function ElementConditional({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- we want to run this only once when the element renders for the first time
   }, []);
+
+  const isRecognizedType = Object.values(TSurveyElementTypeEnum).includes(element.type);
+
+  useEffect(() => {
+    if (!isRecognizedType) {
+      console.warn(
+        `[Formbricks] Unrecognized element type "${element.type}" for element with id "${element.id}". No component will be rendered.`
+      );
+    }
+  }, [element.type, element.id, isRecognizedType]);
+
+  if (!isRecognizedType) {
+    return null;
+  }
 
   return (
     <div ref={containerRef}>

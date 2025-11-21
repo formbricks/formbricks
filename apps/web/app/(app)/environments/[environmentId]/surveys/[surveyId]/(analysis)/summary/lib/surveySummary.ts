@@ -18,6 +18,7 @@ import {
   TSurveyAddressElement,
   TSurveyContactInfoElement,
   TSurveyElement,
+  TSurveyElementChoice,
   TSurveyElementTypeEnum,
 } from "@formbricks/types/surveys/elements";
 import {
@@ -33,7 +34,6 @@ import {
   TSurveyElementSummaryRanking,
   TSurveyElementSummaryRating,
   TSurveyLanguage,
-  TSurveyQuestionChoice,
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -323,7 +323,7 @@ const checkForI18n = (
   // Return the localized value of the choice fo multiSelect single question
   if (question && "choices" in question) {
     const choice = question.choices?.find(
-      (choice: TSurveyQuestionChoice) => choice.label?.[languageCode] === responseData[id]
+      (choice: TSurveyElementChoice) => choice.label?.[languageCode] === responseData[id]
     );
     return choice && "label" in choice
       ? getLocalizedValue(choice.label, "default") || responseData[id]

@@ -2,8 +2,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyRankingElement } from "@formbricks/types/surveys/elements";
-import type { TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
+import type { TSurveyElementChoice, TSurveyRankingElement } from "@formbricks/types/surveys/elements";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
@@ -55,7 +54,7 @@ export function RankingQuestion({
   const sortedItems = useMemo(() => {
     return localValue
       .map((id) => question.choices.find((c) => c.id === id))
-      .filter((item): item is TSurveyQuestionChoice => item !== undefined);
+      .filter((item): item is TSurveyElementChoice => item !== undefined);
   }, [localValue, question.choices]);
 
   const unsortedItems = useMemo(() => {
@@ -66,7 +65,7 @@ export function RankingQuestion({
   }, [question.choices, question.shuffleOption, localValue, sortedItems, shuffledChoicesIds]);
 
   const handleItemClick = useCallback(
-    (item: TSurveyQuestionChoice) => {
+    (item: TSurveyElementChoice) => {
       const isAlreadySorted = localValue.includes(item.id);
       const newLocalValue = isAlreadySorted
         ? localValue.filter((id) => id !== item.id)
@@ -77,7 +76,7 @@ export function RankingQuestion({
       // Immediately update parent state with the new ranking
       const sortedLabels = newLocalValue
         .map((id) => question.choices.find((c) => c.id === id))
-        .filter((item): item is TSurveyQuestionChoice => item !== undefined)
+        .filter((item): item is TSurveyElementChoice => item !== undefined)
         .map((item) => getLocalizedValue(item.label, languageCode));
       onChange({ [question.id]: sortedLabels });
 
@@ -101,7 +100,7 @@ export function RankingQuestion({
       // Immediately update parent state with the new ranking
       const sortedLabels = newLocalValue
         .map((id) => question.choices.find((c) => c.id === id))
-        .filter((item): item is TSurveyQuestionChoice => item !== undefined)
+        .filter((item): item is TSurveyElementChoice => item !== undefined)
         .map((item) => getLocalizedValue(item.label, languageCode));
       onChange({ [question.id]: sortedLabels });
 

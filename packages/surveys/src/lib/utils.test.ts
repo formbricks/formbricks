@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TJsEnvironmentStateSurvey } from "../../../types/js";
 import { type TAllowedFileExtension, mimeTypes } from "../../../types/storage";
 import { TSurveyElementTypeEnum } from "../../../types/surveys/elements";
-import type { TSurveyLanguage, TSurveyQuestionChoice } from "../../../types/surveys/types";
+import type { TSurveyLanguage } from "../../../types/surveys/types";
 import {
   findBlockByElementId,
   getDefaultLanguageCode,
-  getElementsFromSurvey,
+  getElementsFromSurveyBlocks,
   getMimeType,
   getShuffledChoicesIds,
   getShuffledRowIndices,
@@ -140,12 +140,12 @@ describe("getShuffledChoicesIds", () => {
     mockGetRandomValues.mockReset();
   });
 
-  const choicesBase: TSurveyQuestionChoice[] = [
+  const choicesBase = [
     { id: "c1", label: { en: "Choice 1" } },
     { id: "c2", label: { en: "Choice 2" } },
     { id: "c3", label: { en: "Choice 3" } },
   ];
-  const choicesWithOther: TSurveyQuestionChoice[] = [...choicesBase, { id: "other", label: { en: "Other" } }];
+  const choicesWithOther = [...choicesBase, { id: "other", label: { en: "Other" } }];
 
   test('should return unshuffled for "none"', () => {
     expect(getShuffledChoicesIds(choicesBase, "none")).toEqual(["c1", "c2", "c3"]);
@@ -225,7 +225,7 @@ describe("getQuestionsFromSurvey", () => {
       ],
     };
 
-    const questions = getElementsFromSurvey(survey);
+    const questions = getElementsFromSurveyBlocks(survey.blocks);
     expect(questions).toHaveLength(3);
     expect(questions[0].id).toBe("q1");
     expect(questions[1].id).toBe("q2");
@@ -238,7 +238,7 @@ describe("getQuestionsFromSurvey", () => {
       blocks: [],
     } as TJsEnvironmentStateSurvey;
 
-    expect(getElementsFromSurvey(survey)).toEqual([]);
+    expect(getElementsFromSurveyBlocks(survey.blocks)).toEqual([]);
   });
 
   test("should handle blocks with no elements", () => {
@@ -263,7 +263,7 @@ describe("getQuestionsFromSurvey", () => {
       ],
     };
 
-    const questions = getElementsFromSurvey(survey);
+    const questions = getElementsFromSurveyBlocks(survey.blocks);
     expect(questions).toHaveLength(1);
     expect(questions[0].id).toBe("q1");
   });
@@ -313,17 +313,17 @@ describe("findBlockByElementId", () => {
   };
 
   test("should find block containing the element", () => {
-    const block = findBlockByElementId(survey, "q1");
+    const block = findBlockByElementId(survey.blocks, "q1");
     expect(block).toBeDefined();
     expect(block?.id).toBe("block1");
 
-    const block2 = findBlockByElementId(survey, "q3");
+    const block2 = findBlockByElementId(survey.blocks, "q3");
     expect(block2).toBeDefined();
     expect(block2?.id).toBe("block2");
   });
 
   test("should return undefined for non-existent element", () => {
-    const block = findBlockByElementId(survey, "nonexistent");
+    const block = findBlockByElementId(survey.blocks, "nonexistent");
     expect(block).toBeUndefined();
   });
 });
