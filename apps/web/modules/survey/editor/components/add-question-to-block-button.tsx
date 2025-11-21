@@ -29,6 +29,7 @@ interface AddQuestionToBlockButtonProps {
   localSurvey: TSurvey;
   block: TSurveyBlock;
   setLocalSurvey: (survey: TSurvey) => void;
+  setActiveQuestionId: (questionId: string) => void;
   project: Project;
   isCxMode: boolean;
 }
@@ -37,6 +38,7 @@ export const AddQuestionToBlockButton = ({
   localSurvey,
   block,
   setLocalSurvey,
+  setActiveQuestionId,
   project,
   isCxMode,
 }: AddQuestionToBlockButtonProps) => {
@@ -70,7 +72,7 @@ export const AddQuestionToBlockButton = ({
 
     setLocalSurvey(result.data);
     setOpen(false);
-    toast.success("Question added to block");
+    setActiveQuestionId(questionWithLabels.id);
   };
 
   return (
@@ -79,7 +81,9 @@ export const AddQuestionToBlockButton = ({
         <Button variant="secondary">
           <PlusIcon className="h-4 w-4" />
           <div>
-            <p className="text-sm font-medium text-slate-900">Add question to block</p>
+            <p className="text-sm font-medium text-slate-900">
+              {t("environments.surveys.edit.add_question_to_block")}
+            </p>
           </div>
         </Button>
       </DropdownMenuTrigger>

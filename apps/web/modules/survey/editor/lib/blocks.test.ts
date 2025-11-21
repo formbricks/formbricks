@@ -280,8 +280,21 @@ describe("deleteBlock", () => {
     }
   });
 
-  test("should return error when block not found", () => {
+  test("should return error when trying to delete the last block", () => {
     const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
+    const result = deleteBlock(survey, "block-1");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toBe("Cannot delete the last block in the survey");
+    }
+  });
+
+  test("should return error when block not found", () => {
+    const survey = createMockSurvey([
+      createMockBlock("block-1", "Block 1"),
+      createMockBlock("block-2", "Block 2"),
+    ]);
     const result = deleteBlock(survey, "nonexistent");
 
     expect(result.ok).toBe(false);

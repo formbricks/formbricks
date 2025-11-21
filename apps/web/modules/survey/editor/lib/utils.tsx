@@ -26,7 +26,7 @@ import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { getQuestionTypes, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
@@ -106,74 +106,92 @@ const getQuestionIconMapping = (t: TFunction) =>
     {}
   );
 
+const getElementHeadline = (
+  localSurvey: TSurvey,
+  element: TSurveyElement,
+  languageCode: string,
+  t: TFunction
+): string => {
+  const headlineData = recallToHeadline(element.headline, localSurvey, false, languageCode);
+  const headlineText = headlineData[languageCode];
+  if (headlineText) {
+    const textContent = getTextContent(headlineText);
+    if (textContent.length > 0) {
+      return textContent;
+    }
+  }
+  return getTSurveyQuestionTypeEnumName(element.type, t) ?? "";
+};
+
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   t: TFunction,
-  currQuestionIdx?: number // Optional in case of quotas
+  blockIdx?: number // Optional - if provided, includes elements from this block and all previous blocks
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   const variables = localSurvey.variables ?? [];
-  // Derive questions from blocks
-  const questions = getElementsFromBlocks(localSurvey.blocks);
+
+  // If blockIdx is provided, get elements from current block and all previous blocks
+  // Otherwise, get all elements from all blocks
+  const allElements =
+    blockIdx === undefined
+      ? getElementsFromBlocks(localSurvey.blocks)
+      : localSurvey.blocks.slice(0, blockIdx + 1).flatMap((block) => block.elements);
 
   const groupedOptions: TComboboxGroupedOption[] = [];
-  const questionOptions: TComboboxOption[] = [];
+  const elementOptions: TComboboxOption[] = [];
 
-  questions
-    .filter((_, idx) => (typeof currQuestionIdx === "undefined" ? true : idx <= currQuestionIdx))
-    .forEach((question) => {
-      if (question.type === TSurveyElementTypeEnum.Matrix) {
-        // Rows submenu
-        const processedHeadline = recallToHeadline(question.headline, localSurvey, false, "default");
-        const questionHeadline = getTextContent(processedHeadline.default ?? "");
-        const rows = question.rows.map((row, rowIdx) => {
-          const processedLabel = recallToHeadline(row.label, localSurvey, false, "default");
-          return {
-            icon: getQuestionIconMapping(t)[question.type],
-            label: `${getTextContent(processedLabel.default ?? "")} (${questionHeadline})`,
-            value: `${question.id}.${rowIdx}`,
+  allElements.forEach((element) => {
+    if (element.type === TSurveyElementTypeEnum.Matrix) {
+      const elementHeadline = getElementHeadline(localSurvey, element, "default", t);
+
+      // Rows submenu
+      const rows = element.rows.map((row, rowIdx) => {
+        const processedLabel = recallToHeadline(row.label, localSurvey, false, "default");
+        return {
+          icon: getQuestionIconMapping(t)[element.type],
+          label: `${getTextContent(processedLabel.default ?? "")} (${elementHeadline})`,
+          value: `${element.id}.${rowIdx}`,
+          meta: {
+            type: "question",
+            rowIdx: rowIdx.toString(),
+          },
+        };
+      });
+
+      elementOptions.push({
+        icon: getQuestionIconMapping(t)[element.type],
+        label: elementHeadline,
+        value: element.id,
+        meta: {
+          type: "question",
+        },
+        children: [
+          {
+            label: t("environments.surveys.edit.matrix_rows", "Rows"),
+            value: `${element.id}-rows`,
+            children: rows,
+          },
+          {
+            label: t("environments.surveys.edit.matrix_all_fields", "All fields"),
+            value: element.id,
             meta: {
               type: "question",
-              rowIdx: rowIdx.toString(),
             },
-          };
-        });
-
-        questionOptions.push({
-          icon: getQuestionIconMapping(t)[question.type],
-          label: questionHeadline,
-          value: question.id,
-          meta: {
-            type: "question",
           },
-          children: [
-            {
-              label: t("environments.surveys.edit.matrix_rows", "Rows"),
-              value: `${question.id}-rows`,
-              children: rows,
-            },
-            {
-              label: t("environments.surveys.edit.matrix_all_fields", "All fields"),
-              value: question.id,
-              meta: {
-                type: "question",
-              },
-            },
-          ],
-        });
-      } else {
-        questionOptions.push({
-          icon: getQuestionIconMapping(t)[question.type],
-          label: getTextContent(
-            recallToHeadline(question.headline, localSurvey, false, "default").default ?? ""
-          ),
-          value: question.id,
-          meta: {
-            type: "question",
-          },
-        });
-      }
-    });
+        ],
+      });
+    } else {
+      elementOptions.push({
+        icon: getQuestionIconMapping(t)[element.type],
+        label: getElementHeadline(localSurvey, element, "default", t),
+        value: element.id,
+        meta: {
+          type: "question",
+        },
+      });
+    }
+  });
 
   const variableOptions = variables.map((variable) => {
     return {
@@ -197,11 +215,11 @@ export const getConditionValueOptions = (
     };
   });
 
-  if (questionOptions.length > 0) {
+  if (elementOptions.length > 0) {
     groupedOptions.push({
       label: t("common.questions"),
       value: "questions",
-      options: questionOptions,
+      options: elementOptions,
     });
   }
 
@@ -237,43 +255,43 @@ export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: strin
 export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] => [
   { label: t("environments.surveys.edit.calculate"), value: "calculate" },
   { label: t("environments.surveys.edit.require_answer"), value: "requireAnswer" },
-  { label: t("environments.surveys.edit.jump_to_question"), value: "jumpToBlock" },
+  { label: t("environments.surveys.edit.jump_to_block"), value: "jumpToBlock" },
 ];
 
 export const hasJumpToBlockAction = (actions: TSurveyBlockLogicAction[]): boolean => {
   return actions.some((action) => action.objective === "jumpToBlock");
 };
 
-export const getQuestionOperatorOptions = (
-  question: TSurveyElement,
+export const getElementOperatorOptions = (
+  element: TSurveyElement,
   t: TFunction,
   condition?: TSingleCondition
 ): TComboboxOption[] => {
   let options: TLogicRuleOption;
 
-  if (question.type === "openText") {
-    const inputType = question.inputType === "number" ? "number" : "text";
+  if (element.type === "openText") {
+    const inputType = element.inputType === "number" ? "number" : "text";
     options = getLogicRules(t).question[`openText.${inputType}`].options;
-  } else if (question.type === TSurveyElementTypeEnum.Matrix && condition) {
+  } else if (element.type === TSurveyElementTypeEnum.Matrix && condition) {
     const isMatrixRow =
       condition.leftOperand.type === "question" && condition.leftOperand?.meta?.row !== undefined;
     options = getLogicRules(t).question[`matrix${isMatrixRow ? ".row" : ""}`].options;
   } else {
-    options = getLogicRules(t).question[question.type].options;
+    options = getLogicRules(t).question[element.type].options;
   }
 
-  if (question.required) {
+  if (element.required) {
     options = options.filter((option) => option.value !== "isSkipped") as TLogicRuleOption;
   }
 
   return options;
 };
 
-export const getDefaultOperatorForQuestion = (
-  question: TSurveyElement,
+export const getDefaultOperatorForElement = (
+  element: TSurveyElement,
   t: TFunction
 ): TSurveyLogicConditionsOperator => {
-  const options = getQuestionOperatorOptions(question, t);
+  const options = getElementOperatorOptions(element, t);
 
   return options[0].value.toString() as TSurveyLogicConditionsOperator;
 };
@@ -305,8 +323,8 @@ export const getConditionOperatorOptions = (
     return getLogicRules(t).hiddenField.options;
   } else if (condition.leftOperand.type === "question") {
     // Derive questions from blocks
-    const questions = getElementsFromBlocks(localSurvey.blocks);
-    const question = questions.find((question) => {
+    const elements = getElementsFromBlocks(localSurvey.blocks);
+    const element = elements.find((question) => {
       let leftOperandQuestionId = condition.leftOperand.value;
       if (question.type === TSurveyElementTypeEnum.Matrix) {
         leftOperandQuestionId = condition.leftOperand.value.split(".")[0];
@@ -314,9 +332,9 @@ export const getConditionOperatorOptions = (
       return question.id === leftOperandQuestionId;
     });
 
-    if (!question) return [];
+    if (!element) return [];
 
-    return getQuestionOperatorOptions(question, t, condition);
+    return getElementOperatorOptions(element, t, condition);
   }
   return [];
 };
@@ -325,7 +343,7 @@ export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
   t: TFunction,
-  questionIdx?: number
+  blockIdx?: number // Optional - if provided, includes elements from this block and all previous blocks
 ): {
   show?: boolean;
   showInput?: boolean;
@@ -350,19 +368,23 @@ export const getMatchValueProps = (
     return { show: false, options: [] };
   }
 
-  // Derive questions from blocks
-  const allQuestions = getElementsFromBlocks(localSurvey.blocks);
-  let questions = allQuestions.filter((_, idx) =>
-    typeof questionIdx === "undefined" ? true : idx <= questionIdx
-  );
+  // If blockIdx is provided, get elements from current block and all previous blocks
+  // Otherwise, get all elements from all blocks
+  let elements =
+    blockIdx === undefined
+      ? getElementsFromBlocks(localSurvey.blocks)
+      : localSurvey.blocks
+          .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
+          .flatMap((block) => block.elements);
+
   let variables = localSurvey.variables ?? [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
 
-  const selectedQuestion = questions.find((question) => question.id === condition.leftOperand.value);
+  const selectedElement = elements.find((element) => element.id === condition.leftOperand.value);
   const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.value);
 
   if (condition.leftOperand.type === "question") {
-    questions = questions.filter((question) => question.id !== condition.leftOperand.value);
+    elements = elements.filter((element) => element.id !== condition.leftOperand.value);
   } else if (condition.leftOperand.type === "variable") {
     variables = variables.filter((variable) => variable.id !== condition.leftOperand.value);
   } else if (condition.leftOperand.type === "hiddenField") {
@@ -370,16 +392,16 @@ export const getMatchValueProps = (
   }
 
   if (condition.leftOperand.type === "question") {
-    if (selectedQuestion?.type === TSurveyElementTypeEnum.OpenText) {
-      const allowedQuestionTypes = [TSurveyElementTypeEnum.OpenText];
+    if (selectedElement?.type === TSurveyElementTypeEnum.OpenText) {
+      const allowedElementTypes = [TSurveyElementTypeEnum.OpenText];
 
-      if (selectedQuestion.inputType === "number") {
-        allowedQuestionTypes.push(TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS);
+      if (selectedElement.inputType === "number") {
+        allowedElementTypes.push(TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS);
       }
 
       if (["equals", "doesNotEqual"].includes(condition.operator)) {
-        if (selectedQuestion.inputType !== "number") {
-          allowedQuestionTypes.push(
+        if (selectedElement.inputType !== "number") {
+          allowedElementTypes.push(
             TSurveyElementTypeEnum.Date,
             TSurveyElementTypeEnum.MultipleChoiceSingle,
             TSurveyElementTypeEnum.MultipleChoiceMulti
@@ -387,15 +409,15 @@ export const getMatchValueProps = (
         }
       }
 
-      const allowedQuestions = questions.filter((question) => allowedQuestionTypes.includes(question.type));
+      const allowedElements = elements.filter((element) => allowedElementTypes.includes(element.type));
 
-      const questionOptions = allowedQuestions.map((question) => {
+      const elementOptions = allowedElements.map((element) => {
         return {
-          icon: getQuestionIconMapping(t)[question.type],
+          icon: getQuestionIconMapping(t)[element.type],
           label: getTextContent(
-            recallToHeadline(question.headline, localSurvey, false, "default").default ?? ""
+            recallToHeadline(element.headline, localSurvey, false, "default").default ?? ""
           ),
-          value: question.id,
+          value: element.id,
           meta: {
             type: "question",
           },
@@ -404,7 +426,7 @@ export const getMatchValueProps = (
 
       const variableOptions = variables
         .filter((variable) =>
-          selectedQuestion.inputType !== "number" ? variable.type === "text" : variable.type === "number"
+          selectedElement.inputType === "number" ? variable.type === "number" : variable.type === "text"
         )
         .map((variable) => {
           return {
@@ -430,11 +452,11 @@ export const getMatchValueProps = (
 
       const groupedOptions: TComboboxGroupedOption[] = [];
 
-      if (questionOptions.length > 0) {
+      if (elementOptions.length > 0) {
         groupedOptions.push({
           label: t("common.questions"),
           value: "questions",
-          options: questionOptions,
+          options: elementOptions,
         });
       }
 
@@ -456,12 +478,12 @@ export const getMatchValueProps = (
       return {
         show: true,
         showInput: true,
-        inputType: selectedQuestion.inputType === "number" ? "number" : "text",
+        inputType: selectedElement.inputType === "number" ? "number" : "text",
         options: groupedOptions,
       };
     } else if (
-      selectedQuestion?.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-      selectedQuestion?.type === TSurveyElementTypeEnum.MultipleChoiceMulti
+      selectedElement?.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+      selectedElement?.type === TSurveyElementTypeEnum.MultipleChoiceMulti
     ) {
       const operatorsToFilterNone = [
         "includesOneOf",
@@ -470,10 +492,10 @@ export const getMatchValueProps = (
         "doesNotIncludeAllOf",
       ];
       const shouldFilterNone =
-        selectedQuestion.type === TSurveyElementTypeEnum.MultipleChoiceMulti &&
+        selectedElement.type === TSurveyElementTypeEnum.MultipleChoiceMulti &&
         operatorsToFilterNone.includes(condition.operator);
 
-      const choices = selectedQuestion.choices
+      const choices = selectedElement.choices
         .filter((choice) => !shouldFilterNone || choice.id !== "none")
         .map((choice) => {
           return {
@@ -490,8 +512,8 @@ export const getMatchValueProps = (
         showInput: false,
         options: [{ label: t("common.choices"), value: "choices", options: choices }],
       };
-    } else if (selectedQuestion?.type === TSurveyElementTypeEnum.PictureSelection) {
-      const choices = selectedQuestion.choices.map((choice, idx) => {
+    } else if (selectedElement?.type === TSurveyElementTypeEnum.PictureSelection) {
+      const choices = selectedElement.choices.map((choice, idx) => {
         return {
           imgSrc: choice.imageUrl,
           label: `${t("common.picture")} ${idx + 1}`,
@@ -507,8 +529,8 @@ export const getMatchValueProps = (
         showInput: false,
         options: [{ label: t("common.choices"), value: "choices", options: choices }],
       };
-    } else if (selectedQuestion?.type === TSurveyElementTypeEnum.Rating) {
-      const choices = Array.from({ length: selectedQuestion.range }, (_, idx) => {
+    } else if (selectedElement?.type === TSurveyElementTypeEnum.Rating) {
+      const choices = Array.from({ length: selectedElement.range }, (_, idx) => {
         return {
           label: `${idx + 1}`,
           value: idx + 1,
@@ -554,7 +576,7 @@ export const getMatchValueProps = (
         showInput: false,
         options: groupedOptions,
       };
-    } else if (selectedQuestion?.type === TSurveyElementTypeEnum.NPS) {
+    } else if (selectedElement?.type === TSurveyElementTypeEnum.NPS) {
       const choices = Array.from({ length: 11 }, (_, idx) => {
         return {
           label: `${idx}`,
@@ -601,18 +623,18 @@ export const getMatchValueProps = (
         showInput: false,
         options: groupedOptions,
       };
-    } else if (selectedQuestion?.type === TSurveyElementTypeEnum.Date) {
-      const openTextQuestions = questions.filter((question) =>
-        [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date].includes(question.type)
+    } else if (selectedElement?.type === TSurveyElementTypeEnum.Date) {
+      const openTextElements = elements.filter((element) =>
+        [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date].includes(element.type)
       );
 
-      const questionOptions = openTextQuestions.map((question) => {
+      const elementOptions = openTextElements.map((element) => {
         return {
-          icon: getQuestionIconMapping(t)[question.type],
+          icon: getQuestionIconMapping(t)[element.type],
           label: getTextContent(
-            recallToHeadline(question.headline, localSurvey, false, "default").default ?? ""
+            recallToHeadline(element.headline, localSurvey, false, "default").default ?? ""
           ),
-          value: question.id,
+          value: element.id,
           meta: {
             type: "question",
           },
@@ -645,11 +667,11 @@ export const getMatchValueProps = (
 
       const groupedOptions: TComboboxGroupedOption[] = [];
 
-      if (questionOptions.length > 0) {
+      if (elementOptions.length > 0) {
         groupedOptions.push({
           label: t("common.questions"),
           value: "questions",
-          options: questionOptions,
+          options: elementOptions,
         });
       }
 
@@ -675,8 +697,8 @@ export const getMatchValueProps = (
         inputType: "date",
         options: groupedOptions,
       };
-    } else if (selectedQuestion?.type === TSurveyElementTypeEnum.Matrix) {
-      const choices = selectedQuestion.columns.map((column, colIdx) => {
+    } else if (selectedElement?.type === TSurveyElementTypeEnum.Matrix) {
+      const choices = selectedElement.columns.map((column, colIdx) => {
         return {
           label: getLocalizedValue(column.label, "default"),
           value: colIdx.toString(),
@@ -694,22 +716,22 @@ export const getMatchValueProps = (
     }
   } else if (condition.leftOperand.type === "variable") {
     if (selectedVariable?.type === "text") {
-      const allowedQuestionTypes = [
+      const allowedElementTypes = [
         TSurveyElementTypeEnum.OpenText,
         TSurveyElementTypeEnum.MultipleChoiceSingle,
       ];
 
       if (["equals", "doesNotEqual"].includes(condition.operator)) {
-        allowedQuestionTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
+        allowedElementTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
       }
 
-      const allowedQuestions = questions.filter((question) => allowedQuestionTypes.includes(question.type));
+      const allowedElements = elements.filter((element) => allowedElementTypes.includes(element.type));
 
-      const questionOptions = allowedQuestions.map((question) => {
+      const elementOptions = allowedElements.map((element) => {
         return {
-          icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
-          value: question.id,
+          icon: getQuestionIconMapping(t)[element.type],
+          label: getElementHeadline(localSurvey, element, "default", t),
+          value: element.id,
           meta: {
             type: "question",
           },
@@ -742,11 +764,11 @@ export const getMatchValueProps = (
 
       const groupedOptions: TComboboxGroupedOption[] = [];
 
-      if (questionOptions.length > 0) {
+      if (elementOptions.length > 0) {
         groupedOptions.push({
           label: t("common.questions"),
           value: "questions",
-          options: questionOptions,
+          options: elementOptions,
         });
       }
 
@@ -773,17 +795,17 @@ export const getMatchValueProps = (
         options: groupedOptions,
       };
     } else if (selectedVariable?.type === "number") {
-      const allowedQuestions = questions.filter(
-        (question) =>
-          [TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS].includes(question.type) ||
-          (question.type === TSurveyElementTypeEnum.OpenText && question.inputType === "number")
+      const allowedElements = elements.filter(
+        (element) =>
+          [TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS].includes(element.type) ||
+          (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
       );
 
-      const questionOptions = allowedQuestions.map((question) => {
+      const elementOptions = allowedElements.map((element) => {
         return {
-          icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
-          value: question.id,
+          icon: getQuestionIconMapping(t)[element.type],
+          label: getElementHeadline(localSurvey, element, "default", t),
+          value: element.id,
           meta: {
             type: "question",
           },
@@ -816,11 +838,11 @@ export const getMatchValueProps = (
 
       const groupedOptions: TComboboxGroupedOption[] = [];
 
-      if (questionOptions.length > 0) {
+      if (elementOptions.length > 0) {
         groupedOptions.push({
           label: t("common.questions"),
           value: "questions",
-          options: questionOptions,
+          options: elementOptions,
         });
       }
 
@@ -848,22 +870,22 @@ export const getMatchValueProps = (
       };
     }
   } else if (condition.leftOperand.type === "hiddenField") {
-    const allowedQuestionTypes = [
+    const allowedElementTypes = [
       TSurveyElementTypeEnum.OpenText,
       TSurveyElementTypeEnum.MultipleChoiceSingle,
     ];
 
     if (["equals", "doesNotEqual"].includes(condition.operator)) {
-      allowedQuestionTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
+      allowedElementTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
     }
 
-    const allowedQuestions = questions.filter((question) => allowedQuestionTypes.includes(question.type));
+    const allowedElements = elements.filter((element) => allowedElementTypes.includes(element.type));
 
-    const questionOptions = allowedQuestions.map((question) => {
+    const elementOptions = allowedElements.map((element) => {
       return {
-        icon: getQuestionIconMapping(t)[question.type],
-        label: getLocalizedValue(question.headline, "default"),
-        value: question.id,
+        icon: getQuestionIconMapping(t)[element.type],
+        label: getElementHeadline(localSurvey, element, "default", t),
+        value: element.id,
         meta: {
           type: "question",
         },
@@ -896,11 +918,11 @@ export const getMatchValueProps = (
 
     const groupedOptions: TComboboxGroupedOption[] = [];
 
-    if (questionOptions.length > 0) {
+    if (elementOptions.length > 0) {
       groupedOptions.push({
         label: t("common.questions"),
         value: "questions",
-        options: questionOptions,
+        options: elementOptions,
       });
     }
 
@@ -934,50 +956,45 @@ export const getMatchValueProps = (
 export const getActionTargetOptions = (
   action: TSurveyBlockLogicAction,
   localSurvey: TSurvey,
-  currQuestionIdx: number,
+  blockIdx: number,
   t: TFunction
 ): TComboboxOption[] => {
-  // Derive questions from blocks
-  const allQuestions = localSurvey.blocks?.flatMap((b) => b.elements) ?? [];
-  let questions = allQuestions.filter((_, idx) => idx > currQuestionIdx);
+  // Derive elements from blocks
+  const allElements = localSurvey.blocks?.flatMap((b) => b.elements) ?? [];
 
+  // Calculate which elements come after the current block
+  let elementsUpToAndIncludingCurrentBlock = 0;
+  for (let i = 0; i <= blockIdx; i++) {
+    elementsUpToAndIncludingCurrentBlock += localSurvey.blocks[i].elements.length;
+  }
+
+  // For requireAnswer, show elements after the current block (not including current block)
   if (action.objective === "requireAnswer") {
-    questions = questions.filter((question) => !question.required);
-    // Return question IDs (elements) for requireAnswer
-    return questions.map((question) => {
-      const processedHeadline = recallToHeadline(question.headline, localSurvey, false, "default");
+    const elementsAfterCurrentBlock = allElements.filter(
+      (_, idx) => idx >= elementsUpToAndIncludingCurrentBlock
+    );
+    const nonRequiredElements = elementsAfterCurrentBlock.filter((element) => !element.required);
+
+    // Return element IDs for requireAnswer
+    return nonRequiredElements.map((element) => {
       return {
-        icon: getQuestionIconMapping(t)[question.type],
-        label: getTextContent(processedHeadline.default ?? ""),
-        value: question.id, // Element ID
+        icon: getQuestionIconMapping(t)[element.type],
+        label: getElementHeadline(localSurvey, element, "default", t),
+        value: element.id,
       };
     });
   }
 
   // For jumpToBlock, we need block IDs
-  // Track which blocks we've already added to avoid duplicates when a block has multiple elements
   const blocks = localSurvey.blocks ?? [];
-  const addedBlockIds = new Set<string>();
-  const questionOptions: TComboboxOption[] = [];
+  const blockOptions: TComboboxOption[] = [];
 
-  for (const question of questions) {
-    // Find which block this question belongs to
-    const block = blocks.find((b) => b.elements.some((e) => e.id === question.id));
+  // Add blocks after the current block
+  for (let i = blockIdx + 1; i < blocks.length; i++) {
+    const block = blocks[i];
 
-    if (!block) continue;
-
-    // Skip if we've already added this block
-    if (addedBlockIds.has(block.id)) continue;
-
-    // Mark this block as added
-    addedBlockIds.add(block.id);
-
-    // Use the first element's headline as the block label
-    const firstElement = block.elements[0];
-    const processedHeadline = recallToHeadline(firstElement.headline, localSurvey, false, "default");
-    questionOptions.push({
-      icon: getQuestionIconMapping(t)[firstElement.type],
-      label: getTextContent(processedHeadline.default ?? ""),
+    blockOptions.push({
+      label: block.name,
       value: block.id,
     });
   }
@@ -1004,7 +1021,7 @@ export const getActionTargetOptions = (
     }
   });
 
-  return [...questionOptions, ...endingCardOptions];
+  return [...blockOptions, ...endingCardOptions];
 };
 
 export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] => {
@@ -1067,13 +1084,15 @@ export const getActionOperatorOptions = (
 export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
-  questionIdx: number,
+  blockIdx: number,
   t: TFunction
 ): TComboboxGroupedOption[] => {
-  const questions = getElementsFromBlocks(localSurvey.blocks);
+  // Get elements from current block and all previous blocks
+  const allElements = localSurvey.blocks
+    .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
+    .flatMap((block) => block.elements);
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
-  const filteredQuestions = questions.filter((_, idx) => idx <= questionIdx);
 
   const hiddenFieldsOptions = hiddenFields.map((field) => {
     return {
@@ -1093,21 +1112,21 @@ export const getActionValueOptions = (
   if (!selectedVariable) return [];
 
   if (selectedVariable.type === "text") {
-    const allowedQuestions = filteredQuestions.filter((question) =>
+    const allowedElements = allElements.filter((element) =>
       [
         TSurveyElementTypeEnum.OpenText,
         TSurveyElementTypeEnum.MultipleChoiceSingle,
         TSurveyElementTypeEnum.Rating,
         TSurveyElementTypeEnum.NPS,
         TSurveyElementTypeEnum.Date,
-      ].includes(question.type)
+      ].includes(element.type)
     );
 
-    const questionOptions = allowedQuestions.map((question) => {
+    const elementOptions = allowedElements.map((element) => {
       return {
-        icon: getQuestionIconMapping(t)[question.type],
-        label: getTextContent(getLocalizedValue(question.headline, "default")),
-        value: question.id,
+        icon: getQuestionIconMapping(t)[element.type],
+        label: getElementHeadline(localSurvey, element, "default", t),
+        value: element.id,
         meta: {
           type: "question",
         },
@@ -1129,11 +1148,11 @@ export const getActionValueOptions = (
 
     const groupedOptions: TComboboxGroupedOption[] = [];
 
-    if (questionOptions.length > 0) {
+    if (elementOptions.length > 0) {
       groupedOptions.push({
         label: t("common.questions"),
         value: "questions",
-        options: questionOptions,
+        options: elementOptions,
       });
     }
 
@@ -1155,17 +1174,17 @@ export const getActionValueOptions = (
 
     return groupedOptions;
   } else if (selectedVariable.type === "number") {
-    const allowedQuestions = filteredQuestions.filter(
-      (question) =>
-        [TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS].includes(question.type) ||
-        (question.type === TSurveyElementTypeEnum.OpenText && question.inputType === "number")
+    const allowedElements = allElements.filter(
+      (element) =>
+        [TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS].includes(element.type) ||
+        (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
     );
 
-    const questionOptions = allowedQuestions.map((question) => {
+    const elementOptions = allowedElements.map((element) => {
       return {
-        icon: getQuestionIconMapping(t)[question.type],
-        label: getTextContent(getLocalizedValue(question.headline, "default")),
-        value: question.id,
+        icon: getQuestionIconMapping(t)[element.type],
+        label: getTextContent(getLocalizedValue(element.headline, "default")),
+        value: element.id,
         meta: {
           type: "question",
         },
@@ -1187,11 +1206,11 @@ export const getActionValueOptions = (
 
     const groupedOptions: TComboboxGroupedOption[] = [];
 
-    if (questionOptions.length > 0) {
+    if (elementOptions.length > 0) {
       groupedOptions.push({
         label: t("common.questions"),
         value: "questions",
-        options: questionOptions,
+        options: elementOptions,
       });
     }
 

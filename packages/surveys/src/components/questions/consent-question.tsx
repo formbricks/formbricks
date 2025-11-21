@@ -96,7 +96,7 @@ export function ConsentQuestion({
           aria-labelledby={`${question.id}-label`}
           required={question.required}
         />
-        <span id={`${question.id}-label`} className="fb-ml-3 fb-mr-3 fb-font-medium fb-flex-1" dir="auto">
+        <span className="fb-ml-3 fb-mr-3 fb-font-medium fb-flex-1" dir="auto">
           {getLocalizedValue(question.label, languageCode)}
         </span>
       </label>

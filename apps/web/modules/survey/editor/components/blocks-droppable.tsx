@@ -40,6 +40,7 @@ interface BlocksDroppableProps {
   deleteBlock: (blockId: string) => void;
   moveBlock: (blockId: string, direction: "up" | "down") => void;
   addElementToBlock: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
+  moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
 }
 
 export const BlocksDroppable = ({
@@ -70,6 +71,7 @@ export const BlocksDroppable = ({
   deleteBlock,
   moveBlock,
   addElementToBlock,
+  moveElementToBlock,
 }: BlocksDroppableProps) => {
   const [parent] = useAutoAnimate();
 
@@ -115,6 +117,7 @@ export const BlocksDroppable = ({
               deleteBlock={deleteBlock}
               moveBlock={moveBlock}
               addElementToBlock={addElementToBlock}
+              moveElementToBlock={moveElementToBlock}
               totalBlocks={localSurvey.blocks.length}
             />
           );

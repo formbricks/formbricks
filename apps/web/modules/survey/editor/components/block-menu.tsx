@@ -6,9 +6,9 @@ import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface BlockMenuProps {
-  blockIndex: number;
   isFirstBlock: boolean;
   isLastBlock: boolean;
+  isOnlyBlock: boolean;
   onDuplicate: () => void;
   onDelete: () => void;
   onMoveUp: () => void;
@@ -16,9 +16,9 @@ interface BlockMenuProps {
 }
 
 export const BlockMenu = ({
-  blockIndex,
   isFirstBlock,
   isLastBlock,
+  isOnlyBlock,
   onDuplicate,
   onDelete,
   onMoveUp,
@@ -77,9 +77,12 @@ export const BlockMenu = ({
         <Button
           variant="ghost"
           size="icon"
+          disabled={isOnlyBlock}
           onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
+            if (!isOnlyBlock) {
+              e.stopPropagation();
+              onDelete();
+            }
           }}
           className="h-8 w-8">
           <TrashIcon className="h-4 w-4" />

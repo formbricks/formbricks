@@ -237,9 +237,8 @@ export function MultipleChoiceMultiQuestion({
                   baseLabelClassName
                 )}
                 onKeyDown={(e) => {
-                  // Accessibility: if spacebar was pressed pass this down to the input
+                  // Accessibility: if spacebar was pressed pass this down to the checkbox
                   if (e.key === " ") {
-                    if (otherSelected) return;
                     e.preventDefault();
                     document.getElementById(otherOption.id)?.click();
                   }
@@ -248,7 +247,7 @@ export function MultipleChoiceMultiQuestion({
                   <input
                     type="checkbox"
                     dir={dir}
-                    tabIndex={-1}
+                    tabIndex={isCurrent ? 0 : -1}
                     id={otherOption.id}
                     name={question.id}
                     value={getLocalizedValue(otherOption.label, languageCode)}
@@ -279,7 +278,7 @@ export function MultipleChoiceMultiQuestion({
                   <input
                     ref={otherSpecify}
                     dir={otherOptionInputDir}
-                    id={`${otherOption.id}-label`}
+                    id={`${otherOption.id}-specify`}
                     maxLength={250}
                     name={question.id}
                     tabIndex={isCurrent ? 0 : -1}

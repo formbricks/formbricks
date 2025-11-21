@@ -34,6 +34,20 @@ export function CTAQuestion({
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
+  const handleExternalButtonClick = () => {
+    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+    onChange({ [question.id]: "clicked" });
+
+    if (question.buttonUrl) {
+      if (onOpenExternalURL) {
+        onOpenExternalURL(question.buttonUrl);
+      } else {
+        window.open(question.buttonUrl, "_blank")?.focus();
+      }
+    }
+  };
+
   return (
     <div key={question.id}>
       <div>
@@ -47,29 +61,21 @@ export function CTAQuestion({
           subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
           questionId={question.id}
         />
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
-            <button
-              dir="auto"
-              type="button"
-              tabIndex={isCurrent ? 0 : -1}
-              onClick={() => {
-                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedTtcObj);
-                onChange({ [question.id]: "clicked" });
-
-                if (onOpenExternalURL) {
-                  onOpenExternalURL(question.buttonUrl);
-                } else {
-                  window.open(question.buttonUrl, "_blank")?.focus();
-                }
-              }}
-              className="fb-text-heading focus:fb-ring-focus fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
-              {getLocalizedValue(question.ctaButtonLabel, languageCode)}
-              <LinkIcon className="fb-ml-2 fb-h-4 fb-w-4" />
-            </button>
+        {question.buttonExternal && question.buttonUrl && (
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+            <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
+              <button
+                dir="auto"
+                type="button"
+                tabIndex={isCurrent ? 0 : -1}
+                onClick={handleExternalButtonClick}
+                className="fb-text-heading focus:fb-ring-focus fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
+                {getLocalizedValue(question.ctaButtonLabel, languageCode)}
+                <LinkIcon className="fb-ml-2 fb-h-4 fb-w-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -4,7 +4,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyNPSElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -18,21 +17,18 @@ interface NPSQuestionFormProps {
   question: TSurveyNPSElement;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyNPSElement>) => void;
-  lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
-  buttonLabel?: TI18nString;
 }
 
 export const NPSQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
-  lastQuestion,
   isInvalid,
   localSurvey,
   selectedLanguageCode,
@@ -40,7 +36,6 @@ export const NPSQuestionForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
-  buttonLabel,
 }: NPSQuestionFormProps): JSX.Element => {
   const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -135,26 +130,6 @@ export const NPSQuestionForm = ({
           />
         </div>
       </div>
-
-      {!question.required && (
-        <div className="mt-3">
-          <QuestionFormInput
-            id="buttonLabel"
-            value={buttonLabel}
-            label={t("environments.surveys.edit.next_button_label")}
-            localSurvey={localSurvey}
-            questionIdx={questionIdx}
-            maxLength={48}
-            placeholder={lastQuestion ? t("common.finish") : t("common.next")}
-            isInvalid={isInvalid}
-            updateQuestion={updateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-          />
-        </div>
-      )}
 
       <AdvancedOptionToggle
         isChecked={question.isColorCodingEnabled}

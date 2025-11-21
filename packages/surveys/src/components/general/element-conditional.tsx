@@ -30,8 +30,6 @@ interface ElementConditionalProps {
   onChange: (responseData: TResponseData) => void;
   onBack: () => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
-  isFirstElement: boolean;
-  isLastElement: boolean;
   languageCode: string;
   prefilledElementValue?: TResponseDataValue;
   skipPrefilled?: boolean;
