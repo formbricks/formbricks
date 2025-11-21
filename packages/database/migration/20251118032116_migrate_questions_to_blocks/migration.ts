@@ -1,13 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
-import { migrateQuestionsSurveyToBlocks } from "../../src/utils/data-migrations/20251118032116_migrate_questions_to_blocks";
-import type {
-  Block,
-  CTAMigrationStats,
-  SurveyQuestion,
-  SurveyRecord,
-} from "../../types/data-migrations/20251118032116_migrate_questions_to_blocks";
+import type { Block, CTAMigrationStats, SurveyQuestion, SurveyRecord } from "./types";
+import { migrateQuestionsSurveyToBlocks } from "./utils";
 
 export const migrateQuestionsToBlocks: MigrationScript = {
   type: "data",

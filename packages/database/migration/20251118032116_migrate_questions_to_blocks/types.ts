@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/filename-case -- We want to keep the same file name for the migration */
 export type I18nString = Record<string, string>;
 
 export interface SurveyQuestion {

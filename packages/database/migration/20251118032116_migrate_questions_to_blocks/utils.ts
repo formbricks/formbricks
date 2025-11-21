@@ -1,20 +1,17 @@
-/* eslint-disable unicorn/filename-case -- We want to keep the same file name for the migration */
-import type {
-  Block,
-  CTAMigrationStats,
-  Condition,
-  ConditionGroup,
-  LogicAction,
-  MigratedSurvey,
-  SingleCondition,
-  SurveyLogic,
-  SurveyQuestion,
-  SurveyRecord,
-} from "../../../types/data-migrations/20251118032116_migrate_questions_to_blocks";
 import {
+  type Block,
+  type CTAMigrationStats,
+  type Condition,
+  type ConditionGroup,
+  type LogicAction,
+  type MigratedSurvey,
+  type SingleCondition,
+  type SurveyLogic,
+  type SurveyQuestion,
+  type SurveyRecord,
   isConditionGroup as checkIsConditionGroup,
   isSingleCondition as checkIsSingleCondition,
-} from "../../../types/data-migrations/20251118032116_migrate_questions_to_blocks";
+} from "./types";
 
 /**
  * Check if a condition references a CTA element with a specific operator
