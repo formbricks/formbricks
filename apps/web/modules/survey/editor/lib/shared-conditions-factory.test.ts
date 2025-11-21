@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { TFunction } from "i18next";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyQuotaLogic } from "@formbricks/types/quota";
 import {
@@ -87,7 +88,7 @@ vi.mock("@/modules/survey/editor/lib/utils", () => ({
     { value: "notEquals", label: "not equals" },
     { value: "isEmpty", label: "is empty" },
   ]),
-  getDefaultOperatorForQuestion: vi.fn().mockReturnValue("equals"),
+  getDefaultOperatorForElement: vi.fn().mockReturnValue("equals"),
 }));
 
 vi.mock("@paralleldrive/cuid2", () => ({
@@ -168,7 +169,7 @@ describe("shared-conditions-factory", () => {
 
   const defaultParams: SharedConditionsFactoryParams = {
     survey: mockSurvey,
-    t: mockT,
+    t: mockT as unknown as TFunction,
     getDefaultOperator: mockGetDefaultOperator,
   };
 
@@ -247,11 +248,11 @@ describe("shared-conditions-factory", () => {
     });
 
     test("should call getConditionValueOptions with questionIdx", async () => {
-      const paramsWithQuestionIdx = {
+      const paramsWithBlockIdx = {
         ...defaultParams,
-        questionIdx: 0,
+        blockIdx: 0,
       };
-      const result = createSharedConditionsFactory(paramsWithQuestionIdx, defaultCallbacks);
+      const result = createSharedConditionsFactory(paramsWithBlockIdx, defaultCallbacks);
 
       result.config.getLeftOperandOptions();
 
@@ -274,11 +275,11 @@ describe("shared-conditions-factory", () => {
     });
 
     test("should call getMatchValueProps with questionIdx", async () => {
-      const paramsWithQuestionIdx = {
+      const paramsWithBlockIdx = {
         ...defaultParams,
-        questionIdx: 0,
+        blockIdx: 0,
       };
-      const result = createSharedConditionsFactory(paramsWithQuestionIdx, defaultCallbacks);
+      const result = createSharedConditionsFactory(paramsWithBlockIdx, defaultCallbacks);
       const mockCondition: TSingleCondition = {
         id: "condition1",
         leftOperand: { value: "question1", type: "question" },
