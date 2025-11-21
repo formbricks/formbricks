@@ -134,11 +134,9 @@ export const getConditionValueOptions = (
   // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
   const allElements =
-    blockIdx !== undefined
-      ? localSurvey.blocks
-          .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
-          .flatMap((block) => block.elements)
-      : getElementsFromBlocks(localSurvey.blocks);
+    blockIdx === undefined
+      ? getElementsFromBlocks(localSurvey.blocks)
+      : localSurvey.blocks.slice(0, blockIdx + 1).flatMap((block) => block.elements);
 
   const groupedOptions: TComboboxGroupedOption[] = [];
   const elementOptions: TComboboxOption[] = [];
@@ -373,11 +371,11 @@ export const getMatchValueProps = (
   // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
   let elements =
-    blockIdx !== undefined
-      ? localSurvey.blocks
+    blockIdx === undefined
+      ? getElementsFromBlocks(localSurvey.blocks)
+      : localSurvey.blocks
           .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
-          .flatMap((block) => block.elements)
-      : getElementsFromBlocks(localSurvey.blocks);
+          .flatMap((block) => block.elements);
 
   let variables = localSurvey.variables ?? [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
@@ -428,7 +426,7 @@ export const getMatchValueProps = (
 
       const variableOptions = variables
         .filter((variable) =>
-          selectedElement.inputType !== "number" ? variable.type === "text" : variable.type === "number"
+          selectedElement.inputType === "number" ? variable.type === "number" : variable.type === "text"
         )
         .map((variable) => {
           return {

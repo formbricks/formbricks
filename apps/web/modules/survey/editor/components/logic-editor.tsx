@@ -3,8 +3,7 @@
 import { ArrowRightIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
