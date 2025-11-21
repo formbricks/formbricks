@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { TFunction } from "i18next";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyQuotaLogic } from "@formbricks/types/quota";
 import {
@@ -87,8 +88,12 @@ vi.mock("@/modules/survey/editor/lib/utils", () => ({
     { value: "notEquals", label: "not equals" },
     { value: "isEmpty", label: "is empty" },
   ]),
-  getDefaultOperatorForQuestion: vi.fn().mockReturnValue("equals"),
   getDefaultOperatorForElement: vi.fn().mockReturnValue("equals"),
+  getElementOperatorOptions: vi.fn().mockReturnValue([
+    { value: "equals", label: "equals" },
+    { value: "notEquals", label: "not equals" },
+    { value: "isEmpty", label: "is empty" },
+  ]),
 }));
 
 vi.mock("@paralleldrive/cuid2", () => ({
@@ -169,7 +174,7 @@ describe("shared-conditions-factory", () => {
 
   const defaultParams: SharedConditionsFactoryParams = {
     survey: mockSurvey,
-    t: mockT,
+    t: mockT as unknown as TFunction,
     getDefaultOperator: mockGetDefaultOperator,
   };
 
@@ -244,15 +249,15 @@ describe("shared-conditions-factory", () => {
       result.config.getLeftOperandOptions();
 
       const { getConditionValueOptions } = await import("@/modules/survey/editor/lib/utils");
-      expect(getConditionValueOptions).toHaveBeenCalledWith(mockSurvey, mockT);
+      expect(getConditionValueOptions).toHaveBeenCalledWith(mockSurvey, mockT, undefined);
     });
 
     test("should call getConditionValueOptions with questionIdx", async () => {
-      const paramsWithQuestionIdx = {
+      const paramsWithBlockIdx = {
         ...defaultParams,
         blockIdx: 0,
       };
-      const result = createSharedConditionsFactory(paramsWithQuestionIdx, defaultCallbacks);
+      const result = createSharedConditionsFactory(paramsWithBlockIdx, defaultCallbacks);
 
       result.config.getLeftOperandOptions();
 
@@ -271,15 +276,15 @@ describe("shared-conditions-factory", () => {
       result.config.getValueProps(mockCondition);
 
       const { getMatchValueProps } = await import("@/modules/survey/editor/lib/utils");
-      expect(getMatchValueProps).toHaveBeenCalledWith(mockCondition, mockSurvey, mockT);
+      expect(getMatchValueProps).toHaveBeenCalledWith(mockCondition, mockSurvey, mockT, undefined);
     });
 
     test("should call getMatchValueProps with questionIdx", async () => {
-      const paramsWithQuestionIdx = {
+      const paramsWithBlockIdx = {
         ...defaultParams,
         blockIdx: 0,
       };
-      const result = createSharedConditionsFactory(paramsWithQuestionIdx, defaultCallbacks);
+      const result = createSharedConditionsFactory(paramsWithBlockIdx, defaultCallbacks);
       const mockCondition: TSingleCondition = {
         id: "condition1",
         leftOperand: { value: "question1", type: "element" },
@@ -299,6 +304,30 @@ describe("shared-conditions-factory", () => {
 
       expect(operator).toBe("equals");
       expect(mockGetDefaultOperator).toHaveBeenCalled();
+    });
+
+    test("should get operator options for condition", async () => {
+      const { getConditionOperatorOptions } = await import("@/modules/survey/editor/lib/utils");
+      const mockGetConditionOperatorOptions = vi.mocked(getConditionOperatorOptions);
+      mockGetConditionOperatorOptions.mockReturnValue([
+        { value: "equals", label: "equals" },
+        { value: "doesNotEqual", label: "does not equal" },
+      ]);
+
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+      const mockCondition: TSingleCondition = {
+        id: "condition1",
+        leftOperand: { value: "question1", type: "element" },
+        operator: "equals",
+      };
+
+      const operators = result.config.getOperatorOptions(mockCondition);
+
+      expect(mockGetConditionOperatorOptions).toHaveBeenCalledWith(mockCondition, mockSurvey, mockT);
+      expect(operators).toEqual([
+        { value: "equals", label: "equals" },
+        { value: "doesNotEqual", label: "does not equal" },
+      ]);
     });
 
     test("should format left operand value", async () => {
@@ -361,6 +390,139 @@ describe("shared-conditions-factory", () => {
       expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
     });
 
+    test("onUpdateCondition should correct invalid operator for element type", async () => {
+      const { getElementOperatorOptions } = await import("@/modules/survey/editor/lib/utils");
+      const mockGetElementOperatorOptions = vi.mocked(getElementOperatorOptions);
+
+      // Mock to return limited operators (e.g., only isEmpty and isNotEmpty)
+      mockGetElementOperatorOptions.mockReturnValue([
+        { value: "isEmpty", label: "is empty" },
+        { value: "isNotEmpty", label: "is not empty" },
+      ]);
+
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+      const resourceId = "condition1";
+      const updates = {
+        leftOperand: {
+          value: "question1",
+          type: "element" as const,
+        },
+        operator: "equals" as TSurveyLogicConditionsOperator, // Invalid operator for this element
+      };
+
+      result.callbacks.onUpdateCondition(resourceId, updates);
+
+      expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
+
+      // Get the updater function that was called
+      const updater = mockConditionsChange.mock.calls[0][0] as (c: TConditionGroup) => TConditionGroup;
+      const mockConditions: TConditionGroup = {
+        id: "root",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            leftOperand: { value: "oldQuestion", type: "element" },
+            operator: "equals",
+          },
+        ],
+      };
+
+      updater(structuredClone(mockConditions));
+
+      // Verify the operator was validated
+      expect(mockGetElementOperatorOptions).toHaveBeenCalled();
+    });
+
+    test("onUpdateCondition should handle update with valid operator", async () => {
+      const { getElementOperatorOptions } = await import("@/modules/survey/editor/lib/utils");
+      const mockGetElementOperatorOptions = vi.mocked(getElementOperatorOptions);
+
+      // Mock to return operators that include the one being set
+      mockGetElementOperatorOptions.mockReturnValue([
+        { value: "equals", label: "equals" },
+        { value: "doesNotEqual", label: "does not equal" },
+      ]);
+
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+      const resourceId = "condition1";
+      const updates = {
+        leftOperand: {
+          value: "question1",
+          type: "element" as const,
+        },
+        operator: "equals" as TSurveyLogicConditionsOperator, // Valid operator
+      };
+
+      result.callbacks.onUpdateCondition(resourceId, updates);
+
+      expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    test("onUpdateCondition should handle update without leftOperand", () => {
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+      const resourceId = "condition1";
+      const updates = {
+        operator: "equals" as TSurveyLogicConditionsOperator,
+      };
+
+      result.callbacks.onUpdateCondition(resourceId, updates);
+
+      expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    test("onUpdateCondition should handle update without operator", () => {
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+      const resourceId = "condition1";
+      const updates = {
+        leftOperand: {
+          value: "question1",
+          type: "element" as const,
+        },
+      };
+
+      result.callbacks.onUpdateCondition(resourceId, updates);
+
+      expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    test("onUpdateCondition should handle non-question leftOperand type", () => {
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+      const resourceId = "condition1";
+      const updates = {
+        leftOperand: {
+          value: "variable1",
+          type: "variable" as const,
+        },
+        operator: "equals" as TSurveyLogicConditionsOperator,
+      };
+
+      result.callbacks.onUpdateCondition(resourceId, updates);
+
+      expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    test("onUpdateCondition should handle element not found", async () => {
+      const { getElementOperatorOptions } = await import("@/modules/survey/editor/lib/utils");
+      const mockGetElementOperatorOptions = vi.mocked(getElementOperatorOptions);
+
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+      const resourceId = "condition1";
+      const updates = {
+        leftOperand: {
+          value: "non-existent-question",
+          type: "element" as const,
+        },
+        operator: "equals" as TSurveyLogicConditionsOperator,
+      };
+
+      result.callbacks.onUpdateCondition(resourceId, updates);
+
+      expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
+      // Should not call getElementOperatorOptions if element not found
+      expect(mockGetElementOperatorOptions).not.toHaveBeenCalled();
+    });
+
     test("onToggleGroupConnector should toggle group connector", () => {
       const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
       const groupId = "group1";
@@ -368,6 +530,21 @@ describe("shared-conditions-factory", () => {
       result.callbacks.onToggleGroupConnector(groupId);
 
       expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
+
+      // Execute the updater function to ensure it runs properly
+      const updater = mockConditionsChange.mock.calls[0][0] as (c: TConditionGroup) => TConditionGroup;
+      const mockConditions: TConditionGroup = {
+        id: "root",
+        connector: "and",
+        conditions: [
+          {
+            id: "group1",
+            connector: "and",
+            conditions: [],
+          },
+        ],
+      };
+      updater(mockConditions);
     });
 
     test("onCreateGroup should create group when includeCreateGroup is true", () => {
@@ -381,6 +558,21 @@ describe("shared-conditions-factory", () => {
       result.callbacks.onCreateGroup!(resourceId);
 
       expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
+
+      // Execute the updater function to ensure it runs properly
+      const updater = mockConditionsChange.mock.calls[0][0] as (c: TConditionGroup) => TConditionGroup;
+      const mockConditions: TConditionGroup = {
+        id: "root",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            leftOperand: { value: "question1", type: "question" },
+            operator: "equals",
+          },
+        ],
+      };
+      updater(mockConditions);
     });
   });
 

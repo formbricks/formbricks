@@ -36,44 +36,58 @@ export function AddressQuestion({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
+
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+
   const safeValue = useMemo(() => {
     return Array.isArray(value) ? value : ["", "", "", "", "", ""];
   }, [value]);
+
   const isCurrent = question.id === currentQuestionId;
 
-  const fields = [
-    {
-      id: "addressLine1",
-      ...question.addressLine1,
-      label: question.addressLine1.placeholder[languageCode],
-    },
-    {
-      id: "addressLine2",
-      ...question.addressLine2,
-      label: question.addressLine2.placeholder[languageCode],
-    },
-    {
-      id: "city",
-      ...question.city,
-      label: question.city.placeholder[languageCode],
-    },
-    {
-      id: "state",
-      ...question.state,
-      label: question.state.placeholder[languageCode],
-    },
-    {
-      id: "zip",
-      ...question.zip,
-      label: question.zip.placeholder[languageCode],
-    },
-    {
-      id: "country",
-      ...question.country,
-      label: question.country.placeholder[languageCode],
-    },
-  ];
+  const fields = useMemo(
+    () => [
+      {
+        id: "addressLine1",
+        ...question.addressLine1,
+        label: question.addressLine1.placeholder[languageCode],
+      },
+      {
+        id: "addressLine2",
+        ...question.addressLine2,
+        label: question.addressLine2.placeholder[languageCode],
+      },
+      {
+        id: "city",
+        ...question.city,
+        label: question.city.placeholder[languageCode],
+      },
+      {
+        id: "state",
+        ...question.state,
+        label: question.state.placeholder[languageCode],
+      },
+      {
+        id: "zip",
+        ...question.zip,
+        label: question.zip.placeholder[languageCode],
+      },
+      {
+        id: "country",
+        ...question.country,
+        label: question.country.placeholder[languageCode],
+      },
+    ],
+    [
+      question.addressLine1,
+      question.addressLine2,
+      question.city,
+      question.state,
+      question.zip,
+      question.country,
+      languageCode,
+    ]
+  );
 
   const handleChange = (fieldId: string, fieldValue: string) => {
     const newValue = fields.map((field) => {
@@ -102,6 +116,25 @@ export function AddressQuestion({
     [question.id, autoFocusEnabled, currentQuestionId]
   );
 
+  const isFieldRequired = useCallback(
+    (field: (typeof fields)[number]) => {
+      if (field.required) {
+        return true;
+      }
+
+      // if all fields are optional and the question is required, then the fields should be required
+      if (
+        fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
+        question.required
+      ) {
+        return true;
+      }
+
+      return false;
+    },
+    [fields, question.required]
+  );
+
   return (
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
       <div>
@@ -118,32 +151,17 @@ export function AddressQuestion({
 
         <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
           {fields.map((field, index) => {
-            const isFieldRequired = () => {
-              if (field.required) {
-                return true;
-              }
-
-              // if all fields are optional and the question is required, then the fields should be required
-              if (
-                fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
-                question.required
-              ) {
-                return true;
-              }
-
-              return false;
-            };
+            const isRequired = isFieldRequired(field);
 
             return (
               field.show && (
-                <div className="fb-space-y-1">
-                  <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
+                <div className="fb-space-y-1" key={field.id}>
+                  <Label htmlForId={field.id} text={isRequired ? `${field.label}*` : field.label} />
                   <Input
                     id={field.id}
-                    key={field.id}
-                    required={isFieldRequired()}
+                    required={isRequired}
                     value={safeValue[index] || ""}
-                    type={field.id === "email" ? "email" : "text"}
+                    type="text"
                     onChange={(e) => {
                       handleChange(field.id, e.currentTarget.value);
                     }}

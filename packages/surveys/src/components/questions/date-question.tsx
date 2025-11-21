@@ -127,10 +127,14 @@ export function DateQuestion({
       key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
+
+        // Validate required field
         if (question.required && !value) {
           setErrorMessage(t("errors.please_select_a_date"));
           return;
         }
+
+        setErrorMessage("");
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
       }}
@@ -189,6 +193,15 @@ export function DateQuestion({
             isOpen={datePickerOpen}
             onChange={(value) => {
               const date = value as Date;
+
+              if (!date) {
+                if (question.required) {
+                  setErrorMessage(t("errors.please_select_a_date"));
+                }
+                return;
+              }
+
+              setErrorMessage("");
               setSelectedDate(date);
 
               // Get the timezone offset in minutes and convert it to milliseconds

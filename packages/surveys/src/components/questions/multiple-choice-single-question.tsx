@@ -180,9 +180,7 @@ export function MultipleChoiceSingleQuestion({
               <label
                 tabIndex={isCurrent ? 0 : -1}
                 className={cn(
-                  value === getLocalizedValue(otherOption.label, languageCode)
-                    ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                    : "fb-border-border",
+                  otherSelected ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
                   "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                 )}
                 onKeyDown={(e) => {
@@ -224,11 +222,11 @@ export function MultipleChoiceSingleQuestion({
                 {otherSelected ? (
                   <input
                     ref={otherSpecify}
-                    id={`${otherOption.id}-label`}
+                    id={`${otherOption.id}-input`}
                     dir={otherOptionInputDir}
                     name={question.id}
                     pattern=".*\S+.*"
-                    value={value}
+                    value={value ?? ""}
                     onChange={(e) => {
                       onChange({ [question.id]: e.currentTarget.value });
                     }}

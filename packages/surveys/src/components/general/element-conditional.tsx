@@ -30,8 +30,6 @@ interface ElementConditionalProps {
   onChange: (responseData: TResponseData) => void;
   onBack: () => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
-  isFirstElement: boolean;
-  isLastElement: boolean;
   languageCode: string;
   prefilledElementValue?: TResponseDataValue;
   skipPrefilled?: boolean;
@@ -113,195 +111,228 @@ export function ElementConditional({
     return null;
   }
 
-  return (
-    <div ref={containerRef}>
-      {element.type === TSurveyElementTypeEnum.OpenText ? (
-        <OpenTextQuestion
-          key={element.id}
-          question={element}
-          value={typeof value === "string" ? value : ""}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-          dir={dir}
-        />
-      ) : element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ? (
-        <MultipleChoiceSingleQuestion
-          key={element.id}
-          question={element}
-          value={typeof value === "string" ? value : undefined}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-          dir={dir}
-        />
-      ) : element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ? (
-        <MultipleChoiceMultiQuestion
-          key={element.id}
-          question={element}
-          value={Array.isArray(value) ? value : []}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-          dir={dir}
-        />
-      ) : element.type === TSurveyElementTypeEnum.NPS ? (
-        <NPSQuestion
-          key={element.id}
-          question={element}
-          value={typeof value === "number" ? value : undefined}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-          dir={dir}
-        />
-      ) : element.type === TSurveyElementTypeEnum.CTA ? (
-        <CTAQuestion
-          key={element.id}
-          question={element}
-          value={typeof value === "string" ? value : ""}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-          onOpenExternalURL={onOpenExternalURL}
-        />
-      ) : element.type === TSurveyElementTypeEnum.Rating ? (
-        <RatingQuestion
-          key={element.id}
-          question={element}
-          value={typeof value === "number" ? value : undefined}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-          dir={dir}
-        />
-      ) : element.type === TSurveyElementTypeEnum.Consent ? (
-        <ConsentQuestion
-          key={element.id}
-          question={element}
-          value={typeof value === "string" ? value : ""}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-          dir={dir}
-        />
-      ) : element.type === TSurveyElementTypeEnum.Date ? (
-        <DateQuestion
-          key={element.id}
-          question={element}
-          value={typeof value === "string" ? value : ""}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-        />
-      ) : element.type === TSurveyElementTypeEnum.PictureSelection ? (
-        <PictureSelectionQuestion
-          key={element.id}
-          question={element}
-          value={Array.isArray(value) ? value : []}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-          dir={dir}
-        />
-      ) : element.type === TSurveyElementTypeEnum.FileUpload ? (
-        <FileUploadQuestion
-          key={element.id}
-          surveyId={surveyId}
-          question={element}
-          value={Array.isArray(value) ? value : []}
-          onChange={onChange}
-          onFileUpload={onFileUpload}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-        />
-      ) : element.type === TSurveyElementTypeEnum.Cal ? (
-        <CalQuestion
-          key={element.id}
-          question={element}
-          value={typeof value === "string" ? value : ""}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          currentQuestionId={currentElementId}
-        />
-      ) : element.type === TSurveyElementTypeEnum.Matrix ? (
-        <MatrixQuestion
-          question={element}
-          value={typeof value === "object" && !Array.isArray(value) ? value : {}}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          currentQuestionId={currentElementId}
-        />
-      ) : element.type === TSurveyElementTypeEnum.Address ? (
-        <AddressQuestion
-          question={element}
-          value={Array.isArray(value) ? value : undefined}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          currentQuestionId={currentElementId}
-          autoFocusEnabled={autoFocusEnabled}
-          dir={dir}
-        />
-      ) : element.type === TSurveyElementTypeEnum.Ranking ? (
-        <RankingQuestion
-          question={element}
-          value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, element.choices) : []}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          autoFocusEnabled={autoFocusEnabled}
-          currentQuestionId={currentElementId}
-        />
-      ) : element.type === TSurveyElementTypeEnum.ContactInfo ? (
-        <ContactInfoQuestion
-          question={element}
-          value={Array.isArray(value) ? value : undefined}
-          onChange={onChange}
-          languageCode={languageCode}
-          ttc={ttc}
-          setTtc={setTtc}
-          currentQuestionId={currentElementId}
-          autoFocusEnabled={autoFocusEnabled}
-          dir={dir}
-        />
-      ) : null}
-    </div>
-  );
+  const renderElement = () => {
+    switch (element.type) {
+      case TSurveyElementTypeEnum.OpenText:
+        return (
+          <OpenTextQuestion
+            key={element.id}
+            question={element}
+            value={typeof value === "string" ? value : ""}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+            dir={dir}
+          />
+        );
+      case TSurveyElementTypeEnum.MultipleChoiceSingle:
+        return (
+          <MultipleChoiceSingleQuestion
+            key={element.id}
+            question={element}
+            value={typeof value === "string" ? value : undefined}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+            dir={dir}
+          />
+        );
+      case TSurveyElementTypeEnum.MultipleChoiceMulti:
+        return (
+          <MultipleChoiceMultiQuestion
+            key={element.id}
+            question={element}
+            value={Array.isArray(value) ? value : []}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+            dir={dir}
+          />
+        );
+      case TSurveyElementTypeEnum.NPS:
+        return (
+          <NPSQuestion
+            key={element.id}
+            question={element}
+            value={typeof value === "number" ? value : undefined}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+            dir={dir}
+          />
+        );
+      case TSurveyElementTypeEnum.CTA:
+        return (
+          <CTAQuestion
+            key={element.id}
+            question={element}
+            value={typeof value === "string" ? value : ""}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+            onOpenExternalURL={onOpenExternalURL}
+          />
+        );
+      case TSurveyElementTypeEnum.Rating:
+        return (
+          <RatingQuestion
+            key={element.id}
+            question={element}
+            value={typeof value === "number" ? value : undefined}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+            dir={dir}
+          />
+        );
+      case TSurveyElementTypeEnum.Consent:
+        return (
+          <ConsentQuestion
+            key={element.id}
+            question={element}
+            value={typeof value === "string" ? value : ""}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+            dir={dir}
+          />
+        );
+      case TSurveyElementTypeEnum.Date:
+        return (
+          <DateQuestion
+            key={element.id}
+            question={element}
+            value={typeof value === "string" ? value : ""}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+          />
+        );
+      case TSurveyElementTypeEnum.PictureSelection:
+        return (
+          <PictureSelectionQuestion
+            key={element.id}
+            question={element}
+            value={Array.isArray(value) ? value : []}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+            dir={dir}
+          />
+        );
+      case TSurveyElementTypeEnum.FileUpload:
+        return (
+          <FileUploadQuestion
+            key={element.id}
+            surveyId={surveyId}
+            question={element}
+            value={Array.isArray(value) ? value : []}
+            onChange={onChange}
+            onFileUpload={onFileUpload}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+          />
+        );
+      case TSurveyElementTypeEnum.Cal:
+        return (
+          <CalQuestion
+            key={element.id}
+            question={element}
+            value={typeof value === "string" ? value : ""}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            currentQuestionId={currentElementId}
+          />
+        );
+      case TSurveyElementTypeEnum.Matrix:
+        return (
+          <MatrixQuestion
+            question={element}
+            value={typeof value === "object" && !Array.isArray(value) ? value : {}}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            currentQuestionId={currentElementId}
+          />
+        );
+      case TSurveyElementTypeEnum.Address:
+        return (
+          <AddressQuestion
+            question={element}
+            value={Array.isArray(value) ? value : undefined}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            currentQuestionId={currentElementId}
+            autoFocusEnabled={autoFocusEnabled}
+            dir={dir}
+          />
+        );
+      case TSurveyElementTypeEnum.Ranking:
+        return (
+          <RankingQuestion
+            question={element}
+            value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, element.choices) : []}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            autoFocusEnabled={autoFocusEnabled}
+            currentQuestionId={currentElementId}
+          />
+        );
+      case TSurveyElementTypeEnum.ContactInfo:
+        return (
+          <ContactInfoQuestion
+            question={element}
+            value={Array.isArray(value) ? value : undefined}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={setTtc}
+            currentQuestionId={currentElementId}
+            autoFocusEnabled={autoFocusEnabled}
+            dir={dir}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return <div ref={containerRef}>{renderElement()}</div>;
 }

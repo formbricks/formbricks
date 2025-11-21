@@ -26,7 +26,7 @@ import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { getQuestionTypes, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
@@ -106,6 +106,23 @@ const getQuestionIconMapping = (t: TFunction) =>
     {}
   );
 
+const getElementHeadline = (
+  localSurvey: TSurvey,
+  element: TSurveyElement,
+  languageCode: string,
+  t: TFunction
+): string => {
+  const headlineData = recallToHeadline(element.headline, localSurvey, false, languageCode);
+  const headlineText = headlineData[languageCode];
+  if (headlineText) {
+    const textContent = getTextContent(headlineText);
+    if (textContent.length > 0) {
+      return textContent;
+    }
+  }
+  return getTSurveyQuestionTypeEnumName(element.type, t) ?? "";
+};
+
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   t: TFunction,
@@ -117,11 +134,9 @@ export const getConditionValueOptions = (
   // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
   const allElements =
-    blockIdx !== undefined
-      ? localSurvey.blocks
-          .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
-          .flatMap((block) => block.elements)
-      : getElementsFromBlocks(localSurvey.blocks);
+    blockIdx === undefined
+      ? getElementsFromBlocks(localSurvey.blocks)
+      : localSurvey.blocks.slice(0, blockIdx + 1).flatMap((block) => block.elements);
 
   const groupedOptions: TComboboxGroupedOption[] = [];
   const elementOptions: TComboboxOption[] = [];
@@ -133,9 +148,9 @@ export const getConditionValueOptions = (
     }
 
     if (element.type === TSurveyElementTypeEnum.Matrix) {
+      const elementHeadline = getElementHeadline(localSurvey, element, "default", t);
+
       // Rows submenu
-      const processedHeadline = recallToHeadline(element.headline, localSurvey, false, "default");
-      const elementHeadline = getTextContent(processedHeadline.default ?? "");
       const rows = element.rows.map((row, rowIdx) => {
         const processedLabel = recallToHeadline(row.label, localSurvey, false, "default");
         return {
@@ -174,9 +189,7 @@ export const getConditionValueOptions = (
     } else {
       elementOptions.push({
         icon: getQuestionIconMapping(t)[element.type],
-        label: getTextContent(
-          recallToHeadline(element.headline, localSurvey, false, "default").default ?? ""
-        ),
+        label: getElementHeadline(localSurvey, element, "default", t),
         value: element.id,
         meta: {
           type: "element",
@@ -364,11 +377,11 @@ export const getMatchValueProps = (
   // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
   let elements =
-    blockIdx !== undefined
-      ? localSurvey.blocks
+    blockIdx === undefined
+      ? getElementsFromBlocks(localSurvey.blocks)
+      : localSurvey.blocks
           .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
-          .flatMap((block) => block.elements)
-      : getElementsFromBlocks(localSurvey.blocks);
+          .flatMap((block) => block.elements);
 
   let variables = localSurvey.variables ?? [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
@@ -419,7 +432,7 @@ export const getMatchValueProps = (
 
       const variableOptions = variables
         .filter((variable) =>
-          selectedElement.inputType !== "number" ? variable.type === "text" : variable.type === "number"
+          selectedElement.inputType === "number" ? variable.type === "number" : variable.type === "text"
         )
         .map((variable) => {
           return {
@@ -721,10 +734,9 @@ export const getMatchValueProps = (
       const allowedElements = elements.filter((element) => allowedElementTypes.includes(element.type));
 
       const elementOptions = allowedElements.map((element) => {
-        const processedHeadline = recallToHeadline(element.headline, localSurvey, false, "default");
         return {
           icon: getQuestionIconMapping(t)[element.type],
-          label: getTextContent(processedHeadline.default ?? ""),
+          label: getElementHeadline(localSurvey, element, "default", t),
           value: element.id,
           meta: {
             type: "element",
@@ -796,10 +808,9 @@ export const getMatchValueProps = (
       );
 
       const elementOptions = allowedElements.map((element) => {
-        const processedHeadline = recallToHeadline(element.headline, localSurvey, false, "default");
         return {
           icon: getQuestionIconMapping(t)[element.type],
-          label: getTextContent(processedHeadline.default ?? ""),
+          label: getElementHeadline(localSurvey, element, "default", t),
           value: element.id,
           meta: {
             type: "element",
@@ -877,10 +888,9 @@ export const getMatchValueProps = (
     const allowedElements = elements.filter((element) => allowedElementTypes.includes(element.type));
 
     const elementOptions = allowedElements.map((element) => {
-      const processedHeadline = recallToHeadline(element.headline, localSurvey, false, "default");
       return {
         icon: getQuestionIconMapping(t)[element.type],
-        label: getTextContent(processedHeadline.default ?? ""),
+        label: getElementHeadline(localSurvey, element, "default", t),
         value: element.id,
         meta: {
           type: "element",
@@ -973,11 +983,10 @@ export const getActionTargetOptions = (
 
     // Return element IDs for requireAnswer
     return nonRequiredElements.map((element) => {
-      const processedHeadline = recallToHeadline(element.headline, localSurvey, false, "default");
       return {
         icon: getQuestionIconMapping(t)[element.type],
-        label: getTextContent(processedHeadline.default ?? ""),
-        value: element.id, // Element ID
+        label: getElementHeadline(localSurvey, element, "default", t),
+        value: element.id,
       };
     });
   }
@@ -1120,10 +1129,9 @@ export const getActionValueOptions = (
     );
 
     const elementOptions = allowedElements.map((element) => {
-      const processedHeadline = recallToHeadline(element.headline, localSurvey, false, "default");
       return {
         icon: getQuestionIconMapping(t)[element.type],
-        label: getTextContent(processedHeadline.default ?? ""),
+        label: getElementHeadline(localSurvey, element, "default", t),
         value: element.id,
         meta: {
           type: "element",

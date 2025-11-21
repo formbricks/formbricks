@@ -3,7 +3,6 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -26,7 +25,6 @@ interface RatingQuestionFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
-  buttonLabel?: TI18nString;
 }
 
 export const RatingQuestionForm = ({
@@ -40,7 +38,6 @@ export const RatingQuestionForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
-  buttonLabel,
 }: RatingQuestionFormProps) => {
   const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -179,27 +176,6 @@ export const RatingQuestionForm = ({
             isStorageConfigured={isStorageConfigured}
           />
         </div>
-      </div>
-
-      <div className="mt-3">
-        {!question.required && (
-          <div className="flex-1">
-            <QuestionFormInput
-              id="buttonLabel"
-              value={buttonLabel}
-              label={t("environments.surveys.edit.next_button_label")}
-              localSurvey={localSurvey}
-              questionIdx={questionIdx}
-              placeholder={"skip"}
-              isInvalid={isInvalid}
-              updateQuestion={updateQuestion}
-              selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-              locale={locale}
-              isStorageConfigured={isStorageConfigured}
-            />
-          </div>
-        )}
       </div>
 
       {question.scale !== "star" && (

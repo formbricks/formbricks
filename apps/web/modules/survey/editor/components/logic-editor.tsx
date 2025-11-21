@@ -1,16 +1,14 @@
 "use client";
 
 import { ArrowRightIcon } from "lucide-react";
-import { ReactElement, useMemo } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
-import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import {
   Select,
   SelectContent,
@@ -41,39 +39,23 @@ export function LogicEditor({
   isLast,
 }: LogicEditorProps) {
   const { t } = useTranslation();
-  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
 
   const blockLogicFallback = block.logicFallback;
 
   const fallbackOptions = useMemo(() => {
     let options: {
-      icon?: ReactElement;
       label: string;
       value: string;
     }[] = [];
 
     const blocks = localSurvey.blocks;
 
-    // Track which blocks we've already added to avoid duplicates when a block has multiple elements
-    const addedBlockIds = new Set<string>();
-
-    // Iterate over the elements AFTER the current block
+    // Add blocks AFTER the current block
     for (let i = blockIdx + 1; i < blocks.length; i++) {
       const currentBlock = blocks[i];
 
-      if (addedBlockIds.has(currentBlock.id)) continue;
-
-      addedBlockIds.add(currentBlock.id);
-
-      // Use the first element's headline as the block label
-      const firstElement = currentBlock.elements[0];
-      if (!firstElement) continue;
-
       options.push({
-        icon: QUESTIONS_ICON_MAP[firstElement.type],
-        label: getTextContent(
-          recallToHeadline(firstElement.headline, localSurvey, false, "default").default ?? ""
-        ),
+        label: currentBlock.name,
         value: currentBlock.id,
       });
     }
@@ -92,7 +74,7 @@ export function LogicEditor({
     });
 
     return options;
-  }, [localSurvey, blockIdx, QUESTIONS_ICON_MAP, t]);
+  }, [localSurvey, blockIdx, t]);
 
   return (
     <div className="flex w-full min-w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
@@ -133,15 +115,12 @@ export function LogicEditor({
             </SelectTrigger>
             <SelectContent>
               <SelectItem key="fallback_default_selection" value={"defaultSelection"}>
-                {t("environments.surveys.edit.next_question")}
+                {t("environments.surveys.edit.next_block")}
               </SelectItem>
 
               {fallbackOptions.map((option) => (
                 <SelectItem key={`fallback_${option.value}`} value={option.value}>
-                  <div className="flex items-center gap-2">
-                    {option.icon}
-                    {option.label}
-                  </div>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
