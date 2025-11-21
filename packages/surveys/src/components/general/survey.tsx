@@ -777,7 +777,6 @@ export function Survey({
               isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
-              currentBlockId={blockId}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               onOpenExternalURL={onOpenExternalURL}
               dir={dir}

@@ -45,9 +45,11 @@ export function StackedCardsContainer({
 
   const blockIdxTemp = useMemo(() => {
     if (currentBlockId === "start") return survey.welcomeCard.enabled ? -1 : 0;
+
     if (!survey.blocks.map((block) => block.id).includes(currentBlockId)) {
       return survey.blocks.length;
     }
+
     return survey.blocks.findIndex((block) => block.id === currentBlockId);
   }, [currentBlockId, survey]);
 
@@ -132,7 +134,7 @@ export function StackedCardsContainer({
   // Reset block progress, when card arrangement changes
   useEffect(() => {
     if (shouldResetBlockId) {
-      setBlockId(survey.welcomeCard.enabled ? "start" : survey.blocks[0]?.id);
+      setBlockId(survey.welcomeCard.enabled ? "start" : survey.blocks[0].id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when cardArrangement changes
   }, [cardArrangement]);
