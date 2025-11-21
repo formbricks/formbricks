@@ -244,7 +244,7 @@ describe("shared-conditions-factory", () => {
       result.config.getLeftOperandOptions();
 
       const { getConditionValueOptions } = await import("@/modules/survey/editor/lib/utils");
-      expect(getConditionValueOptions).toHaveBeenCalledWith(mockSurvey, mockT);
+      expect(getConditionValueOptions).toHaveBeenCalledWith(mockSurvey, mockT, undefined);
     });
 
     test("should call getConditionValueOptions with questionIdx", async () => {
@@ -271,7 +271,7 @@ describe("shared-conditions-factory", () => {
       result.config.getValueProps(mockCondition);
 
       const { getMatchValueProps } = await import("@/modules/survey/editor/lib/utils");
-      expect(getMatchValueProps).toHaveBeenCalledWith(mockCondition, mockSurvey, mockT);
+      expect(getMatchValueProps).toHaveBeenCalledWith(mockCondition, mockSurvey, mockT, undefined);
     });
 
     test("should call getMatchValueProps with questionIdx", async () => {
