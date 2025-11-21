@@ -26,7 +26,15 @@ import {
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyQuestionTypeEnum | "Attributes" | "Tags" | "Languages" | "Quotas";
+  type:
+    | TSurveyQuestionTypeEnum
+    | "Attributes"
+    | "Tags"
+    | "Languages"
+    | "Quotas"
+    | "Hidden Fields"
+    | "Meta"
+    | OptionsType.OTHERS;
   filterOptions: (string | TI18nString)[];
   filterComboBoxOptions: (string | TI18nString)[];
   id: string;

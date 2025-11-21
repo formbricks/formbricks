@@ -76,9 +76,9 @@ export const generateQuestionAndFilterOptions = (
   questionFilterOptions: QuestionFilterOptions[];
 } => {
   let questionOptions: QuestionOptions[] = [];
-  let questionFilterOptions: any = [];
+  let questionFilterOptions: QuestionFilterOptions[] = [];
 
-  let questionsOptions: any = [];
+  let questionsOptions: QuestionOption[] = [];
 
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
