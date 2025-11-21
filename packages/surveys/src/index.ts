@@ -73,9 +73,6 @@ export const onFilePick = (files: { name: string; type: string; base64: string }
   globalThis.dispatchEvent(fileUploadEvent);
 };
 
-// Export setStyleNonce for CSP nonce support
-export { setStyleNonce };
-
 // Initialize the global formbricksSurveys object if it doesn't exist
 if (globalThis.window !== undefined) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type definition is in @formbricks/types package
