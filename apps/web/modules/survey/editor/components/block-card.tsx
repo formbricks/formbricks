@@ -425,6 +425,13 @@ export const BlockCard = ({
   const blockQuestionCount = block.elements.length;
   const blockQuestionCountText = blockQuestionCount === 1 ? "question" : "questions";
 
+  let blockSidebarColorClass = "";
+  if (isBlockInvalid) {
+    blockSidebarColorClass = "bg-red-400";
+  } else {
+    blockSidebarColorClass = isBlockOpen ? "bg-slate-700" : "bg-slate-400";
+  }
+
   return (
     <div
       className={cn(
@@ -438,7 +445,8 @@ export const BlockCard = ({
         {...listeners}
         {...attributes}
         className={cn(
-          isBlockInvalid ? "bg-red-400" : isBlockOpen ? "bg-slate-700" : "bg-slate-400",
+          // isBlockInvalid ? "bg-red-400" : isBlockOpen ? "bg-slate-700" : "bg-slate-400",
+          blockSidebarColorClass,
           "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
           "flex flex-col items-center justify-between gap-2"
         )}>
@@ -469,7 +477,7 @@ export const BlockCard = ({
                   </p>
                 </div>
               </div>
-              <div onClick={(e) => e.stopPropagation()}>
+              <div>
                 <BlockMenu
                   isFirstBlock={blockIdx === 0}
                   isLastBlock={blockIdx === totalBlocks - 1}

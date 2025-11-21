@@ -1385,8 +1385,8 @@ checksums:
     environments/surveys/edit/move_question_to_block: e8d7ef1e2f727921cb7f5788849492ad
     environments/surveys/edit/multiply: 89a0bb629167f97750ae1645a46ced0d
     environments/surveys/edit/needed_for_self_hosted_cal_com_instance: d241e72f0332177d32ce6c35070757dc
+    environments/surveys/edit/next_block: 53eaa5b1c9333455ab1e99bedd222ba2
     environments/surveys/edit/next_button_label: e23522dd38f3eabeeccd3f48f32b73a8
-    environments/surveys/edit/next_question: 2e0f1ea264fb4bfcb8378b2b0cf7c18f
     environments/surveys/edit/no_hidden_fields_yet_add_first_one_below: 9cc6cab3a6a42dbf835215897b5b8516
     environments/surveys/edit/no_images_found_for: 90f10f4611ed7b115a49595409b66ebe
     environments/surveys/edit/no_languages_found_add_first_one_to_get_started: 22d7782c8504daf693cab3cf7135d6e3
