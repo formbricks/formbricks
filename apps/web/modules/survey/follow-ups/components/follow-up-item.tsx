@@ -44,6 +44,11 @@ export const FollowUpItem = ({
 
     if (!to) return true;
 
+    // Verified email is always valid as an option (handled at execution time)
+    if (to === "verifiedEmail") {
+      return false;
+    }
+
     const matchedQuestion = localSurvey.questions.find((question) => {
       if (question.id !== to) {
         return false;

@@ -78,7 +78,7 @@ interface AddFollowUpModalProps {
 }
 
 type EmailSendToOption = {
-  type: "openTextQuestion" | "contactInfoQuestion" | "hiddenField" | "user";
+  type: "openTextQuestion" | "contactInfoQuestion" | "hiddenField" | "user" | "verifiedEmail";
   label: string;
   id: string;
 };
@@ -140,7 +140,18 @@ export const FollowUpModal = ({
       ? updatedTeamMemberDetails
       : [...updatedTeamMemberDetails, { email: userEmail, name: "Yourself" }];
 
+    const verifiedEmailOption = localSurvey.isVerifyEmailEnabled
+      ? [
+          {
+            label: t("common.verified_email"),
+            id: "verifiedEmail",
+            type: "verifiedEmail" as EmailSendToOption["type"],
+          },
+        ]
+      : [];
+
     return [
+      ...verifiedEmailOption,
       ...openTextAndContactQuestions.map((question) => ({
         label: getTextContent(
           recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]
@@ -164,7 +175,7 @@ export const FollowUpModal = ({
         type: "user" as EmailSendToOption["type"],
       })),
     ];
-  }, [localSurvey, selectedLanguageCode, teamMemberDetails, userEmail]);
+  }, [localSurvey, selectedLanguageCode, teamMemberDetails, userEmail, t]);
 
   const form = useForm<TCreateSurveyFollowUpForm>({
     defaultValues: {
@@ -378,6 +389,9 @@ export const FollowUpModal = ({
     setOpen(open);
   };
 
+  const emailSendToVerifiedEmailOptions = emailSendToOptions.filter(
+    (option) => option.type === "verifiedEmail"
+  );
   const emailSendToQuestionOptions = emailSendToOptions.filter(
     (option) => option.type === "openTextQuestion" || option.type === "contactInfoQuestion"
   );
@@ -387,7 +401,12 @@ export const FollowUpModal = ({
   const renderSelectItem = (option: EmailSendToOption) => {
     return (
       <SelectItem key={option.id} value={option.id}>
-        {option.type === "hiddenField" ? (
+        {option.type === "verifiedEmail" ? (
+          <div className="flex items-center space-x-2">
+            <MailIcon className="h-4 w-4" />
+            <span>{option.label}</span>
+          </div>
+        ) : option.type === "hiddenField" ? (
           <div className="flex items-center space-x-2">
             <EyeOffIcon className="h-4 w-4" />
             <span>{option.label}</span>
@@ -649,11 +668,16 @@ export const FollowUpModal = ({
                                       </SelectTrigger>
 
                                       <SelectContent>
-                                        {emailSendToQuestionOptions.length > 0 ? (
+                                        {emailSendToVerifiedEmailOptions.length > 0 ||
+                                        emailSendToQuestionOptions.length > 0 ? (
                                           <div className="flex flex-col">
                                             <div className="flex items-center space-x-2 p-2">
                                               <p className="text-sm text-slate-500">Questions</p>
                                             </div>
+
+                                            {emailSendToVerifiedEmailOptions.map((option) =>
+                                              renderSelectItem(option)
+                                            )}
 
                                             {emailSendToQuestionOptions.map((option) =>
                                               renderSelectItem(option)

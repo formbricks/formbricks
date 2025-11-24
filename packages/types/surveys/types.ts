@@ -1349,6 +1349,7 @@ export const ZSurvey = z
         .forEach((followUp, index) => {
           if (followUp.action.properties.to) {
             const validOptions = [
+              "verifiedEmail", // Allow verified email from email verification feature
               ...survey.questions
                 .filter((q) => {
                   if (q.type === TSurveyQuestionTypeEnum.OpenText) {
