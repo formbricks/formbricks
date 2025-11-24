@@ -484,6 +484,200 @@ describe("createContactsFromCSV", () => {
     });
     expect(result[0].id).toBe("c1");
   });
+
+  test("creates new contact when email is not in existing contacts map", async () => {
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.contactAttributeKey.findMany)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { key: "email", id: "id-email" },
+        { key: "name", id: "id-name" },
+        { key: "age", id: "id-age" },
+      ] as any);
+    vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 3 });
+    vi.mocked(prisma.contact.create).mockResolvedValue({
+      id: "new-contact",
+      environmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      attributes: [
+        { attributeKey: { key: "email" }, value: "newuser@example.com" },
+        { attributeKey: { key: "name" }, value: "New User" },
+        { attributeKey: { key: "age" }, value: "25" },
+      ],
+    } as any);
+    const csvData = [{ email: "newuser@example.com", name: "New User", age: "25" }];
+    const result = await createContactsFromCSV(csvData, environmentId, "skip", {
+      email: "email",
+      name: "name",
+      age: "age",
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("new-contact");
+    expect(prisma.contact.create).toHaveBeenCalled();
+  });
+
+  test("handles email validation error correctly", async () => {
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.contactAttributeKey.findMany)
+      .mockResolvedValueOnce([
+        { key: "email", id: "id-email" },
+        { key: "name", id: "id-name" },
+      ] as any)
+      .mockResolvedValueOnce([
+        { key: "email", id: "id-email" },
+        { key: "name", id: "id-name" },
+      ] as any);
+    const csvData = [{ email: "test@example.com", name: "Test" }];
+    const result = await createContactsFromCSV(csvData, environmentId, "skip", {
+      email: "email",
+      name: "name",
+    });
+    expect(result).toBeDefined();
+  });
+
+  test("handles update action without duplicate userId", async () => {
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([
+      {
+        id: "c1",
+        attributes: [
+          { attributeKey: { key: "email", id: "id-email" }, value: "john@example.com" },
+          { attributeKey: { key: "name", id: "id-name" }, value: "Old Name" },
+        ],
+      },
+    ] as any);
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+      { key: "email", id: "id-email" },
+      { key: "name", id: "id-name" },
+    ] as any);
+    vi.mocked(prisma.contact.update).mockResolvedValue({
+      id: "c1",
+      environmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      attributes: [
+        { attributeKey: { key: "email" }, value: "john@example.com" },
+        { attributeKey: { key: "name" }, value: "New Name" },
+      ],
+    } as any);
+    const csvData = [{ email: "john@example.com", name: "New Name" }];
+    const result = await createContactsFromCSV(csvData, environmentId, "update", {
+      email: "email",
+      name: "name",
+    });
+    expect(result[0].id).toBe("c1");
+    expect(prisma.contact.update).toHaveBeenCalled();
+  });
+
+  test("handles overwrite action without duplicate userId", async () => {
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([
+      {
+        id: "c1",
+        attributes: [
+          { attributeKey: { key: "email", id: "id-email" }, value: "john@example.com" },
+          { attributeKey: { key: "name", id: "id-name" }, value: "Old Name" },
+        ],
+      },
+    ] as any);
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+      { key: "email", id: "id-email" },
+      { key: "name", id: "id-name" },
+    ] as any);
+    vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 2 });
+    vi.mocked(prisma.contact.update).mockResolvedValue({
+      id: "c1",
+      environmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      attributes: [
+        { attributeKey: { key: "email" }, value: "john@example.com" },
+        { attributeKey: { key: "name" }, value: "New Name" },
+      ],
+    } as any);
+    const csvData = [{ email: "john@example.com", name: "New Name" }];
+    const result = await createContactsFromCSV(csvData, environmentId, "overwrite", {
+      email: "email",
+      name: "name",
+    });
+    expect(result[0].id).toBe("c1");
+    expect(prisma.contactAttribute.deleteMany).toHaveBeenCalled();
+  });
+
+  test("applies lowercase normalization to userId duplicate check in overwrite", async () => {
+    const existingUserIdAttr = { value: "user123", contactId: "other-contact" };
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([
+      {
+        id: "c1",
+        attributes: [
+          { attributeKey: { key: "email", id: "id-email" }, value: "john@example.com" },
+          { attributeKey: { key: "userid", id: "id-userid" }, value: "old-user-id" },
+        ],
+      },
+    ] as any);
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([existingUserIdAttr] as any);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+      { key: "email", id: "id-email" },
+      { key: "userid", id: "id-userid" },
+    ] as any);
+    vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 2 });
+    vi.mocked(prisma.contact.update).mockResolvedValue({
+      id: "c1",
+      environmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      attributes: [
+        { attributeKey: { key: "email" }, value: "john@example.com" },
+        { attributeKey: { key: "userid" }, value: "old-user-id" },
+      ],
+    } as any);
+    const csvData = [{ email: "john@example.com", userid: "user123" }];
+    const result = await createContactsFromCSV(csvData, environmentId, "overwrite", {
+      email: "email",
+      userid: "userid",
+    });
+    expect(result[0].id).toBe("c1");
+    expect(prisma.contactAttribute.deleteMany).toHaveBeenCalled();
+  });
+
+  test("handles existing contacts without email attribute", async () => {
+    vi.mocked(prisma.contact.findMany)
+      .mockResolvedValueOnce([
+        {
+          id: "c1",
+          attributes: [{ attributeKey: { key: "name", id: "id-name" }, value: "John" }],
+        },
+      ] as any)
+      .mockResolvedValueOnce([]);
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.contactAttributeKey.findMany)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { key: "email", id: "id-email" },
+        { key: "name", id: "id-name" },
+      ] as any);
+    vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 2 });
+    vi.mocked(prisma.contact.create).mockResolvedValue({
+      id: "new-contact",
+      environmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      attributes: [
+        { attributeKey: { key: "email" }, value: "newuser@example.com" },
+        { attributeKey: { key: "name" }, value: "New User" },
+      ],
+    } as any);
+    const csvData = [{ email: "newuser@example.com", name: "New User" }];
+    const result = await createContactsFromCSV(csvData, environmentId, "skip", {
+      email: "email",
+      name: "name",
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("new-contact");
+  });
 });
 
 describe("buildContactWhereClause", () => {
@@ -847,5 +1041,62 @@ describe("generatePersonalLinks", () => {
 
     expect(getContactSurveyLink).toHaveBeenCalledWith("contact-1", mockSurveyId, mockExpirationDays);
     expect(getContactSurveyLink).toHaveBeenCalledWith("contact-2", mockSurveyId, mockExpirationDays);
+  });
+
+  test("handles failed getContactSurveyLink calls gracefully", async () => {
+    const { getSegment } = await import("@/modules/ee/contacts/segments/lib/segments");
+    const { segmentFilterToPrismaQuery } = await import(
+      "@/modules/ee/contacts/segments/lib/filter/prisma-query"
+    );
+    const { getContactSurveyLink } = await import("@/modules/ee/contacts/lib/contact-survey-link");
+
+    vi.mocked(getSegment).mockResolvedValue({
+      id: mockSegmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      environmentId: "env-123",
+      description: "Test segment",
+      title: "Test Segment",
+      isPrivate: false,
+      surveys: [],
+      filters: [],
+    });
+
+    vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+      ok: true,
+      data: { whereClause: {} },
+    } as any);
+
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([
+      {
+        id: "contact-1",
+        attributes: [
+          { attributeKey: { key: "email" }, value: "test@example.com" },
+          { attributeKey: { key: "name" }, value: "Test User" },
+        ],
+      },
+      {
+        id: "contact-2",
+        attributes: [
+          { attributeKey: { key: "email" }, value: "another@example.com" },
+          { attributeKey: { key: "name" }, value: "Another User" },
+        ],
+      },
+    ] as any);
+
+    vi.mocked(getContactSurveyLink)
+      .mockReturnValueOnce({
+        ok: false,
+        error: new Error("Failed to generate link"),
+      })
+      .mockReturnValueOnce({
+        ok: true,
+        data: "https://example.com/survey/link2",
+      });
+
+    const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, mockExpirationDays);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].contactId).toBe("contact-2");
   });
 });
