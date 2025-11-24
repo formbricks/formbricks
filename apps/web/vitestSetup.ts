@@ -184,6 +184,11 @@ export const testInputValidation = async (service: Function, ...args: any[]): Pr
   });
 };
 
+// Export new testing utilities for easy access
+export { setupTestEnvironment } from "./lib/testing/setup";
+export { TEST_IDS, FIXTURES } from "./lib/testing/constants";
+export * from "./lib/testing/mocks";
+
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
