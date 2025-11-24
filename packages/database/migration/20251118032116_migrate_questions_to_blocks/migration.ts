@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
-import type { Block, CTAMigrationStats, SurveyQuestion, SurveyRecord } from "./types";
+import type { Block, CTAMigrationStats, SurveyRecord } from "./types";
 import { migrateQuestionsSurveyToBlocks } from "./utils";
 
 export const migrateQuestionsToBlocks: MigrationScript = {
@@ -31,8 +31,7 @@ export const migrateQuestionsToBlocks: MigrationScript = {
     logger.info(`Found ${surveys.length.toString()} surveys to migrate`);
 
     // 2. Process each survey
-    const updates: { id: string; blocks: Block[]; questions: SurveyQuestion[] }[] = [];
-    let failedCount = 0;
+    const updates: { id: string; blocks: Block[] }[] = [];
 
     for (const survey of surveys) {
       try {
@@ -40,22 +39,16 @@ export const migrateQuestionsToBlocks: MigrationScript = {
         updates.push({
           id: migrated.id,
           blocks: migrated.blocks,
-          questions: [],
         });
       } catch (error) {
-        failedCount++;
         logger.error(error, `Failed to migrate survey ${survey.id}`);
+        throw new Error(
+          `Migration failed for survey ${survey.id}: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
-    if (updates.length === 0) {
-      logger.error(`All ${failedCount.toString()} surveys failed migration`);
-      throw new Error("Migration failed for all surveys");
-    }
-
-    logger.info(
-      `Successfully processed ${updates.length.toString()} surveys, ${failedCount.toString()} failed`
-    );
+    logger.info(`Successfully processed ${updates.length.toString()} surveys`);
 
     // 3. Update surveys individually for safety (avoids SQL injection risks with complex JSONB arrays)
     let updatedCount = 0;
@@ -71,10 +64,9 @@ export const migrateQuestionsToBlocks: MigrationScript = {
              SELECT array_agg(elem)
              FROM jsonb_array_elements($1::jsonb) AS elem
            ), 
-           questions = $2::jsonb 
-           WHERE id = $3`,
+           questions = '[]'::jsonb 
+           WHERE id = $2`,
           JSON.stringify(update.blocks),
-          JSON.stringify(update.questions),
           update.id
         );
 
@@ -86,15 +78,13 @@ export const migrateQuestionsToBlocks: MigrationScript = {
         }
       } catch (error) {
         logger.error(error, `Failed to update survey ${update.id} in database`);
-        failedCount++;
+        throw new Error(
+          `Database update failed for survey ${update.id}: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
     logger.info(`Migration complete: ${updatedCount.toString()} surveys migrated to blocks`);
-
-    if (failedCount > 0) {
-      logger.warn(`Warning: ${failedCount.toString()} surveys failed and need manual review`);
-    }
 
     // 4. Log CTA migration statistics
     if (ctaStats.totalCTAElements > 0) {
