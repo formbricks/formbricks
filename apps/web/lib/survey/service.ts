@@ -300,7 +300,9 @@ export const updateSurveyInternal = async (
     const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
       updatedSurvey;
 
-    checkForInvalidImagesInQuestions(questions);
+    if (!skipValidation) {
+      checkForInvalidImagesInQuestions(questions);
+    }
 
     if (languages) {
       // Process languages update logic here
@@ -359,7 +361,7 @@ export const updateSurveyInternal = async (
       if (type === "app") {
         // parse the segment filters:
         const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-        if (!parsedFilters.success) {
+        if (!skipValidation && !parsedFilters.success) {
           throw new InvalidInputError("Invalid user segment filters");
         }
 

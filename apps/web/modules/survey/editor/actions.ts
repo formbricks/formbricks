@@ -46,7 +46,12 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
   }
 };
 
-// Draft action with lenient schema - accepts any input, validates manually
+/**
+ * Lenient schema for draft survey updates.
+ * Accepts any input without type validation to allow incomplete survey state.
+ * Full validation (Zod schema + runtime checks) is enforced on publish.
+ * Use this only for draft surveys; use `updateSurveyAction` for published surveys.
+ */
 export const updateSurveyDraftAction = authenticatedActionClient
   .schema(z.any()) // Accept any input - we'll validate manually if needed
   .action(

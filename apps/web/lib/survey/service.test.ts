@@ -34,6 +34,7 @@ import {
   handleTriggerUpdates,
   loadNewSegmentInSurvey,
   updateSurvey,
+  updateSurveyInternal,
 } from "./service";
 
 // Mock organization service
@@ -952,6 +953,77 @@ describe("Tests for getSurveysBySegmentId", () => {
       prisma.survey.findMany.mockRejectedValueOnce(new Error("Unexpected error"));
 
       await expect(getSurveysBySegmentId(mockSegmentId)).rejects.toThrow(Error);
+    });
+  });
+});
+
+describe("updateSurveyDraftAction", () => {
+  beforeEach(() => {
+    vi.mocked(getActionClasses).mockResolvedValue([mockActionClass] as TActionClass[]);
+    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganizationOutput);
+  });
+
+  describe("Happy Path", () => {
+    test("should save draft with missing translations", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockSurveyOutput);
+
+      // Create a survey with incomplete i18n/fields
+      const incompleteSurvey = {
+        ...updateSurveyInput,
+        questions: [
+          {
+            id: "q1",
+            type: TSurveyQuestionTypeEnum.OpenText,
+            // Missing headline or other required fields
+          },
+        ],
+      } as unknown as TSurvey;
+
+      // Expect success (skipValidation = true)
+      const result = await updateSurveyInternal(incompleteSurvey, true);
+      expect(result).toBeDefined();
+      expect(prisma.survey.update).toHaveBeenCalled();
+    });
+
+    test("should allow draft with invalid images if gating is applied", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockSurveyOutput);
+
+      const surveyWithInvalidImage = {
+        ...updateSurveyInput,
+        questions: [
+          {
+            id: "q1",
+            type: TSurveyQuestionTypeEnum.OpenText,
+            headline: { default: "Question" },
+            imageUrl: "http://invalid-image-url.com/image.txt", // Invalid image extension
+          },
+        ],
+      } as unknown as TSurvey;
+
+      // Expect success (skipValidation = true)
+      await updateSurveyInternal(surveyWithInvalidImage, true);
+      expect(prisma.survey.update).toHaveBeenCalled();
+    });
+  });
+
+  describe("Sad Path", () => {
+    test("should reject publishing survey with incomplete translations", async () => {
+      // Create a draft with missing translations
+      const incompleteSurvey = {
+        ...updateSurveyInput,
+        questions: [
+          {
+            id: "q1",
+            type: TSurveyQuestionTypeEnum.OpenText,
+            // Missing headline
+          },
+        ],
+      } as unknown as TSurvey;
+
+      // Expect validation error (skipValidation = false)
+      await expect(updateSurveyInternal(incompleteSurvey, false)).rejects.toThrow();
     });
   });
 });
