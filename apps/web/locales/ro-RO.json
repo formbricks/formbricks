@@ -1352,7 +1352,7 @@
         "error_saving_changes": "Eroare la salvarea modificărilor",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Permite răspunsuri multiple; continuă afișarea chiar și după un răspuns (de exemplu, Caseta de Feedback).",
         "everyone": "Toată lumea",
-        "external_urls_paywall_tooltip": "Vă rugăm să faceți upgrade pentru a personaliza URL-ul extern. Prevenire phishing.",
+        "external_urls_paywall_tooltip": "Vă rugăm să treceți la planul Startup pentru a personaliza URL-urile externe. Acest lucru ne ajută să prevenim phishing-ul.",
         "fallback_missing": "Rezerva lipsă",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} este folosit în logică întrebării {questionIndex}. Vă rugăm să-l eliminați din logică mai întâi.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Câmpul ascuns \"{fieldId}\" este folosit în cota \"{quotaName}\"",

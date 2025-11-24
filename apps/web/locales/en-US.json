@@ -1352,7 +1352,7 @@
         "error_saving_changes": "Error saving changes",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Allow multiple responses; continue showing even after a response (e.g., Feedback Box).",
         "everyone": "Everyone",
-        "external_urls_paywall_tooltip": "Please upgrade to customize external URL. Phishing prevention.",
+        "external_urls_paywall_tooltip": "Please upgrade to Startup plan to customize external URLs. This helps us prevent phishing.",
         "fallback_missing": "Fallback missing",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} is used in logic of question {questionIndex}. Please remove it from logic first.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Hidden field \"{fieldId}\" is being used in \"{quotaName}\" quota",

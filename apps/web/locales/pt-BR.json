@@ -1352,7 +1352,7 @@
         "error_saving_changes": "Erro ao salvar alterações",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Permitir múltiplas respostas; continuar mostrando mesmo após uma resposta (ex.: caixa de feedback).",
         "everyone": "Todo mundo",
-        "external_urls_paywall_tooltip": "Por favor, faça upgrade para personalizar o URL externo. Prevenção de phishing.",
+        "external_urls_paywall_tooltip": "Por favor, faça upgrade para o plano Startup para personalizar URLs externos. Isso nos ajuda a prevenir phishing.",
         "fallback_missing": "Faltando alternativa",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} é usado na lógica da pergunta {questionIndex}. Por favor, remova-o da lógica primeiro.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Campo oculto \"{fieldId}\" está sendo usado na cota \"{quotaName}\"",

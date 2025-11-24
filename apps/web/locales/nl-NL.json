@@ -1352,7 +1352,7 @@
         "error_saving_changes": "Fout bij het opslaan van wijzigingen",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Meerdere reacties toestaan; blijf tonen, zelfs na een reactie (bijv. feedbackbox).",
         "everyone": "Iedereen",
-        "external_urls_paywall_tooltip": "Upgrade om de externe URL aan te passen. Phishing-preventie.",
+        "external_urls_paywall_tooltip": "Upgrade naar het Startup-abonnement om externe URL's aan te passen. Dit helpt ons phishing te voorkomen.",
         "fallback_missing": "Terugval ontbreekt",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} wordt gebruikt in de logica van vraag {questionIndex}. Verwijder het eerst uit de logica.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Verborgen veld \"{fieldId}\" wordt gebruikt in het \"{quotaName}\" quotum",
