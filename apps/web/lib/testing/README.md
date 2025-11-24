@@ -5,15 +5,21 @@ Practical utilities to write cleaner, faster, more consistent unit tests.
 ## Quick Start
 
 ```typescript
-import { describe, expect, test } from "vitest";
-import { vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+// NOW import modules that depend on mocks
+import { prisma } from "@formbricks/database";
 import { FIXTURES, TEST_IDS } from "@/lib/testing/constants";
+// ⚠️ CRITICAL: Setup ALL mocks BEFORE importing modules that use them
 import { COMMON_ERRORS, createContactsMocks } from "@/lib/testing/mocks";
 import { setupTestEnvironment } from "@/lib/testing/setup";
+import { getContact } from "./contacts";
 
-// Setup standard test environment
-setupTestEnvironment();
 vi.mock("@formbricks/database", () => createContactsMocks());
+vi.mock("@/lib/utils/validate", () => ({
+  validateInputs: vi.fn(),
+}));
+
+setupTestEnvironment();
 
 describe("ContactService", () => {
   test("should find a contact", async () => {
@@ -24,6 +30,70 @@ describe("ContactService", () => {
     expect(result).toEqual(FIXTURES.contact);
   });
 });
+```
+
+---
+
+## Critical Setup Rules ⚠️
+
+### Rule 1: Mock Order is Everything
+
+**Vitest requires all `vi.mock()` calls to happen BEFORE any imports that use the mocked modules.**
+
+```typescript
+// ❌ WRONG - will fail with "prisma is not defined"
+import { prisma } from "@formbricks/database";
+
+vi.mock("@formbricks/database", () => createContactsMocks());
+```
+
+```typescript
+// ✅ CORRECT - setup mocks first
+// THEN import modules that depend on the mock
+import { prisma } from "@formbricks/database";
+import { createContactsMocks } from "@/lib/testing/mocks";
+
+vi.mock("@formbricks/database", () => createContactsMocks());
+```
+
+### Rule 2: Mock All External Dependencies
+
+Don't forget to mock functions that are called by your tested code:
+
+```typescript
+// ✅ Mock validateInputs if it's called by the function you're testing
+vi.mock("@/lib/utils/validate", () => ({
+  validateInputs: vi.fn(),
+}));
+
+// Set up a default behavior
+vi.mocked(validateInputs).mockImplementation(() => []);
+```
+
+### Rule 3: Fixtures Must Match Real Data Structures
+
+Test fixtures should match the exact structure expected by your code:
+
+```typescript
+// ❌ INCOMPLETE - will fail when code tries to access attributes
+const contact = {
+  id: TEST_IDS.contact,
+  email: "test@example.com",
+  userId: TEST_IDS.user,
+};
+
+// ✅ COMPLETE - matches what transformPrismaContact expects
+const contact = {
+  id: TEST_IDS.contact,
+  environmentId: TEST_IDS.environment,
+  userId: TEST_IDS.user,
+  createdAt: new Date("2024-01-01"),
+  updatedAt: new Date("2024-01-02"),
+  attributes: [
+    { value: "test@example.com", attributeKey: { key: "email", name: "Email" } },
+    { value: TEST_IDS.user, attributeKey: { key: "userId", name: "User ID" } },
+  ],
+};
 ```
 
 ---
@@ -452,3 +522,4 @@ apps/web/lib/testing/
 - **Mock Factories** → See `mocks/database.ts`, `mocks/errors.ts`, `mocks/transactions.ts`
 - **All Available Fixtures** → See `constants.ts`
 - **Error Codes** → See `mocks/errors.ts` for all COMMON_ERRORS
+- **Mock Setup Pattern** → Review `apps/web/modules/ee/contacts/lib/contacts.test.ts` for a complete example

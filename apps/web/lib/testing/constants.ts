@@ -50,8 +50,14 @@ export const TEST_IDS = {
 export const FIXTURES = {
   contact: {
     id: TEST_IDS.contact,
-    email: "test@example.com",
+    environmentId: TEST_IDS.environment,
     userId: TEST_IDS.user,
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date("2024-01-02"),
+    attributes: [
+      { value: "test@example.com", attributeKey: { key: "email", name: "Email" } },
+      { value: TEST_IDS.user, attributeKey: { key: "userId", name: "User ID" } },
+    ],
   },
 
   survey: {

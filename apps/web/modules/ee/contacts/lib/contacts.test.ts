@@ -1,7 +1,12 @@
-import { Contact, Prisma } from "@prisma/client";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+// NOW import modules that depend on mocks
+import { FIXTURES, TEST_IDS } from "@/lib/testing/constants";
+// Import utilities that DON'T need to be mocked FIRST
+import { COMMON_ERRORS, createContactsMocks } from "@/lib/testing/mocks";
+import { setupTestEnvironment } from "@/lib/testing/setup";
+import { validateInputs } from "@/lib/utils/validate";
 import {
   buildContactWhereClause,
   createContactsFromCSV,
@@ -12,7 +17,9 @@ import {
   getContactsInSegment,
 } from "./contacts";
 
-// Mock additional dependencies for the new functions
+// Setup ALL mocks BEFORE any other imports
+vi.mock("@formbricks/database", () => createContactsMocks());
+
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   getSegment: vi.fn(),
 }));
@@ -31,27 +38,10 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
-    contact: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      delete: vi.fn(),
-      update: vi.fn(),
-      create: vi.fn(),
-    },
-    contactAttribute: {
-      findMany: vi.fn(),
-      createMany: vi.fn(),
-      findFirst: vi.fn(),
-      deleteMany: vi.fn(),
-    },
-    contactAttributeKey: {
-      findMany: vi.fn(),
-      createMany: vi.fn(),
-    },
-  },
+vi.mock("@/lib/utils/validate", () => ({
+  validateInputs: vi.fn(),
 }));
+
 vi.mock("@/lib/constants", () => ({
   ITEMS_PER_PAGE: 2,
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
@@ -61,124 +51,86 @@ vi.mock("@/lib/constants", () => ({
   POSTHOG_API_KEY: "test-posthog-key",
 }));
 
-const environmentId = "cm123456789012345678901237";
-const contactId = "cm123456789012345678901238";
-const userId = "cm123456789012345678901239";
-const mockContact: Contact & {
-  attributes: { value: string; attributeKey: { key: string; name: string } }[];
-} = {
-  id: contactId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  environmentId,
-  userId,
-  attributes: [
-    { value: "john@example.com", attributeKey: { key: "email", name: "Email" } },
-    { value: "John", attributeKey: { key: "name", name: "Name" } },
-    { value: userId, attributeKey: { key: "userId", name: "User ID" } },
-  ],
-};
+// Setup standard test environment
+setupTestEnvironment();
+
+// Mock validateInputs to return no errors by default
+vi.mocked(validateInputs).mockImplementation(() => {
+  return [];
+});
 
 describe("getContacts", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   test("returns contacts with attributes", async () => {
-    vi.mocked(prisma.contact.findMany).mockResolvedValue([mockContact]);
-    const result = await getContacts(environmentId, 0, "");
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([FIXTURES.contact]);
+    const result = await getContacts(TEST_IDS.environment, 0, "");
     expect(Array.isArray(result)).toBe(true);
-    expect(result[0].id).toBe(contactId);
-    expect(result[0].attributes.email).toBe("john@example.com");
+    expect(result[0].id).toBe(TEST_IDS.contact);
+    expect(result[0].attributes.email).toBe("test@example.com");
   });
 
   test("returns empty array if no contacts", async () => {
     vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
-    const result = await getContacts(environmentId, 0, "");
+    const result = await getContacts(TEST_IDS.environment, 0, "");
     expect(result).toEqual([]);
   });
 
   test("throws DatabaseError on Prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
-      code: "P2002",
-      clientVersion: "1.0.0",
-    });
-    vi.mocked(prisma.contact.findMany).mockRejectedValue(prismaError);
-    await expect(getContacts(environmentId, 0, "")).rejects.toThrow(DatabaseError);
+    vi.mocked(prisma.contact.findMany).mockRejectedValue(COMMON_ERRORS.UNIQUE_CONSTRAINT);
+    await expect(getContacts(TEST_IDS.environment, 0, "")).rejects.toThrow(DatabaseError);
   });
 
   test("throws original error on unknown error", async () => {
     const genericError = new Error("Unknown error");
     vi.mocked(prisma.contact.findMany).mockRejectedValue(genericError);
-    await expect(getContacts(environmentId, 0, "")).rejects.toThrow(genericError);
+    await expect(getContacts(TEST_IDS.environment, 0, "")).rejects.toThrow(genericError);
   });
 });
 
 describe("getContact", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   test("returns contact if found", async () => {
-    vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContact);
-    const result = await getContact(contactId);
-    expect(result).toEqual(mockContact);
+    vi.mocked(prisma.contact.findUnique).mockResolvedValue(FIXTURES.contact);
+    const result = await getContact(TEST_IDS.contact);
+    expect(result).toEqual(FIXTURES.contact);
   });
 
   test("returns null if not found", async () => {
     vi.mocked(prisma.contact.findUnique).mockResolvedValue(null);
-    const result = await getContact(contactId);
+    const result = await getContact(TEST_IDS.contact);
     expect(result).toBeNull();
   });
 
   test("throws DatabaseError on Prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
-      code: "P2002",
-      clientVersion: "1.0.0",
-    });
-    vi.mocked(prisma.contact.findUnique).mockRejectedValue(prismaError);
-    await expect(getContact(contactId)).rejects.toThrow(DatabaseError);
+    vi.mocked(prisma.contact.findUnique).mockRejectedValue(COMMON_ERRORS.UNIQUE_CONSTRAINT);
+    await expect(getContact(TEST_IDS.contact)).rejects.toThrow(DatabaseError);
   });
 
   test("throws original error on unknown error", async () => {
     const genericError = new Error("Unknown error");
     vi.mocked(prisma.contact.findUnique).mockRejectedValue(genericError);
-    await expect(getContact(contactId)).rejects.toThrow(genericError);
+    await expect(getContact(TEST_IDS.contact)).rejects.toThrow(genericError);
   });
 });
 
 describe("deleteContact", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   test("deletes contact and revalidates caches", async () => {
-    vi.mocked(prisma.contact.delete).mockResolvedValue(mockContact);
-    const result = await deleteContact(contactId);
-    expect(result).toEqual(mockContact);
+    vi.mocked(prisma.contact.delete).mockResolvedValue(FIXTURES.contact);
+    const result = await deleteContact(TEST_IDS.contact);
+    expect(result).toEqual(FIXTURES.contact);
   });
 
   test("throws DatabaseError on Prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
-      code: "P2002",
-      clientVersion: "1.0.0",
-    });
-    vi.mocked(prisma.contact.delete).mockRejectedValue(prismaError);
-    await expect(deleteContact(contactId)).rejects.toThrow(DatabaseError);
+    vi.mocked(prisma.contact.delete).mockRejectedValue(COMMON_ERRORS.UNIQUE_CONSTRAINT);
+    await expect(deleteContact(TEST_IDS.contact)).rejects.toThrow(DatabaseError);
   });
 
   test("throws original error on unknown error", async () => {
     const genericError = new Error("Unknown error");
     vi.mocked(prisma.contact.delete).mockRejectedValue(genericError);
-    await expect(deleteContact(contactId)).rejects.toThrow(genericError);
+    await expect(deleteContact(TEST_IDS.contact)).rejects.toThrow(genericError);
   });
 });
 
 describe("createContactsFromCSV", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   test("creates new contacts and missing attribute keys", async () => {
     vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
@@ -191,7 +143,7 @@ describe("createContactsFromCSV", () => {
     vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 2 });
     vi.mocked(prisma.contact.create).mockResolvedValue({
       id: "c1",
-      environmentId,
+      environmentId: TEST_IDS.environment,
       createdAt: new Date(),
       updatedAt: new Date(),
       attributes: [
@@ -200,7 +152,7 @@ describe("createContactsFromCSV", () => {
       ],
     } as any);
     const csvData = [{ email: "john@example.com", name: "John" }];
-    const result = await createContactsFromCSV(csvData, environmentId, "skip", {
+    const result = await createContactsFromCSV(csvData, TEST_IDS.environment, "skip", {
       email: "email",
       name: "name",
     });
@@ -218,7 +170,7 @@ describe("createContactsFromCSV", () => {
       { key: "name", id: "id-name" },
     ] as any);
     const csvData = [{ email: "john@example.com", name: "John" }];
-    const result = await createContactsFromCSV(csvData, environmentId, "skip", {
+    const result = await createContactsFromCSV(csvData, TEST_IDS.environment, "skip", {
       email: "email",
       name: "name",
     });
@@ -242,7 +194,7 @@ describe("createContactsFromCSV", () => {
     ] as any);
     vi.mocked(prisma.contact.update).mockResolvedValue({
       id: "c1",
-      environmentId,
+      environmentId: TEST_IDS.environment,
       createdAt: new Date(),
       updatedAt: new Date(),
       attributes: [
@@ -251,7 +203,7 @@ describe("createContactsFromCSV", () => {
       ],
     } as any);
     const csvData = [{ email: "john@example.com", name: "John" }];
-    const result = await createContactsFromCSV(csvData, environmentId, "update", {
+    const result = await createContactsFromCSV(csvData, TEST_IDS.environment, "update", {
       email: "email",
       name: "name",
     });
@@ -276,7 +228,7 @@ describe("createContactsFromCSV", () => {
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 2 });
     vi.mocked(prisma.contact.update).mockResolvedValue({
       id: "c1",
-      environmentId,
+      environmentId: TEST_IDS.environment,
       createdAt: new Date(),
       updatedAt: new Date(),
       attributes: [
@@ -285,7 +237,7 @@ describe("createContactsFromCSV", () => {
       ],
     } as any);
     const csvData = [{ email: "john@example.com", name: "John" }];
-    const result = await createContactsFromCSV(csvData, environmentId, "overwrite", {
+    const result = await createContactsFromCSV(csvData, TEST_IDS.environment, "overwrite", {
       email: "email",
       name: "name",
     });
@@ -293,21 +245,21 @@ describe("createContactsFromCSV", () => {
   });
 
   test("throws ValidationError if email is missing in CSV", async () => {
+    // Override the validateInputs mock to return validation errors for this test
+    vi.mocked(validateInputs).mockImplementationOnce(() => {
+      throw new ValidationError("Validation failed");
+    });
     const csvData = [{ name: "John" }];
     await expect(
-      createContactsFromCSV(csvData as any, environmentId, "skip", { name: "name" })
+      createContactsFromCSV(csvData as any, TEST_IDS.environment, "skip", { name: "name" })
     ).rejects.toThrow(ValidationError);
   });
 
   test("throws DatabaseError on Prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
-      code: "P2002",
-      clientVersion: "1.0.0",
-    });
-    vi.mocked(prisma.contact.findMany).mockRejectedValue(prismaError);
+    vi.mocked(prisma.contact.findMany).mockRejectedValue(COMMON_ERRORS.UNIQUE_CONSTRAINT);
     const csvData = [{ email: "john@example.com", name: "John" }];
     await expect(
-      createContactsFromCSV(csvData, environmentId, "skip", { email: "email", name: "name" })
+      createContactsFromCSV(csvData, TEST_IDS.environment, "skip", { email: "email", name: "name" })
     ).rejects.toThrow(DatabaseError);
   });
 
@@ -316,22 +268,17 @@ describe("createContactsFromCSV", () => {
     vi.mocked(prisma.contact.findMany).mockRejectedValue(genericError);
     const csvData = [{ email: "john@example.com", name: "John" }];
     await expect(
-      createContactsFromCSV(csvData, environmentId, "skip", { email: "email", name: "name" })
+      createContactsFromCSV(csvData, TEST_IDS.environment, "skip", { email: "email", name: "name" })
     ).rejects.toThrow(genericError);
   });
 });
 
 describe("buildContactWhereClause", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   test("returns where clause for email", () => {
-    const environmentId = "env-1";
     const search = "john";
-    const result = buildContactWhereClause(environmentId, search);
+    const result = buildContactWhereClause(TEST_IDS.environment, search);
     expect(result).toEqual({
-      environmentId,
+      environmentId: TEST_IDS.environment,
       OR: [
         {
           attributes: {
@@ -354,26 +301,18 @@ describe("buildContactWhereClause", () => {
   });
 
   test("returns where clause without search", () => {
-    const environmentId = "cm123456789012345678901240";
-    const result = buildContactWhereClause(environmentId);
-    expect(result).toEqual({ environmentId });
+    const result = buildContactWhereClause(TEST_IDS.environment);
+    expect(result).toEqual({ environmentId: TEST_IDS.environment });
   });
 });
 
 describe("getContactsInSegment", () => {
-  const mockSegmentId = "cm123456789012345678901235";
-  const mockEnvironmentId = "cm123456789012345678901236";
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   test("returns contacts when segment and filters are valid", async () => {
     const mockSegment = {
-      id: mockSegmentId,
+      id: TEST_IDS.segment,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      environmentId: TEST_IDS.environment,
       description: "Test segment",
       title: "Test Segment",
       isPrivate: false,
@@ -399,7 +338,7 @@ describe("getContactsInSegment", () => {
     ] as any;
 
     const mockWhereClause = {
-      environmentId: mockEnvironmentId,
+      environmentId: TEST_IDS.environment,
       attributes: {
         some: {
           attributeKey: { key: "email" },
@@ -423,7 +362,7 @@ describe("getContactsInSegment", () => {
 
     vi.mocked(prisma.contact.findMany).mockResolvedValue(mockContacts);
 
-    const result = await getContactsInSegment(mockSegmentId);
+    const result = await getContactsInSegment(TEST_IDS.segment);
 
     expect(result).toEqual([
       {
@@ -475,17 +414,17 @@ describe("getContactsInSegment", () => {
 
     vi.mocked(getSegment).mockRejectedValue(new Error("Segment not found"));
 
-    const result = await getContactsInSegment(mockSegmentId);
+    const result = await getContactsInSegment(TEST_IDS.segment);
 
     expect(result).toBeNull();
   });
 
   test("returns null when segment filter to prisma query fails", async () => {
     const mockSegment = {
-      id: mockSegmentId,
+      id: TEST_IDS.segment,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      environmentId: TEST_IDS.environment,
       description: "Test segment",
       title: "Test Segment",
       isPrivate: false,
@@ -505,17 +444,17 @@ describe("getContactsInSegment", () => {
       error: { type: "bad_request" },
     } as any);
 
-    const result = await getContactsInSegment(mockSegmentId);
+    const result = await getContactsInSegment(TEST_IDS.segment);
 
     expect(result).toBeNull();
   });
 
   test("returns null when prisma query fails", async () => {
     const mockSegment = {
-      id: mockSegmentId,
+      id: TEST_IDS.segment,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      environmentId: TEST_IDS.environment,
       description: "Test segment",
       title: "Test Segment",
       isPrivate: false,
@@ -537,7 +476,7 @@ describe("getContactsInSegment", () => {
 
     vi.mocked(prisma.contact.findMany).mockRejectedValue(new Error("Database error"));
 
-    const result = await getContactsInSegment(mockSegmentId);
+    const result = await getContactsInSegment(TEST_IDS.segment);
 
     expect(result).toBeNull();
   });
@@ -547,28 +486,20 @@ describe("getContactsInSegment", () => {
 
     vi.mocked(getSegment).mockRejectedValue(new Error("Database error"));
 
-    const result = await getContactsInSegment(mockSegmentId);
+    const result = await getContactsInSegment(TEST_IDS.segment);
 
     expect(result).toBeNull(); // The function catches errors and returns null
   });
 });
 
 describe("generatePersonalLinks", () => {
-  const mockSurveyId = "cm123456789012345678901234"; // Valid CUID2 format
-  const mockSegmentId = "cm123456789012345678901235"; // Valid CUID2 format
-  const mockExpirationDays = 7;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   test("returns null when getContactsInSegment fails", async () => {
     // Mock getSegment to fail which will cause getContactsInSegment to return null
     const { getSegment } = await import("@/modules/ee/contacts/segments/lib/segments");
 
     vi.mocked(getSegment).mockRejectedValue(new Error("Segment not found"));
 
-    const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+    const result = await generatePersonalLinks(TEST_IDS.survey, TEST_IDS.segment);
 
     expect(result).toBeNull();
   });
@@ -581,10 +512,10 @@ describe("generatePersonalLinks", () => {
     );
 
     vi.mocked(getSegment).mockResolvedValue({
-      id: mockSegmentId,
+      id: TEST_IDS.segment,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "env-123",
+      environmentId: TEST_IDS.environment,
       description: "Test segment",
       title: "Test Segment",
       isPrivate: false,
@@ -599,12 +530,13 @@ describe("generatePersonalLinks", () => {
 
     vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
 
-    const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+    const result = await generatePersonalLinks(TEST_IDS.survey, TEST_IDS.segment);
 
     expect(result).toEqual([]);
   });
 
   test("generates personal links for contacts successfully", async () => {
+    const expirationDays = 7;
     // Mock all the dependencies that getContactsInSegment needs
     const { getSegment } = await import("@/modules/ee/contacts/segments/lib/segments");
     const { segmentFilterToPrismaQuery } = await import(
@@ -613,10 +545,10 @@ describe("generatePersonalLinks", () => {
     const { getContactSurveyLink } = await import("@/modules/ee/contacts/lib/contact-survey-link");
 
     vi.mocked(getSegment).mockResolvedValue({
-      id: mockSegmentId,
+      id: TEST_IDS.segment,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "env-123",
+      environmentId: TEST_IDS.environment,
       description: "Test segment",
       title: "Test Segment",
       isPrivate: false,
@@ -657,7 +589,7 @@ describe("generatePersonalLinks", () => {
         data: "https://example.com/survey/link2",
       });
 
-    const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, mockExpirationDays);
+    const result = await generatePersonalLinks(TEST_IDS.survey, TEST_IDS.segment, expirationDays);
 
     expect(result).toEqual([
       {
@@ -667,7 +599,7 @@ describe("generatePersonalLinks", () => {
           name: "Test User",
         },
         surveyUrl: "https://example.com/survey/link1",
-        expirationDays: mockExpirationDays,
+        expirationDays,
       },
       {
         contactId: "contact-2",
@@ -676,11 +608,11 @@ describe("generatePersonalLinks", () => {
           name: "Another User",
         },
         surveyUrl: "https://example.com/survey/link2",
-        expirationDays: mockExpirationDays,
+        expirationDays,
       },
     ]);
 
-    expect(getContactSurveyLink).toHaveBeenCalledWith("contact-1", mockSurveyId, mockExpirationDays);
-    expect(getContactSurveyLink).toHaveBeenCalledWith("contact-2", mockSurveyId, mockExpirationDays);
+    expect(getContactSurveyLink).toHaveBeenCalledWith("contact-1", TEST_IDS.survey, expirationDays);
+    expect(getContactSurveyLink).toHaveBeenCalledWith("contact-2", TEST_IDS.survey, expirationDays);
   });
 });

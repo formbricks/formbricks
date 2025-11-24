@@ -14,17 +14,22 @@ import {
   SelectedFilterValue,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
+import { TEST_IDS } from "@/lib/testing/constants";
+import { setupTestEnvironment } from "@/lib/testing/setup";
 import { generateQuestionAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
 
-describe("surveys", () => {
-  afterEach(() => {
-    cleanup();
-  });
+setupTestEnvironment();
 
+// Cleanup React components after each test
+afterEach(() => {
+  cleanup();
+});
+
+describe("surveys", () => {
   describe("generateQuestionAndFilterOptions", () => {
     test("should return question options for basic survey without additional options", () => {
       const survey = {
-        id: "survey1",
+        id: TEST_IDS.survey,
         name: "Test Survey",
         questions: [
           {
@@ -35,7 +40,7 @@ describe("surveys", () => {
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
+        environmentId: TEST_IDS.environment,
         status: "draft",
       } as unknown as TSurvey;
 
@@ -49,17 +54,23 @@ describe("surveys", () => {
 
     test("should include tags in options when provided", () => {
       const survey = {
-        id: "survey1",
+        id: TEST_IDS.survey,
         name: "Test Survey",
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
+        environmentId: TEST_IDS.environment,
         status: "draft",
       } as unknown as TSurvey;
 
       const tags: TTag[] = [
-        { id: "tag1", name: "Tag 1", environmentId: "env1", createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: TEST_IDS.team,
+          name: "Tag 1",
+          environmentId: TEST_IDS.environment,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ];
 
       const result = generateQuestionAndFilterOptions(survey, tags, {}, {}, {}, []);
@@ -72,12 +83,12 @@ describe("surveys", () => {
 
     test("should include attributes in options when provided", () => {
       const survey = {
-        id: "survey1",
+        id: TEST_IDS.survey,
         name: "Test Survey",
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
+        environmentId: TEST_IDS.environment,
         status: "draft",
       } as unknown as TSurvey;
 
@@ -95,12 +106,12 @@ describe("surveys", () => {
 
     test("should include meta in options when provided", () => {
       const survey = {
-        id: "survey1",
+        id: TEST_IDS.survey,
         name: "Test Survey",
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
+        environmentId: TEST_IDS.environment,
         status: "draft",
       } as unknown as TSurvey;
 
@@ -118,12 +129,12 @@ describe("surveys", () => {
 
     test("should include hidden fields in options when provided", () => {
       const survey = {
-        id: "survey1",
+        id: TEST_IDS.survey,
         name: "Test Survey",
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
+        environmentId: TEST_IDS.environment,
         status: "draft",
       } as unknown as TSurvey;
 
@@ -143,12 +154,12 @@ describe("surveys", () => {
 
     test("should include language options when survey has languages", () => {
       const survey = {
-        id: "survey1",
+        id: TEST_IDS.survey,
         name: "Test Survey",
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
+        environmentId: TEST_IDS.environment,
         status: "draft",
         languages: [{ language: { code: "en" } as unknown as TLanguage } as unknown as TSurveyLanguage],
       } as unknown as TSurvey;
@@ -162,7 +173,7 @@ describe("surveys", () => {
 
     test("should handle all question types correctly", () => {
       const survey = {
-        id: "survey1",
+        id: TEST_IDS.survey,
         name: "Test Survey",
         questions: [
           {
@@ -219,7 +230,7 @@ describe("surveys", () => {
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
+        environmentId: TEST_IDS.environment,
         status: "draft",
       } as unknown as TSurvey;
 
@@ -234,12 +245,12 @@ describe("surveys", () => {
 
     test("should provide extended filter options for URL meta field", () => {
       const survey = {
-        id: "survey1",
+        id: TEST_IDS.survey,
         name: "Test Survey",
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
+        environmentId: TEST_IDS.environment,
         status: "draft",
       } as unknown as TSurvey;
 
@@ -272,7 +283,7 @@ describe("surveys", () => {
 
   describe("getFormattedFilters", () => {
     const survey = {
-      id: "survey1",
+      id: TEST_IDS.survey,
       name: "Test Survey",
       questions: [
         {
@@ -346,7 +357,7 @@ describe("surveys", () => {
       ],
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "env1",
+      environmentId: TEST_IDS.environment,
       status: "draft",
     } as unknown as TSurvey;
 
