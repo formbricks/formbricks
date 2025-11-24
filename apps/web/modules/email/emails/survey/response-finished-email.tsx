@@ -82,7 +82,7 @@ export async function ResponseFinishedEmail({
                 return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
               })
               .map((hiddenFieldId) => {
-                const hiddenFieldResponse = response.data[hiddenFieldId];
+                const hiddenFieldResponse = response.data[hiddenFieldId] as string;
                 return (
                   <Row key={hiddenFieldId}>
                     <Column className="w-full font-medium">
