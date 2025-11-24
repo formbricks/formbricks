@@ -283,10 +283,6 @@ export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQue
 export type TDynamicLogicField = z.infer<typeof ZDynamicLogicField>;
 export type TActionObjective = z.infer<typeof ZActionObjective>;
 
-// Actions
-export const ZActionVariableValueType = z.union([z.literal("static"), ZDynamicLogicField]);
-export type TActionVariableValueType = z.infer<typeof ZActionVariableValueType>;
-
 const ZActionBase = z.object({
   id: ZId,
   objective: ZActionObjective,

@@ -187,7 +187,7 @@ export async function PreviewEmailTemplate({
               <EmailButton
                 className="rounded-custom inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium text-black"
                 href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}>
-                {getLocalizedValue(firstQuestion.dismissButtonLabel, defaultLanguageCode) || "Skip"}
+                {t("emails.skip")}
               </EmailButton>
             )}
             <EmailButton

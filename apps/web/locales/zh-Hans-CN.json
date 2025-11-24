@@ -486,6 +486,7 @@
     "response_finished_email_subject_with_email": "{personEmail} 刚刚完成了你的 {surveyName} 调查 ✅",
     "schedule_your_meeting": "安排你的会议",
     "select_a_date": "选择 日期",
+    "skip": "跳过",
     "survey_response_finished_email_congrats": "恭喜，您收到了一份新的问卷回复！有人刚刚完成了您的问卷：{surveyName}",
     "survey_response_finished_email_dont_want_notifications": "不希望收到这些通知？",
     "survey_response_finished_email_hey": "嗨 👋",
