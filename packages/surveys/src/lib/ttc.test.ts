@@ -27,15 +27,15 @@ describe("getUpdatedTtc", () => {
 });
 
 describe("useTtc", () => {
-  let mockSetTtc: ReturnType<typeof vi.fn>;
-  let mockSetStartTime: ReturnType<typeof vi.fn>;
+  let mockSetTtc: (ttc: Record<string, number>) => void;
+  let mockSetStartTime: (time: number) => void;
   let currentTime = 0;
   let initialProps: {
     questionId: TSurveyQuestionId;
     ttc: TResponseTtc;
-    setTtc: ReturnType<typeof vi.fn>;
+    setTtc: (ttc: Record<string, number>) => void;
     startTime: number;
-    setStartTime: ReturnType<typeof vi.fn>;
+    setStartTime: (time: number) => void;
     isCurrentQuestion: boolean;
   };
 

@@ -94,7 +94,7 @@ export const Complete: Story = {
 /**
  * Progress bar with gradient indicator
  */
-export const customStyling: Story = {
+export const CustomStyling: Story = {
   args: {
     value: 70,
     indicatorStyling: {
