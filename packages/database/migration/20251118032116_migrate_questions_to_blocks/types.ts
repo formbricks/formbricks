@@ -67,7 +67,6 @@ export interface SurveyRecord {
 export interface MigratedSurvey {
   id: string;
   blocks: Block[];
-  questions: SurveyQuestion[];
 }
 
 // Statistics tracking for CTA migration

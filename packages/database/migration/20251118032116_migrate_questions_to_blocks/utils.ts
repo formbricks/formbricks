@@ -350,7 +350,7 @@ export const migrateQuestionsSurveyToBlocks = (
 ): MigratedSurvey => {
   // Skip if no questions
   if (survey.questions.length === 0) {
-    return { ...survey, blocks: survey.blocks ?? [], questions: [] };
+    return { id: survey.id, blocks: survey.blocks ?? [] };
   }
 
   // STEP 1: Process CTA questions FIRST (before converting to blocks)
@@ -410,8 +410,7 @@ export const migrateQuestionsSurveyToBlocks = (
   }
 
   return {
-    ...survey,
+    id: survey.id,
     blocks,
-    questions: [],
   };
 };
