@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/preact-vite";
 import type { ComponentProps } from "preact";
-import { useEffect, useState } from "preact/hooks";
 import "../../../styles/global.css";
 import { Progress } from "./index";
 
