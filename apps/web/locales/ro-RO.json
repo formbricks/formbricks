@@ -486,7 +486,6 @@
     "response_finished_email_subject_with_email": "{personEmail} tocmai a completat sondajul {surveyName} ✅",
     "schedule_your_meeting": "Programați întâlnirea",
     "select_a_date": "Selectați o dată",
-    "skip": "Omite",
     "survey_response_finished_email_congrats": "Felicitări, aţi primit un răspuns nou la sondaj! Cineva tocmai a completat sondajul dumneavoastră: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Nu doriți să primiți aceste notificări?",
     "survey_response_finished_email_hey": "Hei 👋",

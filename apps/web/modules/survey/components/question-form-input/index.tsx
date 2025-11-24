@@ -313,6 +313,11 @@ export const QuestionFormInput = ({
   const getIsRequiredToggleDisabled = (): boolean => {
     if (!question) return false;
 
+    // CTA elements should always have the required toggle disabled
+    if (question.type === TSurveyElementTypeEnum.CTA) {
+      return true;
+    }
+
     if (question.type === TSurveyElementTypeEnum.Address) {
       const allFieldsAreOptional = [
         question.addressLine1,

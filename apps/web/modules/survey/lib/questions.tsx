@@ -172,6 +172,7 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       ctaButtonLabel: createI18nString(t("templates.book_interview"), []),
       buttonUrl: "",
       buttonExternal: true,
+      required: false,
     },
   },
   {

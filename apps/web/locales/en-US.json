@@ -486,7 +486,6 @@
     "response_finished_email_subject_with_email": "{personEmail} just completed your {surveyName} survey ✅",
     "schedule_your_meeting": "Schedule your meeting",
     "select_a_date": "Select a date",
-    "skip": "Skip",
     "survey_response_finished_email_congrats": "Congrats, you received a new response to your survey! Someone just completed your survey: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Don't want to get these notifications?",
     "survey_response_finished_email_hey": "Hey \uD83D\uDC4B",

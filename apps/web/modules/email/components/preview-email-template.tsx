@@ -11,19 +11,18 @@ import {
 } from "@react-email/components";
 import { render } from "@react-email/render";
 import { TFunction } from "i18next";
-import { CalendarDaysIcon, UploadIcon } from "lucide-react";
+import { CalendarDaysIcon, ExternalLinkIcon, UploadIcon } from "lucide-react";
 import React from "react";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyCTAElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { isLight, mixColor } from "@/lib/utils/colors";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
-import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
-import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 import { QuestionHeader } from "./email-question-header";
 
@@ -84,8 +83,6 @@ export async function PreviewEmailTemplate({
   // Derive questions from blocks
   const questions = getElementsFromBlocks(survey.blocks);
   const firstQuestion = questions[0];
-
-  const { block } = findElementLocation(survey, firstQuestion.id);
 
   const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode));
   const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode));
@@ -178,30 +175,27 @@ export async function PreviewEmailTemplate({
           </Section>
         </EmailTemplateWrapper>
       );
-    case TSurveyElementTypeEnum.CTA:
+    case TSurveyElementTypeEnum.CTA: {
+      const ctaElement = firstQuestion as TSurveyCTAElement;
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
-          <Container className="mx-0 mt-4 max-w-none">
-            {!firstQuestion.required && (
+          {ctaElement.buttonExternal && ctaElement.ctaButtonLabel && ctaElement.buttonUrl && (
+            <Container className="mx-0 mt-4 flex max-w-none items-center justify-end">
               <EmailButton
-                className="rounded-custom inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium text-black"
-                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}>
-                {t("emails.skip")}
+                className="text-question-color flex items-center rounded-md border-0 bg-transparent px-3 py-3 text-base font-medium leading-4 no-underline shadow-none"
+                href={ctaElement.buttonUrl}>
+                <Text className="inline">
+                  {getLocalizedValue(ctaElement.ctaButtonLabel, defaultLanguageCode)}{" "}
+                </Text>
+                <ExternalLinkIcon className="ml-2 inline h-4 w-4" />
               </EmailButton>
-            )}
-            <EmailButton
-              className={cn(
-                "bg-brand-color rounded-custom inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium",
-                isLight(brandColor) ? "text-black" : "text-white"
-              )}
-              href={`${urlWithPrefilling}${firstQuestion.id}=clicked`}>
-              {getLocalizedValue(block?.buttonLabel, defaultLanguageCode)}
-            </EmailButton>
-          </Container>
+            </Container>
+          )}
           <EmailFooter />
         </EmailTemplateWrapper>
       );
+    }
     case TSurveyElementTypeEnum.Rating:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>

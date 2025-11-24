@@ -457,7 +457,6 @@ checksums:
     emails/response_finished_email_subject_with_email: 14798acfdaec4b2b2f33dc4a9f4f8ee5
     emails/schedule_your_meeting: 01683323bd7373560cd2cb2737dbaf06
     emails/select_a_date: 521e4a705800da06d091fde3e801ce02
-    emails/skip: b7f28dfa2f58b80b149bb82b392d0291
     emails/survey_response_finished_email_congrats: 4cc39698d6a16f68cf7d9db902c5978e
     emails/survey_response_finished_email_dont_want_notifications: 5c6fbb5adc79ed133911918984616609
     emails/survey_response_finished_email_hey: 20c5157a424f7d49ceeb27e6fb13d194

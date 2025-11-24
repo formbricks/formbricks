@@ -486,7 +486,6 @@
     "response_finished_email_subject_with_email": "{personEmail} hat deine Umfrage {surveyName} abgeschlossen ✅",
     "schedule_your_meeting": "Termin planen",
     "select_a_date": "Datum auswählen",
-    "skip": "Überspringen",
     "survey_response_finished_email_congrats": "Glückwunsch, Du hast eine neue Antwort auf deine Umfrage {surveyName} erhalten!",
     "survey_response_finished_email_dont_want_notifications": "Möchtest Du diese Benachrichtigungen nicht erhalten?",
     "survey_response_finished_email_hey": "Hey 👋",

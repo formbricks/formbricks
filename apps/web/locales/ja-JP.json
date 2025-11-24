@@ -486,7 +486,6 @@
     "response_finished_email_subject_with_email": "{personEmail} が {surveyName} フォームを完了しました ✅",
     "schedule_your_meeting": "ミーティングを予約",
     "select_a_date": "日付を選択",
-    "skip": "スキップ",
     "survey_response_finished_email_congrats": "おめでとうございます、新しい回答が届きました！{surveyName} フォームへの回答が完了しました。",
     "survey_response_finished_email_dont_want_notifications": "これらの通知を受け取りたくないですか？",
     "survey_response_finished_email_hey": "こんにちは 👋",

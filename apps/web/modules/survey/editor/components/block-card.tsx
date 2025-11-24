@@ -538,7 +538,7 @@ export const BlockCard = ({
                                 <h3 className="text-sm font-semibold">
                                   {getElementHeadline(element, selectedLanguageCode)}
                                 </h3>
-                                {!isOpen && (
+                                {!isOpen && element.type !== TSurveyElementTypeEnum.CTA && (
                                   <p className="mt-1 truncate text-xs text-slate-500">
                                     {element?.required
                                       ? t("environments.surveys.edit.required")

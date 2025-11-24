@@ -55,7 +55,7 @@ export function CTAQuestion({
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
           questionId={question.id}
-          required={question.required}
+          required={true}
         />
         <Subheader
           subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
