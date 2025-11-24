@@ -1,6 +1,7 @@
 import type { StorybookConfig } from "@storybook/react-vite";
 import { createRequire } from "module";
 import { dirname, join } from "path";
+import { mergeConfig } from "vite";
 
 const require = createRequire(import.meta.url);
 
@@ -13,7 +14,11 @@ function getAbsolutePath(value: string): any {
 }
 
 const config: StorybookConfig = {
-  stories: ["../src/**/*.mdx", "../../web/modules/ui/**/stories.@(js|jsx|mjs|ts|tsx)"],
+  stories: [
+    "../src/**/*.mdx",
+    "../../web/modules/ui/**/stories.@(js|jsx|mjs|ts|tsx)",
+    "../../../packages/surveys/src/components/**/stories.@(js|jsx|mjs|ts|tsx)",
+  ],
   addons: [
     getAbsolutePath("@storybook/addon-onboarding"),
     getAbsolutePath("@storybook/addon-links"),
@@ -24,6 +29,17 @@ const config: StorybookConfig = {
   framework: {
     name: getAbsolutePath("@storybook/react-vite"),
     options: {},
+  },
+  async viteFinal(config) {
+    return mergeConfig(config, {
+      resolve: {
+        alias: {
+          preact: "react",
+          "preact/hooks": "react",
+          "preact/jsx-runtime": "react/jsx-runtime",
+        },
+      },
+    });
   },
 };
 export default config;
