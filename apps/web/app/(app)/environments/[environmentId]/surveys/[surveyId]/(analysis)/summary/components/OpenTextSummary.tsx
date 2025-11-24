@@ -10,8 +10,8 @@ import { getContactIdentifier } from "@/lib/utils/contact";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { EmptyQuestionState } from "./EmptyQuestionState";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface OpenTextSummaryProps {
@@ -38,7 +38,7 @@ export const OpenTextSummary = ({ questionSummary, environmentId, survey, locale
       <div className="border-t border-slate-200"></div>
       {questionSummary.samples.length === 0 ? (
         <div className="p-8">
-          <EmptyQuestionState />
+          <EmptyState text={t("environments.surveys.summary.no_responses_found")} variant="simple" />
         </div>
       ) : (
         <div className="max-h-[40vh] overflow-y-auto">

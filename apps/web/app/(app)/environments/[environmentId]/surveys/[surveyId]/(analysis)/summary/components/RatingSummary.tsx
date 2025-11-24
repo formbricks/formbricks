@@ -11,12 +11,12 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { TooltipProvider } from "@/modules/ui/components/tooltip";
 import { ClickableBarSegment } from "./ClickableBarSegment";
-import { EmptyQuestionState } from "./EmptyQuestionState";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 import { RatingScaleLegend } from "./RatingScaleLegend";
 import { SatisfactionIndicator } from "./SatisfactionIndicator";
@@ -85,7 +85,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
           <div className="px-4 pb-6 pt-4 md:px-6">
             {questionSummary.responseCount === 0 ? (
               <>
-                <EmptyQuestionState />
+                <EmptyState text={t("environments.surveys.summary.no_responses_found")} variant="simple" />
                 <RatingScaleLegend
                   scale={questionSummary.question.scale}
                   range={questionSummary.question.range}

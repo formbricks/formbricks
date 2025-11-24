@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/component
 import { TooltipProvider } from "@/modules/ui/components/tooltip";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { ClickableBarSegment } from "./ClickableBarSegment";
-import { EmptyQuestionState } from "./EmptyQuestionState";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 import { SatisfactionIndicator } from "./SatisfactionIndicator";
 
@@ -108,41 +107,37 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
 
         <TabsContent value="aggregated" className="mt-4">
           <div className="px-4 pb-6 pt-4 md:px-6">
-            {questionSummary.responseCount === 0 ? (
-              <EmptyQuestionState />
-            ) : (
-              <div className="space-y-5 text-sm md:text-base">
-                {["promoters", "passives", "detractors", "dismissed"].map((group) => (
-              <button
-                className="w-full cursor-pointer hover:opacity-80"
-                key={group}
-                onClick={() => applyFilter(group)}>
-                <div
-                  className={`mb-2 flex justify-between ${group === "dismissed" ? "mb-2 border-t bg-white pt-4 text-sm md:text-base" : ""}`}>
-                  <div className="mr-8 flex space-x-1">
-                    <p
-                      className={`font-semibold capitalize text-slate-700 ${group === "dismissed" ? "" : "text-slate-700"}`}>
-                      {group}
-                    </p>
-                    <div>
-                      <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                        {convertFloatToNDecimal(questionSummary[group]?.percentage, 2)}%
+            <div className="space-y-5 text-sm md:text-base">
+              {["promoters", "passives", "detractors", "dismissed"].map((group) => (
+                <button
+                  className="w-full cursor-pointer hover:opacity-80"
+                  key={group}
+                  onClick={() => applyFilter(group)}>
+                  <div
+                    className={`mb-2 flex justify-between ${group === "dismissed" ? "mb-2 border-t bg-white pt-4 text-sm md:text-base" : ""}`}>
+                    <div className="mr-8 flex space-x-1">
+                      <p
+                        className={`font-semibold capitalize text-slate-700 ${group === "dismissed" ? "" : "text-slate-700"}`}>
+                        {group}
                       </p>
+                      <div>
+                        <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                          {convertFloatToNDecimal(questionSummary[group]?.percentage, 2)}%
+                        </p>
+                      </div>
                     </div>
+                    <p className="flex w-32 items-end justify-end text-slate-600">
+                      {questionSummary[group]?.count}{" "}
+                      {questionSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
+                    </p>
                   </div>
-                  <p className="flex w-32 items-end justify-end text-slate-600">
-                    {questionSummary[group]?.count}{" "}
-                    {questionSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
-                  </p>
-                </div>
-                <ProgressBar
-                  barColor={group === "dismissed" ? "bg-slate-600" : "bg-brand-dark"}
-                  progress={questionSummary[group]?.percentage / 100}
-                />
-              </button>
-            ))}
-              </div>
-            )}
+                  <ProgressBar
+                    barColor={group === "dismissed" ? "bg-slate-600" : "bg-brand-dark"}
+                    progress={questionSummary[group]?.percentage / 100}
+                  />
+                </button>
+              ))}
+            </div>
           </div>
         </TabsContent>
 
