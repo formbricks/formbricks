@@ -268,6 +268,64 @@ describe("surveys", () => {
       expect(sourceFilterOption).toBeDefined();
       expect(sourceFilterOption?.filterOptions).toEqual(["Equals", "Not equals"]);
     });
+
+    test("should include quota options in filter options when quotas are provided", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        questions: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        environmentId: "env1",
+        status: "draft",
+      } as unknown as TSurvey;
+
+      const quotas = [{ id: "quota1" }];
+
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any);
+
+      const quotaFilterOption = result.questionFilterOptions.find((o) => o.id === "quota1");
+      expect(quotaFilterOption).toBeDefined();
+      expect(quotaFilterOption?.type).toBe("Quotas");
+      expect(quotaFilterOption?.filterOptions).toEqual(["Status"]);
+      expect(quotaFilterOption?.filterComboBoxOptions).toEqual([
+        "Screened in",
+        "Screened out (overquota)",
+        "Not in quota",
+      ]);
+    });
+
+    test("should include multiple quota options when multiple quotas are provided", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        questions: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        environmentId: "env1",
+        status: "draft",
+      } as unknown as TSurvey;
+
+      const quotas = [{ id: "quota1" }, { id: "quota2" }];
+
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any);
+
+      const quota1 = result.questionFilterOptions.find((o) => o.id === "quota1");
+      const quota2 = result.questionFilterOptions.find((o) => o.id === "quota2");
+
+      expect(quota1).toBeDefined();
+      expect(quota2).toBeDefined();
+      expect(quota1?.filterComboBoxOptions).toEqual([
+        "Screened in",
+        "Screened out (overquota)",
+        "Not in quota",
+      ]);
+      expect(quota2?.filterComboBoxOptions).toEqual([
+        "Screened in",
+        "Screened out (overquota)",
+        "Not in quota",
+      ]);
+    });
   });
 
   describe("getFormattedFilters", () => {
@@ -866,6 +924,75 @@ describe("surveys", () => {
 
       expect(result.meta?.url).toEqual({ op: "contains", value: "formbricks.com" });
       expect(result.meta?.source).toEqual({ op: "equals", value: "newsletter" });
+    });
+
+    test("should filter by quota with screened in status", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Quotas", label: "Quota 1", id: "quota1" },
+            filterType: { filterComboBoxValue: "Screened in" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.quotas?.quota1).toEqual({ op: "screenedIn" });
+    });
+
+    test("should filter by quota with screened out status", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Quotas", label: "Quota 1", id: "quota1" },
+            filterType: { filterComboBoxValue: "Screened out (overquota)" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.quotas?.quota1).toEqual({ op: "screenedOut" });
+    });
+
+    test("should filter by quota with not in quota status", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Quotas", label: "Quota 1", id: "quota1" },
+            filterType: { filterComboBoxValue: "Not in quota" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.quotas?.quota1).toEqual({ op: "screenedOutNotInQuota" });
+    });
+
+    test("should filter by multiple quotas with different statuses", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Quotas", label: "Quota 1", id: "quota1" },
+            filterType: { filterComboBoxValue: "Screened in" },
+          },
+          {
+            questionType: { type: "Quotas", label: "Quota 2", id: "quota2" },
+            filterType: { filterComboBoxValue: "Not in quota" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.quotas?.quota1).toEqual({ op: "screenedIn" });
+      expect(result.quotas?.quota2).toEqual({ op: "screenedOutNotInQuota" });
     });
   });
 
