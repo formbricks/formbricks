@@ -258,8 +258,8 @@ describe("getLogicRules", () => {
           value: ZSurveyLogicConditionsOperator.Enum.isClicked,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
+          label: "mockTranslate(environments.surveys.edit.is_not_clicked)",
+          value: ZSurveyLogicConditionsOperator.Enum.isNotClicked,
         },
       ]);
     });
