@@ -30,6 +30,7 @@ import {
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -258,6 +259,8 @@ export const FollowUpModal = ({
             subject: data.subject,
             body: sanitizedBody,
             attachResponseData: data.attachResponseData,
+            includeVariables: data.includeVariables,
+            includeHiddenFields: data.includeHiddenFields,
           },
         },
       };
@@ -305,6 +308,8 @@ export const FollowUpModal = ({
           subject: data.subject,
           body: sanitizedBody,
           attachResponseData: data.attachResponseData,
+          includeVariables: data.includeVariables,
+          includeHiddenFields: data.includeHiddenFields,
         },
       },
     };
@@ -360,6 +365,8 @@ export const FollowUpModal = ({
         subject: defaultValues?.subject ?? "Thanks for your answers!",
         body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
         attachResponseData: defaultValues?.attachResponseData ?? false,
+        includeVariables: defaultValues?.includeVariables ?? false,
+        includeHiddenFields: defaultValues?.includeHiddenFields ?? false,
       });
     }
   }, [open, defaultValues, emailSendToOptions, form, userEmail, locale, t]);
@@ -824,27 +831,60 @@ export const FollowUpModal = ({
                       render={({ field }) => {
                         return (
                           <FormItem>
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                  id="attachResponseData"
-                                  checked={field.value}
-                                  defaultChecked={defaultValues?.attachResponseData ?? false}
-                                  onCheckedChange={(checked) => field.onChange(checked)}
-                                />
-                                <FormLabel htmlFor="attachResponseData" className="font-medium">
-                                  {t(
-                                    "environments.surveys.edit.follow_ups_modal_action_attach_response_data_label"
+                            <AdvancedOptionToggle
+                              htmlId="attachResponseData"
+                              isChecked={field.value}
+                              onToggle={(checked) => field.onChange(checked)}
+                              title={t(
+                                "environments.surveys.edit.follow_ups_modal_action_attach_response_data_label"
+                              )}
+                              description={t(
+                                "environments.surveys.edit.follow_ups_modal_action_attach_response_data_description"
+                              )}
+                              customContainerClass="p-0"
+                              childBorder>
+                              <div className="flex w-full flex-col gap-4 p-4">
+                                <FormField
+                                  control={form.control}
+                                  name="includeVariables"
+                                  render={({ field: variablesField }) => (
+                                    <FormItem>
+                                      <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id="includeVariables"
+                                          checked={variablesField.value}
+                                          onCheckedChange={(checked) => variablesField.onChange(checked)}
+                                          disabled={!field.value}
+                                        />
+                                        <FormLabel htmlFor="includeVariables" className="font-medium">
+                                          {t("environments.surveys.edit.follow_ups_include_variables")}
+                                        </FormLabel>
+                                      </div>
+                                    </FormItem>
                                   )}
-                                </FormLabel>
-                              </div>
+                                />
 
-                              <FormDescription className="text-sm text-slate-500">
-                                {t(
-                                  "environments.surveys.edit.follow_ups_modal_action_attach_response_data_description"
-                                )}
-                              </FormDescription>
-                            </div>
+                                <FormField
+                                  control={form.control}
+                                  name="includeHiddenFields"
+                                  render={({ field: hiddenFieldsField }) => (
+                                    <FormItem>
+                                      <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id="includeHiddenFields"
+                                          checked={hiddenFieldsField.value}
+                                          onCheckedChange={(checked) => hiddenFieldsField.onChange(checked)}
+                                          disabled={!field.value}
+                                        />
+                                        <FormLabel htmlFor="includeHiddenFields" className="font-medium">
+                                          {t("environments.surveys.edit.follow_ups_include_hidden_fields")}
+                                        </FormLabel>
+                                      </div>
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            </AdvancedOptionToggle>
                           </FormItem>
                         );
                       }}

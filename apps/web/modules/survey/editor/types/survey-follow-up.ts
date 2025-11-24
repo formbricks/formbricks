@@ -9,6 +9,8 @@ export const ZCreateSurveyFollowUpFormSchema = z.object({
   subject: z.string().trim().min(1, "Subject is required"),
   body: z.string().trim().min(1, "Body is required"),
   attachResponseData: z.boolean(),
+  includeVariables: z.boolean(),
+  includeHiddenFields: z.boolean(),
 });
 
 export type TCreateSurveyFollowUpForm = z.infer<typeof ZCreateSurveyFollowUpFormSchema>;
