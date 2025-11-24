@@ -446,4 +446,7 @@ const sentryOptions = {
 // Runtime Sentry reporting still depends on DSN being set via environment variables
 const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
 
+console.log("BASE PATH", nextConfig.basePath);
+
+
 export default exportConfig;
