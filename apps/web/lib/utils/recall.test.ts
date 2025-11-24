@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   checkForEmptyFallBackValue,
@@ -40,7 +40,7 @@ vi.mock("@/lib/utils/datetime", () => ({
       return false;
     }
   }),
-  formatDateWithOrdinal: vi.fn((date) => {
+  formatDateWithOrdinal: vi.fn(() => {
     return "January 1st, 2023";
   }),
 }));
@@ -355,10 +355,10 @@ describe("recall utility functions", () => {
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe("id1");
       expect(result[0].label).toBe("Question One");
-      expect(result[0].type).toBe("question");
+      expect(result[0].type).toBe("element");
       expect(result[1].id).toBe("id2");
       expect(result[1].label).toBe("Question Two");
-      expect(result[1].type).toBe("question");
+      expect(result[1].type).toBe("element");
     });
 
     test("handles hidden fields in recall items", () => {
@@ -422,7 +422,7 @@ describe("recall utility functions", () => {
   describe("headlineToRecall", () => {
     test("transforms headlines to recall info", () => {
       const text = "What do you think of @Product?";
-      const recallItems: TSurveyRecallItem[] = [{ id: "product", label: "Product", type: "question" }];
+      const recallItems: TSurveyRecallItem[] = [{ id: "product", label: "Product", type: "element" }];
       const fallbacks: fallbacks = {
         product: "our product",
       };
@@ -434,8 +434,8 @@ describe("recall utility functions", () => {
     test("transforms multiple headlines", () => {
       const text = "Rate @Product made by @Company";
       const recallItems: TSurveyRecallItem[] = [
-        { id: "product", label: "Product", type: "question" },
-        { id: "company", label: "Company", type: "question" },
+        { id: "product", label: "Product", type: "element" },
+        { id: "company", label: "Company", type: "element" },
       ];
       const fallbacks: fallbacks = {
         product: "our product",

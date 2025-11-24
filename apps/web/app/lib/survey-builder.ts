@@ -27,7 +27,7 @@ export const createJumpLogic = (
         id: createId(),
         leftOperand: {
           value: sourceQuestionId,
-          type: "question",
+          type: "element",
         },
         operator: operator,
       },
@@ -57,7 +57,7 @@ export const createChoiceJumpLogic = (
         id: createId(),
         leftOperand: {
           value: sourceQuestionId,
-          type: "question",
+          type: "element",
         },
         operator: "equals",
         rightOperand: {

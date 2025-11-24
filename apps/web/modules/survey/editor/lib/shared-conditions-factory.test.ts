@@ -70,7 +70,7 @@ vi.mock("@/lib/surveyLogic/utils", () => ({
 
 vi.mock("@/modules/survey/editor/lib/utils", () => ({
   getConditionValueOptions: vi.fn().mockReturnValue([
-    { value: "question1", label: "Question 1", type: "question" },
+    { value: "question1", label: "Question 1", type: "element" },
     { value: "variable1", label: "Variable 1", type: "variable" },
   ]),
   getConditionOperatorOptions: vi.fn().mockReturnValue([
@@ -269,7 +269,7 @@ describe("shared-conditions-factory", () => {
       const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
       const mockCondition: TSingleCondition = {
         id: "condition1",
-        leftOperand: { value: "question1", type: "question" },
+        leftOperand: { value: "question1", type: "element" },
         operator: "equals",
       };
 
@@ -287,7 +287,7 @@ describe("shared-conditions-factory", () => {
       const result = createSharedConditionsFactory(paramsWithBlockIdx, defaultCallbacks);
       const mockCondition: TSingleCondition = {
         id: "condition1",
-        leftOperand: { value: "question1", type: "question" },
+        leftOperand: { value: "question1", type: "element" },
         operator: "equals",
       };
 
@@ -317,7 +317,7 @@ describe("shared-conditions-factory", () => {
       const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
       const mockCondition: TSingleCondition = {
         id: "condition1",
-        leftOperand: { value: "question1", type: "question" },
+        leftOperand: { value: "question1", type: "element" },
         operator: "equals",
       };
 
@@ -338,7 +338,7 @@ describe("shared-conditions-factory", () => {
       const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
       const mockCondition: TSingleCondition = {
         id: "condition1",
-        leftOperand: { value: "question1", type: "question" },
+        leftOperand: { value: "question1", type: "element" },
         operator: "equals",
       };
 
@@ -405,7 +405,7 @@ describe("shared-conditions-factory", () => {
       const updates = {
         leftOperand: {
           value: "question1",
-          type: "question" as const,
+          type: "element" as const,
         },
         operator: "equals" as TSurveyLogicConditionsOperator, // Invalid operator for this element
       };
@@ -422,7 +422,7 @@ describe("shared-conditions-factory", () => {
         conditions: [
           {
             id: "condition1",
-            leftOperand: { value: "oldQuestion", type: "question" },
+            leftOperand: { value: "oldQuestion", type: "element" },
             operator: "equals",
           },
         ],
@@ -449,7 +449,7 @@ describe("shared-conditions-factory", () => {
       const updates = {
         leftOperand: {
           value: "question1",
-          type: "question" as const,
+          type: "element" as const,
         },
         operator: "equals" as TSurveyLogicConditionsOperator, // Valid operator
       };
@@ -477,7 +477,7 @@ describe("shared-conditions-factory", () => {
       const updates = {
         leftOperand: {
           value: "question1",
-          type: "question" as const,
+          type: "element" as const,
         },
       };
 
@@ -511,7 +511,7 @@ describe("shared-conditions-factory", () => {
       const updates = {
         leftOperand: {
           value: "non-existent-question",
-          type: "question" as const,
+          type: "element" as const,
         },
         operator: "equals" as TSurveyLogicConditionsOperator,
       };
@@ -583,9 +583,9 @@ describe("shared-conditions-factory", () => {
       const updates = {
         leftOperand: {
           value: "matrix-question.row1",
-          type: "question" as const,
+          type: "element" as const,
           meta: {
-            type: "question" as const,
+            type: "element" as const,
           },
         },
       };
@@ -600,7 +600,7 @@ describe("shared-conditions-factory", () => {
         conditions: [
           {
             id: "condition1",
-            leftOperand: { value: "matrix-question", type: "question" },
+            leftOperand: { value: "matrix-question", type: "element" },
             operator: "equals",
             rightOperand: { value: "x", type: "static" },
           } as TSingleCondition,
@@ -609,7 +609,7 @@ describe("shared-conditions-factory", () => {
       const updated = updater(structuredClone(initial));
       expect(updated.conditions[0]).toMatchObject({
         operator: "isEmpty",
-        leftOperand: { value: "matrix-question", type: "question", meta: { row: "row1" } },
+        leftOperand: { value: "matrix-question", type: "element", meta: { row: "row1" } },
         rightOperand: undefined,
       });
     });
@@ -620,9 +620,9 @@ describe("shared-conditions-factory", () => {
       const updates = {
         leftOperand: {
           value: "question1",
-          type: "question" as const,
+          type: "element" as const,
           meta: {
-            type: "question" as const,
+            type: "element" as const,
           },
         },
       };
@@ -638,9 +638,9 @@ describe("shared-conditions-factory", () => {
       const updates = {
         leftOperand: {
           value: "matrix-question",
-          type: "question" as const,
+          type: "element" as const,
           meta: {
-            type: "question" as const,
+            type: "element" as const,
           },
         },
       };
@@ -658,13 +658,13 @@ describe("shared-conditions-factory", () => {
         conditions: [
           {
             id: "condition1",
-            leftOperand: { value: "question1", type: "question" },
+            leftOperand: { value: "question1", type: "element" },
             operator: "equals",
             rightOperand: { value: "test", type: "static" },
           },
           {
             id: "condition2",
-            leftOperand: { value: "question2", type: "question" },
+            leftOperand: { value: "question2", type: "element" },
             operator: "doesNotEqual",
             rightOperand: { value: "test2", type: "static" },
           },
@@ -704,7 +704,7 @@ describe("shared-conditions-factory", () => {
         conditions: [
           {
             id: "condition1",
-            leftOperand: { value: "question1", type: "question" },
+            leftOperand: { value: "question1", type: "element" },
             operator: "equals",
             rightOperand: { value: "test", type: "static" },
           },
@@ -712,7 +712,7 @@ describe("shared-conditions-factory", () => {
             id: "condition2",
             leftOperand: {
               value: "matrix-question",
-              type: "question",
+              type: "element",
               meta: { row: "row1" },
             },
             operator: "isEmpty",
@@ -727,7 +727,7 @@ describe("shared-conditions-factory", () => {
         conditions: [
           {
             id: "condition1",
-            leftOperand: { value: "question1", type: "question" },
+            leftOperand: { value: "question1", type: "element" },
             operator: "equals",
             rightOperand: { value: "test", type: "static" },
           },
@@ -735,7 +735,7 @@ describe("shared-conditions-factory", () => {
             id: "condition2",
             leftOperand: {
               value: "matrix-question",
-              type: "question",
+              type: "element",
               meta: { row: "row1" },
             },
             operator: "isEmpty",
@@ -788,7 +788,7 @@ describe("shared-conditions-factory", () => {
       });
     });
 
-    test("should preserve meta for question type conditions", () => {
+    test("should preserve meta for element type conditions", () => {
       const genericConditions: TQuotaConditionGroup = {
         id: "root",
         connector: "and",
@@ -797,7 +797,7 @@ describe("shared-conditions-factory", () => {
             id: "condition1",
             leftOperand: {
               value: "question1",
-              type: "question" as const,
+              type: "element" as const,
               meta: { row: "row1", column: "col1" },
             },
             operator: "equals",
@@ -809,7 +809,7 @@ describe("shared-conditions-factory", () => {
       const result = genericConditionsToQuota(genericConditions);
 
       expect(result.conditions[0].leftOperand).toHaveProperty("meta");
-      if (result.conditions[0].leftOperand.type === "question") {
+      if (result.conditions[0].leftOperand.type === "element") {
         expect(result.conditions[0].leftOperand.meta).toEqual({ row: "row1", column: "col1" });
       }
     });
@@ -844,7 +844,7 @@ describe("shared-conditions-factory", () => {
         conditions: [
           {
             id: "condition1",
-            leftOperand: { value: "question1", type: "question" },
+            leftOperand: { value: "question1", type: "element" },
             operator: "equals",
             rightOperand: { value: "test", type: "static" },
           },

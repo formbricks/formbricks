@@ -124,7 +124,7 @@ export const RecallItemSelect = ({
         );
       })
       .map((question) => {
-        return { id: question.id, label: question.headline[selectedLanguageCode], type: "question" as const };
+        return { id: question.id, label: question.headline[selectedLanguageCode], type: "element" as const };
       });
 
     return filteredQuestions;
@@ -143,7 +143,7 @@ export const RecallItemSelect = ({
 
   const getRecallItemIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
-      case "question":
+      case "element":
         const question = questions.find((question) => question.id === recallItem.id);
         if (question) {
           return questionIconMapping[question?.type as keyof typeof questionIconMapping];

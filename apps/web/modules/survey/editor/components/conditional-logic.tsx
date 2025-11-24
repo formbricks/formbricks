@@ -75,7 +75,7 @@ export function ConditionalLogic({
             id: createId(),
             leftOperand: {
               value: firstElement.id,
-              type: "question",
+              type: "element",
             },
             operator,
           },

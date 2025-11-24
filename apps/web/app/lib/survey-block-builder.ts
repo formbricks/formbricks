@@ -227,7 +227,7 @@ export const createBlockJumpLogic = (
         id: createId(),
         leftOperand: {
           value: sourceElementId,
-          type: "question",
+          type: "element",
         },
         operator: operator,
       },
@@ -257,7 +257,7 @@ export const createBlockChoiceJumpLogic = (
         id: createId(),
         leftOperand: {
           value: sourceElementId,
-          type: "question",
+          type: "element",
         },
         operator: "equals",
         rightOperand: {

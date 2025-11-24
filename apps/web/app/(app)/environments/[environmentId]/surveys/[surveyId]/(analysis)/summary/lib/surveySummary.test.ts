@@ -325,7 +325,7 @@ describe("getSurveySummaryDropOff", () => {
                   {
                     id: "c1",
                     leftOperand: {
-                      type: "question" as const,
+                      type: "element" as const,
                       value: "q2",
                     },
                     operator: "equals" as const,

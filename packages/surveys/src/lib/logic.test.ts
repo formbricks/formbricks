@@ -166,7 +166,7 @@ describe("Survey Logic", () => {
       const singleCondition: TSingleCondition = {
         id: "condition1",
         operator: "equals",
-        leftOperand: { type: "question", value: "q1" },
+        leftOperand: { type: "element", value: "q1" },
         rightOperand: { type: "static", value: "test" },
       };
       expect(isConditionGroup(singleCondition)).toBe(false);
@@ -199,13 +199,13 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "equals",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "test answer" },
           },
           {
             id: "condition2",
             operator: "equals",
-            leftOperand: { type: "question", value: "q2" },
+            leftOperand: { type: "element", value: "q2" },
             rightOperand: { type: "static", value: 42 },
           },
         ],
@@ -222,13 +222,13 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "equals",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "wrong answer" },
           },
           {
             id: "condition2",
             operator: "equals",
-            leftOperand: { type: "question", value: "q2" },
+            leftOperand: { type: "element", value: "q2" },
             rightOperand: { type: "static", value: 42 },
           },
         ],
@@ -245,7 +245,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "equals",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "test answer" },
           },
           {
@@ -255,7 +255,7 @@ describe("Survey Logic", () => {
               {
                 id: "condition2",
                 operator: "equals",
-                leftOperand: { type: "question", value: "q2" },
+                leftOperand: { type: "element", value: "q2" },
                 rightOperand: { type: "static", value: "wrong" },
               },
               {
@@ -280,13 +280,13 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "equals",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "test answer" },
           },
           {
             id: "condition2",
             operator: "equals",
-            leftOperand: { type: "question", value: "q2" },
+            leftOperand: { type: "element", value: "q2" },
             rightOperand: { type: "static", value: "wrong value" },
           },
         ],
@@ -303,13 +303,13 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "equals",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "wrong answer" },
           },
           {
             id: "condition2",
             operator: "equals",
-            leftOperand: { type: "question", value: "q2" },
+            leftOperand: { type: "element", value: "q2" },
             rightOperand: { type: "static", value: "wrong value" },
           },
         ],
@@ -508,7 +508,7 @@ describe("Survey Logic", () => {
           objective: "calculate",
           variableId: "var2",
           operator: "add",
-          value: { type: "question", value: "q2" },
+          value: { type: "element", value: "q2" },
         },
       ];
 
@@ -609,7 +609,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "contains",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "test" },
           },
         ],
@@ -623,7 +623,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "doesNotContain",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "invalid" },
           },
         ],
@@ -639,7 +639,7 @@ describe("Survey Logic", () => {
           {
             id: "condition3",
             operator: "startsWith",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "test" },
           },
         ],
@@ -655,7 +655,7 @@ describe("Survey Logic", () => {
           {
             id: "condition4",
             operator: "doesNotStartWith",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "invalid" },
           },
         ],
@@ -671,7 +671,7 @@ describe("Survey Logic", () => {
           {
             id: "condition5",
             operator: "endsWith",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "answer" },
           },
         ],
@@ -685,7 +685,7 @@ describe("Survey Logic", () => {
           {
             id: "condition6",
             operator: "doesNotEndWith",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "invalid" },
           },
         ],
@@ -704,7 +704,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "isGreaterThan",
-            leftOperand: { type: "question", value: "q2" },
+            leftOperand: { type: "element", value: "q2" },
             rightOperand: { type: "static", value: "30" },
           },
         ],
@@ -720,7 +720,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "isLessThan",
-            leftOperand: { type: "question", value: "q2" },
+            leftOperand: { type: "element", value: "q2" },
             rightOperand: { type: "static", value: "50" },
           },
         ],
@@ -734,7 +734,7 @@ describe("Survey Logic", () => {
           {
             id: "condition3",
             operator: "isGreaterThanOrEqual",
-            leftOperand: { type: "question", value: "q2" },
+            leftOperand: { type: "element", value: "q2" },
             rightOperand: { type: "static", value: "42" },
           },
         ],
@@ -750,7 +750,7 @@ describe("Survey Logic", () => {
           {
             id: "condition4",
             operator: "isLessThanOrEqual",
-            leftOperand: { type: "question", value: "q2" },
+            leftOperand: { type: "element", value: "q2" },
             rightOperand: { type: "static", value: "42" },
           },
         ],
@@ -769,7 +769,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "isAfter",
-            leftOperand: { type: "question", value: "q5" },
+            leftOperand: { type: "element", value: "q5" },
             rightOperand: { type: "static", value: "2022-12-31" },
           },
         ],
@@ -783,7 +783,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "isBefore",
-            leftOperand: { type: "question", value: "q5" },
+            leftOperand: { type: "element", value: "q5" },
             rightOperand: { type: "static", value: "2023-01-02" },
           },
         ],
@@ -797,7 +797,7 @@ describe("Survey Logic", () => {
           {
             id: "condition3",
             operator: "equals",
-            leftOperand: { type: "question", value: "q5" },
+            leftOperand: { type: "element", value: "q5" },
             rightOperand: { type: "static", value: "2023-01-01" },
           },
         ],
@@ -816,7 +816,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "includesAllOf",
-            leftOperand: { type: "question", value: "q4" },
+            leftOperand: { type: "element", value: "q4" },
             rightOperand: { type: "static", value: ["opt1", "opt2"] },
           },
         ],
@@ -832,7 +832,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "includesOneOf",
-            leftOperand: { type: "question", value: "q4" },
+            leftOperand: { type: "element", value: "q4" },
             rightOperand: { type: "static", value: ["opt1", "Invalid Option"] },
           },
         ],
@@ -848,7 +848,7 @@ describe("Survey Logic", () => {
           {
             id: "condition3",
             operator: "doesNotIncludeAllOf",
-            leftOperand: { type: "question", value: "q4" },
+            leftOperand: { type: "element", value: "q4" },
             rightOperand: { type: "static", value: ["Invalid 1", "Invalid 2"] },
           },
         ],
@@ -864,7 +864,7 @@ describe("Survey Logic", () => {
           {
             id: "condition4",
             operator: "doesNotIncludeOneOf",
-            leftOperand: { type: "question", value: "q4" },
+            leftOperand: { type: "element", value: "q4" },
             rightOperand: { type: "static", value: ["opt3", "Invalid Option"] },
           },
         ],
@@ -883,7 +883,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "isSubmitted",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
           },
         ],
       };
@@ -898,7 +898,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "isSkipped",
-            leftOperand: { type: "question", value: "emptyField" },
+            leftOperand: { type: "element", value: "emptyField" },
           },
         ],
       };
@@ -913,7 +913,7 @@ describe("Survey Logic", () => {
           {
             id: "condition3",
             operator: "isBooked",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
           },
         ],
       };
@@ -929,7 +929,7 @@ describe("Survey Logic", () => {
             id: "condition1",
             operator: "equals",
             leftOperand: {
-              type: "question",
+              type: "element",
               value: "q8",
               meta: { row: "0" },
             },
@@ -948,7 +948,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "isSubmitted",
-            leftOperand: { type: "question", value: "q6" },
+            leftOperand: { type: "element", value: "q6" },
           },
         ],
       };
@@ -963,7 +963,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "isSkipped",
-            leftOperand: { type: "question", value: "skippedUpload" },
+            leftOperand: { type: "element", value: "skippedUpload" },
           },
         ],
       };
@@ -984,7 +984,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "isPartiallySubmitted",
-            leftOperand: { type: "question", value: "q8" },
+            leftOperand: { type: "element", value: "q8" },
           },
         ],
       };
@@ -1009,7 +1009,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "isCompletelySubmitted",
-            leftOperand: { type: "question", value: "q8" },
+            leftOperand: { type: "element", value: "q8" },
           },
         ],
       };
@@ -1034,7 +1034,7 @@ describe("Survey Logic", () => {
             id: "condition1",
             // @ts-ignore - intentionally using invalid operator for test
             operator: "invalidOperator",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "test" },
           },
         ],
@@ -1049,7 +1049,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "equals",
-            leftOperand: { type: "question", value: "nonExistentId" },
+            leftOperand: { type: "element", value: "nonExistentId" },
             rightOperand: { type: "static", value: "test" },
           },
         ],
@@ -1092,7 +1092,7 @@ describe("Survey Logic", () => {
             id: "condition1",
             operator: "equals",
             leftOperand: {
-              type: "question",
+              type: "element",
               value: "q8",
               meta: { row: "invalid-row" },
             },
@@ -1112,7 +1112,7 @@ describe("Survey Logic", () => {
             id: "condition1",
             operator: "equals",
             leftOperand: {
-              type: "question",
+              type: "element",
               value: "q8",
               meta: { row: "99" }, // Invalid row index
             },
@@ -1136,7 +1136,7 @@ describe("Survey Logic", () => {
             id: "condition1",
             operator: "isEmpty",
             leftOperand: {
-              type: "question",
+              type: "element",
               value: "q8",
               meta: { row: "0" },
             },
@@ -1156,7 +1156,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "doesNotEqual",
-            leftOperand: { type: "question", value: "q7" },
+            leftOperand: { type: "element", value: "q7" },
             rightOperand: { type: "static", value: "option2" },
           },
         ],
@@ -1179,8 +1179,8 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "equals",
-            leftOperand: { type: "question", value: "dateQ1" },
-            rightOperand: { type: "question", value: "dateQ2" },
+            leftOperand: { type: "element", value: "dateQ1" },
+            rightOperand: { type: "element", value: "dateQ2" },
           },
         ],
       };
@@ -1225,8 +1225,8 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "doesNotEqual",
-            leftOperand: { type: "question", value: "dateQ1" },
-            rightOperand: { type: "question", value: "dateQ2" },
+            leftOperand: { type: "element", value: "dateQ1" },
+            rightOperand: { type: "element", value: "dateQ2" },
           },
         ],
       };
@@ -1273,7 +1273,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "equals",
-            leftOperand: { type: "question", value: "multiValue" },
+            leftOperand: { type: "element", value: "multiValue" },
             rightOperand: { type: "static", value: "option1" },
           },
         ],
@@ -1290,8 +1290,8 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "equals",
-            leftOperand: { type: "question", value: "q1" },
-            rightOperand: { type: "question", value: "multiQ" },
+            leftOperand: { type: "element", value: "q1" },
+            rightOperand: { type: "element", value: "multiQ" },
           },
         ],
       };
@@ -1312,7 +1312,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "isEmpty",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
           },
         ],
       };
@@ -1328,7 +1328,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "isNotEmpty",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
           },
         ],
       };
@@ -1345,7 +1345,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "isAnyOf",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: ["wrong answer", "test answer", "another answer"] },
           },
         ],
@@ -1360,7 +1360,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "isAnyOf",
-            leftOperand: { type: "question", value: "q1" },
+            leftOperand: { type: "element", value: "q1" },
             rightOperand: { type: "static", value: "test answer" },
           },
         ],
@@ -1402,7 +1402,7 @@ describe("Survey Logic", () => {
           {
             id: "condition1",
             operator: "equals",
-            leftOperand: { type: "question", value: "multiChoiceWithOther" },
+            leftOperand: { type: "element", value: "multiChoiceWithOther" },
             rightOperand: { type: "static", value: "Custom Option" },
           },
         ],
@@ -1423,7 +1423,7 @@ describe("Survey Logic", () => {
           {
             id: "condition2",
             operator: "equals",
-            leftOperand: { type: "question", value: "multiChoiceWithOther" },
+            leftOperand: { type: "element", value: "multiChoiceWithOther" },
             rightOperand: { type: "static", value: "opt1" },
           },
         ],

@@ -1092,7 +1092,7 @@ const reviewPrompt = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[0],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isLessThanOrEqual",
                     rightOperand: {
@@ -1922,7 +1922,7 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[0],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isGreaterThanOrEqual",
                     rightOperand: {
@@ -2367,7 +2367,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[0],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isLessThanOrEqual",
                     rightOperand: {
@@ -2411,7 +2411,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[1],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isSubmitted",
                   },
@@ -3036,7 +3036,7 @@ const rateCheckoutExperience = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[0],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isGreaterThanOrEqual",
                     rightOperand: {
@@ -3131,7 +3131,7 @@ const measureSearchExperience = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[0],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isGreaterThanOrEqual",
                     rightOperand: {
@@ -3226,7 +3226,7 @@ const evaluateContentQuality = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[0],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isGreaterThanOrEqual",
                     rightOperand: {
@@ -3349,7 +3349,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[1],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isGreaterThanOrEqual",
                     rightOperand: {
@@ -3392,7 +3392,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[2],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isSubmitted",
                   },
@@ -3400,7 +3400,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[1],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isSkipped",
                   },
@@ -3439,7 +3439,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[3],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isSubmitted",
                   },
@@ -3447,7 +3447,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[1],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isSkipped",
                   },
@@ -3557,7 +3557,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[1],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "equals",
                     rightOperand: {
@@ -3872,7 +3872,7 @@ const improveNewsletterContent = (t: TFunction): TTemplate => {
                     id: createId(),
                     leftOperand: {
                       value: reusableElementIds[0],
-                      type: "question",
+                      type: "element",
                     },
                     operator: "isLessThan",
                     rightOperand: {

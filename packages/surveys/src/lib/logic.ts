@@ -88,7 +88,7 @@ const getLeftOperandValue = (
   selectedLanguage: string
 ) => {
   switch (leftOperand.type) {
-    case "question":
+    case "element":
       const questions = getElementsFromSurveyBlocks(localSurvey.blocks);
       const currentQuestion = questions.find((q) => q.id === leftOperand.value);
       if (!currentQuestion) return undefined;
@@ -188,7 +188,7 @@ const getRightOperandValue = (
   if (!rightOperand) return undefined;
 
   switch (rightOperand.type) {
-    case "question":
+    case "element":
       return data[rightOperand.value];
     case "variable":
       const variables = localSurvey.variables || [];
@@ -224,7 +224,7 @@ const evaluateSingleCondition = (
     let leftField: TSurveyElement | TSurveyVariable | string;
 
     const questions = getElementsFromSurveyBlocks(localSurvey.blocks);
-    if (condition.leftOperand?.type === "question") {
+    if (condition.leftOperand?.type === "element") {
       leftField = questions.find((q) => q.id === condition.leftOperand?.value) ?? "";
     } else if (condition.leftOperand?.type === "variable") {
       leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand?.value) as TSurveyVariable;
@@ -236,7 +236,7 @@ const evaluateSingleCondition = (
 
     let rightField: TSurveyElement | TSurveyVariable | string;
 
-    if (condition.rightOperand?.type === "question") {
+    if (condition.rightOperand?.type === "element") {
       rightField = questions.find((q) => q.id === condition.rightOperand?.value) ?? "";
     } else if (condition.rightOperand?.type === "variable") {
       rightField = localSurvey.variables.find(
@@ -258,7 +258,7 @@ const evaluateSingleCondition = (
 
     switch (condition.operator) {
       case "equals":
-        if (condition.leftOperand.type === "question") {
+        if (condition.leftOperand.type === "element") {
           if (
             (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
             typeof leftValue === "string" &&
@@ -270,7 +270,7 @@ const evaluateSingleCondition = (
         }
 
         // when left value is of openText, hiddenField, variable and right value is of multichoice
-        if (condition.rightOperand?.type === "question") {
+        if (condition.rightOperand?.type === "element") {
           if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
               return rightValue.includes(leftValue as string);
@@ -294,7 +294,7 @@ const evaluateSingleCondition = (
       case "doesNotEqual":
         // when left value is of picture selection question and right value is its option
         if (
-          condition.leftOperand.type === "question" &&
+          condition.leftOperand.type === "element" &&
           (leftField as TSurveyElement).type === TSurveyElementTypeEnum.PictureSelection &&
           Array.isArray(leftValue) &&
           leftValue.length > 0 &&
@@ -305,7 +305,7 @@ const evaluateSingleCondition = (
 
         // when left value is of date question and right value is string
         if (
-          condition.leftOperand.type === "question" &&
+          condition.leftOperand.type === "element" &&
           (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
           typeof leftValue === "string" &&
           typeof rightValue === "string"
@@ -314,7 +314,7 @@ const evaluateSingleCondition = (
         }
 
         // when left value is of openText, hiddenField, variable and right value is of multichoice
-        if (condition.rightOperand?.type === "question") {
+        if (condition.rightOperand?.type === "element") {
           if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
               return !rightValue.includes(leftValue as string);
@@ -350,7 +350,7 @@ const evaluateSingleCondition = (
       case "isSubmitted":
         if (typeof leftValue === "string") {
           if (
-            condition.leftOperand.type === "question" &&
+            condition.leftOperand.type === "element" &&
             (leftField as TSurveyElement).type === TSurveyElementTypeEnum.FileUpload &&
             leftValue
           ) {
@@ -472,7 +472,7 @@ const performCalculation = (
         operandValue = value;
       }
       break;
-    case "question":
+    case "element":
     case "hiddenField":
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
