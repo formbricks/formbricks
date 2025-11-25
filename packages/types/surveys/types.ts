@@ -2015,7 +2015,7 @@ const validateConditions = (
     const { leftOperand, operator, rightOperand } = condition;
 
     // Validate left operand
-    if (leftOperand.type === "question") {
+    if (leftOperand.type === "element") {
       const questionId = leftOperand.value;
       const questionIdx = survey.questions.findIndex((q) => q.id === questionId);
       const question = questionIdx !== -1 ? survey.questions[questionIdx] : undefined;
@@ -2072,7 +2072,7 @@ const validateConditions = (
 
       if (question.type === TSurveyQuestionTypeEnum.OpenText) {
         // Validate right operand
-        if (rightOperand?.type === "question") {
+        if (rightOperand?.type === "element") {
           const quesId = rightOperand.value;
           const ques = survey.questions.find((q) => q.id === quesId);
 
@@ -2304,7 +2304,7 @@ const validateConditions = (
           });
         }
       } else if (question.type === TSurveyQuestionTypeEnum.Date) {
-        if (rightOperand?.type === "question") {
+        if (rightOperand?.type === "element") {
           const quesId = rightOperand.value;
           const ques = survey.questions.find((q) => q.id === quesId);
 
@@ -2531,7 +2531,7 @@ const validateConditions = (
       }
 
       // Validate right operand
-      if (rightOperand?.type === "question") {
+      if (rightOperand?.type === "element") {
         const questionId = rightOperand.value;
         const question = survey.questions.find((q) => q.id === questionId);
 
@@ -2654,7 +2654,7 @@ const validateActions = (
           };
         }
 
-        if (action.value.type === "question") {
+        if (action.value.type === "element") {
           const allowedQuestions = [
             TSurveyQuestionTypeEnum.OpenText,
             TSurveyQuestionTypeEnum.MultipleChoiceSingle,
@@ -2686,7 +2686,7 @@ const validateActions = (
         };
       }
 
-      if (action.value.type === "question") {
+      if (action.value.type === "element") {
         const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
 
         const selectedQuestion = previousQuestions.find((q) => q.id === action.value.value);
