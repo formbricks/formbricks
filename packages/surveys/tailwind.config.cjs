@@ -26,7 +26,6 @@ module.exports = {
         "accent-selected-bg": "var(--accent-background-color-selected)",
         "input-bg": "var(--input-background-color)",
         "input-bg-selected": "var(--input-background-color-selected)",
-        placeholder: "var(--placeholder-color)",
         "rating-fill": "var(--rating-fill)",
         "rating-focus": "var(--rating-hover)",
         "rating-selected": "var(--rating-selected)",
