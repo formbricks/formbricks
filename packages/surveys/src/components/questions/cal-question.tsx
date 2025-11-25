@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { BackButton } from "@formbricks/survey-core";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyCalQuestion, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { BackButton } from "@formbricks/ui";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { CalEmbed } from "@/components/general/cal-embed";
 import { Headline } from "@/components/general/headline";

@@ -1,6 +1,6 @@
 ## Overview
 
-The `@formbricks/survey-core` package provides React-authored survey UI components. These components are written using standard React APIs (hooks, JSX, etc.) for maximum familiarity and ecosystem compatibility.
+The `@formbricks/ui` package provides React-authored survey UI components. These components are written using standard React APIs (hooks, JSX, etc.) for maximum familiarity and ecosystem compatibility.
 
 ## Purpose
 
@@ -22,7 +22,7 @@ All components are authored using standard React patterns:
 
 ### Build Strategy
 
-- **survey-core**: React components, treated as a normal React library
+- **ui**: React components, treated as a normal React library
 - **surveys**: Build step aliases `react` → `preact/compat`, producing a small Preact-powered widget
 - **Web app + Storybook**: Continue using real React with no changes
 
@@ -36,7 +36,7 @@ All components are authored using standard React patterns:
 ## File Structure
 
 ```text
-packages/survey-core/
+packages/ui/
 ├── src/
 │   ├── components/        # React survey components
 │   │   ├── buttons/       # Survey navigation buttons
@@ -66,7 +66,7 @@ packages/survey-core/
 ### In React Applications
 
 ```tsx
-import { SurveyComponent } from "@formbricks/survey-core";
+import { SurveyComponent } from "@formbricks/ui";
 
 function App() {
   return <SurveyComponent {...props} />;

@@ -2,15 +2,15 @@ import type { Plugin } from "vite";
 
 /**
  * Vite plugin that automatically adds 'fb-' prefix to Tailwind classes
- * in className strings from @formbricks/survey-core components
+ * in className strings from @formbricks/ui components
  */
 export function addFbPrefixPlugin(): Plugin {
   return {
     name: "add-fb-prefix",
     enforce: "pre",
     transform(code, id) {
-      // Only process files that import from survey-core
-      if (!id.includes("node_modules") && code.includes("@formbricks/survey-core")) {
+      // Only process files that import from ui package
+      if (!id.includes("node_modules") && code.includes("@formbricks/ui")) {
         // Transform className strings to add fb- prefix
         const transformedCode = transformClassNameStrings(code);
         if (transformedCode !== code) {

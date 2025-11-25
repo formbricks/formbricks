@@ -2,8 +2,8 @@ import { addFbPrefix } from "./add-fb-prefix";
 
 /**
  * Enhanced cn utility that automatically adds fb- prefix to classes
- * This replaces survey-core's cn utility via Vite alias
- * All survey-core components will automatically get fb- prefixed classes
+ * This replaces ui package's cn utility via Vite alias
+ * All ui package components will automatically get fb- prefixed classes
  */
 export function cn(...classes: (string | undefined | null | false)[]): string {
   // Filter out falsy values and join

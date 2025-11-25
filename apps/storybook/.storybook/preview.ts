@@ -1,6 +1,6 @@
 import type { Preview } from "@storybook/react-vite";
 import React from "react";
-import { I18nProvider as SurveyCoreI18nProvider } from "../../../packages/survey-core/src/components/i18n/provider";
+import { I18nProvider as UiI18nProvider } from "../../../packages/ui/src/components/i18n/provider";
 import { I18nProvider as WebI18nProvider } from "../../web/lingodotdev/client";
 import "../../web/modules/ui/globals.css";
 
@@ -16,10 +16,10 @@ const withLingodotDev = (Story: any) => {
   );
 };
 
-// Create an i18n decorator for survey-core components
-const withSurveyCoreI18n = (Story: any) => {
+// Create a Storybook-specific i18n decorator for ui package components
+const withUiI18n = (Story: any) => {
   return React.createElement(
-    SurveyCoreI18nProvider,
+    UiI18nProvider,
     {
       language: "en",
     } as any,
@@ -36,7 +36,7 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [withLingodotDev, withSurveyCoreI18n],
+  decorators: [withLingodotDev, withUiI18n],
 };
 
 export default preview;

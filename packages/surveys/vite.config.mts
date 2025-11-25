@@ -12,33 +12,33 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Vite plugin that intercepts survey-core's cn utility import
+ * Vite plugin that intercepts ui package's cn utility import
  * and replaces it with our prefixed version
  */
 function addFbPrefixPlugin(): Plugin {
-  const surveyCoreUtilsPath = resolve(__dirname, "../survey-core/src/lib/utils.ts");
+  const uiUtilsPath = resolve(__dirname, "../ui/src/lib/utils.ts");
   const embedCnPath = resolve(__dirname, "src/lib/cn-with-prefix.ts");
-  const surveyCoreSrcPath = resolve(__dirname, "../survey-core/src");
+  const uiSrcPath = resolve(__dirname, "../ui/src");
 
   return {
-    name: "add-fb-prefix-to-survey-core",
+    name: "add-fb-prefix-to-ui",
     enforce: "pre",
     resolveId(id, importer) {
       if (!importer) return null;
 
       // Normalize paths for comparison
       const normalizedImporter = importer.replace(/\\/g, "/");
-      const normalizedSurveyCoreSrc = surveyCoreSrcPath.replace(/\\/g, "/");
+      const normalizedUiSrc = uiSrcPath.replace(/\\/g, "/");
 
-      // Check if the importer is from survey-core
-      const isFromSurveyCore =
-        normalizedImporter.includes("survey-core/src") ||
-        normalizedImporter.includes("survey-core\\src") ||
-        normalizedImporter.startsWith(normalizedSurveyCoreSrc) ||
-        normalizedImporter.includes("/survey-core/") ||
-        normalizedImporter.includes("\\survey-core\\");
+      // Check if the importer is from ui package
+      const isFromUi =
+        normalizedImporter.includes("ui/src") ||
+        normalizedImporter.includes("ui\\src") ||
+        normalizedImporter.startsWith(normalizedUiSrc) ||
+        normalizedImporter.includes("/ui/") ||
+        normalizedImporter.includes("\\ui\\");
 
-      if (isFromSurveyCore) {
+      if (isFromUi) {
         // Handle @/lib/utils alias
         if (id === "@/lib/utils" || id === "@/lib/utils.ts") {
           return embedCnPath;
@@ -49,7 +49,7 @@ function addFbPrefixPlugin(): Plugin {
           try {
             const resolved = resolve(dirname(importer), id);
             const normalizedResolved = resolved.replace(/\\/g, "/");
-            const normalizedTarget = surveyCoreUtilsPath.replace(/\\/g, "/");
+            const normalizedTarget = uiUtilsPath.replace(/\\/g, "/");
 
             if (normalizedResolved === normalizedTarget) {
               return embedCnPath;
@@ -60,9 +60,9 @@ function addFbPrefixPlugin(): Plugin {
         }
       }
 
-      // Also intercept direct imports of survey-core's utils file
+      // Also intercept direct imports of ui package's utils file
       const normalizedId = id.replace(/\\/g, "/");
-      const normalizedTarget = surveyCoreUtilsPath.replace(/\\/g, "/");
+      const normalizedTarget = uiUtilsPath.replace(/\\/g, "/");
       if (normalizedId === normalizedTarget) {
         return embedCnPath;
       }
@@ -135,12 +135,12 @@ const config = ({ mode }) => {
     ],
     resolve: {
       alias: {
-        // Alias React to Preact for survey-core components
+        // Alias React to Preact for ui package components
         react: "preact/compat",
         "react-dom": "preact/compat",
         "react/jsx-runtime": "preact/jsx-runtime",
-        // Allow importing from survey-core source files
-        "@formbricks/survey-core/src": resolve(__dirname, "../../survey-core/src"),
+        // Allow importing from ui package source files
+        "@formbricks/ui/src": resolve(__dirname, "../../ui/src"),
       },
     },
   });

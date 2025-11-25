@@ -11,7 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "../web"),
-      "@survey-core": path.resolve(__dirname, "../../packages/survey-core/src"),
+      "@ui": path.resolve(__dirname, "../../packages/ui/src"),
     },
   },
 });

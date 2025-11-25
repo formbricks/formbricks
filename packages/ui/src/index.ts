@@ -1,4 +1,4 @@
-// @formbricks/survey-core
+// @formbricks/ui
 // React-authored survey UI components
 //
 // This package exports React components that can be used in:

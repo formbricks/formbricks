@@ -1,9 +1,9 @@
 {
-  "name": "@formbricks/survey-core",
+  "name": "@formbricks/ui",
   "license": "MIT",
   "version": "1.0.0",
   "private": true,
-  "description": "Formbricks survey core components - React-authored survey UI components for use in web app, Storybook, and embed bundle.",
+  "description": "Formbricks UI components - React-authored survey UI components for use in web app, Storybook, and embed bundle.",
   "homepage": "https://formbricks.com",
   "type": "module",
   "repository": {

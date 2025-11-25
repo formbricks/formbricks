@@ -8,8 +8,8 @@
     "jsxImportSource": "preact",
     "paths": {
       "@/*": ["./src/*"],
-      "@formbricks/survey-core": ["../survey-core/src/index.ts"],
-      "@survey-core/*": ["../survey-core/src/*"]
+      "@formbricks/ui": ["../ui/src/index.ts"],
+      "@ui/*": ["../ui/src/*"]
     },
     "resolveJsonModule": true
   },

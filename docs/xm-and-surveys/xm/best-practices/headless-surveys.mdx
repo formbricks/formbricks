@@ -29,7 +29,7 @@ This document shows how you can use Formbricks to manage survey definitions and 
 ## Core components
 
 1. **Formbricks Backend:** Use the Formbricks app or Management API to create surveys (questions, flows, locales, validations).  
-2. **Your UI Survey Package:** Renders your custom UI, collects the data and sends to Formbricks backend using Formbricks API. For inspiration, you can start looking [here](https://github.com/formbricks/formbricks/tree/main/packages/survey-core). With an active Enterprise license you can even fork our survey packages, make changes and keep them private to your organization (freed from AGPL obligation to also release your changes under AGPL)  
+2. **Your UI Survey Package:** Renders your custom UI, collects the data and sends to Formbricks backend using Formbricks API. For inspiration, you can start looking [here](https://github.com/formbricks/formbricks/tree/main/packages/ui). With an active Enterprise license you can even fork our survey packages, make changes and keep them private to your organization (freed from AGPL obligation to also release your changes under AGPL)  
 3. **Webhook Integration:** Using in-built Webhook integration forward the data to your Analysis tool or Data warehouse.  
 4. **Your Analysis Tool / Data Warehouse:** Receive all the data from Formbricks integration and process it for analysis.
 
@@ -136,7 +136,7 @@ Body:
 
 Your frontend receives the survey JSON and renders it using your own UI components. 
 
-For inspiration, you can start looking [here](https://github.com/formbricks/formbricks/tree/main/packages/survey-core). With an active Enterprise license you can even fork our survey packages, make changes and keep them private to your organization (freed from AGPL obligation to also release your changes under AGPL)
+For inspiration, you can start looking [here](https://github.com/formbricks/formbricks/tree/main/packages/ui). With an active Enterprise license you can even fork our survey packages, make changes and keep them private to your organization (freed from AGPL obligation to also release your changes under AGPL)
 
 * Question rendering based on type (openText, multipleChoiceSingle, rating, etc.)  
 * Skip logic and conditional branching  

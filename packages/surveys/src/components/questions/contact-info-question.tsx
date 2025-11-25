@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
-import { BackButton } from "@formbricks/survey-core";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { BackButton } from "@formbricks/ui";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { Input } from "@/components/general/input";

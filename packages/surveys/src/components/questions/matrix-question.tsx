@@ -1,12 +1,12 @@
 import { type JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
-import { BackButton } from "@formbricks/survey-core";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type {
   TSurveyMatrixQuestion,
   TSurveyMatrixQuestionChoice,
   TSurveyQuestionId,
 } from "@formbricks/types/surveys/types";
+import { BackButton } from "@formbricks/ui";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
