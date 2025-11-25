@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getEnvironment } from "@/lib/environment/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
-import { EnvironmentIdBaseLayout } from "@/modules/ui/components/environmentId-base-layout";
 
 const SurveyEditorEnvironmentLayout = async (props) => {
   const params = await props.params;
@@ -25,11 +24,9 @@ const SurveyEditorEnvironmentLayout = async (props) => {
   }
 
   return (
-    <EnvironmentIdBaseLayout>
-      <div className="flex h-screen flex-col">
-        <div className="h-full overflow-y-auto bg-slate-50">{children}</div>
-      </div>
-    </EnvironmentIdBaseLayout>
+    <div className="flex h-screen flex-col">
+      <div className="h-full overflow-y-auto bg-slate-50">{children}</div>
+    </div>
   );
 };
 

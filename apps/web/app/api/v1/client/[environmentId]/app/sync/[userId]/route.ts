@@ -54,8 +54,6 @@ const checkResponseLimit = async (environmentId: string): Promise<boolean> => {
   const monthlyResponseLimit = organization.billing.limits.monthly.responses;
   const isLimitReached = monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
 
-  // Limit check completed
-
   return isLimitReached;
 };
 

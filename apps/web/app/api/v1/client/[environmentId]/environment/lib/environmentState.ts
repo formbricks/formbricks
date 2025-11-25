@@ -41,8 +41,6 @@ export const getEnvironmentState = async (
         const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
         isMonthlyResponsesLimitReached =
           monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
-
-        // Limit check completed
       }
 
       // Build the response data

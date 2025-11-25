@@ -9,7 +9,7 @@ import {
   SelectedFilterValue,
   TResponseStatus,
   useResponseFilter,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";

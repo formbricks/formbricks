@@ -4,7 +4,6 @@ import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/comp
 import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/environment-context";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getEnvironmentLayoutData } from "@/modules/environments/lib/utils";
-import { EnvironmentIdBaseLayout } from "@/modules/ui/components/environmentId-base-layout";
 import EnvironmentStorageHandler from "./components/EnvironmentStorageHandler";
 
 const EnvLayout = async (props: {
@@ -24,7 +23,7 @@ const EnvLayout = async (props: {
   const layoutData = await getEnvironmentLayoutData(params.environmentId, session.user.id);
 
   return (
-    <EnvironmentIdBaseLayout>
+    <>
       <EnvironmentStorageHandler environmentId={params.environmentId} />
       <EnvironmentContextWrapper
         environment={layoutData.environment}
@@ -32,7 +31,7 @@ const EnvLayout = async (props: {
         organization={layoutData.organization}>
         <EnvironmentLayout layoutData={layoutData}>{children}</EnvironmentLayout>
       </EnvironmentContextWrapper>
-    </EnvironmentIdBaseLayout>
+    </>
   );
 };
 
