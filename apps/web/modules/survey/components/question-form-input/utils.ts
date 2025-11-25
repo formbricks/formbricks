@@ -108,7 +108,6 @@ export const isValueIncomplete = (
     "buttonLabel",
     "placeholder",
     "backButtonLabel",
-    "dismissButtonLabel",
   ];
 
   // If value is not provided, immediately return false as it cannot be incomplete.

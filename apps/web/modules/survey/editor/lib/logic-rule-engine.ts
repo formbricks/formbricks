@@ -260,8 +260,8 @@ export const getLogicRules = (t: TFunction) => {
             value: ZSurveyLogicConditionsOperator.Enum.isClicked,
           },
           {
-            label: t("environments.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
+            label: t("environments.surveys.edit.is_not_clicked"),
+            value: ZSurveyLogicConditionsOperator.Enum.isNotClicked,
           },
         ],
       },

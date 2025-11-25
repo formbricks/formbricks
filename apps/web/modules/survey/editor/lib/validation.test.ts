@@ -4,10 +4,17 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
+  TSurveyAddressElement,
+  TSurveyCTAElement,
   TSurveyConsentElement,
+  TSurveyContactInfoElement,
   TSurveyElementTypeEnum,
+  TSurveyMatrixElement,
   TSurveyMultipleChoiceElement,
+  TSurveyNPSElement,
   TSurveyOpenTextElement,
+  TSurveyPictureSelectionElement,
+  TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
@@ -382,6 +389,422 @@ describe("validation.validateElement", () => {
     test("should return false if consent label is invalid", () => {
       const q = { ...consentElementBase, label: { default: "I agree", en: "I agree", de: "" } };
       expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+  });
+
+  // Test MultipleChoiceMulti Element
+  describe("MultipleChoiceMulti Element", () => {
+    const mcMultiElementBase: TSurveyMultipleChoiceElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+      headline: { default: "Multi Choice", en: "Multi Choice", de: "Mehrfachauswahl" },
+      choices: [
+        { id: "c1", label: { default: "Option 1", en: "Option 1", de: "Option 1" } },
+        { id: "c2", label: { default: "Option 2", en: "Option 2", de: "Option 2" } },
+      ],
+      shuffleOption: "none",
+    };
+
+    test("should return true for a valid MultipleChoiceMulti element", () => {
+      expect(validation.validateElement(mcMultiElementBase, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return false if a choice label is invalid", () => {
+      const q = {
+        ...mcMultiElementBase,
+        choices: [
+          { id: "c1", label: { default: "Option 1", en: "Option 1", de: "Option 1" } },
+          { id: "c2", label: { default: "Option 2", en: "Option 2", de: "" } },
+        ],
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return false if there are duplicate choice labels", () => {
+      const q = {
+        ...mcMultiElementBase,
+        choices: [
+          { id: "c1", label: { default: "Option 1", en: "Option 1", de: "Option 1" } },
+          { id: "c2", label: { default: "Option 1", en: "Option 1", de: "Option 1" } }, // Duplicate
+        ],
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+  });
+
+  // Test Picture Selection Element
+  describe("PictureSelection Element", () => {
+    const pictureSelectionElementBase: TSurveyPictureSelectionElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.PictureSelection,
+      headline: { default: "Select Image", en: "Select Image", de: "Bild auswählen" },
+      choices: [
+        { id: "p1", imageUrl: "https://example.com/img1.jpg" },
+        { id: "p2", imageUrl: "https://example.com/img2.jpg" },
+      ],
+      allowMulti: false,
+    };
+
+    test("should return true for a valid PictureSelection element with 2+ choices", () => {
+      expect(validation.validateElement(pictureSelectionElementBase, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return false if PictureSelection has less than 2 choices", () => {
+      const q = {
+        ...pictureSelectionElementBase,
+        choices: [{ id: "p1", imageUrl: "https://example.com/img1.jpg" }],
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return false if PictureSelection has 0 choices", () => {
+      const q = {
+        ...pictureSelectionElementBase,
+        choices: [],
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+  });
+
+  // Test CTA Element
+  describe("CTA Element", () => {
+    const ctaElementBase: TSurveyCTAElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.CTA,
+      headline: { default: "Call to Action", en: "Call to Action", de: "Handlungsaufforderung" },
+      subheader: { default: "Click below", en: "Click below", de: "Klicke unten" },
+      buttonExternal: false,
+      required: false,
+    };
+
+    test("should return true for a valid CTA element without external button", () => {
+      expect(validation.validateElement(ctaElementBase, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return true for a valid CTA element with external button and valid label", () => {
+      const q: TSurveyCTAElement = {
+        ...ctaElementBase,
+        buttonExternal: true,
+        ctaButtonLabel: { default: "Click", en: "Click", de: "Klicken" },
+        buttonUrl: "https://example.com",
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return false for CTA with external button but invalid ctaButtonLabel", () => {
+      const q: TSurveyCTAElement = {
+        ...ctaElementBase,
+        buttonExternal: true,
+        ctaButtonLabel: { default: "Click", en: "Click", de: "" }, // Invalid German label
+        buttonUrl: "https://example.com",
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return true for CTA with buttonExternal true but no ctaButtonLabel", () => {
+      const q: TSurveyCTAElement = {
+        ...ctaElementBase,
+        buttonExternal: true,
+        buttonUrl: "https://example.com",
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
+    });
+  });
+
+  // Test Matrix Element
+  describe("Matrix Element", () => {
+    const matrixElementBase: TSurveyMatrixElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.Matrix,
+      headline: { default: "Matrix Q", en: "Matrix Q", de: "Matrix F" },
+      rows: [
+        { id: "r1", label: { default: "Row 1", en: "Row 1", de: "Zeile 1" } },
+        { id: "r2", label: { default: "Row 2", en: "Row 2", de: "Zeile 2" } },
+      ],
+      columns: [
+        { id: "c1", label: { default: "Col 1", en: "Col 1", de: "Spalte 1" } },
+        { id: "c2", label: { default: "Col 2", en: "Col 2", de: "Spalte 2" } },
+      ],
+      shuffleOption: "none",
+    };
+
+    test("should return true for a valid Matrix element", () => {
+      expect(validation.validateElement(matrixElementBase, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return false if a row label is invalid", () => {
+      const q = {
+        ...matrixElementBase,
+        rows: [
+          { id: "r1", label: { default: "Row 1", en: "Row 1", de: "Zeile 1" } },
+          { id: "r2", label: { default: "Row 2", en: "Row 2", de: "" } }, // Invalid
+        ],
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return false if a column label is invalid", () => {
+      const q = {
+        ...matrixElementBase,
+        columns: [
+          { id: "c1", label: { default: "Col 1", en: "Col 1", de: "Spalte 1" } },
+          { id: "c2", label: { default: "Col 2", en: "Col 2", de: "" } }, // Invalid
+        ],
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return false if there are duplicate row labels", () => {
+      const q = {
+        ...matrixElementBase,
+        rows: [
+          { id: "r1", label: { default: "Row 1", en: "Row 1", de: "Zeile 1" } },
+          { id: "r2", label: { default: "Row 1", en: "Row 1", de: "Zeile 1" } }, // Duplicate
+        ],
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return false if there are duplicate column labels", () => {
+      const q = {
+        ...matrixElementBase,
+        columns: [
+          { id: "c1", label: { default: "Col 1", en: "Col 1", de: "Spalte 1" } },
+          { id: "c2", label: { default: "Col 1", en: "Col 1", de: "Spalte 1" } }, // Duplicate
+        ],
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+  });
+
+  // Test ContactInfo Element
+  describe("ContactInfo Element", () => {
+    const contactInfoElementBase: TSurveyContactInfoElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.ContactInfo,
+      headline: { default: "Contact", en: "Contact", de: "Kontakt" },
+      firstName: {
+        show: true,
+        required: false,
+        placeholder: { default: "First Name", en: "First Name", de: "Vorname" },
+      },
+      lastName: {
+        show: true,
+        required: false,
+        placeholder: { default: "Last Name", en: "Last Name", de: "Nachname" },
+      },
+      email: {
+        show: true,
+        required: false,
+        placeholder: { default: "Email", en: "Email", de: "E-Mail" },
+      },
+      phone: { show: false, required: false, placeholder: { default: "Phone", en: "Phone", de: "Telefon" } },
+      company: {
+        show: false,
+        required: false,
+        placeholder: { default: "Company", en: "Company", de: "Firma" },
+      },
+    };
+
+    test("should return true for a valid ContactInfo element", () => {
+      expect(validation.validateElement(contactInfoElementBase, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return false if a visible field placeholder is invalid", () => {
+      const q = {
+        ...contactInfoElementBase,
+        firstName: {
+          show: true,
+          required: false,
+          placeholder: { default: "First Name", en: "First Name", de: "" }, // Invalid
+        },
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return true if a hidden field placeholder is invalid (not shown)", () => {
+      const q = {
+        ...contactInfoElementBase,
+        phone: {
+          show: false,
+          required: false,
+          placeholder: { default: "Phone", en: "Phone", de: "" }, // Invalid but hidden
+        },
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
+    });
+  });
+
+  // Test Address Element
+  describe("Address Element", () => {
+    const addressElementBase: TSurveyAddressElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.Address,
+      headline: { default: "Address", en: "Address", de: "Adresse" },
+      addressLine1: {
+        show: true,
+        required: false,
+        placeholder: { default: "Address Line 1", en: "Address Line 1", de: "Adresszeile 1" },
+      },
+      addressLine2: {
+        show: true,
+        required: false,
+        placeholder: { default: "Address Line 2", en: "Address Line 2", de: "Adresszeile 2" },
+      },
+      city: { show: true, required: false, placeholder: { default: "City", en: "City", de: "Stadt" } },
+      state: { show: true, required: false, placeholder: { default: "State", en: "State", de: "Staat" } },
+      zip: { show: true, required: false, placeholder: { default: "ZIP", en: "ZIP", de: "PLZ" } },
+      country: {
+        show: true,
+        required: false,
+        placeholder: { default: "Country", en: "Country", de: "Land" },
+      },
+    };
+
+    test("should return true for a valid Address element", () => {
+      expect(validation.validateElement(addressElementBase, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return false if a visible field placeholder is invalid", () => {
+      const q = {
+        ...addressElementBase,
+        city: {
+          show: true,
+          required: false,
+          placeholder: { default: "City", en: "City", de: "" }, // Invalid
+        },
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return true if a hidden field placeholder is invalid (not shown)", () => {
+      const q = {
+        ...addressElementBase,
+        country: {
+          show: false,
+          required: false,
+          placeholder: { default: "Country", en: "Country", de: "" }, // Invalid but hidden
+        },
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
+    });
+  });
+
+  // Test default validation for elements with upperLabel and lowerLabel
+  describe("Default validation for Rating and NPS elements", () => {
+    const ratingElementBase: TSurveyRatingElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.Rating,
+      headline: { default: "Rating", en: "Rating", de: "Bewertung" },
+      range: 5,
+      scale: "number",
+      lowerLabel: { default: "Bad", en: "Bad", de: "Schlecht" },
+      upperLabel: { default: "Good", en: "Good", de: "Gut" },
+      isColorCodingEnabled: false,
+    };
+
+    test("should return true for a valid Rating element with valid upperLabel and lowerLabel", () => {
+      expect(validation.validateElement(ratingElementBase, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return false if lowerLabel is invalid", () => {
+      const q = {
+        ...ratingElementBase,
+        lowerLabel: { default: "Bad", en: "Bad", de: "" }, // Invalid
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return false if upperLabel is invalid", () => {
+      const q = {
+        ...ratingElementBase,
+        upperLabel: { default: "Good", en: "Good", de: "" }, // Invalid
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return true if lowerLabel is empty/undefined (not validated)", () => {
+      const q = {
+        ...ratingElementBase,
+        lowerLabel: undefined,
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return true if lowerLabel.default is empty string (skipped)", () => {
+      const q = {
+        ...ratingElementBase,
+        lowerLabel: { default: "", en: "", de: "" },
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    const npsElementBase: TSurveyNPSElement = {
+      ...baseElementFields,
+      type: TSurveyElementTypeEnum.NPS,
+      headline: { default: "NPS", en: "NPS", de: "NPS" },
+      lowerLabel: { default: "Not Likely", en: "Not Likely", de: "Unwahrscheinlich" },
+      upperLabel: { default: "Very Likely", en: "Very Likely", de: "Sehr wahrscheinlich" },
+      isColorCodingEnabled: false,
+    };
+
+    test("should return true for a valid NPS element with valid upperLabel and lowerLabel", () => {
+      expect(validation.validateElement(npsElementBase, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return false for NPS if lowerLabel is invalid", () => {
+      const q = {
+        ...npsElementBase,
+        lowerLabel: { default: "Not Likely", en: "Not Likely", de: "" },
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return false for NPS if upperLabel is invalid", () => {
+      const q = {
+        ...npsElementBase,
+        upperLabel: { default: "Very Likely", en: "Very Likely", de: "" },
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+  });
+
+  // Test subheader validation
+  describe("Subheader validation", () => {
+    test("should return false if subheader is invalid when provided", () => {
+      const q: TSurveyOpenTextElement = {
+        ...baseElementFields,
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: { default: "Open Text", en: "Open Text", de: "Offener Text" },
+        subheader: { default: "Enter here", en: "Enter here", de: "" }, // Invalid
+        inputType: "text",
+        charLimit: { enabled: false },
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("should return true if subheader.default is empty (skipped)", () => {
+      const q: TSurveyOpenTextElement = {
+        ...baseElementFields,
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: { default: "Open Text", en: "Open Text", de: "Offener Text" },
+        subheader: { default: "", en: "", de: "" },
+        inputType: "text",
+        charLimit: { enabled: false },
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("should return true if there's only one language (default)", () => {
+      const q: TSurveyOpenTextElement = {
+        ...baseElementFields,
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: { default: "Open Text", en: "Open Text" },
+        subheader: { default: "Some text", en: "Some text", de: "" }, // de empty but only default language
+        inputType: "text",
+        charLimit: { enabled: false },
+      };
+      expect(validation.validateElement(q, surveyLanguagesOnlyDefault)).toBe(true);
     });
   });
 });

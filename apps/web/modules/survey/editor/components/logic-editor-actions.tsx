@@ -13,7 +13,7 @@ import {
   TActionNumberVariableCalculateOperator,
   TActionTextVariableCalculateOperator,
 } from "@formbricks/types/surveys/logic";
-import { TActionVariableValueType, TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getUpdatedActionBody } from "@/lib/surveyLogic/utils";
 import {
   getActionObjectiveOptions,
@@ -218,7 +218,11 @@ export function LogicEditorActions({
                         }}
                         groupedOptions={getActionValueOptions(action.variableId, localSurvey, blockIdx, t)}
                         onChangeValue={(val, option, fromInput) => {
-                          const fieldType = option?.meta?.type as TActionVariableValueType;
+                          const fieldType = option?.meta?.type as
+                            | "static"
+                            | "variable"
+                            | "hiddenField"
+                            | "element";
 
                           if (!fromInput && fieldType !== "static") {
                             handleValuesChange(idx, {

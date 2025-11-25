@@ -283,10 +283,6 @@ export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQue
 export type TDynamicLogicField = z.infer<typeof ZDynamicLogicField>;
 export type TActionObjective = z.infer<typeof ZActionObjective>;
 
-// Actions
-export const ZActionVariableValueType = z.union([z.literal("static"), ZDynamicLogicField]);
-export type TActionVariableValueType = z.infer<typeof ZActionVariableValueType>;
-
 const ZActionBase = z.object({
   id: ZId,
   objective: ZActionObjective,
@@ -2899,7 +2895,7 @@ const isInvalidOperatorsForElementType = (
       }
       break;
     case TSurveyElementTypeEnum.CTA:
-      if (!["isClicked", "isSkipped"].includes(operator)) {
+      if (!["isClicked", "isNotClicked"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;
@@ -2995,12 +2991,23 @@ const validateBlockConditions = (
         });
       }
 
+      // Validate CTA elements: CTAs without external buttons cannot be used in logic
+      if (element.type === TSurveyElementTypeEnum.CTA && !element.buttonExternal) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: CTA element "${elementId}" does not have an external button and cannot be used in logic conditions in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+        });
+        return;
+      }
+
       // Validate right operand
       if (
         [
           "isSubmitted",
           "isSkipped",
           "isClicked",
+          "isNotClicked",
           "isAccepted",
           "isBooked",
           "isPartiallySubmitted",

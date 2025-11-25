@@ -160,15 +160,15 @@ export const buildCTAElement = ({
   subheader,
   buttonExternal,
   required,
-  dismissButtonLabel,
+  ctaButtonLabel,
   buttonUrl,
 }: {
   id?: string;
   headline: string;
-  buttonExternal: boolean;
+  buttonExternal?: boolean;
   subheader: string;
   required?: boolean;
-  dismissButtonLabel?: string;
+  ctaButtonLabel?: string;
   buttonUrl?: string;
 }): TSurveyCTAElement => {
   return {
@@ -176,9 +176,9 @@ export const buildCTAElement = ({
     type: TSurveyElementTypeEnum.CTA,
     subheader: createI18nString(subheader, []),
     headline: createI18nString(headline, []),
-    dismissButtonLabel: dismissButtonLabel ? createI18nString(dismissButtonLabel, []) : undefined,
+    ctaButtonLabel: ctaButtonLabel ? createI18nString(ctaButtonLabel, []) : undefined,
     required: required ?? false,
-    buttonExternal,
+    buttonExternal: buttonExternal ?? false,
     buttonUrl,
   };
 };

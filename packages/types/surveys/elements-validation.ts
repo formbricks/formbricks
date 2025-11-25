@@ -41,7 +41,6 @@ const ELEMENT_FIELD_TO_LABEL_MAP: Record<string, string> = {
   upperLabel: "upper label",
   lowerLabel: "lower label",
   "consent.label": "checkbox label",
-  dismissButtonLabel: "dismiss button label",
   html: "description",
 };
 
