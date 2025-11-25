@@ -286,10 +286,6 @@ export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQue
 export type TDynamicLogicField = z.infer<typeof ZDynamicLogicField>;
 export type TActionObjective = z.infer<typeof ZActionObjective>;
 
-// Actions
-export const ZActionVariableValueType = z.union([z.literal("static"), ZDynamicLogicField]);
-export type TActionVariableValueType = z.infer<typeof ZActionVariableValueType>;
-
 const ZActionBase = z.object({
   id: ZId,
   objective: ZActionObjective,
@@ -1212,7 +1208,10 @@ export const ZSurvey = z
         // Validate block button labels
         const defaultLanguageCode = "default";
 
-        if (block.buttonLabel && block.buttonLabel[defaultLanguageCode].trim() !== "") {
+        if (
+          block.buttonLabel?.[defaultLanguageCode] &&
+          block.buttonLabel[defaultLanguageCode].trim() !== ""
+        ) {
           // Validate button label for all enabled languages
           const enabledLanguages = languages.filter((lang) => lang.enabled);
           const languageCodes = enabledLanguages.map((lang) =>
@@ -1237,7 +1236,10 @@ export const ZSurvey = z
           }
         }
 
-        if (block.backButtonLabel && block.backButtonLabel[defaultLanguageCode].trim() !== "") {
+        if (
+          block.backButtonLabel?.[defaultLanguageCode] &&
+          block.backButtonLabel[defaultLanguageCode].trim() !== ""
+        ) {
           // Validate back button label for all enabled languages
           const enabledLanguages = languages.filter((lang) => lang.enabled);
           const languageCodes = enabledLanguages.map((lang) =>

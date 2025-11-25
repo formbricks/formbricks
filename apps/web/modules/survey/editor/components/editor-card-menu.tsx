@@ -122,7 +122,7 @@ export const EditorCardMenu = ({
       type,
       headline,
       subheader,
-      required,
+      required: type === TSurveyElementTypeEnum.CTA ? false : required,
       imageUrl,
       videoUrl,
       buttonLabel,
@@ -138,7 +138,7 @@ export const EditorCardMenu = ({
       ...questionDefaults,
       type,
       id: createId(),
-      required: true,
+      required: type === TSurveyElementTypeEnum.CTA ? false : true,
     };
 
     // Add question to block or as new block

@@ -26,7 +26,7 @@ import { evaluateLogic, performActions } from "@/lib/logic";
 import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
-import { cn, findBlockByElementId, getDefaultLanguageCode, getElementsFromSurvey } from "@/lib/utils";
+import { cn, findBlockByElementId, getDefaultLanguageCode, getElementsFromSurveyBlocks } from "@/lib/utils";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 
 interface VariableStackEntry {
@@ -58,7 +58,6 @@ export function Survey({
   languageCode,
   getSetIsError,
   getSetIsResponseSendingFinished,
-  getSetQuestionId,
   getSetBlockId,
   getSetResponseData,
   responseCount,
@@ -140,7 +139,7 @@ export function Survey({
     return null;
   }, [appUrl, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
-  const questions = useMemo(() => getElementsFromSurvey(localSurvey), [localSurvey]);
+  const questions = useMemo(() => getElementsFromSurveyBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const originalQuestionRequiredStates = useMemo(() => {
     return questions.reduce<Record<string, boolean>>((acc, question) => {
@@ -173,7 +172,7 @@ export function Survey({
   const [blockId, setBlockId] = useState(() => {
     if (startAtQuestionId) {
       // If starting at a specific question, find its parent block
-      const startBlock = findBlockByElementId(localSurvey, startAtQuestionId);
+      const startBlock = findBlockByElementId(localSurvey.blocks, startAtQuestionId);
       return startBlock?.id || localSurvey.blocks[0]?.id;
     } else if (localSurvey.welcomeCard.enabled) {
       return "start";
@@ -311,18 +310,6 @@ export function Survey({
       });
     }
   }, [getSetIsError]);
-
-  useEffect(() => {
-    if (getSetQuestionId) {
-      getSetQuestionId((value: string) => {
-        // Convert question ID to block ID
-        const block = findBlockByElementId(survey, value);
-        if (block) {
-          setBlockId(block.id);
-        }
-      });
-    }
-  }, [getSetQuestionId, survey]);
 
   useEffect(() => {
     if (getSetBlockId) {
@@ -770,7 +757,6 @@ export function Survey({
           Boolean(block) && (
             <BlockConditional
               key={block.id}
-              // survey={localSurvey}
               surveyId={localSurvey.id}
               block={{
                 ...block,
@@ -791,7 +777,6 @@ export function Survey({
               isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
-              currentBlockId={blockId}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               onOpenExternalURL={onOpenExternalURL}
               dir={dir}

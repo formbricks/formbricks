@@ -600,7 +600,7 @@ export const QuestionsView = ({
 
     // If source block is now empty, delete it
     if (sourceBlock.elements.length === 0) {
-      const blockIdx = updatedSurvey.blocks.findIndex((b) => b.id === sourceBlock!.id);
+      const blockIdx = updatedSurvey.blocks.findIndex((b) => b.id === sourceBlock.id);
       if (blockIdx !== -1) {
         updatedSurvey.blocks.splice(blockIdx, 1);
       }
@@ -778,7 +778,6 @@ export const QuestionsView = ({
       blocks.splice(destBlockIndex, 0, movedBlock);
 
       setLocalSurvey({ ...localSurvey, blocks });
-      return;
     }
   };
 

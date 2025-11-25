@@ -5,7 +5,7 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import { TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n";
-import { getElementsFromSurvey } from "./utils";
+import { getElementsFromSurveyBlocks } from "./utils";
 
 const getVariableValue = (
   variables: TSurveyVariable[],
@@ -89,7 +89,7 @@ const getLeftOperandValue = (
 ) => {
   switch (leftOperand.type) {
     case "element":
-      const questions = getElementsFromSurvey(localSurvey);
+      const questions = getElementsFromSurveyBlocks(localSurvey.blocks);
       const currentQuestion = questions.find((q) => q.id === leftOperand.value);
       if (!currentQuestion) return undefined;
 
@@ -223,7 +223,7 @@ const evaluateSingleCondition = (
 
     let leftField: TSurveyElement | TSurveyVariable | string;
 
-    const questions = getElementsFromSurvey(localSurvey);
+    const questions = getElementsFromSurveyBlocks(localSurvey.blocks);
     if (condition.leftOperand?.type === "element") {
       leftField = questions.find((q) => q.id === condition.leftOperand?.value) ?? "";
     } else if (condition.leftOperand?.type === "variable") {

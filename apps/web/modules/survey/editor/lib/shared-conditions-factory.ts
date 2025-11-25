@@ -91,15 +91,9 @@ export function createSharedConditionsFactory(
   };
 
   const config: TConditionsEditorConfig<TSingleCondition> = {
-    getLeftOperandOptions: () =>
-      blockIdx !== undefined
-        ? getConditionValueOptions(survey, t, blockIdx)
-        : getConditionValueOptions(survey, t),
+    getLeftOperandOptions: () => getConditionValueOptions(survey, t, blockIdx),
     getOperatorOptions: (condition) => getConditionOperatorOptions(condition, survey, t),
-    getValueProps: (condition) =>
-      blockIdx !== undefined
-        ? getMatchValueProps(condition, survey, t, blockIdx)
-        : getMatchValueProps(condition, survey, t),
+    getValueProps: (condition) => getMatchValueProps(condition, survey, t, blockIdx),
     getDefaultOperator,
     formatLeftOperandValue: (condition) => getFormatLeftOperandValue(condition, survey),
   };

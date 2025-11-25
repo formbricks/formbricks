@@ -181,7 +181,7 @@ export const OpenQuestionForm = ({
                 },
               });
             }}
-            htmlId="charLimit"
+            htmlId={`charLimit-${question.id}`}
             description={t("environments.surveys.edit.character_limit_toggle_description")}
             childBorder
             title={t("environments.surveys.edit.character_limit_toggle_title")}
@@ -238,7 +238,7 @@ export const OpenQuestionForm = ({
                 longAnswer: checked,
               });
             }}
-            htmlId="longAnswer"
+            htmlId={`longAnswer-${question.id}`}
             title={t("environments.surveys.edit.long_answer")}
             description={t("environments.surveys.edit.long_answer_toggle_description")}
             disabled={question.inputType !== "text"}

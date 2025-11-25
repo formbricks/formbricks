@@ -12,7 +12,6 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 interface BlockConditionalProps {
-  // survey: TJsEnvironmentStateSurvey;
   block: TSurveyBlock;
   value: TResponseData;
   onChange: (responseData: TResponseData) => void;
@@ -28,7 +27,6 @@ interface BlockConditionalProps {
   setTtc: (ttc: TResponseTtc) => void;
   surveyId: string;
   autoFocusEnabled: boolean;
-  currentBlockId: string;
   isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
@@ -36,7 +34,6 @@ interface BlockConditionalProps {
 }
 
 export function BlockConditional({
-  // survey,
   block,
   value,
   onChange,
@@ -210,8 +207,6 @@ export function BlockConditional({
                     onChange={(responseData) => handleElementChange(element.id, responseData)}
                     onBack={() => {}}
                     onFileUpload={onFileUpload}
-                    isFirstElement={false}
-                    isLastElement={false}
                     languageCode={languageCode}
                     prefilledElementValue={prefilledResponseData?.[element.id]}
                     skipPrefilled={skipPrefilled}

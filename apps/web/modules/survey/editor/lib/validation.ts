@@ -121,8 +121,8 @@ export const validationRules = {
     return element.choices.length >= 2;
   },
   cta: (element: TSurveyCTAElement, languages: TSurveyLanguage[]) => {
-    return !element.required && element.dismissButtonLabel
-      ? isLabelValidForAllLanguages(element.dismissButtonLabel, languages)
+    return element.buttonExternal && element.ctaButtonLabel
+      ? isLabelValidForAllLanguages(element.ctaButtonLabel, languages)
       : true;
   },
   matrix: (element: TSurveyMatrixElement, languages: TSurveyLanguage[]) => {

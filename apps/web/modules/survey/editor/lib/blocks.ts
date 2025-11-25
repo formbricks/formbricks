@@ -130,6 +130,11 @@ export const updateBlock = (
  * @returns Result with updated survey or Error
  */
 export const deleteBlock = (survey: TSurvey, blockId: string): Result<TSurvey, Error> => {
+  // Prevent deleting the last block
+  if (survey.blocks?.length === 1) {
+    return err(new Error("Cannot delete the last block in the survey"));
+  }
+
   const filteredBlocks = survey.blocks?.filter((b) => b.id !== blockId) || [];
 
   if (filteredBlocks.length === survey.blocks?.length) {
