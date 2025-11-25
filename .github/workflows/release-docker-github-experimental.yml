@@ -48,3 +48,4 @@ jobs:
           DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
           DUMMY_REDIS_URL: ${{ secrets.DUMMY_REDIS_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          BASE_PATH: "/experimental"
