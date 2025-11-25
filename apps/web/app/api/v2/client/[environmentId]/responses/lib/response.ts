@@ -8,7 +8,11 @@ import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { responseSelection } from "@/app/api/v1/client/[environmentId]/responses/lib/response";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import {
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+} from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
@@ -114,6 +118,10 @@ export const createResponse = async (
       data: prismaData,
       select: responseSelection,
     });
+
+    if (IS_FORMBRICKS_CLOUD) {
+      await getMonthlyOrganizationResponseCount(organization.id);
+    }
 
     const response: TResponse = {
       ...responsePrisma,

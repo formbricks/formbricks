@@ -9,8 +9,11 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
-import { RESPONSES_PER_PAGE } from "@/lib/constants";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { IS_FORMBRICKS_CLOUD, RESPONSES_PER_PAGE } from "@/lib/constants";
+import {
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+} from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
@@ -116,6 +119,10 @@ export const createResponse = async (
       data: prismaData,
       select: responseSelection,
     });
+
+    if (IS_FORMBRICKS_CLOUD) {
+      await getMonthlyOrganizationResponseCount(organization.id);
+    }
 
     const response: TResponse = {
       ...responsePrisma,
