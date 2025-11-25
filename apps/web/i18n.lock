@@ -304,7 +304,7 @@ checksums:
     common/project_not_found: be3b516c02b05553acb4ae338511f645
     common/project_permission_not_found: ace6b03f06bd14e884e4295c5022d61b
     common/projects: fe8af5cfb3c95cb35534872a325b225e
-    common/question: 0576462ce60d4263d7c482463fcc9547
+    common/question: 2a47e06b62410b16003c4979dee0099f
     common/question_id: d0c3672976c281411bdccf749faf5ffd
     common/questions: 38d08215fd7a8026077c7b64eea6bb59
     common/quota: edd33b180b463ee7a70a64a5c4ad7f02
@@ -748,8 +748,11 @@ checksums:
     environments/project/app-connection/how_to_setup_description: 2ae5cd9456a8acd3986e3d3678e70ed2
     environments/project/app-connection/receiving_data: 9f2a48c0b0278861add70b526061264c
     environments/project/app-connection/recheck: f95f2bbe6990a123d60255c87bdd59f7
+    environments/project/app-connection/sdk_connection_details: 89f2c169fd1604c1df5a834517f1eae1
+    environments/project/app-connection/sdk_connection_details_description: d9b5d06776a139aef6fc8ed53d71bf0a
     environments/project/app-connection/setup_alert_description: 6d676044d01dc2147731ffab7df6c259
     environments/project/app-connection/setup_alert_title: 9561cca2b391e0df81e8a982921ff2bb
+    environments/project/app-connection/webapp_url: d64d8cc3c4c4ecce780d94755f7e4de9
     environments/project/general/cannot_delete_only_project: 24751701a42d8b4d2ba6112a5f642bad
     environments/project/general/delete_project: e4a2a227105c4ec71e561ab1f140eb26
     environments/project/general/delete_project_confirmation: 54a4ee78867537e0244c7170453cdb3f

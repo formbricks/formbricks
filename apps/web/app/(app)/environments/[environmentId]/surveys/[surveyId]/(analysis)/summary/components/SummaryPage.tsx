@@ -115,6 +115,7 @@ export const SummaryPage = ({
     <>
       <SummaryMetadata
         surveySummary={surveySummary.meta}
+        quotasCount={surveySummary.quotas?.length ?? 0}
         isLoading={isLoading}
         tab={tab}
         setTab={setTab}

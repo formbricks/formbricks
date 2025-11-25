@@ -801,8 +801,11 @@
         "how_to_setup_description": "請按照這些步驟在您的應用程式中設定 Formbricks 小工具。",
         "receiving_data": "正在接收資料 💃🕺",
         "recheck": "重新檢查",
+        "sdk_connection_details": "SDK 連線詳細資訊",
+        "sdk_connection_details_description": "您的唯一環境 ID 和 SDK 連線 URL，用於將 Formbricks 與您的應用程式整合。",
         "setup_alert_description": "遵循 此 分步 教程 ，在 5 分鐘 內 將您的應用程式 或 網站 連線 。",
-        "setup_alert_title": "如何 連線"
+        "setup_alert_title": "如何 連線",
+        "webapp_url": "SDK 連接 URL"
       },
       "general": {
         "cannot_delete_only_project": "這是您唯一的專案，無法刪除。請先建立新專案。",

@@ -801,8 +801,11 @@
         "how_to_setup_description": "アプリ内でFormbricksウィジェットを設定する手順に従ってください。",
         "receiving_data": "データ受信中 💃🕺",
         "recheck": "再チェック",
+        "sdk_connection_details": "SDK接続詳細",
+        "sdk_connection_details_description": "FormbricksをアプリケーションとAPI統合するためのEnvironmentIdとSDK接続URL。",
         "setup_alert_description": "5 分以内でアプリまたはウェブサイト を 接続する手順をステップバイステップ の チュートリアルに従ってください。",
-        "setup_alert_title": "接続方法"
+        "setup_alert_title": "接続方法",
+        "webapp_url": "SDK接続URL"
       },
       "general": {
         "cannot_delete_only_project": "これは唯一のプロジェクトのため削除できません。まず新しいプロジェクトを作成してください。",

@@ -331,7 +331,7 @@
     "project_not_found": "Project not found",
     "project_permission_not_found": "Project permission not found",
     "projects": "Projects",
-    "question": "Question",
+    "question": "question",
     "question_id": "Question ID",
     "questions": "Questions",
     "quota": "Quota",
@@ -794,6 +794,8 @@
         "cache_update_delay_title": "Changes will be reflected after ~1 minute due to caching",
         "environment_id": "Your Environment ID",
         "environment_id_description": "This id uniquely identifies this Formbricks environment.",
+        "sdk_connection_details": "SDK Connection Details",
+        "sdk_connection_details_description": "Your unique environment ID and SDK connection URL for integrating Formbricks with your application.",
         "formbricks_sdk_connected": "Formbricks SDK is connected",
         "formbricks_sdk_not_connected": "Formbricks SDK is not yet connected.",
         "formbricks_sdk_not_connected_description": "Add the Formbricks SDK to your website or app to connect it with Formbricks",
@@ -802,7 +804,8 @@
         "receiving_data": "Receiving data \uD83D\uDC83\uD83D\uDD7A",
         "recheck": "Re-check",
         "setup_alert_description": "Follow this step-by-step tutorial to connect your app or website in under 5 minutes.",
-        "setup_alert_title": "How to connect"
+        "setup_alert_title": "How to connect",
+        "webapp_url": "SDK Connection URL"
       },
       "general": {
         "cannot_delete_only_project": "This is your only project, it cannot be deleted. Create a new project first.",

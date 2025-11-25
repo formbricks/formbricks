@@ -35,6 +35,7 @@ interface ConditionsEditorProps {
   callbacks: TConditionsEditorCallbacks;
   depth?: number;
   quotaErrors?: FieldErrors<TSurveyQuotaInput>;
+  isSubmitted?: boolean;
 }
 
 export function ConditionsEditor({
@@ -43,6 +44,7 @@ export function ConditionsEditor({
   callbacks,
   depth = 0,
   quotaErrors,
+  isSubmitted = false,
 }: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslation();
   const [parent] = useAutoAnimate();
@@ -256,7 +258,7 @@ export function ConditionsEditor({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        {quotaError && <p className="text-error mt-2 w-full text-right text-sm">{quotaError}</p>}
+        {quotaError && isSubmitted && <p className="text-error mt-2 w-full text-right text-sm">{quotaError}</p>}
       </div>
     );
   };
