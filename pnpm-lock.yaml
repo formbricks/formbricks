@@ -149,9 +149,9 @@ importers:
       '@formbricks/storage':
         specifier: workspace:*
         version: link:../../packages/storage
-      '@formbricks/surveys':
+      '@formbricks/survey-embed':
         specifier: workspace:*
-        version: link:../../packages/surveys
+        version: link:../../packages/survey-embed
       '@formbricks/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -798,7 +798,86 @@ importers:
         specifier: 3.1.3
         version: 3.1.3(@types/node@22.15.18)(jiti@2.4.2)(jsdom@26.1.0)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.1)
 
-  packages/surveys:
+  packages/survey-core:
+    dependencies:
+      '@calcom/embed-snippet':
+        specifier: 1.3.3
+        version: 1.3.3
+      '@formkit/auto-animate':
+        specifier: 0.8.2
+        version: 0.8.2
+      i18next:
+        specifier: 25.5.2
+        version: 25.5.2(typescript@5.8.3)
+      i18next-icu:
+        specifier: 2.4.0
+        version: 2.4.0(intl-messageformat@10.7.18)
+      isomorphic-dompurify:
+        specifier: 2.24.0
+        version: 2.24.0
+      react:
+        specifier: 19.1.0
+        version: 19.1.0
+      react-calendar:
+        specifier: 5.1.0
+        version: 5.1.0(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react-date-picker:
+        specifier: 11.0.0
+        version: 11.0.0(@types/react-dom@19.1.5(@types/react@19.1.4))(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.1.0(react@19.1.0)
+      react-i18next:
+        specifier: 15.7.3
+        version: 15.7.3(i18next@25.5.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
+    devDependencies:
+      '@formbricks/config-typescript':
+        specifier: workspace:*
+        version: link:../config-typescript
+      '@formbricks/eslint-config':
+        specifier: workspace:*
+        version: link:../config-eslint
+      '@formbricks/i18n-utils':
+        specifier: workspace:*
+        version: link:../i18n-utils
+      '@formbricks/types':
+        specifier: workspace:*
+        version: link:../types
+      '@testing-library/react':
+        specifier: 16.3.0
+        version: 16.3.0(@testing-library/dom@8.20.1)(@types/react-dom@19.1.5(@types/react@19.1.4))(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@types/react':
+        specifier: 19.1.4
+        version: 19.1.4
+      '@vitejs/plugin-react':
+        specifier: ^4.3.4
+        version: 4.4.1(vite@6.4.1(@types/node@22.15.18)(jiti@2.4.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.1))
+      autoprefixer:
+        specifier: 10.4.21
+        version: 10.4.21(postcss@8.5.3)
+      postcss:
+        specifier: 8.5.3
+        version: 8.5.3
+      tailwindcss:
+        specifier: 3.4.17
+        version: 3.4.17(ts-node@10.9.2(@types/node@22.15.18)(typescript@5.8.3))
+      terser:
+        specifier: 5.39.1
+        version: 5.39.1
+      vite:
+        specifier: 6.4.1
+        version: 6.4.1(@types/node@22.15.18)(jiti@2.4.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.1)
+      vite-plugin-dts:
+        specifier: 4.5.3
+        version: 4.5.3(@types/node@22.15.18)(rollup@4.52.5)(typescript@5.8.3)(vite@6.4.1(@types/node@22.15.18)(jiti@2.4.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.1))
+      vite-tsconfig-paths:
+        specifier: 5.1.4
+        version: 5.1.4(typescript@5.8.3)(vite@6.4.1(@types/node@22.15.18)(jiti@2.4.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.1))
+      vitest:
+        specifier: 3.1.3
+        version: 3.1.3(@types/node@22.15.18)(jiti@2.4.2)(jsdom@26.1.0)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.1)
+
+  packages/survey-embed:
     dependencies:
       '@calcom/embed-snippet':
         specifier: 1.3.3
@@ -823,7 +902,7 @@ importers:
         version: 5.1.0(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react-date-picker:
         specifier: 11.0.0
-        version: 11.0.0(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        version: 11.0.0(@types/react-dom@19.1.5(@types/react@19.1.4))(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react-i18next:
         specifier: 15.7.3
         version: 15.7.3(i18next@25.5.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
@@ -16805,7 +16884,7 @@ snapshots:
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@8.57.0)
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.32.1(eslint@8.57.0)(typescript@5.8.3))(eslint@8.57.0)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.32.1(eslint@8.57.0)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.0)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.0)
       eslint-plugin-react: 7.37.5(eslint@8.57.0)
       eslint-plugin-react-hooks: 5.2.0(eslint@8.57.0)
@@ -16832,7 +16911,7 @@ snapshots:
 
   eslint-import-resolver-alias@1.1.2(eslint-plugin-import@2.32.0):
     dependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.32.1(eslint@8.57.0)(typescript@5.8.3))(eslint@8.57.0)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.32.1(eslint@8.57.0)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.0)
 
   eslint-import-resolver-node@0.3.9:
     dependencies:
@@ -16853,7 +16932,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.32.1(eslint@8.57.0)(typescript@5.8.3))(eslint@8.57.0)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.32.1(eslint@8.57.0)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -16927,7 +17006,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.32.1(eslint@8.57.0)(typescript@5.8.3))(eslint@8.57.0):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.32.1(eslint@8.57.0)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.0):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -19325,7 +19404,7 @@ snapshots:
       react: 19.1.0
       tween-functions: 1.2.0
 
-  react-date-picker@11.0.0(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  react-date-picker@11.0.0(@types/react-dom@19.1.5(@types/react@19.1.4))(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@wojtekmaj/date-utils': 1.5.1
       clsx: 2.1.1
@@ -19334,7 +19413,7 @@ snapshots:
       react: 19.1.0
       react-calendar: 5.1.0(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react-dom: 19.1.0(react@19.1.0)
-      react-fit: 2.0.1(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react-fit: 2.0.1(@types/react-dom@19.1.5(@types/react@19.1.4))(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       update-input-width: 1.4.2
     optionalDependencies:
       '@types/react': 19.1.4
@@ -19377,7 +19456,7 @@ snapshots:
       '@babel/runtime': 7.28.4
       react: 19.1.0
 
-  react-fit@2.0.1(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  react-fit@2.0.1(@types/react-dom@19.1.5(@types/react@19.1.4))(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       detect-element-overflow: 1.4.2
       react: 19.1.0
@@ -19385,6 +19464,7 @@ snapshots:
       warning: 4.0.3
     optionalDependencies:
       '@types/react': 19.1.4
+      '@types/react-dom': 19.1.5(@types/react@19.1.4)
 
   react-hook-form@7.56.2(react@19.1.0):
     dependencies:

@@ -1,0 +1,63 @@
+import react from "@vitejs/plugin-react";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
+import { loadEnv } from "vite";
+import dts from "vite-plugin-dts";
+import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from "vitest/config";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const config = ({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+
+  return defineConfig({
+    test: {
+      environment: "jsdom",
+      environmentMatchGlobs: [
+        ["**/*.test.tsx", "jsdom"],
+        ["**/lib/**/*.test.ts", "jsdom"],
+      ],
+      setupFiles: ["./vitestSetup.ts"],
+      exclude: ["dist/**", "node_modules/**"],
+      env: env,
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "html", "lcov"],
+        reportsDirectory: "./coverage",
+        include: ["src/lib/**/*.ts"],
+        exclude: ["**/*.tsx"],
+      },
+    },
+    define: {
+      "process.env.NODE_ENV": JSON.stringify(mode),
+    },
+    build: {
+      emptyOutDir: false,
+      minify: "terser",
+      rollupOptions: {
+        // Externalize node-html-parser to keep bundle size small (~53KB)
+        // It's pulled in via @formbricks/types but not used in browser runtime
+        external: ["node-html-parser"],
+        output: {
+          inlineDynamicImports: true,
+        },
+      },
+      lib: {
+        entry: resolve(__dirname, "src/index.ts"),
+        name: "formbricksSurveyCore",
+        formats: ["es", "umd"],
+        fileName: "index",
+      },
+    },
+    plugins: [
+      react(),
+      dts({ rollupTypes: true }),
+      tsconfigPaths(),
+    ],
+  });
+};
+
+export default config;
+

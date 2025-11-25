@@ -74,17 +74,30 @@
     "@formbricks/storage#test:coverage": {
       "dependsOn": ["@formbricks/logger#build"]
     },
-    "@formbricks/surveys#build": {
+    "@formbricks/survey-core#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "@formbricks/surveys#build:dev": {
+    "@formbricks/survey-core#build:dev": {
       "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build"],
       "outputs": ["dist/**"]
     },
-    "@formbricks/surveys#go": {
+    "@formbricks/survey-core#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/surveys#build"],
+      "dependsOn": ["@formbricks/survey-core#build"],
+      "persistent": true
+    },
+    "@formbricks/survey-embed#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/survey-embed#build:dev": {
+      "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/survey-embed#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/survey-embed#build"],
       "persistent": true
     },
     "@formbricks/web#go": {

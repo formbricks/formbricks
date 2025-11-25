@@ -32,7 +32,7 @@
     "@formbricks/js-core": "workspace:*",
     "@formbricks/logger": "workspace:*",
     "@formbricks/storage": "workspace:*",
-    "@formbricks/surveys": "workspace:*",
+    "@formbricks/survey-embed": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@hookform/resolvers": "5.0.1",
     "@intercom/messenger-js-sdk": "0.0.14",

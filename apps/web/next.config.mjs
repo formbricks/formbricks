@@ -369,7 +369,7 @@ const nextConfig = {
         destination: "/js/formbricks.umd.cjs",
       },
       {
-        source: "/api/packages/surveys",
+        source: "/api/packages/survey-embed",
         destination: "/js/surveys.umd.cjs",
       },
       {

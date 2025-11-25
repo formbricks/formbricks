@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@formbricks/survey-core": ["../survey-core/src/index.ts"],
+      "@survey-core/*": ["../survey-core/src/*"]
+    },
+    "resolveJsonModule": true
+  },
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src", "../types/surveys.d.ts"]
+}

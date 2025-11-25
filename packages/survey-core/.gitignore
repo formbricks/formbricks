@@ -1,0 +1,11 @@
+node_modules
+dist
+.turbo
+coverage
+*.log
+.DS_Store
+
+# TypeScript declaration files (generated build artifacts)
+**/*.d.ts
+**/*.d.ts.map
+

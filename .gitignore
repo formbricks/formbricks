@@ -40,6 +40,14 @@ yarn-error.log*
 .turbo
 **/*vite.config.*.timestamp-*
 
+# TypeScript declaration files and source maps (generated build artifacts)
+**/*.d.ts.map
+# Ignore all .d.ts files except manually written ones
+**/*.d.ts
+!packages/types/next-auth.d.ts
+!packages/types/surveys.d.ts
+!packages/types/video.d.ts
+
 # environment specific
 .direnv
 
