@@ -75,12 +75,12 @@ export function LanguageSwitch({
   });
 
   return (
-    <div className="fb-z-[1001] fb-flex fb-w-fit fb-items-center">
+    <div className="z-[1001] flex w-fit items-center">
       <button
         title={t("common.language_switch")}
         type="button"
         className={cn(
-          "fb-text-heading fb-relative fb-h-8 fb-w-8 fb-rounded-md focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-justify-center fb-flex fb-items-center"
+          "text-heading relative flex h-8 w-8 items-center justify-center rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2"
         )}
         style={{
           backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",
@@ -99,8 +99,8 @@ export function LanguageSwitch({
       {showLanguageDropdown ? (
         <div
           className={cn(
-            "fb-bg-brand fb-text-on-brand fb-absolute fb-top-10 fb-space-y-2 fb-rounded-md fb-p-2 fb-text-xs",
-            dir === "rtl" ? "fb-left-8" : "fb-right-8"
+            "bg-brand text-on-brand absolute top-10 space-y-2 rounded-md p-2 text-xs",
+            dir === "rtl" ? "left-8" : "right-8"
           )}
           ref={languageDropdownRef}>
           {surveyLanguages.map((surveyLanguage) => {
@@ -109,7 +109,7 @@ export function LanguageSwitch({
               <button
                 key={surveyLanguage.language.id}
                 type="button"
-                className="fb-block fb-w-full fb-p-1.5 fb-text-left hover:fb-opacity-80"
+                className="block w-full p-1.5 text-left hover:opacity-80"
                 onClick={() => {
                   changeLanguage(surveyLanguage.language.code);
                 }}>

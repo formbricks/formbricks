@@ -274,10 +274,10 @@ describe("addCustomThemeToDom", () => {
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
 
-    expect(variables["--fb-brand-color"]).toBe("#0000FF");
-    expect(variables["--fb-focus-color"]).toBe("#0000FF");
-    expect(variables["--fb-brand-text-color"]).toBe("white"); // isLight('#0000FF') is false
-    expect(variables["--fb-border-radius"]).toBe("8px"); // Default roundness
+    expect(variables["--brand-color"]).toBe("#0000FF");
+    expect(variables["--focus-color"]).toBe("#0000FF");
+    expect(variables["--brand-text-color"]).toBe("white"); // isLight('#0000FF') is false
+    expect(variables["--border-radius"]).toBe("8px"); // Default roundness
   });
 
   test("should apply brand-text-color as black for light brandColor", () => {
@@ -285,7 +285,7 @@ describe("addCustomThemeToDom", () => {
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
-    expect(variables["--fb-brand-text-color"]).toBe("black"); // isLight('#FFFF00') is true
+    expect(variables["--brand-text-color"]).toBe("black"); // isLight('#FFFF00') is true
   });
 
   test("should default brand-text-color to white if brandColor is undefined", () => {
@@ -293,7 +293,7 @@ describe("addCustomThemeToDom", () => {
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
-    expect(variables["--fb-brand-text-color"]).toBe("#ffffff");
+    expect(variables["--brand-text-color"]).toBe("#ffffff");
   });
 
   test("should apply all survey styling properties", () => {
@@ -315,25 +315,25 @@ describe("addCustomThemeToDom", () => {
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
 
-    expect(variables["--fb-brand-color"]).toBe("#112233");
-    expect(variables["--fb-focus-color"]).toBe("#112233");
-    expect(variables["--fb-brand-text-color"]).toBe("white");
-    expect(variables["--fb-heading-color"]).toBe("#AABBCC");
-    expect(variables["--fb-subheading-color"]).toBe("#AABBCC");
-    expect(variables["--fb-placeholder-color"]).toBeDefined(); // Relies on mixColor
-    expect(variables["--fb-border-color"]).toBe("#DDDDDD");
-    expect(variables["--fb-border-color-highlight"]).toBeDefined(); // Relies on mixColor
-    expect(variables["--fb-survey-background-color"]).toBe("#EEEEEE");
-    expect(variables["--fb-survey-border-color"]).toBe("#CCCCCC");
-    expect(variables["--fb-border-radius"]).toBe("12px");
-    expect(variables["--fb-input-background-color"]).toBe("#F0F0F0");
-    expect(variables["--fb-signature-text-color"]).toBeDefined(); // Relies on mixColor & isLight
-    expect(variables["--fb-branding-text-color"]).toBeDefined(); // Relies on mixColor & isLight
-    expect(variables["--fb-input-background-color-selected"]).toBeDefined(); // Relies on mixColor
-    expect(variables["--fb-accent-background-color"]).toBeDefined(); // Relies on mixColor
-    expect(variables["--fb-accent-background-color-selected"]).toBeDefined(); // Relies on mixColor
+    expect(variables["--brand-color"]).toBe("#112233");
+    expect(variables["--focus-color"]).toBe("#112233");
+    expect(variables["--brand-text-color"]).toBe("white");
+    expect(variables["--heading-color"]).toBe("#AABBCC");
+    expect(variables["--subheading-color"]).toBe("#AABBCC");
+    expect(variables["--placeholder-color"]).toBeDefined(); // Relies on mixColor
+    expect(variables["--border-color"]).toBe("#DDDDDD");
+    expect(variables["--border-color-highlight"]).toBeDefined(); // Relies on mixColor
+    expect(variables["--survey-background-color"]).toBe("#EEEEEE");
+    expect(variables["--survey-border-color"]).toBe("#CCCCCC");
+    expect(variables["--border-radius"]).toBe("12px");
+    expect(variables["--input-background-color"]).toBe("#F0F0F0");
+    expect(variables["--signature-text-color"]).toBeDefined(); // Relies on mixColor & isLight
+    expect(variables["--branding-text-color"]).toBeDefined(); // Relies on mixColor & isLight
+    expect(variables["--input-background-color-selected"]).toBeDefined(); // Relies on mixColor
+    expect(variables["--accent-background-color"]).toBeDefined(); // Relies on mixColor
+    expect(variables["--accent-background-color-selected"]).toBeDefined(); // Relies on mixColor
     // calendar-tile-color depends on isLight(brandColor)
-    expect(variables["--fb-calendar-tile-color"]).toBeUndefined(); // isLight('#112233') is false, so this should be undefined
+    expect(variables["--calendar-tile-color"]).toBeUndefined(); // isLight('#112233') is false, so this should be undefined
   });
 
   test("should set signature and branding text colors for dark questionColor", () => {
@@ -346,8 +346,8 @@ describe("addCustomThemeToDom", () => {
     const variables = getCssVariables(styleElement);
 
     // For dark questionColor ('#202020'), isLight is false, so mix with white.
-    expect(variables["--fb-signature-text-color"]).toBeDefined();
-    expect(variables["--fb-branding-text-color"]).toBeDefined();
+    expect(variables["--signature-text-color"]).toBeDefined();
+    expect(variables["--branding-text-color"]).toBeDefined();
   });
 
   test("should handle roundness 0 correctly", () => {
@@ -355,7 +355,7 @@ describe("addCustomThemeToDom", () => {
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
-    expect(variables["--fb-border-radius"]).toBe("0px");
+    expect(variables["--border-radius"]).toBe("0px");
   });
 
   test("should set input-background-color-selected to slate-50 for white inputColor", () => {
@@ -365,7 +365,7 @@ describe("addCustomThemeToDom", () => {
       addCustomThemeToDom({ styling });
       const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
       const variables = getCssVariables(styleElement);
-      expect(variables["--fb-input-background-color-selected"]).toBe("var(--slate-50)");
+      expect(variables["--input-background-color-selected"]).toBe("var(--slate-50)");
     });
   });
 
@@ -379,8 +379,8 @@ describe("addCustomThemeToDom", () => {
     const variables = getCssVariables(styleElement);
     // We can't easily test the exact mixed color without duplicating mixColor logic or having access to its exact output for these inputs.
     // So, we just check that it's defined and not the slate-50 default.
-    expect(variables["--fb-input-background-color-selected"]).toBeDefined();
-    expect(variables["--fb-input-background-color-selected"]).not.toBe("var(--slate-50)");
+    expect(variables["--input-background-color-selected"]).toBeDefined();
+    expect(variables["--input-background-color-selected"]).not.toBe("var(--slate-50)");
   });
 
   test("should not set calendar-tile-color if brandColor is undefined", () => {
@@ -388,7 +388,7 @@ describe("addCustomThemeToDom", () => {
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
-    expect(variables["--fb-calendar-tile-color"]).toBeUndefined();
+    expect(variables["--calendar-tile-color"]).toBeUndefined();
   });
 
   test("should not define variables for undefined styling properties", () => {
@@ -397,11 +397,11 @@ describe("addCustomThemeToDom", () => {
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
 
-    expect(variables["--fb-brand-color"]).toBe("#ABC");
+    expect(variables["--brand-color"]).toBe("#ABC");
     // Check a few that would not be set
-    expect(variables["--fb-heading-color"]).toBeUndefined();
-    expect(variables["--fb-survey-background-color"]).toBeUndefined();
-    expect(variables["--fb-input-background-color"]).toBeUndefined();
+    expect(variables["--heading-color"]).toBeUndefined();
+    expect(variables["--survey-background-color"]).toBeUndefined();
+    expect(variables["--input-background-color"]).toBeUndefined();
   });
 
   test("should apply nonce to new custom theme style element when nonce is set", () => {

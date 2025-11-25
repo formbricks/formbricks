@@ -65,8 +65,8 @@ export function CTAQuestion({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-            <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
+          <div className="flex w-full flex-row-reverse justify-between pt-4">
+            <div className="flex w-full flex-row-reverse justify-start">
               <SubmitButton
                 buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
                 isLastQuestion={isLastQuestion}
@@ -98,7 +98,7 @@ export function CTAQuestion({
                     onSubmit({ [question.id]: "" }, updatedTtcObj);
                     onChange({ [question.id]: "" });
                   }}
-                  className="fb-text-heading focus:fb-ring-focus fb-mr-4 fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
+                  className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
                   {getLocalizedValue(question.dismissButtonLabel, languageCode) || "Skip"}
                 </button>
               )}

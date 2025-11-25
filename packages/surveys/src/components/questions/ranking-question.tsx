@@ -159,7 +159,7 @@ export function RankingQuestion({
 
   return (
     <ScrollableContainer ref={scrollableRef} fullSizeCards={fullSizeCards}>
-      <form onSubmit={handleSubmit} className="fb-w-full">
+      <form onSubmit={handleSubmit} className="w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -170,10 +170,10 @@ export function RankingQuestion({
           subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
           questionId={question.id}
         />
-        <div className="fb-mt-4">
+        <div className="mt-4">
           <fieldset>
-            <legend className="fb-sr-only">{t("common.ranking_items")}</legend>
-            <div className="fb-relative" ref={parent}>
+            <legend className="sr-only">{t("common.ranking_items")}</legend>
+            <div className="relative" ref={parent}>
               {[...sortedItems, ...unsortedItems].map((item, idx) => {
                 if (!item) return null;
                 const isSorted = sortedItems.includes(item);
@@ -184,8 +184,8 @@ export function RankingQuestion({
                   <div
                     key={item.id}
                     className={cn(
-                      "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading hover:fb-bg-input-bg-selected focus-within:fb-border-brand focus-within:fb-shadow-outline focus-within:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer w-full focus:outline-none",
-                      isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
+                      "border-border text-heading hover:bg-input-bg-selected focus-within:border-brand focus-within:shadow-outline focus-within:bg-input-bg-selected rounded-custom relative mb-2 flex h-12 w-full cursor-pointer items-center border transition-all focus:outline-none",
+                      isSorted ? "bg-input-bg-selected" : "bg-input-bg"
                     )}>
                     <button
                       autoFocus={idx === 0 && autoFocusEnabled}
@@ -204,22 +204,22 @@ export function RankingQuestion({
                       aria-label={t("common.select_for_ranking", {
                         item: getLocalizedValue(item.label, languageCode),
                       })}
-                      className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group text-left focus:outline-none">
+                      className="group flex h-full grow items-center gap-x-4 px-4 text-left focus:outline-none">
                       <span
                         className={cn(
-                          "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
+                          "border-brand flex h-6 w-6 grow-0 items-center justify-center rounded-full border text-xs font-semibold",
                           isSorted
-                            ? "fb-bg-brand fb-text-white fb-border"
-                            : "fb-border-dashed group-hover:fb-bg-white fb-text-transparent group-hover:fb-text-heading"
+                            ? "bg-brand border text-white"
+                            : "group-hover:text-heading border-dashed text-transparent group-hover:bg-white"
                         )}>
                         {(idx + 1).toString()}
                       </span>
-                      <div className="fb-grow fb-shrink fb-font-medium fb-text-sm fb-text-start" dir="auto">
+                      <div className="shrink grow text-start text-sm font-medium" dir="auto">
                         {getLocalizedValue(item.label, languageCode)}
                       </div>
                     </button>
                     {isSorted ? (
-                      <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
+                      <div className="border-border flex h-full grow-0 flex-col border-l">
                         <button
                           tabIndex={isFirst ? -1 : 0}
                           type="button"
@@ -231,10 +231,10 @@ export function RankingQuestion({
                             item: getLocalizedValue(item.label, languageCode),
                           })}
                           className={cn(
-                            "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
+                            "flex flex-1 items-center justify-center px-2",
                             isFirst
-                              ? "fb-opacity-30 fb-cursor-not-allowed"
-                              : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
+                              ? "cursor-not-allowed opacity-30"
+                              : "rounded-tr-custom transition-colors hover:bg-black/5"
                           )}
                           disabled={isFirst}>
                           <svg
@@ -259,10 +259,10 @@ export function RankingQuestion({
                             handleMove(item.id, "down");
                           }}
                           className={cn(
-                            "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
+                            "border-border flex flex-1 items-center justify-center border-t px-2",
                             isLast
-                              ? "fb-opacity-30 fb-cursor-not-allowed"
-                              : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
+                              ? "cursor-not-allowed opacity-30"
+                              : "rounded-br-custom transition-colors hover:bg-black/5"
                           )}
                           aria-label={t("common.move_down", {
                             item: getLocalizedValue(item.label, languageCode),
@@ -290,8 +290,8 @@ export function RankingQuestion({
             </div>
           </fieldset>
         </div>
-        {error ? <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div> : null}
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+        {error ? <div className="mt-2 text-sm text-red-500">{error}</div> : null}
+        <div className="flex w-full flex-row-reverse justify-between pt-4">
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

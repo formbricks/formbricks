@@ -115,7 +115,7 @@ export function MultipleChoiceMultiQuestion({
 
   // Common label className for all choice types
   const baseLabelClassName =
-    "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none";
+    "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none";
 
   useEffect(() => {
     // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
@@ -177,7 +177,7 @@ export function MultipleChoiceMultiQuestion({
           setTtc(updatedTtcObj);
           onSubmit({ [question.id]: newValue }, updatedTtcObj);
         }}
-        className="fb-w-full">
+        className="w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -188,10 +188,10 @@ export function MultipleChoiceMultiQuestion({
           subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
           questionId={question.id}
         />
-        <div className="fb-mt-4">
+        <div className="mt-4">
           <fieldset>
-            <legend className="fb-sr-only">Options</legend>
-            <div className="fb-bg-survey-bg fb-relative fb-space-y-2" ref={choicesContainerRef}>
+            <legend className="sr-only">Options</legend>
+            <div className="bg-survey-bg relative space-y-2" ref={choicesContainerRef}>
               {questionChoices.map((choice, idx) => {
                 if (!choice || choice.id === "other" || choice.id === "none") return;
                 return (
@@ -200,9 +200,9 @@ export function MultipleChoiceMultiQuestion({
                     tabIndex={isCurrent ? 0 : -1}
                     className={cn(
                       value.includes(getLocalizedValue(choice.label, languageCode))
-                        ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                        : "fb-border-border fb-bg-input-bg",
-                      isNoneSelected ? "fb-opacity-50" : "",
+                        ? "border-brand bg-input-bg-selected z-10"
+                        : "border-border bg-input-bg",
+                      isNoneSelected ? "opacity-50" : "",
                       baseLabelClassName
                     )}
                     onKeyDown={(e) => {
@@ -213,7 +213,7 @@ export function MultipleChoiceMultiQuestion({
                       }
                     }}
                     autoFocus={idx === 0 && autoFocusEnabled}>
-                    <span className="fb-flex fb-items-center fb-text-sm">
+                    <span className="flex items-center text-sm">
                       <input
                         type="checkbox"
                         dir={dir}
@@ -221,7 +221,7 @@ export function MultipleChoiceMultiQuestion({
                         name={question.id}
                         tabIndex={-1}
                         value={getLocalizedValue(choice.label, languageCode)}
-                        className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                        className="border-brand text-brand h-4 w-4 flex-shrink-0 border focus:ring-0 focus:ring-offset-0"
                         aria-labelledby={`${choice.id}-label`}
                         disabled={isNoneSelected}
                         onChange={(e) => {
@@ -237,7 +237,7 @@ export function MultipleChoiceMultiQuestion({
                         }
                         required={getIsRequired()}
                       />
-                      <span id={`${choice.id}-label`} className="fb-mx-3 fb-grow fb-font-medium" dir="auto">
+                      <span id={`${choice.id}-label`} className="mx-3 grow font-medium" dir="auto">
                         {getLocalizedValue(choice.label, languageCode)}
                       </span>
                     </span>
@@ -248,10 +248,8 @@ export function MultipleChoiceMultiQuestion({
                 <label
                   tabIndex={isCurrent ? 0 : -1}
                   className={cn(
-                    otherSelected
-                      ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                      : "fb-border-border fb-bg-input-bg",
-                    isNoneSelected ? "fb-opacity-50" : "",
+                    otherSelected ? "border-brand bg-input-bg-selected z-10" : "border-border bg-input-bg",
+                    isNoneSelected ? "opacity-50" : "",
                     baseLabelClassName
                   )}
                   onKeyDown={(e) => {
@@ -262,7 +260,7 @@ export function MultipleChoiceMultiQuestion({
                       document.getElementById(otherOption.id)?.click();
                     }
                   }}>
-                  <span className="fb-flex fb-items-center fb-text-sm">
+                  <span className="flex items-center text-sm">
                     <input
                       type="checkbox"
                       dir={dir}
@@ -270,7 +268,7 @@ export function MultipleChoiceMultiQuestion({
                       id={otherOption.id}
                       name={question.id}
                       value={getLocalizedValue(otherOption.label, languageCode)}
-                      className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                      className="border-brand text-brand h-4 w-4 flex-shrink-0 border focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${otherOption.id}-label`}
                       disabled={isNoneSelected}
                       onChange={() => {
@@ -286,10 +284,7 @@ export function MultipleChoiceMultiQuestion({
                       }}
                       checked={otherSelected}
                     />
-                    <span
-                      id={`${otherOption.id}-label`}
-                      className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
-                      dir="auto">
+                    <span id={`${otherOption.id}-label`} className="ml-3 mr-3 grow font-medium" dir="auto">
                       {getLocalizedValue(otherOption.label, languageCode)}
                     </span>
                   </span>
@@ -306,7 +301,7 @@ export function MultipleChoiceMultiQuestion({
                       onChange={(e) => {
                         setOtherValue(e.currentTarget.value);
                       }}
-                      className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
+                      className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       placeholder={
                         getLocalizedValue(question.otherOptionPlaceholder, languageCode).length > 0
                           ? getLocalizedValue(question.otherOptionPlaceholder, languageCode)
@@ -331,9 +326,7 @@ export function MultipleChoiceMultiQuestion({
                 <label
                   tabIndex={isCurrent ? 0 : -1}
                   className={cn(
-                    isNoneSelected
-                      ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                      : "fb-border-border fb-bg-input-bg",
+                    isNoneSelected ? "border-brand bg-input-bg-selected z-10" : "border-border bg-input-bg",
                     baseLabelClassName
                   )}
                   onKeyDown={(e) => {
@@ -342,7 +335,7 @@ export function MultipleChoiceMultiQuestion({
                       document.getElementById(noneOption.id)?.click();
                     }
                   }}>
-                  <span className="fb-flex fb-items-center fb-text-sm">
+                  <span className="flex items-center text-sm">
                     <input
                       type="checkbox"
                       dir={dir}
@@ -350,7 +343,7 @@ export function MultipleChoiceMultiQuestion({
                       id={noneOption.id}
                       name={question.id}
                       value={getLocalizedValue(noneOption.label, languageCode)}
-                      className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                      className="border-brand text-brand h-4 w-4 flex-shrink-0 border focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${noneOption.id}-label`}
                       onChange={(e) => {
                         if ((e.target as HTMLInputElement).checked) {
@@ -363,10 +356,7 @@ export function MultipleChoiceMultiQuestion({
                       }}
                       checked={isNoneSelected}
                     />
-                    <span
-                      id={`${noneOption.id}-label`}
-                      className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
-                      dir="auto">
+                    <span id={`${noneOption.id}-label`} className="ml-3 mr-3 grow font-medium" dir="auto">
                       {getLocalizedValue(noneOption.label, languageCode)}
                     </span>
                   </span>
@@ -375,7 +365,7 @@ export function MultipleChoiceMultiQuestion({
             </div>
           </fieldset>
         </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+        <div className="flex w-full flex-row-reverse justify-between pt-4">
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

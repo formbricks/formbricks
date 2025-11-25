@@ -24,26 +24,26 @@ export function Headline({ headline, questionId, required = true, alignTextCente
       : "";
 
   return (
-    <label htmlFor={questionId} className="fb-text-heading fb-mb-[3px] fb-flex fb-flex-col">
+    <label htmlFor={questionId} className="text-heading mb-[3px] flex flex-col">
       {!required && (
         <span
-          className="fb-text-xs fb-opacity-60 fb-font-normal fb-leading-6 fb-mb-[3px]"
+          className="mb-[3px] text-xs font-normal leading-6 opacity-60"
           tabIndex={-1}
           data-testid="fb__surveys__headline-optional-text-test">
           {t("common.optional")}
         </span>
       )}
       <div
-        className={`fb-flex fb-items-center ${alignTextCenter ? "fb-justify-center" : "fb-justify-between"}`}
+        className={`flex items-center ${alignTextCenter ? "justify-center" : "justify-between"}`}
         dir="auto">
         {isHeadlineHtml ? (
           <div
             data-testid="fb__surveys__headline-text-test"
-            className="fb-htmlbody fb-text-base"
+            className="htmlbody text-base"
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         ) : (
-          <p data-testid="fb__surveys__headline-text-test" className="fb-text-base fb-font-semibold">
+          <p data-testid="fb__surveys__headline-text-test" className="text-base font-semibold">
             {headline}
           </p>
         )}

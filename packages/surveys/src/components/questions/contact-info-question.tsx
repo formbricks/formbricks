@@ -120,7 +120,7 @@ export function ContactInfoQuestion({
 
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards}>
-      <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
+      <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -132,7 +132,7 @@ export function ContactInfoQuestion({
           questionId={question.id}
         />
 
-        <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
+        <div className="mt-4 flex w-full flex-col space-y-2">
           {fields.map((field, index) => {
             const isFieldRequired = () => {
               if (field.required) {
@@ -159,7 +159,7 @@ export function ContactInfoQuestion({
 
             return (
               field.show && (
-                <div className="fb-space-y-1">
+                <div className="space-y-1">
                   <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
                   <Input
                     id={field.id}
@@ -180,7 +180,7 @@ export function ContactInfoQuestion({
             );
           })}
         </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+        <div className="flex w-full flex-row-reverse justify-between pt-4">
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

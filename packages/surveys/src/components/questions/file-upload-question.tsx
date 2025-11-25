@@ -76,7 +76,7 @@ export function FileUploadQuestion({
             onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
           }
         }}
-        className="fb-w-full">
+        className="w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -105,7 +105,7 @@ export function FileUploadQuestion({
             : {})}
           {...(question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
         />
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+        <div className="flex w-full flex-row-reverse justify-between pt-4">
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

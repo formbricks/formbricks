@@ -84,7 +84,7 @@ export function CalQuestion({
           onChange({ [question.id]: value });
           onSubmit({ [question.id]: value }, updatedttc);
         }}
-        className="fb-w-full">
+        className="w-full">
         <div>
           {isMediaAvailable ? (
             <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
@@ -99,9 +99,9 @@ export function CalQuestion({
             questionId={question.id}
           />
           <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
-          {errorMessage ? <span className="fb-text-red-500">{errorMessage}</span> : null}
+          {errorMessage ? <span className="text-red-500">{errorMessage}</span> : null}
         </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+        <div className="flex w-full flex-row-reverse justify-between pt-4">
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}

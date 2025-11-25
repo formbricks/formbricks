@@ -112,7 +112,7 @@ export function PictureSelectionQuestion({
           setTtc(updatedTtcObj);
           onSubmit({ [question.id]: value }, updatedTtcObj);
         }}
-        className="fb-w-full">
+        className="w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
         <Headline
           headline={getLocalizedValue(question.headline, languageCode)}
@@ -123,12 +123,12 @@ export function PictureSelectionQuestion({
           subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
           questionId={question.id}
         />
-        <div className="fb-mt-4">
+        <div className="mt-4">
           <fieldset>
-            <legend className="fb-sr-only">{t("common.options")}</legend>
-            <div className="fb-bg-survey-bg fb-relative fb-grid fb-grid-cols-1 sm:fb-grid-cols-2 fb-gap-4">
+            <legend className="sr-only">{t("common.options")}</legend>
+            <div className="bg-survey-bg relative grid grid-cols-1 gap-4 sm:grid-cols-2">
               {questionChoices.map((choice) => (
-                <div className="fb-relative" key={choice.id}>
+                <div className="relative" key={choice.id}>
                   <button
                     type="button"
                     tabIndex={isCurrent ? 0 : -1}
@@ -144,21 +144,21 @@ export function PictureSelectionQuestion({
                       handleChange(choice.id);
                     }}
                     className={cn(
-                      "fb-relative fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border fb-rounded-custom focus-visible:fb-outline-none focus-visible:fb-ring-2 focus-visible:fb-ring-brand focus-visible:fb-ring-offset-2 fb-aspect-[4/3] fb-min-h-[7rem] fb-max-h-[50vh] group/image",
+                      "rounded-custom focus-visible:ring-brand group/image relative aspect-[4/3] max-h-[50vh] min-h-[7rem] w-full cursor-pointer overflow-hidden border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                       Array.isArray(value) && value.includes(choice.id)
-                        ? "fb-border-brand fb-text-brand fb-z-10 fb-border-4 fb-shadow-sm"
+                        ? "border-brand text-brand z-10 border-4 shadow-sm"
                         : ""
                     )}>
                     {loadingImages[choice.id] && (
-                      <div className="fb-absolute fb-inset-0 fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" />
+                      <div className="absolute inset-0 flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
                     )}
                     <img
                       src={choice.imageUrl}
                       id={choice.id}
                       alt={getOriginalFileNameFromUrl(choice.imageUrl)}
                       className={cn(
-                        "fb-h-full fb-w-full fb-object-cover",
-                        loadingImages[choice.id] ? "fb-opacity-0" : ""
+                        "h-full w-full object-cover",
+                        loadingImages[choice.id] ? "opacity-0" : ""
                       )}
                       onLoad={() => {
                         setLoadingImages((prev) => ({ ...prev, [choice.id]: false }));
@@ -175,9 +175,9 @@ export function PictureSelectionQuestion({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "fb-border-border fb-rounded-custom fb-pointer-events-none fb-absolute fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-border",
-                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : "",
-                          dir === "rtl" ? "fb-left-2" : "fb-right-2"
+                          "border-border rounded-custom pointer-events-none absolute top-2 z-20 h-5 w-5 border",
+                          value.includes(choice.id) ? "border-brand text-brand" : "",
+                          dir === "rtl" ? "left-2" : "right-2"
                         )}
                         required={question.required && value.length === 0}
                       />
@@ -189,9 +189,9 @@ export function PictureSelectionQuestion({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "fb-border-border fb-pointer-events-none fb-absolute fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-rounded-full fb-border",
-                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : "",
-                          dir === "rtl" ? "fb-left-2" : "fb-right-2"
+                          "border-border pointer-events-none absolute top-2 z-20 h-5 w-5 rounded-full border",
+                          value.includes(choice.id) ? "border-brand text-brand" : "",
+                          dir === "rtl" ? "left-2" : "right-2"
                         )}
                         required={question.required && value.length ? false : question.required}
                       />
@@ -207,10 +207,10 @@ export function PictureSelectionQuestion({
                       e.stopPropagation();
                     }}
                     className={cn(
-                      "fb-absolute fb-bottom-4 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100 fb-z-20",
-                      dir === "rtl" ? "fb-left-2" : "fb-right-2"
+                      "absolute bottom-4 z-20 flex items-center gap-2 whitespace-nowrap rounded-md bg-slate-800 bg-opacity-40 p-1.5 text-white backdrop-blur-lg transition duration-300 ease-in-out hover:bg-opacity-65 group-hover/image:opacity-100",
+                      dir === "rtl" ? "left-2" : "right-2"
                     )}>
-                    <span className="fb-sr-only">{t("common.open_in_new_tab")}</span>
+                    <span className="sr-only">{t("common.open_in_new_tab")}</span>
                     <ImageDownIcon />
                   </a>
                 </div>
@@ -218,7 +218,7 @@ export function PictureSelectionQuestion({
             </div>
           </fieldset>
         </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+        <div className="flex w-full flex-row-reverse justify-between pt-4">
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

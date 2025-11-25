@@ -85,7 +85,7 @@ export function StackedCardsContainer({
   const borderStyles = useMemo(() => {
     const baseStyle = {
       border: "1px solid",
-      borderRadius: "var(--fb-border-radius)",
+      borderRadius: "var(--border-radius)",
     };
     // Determine borderColor based on the survey type and availability of highlightBorderColor
     const borderColor =
@@ -142,7 +142,7 @@ export function StackedCardsContainer({
   return (
     <div
       data-testid="stacked-cards-container"
-      className="fb-relative fb-flex fb-h-full fb-items-end fb-justify-center md:fb-items-center"
+      className="relative flex h-full items-end justify-center md:items-center"
       onMouseEnter={() => {
         setHovered(true);
       }}
@@ -154,7 +154,7 @@ export function StackedCardsContainer({
         <div
           id={`questionCard-${questionIdxTemp.toString()}`}
           data-testid={`questionCard-${questionIdxTemp.toString()}`}
-          className={cn("fb-w-full fb-bg-survey-bg fb-overflow-hidden", fullSizeCards ? "fb-h-full" : "")}
+          className={cn("bg-survey-bg w-full overflow-hidden", fullSizeCards ? "h-full" : "")}
           style={borderStyles}>
           {getCardContent(questionIdxTemp, 0)}
         </div>
