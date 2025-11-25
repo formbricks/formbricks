@@ -8,10 +8,7 @@ import { TResponseWithQuotaFull, TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@/lib/organization/service";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
@@ -162,7 +159,6 @@ describe("createResponse V2", () => {
       ...ttc,
       _total: Object.values(ttc).reduce((a, b) => a + b, 0),
     }));
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
     vi.mocked(evaluateResponseQuotas).mockResolvedValue({
       shouldEndSurvey: false,
       quotaFull: null,
@@ -171,12 +167,6 @@ describe("createResponse V2", () => {
 
   afterEach(() => {
     mockIsFormbricksCloud = false;
-  });
-
-  test("should check response limits if IS_FORMBRICKS_CLOUD is true", async () => {
-    mockIsFormbricksCloud = true;
-    await createResponse(mockResponseInput, mockTx);
-    expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
   });
 
   test("should throw ResourceNotFoundError if organization not found", async () => {
@@ -229,7 +219,6 @@ describe("createResponseWithQuotaEvaluation V2", () => {
       ...ttc,
       _total: Object.values(ttc).reduce((a, b) => a + b, 0),
     }));
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
     vi.mocked(evaluateResponseQuotas).mockResolvedValue({
       shouldEndSurvey: false,
       quotaFull: null,

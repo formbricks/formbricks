@@ -5,10 +5,7 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseInput } from "@formbricks/types/responses";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@/lib/organization/service";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { createResponse, createResponseWithQuotaEvaluation } from "./response";
@@ -23,7 +20,6 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/lib/organization/service", () => ({
-  getMonthlyOrganizationResponseCount: vi.fn(),
   getOrganizationByEnvironmentId: vi.fn(),
 }));
 
@@ -127,15 +123,6 @@ describe("createResponse", () => {
         data: expect.objectContaining({ finished: true }),
       })
     );
-  });
-
-  test("should check response limits if IS_FORMBRICKS_CLOUD is true", async () => {
-    mockIsFormbricksCloud = true;
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
-
-    await createResponse(mockResponseInput, prisma);
-
-    expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
   });
 
   test("should throw ResourceNotFoundError if organization not found", async () => {

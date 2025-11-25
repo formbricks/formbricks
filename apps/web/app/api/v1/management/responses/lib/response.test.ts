@@ -4,10 +4,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@/lib/organization/service";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -156,7 +153,6 @@ describe("Response Lib Tests", () => {
       vi.mocked(mockTx.response.create).mockResolvedValue({
         ...mockResponsePrisma,
       });
-      vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
 
       const response = await createResponse(mockResponseInputWithUserId, mockTx);
 
@@ -210,41 +206,6 @@ describe("Response Lib Tests", () => {
       vi.mocked(mockTx.response.create).mockRejectedValue(genericError);
 
       await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(genericError);
-    });
-
-    describe("Cloud specific tests", () => {
-      test("should check response limit and send event if limit reached", async () => {
-        // IS_FORMBRICKS_CLOUD is true by default from the top-level mock
-        const limit = 100;
-        const mockOrgWithBilling = {
-          ...mockOrganization,
-          billing: { limits: { monthly: { responses: limit } } },
-        } as any;
-        vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrgWithBilling);
-        vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
-        vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma);
-        vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(limit); // Limit reached
-
-        await createResponse(mockResponseInput, mockTx);
-
-        expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
-      });
-
-      test("should check response limit if limit not reached", async () => {
-        const limit = 100;
-        const mockOrgWithBilling = {
-          ...mockOrganization,
-          billing: { limits: { monthly: { responses: limit } } },
-        } as any;
-        vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrgWithBilling);
-        vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
-        vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma);
-        vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(limit - 1); // Limit not reached
-
-        await createResponse(mockResponseInput, mockTx);
-
-        expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
-      });
     });
   });
 
