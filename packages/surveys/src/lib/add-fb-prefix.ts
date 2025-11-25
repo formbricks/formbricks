@@ -1,5 +1,5 @@
 /**
- * Adds the 'fb-' prefix to Tailwind CSS classes for survey-embed
+ * Adds the 'fb-' prefix to Tailwind CSS classes for surveys
  * Handles pseudo-classes, responsive prefixes, and negative values
  */
 export function addFbPrefix(className: string): string {

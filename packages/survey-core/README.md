@@ -8,7 +8,7 @@ This package serves as the source of truth for survey UI components that are use
 
 - **Storybook** (React) - Component documentation and visual testing
 - **Next.js web app** (React) - Main application UI
-- **Embed bundle** (Preact) - Compiled via `@formbricks/survey-embed` using `preact/compat`
+- **Embed bundle** (Preact) - Compiled via `@formbricks/surveys` using `preact/compat`
 
 ## Architecture
 
@@ -23,7 +23,7 @@ All components are authored using standard React patterns:
 ### Build Strategy
 
 - **survey-core**: React components, treated as a normal React library
-- **survey-embed**: Build step aliases `react` → `preact/compat`, producing a small Preact-powered widget
+- **surveys**: Build step aliases `react` → `preact/compat`, producing a small Preact-powered widget
 - **Web app + Storybook**: Continue using real React with no changes
 
 ## Features
@@ -79,5 +79,5 @@ Components from this package are automatically available in Storybook for visual
 
 ### In Embed Bundle
 
-The `@formbricks/survey-embed` package imports from this package and compiles it to Preact for lightweight embeds.
+The `@formbricks/surveys` package imports from this package and compiles it to Preact for lightweight embeds.
 

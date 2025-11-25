@@ -1,21 +1,21 @@
 import i18n from "i18next";
 import ICU from "i18next-icu";
 import { initReactI18next } from "react-i18next";
-// Import translations from survey-embed (shared translations)
-import arTranslations from "../../../survey-embed/locales/ar.json";
-import deTranslations from "../../../survey-embed/locales/de.json";
-import enTranslations from "../../../survey-embed/locales/en.json";
-import esTranslations from "../../../survey-embed/locales/es.json";
-import frTranslations from "../../../survey-embed/locales/fr.json";
-import hiTranslations from "../../../survey-embed/locales/hi.json";
-import itTranslations from "../../../survey-embed/locales/it.json";
-import jaTranslations from "../../../survey-embed/locales/ja.json";
-import nlTranslations from "../../../survey-embed/locales/nl.json";
-import ptTranslations from "../../../survey-embed/locales/pt.json";
-import roTranslations from "../../../survey-embed/locales/ro.json";
-import ruTranslations from "../../../survey-embed/locales/ru.json";
-import uzTranslations from "../../../survey-embed/locales/uz.json";
-import zhHansTranslations from "../../../survey-embed/locales/zh-Hans.json";
+// Import translations from surveys (shared translations)
+import arTranslations from "../../../surveys/locales/ar.json";
+import deTranslations from "../../../surveys/locales/de.json";
+import enTranslations from "../../../surveys/locales/en.json";
+import esTranslations from "../../../surveys/locales/es.json";
+import frTranslations from "../../../surveys/locales/fr.json";
+import hiTranslations from "../../../surveys/locales/hi.json";
+import itTranslations from "../../../surveys/locales/it.json";
+import jaTranslations from "../../../surveys/locales/ja.json";
+import nlTranslations from "../../../surveys/locales/nl.json";
+import ptTranslations from "../../../surveys/locales/pt.json";
+import roTranslations from "../../../surveys/locales/ro.json";
+import ruTranslations from "../../../surveys/locales/ru.json";
+import uzTranslations from "../../../surveys/locales/uz.json";
+import zhHansTranslations from "../../../surveys/locales/zh-Hans.json";
 
 i18n
   .use(ICU)

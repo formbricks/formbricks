@@ -1,6 +1,6 @@
 ## Overview
 
-The `@formbricks/survey-embed` package provides a complete survey rendering system built with Preact. It features automated translation management through Lingo.dev and is compiled from React-style components in `@formbricks/survey-core`.
+The `@formbricks/surveys` package provides a complete survey rendering system built with Preact. It features automated translation management through Lingo.dev and is compiled from React-style components in `@formbricks/survey-core`.
 
 ## Features
 
@@ -16,7 +16,7 @@ The `@formbricks/survey-embed` package provides a complete survey rendering syst
 ### File Structure
 
 ```text
-packages/survey-embed/
+packages/surveys/
 ├── locales/                 # Translation files
 │   ├── en.json             # Source translations (English)
 │   ├── de.json             # Generated translations (German)
@@ -65,7 +65,7 @@ packages/survey-embed/
    In the surveys package directory, create a `.env` file:
 
    ```bash
-   # packages/survey-embed/.env
+   # packages/surveys/.env
    LINGODOTDEV_API_KEY=<YOUR_API_KEY>
    ```
 
@@ -84,14 +84,14 @@ This will execute the auto-translate script and update translation files if need
 
 ### Adding New Translation Keys
 
-1. **Update Source File**: Add new keys to `packages/survey-embed/locales/en.json`
+1. **Update Source File**: Add new keys to `packages/surveys/locales/en.json`
 2. **Generate Translations**: Run `pnpm run i18n:generate`
 3. **Update Components**: Use the new translation keys in your components with `useTranslation` hook
 4. **Test**: Verify translations work across all supported languages
 
 ### Updating Existing Translations
 
-1. **Update Target File**: Update the translation keys in the target language file (`packages/survey-embed/locales/<target-language>.json`)
+1. **Update Target File**: Update the translation keys in the target language file (`packages/surveys/locales/<target-language>.json`)
 2. **Test**: Verify translations work across all supported languages
 3. You don't need to run the `i18n:generate` command as it is only required when the source language is updated.
 
@@ -99,7 +99,7 @@ This will execute the auto-translate script and update translation files if need
 
 #### 1. Update lingo.dev Configuration
 
-Edit `packages/survey-embed/i18n.json` to include new target languages:
+Edit `packages/surveys/i18n.json` to include new target languages:
 
 ```json
 {
@@ -112,7 +112,7 @@ Edit `packages/survey-embed/i18n.json` to include new target languages:
 
 #### 2. Update i18n Configuration
 
-Modify `packages/survey-embed/src/lib/i18n.config.ts`:
+Modify `packages/surveys/src/lib/i18n.config.ts`:
 
 ```tsx
 // Add new import

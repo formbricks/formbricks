@@ -87,17 +87,17 @@
       "dependsOn": ["@formbricks/survey-core#build"],
       "persistent": true
     },
-    "@formbricks/survey-embed#build": {
+    "@formbricks/surveys#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "@formbricks/survey-embed#build:dev": {
+    "@formbricks/surveys#build:dev": {
       "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build"],
       "outputs": ["dist/**"]
     },
-    "@formbricks/survey-embed#go": {
+    "@formbricks/surveys#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/survey-embed#build"],
+      "dependsOn": ["@formbricks/surveys#build"],
       "persistent": true
     },
     "@formbricks/web#go": {

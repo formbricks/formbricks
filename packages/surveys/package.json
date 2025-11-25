@@ -1,9 +1,9 @@
 {
-  "name": "@formbricks/survey-embed",
+  "name": "@formbricks/surveys",
   "license": "MIT",
   "version": "1.0.0",
   "private": true,
-  "description": "Formbricks survey embed bundle - Preact-compiled widget for embedding surveys into customer websites.",
+  "description": "Formbricks surveys package - Preact-compiled widget for embedding surveys into customer websites.",
   "homepage": "https://formbricks.com",
   "type": "module",
   "repository": {
