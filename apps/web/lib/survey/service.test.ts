@@ -13,7 +13,6 @@ import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import {
   mockActionClass,
@@ -42,11 +41,6 @@ vi.mock("@/lib/organization/service", () => ({
     id: "org123",
   }),
   subscribeOrganizationMembersToSurveyResponses: vi.fn(),
-}));
-
-// Mock posthogServer
-vi.mock("@/lib/posthogServer", () => ({
-  capturePosthogEnvironmentEvent: vi.fn(),
 }));
 
 // Mock actionClass service
@@ -646,7 +640,6 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
-      expect(capturePosthogEnvironmentEvent).toHaveBeenCalled();
     });
 
     test("creates a private segment for app surveys", async () => {

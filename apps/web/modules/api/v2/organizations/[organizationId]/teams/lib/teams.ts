@@ -2,7 +2,6 @@ import "server-only";
 import { Team } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { captureTelemetry } from "@/lib/telemetry";
 import { getTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/teams/lib/utils";
 import {
   TGetTeamsFilter,
@@ -15,8 +14,6 @@ export const createTeam = async (
   teamInput: TTeamInput,
   organizationId: string
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
-  captureTelemetry("team created");
-
   const { name } = teamInput;
 
   try {

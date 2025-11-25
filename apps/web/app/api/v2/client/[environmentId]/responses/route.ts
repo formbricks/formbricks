@@ -8,7 +8,6 @@ import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/respons
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -147,11 +146,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
       response: responseData,
     });
   }
-
-  await capturePosthogEnvironmentEvent(environmentId, "response created", {
-    surveyId: responseData.surveyId,
-    surveyType: survey.type,
-  });
 
   const quotaObj = createQuotaFullObject(quotaFull);
 

@@ -12,7 +12,7 @@ import { TTag } from "@formbricks/types/tags";
 import {
   DateRange,
   SelectedFilterValue,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { generateQuestionAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
 
