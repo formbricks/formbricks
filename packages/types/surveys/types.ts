@@ -31,12 +31,15 @@ import {
 import { validateElementLabels } from "./elements-validation";
 import {
   type TConditionGroup,
+  type TConditionGroupDeprecated,
   type TSingleCondition,
+  type TSingleConditionDeprecated,
   type TSurveyLogicConditionsOperator,
   ZActionNumberVariableCalculateOperator,
   ZActionTextVariableCalculateOperator,
   ZConditionGroup,
-  ZDynamicLogicFieldValue,
+  ZConditionGroupDeprecated,
+  ZDynamicLogicFieldValueDeprecated,
 } from "./logic";
 import {
   FORBIDDEN_IDS,
@@ -308,7 +311,7 @@ export const ZActionCalculateText = ZActionCalculateBase.extend({
         .string({ message: "Conditional Logic: Value must be a string for text variable" })
         .min(1, "Conditional Logic: Please enter a value in logic field"),
     }),
-    ZDynamicLogicFieldValue,
+    ZDynamicLogicFieldValueDeprecated, // Accept both "question" and "element" for backward compatibility
   ]),
 });
 
@@ -319,7 +322,7 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
       type: z.literal("static"),
       value: z.number({ message: "Conditional Logic: Value must be a number for number variable" }),
     }),
-    ZDynamicLogicFieldValue,
+    ZDynamicLogicFieldValueDeprecated, // Accept both "question" and "element" for backward compatibility
   ]),
 }).superRefine((val, ctx) => {
   if (val.operator === "divide" && val.value.type === "static" && val.value.value === 0) {
@@ -364,6 +367,16 @@ export const ZSurveyLogic = z.object({
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 
+// DEPRECATED: Backward compatibility - accepts "question" type in conditions
+// Actions already accept both "question" and "element" via ZDynamicLogicFieldValueDeprecated
+export const ZSurveyLogicDeprecated = z.object({
+  id: ZId,
+  conditions: ZConditionGroupDeprecated,
+  actions: ZSurveyLogicActions, // Reuse the same actions since they accept both formats
+});
+
+export type TSurveyLogicDeprecated = z.infer<typeof ZSurveyLogicDeprecated>;
+
 export const ZSurveyQuestionBase = z.object({
   id: ZSurveyQuestionId,
   type: z.string(),
@@ -376,7 +389,7 @@ export const ZSurveyQuestionBase = z.object({
   backButtonLabel: ZI18nString.optional(),
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
-  logic: z.array(ZSurveyLogic).optional(),
+  logic: z.array(ZSurveyLogicDeprecated).optional(),
   logicFallback: ZSurveyQuestionId.optional(),
   isDraft: z.boolean().optional(),
 });
@@ -1992,15 +2005,15 @@ const validateConditions = (
   survey: TSurvey,
   questionIndex: number,
   logicIndex: number,
-  conditions: TConditionGroup
+  conditions: TConditionGroupDeprecated
 ): z.ZodIssue[] => {
   const issues: z.ZodIssue[] = [];
 
-  const validateSingleCondition = (condition: TSingleCondition): void => {
+  const validateSingleCondition = (condition: TSingleConditionDeprecated): void => {
     const { leftOperand, operator, rightOperand } = condition;
 
     // Validate left operand
-    if (leftOperand.type === "element") {
+    if (leftOperand.type === "question") {
       const questionId = leftOperand.value;
       const questionIdx = survey.questions.findIndex((q) => q.id === questionId);
       const question = questionIdx !== -1 ? survey.questions[questionIdx] : undefined;
@@ -2057,7 +2070,7 @@ const validateConditions = (
 
       if (question.type === TSurveyQuestionTypeEnum.OpenText) {
         // Validate right operand
-        if (rightOperand?.type === "element") {
+        if (rightOperand?.type === "question") {
           const quesId = rightOperand.value;
           const ques = survey.questions.find((q) => q.id === quesId);
 
@@ -2289,7 +2302,7 @@ const validateConditions = (
           });
         }
       } else if (question.type === TSurveyQuestionTypeEnum.Date) {
-        if (rightOperand?.type === "element") {
+        if (rightOperand?.type === "question") {
           const quesId = rightOperand.value;
           const ques = survey.questions.find((q) => q.id === quesId);
 
@@ -2516,7 +2529,7 @@ const validateConditions = (
       }
 
       // Validate right operand
-      if (rightOperand?.type === "element") {
+      if (rightOperand?.type === "question") {
         const questionId = rightOperand.value;
         const question = survey.questions.find((q) => q.id === questionId);
 
@@ -2579,12 +2592,13 @@ const validateConditions = (
     }
   };
 
-  const validateConditionGroup = (group: TConditionGroup): void => {
+  const validateConditionGroup = (group: TConditionGroup | TConditionGroupDeprecated): void => {
     group.conditions.forEach((condition) => {
-      if (isConditionGroup(condition)) {
-        validateConditionGroup(condition);
+      // Check if it's a group by checking for "conditions" property
+      if ("conditions" in condition && "connector" in condition) {
+        validateConditionGroup(condition as TConditionGroup | TConditionGroupDeprecated);
       } else {
-        validateSingleCondition(condition);
+        validateSingleCondition(condition as TSingleCondition);
       }
     });
   };
@@ -2638,7 +2652,7 @@ const validateActions = (
           };
         }
 
-        if (action.value.type === "element") {
+        if (action.value.type === "question") {
           const allowedQuestions = [
             TSurveyQuestionTypeEnum.OpenText,
             TSurveyQuestionTypeEnum.MultipleChoiceSingle,
@@ -2670,7 +2684,7 @@ const validateActions = (
         };
       }
 
-      if (action.value.type === "element") {
+      if (action.value.type === "question") {
         const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
 
         const selectedQuestion = previousQuestions.find((q) => q.id === action.value.value);
@@ -2781,7 +2795,11 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue
   }
 };
 
-const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLogic[]): z.ZodIssue[] => {
+const validateLogic = (
+  survey: TSurvey,
+  questionIndex: number,
+  logic: TSurveyLogicDeprecated[]
+): z.ZodIssue[] => {
   const logicFallbackIssue = validateLogicFallback(survey, questionIndex);
 
   const logicIssues = logic.map((logicItem, logicIndex) => {
@@ -3522,7 +3540,27 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     type: ZSurveyType.default("link"),
     followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).default([]),
   })
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
+  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null)
+  .superRefine((data, ctx) => {
+    const hasQuestions = data.questions.length > 0;
+    const hasBlocks = data.blocks.length > 0;
+
+    if (hasQuestions && hasBlocks) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Cannot provide both questions and blocks. Please provide only one of these fields.",
+        path: ["questions"],
+      });
+    }
+
+    if (!hasQuestions && !hasBlocks) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Must provide either questions or blocks. Both cannot be empty.",
+        path: ["questions"],
+      });
+    }
+  });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
@@ -3548,7 +3586,27 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurvey.in
     type: ZSurveyType.default("link"),
     followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).default([]),
   })
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
+  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null)
+  .superRefine((data, ctx) => {
+    const hasQuestions = data.questions.length > 0;
+    const hasBlocks = data.blocks.length > 0;
+
+    if (hasQuestions && hasBlocks) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Cannot provide both questions and blocks. Please provide only one of these fields.",
+        path: ["questions"],
+      });
+    }
+
+    if (!hasQuestions && !hasBlocks) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Must provide either questions or blocks. Both cannot be empty.",
+        path: ["questions"],
+      });
+    }
+  });
 
 export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateInputWithEnvironmentId>;
 export interface TSurveyDates {

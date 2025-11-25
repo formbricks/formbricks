@@ -6,6 +6,11 @@ import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import { responses } from "@/app/lib/api/response";
+import {
+  transformBlocksToQuestions,
+  transformQuestionsToBlocks,
+  validateSurveyInput,
+} from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
@@ -45,6 +50,20 @@ export const GET = withV1ApiWrapper({
           response: result.error,
         };
       }
+
+      const hasBlocks = result.survey.blocks && result.survey.blocks.length > 0;
+      if (hasBlocks) {
+        const surveyWithQuestions = {
+          ...result.survey,
+          questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
+          blocks: [],
+        };
+
+        return {
+          response: responses.successResponse(surveyWithQuestions),
+        };
+      }
+
       return {
         response: responses.successResponse(result.survey),
       };
@@ -131,6 +150,23 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
+      const validateResult = validateSurveyInput(surveyUpdate);
+      if (!validateResult.ok) {
+        return {
+          response: responses.badRequestResponse(validateResult.error.message),
+        };
+      }
+
+      const { hasQuestions } = validateResult.data;
+
+      if (hasQuestions) {
+        surveyUpdate.blocks = transformQuestionsToBlocks(
+          surveyUpdate.questions,
+          surveyUpdate.endings || result.survey.endings
+        );
+        surveyUpdate.questions = [];
+      }
+
       const inputValidation = ZSurveyUpdateInput.safeParse({
         ...result.survey,
         ...surveyUpdate,
@@ -155,6 +191,19 @@ export const PUT = withV1ApiWrapper({
       try {
         const updatedSurvey = await updateSurvey({ ...inputValidation.data, id: params.surveyId });
         auditLog.newObject = updatedSurvey;
+
+        if (hasQuestions) {
+          const surveyWithQuestions = {
+            ...updatedSurvey,
+            questions: transformBlocksToQuestions(updatedSurvey.blocks, updatedSurvey.endings),
+            blocks: [],
+          };
+
+          return {
+            response: responses.successResponse(surveyWithQuestions),
+          };
+        }
+
         return {
           response: responses.successResponse(updatedSurvey),
         };
