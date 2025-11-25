@@ -10,8 +10,8 @@ import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { isValidValue } from "../util";
+import { ElementSkip } from "./ElementSkip";
 import { HiddenFields } from "./HiddenFields";
-import { QuestionSkip } from "./QuestionSkip";
 import { RenderResponse } from "./RenderResponse";
 import { ResponseVariables } from "./ResponseVariables";
 import { VerifiedEmail } from "./VerifiedEmail";
@@ -54,7 +54,7 @@ export const SingleResponseCardBody = ({
   return (
     <div className="p-6">
       {survey.welcomeCard.enabled && (
-        <QuestionSkip
+        <ElementSkip
           skippedQuestions={[]}
           questions={questions}
           status={"welcomeCard"}
@@ -94,7 +94,7 @@ export const SingleResponseCardBody = ({
                   </p>
                   <div dir="auto">
                     <RenderResponse
-                      question={question}
+                      element={question}
                       survey={survey}
                       responseData={response.data[question.id]}
                       language={response.language}
@@ -103,7 +103,7 @@ export const SingleResponseCardBody = ({
                   </div>
                 </div>
               ) : (
-                <QuestionSkip
+                <ElementSkip
                   skippedQuestions={skipped}
                   questions={questions}
                   responseData={response.data}

@@ -30,7 +30,7 @@ import {
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { getQuestionIconMap } from "@/modules/survey/lib/questions";
+import { getElementIconMap } from "@/modules/survey/lib/elements";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -97,7 +97,7 @@ export const FollowUpModal = ({
   locale,
 }: AddFollowUpModalProps) => {
   const { t } = useTranslation();
-  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+  const QUESTIONS_ICON_MAP = getElementIconMap(t);
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);
 

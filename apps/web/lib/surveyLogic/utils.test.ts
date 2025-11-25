@@ -259,7 +259,7 @@ describe("surveyLogic", () => {
     ];
     const result = performActions(mockSurvey, actions, data, initialVars);
     expect(result.calculations.v).toBe(3);
-    expect(result.requiredQuestionIds).toContain("q2");
+    expect(result.requiredElementIds).toContain("q2");
     expect(result.jumpTarget).toBe("q3");
   });
 

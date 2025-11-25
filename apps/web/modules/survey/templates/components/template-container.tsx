@@ -67,7 +67,7 @@ export const TemplateContainerWithPreview = ({
           {activeTemplate && (
             <PreviewSurvey
               survey={{ ...getMinimalSurvey(t), ...activeTemplate.preset }}
-              questionId={activeQuestionId}
+              elementId={activeQuestionId}
               project={project}
               environment={environment}
               languageCode={"default"}

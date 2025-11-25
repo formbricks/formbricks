@@ -24,7 +24,7 @@ import NotionLogo from "@/images/notion.png";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { getElementTypes } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -307,7 +307,7 @@ export const AddIntegrationModal = ({
               </>
             );
           case ERRORS.MAPPING:
-            const question = getQuestionTypes(t).find((qt) => qt.id === ques.type);
+            const question = getElementTypes(t).find((qt) => qt.id === ques.type);
             if (!question) return null;
             return (
               <>

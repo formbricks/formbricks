@@ -26,33 +26,33 @@ import { getFormattedDateTimeString } from "../utils/datetime";
 import { sanitizeString } from "../utils/strings";
 
 /**
- * Extracts choice IDs from response values for multiple choice questions
+ * Extracts choice IDs from response values for multiple choice elements
  * @param responseValue - The response value (string for single choice, array for multi choice)
- * @param question - The survey question containing choices
+ * @param element - The survey element containing choices
  * @param language - The language to match against (defaults to "default")
  * @returns Array of choice IDs
  */
 export const extractChoiceIdsFromResponse = (
   responseValue: TResponseDataValue,
-  question: TSurveyElement,
+  element: TSurveyElement,
   language: string = "default"
 ): string[] => {
-  // Type guard to ensure the question has choices
   if (
-    question.type !== "multipleChoiceMulti" &&
-    question.type !== "multipleChoiceSingle" &&
-    question.type !== "ranking" &&
-    question.type !== "pictureSelection"
+    element.type !== "multipleChoiceMulti" &&
+    element.type !== "multipleChoiceSingle" &&
+    element.type !== "ranking" &&
+    element.type !== "pictureSelection"
   ) {
     return [];
   }
-  const isPictureSelection = question.type === "pictureSelection";
+
+  const isPictureSelection = element.type === "pictureSelection";
 
   if (!responseValue) {
     return [];
   }
 
-  // For picture selection questions, the response value is already choice ID(s)
+  // For picture selection elements, the response value is already choice ID(s)
   if (isPictureSelection) {
     if (Array.isArray(responseValue)) {
       // Multi-selection: array of choice IDs
@@ -68,7 +68,7 @@ export const extractChoiceIdsFromResponse = (
 
   // Helper function to find choice by label - eliminates duplication
   const findChoiceByLabel = (choiceLabel: string): string | null => {
-    const targetChoice = question.choices.find((c) => {
+    const targetChoice = element.choices.find((c) => {
       // Try exact language match first
       if (c.label[defaultLanguage] === choiceLabel) {
         return true;
@@ -93,13 +93,13 @@ export const extractChoiceIdsFromResponse = (
 
 export const getChoiceIdByValue = (
   value: string,
-  question: TSurveyMultipleChoiceElement | TSurveyRankingElement | TSurveyPictureSelectionElement
+  element: TSurveyMultipleChoiceElement | TSurveyRankingElement | TSurveyPictureSelectionElement
 ) => {
-  if (question.type === "pictureSelection") {
-    return question.choices.find((choice) => choice.imageUrl === value)?.id ?? "other";
+  if (element.type === "pictureSelection") {
+    return element.choices.find((choice) => choice.imageUrl === value)?.id ?? "other";
   }
 
-  return question.choices.find((choice) => choice.label.default === value)?.id ?? "other";
+  return element.choices.find((choice) => choice.label.default === value)?.id ?? "other";
 };
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
@@ -325,13 +325,12 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     });
   }
 
-  // For Questions Data
   if (filterCriteria?.data) {
     const data: Prisma.ResponseWhereInput[] = [];
 
     Object.entries(filterCriteria.data).forEach(([key, val]) => {
-      const questions = getElementsFromBlocks(survey.blocks);
-      const question = questions.find((question) => question.id === key);
+      const elements = getElementsFromBlocks(survey.blocks);
+      const element = elements.find((element) => element.id === key);
 
       switch (val.op) {
         case "submitted":
@@ -365,7 +364,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
                   equals: "",
                 },
               },
-              // For address question
+              // For address element
               {
                 data: {
                   path: [key],
@@ -444,29 +443,29 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
           });
           break;
         case "includesOne":
-          // * If the question includes an 'other' choice and the user has selected it:
-          // *   - `predefinedLabels`: Collects labels from the question's choices that aren't selected by the user.
+          // * If the element includes an 'other' choice and the user has selected it:
+          // *   - `predefinedLabels`: Collects labels from the element's choices that aren't selected by the user.
           // *   - `subsets`: Generates all possible non-empty permutations of subsets of these predefined labels.
           // *
-          // * Depending on the question type (multiple or single choice), the filter is constructed:
+          // * Depending on the element type (multiple or single choice), the filter is constructed:
           // *   - For "multipleChoiceMulti": Filters out any combinations of choices that match the subsets of predefined labels.
           // *   - For "multipleChoiceSingle": Filters out any single predefined labels that match the user's selection.
           const values: string[] = val.value.map((v) => v.toString());
           const otherChoice =
-            question && (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle")
-              ? question.choices.find((choice) => choice.id === "other")
+            element && (element.type === "multipleChoiceMulti" || element.type === "multipleChoiceSingle")
+              ? element.choices.find((choice) => choice.id === "other")
               : null;
 
           if (
-            question &&
-            (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") &&
-            question.choices.map((choice) => choice.id).includes("other") &&
+            element &&
+            (element.type === "multipleChoiceMulti" || element.type === "multipleChoiceSingle") &&
+            element.choices.map((choice) => choice.id).includes("other") &&
             otherChoice &&
             values.includes(otherChoice.label.default)
           ) {
             const predefinedLabels: string[] = [];
 
-            question.choices.forEach((choice) => {
+            element.choices.forEach((choice) => {
               Object.values(choice.label).forEach((label) => {
                 if (!values.includes(label)) {
                   predefinedLabels.push(label);
@@ -475,7 +474,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             });
 
             const subsets = generateAllPermutationsOfSubsets(predefinedLabels);
-            if (question.type === "multipleChoiceMulti") {
+            if (element.type === "multipleChoiceMulti") {
               const subsetConditions = subsets.map((subset) => ({
                 data: { path: [key], equals: subset },
               }));
@@ -665,18 +664,18 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
   const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
   const modifiedSurvey = replaceHeadlineRecall(survey, "default");
 
-  const modifiedQuestions = getElementsFromBlocks(modifiedSurvey.blocks);
+  const modifiedElements = getElementsFromBlocks(modifiedSurvey.blocks);
 
-  const questions = modifiedQuestions.map((question, idx) => {
-    const headline = getTextContent(getLocalizedValue(question.headline, "default")) ?? question.id;
-    if (question.type === "matrix") {
-      return question.rows.map((row) => {
+  const elements = modifiedElements.map((element, idx) => {
+    const headline = getTextContent(getLocalizedValue(element.headline, "default")) ?? element.id;
+    if (element.type === "matrix") {
+      return element.rows.map((row) => {
         return `${idx + 1}. ${headline} - ${getTextContent(getLocalizedValue(row.label, "default"))}`;
       });
     } else if (
-      question.type === "multipleChoiceMulti" ||
-      question.type === "multipleChoiceSingle" ||
-      question.type === "ranking"
+      element.type === "multipleChoiceMulti" ||
+      element.type === "multipleChoiceSingle" ||
+      element.type === "ranking"
     ) {
       return [`${idx + 1}. ${headline}`, `${idx + 1}. ${headline} - Option ID`];
     } else {
@@ -691,13 +690,13 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
       : [];
   const variables = survey.variables?.map((variable) => variable.name) || [];
 
-  return { metaDataFields, questions, hiddenFields, variables, userAttributes };
+  return { metaDataFields, elements, hiddenFields, variables, userAttributes };
 };
 
 export const getResponsesJson = (
   survey: TSurvey,
   responses: TResponseWithQuotas[],
-  questionsHeadlines: string[][],
+  elementsHeadlines: string[][],
   userAttributes: string[],
   hiddenFields: string[],
   isQuotasAllowed: boolean = false
@@ -733,17 +732,17 @@ export const getResponsesJson = (
     });
 
     // survey response data
-    questionsHeadlines.forEach((questionHeadline) => {
-      const questionIndex = parseInt(questionHeadline[0]) - 1;
-      const questions = getElementsFromBlocks(survey.blocks);
-      const question = questions[questionIndex];
-      const answer = response.data[question.id];
+    elementsHeadlines.forEach((elementHeadline) => {
+      const elementIndex = parseInt(elementHeadline[0]) - 1;
+      const elements = getElementsFromBlocks(survey.blocks);
+      const element = elements[elementIndex];
+      const answer = response.data[element.id];
 
-      if (question.type === "matrix") {
-        // For matrix questions, we need to handle each row separately
-        questionHeadline.forEach((headline, index) => {
+      if (element.type === "matrix") {
+        // For matrix elements, we need to handle each row separately
+        elementHeadline.forEach((headline, index) => {
           if (answer) {
-            const row = question.rows[index];
+            const row = element.rows[index];
             if (row && row.label.default && answer[row.label.default] !== undefined) {
               jsonData[idx][headline] = answer[row.label.default];
             } else {
@@ -752,20 +751,20 @@ export const getResponsesJson = (
           }
         });
       } else if (
-        question.type === "multipleChoiceMulti" ||
-        question.type === "multipleChoiceSingle" ||
-        question.type === "ranking"
+        element.type === "multipleChoiceMulti" ||
+        element.type === "multipleChoiceSingle" ||
+        element.type === "ranking"
       ) {
         // Set the main response value
-        jsonData[idx][questionHeadline[0]] = processResponseData(answer);
+        jsonData[idx][elementHeadline[0]] = processResponseData(answer);
 
         // Set the option IDs using the reusable function
-        if (questionHeadline[1]) {
-          const choiceIds = extractChoiceIdsFromResponse(answer, question, response.language || "default");
-          jsonData[idx][questionHeadline[1]] = choiceIds.join(", ");
+        if (elementHeadline[1]) {
+          const choiceIds = extractChoiceIdsFromResponse(answer, element, response.language || "default");
+          jsonData[idx][elementHeadline[1]] = choiceIds.join(", ");
         }
       } else {
-        jsonData[idx][questionHeadline[0]] = processResponseData(answer);
+        jsonData[idx][elementHeadline[0]] = processResponseData(answer);
       }
     });
 

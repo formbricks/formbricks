@@ -69,20 +69,20 @@ export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) =
  * Validates a single choice's image URL
  * @param choice - Choice to validate
  * @param choiceIdx - Index of the choice for error reporting
- * @param questionIdx - Index of the question for error reporting
+ * @param elementIdx - Index of the element for error reporting
  * @param blockName - Block name for error reporting
  * @returns Result with void data on success or Error on failure
  */
 const validateChoiceImage = (
   choice: TSurveyPictureChoice,
   choiceIdx: number,
-  questionIdx: number,
+  elementIdx: number,
   blockName: string
 ): Result<void, Error> => {
   if (choice.imageUrl && !isValidImageFile(choice.imageUrl)) {
     return err(
       new Error(
-        `Invalid image URL in choice ${choiceIdx + 1} of question ${questionIdx + 1} of block "${blockName}"`
+        `Invalid image URL in choice ${choiceIdx + 1} of question ${elementIdx + 1} of block "${blockName}"`
       )
     );
   }
@@ -91,18 +91,18 @@ const validateChoiceImage = (
 
 /**
  * Validates choice images for picture selection elements
- * Only picture selection questions have imageUrl in choices
+ * Only picture selection elements have imageUrl in choices
  * @param element - Element with choices to validate
- * @param questionIdx - Index of the question for error reporting
+ * @param elementIdx - Index of the element for error reporting
  * @param blockName - Block name for error reporting
  * @returns Result with void data on success or Error on failure
  */
 const validatePictureSelectionChoiceImages = (
   element: TSurveyElement,
-  questionIdx: number,
+  elementIdx: number,
   blockName: string
 ): Result<void, Error> => {
-  // Only validate choices for picture selection questions
+  // Only validate choices for picture selection elements
   if (element.type !== TSurveyElementTypeEnum.PictureSelection) {
     return ok(undefined);
   }
@@ -112,7 +112,7 @@ const validatePictureSelectionChoiceImages = (
   }
 
   for (let choiceIdx = 0; choiceIdx < element.choices.length; choiceIdx++) {
-    const result = validateChoiceImage(element.choices[choiceIdx], choiceIdx, questionIdx, blockName);
+    const result = validateChoiceImage(element.choices[choiceIdx], choiceIdx, elementIdx, blockName);
     if (!result.ok) {
       return result;
     }

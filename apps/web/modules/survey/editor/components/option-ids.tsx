@@ -6,21 +6,21 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 
 interface OptionIdsProps {
-  question: TSurveyElement;
+  element: TSurveyElement;
   selectedLanguageCode: string;
 }
 
-export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) => {
+export const OptionIds = ({ element, selectedLanguageCode }: OptionIdsProps) => {
   const { t } = useTranslation();
 
   const renderChoiceIds = () => {
-    switch (question.type) {
+    switch (element.type) {
       case TSurveyElementTypeEnum.MultipleChoiceSingle:
       case TSurveyElementTypeEnum.MultipleChoiceMulti:
       case TSurveyElementTypeEnum.Ranking:
         return (
           <div className="flex flex-col gap-2">
-            {question.choices.map((choice) => (
+            {element.choices.map((choice) => (
               <div key={choice.id}>
                 <IdBadge id={choice.id} label={getLocalizedValue(choice.label, selectedLanguageCode)} />
               </div>
@@ -31,7 +31,7 @@ export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) =>
       case TSurveyElementTypeEnum.PictureSelection:
         return (
           <div className="flex flex-col gap-3">
-            {question.choices.map((choice) => {
+            {element.choices.map((choice) => {
               const imageUrl = choice.imageUrl;
               if (!imageUrl) return null;
               return (

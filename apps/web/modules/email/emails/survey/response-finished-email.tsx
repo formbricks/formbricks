@@ -3,7 +3,7 @@ import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
 import { type TSurvey } from "@formbricks/types/surveys/types";
-import { getQuestionResponseMapping } from "@/lib/responses";
+import { getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
 import { EmailButton } from "../../components/email-button";
@@ -26,7 +26,7 @@ export async function ResponseFinishedEmail({
   environmentId,
   organization,
 }: ResponseFinishedEmailProps): Promise<React.JSX.Element> {
-  const questions = getQuestionResponseMapping(survey, response);
+  const questions = getElementResponseMapping(survey, response);
   const t = await getTranslate();
 
   return (
@@ -44,9 +44,9 @@ export async function ResponseFinishedEmail({
             {questions.map((question) => {
               if (!question.response) return;
               return (
-                <Row key={question.question}>
+                <Row key={question.element}>
                   <Column className="w-full font-medium">
-                    <Text className="mb-2 text-sm">{question.question}</Text>
+                    <Text className="mb-2 text-sm">{question.element}</Text>
                     {renderEmailResponseValue(question.response, question.type, t)}
                   </Column>
                 </Row>

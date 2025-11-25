@@ -9,7 +9,7 @@ import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/block
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ConditionalLogic } from "@/modules/survey/editor/components/conditional-logic";
 
 interface BlockSettingsProps {
@@ -81,14 +81,14 @@ export const BlockSettings = ({
         <div className="mt-2 space-y-4">
           <div className="flex space-x-2">
             {blockIndex !== 0 && (
-              <QuestionFormInput
+              <ElementFormInput
                 id="backButtonLabel"
                 value={block.backButtonLabel}
                 label={t("environments.surveys.edit.back_button_label")}
                 localSurvey={localSurvey}
-                questionIdx={blockIndex}
+                elementIdx={blockIndex}
                 isInvalid={false}
-                updateQuestion={(_, updatedAttributes) => {
+                updateElement={(_, updatedAttributes) => {
                   if ("backButtonLabel" in updatedAttributes) {
                     const backButtonLabel = updatedAttributes.backButtonLabel as TI18nString;
                     updateBlockButtonLabel(blockIndex, "backButtonLabel", {
@@ -117,14 +117,14 @@ export const BlockSettings = ({
                 }}
               />
             )}
-            <QuestionFormInput
+            <ElementFormInput
               id="buttonLabel"
               value={block.buttonLabel}
               label={t("environments.surveys.edit.button_label")}
               localSurvey={localSurvey}
-              questionIdx={blockIndex}
+              elementIdx={blockIndex}
               isInvalid={false}
-              updateQuestion={(_, updatedAttributes) => {
+              updateElement={(_, updatedAttributes) => {
                 if ("buttonLabel" in updatedAttributes) {
                   const languageSymbols = extractLanguageCodes(localSurvey.languages ?? []);
                   const buttonLabel = updatedAttributes.buttonLabel as TI18nString;

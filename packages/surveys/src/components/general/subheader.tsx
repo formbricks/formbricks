@@ -3,10 +3,10 @@ import { isValidHTML } from "@/lib/html-utils";
 
 interface SubheaderProps {
   subheader?: string;
-  questionId: string;
+  elementId: string;
 }
 
-export function Subheader({ subheader, questionId }: SubheaderProps) {
+export function Subheader({ subheader, elementId }: SubheaderProps) {
   const isHtml = subheader ? isValidHTML(subheader) : false;
   const safeHtml = isHtml && subheader ? DOMPurify.sanitize(subheader, { ADD_ATTR: ["target"] }) : "";
 
@@ -14,7 +14,7 @@ export function Subheader({ subheader, questionId }: SubheaderProps) {
 
   return (
     <label
-      htmlFor={questionId}
+      htmlFor={elementId}
       className="fb-text-subheading fb-block fb-break-words fb-text-sm fb-font-normal fb-leading-6"
       data-testid="subheader"
       dir="auto">

@@ -15,8 +15,6 @@ import {
 import {
   TSurvey,
   TSurveyEndings,
-  TSurveyQuestion,
-  TSurveyQuestionId,
   TSurveyVariable,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
@@ -26,7 +24,7 @@ import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { getQuestionTypes, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
+import { getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
@@ -97,8 +95,8 @@ export const formatTextWithSlashes = (
   });
 };
 
-const getQuestionIconMapping = (t: TFunction) =>
-  getQuestionTypes(t).reduce(
+const getElementIconMapping = (t: TFunction) =>
+  getElementTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
       [curr.id]: curr.icon,
@@ -120,7 +118,7 @@ const getElementHeadline = (
       return textContent;
     }
   }
-  return getTSurveyQuestionTypeEnumName(element.type, t) ?? "";
+  return getTSurveyElementTypeEnumName(element.type, t) ?? "";
 };
 
 export const getConditionValueOptions = (
@@ -154,7 +152,7 @@ export const getConditionValueOptions = (
       const rows = element.rows.map((row, rowIdx) => {
         const processedLabel = recallToHeadline(row.label, localSurvey, false, "default");
         return {
-          icon: getQuestionIconMapping(t)[element.type],
+          icon: getElementIconMapping(t)[element.type],
           label: `${getTextContent(processedLabel.default ?? "")} (${elementHeadline})`,
           value: `${element.id}.${rowIdx}`,
           meta: {
@@ -165,7 +163,7 @@ export const getConditionValueOptions = (
       });
 
       elementOptions.push({
-        icon: getQuestionIconMapping(t)[element.type],
+        icon: getElementIconMapping(t)[element.type],
         label: elementHeadline,
         value: element.id,
         meta: {
@@ -188,7 +186,7 @@ export const getConditionValueOptions = (
       });
     } else {
       elementOptions.push({
-        icon: getQuestionIconMapping(t)[element.type],
+        icon: getElementIconMapping(t)[element.type],
         label: getElementHeadline(localSurvey, element, "default", t),
         value: element.id,
         meta: {
@@ -223,7 +221,7 @@ export const getConditionValueOptions = (
   if (elementOptions.length > 0) {
     groupedOptions.push({
       label: t("common.questions"),
-      value: "questions",
+      value: "elements",
       options: elementOptions,
     });
   }
@@ -276,13 +274,13 @@ export const getElementOperatorOptions = (
 
   if (element.type === "openText") {
     const inputType = element.inputType === "number" ? "number" : "text";
-    options = getLogicRules(t).question[`openText.${inputType}`].options;
+    options = getLogicRules(t).element[`openText.${inputType}`].options;
   } else if (element.type === TSurveyElementTypeEnum.Matrix && condition) {
     const isMatrixRow =
       condition.leftOperand.type === "element" && condition.leftOperand?.meta?.row !== undefined;
-    options = getLogicRules(t).question[`matrix${isMatrixRow ? ".row" : ""}`].options;
+    options = getLogicRules(t).element[`matrix${isMatrixRow ? ".row" : ""}`].options;
   } else {
-    options = getLogicRules(t).question[element.type].options;
+    options = getLogicRules(t).element[element.type].options;
   }
 
   if (element.required) {
@@ -303,9 +301,9 @@ export const getDefaultOperatorForElement = (
 
 export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurvey: TSurvey): string => {
   if (condition.leftOperand.type === "element") {
-    const questions = getElementsFromBlocks(localSurvey.blocks);
-    const question = questions.find((q) => q.id === condition.leftOperand.value);
-    if (question && question.type === TSurveyElementTypeEnum.Matrix) {
+    const elements = getElementsFromBlocks(localSurvey.blocks);
+    const element = elements.find((e) => e.id === condition.leftOperand.value);
+    if (element && element.type === TSurveyElementTypeEnum.Matrix) {
       if (condition.leftOperand?.meta?.row !== undefined) {
         return `${condition.leftOperand.value}.${condition.leftOperand.meta.row}`;
       }
@@ -327,14 +325,14 @@ export const getConditionOperatorOptions = (
   } else if (condition.leftOperand.type === "hiddenField") {
     return getLogicRules(t).hiddenField.options;
   } else if (condition.leftOperand.type === "element") {
-    // Derive questions from blocks
+    // Derive elements from blocks
     const elements = getElementsFromBlocks(localSurvey.blocks);
-    const element = elements.find((question) => {
-      let leftOperandQuestionId = condition.leftOperand.value;
-      if (question.type === TSurveyElementTypeEnum.Matrix) {
-        leftOperandQuestionId = condition.leftOperand.value.split(".")[0];
+    const element = elements.find((element) => {
+      let leftOperandElementId = condition.leftOperand.value;
+      if (element.type === TSurveyElementTypeEnum.Matrix) {
+        leftOperandElementId = condition.leftOperand.value.split(".")[0];
       }
-      return question.id === leftOperandQuestionId;
+      return element.id === leftOperandElementId;
     });
 
     if (!element) return [];
@@ -419,7 +417,7 @@ export const getMatchValueProps = (
 
       const elementOptions = allowedElements.map((element) => {
         return {
-          icon: getQuestionIconMapping(t)[element.type],
+          icon: getElementIconMapping(t)[element.type],
           label: getTextContent(
             recallToHeadline(element.headline, localSurvey, false, "default").default ?? ""
           ),
@@ -461,7 +459,7 @@ export const getMatchValueProps = (
       if (elementOptions.length > 0) {
         groupedOptions.push({
           label: t("common.questions"),
-          value: "questions",
+          value: "elements",
           options: elementOptions,
         });
       }
@@ -636,7 +634,7 @@ export const getMatchValueProps = (
 
       const elementOptions = openTextElements.map((element) => {
         return {
-          icon: getQuestionIconMapping(t)[element.type],
+          icon: getElementIconMapping(t)[element.type],
           label: getTextContent(
             recallToHeadline(element.headline, localSurvey, false, "default").default ?? ""
           ),
@@ -676,7 +674,7 @@ export const getMatchValueProps = (
       if (elementOptions.length > 0) {
         groupedOptions.push({
           label: t("common.questions"),
-          value: "questions",
+          value: "elements",
           options: elementOptions,
         });
       }
@@ -735,7 +733,7 @@ export const getMatchValueProps = (
 
       const elementOptions = allowedElements.map((element) => {
         return {
-          icon: getQuestionIconMapping(t)[element.type],
+          icon: getElementIconMapping(t)[element.type],
           label: getElementHeadline(localSurvey, element, "default", t),
           value: element.id,
           meta: {
@@ -773,7 +771,7 @@ export const getMatchValueProps = (
       if (elementOptions.length > 0) {
         groupedOptions.push({
           label: t("common.questions"),
-          value: "questions",
+          value: "elements",
           options: elementOptions,
         });
       }
@@ -809,7 +807,7 @@ export const getMatchValueProps = (
 
       const elementOptions = allowedElements.map((element) => {
         return {
-          icon: getQuestionIconMapping(t)[element.type],
+          icon: getElementIconMapping(t)[element.type],
           label: getElementHeadline(localSurvey, element, "default", t),
           value: element.id,
           meta: {
@@ -847,7 +845,7 @@ export const getMatchValueProps = (
       if (elementOptions.length > 0) {
         groupedOptions.push({
           label: t("common.questions"),
-          value: "questions",
+          value: "elements",
           options: elementOptions,
         });
       }
@@ -889,7 +887,7 @@ export const getMatchValueProps = (
 
     const elementOptions = allowedElements.map((element) => {
       return {
-        icon: getQuestionIconMapping(t)[element.type],
+        icon: getElementIconMapping(t)[element.type],
         label: getElementHeadline(localSurvey, element, "default", t),
         value: element.id,
         meta: {
@@ -927,7 +925,7 @@ export const getMatchValueProps = (
     if (elementOptions.length > 0) {
       groupedOptions.push({
         label: t("common.questions"),
-        value: "questions",
+        value: "elements",
         options: elementOptions,
       });
     }
@@ -984,7 +982,7 @@ export const getActionTargetOptions = (
     // Return element IDs for requireAnswer
     return nonRequiredElements.map((element) => {
       return {
-        icon: getQuestionIconMapping(t)[element.type],
+        icon: getElementIconMapping(t)[element.type],
         label: getElementHeadline(localSurvey, element, "default", t),
         value: element.id,
       };
@@ -1130,7 +1128,7 @@ export const getActionValueOptions = (
 
     const elementOptions = allowedElements.map((element) => {
       return {
-        icon: getQuestionIconMapping(t)[element.type],
+        icon: getElementIconMapping(t)[element.type],
         label: getElementHeadline(localSurvey, element, "default", t),
         value: element.id,
         meta: {
@@ -1157,7 +1155,7 @@ export const getActionValueOptions = (
     if (elementOptions.length > 0) {
       groupedOptions.push({
         label: t("common.questions"),
-        value: "questions",
+        value: "elements",
         options: elementOptions,
       });
     }
@@ -1188,7 +1186,7 @@ export const getActionValueOptions = (
 
     const elementOptions = allowedElements.map((element) => {
       return {
-        icon: getQuestionIconMapping(t)[element.type],
+        icon: getElementIconMapping(t)[element.type],
         label: getTextContent(getLocalizedValue(element.headline, "default")),
         value: element.id,
         meta: {
@@ -1215,7 +1213,7 @@ export const getActionValueOptions = (
     if (elementOptions.length > 0) {
       groupedOptions.push({
         label: t("common.questions"),
-        value: "questions",
+        value: "elements",
         options: elementOptions,
       });
     }
@@ -1276,10 +1274,10 @@ const isUsedInRightOperand = (
   }
 };
 
-export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQuestionId): number => {
-  const { block } = findElementLocation(survey, questionId);
+export const findElementUsedInLogic = (survey: TSurvey, elementId: string): number => {
+  const { block } = findElementLocation(survey, elementId);
 
-  // The parent block for this questionId was not found in the survey, while this shouldn't happen but we still have a safety check and return -1
+  // The parent block for this elementId was not found in the survey, while this shouldn't happen but we still have a safety check and return -1
   if (!block) {
     return -1;
   }
@@ -1291,14 +1289,14 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
     } else {
       // It's a TSingleCondition
       return (
-        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "element", questionId)) ||
-        isUsedInLeftOperand(condition.leftOperand, "element", questionId)
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "element", elementId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "element", elementId)
       );
     }
   };
 
   const isUsedInAction = (action: TSurveyBlockLogicAction): boolean => {
-    if (action.objective === "requireAnswer" && action.target === questionId) {
+    if (action.objective === "requireAnswer" && action.target === elementId) {
       return true;
     }
 
@@ -1309,19 +1307,17 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
-  // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = getElementsFromBlocks(survey.blocks);
+  const elements = getElementsFromBlocks(survey.blocks);
 
-  return questions.findIndex((question) => {
-    const { block } = findElementLocation(survey, question.id);
+  return elements.findIndex((element) => {
+    const { block } = findElementLocation(survey, element.id);
 
     if (!block) {
       return false;
     }
 
     return (
-      block.logicFallback === questionId ||
-      (question.id !== questionId && block.logic?.some(isUsedInLogicRule))
+      block.logicFallback === elementId || (element.id !== elementId && block.logic?.some(isUsedInLogicRule))
     );
   });
 };
@@ -1329,22 +1325,22 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
 export const isUsedInQuota = (
   quota: TSurveyQuota,
   {
-    questionId,
+    elementId,
     hiddenFieldId,
     variableId,
     endingCardId,
   }: {
-    questionId?: TSurveyQuestionId;
+    elementId?: string;
     hiddenFieldId?: string;
     variableId?: string;
     endingCardId?: string;
   }
 ): boolean => {
-  if (questionId) {
+  if (elementId) {
     return quota.logic.conditions.some(
       (condition) =>
-        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "element", questionId)) ||
-        isUsedInLeftOperand(condition.leftOperand, "element", questionId)
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "element", elementId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "element", elementId)
     );
   }
 
@@ -1385,14 +1381,14 @@ const checkWelcomeCardForRecall = (welcomeCard: TSurveyWelcomeCard, recallPatter
   );
 };
 
-const checkQuestionForRecall = (question: TSurveyQuestion, recallPattern: string): boolean => {
+const checkElementForRecall = (element: TSurveyElement, recallPattern: string): boolean => {
   // Check headline
-  if (Object.values(question.headline).some((text) => text.includes(recallPattern))) {
+  if (Object.values(element.headline).some((text) => text.includes(recallPattern))) {
     return true;
   }
 
   // Check subheader
-  if (checkTextForRecallPattern(question.subheader, recallPattern)) {
+  if (checkTextForRecallPattern(element.subheader, recallPattern)) {
     return true;
   }
 
@@ -1421,18 +1417,16 @@ export const isUsedInRecall = (survey: TSurvey, id: string): number => {
     return -2; // Special index for welcome card
   }
 
-  // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = (survey.blocks?.flatMap((b) => b.elements) ?? []) as unknown as TSurveyQuestion[];
+  const elements = getElementsFromBlocks(survey.blocks);
 
-  // Check questions
-  const questionIndex = questions.findIndex((question) => checkQuestionForRecall(question, recallPattern));
-  if (questionIndex !== -1) {
-    return questionIndex;
+  const elementIndex = elements.findIndex((element) => checkElementForRecall(element, recallPattern));
+  if (elementIndex !== -1) {
+    return elementIndex;
   }
 
   // Check ending cards
   if (checkEndingCardsForRecall(survey.endings, recallPattern)) {
-    return questions.length; // Special index for ending cards
+    return elements.length; // Special index for ending cards
   }
 
   return -1; // Not found
@@ -1440,7 +1434,7 @@ export const isUsedInRecall = (survey: TSurvey, id: string): number => {
 
 export const findOptionUsedInLogic = (
   survey: TSurvey,
-  questionId: TSurveyQuestionId,
+  elementId: string,
   optionId: string,
   checkInLeftOperand: boolean = false
 ): number => {
@@ -1455,7 +1449,7 @@ export const findOptionUsedInLogic = (
   };
 
   const isUsedInOperand = (condition: TSingleCondition): boolean => {
-    if (condition.leftOperand.type === "element" && condition.leftOperand.value === questionId) {
+    if (condition.leftOperand.type === "element" && condition.leftOperand.value === elementId) {
       if (checkInLeftOperand) {
         if (condition.leftOperand.meta && Object.entries(condition.leftOperand.meta).length > 0) {
           const optionIdInMeta = Object.values(condition.leftOperand.meta).some(
@@ -1479,11 +1473,10 @@ export const findOptionUsedInLogic = (
     return isUsedInCondition(logicRule.conditions);
   };
 
-  // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = getElementsFromBlocks(survey.blocks);
+  const elements = getElementsFromBlocks(survey.blocks);
 
-  return questions.findIndex((question) => {
-    const { block } = findElementLocation(survey, question.id);
+  return elements.findIndex((element) => {
+    const { block } = findElementLocation(survey, element.id);
 
     if (!block) {
       return false;
@@ -1515,11 +1508,10 @@ export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): nu
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
-  // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = (survey.blocks?.flatMap((b) => b.elements) ?? []) as unknown as TSurveyQuestion[];
+  const elements = survey.blocks.flatMap((b) => b.elements);
 
-  return questions.findIndex((question) => {
-    const { block } = findElementLocation(survey, question.id);
+  return elements.findIndex((element) => {
+    const { block } = findElementLocation(survey, element.id);
 
     if (!block) {
       return false;
@@ -1548,11 +1540,10 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
     return isUsedInCondition(logicRule.conditions);
   };
 
-  // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = getElementsFromBlocks(survey.blocks);
+  const elements = getElementsFromBlocks(survey.blocks);
 
-  return questions.findIndex((question) => {
-    const { block } = findElementLocation(survey, question.id);
+  return elements.findIndex((element) => {
+    const { block } = findElementLocation(survey, element.id);
 
     if (!block) {
       return false;
@@ -1578,11 +1569,10 @@ export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string)
     return logicRule.actions.some(isUsedInAction);
   };
 
-  // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = getElementsFromBlocks(survey.blocks);
+  const elements = getElementsFromBlocks(survey.blocks);
 
-  return questions.findIndex((question) => {
-    const { block } = findElementLocation(survey, question.id);
+  return elements.findIndex((element) => {
+    const { block } = findElementLocation(survey, element.id);
 
     if (!block) {
       return false;

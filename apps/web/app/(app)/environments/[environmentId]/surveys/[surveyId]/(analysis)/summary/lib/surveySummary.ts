@@ -15,8 +15,6 @@ import {
   ZResponseFilterCriteria,
 } from "@formbricks/types/responses";
 import {
-  TSurveyAddressElement,
-  TSurveyContactInfoElement,
   TSurveyElement,
   TSurveyElementChoice,
   TSurveyElementTypeEnum,
@@ -99,16 +97,16 @@ export const getSurveySummaryMeta = (
   };
 };
 
-const evaluateLogicAndGetNextQuestionId = (
+const evaluateLogicAndGetNextElementId = (
   localSurvey: TSurvey,
-  questions: TSurveyElement[],
+  elements: TSurveyElement[],
   data: TResponseData,
   localVariables: TResponseVariables,
-  currentQuestionIndex: number,
+  currentElementIndex: number,
   currQuesTemp: TSurveyElement,
   selectedLanguage: string | null
 ): {
-  nextQuestionId: string | undefined;
+  nextElementId: string | undefined;
   updatedSurvey: TSurvey;
   updatedVariables: TResponseVariables;
 } => {
@@ -122,19 +120,19 @@ const evaluateLogicAndGetNextQuestionId = (
   if (currentBlock?.logic && currentBlock.logic.length > 0) {
     for (const logic of currentBlock.logic) {
       if (evaluateLogic(localSurvey, data, localVariables, logic.conditions, selectedLanguage ?? "default")) {
-        const { jumpTarget, requiredQuestionIds, calculations } = performActions(
+        const { jumpTarget, requiredElementIds, calculations } = performActions(
           updatedSurvey,
           logic.actions,
           data,
           updatedVariables
         );
 
-        if (requiredQuestionIds.length > 0) {
+        if (requiredElementIds.length > 0) {
           // Update blocks to mark elements as required
           updatedSurvey.blocks = updatedSurvey.blocks.map((block) => ({
             ...block,
             elements: block.elements.map((e) =>
-              requiredQuestionIds.includes(e.id) ? { ...e, required: true } : e
+              requiredElementIds.includes(e.id) ? { ...e, required: true } : e
             ),
           }));
         }
@@ -152,29 +150,29 @@ const evaluateLogicAndGetNextQuestionId = (
     firstJumpTarget = currentBlock.logicFallback;
   }
 
-  // Return the first jump target if found, otherwise go to the next question
-  const nextQuestionId = firstJumpTarget || questions[currentQuestionIndex + 1]?.id || undefined;
+  // Return the first jump target if found, otherwise go to the next element
+  const nextElementId = firstJumpTarget || elements[currentElementIndex + 1]?.id || undefined;
 
-  return { nextQuestionId, updatedSurvey, updatedVariables };
+  return { nextElementId, updatedSurvey, updatedVariables };
 };
 
 export const getSurveySummaryDropOff = (
   survey: TSurvey,
-  questions: TSurveyElement[],
+  elements: TSurveyElement[],
   responses: TSurveySummaryResponse[],
   displayCount: number
 ): TSurveySummary["dropOff"] => {
-  const initialTtc = questions.reduce((acc: Record<string, number>, question) => {
-    acc[question.id] = 0;
+  const initialTtc = elements.reduce((acc: Record<string, number>, element) => {
+    acc[element.id] = 0;
     return acc;
   }, {});
 
   let totalTtc = { ...initialTtc };
   let responseCounts = { ...initialTtc };
 
-  let dropOffArr = new Array(questions.length).fill(0) as number[];
-  let impressionsArr = new Array(questions.length).fill(0) as number[];
-  let dropOffPercentageArr = new Array(questions.length).fill(0) as number[];
+  let dropOffArr = new Array(elements.length).fill(0) as number[];
+  let impressionsArr = new Array(elements.length).fill(0) as number[];
+  let dropOffPercentageArr = new Array(elements.length).fill(0) as number[];
 
   const surveyVariablesData = survey.variables?.reduce(
     (acc, variable) => {
@@ -186,10 +184,10 @@ export const getSurveySummaryDropOff = (
 
   responses.forEach((response) => {
     // Calculate total time-to-completion
-    Object.keys(totalTtc).forEach((questionId) => {
-      if (response.ttc && response.ttc[questionId]) {
-        totalTtc[questionId] += response.ttc[questionId];
-        responseCounts[questionId]++;
+    Object.keys(totalTtc).forEach((elementId) => {
+      if (response.ttc && response.ttc[elementId]) {
+        totalTtc[elementId] += response.ttc[elementId];
+        responseCounts[elementId]++;
       }
     });
 
@@ -201,11 +199,11 @@ export const getSurveySummaryDropOff = (
 
     let currQuesIdx = 0;
 
-    while (currQuesIdx < questions.length) {
-      const currQues = questions[currQuesIdx];
+    while (currQuesIdx < elements.length) {
+      const currQues = elements[currQuesIdx];
       if (!currQues) break;
 
-      // question is not answered and required
+      // element is not answered and required
       if (response.data[currQues.id] === undefined && currQues.required) {
         dropOffArr[currQuesIdx]++;
         impressionsArr[currQuesIdx]++;
@@ -214,9 +212,9 @@ export const getSurveySummaryDropOff = (
 
       impressionsArr[currQuesIdx]++;
 
-      const { nextQuestionId, updatedSurvey, updatedVariables } = evaluateLogicAndGetNextQuestionId(
+      const { nextElementId, updatedSurvey, updatedVariables } = evaluateLogicAndGetNextElementId(
         localSurvey,
-        questions,
+        elements,
         localResponseData,
         localVariables,
         currQuesIdx,
@@ -227,9 +225,9 @@ export const getSurveySummaryDropOff = (
       localSurvey = updatedSurvey;
       localVariables = updatedVariables;
 
-      if (nextQuestionId) {
-        const nextQuesIdx = questions.findIndex((q) => q.id === nextQuestionId);
-        if (!response.data[nextQuestionId] && !response.finished) {
+      if (nextElementId) {
+        const nextQuesIdx = elements.findIndex((q) => q.id === nextElementId);
+        if (!response.data[nextElementId] && !response.finished) {
           dropOffArr[nextQuesIdx]++;
           impressionsArr[nextQuesIdx]++;
           break;
@@ -241,10 +239,9 @@ export const getSurveySummaryDropOff = (
     }
   });
 
-  // Calculate the average time for each question
-  Object.keys(totalTtc).forEach((questionId) => {
-    totalTtc[questionId] =
-      responseCounts[questionId] > 0 ? totalTtc[questionId] / responseCounts[questionId] : 0;
+  // Calculate the average time for each element
+  Object.keys(totalTtc).forEach((elementId) => {
+    totalTtc[elementId] = responseCounts[elementId] > 0 ? totalTtc[elementId] / responseCounts[elementId] : 0;
   });
 
   if (!survey.welcomeCard.enabled) {
@@ -261,18 +258,18 @@ export const getSurveySummaryDropOff = (
     dropOffPercentageArr[0] = (dropOffArr[0] / impressionsArr[0]) * 100;
   }
 
-  for (let i = 1; i < questions.length; i++) {
+  for (let i = 1; i < elements.length; i++) {
     if (impressionsArr[i] !== 0) {
       dropOffPercentageArr[i] = (dropOffArr[i] / impressionsArr[i]) * 100;
     }
   }
 
-  const dropOff = questions.map((question, index) => {
+  const dropOff = elements.map((element, index) => {
     return {
-      questionId: question.id,
-      questionType: question.type,
-      headline: getTextContent(getLocalizedValue(question.headline, "default")),
-      ttc: convertFloatTo2Decimal(totalTtc[question.id]) || 0,
+      elementId: element.id,
+      elementType: element.type,
+      headline: getTextContent(getLocalizedValue(element.headline, "default")),
+      ttc: convertFloatTo2Decimal(totalTtc[element.id]) || 0,
       impressions: impressionsArr[index] || 0,
       dropOffCount: dropOffArr[index] || 0,
       dropOffPercentage: convertFloatTo2Decimal(dropOffPercentageArr[index]) || 0,
@@ -291,17 +288,17 @@ const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: strin
 const checkForI18n = (
   responseData: TResponseData,
   id: string,
-  questions: TSurveyElement[],
+  elements: TSurveyElement[],
   languageCode: string
 ) => {
-  const question = questions.find((question) => question.id === id);
+  const element = elements.find((element) => element.id === id);
 
-  if (question?.type === "multipleChoiceMulti" || question?.type === "ranking") {
+  if (element?.type === "multipleChoiceMulti" || element?.type === "ranking") {
     // Initialize an array to hold the choice values
     let choiceValues = [] as string[];
 
-    // Type guard: both question types have choices property
-    const hasChoices = "choices" in question;
+    // Type guard: both element types have choices property
+    const hasChoices = "choices" in element;
     if (!hasChoices) return [];
 
     (typeof responseData[id] === "string"
@@ -310,19 +307,19 @@ const checkForI18n = (
     )?.forEach((data) => {
       choiceValues.push(
         getLocalizedValue(
-          question.choices.find((choice) => choice.label[languageCode] === data)?.label,
+          element.choices.find((choice) => choice.label[languageCode] === data)?.label,
           "default"
         ) || data
       );
     });
 
-    // Return the array of localized choice values of multiSelect multi questions
+    // Return the array of localized choice values of multiSelect multi elements
     return choiceValues;
   }
 
-  // Return the localized value of the choice fo multiSelect single question
-  if (question && "choices" in question) {
-    const choice = question.choices?.find(
+  // Return the localized value of the choice fo multiSelect single element
+  if (element && "choices" in element) {
+    const choice = element.choices?.find(
       (choice: TSurveyElementChoice) => choice.label?.[languageCode] === responseData[id]
     );
     return choice && "label" in choice
@@ -333,21 +330,21 @@ const checkForI18n = (
   return responseData[id];
 };
 
-export const getQuestionSummary = async (
+export const getElementSummary = async (
   survey: TSurvey,
-  questions: TSurveyElement[],
+  elements: TSurveyElement[],
   responses: TSurveySummaryResponse[],
   dropOff: TSurveySummary["dropOff"]
 ): Promise<TSurveySummary["summary"]> => {
   const VALUES_LIMIT = 50;
   let summary: TSurveySummary["summary"] = [];
 
-  for (const question of questions) {
-    switch (question.type) {
+  for (const element of elements) {
+    switch (element.type) {
       case TSurveyElementTypeEnum.OpenText: {
         let values: TSurveyElementSummaryOpenText["samples"] = [];
         responses.forEach((response) => {
-          const answer = response.data[question.id];
+          const answer = response.data[element.id];
           if (answer && typeof answer === "string") {
             values.push({
               id: response.id,
@@ -360,8 +357,8 @@ export const getQuestionSummary = async (
         });
 
         summary.push({
-          type: question.type,
-          question: question,
+          type: element.type,
+          element: element,
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
         });
@@ -373,14 +370,14 @@ export const getQuestionSummary = async (
       case TSurveyElementTypeEnum.MultipleChoiceMulti: {
         let values: TSurveyElementSummaryMultipleChoice["choices"] = [];
 
-        const otherOption = question.choices.find((choice) => choice.id === "other");
-        const noneOption = question.choices.find((choice) => choice.id === "none");
+        const otherOption = element.choices.find((choice) => choice.id === "other");
+        const noneOption = element.choices.find((choice) => choice.id === "none");
 
-        const questionChoices = question.choices
+        const elementChoices = element.choices
           .filter((choice) => choice.id !== "other" && choice.id !== "none")
           .map((choice) => getLocalizedValue(choice.label, "default"));
 
-        const choiceCountMap = questionChoices.reduce((acc: Record<string, number>, choice) => {
+        const choiceCountMap = elementChoices.reduce((acc: Record<string, number>, choice) => {
           acc[choice] = 0;
           return acc;
         }, {});
@@ -397,16 +394,16 @@ export const getQuestionSummary = async (
 
           const answer =
             responseLanguageCode === "default"
-              ? response.data[question.id]
-              : checkForI18n(response.data, question.id, questions, responseLanguageCode);
+              ? response.data[element.id]
+              : checkForI18n(response.data, element.id, elements, responseLanguageCode);
 
           let hasValidAnswer = false;
 
-          if (Array.isArray(answer) && question.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
+          if (Array.isArray(answer) && element.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             answer.forEach((value) => {
               if (value) {
                 totalSelectionCount++;
-                if (questionChoices.includes(value)) {
+                if (elementChoices.includes(value)) {
                   choiceCountMap[value]++;
                 } else if (noneLabel && value === noneLabel) {
                   noneCount++;
@@ -422,11 +419,11 @@ export const getQuestionSummary = async (
             });
           } else if (
             typeof answer === "string" &&
-            question.type === TSurveyElementTypeEnum.MultipleChoiceSingle
+            element.type === TSurveyElementTypeEnum.MultipleChoiceSingle
           ) {
             if (answer) {
               totalSelectionCount++;
-              if (questionChoices.includes(answer)) {
+              if (elementChoices.includes(answer)) {
                 choiceCountMap[answer]++;
               } else if (noneLabel && answer === noneLabel) {
                 noneCount++;
@@ -478,8 +475,8 @@ export const getQuestionSummary = async (
         }
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           responseCount: totalResponseCount,
           selectionCount: totalSelectionCount,
           choices: values,
@@ -492,14 +489,14 @@ export const getQuestionSummary = async (
         let values: TSurveyElementSummaryPictureSelection["choices"] = [];
         const choiceCountMap: Record<string, number> = {};
 
-        question.choices.forEach((choice) => {
+        element.choices.forEach((choice) => {
           choiceCountMap[choice.id] = 0;
         });
         let totalResponseCount = 0;
         let totalSelectionCount = 0;
 
         responses.forEach((response) => {
-          const answer = response.data[question.id];
+          const answer = response.data[element.id];
           if (Array.isArray(answer)) {
             totalResponseCount++;
             answer.forEach((value) => {
@@ -509,7 +506,7 @@ export const getQuestionSummary = async (
           }
         });
 
-        question.choices.forEach((choice) => {
+        element.choices.forEach((choice) => {
           values.push({
             id: choice.id,
             imageUrl: choice.imageUrl,
@@ -522,8 +519,8 @@ export const getQuestionSummary = async (
         });
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           responseCount: totalResponseCount,
           selectionCount: totalSelectionCount,
           choices: values,
@@ -535,7 +532,7 @@ export const getQuestionSummary = async (
       case TSurveyElementTypeEnum.Rating: {
         let values: TSurveyElementSummaryRating["choices"] = [];
         const choiceCountMap: Record<number, number> = {};
-        const range = question.range;
+        const range = element.range;
 
         for (let i = 1; i <= range; i++) {
           choiceCountMap[i] = 0;
@@ -546,12 +543,12 @@ export const getQuestionSummary = async (
         let dismissed = 0;
 
         responses.forEach((response) => {
-          const answer = response.data[question.id];
+          const answer = response.data[element.id];
           if (typeof answer === "number") {
             totalResponseCount++;
             choiceCountMap[answer]++;
             totalRating += answer;
-          } else if (response.ttc && response.ttc[question.id] > 0) {
+          } else if (response.ttc && response.ttc[element.id] > 0) {
             dismissed++;
           }
         });
@@ -566,8 +563,8 @@ export const getQuestionSummary = async (
         });
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           average: convertFloatTo2Decimal(totalRating / totalResponseCount) || 0,
           responseCount: totalResponseCount,
           choices: values,
@@ -590,7 +587,7 @@ export const getQuestionSummary = async (
         };
 
         responses.forEach((response) => {
-          const value = response.data[question.id];
+          const value = response.data[element.id];
           if (typeof value === "number") {
             data.total++;
             if (value >= 9) {
@@ -600,7 +597,7 @@ export const getQuestionSummary = async (
             } else {
               data.detractors++;
             }
-          } else if (response.ttc && response.ttc[question.id] > 0) {
+          } else if (response.ttc && response.ttc[element.id] > 0) {
             data.total++;
             data.dismissed++;
           }
@@ -612,8 +609,8 @@ export const getQuestionSummary = async (
             : 0;
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           responseCount: data.total,
           total: data.total,
           score: data.score,
@@ -643,7 +640,7 @@ export const getQuestionSummary = async (
         };
 
         responses.forEach((response) => {
-          const value = response.data[question.id];
+          const value = response.data[element.id];
           if (value === "clicked") {
             data.clicked++;
           } else if (value === "dismissed") {
@@ -652,12 +649,12 @@ export const getQuestionSummary = async (
         });
 
         const totalResponses = data.clicked + data.dismissed;
-        const idx = questions.findIndex((q) => q.id === question.id);
+        const idx = elements.findIndex((q) => q.id === element.id);
         const impressions = dropOff[idx].impressions;
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           impressionCount: impressions,
           clickCount: data.clicked,
           skipCount: data.dismissed,
@@ -676,10 +673,10 @@ export const getQuestionSummary = async (
         };
 
         responses.forEach((response) => {
-          const value = response.data[question.id];
+          const value = response.data[element.id];
           if (value === "accepted") {
             data.accepted++;
-          } else if (response.ttc && response.ttc[question.id] > 0) {
+          } else if (response.ttc && response.ttc[element.id] > 0) {
             data.dismissed++;
           }
         });
@@ -687,8 +684,8 @@ export const getQuestionSummary = async (
         const totalResponses = data.accepted + data.dismissed;
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           responseCount: totalResponses,
           accepted: {
             count: data.accepted,
@@ -707,7 +704,7 @@ export const getQuestionSummary = async (
       case TSurveyElementTypeEnum.Date: {
         let values: TSurveyElementSummaryDate["samples"] = [];
         responses.forEach((response) => {
-          const answer = response.data[question.id];
+          const answer = response.data[element.id];
           if (answer && typeof answer === "string") {
             values.push({
               id: response.id,
@@ -720,8 +717,8 @@ export const getQuestionSummary = async (
         });
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
         });
@@ -732,7 +729,7 @@ export const getQuestionSummary = async (
       case TSurveyElementTypeEnum.FileUpload: {
         let values: TSurveyElementSummaryFileUpload["files"] = [];
         responses.forEach((response) => {
-          const answer = response.data[question.id];
+          const answer = response.data[element.id];
           if (Array.isArray(answer)) {
             values.push({
               id: response.id,
@@ -745,8 +742,8 @@ export const getQuestionSummary = async (
         });
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           responseCount: values.length,
           files: values.slice(0, VALUES_LIMIT),
         });
@@ -761,18 +758,18 @@ export const getQuestionSummary = async (
         };
 
         responses.forEach((response) => {
-          const value = response.data[question.id];
+          const value = response.data[element.id];
           if (value === "booked") {
             data.booked++;
-          } else if (response.ttc && response.ttc[question.id] > 0) {
+          } else if (response.ttc && response.ttc[element.id] > 0) {
             data.skipped++;
           }
         });
         const totalResponses = data.booked + data.skipped;
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           responseCount: totalResponses,
           booked: {
             count: data.booked,
@@ -788,8 +785,8 @@ export const getQuestionSummary = async (
         break;
       }
       case TSurveyElementTypeEnum.Matrix: {
-        const rows = question.rows.map((row) => getLocalizedValue(row.label, "default"));
-        const columns = question.columns.map((column) => getLocalizedValue(column.label, "default"));
+        const rows = element.rows.map((row) => getLocalizedValue(row.label, "default"));
+        const columns = element.columns.map((column) => getLocalizedValue(column.label, "default"));
         let totalResponseCount = 0;
 
         // Initialize count object
@@ -802,13 +799,13 @@ export const getQuestionSummary = async (
         }, {});
 
         responses.forEach((response) => {
-          const selectedResponses = response.data[question.id] as Record<string, string>;
+          const selectedResponses = response.data[element.id] as Record<string, string>;
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
           if (selectedResponses) {
             totalResponseCount++;
-            question.rows.forEach((row) => {
+            element.rows.forEach((row) => {
               const localizedRow = getLocalizedValue(row.label, responseLanguageCode);
-              const colValue = question.columns.find((column) => {
+              const colValue = element.columns.find((column) => {
                 return (
                   getLocalizedValue(column.label, responseLanguageCode) === selectedResponses[localizedRow]
                 );
@@ -841,8 +838,8 @@ export const getQuestionSummary = async (
         });
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           responseCount: totalResponseCount,
           data: matrixSummary,
         });
@@ -851,7 +848,7 @@ export const getQuestionSummary = async (
       case TSurveyElementTypeEnum.Address: {
         let values: TSurveyElementSummaryAddress["samples"] = [];
         responses.forEach((response) => {
-          const answer = response.data[question.id];
+          const answer = response.data[element.id];
           if (Array.isArray(answer) && answer.length > 0) {
             values.push({
               id: response.id,
@@ -865,7 +862,7 @@ export const getQuestionSummary = async (
 
         summary.push({
           type: TSurveyElementTypeEnum.Address,
-          question: question as TSurveyAddressElement,
+          element,
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
         });
@@ -876,7 +873,7 @@ export const getQuestionSummary = async (
       case TSurveyElementTypeEnum.ContactInfo: {
         let values: TSurveyElementSummaryContactInfo["samples"] = [];
         responses.forEach((response) => {
-          const answer = response.data[question.id];
+          const answer = response.data[element.id];
           if (Array.isArray(answer) && answer.length > 0) {
             values.push({
               id: response.id,
@@ -890,7 +887,7 @@ export const getQuestionSummary = async (
 
         summary.push({
           type: TSurveyElementTypeEnum.ContactInfo,
-          question: question as TSurveyContactInfoElement,
+          element,
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
         });
@@ -900,11 +897,12 @@ export const getQuestionSummary = async (
       }
       case TSurveyElementTypeEnum.Ranking: {
         let values: TSurveyElementSummaryRanking["choices"] = [];
-        const questionChoices = question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
+        const elementChoices = element.choices.map((choice) => getLocalizedValue(choice.label, "default"));
         let totalResponseCount = 0;
         const choiceRankSums: Record<string, number> = {};
         const choiceCountMap: Record<string, number> = {};
-        questionChoices.forEach((choice: string) => {
+
+        elementChoices.forEach((choice: string) => {
           choiceRankSums[choice] = 0;
           choiceCountMap[choice] = 0;
         });
@@ -914,14 +912,14 @@ export const getQuestionSummary = async (
 
           const answer =
             responseLanguageCode === "default"
-              ? response.data[question.id]
-              : checkForI18n(response.data, question.id, questions, responseLanguageCode);
+              ? response.data[element.id]
+              : checkForI18n(response.data, element.id, elements, responseLanguageCode);
 
           if (Array.isArray(answer)) {
             totalResponseCount++;
             answer.forEach((value, index) => {
               const ranking = index + 1; // Calculate ranking based on index
-              if (questionChoices.includes(value)) {
+              if (elementChoices.includes(value)) {
                 choiceRankSums[value] += ranking;
                 choiceCountMap[value]++;
               }
@@ -929,7 +927,7 @@ export const getQuestionSummary = async (
           }
         });
 
-        questionChoices.forEach((choice: string) => {
+        elementChoices.forEach((choice: string) => {
           const count = choiceCountMap[choice];
           const avgRanking = count > 0 ? choiceRankSums[choice] / count : 0;
           values.push({
@@ -940,8 +938,8 @@ export const getQuestionSummary = async (
         });
 
         summary.push({
-          type: question.type,
-          question,
+          type: element.type,
+          element,
           responseCount: totalResponseCount,
           choices: values,
         });
@@ -988,8 +986,7 @@ export const getSurveySummary = reactCache(
         throw new ResourceNotFoundError("Survey", surveyId);
       }
 
-      // Derive questions once from blocks
-      const questions = getElementsFromBlocks(survey.blocks);
+      const elements = getElementsFromBlocks(survey.blocks);
 
       const batchSize = 5000;
       const hasFilter = Object.keys(filterCriteria ?? {}).length > 0;
@@ -1021,16 +1018,16 @@ export const getSurveySummary = reactCache(
         getQuotasSummary(surveyId),
       ]);
 
-      const dropOff = getSurveySummaryDropOff(survey, questions, responses, displayCount);
-      const [meta, questionWiseSummary] = await Promise.all([
+      const dropOff = getSurveySummaryDropOff(survey, elements, responses, displayCount);
+      const [meta, elementSummary] = await Promise.all([
         getSurveySummaryMeta(responses, displayCount, quotas),
-        getQuestionSummary(survey, questions, responses, dropOff),
+        getElementSummary(survey, elements, responses, dropOff),
       ]);
 
       return {
         meta,
         dropOff,
-        summary: questionWiseSummary,
+        summary: elementSummary,
         quotas,
       };
     } catch (error) {

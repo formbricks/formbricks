@@ -56,12 +56,11 @@ export const formatContactInfoData = (responseValue: TResponseDataValue): Record
 export const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): Record<string, any> => {
   const responseData: Record<string, any> = {};
 
-  // Derive questions from blocks
-  const questions = getElementsFromBlocks(survey.blocks);
+  const elements = getElementsFromBlocks(survey.blocks);
 
-  for (const question of questions) {
-    const responseValue = response.data[question.id];
-    switch (question.type) {
+  for (const element of elements) {
+    const responseValue = response.data[element.id];
+    switch (element.type) {
       case "matrix":
         if (typeof responseValue === "object") {
           Object.assign(responseData, responseValue);
@@ -74,7 +73,7 @@ export const extractResponseData = (response: TResponseWithQuotas, survey: TSurv
         Object.assign(responseData, formatContactInfoData(responseValue));
         break;
       default:
-        responseData[question.id] = responseValue;
+        responseData[element.id] = responseValue;
     }
   }
 

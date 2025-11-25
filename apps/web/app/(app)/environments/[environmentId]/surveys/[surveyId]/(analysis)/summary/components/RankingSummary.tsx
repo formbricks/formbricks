@@ -3,26 +3,26 @@ import { TSurvey, TSurveyElementSummaryRanking } from "@formbricks/types/surveys
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { convertFloatToNDecimal } from "../lib/utils";
-import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface RankingSummaryProps {
-  questionSummary: TSurveyElementSummaryRanking;
+  elementSummary: TSurveyElementSummaryRanking;
   survey: TSurvey;
 }
 
-export const RankingSummary = ({ questionSummary, survey }: RankingSummaryProps) => {
+export const RankingSummary = ({ elementSummary, survey }: RankingSummaryProps) => {
   // sort by count and transform to array
   const { t } = useTranslation();
-  const results = Object.values(questionSummary.choices).sort((a, b) => {
+  const results = Object.values(elementSummary.choices).sort((a, b) => {
     return a.avgRanking - b.avgRanking; // Sort by count
   });
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
+      <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => {
-          const choiceId = getChoiceIdByValue(result.value, questionSummary.question);
+          const choiceId = getChoiceIdByValue(result.value, elementSummary.element);
           return (
             <div key={result.value} className="group cursor-pointer">
               <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">

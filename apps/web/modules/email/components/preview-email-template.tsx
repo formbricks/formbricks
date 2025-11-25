@@ -24,7 +24,7 @@ import { isLight, mixColor } from "@/lib/utils/colors";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
-import { QuestionHeader } from "./email-question-header";
+import { QuestionHeader } from "./email-element-header";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;

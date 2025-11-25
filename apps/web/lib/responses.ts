@@ -9,9 +9,9 @@ import { getLanguageCode, getLocalizedValue } from "./i18n/utils";
 // function to convert response value of type string | number | string[] or Record<string, string> to string | string[]
 export const convertResponseValue = (
   answer: TResponseDataValue,
-  question: TSurveyElement
+  element: TSurveyElement
 ): string | string[] => {
-  switch (question.type) {
+  switch (element.type) {
     case "ranking":
     case "fileUpload":
       if (typeof answer === "string") {
@@ -20,11 +20,11 @@ export const convertResponseValue = (
 
     case "pictureSelection":
       if (typeof answer === "string") {
-        const imageUrl = question.choices.find((choice) => choice.id === answer)?.imageUrl;
+        const imageUrl = element.choices.find((choice) => choice.id === answer)?.imageUrl;
         return imageUrl ? [imageUrl] : [];
       } else if (Array.isArray(answer)) {
         return answer
-          .map((answerId) => question.choices.find((choice) => choice.id === answerId)?.imageUrl)
+          .map((answerId) => element.choices.find((choice) => choice.id === answerId)?.imageUrl)
           .filter((url): url is string => url !== undefined);
       } else return [];
 
@@ -33,35 +33,32 @@ export const convertResponseValue = (
   }
 };
 
-export const getQuestionResponseMapping = (
+export const getElementResponseMapping = (
   survey: TSurvey,
   response: TResponse
-): { question: string; response: string | string[]; type: TSurveyElementTypeEnum }[] => {
-  const questionResponseMapping: {
-    question: string;
+): { element: string; response: string | string[]; type: TSurveyElementTypeEnum }[] => {
+  const elementResponseMapping: {
+    element: string;
     response: string | string[];
     type: TSurveyElementTypeEnum;
   }[] = [];
   const responseLanguageCode = getLanguageCode(survey.languages, response.language);
 
-  const questions = getElementsFromBlocks(survey.blocks);
+  const elements = getElementsFromBlocks(survey.blocks);
 
-  for (const question of questions) {
-    const answer = response.data[question.id];
+  for (const element of elements) {
+    const answer = response.data[element.id];
 
-    questionResponseMapping.push({
-      question: getTextContent(
-        parseRecallInfo(
-          getLocalizedValue(question.headline, responseLanguageCode ?? "default"),
-          response.data
-        )
+    elementResponseMapping.push({
+      element: getTextContent(
+        parseRecallInfo(getLocalizedValue(element.headline, responseLanguageCode ?? "default"), response.data)
       ),
-      response: convertResponseValue(answer, question),
-      type: question.type,
+      response: convertResponseValue(answer, element),
+      type: element.type,
     });
   }
 
-  return questionResponseMapping;
+  return elementResponseMapping;
 };
 
 export const processResponseData = (responseData: TResponseDataValue): string => {

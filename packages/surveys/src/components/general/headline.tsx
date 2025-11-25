@@ -4,18 +4,18 @@ import { isValidHTML } from "@/lib/html-utils";
 
 interface HeadlineProps {
   headline: string;
-  questionId: string;
+  elementId: string;
   required?: boolean;
   alignTextCenter?: boolean;
 }
 
-export function Headline({ headline, questionId, required = true, alignTextCenter = false }: HeadlineProps) {
+export function Headline({ headline, elementId, required = true, alignTextCenter = false }: HeadlineProps) {
   const { t } = useTranslation();
   const isHeadlineHtml = isValidHTML(headline);
   const safeHtml = isHeadlineHtml && headline ? DOMPurify.sanitize(headline, { ADD_ATTR: ["target"] }) : "";
 
   return (
-    <label htmlFor={questionId} className="fb-text-heading fb-mb-[3px] fb-flex fb-flex-col">
+    <label htmlFor={elementId} className="fb-text-heading fb-mb-[3px] fb-flex fb-flex-col">
       {!required && (
         <span
           className="fb-text-xs fb-opacity-60 fb-font-normal fb-leading-6 fb-mb-[3px]"

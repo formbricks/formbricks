@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { extractRecallInfo } from "@/lib/utils/recall";
@@ -21,36 +21,35 @@ import { Tag } from "@/modules/ui/components/tag";
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: TSurveyQuestionId | null;
-  setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
+  activeElementId: string | null;
+  setActiveElementId: (elementId: string | null) => void;
   quotas: TSurveyQuota[];
 }
 
 export const HiddenFieldsCard = ({
-  activeQuestionId,
+  activeElementId,
   localSurvey,
-  setActiveQuestionId,
+  setActiveElementId,
   setLocalSurvey,
   quotas,
 }: HiddenFieldsCardProps) => {
-  const open = activeQuestionId == "hidden";
+  const open = activeElementId == "hidden";
   const [hiddenField, setHiddenField] = useState<string>("");
   const { t } = useTranslation();
   const setOpen = (open: boolean) => {
     if (open) {
       // NOSONAR typescript:S2301 // the function usage is clear
-      setActiveQuestionId("hidden");
+      setActiveElementId("hidden");
     } else {
-      setActiveQuestionId(null);
+      setActiveElementId(null);
     }
   };
 
-  const questions = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+  const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const updateSurvey = (data: TSurveyHiddenFields, currentFieldId?: string) => {
     let updatedSurvey = { ...localSurvey };
 
-    // Remove recall info from question/element headlines
     if (currentFieldId) {
       updatedSurvey.blocks = updatedSurvey.blocks.map((block) => ({
         ...block,
@@ -93,26 +92,27 @@ export const HiddenFieldsCard = ({
       );
       return;
     }
-    const recallQuestionIdx = isUsedInRecall(localSurvey, fieldId);
-    if (recallQuestionIdx === -2) {
+
+    const recallElementIdx = isUsedInRecall(localSurvey, fieldId);
+    if (recallElementIdx === -2) {
       toast.error(
         t("environments.surveys.edit.hidden_field_used_in_recall_welcome", { hiddenField: fieldId })
       );
       return;
     }
 
-    const totalQuestions = questions.length;
-    if (recallQuestionIdx === totalQuestions) {
+    const totalElements = elements.length;
+    if (recallElementIdx === totalElements) {
       toast.error(
         t("environments.surveys.edit.hidden_field_used_in_recall_ending_card", { hiddenField: fieldId })
       );
       return;
     }
-    if (recallQuestionIdx !== -1) {
+    if (recallElementIdx !== -1) {
       toast.error(
         t("environments.surveys.edit.hidden_field_used_in_recall", {
           hiddenField: fieldId,
-          questionIndex: recallQuestionIdx + 1,
+          questionIndex: recallElementIdx + 1,
         })
       );
       return;
@@ -200,13 +200,13 @@ export const HiddenFieldsCard = ({
             className="mt-5"
             onSubmit={(e) => {
               e.preventDefault();
-              const existingQuestionIds = questions.map((question) => question.id);
+              const existingElementIds = elements.map((element) => element.id);
               const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
               const validateIdError = validateId(
                 "Hidden field",
                 hiddenField,
-                existingQuestionIds,
+                existingElementIds,
                 existingEndingCardIds,
                 existingHiddenFieldIds
               );

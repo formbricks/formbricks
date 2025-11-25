@@ -11,11 +11,11 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
-  getCXQuestionNameMap,
-  getQuestionDefaults,
-  getQuestionIconMap,
-  getQuestionNameMap,
-} from "@/modules/survey/lib/questions";
+  getCXElementNameMap,
+  getElementDefaults,
+  getElementIconMap,
+  getElementNameMap,
+} from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -46,10 +46,10 @@ interface EditorCardMenuProps {
   moveCard: (cardIdx: number, up: boolean) => void;
   card: EditorCardMenuSurveyElement | TSurveyEndScreenCard | TSurveyRedirectUrlCard;
   updateCard: (cardIdx: number, updatedAttributes: any) => void;
-  addCard: (question: any, index?: number) => void;
+  addCard: (element: any, index?: number) => void;
   addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
-  cardType: "question" | "ending";
+  cardType: "element" | "ending";
   project?: Project;
   isCxMode?: boolean;
 }
@@ -73,7 +73,7 @@ export const EditorCardMenu = ({
   isCxMode = false,
 }: EditorCardMenuProps) => {
   const { t } = useTranslation();
-  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+  const ELEMENTS_ICON_MAP = getElementIconMap(t);
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(() => {
     if (card.type !== "endScreen" && card.type !== "redirectToUrl") {
@@ -83,19 +83,19 @@ export const EditorCardMenu = ({
     return undefined;
   });
 
-  const questions = getElementsFromBlocks(survey.blocks);
+  const elements = getElementsFromBlocks(survey.blocks);
   const isDeleteDisabled =
-    cardType === "question" ? questions.length === 1 : survey.type === "link" && survey.endings.length === 1;
+    cardType === "element" ? elements.length === 1 : survey.type === "link" && survey.endings.length === 1;
 
-  const availableQuestionTypes = isCxMode ? getCXQuestionNameMap(t) : getQuestionNameMap(t);
+  const availableElementTypes = isCxMode ? getCXElementNameMap(t) : getElementNameMap(t);
 
-  const changeQuestionType = (type?: TSurveyElementTypeEnum) => {
+  const changeElementType = (type?: TSurveyElementTypeEnum) => {
     if (!type) return;
 
     const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } =
       card as EditorCardMenuSurveyElement;
 
-    const questionDefaults = getQuestionDefaults(type, project, t);
+    const elementDefaults = getElementDefaults(type, project, t);
 
     if (
       (type === TSurveyElementTypeEnum.MultipleChoiceSingle &&
@@ -118,7 +118,7 @@ export const EditorCardMenu = ({
     }
 
     updateCard(cardIdx, {
-      ...questionDefaults,
+      ...elementDefaults,
       type,
       headline,
       subheader,
@@ -131,22 +131,22 @@ export const EditorCardMenu = ({
     });
   };
 
-  const addQuestionCardBelow = (type: TSurveyElementTypeEnum) => {
-    const questionDefaults = getQuestionDefaults(type, project, t);
+  const addElementCardBelow = (type: TSurveyElementTypeEnum) => {
+    const elementDefaults = getElementDefaults(type, project, t);
 
-    const newQuestion = {
-      ...questionDefaults,
+    const newElement = {
+      ...elementDefaults,
       type,
       id: createId(),
       required: type === TSurveyElementTypeEnum.CTA ? false : true,
     };
 
-    // Add question to block or as new block
+    // Add element to block or as new block
     if (addCardToBlock && blockId && elementIdx !== undefined) {
       // Pass blockId and element index within the block
-      addCardToBlock(newQuestion as TSurveyElement, blockId, elementIdx);
+      addCardToBlock(newElement as TSurveyElement, blockId, elementIdx);
     } else {
-      addCard(newQuestion, cardIdx + 1);
+      addCard(newElement, cardIdx + 1);
     }
 
     const section = document.getElementById(`${card.id}`);
@@ -158,7 +158,7 @@ export const EditorCardMenu = ({
   };
 
   const onConfirm = () => {
-    changeQuestionType(changeToType);
+    changeElementType(changeToType);
     setLogicWarningModal(false);
   };
 
@@ -229,7 +229,7 @@ export const EditorCardMenu = ({
 
         <DropdownMenuContent>
           <div className="flex flex-col">
-            {cardType === "question" && (
+            {cardType === "element" && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger
                   className="cursor-pointer text-sm text-slate-600 hover:text-slate-700"
@@ -238,7 +238,7 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
-                  {Object.entries(availableQuestionTypes).map(([type, name]) => {
+                  {Object.entries(availableElementTypes).map(([type, name]) => {
                     if (type === card.type) return null;
                     return (
                       <DropdownMenuItem
@@ -250,9 +250,9 @@ export const EditorCardMenu = ({
                             return;
                           }
 
-                          changeQuestionType(type as TSurveyElementTypeEnum);
+                          changeElementType(type as TSurveyElementTypeEnum);
                         }}
-                        icon={QUESTIONS_ICON_MAP[type as TSurveyElementTypeEnum]}>
+                        icon={ELEMENTS_ICON_MAP[type as TSurveyElementTypeEnum]}>
                         <span className="ml-2">{name}</span>
                       </DropdownMenuItem>
                     );
@@ -271,25 +271,25 @@ export const EditorCardMenu = ({
               </DropdownMenuItem>
             )}
 
-            {cardType === "question" && (
+            {cardType === "element" && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
                   {t("environments.surveys.edit.add_question_below")}
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
-                  {Object.entries(availableQuestionTypes).map(([type, name]) => {
+                  {Object.entries(availableElementTypes).map(([type, name]) => {
                     return (
                       <DropdownMenuItem
                         key={type}
                         className="min-h-8"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (cardType === "question") {
-                            addQuestionCardBelow(type as TSurveyElementTypeEnum);
+                          if (cardType === "element") {
+                            addElementCardBelow(type as TSurveyElementTypeEnum);
                           }
                         }}>
-                        {QUESTIONS_ICON_MAP[type as TSurveyElementTypeEnum]}
+                        {ELEMENTS_ICON_MAP[type as TSurveyElementTypeEnum]}
                         <span className="ml-2">{name}</span>
                       </DropdownMenuItem>
                     );
@@ -297,7 +297,7 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
-            {cardType === "question" && moveElementToBlock && survey.blocks.length > 1 && (
+            {cardType === "element" && moveElementToBlock && survey.blocks.length > 1 && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
                   {t("environments.surveys.edit.move_question_to_block")}

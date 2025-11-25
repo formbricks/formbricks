@@ -33,7 +33,7 @@ interface SurveyMenuBarProps {
   environmentId: string;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
-  setInvalidQuestions: React.Dispatch<React.SetStateAction<string[]>>;
+  setInvalidElements: React.Dispatch<React.SetStateAction<string[]>>;
   project: Project;
   responseCount: number;
   selectedLanguageCode: string;
@@ -51,7 +51,7 @@ export const SurveyMenuBar = ({
   setLocalSurvey,
   activeId,
   setActiveId,
-  setInvalidQuestions,
+  setInvalidElements,
   project,
   responseCount,
   selectedLanguageCode,
@@ -183,22 +183,20 @@ export const SurveyMenuBar = ({
           const element = block?.elements[elementIdx];
 
           if (element) {
-            setInvalidQuestions((prevInvalidQuestions) =>
-              prevInvalidQuestions ? [...prevInvalidQuestions, element.id] : [element.id]
+            setInvalidElements((prevInvalidElements) =>
+              prevInvalidElements ? [...prevInvalidElements, element.id] : [element.id]
             );
           }
         }
-        // For block-level errors (buttonLabel, logic, etc.), we don't mark specific questions as invalid
-        // The error will still be shown in the toast/UI via the error message
       } else if (currentError.path[0] === "welcomeCard") {
-        setInvalidQuestions((prevInvalidQuestions) =>
-          prevInvalidQuestions ? [...prevInvalidQuestions, "start"] : ["start"]
+        setInvalidElements((prevInvalidElements) =>
+          prevInvalidElements ? [...prevInvalidElements, "start"] : ["start"]
         );
       } else if (currentError.path[0] === "endings") {
         const endingIdx = typeof currentError.path[1] === "number" ? currentError.path[1] : -1;
-        setInvalidQuestions((prevInvalidQuestions) =>
-          prevInvalidQuestions
-            ? [...prevInvalidQuestions, localSurvey.endings[endingIdx].id]
+        setInvalidElements((prevInvalidElements) =>
+          prevInvalidElements
+            ? [...prevInvalidElements, localSurvey.endings[endingIdx].id]
             : [localSurvey.endings[endingIdx].id]
         );
       }

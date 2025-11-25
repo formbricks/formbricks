@@ -9,7 +9,7 @@ import { type TI18nString } from "@formbricks/types/i18n";
 import { TSurveyMatrixElement, TSurveyMatrixElementChoice } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
@@ -18,8 +18,8 @@ interface MatrixSortableItemProps {
   type: "row" | "column";
   index: number;
   localSurvey: TSurvey;
-  question: TSurveyMatrixElement;
-  questionIdx: number;
+  element: TSurveyMatrixElement;
+  elementIdx: number;
   updateMatrixLabel: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
   onDelete: (index: number) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
@@ -36,7 +36,7 @@ export const MatrixSortableItem = ({
   type,
   index,
   localSurvey,
-  questionIdx,
+  elementIdx,
   updateMatrixLabel,
   onDelete,
   onKeyDown,
@@ -65,12 +65,12 @@ export const MatrixSortableItem = ({
       </div>
 
       <div className="flex w-full items-center">
-        <QuestionFormInput
+        <ElementFormInput
           key={choice.id}
           id={`${type}-${index}`}
           label=""
           localSurvey={localSurvey}
-          questionIdx={questionIdx}
+          elementIdx={elementIdx}
           value={choice.label}
           updateMatrixLabel={updateMatrixLabel}
           selectedLanguageCode={selectedLanguageCode}
