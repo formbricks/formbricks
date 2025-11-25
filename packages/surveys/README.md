@@ -1,6 +1,6 @@
 ## Overview
 
-The `@formbricks/surveys` package provides a complete survey rendering system built with Preact. It features automated translation management through Lingo.dev and is compiled from React-style components in `@formbricks/ui`.
+The `@formbricks/surveys` package provides a complete survey rendering system built with Preact. It features automated translation management through Lingo.dev and is compiled from React components in `@formbricks/ui`.
 
 ## Features
 

@@ -14,5 +14,5 @@
     "resolveJsonModule": true
   },
   "extends": "@formbricks/config-typescript/js-library.json",
-  "include": ["src", "../types/surveys.d.ts"]
+  "include": ["src", "../types/surveys.d.ts", "vite-env.d.ts"]
 }

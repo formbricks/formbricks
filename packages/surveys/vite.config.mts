@@ -17,7 +17,6 @@ const __dirname = dirname(__filename);
  */
 function addFbPrefixPlugin(): Plugin {
   const uiUtilsPath = resolve(__dirname, "../ui/src/lib/utils.ts");
-  const embedCnPath = resolve(__dirname, "src/lib/cn-with-prefix.ts");
   const uiSrcPath = resolve(__dirname, "../ui/src");
 
   return {
@@ -38,47 +37,9 @@ function addFbPrefixPlugin(): Plugin {
         normalizedImporter.includes("/ui/") ||
         normalizedImporter.includes("\\ui\\");
 
-      if (isFromUi) {
-        // Handle @/lib/utils alias
-        if (id === "@/lib/utils" || id === "@/lib/utils.ts") {
-          return embedCnPath;
-        }
+      // Plugin functionality removed - cn-with-prefix.ts file was deleted
+      // If prefix functionality is needed, it should be reimplemented
 
-        // Handle relative imports like "../../lib/utils" or "../lib/utils"
-        if (id.includes("lib/utils")) {
-          try {
-            const resolved = resolve(dirname(importer), id);
-            const normalizedResolved = resolved.replace(/\\/g, "/");
-            const normalizedTarget = uiUtilsPath.replace(/\\/g, "/");
-
-            if (normalizedResolved === normalizedTarget) {
-              return embedCnPath;
-            }
-          } catch {
-            // Ignore resolution errors
-          }
-        }
-      }
-
-      // Also intercept direct imports of ui package's utils file
-      const normalizedId = id.replace(/\\/g, "/");
-      const normalizedTarget = uiUtilsPath.replace(/\\/g, "/");
-      if (normalizedId === normalizedTarget) {
-        return embedCnPath;
-      }
-
-      return null;
-    },
-    load(id) {
-      // Intercept when the actual utils file is loaded
-      const normalizedId = id.replace(/\\/g, "/");
-      const normalizedTarget = surveyCoreUtilsPath.replace(/\\/g, "/");
-
-      if (normalizedId === normalizedTarget) {
-        // Return our prefixed version - use relative path from embed
-        const relativePath = embedCnPath.replace(/\\/g, "/");
-        return `export { cn } from "${relativePath}";`;
-      }
       return null;
     },
   };

@@ -3,7 +3,7 @@
   "license": "MIT",
   "version": "1.0.0",
   "private": true,
-  "description": "Formbricks surveys package - Preact-compiled widget for embedding surveys into customer websites.",
+  "description": "Formbricks-surveys is a helper library to embed surveys into your application.",
   "homepage": "https://formbricks.com",
   "type": "module",
   "repository": {

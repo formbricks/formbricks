@@ -2,9 +2,9 @@
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
-    "emitDeclarationOnly": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
+    "noEmit": true,
     "paths": {
       "@/*": ["./src/*"]
     },
