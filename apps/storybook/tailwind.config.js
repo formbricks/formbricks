@@ -3,5 +3,10 @@ import base from "../web/tailwind.config";
 
 export default {
   ...base,
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}", "../web/modules/ui/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "../web/modules/ui/**/*.{js,ts,jsx,tsx}",
+    "../../packages/ui/src/**/*.{js,ts,jsx,tsx}",
+  ],
 };
