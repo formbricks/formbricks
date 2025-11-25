@@ -1,0 +1,62 @@
+{
+  "name": "@formbricks/ui",
+  "license": "MIT",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reusable UI components for Formbricks applications",
+  "homepage": "https://formbricks.com",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formbricks/formbricks"
+  },
+  "sideEffects": false,
+  "source": "src/index.ts",
+  "main": "dist/index.umd.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs"
+    }
+  },
+  "scripts": {
+    "dev": "vite build --watch --mode dev",
+    "build": "vite build",
+    "build:dev": "vite build --mode dev",
+    "go": "vite build --watch --mode dev",
+    "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
+    "preview": "vite preview",
+    "clean": "rimraf .turbo node_modules dist"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.5"
+  },
+  "devDependencies": {
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
+    "@types/react": "19.1.4",
+    "@types/react-dom": "19.1.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "10.4.21",
+    "postcss": "8.5.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "3.4.17",
+    "terser": "5.39.1",
+    "vite": "6.4.1",
+    "vite-plugin-dts": "4.5.3",
+    "vite-tsconfig-paths": "5.1.4"
+  }
+}
