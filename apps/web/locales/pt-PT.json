@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "Atualizar",
       "upload_contacts_modal_pick_different_file": "Escolher um ficheiro diferente",
       "upload_contacts_modal_preview": "Aqui está uma pré-visualização dos seus dados.",
-      "upload_contacts_modal_upload_btn": "Carregar contactos"
+      "upload_contacts_modal_upload_btn": "Carregar contactos",
+      "upload_contacts_success": "Contactos carregados com sucesso"
     },
     "formbricks_logo": "Logotipo do Formbricks",
     "integrations": {

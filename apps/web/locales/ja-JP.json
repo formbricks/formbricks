@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "更新",
       "upload_contacts_modal_pick_different_file": "別のファイルを選択",
       "upload_contacts_modal_preview": "データのプレビューです。",
-      "upload_contacts_modal_upload_btn": "連絡先をアップロード"
+      "upload_contacts_modal_upload_btn": "連絡先をアップロード",
+      "upload_contacts_success": "連絡先のアップロードに成功しました"
     },
     "formbricks_logo": "Formbricksのロゴ",
     "integrations": {

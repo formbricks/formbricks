@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "更新",
       "upload_contacts_modal_pick_different_file": "选择不同的文件",
       "upload_contacts_modal_preview": "这是 你 的 数据 预览。",
-      "upload_contacts_modal_upload_btn": "上传 联系人"
+      "upload_contacts_modal_upload_btn": "上传 联系人",
+      "upload_contacts_success": "联系人上传成功"
     },
     "formbricks_logo": "Formbricks Logo",
     "integrations": {
