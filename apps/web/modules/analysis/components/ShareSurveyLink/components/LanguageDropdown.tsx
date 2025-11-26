@@ -25,7 +25,7 @@ export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdo
       <div className="relative">
         {showLanguageSelect && (
           <div
-            className="absolute top-12 z-30 w-fit rounded-lg border bg-slate-900 p-1 text-sm text-white"
+            className="absolute top-12 z-30 max-h-64 w-fit overflow-auto rounded-lg border bg-slate-900 p-1 text-sm text-white"
             ref={languageDropdownRef}>
             {enabledLanguages.map((surveyLanguage) => (
               <button

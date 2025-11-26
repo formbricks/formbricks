@@ -99,7 +99,7 @@ export function LanguageSwitch({
       {showLanguageDropdown ? (
         <div
           className={cn(
-            "fb-bg-brand fb-text-on-brand fb-absolute fb-top-10 fb-space-y-2 fb-rounded-md fb-p-2 fb-text-xs",
+            "fb-bg-brand fb-text-on-brand fb-absolute fb-top-10 fb-max-h-64 fb-space-y-2 fb-overflow-auto fb-rounded-md fb-p-2 fb-text-xs",
             dir === "rtl" ? "fb-left-8" : "fb-right-8"
           )}
           ref={languageDropdownRef}>
