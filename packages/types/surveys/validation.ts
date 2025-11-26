@@ -339,6 +339,10 @@ export const validateId = (
 
 type TCondition = TSingleCondition | TConditionGroup;
 
+export const isSingleCondition = (condition: TCondition): condition is TSingleCondition => {
+  return "leftOperand" in condition && "operator" in condition;
+};
+
 export const isConditionGroup = (condition: TCondition): condition is TConditionGroup => {
   return "conditions" in condition;
 };
