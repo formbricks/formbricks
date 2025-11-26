@@ -131,16 +131,16 @@ export const BlockCard = ({
 
   // Check if button labels have incomplete translations for any enabled language
   // A button label is invalid if it exists but doesn't have valid text for all enabled languages
+  const surveyLanguages = localSurvey.languages ?? [];
   const hasInvalidButtonLabel =
-    block.buttonLabel !== undefined &&
-    !isLabelValidForAllLanguages(block.buttonLabel, localSurvey.languages ?? []);
+    block.buttonLabel !== undefined && !isLabelValidForAllLanguages(block.buttonLabel, surveyLanguages);
 
   // Check if back button label is invalid
   // Back button label should exist for all blocks except the first one
   const hasInvalidBackButtonLabel =
     blockIdx > 0 &&
     block.backButtonLabel !== undefined &&
-    !isLabelValidForAllLanguages(block.backButtonLabel, localSurvey.languages ?? []);
+    !isLabelValidForAllLanguages(block.backButtonLabel, surveyLanguages);
 
   // Block should be highlighted if it has invalid elements OR invalid button labels
   const isBlockInvalid = hasInvalidElement || hasInvalidButtonLabel || hasInvalidBackButtonLabel;

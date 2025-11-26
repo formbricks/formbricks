@@ -4797,7 +4797,6 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
               type: TSurveyElementTypeEnum.OpenText,
               headline: createI18nString(t("templates.custom_survey_question_1_headline"), []),
               placeholder: createI18nString(t("templates.custom_survey_question_1_placeholder"), []),
-              buttonLabel: createI18nString(t("templates.next"), []),
               required: true,
               inputType: "text",
               charLimit: {
@@ -4805,6 +4804,8 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
               },
             } as TSurveyOpenTextElement,
           ],
+          // Button labels at block level with default key for i18n support
+          buttonLabel: createI18nString(t("templates.next"), []),
         },
       ],
     },
@@ -4870,6 +4871,8 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
             isDraft: true,
           },
         ],
+        buttonLabel: createI18nString(t("templates.next"), []),
+        backButtonLabel: createI18nString(t("templates.preview_survey_question_2_back_button_label"), []),
       },
     ],
     endings: [

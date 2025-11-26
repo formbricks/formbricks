@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import {
@@ -143,6 +143,12 @@ export const ElementFormInput = ({
       return getMatrixLabel(currentElement, index, surveyLanguageCodes, isMatrixLabelRow ? "row" : "column");
     }
 
+    // For block-level properties (buttonLabel, backButtonLabel) or when value is explicitly provided,
+    // use the value prop directly instead of looking up on currentElement
+    if (value && typeof value === "object" && "default" in value) {
+      return value;
+    }
+
     return (
       (currentElement &&
         (id.includes(".")
@@ -165,12 +171,18 @@ export const ElementFormInput = ({
     elementIdx,
     elements,
     surveyLanguageCodes,
+    value,
   ]);
 
   const [text, setText] = useState(elementText);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
     determineImageUploaderVisibility(elementIdx, elements)
   );
+
+  // Sync text state when elementText changes (e.g., on page reload or when value prop changes)
+  useEffect(() => {
+    setText(elementText);
+  }, [elementText]);
 
   const highlightContainerRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
