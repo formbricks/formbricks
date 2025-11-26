@@ -3202,6 +3202,165 @@ const validateBlockConditions = (
             }
           }
         }
+      } else if (
+        element.type === TSurveyElementTypeEnum.NPS ||
+        element.type === TSurveyElementTypeEnum.Rating
+      ) {
+        if (rightOperand?.type === "variable") {
+          const variableId = rightOperand.value;
+          const variable = survey.variables.find((v) => v.id === variableId);
+
+          if (!variable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type !== "number") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable type should be number in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "static") {
+          if (typeof rightOperand.value !== "number") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand should be a number for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (element.type === TSurveyElementTypeEnum.NPS) {
+            if (rightOperand.value < 0 || rightOperand.value > 10) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          } else if (rightOperand.value < 1 || rightOperand.value > element.range) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Rating value should be between 1 and ${String(element.range)} for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Right operand should be a variable or a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+            path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          });
+        }
+      } else if (element.type === TSurveyElementTypeEnum.Date) {
+        if (rightOperand?.type === "element") {
+          const elemId = rightOperand.value;
+          const elem = allElements.get(elemId);
+
+          if (!elem) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Element ID ${elemId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            const validElementTypes = [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date];
+            if (!validElementTypes.includes(elem.data.type)) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (rightOperand?.type === "variable") {
+          const variableId = rightOperand.value;
+          const variable = survey.variables.find((v) => v.id === variableId);
+
+          if (!variable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type !== "text") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "hiddenField") {
+          const fieldId = rightOperand.value;
+          const doesFieldExists = survey.hiddenFields.fieldIds?.includes(fieldId);
+
+          if (!doesFieldExists) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "static") {
+          const date = rightOperand.value as string;
+
+          if (!date) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Please select a date value in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (isNaN(new Date(date).getTime())) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        }
+      } else if (element.type === TSurveyElementTypeEnum.Matrix) {
+        const row = leftOperand.meta?.row;
+        if (row === undefined) {
+          if (rightOperand?.value !== undefined) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand is not allowed in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+          if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Operator "${operator}" is not allowed in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else {
+          if (rightOperand === undefined) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand is required in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+          if (rightOperand) {
+            if (rightOperand.type !== "static") {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Right operand should be a static value in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+            const rowIndex = Number(row);
+            if (rowIndex < 0 || rowIndex >= element.rows.length) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Invalid row index in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        }
       }
     } else if (leftOperand.type === "variable") {
       const variableId = leftOperand.value;
