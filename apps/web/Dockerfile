@@ -124,7 +124,7 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-RUN npm install -g prisma
+RUN npm install -g prisma@6
 
 # Create a startup script to handle the conditional logic
 COPY --from=installer /app/apps/web/scripts/docker/next-start.sh /home/nextjs/start.sh

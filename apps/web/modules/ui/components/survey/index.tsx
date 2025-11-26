@@ -14,6 +14,7 @@ declare global {
       renderSurveyModal: (props: SurveyContainerProps) => void;
       renderSurvey: (props: SurveyContainerProps) => void;
       onFilePick: (files: { name: string; type: string; base64: string }[]) => void;
+      setNonce: (nonce: string | undefined) => void;
     };
   }
 }
@@ -80,7 +81,7 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
 
     loadScript();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [props]);
 
   useEffect(() => {
     if (isScriptLoaded) {

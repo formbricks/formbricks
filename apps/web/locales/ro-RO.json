@@ -331,7 +331,7 @@
     "project_not_found": "Proiectul nu a fost găsit",
     "project_permission_not_found": "Permisiunea proiectului nu a fost găsită",
     "projects": "Proiecte",
-    "question": "Întrebare",
+    "question": "întrebare",
     "question_id": "ID întrebare",
     "questions": "Întrebări",
     "quota": "Cotă",
@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "Actualizare",
       "upload_contacts_modal_pick_different_file": "Selectați un alt fișier",
       "upload_contacts_modal_preview": "Iată o previzualizare a datelor tale.",
-      "upload_contacts_modal_upload_btn": "Încărcați contacte"
+      "upload_contacts_modal_upload_btn": "Încărcați contacte",
+      "upload_contacts_success": "Contactele au fost încărcate cu succes"
     },
     "formbricks_logo": "Logo Formbricks",
     "integrations": {
@@ -801,8 +802,11 @@
         "how_to_setup_description": "Urmează acești pași pentru a configura widget-ul Formbricks în aplicația ta.",
         "receiving_data": "Recepționare date 💃🕺",
         "recheck": "Re-verifică",
+        "sdk_connection_details": "Detalii de conexiune SDK",
+        "sdk_connection_details_description": "ID-ul mediului tău unic și URL-ul de conexiune SDK pentru a integra Formbricks cu aplicația ta.",
         "setup_alert_description": "Urmează acest tutorial pas cu pas pentru a-ți conecta aplicația sau site-ul în mai puțin de 5 minute.",
-        "setup_alert_title": "Cum să conectezi"
+        "setup_alert_title": "Cum să conectezi",
+        "webapp_url": "URL de conexiune SDK"
       },
       "general": {
         "cannot_delete_only_project": "Acesta este singurul tău proiect, nu poate fi șters. Creează mai întâi un proiect nou.",
@@ -1352,7 +1356,7 @@
         "error_saving_changes": "Eroare la salvarea modificărilor",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Permite răspunsuri multiple; continuă afișarea chiar și după un răspuns (de exemplu, Caseta de Feedback).",
         "everyone": "Toată lumea",
-        "external_urls_paywall_tooltip": "Vă rugăm să faceți upgrade pentru a personaliza URL-ul extern. Prevenire phishing.",
+        "external_urls_paywall_tooltip": "Vă rugăm să treceți la planul Startup pentru a personaliza URL-urile externe. Acest lucru ne ajută să prevenim phishing-ul.",
         "fallback_missing": "Rezerva lipsă",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} este folosit în logică întrebării {questionIndex}. Vă rugăm să-l eliminați din logică mai întâi.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Câmpul ascuns \"{fieldId}\" este folosit în cota \"{quotaName}\"",

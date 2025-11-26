@@ -108,8 +108,6 @@
     "nodemailer": "7.0.9",
     "otplib": "12.0.1",
     "papaparse": "5.5.2",
-    "posthog-js": "1.240.0",
-    "posthog-node": "5.9.2",
     "prismjs": "1.30.0",
     "qr-code-styling": "1.9.2",
     "qrcode": "1.5.4",

@@ -89,7 +89,7 @@ jobs:
       - check-latest-release
     with:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
-      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest }}
+      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
 
   docker-build-cloud:
     name: Build & push Formbricks Cloud to ECR
@@ -101,7 +101,7 @@ jobs:
     with:
       image_tag: ${{ needs.docker-build-community.outputs.VERSION }}
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
-      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest }}
+      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
     needs:
       - check-latest-release
       - docker-build-community
@@ -154,4 +154,4 @@ jobs:
       release_tag: ${{ github.event.release.tag_name }}
       commit_sha: ${{ github.sha }}
       is_prerelease: ${{ github.event.release.prerelease }}
-      make_latest: ${{ needs.check-latest-release.outputs.is_latest }}
+      make_latest: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}

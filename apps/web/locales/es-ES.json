@@ -331,7 +331,7 @@
     "project_not_found": "Proyecto no encontrado",
     "project_permission_not_found": "Permiso de proyecto no encontrado",
     "projects": "Proyectos",
-    "question": "Pregunta",
+    "question": "pregunta",
     "question_id": "ID de pregunta",
     "questions": "Preguntas",
     "quota": "Cuota",
@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "Actualizar",
       "upload_contacts_modal_pick_different_file": "Selecciona un archivo diferente",
       "upload_contacts_modal_preview": "Aquí tienes una vista previa de tus datos.",
-      "upload_contacts_modal_upload_btn": "Subir contactos"
+      "upload_contacts_modal_upload_btn": "Subir contactos",
+      "upload_contacts_success": "Contactos subidos correctamente"
     },
     "formbricks_logo": "Logo de Formbricks",
     "integrations": {
@@ -801,8 +802,11 @@
         "how_to_setup_description": "Sigue estos pasos para configurar el widget de Formbricks en tu aplicación.",
         "receiving_data": "Recibiendo datos 💃🕺",
         "recheck": "Volver a comprobar",
+        "sdk_connection_details": "Detalles de conexión del SDK",
+        "sdk_connection_details_description": "Tu ID de entorno único y URL de conexión del SDK para integrar Formbricks con tu aplicación.",
         "setup_alert_description": "Sigue este tutorial paso a paso para conectar tu aplicación o sitio web en menos de 5 minutos.",
-        "setup_alert_title": "Cómo conectar"
+        "setup_alert_title": "Cómo conectar",
+        "webapp_url": "URL de conexión del SDK"
       },
       "general": {
         "cannot_delete_only_project": "Este es tu único proyecto, no se puede eliminar. Crea un proyecto nuevo primero.",
@@ -1352,7 +1356,7 @@
         "error_saving_changes": "Error al guardar los cambios",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Permitir respuestas múltiples; seguir mostrando incluso después de una respuesta (p. ej., cuadro de comentarios).",
         "everyone": "Todos",
-        "external_urls_paywall_tooltip": "Por favor, actualiza para personalizar la URL externa. Prevención de phishing.",
+        "external_urls_paywall_tooltip": "Por favor, actualiza al plan Startup para personalizar URLs externos. Esto nos ayuda a prevenir el phishing.",
         "fallback_missing": "Falta respaldo",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} se usa en la lógica de la pregunta {questionIndex}. Por favor, elimínalo primero de la lógica.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "El campo oculto \"{fieldId}\" se está utilizando en la cuota \"{quotaName}\"",
