@@ -1324,6 +1324,7 @@
         "create_your_own_survey": "Create your own survey",
         "css_selector": "CSS Selector",
         "custom_hostname": "Custom hostname",
+        "customize_survey_logo": "Customize the survey logo",
         "darken_or_lighten_background_of_your_choice": "Darken or lighten background of your choice.",
         "date_format": "Date format",
         "days_before_showing_this_survey_again": "days after any survey is shown before this survey can appear.",
@@ -1467,9 +1468,8 @@
         "link_survey_description": "Share a link to a survey page or embed it in a web page or email.",
         "load_segment": "Load segment",
         "logic_error_warning": "Changing will cause logic errors",
-        "logo_settings": "Logo settings",
-        "customize_survey_logo": "Customize the survey logo",
         "logic_error_warning_text": "Changing the question type will remove the logic conditions from this question",
+        "logo_settings": "Logo settings",
         "long_answer": "Long answer",
         "lower_label": "Lower Label",
         "manage_languages": "Manage Languages",
@@ -1501,6 +1501,7 @@
         "overwrite_global_waiting_time": "Set custom waiting time",
         "overwrite_global_waiting_time_description": "Override the project configuration for this survey only.",
         "overwrite_placement": "Overwrite placement",
+        "overwrite_survey_logo": "Set custom survey logo",
         "overwrite_the_global_placement_of_the_survey": "Overwrite the global placement of the survey",
         "pick_a_background_from_our_library_or_upload_your_own": "Pick a background from our library or upload your own.",
         "picture_idx": "Picture {idx}",
@@ -1512,9 +1513,9 @@
         "please_specify": "Please specify",
         "prevent_double_submission": "Prevent double submission",
         "prevent_double_submission_description": "Only allow 1 response per email address",
+        "project_logo_will_be_used": "Project logo will be used",
         "protect_survey_with_pin": "Protect survey with a PIN",
         "protect_survey_with_pin_description": "Only users who have the PIN can access the survey.",
-        "project_logo_will_be_used": "Project logo will be used",
         "publish": "Publish",
         "question": "Question",
         "question_color": "Question color",
@@ -1622,7 +1623,6 @@
         "survey_completed_heading": "Survey Completed",
         "survey_completed_subheading": "This free & open-source survey has been closed",
         "survey_display_settings": "Survey Display Settings",
-        "overwrite_survey_logo": "Set custom survey logo",
         "survey_placement": "Survey Placement",
         "survey_trigger": "Survey Trigger",
         "switch_multi_lanugage_on_to_get_started": "Switch multi-lanugage on to get started \uD83D\uDC49",
@@ -1850,11 +1850,6 @@
         "filtered_responses_csv": "Filtered responses (CSV)",
         "filtered_responses_excel": "Filtered responses (Excel)",
         "generating_qr_code": "Generating QR code",
-<<<<<<< Updated upstream
-=======
-        "go_to_setup_checklist": "Go to Setup Checklist \uD83D\uDC49",
-        "grouped": "Grouped",
->>>>>>> Stashed changes
         "impressions": "Impressions",
         "impressions_tooltip": "Number of times the survey has been viewed.",
         "in_app": {
@@ -1889,10 +1884,6 @@
         "includes_all": "Includes all",
         "includes_either": "Includes either",
         "individual": "Individual",
-<<<<<<< Updated upstream
-=======
-        "install_widget": "Install Formbricks Widget",
->>>>>>> Stashed changes
         "is_equal_to": "Is equal to",
         "is_less_than": "Is less than",
         "last_30_days": "Last 30 days",
@@ -1906,10 +1897,6 @@
         "other_values_found": "Other values found",
         "overall": "Overall",
         "promoters": "Promoters",
-<<<<<<< Updated upstream
-=======
-        "promotersTooltip": "Percentage of respondents who scored 9-10, indicating high likelihood to recommend.",
->>>>>>> Stashed changes
         "qr_code": "QR code",
         "qr_code_description": "Responses collected via QR code are anonymous.",
         "qr_code_download_failed": "QR code download failed",
