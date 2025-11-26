@@ -474,23 +474,6 @@ export const transformBlocksToQuestions = (
     questions.push(element);
   }
 
-  for (const question of questions) {
-    if (Array.isArray(question.logic) && question.logic.length > 0) {
-      question.logic = question.logic.map(
-        (item: { actions: TSurveyBlockLogicAction[]; [key: string]: unknown }) => {
-          return {
-            ...item,
-            actions: reverseLogicActions(item.actions, blockIdToQuestionId, endingIds),
-          };
-        }
-      );
-    }
-
-    if (typeof question.logicFallback === "string") {
-      question.logicFallback = reverseLogicFallback(question.logicFallback, blockIdToQuestionId, endingIds);
-    }
-  }
-
   return questions as TSurveyQuestion[];
 };
 

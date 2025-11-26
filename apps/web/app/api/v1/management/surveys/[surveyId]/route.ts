@@ -51,16 +51,18 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const hasBlocks = result.survey.blocks && result.survey.blocks.length > 0;
-      if (hasBlocks) {
-        const surveyWithQuestions = {
-          ...result.survey,
-          questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
-          blocks: [],
-        };
+      const shouldTransformToQuestions =
+        result.survey.blocks &&
+        result.survey.blocks.length > 0 &&
+        result.survey.blocks.every((block) => block.elements.length === 1);
 
+      if (shouldTransformToQuestions) {
         return {
-          response: responses.successResponse(surveyWithQuestions),
+          response: responses.successResponse({
+            ...result.survey,
+            questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
+            blocks: [],
+          }),
         };
       }
 
