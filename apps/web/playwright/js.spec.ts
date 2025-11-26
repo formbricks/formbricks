@@ -109,9 +109,9 @@ test.describe("JS Package Test", async () => {
 
     // Fill the survey
     await page.getByRole("button", { name: "Happy to help!" }).click();
-    await page.locator("label").filter({ hasText: "Somewhat disappointed" }).click();
+    await page.locator("#questionCard-1 label").filter({ hasText: "Somewhat disappointed" }).click();
     await page.locator("#questionCard-1").getByRole("button", { name: "Next" }).click();
-    await page.locator("label").filter({ hasText: "Founder" }).click();
+    await page.locator("#questionCard-2 label").filter({ hasText: "Founder" }).click();
     await page.locator("#questionCard-2").getByRole("button", { name: "Next" }).click();
     await page
       .locator("#questionCard-3")
@@ -121,7 +121,7 @@ test.describe("JS Package Test", async () => {
     await page.locator("#questionCard-4").getByLabel("textarea").fill("Much higher response rates!");
     await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
     await page.locator("#questionCard-5").getByLabel("textarea").fill("Make this end to end test pass!");
-    await page.locator("#questionCard-5").getByRole("button", { name: "Next" }).click();
+    await page.locator("#questionCard-5").getByRole("button", { name: "Finish" }).click();
 
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");

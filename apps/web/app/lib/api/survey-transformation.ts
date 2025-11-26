@@ -480,6 +480,7 @@ export const transformBlocksToQuestions = (
 export const validateSurveyInput = (input: {
   questions?: TSurveyQuestion[];
   blocks?: TSurveyBlock[];
+  updateOnly?: boolean;
 }): Result<{ hasQuestions: boolean; hasBlocks: boolean }, InvalidInputError> => {
   const hasQuestions = Boolean(input.questions && input.questions.length > 0);
   const hasBlocks = Boolean(input.blocks && input.blocks.length > 0);
@@ -492,7 +493,7 @@ export const validateSurveyInput = (input: {
     );
   }
 
-  if (!hasQuestions && !hasBlocks) {
+  if (!hasQuestions && !hasBlocks && !input.updateOnly) {
     return err(new InvalidInputError("Must provide either questions or blocks. Both cannot be empty."));
   }
 
