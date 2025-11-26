@@ -46,6 +46,7 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
+  publicDomain: string;
 }
 
 export const MainNavigation = ({
@@ -56,6 +57,7 @@ export const MainNavigation = ({
   membershipRole,
   isFormbricksCloud,
   isDevelopment,
+  publicDomain,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -286,15 +288,16 @@ export const MainNavigation = ({
                   {/* Logout */}
                   <DropdownMenuItem
                     onClick={async () => {
+                      const loginUrl = `${publicDomain}/auth/login`;
                       const route = await signOutWithAudit({
                         reason: "user_initiated",
-                        redirectUrl: "/auth/login",
+                        redirectUrl: loginUrl,
                         organizationId: organization.id,
                         redirect: false,
-                        callbackUrl: "/auth/login",
+                        callbackUrl: loginUrl,
                         clearEnvironmentId: true,
                       });
-                      router.push(route?.url || "/auth/login"); // NOSONAR // We want to check for empty strings
+                      router.push(route?.url || loginUrl); // NOSONAR // We want to check for empty strings
                     }}
                     icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
                     {t("common.logout")}

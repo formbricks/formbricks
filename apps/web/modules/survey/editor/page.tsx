@@ -6,6 +6,7 @@ import {
   SURVEY_BG_COLORS,
   UNSPLASH_ACCESS_KEY,
 } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
@@ -105,6 +106,7 @@ export const SurveyEditorPage = async (props) => {
   }
 
   const isCxMode = searchParams.mode === "cx";
+  const publicDomain = getPublicDomain();
 
   return (
     <SurveyEditor
@@ -134,6 +136,7 @@ export const SurveyEditorPage = async (props) => {
       isQuotasAllowed={isQuotasAllowed}
       quotas={quotas}
       isExternalUrlsAllowed={isExternalUrlsAllowed}
+      publicDomain={publicDomain}
     />
   );
 };

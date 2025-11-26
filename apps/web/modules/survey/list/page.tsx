@@ -70,6 +70,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
         environment={environment}
         project={projectWithRequiredProps}
         isTemplatePage={false}
+        publicDomain={publicDomain}
       />
     );
 

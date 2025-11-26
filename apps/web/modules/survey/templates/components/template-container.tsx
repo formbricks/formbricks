@@ -16,6 +16,7 @@ type TemplateContainerWithPreviewProps = {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   userId: string;
   isTemplatePage?: boolean;
+  publicDomain: string;
 };
 
 export const TemplateContainerWithPreview = ({
@@ -23,6 +24,7 @@ export const TemplateContainerWithPreview = ({
   environment,
   userId,
   isTemplatePage = true,
+  publicDomain,
 }: TemplateContainerWithPreviewProps) => {
   const { t } = useTranslation();
   const initialTemplate = customSurveyTemplate(t);
@@ -70,6 +72,7 @@ export const TemplateContainerWithPreview = ({
               environment={environment}
               languageCode={"default"}
               isSpamProtectionAllowed={false} // setting it to false as this is a template
+              publicDomain={publicDomain}
             />
           )}
         </aside>
