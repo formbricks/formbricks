@@ -8,16 +8,11 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cache } from "@/lib/cache";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
-import {
-  capturePosthogEnvironmentEvent,
-  sendPlanLimitsReachedEventToPosthogWeekly,
-} from "@/lib/posthogServer";
 import { EnvironmentStateData, getEnvironmentStateData } from "./data";
 import { getEnvironmentState } from "./environmentState";
 
 // Mock dependencies
 vi.mock("@/lib/organization/service");
-vi.mock("@/lib/posthogServer");
 vi.mock("@/lib/cache", () => ({
   cache: {
     withCache: vi.fn(),
@@ -43,7 +38,6 @@ vi.mock("@/lib/constants", () => ({
   RECAPTCHA_SECRET_KEY: "mock_recaptcha_secret_key",
   IS_RECAPTCHA_CONFIGURED: true,
   IS_PRODUCTION: true,
-  IS_POSTHOG_CONFIGURED: false,
   ENTERPRISE_LICENSE_KEY: "mock_enterprise_license_key",
 }));
 
@@ -188,9 +182,7 @@ describe("getEnvironmentState", () => {
     expect(result.data).toEqual(expectedData);
     expect(getEnvironmentStateData).toHaveBeenCalledWith(environmentId);
     expect(prisma.environment.update).not.toHaveBeenCalled();
-    expect(capturePosthogEnvironmentEvent).not.toHaveBeenCalled();
     expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(mockOrganization.id);
-    expect(sendPlanLimitsReachedEventToPosthogWeekly).not.toHaveBeenCalled();
   });
 
   test("should throw ResourceNotFoundError if environment not found", async () => {
@@ -226,7 +218,6 @@ describe("getEnvironmentState", () => {
       where: { id: environmentId },
       data: { appSetupCompleted: true },
     });
-    expect(capturePosthogEnvironmentEvent).toHaveBeenCalledWith(environmentId, "app setup completed");
     expect(result.data).toBeDefined();
   });
 
@@ -237,16 +228,6 @@ describe("getEnvironmentState", () => {
 
     expect(result.data.surveys).toEqual([]);
     expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(mockOrganization.id);
-    expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalledWith(environmentId, {
-      plan: mockOrganization.billing.plan,
-      limits: {
-        projects: null,
-        monthly: {
-          miu: null,
-          responses: mockOrganization.billing.limits.monthly.responses,
-        },
-      },
-    });
   });
 
   test("should return surveys if monthly response limit not reached (Cloud)", async () => {
@@ -256,21 +237,6 @@ describe("getEnvironmentState", () => {
 
     expect(result.data.surveys).toEqual(mockSurveys);
     expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(mockOrganization.id);
-    expect(sendPlanLimitsReachedEventToPosthogWeekly).not.toHaveBeenCalled();
-  });
-
-  test("should handle error when sending Posthog limit reached event", async () => {
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(100);
-    const posthogError = new Error("Posthog failed");
-    vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockRejectedValue(posthogError);
-
-    const result = await getEnvironmentState(environmentId);
-
-    expect(result.data.surveys).toEqual([]);
-    expect(logger.error).toHaveBeenCalledWith(
-      posthogError,
-      "Error sending plan limits reached event to Posthog"
-    );
   });
 
   test("should include recaptchaSiteKey if recaptcha variables are set", async () => {
@@ -313,7 +279,6 @@ describe("getEnvironmentState", () => {
 
     // Should return surveys even with high count since limit is null (unlimited)
     expect(result.data.surveys).toEqual(mockSurveys);
-    expect(sendPlanLimitsReachedEventToPosthogWeekly).not.toHaveBeenCalled();
   });
 
   test("should propagate database update errors", async () => {
@@ -329,21 +294,6 @@ describe("getEnvironmentState", () => {
 
     // Should throw error since Promise.all will fail if database update fails
     await expect(getEnvironmentState(environmentId)).rejects.toThrow("Database error");
-  });
-
-  test("should propagate PostHog event capture errors", async () => {
-    const incompleteEnvironmentData = {
-      ...mockEnvironmentStateData,
-      environment: {
-        ...mockEnvironmentStateData.environment,
-        appSetupCompleted: false,
-      },
-    };
-    vi.mocked(getEnvironmentStateData).mockResolvedValue(incompleteEnvironmentData);
-    vi.mocked(capturePosthogEnvironmentEvent).mockRejectedValue(new Error("PostHog error"));
-
-    // Should throw error since Promise.all will fail if PostHog event capture fails
-    await expect(getEnvironmentState(environmentId)).rejects.toThrow("PostHog error");
   });
 
   test("should include recaptchaSiteKey when IS_RECAPTCHA_CONFIGURED is true", async () => {

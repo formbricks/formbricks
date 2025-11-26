@@ -1,7 +1,6 @@
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { captureTelemetry } from "@/lib/telemetry";
 import { getWebhooksQuery } from "@/modules/api/v2/management/webhooks/lib/utils";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -47,8 +46,6 @@ export const getWebhooks = async (
 };
 
 export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webhook, ApiErrorResponseV2>> => {
-  captureTelemetry("webhook_created");
-
   const { environmentId, name, url, source, triggers, surveyIds } = webhook;
 
   try {

@@ -802,8 +802,11 @@
         "how_to_setup_description": "請按照這些步驟在您的應用程式中設定 Formbricks 小工具。",
         "receiving_data": "正在接收資料 💃🕺",
         "recheck": "重新檢查",
+        "sdk_connection_details": "SDK 連線詳細資訊",
+        "sdk_connection_details_description": "您的唯一環境 ID 和 SDK 連線 URL，用於將 Formbricks 與您的應用程式整合。",
         "setup_alert_description": "遵循 此 分步 教程 ，在 5 分鐘 內 將您的應用程式 或 網站 連線 。",
-        "setup_alert_title": "如何 連線"
+        "setup_alert_title": "如何 連線",
+        "webapp_url": "SDK 連接 URL"
       },
       "general": {
         "cannot_delete_only_project": "這是您唯一的專案，無法刪除。請先建立新專案。",
@@ -1353,7 +1356,7 @@
         "error_saving_changes": "儲存變更時發生錯誤",
         "even_after_they_submitted_a_response_e_g_feedback_box": "允許多次回應；即使已提交回應仍繼續顯示（例如：意見回饋框）。",
         "everyone": "所有人",
-        "external_urls_paywall_tooltip": "請升級以自訂 external URL 。 Phishing 預防。",
+        "external_urls_paywall_tooltip": "請升級至 Startup 計劃以自訂外部 URL。這有助於防止網路釣魚攻擊。",
         "fallback_missing": "遺失的回退",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "'{'fieldId'}' 用於問題 '{'questionIndex'}' 的邏輯中。請先從邏輯中移除。",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "隱藏欄位 \"{fieldId}\" 正被使用於 \"{quotaName}\" 配額中",

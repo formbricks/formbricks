@@ -331,7 +331,7 @@
     "project_not_found": "Projeto não encontrado",
     "project_permission_not_found": "Permissão do projeto não encontrada",
     "projects": "Projetos",
-    "question": "Pergunta",
+    "question": "pergunta",
     "question_id": "ID da Pergunta",
     "questions": "Perguntas",
     "quota": "Cota",
@@ -802,8 +802,11 @@
         "how_to_setup_description": "Siga esses passos para configurar o widget do Formbricks no seu app.",
         "receiving_data": "Recebendo dados 💃🕺",
         "recheck": "Verificar novamente",
+        "sdk_connection_details": "Detalhes de Conexão do SDK",
+        "sdk_connection_details_description": "Seu ID de ambiente único e URL de conexão do SDK para integrar o Formbricks com seu aplicativo.",
         "setup_alert_description": "Siga este tutorial passo a passo para conectar seu app ou site em menos de 5 minutos.",
-        "setup_alert_title": "Como conectar"
+        "setup_alert_title": "Como conectar",
+        "webapp_url": "URL de conexão do SDK"
       },
       "general": {
         "cannot_delete_only_project": "Esse é seu único projeto, não pode ser deletado. Crie um novo projeto primeiro.",
@@ -1353,7 +1356,7 @@
         "error_saving_changes": "Erro ao salvar alterações",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Permitir múltiplas respostas; continuar mostrando mesmo após uma resposta (ex.: caixa de feedback).",
         "everyone": "Todo mundo",
-        "external_urls_paywall_tooltip": "Por favor, faça upgrade para personalizar o URL externo. Prevenção de phishing.",
+        "external_urls_paywall_tooltip": "Por favor, faça upgrade para o plano Startup para personalizar URLs externos. Isso nos ajuda a prevenir phishing.",
         "fallback_missing": "Faltando alternativa",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} é usado na lógica da pergunta {questionIndex}. Por favor, remova-o da lógica primeiro.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Campo oculto \"{fieldId}\" está sendo usado na cota \"{quotaName}\"",

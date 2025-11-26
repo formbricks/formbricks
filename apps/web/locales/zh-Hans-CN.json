@@ -802,8 +802,11 @@
         "how_to_setup_description": "遵循这些步骤在你的应用中设置 Formbricks 小部件。",
         "receiving_data": "接收 数据 💃🕺",
         "recheck": "重新检查",
+        "sdk_connection_details": "SDK 连接详情",
+        "sdk_connection_details_description": "您唯一的环境 ID 和 SDK 连接 URL，用于将 Formbricks 与您的应用程序集成。",
         "setup_alert_description": "按照 此 步骤教程 在 5 分钟 以内 连接 你的 应用 或 网站。",
-        "setup_alert_title": "如何 连接"
+        "setup_alert_title": "如何 连接",
+        "webapp_url": "SDK连接URL"
       },
       "general": {
         "cannot_delete_only_project": "这是 您 唯一的 项目，不可 删除。请 先 创建一个新的 项目。",
@@ -1353,7 +1356,7 @@
         "error_saving_changes": "保存 更改 时 出错",
         "even_after_they_submitted_a_response_e_g_feedback_box": "允许多次回应；即使已提交回应，仍会继续显示（例如，反馈框）。",
         "everyone": "所有 人",
-        "external_urls_paywall_tooltip": "请升级 以自定义 外部 URL 。 网络钓鱼 预防 。",
+        "external_urls_paywall_tooltip": "请升级到 Startup 计划以自定义外部 URL。这有助于我们防止网络钓鱼。",
         "fallback_missing": "备用 缺失",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "\"{fieldId} 在 问题 {questionIndex} 的 逻辑 中 使用。请 先 从 逻辑 中 删除 它。\"",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "隐藏 字段 \"{fieldId}\" 正在 被 \"{quotaName}\" 配额 使用",

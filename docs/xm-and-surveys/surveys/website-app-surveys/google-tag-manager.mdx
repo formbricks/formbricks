@@ -1,0 +1,223 @@
+---
+title: "Google Tag Manager"
+description: "Deploy Formbricks surveys through GTM without modifying your website code."
+icon: "tags"
+---
+
+## Prerequisites
+
+- [Google Tag Manager](https://tagmanager.google.com/) installed on your website
+- Your Formbricks **Environment ID** (Settings > Configuration > Website & App Connection)
+- Your **App URL**: `https://app.formbricks.com` (or your self-hosted URL)
+
+<Note>
+ Use PUBLIC_URL for multi-domain setups, WEBAPP_URL for single-domain setups.
+</Note>
+
+## Basic Setup
+
+<Steps>
+  <Step title="Create a Custom HTML tag in GTM">
+    1. Create a new tag with preferred name e.g. "Formbricks Intercept Surveys"
+    2. Tag Type: Custom HTML
+    3. Paste the code from Step 2. Make sure to replace `<your-environment-id>` and if you self-host, replace `<your-app-url>`
+  </Step>
+
+  <Step title="Add initialization script">
+
+```html
+<script type="text/javascript">
+!function(){
+    var appUrl = "https://app.formbricks.com"; // REPLACE ONLY IF YOUR SELF-HOST
+    var environmentId = "<your-environment-id>"; // REPLACE
+    var t=document.createElement("script");
+    t.type="text/javascript";
+    t.async=!0;
+    t.src=appUrl+"/js/formbricks.umd.cjs";
+    t.onload=function(){
+        window.formbricks && window.formbricks.setup({
+            environmentId: environmentId,
+            appUrl: appUrl
+        });
+    };
+    var e=document.getElementsByTagName("script")[0];
+    e.parentNode.insertBefore(t,e);
+}();
+</script>
+```
+
+![Add GTM Custom HTML tag](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/create-a-tag.webp)
+
+  </Step>
+
+  <Step title="Set trigger">
+    1. Trigger: **All Pages** - Page View (default) or use case specific event
+    2. Save and publish
+    ![Add a trigger](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/create-a-trigger.webp)
+
+  </Step>
+
+  <Step title="Test">
+    1. Use GTM Preview mode
+    2. Verify the tag fires
+    3. Add `?formbricksDebug=true` to the URL to see test logs in browser console (see [Debugging Mode](/xm-and-surveys/surveys/website-app-surveys/framework-guides#debugging-formbricks-integration) for more details)
+  </Step>
+</Steps>
+
+
+## User Identification
+
+Identify users to enable targeting and attributes. Learn more about [user identification](/xm-and-surveys/surveys/website-app-surveys/user-identification).
+
+<Note>
+  User identification is part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license). 
+</Note>
+
+<Steps>
+  <Step title="Create GTM variables">
+   1. Go to Variables on GTM dashboard
+   2. Create new User-defined variable
+   3. Name it (e.g., "User ID")
+   4. Variable Type: Data Layer Variable
+   5. Data Layer Variable: "userId"
+   6. Save and publish
+   7. Repeat for attributes you want to track e.g. "userEmail" and "userPlan" (optional)
+
+  ![Create a variable](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/create-a-variable.webp)
+  </Step>
+
+  <Step title="Create identification tag">
+    New Custom HTML tag named "Formbricks - User":
+
+```html
+<script>
+(function() {
+    var check = setInterval(function() {
+        if (window.formbricks && window.formbricks.setUserId) {
+            clearInterval(check);
+            var userId = {{User ID}};
+            if (userId) {
+                window.formbricks.setUserId(userId);
+                var attrs = {};
+                if ({{User Email}}) attrs.email = {{User Email}};
+                if ({{User Plan}}) attrs.plan = {{User Plan}};
+                if (Object.keys(attrs).length) {
+                    window.formbricks.setAttributes(attrs);
+                }
+            }
+        }
+    }, 100);
+    setTimeout(function() { clearInterval(check); }, 10000);
+})();
+</script>
+```
+
+  </Step>
+
+  <Step title="Set trigger and push data">
+    1. Create a custom event trigger in GTM
+    2. Trigger Type: Custom Event
+    3. Event name: `user-login` (or your preferred event name)
+    4. Attach this trigger to your "Formbricks - User" tag
+    5. Save and publish
+
+    ![User Login Trigger](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/user-login-trigger.webp)
+
+    6. In your code, push data with the same event name:
+
+```javascript
+window.dataLayer = window.dataLayer || [];
+window.dataLayer.push({
+    'event': 'user-login',
+    'userId': 'user-123',
+    'userEmail': 'user@example.com',
+    'userPlan': 'premium'
+});
+```
+
+  </Step>
+</Steps>
+
+## Track Custom Events
+
+<Steps>
+  <Step title="Create code action in Formbricks">
+    Add code action via Formbricks UI
+
+    ![Add a code action to open source in app survey](/images/xm-and-surveys/surveys/website-app-surveys/actions/code-action.webp "Add a code action to open source in app survey")
+  </Step>
+
+  <Step title="Create GTM variable for Event Name">
+    1. Go to Variables on GTM dashboard
+    2. Create new User-defined variable
+    3. Name it "Event Name"
+    4. Variable Type: Data Layer Variable
+    5. Data Layer Variable: "eventName"
+    6. Save and publish
+
+    ![Create Event Variable](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/create-event-variable.webp)
+  
+  </Step>
+
+  <Step title="Create event tracking tag">
+    New Custom HTML tag:
+
+```html
+<script>
+if (window.formbricks && window.formbricks.track) {
+    window.formbricks.track({{Event Name}});
+}
+</script>
+```
+
+  </Step>
+
+  <Step title="Create custom trigger">
+    1. Create a custom event trigger in GTM
+    2. Trigger Type: Custom Event
+    3. Event name: `eventName` or name that matches with your event in code.
+    4. Attach this trigger to your event tracking tag
+    5. Save and publish
+
+    ![Track Event Trigger](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/track-event-trigger.webp)
+
+  </Step>
+
+  <Step title="Fire events from your site">
+
+```javascript
+// Track button click
+window.dataLayer.push({
+    'event': 'eventName',
+    'eventName': 'code-action'
+});
+```
+
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+**Surveys not showing?**
+- Use GTM Preview mode to check tag firing
+- Add `?formbricksDebug=true` to your URL
+- Check browser console for errors
+- Wait 1 minute for the Server Cache to refresh
+
+**User ID not working?**
+- Verify Data Layer push syntax
+- Check GTM variables are reading correct values
+- Ensure user tag fires after initialization
+
+**Events not tracking?**
+- Confirm `window.formbricks` exists before calling track
+- Match event names exactly with Formbricks action names
+- Check timing - Formbricks must be initialized first
+
+## Need Help?
+
+- [GitHub Discussions](https://github.com/formbricks/formbricks/discussions)
+- [Framework Guides](/xm-and-surveys/surveys/website-app-surveys/framework-guides)
+- [Actions](/xm-and-surveys/surveys/website-app-surveys/actions)
+- [User Identification](/xm-and-surveys/surveys/website-app-surveys/user-identification)
+

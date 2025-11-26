@@ -331,7 +331,7 @@
     "project_not_found": "Project niet gevonden",
     "project_permission_not_found": "Projecttoestemming niet gevonden",
     "projects": "Projecten",
-    "question": "Vraag",
+    "question": "vraag",
     "question_id": "Vraag-ID",
     "questions": "Vragen",
     "quota": "Quotum",
@@ -802,8 +802,11 @@
         "how_to_setup_description": "Volg deze stappen om de Formbricks-widget in uw app in te stellen.",
         "receiving_data": "Gegevens ontvangen 💃🕺",
         "recheck": "Controleer opnieuw",
+        "sdk_connection_details": "SDK-verbindingsdetails",
+        "sdk_connection_details_description": "Uw unieke Environment ID en SDK-verbindings-URL voor integratie van Formbricks met uw applicatie.",
         "setup_alert_description": "Volg deze stapsgewijze handleiding om uw app of website in minder dan 5 minuten te verbinden.",
-        "setup_alert_title": "Hoe te verbinden"
+        "setup_alert_title": "Hoe te verbinden",
+        "webapp_url": "SDK-verbindings-URL"
       },
       "general": {
         "cannot_delete_only_project": "Dit is uw enige project. Het kan niet worden verwijderd. Maak eerst een nieuw project aan.",
@@ -1353,7 +1356,7 @@
         "error_saving_changes": "Fout bij het opslaan van wijzigingen",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Meerdere reacties toestaan; blijf tonen, zelfs na een reactie (bijv. feedbackbox).",
         "everyone": "Iedereen",
-        "external_urls_paywall_tooltip": "Upgrade om de externe URL aan te passen. Phishing-preventie.",
+        "external_urls_paywall_tooltip": "Upgrade naar het Startup-abonnement om externe URL's aan te passen. Dit helpt ons phishing te voorkomen.",
         "fallback_missing": "Terugval ontbreekt",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} wordt gebruikt in de logica van vraag {questionIndex}. Verwijder het eerst uit de logica.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Verborgen veld \"{fieldId}\" wordt gebruikt in het \"{quotaName}\" quotum",

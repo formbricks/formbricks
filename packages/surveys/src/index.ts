@@ -4,7 +4,7 @@ import { RenderSurvey } from "@/components/general/render-survey";
 import { I18nProvider } from "@/components/i18n/provider";
 import { FILE_PICK_EVENT } from "@/lib/constants";
 import { getI18nLanguage } from "@/lib/i18n-utils";
-import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
+import { addCustomThemeToDom, addStylesToDom, setStyleNonce } from "@/lib/styles";
 
 export const renderSurveyInline = (props: SurveyContainerProps) => {
   const inlineProps: SurveyContainerProps = {
@@ -70,15 +70,17 @@ export const renderSurveyModal = renderSurvey;
 
 export const onFilePick = (files: { name: string; type: string; base64: string }[]) => {
   const fileUploadEvent = new CustomEvent(FILE_PICK_EVENT, { detail: files });
-  window.dispatchEvent(fileUploadEvent);
+  globalThis.dispatchEvent(fileUploadEvent);
 };
 
 // Initialize the global formbricksSurveys object if it doesn't exist
-if (typeof window !== "undefined") {
-  window.formbricksSurveys = {
+if (globalThis.window !== undefined) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type definition is in @formbricks/types package
+  (globalThis.window as any).formbricksSurveys = {
     renderSurveyInline,
     renderSurveyModal,
     renderSurvey,
     onFilePick,
-  };
+    setNonce: setStyleNonce,
+  } as typeof globalThis.window.formbricksSurveys;
 }

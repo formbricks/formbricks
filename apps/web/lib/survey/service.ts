@@ -13,7 +13,6 @@ import {
 } from "@/lib/organization/service";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
-import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { validateInputs } from "../utils/validate";
 import { checkForInvalidImagesInQuestions, transformPrismaSurvey } from "./utils";
 
@@ -672,11 +671,6 @@ export const createSurvey = async (
     if (createdBy) {
       await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy, organization.id);
     }
-
-    await capturePosthogEnvironmentEvent(survey.environmentId, "survey created", {
-      surveyId: survey.id,
-      surveyType: survey.type,
-    });
 
     return transformedSurvey;
   } catch (error) {

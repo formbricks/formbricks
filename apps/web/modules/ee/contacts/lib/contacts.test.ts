@@ -68,7 +68,6 @@ const mockEnvironmentId = "env-123";
 const mockContactId = "contact-123";
 const mockSegmentId = "segment-123";
 const mockSurveyId = "survey-123";
-
 const mockPrismaContact = {
   id: mockContactId,
   createdAt: new Date("2024-01-01"),
