@@ -232,7 +232,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {
         await page.getByText(surveys.createAndSubmit.ranking.choices[i]).click();
       }
-      await page.locator("#questionCard-12").getByRole("button", { name: "Finish" }).click();
+      await page.locator("#questionCard-12").getByRole("button", { name: "Next" }).click();
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     });
@@ -979,7 +979,7 @@ test.describe("Testing Survey with advanced logic", async () => {
         .fill("This is my city");
       await expect(page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.zip)).toBeVisible();
       await page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.zip).fill("12345");
-      await page.locator("#questionCard-13").getByRole("button", { name: "Finish" }).click();
+      await page.locator("#questionCard-13").getByRole("button", { name: "Next" }).click();
 
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
