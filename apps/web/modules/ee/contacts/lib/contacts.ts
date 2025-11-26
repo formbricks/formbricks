@@ -350,7 +350,7 @@ export const createContactsFromCSV = async (
           case "update": {
             // if the record has a userId, check if it already exists
             const existingUserId = existingUserIds.find(
-              (attr) => attr.value === normalizedRecord.userId && attr.contactId !== existingContact.id
+              (attr) => attr.value === normalizedRecord.userid && attr.contactId !== existingContact.id
             );
             let recordToProcess = { ...normalizedRecord };
             if (existingUserId) {
@@ -407,7 +407,7 @@ export const createContactsFromCSV = async (
           case "overwrite": {
             // if the record has a userId, check if it already exists
             const existingUserId = existingUserIds.find(
-              (attr) => attr.value === normalizedRecord.userId && attr.contactId !== existingContact.id
+              (attr) => attr.value === normalizedRecord.userid && attr.contactId !== existingContact.id
             );
             let recordToProcess = { ...normalizedRecord };
             if (existingUserId) {

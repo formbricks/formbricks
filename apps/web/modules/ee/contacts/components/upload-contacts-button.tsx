@@ -354,7 +354,7 @@ export const UploadContactsCSVButton = ({
                       <h3 className="font-medium text-slate-500">
                         {t("environments.contacts.upload_contacts_modal_preview")}
                       </h3>
-                      <div className="h-[300px] w-full overflow-auto rounded-md border border-slate-300">
+                      <div className="max-h-[300px] w-full overflow-auto rounded-md border border-slate-300">
                         <CsvTable data={[...csvResponse.slice(0, 11)]} />
                       </div>
                     </div>
