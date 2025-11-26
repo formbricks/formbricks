@@ -1,7 +1,6 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import React from "react";
@@ -11,7 +10,6 @@ import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { Badge } from "@/modules/ui/components/badge";
 import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -24,7 +22,6 @@ type CardStylingSettingsProps = {
   isSettingsPage?: boolean;
   surveyType?: TSurveyType;
   disabled?: boolean;
-  project: Project;
   form: UseFormReturn<TProjectStyling | TSurveyStyling>;
 };
 
@@ -33,14 +30,12 @@ export const CardStylingSettings = ({
   surveyType,
   disabled,
   open,
-  project,
   setOpen,
   form,
 }: CardStylingSettingsProps) => {
   const { t } = useTranslation();
   const isAppSurvey = surveyType === "app";
   const surveyTypeDerived = isAppSurvey ? "App" : "Link";
-  const isLogoVisible = !!project.logo?.url;
 
   const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "straight";
   const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "straight";
@@ -221,35 +216,6 @@ export const CardStylingSettings = ({
               )}
             />
           </div>
-
-          {isLogoVisible && (!surveyType || surveyType === "link") && !isSettingsPage && (
-            <div className="flex items-center space-x-1">
-              <FormField
-                control={form.control}
-                name="isLogoHidden"
-                render={({ field }) => (
-                  <FormItem className="flex w-full items-center gap-2 space-y-0">
-                    <FormControl>
-                      <Switch
-                        id="isLogoHidden"
-                        checked={!!field.value}
-                        onCheckedChange={(checked) => field.onChange(checked)}
-                      />
-                    </FormControl>
-                    <div>
-                      <FormLabel>
-                        {t("environments.surveys.edit.hide_logo")}
-                        <Badge type="gray" size="normal" text={t("common.link_surveys")} />
-                      </FormLabel>
-                      <FormDescription>
-                        {t("environments.surveys.edit.hide_the_logo_in_this_specific_survey")}
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-          )}
 
           {(!surveyType || isAppSurvey) && (
             <div className="flex max-w-xs flex-col gap-4">

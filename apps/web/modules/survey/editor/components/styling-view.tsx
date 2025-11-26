@@ -11,6 +11,7 @@ import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { defaultStyling } from "@/lib/styling/constants";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
+import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { BackgroundStylingCard } from "@/modules/ui/components/background-styling-card";
 import { Button } from "@/modules/ui/components/button";
@@ -64,6 +65,7 @@ export const StylingView = ({
   const setOverwriteThemeStyling = (value: boolean) => form.setValue("overwriteThemeStyling", value);
 
   const [formStylingOpen, setFormStylingOpen] = useState(false);
+  const [logoSettingsOpen, setLogoSettingsOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [stylingOpen, setStylingOpen] = useState(false);
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
@@ -88,6 +90,7 @@ export const StylingView = ({
   useEffect(() => {
     if (!overwriteThemeStyling) {
       setFormStylingOpen(false);
+      setLogoSettingsOpen(false);
       setCardStylingOpen(false);
       setStylingOpen(false);
     }
@@ -198,21 +201,31 @@ export const StylingView = ({
             setOpen={setCardStylingOpen}
             surveyType={localSurvey.type}
             disabled={!overwriteThemeStyling}
-            project={project}
             form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
           />
 
           {localSurvey.type === "link" && (
-            <BackgroundStylingCard
-              open={stylingOpen}
-              setOpen={setStylingOpen}
-              environmentId={environmentId}
-              colors={colors}
-              disabled={!overwriteThemeStyling}
-              isUnsplashConfigured={isUnsplashConfigured}
-              form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
-              isStorageConfigured={isStorageConfigured}
-            />
+            <>
+              <BackgroundStylingCard
+                open={stylingOpen}
+                setOpen={setStylingOpen}
+                environmentId={environmentId}
+                colors={colors}
+                disabled={!overwriteThemeStyling}
+                isUnsplashConfigured={isUnsplashConfigured}
+                form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+                isStorageConfigured={isStorageConfigured}
+              />
+
+              <LogoSettingsCard
+                open={logoSettingsOpen}
+                setOpen={setLogoSettingsOpen}
+                disabled={!overwriteThemeStyling}
+                environmentId={environmentId}
+                form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+                isStorageConfigured={isStorageConfigured}
+              />
+            </>
           )}
 
           {!isCxMode && (

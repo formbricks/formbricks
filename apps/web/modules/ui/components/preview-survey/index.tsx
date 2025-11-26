@@ -240,7 +240,7 @@ export const PreviewSurvey = ({
                 <div className="flex h-full w-full flex-col justify-center px-1">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
-                      <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
+                      <ClientLogo environmentId={environment.id} projectLogo={project.logo} surveyLogo={styling.logo} previewSurvey />
                     )}
                   </div>
                   <div className="z-10 w-full rounded-lg border border-transparent">
@@ -340,7 +340,7 @@ export const PreviewSurvey = ({
                 isEditorView>
                 <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (
-                    <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
+                    <ClientLogo environmentId={environment.id} projectLogo={project.logo} surveyLogo={styling.logo} previewSurvey />
                   )}
                 </div>
                 <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">

@@ -168,6 +168,10 @@ const ZSurveyBase = z.object({
       background: ZSurveyStylingBackground.nullish(),
       hideProgressBar: z.boolean().nullish(),
       isLogoHidden: z.boolean().nullish(),
+      logo: z.object({
+        url: z.string().optional(),
+        bgColor: z.string().optional(),
+      }).nullish(),
     })
     .nullable()
     .openapi({

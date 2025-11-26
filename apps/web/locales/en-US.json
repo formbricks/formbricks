@@ -1255,7 +1255,7 @@
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Automatically close the survey if the user does not respond after certain number of seconds.",
         "automatically_mark_the_survey_as_complete_after": "Automatically mark the survey as complete after",
         "back_button_label": "\"Back\" Button Label",
-        "background_styling": "Background Styling",
+        "background_styling": "Background styling",
         "bold": "Bold",
         "brand_color": "Brand color",
         "brightness": "Brightness",
@@ -1270,7 +1270,7 @@
         "card_arrangement_for_survey_type_derived": "Card Arrangement for {surveyTypeDerived} Surveys",
         "card_background_color": "Card background color",
         "card_border_color": "Card border color",
-        "card_styling": "Card Styling",
+        "card_styling": "Card styling",
         "casual": "Casual",
         "caution_edit_duplicate": "Duplicate & edit",
         "caution_edit_published_survey": "Edit a published survey?",
@@ -1420,6 +1420,7 @@
         "hide_back_button": "Hide 'Back' button",
         "hide_back_button_description": "Do not display the back button in the survey",
         "hide_logo": "Hide logo",
+        "hide_logo_from_survey": "Hide logo from this survey",
         "hide_progress_bar": "Hide progress bar",
         "hide_the_logo_in_this_specific_survey": "Hide the logo in this specific survey",
         "hostname": "Hostname",
@@ -1466,6 +1467,8 @@
         "link_survey_description": "Share a link to a survey page or embed it in a web page or email.",
         "load_segment": "Load segment",
         "logic_error_warning": "Changing will cause logic errors",
+        "logo_settings": "Logo settings",
+        "customize_survey_logo": "Customize the survey logo",
         "logic_error_warning_text": "Changing the question type will remove the logic conditions from this question",
         "long_answer": "Long answer",
         "lower_label": "Lower Label",
@@ -1483,6 +1486,7 @@
         "no_languages_found_add_first_one_to_get_started": "No languages found. Add the first one to get started.",
         "no_option_found": "No option found",
         "no_recall_items_found": "No recall items found ",
+        "no_survey_logo_selected": "No survey logo selected",
         "no_variables_yet_add_first_one_below": "No variables yet. Add the first one below.",
         "number": "Number",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Once set, the default language for this survey can only be changed by disabling the multi-language option and deleting all translations.",
@@ -1510,6 +1514,7 @@
         "prevent_double_submission_description": "Only allow 1 response per email address",
         "protect_survey_with_pin": "Protect survey with a PIN",
         "protect_survey_with_pin_description": "Only users who have the PIN can access the survey.",
+        "project_logo_will_be_used": "Project logo will be used",
         "publish": "Publish",
         "question": "Question",
         "question_color": "Question color",
@@ -1617,6 +1622,7 @@
         "survey_completed_heading": "Survey Completed",
         "survey_completed_subheading": "This free & open-source survey has been closed",
         "survey_display_settings": "Survey Display Settings",
+        "overwrite_survey_logo": "Set custom survey logo",
         "survey_placement": "Survey Placement",
         "survey_trigger": "Survey Trigger",
         "switch_multi_lanugage_on_to_get_started": "Switch multi-lanugage on to get started \uD83D\uDC49",
@@ -1830,6 +1836,7 @@
         "configure_alerts": "Configure alerts",
         "congrats": "Congrats! Your survey is live.",
         "connect_your_website_or_app_with_formbricks_to_get_started": "Connect your website or app with Formbricks to get started.",
+        "csatTooltip": "Customer Satisfaction Score measures the percentage of respondents who gave top ratings (based on the rating scale).",
         "current_count": "Current count",
         "custom_range": "Custom range...",
         "delete_all_existing_responses_and_displays": "Delete all existing responses and displays",
@@ -1843,6 +1850,11 @@
         "filtered_responses_csv": "Filtered responses (CSV)",
         "filtered_responses_excel": "Filtered responses (Excel)",
         "generating_qr_code": "Generating QR code",
+<<<<<<< Updated upstream
+=======
+        "go_to_setup_checklist": "Go to Setup Checklist \uD83D\uDC49",
+        "grouped": "Grouped",
+>>>>>>> Stashed changes
         "impressions": "Impressions",
         "impressions_tooltip": "Number of times the survey has been viewed.",
         "in_app": {
@@ -1877,6 +1889,10 @@
         "includes_all": "Includes all",
         "includes_either": "Includes either",
         "individual": "Individual",
+<<<<<<< Updated upstream
+=======
+        "install_widget": "Install Formbricks Widget",
+>>>>>>> Stashed changes
         "is_equal_to": "Is equal to",
         "is_less_than": "Is less than",
         "last_30_days": "Last 30 days",
@@ -1890,6 +1906,10 @@
         "other_values_found": "Other values found",
         "overall": "Overall",
         "promoters": "Promoters",
+<<<<<<< Updated upstream
+=======
+        "promotersTooltip": "Percentage of respondents who scored 9-10, indicating high likelihood to recommend.",
+>>>>>>> Stashed changes
         "qr_code": "QR code",
         "qr_code_description": "Responses collected via QR code are anonymous.",
         "qr_code_download_failed": "QR code download failed",
