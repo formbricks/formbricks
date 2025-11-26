@@ -10,7 +10,7 @@ const logicRules = getLogicRules(mockT as unknown as TFunction);
 
 describe("getLogicRules", () => {
   test("should return correct structure for question rules", () => {
-    expect(logicRules).toHaveProperty("question");
+    expect(logicRules).toHaveProperty("element");
     expect(logicRules.element).toBeInstanceOf(Object);
   });
 

@@ -477,7 +477,7 @@ describe("getQuestionSummary", () => {
       responses,
       mockDropOff
     );
-    const openTextSummary = summary.find((s: any) => s.question?.id === "q_open");
+    const openTextSummary = summary.find((s: any) => s.element?.id === "q_open");
     expect(openTextSummary?.type).toBe(TSurveyElementTypeEnum.OpenText);
     expect(openTextSummary?.responseCount).toBe(1);
     // @ts-expect-error
@@ -491,7 +491,7 @@ describe("getQuestionSummary", () => {
       responses,
       mockDropOff
     );
-    const multiSingleSummary = summary.find((s: any) => s.question?.id === "q_multi_single");
+    const multiSingleSummary = summary.find((s: any) => s.element?.id === "q_multi_single");
     expect(multiSingleSummary?.type).toBe(TSurveyElementTypeEnum.MultipleChoiceSingle);
     expect(multiSingleSummary?.responseCount).toBe(1);
     // @ts-expect-error

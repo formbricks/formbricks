@@ -69,10 +69,10 @@ const NoBaseFoundError = () => {
   );
 };
 
-const renderQuestionSelection = ({
+const renderElementSelection = ({
   t,
   selectedSurvey,
-  questions,
+  elements,
   control,
   includeVariables,
   setIncludeVariables,
@@ -85,7 +85,7 @@ const renderQuestionSelection = ({
 }: {
   t: TFunction;
   selectedSurvey: TSurvey;
-  questions: TSurveyElement[];
+  elements: TSurveyElement[];
   control: Control<IntegrationModalInputs>;
   includeVariables: boolean;
   setIncludeVariables: (value: boolean) => void;
@@ -102,29 +102,29 @@ const renderQuestionSelection = ({
         <Label htmlFor="Surveys">{t("common.questions")}</Label>
         <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
           <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-            {questions.map((question) => (
+            {elements.map((element) => (
               <Controller
-                key={question.id}
+                key={element.id}
                 control={control}
-                name={"questions"}
+                name={"elements"}
                 render={({ field }) => (
                   <div className="my-1 flex items-center space-x-2">
-                    <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                    <label htmlFor={element.id} className="flex cursor-pointer items-center">
                       <Checkbox
                         type="button"
-                        id={question.id}
-                        value={question.id}
+                        id={element.id}
+                        value={element.id}
                         className="bg-white"
-                        checked={field.value?.includes(question.id)}
+                        checked={field.value?.includes(element.id)}
                         onCheckedChange={(checked) => {
                           return checked
-                            ? field.onChange([...field.value, question.id])
-                            : field.onChange(field.value?.filter((value) => value !== question.id));
+                            ? field.onChange([...(field.value || []), element.id])
+                            : field.onChange(field.value?.filter((value) => value !== element.id) || []);
                         }}
                       />
                       <span className="ml-2">
                         {getTextContent(
-                          recallToHeadline(question.headline, selectedSurvey, false, "default")["default"]
+                          recallToHeadline(element.headline, selectedSurvey, false, "default")["default"]
                         )}
                       </span>
                     </label>
@@ -199,7 +199,7 @@ export const AddIntegrationModal = ({
   };
 
   const selectedSurvey = surveys.find((item) => item.id === survey);
-  const questions = useMemo(
+  const elements = useMemo(
     () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
     [selectedSurvey]
   );
@@ -218,7 +218,7 @@ export const AddIntegrationModal = ({
         throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
 
-      if (data.questions.length === 0) {
+      if (data.elements.length === 0) {
         throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
 
@@ -226,9 +226,9 @@ export const AddIntegrationModal = ({
       const integrationData: TIntegrationAirtableConfigData = {
         surveyId: selectedSurvey.id,
         surveyName: selectedSurvey.name,
-        questionIds: data.questions,
-        questions:
-          data.questions.length === questions.length
+        elementIds: data.elements,
+        elements:
+          data.elements.length === elements.length
             ? t("common.all_questions")
             : t("common.selected_questions"),
         createdAt: new Date(),
@@ -376,7 +376,7 @@ export const AddIntegrationModal = ({
                           required
                           onValueChange={(val) => {
                             field.onChange(val);
-                            setValue("questions", []);
+                            setValue("elements", []);
                           }}
                           defaultValue={defaultData?.survey}>
                           <SelectTrigger>
@@ -402,10 +402,10 @@ export const AddIntegrationModal = ({
 
               {survey &&
                 selectedSurvey &&
-                renderQuestionSelection({
+                renderElementSelection({
                   t,
                   selectedSurvey,
-                  questions,
+                  elements: elements,
                   control,
                   includeVariables,
                   setIncludeVariables,

@@ -298,12 +298,12 @@ describe("Response Processing", () => {
       const mapping = getElementResponseMapping(mockSurvey, mockResponse);
       expect(mapping).toHaveLength(2);
       expect(mapping[0]).toEqual({
-        question: "Question 1",
+        element: "Question 1",
         response: "Answer 1",
         type: TSurveyElementTypeEnum.OpenText,
       });
       expect(mapping[1]).toEqual({
-        question: "Question 2",
+        element: "Question 2",
         response: "Option 1; Option 2",
         type: TSurveyElementTypeEnum.MultipleChoiceMulti,
       });
