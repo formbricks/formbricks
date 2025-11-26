@@ -244,11 +244,27 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
             {validationErrors.length > 0 && (
               <Alert variant="error">
                 <AlertTitle>{t("environments.surveys.import_survey_errors")}</AlertTitle>
-                <AlertDescription>
-                  <ul className="list-disc pl-4 text-sm">
-                    {validationErrors.map((error, i) => (
-                      <li key={i}>{error}</li>
-                    ))}
+                <AlertDescription className="max-h-60 overflow-y-auto">
+                  <ul className="space-y-2 text-sm">
+                    {validationErrors.map((error, i) => {
+                      // Check if the error contains a field path (format: 'Field "path":')
+                      const fieldMatch = error.match(/^Field "([^"]+)": (.+)$/);
+                      if (fieldMatch) {
+                        return (
+                          <li key={i} className="flex flex-col gap-1">
+                            <code className="rounded bg-red-50 px-1.5 py-0.5 font-mono text-xs text-red-800">
+                              {fieldMatch[1]}
+                            </code>
+                            <span className="text-slate-700">{fieldMatch[2]}</span>
+                          </li>
+                        );
+                      }
+                      return (
+                        <li key={i} className="text-slate-700">
+                          {error}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </AlertDescription>
               </Alert>
@@ -257,7 +273,7 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
             {validationWarnings.length > 0 && (
               <Alert variant="warning">
                 <AlertTitle>{t("environments.surveys.import_survey_warnings")}</AlertTitle>
-                <AlertDescription>
+                <AlertDescription className="max-h-60 overflow-y-auto">
                   <ul className="list-disc pl-4 text-sm">
                     {validationWarnings.map((warningKey, i) => (
                       <li key={i}>{t(`environments.surveys.${warningKey}`)}</li>
@@ -269,7 +285,7 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
 
             {validationInfos.length > 0 && (
               <Alert variant="info">
-                <AlertDescription>
+                <AlertDescription className="max-h-60 overflow-y-auto">
                   <ul className="list-disc pl-4 text-sm">
                     {validationInfos.map((infoKey, i) => (
                       <li key={i}>{t(`environments.surveys.${infoKey}`)}</li>

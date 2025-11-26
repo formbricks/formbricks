@@ -323,7 +323,10 @@ export const validateSurveyImportAction = authenticatedActionClient
     if ("error" in parseResult) {
       return {
         valid: false,
-        errors: [parseResult.error],
+        errors:
+          parseResult.details && parseResult.details.length > 0
+            ? [parseResult.error, ...parseResult.details]
+            : [parseResult.error],
         warnings: [],
         infos: [],
         surveyName: parsedInput.surveyData.name || "",
@@ -428,9 +431,10 @@ export const importSurveyAction = authenticatedActionClient
       // Step 1: Parse and validate survey payload
       const parseResult = parseSurveyPayload(parsedInput.surveyData);
       if ("error" in parseResult) {
-        const errorMessage = parseResult.details
-          ? `${parseResult.error}:\n${parseResult.details.join("\n")}`
-          : parseResult.error;
+        const errorMessage =
+          parseResult.details && parseResult.details.length > 0
+            ? `${parseResult.error}:\n${parseResult.details.join("\n")}`
+            : parseResult.error;
         throw new Error(`Validation failed: ${errorMessage}`);
       }
       const { surveyInput, exportedLanguages, triggers } = parseResult;

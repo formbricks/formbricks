@@ -30,7 +30,10 @@ export const parseSurveyPayload = (surveyData: unknown): TParsedPayload | TParse
   if (!languagesResult.success) {
     return {
       error: "Invalid languages format",
-      details: languagesResult.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`),
+      details: languagesResult.error.errors.map((e) => {
+        const path = e.path.length > 0 ? `languages.${e.path.join(".")}` : "languages";
+        return `Field "${path}": ${e.message}`;
+      }),
     };
   }
   const exportedLanguages = languagesResult.data;
@@ -40,7 +43,10 @@ export const parseSurveyPayload = (surveyData: unknown): TParsedPayload | TParse
   if (!triggersResult.success) {
     return {
       error: "Invalid triggers format",
-      details: triggersResult.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`),
+      details: triggersResult.error.errors.map((e) => {
+        const path = e.path.length > 0 ? `triggers.${e.path.join(".")}` : "triggers";
+        return `Field "${path}": ${e.message}`;
+      }),
     };
   }
   const triggers = triggersResult.data;
@@ -54,7 +60,10 @@ export const parseSurveyPayload = (surveyData: unknown): TParsedPayload | TParse
   if (!surveyResult.success) {
     return {
       error: "Invalid survey format",
-      details: surveyResult.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`),
+      details: surveyResult.error.errors.map((e) => {
+        const path = e.path.length > 0 ? e.path.join(".") : "root";
+        return `Field "${path}": ${e.message}`;
+      }),
     };
   }
 
