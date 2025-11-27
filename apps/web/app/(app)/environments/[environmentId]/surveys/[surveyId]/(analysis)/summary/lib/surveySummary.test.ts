@@ -3203,7 +3203,7 @@ describe("CTA question type tests", () => {
       type: TSurveyElementTypeEnum.CTA,
       headline: { default: "Would you like to try our product?" },
       buttonLabel: { default: "Try Now" },
-      buttonExternal: false,
+      buttonExternal: true,
       buttonUrl: "https://example.com",
       required: true,
     };
@@ -3289,7 +3289,7 @@ describe("CTA question type tests", () => {
       type: TSurveyElementTypeEnum.CTA,
       headline: { default: "Would you like to try our product?" },
       buttonLabel: { default: "Try Now" },
-      buttonExternal: false,
+      buttonExternal: true,
       buttonUrl: "https://example.com",
       required: false,
     };
