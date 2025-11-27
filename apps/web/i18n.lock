@@ -383,7 +383,6 @@ checksums:
     common/teams: a2fbdec69342366a2b6033d119aa279a
     common/teams_not_found: 02f333a64a83c1c014d8900ec9666345
     common/text: 4ddccc1974775ed7357f9beaf9361cec
-    common/text_variable: 5fdfcc48b8010a4f44e16b8051272a75
     common/time: b504a03d52e8001bfdc5cb6205364f42
     common/time_to_finish: c8f6abdb886bee3619bb50b08fada5fa
     common/title: 344e64395eaff6822a57d18623853e1a
