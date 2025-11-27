@@ -140,7 +140,6 @@ test.describe("JS Package Test", async () => {
     await expect(page.getByRole("link", { name: "Responses" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Completed 100%" })).toBeVisible();
     await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("CTR100%")).toBeVisible();
     await expect(page.getByText("Somewhat disappointed")).toBeVisible();
     await expect(page.getByText("Founder")).toBeVisible();
     await expect(page.getByText("People who believe that PMF").first()).toBeVisible();

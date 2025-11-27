@@ -634,6 +634,11 @@ export const getElementSummary = async (
         break;
       }
       case TSurveyElementTypeEnum.CTA: {
+        // Only calculate summary for CTA elements with external buttons (CTR tracking is only meaningful for external links)
+        if (!element.buttonExternal) {
+          break;
+        }
+
         const data = {
           clicked: 0,
           dismissed: 0,
