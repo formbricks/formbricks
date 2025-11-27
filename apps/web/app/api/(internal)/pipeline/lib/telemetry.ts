@@ -97,7 +97,12 @@ export const sendTelemetryEvents = async () => {
       // Update in-memory check to prevent this instance from checking again for 24h.
       nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
     } catch (e) {
-      logger.error(e, "Failed to send telemetry");
+      // Log as warning since telemetry is non-essential
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      logger.warn(
+        { error: e, message: errorMessage, lastSent, now },
+        "Failed to send telemetry - applying 1h cooldown"
+      );
 
       // Failure cooldown: Prevent retrying immediately to avoid hammering the endpoint.
       // Wait 1 hour before allowing this instance to try again.
@@ -109,8 +114,13 @@ export const sendTelemetryEvents = async () => {
       await cache.del([TELEMETRY_LOCK_KEY]);
     }
   } catch (error) {
-    // Catch-all for any unexpected errors in the wrapper logic.
-    logger.error(error, "Error in sendTelemetryEvents wrapper");
+    // Catch-all for any unexpected errors in the wrapper logic (cache failures, lock issues, etc.)
+    // Log as warning since telemetry is non-essential functionality
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.warn(
+      { error, message: errorMessage, timestamp: Date.now() },
+      "Unexpected error in sendTelemetryEvents wrapper - telemetry check skipped"
+    );
   }
 };
 
