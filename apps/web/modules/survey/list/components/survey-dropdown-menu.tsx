@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
@@ -39,7 +39,6 @@ interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
   publicDomain: string;
-  refreshSingleUseId: () => Promise<string | undefined>;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
   deleteSurvey: (surveyId: string) => void;
@@ -50,7 +49,6 @@ export const SurveyDropDownMenu = ({
   environmentId,
   survey,
   publicDomain,
-  refreshSingleUseId,
   disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
@@ -62,26 +60,11 @@ export const SurveyDropDownMenu = ({
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
-  const [newSingleUseId, setNewSingleUseId] = useState<string | undefined>(undefined);
 
   const router = useRouter();
 
   const surveyLink = useMemo(() => publicDomain + "/s/" + survey.id, [survey.id, publicDomain]);
-
-  // Pre-fetch single-use ID when dropdown opens to avoid async delay during clipboard operation
-  // This ensures Safari's clipboard API works by maintaining the user gesture context
-  useEffect(() => {
-    if (!isDropDownOpen) return;
-    const fetchNewId = async () => {
-      try {
-        const newId = await refreshSingleUseId();
-        setNewSingleUseId(newId ?? undefined);
-      } catch (error) {
-        logger.error(error);
-      }
-    };
-    fetchNewId();
-  }, [refreshSingleUseId, isDropDownOpen]);
+  const isSingleUseEnabled = survey.singleUse?.enabled ?? false;
 
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
@@ -100,7 +83,8 @@ export const SurveyDropDownMenu = ({
     try {
       e.preventDefault();
       setIsDropDownOpen(false);
-      const copiedLink = copySurveyLink(surveyLink, newSingleUseId);
+      // For single-use surveys, this button is disabled, so we just copy the base link
+      const copiedLink = copySurveyLink(surveyLink);
       navigator.clipboard.writeText(copiedLink);
       toast.success(t("common.copied_to_clipboard"));
     } catch (error) {
@@ -113,7 +97,6 @@ export const SurveyDropDownMenu = ({
     setLoading(true);
     try {
       const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
-        environmentId,
         surveyId,
         targetEnvironmentId: environmentId,
       });
@@ -206,31 +189,36 @@ export const SurveyDropDownMenu = ({
               <>
                 <DropdownMenuItem>
                   <button
-                    className="flex w-full cursor-pointer items-center"
+                    type="button"
+                    className={cn(
+                      "flex w-full items-center",
+                      isSingleUseEnabled && "cursor-not-allowed opacity-50"
+                    )}
+                    disabled={isSingleUseEnabled}
                     onClick={async (e) => {
                       e.preventDefault();
                       setIsDropDownOpen(false);
-                      const newId = await refreshSingleUseId();
-                      const previewUrl =
-                        surveyLink + (newId ? `?suId=${newId}&preview=true` : "?preview=true");
+                      const previewUrl = surveyLink + "?preview=true";
                       window.open(previewUrl, "_blank");
                     }}>
                     <EyeIcon className="mr-2 h-4 w-4" />
                     {t("common.preview_survey")}
                   </button>
                 </DropdownMenuItem>
-                {!survey.singleUse?.enabled && (
-                  <DropdownMenuItem>
-                    <button
-                      type="button"
-                      data-testid="copy-link"
-                      className="flex w-full items-center"
-                      onClick={async (e) => handleCopyLink(e)}>
-                      <LinkIcon className="mr-2 h-4 w-4" />
-                      {t("common.copy_link")}
-                    </button>
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    data-testid="copy-link"
+                    className={cn(
+                      "flex w-full items-center",
+                      isSingleUseEnabled && "cursor-not-allowed opacity-50"
+                    )}
+                    disabled={isSingleUseEnabled}
+                    onClick={async (e) => handleCopyLink(e)}>
+                    <LinkIcon className="mr-2 h-4 w-4" />
+                    {t("common.copy_link")}
+                  </button>
+                </DropdownMenuItem>
               </>
             )}
             {!isSurveyCreationDeletionDisabled && (

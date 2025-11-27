@@ -19,8 +19,7 @@ export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 // Other
 export const CRON_SECRET = env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
-export const FB_LOGO_URL =
-  "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
+export const FB_LOGO_URL = `${WEBAPP_URL}/logo-transparent.png`;
 
 export const PRIVACY_URL = env.PRIVACY_URL;
 export const TERMS_URL = env.TERMS_URL;
@@ -170,11 +169,13 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
   "de-DE",
   "pt-BR",
   "fr-FR",
+  "nl-NL",
   "zh-Hant-TW",
   "pt-PT",
   "ro-RO",
   "ja-JP",
   "zh-Hans-CN",
+  "es-ES",
 ];
 
 // Billing constants
@@ -216,10 +217,6 @@ export const BILLING_LIMITS = {
 export const INTERCOM_SECRET_KEY = env.INTERCOM_SECRET_KEY;
 export const INTERCOM_APP_ID = env.INTERCOM_APP_ID;
 export const IS_INTERCOM_CONFIGURED = Boolean(env.INTERCOM_APP_ID && INTERCOM_SECRET_KEY);
-
-export const POSTHOG_API_KEY = env.POSTHOG_API_KEY;
-export const POSTHOG_API_HOST = env.POSTHOG_API_HOST;
-export const IS_POSTHOG_CONFIGURED = Boolean(POSTHOG_API_KEY && POSTHOG_API_HOST);
 
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
 export const TURNSTILE_SITE_KEY = env.TURNSTILE_SITE_KEY;

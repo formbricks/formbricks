@@ -4,11 +4,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@/lib/organization/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -96,9 +92,6 @@ const mockTransformedResponses = [mockResponse, { ...mockResponse, id: "response
 // Mock dependencies
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
-  POSTHOG_API_KEY: "mock-posthog-api-key",
-  POSTHOG_HOST: "mock-posthog-host",
-  IS_POSTHOG_CONFIGURED: true,
   ENCRYPTION_KEY: "mock-encryption-key",
   ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
   GITHUB_ID: "mock-github-id",
@@ -118,10 +111,8 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "mock-sentry-dsn",
 }));
 vi.mock("@/lib/organization/service");
-vi.mock("@/lib/posthogServer");
 vi.mock("@/lib/response/service");
 vi.mock("@/lib/response/utils");
-vi.mock("@/lib/telemetry");
 vi.mock("@/lib/utils/validate");
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -162,7 +153,6 @@ describe("Response Lib Tests", () => {
       vi.mocked(mockTx.response.create).mockResolvedValue({
         ...mockResponsePrisma,
       });
-      vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
 
       const response = await createResponse(mockResponseInputWithUserId, mockTx);
 
@@ -216,68 +206,6 @@ describe("Response Lib Tests", () => {
       vi.mocked(mockTx.response.create).mockRejectedValue(genericError);
 
       await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(genericError);
-    });
-
-    describe("Cloud specific tests", () => {
-      test("should check response limit and send event if limit reached", async () => {
-        // IS_FORMBRICKS_CLOUD is true by default from the top-level mock
-        const limit = 100;
-        const mockOrgWithBilling = {
-          ...mockOrganization,
-          billing: { limits: { monthly: { responses: limit } } },
-        } as any;
-        vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrgWithBilling);
-        vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
-        vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma);
-        vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(limit); // Limit reached
-
-        await createResponse(mockResponseInput, mockTx);
-
-        expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
-        expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalled();
-      });
-
-      test("should check response limit and not send event if limit not reached", async () => {
-        const limit = 100;
-        const mockOrgWithBilling = {
-          ...mockOrganization,
-          billing: { limits: { monthly: { responses: limit } } },
-        } as any;
-        vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrgWithBilling);
-        vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
-        vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma);
-        vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(limit - 1); // Limit not reached
-
-        await createResponse(mockResponseInput, mockTx);
-
-        expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
-        expect(sendPlanLimitsReachedEventToPosthogWeekly).not.toHaveBeenCalled();
-      });
-
-      test("should log error if sendPlanLimitsReachedEventToPosthogWeekly fails", async () => {
-        const limit = 100;
-        const mockOrgWithBilling = {
-          ...mockOrganization,
-          billing: { limits: { monthly: { responses: limit } } },
-        } as any;
-        const posthogError = new Error("Posthog error");
-        vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrgWithBilling);
-        vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
-        vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma);
-        vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(limit); // Limit reached
-        vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockRejectedValue(posthogError);
-
-        // Expecting successful response creation despite PostHog error
-        const response = await createResponse(mockResponseInput, mockTx);
-
-        expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
-        expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalled();
-        expect(logger.error).toHaveBeenCalledWith(
-          posthogError,
-          "Error sending plan limits reached event to Posthog"
-        );
-        expect(response).toEqual(mockResponse); // Should still return the created response
-      });
     });
   });
 

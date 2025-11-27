@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementsComboBox";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -26,8 +27,8 @@ import {
 import { Input } from "@/modules/ui/components/input";
 
 type ElementFilterComboBoxProps = {
-  filterOptions: string[] | undefined;
-  filterComboBoxOptions: string[] | undefined;
+  filterOptions: (string | TI18nString)[] | undefined;
+  filterComboBoxOptions: (string | TI18nString)[] | undefined;
   filterValue: string | undefined;
   filterComboBoxValue: string | string[] | undefined;
   onChangeFilterValue: (o: string) => void;
@@ -74,7 +75,7 @@ export const ElementFilterComboBox = ({
     if (!isMultiple) return filterComboBoxOptions;
 
     return filterComboBoxOptions?.filter((o) => {
-      const optionValue = typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o;
+      const optionValue = typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
       return !filterComboBoxValue?.includes(optionValue);
     });
   }, [isMultiple, filterComboBoxOptions, filterComboBoxValue, defaultLanguageCode]);
@@ -91,14 +92,15 @@ export const ElementFilterComboBox = ({
   const filteredOptions = useMemo(
     () =>
       options?.filter((o) => {
-        const optionValue = typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o;
+        const optionValue =
+          typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
         return optionValue.toLowerCase().includes(searchQuery.toLowerCase());
       }),
     [options, searchQuery, defaultLanguageCode]
   );
 
-  const handleCommandItemSelect = (o: string) => {
-    const value = typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o;
+  const handleCommandItemSelect = (o: string | TI18nString) => {
+    const value = typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
 
     if (isMultiple) {
       const newValue = Array.isArray(filterComboBoxValue) ? [...filterComboBoxValue, value] : [value];
@@ -200,14 +202,18 @@ export const ElementFilterComboBox = ({
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white">
-            {filterOptions?.map((o, index) => (
-              <DropdownMenuItem
-                key={`${o}-${index}`}
-                className="cursor-pointer"
-                onClick={() => onChangeFilterValue(o)}>
-                {o}
-              </DropdownMenuItem>
-            ))}
+            {filterOptions?.map((o, index) => {
+              const optionValue =
+                typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+              return (
+                <DropdownMenuItem
+                  key={`${optionValue}-${index}`}
+                  className="cursor-pointer"
+                  onClick={() => onChangeFilterValue(optionValue)}>
+                  {optionValue}
+                </DropdownMenuItem>
+              );
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -269,7 +275,8 @@ export const ElementFilterComboBox = ({
                 <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
                 <CommandGroup>
                   {filteredOptions?.map((o) => {
-                    const optionValue = typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o;
+                    const optionValue =
+                      typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
                     return (
                       <CommandItem
                         key={optionValue}

@@ -53,9 +53,9 @@ export const I18nProvider = ({ children, language, defaultLanguage }: I18nProvid
     initializeI18n();
   }, [locale, defaultLanguage]);
 
-  // Don't render children until i18n is ready to prevent hydration issues
+  // Don't render children until i18n is ready to prevent race conditions
   if (!isReady) {
-    return <div style={{ visibility: "hidden" }}>{children}</div>;
+    return null;
   }
 
   return (

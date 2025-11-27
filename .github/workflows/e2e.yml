@@ -17,7 +17,6 @@ on:
   workflow_dispatch:
 
 env:
-  TELEMETRY_DISABLED: 1
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 

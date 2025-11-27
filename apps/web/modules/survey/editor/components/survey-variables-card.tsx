@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
+import { OptionIds } from "@/modules/survey/editor/components/option-ids";
 import { SurveyVariablesCardItem } from "@/modules/survey/editor/components/survey-variables-card-item";
 
 interface SurveyVariablesCardProps {
@@ -91,6 +92,12 @@ export const SurveyVariablesCard = ({
             setLocalSurvey={setLocalSurvey}
             quotas={quotas}
           />
+
+          {localSurvey.variables.length > 0 && (
+            <div className="mt-6">
+              <OptionIds type="variables" variables={localSurvey.variables} />
+            </div>
+          )}
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
     </div>

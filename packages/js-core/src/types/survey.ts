@@ -49,6 +49,7 @@ export type TActionClassNoCodeConfig =
         value: string;
         rule: TActionClassPageUrlRule;
       }[];
+      urlFiltersConnector?: "or" | "and";
       elementSelector: {
         cssSelector?: string | undefined;
         innerHtml?: string | undefined;
@@ -60,6 +61,7 @@ export type TActionClassNoCodeConfig =
         value: string;
         rule: TActionClassPageUrlRule;
       }[];
+      urlFiltersConnector?: "or" | "and";
     }
   | {
       type: "exitIntent";
@@ -67,6 +69,7 @@ export type TActionClassNoCodeConfig =
         value: string;
         rule: TActionClassPageUrlRule;
       }[];
+      urlFiltersConnector?: "or" | "and";
     }
   | {
       type: "fiftyPercentScroll";
@@ -74,6 +77,7 @@ export type TActionClassNoCodeConfig =
         value: string;
         rule: TActionClassPageUrlRule;
       }[];
+      urlFiltersConnector?: "or" | "and";
     };
 
 export interface TTrackProperties {

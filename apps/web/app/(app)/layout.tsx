@@ -1,12 +1,9 @@
 import { getServerSession } from "next-auth";
-import { Suspense } from "react";
 import { IntercomClientWrapper } from "@/app/intercom/IntercomClientWrapper";
-import { IS_POSTHOG_CONFIGURED, POSTHOG_API_HOST, POSTHOG_API_KEY } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { NoMobileOverlay } from "@/modules/ui/components/no-mobile-overlay";
-import { PHProvider, PostHogPageview } from "@/modules/ui/components/post-hog-client";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 
 const AppLayout = async ({ children }) => {
@@ -21,20 +18,9 @@ const AppLayout = async ({ children }) => {
   return (
     <>
       <NoMobileOverlay />
-      <Suspense>
-        <PostHogPageview
-          posthogEnabled={IS_POSTHOG_CONFIGURED}
-          postHogApiHost={POSTHOG_API_HOST}
-          postHogApiKey={POSTHOG_API_KEY}
-        />
-      </Suspense>
-      <PHProvider posthogEnabled={IS_POSTHOG_CONFIGURED}>
-        <>
-          <IntercomClientWrapper user={user} />
-          <ToasterClient />
-          {children}
-        </>
-      </PHProvider>
+      <IntercomClientWrapper user={user} />
+      <ToasterClient />
+      {children}
     </>
   );
 };

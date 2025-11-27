@@ -4,7 +4,7 @@ pre {
 }
 
 pre::-webkit-scrollbar {
-  width: 4px !important;
+  width: 7px !important;
   border-radius: 99px;
 }
 
@@ -15,6 +15,6 @@ pre::-webkit-scrollbar-track {
 
 pre::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
-  border: 3px solid #cbd5e1;
+  border: 2px solid #cbd5e1;
   border-radius: 99px;
 }

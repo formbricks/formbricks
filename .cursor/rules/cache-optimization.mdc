@@ -179,14 +179,14 @@ For endpoints serving client SDKs, coordinate TTLs across layers:
 
 ```typescript
 // Client SDK cache (expiresAt) - longest TTL for fewer requests
-const CLIENT_TTL = 60 * 60;           // 1 hour (seconds for client)
+const CLIENT_TTL = 60;           // 1 minute (seconds for client)
 
 // Server Redis cache - shorter TTL ensures fresh data for clients  
-const SERVER_TTL = 60 * 30 * 1000;   // 30 minutes in milliseconds
+const SERVER_TTL = 60 * 1000;   // 1 minutes in milliseconds
 
 // HTTP cache headers (seconds)
-const BROWSER_TTL = 60 * 60;         // 1 hour (max-age)
-const CDN_TTL = 60 * 30;             // 30 minutes (s-maxage)
+const BROWSER_TTL = 60;         // 1 minute (max-age)
+const CDN_TTL = 60;             // 1 minute (s-maxage)
 const CORS_TTL = 60 * 60;            // 1 hour (balanced approach)
 ```
 

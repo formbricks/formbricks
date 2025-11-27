@@ -1,14 +1,13 @@
 import { redirect } from "next/navigation";
 import { getEnvironment } from "@/lib/environment/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
-import { EnvironmentIdBaseLayout } from "@/modules/ui/components/environmentId-base-layout";
 
 const SurveyEditorEnvironmentLayout = async (props) => {
   const params = await props.params;
 
   const { children } = props;
 
-  const { t, session, user, organization } = await environmentIdLayoutChecks(params.environmentId);
+  const { t, session, user } = await environmentIdLayoutChecks(params.environmentId);
 
   if (!session) {
     return redirect(`/auth/login`);
@@ -25,15 +24,9 @@ const SurveyEditorEnvironmentLayout = async (props) => {
   }
 
   return (
-    <EnvironmentIdBaseLayout
-      environmentId={params.environmentId}
-      session={session}
-      user={user}
-      organization={organization}>
-      <div className="flex h-screen flex-col">
-        <div className="h-full overflow-y-auto bg-slate-50">{children}</div>
-      </div>
-    </EnvironmentIdBaseLayout>
+    <div className="flex h-screen flex-col">
+      <div className="h-full overflow-y-auto bg-slate-50">{children}</div>
+    </div>
   );
 };
 

@@ -809,6 +809,9 @@ export const FollowUpModal = ({
                                     }
                                   }}
                                   isInvalid={!!formErrors.body}
+                                  localSurvey={localSurvey}
+                                  elementId="follow-up"
+                                  selectedLanguageCode={selectedLanguageCode}
                                 />
                               </FormControl>
 

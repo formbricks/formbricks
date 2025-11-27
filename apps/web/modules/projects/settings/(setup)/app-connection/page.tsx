@@ -4,6 +4,7 @@ import Link from "next/link";
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { WEBAPP_URL } from "@/lib/constants";
 import { getEnvironments } from "@/lib/environment/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
@@ -40,9 +41,12 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
       <div className="space-y-4">
         <EnvironmentNotice environmentId={environmentId} subPageUrl="/project/app-connection" />
         <SettingsCard
-          title={t("environments.project.app-connection.environment_id")}
-          description={t("environments.project.app-connection.environment_id_description")}>
-          <IdBadge id={environmentId} />
+          title={t("environments.project.app-connection.sdk_connection_details")}
+          description={t("environments.project.app-connection.sdk_connection_details_description")}>
+          <div className="space-y-3">
+            <IdBadge id={environmentId} label={t("environments.project.app-connection.environment_id")} />
+            <IdBadge id={WEBAPP_URL} label={t("environments.project.app-connection.webapp_url")} />
+          </div>
         </SettingsCard>
         <SettingsCard
           title={t("environments.project.app-connection.app_connection")}
@@ -51,7 +55,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
             <div className="space-y-4">
               <WidgetStatusIndicator environment={environment} />
               {!environment.appSetupCompleted ? (
-                <Alert variant="outbound">
+                <Alert variant="info">
                   <AlertTitle>{t("environments.project.app-connection.setup_alert_title")}</AlertTitle>
                   <AlertDescription>
                     {t("environments.project.app-connection.setup_alert_description")}
