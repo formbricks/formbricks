@@ -300,23 +300,17 @@ const findJumpToQuestionActions = (actions: TSurveyLogicAction[]): TActionJumpTo
 
 // function to validate hidden field or question id or element id
 export const validateId = (
-  type: "Hidden field" | "Question" | "Element",
+  type: "Hidden field" | "Question", // TODO: Change this to "Element" when we're ready to change the UI
   field: string,
-  existingQuestionIds: string[],
+  existingElementIds: string[],
   existingEndingCardIds: string[],
-  existingHiddenFieldIds: string[],
-  existingElementIds?: string[]
+  existingHiddenFieldIds: string[]
 ): string | null => {
   if (field.trim() === "") {
     return `Please enter a ${type} Id.`;
   }
 
-  const combinedIds = [
-    ...existingQuestionIds,
-    ...existingHiddenFieldIds,
-    ...existingEndingCardIds,
-    ...(existingElementIds ?? []),
-  ];
+  const combinedIds = [...existingElementIds, ...existingHiddenFieldIds, ...existingEndingCardIds];
 
   if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
     return `${type} ID already exists in questions, hidden fields, or elements.`;

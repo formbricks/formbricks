@@ -36,7 +36,7 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
   const { properties } = props.followUp.action;
   const { body } = properties;
 
-  const questions = props.attachResponseData ? getElementResponseMapping(props.survey, props.response) : [];
+  const elements = props.attachResponseData ? getElementResponseMapping(props.survey, props.response) : [];
   const t = await getTranslate();
   // If the logo is not set, we are not using white labeling
   const isDefaultLogo = !props.logoUrl || props.logoUrl === fbLogoUrl;
@@ -70,15 +70,15 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
               }}
             />
 
-            {questions.length > 0 ? <Hr /> : null}
+            {elements.length > 0 ? <Hr /> : null}
 
-            {questions.map((question) => {
-              if (!question.response) return;
+            {elements.map((e) => {
+              if (!e.response) return;
               return (
-                <Row key={question.element}>
+                <Row key={e.element}>
                   <Column className="w-full font-medium">
-                    <Text className="mb-2 text-sm">{question.element}</Text>
-                    {renderEmailResponseValue(question.response, question.type, t, true)}
+                    <Text className="mb-2 text-sm">{e.element}</Text>
+                    {renderEmailResponseValue(e.response, e.type, t, true)}
                   </Column>
                 </Row>
               );

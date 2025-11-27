@@ -90,7 +90,7 @@ export const RankingElementForm = ({
   };
 
   const deleteChoice = (choiceIdx: number) => {
-    const newChoices = !element.choices ? [] : element.choices.filter((_, idx) => idx !== choiceIdx);
+    const newChoices = element.choices.filter((_, idx) => idx !== choiceIdx);
     const choiceValue = element.choices[choiceIdx].label[selectedLanguageCode];
 
     if (isInvalidValue === choiceValue) {

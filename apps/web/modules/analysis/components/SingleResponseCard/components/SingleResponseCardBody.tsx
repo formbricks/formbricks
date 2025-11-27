@@ -27,8 +27,8 @@ export const SingleResponseCardBody = ({
   response,
   skippedQuestions,
 }: SingleResponseCardBodyProps) => {
-  const questions = getElementsFromBlocks(survey.blocks);
-  const isFirstQuestionAnswered = questions[0] ? !!response.data[questions[0].id] : false;
+  const elements = getElementsFromBlocks(survey.blocks);
+  const isFirstElementAnswered = elements[0] ? !!response.data[elements[0].id] : false;
   const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {
     // Updated regex to match content between #/ and \#
@@ -55,10 +55,10 @@ export const SingleResponseCardBody = ({
     <div className="p-6">
       {survey.welcomeCard.enabled && (
         <ElementSkip
-          skippedQuestions={[]}
-          questions={questions}
+          skippedElements={[]}
+          elements={elements}
           status={"welcomeCard"}
-          isFirstQuestionAnswered={isFirstQuestionAnswered}
+          isFirstElementAnswered={isFirstElementAnswered}
           responseData={response.data}
         />
       )}
@@ -66,7 +66,7 @@ export const SingleResponseCardBody = ({
         {survey.isVerifyEmailEnabled && response.data["verifiedEmail"] && (
           <VerifiedEmail responseData={response.data} />
         )}
-        {questions.map((question) => {
+        {elements.map((question) => {
           const skipped = skippedQuestions.find((skippedQuestionElement) =>
             skippedQuestionElement.includes(question.id)
           );
@@ -104,8 +104,8 @@ export const SingleResponseCardBody = ({
                 </div>
               ) : (
                 <ElementSkip
-                  skippedQuestions={skipped}
-                  questions={questions}
+                  skippedElements={skipped}
+                  elements={elements}
                   responseData={response.data}
                   status={
                     response.finished ||

@@ -1,13 +1,13 @@
 import { Container } from "@react-email/components";
 import { cn } from "@/lib/cn";
 
-interface QuestionHeaderProps {
+interface ElementHeaderProps {
   headline: string;
   subheader?: string;
   className?: string;
 }
 
-export function QuestionHeader({ headline, subheader, className }: QuestionHeaderProps): React.JSX.Element {
+export function ElementHeader({ headline, subheader, className }: ElementHeaderProps): React.JSX.Element {
   return (
     <>
       <Container className={cn("text-question-color m-0 block text-base font-semibold leading-6", className)}>
