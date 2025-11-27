@@ -5,50 +5,46 @@ import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import {
-  TSurvey,
-  TSurveyElementSummaryPictureSelection,
-  TSurveyQuestionId,
-} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryPictureSelection } from "@formbricks/types/surveys/types";
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
-import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface PictureChoiceSummaryProps {
-  questionSummary: TSurveyElementSummaryPictureSelection;
+  elementSummary: TSurveyElementSummaryPictureSelection;
   survey: TSurvey;
   setFilter: (
-    questionId: TSurveyQuestionId,
+    elementId: string,
     label: TI18nString,
-    questionType: TSurveyElementTypeEnum,
+    elementType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
 }
 
-export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: PictureChoiceSummaryProps) => {
-  const results = questionSummary.choices;
+export const PictureChoiceSummary = ({ elementSummary, survey, setFilter }: PictureChoiceSummaryProps) => {
+  const results = elementSummary.choices;
   const { t } = useTranslation();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
+      <ElementSummaryHeader
+        elementSummary={elementSummary}
         survey={survey}
         additionalInfo={
-          questionSummary.question.allowMulti ? (
+          elementSummary.element.allowMulti ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">
               <InboxIcon className="mr-2 h-4 w-4" />
-              {`${questionSummary.selectionCount} ${t("common.selections")}`}
+              {`${elementSummary.selectionCount} ${t("common.selections")}`}
             </div>
           ) : undefined
         }
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, index) => {
-          const choiceId = getChoiceIdByValue(result.imageUrl, questionSummary.question);
+          const choiceId = getChoiceIdByValue(result.imageUrl, elementSummary.element);
           return (
             <button
               type="button"
@@ -56,9 +52,9 @@ export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: Pic
               key={result.id}
               onClick={() =>
                 setFilter(
-                  questionSummary.question.id,
-                  questionSummary.question.headline,
-                  questionSummary.question.type,
+                  elementSummary.element.id,
+                  elementSummary.element.headline,
+                  elementSummary.element.type,
                   t("environments.surveys.summary.includes_all"),
                   [`${t("environments.surveys.edit.picture_idx", { idx: index + 1 })}`]
                 )

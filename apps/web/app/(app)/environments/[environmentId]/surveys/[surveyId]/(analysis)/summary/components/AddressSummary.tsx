@@ -8,20 +8,20 @@ import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
-import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface AddressSummaryProps {
-  questionSummary: TSurveyElementSummaryAddress;
+  elementSummary: TSurveyElementSummaryAddress;
   environmentId: string;
   survey: TSurvey;
   locale: TUserLocale;
 }
 
-export const AddressSummary = ({ questionSummary, environmentId, survey, locale }: AddressSummaryProps) => {
+export const AddressSummary = ({ elementSummary, environmentId, survey, locale }: AddressSummaryProps) => {
   const { t } = useTranslation();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
+      <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
       <div>
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
           <div className="pl-4 md:pl-6">{t("common.user")}</div>
@@ -29,7 +29,7 @@ export const AddressSummary = ({ questionSummary, environmentId, survey, locale 
           <div className="px-4 md:px-6">{t("common.time")}</div>
         </div>
         <div className="max-h-[62vh] w-full overflow-y-auto">
-          {questionSummary.samples.map((response) => {
+          {elementSummary.samples.map((response) => {
             return (
               <div
                 key={response.id}

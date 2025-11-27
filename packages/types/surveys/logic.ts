@@ -82,6 +82,23 @@ export const ZDynamicLogicFieldValue = z.union([ZDynamicElement, ZDynamicVariabl
 
 export type TDynamicLogicFieldValue = z.infer<typeof ZDynamicLogicFieldValue>;
 
+// DEPRECATED: Backward compatibility for API - accepts "question" instead of "element"
+// This is used in API input validation to support old clients
+const ZDynamicQuestion = z.object({
+  type: z.literal("question"),
+  value: z.string().min(1, "Conditional Logic: Question id cannot be empty"),
+  meta: z.record(z.string()).optional(),
+});
+
+export const ZDynamicLogicFieldValueDeprecated = z.union(
+  [ZDynamicQuestion, ZDynamicElement, ZDynamicVariable, ZDynamicHiddenField],
+  {
+    message: "Conditional Logic: Invalid dynamic field value",
+  }
+);
+
+export type TDynamicLogicFieldValueDeprecated = z.infer<typeof ZDynamicLogicFieldValueDeprecated>;
+
 // Right operand for conditions
 export const ZRightOperandStatic = z.object({
   type: z.literal("static"),
@@ -93,6 +110,10 @@ export type TLeftOperand = z.infer<typeof _ZLeftOperand>;
 
 export const ZRightOperand = z.union([ZRightOperandStatic, ZDynamicLogicFieldValue]);
 export type TRightOperand = z.infer<typeof ZRightOperand>;
+
+// DEPRECATED: Backward compatibility for API
+export const ZRightOperandDeprecated = z.union([ZRightOperandStatic, ZDynamicLogicFieldValueDeprecated]);
+export type TRightOperandDeprecated = z.infer<typeof ZRightOperandDeprecated>;
 
 // Operators that don't require a right operand
 export const operatorsWithoutRightOperand = [
@@ -150,6 +171,46 @@ export const ZSingleCondition = z
 
 export type TSingleCondition = z.infer<typeof ZSingleCondition>;
 
+// DEPRECATED: Backward compatibility for API - accepts "question" type
+export const ZSingleConditionDeprecated = z
+  .object({
+    id: ZId,
+    leftOperand: ZDynamicLogicFieldValueDeprecated,
+    operator: ZSurveyLogicConditionsOperator,
+    rightOperand: ZRightOperandDeprecated.optional(),
+  })
+  .and(
+    z.object({
+      connector: z.undefined(),
+    })
+  )
+  .superRefine((val, ctx) => {
+    if (
+      !operatorsWithoutRightOperand.includes(val.operator as (typeof operatorsWithoutRightOperand)[number])
+    ) {
+      if (val.rightOperand === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: right operand is required for operator "${val.operator}"`,
+          path: ["rightOperand"],
+        });
+      } else if (val.rightOperand.type === "static" && val.rightOperand.value === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: right operand value cannot be empty for operator "${val.operator}"`,
+        });
+      }
+    } else if (val.rightOperand !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Conditional Logic: right operand should not be present for operator "${val.operator}"`,
+        path: ["rightOperand"],
+      });
+    }
+  });
+
+export type TSingleConditionDeprecated = z.infer<typeof ZSingleConditionDeprecated>;
+
 export const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
   z.object({
     id: ZId,
@@ -162,4 +223,19 @@ export interface TConditionGroup {
   id: string;
   connector: TConnector;
   conditions: (TSingleCondition | TConditionGroup)[];
+}
+
+// DEPRECATED: Backward compatibility for API
+export const ZConditionGroupDeprecated: z.ZodType<TConditionGroupDeprecated> = z.lazy(() =>
+  z.object({
+    id: ZId,
+    connector: ZConnector,
+    conditions: z.array(z.union([ZSingleConditionDeprecated, ZConditionGroupDeprecated])),
+  })
+);
+
+export interface TConditionGroupDeprecated {
+  id: string;
+  connector: TConnector;
+  conditions: (TSingleConditionDeprecated | TConditionGroupDeprecated)[];
 }

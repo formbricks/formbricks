@@ -13,7 +13,7 @@ import {
   TIntegrationSlackConfigData,
   TIntegrationSlackInput,
 } from "@formbricks/types/integration/slack";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
@@ -55,7 +55,7 @@ export const AddChannelMappingModal = ({
 }: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
   const { t } = useTranslation();
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<TIntegrationItem | null>(null);
@@ -73,19 +73,19 @@ export const AddChannelMappingModal = ({
     },
   };
 
-  const questions = useMemo(
+  const surveyElements = useMemo(
     () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
     [selectedSurvey]
   );
 
   useEffect(() => {
     if (selectedSurvey) {
-      const questionIds = questions.map((question) => question.id);
+      const elementIds = surveyElements.map((element) => element.id);
       if (!selectedIntegration) {
-        setSelectedQuestions(questionIds);
+        setSelectedElements(elementIds);
       }
     }
-  }, [questions, selectedIntegration, selectedSurvey]);
+  }, [surveyElements, selectedIntegration, selectedSurvey]);
 
   useEffect(() => {
     if (selectedIntegration) {
@@ -98,7 +98,7 @@ export const AddChannelMappingModal = ({
           return survey.id === selectedIntegration.surveyId;
         })!
       );
-      setSelectedQuestions(selectedIntegration.questionIds);
+      setSelectedElements(selectedIntegration.elementIds);
       setIncludeVariables(!!selectedIntegration.includeVariables);
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
@@ -117,7 +117,7 @@ export const AddChannelMappingModal = ({
         throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
 
-      if (selectedQuestions.length === 0) {
+      if (selectedElements.length === 0) {
         throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
       setIsLinkingChannel(true);
@@ -126,9 +126,9 @@ export const AddChannelMappingModal = ({
         channelName: selectedChannel.name,
         surveyId: selectedSurvey.id,
         surveyName: selectedSurvey.name,
-        questionIds: selectedQuestions,
-        questions:
-          selectedQuestions.length === selectedSurvey?.questions.length
+        elementIds: selectedElements,
+        elements:
+          selectedElements.length === surveyElements.length
             ? t("common.all_questions")
             : t("common.selected_questions"),
         createdAt: new Date(),
@@ -159,11 +159,11 @@ export const AddChannelMappingModal = ({
     }
   };
 
-  const handleCheckboxChange = (questionId: TSurveyQuestionId) => {
-    setSelectedQuestions((prevValues) =>
-      prevValues.includes(questionId)
-        ? prevValues.filter((value) => value !== questionId)
-        : [...prevValues, questionId]
+  const handleCheckboxChange = (elementId: string) => {
+    setSelectedElements((prevValues) =>
+      prevValues.includes(elementId)
+        ? prevValues.filter((value) => value !== elementId)
+        : [...prevValues, elementId]
     );
   };
 
@@ -274,22 +274,22 @@ export const AddChannelMappingModal = ({
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
                     <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                        {questions.map((question) => (
-                          <div key={question.id} className="my-1 flex items-center space-x-2">
-                            <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                        {surveyElements.map((element) => (
+                          <div key={element.id} className="my-1 flex items-center space-x-2">
+                            <label htmlFor={element.id} className="flex cursor-pointer items-center">
                               <Checkbox
                                 type="button"
-                                id={question.id}
-                                value={question.id}
+                                id={element.id}
+                                value={element.id}
                                 className="bg-white"
-                                checked={selectedQuestions.includes(question.id)}
+                                checked={selectedElements.includes(element.id)}
                                 onCheckedChange={() => {
-                                  handleCheckboxChange(question.id);
+                                  handleCheckboxChange(element.id);
                                 }}
                               />
                               <span className="ml-2">
                                 {getTextContent(
-                                  recallToHeadline(question.headline, selectedSurvey, false, "default")[
+                                  recallToHeadline(element.headline, selectedSurvey, false, "default")[
                                     "default"
                                   ]
                                 )}

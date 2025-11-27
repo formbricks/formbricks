@@ -12,23 +12,23 @@ interface BlocksDroppableProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   project: Project;
-  moveQuestion: (questionIndex: number, up: boolean) => void;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (questionIdx: number, logicFallback: string | undefined) => void;
+  moveElement: (elementIdx: number, up: boolean) => void;
+  updateElement: (elementIdx: number, updatedAttributes: any) => void;
+  updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
   updateBlockButtonLabel: (
     blockIndex: number,
     labelKey: "buttonLabel" | "backButtonLabel",
     labelValue: TI18nString | undefined
   ) => void;
-  deleteQuestion: (questionIdx: number) => void;
-  duplicateQuestion: (questionIdx: number) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (questionId: string | null) => void;
+  deleteElement: (elementIdx: number) => void;
+  duplicateElement: (elementIdx: number) => void;
+  activeElementId: string | null;
+  setActiveElementId: (elementId: string | null) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
-  invalidQuestions: string[] | null;
-  addQuestion: (question: any, index?: number) => void;
+  invalidElements: string[] | null;
+  addElement: (element: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -44,22 +44,22 @@ interface BlocksDroppableProps {
 }
 
 export const BlocksDroppable = ({
-  activeQuestionId,
-  deleteQuestion,
-  duplicateQuestion,
-  invalidQuestions,
+  activeElementId,
+  deleteElement,
+  duplicateElement,
+  invalidElements,
   localSurvey,
   setLocalSurvey,
-  moveQuestion,
+  moveElement,
   project,
   selectedLanguageCode,
-  setActiveQuestionId,
+  setActiveElementId,
   setSelectedLanguageCode,
-  updateQuestion,
+  updateElement,
   updateBlockLogic,
   updateBlockLogicFallback,
   updateBlockButtonLabel,
-  addQuestion,
+  addElement,
   isFormbricksCloud,
   isCxMode,
   locale,
@@ -91,21 +91,21 @@ export const BlocksDroppable = ({
               project={project}
               block={block}
               blockIdx={blockIdx}
-              moveQuestion={moveQuestion}
-              updateQuestion={updateQuestion}
+              moveElement={moveElement}
+              updateElement={updateElement}
               updateBlockLogic={updateBlockLogic}
               updateBlockLogicFallback={updateBlockLogicFallback}
               updateBlockButtonLabel={updateBlockButtonLabel}
-              duplicateQuestion={duplicateQuestion}
+              duplicateElement={duplicateElement}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              deleteQuestion={deleteQuestion}
-              activeQuestionId={activeQuestionId}
-              setActiveQuestionId={setActiveQuestionId}
-              lastQuestion={isLastBlock}
+              deleteElement={deleteElement}
+              activeElementId={activeElementId}
+              setActiveElementId={setActiveElementId}
+              lastElement={isLastBlock}
               lastElementIndex={lastElementIndex}
-              invalidQuestions={invalidQuestions ?? undefined}
-              addQuestion={addQuestion}
+              invalidElements={invalidElements ?? undefined}
+              addElement={addElement}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}

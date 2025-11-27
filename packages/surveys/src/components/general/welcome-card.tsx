@@ -154,7 +154,7 @@ export function WelcomeCard({
 
         <Headline
           headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), responseData, variablesData)}
-          questionId="welcomeCard"
+          elementId="welcomeCard"
         />
         <Subheader
           subheader={replaceRecallInfo(
@@ -162,7 +162,7 @@ export function WelcomeCard({
             responseData,
             variablesData
           )}
-          questionId="welcomeCard"
+          elementId="welcomeCard"
         />
         <div className="fb-mt-4 fb-flex fb-gap-4 fb-pt-4">
           <SubmitButton

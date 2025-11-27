@@ -427,7 +427,7 @@ describe("Response Utils", () => {
     test("should extract survey details correctly", () => {
       const result = extractSurveyDetails(mockSurvey as TSurvey, mockResponses as TResponse[]);
       expect(result.metaDataFields).toContain("userAgent - browser");
-      expect(result.questions).toHaveLength(2); // 1 regular question + 2 matrix rows
+      expect(result.elements).toHaveLength(2); // 1 regular question + 2 matrix rows
       expect(result.hiddenFields).toContain("hidden1");
       expect(result.userAttributes).toContain("email");
     });

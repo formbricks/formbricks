@@ -44,33 +44,40 @@ const processDataForIntegration = async (
   includeMetadata: boolean,
   includeHiddenFields: boolean,
   includeCreatedAt: boolean,
-  questionIds: string[]
-): Promise<string[][]> => {
+  elementIds: string[]
+): Promise<{
+  responses: string[];
+  elements: string[];
+}> => {
   const ids =
     includeHiddenFields && survey.hiddenFields.fieldIds
-      ? [...questionIds, ...survey.hiddenFields.fieldIds]
-      : questionIds;
-  const values = await extractResponses(integrationType, data, ids, survey);
+      ? [...elementIds, ...survey.hiddenFields.fieldIds]
+      : elementIds;
+  const { responses, elements } = await extractResponses(integrationType, data, ids, survey);
+
   if (includeMetadata) {
-    values[0].push(convertMetaObjectToString(data.response.meta));
-    values[1].push("Metadata");
+    responses.push(convertMetaObjectToString(data.response.meta));
+    elements.push("Metadata");
   }
   if (includeVariables) {
-    survey.variables.forEach((variable) => {
+    survey.variables?.forEach((variable) => {
       const value = data.response.variables[variable.id];
       if (value !== undefined) {
-        values[0].push(String(data.response.variables[variable.id]));
-        values[1].push(variable.name);
+        responses.push(String(data.response.variables[variable.id]));
+        elements.push(variable.name);
       }
     });
   }
   if (includeCreatedAt) {
     const date = new Date(data.response.createdAt);
-    values[0].push(`${getFormattedDateTimeString(date)}`);
-    values[1].push("Created At");
+    responses.push(`${getFormattedDateTimeString(date)}`);
+    elements.push("Created At");
   }
 
-  return values;
+  return {
+    responses,
+    elements,
+  };
 };
 
 export const handleIntegrations = async (
@@ -133,9 +140,9 @@ const handleAirtableIntegration = async (
             !!element.includeMetadata,
             !!element.includeHiddenFields,
             !!element.includeCreatedAt,
-            element.questionIds
+            element.elementIds
           );
-          await airtableWriteData(integration.config.key, element, values);
+          await airtableWriteData(integration.config.key, element, values.responses, values.elements);
         }
       }
     }
@@ -169,14 +176,14 @@ const handleGoogleSheetsIntegration = async (
             !!element.includeMetadata,
             !!element.includeHiddenFields,
             !!element.includeCreatedAt,
-            element.questionIds
+            element.elementIds
           );
           const integrationData = structuredClone(integration);
           integrationData.config.data.forEach((data) => {
             data.createdAt = new Date(data.createdAt);
           });
 
-          await writeData(integrationData, element.spreadsheetId, values);
+          await writeData(integrationData, element.spreadsheetId, values.responses, values.elements);
         }
       }
     }
@@ -210,9 +217,15 @@ const handleSlackIntegration = async (
             !!element.includeMetadata,
             !!element.includeHiddenFields,
             !!element.includeCreatedAt,
-            element.questionIds
+            element.elementIds
           );
-          await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
+          await writeDataToSlack(
+            integration.config.key,
+            element.channelId,
+            values.responses,
+            values.elements,
+            survey?.name
+          );
         }
       }
     }
@@ -232,34 +245,36 @@ const handleSlackIntegration = async (
 const extractResponses = async (
   integrationType: TIntegrationType,
   pipelineData: TPipelineInput,
-  questionIds: string[],
+  elementIds: string[],
   survey: TSurvey
-): Promise<string[][]> => {
+): Promise<{
+  responses: string[];
+  elements: string[];
+}> => {
   const responses: string[] = [];
-  const questions: string[] = [];
+  const elements: string[] = [];
 
-  // Derive questions from blocks
-  const surveyQuestions = getElementsFromBlocks(survey.blocks);
+  const surveyElements = getElementsFromBlocks(survey.blocks);
 
-  for (const questionId of questionIds) {
+  for (const elementId of elementIds) {
     //check for hidden field Ids
-    if (survey.hiddenFields.fieldIds?.includes(questionId)) {
-      responses.push(processResponseData(pipelineData.response.data[questionId]));
-      questions.push(questionId);
+    if (survey.hiddenFields.fieldIds?.includes(elementId)) {
+      responses.push(processResponseData(pipelineData.response.data[elementId]));
+      elements.push(elementId);
       continue;
     }
-    const question = surveyQuestions.find((q) => q.id === questionId);
-    if (!question) {
+    const element = surveyElements.find((q) => q.id === elementId);
+    if (!element) {
       continue;
     }
 
-    const responseValue = pipelineData.response.data[questionId];
+    const responseValue = pipelineData.response.data[elementId];
 
     if (responseValue !== undefined) {
       let answer: typeof responseValue;
-      if (question.type === TSurveyElementTypeEnum.PictureSelection) {
+      if (element.type === TSurveyElementTypeEnum.PictureSelection) {
         const selectedChoiceIds = responseValue as string[];
-        answer = question?.choices
+        answer = element?.choices
           .filter((choice) => selectedChoiceIds.includes(choice.id))
           .map((choice) => choice.imageUrl)
           .join("\n");
@@ -279,16 +294,19 @@ const extractResponses = async (
       },
       {} as Record<string, string>
     );
-    questions.push(
+    elements.push(
       parseRecallInfo(
-        getTextContent(getLocalizedValue(question?.headline, "default")),
+        getTextContent(getLocalizedValue(element?.headline, "default")),
         integrationType === "slack" ? pipelineData.response.data : emptyResponseObject,
         integrationType === "slack" ? pipelineData.response.variables : {}
       ) || ""
     );
   }
 
-  return [responses, questions];
+  return {
+    responses,
+    elements,
+  };
 };
 
 const handleNotionIntegration = async (
@@ -326,35 +344,34 @@ const buildNotionPayloadProperties = (
   const properties: any = {};
   const responses = data.response.data;
 
-  // Derive questions from blocks
-  const surveyQuestions = getElementsFromBlocks(surveyData.blocks);
+  const surveyElements = getElementsFromBlocks(surveyData.blocks);
 
-  const mappingQIds = mapping
-    .filter((m) => m.question.type === TSurveyElementTypeEnum.PictureSelection)
-    .map((m) => m.question.id);
+  const mappingElementIds = mapping
+    .filter((m) => m.element.type === TSurveyElementTypeEnum.PictureSelection)
+    .map((m) => m.element.id);
 
   Object.keys(responses).forEach((resp) => {
-    if (mappingQIds.find((qId) => qId === resp)) {
+    if (mappingElementIds.find((elementId) => elementId === resp)) {
       const selectedChoiceIds = responses[resp] as string[];
-      const pictureQuestion = surveyQuestions.find((q) => q.id === resp);
+      const pictureElement = surveyElements.find((el) => el.id === resp);
 
-      responses[resp] = (pictureQuestion as any)?.choices
+      responses[resp] = (pictureElement as any)?.choices
         .filter((choice) => selectedChoiceIds.includes(choice.id))
         .map((choice) => choice.imageUrl);
     }
   });
 
   mapping.forEach((map) => {
-    if (map.question.id === "metadata") {
+    if (map.element.id === "metadata") {
       properties[map.column.name] = {
         [map.column.type]: getValue(map.column.type, convertMetaObjectToString(data.response.meta)) || null,
       };
-    } else if (map.question.id === "createdAt") {
+    } else if (map.element.id === "createdAt") {
       properties[map.column.name] = {
         [map.column.type]: getValue(map.column.type, data.response.createdAt) || null,
       };
     } else {
-      const value = responses[map.question.id];
+      const value = responses[map.element.id];
       properties[map.column.name] = {
         [map.column.type]: getValue(map.column.type, value) || null,
       };

@@ -2,14 +2,14 @@
 
 import React, { createContext, useCallback, useContext, useState } from "react";
 import {
-  QuestionOption,
-  QuestionOptions,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
-import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
+  ElementOption,
+  ElementOptions,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementsComboBox";
+import { ElementFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { getTodayDate } from "@/app/lib/surveys/surveys";
 
 export interface FilterValue {
-  questionType: Partial<QuestionOption>;
+  elementType: Partial<ElementOption>;
   filterType: {
     filterValue: string | undefined;
     filterComboBoxValue: string | string[] | undefined;
@@ -24,8 +24,8 @@ export interface SelectedFilterValue {
 }
 
 interface SelectedFilterOptions {
-  questionOptions: QuestionOptions[];
-  questionFilterOptions: QuestionFilterOptions[];
+  elementOptions: ElementOptions[];
+  elementFilterOptions: ElementFilterOptions[];
 }
 
 export interface DateRange {
@@ -53,8 +53,8 @@ const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => 
   });
   // state holds all the options of the responses fetched
   const [selectedOptions, setSelectedOptions] = useState<SelectedFilterOptions>({
-    questionFilterOptions: [],
-    questionOptions: [],
+    elementFilterOptions: [],
+    elementOptions: [],
   });
 
   const [dateRange, setDateRange] = useState<DateRange>({

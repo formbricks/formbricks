@@ -18,7 +18,7 @@ import { ResponseBadges } from "@/modules/ui/components/response-badges";
 
 interface RenderResponseProps {
   responseData: TResponseDataValue;
-  question: TSurveyElement;
+  element: TSurveyElement;
   survey: TSurvey;
   language: string | null;
   isExpanded?: boolean;
@@ -27,7 +27,7 @@ interface RenderResponseProps {
 
 export const RenderResponse: React.FC<RenderResponseProps> = ({
   responseData,
-  question,
+  element,
   survey,
   language,
   isExpanded = true,
@@ -48,16 +48,15 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       return String(data);
     }
   };
-  const questionType = question.type;
-  switch (questionType) {
+  switch (element.type) {
     case TSurveyElementTypeEnum.Rating:
       if (typeof responseData === "number") {
         return (
           <RatingResponse
-            scale={question.scale}
+            scale={element.scale}
             answer={responseData}
-            range={question.range}
-            addColors={question.isColorCodingEnabled}
+            range={element.range}
+            addColors={element.isColorCodingEnabled}
           />
         );
       }
@@ -75,7 +74,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       if (Array.isArray(responseData)) {
         return (
           <PictureSelectionResponse
-            choices={question.choices}
+            choices={element.choices}
             selected={responseData}
             isExpanded={isExpanded}
             showId={showId}
@@ -92,7 +91,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       if (typeof responseData === "object" && !Array.isArray(responseData)) {
         return (
           <>
-            {question.rows.map((row) => {
+            {element.rows.map((row) => {
               const languagCode = getLanguageCode(survey.languages, language);
               const rowValueInSelectedLanguage = getLocalizedValue(row.label, languagCode);
               if (!responseData[rowValueInSelectedLanguage]) return null;
@@ -153,7 +152,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
     case TSurveyElementTypeEnum.Ranking:
       if (typeof responseData === "string" || typeof responseData === "number") {
-        const choiceId = getChoiceIdByValue(responseData.toString(), question);
+        const choiceId = getChoiceIdByValue(responseData.toString(), element);
         return (
           <ResponseBadges
             items={[{ value: responseData.toString(), id: choiceId }]}
@@ -163,12 +162,12 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         );
       } else if (Array.isArray(responseData)) {
         const itemsArray = responseData.map((choice) => {
-          const choiceId = getChoiceIdByValue(choice, question);
+          const choiceId = getChoiceIdByValue(choice, element);
           return { value: choice, id: choiceId };
         });
         return (
           <>
-            {questionType === TSurveyElementTypeEnum.Ranking ? (
+            {element.type === TSurveyElementTypeEnum.Ranking ? (
               <RankingResponse value={itemsArray} isExpanded={isExpanded} showId={showId} />
             ) : (
               <ResponseBadges items={itemsArray} isExpanded={isExpanded} showId={showId} />

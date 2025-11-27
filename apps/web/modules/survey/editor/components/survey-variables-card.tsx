@@ -5,15 +5,15 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { FileDigitIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { SurveyVariablesCardItem } from "@/modules/survey/editor/components/survey-variables-card-item";
 
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: TSurveyQuestionId | null;
-  setActiveQuestionId: (id: TSurveyQuestionId | null) => void;
+  activeElementId: string | null;
+  setActiveElementId: (id: string | null) => void;
   quotas: TSurveyQuota[];
 }
 
@@ -22,20 +22,20 @@ const variablesCardId = `fb-variables-${Date.now()}`;
 export const SurveyVariablesCard = ({
   localSurvey,
   setLocalSurvey,
-  activeQuestionId,
-  setActiveQuestionId,
+  activeElementId,
+  setActiveElementId,
   quotas,
 }: SurveyVariablesCardProps) => {
-  const open = activeQuestionId === variablesCardId;
+  const open = activeElementId === variablesCardId;
   const { t } = useTranslation();
   const [parent] = useAutoAnimate();
 
   const setOpenState = (state: boolean) => {
     if (state) {
       // NOSONAR // This is ok for setOpenState
-      setActiveQuestionId(variablesCardId);
+      setActiveElementId(variablesCardId);
     } else {
-      setActiveQuestionId(null);
+      setActiveElementId(null);
     }
   };
 

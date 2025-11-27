@@ -29,18 +29,18 @@ interface ShuffleOptionsTypes {
 
 interface ShuffleOptionSelectProps {
   shuffleOption: TShuffleOption | undefined;
-  updateQuestion: (
-    questionIdx: number,
+  updateElement: (
+    elementIdx: number,
     updatedAttributes: Partial<TSurveyMatrixElement | TSurveyMultipleChoiceElement | TSurveyRankingElement>
   ) => void;
-  questionIdx: number;
+  elementIdx: number;
   shuffleOptionsTypes: ShuffleOptionsTypes;
 }
 
 export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
-  questionIdx,
+  elementIdx,
   shuffleOption,
-  updateQuestion,
+  updateElement,
   shuffleOptionsTypes,
 }) => {
   const { t } = useTranslation();
@@ -49,7 +49,7 @@ export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
       defaultValue={shuffleOption}
       value={shuffleOption}
       onValueChange={(e: TShuffleOption) => {
-        updateQuestion(questionIdx, { shuffleOption: e });
+        updateElement(elementIdx, { shuffleOption: e });
       }}>
       <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
         <SelectValue placeholder={t("environments.surveys.edit.select_ordering")} />

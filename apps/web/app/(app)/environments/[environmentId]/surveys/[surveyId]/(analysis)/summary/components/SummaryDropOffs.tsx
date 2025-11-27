@@ -6,7 +6,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
-import { getQuestionIcon } from "@/modules/survey/lib/questions";
+import { getElementIcon } from "@/modules/survey/lib/elements";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface SummaryDropOffsProps {
@@ -16,8 +16,8 @@ interface SummaryDropOffsProps {
 
 export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   const { t } = useTranslation();
-  const getIcon = (questionType: TSurveyElementTypeEnum) => {
-    const Icon = getQuestionIcon(questionType, t);
+  const getIcon = (elementType: TSurveyElementTypeEnum) => {
+    const Icon = getElementIcon(elementType, t);
     return <Icon className="mt-[3px] h-5 w-5 shrink-0 text-slate-600" />;
   };
 
@@ -45,10 +45,10 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
         </div>
         {dropOff.map((quesDropOff) => (
           <div
-            key={quesDropOff.questionId}
+            key={quesDropOff.elementId}
             className="grid grid-cols-6 items-start border-b border-slate-100 text-xs text-slate-800 md:text-sm">
             <div className="col-span-3 flex gap-3 px-4 py-2 md:px-6">
-              {getIcon(quesDropOff.questionType)}
+              {getIcon(quesDropOff.elementType)}
               <p>
                 {formatTextWithSlashes(
                   recallToHeadline(

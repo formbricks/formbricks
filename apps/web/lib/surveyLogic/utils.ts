@@ -268,12 +268,12 @@ const evaluateSingleCondition = (
       ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
       : undefined;
 
-    const questions = getElementsFromBlocks(localSurvey.blocks);
+    const elements = getElementsFromBlocks(localSurvey.blocks);
 
     let leftField: TSurveyElement | TSurveyVariable | string;
 
     if (condition.leftOperand?.type === "element") {
-      leftField = questions.find((q) => q.id === condition.leftOperand?.value) ?? "";
+      leftField = elements.find((q) => q.id === condition.leftOperand?.value) ?? "";
     } else if (condition.leftOperand?.type === "variable") {
       leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand?.value) as TSurveyVariable;
     } else if (condition.leftOperand?.type === "hiddenField") {
@@ -285,7 +285,7 @@ const evaluateSingleCondition = (
     let rightField: TSurveyElement | TSurveyVariable | string;
 
     if (condition.rightOperand?.type === "element") {
-      rightField = questions.find((q) => q.id === condition.rightOperand?.value) ?? "";
+      rightField = elements.find((q) => q.id === condition.rightOperand?.value) ?? "";
     } else if (condition.rightOperand?.type === "variable") {
       rightField = localSurvey.variables.find(
         (v) => v.id === condition.rightOperand?.value
@@ -312,7 +312,7 @@ const evaluateSingleCondition = (
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
-            // when left value is of date question and right value is string
+            // when left value is of date element and right value is string
             return new Date(leftValue).getTime() === new Date(rightValue).getTime();
           }
         }
@@ -340,7 +340,7 @@ const evaluateSingleCondition = (
           leftValue === rightValue
         );
       case "doesNotEqual":
-        // when left value is of picture selection question and right value is its option
+        // when left value is of picture selection element and right value is its option
         if (
           condition.leftOperand.type === "element" &&
           (leftField as TSurveyElement).type === TSurveyElementTypeEnum.PictureSelection &&
@@ -351,7 +351,7 @@ const evaluateSingleCondition = (
           return !leftValue.includes(rightValue);
         }
 
-        // when left value is of date question and right value is string
+        // when left value is of date element and right value is string
         if (
           condition.leftOperand.type === "element" &&
           (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
@@ -512,13 +512,13 @@ const getLeftOperandValue = (
 ) => {
   switch (leftOperand.type) {
     case "element":
-      const questions = getElementsFromBlocks(localSurvey.blocks);
-      const currentQuestion = questions.find((q) => q.id === leftOperand.value);
-      if (!currentQuestion) return undefined;
+      const elements = getElementsFromBlocks(localSurvey.blocks);
+      const currentElement = elements.find((q) => q.id === leftOperand.value);
+      if (!currentElement) return undefined;
 
       const responseValue = data[leftOperand.value];
 
-      if (currentQuestion.type === "openText" && currentQuestion.inputType === "number") {
+      if (currentElement.type === "openText" && currentElement.inputType === "number") {
         if (responseValue === undefined) return undefined;
         if (typeof responseValue === "string" && responseValue.trim() === "") return undefined;
 
@@ -526,11 +526,11 @@ const getLeftOperandValue = (
         return isNaN(numberValue) ? undefined : numberValue;
       }
 
-      if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {
-        const isOthersEnabled = currentQuestion.choices.at(-1)?.id === "other";
+      if (currentElement.type === "multipleChoiceSingle" || currentElement.type === "multipleChoiceMulti") {
+        const isOthersEnabled = currentElement.choices.at(-1)?.id === "other";
 
         if (typeof responseValue === "string") {
-          const choice = currentQuestion.choices.find((choice) => {
+          const choice = currentElement.choices.find((choice) => {
             return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
           });
 
@@ -546,7 +546,7 @@ const getLeftOperandValue = (
         } else if (Array.isArray(responseValue)) {
           let choices: string[] = [];
           responseValue.forEach((value) => {
-            const foundChoice = currentQuestion.choices.find((choice) => {
+            const foundChoice = currentElement.choices.find((choice) => {
               return getLocalizedValue(choice.label, selectedLanguage) === value;
             });
 
@@ -563,23 +563,23 @@ const getLeftOperandValue = (
       }
 
       if (
-        currentQuestion.type === "matrix" &&
+        currentElement.type === "matrix" &&
         typeof responseValue === "object" &&
         !Array.isArray(responseValue)
       ) {
         if (leftOperand.meta && leftOperand.meta.row !== undefined) {
           const rowIndex = Number(leftOperand.meta.row);
 
-          if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentQuestion.rows.length) {
+          if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentElement.rows.length) {
             return undefined;
           }
-          const row = getLocalizedValue(currentQuestion.rows[rowIndex].label, selectedLanguage);
+          const row = getLocalizedValue(currentElement.rows[rowIndex].label, selectedLanguage);
 
           const rowValue = responseValue[row];
           if (rowValue === "") return "";
 
           if (rowValue) {
-            const columnIndex = currentQuestion.columns.findIndex((column) => {
+            const columnIndex = currentElement.columns.findIndex((column) => {
               return getLocalizedValue(column.label, selectedLanguage) === rowValue;
             });
             if (columnIndex === -1) return undefined;
@@ -630,11 +630,11 @@ export const performActions = (
   calculationResults: TResponseVariables
 ): {
   jumpTarget: string | undefined;
-  requiredQuestionIds: string[];
+  requiredElementIds: string[];
   calculations: TResponseVariables;
 } => {
   let jumpTarget: string | undefined;
-  const requiredQuestionIds: string[] = [];
+  const requiredElementIds: string[] = [];
   const calculations: TResponseVariables = { ...calculationResults };
 
   actions.forEach((action) => {
@@ -644,7 +644,7 @@ export const performActions = (
         if (result !== undefined) calculations[action.variableId] = result;
         break;
       case "requireAnswer":
-        requiredQuestionIds.push(action.target);
+        requiredElementIds.push(action.target);
         break;
       case "jumpToBlock":
         if (!jumpTarget) {
@@ -654,7 +654,7 @@ export const performActions = (
     }
   });
 
-  return { jumpTarget, requiredQuestionIds, calculations };
+  return { jumpTarget, requiredElementIds, calculations };
 };
 
 const performCalculation = (

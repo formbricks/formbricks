@@ -6,7 +6,7 @@ import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-reac
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
-import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
@@ -18,7 +18,7 @@ type TPreviewType = "modal" | "fullwidth" | "email";
 
 interface PreviewSurveyProps {
   survey: TSurvey;
-  questionId?: string | null;
+  elementId?: string | null;
   previewType?: TPreviewType;
   project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
@@ -58,7 +58,7 @@ const previewParentContainerVariant: Variants = {
 let setBlockId = (_: string) => {};
 
 export const PreviewSurvey = ({
-  questionId,
+  elementId,
   survey,
   previewType,
   project,
@@ -140,31 +140,31 @@ export const PreviewSurvey = ({
     return project.styling;
   }, [project.styling, survey.styling]);
 
-  const updateQuestionId = useCallback(
-    (newQuestionId: TSurveyQuestionId) => {
+  const updateElementId = useCallback(
+    (newElementId: string) => {
       if (
-        !newQuestionId ||
-        newQuestionId === "hidden" ||
-        newQuestionId === "multiLanguage" ||
-        newQuestionId.includes("fb-variables-")
+        !newElementId ||
+        newElementId === "hidden" ||
+        newElementId === "multiLanguage" ||
+        newElementId.includes("fb-variables-")
       )
         return;
-      if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;
+      if (newElementId === "start" && !survey.welcomeCard.enabled) return;
 
-      if (newQuestionId === "start") {
+      if (newElementId === "start") {
         setBlockId("start");
         return;
       }
 
-      // Convert questionId to blockId and set it directly
-      const block = survey.blocks.find((b) => b.elements.some((e) => e.id === newQuestionId));
+      // Convert elementId to blockId and set it directly
+      const block = survey.blocks.find((b) => b.elements.some((e) => e.id === newElementId));
       if (block) {
         setBlockId(block.id);
         return;
       }
 
       // check the endings
-      const ending = survey.endings.find((e) => e.id === newQuestionId);
+      const ending = survey.endings.find((e) => e.id === newElementId);
       if (ending) {
         setBlockId(ending.id);
         return;
@@ -174,13 +174,13 @@ export const PreviewSurvey = ({
   );
 
   useEffect(() => {
-    if (questionId) {
-      updateQuestionId(questionId);
+    if (elementId) {
+      updateElementId(elementId);
     }
-  }, [questionId, updateQuestionId]);
+  }, [elementId, updateElementId]);
 
   const onFinished = () => {
-    // close modal if there are no questions left
+    // close modal if there are no elements left
     if (survey.type === "app" && survey.endings.length === 0) {
       setIsModalOpen(false);
       setTimeout(() => {
@@ -195,13 +195,13 @@ export const PreviewSurvey = ({
   // this useEffect is for refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
     if (survey.name !== surveyNameTemp && survey.id === "someUniqueId1") {
-      resetQuestionProgress();
+      resetProgress();
       surveyNameTemp = survey.name;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
-  const resetQuestionProgress = () => {
+  const resetProgress = () => {
     let storePreviewMode = previewMode;
     setPreviewMode("null");
     setTimeout(() => {
@@ -229,14 +229,14 @@ export const PreviewSurvey = ({
     setIsModalOpen(false);
     setTimeout(() => {
       setIsModalOpen(true);
-      resetQuestionProgress();
+      resetProgress();
     }, 1000);
   };
 
   if (!previewType) {
     previewType = appSetupCompleted ? "modal" : "fullwidth";
 
-    if (!questionId) {
+    if (!elementId) {
       return <></>;
     }
   }
@@ -244,8 +244,8 @@ export const PreviewSurvey = ({
   const handlePreviewModeChange = (mode: "mobile" | "desktop") => {
     setPreviewMode(mode);
     requestAnimationFrame(() => {
-      if (questionId) {
-        updateQuestionId(questionId);
+      if (elementId) {
+        updateElementId(elementId);
       }
     });
   };
@@ -273,7 +273,7 @@ export const PreviewSurvey = ({
               Preview
             </p>
             <div className="absolute right-0 top-0 m-2">
-              <ResetProgressButton onClick={resetQuestionProgress} />
+              <ResetProgressButton onClick={resetProgress} />
             </div>
             <MediaBackground
               surveyType={survey.type}
@@ -379,7 +379,7 @@ export const PreviewSurvey = ({
                       }}
                     />
                   )}
-                  <ResetProgressButton onClick={resetQuestionProgress} />
+                  <ResetProgressButton onClick={resetProgress} />
                 </div>
               </div>
             </div>

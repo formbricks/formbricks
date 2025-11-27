@@ -16,28 +16,28 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { AddQuestionToBlockButton } from "@/modules/survey/editor/components/add-question-to-block-button";
-import { AddressQuestionForm } from "@/modules/survey/editor/components/address-question-form";
+import { AddElementToBlockButton } from "@/modules/survey/editor/components/add-element-to-block-button";
+import { AddressElementForm } from "@/modules/survey/editor/components/address-element-form";
 import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-settings";
 import { BlockMenu } from "@/modules/survey/editor/components/block-menu";
 import { BlockSettings } from "@/modules/survey/editor/components/block-settings";
-import { CalQuestionForm } from "@/modules/survey/editor/components/cal-question-form";
-import { ConsentQuestionForm } from "@/modules/survey/editor/components/consent-question-form";
-import { ContactInfoQuestionForm } from "@/modules/survey/editor/components/contact-info-question-form";
-import { CTAQuestionForm } from "@/modules/survey/editor/components/cta-question-form";
-import { DateQuestionForm } from "@/modules/survey/editor/components/date-question-form";
+import { CalElementForm } from "@/modules/survey/editor/components/cal-element-form";
+import { ConsentElementForm } from "@/modules/survey/editor/components/consent-element-form";
+import { ContactInfoElementForm } from "@/modules/survey/editor/components/contact-info-element-form";
+import { CTAElementForm } from "@/modules/survey/editor/components/cta-element-form";
+import { DateElementForm } from "@/modules/survey/editor/components/date-element-form";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
-import { FileUploadQuestionForm } from "@/modules/survey/editor/components/file-upload-question-form";
-import { MatrixQuestionForm } from "@/modules/survey/editor/components/matrix-question-form";
-import { MultipleChoiceQuestionForm } from "@/modules/survey/editor/components/multiple-choice-question-form";
-import { NPSQuestionForm } from "@/modules/survey/editor/components/nps-question-form";
-import { OpenQuestionForm } from "@/modules/survey/editor/components/open-question-form";
+import { FileUploadElementForm } from "@/modules/survey/editor/components/file-upload-element-form";
+import { MatrixElementForm } from "@/modules/survey/editor/components/matrix-element-form";
+import { MultipleChoiceElementForm } from "@/modules/survey/editor/components/multiple-choice-element-form";
+import { NPSElementForm } from "@/modules/survey/editor/components/nps-element-form";
+import { OpenElementForm } from "@/modules/survey/editor/components/open-element-form";
 import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
-import { RankingQuestionForm } from "@/modules/survey/editor/components/ranking-question-form";
-import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-question-form";
+import { RankingElementForm } from "@/modules/survey/editor/components/ranking-element-form";
+import { RatingElementForm } from "@/modules/survey/editor/components/rating-element-form";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { isLabelValidForAllLanguages } from "@/modules/survey/editor/lib/validation";
-import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
+import { getElementIconMap, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 
 interface BlockCardProps {
@@ -45,25 +45,25 @@ interface BlockCardProps {
   project: Project;
   block: TSurveyBlock;
   blockIdx: number;
-  moveQuestion: (questionIndex: number, up: boolean) => void;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (questionIdx: number, logicFallback: string | undefined) => void;
+  moveElement: (elementIdx: number, up: boolean) => void;
+  updateElement: (elementIdx: number, updatedAttributes: any) => void;
+  updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
   updateBlockButtonLabel: (
     blockIndex: number,
     labelKey: "buttonLabel" | "backButtonLabel",
     labelValue: TI18nString | undefined
   ) => void;
-  deleteQuestion: (questionIdx: number) => void;
-  duplicateQuestion: (questionIdx: number) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (questionId: string | null) => void;
-  lastQuestion: boolean;
+  deleteElement: (elementIdx: number) => void;
+  duplicateElement: (elementIdx: number) => void;
+  activeElementId: string | null;
+  setActiveElementId: (elementId: string | null) => void;
+  lastElement: boolean;
   lastElementIndex: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
-  invalidQuestions?: string[];
-  addQuestion: (question: any, index?: number) => void;
+  invalidElements?: string[];
+  addElement: (element: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -85,21 +85,21 @@ export const BlockCard = ({
   project,
   block,
   blockIdx,
-  moveQuestion,
-  updateQuestion,
+  moveElement,
+  updateElement,
   updateBlockLogic,
   updateBlockLogicFallback,
   updateBlockButtonLabel,
-  duplicateQuestion,
-  deleteQuestion,
-  activeQuestionId,
-  setActiveQuestionId,
-  lastQuestion,
+  duplicateElement,
+  deleteElement,
+  activeElementId,
+  setActiveElementId,
+  lastElement,
   lastElementIndex,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  invalidQuestions,
-  addQuestion,
+  invalidElements,
+  addElement,
   isFormbricksCloud,
   isCxMode,
   locale,
@@ -119,15 +119,15 @@ export const BlockCard = ({
     id: block.id,
   });
   const { t } = useTranslation();
-  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+  const ELEMENTS_ICON_MAP = getElementIconMap(t);
 
   const hasMultipleElements = block.elements.length > 1;
   const blockLogic = block.logic ?? [];
 
   // Check if any element in this block is currently active
-  const isBlockOpen = block.elements.some((element) => element.id === activeQuestionId);
+  const isBlockOpen = block.elements.some((element) => element.id === activeElementId);
 
-  const hasInvalidElement = block.elements.some((element) => invalidQuestions?.includes(element.id));
+  const hasInvalidElement = block.elements.some((element) => invalidElements?.includes(element.id));
 
   // Check if button labels have incomplete translations for any enabled language
   // A button label is invalid if it exists but doesn't have valid text for all enabled languages
@@ -160,7 +160,7 @@ export const BlockCard = ({
     if (headlineText) {
       return formatTextWithSlashes(getTextContent(headlineText ?? ""));
     }
-    return getTSurveyQuestionTypeEnumName(element.type, t);
+    return getTSurveyElementTypeEnumName(element.type, t);
   };
 
   const shouldShowCautionAlert = (elementType: TSurveyElementTypeEnum): boolean => {
@@ -178,19 +178,19 @@ export const BlockCard = ({
     );
   };
 
-  const renderElementForm = (element: TSurveyElement, questionIdx: number) => {
+  const renderElementForm = (element: TSurveyElement, elementIdx: number) => {
     switch (element.type) {
       case TSurveyElementTypeEnum.OpenText:
         return (
-          <OpenQuestionForm
+          <OpenElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
-            lastQuestion={lastQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
+            lastElement={lastElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -198,14 +198,14 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.MultipleChoiceSingle:
         return (
-          <MultipleChoiceQuestionForm
+          <MultipleChoiceElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -213,14 +213,14 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.MultipleChoiceMulti:
         return (
-          <MultipleChoiceQuestionForm
+          <MultipleChoiceElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -228,14 +228,14 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.NPS:
         return (
-          <NPSQuestionForm
+          <NPSElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -243,15 +243,15 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.CTA:
         return (
-          <CTAQuestionForm
+          <CTAElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
-            lastQuestion={lastQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
+            lastElement={lastElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -259,15 +259,15 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.Rating:
         return (
-          <RatingQuestionForm
+          <RatingElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
-            lastQuestion={lastQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
+            lastElement={lastElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -275,14 +275,14 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.Consent:
         return (
-          <ConsentQuestionForm
+          <ConsentElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -290,14 +290,14 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.Date:
         return (
-          <DateQuestionForm
+          <DateElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -307,27 +307,27 @@ export const BlockCard = ({
         return (
           <PictureSelectionForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
           />
         );
       case TSurveyElementTypeEnum.FileUpload:
         return (
-          <FileUploadQuestionForm
+          <FileUploadElementForm
             localSurvey={localSurvey}
             project={project}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             isFormbricksCloud={isFormbricksCloud}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
@@ -336,15 +336,15 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.Cal:
         return (
-          <CalQuestionForm
+          <CalElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
-            lastQuestion={lastQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
+            lastElement={lastElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -352,14 +352,14 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.Matrix:
         return (
-          <MatrixQuestionForm
+          <MatrixElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -367,14 +367,14 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.Address:
         return (
-          <AddressQuestionForm
+          <AddressElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -382,14 +382,14 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.Ranking:
         return (
-          <RankingQuestionForm
+          <RankingElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -397,15 +397,15 @@ export const BlockCard = ({
         );
       case TSurveyElementTypeEnum.ContactInfo:
         return (
-          <ContactInfoQuestionForm
+          <ContactInfoElementForm
             localSurvey={localSurvey}
-            question={element}
-            questionIdx={questionIdx}
-            updateQuestion={updateQuestion}
-            lastQuestion={lastQuestion}
+            element={element}
+            elementIdx={elementIdx}
+            updateElement={updateElement}
+            lastElement={lastElement}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidQuestions ? invalidQuestions.includes(element.id) : false}
+            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -422,8 +422,8 @@ export const BlockCard = ({
     zIndex: isDragging ? 10 : 1,
   };
 
-  const blockQuestionCount = block.elements.length;
-  const blockQuestionCountText = blockQuestionCount === 1 ? "question" : "questions";
+  const blockElementsCount = block.elements.length;
+  const blockElementsCountText = blockElementsCount === 1 ? "question" : "questions";
 
   let blockSidebarColorClass = "";
   if (isBlockInvalid) {
@@ -473,7 +473,7 @@ export const BlockCard = ({
                 <div>
                   <h4 className="text-sm font-medium text-slate-700">{block.name}</h4>
                   <p className="text-xs text-slate-500">
-                    {blockQuestionCount} {blockQuestionCountText}
+                    {blockElementsCount} {blockElementsCountText}
                   </p>
                 </div>
               </div>
@@ -495,24 +495,24 @@ export const BlockCard = ({
             {/* Render each element in the block */}
             <div ref={elementsParent}>
               {block.elements.map((element, elementIndex) => {
-                // Calculate the actual question index in the flattened questions array
-                let questionIdx = 0;
+                // Calculate the actual element index in the flattened elements array
+                let elementIdx = 0;
                 for (let i = 0; i < blockIdx; i++) {
-                  questionIdx += localSurvey.blocks[i].elements.length;
+                  elementIdx += localSurvey.blocks[i].elements.length;
                 }
-                questionIdx += elementIndex;
+                elementIdx += elementIndex;
 
-                const isOpen = activeQuestionId === element.id;
+                const isOpen = activeElementId === element.id;
 
                 return (
                   <div key={element.id} className={cn(elementIndex > 0 && "border-t border-slate-200")}>
                     <Collapsible.Root
                       open={isOpen}
                       onOpenChange={() => {
-                        if (activeQuestionId !== element.id) {
-                          setActiveQuestionId(element.id);
+                        if (activeElementId !== element.id) {
+                          setActiveElementId(element.id);
                         } else {
-                          setActiveQuestionId(null);
+                          setActiveElementId(null);
                         }
                       }}
                       className="w-full">
@@ -527,7 +527,7 @@ export const BlockCard = ({
                           <div className="flex grow">
                             <div className="flex grow items-center gap-3" dir="auto">
                               <div className="flex items-center text-slate-600">
-                                {QUESTIONS_ICON_MAP[element.type]}
+                                {ELEMENTS_ICON_MAP[element.type]}
                               </div>
                               <div className="flex grow flex-col justify-center">
                                 {hasMultipleElements && (
@@ -552,13 +552,13 @@ export const BlockCard = ({
                           <div className="flex items-center space-x-2">
                             <EditorCardMenu
                               survey={localSurvey}
-                              cardIdx={questionIdx}
-                              lastCard={lastQuestion && elementIndex === lastElementIndex}
+                              cardIdx={elementIdx}
+                              lastCard={lastElement && elementIndex === lastElementIndex}
                               blockId={block.id}
                               elementIdx={elementIndex}
-                              duplicateCard={duplicateQuestion}
-                              deleteCard={deleteQuestion}
-                              moveCard={moveQuestion}
+                              duplicateCard={duplicateElement}
+                              deleteCard={deleteElement}
+                              moveCard={moveElement}
                               card={{
                                 ...element,
                                 logic: block.logic,
@@ -566,11 +566,11 @@ export const BlockCard = ({
                                 backButtonLabel: block.backButtonLabel,
                               }}
                               project={project}
-                              updateCard={updateQuestion}
-                              addCard={addQuestion}
+                              updateCard={updateElement}
+                              addCard={addElement}
                               addCardToBlock={addElementToBlock}
                               moveElementToBlock={moveElementToBlock}
-                              cardType="question"
+                              cardType="element"
                               isCxMode={isCxMode}
                             />
                           </div>
@@ -585,7 +585,7 @@ export const BlockCard = ({
                             </AlertButton>
                           </Alert>
                         )}
-                        {renderElementForm(element, questionIdx)}
+                        {renderElementForm(element, elementIdx)}
                         <div className="mt-4">
                           <Collapsible.Root
                             open={openAdvanced}
@@ -611,11 +611,11 @@ export const BlockCard = ({
                                 <div className="mt-2 flex space-x-2"></div>
                               ) : null}
                               <AdvancedSettings
-                                // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the question type to the respective element type in all the question forms.
-                                question={element}
-                                questionIdx={questionIdx}
+                                // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the element type to the respective element type in all the element forms.
+                                element={element}
+                                elementIdx={elementIdx}
                                 localSurvey={localSurvey}
-                                updateQuestion={updateQuestion}
+                                updateElement={updateElement}
                                 updateBlockLogic={updateBlockLogic}
                                 updateBlockLogicFallback={updateBlockLogicFallback}
                                 selectedLanguageCode={selectedLanguageCode}
@@ -630,13 +630,13 @@ export const BlockCard = ({
               })}
             </div>
             <hr className="mb-4 border-dashed border-slate-200" />
-            {/* Add Question to Block button */}
+            {/* Add Element to Block button */}
 
             <div className="p-4 pt-0">
-              <AddQuestionToBlockButton
+              <AddElementToBlockButton
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
-                setActiveQuestionId={setActiveQuestionId}
+                setActiveElementId={setActiveElementId}
                 block={block}
                 project={project}
                 isCxMode={isCxMode}

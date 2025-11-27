@@ -7,21 +7,21 @@ import {
   TSurveyElementChoice,
   TSurveyElementTypeEnum,
 } from "@formbricks/types/surveys/elements";
-import { AddressQuestion } from "@/components/questions/address-question";
-import { CalQuestion } from "@/components/questions/cal-question";
-import { ConsentQuestion } from "@/components/questions/consent-question";
-import { ContactInfoQuestion } from "@/components/questions/contact-info-question";
-import { CTAQuestion } from "@/components/questions/cta-question";
-import { DateQuestion } from "@/components/questions/date-question";
-import { FileUploadQuestion } from "@/components/questions/file-upload-question";
-import { MatrixQuestion } from "@/components/questions/matrix-question";
-import { MultipleChoiceMultiQuestion } from "@/components/questions/multiple-choice-multi-question";
-import { MultipleChoiceSingleQuestion } from "@/components/questions/multiple-choice-single-question";
-import { NPSQuestion } from "@/components/questions/nps-question";
-import { OpenTextQuestion } from "@/components/questions/open-text-question";
-import { PictureSelectionQuestion } from "@/components/questions/picture-selection-question";
-import { RankingQuestion } from "@/components/questions/ranking-question";
-import { RatingQuestion } from "@/components/questions/rating-question";
+import { AddressElement } from "@/components/elements/address-element";
+import { CalElement } from "@/components/elements/cal-element";
+import { ConsentElement } from "@/components/elements/consent-element";
+import { ContactInfoElement } from "@/components/elements/contact-info-element";
+import { CTAElement } from "@/components/elements/cta-element";
+import { DateElement } from "@/components/elements/date-element";
+import { FileUploadElement } from "@/components/elements/file-upload-element";
+import { MatrixElement } from "@/components/elements/matrix-element";
+import { MultipleChoiceMultiElement } from "@/components/elements/multiple-choice-multi-element";
+import { MultipleChoiceSingleElement } from "@/components/elements/multiple-choice-single-element";
+import { NPSElement } from "@/components/elements/nps-element";
+import { OpenTextElement } from "@/components/elements/open-text-element";
+import { PictureSelectionElement } from "@/components/elements/picture-selection-element";
+import { RankingElement } from "@/components/elements/ranking-element";
+import { RatingElement } from "@/components/elements/rating-element";
 import { getLocalizedValue } from "@/lib/i18n";
 
 interface ElementConditionalProps {
@@ -75,7 +75,7 @@ export function ElementConditional({
     }
   }, [formRef]);
 
-  const getResponseValueForRankingQuestion = (value: string[], choices: TSurveyElementChoice[]): string[] => {
+  const getResponseValueForRankingElement = (value: string[], choices: TSurveyElementChoice[]): string[] => {
     return value
       .map((entry) => {
         // First check if entry is already a valid choice ID
@@ -115,144 +115,144 @@ export function ElementConditional({
     switch (element.type) {
       case TSurveyElementTypeEnum.OpenText:
         return (
-          <OpenTextQuestion
+          <OpenTextElement
             key={element.id}
-            question={element}
+            element={element}
             value={typeof value === "string" ? value : ""}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             dir={dir}
           />
         );
       case TSurveyElementTypeEnum.MultipleChoiceSingle:
         return (
-          <MultipleChoiceSingleQuestion
+          <MultipleChoiceSingleElement
             key={element.id}
-            question={element}
+            element={element}
             value={typeof value === "string" ? value : undefined}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             dir={dir}
           />
         );
       case TSurveyElementTypeEnum.MultipleChoiceMulti:
         return (
-          <MultipleChoiceMultiQuestion
+          <MultipleChoiceMultiElement
             key={element.id}
-            question={element}
+            element={element}
             value={Array.isArray(value) ? value : []}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             dir={dir}
           />
         );
       case TSurveyElementTypeEnum.NPS:
         return (
-          <NPSQuestion
+          <NPSElement
             key={element.id}
-            question={element}
+            element={element}
             value={typeof value === "number" ? value : undefined}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             dir={dir}
           />
         );
       case TSurveyElementTypeEnum.CTA:
         return (
-          <CTAQuestion
+          <CTAElement
             key={element.id}
-            question={element}
+            element={element}
             value={typeof value === "string" ? value : ""}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             onOpenExternalURL={onOpenExternalURL}
           />
         );
       case TSurveyElementTypeEnum.Rating:
         return (
-          <RatingQuestion
+          <RatingElement
             key={element.id}
-            question={element}
+            element={element}
             value={typeof value === "number" ? value : undefined}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             dir={dir}
           />
         );
       case TSurveyElementTypeEnum.Consent:
         return (
-          <ConsentQuestion
+          <ConsentElement
             key={element.id}
-            question={element}
+            element={element}
             value={typeof value === "string" ? value : ""}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             dir={dir}
           />
         );
       case TSurveyElementTypeEnum.Date:
         return (
-          <DateQuestion
+          <DateElement
             key={element.id}
-            question={element}
+            element={element}
             value={typeof value === "string" ? value : ""}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
           />
         );
       case TSurveyElementTypeEnum.PictureSelection:
         return (
-          <PictureSelectionQuestion
+          <PictureSelectionElement
             key={element.id}
-            question={element}
+            element={element}
             value={Array.isArray(value) ? value : []}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             dir={dir}
           />
         );
       case TSurveyElementTypeEnum.FileUpload:
         return (
-          <FileUploadQuestion
+          <FileUploadElement
             key={element.id}
             surveyId={surveyId}
-            question={element}
+            element={element}
             value={Array.isArray(value) ? value : []}
             onChange={onChange}
             onFileUpload={onFileUpload}
@@ -260,71 +260,71 @@ export function ElementConditional({
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
           />
         );
       case TSurveyElementTypeEnum.Cal:
         return (
-          <CalQuestion
+          <CalElement
             key={element.id}
-            question={element}
+            element={element}
             value={typeof value === "string" ? value : ""}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
           />
         );
       case TSurveyElementTypeEnum.Matrix:
         return (
-          <MatrixQuestion
-            question={element}
+          <MatrixElement
+            element={element}
             value={typeof value === "object" && !Array.isArray(value) ? value : {}}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
           />
         );
       case TSurveyElementTypeEnum.Address:
         return (
-          <AddressQuestion
-            question={element}
+          <AddressElement
+            element={element}
             value={Array.isArray(value) ? value : undefined}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             autoFocusEnabled={autoFocusEnabled}
             dir={dir}
           />
         );
       case TSurveyElementTypeEnum.Ranking:
         return (
-          <RankingQuestion
-            question={element}
-            value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, element.choices) : []}
+          <RankingElement
+            element={element}
+            value={Array.isArray(value) ? getResponseValueForRankingElement(value, element.choices) : []}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
             autoFocusEnabled={autoFocusEnabled}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
           />
         );
       case TSurveyElementTypeEnum.ContactInfo:
         return (
-          <ContactInfoQuestion
-            question={element}
+          <ContactInfoElement
+            element={element}
             value={Array.isArray(value) ? value : undefined}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
             setTtc={setTtc}
-            currentQuestionId={currentElementId}
+            currentElementId={currentElementId}
             autoFocusEnabled={autoFocusEnabled}
             dir={dir}
           />

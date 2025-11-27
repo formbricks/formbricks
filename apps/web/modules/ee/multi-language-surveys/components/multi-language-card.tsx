@@ -8,7 +8,7 @@ import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -25,8 +25,8 @@ interface MultiLanguageCardProps {
   localSurvey: TSurvey;
   projectLanguages: Language[];
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: TSurveyQuestionId | null;
-  setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
+  activeElementId: string | null;
+  setActiveElementId: (elementId: string | null) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
   setSelectedLanguageCode: (language: string) => void;
@@ -43,9 +43,9 @@ export interface ConfirmationModalProps {
 }
 
 export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
-  activeQuestionId,
+  activeElementId,
   localSurvey,
-  setActiveQuestionId,
+  setActiveElementId,
   setLocalSurvey,
   projectLanguages,
   isMultiLanguageAllowed,
@@ -55,7 +55,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 }) => {
   const { t } = useTranslation();
   const environmentId = localSurvey.environmentId;
-  const open = activeQuestionId === "multiLanguage";
+  const open = activeElementId === "multiLanguage";
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 1);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalProps>({
     title: "",
@@ -72,9 +72,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
   const setOpen = (open: boolean) => {
     if (open) {
-      setActiveQuestionId("multiLanguage");
+      setActiveElementId("multiLanguage");
     } else {
-      setActiveQuestionId(null);
+      setActiveElementId(null);
     }
   };
 
@@ -279,7 +279,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                             defaultLanguage={defaultLanguage}
                             localSurvey={localSurvey}
                             projectLanguages={projectLanguages}
-                            setActiveQuestionId={setActiveQuestionId}
+                            setActiveElementId={setActiveElementId}
                             setSelectedLanguageCode={setSelectedLanguageCode}
                             updateSurveyLanguages={updateSurveyLanguages}
                             locale={locale}

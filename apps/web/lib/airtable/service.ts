@@ -206,15 +206,13 @@ const getExistingFields = async (key: TIntegrationAirtableCredential, baseId: st
 export const writeData = async (
   key: TIntegrationAirtableCredential,
   configData: TIntegrationAirtableConfigData,
-  values: string[][]
+  responses: string[],
+  elements: string[]
 ) => {
-  const responses = values[0];
-  const questions = values[1];
-
   // 1) Build the record payload
   const data: Record<string, string> = {};
-  for (let i = 0; i < questions.length; i++) {
-    data[questions[i]] =
+  for (let i = 0; i < elements.length; i++) {
+    data[elements[i]] =
       responses[i].length > AIRTABLE_MESSAGE_LIMIT
         ? truncateText(responses[i], AIRTABLE_MESSAGE_LIMIT)
         : responses[i];
@@ -222,7 +220,7 @@ export const writeData = async (
 
   // 2) Figure out which fields need creating
   const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
-  const fieldsToCreate = questions.filter((q) => !existingFields.has(q));
+  const fieldsToCreate = elements.filter((q) => !existingFields.has(q));
 
   // 3) Create any missing fields with throttling to respect Airtable's 5 req/sec per base limit
   if (fieldsToCreate.length > 0) {

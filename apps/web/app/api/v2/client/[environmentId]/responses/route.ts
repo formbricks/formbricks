@@ -11,7 +11,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
-import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
+import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
