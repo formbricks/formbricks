@@ -56,10 +56,16 @@ export const sendTelemetryEvents = async () => {
 
     try {
       await sendTelemetry(lastSent);
-      // Update last sent
-      await cache.set(TELEMETRY_LAST_SENT_KEY, now.toString(), TELEMETRY_INTERVAL_MS * 2); // Keep it longer than interval
+      // Update last sent on success (24h)
+      await cache.set(TELEMETRY_LAST_SENT_KEY, now.toString(), TELEMETRY_INTERVAL_MS * 2);
       nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
     } catch (e) {
+      logger.error(e, "Failed to send telemetry");
+
+      // FAILURE COOLDOWN:
+      // Prevent retrying immediately. Wait 1 hour before trying again.
+      // We update the in-memory check so this instance doesn't retry.
+      nextTelemetryCheck = now + 60 * 60 * 1000;
     } finally {
       await redis.del(TELEMETRY_LOCK_KEY);
     }
