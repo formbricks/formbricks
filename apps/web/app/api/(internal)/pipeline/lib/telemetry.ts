@@ -91,8 +91,8 @@ export const sendTelemetryEvents = async () => {
       await sendTelemetry(lastSent);
 
       // Success: Update Redis with current timestamp so other instances know telemetry was sent.
-      // TTL is 2x the interval (48h) to ensure it persists even if Redis restarts.
-      await cache.set(TELEMETRY_LAST_SENT_KEY, now.toString(), TELEMETRY_INTERVAL_MS * 2);
+      // No TTL - persists indefinitely to support low-volume instances (responses every few days/weeks).
+      await cache.set(TELEMETRY_LAST_SENT_KEY, now.toString());
 
       // Update in-memory check to prevent this instance from checking again for 24h.
       nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
@@ -129,39 +129,66 @@ const sendTelemetry = async (lastSent: number) => {
   if (!oldestOrg) return; // No organization exists, nothing to report
   const instanceId = createHash("sha256").update(oldestOrg.id).digest("hex");
 
-  const [
-    organizationCount,
-    userCount,
-    teamCount,
-    projectCount,
-    surveyCount,
-    inProgressSurveyCount,
-    completedSurveyCount,
-    responseCountAllTime,
-    responseCountSinceLastUpdate,
-    displayCount,
-    contactCount,
-    segmentCount,
-    integrations,
-    ssoProviders,
-    newestResponse,
-  ] = await Promise.all([
-    prisma.organization.count(),
-    prisma.user.count(),
-    prisma.team.count(),
-    prisma.project.count(),
-    prisma.survey.count(),
-    prisma.survey.count({ where: { status: "inProgress" } }),
-    prisma.survey.count({ where: { status: "completed" } }),
-    prisma.response.count(),
-    prisma.response.count({ where: { createdAt: { gt: new Date(lastSent || 0) } } }),
-    prisma.display.count(),
-    prisma.contact.count(),
-    prisma.segment.count(),
+  // Optimize database queries to reduce connection pool usage:
+  // Instead of 15 parallel queries (which could exhaust the connection pool),
+  // we batch all count queries into a single raw SQL query.
+  // This reduces connection usage from 15 → 3 (batch counts + integrations + accounts).
+  const [countsResult, integrations, ssoProviders] = await Promise.all([
+    // Single query for all counts (13 metrics in one round-trip)
+    prisma.$queryRaw<
+      [
+        {
+          organizationCount: bigint;
+          userCount: bigint;
+          teamCount: bigint;
+          projectCount: bigint;
+          surveyCount: bigint;
+          inProgressSurveyCount: bigint;
+          completedSurveyCount: bigint;
+          responseCountAllTime: bigint;
+          responseCountSinceLastUpdate: bigint;
+          displayCount: bigint;
+          contactCount: bigint;
+          segmentCount: bigint;
+          newestResponseAt: Date | null;
+        },
+      ]
+    >`
+      SELECT
+        (SELECT COUNT(*) FROM "Organization") as "organizationCount",
+        (SELECT COUNT(*) FROM "User") as "userCount",
+        (SELECT COUNT(*) FROM "Team") as "teamCount",
+        (SELECT COUNT(*) FROM "Project") as "projectCount",
+        (SELECT COUNT(*) FROM "Survey") as "surveyCount",
+        (SELECT COUNT(*) FROM "Survey" WHERE status = 'inProgress') as "inProgressSurveyCount",
+        (SELECT COUNT(*) FROM "Survey" WHERE status = 'completed') as "completedSurveyCount",
+        (SELECT COUNT(*) FROM "Response") as "responseCountAllTime",
+        (SELECT COUNT(*) FROM "Response" WHERE "createdAt" > ${new Date(lastSent || 0)}) as "responseCountSinceLastUpdate",
+        (SELECT COUNT(*) FROM "Display") as "displayCount",
+        (SELECT COUNT(*) FROM "Contact") as "contactCount",
+        (SELECT COUNT(*) FROM "Segment") as "segmentCount",
+        (SELECT MAX("createdAt") FROM "Response") as "newestResponseAt"
+    `,
+    // Keep these as separate queries since they need DISTINCT which is harder to optimize
     prisma.integration.findMany({ select: { type: true }, distinct: ["type"] }),
     prisma.account.findMany({ select: { provider: true }, distinct: ["provider"] }),
-    prisma.response.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
   ]);
+
+  // Extract metrics from the batched query result and convert bigints to numbers
+  const counts = countsResult[0];
+  const organizationCount = Number(counts.organizationCount);
+  const userCount = Number(counts.userCount);
+  const teamCount = Number(counts.teamCount);
+  const projectCount = Number(counts.projectCount);
+  const surveyCount = Number(counts.surveyCount);
+  const inProgressSurveyCount = Number(counts.inProgressSurveyCount);
+  const completedSurveyCount = Number(counts.completedSurveyCount);
+  const responseCountAllTime = Number(counts.responseCountAllTime);
+  const responseCountSinceLastUpdate = Number(counts.responseCountSinceLastUpdate);
+  const displayCount = Number(counts.displayCount);
+  const contactCount = Number(counts.contactCount);
+  const segmentCount = Number(counts.segmentCount);
+  const newestResponse = counts.newestResponseAt ? { createdAt: counts.newestResponseAt } : null;
 
   // Convert integration array to boolean map indicating which integrations are configured.
   const integrationMap = {

@@ -26,6 +26,7 @@ vi.mock("@formbricks/database", () => ({
     segment: { count: vi.fn() },
     integration: { findMany: vi.fn() },
     account: { findMany: vi.fn() },
+    $queryRaw: vi.fn(),
   },
 }));
 vi.mock("@formbricks/logger", () => ({
@@ -49,16 +50,12 @@ vi.mock("@/lib/env", () => ({
 
 // Mock fetch
 const fetchMock = vi.fn();
-global.fetch = fetchMock;
+globalThis.fetch = fetchMock;
 
 const mockCacheService = {
   get: vi.fn(),
   set: vi.fn(),
-  getRedisClient: vi.fn(),
-};
-
-const mockRedisClient = {
-  set: vi.fn(),
+  tryLock: vi.fn(),
   del: vi.fn(),
 };
 
@@ -74,11 +71,10 @@ describe("sendTelemetryEvents", () => {
       ok: true,
       data: mockCacheService as any,
     });
-    mockCacheService.getRedisClient.mockReturnValue(mockRedisClient);
-    mockRedisClient.set.mockResolvedValue("OK"); // Lock acquired
-    mockRedisClient.del.mockResolvedValue(1);
+    mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true }); // Lock acquired
+    mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
     mockCacheService.get.mockResolvedValue({ ok: true, data: null }); // No last sent time
-    mockCacheService.set.mockResolvedValue(undefined);
+    mockCacheService.set.mockResolvedValue({ ok: true, data: undefined });
 
     // Setup default prisma behavior
     vi.mocked(prisma.organization.findFirst).mockResolvedValue({
@@ -86,23 +82,28 @@ describe("sendTelemetryEvents", () => {
       createdAt: new Date("2023-01-01"),
     } as any);
 
-    // Mock counts
-    vi.mocked(prisma.organization.count).mockResolvedValue(1);
-    vi.mocked(prisma.user.count).mockResolvedValue(5);
-    vi.mocked(prisma.team.count).mockResolvedValue(2);
-    vi.mocked(prisma.project.count).mockResolvedValue(3);
-    vi.mocked(prisma.survey.count).mockResolvedValue(10);
-    vi.mocked(prisma.response.count).mockResolvedValue(100);
-    vi.mocked(prisma.display.count).mockResolvedValue(50);
-    vi.mocked(prisma.contact.count).mockResolvedValue(20);
-    vi.mocked(prisma.segment.count).mockResolvedValue(4);
+    // Mock raw SQL query for counts (batched query)
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      {
+        organizationCount: BigInt(1),
+        userCount: BigInt(5),
+        teamCount: BigInt(2),
+        projectCount: BigInt(3),
+        surveyCount: BigInt(10),
+        inProgressSurveyCount: BigInt(4),
+        completedSurveyCount: BigInt(6),
+        responseCountAllTime: BigInt(100),
+        responseCountSinceLastUpdate: BigInt(10),
+        displayCount: BigInt(50),
+        contactCount: BigInt(20),
+        segmentCount: BigInt(4),
+        newestResponseAt: new Date("2024-01-01T00:00:00.000Z"),
+      },
+    ] as any);
 
     // Mock other queries
     vi.mocked(prisma.integration.findMany).mockResolvedValue([{ type: IntegrationType.notion }] as any);
     vi.mocked(prisma.account.findMany).mockResolvedValue([{ provider: "github" }] as any);
-    vi.mocked(prisma.response.findFirst).mockResolvedValue({
-      createdAt: new Date("2024-01-01T00:00:00.000Z"),
-    } as any);
 
     fetchMock.mockResolvedValue({ ok: true });
   });
@@ -115,16 +116,15 @@ describe("sendTelemetryEvents", () => {
     await sendTelemetryEvents();
 
     // Check lock acquisition
-    expect(mockRedisClient.set).toHaveBeenCalledWith(
+    expect(mockCacheService.tryLock).toHaveBeenCalledWith(
       "telemetry_lock",
       "locked",
-      expect.objectContaining({ NX: true })
+      60 * 1000 // 1 minute TTL
     );
 
     // Check data gathering
     expect(prisma.organization.findFirst).toHaveBeenCalled();
-    expect(prisma.survey.count).toHaveBeenCalled();
-    expect(prisma.response.count).toHaveBeenCalled();
+    expect(prisma.$queryRaw).toHaveBeenCalled();
 
     // Check fetch call
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -134,15 +134,11 @@ describe("sendTelemetryEvents", () => {
     expect(payload.integrations.notion).toBe(true);
     expect(payload.sso.github).toBe(true);
 
-    // Check cache update
-    expect(mockCacheService.set).toHaveBeenCalledWith(
-      "telemetry_last_sent_ts",
-      expect.any(String),
-      expect.any(Number)
-    );
+    // Check cache update (no TTL parameter)
+    expect(mockCacheService.set).toHaveBeenCalledWith("telemetry_last_sent_ts", expect.any(String));
 
     // Check lock release
-    expect(mockRedisClient.del).toHaveBeenCalledWith("telemetry_lock");
+    expect(mockCacheService.del).toHaveBeenCalledWith(["telemetry_lock"]);
   });
 
   test("should skip if in-memory check fails", async () => {
@@ -164,17 +160,17 @@ describe("sendTelemetryEvents", () => {
 
     await sendTelemetryEvents();
 
-    expect(mockRedisClient.set).not.toHaveBeenCalled(); // No lock attempt
+    expect(mockCacheService.tryLock).not.toHaveBeenCalled(); // No lock attempt
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test("should skip if lock cannot be acquired", async () => {
-    mockRedisClient.set.mockResolvedValue(null); // Lock not acquired
+    mockCacheService.tryLock.mockResolvedValue({ ok: true, data: false }); // Lock not acquired
 
     await sendTelemetryEvents();
 
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(mockRedisClient.del).not.toHaveBeenCalled(); // Shouldn't try to delete lock we didn't acquire
+    expect(mockCacheService.del).not.toHaveBeenCalled(); // Shouldn't try to delete lock we didn't acquire
   });
 
   test("should handle cache service failure gracefully", async () => {
@@ -201,6 +197,7 @@ describe("sendTelemetryEvents", () => {
     // Ensure we can acquire lock by setting last sent time far in the past
     const oldTime = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
     mockCacheService.get.mockResolvedValue({ ok: true, data: String(oldTime) });
+    mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true }); // Lock acquired
 
     // Make fetch fail to trigger the catch block
     const networkError = new Error("Network error");
@@ -209,17 +206,13 @@ describe("sendTelemetryEvents", () => {
     await freshSendTelemetryEvents();
 
     // Verify lock was acquired
-    expect(mockRedisClient.set).toHaveBeenCalledWith(
-      "telemetry_lock",
-      "locked",
-      expect.objectContaining({ NX: true })
-    );
+    expect(mockCacheService.tryLock).toHaveBeenCalledWith("telemetry_lock", "locked", 60 * 1000);
 
-    // The error should be caught in the inner catch block (line 62-68)
+    // The error should be caught in the inner catch block
     expect(logger.error).toHaveBeenCalledWith(networkError, "Failed to send telemetry");
 
     // Lock should be released in finally block
-    expect(mockRedisClient.del).toHaveBeenCalledWith("telemetry_lock");
+    expect(mockCacheService.del).toHaveBeenCalledWith(["telemetry_lock"]);
 
     // Cache should not be updated on failure
     expect(mockCacheService.set).not.toHaveBeenCalled();
@@ -227,7 +220,7 @@ describe("sendTelemetryEvents", () => {
     // Verify cooldown: run again immediately (should be blocked by in-memory check)
     vi.clearAllMocks();
     mockCacheService.get.mockResolvedValue({ ok: true, data: null });
-    mockRedisClient.set.mockResolvedValue("OK");
+    mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true });
     await freshSendTelemetryEvents();
     expect(getCacheService).not.toHaveBeenCalled(); // Should be blocked by in-memory check
   });
@@ -245,30 +238,25 @@ describe("sendTelemetryEvents", () => {
       ok: true,
       data: mockCacheService as any,
     });
-    mockCacheService.getRedisClient.mockReturnValue(mockRedisClient);
-    mockRedisClient.set.mockResolvedValue("OK");
-    mockRedisClient.del.mockResolvedValue(1);
+    mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true }); // Lock acquired
+    mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
     mockCacheService.get.mockResolvedValue({ ok: true, data: String(oldTime) });
-    mockCacheService.set.mockResolvedValue(undefined);
+    mockCacheService.set.mockResolvedValue({ ok: true, data: undefined });
 
     vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
 
     await freshSendTelemetryEvents();
 
-    // sendTelemetry returns early when no org exists (line 84)
+    // sendTelemetry returns early when no org exists
     // Since it returns (not throws), the try block completes successfully
-    // Then cache.set is called (line 60), and finally block executes (line 70)
+    // Then cache.set is called, and finally block executes
     expect(fetchMock).not.toHaveBeenCalled();
 
     // Verify lock was acquired (prerequisite for finally block to execute)
-    expect(mockRedisClient.set).toHaveBeenCalledWith(
-      "telemetry_lock",
-      "locked",
-      expect.objectContaining({ NX: true })
-    );
+    expect(mockCacheService.tryLock).toHaveBeenCalledWith("telemetry_lock", "locked", 60 * 1000);
 
-    // Lock should be released in finally block (line 70)
-    expect(mockRedisClient.del).toHaveBeenCalledWith("telemetry_lock");
+    // Lock should be released in finally block
+    expect(mockCacheService.del).toHaveBeenCalledWith(["telemetry_lock"]);
 
     // Note: The current implementation calls cache.set even when no org exists
     // This might be a bug, but we test the actual behavior
