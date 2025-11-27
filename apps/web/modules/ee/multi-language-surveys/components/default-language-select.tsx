@@ -59,7 +59,7 @@ export function DefaultLanguageSelect({
             <SelectTrigger className="xs:w-[180px] xs:text-sm w-full px-4 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="max-h-64 overflow-auto">
+            <SelectContent>
               {projectLanguages.map((language) => (
                 <SelectItem
                   className="px-0.5 py-1 text-sm text-slate-800"
