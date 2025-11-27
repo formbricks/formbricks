@@ -1245,8 +1245,8 @@ checksums:
     environments/surveys/edit/custom_hostname: bc2b1c8de3f9b8ef145b45aeba6ab429
     environments/surveys/edit/darken_or_lighten_background_of_your_choice: 304a64a8050ebf501d195e948cd25b6f
     environments/surveys/edit/date_format: e95dfc41ac944874868487457ddc057a
-    environments/surveys/edit/days_before_showing_this_survey_again: 354fb28c5ff076f022d82a20c749ee46
     environments/surveys/edit/delete_block: c00617cb0724557e486304276063807a
+    environments/surveys/edit/days_before_showing_this_survey_again: 354fb28c5ff076f022d82a20c749ee46
     environments/surveys/edit/delete_choice: fd750208d414b9ad8c980c161a0199e1
     environments/surveys/edit/disable_the_visibility_of_survey_progress: 2af631010114307ac2a91612559c9618
     environments/surveys/edit/display_an_estimate_of_completion_time_for_survey: 03f0a816569399c1c61d08dbc913de06
@@ -1564,8 +1564,8 @@ checksums:
     environments/surveys/edit/unlock_targeting_description: 8e315dc41c2849754839a1460643c5fb
     environments/surveys/edit/unlock_targeting_title: 6098caf969cac64cd54e217471ae42d4
     environments/surveys/edit/unsaved_changes_warning: a164f276c9f7344022aa4640b32abcf9
-    environments/surveys/edit/until_they_submit_a_response: 2a0fd5dcc6cc40a72ed9b974f22eaf68
     environments/surveys/edit/untitled_block: fdaa045139deff5cc65fa027df0cc22e
+    environments/surveys/edit/until_they_submit_a_response: 2a0fd5dcc6cc40a72ed9b974f22eaf68
     environments/surveys/edit/upgrade_notice_description: 32b66a4f257ad8d38bc38dcc95fe23c4
     environments/surveys/edit/upgrade_notice_title: 40866066ebc558ad0c92a4f19f12090c
     environments/surveys/edit/upload: 4a6c84aa16db0f4e5697f49b45257bc7
