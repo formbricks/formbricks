@@ -398,32 +398,41 @@ export const FollowUpModal = ({
   const emailSendToHiddenFieldOptions = emailSendToOptions.filter((option) => option.type === "hiddenField");
   const userSendToEmailOptions = emailSendToOptions.filter((option) => option.type === "user");
 
+  const getSelectItemIcon = (
+    type: EmailSendToOption["type"]
+  ): { icon: React.ReactNode; textClass?: string } => {
+    switch (type) {
+      case "verifiedEmail":
+        return { icon: <MailIcon className="h-4 w-4" /> };
+      case "hiddenField":
+        return { icon: <EyeOffIcon className="h-4 w-4" /> };
+      case "user":
+        return {
+          icon: <UserIcon className="h-4 w-4" />,
+          textClass: "overflow-hidden text-ellipsis whitespace-nowrap",
+        };
+      case "openTextQuestion":
+      case "contactInfoQuestion":
+        return {
+          icon: (
+            <div className="h-4 w-4">
+              {QUESTIONS_ICON_MAP[type === "openTextQuestion" ? "openText" : "contactInfo"]}
+            </div>
+          ),
+          textClass: "overflow-hidden text-ellipsis whitespace-nowrap",
+        };
+    }
+  };
+
   const renderSelectItem = (option: EmailSendToOption) => {
+    const { icon, textClass } = getSelectItemIcon(option.type);
+
     return (
       <SelectItem key={option.id} value={option.id}>
-        {option.type === "verifiedEmail" ? (
-          <div className="flex items-center space-x-2">
-            <MailIcon className="h-4 w-4" />
-            <span>{option.label}</span>
-          </div>
-        ) : option.type === "hiddenField" ? (
-          <div className="flex items-center space-x-2">
-            <EyeOffIcon className="h-4 w-4" />
-            <span>{option.label}</span>
-          </div>
-        ) : option.type === "user" ? (
-          <div className="flex items-center space-x-2">
-            <UserIcon className="h-4 w-4" />
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
-          </div>
-        ) : (
-          <div className="flex items-center space-x-2">
-            <div className="h-4 w-4">
-              {QUESTIONS_ICON_MAP[option.type === "openTextQuestion" ? "openText" : "contactInfo"]}
-            </div>
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
-          </div>
-        )}
+        <div className="flex items-center space-x-2">
+          {icon}
+          <span className={textClass}>{option.label}</span>
+        </div>
       </SelectItem>
     );
   };

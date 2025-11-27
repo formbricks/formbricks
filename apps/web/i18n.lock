@@ -383,6 +383,7 @@ checksums:
     common/teams: a2fbdec69342366a2b6033d119aa279a
     common/teams_not_found: 02f333a64a83c1c014d8900ec9666345
     common/text: 4ddccc1974775ed7357f9beaf9361cec
+    common/text_variable: 5fdfcc48b8010a4f44e16b8051272a75
     common/time: b504a03d52e8001bfdc5cb6205364f42
     common/time_to_finish: c8f6abdb886bee3619bb50b08fada5fa
     common/title: 344e64395eaff6822a57d18623853e1a
@@ -440,6 +441,7 @@ checksums:
     emails/forgot_password_email_link_valid_for_24_hours: 1616714e6bf36e4379b9868e98e82957
     emails/forgot_password_email_subject: bd7a2b22e7b480c29f512532fd2b7e2b
     emails/forgot_password_email_text: 5100fa2fe2180ded9cb2d89b4f77d2e0
+    emails/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
     emails/imprint: c4e5f2a1994d3cc5896b200709cc499c
     emails/invite_accepted_email_heading: 6ff6dff269b0f1ac1b73912c9e344343
     emails/invite_accepted_email_subject: 4f5f2a68c98dd1dd01143fcae3be5562
@@ -451,12 +453,14 @@ checksums:
     emails/invite_email_text_par2: 14da6da9fdbc21a1cb38988abac7932d
     emails/invite_member_email_subject: 295e329b1642339dc7cc2b49a687e1f8
     emails/new_email_verification_text: b7f00f47d04afa9e872176d9933f2d93
+    emails/number_variable: d4f2bbb1965c791cf9921a5112914f3f
     emails/password_changed_email_heading: 601f68fc8bef9c5ecf79f4ec4de5ad06
     emails/password_changed_email_text: f9ed4db250ec1b2adf4cb4527ec72d78
     emails/password_reset_notify_email_subject: 0a6805fc27c5bb7999f0d311ef5981e1
     emails/privacy_policy: 7459744a63ef8af4e517a09024bd7c08
     emails/reject: 417c19f66db70a0548bdeb398cdc46e0
     emails/render_email_response_value_file_upload_response_link_not_included: 56f400d68c00b06a2bd976389778df9f
+    emails/response_data: 26363c0d3a839c3b33c9e8c6dd3deca9
     emails/response_finished_email_subject: 7e8b92b483242ddb31ba83e8fcf890f9
     emails/response_finished_email_subject_with_email: 14798acfdaec4b2b2f33dc4a9f4f8ee5
     emails/schedule_your_meeting: 01683323bd7373560cd2cb2737dbaf06
@@ -468,6 +472,7 @@ checksums:
     emails/survey_response_finished_email_turn_off_notifications_for_this_form: 7b6a7074490ceaf3d1903a37169364d6
     emails/survey_response_finished_email_view_more_responses: fe053505f470cbbb5823ca15ceefcedd
     emails/survey_response_finished_email_view_survey_summary: c4e8b5207c0dc856a01011c8b91e0d94
+    emails/text_variable: 5fdfcc48b8010a4f44e16b8051272a75
     emails/verification_email_click_on_this_link: 3c9ad15bd2e3822d3ecd85a421311ebc
     emails/verification_email_heading: 0f86a46d434bb4595b8753d3cf2524e0
     emails/verification_email_hey: 20c5157a424f7d49ceeb27e6fb13d194
@@ -1286,11 +1291,13 @@ checksums:
     environments/surveys/edit/follow_ups_ending_card_delete_modal_text: 71ac1865afe2b2f76836dcbebd1a813e
     environments/surveys/edit/follow_ups_ending_card_delete_modal_title: 11d0b31535034e0a86c906557fb6f22e
     environments/surveys/edit/follow_ups_hidden_field_error: 28aa017b194fb6d7d6c06a8a0bf843ff
+    environments/surveys/edit/follow_ups_include_hidden_fields: 8f0c2f8ddd3b95a3e7456a42be9362bb
+    environments/surveys/edit/follow_ups_include_variables: 2604dd580ceafec167ff9136d800f31e
     environments/surveys/edit/follow_ups_item_ending_tag: 159c4e3bc953aae9a9dba27f7917228b
     environments/surveys/edit/follow_ups_item_issue_detected_tag: bfb6b1f7b9f0a0a76bac853f01f72ba8
     environments/surveys/edit/follow_ups_item_response_tag: 4b63073494e2224e1333624c6cee4240
     environments/surveys/edit/follow_ups_item_send_email_tag: 0ef83c0bb40de25921a9ee7fa05babec
-    environments/surveys/edit/follow_ups_modal_action_attach_response_data_description: d23abb5a7e610b1ec3273c60d36a81e7
+    environments/surveys/edit/follow_ups_modal_action_attach_response_data_description: 901a493d60331420da61d0e76bf07eae
     environments/surveys/edit/follow_ups_modal_action_attach_response_data_label: 32eff1a88e1a044fc22b0bff54f3c683
     environments/surveys/edit/follow_ups_modal_action_body_label: e88eb1ea71f5ef886aa43ea6ba292d87
     environments/surveys/edit/follow_ups_modal_action_body_placeholder: 4a658fa2f0af640a07f956551043eb88
