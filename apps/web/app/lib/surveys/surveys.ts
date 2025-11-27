@@ -12,7 +12,7 @@ import {
   DateRange,
   FilterValue,
   SelectedFilterValue,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import {
   OptionsType,
   QuestionOption,
@@ -76,9 +76,9 @@ export const generateQuestionAndFilterOptions = (
   questionFilterOptions: QuestionFilterOptions[];
 } => {
   let questionOptions: QuestionOptions[] = [];
-  let questionFilterOptions: any = [];
+  let questionFilterOptions: QuestionFilterOptions[] = [];
 
-  let questionsOptions: any = [];
+  let questionsOptions: QuestionOption[] = [];
 
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
@@ -121,8 +121,8 @@ export const generateQuestionAndFilterOptions = (
       } else if (q.type === TSurveyQuestionTypeEnum.Matrix) {
         questionFilterOptions.push({
           type: q.type,
-          filterOptions: q.rows.flatMap((row) => Object.values(row)),
-          filterComboBoxOptions: q.columns.flatMap((column) => Object.values(column)),
+          filterOptions: q.rows.map((row) => getLocalizedValue(row.label, "default")),
+          filterComboBoxOptions: q.columns.map((column) => getLocalizedValue(column.label, "default")),
           id: q.id,
         });
       } else {

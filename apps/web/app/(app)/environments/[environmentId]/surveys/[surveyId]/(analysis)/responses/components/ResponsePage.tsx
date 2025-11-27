@@ -8,8 +8,8 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
@@ -96,14 +96,21 @@ export const ResponsePage = ({
     }
   }, [searchParams, resetState]);
 
+  // Only fetch if filters are applied (not on initial mount with no filters)
+  const hasFilters =
+    selectedFilter?.responseStatus !== "all" ||
+    (selectedFilter?.filter && selectedFilter.filter.length > 0) ||
+    (dateRange.from && dateRange.to);
+
   useEffect(() => {
     const fetchFilteredResponses = async () => {
       try {
         // skip call for initial mount
-        if (page === null) {
+        if (page === null && !hasFilters) {
           setPage(1);
           return;
         }
+        setPage(1);
         setIsFetchingFirstPage(true);
         let responses: TResponseWithQuotas[] = [];
 
@@ -126,15 +133,7 @@ export const ResponsePage = ({
         setIsFetchingFirstPage(false);
       }
     };
-
-    // Only fetch if filters are applied (not on initial mount with no filters)
-    const hasFilters =
-      (selectedFilter && Object.keys(selectedFilter).length > 0) ||
-      (dateRange && (dateRange.from || dateRange.to));
-
-    if (hasFilters) {
-      fetchFilteredResponses();
-    }
+    fetchFilteredResponses();
   }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (

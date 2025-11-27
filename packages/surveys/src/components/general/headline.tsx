@@ -1,7 +1,7 @@
 import DOMPurify from "isomorphic-dompurify";
 import { useTranslation } from "react-i18next";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { isValidHTML } from "@/lib/html-utils";
+import { isValidHTML, stripInlineStyles } from "@/lib/html-utils";
 
 interface HeadlineProps {
   headline: string;
@@ -12,8 +12,16 @@ interface HeadlineProps {
 
 export function Headline({ headline, questionId, required = true, alignTextCenter = false }: HeadlineProps) {
   const { t } = useTranslation();
-  const isHeadlineHtml = isValidHTML(headline);
-  const safeHtml = isHeadlineHtml && headline ? DOMPurify.sanitize(headline, { ADD_ATTR: ["target"] }) : "";
+  // Strip inline styles BEFORE parsing to avoid CSP violations
+  const strippedHeadline = stripInlineStyles(headline);
+  const isHeadlineHtml = isValidHTML(strippedHeadline);
+  const safeHtml =
+    isHeadlineHtml && strippedHeadline
+      ? DOMPurify.sanitize(strippedHeadline, {
+          ADD_ATTR: ["target"],
+          FORBID_ATTR: ["style"], // Additional safeguard to remove any remaining inline styles
+        })
+      : "";
 
   return (
     <label htmlFor={questionId} className="fb-text-heading fb-mb-[3px] fb-flex fb-flex-col">

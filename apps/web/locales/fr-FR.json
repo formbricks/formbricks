@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "Mettre à jour",
       "upload_contacts_modal_pick_different_file": "Choisissez un fichier différent",
       "upload_contacts_modal_preview": "Voici un aperçu de vos données.",
-      "upload_contacts_modal_upload_btn": "Importer des contacts"
+      "upload_contacts_modal_upload_btn": "Importer des contacts",
+      "upload_contacts_success": "Contacts téléchargés avec succès"
     },
     "formbricks_logo": "Logo Formbricks",
     "integrations": {
@@ -1355,7 +1356,7 @@
         "error_saving_changes": "Erreur lors de l'enregistrement des modifications",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Autoriser plusieurs réponses ; continuer à afficher même après une réponse (par exemple, boîte de commentaires).",
         "everyone": "Tout le monde",
-        "external_urls_paywall_tooltip": "Veuillez passer à la version supérieure pour personnaliser l'URL externe. Prévention contre l'hameçonnage.",
+        "external_urls_paywall_tooltip": "Veuillez passer au forfait Startup pour personnaliser les URL externes. Cela nous aide à prévenir le phishing.",
         "fallback_missing": "Fallback manquant",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} est utilisé dans la logique de la question {questionIndex}. Veuillez d'abord le supprimer de la logique.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Le champ masqué \"{fieldId}\" est utilisé dans le quota \"{quotaName}\"",

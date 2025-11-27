@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "Aktualisieren",
       "upload_contacts_modal_pick_different_file": "Wähle eine andere Datei",
       "upload_contacts_modal_preview": "Hier ist eine Vorschau deiner Daten.",
-      "upload_contacts_modal_upload_btn": "Kontakte hochladen"
+      "upload_contacts_modal_upload_btn": "Kontakte hochladen",
+      "upload_contacts_success": "Kontakte erfolgreich hochgeladen"
     },
     "formbricks_logo": "Formbricks-Logo",
     "integrations": {
@@ -1355,7 +1356,7 @@
         "error_saving_changes": "Fehler beim Speichern der Änderungen",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Mehrfachantworten erlauben; weiterhin anzeigen, auch nach einer Antwort (z.B. Feedback-Box).",
         "everyone": "Jeder",
-        "external_urls_paywall_tooltip": "Bitte aktualisieren, um die externe URL anzupassen. Phishing-Prävention.",
+        "external_urls_paywall_tooltip": "Bitte führen sie ein upgrade auf den Startup-plan durch, um externe URLs anzupassen. Dies hilft uns, phishing zu verhindern.",
         "fallback_missing": "Fehlender Fallback",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} wird in der Logik der Frage {questionIndex} verwendet. Bitte entferne es zuerst aus der Logik.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Verstecktes Feld \"{fieldId}\" wird in der \"{quotaName}\" Quote verwendet",

@@ -631,7 +631,8 @@
       "upload_contacts_modal_duplicates_update_title": "更新",
       "upload_contacts_modal_pick_different_file": "別のファイルを選択",
       "upload_contacts_modal_preview": "データのプレビューです。",
-      "upload_contacts_modal_upload_btn": "連絡先をアップロード"
+      "upload_contacts_modal_upload_btn": "連絡先をアップロード",
+      "upload_contacts_success": "連絡先のアップロードに成功しました"
     },
     "formbricks_logo": "Formbricksのロゴ",
     "integrations": {
@@ -1355,7 +1356,7 @@
         "error_saving_changes": "変更の保存中にエラーが発生しました",
         "even_after_they_submitted_a_response_e_g_feedback_box": "複数の回答を許可；回答後も表示を継続（例：フィードボックス）。",
         "everyone": "全員",
-        "external_urls_paywall_tooltip": "外部 URL をカスタマイズするにはアップグレードしてください 。 フィッシング防止 。",
+        "external_urls_paywall_tooltip": "外部URLをカスタマイズするには、スタートアッププランへのアップグレードが必要です。これによりフィッシング詐欺を防止することができます。",
         "fallback_missing": "フォールバックがありません",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} は質問 {questionIndex} のロジックで使用されています。まず、ロジックから削除してください。",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "隠しフィールド \"{fieldId}\" は \"{quotaName}\" クォータ で使用されています",

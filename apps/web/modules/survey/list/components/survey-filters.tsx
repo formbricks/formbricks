@@ -31,9 +31,10 @@ const getCreatorOptions = (t: TFunction): TFilterOption[] => [
 ];
 
 const getStatusOptions = (t: TFunction): TFilterOption[] => [
+  { label: t("common.draft"), value: "draft" },
+  { label: t("common.in_progress"), value: "inProgress" },
   { label: t("common.paused"), value: "paused" },
   { label: t("common.completed"), value: "completed" },
-  { label: t("common.draft"), value: "draft" },
 ];
 
 const getSortOptions = (t: TFunction): TSortOption[] => [
