@@ -259,6 +259,9 @@ const getExistingSurvey = async (surveyId: string) => {
       styling: true,
       segment: true,
       followUps: true,
+      displayOption: true,
+      recontactDays: true,
+      displayLimit: true,
       triggers: {
         select: {
           actionClass: {

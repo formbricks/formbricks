@@ -1,8 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
-import { IS_POSTHOG_CONFIGURED } from "@/lib/constants";
 import { canUserAccessOrganization } from "@/lib/organization/auth";
 import { getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
@@ -40,14 +38,6 @@ const ProjectOnboardingLayout = async (props) => {
 
   return (
     <div className="flex-1 bg-slate-50">
-      <PosthogIdentify
-        session={session}
-        user={user}
-        organizationId={organization.id}
-        organizationName={organization.name}
-        organizationBilling={organization.billing}
-        isPosthogEnabled={IS_POSTHOG_CONFIGURED}
-      />
       <ToasterClient />
       {children}
     </div>

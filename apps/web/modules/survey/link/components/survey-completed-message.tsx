@@ -1,22 +1,21 @@
-"use client";
-
 import { Project } from "@prisma/client";
 import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useTranslation } from "react-i18next";
 import { TSurveySingleUse } from "@formbricks/types/surveys/types";
+import { getTranslate } from "@/lingodotdev/server";
 import footerLogo from "../lib/footerlogo.svg";
 
-interface SurveyLinkUsedProps {
+interface SurveyCompletedMessageProps {
   singleUseMessage: TSurveySingleUse | null;
   project?: Pick<Project, "linkSurveyBranding">;
 }
 
-export const SurveyLinkUsed = ({ singleUseMessage, project }: SurveyLinkUsedProps) => {
-  const { t } = useTranslation();
+export const SurveyCompletedMessage = async ({ singleUseMessage, project }: SurveyCompletedMessageProps) => {
+  const t = await getTranslate();
   const defaultHeading = t("s.survey_already_answered_heading");
   const defaultSubheading = t("s.survey_already_answered_subheading");
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-between bg-gradient-to-tr from-slate-200 to-slate-50 py-8 text-center">
       <div className="my-auto flex flex-col items-center space-y-3 text-slate-300">

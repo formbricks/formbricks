@@ -7,12 +7,13 @@ import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
+import { EmptyAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import {
   SelectedFilterValue,
   useResponseFilter,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { EmptyAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { CTASummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CTASummary";
 import { CalSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
 import { ConsentSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
@@ -30,7 +31,7 @@ import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/
 import { constructToastMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementsComboBox";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { SkeletonLoader } from "@/modules/ui/components/skeleton-loader";
 import { AddressSummary } from "./AddressSummary";
 
@@ -55,7 +56,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
     const filterObject: SelectedFilterValue = { ...selectedFilter };
     const value = {
       id: elementId,
-      label: getLocalizedValue(label, "default"),
+      label: getTextContent(getLocalizedValue(label, "default")),
       elementType,
       type: OptionsType.ELEMENTS,
     };
@@ -104,12 +105,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
       ) : summary.length === 0 ? (
         <SkeletonLoader type="summary" />
       ) : responseCount === 0 ? (
-        <EmptySpaceFiller
-          type="response"
-          environment={environment}
-          noWidgetRequired={survey.type === "link"}
-          emptyMessage={t("environments.surveys.summary.no_responses_found")}
-        />
+        <EmptyState text={t("environments.surveys.summary.no_responses_found")} />
       ) : (
         summary.map((elementSummary) => {
           if (elementSummary.type === TSurveyElementTypeEnum.OpenText) {

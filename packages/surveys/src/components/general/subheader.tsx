@@ -1,5 +1,5 @@
 import DOMPurify from "isomorphic-dompurify";
-import { isValidHTML } from "@/lib/html-utils";
+import { isValidHTML, stripInlineStyles } from "@/lib/html-utils";
 
 interface SubheaderProps {
   subheader?: string;
@@ -7,8 +7,16 @@ interface SubheaderProps {
 }
 
 export function Subheader({ subheader, elementId }: SubheaderProps) {
-  const isHtml = subheader ? isValidHTML(subheader) : false;
-  const safeHtml = isHtml && subheader ? DOMPurify.sanitize(subheader, { ADD_ATTR: ["target"] }) : "";
+  // Strip inline styles BEFORE parsing to avoid CSP violations
+  const strippedSubheader = subheader ? stripInlineStyles(subheader) : "";
+  const isHtml = strippedSubheader ? isValidHTML(strippedSubheader) : false;
+  const safeHtml =
+    isHtml && strippedSubheader
+      ? DOMPurify.sanitize(strippedSubheader, {
+          ADD_ATTR: ["target"],
+          FORBID_ATTR: ["style"], // Additional safeguard to remove any remaining inline styles
+        })
+      : "";
 
   if (!subheader) return null;
 

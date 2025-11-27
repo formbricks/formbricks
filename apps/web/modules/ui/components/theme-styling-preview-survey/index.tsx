@@ -110,6 +110,10 @@ export const ThemeStylingPreviewSurvey = ({
 
   const isAppSurvey = previewType === "app";
 
+  // Create a unique key that includes both timestamp and preview type
+  // This ensures the survey remounts when switching between app and link
+  const surveyKey = `${previewType}-${surveyFormKey}`;
+
   const scrollToEditLogoSection = () => {
     const editLogoSection = document.getElementById("edit-logo");
     if (editLogoSection) {
@@ -160,7 +164,7 @@ export const ThemeStylingPreviewSurvey = ({
               previewMode="desktop"
               background={project.styling.cardBackgroundColor?.light}
               borderRadius={project.styling.roundness ?? 8}>
-              <Fragment key={surveyFormKey}>
+              <Fragment key={surveyKey}>
                 <SurveyInline
                   isPreviewMode={true}
                   survey={{ ...survey, type: "app" }}
@@ -185,7 +189,7 @@ export const ThemeStylingPreviewSurvey = ({
                 </button>
               )}
               <div
-                key={surveyFormKey}
+                key={surveyKey}
                 className={`${project.logo?.url && !project.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
                   isPreviewMode={true}

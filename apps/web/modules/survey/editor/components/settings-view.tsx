@@ -97,11 +97,7 @@ export const SettingsView = ({
         isSpamProtectionAllowed={isSpamProtectionAllowed}
       />
 
-      <RecontactOptionsCard
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-        environmentId={environment.id}
-      />
+      <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
       {isAppSurvey && (
         <SurveyPlacementCard

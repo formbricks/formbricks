@@ -2755,7 +2755,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.career_development_survey_name"),
-      role: "productManager",
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.career_development_survey_description"),
@@ -2873,7 +2873,7 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.professional_development_survey_name"),
-      role: "productManager",
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.professional_development_survey_description"),

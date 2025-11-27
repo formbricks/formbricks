@@ -1,14 +1,13 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
+import { ZEnvironmentId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
@@ -44,7 +43,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
 
   const { environmentId } = params;
-  const environmentIdValidation = ZId.safeParse(environmentId);
+  const environmentIdValidation = ZEnvironmentId.safeParse(environmentId);
   const responseInputValidation = ZResponseInputV2.safeParse({ ...responseInput, environmentId });
 
   if (!environmentIdValidation.success) {
@@ -148,11 +147,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
       response: responseData,
     });
   }
-
-  await capturePosthogEnvironmentEvent(environmentId, "response created", {
-    surveyId: responseData.surveyId,
-    surveyType: survey.type,
-  });
 
   const quotaObj = createQuotaFullObject(quotaFull);
 

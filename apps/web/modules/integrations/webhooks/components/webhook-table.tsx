@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 
 interface WebhookTableProps {
   environment: TEnvironment;
@@ -46,12 +46,7 @@ export const WebhookTable = ({
   return (
     <>
       {webhooks.length === 0 ? (
-        <EmptySpaceFiller
-          type="table"
-          environment={environment}
-          noWidgetRequired={true}
-          emptyMessage={t("environments.integrations.webhooks.empty_webhook_message")}
-        />
+        <EmptyState text={t("environments.integrations.webhooks.empty_webhook_message")} />
       ) : (
         <div className="rounded-lg border border-slate-200">
           {TableHeading}

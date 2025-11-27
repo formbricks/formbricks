@@ -4,16 +4,18 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   SelectedFilterValue,
   TResponseStatus,
   useResponseFilter,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { ElementFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementFilterComboBox";
 import { generateElementAndFilterOptions } from "@/app/lib/surveys/surveys";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import {
@@ -26,9 +28,17 @@ import {
 import { ElementOption, ElementsComboBox, OptionsType } from "./ElementsComboBox";
 
 export type ElementFilterOptions = {
-  type: TSurveyElementTypeEnum | "Attributes" | "Tags" | "Languages" | "Quotas";
-  filterOptions: string[];
-  filterComboBoxOptions: string[];
+  type:
+    | TSurveyElementTypeEnum
+    | "Attributes"
+    | "Tags"
+    | "Languages"
+    | "Quotas"
+    | "Hidden Fields"
+    | "Meta"
+    | OptionsType.OTHERS;
+  filterOptions: (string | TI18nString)[];
+  filterComboBoxOptions: (string | TI18nString)[];
   id: string;
 };
 
@@ -70,6 +80,12 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [filterValue, setFilterValue] = useState<SelectedFilterValue>(selectedFilter);
 
+  const getDefaultFilterValue = (option?: ElementFilterOptions): string | undefined => {
+    if (!option || option.filterOptions.length === 0) return undefined;
+    const firstOption = option.filterOptions[0];
+    return typeof firstOption === "object" ? getLocalizedValue(firstOption, "default") : firstOption;
+  };
+
   useEffect(() => {
     // Fetch the initial data for the filter and load it into the state
     const handleInitialData = async () => {
@@ -95,15 +111,18 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   }, [isOpen, setSelectedOptions, survey]);
 
   const handleOnChangeElementComboBoxValue = (value: ElementOption, index: number) => {
+    const matchingFilterOption = selectedOptions.elementFilterOptions.find(
+      (q) => q.type === value.type || q.type === value.elementType
+    );
+    const defaultFilterValue = getDefaultFilterValue(matchingFilterOption);
+
     if (filterValue.filter[index].elementType) {
       // Create a new array and copy existing values from SelectedFilter
       filterValue.filter[index] = {
         elementType: value,
         filterType: {
           filterComboBoxValue: undefined,
-          filterValue: selectedOptions.elementFilterOptions.find(
-            (q) => q.type === value.type || q.type === value.elementType
-          )?.filterOptions[0],
+          filterValue: defaultFilterValue,
         },
       };
       setFilterValue({ filter: [...filterValue.filter], responseStatus: filterValue.responseStatus });
@@ -112,9 +131,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
       filterValue.filter[index].elementType = value;
       filterValue.filter[index].filterType = {
         filterComboBoxValue: undefined,
-        filterValue: selectedOptions.elementFilterOptions.find(
-          (q) => q.type === value.type || q.type === value.elementType
-        )?.filterOptions[0],
+        filterValue: defaultFilterValue,
       };
       setFilterValue({ ...filterValue });
     }
@@ -218,11 +235,13 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     setFilterValue(selectedFilter);
   }, [selectedFilter]);
 
+  const activeFilterCount = filterValue.filter.length + (filterValue.responseStatus === "all" ? 0 : 1);
+
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <PopoverTriggerButton isOpen={isOpen}>
-          Filter <b>{filterValue.filter.length > 0 && `(${filterValue.filter.length})`}</b>
+          Filter <b>{activeFilterCount > 0 && `(${activeFilterCount})`}</b>
         </PopoverTriggerButton>
       </PopoverTrigger>
       <PopoverContent

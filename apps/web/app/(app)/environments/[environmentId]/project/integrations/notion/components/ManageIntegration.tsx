@@ -4,7 +4,6 @@ import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TUserLocale } from "@formbricks/types/user";
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
@@ -12,11 +11,10 @@ import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface ManageIntegrationProps {
-  environment: TEnvironment;
   notionIntegration: TIntegrationNotion;
   setOpenAddIntegrationModal: React.Dispatch<React.SetStateAction<boolean>>;
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
@@ -28,7 +26,6 @@ interface ManageIntegrationProps {
 }
 
 export const ManageIntegration = ({
-  environment,
   notionIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
@@ -101,12 +98,7 @@ export const ManageIntegration = ({
       </div>
       {!integrationArray || integrationArray.length === 0 ? (
         <div className="mt-4 w-full">
-          <EmptySpaceFiller
-            type="table"
-            environment={environment}
-            noWidgetRequired={true}
-            emptyMessage={t("environments.integrations.notion.no_databases_found")}
-          />
+          <EmptyState text={t("environments.integrations.notion.no_databases_found")} />
         </div>
       ) : (
         <div className="mt-4 flex w-full flex-col items-center justify-center">

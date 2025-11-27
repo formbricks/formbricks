@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -100,13 +101,14 @@ export function CreateSegmentModal({
         toast.error(errorMessage);
         setIsCreatingSegment(false);
       }
-    } catch (err: any) {
+    } catch (error_) {
+      logger.error("Error creating segment:", error_);
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-      if (!parsedFilters.success) {
-        toast.error(t("environments.segments.invalid_segment_filters"));
-      } else {
+      if (parsedFilters.success) {
         toast.error(t("common.something_went_wrong_please_try_again"));
+      } else {
+        toast.error(t("environments.segments.invalid_segment_filters"));
       }
       setIsCreatingSegment(false);
       return;
@@ -115,8 +117,12 @@ export function CreateSegmentModal({
 
   const isSaveDisabled = useMemo(() => {
     // check if title is empty
-
     if (!segment.title || segment.title.trim() === "") {
+      return true;
+    }
+
+    // check if filters are empty
+    if (segment.filters.length === 0) {
       return true;
     }
 

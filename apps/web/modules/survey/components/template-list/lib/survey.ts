@@ -7,7 +7,6 @@ import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
@@ -124,11 +123,6 @@ export const createSurvey = async (
     if (createdBy) {
       await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy, organization.id);
     }
-
-    await capturePosthogEnvironmentEvent(survey.environmentId, "survey created", {
-      surveyId: survey.id,
-      surveyType: survey.type,
-    });
 
     return transformedSurvey;
   } catch (error) {

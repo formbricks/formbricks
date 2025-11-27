@@ -87,8 +87,8 @@ test.describe("JS Package Test", async () => {
     await page.getByRole("button", { name: "Create action" }).click();
 
     await page.locator("#recontactOptionsCardTrigger").click();
-    await page.locator("label").filter({ hasText: "Keep showing while conditions" }).click();
-    await page.locator("#recontactDays").check();
+    await page.locator('[data-testid="recontact-option-respondMultiple"]').click();
+    await page.locator('[data-testid="waiting-time-option-ignore"]').click();
 
     await page.getByRole("button", { name: "Publish" }).click();
 
