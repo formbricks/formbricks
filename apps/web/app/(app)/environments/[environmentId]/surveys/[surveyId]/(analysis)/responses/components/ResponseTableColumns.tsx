@@ -15,7 +15,7 @@ import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@/modules/survey/lib/questions";
+import { VARIABLES_ICON_MAP, getElementIconMap } from "@/modules/survey/lib/elements";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
@@ -30,35 +30,33 @@ import {
   getMetadataValue,
 } from "../lib/utils";
 
-const getQuestionColumnsData = (
-  question: TSurveyElement,
+const getElementColumnsData = (
+  element: TSurveyElement,
   survey: TSurvey,
   isExpanded: boolean,
   t: TFunction
 ): ColumnDef<TResponseTableData>[] => {
-  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+  const ELEMENTS_ICON_MAP = getElementIconMap(t);
   const addressFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
   const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
 
   // Helper function to create consistent column headers
-  const createQuestionHeader = (questionType: string, headline: string, suffix?: string) => {
+  const createElementHeader = (elementType: string, headline: string, suffix?: string) => {
     const title = suffix ? `${headline} - ${suffix}` : headline;
-    const QuestionHeader = () => (
+    const ElementHeader = () => (
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 overflow-hidden">
-          <span className="h-4 w-4">{QUESTIONS_ICON_MAP[questionType]}</span>
+          <span className="h-4 w-4">{ELEMENTS_ICON_MAP[elementType]}</span>
           <span className="truncate">{title}</span>
         </div>
       </div>
     );
-    QuestionHeader.displayName = "QuestionHeader";
-    return QuestionHeader;
+    return ElementHeader;
   };
 
-  // Helper function to get localized question headline
-  const getQuestionHeadline = (question: TSurveyElement, survey: TSurvey) => {
+  const getElementHeadline = (element: TSurveyElement, survey: TSurvey) => {
     return getTextContent(
-      getLocalizedValue(recallToHeadline(question.headline, survey, false, "default"), "default")
+      getLocalizedValue(recallToHeadline(element.headline, survey, false, "default"), "default")
     );
   };
 
@@ -77,18 +75,18 @@ const getQuestionColumnsData = (
     );
   };
 
-  switch (question.type) {
+  switch (element.type) {
     case "matrix":
-      return question.rows.map((matrixRow) => {
+      return element.rows.map((matrixRow) => {
         return {
-          accessorKey: "QUESTION_" + question.id + "_" + matrixRow.label.default,
+          accessorKey: "ELEMENT_" + element.id + "_" + matrixRow.label.default,
           header: () => {
             return (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 overflow-hidden">
-                  <span className="h-4 w-4">{QUESTIONS_ICON_MAP["matrix"]}</span>
+                  <span className="h-4 w-4">{ELEMENTS_ICON_MAP["matrix"]}</span>
                   <span className="truncate">
-                    {getTextContent(getLocalizedValue(question.headline, "default")) +
+                    {getTextContent(getLocalizedValue(element.headline, "default")) +
                       " - " +
                       getLocalizedValue(matrixRow.label, "default")}
                   </span>
@@ -108,12 +106,12 @@ const getQuestionColumnsData = (
     case "address":
       return addressFields.map((addressField) => {
         return {
-          accessorKey: "QUESTION_" + question.id + "_" + addressField,
+          accessorKey: "ELEMENT_" + element.id + "_" + addressField,
           header: () => {
             return (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 overflow-hidden">
-                  <span className="h-4 w-4">{QUESTIONS_ICON_MAP["address"]}</span>
+                  <span className="h-4 w-4">{ELEMENTS_ICON_MAP["address"]}</span>
                   <span className="truncate">{getAddressFieldLabel(addressField, t)}</span>
                 </div>
               </div>
@@ -131,12 +129,12 @@ const getQuestionColumnsData = (
     case "contactInfo":
       return contactInfoFields.map((contactInfoField) => {
         return {
-          accessorKey: "QUESTION_" + question.id + "_" + contactInfoField,
+          accessorKey: "ELEMENT_" + element.id + "_" + contactInfoField,
           header: () => {
             return (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 overflow-hidden">
-                  <span className="h-4 w-4">{QUESTIONS_ICON_MAP["contactInfo"]}</span>
+                  <span className="h-4 w-4">{ELEMENTS_ICON_MAP["contactInfo"]}</span>
                   <span className="truncate">{getContactInfoFieldLabel(contactInfoField, t)}</span>
                 </div>
               </div>
@@ -155,17 +153,17 @@ const getQuestionColumnsData = (
     case "multipleChoiceSingle":
     case "ranking":
     case "pictureSelection": {
-      const questionHeadline = getQuestionHeadline(question, survey);
+      const elementHeadline = getElementHeadline(element, survey);
       return [
         {
-          accessorKey: "QUESTION_" + question.id,
-          header: createQuestionHeader(question.type, questionHeadline),
+          accessorKey: "ELEMENT_" + element.id,
+          header: createElementHeader(element.type, elementHeadline),
           cell: ({ row }) => {
-            const responseValue = row.original.responseData[question.id];
+            const responseValue = row.original.responseData[element.id];
             const language = row.original.language;
             return (
               <RenderResponse
-                question={question}
+                element={element}
                 survey={survey}
                 responseData={responseValue}
                 language={language}
@@ -176,15 +174,15 @@ const getQuestionColumnsData = (
           },
         },
         {
-          accessorKey: "QUESTION_" + question.id + "optionIds",
-          header: createQuestionHeader(question.type, questionHeadline, t("common.option_id")),
+          accessorKey: "ELEMENT_" + element.id + "optionIds",
+          header: createElementHeader(element.type, elementHeadline, t("common.option_id")),
           cell: ({ row }) => {
-            const responseValue = row.original.responseData[question.id];
+            const responseValue = row.original.responseData[element.id];
             // Type guard to ensure responseValue is the correct type
             if (typeof responseValue === "string" || Array.isArray(responseValue)) {
               const choiceIds = extractChoiceIdsFromResponse(
                 responseValue,
-                question,
+                element,
                 row.original.language || undefined
               );
               return renderChoiceIdBadges(choiceIds, isExpanded);
@@ -198,28 +196,25 @@ const getQuestionColumnsData = (
     default:
       return [
         {
-          accessorKey: "QUESTION_" + question.id,
+          accessorKey: "ELEMENT_" + element.id,
           header: () => (
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 overflow-hidden">
-                <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
+                <span className="h-4 w-4">{ELEMENTS_ICON_MAP[element.type]}</span>
                 <span className="truncate">
                   {getTextContent(
-                    getLocalizedValue(
-                      recallToHeadline(question.headline, survey, false, "default"),
-                      "default"
-                    )
+                    getLocalizedValue(recallToHeadline(element.headline, survey, false, "default"), "default")
                   )}
                 </span>
               </div>
             </div>
           ),
           cell: ({ row }) => {
-            const responseValue = row.original.responseData[question.id];
+            const responseValue = row.original.responseData[element.id];
             const language = row.original.language;
             return (
               <RenderResponse
-                question={question}
+                element={element}
                 survey={survey}
                 responseData={responseValue}
                 language={language}
@@ -267,10 +262,8 @@ export const generateResponseTableColumns = (
   t: TFunction,
   showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
-  const questions = getElementsFromBlocks(survey.blocks);
-  const questionColumns = questions.flatMap((question) =>
-    getQuestionColumnsData(question, survey, isExpanded, t)
-  );
+  const elements = getElementsFromBlocks(survey.blocks);
+  const elementColumns = elements.flatMap((element) => getElementColumnsData(element, survey, isExpanded, t));
 
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
@@ -417,7 +410,7 @@ export const generateResponseTableColumns = (
     ),
   };
 
-  // Combine the selection column with the dynamic question columns
+  // Combine the selection column with the dynamic element columns
   const baseColumns = [
     personColumn,
     singleUseIdColumn,
@@ -425,7 +418,7 @@ export const generateResponseTableColumns = (
     ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
-    ...questionColumns,
+    ...elementColumns,
     ...variableColumns,
     ...hiddenFieldColumns,
     ...metadataColumns,

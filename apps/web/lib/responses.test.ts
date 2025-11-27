@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { convertResponseValue, getQuestionResponseMapping, processResponseData } from "./responses";
+import { convertResponseValue, getElementResponseMapping, processResponseData } from "./responses";
 
 // Mock the recall and i18n utils
 vi.mock("@/lib/utils/recall", () => ({
@@ -295,15 +295,15 @@ describe("Response Processing", () => {
     };
 
     test("should map questions to responses correctly", () => {
-      const mapping = getQuestionResponseMapping(mockSurvey, mockResponse);
+      const mapping = getElementResponseMapping(mockSurvey, mockResponse);
       expect(mapping).toHaveLength(2);
       expect(mapping[0]).toEqual({
-        question: "Question 1",
+        element: "Question 1",
         response: "Answer 1",
         type: TSurveyElementTypeEnum.OpenText,
       });
       expect(mapping[1]).toEqual({
-        question: "Question 2",
+        element: "Question 2",
         response: "Option 1; Option 2",
         type: TSurveyElementTypeEnum.MultipleChoiceMulti,
       });
@@ -334,7 +334,7 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(mockSurvey, response);
+      const mapping = getElementResponseMapping(mockSurvey, response);
       expect(mapping).toHaveLength(2);
       expect(mapping[0].response).toBe("");
       expect(mapping[1].response).toBe("");
@@ -412,8 +412,8 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(survey, response);
-      expect(mapping[0].question).toBe("Question 1 EN");
+      const mapping = getElementResponseMapping(survey, response);
+      expect(mapping[0].element).toBe("Question 1 EN");
     });
 
     test("should handle null response language", () => {
@@ -441,9 +441,9 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(mockSurvey, response);
+      const mapping = getElementResponseMapping(mockSurvey, response);
       expect(mapping).toHaveLength(2);
-      expect(mapping[0].question).toBe("Question 1");
+      expect(mapping[0].element).toBe("Question 1");
     });
 
     test("should handle undefined response language", () => {
@@ -471,9 +471,9 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(mockSurvey, response);
+      const mapping = getElementResponseMapping(mockSurvey, response);
       expect(mapping).toHaveLength(2);
-      expect(mapping[0].question).toBe("Question 1");
+      expect(mapping[0].element).toBe("Question 1");
     });
 
     test("should handle empty survey languages", () => {
@@ -505,9 +505,9 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(survey, response);
+      const mapping = getElementResponseMapping(survey, response);
       expect(mapping).toHaveLength(2);
-      expect(mapping[0].question).toBe("Question 1"); // Should fallback to default
+      expect(mapping[0].element).toBe("Question 1"); // Should fallback to default
     });
   });
 });

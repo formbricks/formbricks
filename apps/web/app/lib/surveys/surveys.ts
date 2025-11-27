@@ -15,11 +15,11 @@ import {
   SelectedFilterValue,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import {
+  ElementOption,
+  ElementOptions,
   OptionsType,
-  QuestionOption,
-  QuestionOptions,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
-import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementsComboBox";
+import { ElementFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -65,8 +65,7 @@ const META_OP_MAP = {
   "Does not end with": "doesNotEndWith",
 } as const;
 
-// creating the options for the filtering to be selected there are 4 types questions, attributes, tags and metadata
-export const generateQuestionAndFilterOptions = (
+export const generateElementAndFilterOptions = (
   survey: TSurvey,
   environmentTags: TTag[] | undefined,
   attributes: TSurveyContactAttributes,
@@ -74,39 +73,39 @@ export const generateQuestionAndFilterOptions = (
   hiddenFields: TResponseHiddenFieldsFilter,
   quotas: TSurveyQuota[]
 ): {
-  questionOptions: QuestionOptions[];
-  questionFilterOptions: QuestionFilterOptions[];
+  elementOptions: ElementOptions[];
+  elementFilterOptions: ElementFilterOptions[];
 } => {
-  let questionOptions: QuestionOptions[] = [];
-  let questionFilterOptions: any = [];
+  let elementOptions: ElementOptions[] = [];
+  let elementFilterOptions: any = [];
 
-  let questionsOptions: any = [];
-  const questions = getElementsFromBlocks(survey.blocks);
+  let elementsOptions: any = [];
+  const elements = getElementsFromBlocks(survey.blocks);
 
-  questions.forEach((q) => {
+  elements.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
-      questionsOptions.push({
+      elementsOptions.push({
         label: getTextContent(
           getLocalizedValue(recallToHeadline(q.headline, survey, false, "default"), "default")
         ),
-        questionType: q.type,
-        type: OptionsType.QUESTIONS,
+        elementType: q.type,
+        type: OptionsType.ELEMENTS,
         id: q.id,
       });
     }
   });
-  questionOptions = [...questionOptions, { header: OptionsType.QUESTIONS, option: questionsOptions }];
-  questions.forEach((q) => {
+  elementOptions = [...elementOptions, { header: OptionsType.ELEMENTS, option: elementsOptions }];
+  elements.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
       if (q.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
-        questionFilterOptions.push({
+        elementFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
           id: q.id,
         });
       } else if (q.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
-        questionFilterOptions.push({
+        elementFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: q?.choices
@@ -115,21 +114,21 @@ export const generateQuestionAndFilterOptions = (
           id: q.id,
         });
       } else if (q.type === TSurveyElementTypeEnum.PictureSelection) {
-        questionFilterOptions.push({
+        elementFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: q?.choices ? q?.choices?.map((_, idx) => `Picture ${idx + 1}`) : [""],
           id: q.id,
         });
       } else if (q.type === TSurveyElementTypeEnum.Matrix) {
-        questionFilterOptions.push({
+        elementFilterOptions.push({
           type: q.type,
           filterOptions: q.rows.flatMap((row) => Object.values(row)),
           filterComboBoxOptions: q.columns.flatMap((column) => Object.values(column)),
           id: q.id,
         });
       } else {
-        questionFilterOptions.push({
+        elementFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: filterOptions[q.type],
@@ -143,9 +142,9 @@ export const generateQuestionAndFilterOptions = (
     return { label: t.name, type: OptionsType.TAGS, id: t.id };
   });
   if (tagsOptions && tagsOptions?.length > 0) {
-    questionOptions = [...questionOptions, { header: OptionsType.TAGS, option: tagsOptions }];
+    elementOptions = [...elementOptions, { header: OptionsType.TAGS, option: tagsOptions }];
     environmentTags?.forEach((t) => {
-      questionFilterOptions.push({
+      elementFilterOptions.push({
         type: "Tags",
         filterOptions: conditionOptions.tags,
         filterComboBoxOptions: filterOptions.tags,
@@ -155,8 +154,8 @@ export const generateQuestionAndFilterOptions = (
   }
 
   if (attributes) {
-    questionOptions = [
-      ...questionOptions,
+    elementOptions = [
+      ...elementOptions,
       {
         header: OptionsType.ATTRIBUTES,
         option: Object.keys(attributes).map((a) => {
@@ -165,7 +164,7 @@ export const generateQuestionAndFilterOptions = (
       },
     ];
     Object.keys(attributes).forEach((a) => {
-      questionFilterOptions.push({
+      elementFilterOptions.push({
         type: "Attributes",
         filterOptions: conditionOptions.userAttributes,
         filterComboBoxOptions: attributes[a],
@@ -175,8 +174,8 @@ export const generateQuestionAndFilterOptions = (
   }
 
   if (meta) {
-    questionOptions = [
-      ...questionOptions,
+    elementOptions = [
+      ...elementOptions,
       {
         header: OptionsType.META,
         option: Object.keys(meta).map((m) => {
@@ -185,7 +184,7 @@ export const generateQuestionAndFilterOptions = (
       },
     ];
     Object.keys(meta).forEach((m) => {
-      questionFilterOptions.push({
+      elementFilterOptions.push({
         type: "Meta",
         filterOptions: m === "url" ? Object.keys(META_OP_MAP) : ["Equals", "Not equals"],
         filterComboBoxOptions: meta[m],
@@ -195,8 +194,8 @@ export const generateQuestionAndFilterOptions = (
   }
 
   if (hiddenFields) {
-    questionOptions = [
-      ...questionOptions,
+    elementOptions = [
+      ...elementOptions,
       {
         header: OptionsType.HIDDEN_FIELDS,
         option: Object.keys(hiddenFields).map((hiddenField) => {
@@ -205,7 +204,7 @@ export const generateQuestionAndFilterOptions = (
       },
     ];
     Object.keys(hiddenFields).forEach((hiddenField) => {
-      questionFilterOptions.push({
+      elementFilterOptions.push({
         type: "Hidden Fields",
         filterOptions: ["Equals", "Not equals"],
         filterComboBoxOptions: hiddenFields[hiddenField],
@@ -214,29 +213,29 @@ export const generateQuestionAndFilterOptions = (
     });
   }
 
-  let languageQuestion: QuestionOption[] = [];
+  let languageElement: ElementOption[] = [];
 
   //can be extended to include more properties
   if (survey.languages?.length > 0) {
-    languageQuestion.push({ label: "Language", type: OptionsType.OTHERS, id: "language" });
+    languageElement.push({ label: "Language", type: OptionsType.OTHERS, id: "language" });
     const languageOptions = survey.languages.map((sl) => sl.language.code);
-    questionFilterOptions.push({
+    elementFilterOptions.push({
       type: OptionsType.OTHERS,
       filterOptions: conditionOptions.languages,
       filterComboBoxOptions: languageOptions,
       id: "language",
     });
   }
-  questionOptions = [...questionOptions, { header: OptionsType.OTHERS, option: languageQuestion }];
+  elementOptions = [...elementOptions, { header: OptionsType.OTHERS, option: languageElement }];
 
   if (quotas.length > 0) {
     const quotaOptions = quotas.map((quota) => {
       return { label: quota.name, type: OptionsType.QUOTAS, id: quota.id };
     });
-    questionOptions = [...questionOptions, { header: OptionsType.QUOTAS, option: quotaOptions }];
+    elementOptions = [...elementOptions, { header: OptionsType.QUOTAS, option: quotaOptions }];
 
     quotas.forEach((quota) => {
-      questionFilterOptions.push({
+      elementFilterOptions.push({
         type: "Quotas",
         filterOptions: ["Status"],
         filterComboBoxOptions: ["Screened in", "Screened out (overquota)", "Screened out (not in quota)"],
@@ -245,7 +244,7 @@ export const generateQuestionAndFilterOptions = (
     });
   }
 
-  return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
+  return { elementOptions: [...elementOptions], elementFilterOptions: [...elementFilterOptions] };
 };
 
 // get the formatted filter expression to fetch filtered responses
@@ -256,7 +255,7 @@ export const getFormattedFilters = (
 ): TResponseFilterCriteria => {
   const filters: TResponseFilterCriteria = {};
 
-  const questions: FilterValue[] = [];
+  const elements: FilterValue[] = [];
   const tags: FilterValue[] = [];
   const attributes: FilterValue[] = [];
   const others: FilterValue[] = [];
@@ -265,19 +264,19 @@ export const getFormattedFilters = (
   const quotas: FilterValue[] = [];
 
   selectedFilter.filter.forEach((filter) => {
-    if (filter.questionType?.type === "Questions") {
-      questions.push(filter);
-    } else if (filter.questionType?.type === "Tags") {
+    if (filter.elementType?.type === "Elements") {
+      elements.push(filter);
+    } else if (filter.elementType?.type === "Tags") {
       tags.push(filter);
-    } else if (filter.questionType?.type === "Attributes") {
+    } else if (filter.elementType?.type === "Attributes") {
       attributes.push(filter);
-    } else if (filter.questionType?.type === "Other Filters") {
+    } else if (filter.elementType?.type === "Other Filters") {
       others.push(filter);
-    } else if (filter.questionType?.type === "Meta") {
+    } else if (filter.elementType?.type === "Meta") {
       meta.push(filter);
-    } else if (filter.questionType?.type === "Hidden Fields") {
+    } else if (filter.elementType?.type === "Hidden Fields") {
       hiddenFields.push(filter);
-    } else if (filter.questionType?.type === "Quotas") {
+    } else if (filter.elementType?.type === "Quotas") {
       quotas.push(filter);
     }
   });
@@ -305,28 +304,27 @@ export const getFormattedFilters = (
     };
     tags.forEach((tag) => {
       if (tag.filterType.filterComboBoxValue === "Applied") {
-        filters.tags?.applied?.push(tag.questionType.label ?? "");
+        filters.tags?.applied?.push(tag.elementType.label ?? "");
       } else {
-        filters.tags?.notApplied?.push(tag.questionType.label ?? "");
+        filters.tags?.notApplied?.push(tag.elementType.label ?? "");
       }
     });
   }
 
-  // for questions
-  if (questions.length) {
-    const surveyQuestions = getElementsFromBlocks(survey.blocks);
-    questions.forEach(({ filterType, questionType }) => {
+  if (elements.length) {
+    const surveyElements = getElementsFromBlocks(survey.blocks);
+    elements.forEach(({ filterType, elementType }) => {
       if (!filters.data) filters.data = {};
-      switch (questionType.questionType) {
+      switch (elementType.elementType) {
         case TSurveyElementTypeEnum.OpenText:
         case TSurveyElementTypeEnum.Address:
         case TSurveyElementTypeEnum.ContactInfo: {
           if (filterType.filterComboBoxValue === "Filled out") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "filledOut",
             };
           } else if (filterType.filterComboBoxValue === "Skipped") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "skipped",
             };
           }
@@ -334,11 +332,11 @@ export const getFormattedFilters = (
         }
         case TSurveyElementTypeEnum.Ranking: {
           if (filterType.filterComboBoxValue === "Filled out") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "submitted",
             };
           } else if (filterType.filterComboBoxValue === "Skipped") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "skipped",
             };
           }
@@ -347,12 +345,12 @@ export const getFormattedFilters = (
         case TSurveyElementTypeEnum.MultipleChoiceSingle:
         case TSurveyElementTypeEnum.MultipleChoiceMulti: {
           if (filterType.filterValue === "Includes either") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "includesOne",
               value: filterType.filterComboBoxValue as string[],
             };
           } else if (filterType.filterValue === "Includes all") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "includesAll",
               value: filterType.filterComboBoxValue as string[],
             };
@@ -362,30 +360,30 @@ export const getFormattedFilters = (
         case TSurveyElementTypeEnum.NPS:
         case TSurveyElementTypeEnum.Rating: {
           if (filterType.filterValue === "Is equal to") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "equals",
               value: parseInt(filterType.filterComboBoxValue as string),
             };
           } else if (filterType.filterValue === "Is less than") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "lessThan",
               value: parseInt(filterType.filterComboBoxValue as string),
             };
           } else if (filterType.filterValue === "Is more than") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "greaterThan",
               value: parseInt(filterType.filterComboBoxValue as string),
             };
           } else if (filterType.filterValue === "Submitted") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "submitted",
             };
           } else if (filterType.filterValue === "Skipped") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "skipped",
             };
           } else if (filterType.filterValue === "Includes either") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "includesOne",
               value: (filterType.filterComboBoxValue as string[]).map((value) => parseInt(value)),
             };
@@ -394,11 +392,11 @@ export const getFormattedFilters = (
         }
         case TSurveyElementTypeEnum.CTA: {
           if (filterType.filterComboBoxValue === "Clicked") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "clicked",
             };
           } else if (filterType.filterComboBoxValue === "Dismissed") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "skipped",
             };
           }
@@ -406,22 +404,22 @@ export const getFormattedFilters = (
         }
         case TSurveyElementTypeEnum.Consent: {
           if (filterType.filterComboBoxValue === "Accepted") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "accepted",
             };
           } else if (filterType.filterComboBoxValue === "Dismissed") {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "skipped",
             };
           }
           break;
         }
         case TSurveyElementTypeEnum.PictureSelection: {
-          const questionId = questionType.id ?? "";
-          const question = surveyQuestions.find((q) => q.id === questionId);
+          const elementId = elementType.id ?? "";
+          const element = surveyElements.find((q) => q.id === elementId);
 
           if (
-            question?.type !== TSurveyElementTypeEnum.PictureSelection ||
+            element?.type !== TSurveyElementTypeEnum.PictureSelection ||
             !Array.isArray(filterType.filterComboBoxValue)
           ) {
             return;
@@ -429,16 +427,16 @@ export const getFormattedFilters = (
 
           const selectedOptions = filterType.filterComboBoxValue.map((option) => {
             const index = parseInt(option.split(" ")[1]);
-            return question?.choices[index - 1].id;
+            return element?.choices[index - 1].id;
           });
 
           if (filterType.filterValue === "Includes all") {
-            filters.data[questionId] = {
+            filters.data[elementId] = {
               op: "includesAll",
               value: selectedOptions,
             };
           } else if (filterType.filterValue === "Includes either") {
-            filters.data[questionId] = {
+            filters.data[elementId] = {
               op: "includesOne",
               value: selectedOptions,
             };
@@ -451,7 +449,7 @@ export const getFormattedFilters = (
             filterType.filterComboBoxValue &&
             typeof filterType.filterComboBoxValue === "string"
           ) {
-            filters.data[questionType.id ?? ""] = {
+            filters.data[elementType.id ?? ""] = {
               op: "matrix",
               value: { [filterType.filterValue]: filterType.filterComboBoxValue },
             };
@@ -464,16 +462,16 @@ export const getFormattedFilters = (
 
   // for hidden fields
   if (hiddenFields.length) {
-    hiddenFields.forEach(({ filterType, questionType }) => {
+    hiddenFields.forEach(({ filterType, elementType }) => {
       if (!filters.data) filters.data = {};
       if (!filterType.filterComboBoxValue) return;
       if (filterType.filterValue === "Equals") {
-        filters.data[questionType.label ?? ""] = {
+        filters.data[elementType.label ?? ""] = {
           op: "equals",
           value: filterType.filterComboBoxValue as string,
         };
       } else if (filterType.filterValue === "Not equals") {
-        filters.data[questionType.label ?? ""] = {
+        filters.data[elementType.label ?? ""] = {
           op: "notEquals",
           value: filterType.filterComboBoxValue as string,
         };
@@ -483,16 +481,16 @@ export const getFormattedFilters = (
 
   // for attributes
   if (attributes.length) {
-    attributes.forEach(({ filterType, questionType }) => {
+    attributes.forEach(({ filterType, elementType }) => {
       if (!filters.contactAttributes) filters.contactAttributes = {};
       if (!filterType.filterComboBoxValue) return;
       if (filterType.filterValue === "Equals") {
-        filters.contactAttributes[questionType.label ?? ""] = {
+        filters.contactAttributes[elementType.label ?? ""] = {
           op: "equals",
           value: filterType.filterComboBoxValue as string,
         };
       } else if (filterType.filterValue === "Not equals") {
-        filters.contactAttributes[questionType.label ?? ""] = {
+        filters.contactAttributes[elementType.label ?? ""] = {
           op: "notEquals",
           value: filterType.filterComboBoxValue as string,
         };
@@ -502,16 +500,16 @@ export const getFormattedFilters = (
 
   // for others
   if (others.length) {
-    others.forEach(({ filterType, questionType }) => {
+    others.forEach(({ filterType, elementType }) => {
       if (!filters.others) filters.others = {};
       if (!filterType.filterComboBoxValue) return;
       if (filterType.filterValue === "Equals") {
-        filters.others[questionType.label ?? ""] = {
+        filters.others[elementType.label ?? ""] = {
           op: "equals",
           value: filterType.filterComboBoxValue as string,
         };
       } else if (filterType.filterValue === "Not equals") {
-        filters.others[questionType.label ?? ""] = {
+        filters.others[elementType.label ?? ""] = {
           op: "notEquals",
           value: filterType.filterComboBoxValue as string,
         };
@@ -521,7 +519,7 @@ export const getFormattedFilters = (
 
   // for meta
   if (meta.length) {
-    meta.forEach(({ filterType, questionType }) => {
+    meta.forEach(({ filterType, elementType }) => {
       if (!filters.meta) filters.meta = {};
 
       // For text input cases (URL filtering)
@@ -529,25 +527,25 @@ export const getFormattedFilters = (
         const value = filterType.filterComboBoxValue.trim();
         const op = META_OP_MAP[filterType.filterValue as keyof typeof META_OP_MAP];
         if (op) {
-          filters.meta[questionType.label ?? ""] = { op, value };
+          filters.meta[elementType.label ?? ""] = { op, value };
         }
       }
       // For dropdown/select cases (existing metadata fields)
       else if (Array.isArray(filterType.filterComboBoxValue) && filterType.filterComboBoxValue.length > 0) {
         const value = filterType.filterComboBoxValue[0]; // Take first selected value
         if (filterType.filterValue === "Equals") {
-          filters.meta[questionType.label ?? ""] = { op: "equals", value };
+          filters.meta[elementType.label ?? ""] = { op: "equals", value };
         } else if (filterType.filterValue === "Not equals") {
-          filters.meta[questionType.label ?? ""] = { op: "notEquals", value };
+          filters.meta[elementType.label ?? ""] = { op: "notEquals", value };
         }
       }
     });
   }
 
   if (quotas.length) {
-    quotas.forEach(({ filterType, questionType }) => {
+    quotas.forEach(({ filterType, elementType }) => {
       filters.quotas ??= {};
-      const quotaId = questionType.id;
+      const quotaId = elementType.id;
       if (!quotaId) return;
 
       const statusMap: Record<string, "screenedIn" | "screenedOut" | "screenedOutNotInQuota"> = {

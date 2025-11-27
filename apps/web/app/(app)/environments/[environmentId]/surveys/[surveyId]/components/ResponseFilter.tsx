@@ -12,8 +12,8 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
-import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
+import { ElementFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementFilterComboBox";
+import { generateElementAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import {
@@ -23,9 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
+import { ElementOption, ElementsComboBox, OptionsType } from "./ElementsComboBox";
 
-export type QuestionFilterOptions = {
+export type ElementFilterOptions = {
   type: TSurveyElementTypeEnum | "Attributes" | "Tags" | "Languages" | "Quotas";
   filterOptions: string[];
   filterComboBoxOptions: string[];
@@ -79,7 +79,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
         if (!surveyFilterData?.data) return;
 
         const { attributes, meta, environmentTags, hiddenFields, quotas } = surveyFilterData.data;
-        const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
+        const { elementFilterOptions, elementOptions } = generateElementAndFilterOptions(
           survey,
           environmentTags,
           attributes,
@@ -87,33 +87,33 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           hiddenFields,
           quotas
         );
-        setSelectedOptions({ questionFilterOptions, questionOptions });
+        setSelectedOptions({ elementFilterOptions: elementFilterOptions, elementOptions: elementOptions });
       }
     };
 
     handleInitialData();
   }, [isOpen, setSelectedOptions, survey]);
 
-  const handleOnChangeQuestionComboBoxValue = (value: QuestionOption, index: number) => {
-    if (filterValue.filter[index].questionType) {
+  const handleOnChangeElementComboBoxValue = (value: ElementOption, index: number) => {
+    if (filterValue.filter[index].elementType) {
       // Create a new array and copy existing values from SelectedFilter
       filterValue.filter[index] = {
-        questionType: value,
+        elementType: value,
         filterType: {
           filterComboBoxValue: undefined,
-          filterValue: selectedOptions.questionFilterOptions.find(
-            (q) => q.type === value.type || q.type === value.questionType
+          filterValue: selectedOptions.elementFilterOptions.find(
+            (q) => q.type === value.type || q.type === value.elementType
           )?.filterOptions[0],
         },
       };
       setFilterValue({ filter: [...filterValue.filter], responseStatus: filterValue.responseStatus });
     } else {
       // Update the existing value at the specified index
-      filterValue.filter[index].questionType = value;
+      filterValue.filter[index].elementType = value;
       filterValue.filter[index].filterType = {
         filterComboBoxValue: undefined,
-        filterValue: selectedOptions.questionFilterOptions.find(
-          (q) => q.type === value.type || q.type === value.questionType
+        filterValue: selectedOptions.elementFilterOptions.find(
+          (q) => q.type === value.type || q.type === value.elementType
         )?.filterOptions[0],
       };
       setFilterValue({ ...filterValue });
@@ -124,8 +124,8 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   const clearItem = () => {
     setFilterValue({
       filter: filterValue.filter.filter((s) => {
-        // keep the filter if questionType is selected and filterComboBoxValue is selected
-        return s.questionType.hasOwnProperty("label") && s.filterType.filterComboBoxValue?.length;
+        // keep the filter if elementType is selected and filterComboBoxValue is selected
+        return s.elementType.hasOwnProperty("label") && s.filterType.filterComboBoxValue?.length;
       }),
       responseStatus: filterValue.responseStatus,
     });
@@ -145,7 +145,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
       filter: [
         ...filterValue.filter,
         {
-          questionType: {},
+          elementType: {},
           filterType: { filterComboBoxValue: undefined, filterValue: undefined },
         },
       ],
@@ -197,10 +197,10 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   };
 
   // remove the filter which has already been selected
-  const questionComboBoxOptions = selectedOptions.questionOptions.map((q) => {
+  const elementComboBoxOptions = selectedOptions.elementOptions.map((q) => {
     return {
       ...q,
-      option: q.option.filter((o) => !filterValue.filter.some((f) => f?.questionType?.id === o?.id)),
+      option: q.option.filter((o) => !filterValue.filter.some((f) => f?.elementType?.id === o?.id)),
     };
   });
 
@@ -261,41 +261,41 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
               <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
                 <div
                   className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-2"
-                  key={`${s.questionType.id}-${i}-${s.questionType.label}`}>
-                  <QuestionsComboBox
-                    key={`${s.questionType.label}-${i}-${s.questionType.id}`}
-                    options={questionComboBoxOptions}
-                    selected={s.questionType}
-                    onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
+                  key={`${s.elementType.id}-${i}-${s.elementType.label}`}>
+                  <ElementsComboBox
+                    key={`${s.elementType.label}-${i}-${s.elementType.id}`}
+                    options={elementComboBoxOptions}
+                    selected={s.elementType}
+                    onChangeValue={(value) => handleOnChangeElementComboBoxValue(value, i)}
                   />
-                  <QuestionFilterComboBox
-                    key={`${s.questionType.id}-${i}`}
+                  <ElementFilterComboBox
+                    key={`${s.elementType.id}-${i}`}
                     filterOptions={
-                      selectedOptions.questionFilterOptions.find(
+                      selectedOptions.elementFilterOptions.find(
                         (q) =>
-                          (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
-                          q.id === s.questionType.id
+                          (q.type === s.elementType.elementType || q.type === s.elementType.type) &&
+                          q.id === s.elementType.id
                       )?.filterOptions
                     }
                     filterComboBoxOptions={
-                      selectedOptions.questionFilterOptions.find(
+                      selectedOptions.elementFilterOptions.find(
                         (q) =>
-                          (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
-                          q.id === s.questionType.id
+                          (q.type === s.elementType.elementType || q.type === s.elementType.type) &&
+                          q.id === s.elementType.id
                       )?.filterComboBoxOptions
                     }
                     filterValue={filterValue.filter[i].filterType.filterValue}
                     filterComboBoxValue={filterValue.filter[i].filterType.filterComboBoxValue}
                     type={
-                      s?.questionType?.type === OptionsType.QUESTIONS
-                        ? s?.questionType?.questionType
-                        : s?.questionType?.type
+                      s?.elementType?.type === OptionsType.ELEMENTS
+                        ? s?.elementType?.elementType
+                        : s?.elementType?.type
                     }
-                    fieldId={s?.questionType?.id}
+                    fieldId={s?.elementType?.id}
                     handleRemoveMultiSelect={(value) => handleRemoveMultiSelect(value, i)}
                     onChangeFilterComboBoxValue={(value) => handleOnChangeFilterComboBoxValue(value, i)}
                     onChangeFilterValue={(value) => handleOnChangeFilterValue(value, i)}
-                    disabled={!s?.questionType?.label}
+                    disabled={!s?.elementType?.label}
                   />
                 </div>
                 <div className="flex w-full items-center justify-end gap-1 md:w-auto">

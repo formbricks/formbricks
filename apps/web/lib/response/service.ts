@@ -370,7 +370,7 @@ export const getResponseDownloadFile = async (
       }
     }
 
-    const { metaDataFields, questions, hiddenFields, variables, userAttributes } = extractSurveyDetails(
+    const { metaDataFields, elements, hiddenFields, variables, userAttributes } = extractSurveyDetails(
       survey,
       responses
     );
@@ -399,7 +399,7 @@ export const getResponseDownloadFile = async (
       "Notes",
       "Tags",
       ...metaDataFields,
-      ...questions.flat(),
+      ...elements.flat(),
       ...variables,
       ...hiddenFields,
       ...userAttributes,
@@ -411,7 +411,7 @@ export const getResponseDownloadFile = async (
     const jsonData = getResponsesJson(
       survey,
       responses,
-      questions,
+      elements,
       userAttributes,
       hiddenFields,
       isQuotasAllowed
@@ -550,15 +550,15 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const questions = getElementsFromBlocks(survey.blocks);
+  const elements = getElementsFromBlocks(survey.blocks);
 
-  const fileUploadQuestions = new Set(
-    questions.filter((question) => question.type === TSurveyElementTypeEnum.FileUpload).map((q) => q.id)
+  const fileUploadElements = new Set(
+    elements.filter((element) => element.type === TSurveyElementTypeEnum.FileUpload).map((q) => q.id)
   );
 
   const fileUrls = Object.entries(response.data)
-    .filter(([questionId]) => fileUploadQuestions.has(questionId))
-    .flatMap(([, questionResponse]) => questionResponse as string[]);
+    .filter(([elementId]) => fileUploadElements.has(elementId))
+    .flatMap(([, elementResponse]) => elementResponse as string[]);
 
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {

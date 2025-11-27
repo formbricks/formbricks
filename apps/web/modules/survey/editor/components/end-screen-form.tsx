@@ -7,8 +7,8 @@ import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
+import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { RecallWrapper } from "@/modules/survey/components/element-form-input/components/recall-wrapper";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -53,12 +53,12 @@ export const EndScreenForm = ({
 
   return (
     <form>
-      <QuestionFormInput
+      <ElementFormInput
         id="headline"
         label={t("common.note") + "*"}
         value={endingCard.headline}
         localSurvey={localSurvey}
-        questionIdx={questions.length + endingCardIndex}
+        elementIdx={questions.length + endingCardIndex}
         isInvalid={isInvalid}
         updateSurvey={updateSurvey}
         selectedLanguageCode={selectedLanguageCode}
@@ -71,12 +71,12 @@ export const EndScreenForm = ({
         {endingCard.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
-              <QuestionFormInput
+              <ElementFormInput
                 id="subheader"
                 value={endingCard.subheader}
                 label={t("common.description")}
                 localSurvey={localSurvey}
-                questionIdx={questions.length + endingCardIndex}
+                elementIdx={questions.length + endingCardIndex}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
@@ -138,14 +138,14 @@ export const EndScreenForm = ({
         {showEndingCardCTA && (
           <div className="border-1 mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
             <div className="space-y-2">
-              <QuestionFormInput
+              <ElementFormInput
                 id="buttonLabel"
                 label={t("environments.surveys.edit.button_label")}
                 placeholder={t("environments.surveys.edit.create_your_own_survey")}
                 className="rounded-md"
                 value={endingCard.buttonLabel}
                 localSurvey={localSurvey}
-                questionIdx={questions.length + endingCardIndex}
+                elementIdx={questions.length + endingCardIndex}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
@@ -159,7 +159,7 @@ export const EndScreenForm = ({
               <div className="rounded-md bg-white">
                 <RecallWrapper
                   value={endingCard.buttonLink ?? ""}
-                  questionId={endingCard.id}
+                  elementId={endingCard.id}
                   onChange={(val, recallItems, fallbacks) => {
                     const updatedValue = {
                       ...endingCard,

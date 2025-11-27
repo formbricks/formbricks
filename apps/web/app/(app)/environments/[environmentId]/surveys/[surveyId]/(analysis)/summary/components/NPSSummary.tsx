@@ -3,24 +3,24 @@
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyElementSummaryNps, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryNps } from "@formbricks/types/surveys/types";
 import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
-import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface NPSSummaryProps {
-  questionSummary: TSurveyElementSummaryNps;
+  elementSummary: TSurveyElementSummaryNps;
   survey: TSurvey;
   setFilter: (
-    questionId: TSurveyQuestionId,
+    elementId: string,
     label: TI18nString,
-    questionType: TSurveyElementTypeEnum,
+    elementType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
 }
 
-export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryProps) => {
+export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProps) => {
   const { t } = useTranslation();
   const applyFilter = (group: string) => {
     const filters = {
@@ -46,9 +46,9 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
 
     if (filter) {
       setFilter(
-        questionSummary.question.id,
-        questionSummary.question.headline,
-        questionSummary.question.type,
+        elementSummary.element.id,
+        elementSummary.element.headline,
+        elementSummary.element.type,
         filter.comparison,
         filter.values
       );
@@ -57,7 +57,7 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
+      <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {["promoters", "passives", "detractors", "dismissed"].map((group) => (
           <button
@@ -73,25 +73,25 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
                 </p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(questionSummary[group]?.percentage, 2)}%
+                    {convertFloatToNDecimal(elementSummary[group]?.percentage, 2)}%
                   </p>
                 </div>
               </div>
               <p className="flex w-32 items-end justify-end text-slate-600">
-                {questionSummary[group]?.count}{" "}
-                {questionSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
+                {elementSummary[group]?.count}{" "}
+                {elementSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
               </p>
             </div>
             <ProgressBar
               barColor={group === "dismissed" ? "bg-slate-600" : "bg-brand-dark"}
-              progress={questionSummary[group]?.percentage / 100}
+              progress={elementSummary[group]?.percentage / 100}
             />
           </button>
         ))}
       </div>
 
       <div className="flex justify-center pb-4 pt-4">
-        <HalfCircle value={questionSummary.score} />
+        <HalfCircle value={elementSummary.score} />
       </div>
     </div>
   );

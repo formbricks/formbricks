@@ -11,29 +11,29 @@ import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface OpenTextSummaryProps {
-  questionSummary: TSurveyElementSummaryOpenText;
+  elementSummary: TSurveyElementSummaryOpenText;
   environmentId: string;
   survey: TSurvey;
   locale: TUserLocale;
 }
 
-export const OpenTextSummary = ({ questionSummary, environmentId, survey, locale }: OpenTextSummaryProps) => {
+export const OpenTextSummary = ({ elementSummary, environmentId, survey, locale }: OpenTextSummaryProps) => {
   const { t } = useTranslation();
   const [visibleResponses, setVisibleResponses] = useState(10);
 
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>
-      Math.min(prevVisibleResponses + 10, questionSummary.samples.length)
+      Math.min(prevVisibleResponses + 10, elementSummary.samples.length)
     );
   };
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
+      <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
       <div className="border-t border-slate-200"></div>
       <div className="max-h-[40vh] overflow-y-auto">
         <Table>
@@ -45,7 +45,7 @@ export const OpenTextSummary = ({ questionSummary, environmentId, survey, locale
             </TableRow>
           </TableHeader>
           <TableBody>
-            {questionSummary.samples.slice(0, visibleResponses).map((response) => (
+            {elementSummary.samples.slice(0, visibleResponses).map((response) => (
               <TableRow key={response.id}>
                 <TableCell>
                   {response.contact ? (
@@ -80,7 +80,7 @@ export const OpenTextSummary = ({ questionSummary, environmentId, survey, locale
             ))}
           </TableBody>
         </Table>
-        {visibleResponses < questionSummary.samples.length && (
+        {visibleResponses < elementSummary.samples.length && (
           <div className="flex justify-center py-4">
             <Button onClick={handleLoadMore} variant="secondary" size="sm">
               {t("common.load_more")}

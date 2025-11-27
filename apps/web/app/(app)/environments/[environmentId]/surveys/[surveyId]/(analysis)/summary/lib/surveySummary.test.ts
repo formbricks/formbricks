@@ -14,7 +14,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
-  getQuestionSummary,
+  getElementSummary,
   getResponsesForSummary,
   getSurveySummary,
   getSurveySummaryDropOff,
@@ -232,7 +232,7 @@ describe("getSurveySummaryDropOff", () => {
     vi.mocked(evaluateLogic).mockReturnValue(false); // Default: no logic triggers
     vi.mocked(performActions).mockReturnValue({
       jumpTarget: undefined,
-      requiredQuestionIds: [],
+      requiredElementIds: [],
       calculations: {},
     });
   });
@@ -270,14 +270,14 @@ describe("getSurveySummaryDropOff", () => {
 
     expect(dropOff.length).toBe(2);
     // Q1
-    expect(dropOff[0].questionId).toBe("q1");
+    expect(dropOff[0].elementId).toBe("q1");
     expect(dropOff[0].impressions).toBe(displayCount); // Welcome card disabled, so first question impressions = displayCount
     expect(dropOff[0].dropOffCount).toBe(displayCount - responses.length); // 5 displays - 2 started = 3 dropped before q1
     expect(dropOff[0].dropOffPercentage).toBe(60); // (3/5)*100
     expect(dropOff[0].ttc).toBe(10);
 
     // Q2
-    expect(dropOff[1].questionId).toBe("q2");
+    expect(dropOff[1].elementId).toBe("q2");
     expect(dropOff[1].impressions).toBe(responses.length); // 2 responses reached q1, so 2 impressions for q2
     expect(dropOff[1].dropOffCount).toBe(1); // 1 response dropped at q2
     expect(dropOff[1].dropOffPercentage).toBe(50); // (1/2)*100
@@ -395,9 +395,9 @@ describe("getSurveySummaryDropOff", () => {
     });
     vi.mocked(performActions).mockImplementation((_s, actions, _d, _v) => {
       if (actions[0] && "objective" in actions[0] && actions[0].objective === "jumpToBlock") {
-        return { jumpTarget: actions[0].target, requiredQuestionIds: [], calculations: {} };
+        return { jumpTarget: actions[0].target, requiredElementIds: [], calculations: {} };
       }
-      return { jumpTarget: undefined, requiredQuestionIds: [], calculations: {} };
+      return { jumpTarget: undefined, requiredElementIds: [], calculations: {} };
     });
 
     const dropOff = getSurveySummaryDropOff(
@@ -471,13 +471,13 @@ describe("getQuestionSummary", () => {
   });
 
   test("summarizes OpenText questions", async () => {
-    const summary = await getQuestionSummary(
+    const summary = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
       mockDropOff
     );
-    const openTextSummary = summary.find((s: any) => s.question?.id === "q_open");
+    const openTextSummary = summary.find((s: any) => s.element?.id === "q_open");
     expect(openTextSummary?.type).toBe(TSurveyElementTypeEnum.OpenText);
     expect(openTextSummary?.responseCount).toBe(1);
     // @ts-expect-error
@@ -485,13 +485,13 @@ describe("getQuestionSummary", () => {
   });
 
   test("summarizes MultipleChoiceSingle questions", async () => {
-    const summary = await getQuestionSummary(
+    const summary = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
       mockDropOff
     );
-    const multiSingleSummary = summary.find((s: any) => s.question?.id === "q_multi_single");
+    const multiSingleSummary = summary.find((s: any) => s.element?.id === "q_multi_single");
     expect(multiSingleSummary?.type).toBe(TSurveyElementTypeEnum.MultipleChoiceSingle);
     expect(multiSingleSummary?.responseCount).toBe(1);
     // @ts-expect-error
@@ -503,7 +503,7 @@ describe("getQuestionSummary", () => {
   });
 
   test("summarizes HiddenFields", async () => {
-    const summary = await getQuestionSummary(
+    const summary = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -568,10 +568,10 @@ describe("getQuestionSummary", () => {
       ];
 
       const dropOff = [
-        { questionId: "ranking-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+        { elementId: "ranking-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
       ] as unknown as TSurveySummary["dropOff"];
 
-      const summary = await getQuestionSummary(
+      const summary = await getElementSummary(
         survey,
         getElementsFromBlocks(survey.blocks),
         responses,
@@ -654,10 +654,10 @@ describe("getQuestionSummary", () => {
       });
 
       const dropOff = [
-        { questionId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+        { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
       ] as unknown as TSurveySummary["dropOff"];
 
-      const summary = await getQuestionSummary(
+      const summary = await getElementSummary(
         survey,
         getElementsFromBlocks(survey.blocks),
         responses,
@@ -736,10 +736,10 @@ describe("getQuestionSummary", () => {
       ];
 
       const dropOff = [
-        { questionId: "ranking-q1", impressions: 2, dropOffCount: 2, dropOffPercentage: 100 },
+        { elementId: "ranking-q1", impressions: 2, dropOffCount: 2, dropOffPercentage: 100 },
       ] as unknown as TSurveySummary["dropOff"];
 
-      const summary = await getQuestionSummary(
+      const summary = await getElementSummary(
         survey,
         getElementsFromBlocks(survey.blocks),
         responses,
@@ -800,10 +800,10 @@ describe("getQuestionSummary", () => {
       ];
 
       const dropOff = [
-        { questionId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+        { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
       ] as unknown as TSurveySummary["dropOff"];
 
-      const summary = await getQuestionSummary(
+      const summary = await getElementSummary(
         survey,
         getElementsFromBlocks(survey.blocks),
         responses,
@@ -864,10 +864,10 @@ describe("getQuestionSummary", () => {
       ];
 
       const dropOff = [
-        { questionId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+        { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
       ] as unknown as TSurveySummary["dropOff"];
 
-      const summary = await getQuestionSummary(
+      const summary = await getElementSummary(
         survey,
         getElementsFromBlocks(survey.blocks),
         responses,
@@ -1242,15 +1242,10 @@ describe("Address and ContactInfo question types", () => {
     ];
 
     const dropOff = [
-      { questionId: "address-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "address-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary = await getQuestionSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
     expect(summary[0].type).toBe(TSurveyElementTypeEnum.Address);
@@ -1319,15 +1314,10 @@ describe("Address and ContactInfo question types", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "contact-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "contact-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary = await getQuestionSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
     expect(summary[0].type).toBe(TSurveyElementTypeEnum.ContactInfo);
@@ -1374,15 +1364,10 @@ describe("Address and ContactInfo question types", () => {
     ];
 
     const dropOff = [
-      { questionId: "address-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "address-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary = await getQuestionSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
     expect((summary[0] as any).type).toBe(TSurveyElementTypeEnum.Address);
@@ -1447,15 +1432,10 @@ describe("Address and ContactInfo question types", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "contact-q1", impressions: 3, dropOffCount: 3, dropOffPercentage: 100 },
+      { elementId: "contact-q1", impressions: 3, dropOffCount: 3, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary = await getQuestionSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
     expect((summary[0] as any).type).toBe(TSurveyElementTypeEnum.ContactInfo);
@@ -1516,15 +1496,10 @@ describe("Address and ContactInfo question types", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "address-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "address-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary = await getQuestionSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
     expect((summary[0] as any).type).toBe(TSurveyElementTypeEnum.Address);
@@ -1579,15 +1554,10 @@ describe("Address and ContactInfo question types", () => {
     );
 
     const dropOff = [
-      { questionId: "contact-q1", impressions: 100, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "contact-q1", impressions: 100, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary = await getQuestionSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
     expect((summary[0] as any).type).toBe(TSurveyElementTypeEnum.ContactInfo);
@@ -1666,10 +1636,10 @@ describe("Matrix question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "matrix-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "matrix-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -1754,7 +1724,7 @@ describe("Matrix question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
     // Mock getLocalizedValue for this test
@@ -1773,7 +1743,7 @@ describe("Matrix question type tests", () => {
       return "";
     });
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -1879,10 +1849,10 @@ describe("Matrix question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "matrix-q1", impressions: 4, dropOffCount: 4, dropOffPercentage: 100 },
+      { elementId: "matrix-q1", impressions: 4, dropOffCount: 4, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -1971,10 +1941,10 @@ describe("Matrix question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "matrix-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "matrix-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2043,10 +2013,10 @@ describe("Matrix question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "matrix-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
+      { elementId: "matrix-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2120,10 +2090,10 @@ describe("Matrix question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2202,10 +2172,10 @@ describe("Matrix question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2298,7 +2268,7 @@ describe("Matrix question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "matrix-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "matrix-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
     // Mock getLocalizedValue to handle our specific test case
@@ -2317,7 +2287,7 @@ describe("Matrix question type tests", () => {
       return "";
     });
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2381,10 +2351,10 @@ describe("Matrix question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2474,10 +2444,10 @@ describe("NPS question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "nps-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "nps-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2568,10 +2538,10 @@ describe("NPS question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "nps-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "nps-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2635,10 +2605,10 @@ describe("NPS question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "nps-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
+      { elementId: "nps-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2721,10 +2691,10 @@ describe("NPS question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "nps-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "nps-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2815,10 +2785,10 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2917,10 +2887,10 @@ describe("Rating question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -2977,10 +2947,10 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
+      { elementId: "rating-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3055,10 +3025,10 @@ describe("PictureSelection question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "picture-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "picture-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3134,10 +3104,10 @@ describe("PictureSelection question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "picture-q1", impressions: 2, dropOffCount: 2, dropOffPercentage: 100 },
+      { elementId: "picture-q1", impressions: 2, dropOffCount: 2, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3196,10 +3166,10 @@ describe("PictureSelection question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "picture-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "picture-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3287,14 +3257,14 @@ describe("CTA question type tests", () => {
 
     const dropOff = [
       {
-        questionId: "cta-q1",
+        elementId: "cta-q1",
         impressions: 5, // 5 total impressions (including 2 that didn't respond)
         dropOffCount: 0,
         dropOffPercentage: 0,
       },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3353,14 +3323,14 @@ describe("CTA question type tests", () => {
 
     const dropOff = [
       {
-        questionId: "cta-q1",
+        elementId: "cta-q1",
         impressions: 3, // 3 total impressions
         dropOffCount: 3,
         dropOffPercentage: 100,
       },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3437,10 +3407,10 @@ describe("Consent question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "consent-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "consent-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3497,10 +3467,10 @@ describe("Consent question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "consent-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
+      { elementId: "consent-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3553,10 +3523,10 @@ describe("Consent question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "consent-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "consent-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3618,10 +3588,10 @@ describe("Date question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "date-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "date-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3677,10 +3647,10 @@ describe("Date question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "date-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
+      { elementId: "date-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3728,10 +3698,10 @@ describe("Date question type tests", () => {
     }));
 
     const dropOff = [
-      { questionId: "date-q1", impressions: 100, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "date-q1", impressions: 100, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3796,10 +3766,10 @@ describe("FileUpload question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "file-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "file-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3855,10 +3825,10 @@ describe("FileUpload question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "file-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
+      { elementId: "file-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3931,10 +3901,10 @@ describe("Cal question type tests", () => {
     ] as any;
 
     const dropOff = [
-      { questionId: "cal-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "cal-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -3992,10 +3962,10 @@ describe("Cal question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "cal-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
+      { elementId: "cal-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -4049,10 +4019,10 @@ describe("Cal question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "cal-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "cal-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(
+    const summary: any = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,

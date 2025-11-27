@@ -83,6 +83,12 @@ export const ZSurveyEndings = z.array(ZSurveyEnding);
 
 export type TSurveyEndings = z.infer<typeof ZSurveyEndings>;
 
+/**
+ * @deprecated Use TSurveyElementTypeEnum instead. This enum is kept for v1 API backward compatibility only.
+ */
+/**
+ * @deprecated Use TSurveyElementTypeEnum instead. This enum is kept for v1 API backward compatibility only.
+ */
 export enum TSurveyQuestionTypeEnum {
   FileUpload = "fileUpload",
   OpenText = "openText",
@@ -101,6 +107,9 @@ export enum TSurveyQuestionTypeEnum {
   ContactInfo = "contactInfo",
 }
 
+/**
+ * @deprecated Use ZSurveyElementId / TSurveyElementId instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
   if (FORBIDDEN_IDS.includes(id)) {
     ctx.addIssue({
@@ -124,6 +133,9 @@ export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
   }
 });
 
+/**
+ * @deprecated Use TSurveyElementId instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyQuestionId = z.infer<typeof ZSurveyQuestionId>;
 
 export const ZSurveyWelcomeCard = z
@@ -281,6 +293,9 @@ export type TSurveyQuestionChoice = z.infer<typeof ZSurveyQuestionChoice>;
 
 // Actions for question logic
 export const ZDynamicLogicField = z.enum(["question", "variable", "hiddenField"]);
+/**
+ * @deprecated "jumpToQuestion" is deprecated, use "jumpToBlock" instead. Kept for v1 API backward compatibility only.
+ */
 export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQuestion"]);
 
 export type TDynamicLogicField = z.infer<typeof ZDynamicLogicField>;
@@ -340,11 +355,17 @@ const ZActionRequireAnswer = ZActionBase.extend({
 });
 export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
 
+/**
+ * @deprecated Use jumpToBlock action instead. Kept for v1 API backward compatibility only.
+ */
 const ZActionJumpToQuestion = ZActionBase.extend({
   objective: z.literal("jumpToQuestion"),
   target: z.string().min(1, "Conditional Logic: Target question id cannot be empty"),
 });
 
+/**
+ * @deprecated Use TActionJumpToBlock instead. Kept for v1 API backward compatibility only.
+ */
 export type TActionJumpToQuestion = z.infer<typeof ZActionJumpToQuestion>;
 
 export const ZSurveyLogicAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToQuestion]);
@@ -363,8 +384,9 @@ export const ZSurveyLogic = z.object({
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 
-// DEPRECATED: Backward compatibility - accepts "question" type in conditions
-// Actions already accept both "question" and "element" via ZDynamicLogicFieldValueDeprecated
+/**
+ * @deprecated Use element-specific schemas instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyLogicDeprecated = z.object({
   id: ZId,
   conditions: ZConditionGroupDeprecated,
@@ -393,6 +415,9 @@ export const ZSurveyQuestionBase = z.object({
 export const ZSurveyOpenTextQuestionInputType = z.enum(["text", "email", "url", "number", "phone"]);
 export type TSurveyOpenTextQuestionInputType = z.infer<typeof ZSurveyOpenTextQuestionInputType>;
 
+/**
+ * @deprecated Use ZSurveyOpenTextElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.OpenText),
   placeholder: ZI18nString.optional(),
@@ -436,19 +461,31 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   }
 });
 
+/**
+ * @deprecated Use TSurveyOpenTextElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
 
+/**
+ * @deprecated Use ZSurveyConsentElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Consent),
   label: ZI18nString,
 });
 
+/**
+ * @deprecated Use TSurveyConsentElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
 
 export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
 
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 
+/**
+ * @deprecated Use ZSurveyMultipleChoiceElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
   type: z.union([
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceSingle),
@@ -461,8 +498,14 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
   otherOptionPlaceholder: ZI18nString.optional(),
 });
 
+/**
+ * @deprecated Use TSurveyMultipleChoiceElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyMultipleChoiceQuestion = z.infer<typeof ZSurveyMultipleChoiceQuestion>;
 
+/**
+ * @deprecated Use ZSurveyNPSElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.NPS),
   lowerLabel: ZI18nString.optional(),
@@ -470,8 +513,14 @@ export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   isColorCodingEnabled: z.boolean().optional().default(false),
 });
 
+/**
+ * @deprecated Use TSurveyNPSElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 
+/**
+ * @deprecated Use ZSurveyCTAElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
   buttonUrl: z.string().optional(),
@@ -479,8 +528,14 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   dismissButtonLabel: ZI18nString.optional(),
 });
 
+/**
+ * @deprecated Use TSurveyCTAElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
 
+/**
+ * @deprecated Use ZSurveyRatingElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Rating),
   scale: z.enum(["number", "smiley", "star"]),
@@ -490,16 +545,28 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   isColorCodingEnabled: z.boolean().optional().default(false),
 });
 
+/**
+ * @deprecated Use ZSurveyDateElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Date),
   html: ZI18nString.optional(),
   format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
 });
 
+/**
+ * @deprecated Use TSurveyDateElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyDateQuestion = z.infer<typeof ZSurveyDateQuestion>;
 
+/**
+ * @deprecated Use TSurveyRatingElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
+/**
+ * @deprecated Use ZSurveyPictureSelectionElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.PictureSelection),
   allowMulti: z.boolean().optional().default(false),
@@ -508,8 +575,14 @@ export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
     .min(2, { message: "Picture Selection question must have atleast 2 choices" }),
 });
 
+/**
+ * @deprecated Use TSurveyPictureSelectionElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelectionQuestion>;
 
+/**
+ * @deprecated Use ZSurveyFileUploadElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.FileUpload),
   allowMultipleFiles: z.boolean(),
@@ -517,14 +590,23 @@ export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
   allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
 });
 
+/**
+ * @deprecated Use TSurveyFileUploadElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
 
+/**
+ * @deprecated Use ZSurveyCalElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
   calUserName: z.string().min(1, { message: "Cal user name is required" }),
   calHost: z.string().optional(),
 });
 
+/**
+ * @deprecated Use TSurveyCalElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
 
 export const ZSurveyMatrixQuestionChoice = z.object({
@@ -534,6 +616,9 @@ export const ZSurveyMatrixQuestionChoice = z.object({
 
 export type TSurveyMatrixQuestionChoice = z.infer<typeof ZSurveyMatrixQuestionChoice>;
 
+/**
+ * @deprecated Use ZSurveyMatrixElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
   rows: z.array(ZSurveyMatrixQuestionChoice),
@@ -541,6 +626,9 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   shuffleOption: ZShuffleOption.optional().default("none"),
 });
 
+/**
+ * @deprecated Use TSurveyMatrixElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
 const ZToggleInputConfig = z.object({
@@ -551,6 +639,9 @@ const ZToggleInputConfig = z.object({
 
 export type TInputFieldConfig = z.infer<typeof ZToggleInputConfig>;
 
+/**
+ * @deprecated Use ZSurveyAddressElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Address),
   addressLine1: ZToggleInputConfig,
@@ -561,6 +652,9 @@ export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   country: ZToggleInputConfig,
 });
 
+/**
+ * @deprecated Use ZSurveyContactInfoElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
   firstName: ZToggleInputConfig,
@@ -570,10 +664,19 @@ export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   company: ZToggleInputConfig,
 });
 
+/**
+ * @deprecated Use TSurveyAddressElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
+/**
+ * @deprecated Use TSurveyContactInfoElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
 
+/**
+ * @deprecated Use ZSurveyRankingElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
   choices: z
@@ -584,8 +687,14 @@ export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   shuffleOption: ZShuffleOption.optional(),
 });
 
+/**
+ * @deprecated Use TSurveyRankingElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyRankingQuestion = z.infer<typeof ZSurveyRankingQuestion>;
 
+/**
+ * @deprecated Use TSurveyElement instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
@@ -603,12 +712,24 @@ export const ZSurveyQuestion = z.union([
   ZSurveyContactInfoQuestion,
 ]);
 
+/**
+ * @deprecated Use TSurveyElement instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
 
+/**
+ * @deprecated Use TSurveyElement[] instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
+/**
+ * @deprecated Use TSurveyElement[] instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 
+/**
+ * @deprecated Use TSurveyElementTypeEnum instead. Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.Address,
   TSurveyQuestionTypeEnum.CTA,
@@ -627,6 +748,9 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.ContactInfo,
 ]);
 
+/**
+ * @deprecated Use TSurveyElementTypeEnum instead. Kept for v1 API backward compatibility only.
+ */
 export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;
 
 export const ZSurveyLanguage = z.object({
@@ -637,11 +761,17 @@ export const ZSurveyLanguage = z.object({
 
 export type TSurveyLanguage = z.infer<typeof ZSurveyLanguage>;
 
+/**
+ * @deprecated Kept for v1 API backward compatibility only.
+ */
 export const ZSurveyQuestionsObject = z.object({
   questions: ZSurveyQuestions,
   hiddenFields: ZSurveyHiddenFields,
 });
 
+/**
+ * @deprecated Kept for v1 API backward compatibility only.
+ */
 export type TSurveyQuestionsObject = z.infer<typeof ZSurveyQuestionsObject>;
 
 export const ZSurveyDisplayOption = z.enum([
@@ -3777,11 +3907,11 @@ export interface TSurveyDates {
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
-export type TSurveyEditorTabs = "questions" | "settings" | "styling" | "followUps";
+export type TSurveyEditorTabs = "elements" | "settings" | "styling" | "followUps";
 
 export const ZSurveyElementSummaryOpenText = z.object({
   type: z.literal(TSurveyElementTypeEnum.OpenText),
-  question: ZSurveyOpenTextElement,
+  element: ZSurveyOpenTextElement,
   responseCount: z.number(),
   samples: z.array(
     z.object({
@@ -3806,7 +3936,7 @@ export const ZSurveyElementSummaryMultipleChoice = z.object({
     z.literal(TSurveyElementTypeEnum.MultipleChoiceMulti),
     z.literal(TSurveyElementTypeEnum.MultipleChoiceSingle),
   ]),
-  question: ZSurveyMultipleChoiceElement,
+  element: ZSurveyMultipleChoiceElement,
   responseCount: z.number(),
   selectionCount: z.number(),
   choices: z.array(
@@ -3836,7 +3966,7 @@ export type TSurveyElementSummaryMultipleChoice = z.infer<typeof ZSurveyElementS
 
 export const ZSurveyElementSummaryPictureSelection = z.object({
   type: z.literal(TSurveyElementTypeEnum.PictureSelection),
-  question: ZSurveyPictureSelectionElement,
+  element: ZSurveyPictureSelectionElement,
   responseCount: z.number(),
   selectionCount: z.number(),
   choices: z.array(
@@ -3853,7 +3983,7 @@ export type TSurveyElementSummaryPictureSelection = z.infer<typeof ZSurveyElemen
 
 export const ZSurveyElementSummaryRating = z.object({
   type: z.literal(TSurveyElementTypeEnum.Rating),
-  question: ZSurveyRatingElement,
+  element: ZSurveyRatingElement,
   responseCount: z.number(),
   average: z.number(),
   choices: z.array(
@@ -3872,7 +4002,7 @@ export type TSurveyElementSummaryRating = z.infer<typeof ZSurveyElementSummaryRa
 
 export const ZSurveyElementSummaryNps = z.object({
   type: z.literal(TSurveyElementTypeEnum.NPS),
-  question: ZSurveyNPSElement,
+  element: ZSurveyNPSElement,
   responseCount: z.number(),
   total: z.number(),
   score: z.number(),
@@ -3898,7 +4028,7 @@ export type TSurveyElementSummaryNps = z.infer<typeof ZSurveyElementSummaryNps>;
 
 export const ZSurveyElementSummaryCta = z.object({
   type: z.literal(TSurveyElementTypeEnum.CTA),
-  question: ZSurveyCTAElement,
+  element: ZSurveyCTAElement,
   impressionCount: z.number(),
   clickCount: z.number(),
   skipCount: z.number(),
@@ -3913,7 +4043,7 @@ export type TSurveyElementSummaryCta = z.infer<typeof ZSurveyElementSummaryCta>;
 
 export const ZSurveyElementSummaryConsent = z.object({
   type: z.literal(TSurveyElementTypeEnum.Consent),
-  question: ZSurveyConsentElement,
+  element: ZSurveyConsentElement,
   responseCount: z.number(),
   accepted: z.object({
     count: z.number(),
@@ -3929,7 +4059,7 @@ export type TSurveyElementSummaryConsent = z.infer<typeof ZSurveyElementSummaryC
 
 export const ZSurveyElementSummaryDate = z.object({
   type: z.literal(TSurveyElementTypeEnum.Date),
-  question: ZSurveyDateElement,
+  element: ZSurveyDateElement,
   responseCount: z.number(),
   samples: z.array(
     z.object({
@@ -3951,7 +4081,7 @@ export type TSurveyElementSummaryDate = z.infer<typeof ZSurveyElementSummaryDate
 
 export const ZSurveyElementSummaryFileUpload = z.object({
   type: z.literal(TSurveyElementTypeEnum.FileUpload),
-  question: ZSurveyFileUploadElement,
+  element: ZSurveyFileUploadElement,
   responseCount: z.number(),
   files: z.array(
     z.object({
@@ -3973,7 +4103,7 @@ export type TSurveyElementSummaryFileUpload = z.infer<typeof ZSurveyElementSumma
 
 export const ZSurveyElementSummaryCal = z.object({
   type: z.literal(TSurveyElementTypeEnum.Cal),
-  question: ZSurveyCalElement,
+  element: ZSurveyCalElement,
   responseCount: z.number(),
   booked: z.object({
     count: z.number(),
@@ -3989,7 +4119,7 @@ export type TSurveyElementSummaryCal = z.infer<typeof ZSurveyElementSummaryCal>;
 
 export const ZSurveyElementSummaryMatrix = z.object({
   type: z.literal(TSurveyElementTypeEnum.Matrix),
-  question: ZSurveyMatrixElement,
+  element: ZSurveyMatrixElement,
   responseCount: z.number(),
   data: z.array(
     z.object({
@@ -4030,7 +4160,7 @@ export type TSurveyElementSummaryHiddenFields = z.infer<typeof ZSurveyElementSum
 
 export const ZSurveyElementSummaryAddress = z.object({
   type: z.literal(TSurveyElementTypeEnum.Address),
-  question: ZSurveyAddressElement,
+  element: ZSurveyAddressElement,
   responseCount: z.number(),
   samples: z.array(
     z.object({
@@ -4052,7 +4182,7 @@ export type TSurveyElementSummaryAddress = z.infer<typeof ZSurveyElementSummaryA
 
 export const ZSurveyElementSummaryContactInfo = z.object({
   type: z.literal(TSurveyElementTypeEnum.ContactInfo),
-  question: ZSurveyContactInfoElement,
+  element: ZSurveyContactInfoElement,
   responseCount: z.number(),
   samples: z.array(
     z.object({
@@ -4074,7 +4204,7 @@ export type TSurveyElementSummaryContactInfo = z.infer<typeof ZSurveyElementSumm
 
 export const ZSurveyElementSummaryRanking = z.object({
   type: z.literal(TSurveyElementTypeEnum.Ranking),
-  question: ZSurveyRankingElement,
+  element: ZSurveyRankingElement,
   responseCount: z.number(),
   choices: z.array(
     z.object({
@@ -4134,8 +4264,8 @@ export const ZSurveySummary = z.object({
   }),
   dropOff: z.array(
     z.object({
-      questionId: z.string().cuid2(),
-      questionType: z.nativeEnum(TSurveyElementTypeEnum),
+      elementId: z.string().cuid2(),
+      elementType: z.nativeEnum(TSurveyElementTypeEnum),
       headline: z.string(),
       ttc: z.number(),
       impressions: z.number(),

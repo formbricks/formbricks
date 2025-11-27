@@ -11,7 +11,7 @@ interface SecondaryLanguageSelectProps {
   projectLanguages: Language[];
   defaultLanguage: Language;
   setSelectedLanguageCode: (languageCode: string) => void;
-  setActiveQuestionId: (questionId: string) => void;
+  setActiveElementId: (elementId: string) => void;
   localSurvey: TSurvey;
   updateSurveyLanguages: (language: Language) => void;
   locale: TUserLocale;
@@ -21,7 +21,7 @@ export function SecondaryLanguageSelect({
   projectLanguages,
   defaultLanguage,
   setSelectedLanguageCode,
-  setActiveQuestionId,
+  setActiveElementId,
   localSurvey,
   updateSurveyLanguages,
   locale,
@@ -33,7 +33,7 @@ export function SecondaryLanguageSelect({
     );
   };
 
-  const questions = getElementsFromBlocks(localSurvey.blocks);
+  const elements = getElementsFromBlocks(localSurvey.blocks);
 
   return (
     <div className="space-y-2">
@@ -49,7 +49,7 @@ export function SecondaryLanguageSelect({
             language={language}
             onEdit={() => {
               setSelectedLanguageCode(language.code);
-              setActiveQuestionId(questions[0]?.id);
+              setActiveElementId(elements[0]?.id);
             }}
             onToggle={() => {
               updateSurveyLanguages(language);

@@ -9,8 +9,8 @@ import {
   DateRange,
   SelectedFilterValue,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
-import { generateQuestionAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
+import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementsComboBox";
+import { generateElementAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
 
 describe("surveys", () => {
   afterEach(() => {
@@ -45,12 +45,12 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
 
-      expect(result.questionOptions.length).toBeGreaterThan(0);
-      expect(result.questionOptions[0].header).toBe(OptionsType.QUESTIONS);
-      expect(result.questionFilterOptions.length).toBe(1);
-      expect(result.questionFilterOptions[0].id).toBe("q1");
+      expect(result.elementOptions.length).toBeGreaterThan(0);
+      expect(result.elementOptions[0].header).toBe(OptionsType.ELEMENTS);
+      expect(result.elementFilterOptions.length).toBe(1);
+      expect(result.elementFilterOptions[0].id).toBe("q1");
     });
 
     test("should include tags in options when provided", () => {
@@ -69,9 +69,9 @@ describe("surveys", () => {
         { id: "tag1", name: "Tag 1", environmentId: "env1", createdAt: new Date(), updatedAt: new Date() },
       ];
 
-      const result = generateQuestionAndFilterOptions(survey, tags, {}, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, tags, {}, {}, {}, []);
 
-      const tagsHeader = result.questionOptions.find((opt) => opt.header === OptionsType.TAGS);
+      const tagsHeader = result.elementOptions.find((opt) => opt.header === OptionsType.TAGS);
       expect(tagsHeader).toBeDefined();
       expect(tagsHeader?.option.length).toBe(1);
       expect(tagsHeader?.option[0].label).toBe("Tag 1");
@@ -93,9 +93,9 @@ describe("surveys", () => {
         role: ["admin", "user"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, attributes, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, attributes, {}, {}, []);
 
-      const attributesHeader = result.questionOptions.find((opt) => opt.header === OptionsType.ATTRIBUTES);
+      const attributesHeader = result.elementOptions.find((opt) => opt.header === OptionsType.ATTRIBUTES);
       expect(attributesHeader).toBeDefined();
       expect(attributesHeader?.option.length).toBe(1);
       expect(attributesHeader?.option[0].label).toBe("role");
@@ -117,9 +117,9 @@ describe("surveys", () => {
         source: ["web", "mobile"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, []);
 
-      const metaHeader = result.questionOptions.find((opt) => opt.header === OptionsType.META);
+      const metaHeader = result.elementOptions.find((opt) => opt.header === OptionsType.META);
       expect(metaHeader).toBeDefined();
       expect(metaHeader?.option.length).toBe(1);
       expect(metaHeader?.option[0].label).toBe("source");
@@ -141,9 +141,9 @@ describe("surveys", () => {
         segment: ["free", "paid"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, hiddenFields, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, hiddenFields, []);
 
-      const hiddenFieldsHeader = result.questionOptions.find(
+      const hiddenFieldsHeader = result.elementOptions.find(
         (opt) => opt.header === OptionsType.HIDDEN_FIELDS
       );
       expect(hiddenFieldsHeader).toBeDefined();
@@ -164,9 +164,9 @@ describe("surveys", () => {
         languages: [{ language: { code: "en" } as unknown as TLanguage } as unknown as TSurveyLanguage],
       } as unknown as TSurvey;
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
 
-      const othersHeader = result.questionOptions.find((opt) => opt.header === OptionsType.OTHERS);
+      const othersHeader = result.elementOptions.find((opt) => opt.header === OptionsType.OTHERS);
       expect(othersHeader).toBeDefined();
       expect(othersHeader?.option.some((o) => o.label === "Language")).toBeTruthy();
     });
@@ -262,13 +262,13 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
 
-      expect(result.questionFilterOptions.length).toBe(8);
-      expect(result.questionFilterOptions.some((o) => o.id === "q1")).toBeTruthy();
-      expect(result.questionFilterOptions.some((o) => o.id === "q2")).toBeTruthy();
-      expect(result.questionFilterOptions.some((o) => o.id === "q7")).toBeTruthy();
-      expect(result.questionFilterOptions.some((o) => o.id === "q8")).toBeTruthy();
+      expect(result.elementFilterOptions.length).toBe(8);
+      expect(result.elementFilterOptions.some((o) => o.id === "q1")).toBeTruthy();
+      expect(result.elementFilterOptions.some((o) => o.id === "q2")).toBeTruthy();
+      expect(result.elementFilterOptions.some((o) => o.id === "q7")).toBeTruthy();
+      expect(result.elementFilterOptions.some((o) => o.id === "q8")).toBeTruthy();
     });
 
     test("should provide extended filter options for URL meta field", () => {
@@ -288,10 +288,10 @@ describe("surveys", () => {
         source: ["web", "mobile"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, []);
 
-      const urlFilterOption = result.questionFilterOptions.find((o) => o.id === "url");
-      const sourceFilterOption = result.questionFilterOptions.find((o) => o.id === "source");
+      const urlFilterOption = result.elementFilterOptions.find((o) => o.id === "url");
+      const sourceFilterOption = result.elementFilterOptions.find((o) => o.id === "source");
 
       expect(urlFilterOption).toBeDefined();
       expect(urlFilterOption?.filterOptions).toEqual([
@@ -480,11 +480,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Tags", label: "Tag 1", id: "tag1" },
+            elementType: { type: "Tags", label: "Tag 1", id: "tag1" },
             filterType: { filterComboBoxValue: "Applied" },
           },
           {
-            questionType: { type: "Tags", label: "Tag 2", id: "tag2" },
+            elementType: { type: "Tags", label: "Tag 2", id: "tag2" },
             filterType: { filterComboBoxValue: "Not applied" },
           },
         ] as any,
@@ -501,11 +501,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "Open Text",
               id: "openTextQ",
-              questionType: TSurveyElementTypeEnum.OpenText,
+              elementType: TSurveyElementTypeEnum.OpenText,
             },
             filterType: { filterComboBoxValue: "Filled out" },
           },
@@ -522,11 +522,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "Address",
               id: "addressQ",
-              questionType: TSurveyElementTypeEnum.Address,
+              elementType: TSurveyElementTypeEnum.Address,
             },
             filterType: { filterComboBoxValue: "Skipped" },
           },
@@ -543,11 +543,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "Contact Info",
               id: "contactQ",
-              questionType: TSurveyElementTypeEnum.ContactInfo,
+              elementType: TSurveyElementTypeEnum.ContactInfo,
             },
             filterType: { filterComboBoxValue: "Filled out" },
           },
@@ -564,11 +564,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "Ranking",
               id: "rankingQ",
-              questionType: TSurveyElementTypeEnum.Ranking,
+              elementType: TSurveyElementTypeEnum.Ranking,
             },
             filterType: { filterComboBoxValue: "Filled out" },
           },
@@ -585,11 +585,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "MC Single",
               id: "mcSingleQ",
-              questionType: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              elementType: TSurveyElementTypeEnum.MultipleChoiceSingle,
             },
             filterType: { filterValue: "Includes either", filterComboBoxValue: ["Choice 1"] },
           },
@@ -606,11 +606,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "MC Multi",
               id: "mcMultiQ",
-              questionType: TSurveyElementTypeEnum.MultipleChoiceMulti,
+              elementType: TSurveyElementTypeEnum.MultipleChoiceMulti,
             },
             filterType: { filterValue: "Includes all", filterComboBoxValue: ["Choice 1", "Choice 2"] },
           },
@@ -627,11 +627,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "NPS",
               id: "npsQ",
-              questionType: TSurveyElementTypeEnum.NPS,
+              elementType: TSurveyElementTypeEnum.NPS,
             },
             filterType: { filterValue: "Is equal to", filterComboBoxValue: "7" },
           },
@@ -648,11 +648,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "Rating",
               id: "ratingQ",
-              questionType: TSurveyElementTypeEnum.Rating,
+              elementType: TSurveyElementTypeEnum.Rating,
             },
             filterType: { filterValue: "Is less than", filterComboBoxValue: "4" },
           },
@@ -669,11 +669,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "CTA",
               id: "ctaQ",
-              questionType: TSurveyElementTypeEnum.CTA,
+              elementType: TSurveyElementTypeEnum.CTA,
             },
             filterType: { filterComboBoxValue: "Clicked" },
           },
@@ -690,11 +690,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "Consent",
               id: "consentQ",
-              questionType: TSurveyElementTypeEnum.Consent,
+              elementType: TSurveyElementTypeEnum.Consent,
             },
             filterType: { filterComboBoxValue: "Accepted" },
           },
@@ -711,11 +711,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "Picture",
               id: "pictureQ",
-              questionType: TSurveyElementTypeEnum.PictureSelection,
+              elementType: TSurveyElementTypeEnum.PictureSelection,
             },
             filterType: { filterValue: "Includes either", filterComboBoxValue: ["Picture 1"] },
           },
@@ -732,11 +732,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "Matrix",
               id: "matrixQ",
-              questionType: TSurveyElementTypeEnum.Matrix,
+              elementType: TSurveyElementTypeEnum.Matrix,
             },
             filterType: { filterValue: "Row 1", filterComboBoxValue: "Column 1" },
           },
@@ -753,7 +753,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Hidden Fields", label: "plan", id: "plan" },
+            elementType: { type: "Hidden Fields", label: "plan", id: "plan" },
             filterType: { filterValue: "Equals", filterComboBoxValue: "pro" },
           },
         ],
@@ -769,7 +769,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Attributes", label: "role", id: "role" },
+            elementType: { type: "Attributes", label: "role", id: "role" },
             filterType: { filterValue: "Not equals", filterComboBoxValue: "admin" },
           },
         ],
@@ -785,7 +785,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Other Filters", label: "Language", id: "language" },
+            elementType: { type: "Other Filters", label: "Language", id: "language" },
             filterType: { filterValue: "Equals", filterComboBoxValue: "en" },
           },
         ],
@@ -801,7 +801,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Meta", label: "source", id: "source" },
+            elementType: { type: "Meta", label: "source", id: "source" },
             filterType: { filterValue: "Not equals", filterComboBoxValue: "web" },
           },
         ],
@@ -817,16 +817,16 @@ describe("surveys", () => {
         responseStatus: "complete",
         filter: [
           {
-            questionType: {
-              type: "Questions",
+            elementType: {
+              type: "Elements",
               label: "NPS",
               id: "npsQ",
-              questionType: TSurveyElementTypeEnum.NPS,
+              elementType: TSurveyElementTypeEnum.NPS,
             },
             filterType: { filterValue: "Is more than", filterComboBoxValue: "7" },
           },
           {
-            questionType: { type: "Tags", label: "Tag 1", id: "tag1" },
+            elementType: { type: "Tags", label: "Tag 1", id: "tag1" },
             filterType: { filterComboBoxValue: "Applied" },
           },
         ],
@@ -845,7 +845,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Meta", label: "url", id: "url" },
+            elementType: { type: "Meta", label: "url", id: "url" },
             filterType: { filterValue: "Contains", filterComboBoxValue: "example.com" },
           },
         ],
@@ -873,7 +873,7 @@ describe("surveys", () => {
           responseStatus: "all",
           filter: [
             {
-              questionType: { type: "Meta", label: "url", id: "url" },
+              elementType: { type: "Meta", label: "url", id: "url" },
               filterType: { filterValue, filterComboBoxValue: expected.value },
             },
           ],
@@ -889,7 +889,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Meta", label: "url", id: "url" },
+            elementType: { type: "Meta", label: "url", id: "url" },
             filterType: { filterValue: "Contains", filterComboBoxValue: "" },
           },
         ],
@@ -905,7 +905,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Meta", label: "url", id: "url" },
+            elementType: { type: "Meta", label: "url", id: "url" },
             filterType: { filterValue: "Contains", filterComboBoxValue: "   " },
           },
         ],
@@ -921,7 +921,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Meta", label: "source", id: "source" },
+            elementType: { type: "Meta", label: "source", id: "source" },
             filterType: { filterValue: "Equals", filterComboBoxValue: ["google"] },
           },
         ],
@@ -937,11 +937,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Meta", label: "url", id: "url" },
+            elementType: { type: "Meta", label: "url", id: "url" },
             filterType: { filterValue: "Contains", filterComboBoxValue: "formbricks.com" },
           },
           {
-            questionType: { type: "Meta", label: "source", id: "source" },
+            elementType: { type: "Meta", label: "source", id: "source" },
             filterType: { filterValue: "Equals", filterComboBoxValue: ["newsletter"] },
           },
         ],

@@ -9,12 +9,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import {
-  TSurvey,
-  TSurveyEndScreenCard,
-  TSurveyQuestionId,
-  TSurveyRedirectUrlCard,
-} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
@@ -35,8 +30,8 @@ interface EditEndingCardProps {
   localSurvey: TSurvey;
   endingCardIndex: number;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  setActiveQuestionId: (id: string | null) => void;
-  activeQuestionId: TSurveyQuestionId | null;
+  setActiveElementId: (id: string | null) => void;
+  activeElementId: string | null;
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -52,8 +47,8 @@ export const EditEndingCard = ({
   localSurvey,
   endingCardIndex,
   setLocalSurvey,
-  setActiveQuestionId,
-  activeQuestionId,
+  setActiveElementId,
+  activeElementId,
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
@@ -90,13 +85,13 @@ export const EditEndingCard = ({
     id: endingCard.id,
   });
 
-  let open = activeQuestionId === endingCard.id;
+  let open = activeElementId === endingCard.id;
 
   const setOpen = (e) => {
     if (e) {
-      setActiveQuestionId(endingCard.id);
+      setActiveElementId(endingCard.id);
     } else {
-      setActiveQuestionId(null);
+      setActiveElementId(null);
     }
   };
 

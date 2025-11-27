@@ -10,7 +10,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
@@ -18,9 +18,9 @@ import { Switch } from "@/modules/ui/components/switch";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyPictureSelectionElement;
-  questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyPictureSelectionElement>) => void;
+  element: TSurveyPictureSelectionElement;
+  elementIdx: number;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyPictureSelectionElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -30,9 +30,9 @@ interface PictureSelectionFormProps {
 
 export const PictureSelectionForm = ({
   localSurvey,
-  question,
-  questionIdx,
-  updateQuestion,
+  element,
+  elementIdx,
+  updateElement,
   selectedLanguageCode,
   setSelectedLanguageCode,
   isInvalid,
@@ -44,18 +44,18 @@ export const PictureSelectionForm = ({
   const { t } = useTranslation();
   const handleChoiceDeletion = (choiceValue: string) => {
     // Filter out the deleted choice from the choices array
-    const newChoices = question.choices?.filter((choice) => choice.id !== choiceValue) || [];
+    const newChoices = element.choices?.filter((choice) => choice.id !== choiceValue) || [];
 
-    // Update the question with new choices and logic
-    updateQuestion(questionIdx, {
+    // Update the element with new choices and logic
+    updateElement(elementIdx, {
       choices: newChoices,
     });
   };
 
   const handleFileInputChanges = (urls: string[]) => {
     // Handle choice deletion
-    if (urls.length < question.choices.length) {
-      const deletedChoice = question.choices.find((choice) => !urls.includes(choice.imageUrl));
+    if (urls.length < element.choices.length) {
+      const deletedChoice = element.choices.find((choice) => !urls.includes(choice.imageUrl));
       if (deletedChoice) {
         handleChoiceDeletion(deletedChoice.id);
       }
@@ -63,11 +63,11 @@ export const PictureSelectionForm = ({
 
     // Handle choice addition
     const updatedChoices = urls.map((url) => {
-      const existingChoice = question.choices.find((choice) => choice.imageUrl === url);
+      const existingChoice = element.choices.find((choice) => choice.imageUrl === url);
       return existingChoice ? { ...existingChoice } : { imageUrl: url, id: createId() };
     });
 
-    updateQuestion(questionIdx, {
+    updateElement(elementIdx, {
       choices: updatedChoices,
     });
   };
@@ -75,49 +75,49 @@ export const PictureSelectionForm = ({
   const [parent] = useAutoAnimate();
   return (
     <form>
-      <QuestionFormInput
+      <ElementFormInput
         id="headline"
-        value={question.headline}
+        value={element.headline}
         label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
-        questionIdx={questionIdx}
+        elementIdx={elementIdx}
         isInvalid={isInvalid}
-        updateQuestion={updateQuestion}
+        updateElement={updateElement}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
       />
       <div ref={parent}>
-        {question.subheader !== undefined && (
+        {element.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
-              <QuestionFormInput
+              <ElementFormInput
                 id="subheader"
-                value={question.subheader}
+                value={element.subheader}
                 label={t("common.description")}
                 localSurvey={localSurvey}
-                questionIdx={questionIdx}
+                elementIdx={elementIdx}
                 isInvalid={isInvalid}
-                updateQuestion={updateQuestion}
+                updateElement={updateElement}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
               />
             </div>
           </div>
         )}
-        {question.subheader === undefined && (
+        {element.subheader === undefined && (
           <Button
             size="sm"
             variant="secondary"
             className="mt-3"
             type="button"
             onClick={() => {
-              updateQuestion(questionIdx, {
+              updateElement(elementIdx, {
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
@@ -131,7 +131,7 @@ export const PictureSelectionForm = ({
           {t("common.images")}{" "}
           <span
             className={cn("text-slate-400", {
-              "text-red-600": isInvalid && question.choices?.length < 2,
+              "text-red-600": isInvalid && element.choices?.length < 2,
             })}>
             ({t("environments.surveys.edit.upload_at_least_2_images")})
           </span>
@@ -142,7 +142,7 @@ export const PictureSelectionForm = ({
             allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
             environmentId={environmentId}
             onFileUpload={handleFileInputChanges}
-            fileUrl={question?.choices?.map((choice) => choice.imageUrl)}
+            fileUrl={element?.choices?.map((choice) => choice.imageUrl)}
             multiple={true}
             maxSizeInMB={5}
             isStorageConfigured={isStorageConfigured}
@@ -153,10 +153,10 @@ export const PictureSelectionForm = ({
       <div className="my-4 flex items-center space-x-2">
         <Switch
           id="multi-select-toggle"
-          checked={question.allowMulti}
+          checked={element.allowMulti}
           onClick={(e) => {
             e.stopPropagation();
-            updateQuestion(questionIdx, { allowMulti: !question.allowMulti });
+            updateElement(elementIdx, { allowMulti: !element.allowMulti });
           }}
         />
         <Label htmlFor="multi-select-toggle" className="cursor-pointer">

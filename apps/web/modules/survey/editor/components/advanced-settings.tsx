@@ -2,41 +2,41 @@ import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { OptionIds } from "@/modules/survey/editor/components/option-ids";
-import { UpdateQuestionId } from "@/modules/survey/editor/components/update-question-id";
+import { UpdateElementId } from "@/modules/survey/editor/components/update-element-id";
 
 interface AdvancedSettingsProps {
-  question: TSurveyElement;
-  questionIdx: number;
+  element: TSurveyElement;
+  elementIdx: number;
   localSurvey: TSurvey;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (questionIdx: number, logicFallback: string | undefined) => void;
+  updateElement: (elementIdx: number, updatedAttributes: any) => void;
+  updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
   selectedLanguageCode: string;
 }
 
 export const AdvancedSettings = ({
-  question,
-  questionIdx,
+  element,
+  elementIdx,
   localSurvey,
-  updateQuestion,
+  updateElement,
   selectedLanguageCode,
 }: AdvancedSettingsProps) => {
   const showOptionIds =
-    question.type === TSurveyElementTypeEnum.PictureSelection ||
-    question.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-    question.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-    question.type === TSurveyElementTypeEnum.Ranking;
+    element.type === TSurveyElementTypeEnum.PictureSelection ||
+    element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+    element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
+    element.type === TSurveyElementTypeEnum.Ranking;
 
   return (
     <div className="flex flex-col gap-4">
-      <UpdateQuestionId
-        question={question}
-        questionIdx={questionIdx}
+      <UpdateElementId
+        element={element}
+        elementIdx={elementIdx}
         localSurvey={localSurvey}
-        updateQuestion={updateQuestion}
+        updateElement={updateElement}
       />
 
-      {showOptionIds && <OptionIds question={question} selectedLanguageCode={selectedLanguageCode} />}
+      {showOptionIds && <OptionIds element={element} selectedLanguageCode={selectedLanguageCode} />}
     </div>
   );
 };
