@@ -2712,6 +2712,147 @@ describe("NPS question type tests", () => {
     // Score should be -100 since all valid responses are detractors
     expect(summary[0].score).toBe(-100);
   });
+
+  test("getQuestionSummary includes individual score breakdown in choices array for NPS", async () => {
+    const question = {
+      id: "nps-q1",
+      type: TSurveyQuestionTypeEnum.NPS,
+      headline: { default: "How likely are you to recommend us?" },
+      required: true,
+      lowerLabel: { default: "Not likely" },
+      upperLabel: { default: "Very likely" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "nps-q1": 0 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "nps-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "nps-q1": 7 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r4",
+        data: { "nps-q1": 9 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r5",
+        data: { "nps-q1": 10 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { questionId: "nps-q1", impressions: 5, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    expect(summary[0].choices).toBeDefined();
+    expect(summary[0].choices).toHaveLength(11); // Scores 0-10
+
+    // Verify specific scores
+    const score0 = summary[0].choices.find((c: any) => c.rating === 0);
+    expect(score0.count).toBe(1);
+    expect(score0.percentage).toBe(20); // 1/5 * 100
+
+    const score5 = summary[0].choices.find((c: any) => c.rating === 5);
+    expect(score5.count).toBe(1);
+    expect(score5.percentage).toBe(20);
+
+    const score7 = summary[0].choices.find((c: any) => c.rating === 7);
+    expect(score7.count).toBe(1);
+    expect(score7.percentage).toBe(20);
+
+    const score9 = summary[0].choices.find((c: any) => c.rating === 9);
+    expect(score9.count).toBe(1);
+    expect(score9.percentage).toBe(20);
+
+    const score10 = summary[0].choices.find((c: any) => c.rating === 10);
+    expect(score10.count).toBe(1);
+    expect(score10.percentage).toBe(20);
+
+    // Verify scores with no responses have 0 count
+    const score1 = summary[0].choices.find((c: any) => c.rating === 1);
+    expect(score1.count).toBe(0);
+    expect(score1.percentage).toBe(0);
+  });
+
+  test("getQuestionSummary handles NPS individual score breakdown with no responses", async () => {
+    const question = {
+      id: "nps-q1",
+      type: TSurveyQuestionTypeEnum.NPS,
+      headline: { default: "How likely are you to recommend us?" },
+      required: true,
+      lowerLabel: { default: "Not likely" },
+      upperLabel: { default: "Very likely" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses: any[] = [];
+
+    const dropOff = [
+      { questionId: "nps-q1", impressions: 0, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    expect(summary[0].choices).toBeDefined();
+    expect(summary[0].choices).toHaveLength(11); // Scores 0-10
+
+    // All scores should have 0 count and percentage
+    summary[0].choices.forEach((choice: any) => {
+      expect(choice.count).toBe(0);
+      expect(choice.percentage).toBe(0);
+    });
+  });
 });
 
 describe("Rating question type tests", () => {
@@ -2971,6 +3112,549 @@ describe("Rating question type tests", () => {
     // Verify dismissed is 0
     expect(summary[0].dismissed.count).toBe(0);
   });
+
+  test("getQuestionSummary calculates CSAT for Rating question with range 3", async () => {
+    const question = {
+      id: "rating-q1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Rate our service" },
+      required: true,
+      scale: "number",
+      range: 3,
+      lowerLabel: { default: "Poor" },
+      upperLabel: { default: "Excellent" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "rating-q1": 3 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "rating-q1": 2 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "rating-q1": 3 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    // Range 3: satisfied = score 3
+    // 2 out of 3 responses are satisfied (score 3)
+    expect(summary[0].csat.satisfiedCount).toBe(2);
+    expect(summary[0].csat.satisfiedPercentage).toBe(67); // Math.round((2/3) * 100)
+  });
+
+  test("getQuestionSummary calculates CSAT for Rating question with range 4", async () => {
+    const question = {
+      id: "rating-q1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Rate our service" },
+      required: true,
+      scale: "number",
+      range: 4,
+      lowerLabel: { default: "Poor" },
+      upperLabel: { default: "Excellent" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "rating-q1": 3 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "rating-q1": 4 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "rating-q1": 2 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    // Range 4: satisfied = scores 3-4
+    // 2 out of 3 responses are satisfied (scores 3 and 4)
+    expect(summary[0].csat.satisfiedCount).toBe(2);
+    expect(summary[0].csat.satisfiedPercentage).toBe(67);
+  });
+
+  test("getQuestionSummary calculates CSAT for Rating question with range 5", async () => {
+    const question = {
+      id: "rating-q1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Rate our service" },
+      required: true,
+      scale: "number",
+      range: 5,
+      lowerLabel: { default: "Poor" },
+      upperLabel: { default: "Excellent" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "rating-q1": 4 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "rating-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "rating-q1": 3 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    // Range 5: satisfied = scores 4-5
+    // 2 out of 3 responses are satisfied (scores 4 and 5)
+    expect(summary[0].csat.satisfiedCount).toBe(2);
+    expect(summary[0].csat.satisfiedPercentage).toBe(67);
+  });
+
+  test("getQuestionSummary calculates CSAT for Rating question with range 6", async () => {
+    const question = {
+      id: "rating-q1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Rate our service" },
+      required: true,
+      scale: "number",
+      range: 6,
+      lowerLabel: { default: "Poor" },
+      upperLabel: { default: "Excellent" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "rating-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "rating-q1": 6 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "rating-q1": 4 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    // Range 6: satisfied = scores 5-6
+    // 2 out of 3 responses are satisfied (scores 5 and 6)
+    expect(summary[0].csat.satisfiedCount).toBe(2);
+    expect(summary[0].csat.satisfiedPercentage).toBe(67);
+  });
+
+  test("getQuestionSummary calculates CSAT for Rating question with range 7", async () => {
+    const question = {
+      id: "rating-q1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Rate our service" },
+      required: true,
+      scale: "number",
+      range: 7,
+      lowerLabel: { default: "Poor" },
+      upperLabel: { default: "Excellent" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "rating-q1": 6 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "rating-q1": 7 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "rating-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    // Range 7: satisfied = scores 6-7
+    // 2 out of 3 responses are satisfied (scores 6 and 7)
+    expect(summary[0].csat.satisfiedCount).toBe(2);
+    expect(summary[0].csat.satisfiedPercentage).toBe(67);
+  });
+
+  test("getQuestionSummary calculates CSAT for Rating question with range 10", async () => {
+    const question = {
+      id: "rating-q1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Rate our service" },
+      required: true,
+      scale: "number",
+      range: 10,
+      lowerLabel: { default: "Poor" },
+      upperLabel: { default: "Excellent" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "rating-q1": 8 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "rating-q1": 9 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "rating-q1": 10 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r4",
+        data: { "rating-q1": 7 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { questionId: "rating-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    // Range 10: satisfied = scores 8-10
+    // 3 out of 4 responses are satisfied (scores 8, 9, 10)
+    expect(summary[0].csat.satisfiedCount).toBe(3);
+    expect(summary[0].csat.satisfiedPercentage).toBe(75);
+  });
+
+  test("getQuestionSummary calculates CSAT for Rating question with all satisfied", async () => {
+    const question = {
+      id: "rating-q1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Rate our service" },
+      required: true,
+      scale: "number",
+      range: 5,
+      lowerLabel: { default: "Poor" },
+      upperLabel: { default: "Excellent" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "rating-q1": 4 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "rating-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { questionId: "rating-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    // Range 5: satisfied = scores 4-5
+    // All 2 responses are satisfied
+    expect(summary[0].csat.satisfiedCount).toBe(2);
+    expect(summary[0].csat.satisfiedPercentage).toBe(100);
+  });
+
+  test("getQuestionSummary calculates CSAT for Rating question with none satisfied", async () => {
+    const question = {
+      id: "rating-q1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Rate our service" },
+      required: true,
+      scale: "number",
+      range: 5,
+      lowerLabel: { default: "Poor" },
+      upperLabel: { default: "Excellent" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "rating-q1": 1 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "rating-q1": 2 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "rating-q1": 3 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    // Range 5: satisfied = scores 4-5
+    // None of the responses are satisfied (all are 1, 2, or 3)
+    expect(summary[0].csat.satisfiedCount).toBe(0);
+    expect(summary[0].csat.satisfiedPercentage).toBe(0);
+  });
+
+  test("getQuestionSummary calculates CSAT for Rating question with no responses", async () => {
+    const question = {
+      id: "rating-q1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Rate our service" },
+      required: true,
+      scale: "number",
+      range: 5,
+      lowerLabel: { default: "Poor" },
+      upperLabel: { default: "Excellent" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      questions: [question],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses: any[] = [];
+
+    const dropOff = [
+      { questionId: "rating-q1", impressions: 0, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+
+    expect(summary[0].csat.satisfiedCount).toBe(0);
+    expect(summary[0].csat.satisfiedPercentage).toBe(0);
+  });
 });
 
 describe("PictureSelection question type tests", () => {
@@ -3203,7 +3887,7 @@ describe("CTA question type tests", () => {
       type: TSurveyElementTypeEnum.CTA,
       headline: { default: "Would you like to try our product?" },
       buttonLabel: { default: "Try Now" },
-      buttonExternal: false,
+      buttonExternal: true,
       buttonUrl: "https://example.com",
       required: true,
     };
@@ -3289,7 +3973,7 @@ describe("CTA question type tests", () => {
       type: TSurveyElementTypeEnum.CTA,
       headline: { default: "Would you like to try our product?" },
       buttonLabel: { default: "Try Now" },
-      buttonExternal: false,
+      buttonExternal: true,
       buttonUrl: "https://example.com",
       required: false,
     };

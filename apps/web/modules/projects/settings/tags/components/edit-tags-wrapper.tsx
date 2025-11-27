@@ -2,13 +2,11 @@
 
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
 import { SingleTag } from "@/modules/projects/settings/tags/components/single-tag";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 
 interface EditTagsWrapperProps {
-  environment: TEnvironment;
   environmentTags: TTag[];
   environmentTagsCount: TTagsCount;
   isReadOnly: boolean;
@@ -16,7 +14,12 @@ interface EditTagsWrapperProps {
 
 export const EditTagsWrapper: React.FC<EditTagsWrapperProps> = (props) => {
   const { t } = useTranslation();
-  const { environment, environmentTags, environmentTagsCount, isReadOnly } = props;
+  const { environmentTags, environmentTagsCount, isReadOnly } = props;
+
+  if (!environmentTags?.length) {
+    return <EmptyState text={t("environments.project.tags.no_tag_found")} />;
+  }
+
   return (
     <div className="">
       <div className="grid grid-cols-4 content-center rounded-lg bg-white text-left text-sm font-semibold text-slate-900">
@@ -27,11 +30,7 @@ export const EditTagsWrapper: React.FC<EditTagsWrapperProps> = (props) => {
         )}
       </div>
 
-      {!environmentTags?.length ? (
-        <EmptySpaceFiller environment={environment} type="tag" noWidgetRequired />
-      ) : null}
-
-      {environmentTags?.map((tag) => (
+      {environmentTags.map((tag) => (
         <SingleTag
           key={tag.id}
           tagId={tag.id}

@@ -10,6 +10,7 @@ import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getSurveysAction } from "@/modules/survey/list/actions";
+import { initialFilters } from "@/modules/survey/list/lib/constants";
 import { getFormattedFilters } from "@/modules/survey/list/lib/utils";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { Button } from "@/modules/ui/components/button";
@@ -27,14 +28,6 @@ interface SurveysListProps {
   locale: TUserLocale;
 }
 
-export const initialFilters: TSurveyFilters = {
-  name: "",
-  createdBy: [],
-  status: [],
-  type: [],
-  sortBy: "relevance",
-};
-
 export const SurveysList = ({
   environmentId,
   isReadOnly,
@@ -46,14 +39,18 @@ export const SurveysList = ({
 }: SurveysListProps) => {
   const router = useRouter();
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
-  const [isFetching, setIsFetching] = useState(true);
-  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const [hasMore, setHasMore] = useState<boolean>(false);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
 
-  const filters = useMemo(() => getFormattedFilters(surveyFilters, userId), [surveyFilters, userId]);
+  const { name, createdBy, status, type, sortBy } = surveyFilters;
+  const filters = useMemo(
+    () => getFormattedFilters(surveyFilters, userId),
+    [name, JSON.stringify(createdBy), JSON.stringify(status), JSON.stringify(type), sortBy, userId]
+  );
   const [parent] = useAutoAnimate();
 
   useEffect(() => {
@@ -80,28 +77,30 @@ export const SurveysList = ({
   }, [surveyFilters, isFilterInitialized]);
 
   useEffect(() => {
-    if (isFilterInitialized) {
-      const fetchInitialSurveys = async () => {
-        setIsFetching(true);
-        const res = await getSurveysAction({
-          environmentId,
-          limit: surveysLimit,
-          offset: undefined,
-          filterCriteria: filters,
-        });
-        if (res?.data) {
-          if (res.data.length < surveysLimit) {
-            setHasMore(false);
-          } else {
-            setHasMore(true);
-          }
-          setSurveys(res.data);
-          setIsFetching(false);
+    // Wait for filters to be loaded from localStorage before fetching
+    if (!isFilterInitialized) return;
+
+    const fetchFilteredSurveys = async () => {
+      setIsFetching(true);
+      const res = await getSurveysAction({
+        environmentId,
+        limit: surveysLimit,
+        offset: undefined,
+        filterCriteria: filters,
+      });
+      if (res?.data) {
+        if (res.data.length < surveysLimit) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
         }
-      };
-      fetchInitialSurveys();
-    }
-  }, [environmentId, surveysLimit, filters, isFilterInitialized, refreshTrigger]);
+        setSurveys(res.data);
+        setIsFetching(false);
+      }
+    };
+    fetchFilteredSurveys();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [environmentId, surveysLimit, filters, refreshTrigger, isFilterInitialized]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);

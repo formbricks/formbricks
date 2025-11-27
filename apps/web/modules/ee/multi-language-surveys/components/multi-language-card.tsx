@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
-import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
+import { addMultiLanguageLabels, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -177,6 +177,8 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
   const [parent] = useAutoAnimate();
 
+  const enabledLanguages = getEnabledLanguages(localSurvey.languages);
+
   return (
     <div
       className={cn(
@@ -300,6 +302,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   <AdvancedOptionToggle
                     customContainerClass="px-0 pt-0"
                     htmlId="languageSwitch"
+                    disabled={enabledLanguages.length <= 1}
                     isChecked={!!localSurvey.showLanguageSwitch}
                     onToggle={handleLanguageSwitchToggle}
                     title={t("environments.surveys.edit.show_language_switch")}

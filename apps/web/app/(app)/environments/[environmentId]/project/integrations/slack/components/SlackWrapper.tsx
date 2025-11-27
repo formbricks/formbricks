@@ -78,7 +78,6 @@ export const SlackWrapper = ({
         selectedIntegration={selectedIntegration}
       />
       <ManageIntegration
-        environment={environment}
         slackIntegration={slackIntegration}
         setOpenAddIntegrationModal={setIsModalOpen}
         setIsConnected={setIsConnected}

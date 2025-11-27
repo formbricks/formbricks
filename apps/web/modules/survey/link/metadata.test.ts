@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
+import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
 vi.mock("@/modules/survey/link/lib/data", () => ({
-  getSurveyMetadata: vi.fn(),
+  getSurveyWithMetadata: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -54,12 +54,12 @@ describe("getMetadataForLinkSurvey", () => {
       status: "published",
     } as any;
 
-    vi.mocked(getSurveyMetadata).mockResolvedValue(mockSurvey);
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
 
     const result = await getMetadataForLinkSurvey(mockSurveyId);
 
-    expect(getSurveyMetadata).toHaveBeenCalledWith(mockSurveyId);
-    expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined);
+    expect(getSurveyWithMetadata).toHaveBeenCalledWith(mockSurveyId);
+    expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined, mockSurvey);
     expect(getSurveyOpenGraphMetadata).toHaveBeenCalledWith(mockSurveyId, mockSurveyName, undefined);
 
     expect(result).toEqual({
@@ -98,7 +98,7 @@ describe("getMetadataForLinkSurvey", () => {
       status: "published",
     } as any;
 
-    vi.mocked(getSurveyMetadata).mockResolvedValue(mockSurvey);
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
     vi.mocked(getBasicSurveyMetadata).mockResolvedValue({
       title: mockSurveyName,
       description: mockDescription,
@@ -120,7 +120,7 @@ describe("getMetadataForLinkSurvey", () => {
       status: "published",
     };
 
-    vi.mocked(getSurveyMetadata).mockResolvedValue(mockSurvey as any);
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey as any);
 
     await getMetadataForLinkSurvey(mockSurveyId);
 
@@ -135,7 +135,7 @@ describe("getMetadataForLinkSurvey", () => {
       status: "draft",
     } as any;
 
-    vi.mocked(getSurveyMetadata).mockResolvedValue(mockSurvey);
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
 
     await getMetadataForLinkSurvey(mockSurveyId);
 
@@ -150,7 +150,7 @@ describe("getMetadataForLinkSurvey", () => {
       status: "published",
     } as any;
 
-    vi.mocked(getSurveyMetadata).mockResolvedValue(mockSurvey);
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
     vi.mocked(getSurveyOpenGraphMetadata).mockReturnValue({
       twitter: {
         title: mockSurveyName,
@@ -192,7 +192,7 @@ describe("getMetadataForLinkSurvey", () => {
       status: "published",
     } as any;
 
-    vi.mocked(getSurveyMetadata).mockResolvedValue(mockSurvey);
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
     vi.mocked(getSurveyOpenGraphMetadata).mockReturnValue({
       openGraph: {
         title: mockSurveyName,

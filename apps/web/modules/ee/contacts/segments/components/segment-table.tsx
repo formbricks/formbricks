@@ -33,6 +33,7 @@ export const SegmentTable = async ({
         <>
           {segments.map((segment) => (
             <SegmentTableDataRowContainer
+              key={segment.id}
               currentSegment={segment}
               segments={segments}
               contactAttributeKeys={contactAttributeKeys}

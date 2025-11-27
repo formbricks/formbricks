@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -16,7 +15,6 @@ interface AirtableWrapperProps {
   airtableArray: TIntegrationItem[];
   airtableIntegration?: TIntegrationAirtable;
   surveys: TSurvey[];
-  environment: TEnvironment;
   isEnabled: boolean;
   webAppUrl: string;
   locale: TUserLocale;
@@ -27,7 +25,6 @@ export const AirtableWrapper = ({
   airtableArray,
   airtableIntegration,
   surveys,
-  environment,
   isEnabled,
   webAppUrl,
   locale,
@@ -48,7 +45,6 @@ export const AirtableWrapper = ({
     <ManageIntegration
       airtableArray={airtableArray}
       environmentId={environmentId}
-      environment={environment}
       airtableIntegration={airtableIntegration}
       setIsConnected={setIsConnected}
       surveys={surveys}

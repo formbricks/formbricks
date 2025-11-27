@@ -654,6 +654,162 @@ describe("utils.ts", () => {
       const result = handleUrlFilters(urlFilters);
       expect(result).toBe(true);
     });
+
+    test("returns true with OR connector when any urlFilter matches", () => {
+      const urlFilters = [
+        {
+          value: "https://example.com/other",
+          rule: "exactMatch" as unknown as TActionClassPageUrlRule,
+        },
+        {
+          value: "path",
+          rule: "contains" as unknown as TActionClassPageUrlRule,
+        },
+      ];
+
+      // mock window.location.href
+      vi.stubGlobal("window", {
+        location: {
+          href: "https://example.com/path",
+        },
+      });
+
+      const result = handleUrlFilters(urlFilters, "or");
+      expect(result).toBe(true);
+    });
+
+    test("returns false with OR connector when no urlFilter matches", () => {
+      const urlFilters = [
+        {
+          value: "https://example.com/other",
+          rule: "exactMatch" as unknown as TActionClassPageUrlRule,
+        },
+        {
+          value: "different",
+          rule: "contains" as unknown as TActionClassPageUrlRule,
+        },
+      ];
+
+      // mock window.location.href
+      vi.stubGlobal("window", {
+        location: {
+          href: "https://example.com/path",
+        },
+      });
+
+      const result = handleUrlFilters(urlFilters, "or");
+      expect(result).toBe(false);
+    });
+
+    test("returns true with AND connector when all urlFilters match", () => {
+      const urlFilters = [
+        {
+          value: "example.com",
+          rule: "contains" as unknown as TActionClassPageUrlRule,
+        },
+        {
+          value: "path",
+          rule: "contains" as unknown as TActionClassPageUrlRule,
+        },
+      ];
+
+      // mock window.location.href
+      vi.stubGlobal("window", {
+        location: {
+          href: "https://example.com/path",
+        },
+      });
+
+      const result = handleUrlFilters(urlFilters, "and");
+      expect(result).toBe(true);
+    });
+
+    test("returns false with AND connector when not all urlFilters match", () => {
+      const urlFilters = [
+        {
+          value: "example.com",
+          rule: "contains" as unknown as TActionClassPageUrlRule,
+        },
+        {
+          value: "different",
+          rule: "contains" as unknown as TActionClassPageUrlRule,
+        },
+      ];
+
+      // mock window.location.href
+      vi.stubGlobal("window", {
+        location: {
+          href: "https://example.com/path",
+        },
+      });
+
+      const result = handleUrlFilters(urlFilters, "and");
+      expect(result).toBe(false);
+    });
+
+    test("returns true with AND connector when single filter matches", () => {
+      const urlFilters = [
+        {
+          value: "example.com",
+          rule: "contains" as unknown as TActionClassPageUrlRule,
+        },
+      ];
+
+      // mock window.location.href
+      vi.stubGlobal("window", {
+        location: {
+          href: "https://example.com/path",
+        },
+      });
+
+      const result = handleUrlFilters(urlFilters, "and");
+      expect(result).toBe(true);
+    });
+
+    test("returns false with AND connector when single filter does not match", () => {
+      const urlFilters = [
+        {
+          value: "different.com",
+          rule: "contains" as unknown as TActionClassPageUrlRule,
+        },
+      ];
+
+      // mock window.location.href
+      vi.stubGlobal("window", {
+        location: {
+          href: "https://example.com/path",
+        },
+      });
+
+      const result = handleUrlFilters(urlFilters, "and");
+      expect(result).toBe(false);
+    });
+
+    test("defaults to OR connector when connector is not specified", () => {
+      const urlFilters = [
+        {
+          value: "https://example.com/other",
+          rule: "exactMatch" as unknown as TActionClassPageUrlRule,
+        },
+        {
+          value: "path",
+          rule: "contains" as unknown as TActionClassPageUrlRule,
+        },
+      ];
+
+      // mock window.location.href
+      vi.stubGlobal("window", {
+        location: {
+          href: "https://example.com/path",
+        },
+      });
+
+      const resultWithoutConnector = handleUrlFilters(urlFilters);
+      const resultWithOr = handleUrlFilters(urlFilters, "or");
+
+      expect(resultWithoutConnector).toBe(resultWithOr);
+      expect(resultWithoutConnector).toBe(true);
+    });
   });
 
   // ---------------------------------------------------------------------------------

@@ -8,8 +8,8 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
@@ -26,6 +26,7 @@ interface ResponsePageProps {
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  initialResponses?: TResponseWithQuotas[];
 }
 
 export const ResponsePage = ({
@@ -39,11 +40,12 @@ export const ResponsePage = ({
   isReadOnly,
   isQuotasAllowed,
   quotas,
+  initialResponses = [],
 }: ResponsePageProps) => {
-  const [responses, setResponses] = useState<TResponseWithQuotas[]>([]);
-  const [page, setPage] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
+  const [responses, setResponses] = useState<TResponseWithQuotas[]>(initialResponses);
+  const [page, setPage] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);
+  const [isFetchingFirstPage, setIsFetchingFirstPage] = useState<boolean>(false);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const filters = useMemo(
@@ -56,6 +58,7 @@ export const ResponsePage = ({
   const searchParams = useSearchParams();
 
   const fetchNextPage = useCallback(async () => {
+    if (page === null) return;
     const newPage = page + 1;
 
     let newResponses: TResponseWithQuotas[] = [];
@@ -93,10 +96,22 @@ export const ResponsePage = ({
     }
   }, [searchParams, resetState]);
 
+  // Only fetch if filters are applied (not on initial mount with no filters)
+  const hasFilters =
+    selectedFilter?.responseStatus !== "all" ||
+    (selectedFilter?.filter && selectedFilter.filter.length > 0) ||
+    (dateRange.from && dateRange.to);
+
   useEffect(() => {
-    const fetchInitialResponses = async () => {
+    const fetchFilteredResponses = async () => {
       try {
-        setFetchingFirstPage(true);
+        // skip call for initial mount
+        if (page === null && !hasFilters) {
+          setPage(1);
+          return;
+        }
+        setPage(1);
+        setIsFetchingFirstPage(true);
         let responses: TResponseWithQuotas[] = [];
 
         const getResponsesActionResponse = await getResponsesAction({
@@ -110,19 +125,16 @@ export const ResponsePage = ({
 
         if (responses.length < responsesPerPage) {
           setHasMore(false);
+        } else {
+          setHasMore(true);
         }
         setResponses(responses);
       } finally {
-        setFetchingFirstPage(false);
+        setIsFetchingFirstPage(false);
       }
     };
-    fetchInitialResponses();
-  }, [surveyId, filters, responsesPerPage]);
-
-  useEffect(() => {
-    setPage(1);
-    setHasMore(true);
-  }, [filters]);
+    fetchFilteredResponses();
+  }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
     <>

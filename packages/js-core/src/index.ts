@@ -76,6 +76,19 @@ const registerRouteChange = async (): Promise<void> => {
   await queue.add(checkPageUrl, CommandType.GeneralAction);
 };
 
+/**
+ * Set the CSP nonce for inline styles
+ * @param nonce - The CSP nonce value (without 'nonce-' prefix), or undefined to clear
+ */
+const setNonce = (nonce: string | undefined): void => {
+  // Store nonce on window for access when surveys package loads
+  globalThis.window.__formbricksNonce = nonce;
+
+  // Set nonce in surveys package if it's already loaded
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
+  globalThis.window.formbricksSurveys?.setNonce?.(nonce);
+};
+
 const formbricks = {
   /** @deprecated Use setup() instead. This method will be removed in a future version */
   init: (initConfig: TLegacyConfigInput) => setup(initConfig as unknown as TConfigInput),
@@ -88,6 +101,7 @@ const formbricks = {
   track,
   logout,
   registerRouteChange,
+  setNonce,
 };
 
 type TFormbricks = typeof formbricks;

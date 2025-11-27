@@ -127,6 +127,9 @@ export function RatingElement({
                 onMouseLeave={() => {
                   setHoveredNumber(0);
                 }}
+                onFocus={() => {
+                  setHoveredNumber(number);
+                }}
                 className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
                 {element.scale === "number" ? (
                   <label

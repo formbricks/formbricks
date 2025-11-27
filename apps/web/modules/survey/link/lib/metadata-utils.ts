@@ -19,16 +19,21 @@ export const getNameForURL = (value: string) => encodeURIComponent(value);
 export const getBrandColorForURL = (value: string) => encodeURIComponent(value);
 
 /**
- * Get basic survey metadata (title and description) based on link metadata, welcome card or survey name
+ * Get basic survey metadata (title and description) based on link metadata, welcome card or survey name.
+ *
+ * @param surveyId - Survey identifier
+ * @param languageCode - Language code for localization (default: "default")
+ * @param survey - Optional survey data if already available (e.g., from generateMetadata)
  */
 export const getBasicSurveyMetadata = async (
   surveyId: string,
-  languageCode = "default"
+  languageCode = "default",
+  survey?: Awaited<ReturnType<typeof getSurvey>> | null
 ): Promise<TBasicSurveyMetadata> => {
-  const survey = await getSurvey(surveyId);
+  const surveyData = survey ?? (await getSurvey(surveyId));
 
   // If survey doesn't exist, return default metadata
-  if (!survey) {
+  if (!surveyData) {
     return {
       title: "Survey",
       description: "Please complete this survey.",
@@ -37,11 +42,11 @@ export const getBasicSurveyMetadata = async (
     };
   }
 
-  const metadata = survey.metadata;
-  const welcomeCard = survey.welcomeCard;
+  const metadata = surveyData.metadata;
+  const welcomeCard = surveyData.welcomeCard;
   const useDefaultLanguageCode =
     languageCode === "default" ||
-    survey.languages.find((lang) => lang.language.code === languageCode)?.default;
+    surveyData.languages.find((lang) => lang.language.code === languageCode)?.default;
 
   // Determine language code to use for metadata
   const langCode = useDefaultLanguageCode ? "default" : languageCode;
@@ -51,10 +56,10 @@ export const getBasicSurveyMetadata = async (
   const titleFromWelcome =
     welcomeCard?.enabled && welcomeCard.headline
       ? getTextContent(
-          getLocalizedValue(recallToHeadline(welcomeCard.headline, survey, false, langCode), langCode)
+          getLocalizedValue(recallToHeadline(welcomeCard.headline, surveyData, false, langCode), langCode)
         ) || ""
       : undefined;
-  let title = titleFromMetadata || titleFromWelcome || survey.name;
+  let title = titleFromMetadata || titleFromWelcome || surveyData.name;
 
   // Set description - priority: custom link metadata > default
   const descriptionFromMetadata = metadata?.description
@@ -63,7 +68,7 @@ export const getBasicSurveyMetadata = async (
   let description = descriptionFromMetadata || "Please complete this survey.";
 
   // Get OG image from link metadata if available
-  const { ogImage } = metadata;
+  const ogImage = metadata?.ogImage;
 
   if (!titleFromMetadata) {
     if (IS_FORMBRICKS_CLOUD) {
@@ -74,7 +79,7 @@ export const getBasicSurveyMetadata = async (
   return {
     title,
     description,
-    survey,
+    survey: surveyData,
     ogImage,
   };
 };

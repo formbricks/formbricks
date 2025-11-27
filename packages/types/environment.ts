@@ -1,7 +1,11 @@
 import { z } from "zod";
 
+export const ZEnvironmentId = z.string().cuid();
+
+export type TEnvironmentId = z.infer<typeof ZEnvironmentId>;
+
 export const ZEnvironment = z.object({
-  id: z.string().cuid2(),
+  id: ZEnvironmentId,
   createdAt: z.date(),
   updatedAt: z.date(),
   type: z.enum(["development", "production"]),
@@ -10,12 +14,6 @@ export const ZEnvironment = z.object({
 });
 
 export type TEnvironment = z.infer<typeof ZEnvironment>;
-
-export const ZEnvironmentId = z.object({
-  id: z.string(),
-});
-
-export type TEnvironmentId = z.infer<typeof ZEnvironmentId>;
 
 export const ZEnvironmentUpdateInput = z.object({
   type: z.enum(["development", "production"]),
