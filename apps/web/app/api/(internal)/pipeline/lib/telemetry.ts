@@ -1,9 +1,9 @@
 import { IntegrationType } from "@prisma/client";
+import { createHash } from "crypto";
 import { type CacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { env } from "@/lib/env";
-// import { createHash } from "crypto";
 import packageJson from "../../../../../package.json";
 
 const TELEMETRY_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -77,7 +77,7 @@ const sendTelemetry = async (lastSent: number) => {
 
   if (!oldestOrg) return; // No organization, nothing to report
 
-  // const instanceId = createHash("sha256").update(oldestOrg.id).digest("hex");
+  const instanceId = createHash("sha256").update(oldestOrg.id).digest("hex");
 
   const [
     organizationCount,
@@ -160,7 +160,7 @@ const sendTelemetry = async (lastSent: number) => {
     },
   };
 
-  const url = `https://smee.io/KKu9wVLW6lA0sUp`;
+  const url = `https://ee.formbricks.com/api/v1/instances/${instanceId}/usage-updates`;
 
   await fetch(url, {
     method: "POST",
