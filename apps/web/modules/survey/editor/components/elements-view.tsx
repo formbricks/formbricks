@@ -27,7 +27,7 @@ import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
-import { checkForEmptyFallBackValue, extractRecallInfo } from "@/lib/utils/recall";
+import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import { AddElementButton } from "@/modules/survey/editor/components/add-element-button";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
@@ -205,7 +205,7 @@ export const ElementsView = ({
 
   useEffect(() => {
     if (!invalidElements) return;
-    let updatedInvalidElements: string[] = { ...invalidElements };
+    let updatedInvalidElements: string[] = [...invalidElements];
 
     // Check welcome card
     if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
@@ -400,33 +400,25 @@ export const ElementsView = ({
     });
   };
 
-  const deleteElement = (elementIdx: number) => {
-    const element = elements[elementIdx];
-    if (!element) return;
-
-    const elementId = element.id;
-    const activeElementIdTemp = activeElementId ?? elements[0]?.id;
-    let updatedSurvey: TSurvey = { ...localSurvey };
-
-    // checking if this element is used in logic of any other element
+  const validateElementDeletion = (elementId: string, elementIdx: number): boolean => {
     const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
     if (usedElementIdx !== -1) {
       toast.error(
         t("environments.surveys.edit.question_used_in_logic", { questionIndex: usedElementIdx + 1 })
       );
-      return;
+      return false;
     }
 
     const recallElementIdx = isUsedInRecall(localSurvey, elementId);
     if (recallElementIdx === elements.length) {
       toast.error(t("environments.surveys.edit.question_used_in_recall_ending_card"));
-      return;
+      return false;
     }
     if (recallElementIdx !== -1) {
       toast.error(
         t("environments.surveys.edit.question_used_in_recall", { questionIndex: recallElementIdx + 1 })
       );
-      return;
+      return false;
     }
 
     const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { elementId: elementId }));
@@ -437,65 +429,61 @@ export const ElementsView = ({
           quotaName: quotas[quotaIdx].name,
         })
       );
-      return;
+      return false;
     }
 
-    // check if we are recalling from this element for every language
-    updatedSurvey.blocks = (updatedSurvey.blocks ?? []).map((block) => ({
-      ...block,
-      elements: block.elements.map((element) => {
-        const updatedElement = { ...element };
-        for (const [languageCode, headline] of Object.entries(element.headline)) {
-          if (headline.includes(`recall:${elementId}`)) {
-            const recallInfo = extractRecallInfo(headline);
-            if (recallInfo) {
-              updatedElement.headline = {
-                ...updatedElement.headline,
-                [languageCode]: headline.replace(recallInfo, ""),
-              };
-            }
-          }
-        }
-        return updatedElement;
-      }),
-    }));
+    return true;
+  };
 
-    // Find the block containing this element
-    const { blockId, blockIndex } = findElementLocation(localSurvey, elementId);
-    if (!blockId || blockIndex === -1) return;
-
-    const block = updatedSurvey.blocks[blockIndex];
-
-    // If this is the only element in the block, delete the entire block
-    if (block.elements.length === 1) {
-      const result = deleteBlock(updatedSurvey, blockId);
-      if (!result.ok) {
-        toast.error(result.error.message);
-        return;
-      }
-      updatedSurvey = result.data;
-    } else {
-      // Otherwise, just remove this element from the block
-      const result = deleteElementFromBlock(updatedSurvey, blockId, elementId);
-      if (!result.ok) {
-        toast.error(result.error.message);
-        return;
-      }
-      updatedSurvey = result.data;
-    }
-
-    const firstEndingCard = localSurvey.endings[0];
-    setLocalSurvey(updatedSurvey);
-    delete internalElementIdMap[elementId];
-
+  const handleActiveElementAfterDeletion = (
+    elementId: string,
+    elementIdx: number,
+    updatedSurvey: TSurvey,
+    activeElementIdTemp: string
+  ) => {
     if (elementId === activeElementIdTemp) {
       const newElements = updatedSurvey.blocks.flatMap((b) => b.elements) ?? [];
+      const firstEndingCard = localSurvey.endings[0];
       if (elementIdx <= newElements.length && newElements.length > 0) {
         setActiveElementId(newElements[elementIdx % newElements.length].id);
       } else if (firstEndingCard) {
         setActiveElementId(firstEndingCard.id);
       }
     }
+  };
+
+  const deleteElement = (elementIdx: number) => {
+    const element = elements[elementIdx];
+    if (!element) return;
+
+    const elementId = element.id;
+    if (!validateElementDeletion(elementId, elementIdx)) {
+      return;
+    }
+
+    const activeElementIdTemp = activeElementId ?? elements[0]?.id;
+    // let updatedSurvey = removeRecallReferences(localSurvey, elementId);
+    let updatedSurvey = structuredClone(localSurvey);
+
+    const { blockId, blockIndex } = findElementLocation(localSurvey, elementId);
+    if (!blockId || blockIndex === -1) return;
+
+    const block = updatedSurvey.blocks[blockIndex];
+    const result =
+      block.elements.length === 1
+        ? deleteBlock(updatedSurvey, blockId)
+        : deleteElementFromBlock(updatedSurvey, blockId, elementId);
+
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
+
+    updatedSurvey = result.data;
+    setLocalSurvey(updatedSurvey);
+    delete internalElementIdMap[elementId];
+
+    handleActiveElementAfterDeletion(elementId, elementIdx, updatedSurvey, activeElementIdTemp);
 
     toast.success(t("environments.surveys.edit.question_deleted"));
   };

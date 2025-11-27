@@ -46,6 +46,45 @@ import {
 } from "@/modules/ui/components/select";
 import { IntegrationModalInputs } from "../lib/types";
 
+const ElementCheckbox = ({
+  element,
+  selectedSurvey,
+  field,
+}: {
+  element: TSurveyElement;
+  selectedSurvey: TSurvey;
+  field: {
+    value: string[] | undefined;
+    onChange: (value: string[]) => void;
+  };
+}) => {
+  const handleCheckedChange = (checked: boolean) => {
+    if (checked) {
+      field.onChange([...(field.value || []), element.id]);
+    } else {
+      field.onChange(field.value?.filter((value) => value !== element.id) || []);
+    }
+  };
+
+  return (
+    <div className="my-1 flex items-center space-x-2">
+      <label htmlFor={element.id} className="flex cursor-pointer items-center">
+        <Checkbox
+          type="button"
+          id={element.id}
+          value={element.id}
+          className="bg-white"
+          checked={field.value?.includes(element.id)}
+          onCheckedChange={handleCheckedChange}
+        />
+        <span className="ml-2">
+          {getTextContent(recallToHeadline(element.headline, selectedSurvey, false, "default")["default"])}
+        </span>
+      </label>
+    </div>
+  );
+};
+
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }
   | { isEditMode: true; defaultData: IntegrationModalInputs & { index: number } };
@@ -108,27 +147,7 @@ const renderElementSelection = ({
                 control={control}
                 name={"elements"}
                 render={({ field }) => (
-                  <div className="my-1 flex items-center space-x-2">
-                    <label htmlFor={element.id} className="flex cursor-pointer items-center">
-                      <Checkbox
-                        type="button"
-                        id={element.id}
-                        value={element.id}
-                        className="bg-white"
-                        checked={field.value?.includes(element.id)}
-                        onCheckedChange={(checked) => {
-                          return checked
-                            ? field.onChange([...(field.value || []), element.id])
-                            : field.onChange(field.value?.filter((value) => value !== element.id) || []);
-                        }}
-                      />
-                      <span className="ml-2">
-                        {getTextContent(
-                          recallToHeadline(element.headline, selectedSurvey, false, "default")["default"]
-                        )}
-                      </span>
-                    </label>
-                  </div>
+                  <ElementCheckbox element={element} selectedSurvey={selectedSurvey} field={field} />
                 )}
               />
             ))}

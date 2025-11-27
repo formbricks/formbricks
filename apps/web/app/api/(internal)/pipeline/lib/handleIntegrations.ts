@@ -5,7 +5,7 @@ import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import { TResponseMeta } from "@formbricks/types/responses";
+import { TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -242,6 +242,37 @@ const handleSlackIntegration = async (
   }
 };
 
+// Helper to process a single element's response for integrations
+const processElementResponse = (
+  element: ReturnType<typeof getElementsFromBlocks>[number],
+  responseValue: TResponseDataValue
+): string => {
+  if (responseValue === undefined) {
+    return "";
+  }
+
+  if (element.type === TSurveyElementTypeEnum.PictureSelection) {
+    const selectedChoiceIds = responseValue as string[];
+    return element.choices
+      .filter((choice) => selectedChoiceIds.includes(choice.id))
+      .map((choice) => choice.imageUrl)
+      .join("\n");
+  }
+
+  return processResponseData(responseValue);
+};
+
+// Helper to create empty response object for non-slack integrations
+const createEmptyResponseObject = (responseData: Record<string, unknown>): Record<string, string> => {
+  return Object.keys(responseData).reduce(
+    (acc, key) => {
+      acc[key] = "";
+      return acc;
+    },
+    {} as Record<string, string>
+  );
+};
+
 const extractResponses = async (
   integrationType: TIntegrationType,
   pipelineData: TPipelineInput,
@@ -253,60 +284,39 @@ const extractResponses = async (
 }> => {
   const responses: string[] = [];
   const elements: string[] = [];
-
   const surveyElements = getElementsFromBlocks(survey.blocks);
+  const emptyResponseObject = createEmptyResponseObject(pipelineData.response.data);
 
   for (const elementId of elementIds) {
-    //check for hidden field Ids
+    // Check for hidden field Ids
     if (survey.hiddenFields.fieldIds?.includes(elementId)) {
       responses.push(processResponseData(pipelineData.response.data[elementId]));
       elements.push(elementId);
       continue;
     }
+
     const element = surveyElements.find((q) => q.id === elementId);
     if (!element) {
       continue;
     }
 
     const responseValue = pipelineData.response.data[elementId];
+    responses.push(processElementResponse(element, responseValue));
 
-    if (responseValue !== undefined) {
-      let answer: typeof responseValue;
-      if (element.type === TSurveyElementTypeEnum.PictureSelection) {
-        const selectedChoiceIds = responseValue as string[];
-        answer = element?.choices
-          .filter((choice) => selectedChoiceIds.includes(choice.id))
-          .map((choice) => choice.imageUrl)
-          .join("\n");
-      } else {
-        answer = responseValue;
-      }
+    const responseDataForRecall =
+      integrationType === "slack" ? pipelineData.response.data : emptyResponseObject;
+    const variablesForRecall = integrationType === "slack" ? pipelineData.response.variables : {};
 
-      responses.push(processResponseData(answer));
-    } else {
-      responses.push("");
-    }
-    // Create emptyResponseObject with same keys but empty string values
-    const emptyResponseObject = Object.keys(pipelineData.response.data).reduce(
-      (acc, key) => {
-        acc[key] = "";
-        return acc;
-      },
-      {} as Record<string, string>
-    );
     elements.push(
       parseRecallInfo(
-        getTextContent(getLocalizedValue(element?.headline, "default")),
-        integrationType === "slack" ? pipelineData.response.data : emptyResponseObject,
-        integrationType === "slack" ? pipelineData.response.variables : {}
+        getTextContent(getLocalizedValue(element.headline, "default")),
+        responseDataForRecall,
+        variablesForRecall
       ) || ""
     );
   }
 
-  return {
-    responses,
-    elements,
-  };
+  return { responses, elements };
 };
 
 const handleNotionIntegration = async (

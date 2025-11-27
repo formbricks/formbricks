@@ -92,16 +92,152 @@ export function RatingElement({
     return "fb-bg-rose-100";
   };
 
+  const handleFormSubmit = (e: Event) => {
+    e.preventDefault();
+    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+  };
+
+  const handleKeyDown = (number: number) => (e: KeyboardEvent) => {
+    if (e.key === " ") {
+      e.preventDefault();
+      document.getElementById(number.toString())?.click();
+      document.getElementById(number.toString())?.focus();
+    }
+  };
+
+  const handleMouseOver = (number: number) => () => {
+    setHoveredNumber(number);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredNumber(0);
+  };
+
+  const handleFocus = (number: number) => () => {
+    setHoveredNumber(number);
+  };
+
+  const handleBlur = () => {
+    setHoveredNumber(0);
+  };
+
+  const getNumberLabelClassName = (number: number, totalLength: number): string => {
+    const isSelected = value === number;
+    const isLast = totalLength === number;
+    const isFirst = number === 1;
+    const isHovered = hoveredNumber === number;
+
+    return cn(
+      isSelected
+        ? "fb-bg-accent-selected-bg fb-border-border-highlight fb-z-10 fb-border"
+        : "fb-border-border",
+      isLast ? (dir === "rtl" ? "fb-rounded-l-custom fb-border-l" : "fb-rounded-r-custom fb-border-r") : "",
+      isFirst ? (dir === "rtl" ? "fb-rounded-r-custom fb-border-r" : "fb-rounded-l-custom fb-border-l") : "",
+      isHovered ? "fb-bg-accent-bg" : "",
+      element.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
+      "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
+    );
+  };
+
+  const getStarLabelClassName = (number: number): string => {
+    const isActive = number <= hoveredNumber || number <= (value ?? 0);
+    const isHovered = hoveredNumber === number;
+
+    return cn(
+      isActive || isHovered ? "fb-text-amber-400" : "fb-text-[#8696AC]",
+      "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-cursor-pointer fb-justify-center focus:fb-outline-none"
+    );
+  };
+
+  const getSmileyLabelClassName = (number: number): string => {
+    const isActive = value === number || hoveredNumber === number;
+
+    return cn(
+      "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-w-full fb-cursor-pointer fb-justify-center",
+      isActive
+        ? "fb-stroke-rating-selected fb-text-rating-selected"
+        : "fb-stroke-heading fb-text-heading focus:fb-border-accent-bg focus:fb-border-2 focus:fb-outline-none"
+    );
+  };
+
+  const renderNumberScale = (number: number, totalLength: number) => {
+    return (
+      <label
+        tabIndex={isCurrent ? 0 : -1}
+        onKeyDown={handleKeyDown(number)}
+        className={getNumberLabelClassName(number, totalLength)}>
+        {element.isColorCodingEnabled && (
+          <div
+            className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(element.range, number)}`}
+          />
+        )}
+        <HiddenRadioInput number={number} id={number.toString()} />
+        {number}
+      </label>
+    );
+  };
+
+  const renderStarScale = (number: number) => {
+    return (
+      <label
+        tabIndex={isCurrent ? 0 : -1}
+        onKeyDown={handleKeyDown(number)}
+        className={getStarLabelClassName(number)}
+        onFocus={handleFocus(number)}
+        onBlur={handleBlur}>
+        <HiddenRadioInput number={number} id={number.toString()} />
+        <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+            />
+          </svg>
+        </div>
+      </label>
+    );
+  };
+
+  const renderSmileyScale = (number: number, idx: number) => {
+    return (
+      <label
+        tabIndex={isCurrent ? 0 : -1}
+        className={getSmileyLabelClassName(number)}
+        onKeyDown={handleKeyDown(number)}
+        onFocus={handleFocus(number)}
+        onBlur={handleBlur}>
+        <HiddenRadioInput number={number} id={number.toString()} />
+        <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
+          <RatingSmiley
+            active={value === number || hoveredNumber === number}
+            idx={idx}
+            range={element.range}
+            addColors={element.isColorCodingEnabled}
+          />
+        </div>
+      </label>
+    );
+  };
+
+  const renderRatingOption = (number: number, idx: number, totalLength: number) => {
+    return (
+      <span
+        key={number}
+        onMouseOver={handleMouseOver(number)}
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleFocus(number)}
+        className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
+        {element.scale === "number" && renderNumberScale(number, totalLength)}
+        {element.scale === "star" && renderStarScale(number)}
+        {element.scale !== "number" && element.scale !== "star" && renderSmileyScale(number, idx)}
+      </span>
+    );
+  };
+
   return (
-    <form
-      key={element.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
-        setTtc(updatedTtcObj);
-      }}
-      className="fb-w-full">
-      {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
+    <form key={element.id} onSubmit={handleFormSubmit} className="fb-w-full">
+      {isMediaAvailable && <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} />}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}
         elementId={element.id}
@@ -115,124 +251,9 @@ export function RatingElement({
         <fieldset className="fb-w-full">
           <legend className="fb-sr-only">Choices</legend>
           <div className="fb-flex fb-w-full">
-            {Array.from({ length: element.range }, (_, i) => i + 1).map((number, i, a) => (
-              <span
-                key={number}
-                onMouseOver={() => {
-                  setHoveredNumber(number);
-                }}
-                onFocus={() => {
-                  setHoveredNumber(number);
-                }}
-                onMouseLeave={() => {
-                  setHoveredNumber(0);
-                }}
-                className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
-                {element.scale === "number" ? (
-                  <label
-                    tabIndex={isCurrent ? 0 : -1}
-                    onKeyDown={(e) => {
-                      // Accessibility: if spacebar was pressed pass this down to the input
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        document.getElementById(number.toString())?.click();
-                        document.getElementById(number.toString())?.focus();
-                      }
-                    }}
-                    className={cn(
-                      value === number
-                        ? "fb-bg-accent-selected-bg fb-border-border-highlight fb-z-10 fb-border"
-                        : "fb-border-border",
-                      a.length === number
-                        ? dir === "rtl"
-                          ? "fb-rounded-l-custom fb-border-l"
-                          : "fb-rounded-r-custom fb-border-r"
-                        : "",
-                      number === 1
-                        ? dir === "rtl"
-                          ? "fb-rounded-r-custom fb-border-r"
-                          : "fb-rounded-l-custom fb-border-l"
-                        : "",
-                      hoveredNumber === number ? "fb-bg-accent-bg" : "",
-                      element.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
-                      "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
-                    )}>
-                    {element.isColorCodingEnabled ? (
-                      <div
-                        className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(element.range, number)}`}
-                      />
-                    ) : null}
-                    <HiddenRadioInput number={number} id={number.toString()} />
-                    {number}
-                  </label>
-                ) : element.scale === "star" ? (
-                  <label
-                    tabIndex={isCurrent ? 0 : -1}
-                    onKeyDown={(e) => {
-                      // Accessibility: if spacebar was pressed pass this down to the input
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        document.getElementById(number.toString())?.click();
-                        document.getElementById(number.toString())?.focus();
-                      }
-                    }}
-                    className={cn(
-                      number <= hoveredNumber || number <= value! ? "fb-text-amber-400" : "fb-text-[#8696AC]",
-                      hoveredNumber === number ? "fb-text-amber-400" : "",
-                      "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-cursor-pointer fb-justify-center focus:fb-outline-none"
-                    )}
-                    onFocus={() => {
-                      setHoveredNumber(number);
-                    }}
-                    onBlur={() => {
-                      setHoveredNumber(0);
-                    }}>
-                    <HiddenRadioInput number={number} id={number.toString()} />
-                    <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                          fillRule="evenodd"
-                          d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                        />
-                      </svg>
-                    </div>
-                  </label>
-                ) : (
-                  <label
-                    tabIndex={isCurrent ? 0 : -1}
-                    className={cn(
-                      "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-w-full fb-cursor-pointer fb-justify-center",
-                      value === number || hoveredNumber === number
-                        ? "fb-stroke-rating-selected fb-text-rating-selected"
-                        : "fb-stroke-heading fb-text-heading focus:fb-border-accent-bg focus:fb-border-2 focus:fb-outline-none"
-                    )}
-                    onKeyDown={(e) => {
-                      // Accessibility: if spacebar was pressed pass this down to the input
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        document.getElementById(number.toString())?.click();
-                        document.getElementById(number.toString())?.focus();
-                      }
-                    }}
-                    onFocus={() => {
-                      setHoveredNumber(number);
-                    }}
-                    onBlur={() => {
-                      setHoveredNumber(0);
-                    }}>
-                    <HiddenRadioInput number={number} id={number.toString()} />
-                    <div className={cn("fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain")}>
-                      <RatingSmiley
-                        active={value === number || hoveredNumber === number}
-                        idx={i}
-                        range={element.range}
-                        addColors={element.isColorCodingEnabled}
-                      />
-                    </div>
-                  </label>
-                )}
-              </span>
-            ))}
+            {Array.from({ length: element.range }, (_, i) => i + 1).map((number, i, a) =>
+              renderRatingOption(number, i, a.length)
+            )}
           </div>
           <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-gap-8">
             <p className="fb-max-w-[50%]" dir="auto">

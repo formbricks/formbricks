@@ -24,7 +24,7 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
-const conditionOptions = {
+const conditionOptions: Record<string, string[]> = {
   openText: ["is"],
   multipleChoiceSingle: ["Includes either"],
   multipleChoiceMulti: ["Includes all", "Includes either"],
@@ -41,7 +41,7 @@ const conditionOptions = {
   contactInfo: ["is"],
   ranking: ["is"],
 };
-const filterOptions = {
+const filterOptions: Record<string, string[]> = {
   openText: ["Filled out", "Skipped"],
   rating: ["1", "2", "3", "4", "5"],
   nps: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
@@ -51,6 +51,51 @@ const filterOptions = {
   address: ["Filled out", "Skipped"],
   contactInfo: ["Filled out", "Skipped"],
   ranking: ["Filled out", "Skipped"],
+};
+
+// Helper function to get filter options for a specific element type
+const getElementFilterOption = (
+  element: ReturnType<typeof getElementsFromBlocks>[number]
+): ElementFilterOptions | null => {
+  if (!Object.keys(conditionOptions).includes(element.type)) {
+    return null;
+  }
+
+  const baseOption = {
+    type: element.type,
+    filterOptions: conditionOptions[element.type],
+    id: element.id,
+  };
+
+  switch (element.type) {
+    case TSurveyElementTypeEnum.MultipleChoiceSingle:
+      return {
+        ...baseOption,
+        filterComboBoxOptions: element.choices?.map((c) => c.label) ?? [""],
+      };
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+      return {
+        ...baseOption,
+        filterComboBoxOptions: element.choices?.filter((c) => c.id !== "other").map((c) => c.label) ?? [""],
+      };
+    case TSurveyElementTypeEnum.PictureSelection:
+      return {
+        ...baseOption,
+        filterComboBoxOptions: element.choices?.map((_, idx) => `Picture ${idx + 1}`) ?? [""],
+      };
+    case TSurveyElementTypeEnum.Matrix:
+      return {
+        type: element.type,
+        filterOptions: element.rows.map((row) => getLocalizedValue(row.label, "default")),
+        filterComboBoxOptions: element.columns.map((column) => getLocalizedValue(column.label, "default")),
+        id: element.id,
+      };
+    default:
+      return {
+        ...baseOption,
+        filterComboBoxOptions: filterOptions[element.type],
+      };
+  }
 };
 
 // URL/meta text operators mapping
@@ -96,45 +141,9 @@ export const generateElementAndFilterOptions = (
   });
   elementOptions = [...elementOptions, { header: OptionsType.ELEMENTS, option: elementsOptions }];
   elements.forEach((q) => {
-    if (Object.keys(conditionOptions).includes(q.type)) {
-      if (q.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
-        elementFilterOptions.push({
-          type: q.type,
-          filterOptions: conditionOptions[q.type],
-          filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
-          id: q.id,
-        });
-      } else if (q.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
-        elementFilterOptions.push({
-          type: q.type,
-          filterOptions: conditionOptions[q.type],
-          filterComboBoxOptions: q?.choices
-            ? q?.choices?.filter((c) => c.id !== "other")?.map((c) => c?.label)
-            : [""],
-          id: q.id,
-        });
-      } else if (q.type === TSurveyElementTypeEnum.PictureSelection) {
-        elementFilterOptions.push({
-          type: q.type,
-          filterOptions: conditionOptions[q.type],
-          filterComboBoxOptions: q?.choices ? q?.choices?.map((_, idx) => `Picture ${idx + 1}`) : [""],
-          id: q.id,
-        });
-      } else if (q.type === TSurveyElementTypeEnum.Matrix) {
-        elementFilterOptions.push({
-          type: q.type,
-          filterOptions: q.rows.map((row) => getLocalizedValue(row.label, "default")),
-          filterComboBoxOptions: q.columns.map((column) => getLocalizedValue(column.label, "default")),
-          id: q.id,
-        });
-      } else {
-        elementFilterOptions.push({
-          type: q.type,
-          filterOptions: conditionOptions[q.type],
-          filterComboBoxOptions: filterOptions[q.type],
-          id: q.id,
-        });
-      }
+    const filterOption = getElementFilterOption(q);
+    if (filterOption) {
+      elementFilterOptions.push(filterOption);
     }
   });
 
@@ -247,6 +256,292 @@ export const generateElementAndFilterOptions = (
   return { elementOptions: [...elementOptions], elementFilterOptions: [...elementFilterOptions] };
 };
 
+// Helper function to process filled out/skipped filters
+const processFilledOutSkippedFilter = (
+  filterType: FilterValue["filterType"],
+  elementId: string,
+  filters: TResponseFilterCriteria
+) => {
+  if (filterType.filterComboBoxValue === "Filled out") {
+    filters.data![elementId] = { op: "filledOut" };
+  } else if (filterType.filterComboBoxValue === "Skipped") {
+    filters.data![elementId] = { op: "skipped" };
+  }
+};
+
+// Helper function to process ranking filters
+const processRankingFilter = (
+  filterType: FilterValue["filterType"],
+  elementId: string,
+  filters: TResponseFilterCriteria
+) => {
+  if (filterType.filterComboBoxValue === "Filled out") {
+    filters.data![elementId] = { op: "submitted" };
+  } else if (filterType.filterComboBoxValue === "Skipped") {
+    filters.data![elementId] = { op: "skipped" };
+  }
+};
+
+// Helper function to process multiple choice filters
+const processMultipleChoiceFilter = (
+  filterType: FilterValue["filterType"],
+  elementId: string,
+  filters: TResponseFilterCriteria
+) => {
+  if (filterType.filterValue === "Includes either") {
+    filters.data![elementId] = {
+      op: "includesOne",
+      value: filterType.filterComboBoxValue as string[],
+    };
+  } else if (filterType.filterValue === "Includes all") {
+    filters.data![elementId] = {
+      op: "includesAll",
+      value: filterType.filterComboBoxValue as string[],
+    };
+  }
+};
+
+// Helper function to process NPS/Rating filters
+const processNPSRatingFilter = (
+  filterType: FilterValue["filterType"],
+  elementId: string,
+  filters: TResponseFilterCriteria
+) => {
+  if (filterType.filterValue === "Is equal to") {
+    filters.data![elementId] = {
+      op: "equals",
+      value: parseInt(filterType.filterComboBoxValue as string),
+    };
+  } else if (filterType.filterValue === "Is less than") {
+    filters.data![elementId] = {
+      op: "lessThan",
+      value: parseInt(filterType.filterComboBoxValue as string),
+    };
+  } else if (filterType.filterValue === "Is more than") {
+    filters.data![elementId] = {
+      op: "greaterThan",
+      value: parseInt(filterType.filterComboBoxValue as string),
+    };
+  } else if (filterType.filterValue === "Submitted") {
+    filters.data![elementId] = { op: "submitted" };
+  } else if (filterType.filterValue === "Skipped") {
+    filters.data![elementId] = { op: "skipped" };
+  } else if (filterType.filterValue === "Includes either") {
+    filters.data![elementId] = {
+      op: "includesOne",
+      value: (filterType.filterComboBoxValue as string[]).map((value) => parseInt(value)),
+    };
+  }
+};
+
+// Helper function to process CTA filters
+const processCTAFilter = (
+  filterType: FilterValue["filterType"],
+  elementId: string,
+  filters: TResponseFilterCriteria
+) => {
+  if (filterType.filterComboBoxValue === "Clicked") {
+    filters.data![elementId] = { op: "clicked" };
+  } else if (filterType.filterComboBoxValue === "Dismissed") {
+    filters.data![elementId] = { op: "skipped" };
+  }
+};
+
+// Helper function to process Consent filters
+const processConsentFilter = (
+  filterType: FilterValue["filterType"],
+  elementId: string,
+  filters: TResponseFilterCriteria
+) => {
+  if (filterType.filterComboBoxValue === "Accepted") {
+    filters.data![elementId] = { op: "accepted" };
+  } else if (filterType.filterComboBoxValue === "Dismissed") {
+    filters.data![elementId] = { op: "skipped" };
+  }
+};
+
+// Helper function to process Picture Selection filters
+const processPictureSelectionFilter = (
+  filterType: FilterValue["filterType"],
+  elementId: string,
+  element: ReturnType<typeof getElementsFromBlocks>[number] | undefined,
+  filters: TResponseFilterCriteria
+) => {
+  if (
+    element?.type !== TSurveyElementTypeEnum.PictureSelection ||
+    !Array.isArray(filterType.filterComboBoxValue)
+  ) {
+    return;
+  }
+
+  const selectedOptions = filterType.filterComboBoxValue.map((option) => {
+    const index = parseInt(option.split(" ")[1]);
+    return element?.choices[index - 1].id;
+  });
+
+  if (filterType.filterValue === "Includes all") {
+    filters.data![elementId] = { op: "includesAll", value: selectedOptions };
+  } else if (filterType.filterValue === "Includes either") {
+    filters.data![elementId] = { op: "includesOne", value: selectedOptions };
+  }
+};
+
+// Helper function to process Matrix filters
+const processMatrixFilter = (
+  filterType: FilterValue["filterType"],
+  elementId: string,
+  filters: TResponseFilterCriteria
+) => {
+  if (
+    filterType.filterValue &&
+    filterType.filterComboBoxValue &&
+    typeof filterType.filterComboBoxValue === "string"
+  ) {
+    filters.data![elementId] = {
+      op: "matrix",
+      value: { [filterType.filterValue]: filterType.filterComboBoxValue },
+    };
+  }
+};
+
+// Helper function to process element filters
+const processElementFilters = (
+  elements: FilterValue[],
+  survey: TSurvey,
+  filters: TResponseFilterCriteria
+) => {
+  if (!elements.length) return;
+
+  const surveyElements = getElementsFromBlocks(survey.blocks);
+  filters.data = filters.data || {};
+
+  elements.forEach(({ filterType, elementType }) => {
+    const elementId = elementType.id ?? "";
+    const element = surveyElements.find((q) => q.id === elementId);
+
+    switch (elementType.elementType) {
+      case TSurveyElementTypeEnum.OpenText:
+      case TSurveyElementTypeEnum.Address:
+      case TSurveyElementTypeEnum.ContactInfo:
+        processFilledOutSkippedFilter(filterType, elementId, filters);
+        break;
+      case TSurveyElementTypeEnum.Ranking:
+        processRankingFilter(filterType, elementId, filters);
+        break;
+      case TSurveyElementTypeEnum.MultipleChoiceSingle:
+      case TSurveyElementTypeEnum.MultipleChoiceMulti:
+        processMultipleChoiceFilter(filterType, elementId, filters);
+        break;
+      case TSurveyElementTypeEnum.NPS:
+      case TSurveyElementTypeEnum.Rating:
+        processNPSRatingFilter(filterType, elementId, filters);
+        break;
+      case TSurveyElementTypeEnum.CTA:
+        processCTAFilter(filterType, elementId, filters);
+        break;
+      case TSurveyElementTypeEnum.Consent:
+        processConsentFilter(filterType, elementId, filters);
+        break;
+      case TSurveyElementTypeEnum.PictureSelection:
+        processPictureSelectionFilter(filterType, elementId, element, filters);
+        break;
+      case TSurveyElementTypeEnum.Matrix:
+        processMatrixFilter(filterType, elementId, filters);
+        break;
+    }
+  });
+};
+
+// Helper function to process equals/not equals filters (for hiddenFields, attributes, others)
+const processEqualsNotEqualsFilter = (
+  filterType: FilterValue["filterType"],
+  label: string | undefined,
+  filters: TResponseFilterCriteria,
+  targetKey: "data" | "contactAttributes" | "others"
+) => {
+  if (!filterType.filterComboBoxValue) return;
+
+  if (targetKey === "data") {
+    filters.data = filters.data || {};
+    if (filterType.filterValue === "Equals") {
+      filters.data[label ?? ""] = { op: "equals", value: filterType.filterComboBoxValue as string };
+    } else if (filterType.filterValue === "Not equals") {
+      filters.data[label ?? ""] = { op: "notEquals", value: filterType.filterComboBoxValue as string };
+    }
+  } else if (targetKey === "contactAttributes") {
+    filters.contactAttributes = filters.contactAttributes || {};
+    if (filterType.filterValue === "Equals") {
+      filters.contactAttributes[label ?? ""] = {
+        op: "equals",
+        value: filterType.filterComboBoxValue as string,
+      };
+    } else if (filterType.filterValue === "Not equals") {
+      filters.contactAttributes[label ?? ""] = {
+        op: "notEquals",
+        value: filterType.filterComboBoxValue as string,
+      };
+    }
+  } else if (targetKey === "others") {
+    filters.others = filters.others || {};
+    if (filterType.filterValue === "Equals") {
+      filters.others[label ?? ""] = { op: "equals", value: filterType.filterComboBoxValue as string };
+    } else if (filterType.filterValue === "Not equals") {
+      filters.others[label ?? ""] = { op: "notEquals", value: filterType.filterComboBoxValue as string };
+    }
+  }
+};
+
+// Helper function to process meta filters
+const processMetaFilters = (meta: FilterValue[], filters: TResponseFilterCriteria) => {
+  if (!meta.length) return;
+
+  filters.meta = filters.meta || {};
+
+  meta.forEach(({ filterType, elementType }) => {
+    const label = elementType.label ?? "";
+    const metaFilters = filters.meta!; // Safe because we initialized it above
+
+    // For text input cases (URL filtering)
+    if (typeof filterType.filterComboBoxValue === "string" && filterType.filterComboBoxValue.length > 0) {
+      const value = filterType.filterComboBoxValue.trim();
+      const op = META_OP_MAP[filterType.filterValue as keyof typeof META_OP_MAP];
+      if (op) {
+        metaFilters[label] = { op, value };
+      }
+    }
+    // For dropdown/select cases (existing metadata fields)
+    else if (Array.isArray(filterType.filterComboBoxValue) && filterType.filterComboBoxValue.length > 0) {
+      const value = filterType.filterComboBoxValue[0];
+      if (filterType.filterValue === "Equals") {
+        metaFilters[label] = { op: "equals", value };
+      } else if (filterType.filterValue === "Not equals") {
+        metaFilters[label] = { op: "notEquals", value };
+      }
+    }
+  });
+};
+
+// Helper function to process quota filters
+const processQuotaFilters = (quotas: FilterValue[], filters: TResponseFilterCriteria) => {
+  if (!quotas.length) return;
+
+  filters.quotas = filters.quotas || {};
+
+  const statusMap: Record<string, "screenedIn" | "screenedOut" | "screenedOutNotInQuota"> = {
+    "Screened in": "screenedIn",
+    "Screened out (overquota)": "screenedOut",
+    "Not in quota": "screenedOutNotInQuota",
+  };
+
+  quotas.forEach(({ filterType, elementType }) => {
+    const quotaId = elementType.id;
+    if (!quotaId) return;
+
+    const op = statusMap[String(filterType.filterComboBoxValue)];
+    if (op) filters.quotas![quotaId] = { op };
+  });
+};
+
 // get the formatted filter expression to fetch filtered responses
 export const getFormattedFilters = (
   survey: TSurvey,
@@ -311,252 +606,34 @@ export const getFormattedFilters = (
     });
   }
 
-  if (elements.length) {
-    const surveyElements = getElementsFromBlocks(survey.blocks);
-    elements.forEach(({ filterType, elementType }) => {
-      if (!filters.data) filters.data = {};
-      switch (elementType.elementType) {
-        case TSurveyElementTypeEnum.OpenText:
-        case TSurveyElementTypeEnum.Address:
-        case TSurveyElementTypeEnum.ContactInfo: {
-          if (filterType.filterComboBoxValue === "Filled out") {
-            filters.data[elementType.id ?? ""] = {
-              op: "filledOut",
-            };
-          } else if (filterType.filterComboBoxValue === "Skipped") {
-            filters.data[elementType.id ?? ""] = {
-              op: "skipped",
-            };
-          }
-          break;
-        }
-        case TSurveyElementTypeEnum.Ranking: {
-          if (filterType.filterComboBoxValue === "Filled out") {
-            filters.data[elementType.id ?? ""] = {
-              op: "submitted",
-            };
-          } else if (filterType.filterComboBoxValue === "Skipped") {
-            filters.data[elementType.id ?? ""] = {
-              op: "skipped",
-            };
-          }
-          break;
-        }
-        case TSurveyElementTypeEnum.MultipleChoiceSingle:
-        case TSurveyElementTypeEnum.MultipleChoiceMulti: {
-          if (filterType.filterValue === "Includes either") {
-            filters.data[elementType.id ?? ""] = {
-              op: "includesOne",
-              value: filterType.filterComboBoxValue as string[],
-            };
-          } else if (filterType.filterValue === "Includes all") {
-            filters.data[elementType.id ?? ""] = {
-              op: "includesAll",
-              value: filterType.filterComboBoxValue as string[],
-            };
-          }
-          break;
-        }
-        case TSurveyElementTypeEnum.NPS:
-        case TSurveyElementTypeEnum.Rating: {
-          if (filterType.filterValue === "Is equal to") {
-            filters.data[elementType.id ?? ""] = {
-              op: "equals",
-              value: parseInt(filterType.filterComboBoxValue as string),
-            };
-          } else if (filterType.filterValue === "Is less than") {
-            filters.data[elementType.id ?? ""] = {
-              op: "lessThan",
-              value: parseInt(filterType.filterComboBoxValue as string),
-            };
-          } else if (filterType.filterValue === "Is more than") {
-            filters.data[elementType.id ?? ""] = {
-              op: "greaterThan",
-              value: parseInt(filterType.filterComboBoxValue as string),
-            };
-          } else if (filterType.filterValue === "Submitted") {
-            filters.data[elementType.id ?? ""] = {
-              op: "submitted",
-            };
-          } else if (filterType.filterValue === "Skipped") {
-            filters.data[elementType.id ?? ""] = {
-              op: "skipped",
-            };
-          } else if (filterType.filterValue === "Includes either") {
-            filters.data[elementType.id ?? ""] = {
-              op: "includesOne",
-              value: (filterType.filterComboBoxValue as string[]).map((value) => parseInt(value)),
-            };
-          }
-          break;
-        }
-        case TSurveyElementTypeEnum.CTA: {
-          if (filterType.filterComboBoxValue === "Clicked") {
-            filters.data[elementType.id ?? ""] = {
-              op: "clicked",
-            };
-          } else if (filterType.filterComboBoxValue === "Dismissed") {
-            filters.data[elementType.id ?? ""] = {
-              op: "skipped",
-            };
-          }
-          break;
-        }
-        case TSurveyElementTypeEnum.Consent: {
-          if (filterType.filterComboBoxValue === "Accepted") {
-            filters.data[elementType.id ?? ""] = {
-              op: "accepted",
-            };
-          } else if (filterType.filterComboBoxValue === "Dismissed") {
-            filters.data[elementType.id ?? ""] = {
-              op: "skipped",
-            };
-          }
-          break;
-        }
-        case TSurveyElementTypeEnum.PictureSelection: {
-          const elementId = elementType.id ?? "";
-          const element = surveyElements.find((q) => q.id === elementId);
-
-          if (
-            element?.type !== TSurveyElementTypeEnum.PictureSelection ||
-            !Array.isArray(filterType.filterComboBoxValue)
-          ) {
-            return;
-          }
-
-          const selectedOptions = filterType.filterComboBoxValue.map((option) => {
-            const index = parseInt(option.split(" ")[1]);
-            return element?.choices[index - 1].id;
-          });
-
-          if (filterType.filterValue === "Includes all") {
-            filters.data[elementId] = {
-              op: "includesAll",
-              value: selectedOptions,
-            };
-          } else if (filterType.filterValue === "Includes either") {
-            filters.data[elementId] = {
-              op: "includesOne",
-              value: selectedOptions,
-            };
-          }
-          break;
-        }
-        case TSurveyElementTypeEnum.Matrix: {
-          if (
-            filterType.filterValue &&
-            filterType.filterComboBoxValue &&
-            typeof filterType.filterComboBoxValue === "string"
-          ) {
-            filters.data[elementType.id ?? ""] = {
-              op: "matrix",
-              value: { [filterType.filterValue]: filterType.filterComboBoxValue },
-            };
-          }
-          break;
-        }
-      }
-    });
-  }
+  processElementFilters(elements, survey, filters);
 
   // for hidden fields
   if (hiddenFields.length) {
+    filters.data = filters.data || {};
     hiddenFields.forEach(({ filterType, elementType }) => {
-      if (!filters.data) filters.data = {};
-      if (!filterType.filterComboBoxValue) return;
-      if (filterType.filterValue === "Equals") {
-        filters.data[elementType.label ?? ""] = {
-          op: "equals",
-          value: filterType.filterComboBoxValue as string,
-        };
-      } else if (filterType.filterValue === "Not equals") {
-        filters.data[elementType.label ?? ""] = {
-          op: "notEquals",
-          value: filterType.filterComboBoxValue as string,
-        };
-      }
+      processEqualsNotEqualsFilter(filterType, elementType.label, filters, "data");
     });
   }
 
   // for attributes
   if (attributes.length) {
+    filters.contactAttributes = filters.contactAttributes || {};
     attributes.forEach(({ filterType, elementType }) => {
-      if (!filters.contactAttributes) filters.contactAttributes = {};
-      if (!filterType.filterComboBoxValue) return;
-      if (filterType.filterValue === "Equals") {
-        filters.contactAttributes[elementType.label ?? ""] = {
-          op: "equals",
-          value: filterType.filterComboBoxValue as string,
-        };
-      } else if (filterType.filterValue === "Not equals") {
-        filters.contactAttributes[elementType.label ?? ""] = {
-          op: "notEquals",
-          value: filterType.filterComboBoxValue as string,
-        };
-      }
+      processEqualsNotEqualsFilter(filterType, elementType.label, filters, "contactAttributes");
     });
   }
 
   // for others
   if (others.length) {
+    filters.others = filters.others || {};
     others.forEach(({ filterType, elementType }) => {
-      if (!filters.others) filters.others = {};
-      if (!filterType.filterComboBoxValue) return;
-      if (filterType.filterValue === "Equals") {
-        filters.others[elementType.label ?? ""] = {
-          op: "equals",
-          value: filterType.filterComboBoxValue as string,
-        };
-      } else if (filterType.filterValue === "Not equals") {
-        filters.others[elementType.label ?? ""] = {
-          op: "notEquals",
-          value: filterType.filterComboBoxValue as string,
-        };
-      }
+      processEqualsNotEqualsFilter(filterType, elementType.label, filters, "others");
     });
   }
 
-  // for meta
-  if (meta.length) {
-    meta.forEach(({ filterType, elementType }) => {
-      if (!filters.meta) filters.meta = {};
-
-      // For text input cases (URL filtering)
-      if (typeof filterType.filterComboBoxValue === "string" && filterType.filterComboBoxValue.length > 0) {
-        const value = filterType.filterComboBoxValue.trim();
-        const op = META_OP_MAP[filterType.filterValue as keyof typeof META_OP_MAP];
-        if (op) {
-          filters.meta[elementType.label ?? ""] = { op, value };
-        }
-      }
-      // For dropdown/select cases (existing metadata fields)
-      else if (Array.isArray(filterType.filterComboBoxValue) && filterType.filterComboBoxValue.length > 0) {
-        const value = filterType.filterComboBoxValue[0]; // Take first selected value
-        if (filterType.filterValue === "Equals") {
-          filters.meta[elementType.label ?? ""] = { op: "equals", value };
-        } else if (filterType.filterValue === "Not equals") {
-          filters.meta[elementType.label ?? ""] = { op: "notEquals", value };
-        }
-      }
-    });
-  }
-
-  if (quotas.length) {
-    quotas.forEach(({ filterType, elementType }) => {
-      filters.quotas ??= {};
-      const quotaId = elementType.id;
-      if (!quotaId) return;
-
-      const statusMap: Record<string, "screenedIn" | "screenedOut" | "screenedOutNotInQuota"> = {
-        "Screened in": "screenedIn",
-        "Screened out (overquota)": "screenedOut",
-        "Not in quota": "screenedOutNotInQuota",
-      };
-      const op = statusMap[String(filterType.filterComboBoxValue)];
-      if (op) filters.quotas[quotaId] = { op };
-    });
-  }
+  processMetaFilters(meta, filters);
+  processQuotaFilters(quotas, filters);
 
   return filters;
 };
