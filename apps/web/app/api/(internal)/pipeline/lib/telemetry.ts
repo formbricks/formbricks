@@ -163,11 +163,11 @@ const sendTelemetry = async (lastSent: number) => {
         (SELECT COUNT(*) FROM "Survey" WHERE status = 'inProgress') as "inProgressSurveyCount",
         (SELECT COUNT(*) FROM "Survey" WHERE status = 'completed') as "completedSurveyCount",
         (SELECT COUNT(*) FROM "Response") as "responseCountAllTime",
-        (SELECT COUNT(*) FROM "Response" WHERE "createdAt" > ${new Date(lastSent || 0)}) as "responseCountSinceLastUpdate",
+        (SELECT COUNT(*) FROM "Response" WHERE "created_at" > ${new Date(lastSent || 0)}) as "responseCountSinceLastUpdate",
         (SELECT COUNT(*) FROM "Display") as "displayCount",
         (SELECT COUNT(*) FROM "Contact") as "contactCount",
         (SELECT COUNT(*) FROM "Segment") as "segmentCount",
-        (SELECT MAX("createdAt") FROM "Response") as "newestResponseAt"
+        (SELECT MAX("created_at") FROM "Response") as "newestResponseAt"
     `,
     // Keep these as separate queries since they need DISTINCT which is harder to optimize
     prisma.integration.findMany({ select: { type: true }, distinct: ["type"] }),
