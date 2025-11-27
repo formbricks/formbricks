@@ -121,6 +121,9 @@ export function RatingElement({
                 onMouseOver={() => {
                   setHoveredNumber(number);
                 }}
+                onFocus={() => {
+                  setHoveredNumber(number);
+                }}
                 onMouseLeave={() => {
                   setHoveredNumber(0);
                 }}
