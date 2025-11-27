@@ -578,7 +578,7 @@ export const BlockCard = ({
                       </Collapsible.CollapsibleTrigger>
                       <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
                         {shouldShowCautionAlert(element.type) && (
-                          <Alert variant="warning" size="small" className="w-fill" role="alert">
+                          <Alert variant="warning" size="small" className="w-fill mt-2" role="alert">
                             <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
                             <AlertButton onClick={() => onAlertTrigger()}>
                               {t("common.learn_more")}

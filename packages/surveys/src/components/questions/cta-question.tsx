@@ -61,7 +61,7 @@ export function CTAQuestion({
           subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
           questionId={question.id}
         />
-        {question.buttonExternal && question.buttonUrl && (
+        {question.buttonExternal && (
           <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
             <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
               <button
