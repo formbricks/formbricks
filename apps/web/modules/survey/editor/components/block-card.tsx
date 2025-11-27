@@ -178,242 +178,68 @@ export const BlockCard = ({
     );
   };
 
+  // Common props shared by all element forms
+  const getCommonFormProps = (element: TSurveyElement, elementIdx: number) => ({
+    localSurvey,
+    element,
+    elementIdx,
+    updateElement,
+    selectedLanguageCode,
+    setSelectedLanguageCode,
+    isInvalid: invalidElements ? invalidElements.includes(element.id) : false,
+    locale,
+    isStorageConfigured,
+    isExternalUrlsAllowed,
+  });
+
+  // Element form components mapped by type
+  const elementFormMap = {
+    [TSurveyElementTypeEnum.OpenText]: OpenElementForm,
+    [TSurveyElementTypeEnum.MultipleChoiceSingle]: MultipleChoiceElementForm,
+    [TSurveyElementTypeEnum.MultipleChoiceMulti]: MultipleChoiceElementForm,
+    [TSurveyElementTypeEnum.NPS]: NPSElementForm,
+    [TSurveyElementTypeEnum.CTA]: CTAElementForm,
+    [TSurveyElementTypeEnum.Rating]: RatingElementForm,
+    [TSurveyElementTypeEnum.Consent]: ConsentElementForm,
+    [TSurveyElementTypeEnum.Date]: DateElementForm,
+    [TSurveyElementTypeEnum.PictureSelection]: PictureSelectionForm,
+    [TSurveyElementTypeEnum.FileUpload]: FileUploadElementForm,
+    [TSurveyElementTypeEnum.Cal]: CalElementForm,
+    [TSurveyElementTypeEnum.Matrix]: MatrixElementForm,
+    [TSurveyElementTypeEnum.Address]: AddressElementForm,
+    [TSurveyElementTypeEnum.Ranking]: RankingElementForm,
+    [TSurveyElementTypeEnum.ContactInfo]: ContactInfoElementForm,
+  };
+
+  // Elements that need lastElement prop
+  const elementsWithLastElement = new Set([
+    TSurveyElementTypeEnum.OpenText,
+    TSurveyElementTypeEnum.CTA,
+    TSurveyElementTypeEnum.Rating,
+    TSurveyElementTypeEnum.Cal,
+    TSurveyElementTypeEnum.ContactInfo,
+  ]);
+
   const renderElementForm = (element: TSurveyElement, elementIdx: number) => {
-    switch (element.type) {
-      case TSurveyElementTypeEnum.OpenText:
-        return (
-          <OpenElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            lastElement={lastElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.MultipleChoiceSingle:
-        return (
-          <MultipleChoiceElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.MultipleChoiceMulti:
-        return (
-          <MultipleChoiceElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.NPS:
-        return (
-          <NPSElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.CTA:
-        return (
-          <CTAElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            lastElement={lastElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.Rating:
-        return (
-          <RatingElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            lastElement={lastElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.Consent:
-        return (
-          <ConsentElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.Date:
-        return (
-          <DateElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.PictureSelection:
-        return (
-          <PictureSelectionForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-          />
-        );
-      case TSurveyElementTypeEnum.FileUpload:
-        return (
-          <FileUploadElementForm
-            localSurvey={localSurvey}
-            project={project}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            isFormbricksCloud={isFormbricksCloud}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.Cal:
-        return (
-          <CalElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            lastElement={lastElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.Matrix:
-        return (
-          <MatrixElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.Address:
-        return (
-          <AddressElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.Ranking:
-        return (
-          <RankingElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      case TSurveyElementTypeEnum.ContactInfo:
-        return (
-          <ContactInfoElementForm
-            localSurvey={localSurvey}
-            element={element}
-            elementIdx={elementIdx}
-            updateElement={updateElement}
-            lastElement={lastElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            isInvalid={invalidElements ? invalidElements.includes(element.id) : false}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            isExternalUrlsAllowed={isExternalUrlsAllowed}
-          />
-        );
-      default:
-        return null;
+    const FormComponent = elementFormMap[element.type];
+    if (!FormComponent) return null;
+
+    const commonProps = getCommonFormProps(element, elementIdx);
+
+    // Add lastElement for specific element types
+    const additionalProps: Record<string, unknown> = {};
+    if (elementsWithLastElement.has(element.type)) {
+      additionalProps.lastElement = lastElement;
     }
+
+    // FileUpload needs extra props
+    if (element.type === TSurveyElementTypeEnum.FileUpload) {
+      additionalProps.project = project;
+      additionalProps.isFormbricksCloud = isFormbricksCloud;
+    }
+
+    // @ts-expect-error - These props should cover everything
+    return <FormComponent {...commonProps} {...additionalProps} />;
   };
 
   const style = {

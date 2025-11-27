@@ -2716,7 +2716,7 @@ describe("NPS question type tests", () => {
   test("getQuestionSummary includes individual score breakdown in choices array for NPS", async () => {
     const question = {
       id: "nps-q1",
-      type: TSurveyQuestionTypeEnum.NPS,
+      type: TSurveyElementTypeEnum.NPS,
       headline: { default: "How likely are you to recommend us?" },
       required: true,
       lowerLabel: { default: "Not likely" },
@@ -2725,7 +2725,13 @@ describe("NPS question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -2784,10 +2790,15 @@ describe("NPS question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "nps-q1", impressions: 5, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "nps-q1", impressions: 5, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     expect(summary[0].choices).toBeDefined();
     expect(summary[0].choices).toHaveLength(11); // Scores 0-10
@@ -2822,7 +2833,7 @@ describe("NPS question type tests", () => {
   test("getQuestionSummary handles NPS individual score breakdown with no responses", async () => {
     const question = {
       id: "nps-q1",
-      type: TSurveyQuestionTypeEnum.NPS,
+      type: TSurveyElementTypeEnum.NPS,
       headline: { default: "How likely are you to recommend us?" },
       required: true,
       lowerLabel: { default: "Not likely" },
@@ -2831,7 +2842,13 @@ describe("NPS question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -2839,10 +2856,15 @@ describe("NPS question type tests", () => {
     const responses: any[] = [];
 
     const dropOff = [
-      { questionId: "nps-q1", impressions: 0, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "nps-q1", impressions: 0, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     expect(summary[0].choices).toBeDefined();
     expect(summary[0].choices).toHaveLength(11); // Scores 0-10
@@ -3116,7 +3138,7 @@ describe("Rating question type tests", () => {
   test("getQuestionSummary calculates CSAT for Rating question with range 3", async () => {
     const question = {
       id: "rating-q1",
-      type: TSurveyQuestionTypeEnum.Rating,
+      type: TSurveyElementTypeEnum.Rating,
       headline: { default: "Rate our service" },
       required: true,
       scale: "number",
@@ -3127,7 +3149,13 @@ describe("Rating question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -3166,10 +3194,15 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     // Range 3: satisfied = score 3
     // 2 out of 3 responses are satisfied (score 3)
@@ -3180,7 +3213,7 @@ describe("Rating question type tests", () => {
   test("getQuestionSummary calculates CSAT for Rating question with range 4", async () => {
     const question = {
       id: "rating-q1",
-      type: TSurveyQuestionTypeEnum.Rating,
+      type: TSurveyElementTypeEnum.Rating,
       headline: { default: "Rate our service" },
       required: true,
       scale: "number",
@@ -3191,7 +3224,13 @@ describe("Rating question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -3230,10 +3269,15 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     // Range 4: satisfied = scores 3-4
     // 2 out of 3 responses are satisfied (scores 3 and 4)
@@ -3244,7 +3288,7 @@ describe("Rating question type tests", () => {
   test("getQuestionSummary calculates CSAT for Rating question with range 5", async () => {
     const question = {
       id: "rating-q1",
-      type: TSurveyQuestionTypeEnum.Rating,
+      type: TSurveyElementTypeEnum.Rating,
       headline: { default: "Rate our service" },
       required: true,
       scale: "number",
@@ -3255,7 +3299,13 @@ describe("Rating question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -3294,10 +3344,15 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     // Range 5: satisfied = scores 4-5
     // 2 out of 3 responses are satisfied (scores 4 and 5)
@@ -3308,7 +3363,7 @@ describe("Rating question type tests", () => {
   test("getQuestionSummary calculates CSAT for Rating question with range 6", async () => {
     const question = {
       id: "rating-q1",
-      type: TSurveyQuestionTypeEnum.Rating,
+      type: TSurveyElementTypeEnum.Rating,
       headline: { default: "Rate our service" },
       required: true,
       scale: "number",
@@ -3319,7 +3374,13 @@ describe("Rating question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -3358,10 +3419,15 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     // Range 6: satisfied = scores 5-6
     // 2 out of 3 responses are satisfied (scores 5 and 6)
@@ -3372,7 +3438,7 @@ describe("Rating question type tests", () => {
   test("getQuestionSummary calculates CSAT for Rating question with range 7", async () => {
     const question = {
       id: "rating-q1",
-      type: TSurveyQuestionTypeEnum.Rating,
+      type: TSurveyElementTypeEnum.Rating,
       headline: { default: "Rate our service" },
       required: true,
       scale: "number",
@@ -3383,7 +3449,13 @@ describe("Rating question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -3422,10 +3494,15 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     // Range 7: satisfied = scores 6-7
     // 2 out of 3 responses are satisfied (scores 6 and 7)
@@ -3436,7 +3513,7 @@ describe("Rating question type tests", () => {
   test("getQuestionSummary calculates CSAT for Rating question with range 10", async () => {
     const question = {
       id: "rating-q1",
-      type: TSurveyQuestionTypeEnum.Rating,
+      type: TSurveyElementTypeEnum.Rating,
       headline: { default: "Rate our service" },
       required: true,
       scale: "number",
@@ -3447,7 +3524,13 @@ describe("Rating question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -3496,10 +3579,15 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     // Range 10: satisfied = scores 8-10
     // 3 out of 4 responses are satisfied (scores 8, 9, 10)
@@ -3510,7 +3598,7 @@ describe("Rating question type tests", () => {
   test("getQuestionSummary calculates CSAT for Rating question with all satisfied", async () => {
     const question = {
       id: "rating-q1",
-      type: TSurveyQuestionTypeEnum.Rating,
+      type: TSurveyElementTypeEnum.Rating,
       headline: { default: "Rate our service" },
       required: true,
       scale: "number",
@@ -3521,7 +3609,13 @@ describe("Rating question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -3550,10 +3644,15 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     // Range 5: satisfied = scores 4-5
     // All 2 responses are satisfied
@@ -3564,7 +3663,7 @@ describe("Rating question type tests", () => {
   test("getQuestionSummary calculates CSAT for Rating question with none satisfied", async () => {
     const question = {
       id: "rating-q1",
-      type: TSurveyQuestionTypeEnum.Rating,
+      type: TSurveyElementTypeEnum.Rating,
       headline: { default: "Rate our service" },
       required: true,
       scale: "number",
@@ -3575,7 +3674,13 @@ describe("Rating question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -3614,10 +3719,15 @@ describe("Rating question type tests", () => {
     ];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     // Range 5: satisfied = scores 4-5
     // None of the responses are satisfied (all are 1, 2, or 3)
@@ -3628,7 +3738,7 @@ describe("Rating question type tests", () => {
   test("getQuestionSummary calculates CSAT for Rating question with no responses", async () => {
     const question = {
       id: "rating-q1",
-      type: TSurveyQuestionTypeEnum.Rating,
+      type: TSurveyElementTypeEnum.Rating,
       headline: { default: "Rate our service" },
       required: true,
       scale: "number",
@@ -3639,7 +3749,13 @@ describe("Rating question type tests", () => {
 
     const survey = {
       id: "survey-1",
-      questions: [question],
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
       languages: [],
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
@@ -3647,10 +3763,15 @@ describe("Rating question type tests", () => {
     const responses: any[] = [];
 
     const dropOff = [
-      { questionId: "rating-q1", impressions: 0, dropOffCount: 0, dropOffPercentage: 0 },
+      { elementId: "rating-q1", impressions: 0, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getQuestionSummary(survey, responses, dropOff);
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
 
     expect(summary[0].csat.satisfiedCount).toBe(0);
     expect(summary[0].csat.satisfiedPercentage).toBe(0);

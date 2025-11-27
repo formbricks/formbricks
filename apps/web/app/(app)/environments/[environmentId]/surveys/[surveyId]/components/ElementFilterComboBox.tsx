@@ -26,6 +26,15 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
 
+const DEFAULT_LANGUAGE_CODE = "default";
+
+// Helper to get localized option value
+const getOptionValue = (option: string | TI18nString): string => {
+  return typeof option === "object" && option !== null
+    ? getLocalizedValue(option, DEFAULT_LANGUAGE_CODE)
+    : option;
+};
+
 type ElementFilterComboBoxProps = {
   filterOptions: (string | TI18nString)[] | undefined;
   filterComboBoxOptions: (string | TI18nString)[] | undefined;
@@ -58,32 +67,28 @@ export const ElementFilterComboBox = ({
 
   useClickOutside(commandRef, () => setOpen(false));
 
-  const defaultLanguageCode = "default";
-
   // Check if multiple selection is allowed
-  const isMultiple = useMemo(
-    () =>
-      type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-      type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-      type === TSurveyElementTypeEnum.PictureSelection ||
-      (type === TSurveyElementTypeEnum.NPS && filterValue === "Includes either"),
-    [type, filterValue]
-  );
+  const isMultiSelectType =
+    type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
+    type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+    type === TSurveyElementTypeEnum.PictureSelection;
+  const isNPSIncludesEither = type === TSurveyElementTypeEnum.NPS && filterValue === "Includes either";
+  const isMultiple = isMultiSelectType || isNPSIncludesEither;
 
   // Filter out already selected options for multi-select
   const options = useMemo(() => {
     if (!isMultiple) return filterComboBoxOptions;
 
     return filterComboBoxOptions?.filter((o) => {
-      const optionValue = typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+      const optionValue = getOptionValue(o);
       return !filterComboBoxValue?.includes(optionValue);
     });
-  }, [isMultiple, filterComboBoxOptions, filterComboBoxValue, defaultLanguageCode]);
+  }, [isMultiple, filterComboBoxOptions, filterComboBoxValue]);
 
   // Disable combo box for NPS/Rating when Submitted/Skipped
-  const isDisabledComboBox =
-    (type === TSurveyElementTypeEnum.NPS || type === TSurveyElementTypeEnum.Rating) &&
-    (filterValue === "Submitted" || filterValue === "Skipped");
+  const isNPSOrRating = type === TSurveyElementTypeEnum.NPS || type === TSurveyElementTypeEnum.Rating;
+  const isSubmittedOrSkipped = filterValue === "Submitted" || filterValue === "Skipped";
+  const isDisabledComboBox = isNPSOrRating && isSubmittedOrSkipped;
 
   // Check if this is a text input field (URL meta field)
   const isTextInputField = type === OptionsType.META && fieldId === "url";
@@ -92,15 +97,14 @@ export const ElementFilterComboBox = ({
   const filteredOptions = useMemo(
     () =>
       options?.filter((o) => {
-        const optionValue =
-          typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+        const optionValue = getOptionValue(o);
         return optionValue.toLowerCase().includes(searchQuery.toLowerCase());
       }),
-    [options, searchQuery, defaultLanguageCode]
+    [options, searchQuery]
   );
 
   const handleCommandItemSelect = (o: string | TI18nString) => {
-    const value = typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+    const value = getOptionValue(o);
 
     if (isMultiple) {
       const newValue = Array.isArray(filterComboBoxValue) ? [...filterComboBoxValue, value] : [value];
@@ -203,8 +207,7 @@ export const ElementFilterComboBox = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white">
             {filterOptions?.map((o, index) => {
-              const optionValue =
-                typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+              const optionValue = getOptionValue(o);
               return (
                 <DropdownMenuItem
                   key={`${optionValue}-${index}`}
@@ -275,8 +278,7 @@ export const ElementFilterComboBox = ({
                 <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
                 <CommandGroup>
                   {filteredOptions?.map((o) => {
-                    const optionValue =
-                      typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+                    const optionValue = getOptionValue(o);
                     return (
                       <CommandItem
                         key={optionValue}

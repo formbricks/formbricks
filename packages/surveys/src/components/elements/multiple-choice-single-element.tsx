@@ -70,11 +70,13 @@ export function MultipleChoiceSingleElement({
   useEffect(() => {
     if (!value) {
       const prefillAnswer = new URLSearchParams(window.location.search).get(element.id);
-      if (prefillAnswer) {
-        if (otherOption && prefillAnswer === getLocalizedValue(otherOption.label, languageCode)) {
-          setOtherSelected(true);
-          return;
-        }
+      if (
+        prefillAnswer &&
+        otherOption &&
+        prefillAnswer === getLocalizedValue(otherOption.label, languageCode)
+      ) {
+        setOtherSelected(true);
+        return;
       }
     }
 
@@ -93,16 +95,184 @@ export function MultipleChoiceSingleElement({
 
   const otherOptionInputDir = !value ? dir : "auto";
 
+  const handleFormSubmit = (e: Event) => {
+    e.preventDefault();
+    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+  };
+
+  const handleChoiceClick = (choiceValue: string) => {
+    if (!element.required && value === choiceValue) {
+      onChange({ [element.id]: undefined });
+    } else {
+      setOtherSelected(false);
+      onChange({ [element.id]: choiceValue });
+    }
+  };
+
+  const handleOtherOptionClick = () => {
+    if (otherSelected && !element.required) {
+      onChange({ [element.id]: undefined });
+      setOtherSelected(false);
+    } else if (!otherSelected) {
+      setOtherSelected(true);
+      onChange({ [element.id]: "" });
+    }
+  };
+
+  const handleNoneOptionClick = () => {
+    const noneValue = getLocalizedValue(noneOption!.label, languageCode);
+    if (!element.required && value === noneValue) {
+      onChange({ [element.id]: undefined });
+    } else {
+      setOtherSelected(false);
+      onChange({ [element.id]: noneValue });
+    }
+  };
+
+  const handleKeyDown = (choiceId: string) => (e: KeyboardEvent) => {
+    if (e.key === " ") {
+      e.preventDefault();
+      document.getElementById(choiceId)?.click();
+      document.getElementById(choiceId)?.focus();
+    }
+  };
+
+  const handleOtherKeyDown = (e: KeyboardEvent) => {
+    if (e.key === " ") {
+      if (otherSelected) return;
+      document.getElementById(otherOption!.id)?.click();
+      document.getElementById(otherOption!.id)?.focus();
+    }
+  };
+
+  const renderChoice = (choice: NonNullable<(typeof elementChoices)[0]>, idx: number) => {
+    if (choice.id === "other" || choice.id === "none") return null;
+    const choiceLabel = getLocalizedValue(choice.label, languageCode);
+    const isChecked = value === choiceLabel;
+    const labelClassName = cn(
+      isChecked ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
+      "fb-text-heading fb-bg-input-bg focus-within:fb-border-brand focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+    );
+
+    return (
+      <label
+        key={choice.id}
+        tabIndex={isCurrent ? 0 : -1}
+        className={labelClassName}
+        onKeyDown={handleKeyDown(choice.id)}
+        autoFocus={idx === 0 && autoFocusEnabled}>
+        <span className="fb-flex fb-items-center fb-text-sm">
+          <input
+            tabIndex={-1}
+            type="radio"
+            id={choice.id}
+            name={element.id}
+            value={choiceLabel}
+            dir={dir}
+            className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+            aria-labelledby={`${choice.id}-label`}
+            onClick={() => handleChoiceClick(choiceLabel)}
+            checked={isChecked}
+            required={element.required ? idx === 0 : undefined}
+          />
+          <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium" dir="auto">
+            {choiceLabel}
+          </span>
+        </span>
+      </label>
+    );
+  };
+
+  const renderOtherOption = () => {
+    if (!otherOption) return null;
+    const otherLabel = getLocalizedValue(otherOption.label, languageCode);
+    const labelClassName = cn(
+      otherSelected ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
+      "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+    );
+    const placeholder =
+      getLocalizedValue(element.otherOptionPlaceholder, languageCode).length > 0
+        ? getLocalizedValue(element.otherOptionPlaceholder, languageCode)
+        : "Please specify";
+
+    return (
+      <label tabIndex={isCurrent ? 0 : -1} className={labelClassName} onKeyDown={handleOtherKeyDown}>
+        <span className="fb-flex fb-items-center fb-text-sm">
+          <input
+            tabIndex={-1}
+            dir={dir}
+            type="radio"
+            id={otherOption.id}
+            name={element.id}
+            value={otherLabel}
+            className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+            aria-labelledby={`${otherOption.id}-label`}
+            onClick={handleOtherOptionClick}
+            checked={otherSelected}
+          />
+          <span id={`${otherOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium" dir="auto">
+            {otherLabel}
+          </span>
+        </span>
+        {otherSelected && (
+          <input
+            ref={otherSpecify}
+            id={`${otherOption.id}-input`}
+            dir={otherOptionInputDir}
+            name={element.id}
+            pattern=".*\S+.*"
+            value={value ?? ""}
+            onChange={(e) => onChange({ [element.id]: e.currentTarget.value })}
+            className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
+            placeholder={placeholder}
+            required={element.required}
+            aria-labelledby={`${otherOption.id}-label`}
+            maxLength={250}
+          />
+        )}
+      </label>
+    );
+  };
+
+  const renderNoneOption = () => {
+    if (!noneOption) return null;
+    const noneLabel = getLocalizedValue(noneOption.label, languageCode);
+    const isChecked = value === noneLabel;
+    const labelClassName = cn(
+      isChecked ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
+      "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+    );
+
+    return (
+      <label
+        tabIndex={isCurrent ? 0 : -1}
+        className={labelClassName}
+        onKeyDown={handleKeyDown(noneOption.id)}>
+        <span className="fb-flex fb-items-center fb-text-sm">
+          <input
+            tabIndex={-1}
+            dir={dir}
+            type="radio"
+            id={noneOption.id}
+            name={element.id}
+            value={noneLabel}
+            className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+            aria-labelledby={`${noneOption.id}-label`}
+            onClick={handleNoneOptionClick}
+            checked={isChecked}
+          />
+          <span id={`${noneOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium" dir="auto">
+            {noneLabel}
+          </span>
+        </span>
+      </label>
+    );
+  };
+
   return (
-    <form
-      key={element.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
-        setTtc(updatedTtcObj);
-      }}
-      className="fb-w-full">
-      {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
+    <form key={element.id} onSubmit={handleFormSubmit} className="fb-w-full">
+      {isMediaAvailable && <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} />}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}
         elementId={element.id}
@@ -115,178 +285,13 @@ export function MultipleChoiceSingleElement({
       <div className="fb-mt-4">
         <fieldset>
           <legend className="fb-sr-only">Options</legend>
-
           <div
             className="fb-bg-survey-bg fb-relative fb-space-y-2"
             role="radiogroup"
             ref={choicesContainerRef}>
-            {elementChoices.map((choice, idx) => {
-              if (!choice || choice.id === "other" || choice.id === "none") return;
-              return (
-                <label
-                  key={choice.id}
-                  tabIndex={isCurrent ? 0 : -1}
-                  className={cn(
-                    value === getLocalizedValue(choice.label, languageCode)
-                      ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                      : "fb-border-border",
-                    "fb-text-heading fb-bg-input-bg focus-within:fb-border-brand focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
-                  )}
-                  onKeyDown={(e) => {
-                    // Accessibility: if spacebar was pressed pass this down to the input
-                    if (e.key === " ") {
-                      e.preventDefault();
-                      document.getElementById(choice.id)?.click();
-                      document.getElementById(choice.id)?.focus();
-                    }
-                  }}
-                  autoFocus={idx === 0 && autoFocusEnabled}>
-                  <span className="fb-flex fb-items-center fb-text-sm">
-                    <input
-                      tabIndex={-1}
-                      type="radio"
-                      id={choice.id}
-                      name={element.id}
-                      value={getLocalizedValue(choice.label, languageCode)}
-                      dir={dir}
-                      className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
-                      aria-labelledby={`${choice.id}-label`}
-                      onClick={() => {
-                        const choiceValue = getLocalizedValue(choice.label, languageCode);
-                        if (!element.required && value === choiceValue) {
-                          onChange({ [element.id]: undefined });
-                        } else {
-                          setOtherSelected(false);
-                          onChange({ [element.id]: choiceValue });
-                        }
-                      }}
-                      checked={value === getLocalizedValue(choice.label, languageCode)}
-                      required={element.required ? idx === 0 : undefined}
-                    />
-                    <span
-                      id={`${choice.id}-label`}
-                      className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
-                      dir="auto">
-                      {getLocalizedValue(choice.label, languageCode)}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
-            {otherOption ? (
-              <label
-                tabIndex={isCurrent ? 0 : -1}
-                className={cn(
-                  otherSelected ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
-                  "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
-                )}
-                onKeyDown={(e) => {
-                  // Accessibility: if spacebar was pressed pass this down to the input
-                  if (e.key === " ") {
-                    if (otherSelected) return;
-                    document.getElementById(otherOption.id)?.click();
-                    document.getElementById(otherOption.id)?.focus();
-                  }
-                }}>
-                <span className="fb-flex fb-items-center fb-text-sm">
-                  <input
-                    tabIndex={-1}
-                    dir={dir}
-                    type="radio"
-                    id={otherOption.id}
-                    name={element.id}
-                    value={getLocalizedValue(otherOption.label, languageCode)}
-                    className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
-                    aria-labelledby={`${otherOption.id}-label`}
-                    onClick={() => {
-                      if (otherSelected && !element.required) {
-                        onChange({ [element.id]: undefined });
-                        setOtherSelected(false);
-                      } else if (!otherSelected) {
-                        setOtherSelected(true);
-                        onChange({ [element.id]: "" });
-                      }
-                    }}
-                    checked={otherSelected}
-                  />
-                  <span
-                    id={`${otherOption.id}-label`}
-                    className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
-                    dir="auto">
-                    {getLocalizedValue(otherOption.label, languageCode)}
-                  </span>
-                </span>
-                {otherSelected ? (
-                  <input
-                    ref={otherSpecify}
-                    id={`${otherOption.id}-input`}
-                    dir={otherOptionInputDir}
-                    name={element.id}
-                    pattern=".*\S+.*"
-                    value={value ?? ""}
-                    onChange={(e) => {
-                      onChange({ [element.id]: e.currentTarget.value });
-                    }}
-                    className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
-                    placeholder={
-                      getLocalizedValue(element.otherOptionPlaceholder, languageCode).length > 0
-                        ? getLocalizedValue(element.otherOptionPlaceholder, languageCode)
-                        : "Please specify"
-                    }
-                    required={element.required}
-                    aria-labelledby={`${otherOption.id}-label`}
-                    maxLength={250}
-                  />
-                ) : null}
-              </label>
-            ) : null}
-            {noneOption ? (
-              <label
-                tabIndex={isCurrent ? 0 : -1}
-                className={cn(
-                  value === getLocalizedValue(noneOption.label, languageCode)
-                    ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                    : "fb-border-border",
-                  "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
-                )}
-                onKeyDown={(e) => {
-                  // Accessibility: if spacebar was pressed pass this down to the input
-                  if (e.key === " ") {
-                    e.preventDefault();
-                    document.getElementById(noneOption.id)?.click();
-                    document.getElementById(noneOption.id)?.focus();
-                  }
-                }}>
-                <span className="fb-flex fb-items-center fb-text-sm">
-                  <input
-                    tabIndex={-1}
-                    dir={dir}
-                    type="radio"
-                    id={noneOption.id}
-                    name={element.id}
-                    value={getLocalizedValue(noneOption.label, languageCode)}
-                    className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
-                    aria-labelledby={`${noneOption.id}-label`}
-                    onClick={() => {
-                      const noneValue = getLocalizedValue(noneOption.label, languageCode);
-                      if (!element.required && value === noneValue) {
-                        onChange({ [element.id]: undefined });
-                      } else {
-                        setOtherSelected(false);
-                        onChange({ [element.id]: noneValue });
-                      }
-                    }}
-                    checked={value === getLocalizedValue(noneOption.label, languageCode)}
-                  />
-                  <span
-                    id={`${noneOption.id}-label`}
-                    className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
-                    dir="auto">
-                    {getLocalizedValue(noneOption.label, languageCode)}
-                  </span>
-                </span>
-              </label>
-            ) : null}
+            {elementChoices.map((choice, idx) => choice && renderChoice(choice, idx))}
+            {renderOtherOption()}
+            {renderNoneOption()}
           </div>
         </fieldset>
       </div>

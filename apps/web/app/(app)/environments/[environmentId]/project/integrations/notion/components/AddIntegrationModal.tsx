@@ -39,6 +39,59 @@ import {
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 
+const MappingErrorMessage = ({
+  error,
+  col,
+  elem,
+  t,
+}: {
+  error: { type: string; msg?: React.ReactNode | string } | null | undefined;
+  col: { id: string; name: string; type: string };
+  elem: { id: string; name: string; type: string };
+  t: ReturnType<typeof useTranslation>["t"];
+}) => {
+  const showErrorMsg = useMemo(() => {
+    switch (error?.type) {
+      case ERRORS.UNSUPPORTED_TYPE:
+        return (
+          <>
+            -{" "}
+            {t("environments.integrations.notion.col_name_of_type_is_not_supported", {
+              col_name: col.name,
+              type: col.type,
+            })}
+          </>
+        );
+      case ERRORS.MAPPING:
+        const element = getElementTypes(t).find((et) => et.id === elem.type);
+        if (!element) return null;
+        return (
+          <>
+            {t("environments.integrations.notion.que_name_of_type_cant_be_mapped_to", {
+              que_name: elem.name,
+              question_label: element.label,
+              col_name: col.name,
+              col_type: col.type,
+              mapped_type: TYPE_MAPPING[element.id].join(" ,"),
+            })}
+          </>
+        );
+      default:
+        return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error, col, elem, t]);
+
+  if (!error) return null;
+
+  return (
+    <div className="my-4 w-full rounded-lg bg-red-100 p-4 text-sm text-red-800">
+      <span className="mb-2 block">{error.type}</span>
+      {showErrorMsg}
+    </div>
+  );
+};
+
 interface AddIntegrationModalProps {
   environmentId: string;
   surveys: TSurvey[];
@@ -294,49 +347,6 @@ export const AddIntegrationModal = ({
       });
     };
 
-    const ErrorMsg = ({ error, col, elem }) => {
-      const showErrorMsg = useMemo(() => {
-        switch (error?.type) {
-          case ERRORS.UNSUPPORTED_TYPE:
-            return (
-              <>
-                -{" "}
-                {t("environments.integrations.notion.col_name_of_type_is_not_supported", {
-                  col_name: col.name,
-                  type: col.type,
-                })}
-              </>
-            );
-          case ERRORS.MAPPING:
-            const element = getElementTypes(t).find((et) => et.id === elem.type);
-            if (!element) return null;
-            return (
-              <>
-                {t("environments.integrations.notion.que_name_of_type_cant_be_mapped_to", {
-                  que_name: elem.name,
-                  question_label: element.label,
-                  col_name: col.name,
-                  col_type: col.type,
-                  mapped_type: TYPE_MAPPING[element.id].join(" ,"),
-                })}
-              </>
-            );
-          default:
-            return null;
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [error]);
-
-      if (!error) return null;
-
-      return (
-        <div className="my-4 w-full rounded-lg bg-red-100 p-4 text-sm text-red-800">
-          <span className="mb-2 block">{error.type}</span>
-          {showErrorMsg}
-        </div>
-      );
-    };
-
     const getFilteredDbItems = () => {
       const colMapping = mapping.map((m) => m.column.id);
       return dbItems.filter((item) => !colMapping.includes(item.id));
@@ -344,11 +354,12 @@ export const AddIntegrationModal = ({
 
     return (
       <div className="w-full">
-        <ErrorMsg
+        <MappingErrorMessage
           key={idx}
           error={mapping[idx]?.error}
           col={mapping[idx].column}
           elem={mapping[idx].element}
+          t={t}
         />
         <div className="flex w-full items-center space-x-2">
           <div className="flex w-full items-center">
