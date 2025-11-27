@@ -1338,7 +1338,6 @@ checksums:
     environments/surveys/edit/hide_logo: eef4de2e3fffe8cbe32bff4f6f7250d8
     environments/surveys/edit/hide_logo_from_survey: 9d44321539cc2b397376a35bb8b3d1cd
     environments/surveys/edit/hide_progress_bar: 7eefe7db6a051105bded521d94204933
-    environments/surveys/edit/hide_the_logo_in_this_specific_survey: 29d4c6c714886e57bc29ad292d0f5a00
     environments/surveys/edit/hostname: 9bdaa7692869999df51bb60d58d9ef62
     environments/surveys/edit/how_funky_do_you_want_your_cards_in_survey_type_derived_surveys: 3cb16b37510c01af20a80f51b598346e
     environments/surveys/edit/if_you_need_more_please: a7d208c283caf6b93800b809fca80768
@@ -1401,7 +1400,6 @@ checksums:
     environments/surveys/edit/no_languages_found_add_first_one_to_get_started: 22d7782c8504daf693cab3cf7135d6e3
     environments/surveys/edit/no_option_found: a1a3aa7e6c13b6bb8df20a1a104c7c04
     environments/surveys/edit/no_recall_items_found: 282da57f9bd2a29936ffa89959e346c6
-    environments/surveys/edit/no_survey_logo_selected: 424d687cebac38d00e14ec28be2e3d90
     environments/surveys/edit/no_variables_yet_add_first_one_below: c8704b9ebc9c26c0e9dd50c099ba88cd
     environments/surveys/edit/number: 2789f8391f63e7200a5521078aab017d
     environments/surveys/edit/once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations: 0b1cef6c1d6e9b3d1571126b2062853c
@@ -1428,7 +1426,6 @@ checksums:
     environments/surveys/edit/please_specify: e1faa6cd085144f7339c7e74dc6fb366
     environments/surveys/edit/prevent_double_submission: afc502baa2da81d9c9618da1c3b5a57a
     environments/surveys/edit/prevent_double_submission_description: ef7d2aa22d43bdc6ccebb076c6aa9ce5
-    environments/surveys/edit/project_logo_will_be_used: 0590cc7f0794e841464d7530f58d6726
     environments/surveys/edit/protect_survey_with_pin: 16d1925b6a5770f7423772d6d9a8291a
     environments/surveys/edit/protect_survey_with_pin_description: 0e55d19b6f3578b1024e03606172a5d2
     environments/surveys/edit/publish: 4aa95ba4793bb293e771bd73b4f87c0f
