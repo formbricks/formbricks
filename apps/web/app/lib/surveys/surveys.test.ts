@@ -313,7 +313,7 @@ describe("surveys", () => {
       const survey = {
         id: "survey1",
         name: "Test Survey",
-        questions: [],
+        blocks: [],
         createdAt: new Date(),
         updatedAt: new Date(),
         environmentId: "env1",
@@ -339,7 +339,7 @@ describe("surveys", () => {
       const survey = {
         id: "survey1",
         name: "Test Survey",
-        questions: [],
+        blocks: [],
         createdAt: new Date(),
         updatedAt: new Date(),
         environmentId: "env1",
@@ -1016,7 +1016,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Quotas", label: "Quota 1", id: "quota1" },
+            elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
             filterType: { filterComboBoxValue: "Screened in" },
           },
         ],
@@ -1032,7 +1032,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Quotas", label: "Quota 1", id: "quota1" },
+            elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
             filterType: { filterComboBoxValue: "Screened out (overquota)" },
           },
         ],
@@ -1048,7 +1048,7 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Quotas", label: "Quota 1", id: "quota1" },
+            elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
             filterType: { filterComboBoxValue: "Not in quota" },
           },
         ],
@@ -1064,11 +1064,11 @@ describe("surveys", () => {
         responseStatus: "all",
         filter: [
           {
-            questionType: { type: "Quotas", label: "Quota 1", id: "quota1" },
+            elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
             filterType: { filterComboBoxValue: "Screened in" },
           },
           {
-            questionType: { type: "Quotas", label: "Quota 2", id: "quota2" },
+            elementType: { type: "Quotas", label: "Quota 2", id: "quota2" },
             filterType: { filterComboBoxValue: "Not in quota" },
           },
         ],
