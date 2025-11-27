@@ -186,6 +186,44 @@ export class CacheService {
   }
 
   /**
+   * Try to acquire a distributed lock (atomic SET NX operation)
+   * @param key - Lock key
+   * @param value - Lock value (typically "locked" or instance identifier)
+   * @param ttlMs - Time to live in milliseconds (lock expiration)
+   * @returns Result containing boolean indicating if lock was acquired, or an error
+   */
+  async tryLock(key: CacheKey, value: string, ttlMs: number): Promise<Result<boolean, CacheError>> {
+    // Check Redis availability first
+    if (!this.isRedisClientReady()) {
+      return err({
+        code: ErrorCode.RedisConnectionError,
+      });
+    }
+
+    const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
+    if (!validation.ok) {
+      return validation;
+    }
+
+    try {
+      // Use SET with NX (only set if not exists) and PX (expiration in milliseconds) for atomic lock acquisition
+      const result = await this.withTimeout(
+        this.redis.set(key, value, {
+          NX: true,
+          PX: ttlMs,
+        })
+      );
+      // SET returns "OK" if lock was acquired, null if key already exists
+      return ok(result === "OK");
+    } catch (error) {
+      logger.error({ error, key, ttlMs }, "Cache lock operation failed");
+      return err({
+        code: ErrorCode.RedisOperationError,
+      });
+    }
+  }
+
+  /**
    * Cache wrapper for functions (cache-aside).
    * Never throws due to cache errors; function errors propagate without retry.
    * Must include null in T to support cached null values.

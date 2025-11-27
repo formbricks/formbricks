@@ -227,8 +227,10 @@ export const POST = async (request: Request) => {
       }
     });
   }
-  // Send telemetry events
-  await sendTelemetryEvents();
+  if (event === "responseCreated") {
+    // Send telemetry events
+    await sendTelemetryEvents();
+  }
 
   return Response.json({ data: {} });
 };

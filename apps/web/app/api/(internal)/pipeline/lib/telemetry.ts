@@ -4,85 +4,129 @@ import { type CacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { env } from "@/lib/env";
-import packageJson from "../../../../../package.json";
+import packageJson from "@/package.json";
 
 const TELEMETRY_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const TELEMETRY_LOCK_KEY = "telemetry_lock" as CacheKey;
 const TELEMETRY_LAST_SENT_KEY = "telemetry_last_sent_ts" as CacheKey;
 
+/**
+ * In-memory timestamp for the next telemetry check.
+ * This is a fast, process-local check to avoid unnecessary Redis calls.
+ * Updated after each check to prevent redundant executions.
+ */
 let nextTelemetryCheck = 0;
 
+/**
+ * Sends telemetry events to Formbricks Enterprise endpoint.
+ * Uses a three-layer check system to prevent duplicate submissions:
+ * 1. In-memory check (fast, process-local)
+ * 2. Redis check (shared across instances, persists across restarts)
+ * 3. Distributed lock (prevents concurrent execution in multi-instance deployments)
+ */
 export const sendTelemetryEvents = async () => {
   try {
     const now = Date.now();
-    // 1. In-memory check
+
+    // ============================================================
+    // CHECK 1: In-Memory Check (Fast Path)
+    // ============================================================
+    // Purpose: Quick process-local check to avoid Redis calls if we recently checked.
+    // How it works: If current time is before nextTelemetryCheck, skip entirely.
+    // This is updated after each successful check or failure to prevent spam.
     if (now < nextTelemetryCheck) {
       return;
     }
 
-    // 2. Redis check
+    // ============================================================
+    // CHECK 2: Redis Check (Shared State)
+    // ============================================================
+    // Purpose: Check if telemetry was sent recently by ANY instance (shared across cluster).
+    // This persists across restarts and works in multi-instance deployments.
+
     const cacheServiceResult = await getCacheService();
     if (!cacheServiceResult.ok) {
-      // Fallback: update next check to try again in 1 hour if cache fails, to avoid spamming
+      // Redis unavailable: Fallback to in-memory cooldown to avoid spamming.
+      // Wait 1 hour before trying again. This prevents hammering Redis when it's down.
       nextTelemetryCheck = now + 60 * 60 * 1000;
       return;
     }
     const cache = cacheServiceResult.data;
 
+    // Get the timestamp of when telemetry was last sent (from any instance).
     const lastSentResult = await cache.get(TELEMETRY_LAST_SENT_KEY);
     const lastSentStr = lastSentResult.ok && lastSentResult.data ? (lastSentResult.data as string) : null;
     const lastSent = lastSentStr ? Number.parseInt(lastSentStr, 10) : 0;
 
+    // If less than 24 hours have passed since last telemetry, skip.
+    // Update in-memory check to match remaining time for fast-path optimization.
     if (now - lastSent < TELEMETRY_INTERVAL_MS) {
-      // Update in-memory check to match the remaining time
       nextTelemetryCheck = lastSent + TELEMETRY_INTERVAL_MS;
       return;
     }
 
-    // 3. Acquire Lock to prevent concurrent execution in cluster
-    const redis = cache.getRedisClient();
-    if (!redis) {
+    // ============================================================
+    // CHECK 3: Distributed Lock (Prevent Concurrent Execution)
+    // ============================================================
+    // Purpose: Ensure only ONE instance executes telemetry at a time in a cluster.
+    // How it works:
+    //   - Uses Redis SET NX (only set if not exists) for atomic lock acquisition
+    //   - Lock expires after 1 minute (TTL) to prevent deadlocks if instance crashes
+    //   - If lock exists, another instance is already running telemetry, so we exit
+    //   - Lock is released in finally block after telemetry completes or fails
+    const lockResult = await cache.tryLock(TELEMETRY_LOCK_KEY, "locked", 60 * 1000); // 1 minute TTL
+
+    if (!lockResult.ok || !lockResult.data) {
+      // Lock acquisition failed or already held by another instance.
+      // Exit silently - the other instance will handle telemetry.
+      // No need to update nextTelemetryCheck here since we didn't execute.
       return;
     }
 
-    const acquired = await redis.set(TELEMETRY_LOCK_KEY, "locked", {
-      NX: true,
-      PX: 5 * 60 * 1000, // 5 minutes
-    });
-
-    if (!acquired) {
-      return; // If locked by another instance
-    }
-
+    // ============================================================
+    // EXECUTION: Send Telemetry
+    // ============================================================
+    // We've passed all checks and acquired the lock. Now execute telemetry.
     try {
       await sendTelemetry(lastSent);
-      // Update last sent on success (24h)
+
+      // Success: Update Redis with current timestamp so other instances know telemetry was sent.
+      // TTL is 2x the interval (48h) to ensure it persists even if Redis restarts.
       await cache.set(TELEMETRY_LAST_SENT_KEY, now.toString(), TELEMETRY_INTERVAL_MS * 2);
+
+      // Update in-memory check to prevent this instance from checking again for 24h.
       nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
     } catch (e) {
       logger.error(e, "Failed to send telemetry");
 
-      // FAILURE COOLDOWN:
-      // Prevent retrying immediately. Wait 1 hour before trying again.
-      // We update the in-memory check so this instance doesn't retry.
+      // Failure cooldown: Prevent retrying immediately to avoid hammering the endpoint.
+      // Wait 1 hour before allowing this instance to try again.
+      // Note: Other instances can still try (they'll hit the lock or Redis check).
       nextTelemetryCheck = now + 60 * 60 * 1000;
     } finally {
-      await redis.del(TELEMETRY_LOCK_KEY);
+      // Always release the lock, even if telemetry failed.
+      // This allows other instances to retry if this one failed.
+      await cache.del([TELEMETRY_LOCK_KEY]);
     }
   } catch (error) {
+    // Catch-all for any unexpected errors in the wrapper logic.
     logger.error(error, "Error in sendTelemetryEvents wrapper");
   }
 };
 
+/**
+ * Gathers telemetry data and sends it to Formbricks Enterprise endpoint.
+ * @param lastSent - Timestamp of last telemetry send (used to calculate incremental metrics)
+ */
 const sendTelemetry = async (lastSent: number) => {
-  // Gather data
+  // Get the oldest organization to generate a stable, anonymized instance ID.
+  // Using the oldest org ensures the ID doesn't change over time.
   const oldestOrg = await prisma.organization.findFirst({
     orderBy: { createdAt: "asc" },
     select: { id: true, createdAt: true },
   });
 
-  if (!oldestOrg) return; // No organization, nothing to report
-
+  if (!oldestOrg) return; // No organization exists, nothing to report
   const instanceId = createHash("sha256").update(oldestOrg.id).digest("hex");
 
   const [
@@ -119,6 +163,7 @@ const sendTelemetry = async (lastSent: number) => {
     prisma.response.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
   ]);
 
+  // Convert integration array to boolean map indicating which integrations are configured.
   const integrationMap = {
     notion: integrations.some((i) => i.type === IntegrationType.notion),
     googleSheets: integrations.some((i) => i.type === IntegrationType.googleSheets),
@@ -126,6 +171,8 @@ const sendTelemetry = async (lastSent: number) => {
     slack: integrations.some((i) => i.type === IntegrationType.slack),
   };
 
+  // Check SSO configuration: either via environment variables or database records.
+  // This detects which SSO providers are available/configured.
   const ssoMap = {
     github: !!env.GITHUB_ID || ssoProviders.some((p) => p.provider === "github"),
     google: !!env.GOOGLE_CLIENT_ID || ssoProviders.some((p) => p.provider === "google"),
@@ -133,8 +180,10 @@ const sendTelemetry = async (lastSent: number) => {
     oidc: !!env.OIDC_CLIENT_ID || ssoProviders.some((p) => p.provider === "openid"),
   };
 
+  // Construct telemetry payload with usage statistics and configuration.
   const payload = {
-    schemaVersion: 1,
+    schemaVersion: 1, // Schema version for future compatibility
+    // Core entity counts
     organizationCount,
     userCount,
     teamCount,
@@ -142,8 +191,9 @@ const sendTelemetry = async (lastSent: number) => {
     surveyCount,
     inProgressSurveyCount,
     completedSurveyCount,
+    // Response metrics
     responseCountAllTime,
-    responseCountSinceLastUsageUpdate: responseCountSinceLastUpdate,
+    responseCountSinceLastUsageUpdate: responseCountSinceLastUpdate, // Incremental since last telemetry
     displayCount,
     contactCount,
     segmentCount,
@@ -158,14 +208,16 @@ const sendTelemetry = async (lastSent: number) => {
     },
     sso: ssoMap,
     meta: {
-      version: packageJson.version,
+      version: packageJson.version, // Formbricks version for compatibility tracking
     },
     temporal: {
-      instanceCreatedAt: oldestOrg.createdAt.toISOString(),
-      newestResponseAt: newestResponse?.createdAt.toISOString() || null,
+      instanceCreatedAt: oldestOrg.createdAt.toISOString(), // When instance was first created
+      newestResponseAt: newestResponse?.createdAt.toISOString() || null, // Most recent activity
     },
   };
 
+  // Send telemetry to Formbricks Enterprise endpoint.
+  // This endpoint collects usage statistics for enterprise license validation and analytics.
   const url = `https://ee.formbricks.com/api/v1/instances/${instanceId}/usage-updates`;
 
   await fetch(url, {
