@@ -2,6 +2,8 @@ import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
+import { ZLogo } from "../../types/styling";
+// eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
 import {
   ZSurveyEnding,
   ZSurveyMetadata,
@@ -168,10 +170,7 @@ const ZSurveyBase = z.object({
       background: ZSurveyStylingBackground.nullish(),
       hideProgressBar: z.boolean().nullish(),
       isLogoHidden: z.boolean().nullish(),
-      logo: z.object({
-        url: z.string().optional(),
-        bgColor: z.string().optional(),
-      }).nullish(),
+      logo: ZLogo.nullish(),
     })
     .nullable()
     .openapi({
