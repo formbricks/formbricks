@@ -121,11 +121,11 @@ export function RatingElement({
                 onMouseOver={() => {
                   setHoveredNumber(number);
                 }}
-                onMouseLeave={() => {
-                  setHoveredNumber(0);
-                }}
                 onFocus={() => {
                   setHoveredNumber(number);
+                }}
+                onMouseLeave={() => {
+                  setHoveredNumber(0);
                 }}
                 className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
                 {element.scale === "number" ? (
