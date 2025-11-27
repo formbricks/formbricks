@@ -13,7 +13,7 @@ import {
   DateRange,
   FilterValue,
   SelectedFilterValue,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import {
   ElementOption,
   ElementOptions,
@@ -77,9 +77,9 @@ export const generateElementAndFilterOptions = (
   elementFilterOptions: ElementFilterOptions[];
 } => {
   let elementOptions: ElementOptions[] = [];
-  let elementFilterOptions: any = [];
+  let elementFilterOptions: ElementFilterOptions[] = [];
+  let elementsOptions: ElementOption[] = [];
 
-  let elementsOptions: any = [];
   const elements = getElementsFromBlocks(survey.blocks);
 
   elements.forEach((q) => {
@@ -123,8 +123,8 @@ export const generateElementAndFilterOptions = (
       } else if (q.type === TSurveyElementTypeEnum.Matrix) {
         elementFilterOptions.push({
           type: q.type,
-          filterOptions: q.rows.flatMap((row) => Object.values(row)),
-          filterComboBoxOptions: q.columns.flatMap((column) => Object.values(column)),
+          filterOptions: q.rows.map((row) => getLocalizedValue(row.label, "default")),
+          filterComboBoxOptions: q.columns.map((column) => getLocalizedValue(column.label, "default")),
           id: q.id,
         });
       } else {
@@ -238,7 +238,7 @@ export const generateElementAndFilterOptions = (
       elementFilterOptions.push({
         type: "Quotas",
         filterOptions: ["Status"],
-        filterComboBoxOptions: ["Screened in", "Screened out (overquota)", "Screened out (not in quota)"],
+        filterComboBoxOptions: ["Screened in", "Screened out (overquota)", "Not in quota"],
         id: quota.id,
       });
     });
@@ -551,7 +551,7 @@ export const getFormattedFilters = (
       const statusMap: Record<string, "screenedIn" | "screenedOut" | "screenedOutNotInQuota"> = {
         "Screened in": "screenedIn",
         "Screened out (overquota)": "screenedOut",
-        "Screened out (not in quota)": "screenedOutNotInQuota",
+        "Not in quota": "screenedOutNotInQuota",
       };
       const op = statusMap[String(filterType.filterComboBoxValue)];
       if (op) filters.quotas[quotaId] = { op };

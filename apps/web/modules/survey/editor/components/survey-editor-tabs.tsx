@@ -65,7 +65,7 @@ export const SurveyEditorTabs = ({
   let tabsToDisplay = isCxMode ? tabsComputed.filter((tab) => tab.id !== "settings") : tabsComputed;
 
   return (
-    <div className="fixed z-30 flex h-12 w-full items-center justify-center border-b bg-white md:w-1/2">
+    <div className="fixed z-30 flex h-12 w-full items-center justify-center border-b bg-white md:w-2/3">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabsToDisplay.map((tab) => (
           <button

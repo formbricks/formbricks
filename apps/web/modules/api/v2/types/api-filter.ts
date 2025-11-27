@@ -7,6 +7,7 @@ export const ZGetFilter = z.object({
   order: z.enum(["asc", "desc"]).optional().default("desc").describe("Sort order"),
   startDate: z.coerce.date().optional().describe("Start date"),
   endDate: z.coerce.date().optional().describe("End date"),
+  filterDateField: z.enum(["createdAt", "updatedAt"]).optional().describe("Date field to filter by"),
 });
 
 export type TGetFilter = z.infer<typeof ZGetFilter>;

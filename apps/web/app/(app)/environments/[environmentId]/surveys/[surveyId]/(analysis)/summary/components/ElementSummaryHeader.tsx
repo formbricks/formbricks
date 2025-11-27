@@ -57,8 +57,8 @@ export const ElementSummaryHeader = ({
             {t("environments.surveys.edit.optional")}
           </div>
         )}
+        <IdBadge id={elementSummary.element.id} />
       </div>
-      <IdBadge id={elementSummary.element.id} label={t("common.question_id")} />
     </div>
   );
 };

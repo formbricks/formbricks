@@ -13,7 +13,7 @@ import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
-import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
+import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -46,21 +46,15 @@ const ZCreateUserAction = z.object({
     ),
 });
 
-async function verifyTurnstileIfConfigured(
-  turnstileToken: string | undefined,
-  email: string,
-  name: string
-): Promise<void> {
+async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): Promise<void> {
   if (!IS_TURNSTILE_CONFIGURED) return;
 
   if (!turnstileToken || !TURNSTILE_SECRET_KEY) {
-    captureFailedSignup(email, name);
     throw new UnknownError("Server configuration error");
   }
 
   const isHuman = await verifyTurnstileToken(TURNSTILE_SECRET_KEY, turnstileToken);
   if (!isHuman) {
-    captureFailedSignup(email, name);
     throw new UnknownError("reCAPTCHA verification failed");
   }
 }
@@ -180,7 +174,7 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(
     "user",
     async ({ ctx, parsedInput }: { ctx: ActionClientCtx; parsedInput: Record<string, any> }) => {
       await applyIPRateLimit(rateLimitConfigs.auth.signup);
-      await verifyTurnstileIfConfigured(parsedInput.turnstileToken, parsedInput.email, parsedInput.name);
+      await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
       const hashedPassword = await hashPassword(parsedInput.password);
       const { user, userAlreadyExisted } = await createUserSafely(

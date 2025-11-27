@@ -1,7 +1,6 @@
 import { WebhookSource } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { captureTelemetry } from "@/lib/telemetry";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { createWebhook, getWebhooks } from "../webhook";
 
@@ -14,10 +13,6 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
     },
   },
-}));
-
-vi.mock("@/lib/telemetry", () => ({
-  captureTelemetry: vi.fn(),
 }));
 
 describe("getWebhooks", () => {
@@ -86,7 +81,6 @@ describe("createWebhook", () => {
     vi.mocked(prisma.webhook.create).mockResolvedValueOnce(createdWebhook);
 
     const result = await createWebhook(inputWebhook);
-    expect(captureTelemetry).toHaveBeenCalledWith("webhook_created");
     expect(prisma.webhook.create).toHaveBeenCalled();
     expect(result.ok).toBe(true);
 

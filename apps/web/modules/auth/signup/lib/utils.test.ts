@@ -1,6 +1,5 @@
-import posthog from "posthog-js";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { captureFailedSignup, verifyTurnstileToken } from "./utils";
+import { verifyTurnstileToken } from "./utils";
 
 beforeEach(() => {
   global.fetch = vi.fn();
@@ -60,20 +59,5 @@ describe("verifyTurnstileToken", () => {
 
     const result = await verifyTurnstileToken(secretKey, token);
     expect(result).toBe(false);
-  });
-});
-
-describe("captureFailedSignup", () => {
-  test("should capture TELEMETRY_FAILED_SIGNUP event with email and name", () => {
-    const captureSpy = vi.spyOn(posthog, "capture");
-    const email = "test@example.com";
-    const name = "Test User";
-
-    captureFailedSignup(email, name);
-
-    expect(captureSpy).toHaveBeenCalledWith("TELEMETRY_FAILED_SIGNUP", {
-      email,
-      name,
-    });
   });
 });

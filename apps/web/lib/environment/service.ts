@@ -17,7 +17,6 @@ import {
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { getOrganizationsByUserId } from "../organization/service";
-import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { getUserProjects } from "../project/service";
 import { validateInputs } from "../utils/validate";
 
@@ -171,10 +170,6 @@ export const createEnvironment = async (
           ],
         },
       },
-    });
-
-    await capturePosthogEnvironmentEvent(environment.id, "environment created", {
-      environmentType: environment.type,
     });
 
     return environment;

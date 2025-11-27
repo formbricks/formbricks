@@ -3,11 +3,9 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
@@ -18,18 +16,44 @@ interface DisplayOption {
   description: string;
 }
 
+interface WaitingTimeOption {
+  id: "respect" | "ignore" | "overwrite";
+  value: number | null;
+  name: string;
+  description: string;
+}
+
 interface RecontactOptionsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  environmentId: string;
 }
 
-export const RecontactOptionsCard = ({
-  localSurvey,
-  setLocalSurvey,
-  environmentId,
-}: RecontactOptionsCardProps) => {
+export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactOptionsCardProps) => {
   const { t } = useTranslation();
+
+  const waitingTimeOptions: WaitingTimeOption[] = useMemo(
+    () => [
+      {
+        id: "respect",
+        value: null,
+        name: t("environments.surveys.edit.respect_global_waiting_time"),
+        description: t("environments.surveys.edit.respect_global_waiting_time_description"),
+      },
+      {
+        id: "ignore",
+        value: 0,
+        name: t("environments.surveys.edit.ignore_global_waiting_time"),
+        description: t("environments.surveys.edit.ignore_global_waiting_time_description"),
+      },
+      {
+        id: "overwrite",
+        value: 1,
+        name: t("environments.surveys.edit.overwrite_global_waiting_time"),
+        description: t("environments.surveys.edit.overwrite_global_waiting_time_description"),
+      },
+    ],
+    [t]
+  );
 
   const displayOptions: DisplayOption[] = useMemo(
     () => [
@@ -62,35 +86,51 @@ export const RecontactOptionsCard = ({
   );
 
   const [open, setOpen] = useState(false);
-  const ignoreWaiting = localSurvey.recontactDays !== null;
   const [inputDays, setInputDays] = useState(
-    localSurvey.recontactDays !== null ? localSurvey.recontactDays : 1
+    localSurvey.recontactDays !== null && localSurvey.recontactDays > 0 ? localSurvey.recontactDays : 1
   );
   const [displayLimit, setDisplayLimit] = useState(localSurvey.displayLimit ?? 1);
+
+  // Determine current waiting time option
+  const getWaitingTimeOption = (): "respect" | "ignore" | "overwrite" => {
+    if (localSurvey.recontactDays === null) return "respect";
+    if (localSurvey.recontactDays === 0) return "ignore";
+    return "overwrite";
+  };
 
   // Auto animate
   const [parent] = useAutoAnimate();
 
-  const handleCheckMark = () => {
-    if (ignoreWaiting) {
-      const updatedSurvey = { ...localSurvey, recontactDays: null };
-      setLocalSurvey(updatedSurvey);
-    } else {
-      const updatedSurvey = { ...localSurvey, recontactDays: 0 };
+  const handleWaitingTimeChange = (optionId: string) => {
+    const option = waitingTimeOptions.find((opt) => opt.id === optionId);
+    if (option) {
+      let newRecontactDays = option.value;
+      if (optionId === "overwrite") {
+        newRecontactDays = inputDays;
+      }
+      const updatedSurvey = { ...localSurvey, recontactDays: newRecontactDays };
       setLocalSurvey(updatedSurvey);
     }
   };
 
-  const handleRecontactDaysChange = (event) => {
-    const value = Number(event.target.value);
+  const handleOverwriteDaysChange = (event) => {
+    let value = Number(event.target.value);
+    if (Number.isNaN(value) || value < 1) {
+      value = 1;
+    } else if (value > 365) {
+      value = 365;
+    }
     setInputDays(value);
 
     const updatedSurvey = { ...localSurvey, recontactDays: value };
     setLocalSurvey(updatedSurvey);
   };
 
-  const handleRecontactSessionDaysChange = (event) => {
-    const value = Number(event.target.value);
+  const handleDisplayLimitChange = (event) => {
+    let value = Number(event.target.value);
+    if (Number.isNaN(value) || value < 1) {
+      value = 1;
+    }
     setDisplayLimit(value);
 
     const updatedSurvey = { ...localSurvey, displayLimit: value } satisfies TSurvey;
@@ -128,9 +168,11 @@ export const RecontactOptionsCard = ({
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">{t("environments.surveys.edit.recontact_options")}</p>
+            <p className="font-semibold text-slate-800">
+              {t("environments.surveys.edit.visibility_and_recontact")}
+            </p>
             <p className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.decide_how_often_people_can_answer_this_survey")}
+              {t("environments.surveys.edit.visibility_and_recontact_description")}
             </p>
           </div>
         </div>
@@ -138,6 +180,73 @@ export const RecontactOptionsCard = ({
       <Collapsible.CollapsibleContent className={`flex flex-col ${open && "pb-3"}`} ref={parent}>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
+          {/* Waiting Time Section */}
+          <div className="mb-4 space-y-1 px-1">
+            <h3 className="font-semibold text-slate-800">
+              {t("environments.surveys.edit.waiting_time_across_surveys")}
+            </h3>
+            <p className="text-sm text-slate-500">
+              {t("environments.surveys.edit.waiting_time_across_surveys_description")}
+            </p>
+          </div>
+
+          <RadioGroup
+            value={getWaitingTimeOption()}
+            className="flex flex-col space-y-3"
+            onValueChange={handleWaitingTimeChange}>
+            {waitingTimeOptions.map((option) => (
+              <div key={option.id}>
+                <Label
+                  htmlFor={`waiting-time-${option.id}`}
+                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4"
+                  data-testid={`waiting-time-option-${option.id}`}>
+                  <RadioGroupItem
+                    value={option.id}
+                    id={`waiting-time-${option.id}`}
+                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
+                  />
+                  <div>
+                    <p className="font-semibold text-slate-700">{option.name}</p>
+                    <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+                  </div>
+                </Label>
+                {option.id === "overwrite" && getWaitingTimeOption() === "overwrite" && (
+                  <div className="border-t-none -mt-1.5 w-full rounded-b-lg border bg-slate-50 p-4">
+                    <label htmlFor="overwriteDays">
+                      <p className="text-sm text-slate-700">
+                        {t("environments.surveys.edit.wait")}
+                        <Input
+                          type="number"
+                          min="1"
+                          max="365"
+                          id="overwriteDays"
+                          value={inputDays}
+                          onChange={handleOverwriteDaysChange}
+                          className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                        />
+                        {t("environments.surveys.edit.days_before_showing_this_survey_again")}
+                      </p>
+                    </label>
+                  </div>
+                )}
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
+
+        <hr className="my-3 text-slate-600" />
+
+        <div className="p-3">
+          {/* Recontact Options Section */}
+          <div className="mb-4 space-y-1 px-1">
+            <h3 className="font-semibold text-slate-800">
+              {t("environments.surveys.edit.recontact_options_section")}
+            </h3>
+            <p className="text-sm text-slate-500">
+              {t("environments.surveys.edit.recontact_options_section_description")}
+            </p>
+          </div>
+
           <RadioGroup
             value={localSurvey.displayOption}
             className="flex flex-col space-y-3"
@@ -158,11 +267,12 @@ export const RecontactOptionsCard = ({
               <div key={option.id}>
                 <Label
                   key={option.name}
-                  htmlFor={option.name}
-                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                  htmlFor={`recontact-option-${option.id}`}
+                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4"
+                  data-testid={`recontact-option-${option.id}`}>
                   <RadioGroupItem
                     value={option.id}
-                    id={option.name}
+                    id={`recontact-option-${option.id}`}
                     className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
                   />
                   <div>
@@ -172,105 +282,27 @@ export const RecontactOptionsCard = ({
                   </div>
                 </Label>
                 {option.id === "displaySome" && localSurvey.displayOption === "displaySome" && (
-                  <label htmlFor="displayLimit" className="cursor-pointer p-4">
-                    <p className="text-sm font-semibold text-slate-700">
-                      {t("environments.surveys.edit.show_survey_maximum_of")}
-                      <Input
-                        type="number"
-                        min="1"
-                        id="displayLimit"
-                        value={displayLimit.toString()}
-                        onChange={(e) => handleRecontactSessionDaysChange(e)}
-                        className="mx-2 inline w-16 bg-white text-center text-sm"
-                      />
-                      {t("environments.surveys.edit.times")}.
-                    </p>
-                  </label>
+                  <div className="border-t-none -mt-1.5 w-full rounded-b-lg border bg-slate-50 p-4">
+                    <label htmlFor="displayLimit">
+                      <p className="text-sm text-slate-700">
+                        {t("environments.surveys.edit.show_survey_maximum_of")}
+                        <Input
+                          type="number"
+                          min="1"
+                          id="displayLimit"
+                          value={displayLimit.toString()}
+                          onChange={(e) => handleDisplayLimitChange(e)}
+                          className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                        />
+                        {t("environments.surveys.edit.times")}.
+                      </p>
+                    </label>
+                  </div>
                 )}
               </div>
             ))}
           </RadioGroup>
         </div>
-
-        <AdvancedOptionToggle
-          htmlId="recontactDays"
-          isChecked={ignoreWaiting}
-          onToggle={handleCheckMark}
-          title={t("environments.surveys.edit.ignore_waiting_time_between_surveys")}
-          childBorder={false}
-          description={
-            <>
-              {t("environments.surveys.edit.this_setting_overwrites_your")}{" "}
-              <Link
-                className="decoration-brand-dark underline"
-                href={`/environments/${environmentId}/project/general`}
-                target="_blank">
-                {t("environments.surveys.edit.waiting_period")}
-              </Link>
-              . {t("environments.surveys.edit.use_with_caution")}
-            </>
-          }>
-          {localSurvey.recontactDays !== null && (
-            <RadioGroup
-              value={localSurvey.recontactDays.toString()}
-              className="flex w-full flex-col space-y-3 bg-white"
-              onValueChange={(v) => {
-                const updatedSurvey = { ...localSurvey, recontactDays: v === "null" ? null : Number(v) };
-                setLocalSurvey(updatedSurvey);
-              }}>
-              <Label
-                htmlFor="ignore"
-                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                <RadioGroupItem
-                  value="0"
-                  id="ignore"
-                  className="aria-checked:border-brand-dark mx-4 text-sm disabled:border-slate-400 aria-checked:border-2"
-                />
-                <div>
-                  <p className="font-semibold text-slate-700">
-                    {t("environments.surveys.edit.always_show_survey")}
-                  </p>
-
-                  <p className="mt-2 text-xs font-normal text-slate-600">
-                    {t(
-                      "environments.surveys.edit.when_conditions_match_waiting_time_will_be_ignored_and_survey_shown"
-                    )}
-                  </p>
-                </div>
-              </Label>
-
-              <label
-                htmlFor="newDays"
-                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                <RadioGroupItem
-                  value={inputDays === 0 ? "1" : inputDays.toString()} //Fixes that both radio buttons are checked when inputDays is 0
-                  id="newDays"
-                  className="aria-checked:border-brand-dark mx-4 disabled:border-slate-400 aria-checked:border-2"
-                />
-                <div>
-                  <p className="text-sm font-semibold text-slate-700">
-                    {t("environments.surveys.edit.wait")}
-                    <Input
-                      type="number"
-                      min="1"
-                      id="inputDays"
-                      value={inputDays === 0 ? 1 : inputDays}
-                      onChange={handleRecontactDaysChange}
-                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
-                    />
-                    {t("environments.surveys.edit.days_before_showing_this_survey_again")}.
-                  </p>
-
-                  <p className="mt-2 text-xs font-normal text-slate-600">
-                    {t("environments.surveys.edit.overwrites_waiting_period_between_surveys_to_x_days", {
-                      days: inputDays === 0 ? 1 : inputDays,
-                    })}
-                  </p>
-                </div>
-              </label>
-            </RadioGroup>
-          )}
-        </AdvancedOptionToggle>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );

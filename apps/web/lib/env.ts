@@ -59,8 +59,6 @@ export const env = createEnv({
         ? z.string().optional()
         : z.string().url("REDIS_URL is required for caching, rate limiting, and audit logging"),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
-    POSTHOG_API_HOST: z.string().optional(),
-    POSTHOG_API_KEY: z.string().optional(),
     PRIVACY_URL: z
       .string()
       .url()
@@ -103,7 +101,6 @@ export const env = createEnv({
         }
       )
       .optional(),
-    TELEMETRY_DISABLED: z.enum(["1", "0"]).optional(),
     TERMS_URL: z
       .string()
       .url()
@@ -172,8 +169,6 @@ export const env = createEnv({
     MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     SENTRY_DSN: process.env.SENTRY_DSN,
-    POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
-    POSTHOG_API_HOST: process.env.POSTHOG_API_HOST,
     OPENTELEMETRY_LISTENER_URL: process.env.OPENTELEMETRY_LISTENER_URL,
     INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
@@ -206,7 +201,6 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     PUBLIC_URL: process.env.PUBLIC_URL,
-    TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     TURNSTILE_SITE_KEY: process.env.TURNSTILE_SITE_KEY,
     RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,

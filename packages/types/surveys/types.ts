@@ -3996,6 +3996,10 @@ export const ZSurveyElementSummaryRating = z.object({
   dismissed: z.object({
     count: z.number(),
   }),
+  csat: z.object({
+    satisfiedCount: z.number(),
+    satisfiedPercentage: z.number(),
+  }),
 });
 
 export type TSurveyElementSummaryRating = z.infer<typeof ZSurveyElementSummaryRating>;
@@ -4022,6 +4026,13 @@ export const ZSurveyElementSummaryNps = z.object({
     count: z.number(),
     percentage: z.number(),
   }),
+  choices: z.array(
+    z.object({
+      rating: z.number(),
+      count: z.number(),
+      percentage: z.number(),
+    })
+  ),
 });
 
 export type TSurveyElementSummaryNps = z.infer<typeof ZSurveyElementSummaryNps>;

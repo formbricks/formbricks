@@ -12,6 +12,7 @@ describe("pickCommonFilter", () => {
       order: "asc",
       startDate: new Date("2023-01-01"),
       endDate: new Date("2023-12-31"),
+      filterDateField: "createdAt",
     } as TGetFilter;
     const result = pickCommonFilter(params);
     expect(result).toEqual(params);
@@ -27,6 +28,7 @@ describe("pickCommonFilter", () => {
       order: undefined,
       startDate: undefined,
       endDate: undefined,
+      filterDateField: undefined,
     });
   });
 
@@ -69,6 +71,33 @@ describe("pickCommonFilter", () => {
       const params = {} as TGetFilter;
       const result = buildCommonFilterQuery(query, params);
       expect(result).toEqual({});
+    });
+
+    test("applies filterDateField with updatedAt when provided", () => {
+      const query: Prisma.WebhookFindManyArgs = { where: {} };
+      const params = {
+        startDate: new Date("2023-01-01"),
+        endDate: new Date("2023-12-31"),
+        filterDateField: "updatedAt",
+      } as TGetFilter;
+      const result = buildCommonFilterQuery(query, params);
+      const updatedAt = result.where?.updatedAt as Prisma.DateTimeFilter | undefined;
+      expect(updatedAt?.gte).toEqual(params.startDate);
+      expect(updatedAt?.lte).toEqual(params.endDate);
+      expect(result.where?.createdAt).toBeUndefined();
+    });
+
+    test("defaults to createdAt when filterDateField is not provided", () => {
+      const query: Prisma.WebhookFindManyArgs = { where: {} };
+      const params = {
+        startDate: new Date("2023-01-01"),
+        endDate: new Date("2023-12-31"),
+      } as TGetFilter;
+      const result = buildCommonFilterQuery(query, params);
+      const createdAt = result.where?.createdAt as Prisma.DateTimeFilter | undefined;
+      expect(createdAt?.gte).toEqual(params.startDate);
+      expect(createdAt?.lte).toEqual(params.endDate);
+      expect(result.where?.updatedAt).toBeUndefined();
     });
   });
 });

@@ -502,6 +502,84 @@ describe("getQuestionSummary", () => {
     expect(multiSingleSummary?.choices[0].percentage).toBe(100);
   });
 
+  test("summarizes MultipleChoiceSingle questions with noneOption", async () => {
+    const surveyWithNone = {
+      ...mockBaseSurvey,
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q_multi_none",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: { default: "Pick one or none" },
+              required: false,
+              choices: [
+                { id: "c1", label: { default: "Choice 1" } },
+                { id: "c2", label: { default: "Choice 2" } },
+                { id: "none", label: { default: "None of the above" } }, // none option with id "none"
+              ],
+              shuffleOption: "none",
+            },
+          ],
+        },
+      ],
+      questions: [],
+    };
+
+    const responsesWithNone = [
+      {
+        id: "r1",
+        data: { q_multi_none: "Choice 1" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "default",
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { q_multi_none: "None of the above" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "default",
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { q_multi_none: "None of the above" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "default",
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const summary = await getElementSummary(
+      surveyWithNone as unknown as TSurvey,
+      getElementsFromBlocks((surveyWithNone as unknown as TSurvey).blocks),
+      responsesWithNone,
+      []
+    );
+
+    const multiNoneSummary = summary.find((s: any) => s.element?.id === "q_multi_none");
+    expect(multiNoneSummary?.type).toBe(TSurveyElementTypeEnum.MultipleChoiceSingle);
+    expect(multiNoneSummary?.responseCount).toBe(3);
+
+    // Check that "None of the above" option is included in choices
+    // @ts-expect-error
+    const noneChoice = multiNoneSummary?.choices.find((c: any) => c.value === "None of the above");
+    expect(noneChoice).toBeDefined();
+    expect(noneChoice?.count).toBe(2);
+    expect(noneChoice?.percentage).toBeCloseTo(66.67, 1);
+  });
+
   test("summarizes HiddenFields", async () => {
     const summary = await getElementSummary(
       survey,
@@ -1140,7 +1218,7 @@ describe("getResponsesForSummary", () => {
     await expect(getResponsesForSummary("survey-1", 10, 0)).rejects.not.toThrow(DatabaseError);
   });
 
-  test("getSurveySummary throws DatabaseError when Prisma throws PrismaClientKnownRequestError", async () => {
+  test("getSurveySummary throws DatabaseError when Prisma throws PrismaClientKnownRequestError from getDisplayCountBySurveyId", async () => {
     vi.mocked(getSurvey).mockResolvedValue({
       id: "survey-1",
       blocks: [],
@@ -1149,20 +1227,27 @@ describe("getResponsesForSummary", () => {
       languages: [],
     } as unknown as TSurvey);
 
-    vi.mocked(getResponseCountBySurveyId).mockResolvedValue(10);
+    // Mock prisma.response.findMany to return empty array so getResponsesForSummary succeeds
+    vi.mocked(prisma.response.findMany).mockResolvedValue([]);
 
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Database connection error", {
-      code: "P2002",
-      clientVersion: "4.0.0",
-    });
+    const prismaError = new Prisma.PrismaClientKnownRequestError(
+      "Database connection error from display count",
+      {
+        code: "P2002",
+        clientVersion: "4.0.0",
+      }
+    );
 
-    vi.mocked(prisma.response.findMany).mockRejectedValue(prismaError);
+    // Throw Prisma error from getDisplayCountBySurveyId to hit getSurveySummary's catch block
+    vi.mocked(getDisplayCountBySurveyId).mockRejectedValue(prismaError);
 
     await expect(getSurveySummary("survey-1")).rejects.toThrow(DatabaseError);
-    await expect(getSurveySummary("survey-1")).rejects.toThrow("Database connection error");
+    await expect(getSurveySummary("survey-1")).rejects.toThrow(
+      "Database connection error from display count"
+    );
   });
 
-  test("getSurveySummary rethrows non-Prisma errors", async () => {
+  test("getSurveySummary rethrows non-Prisma errors from getDisplayCountBySurveyId", async () => {
     vi.mocked(getSurvey).mockResolvedValue({
       id: "survey-1",
       blocks: [],
@@ -1171,14 +1256,120 @@ describe("getResponsesForSummary", () => {
       languages: [],
     } as unknown as TSurvey);
 
-    vi.mocked(getResponseCountBySurveyId).mockResolvedValue(10);
+    // Mock prisma.response.findMany to return empty array so getResponsesForSummary succeeds
+    vi.mocked(prisma.response.findMany).mockResolvedValue([]);
 
     const genericError = new Error("Something else went wrong");
-    vi.mocked(prisma.response.findMany).mockRejectedValue(genericError);
+    vi.mocked(getDisplayCountBySurveyId).mockRejectedValue(genericError);
 
     await expect(getSurveySummary("survey-1")).rejects.toThrow("Something else went wrong");
     await expect(getSurveySummary("survey-1")).rejects.toThrow(Error);
     await expect(getSurveySummary("survey-1")).rejects.not.toThrow(DatabaseError);
+  });
+
+  test("getSurveySummary handles multiple batches when responses exceed batchSize", async () => {
+    vi.mocked(getSurvey).mockResolvedValue({
+      id: "survey-1",
+      blocks: [],
+      questions: [],
+      welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
+      languages: [],
+    } as unknown as TSurvey);
+
+    // Create mock responses for two batches
+    // First batch: 5000 responses (exactly batchSize, triggers continuation)
+    // Second batch: 100 responses (less than batchSize, stops loop)
+    const createMockResponses = (count: number, startIdx: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `response-${startIdx + i}`,
+        data: {},
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: {},
+        finished: true,
+        createdAt: new Date(),
+        meta: {},
+        variables: {},
+        surveyId: "survey-1",
+        contactId: null,
+        personAttributes: {},
+        singleUseId: null,
+        isFinished: true,
+        displayId: "display-1",
+        endingId: null,
+      }));
+
+    const firstBatch = createMockResponses(5000, 0);
+    const secondBatch = createMockResponses(100, 5000);
+
+    // First call returns 5000, second call returns 100
+    vi.mocked(prisma.response.findMany).mockResolvedValueOnce(firstBatch).mockResolvedValueOnce(secondBatch);
+
+    vi.mocked(getDisplayCountBySurveyId).mockResolvedValue(5100);
+    vi.mocked(getQuotasSummary).mockResolvedValue([]);
+
+    const result = await getSurveySummary("survey-1");
+
+    // Verify that prisma.response.findMany was called twice (two batches)
+    expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
+
+    // Second call should have cursor set to last response ID of first batch
+    expect(prisma.response.findMany).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: expect.objectContaining({
+          surveyId: "survey-1",
+          id: { lt: "response-4999" }, // Last ID from first batch
+        }),
+      })
+    );
+
+    // Result should contain data from all responses
+    expect(result.meta.totalResponses).toBe(5100);
+  });
+
+  test("getResponsesForSummary applies cursor-based pagination when cursor is provided", async () => {
+    const mockSurvey = { id: "survey-1" } as unknown as TSurvey;
+    const mockResponse = {
+      id: "response-2",
+      data: {},
+      updatedAt: new Date(),
+      contact: null,
+      contactAttributes: {},
+      language: "en",
+      ttc: {},
+      finished: true,
+      createdAt: new Date(),
+      meta: {},
+      variables: {},
+      surveyId: "survey-1",
+      contactId: null,
+      personAttributes: {},
+      singleUseId: null,
+      isFinished: true,
+      displayId: "display-1",
+      endingId: null,
+    };
+
+    vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
+    vi.mocked(prisma.response.findMany).mockResolvedValue([mockResponse]);
+
+    const result = await getResponsesForSummary("survey-1", 10, 0, undefined, "cursor-response-id");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("response-2");
+
+    // Verify that prisma.response.findMany was called with cursor condition
+    expect(prisma.response.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          surveyId: "survey-1",
+          id: { lt: "cursor-response-id" },
+        }),
+      })
+    );
   });
 });
 
@@ -3203,7 +3394,7 @@ describe("CTA question type tests", () => {
       type: TSurveyElementTypeEnum.CTA,
       headline: { default: "Would you like to try our product?" },
       buttonLabel: { default: "Try Now" },
-      buttonExternal: false,
+      buttonExternal: true,
       buttonUrl: "https://example.com",
       required: true,
     };
@@ -3289,7 +3480,7 @@ describe("CTA question type tests", () => {
       type: TSurveyElementTypeEnum.CTA,
       headline: { default: "Would you like to try our product?" },
       buttonLabel: { default: "Try Now" },
-      buttonExternal: false,
+      buttonExternal: true,
       buttonUrl: "https://example.com",
       required: false,
     };
@@ -3346,6 +3537,63 @@ describe("CTA question type tests", () => {
 
     expect(summary[0].ctr.count).toBe(0);
     expect(summary[0].ctr.percentage).toBe(0);
+  });
+
+  test("getQuestionSummary skips CTA summary when buttonExternal is false", async () => {
+    const question = {
+      id: "cta-q1",
+      type: TSurveyElementTypeEnum.CTA,
+      headline: { default: "Internal CTA" },
+      buttonLabel: { default: "Continue" },
+      buttonExternal: false, // Internal button - no CTR tracking
+      required: false,
+    };
+
+    const survey = {
+      id: "survey-1",
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [question],
+        },
+      ],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "response-1",
+        data: { "cta-q1": "clicked" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      {
+        elementId: "cta-q1",
+        impressions: 1,
+        dropOffCount: 0,
+        dropOffPercentage: 0,
+      },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
+
+    // CTA with buttonExternal: false should not generate a summary
+    expect(summary).toHaveLength(0);
   });
 });
 

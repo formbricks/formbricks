@@ -1,15 +1,10 @@
 import "server-only";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
 import { TJsEnvironmentState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
-import {
-  capturePosthogEnvironmentEvent,
-  sendPlanLimitsReachedEventToPosthogWeekly,
-} from "@/lib/posthogServer";
 import { getEnvironmentStateData } from "./data";
 
 /**
@@ -33,13 +28,10 @@ export const getEnvironmentState = async (
       // Handle app setup completion update if needed
       // This is a one-time setup flag that can tolerate TTL-based cache expiration
       if (!environment.appSetupCompleted) {
-        await Promise.all([
-          prisma.environment.update({
-            where: { id: environmentId },
-            data: { appSetupCompleted: true },
-          }),
-          capturePosthogEnvironmentEvent(environmentId, "app setup completed"),
-        ]);
+        await prisma.environment.update({
+          where: { id: environmentId },
+          data: { appSetupCompleted: true },
+        });
       }
 
       // Check monthly response limits for Formbricks Cloud
@@ -49,24 +41,6 @@ export const getEnvironmentState = async (
         const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
         isMonthlyResponsesLimitReached =
           monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
-
-        // Send plan limits event if needed
-        if (isMonthlyResponsesLimitReached) {
-          try {
-            await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-              plan: organization.billing.plan,
-              limits: {
-                projects: null,
-                monthly: {
-                  miu: null,
-                  responses: organization.billing.limits.monthly.responses,
-                },
-              },
-            });
-          } catch (err) {
-            logger.error(err, "Error sending plan limits reached event to Posthog");
-          }
-        }
       }
 
       // Build the response data

@@ -4,6 +4,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
 
 // ============================================
 // UTILITY FUNCTIONS
@@ -72,6 +73,8 @@ export const addBlock = (
     id: createId(),
     name: block.name || t("environments.surveys.edit.untitled_block"),
     elements: block.elements || [],
+    buttonLabel: createI18nString(block.buttonLabel || t("templates.next"), []),
+    backButtonLabel: createI18nString(block.backButtonLabel || t("templates.back"), []),
   };
 
   if (index === undefined) {

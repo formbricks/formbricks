@@ -152,7 +152,7 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const validateResult = validateSurveyInput(surveyUpdate);
+      const validateResult = validateSurveyInput({ ...surveyUpdate, updateOnly: true });
       if (!validateResult.ok) {
         return {
           response: responses.badRequestResponse(validateResult.error.message),
