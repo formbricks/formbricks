@@ -120,7 +120,10 @@ export function RatingElement({
                 key={number}
                 onMouseOver={() => {
                   setHoveredNumber(number);
-                }} // NOSONAR
+                }}
+                onFocus={() => {
+                  setHoveredNumber(number);
+                }}
                 onMouseLeave={() => {
                   setHoveredNumber(0);
                 }}
