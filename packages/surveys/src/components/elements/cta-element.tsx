@@ -61,7 +61,7 @@ export function CTAElement({
           subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
           elementId={element.id}
         />
-        {element.buttonExternal && element.buttonUrl && (
+        {element.buttonExternal && (
           <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
             <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
               <button
