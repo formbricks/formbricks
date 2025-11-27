@@ -1,6 +1,10 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+// During build time, we only need valid-format URLs for Prisma to generate the client.
+// Actual connectivity and secrets are validated at runtime by the startup script.
+const isBuildTime = process.env.NEXT_PHASE === "phase-production-build";
+
 export const env = createEnv({
   /*
    * Serverside Environment variables, not available on the client.
@@ -14,14 +18,21 @@ export const env = createEnv({
     CRON_SECRET: z.string().optional(),
     BREVO_API_KEY: z.string().optional(),
     BREVO_LIST_ID: z.string().optional(),
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: isBuildTime
+      ? z
+          .string()
+          .optional()
+          .default("postgresql://formbricks:formbricks@localhost:5432/formbricks?schema=public")
+      : z.string().url(),
     DEBUG: z.enum(["1", "0"]).optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
     E2E_TESTING: z.enum(["1", "0"]).optional(),
     EMAIL_AUTH_DISABLED: z.enum(["1", "0"]).optional(),
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
-    ENCRYPTION_KEY: z.string(),
+    ENCRYPTION_KEY: isBuildTime
+      ? z.string().optional().default("0000000000000000000000000000000000000000000000000000000000000000")
+      : z.string(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
     GITHUB_ID: z.string().optional(),
     GITHUB_SECRET: z.string().optional(),
@@ -54,8 +65,9 @@ export const env = createEnv({
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
     OPENTELEMETRY_LISTENER_URL: z.string().optional(),
-    REDIS_URL:
-      process.env.NODE_ENV === "test"
+    REDIS_URL: isBuildTime
+      ? z.string().optional().default("redis://localhost:6379")
+      : process.env.NODE_ENV === "test"
         ? z.string().optional()
         : z.string().url("REDIS_URL is required for caching, rate limiting, and audit logging"),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),

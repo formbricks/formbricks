@@ -70,9 +70,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           secrets: |
-            database_url=${{ secrets.DUMMY_DATABASE_URL }}
-            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
-            redis_url=redis://localhost:6379
+            sentry_auth_token=
 
       - name: Verify and Initialize PostgreSQL
         run: |
@@ -129,7 +127,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           echo "🧪 Testing if the Docker image starts correctly..."
 
@@ -141,7 +138,7 @@ jobs:
             $DOCKER_RUN_ARGS \
             -p 3000:3000 \
             -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
-            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
+            -e ENCRYPTION_KEY="test-key-00000000000000000000000000000000000000000000000000" \
             -e REDIS_URL="redis://host.docker.internal:6379" \
             -d "formbricks-test:$GITHUB_SHA"
 

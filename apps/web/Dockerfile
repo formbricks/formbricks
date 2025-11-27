@@ -25,10 +25,6 @@ RUN corepack prepare pnpm@9.15.9 --activate
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
-# Copy the secrets handling script
-COPY apps/web/scripts/docker/read-secrets.sh /tmp/read-secrets.sh
-RUN chmod +x /tmp/read-secrets.sh
-
 # Increase Node.js memory limit as a regular build argument
 ARG NODE_OPTIONS="--max_old_space_size=8192"
 ENV NODE_OPTIONS=${NODE_OPTIONS}
@@ -36,6 +32,10 @@ ENV NODE_OPTIONS=${NODE_OPTIONS}
 # Target architecture - automatically provided by Docker in multi-platform builds
 # but needs explicit declaration for some build systems (like Depot)
 ARG TARGETARCH
+
+# Base path for the application (optional)
+ARG BASE_PATH=""
+ENV BASE_PATH=${BASE_PATH}
 
 # Set the working directory
 WORKDIR /app
@@ -57,13 +57,11 @@ RUN pnpm install --ignore-scripts
 # Build the database package first
 RUN pnpm build --filter=@formbricks/database
 
-# Build the project using our secret reader script
-# This mounts the secrets only during this build step without storing them in layers
-RUN --mount=type=secret,id=database_url \
-    --mount=type=secret,id=encryption_key \
-    --mount=type=secret,id=redis_url \
-    --mount=type=secret,id=sentry_auth_token \
-    /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
+# Build the project - only mount Sentry token for optional sourcemap uploads
+# DATABASE_URL, REDIS_URL, ENCRYPTION_KEY defaults are provided by env.ts during build
+RUN --mount=type=secret,id=sentry_auth_token \
+    SENTRY_AUTH_TOKEN=$(cat /run/secrets/sentry_auth_token 2>/dev/null || echo "") \
+    pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
