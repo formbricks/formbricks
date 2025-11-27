@@ -23,7 +23,7 @@ import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { updateSurveyAction } from "../actions";
+import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 
 interface SurveyMenuBarProps {
@@ -218,6 +218,42 @@ export const SurveyMenuBar = ({
     return true;
   };
 
+  // Add new handler after handleSurveySave
+  const handleSurveySaveDraft = async (): Promise<boolean> => {
+    setIsSurveySaving(true);
+
+    try {
+      if (localSurvey.questions) {
+        localSurvey.questions = localSurvey.questions.map((question) => {
+          const { isDraft, ...rest } = question;
+          return rest;
+        });
+      }
+
+      const segment = await handleSegmentUpdate();
+      clearSurveyLocalStorage();
+      const updatedSurveyResponse = await updateSurveyDraftAction({ ...localSurvey, segment });
+
+      setIsSurveySaving(false);
+      if (updatedSurveyResponse?.data) {
+        setLocalSurvey(updatedSurveyResponse.data);
+        toast.success(t("environments.surveys.edit.changes_saved"));
+        isSuccessfullySavedRef.current = true;
+        router.refresh();
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
+        toast.error(errorMessage);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      setIsSurveySaving(false);
+      toast.error(t("environments.surveys.edit.error_saving_changes"));
+      return false;
+    }
+  };
+
   const handleSurveySave = async (): Promise<boolean> => {
     setIsSurveySaving(true);
 
@@ -380,12 +416,11 @@ export const SurveyMenuBar = ({
             variant="secondary"
             size="sm"
             loading={isSurveySaving}
-            onClick={() => handleSurveySave()}
+            onClick={() => (localSurvey.status === "draft" ? handleSurveySaveDraft() : handleSurveySave())}
             type="submit">
-            {t("common.save")}
+            {localSurvey.status === "draft" ? t("common.save_as_draft") : t("common.save")}
           </Button>
         )}
-
         {localSurvey.status !== "draft" && (
           <Button
             disabled={disableSave}
