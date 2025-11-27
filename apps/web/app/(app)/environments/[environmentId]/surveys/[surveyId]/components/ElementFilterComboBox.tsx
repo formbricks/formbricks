@@ -26,6 +26,15 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
 
+const DEFAULT_LANGUAGE_CODE = "default";
+
+// Helper to get localized option value
+const getOptionValue = (option: string | TI18nString): string => {
+  return typeof option === "object" && option !== null
+    ? getLocalizedValue(option, DEFAULT_LANGUAGE_CODE)
+    : option;
+};
+
 type ElementFilterComboBoxProps = {
   filterOptions: (string | TI18nString)[] | undefined;
   filterComboBoxOptions: (string | TI18nString)[] | undefined;
@@ -37,6 +46,29 @@ type ElementFilterComboBoxProps = {
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
   fieldId?: string;
+};
+
+// Helper function to check if multiple selection is allowed
+const checkIsMultiple = (
+  type: TSurveyElementTypeEnum | Omit<OptionsType, OptionsType.ELEMENTS> | undefined,
+  filterValue: string | undefined
+): boolean => {
+  const isMultiSelectType =
+    type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
+    type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+    type === TSurveyElementTypeEnum.PictureSelection;
+  const isNPSIncludesEither = type === TSurveyElementTypeEnum.NPS && filterValue === "Includes either";
+  return isMultiSelectType || isNPSIncludesEither;
+};
+
+// Helper function to check if combo box should be disabled
+const checkIsDisabledComboBox = (
+  type: TSurveyElementTypeEnum | Omit<OptionsType, OptionsType.ELEMENTS> | undefined,
+  filterValue: string | undefined
+): boolean => {
+  const isNPSOrRating = type === TSurveyElementTypeEnum.NPS || type === TSurveyElementTypeEnum.Rating;
+  const isSubmittedOrSkipped = filterValue === "Submitted" || filterValue === "Skipped";
+  return isNPSOrRating && isSubmittedOrSkipped;
 };
 
 export const ElementFilterComboBox = ({
@@ -58,32 +90,19 @@ export const ElementFilterComboBox = ({
 
   useClickOutside(commandRef, () => setOpen(false));
 
-  const defaultLanguageCode = "default";
-
-  // Check if multiple selection is allowed
-  const isMultiple = useMemo(
-    () =>
-      type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-      type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-      type === TSurveyElementTypeEnum.PictureSelection ||
-      (type === TSurveyElementTypeEnum.NPS && filterValue === "Includes either"),
-    [type, filterValue]
-  );
+  const isMultiple = checkIsMultiple(type, filterValue);
 
   // Filter out already selected options for multi-select
   const options = useMemo(() => {
     if (!isMultiple) return filterComboBoxOptions;
 
     return filterComboBoxOptions?.filter((o) => {
-      const optionValue = typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+      const optionValue = getOptionValue(o);
       return !filterComboBoxValue?.includes(optionValue);
     });
-  }, [isMultiple, filterComboBoxOptions, filterComboBoxValue, defaultLanguageCode]);
+  }, [isMultiple, filterComboBoxOptions, filterComboBoxValue]);
 
-  // Disable combo box for NPS/Rating when Submitted/Skipped
-  const isDisabledComboBox =
-    (type === TSurveyElementTypeEnum.NPS || type === TSurveyElementTypeEnum.Rating) &&
-    (filterValue === "Submitted" || filterValue === "Skipped");
+  const isDisabledComboBox = checkIsDisabledComboBox(type, filterValue);
 
   // Check if this is a text input field (URL meta field)
   const isTextInputField = type === OptionsType.META && fieldId === "url";
@@ -92,15 +111,14 @@ export const ElementFilterComboBox = ({
   const filteredOptions = useMemo(
     () =>
       options?.filter((o) => {
-        const optionValue =
-          typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+        const optionValue = getOptionValue(o);
         return optionValue.toLowerCase().includes(searchQuery.toLowerCase());
       }),
-    [options, searchQuery, defaultLanguageCode]
+    [options, searchQuery]
   );
 
   const handleCommandItemSelect = (o: string | TI18nString) => {
-    const value = typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+    const value = getOptionValue(o);
 
     if (isMultiple) {
       const newValue = Array.isArray(filterComboBoxValue) ? [...filterComboBoxValue, value] : [value];
@@ -113,12 +131,56 @@ export const ElementFilterComboBox = ({
   };
 
   const isComboBoxDisabled = disabled || isDisabledComboBox || !filterValue;
+  const ChevronIcon = open ? ChevronUp : ChevronDown;
+
+  // Render filter options dropdown
+  const renderFilterOptionsDropdown = () => {
+    if (!filterOptions || filterOptions.length <= 1) {
+      return (
+        <div className="flex h-9 max-w-fit items-center rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600">
+          <p className="mr-1 max-w-[50px] truncate sm:max-w-[100px]">{filterValue}</p>
+        </div>
+      );
+    }
+    return (
+      <DropdownMenu
+        onOpenChange={(value) => {
+          if (value) setOpen(false);
+        }}>
+        <DropdownMenuTrigger
+          disabled={disabled}
+          className={clsx(
+            "flex h-9 max-w-fit items-center justify-between gap-2 rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600 focus:outline-transparent focus:ring-0",
+            disabled ? "opacity-50" : "cursor-pointer hover:bg-slate-50"
+          )}>
+          {filterValue ? (
+            <p className="max-w-[50px] truncate sm:max-w-[80px]">{filterValue}</p>
+          ) : (
+            <p className="text-slate-400">{t("common.select")}...</p>
+          )}
+          {filterOptions.length > 1 && <ChevronIcon className="h-4 w-4 flex-shrink-0 opacity-50" />}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-white">
+          {filterOptions.map((o, index) => {
+            const optionValue = getOptionValue(o);
+            return (
+              <DropdownMenuItem
+                key={`${optionValue}-${index}`}
+                className="cursor-pointer"
+                onClick={() => onChangeFilterValue(optionValue)}>
+                {optionValue}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   const handleOpenDropdown = () => {
     if (isComboBoxDisabled) return;
     setOpen(true);
   };
-  const ChevronIcon = open ? ChevronUp : ChevronDown;
 
   // Helper to filter out a specific value from the array
   const getFilteredValues = (valueToRemove: string): string[] => {
@@ -177,46 +239,7 @@ export const ElementFilterComboBox = ({
 
   return (
     <div className="inline-flex h-fit w-full flex-row rounded-md border border-slate-300 hover:border-slate-400">
-      {filterOptions && filterOptions.length <= 1 ? (
-        <div className="flex h-9 max-w-fit items-center rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600">
-          <p className="mr-1 max-w-[50px] truncate sm:max-w-[100px]">{filterValue}</p>
-        </div>
-      ) : (
-        <DropdownMenu
-          onOpenChange={(value) => {
-            if (value) setOpen(false);
-          }}>
-          <DropdownMenuTrigger
-            disabled={disabled}
-            className={clsx(
-              "flex h-9 max-w-fit items-center justify-between gap-2 rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600 focus:outline-transparent focus:ring-0",
-              disabled ? "opacity-50" : "cursor-pointer hover:bg-slate-50"
-            )}>
-            {filterValue ? (
-              <p className="max-w-[50px] truncate sm:max-w-[80px]">{filterValue}</p>
-            ) : (
-              <p className="text-slate-400">{t("common.select")}...</p>
-            )}
-            {filterOptions && filterOptions.length > 1 && (
-              <ChevronIcon className="h-4 w-4 flex-shrink-0 opacity-50" />
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white">
-            {filterOptions?.map((o, index) => {
-              const optionValue =
-                typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
-              return (
-                <DropdownMenuItem
-                  key={`${optionValue}-${index}`}
-                  className="cursor-pointer"
-                  onClick={() => onChangeFilterValue(optionValue)}>
-                  {optionValue}
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+      {renderFilterOptionsDropdown()}
 
       {isTextInputField ? (
         <Input
@@ -275,8 +298,7 @@ export const ElementFilterComboBox = ({
                 <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
                 <CommandGroup>
                   {filteredOptions?.map((o) => {
-                    const optionValue =
-                      typeof o === "object" && o !== null ? getLocalizedValue(o, defaultLanguageCode) : o;
+                    const optionValue = getOptionValue(o);
                     return (
                       <CommandItem
                         key={optionValue}

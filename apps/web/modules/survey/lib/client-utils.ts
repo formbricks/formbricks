@@ -11,5 +11,5 @@ export const copySurveyLink = (surveyUrl: string, singleUseId?: string): string 
  * @param blocks - Array of survey blocks
  * @returns An array of TSurveyElement (pure elements without block-level properties)
  */
-export const getElementsFromBlocks = (blocks: TSurveyBlock[]): TSurveyElement[] =>
-  blocks.flatMap((block) => block.elements);
+export const getElementsFromBlocks = (blocks: TSurveyBlock[] | undefined): TSurveyElement[] =>
+  blocks?.flatMap((block) => block.elements) ?? [];
