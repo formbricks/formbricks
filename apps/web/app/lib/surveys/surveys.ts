@@ -374,10 +374,12 @@ const processPictureSelectionFilter = (
     return;
   }
 
-  const selectedOptions = filterType.filterComboBoxValue.map((option) => {
-    const index = parseInt(option.split(" ")[1]);
-    return element?.choices[index - 1].id;
-  });
+  const selectedOptions = filterType.filterComboBoxValue
+    .map((option) => {
+      const index = parseInt(option.split(" ")[1]);
+      return element?.choices[index - 1]?.id;
+    })
+    .filter(Boolean);
 
   if (filterType.filterValue === "Includes all") {
     filters.data![elementId] = { op: "includesAll", value: selectedOptions };

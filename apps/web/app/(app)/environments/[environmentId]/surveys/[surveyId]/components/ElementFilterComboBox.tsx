@@ -48,6 +48,29 @@ type ElementFilterComboBoxProps = {
   fieldId?: string;
 };
 
+// Helper function to check if multiple selection is allowed
+const checkIsMultiple = (
+  type: TSurveyElementTypeEnum | Omit<OptionsType, OptionsType.ELEMENTS> | undefined,
+  filterValue: string | undefined
+): boolean => {
+  const isMultiSelectType =
+    type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
+    type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+    type === TSurveyElementTypeEnum.PictureSelection;
+  const isNPSIncludesEither = type === TSurveyElementTypeEnum.NPS && filterValue === "Includes either";
+  return isMultiSelectType || isNPSIncludesEither;
+};
+
+// Helper function to check if combo box should be disabled
+const checkIsDisabledComboBox = (
+  type: TSurveyElementTypeEnum | Omit<OptionsType, OptionsType.ELEMENTS> | undefined,
+  filterValue: string | undefined
+): boolean => {
+  const isNPSOrRating = type === TSurveyElementTypeEnum.NPS || type === TSurveyElementTypeEnum.Rating;
+  const isSubmittedOrSkipped = filterValue === "Submitted" || filterValue === "Skipped";
+  return isNPSOrRating && isSubmittedOrSkipped;
+};
+
 export const ElementFilterComboBox = ({
   filterComboBoxOptions,
   filterComboBoxValue,
@@ -67,13 +90,7 @@ export const ElementFilterComboBox = ({
 
   useClickOutside(commandRef, () => setOpen(false));
 
-  // Check if multiple selection is allowed
-  const isMultiSelectType =
-    type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-    type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-    type === TSurveyElementTypeEnum.PictureSelection;
-  const isNPSIncludesEither = type === TSurveyElementTypeEnum.NPS && filterValue === "Includes either";
-  const isMultiple = isMultiSelectType || isNPSIncludesEither;
+  const isMultiple = checkIsMultiple(type, filterValue);
 
   // Filter out already selected options for multi-select
   const options = useMemo(() => {
@@ -85,10 +102,7 @@ export const ElementFilterComboBox = ({
     });
   }, [isMultiple, filterComboBoxOptions, filterComboBoxValue]);
 
-  // Disable combo box for NPS/Rating when Submitted/Skipped
-  const isNPSOrRating = type === TSurveyElementTypeEnum.NPS || type === TSurveyElementTypeEnum.Rating;
-  const isSubmittedOrSkipped = filterValue === "Submitted" || filterValue === "Skipped";
-  const isDisabledComboBox = isNPSOrRating && isSubmittedOrSkipped;
+  const isDisabledComboBox = checkIsDisabledComboBox(type, filterValue);
 
   // Check if this is a text input field (URL meta field)
   const isTextInputField = type === OptionsType.META && fieldId === "url";
@@ -117,12 +131,56 @@ export const ElementFilterComboBox = ({
   };
 
   const isComboBoxDisabled = disabled || isDisabledComboBox || !filterValue;
+  const ChevronIcon = open ? ChevronUp : ChevronDown;
+
+  // Render filter options dropdown
+  const renderFilterOptionsDropdown = () => {
+    if (!filterOptions || filterOptions.length <= 1) {
+      return (
+        <div className="flex h-9 max-w-fit items-center rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600">
+          <p className="mr-1 max-w-[50px] truncate sm:max-w-[100px]">{filterValue}</p>
+        </div>
+      );
+    }
+    return (
+      <DropdownMenu
+        onOpenChange={(value) => {
+          if (value) setOpen(false);
+        }}>
+        <DropdownMenuTrigger
+          disabled={disabled}
+          className={clsx(
+            "flex h-9 max-w-fit items-center justify-between gap-2 rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600 focus:outline-transparent focus:ring-0",
+            disabled ? "opacity-50" : "cursor-pointer hover:bg-slate-50"
+          )}>
+          {filterValue ? (
+            <p className="max-w-[50px] truncate sm:max-w-[80px]">{filterValue}</p>
+          ) : (
+            <p className="text-slate-400">{t("common.select")}...</p>
+          )}
+          {filterOptions.length > 1 && <ChevronIcon className="h-4 w-4 flex-shrink-0 opacity-50" />}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-white">
+          {filterOptions.map((o, index) => {
+            const optionValue = getOptionValue(o);
+            return (
+              <DropdownMenuItem
+                key={`${optionValue}-${index}`}
+                className="cursor-pointer"
+                onClick={() => onChangeFilterValue(optionValue)}>
+                {optionValue}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   const handleOpenDropdown = () => {
     if (isComboBoxDisabled) return;
     setOpen(true);
   };
-  const ChevronIcon = open ? ChevronUp : ChevronDown;
 
   // Helper to filter out a specific value from the array
   const getFilteredValues = (valueToRemove: string): string[] => {
@@ -181,45 +239,7 @@ export const ElementFilterComboBox = ({
 
   return (
     <div className="inline-flex h-fit w-full flex-row rounded-md border border-slate-300 hover:border-slate-400">
-      {filterOptions && filterOptions.length <= 1 ? (
-        <div className="flex h-9 max-w-fit items-center rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600">
-          <p className="mr-1 max-w-[50px] truncate sm:max-w-[100px]">{filterValue}</p>
-        </div>
-      ) : (
-        <DropdownMenu
-          onOpenChange={(value) => {
-            if (value) setOpen(false);
-          }}>
-          <DropdownMenuTrigger
-            disabled={disabled}
-            className={clsx(
-              "flex h-9 max-w-fit items-center justify-between gap-2 rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600 focus:outline-transparent focus:ring-0",
-              disabled ? "opacity-50" : "cursor-pointer hover:bg-slate-50"
-            )}>
-            {filterValue ? (
-              <p className="max-w-[50px] truncate sm:max-w-[80px]">{filterValue}</p>
-            ) : (
-              <p className="text-slate-400">{t("common.select")}...</p>
-            )}
-            {filterOptions && filterOptions.length > 1 && (
-              <ChevronIcon className="h-4 w-4 flex-shrink-0 opacity-50" />
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white">
-            {filterOptions?.map((o, index) => {
-              const optionValue = getOptionValue(o);
-              return (
-                <DropdownMenuItem
-                  key={`${optionValue}-${index}`}
-                  className="cursor-pointer"
-                  onClick={() => onChangeFilterValue(optionValue)}>
-                  {optionValue}
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+      {renderFilterOptionsDropdown()}
 
       {isTextInputField ? (
         <Input

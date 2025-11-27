@@ -53,7 +53,6 @@ export function RatingElement({
     onChange({ [element.id]: number });
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
-    // Note: onSubmit prop is () => {} in multi-element blocks, called by block instead
   };
 
   function HiddenRadioInput({ number, id }: { number: number; id?: string }) {
@@ -99,10 +98,10 @@ export function RatingElement({
   };
 
   const handleKeyDown = (number: number) => (e: KeyboardEvent) => {
-    if (e.key === " ") {
+    const isActivationKey = e.key === " " || e.key === "Enter";
+    if (isActivationKey) {
       e.preventDefault();
-      document.getElementById(number.toString())?.click();
-      document.getElementById(number.toString())?.focus();
+      handleSelect(number);
     }
   };
 

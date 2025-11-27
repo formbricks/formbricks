@@ -82,7 +82,9 @@ export function OpenTextElement({
   };
 
   const validatePhone = (input: HTMLInputElement | HTMLTextAreaElement | null): boolean => {
-    const phoneRegex = /^[+]?[\d\s\-()]{7,}$/;
+    // Match the same pattern as getInputPattern: must start with digit or +, end with digit
+    // Allows digits, +, -, and spaces in between
+    const phoneRegex = /^[0-9+][0-9+\- ]*[0-9]$/;
     if (!phoneRegex.test(value)) {
       input?.setCustomValidity(t("errors.please_enter_a_valid_phone_number"));
       input?.reportValidity();
@@ -137,10 +139,6 @@ export function OpenTextElement({
     if (element.inputType === "text") return element.charLimit?.max;
     if (element.inputType === "phone") return 30;
     return undefined;
-  };
-
-  const getTextareaTitle = (): string | undefined => {
-    return element.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number") : undefined;
   };
 
   const handleInputOnInput = (e: Event) => {
@@ -206,7 +204,6 @@ export function OpenTextElement({
         value={value}
         onInput={handleTextareaOnInput}
         className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
-        title={getTextareaTitle()}
         minLength={getInputMinLength()}
         maxLength={getInputMaxLength()}
       />
