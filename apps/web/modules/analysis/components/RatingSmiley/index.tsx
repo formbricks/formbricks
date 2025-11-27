@@ -66,13 +66,13 @@ const getSmiley = (
 
   return (
     <table style={{ width: "48px", height: "48px" }}>
-      <tbody>
-        <tr>
-          <td align="center" valign="middle">
-            {icon}
-          </td>
-        </tr>
-      </tbody>
+      {" "}
+      {/* NOSONAR S5256 - Need table layout for email compatibility (gmail) */}
+      <tr>
+        <td align="center" valign="middle">
+          {icon}
+        </td>
+      </tr>
     </table>
   );
 };
