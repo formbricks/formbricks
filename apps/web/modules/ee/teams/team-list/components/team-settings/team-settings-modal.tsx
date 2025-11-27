@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
+import { InviteToTeamTab } from "@/modules/ee/teams/team-list/components/team-settings/invite-to-team-tab";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import {
   TOrganizationMember,
@@ -43,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Muted } from "@/modules/ui/components/typography";
 
@@ -79,6 +81,8 @@ export const TeamSettingsModal = ({
   const isTeamContributorMember = isMember && isContributor;
 
   const router = useRouter();
+
+  const [activeTab, setActiveTab] = useState<"members" | "invite">("members");
 
   const initialMembers = useMemo(() => {
     const members = team.members.map((member) => ({
@@ -246,133 +250,162 @@ export const TeamSettingsModal = ({
                     {t("environments.settings.teams.add_members_description")}
                   </Muted>
                 </div>
-                <FormField
-                  control={control}
-                  name={`members`}
-                  render={({ fieldState: { error } }) => (
-                    <FormItem className="flex-1">
-                      <div className="space-y-2 overflow-y-auto">
-                        {watchMembers.map((member, index) => {
-                          const memberOpts = getMemberOptionsForIndex(index);
-                          return (
-                            <div key={`member-${member.userId}-${index}`} className="flex gap-2.5">
-                              <FormField
-                                control={control}
-                                name={`members.${index}.userId`}
-                                render={({ field, fieldState: { error } }) => (
-                                  <FormItem className="flex-1">
-                                    <Select
-                                      onValueChange={(val) => {
-                                        field.onChange(val);
-                                        handleMemberSelectionChange(index, val);
-                                      }}
-                                      disabled={!isOwnerOrManager && !isTeamAdminMember}
-                                      value={member.userId}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select member" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {memberOpts.map((option) => (
-                                          <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                            id={`member-${index}-option`}>
-                                            {option.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    {error?.message && (
-                                      <FormError className="text-left">{error.message}</FormError>
+
+                {/* Tab Toggle for Members / Invite */}
+                {(isOwnerOrManager || isTeamAdminMember) && (
+                  <TabToggle
+                    id="memberTab"
+                    options={[
+                      { value: "members", label: t("environments.settings.teams.current_members") },
+                      { value: "invite", label: t("environments.settings.teams.invite_member_to_team") },
+                    ]}
+                    onChange={(tab) => setActiveTab(tab as "members" | "invite")}
+                    defaultSelected={activeTab}
+                  />
+                )}
+
+                {activeTab === "members" && (
+                  <>
+                    <FormField
+                      control={control}
+                      name={`members`}
+                      render={({ fieldState: { error } }) => (
+                        <FormItem className="flex-1">
+                          <div className="space-y-2 overflow-y-auto">
+                            {watchMembers.map((member, index) => {
+                              const memberOpts = getMemberOptionsForIndex(index);
+                              return (
+                                <div key={`member-${member.userId}-${index}`} className="flex gap-2.5">
+                                  <FormField
+                                    control={control}
+                                    name={`members.${index}.userId`}
+                                    render={({ field, fieldState: { error } }) => (
+                                      <FormItem className="flex-1">
+                                        <Select
+                                          onValueChange={(val) => {
+                                            field.onChange(val);
+                                            handleMemberSelectionChange(index, val);
+                                          }}
+                                          disabled={!isOwnerOrManager && !isTeamAdminMember}
+                                          value={member.userId}>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select member" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {memberOpts.map((option) => (
+                                              <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                                id={`member-${index}-option`}>
+                                                {option.label}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        {error?.message && (
+                                          <FormError className="text-left">{error.message}</FormError>
+                                        )}
+                                      </FormItem>
                                     )}
-                                  </FormItem>
-                                )}
-                              />
+                                  />
 
-                              <FormField
-                                control={control}
-                                name={`members.${index}.role`}
-                                render={({ field }) => (
-                                  <FormItem className="flex-1">
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      value={member.role}
-                                      disabled={(() => {
-                                        const chosenMember = orgMembers.find(
-                                          (m) => m.id === watchMembers[index]?.userId
-                                        );
-                                        if (!chosenMember) return !isOwnerOrManager && !isTeamAdminMember;
+                                  <FormField
+                                    control={control}
+                                    name={`members.${index}.role`}
+                                    render={({ field }) => (
+                                      <FormItem className="flex-1">
+                                        <Select
+                                          onValueChange={field.onChange}
+                                          value={member.role}
+                                          disabled={(() => {
+                                            const chosenMember = orgMembers.find(
+                                              (m) => m.id === watchMembers[index]?.userId
+                                            );
+                                            if (!chosenMember) return !isOwnerOrManager && !isTeamAdminMember;
 
-                                        return (
-                                          chosenMember.role === "owner" ||
-                                          chosenMember.role === "manager" ||
-                                          isTeamContributorMember ||
-                                          chosenMember.id === currentUserId
-                                        );
-                                      })()}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select role" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value={ZTeamRole.enum.admin}>
-                                          {t("environments.settings.teams.team_admin")}
-                                        </SelectItem>
-                                        <SelectItem value={ZTeamRole.enum.contributor}>
-                                          {t("environments.settings.teams.contributor")}
-                                        </SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </FormItem>
-                                )}
-                              />
+                                            return (
+                                              chosenMember.role === "owner" ||
+                                              chosenMember.role === "manager" ||
+                                              isTeamContributorMember ||
+                                              chosenMember.id === currentUserId
+                                            );
+                                          })()}>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select role" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value={ZTeamRole.enum.admin}>
+                                              {t("environments.settings.teams.team_admin")}
+                                            </SelectItem>
+                                            <SelectItem value={ZTeamRole.enum.contributor}>
+                                              {t("environments.settings.teams.contributor")}
+                                            </SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </FormItem>
+                                    )}
+                                  />
 
-                              {/* Delete Button for Member */}
-                              {watchMembers.length > 1 && (
-                                <Button
-                                  size="icon"
-                                  type="button"
-                                  variant="secondary"
-                                  className="shrink-0"
-                                  disabled={
-                                    !isOwnerOrManager &&
-                                    (!isTeamAdminMember || member.userId === currentUserId)
-                                  }
-                                  onClick={() => handleRemoveMember(index)}>
-                                  <Trash2Icon className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {error?.root?.message && (
-                        <FormError className="text-left">{error.root.message}</FormError>
+                                  {/* Delete Button for Member */}
+                                  {watchMembers.length > 1 && (
+                                    <Button
+                                      size="icon"
+                                      type="button"
+                                      variant="secondary"
+                                      className="shrink-0"
+                                      disabled={
+                                        !isOwnerOrManager &&
+                                        (!isTeamAdminMember || member.userId === currentUserId)
+                                      }
+                                      onClick={() => handleRemoveMember(index)}>
+                                      <Trash2Icon className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {error?.root?.message && (
+                            <FormError className="text-left">{error.root.message}</FormError>
+                          )}
+                        </FormItem>
                       )}
-                    </FormItem>
-                  )}
-                />
-                <TooltipRenderer
-                  shouldRender={selectedMemberIds.length === orgMembers.length || hasEmptyMember}
-                  triggerClass="inline-block"
-                  tooltipContent={
-                    hasEmptyMember
-                      ? t("environments.settings.teams.please_fill_all_member_fields")
-                      : t("environments.settings.teams.all_members_added")
-                  }>
-                  <Button
-                    size="default"
-                    type="button"
-                    variant="secondary"
-                    onClick={handleAddMember}
-                    disabled={
-                      (!isOwnerOrManager && !isTeamAdminMember) ||
-                      selectedMemberIds.length === orgMembers.length ||
-                      hasEmptyMember
-                    }>
-                    <PlusIcon className="h-4 w-4" />
-                    <span>{t("common.add_member")}</span>
-                  </Button>
-                </TooltipRenderer>
+                    />
+                    <TooltipRenderer
+                      shouldRender={selectedMemberIds.length === orgMembers.length || hasEmptyMember}
+                      triggerClass="inline-block"
+                      tooltipContent={
+                        hasEmptyMember
+                          ? t("environments.settings.teams.please_fill_all_member_fields")
+                          : t("environments.settings.teams.all_members_added")
+                      }>
+                      <Button
+                        size="default"
+                        type="button"
+                        variant="secondary"
+                        onClick={handleAddMember}
+                        disabled={
+                          (!isOwnerOrManager && !isTeamAdminMember) ||
+                          selectedMemberIds.length === orgMembers.length ||
+                          hasEmptyMember
+                        }>
+                        <PlusIcon className="h-4 w-4" />
+                        <span>{t("common.add_member")}</span>
+                      </Button>
+                    </TooltipRenderer>
+                  </>
+                )}
+
+                {activeTab === "invite" && (
+                  <InviteToTeamTab
+                    teamId={team.id}
+                    teamName={team.name}
+                    onSuccess={() => {
+                      setActiveTab("members");
+                      router.refresh();
+                    }}
+                  />
+                )}
               </div>
 
               {/* Projects Section */}

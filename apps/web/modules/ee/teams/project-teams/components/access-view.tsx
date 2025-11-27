@@ -9,10 +9,10 @@ import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
 interface AccessViewProps {
   teams: TProjectTeam[];
   environmentId: string;
-  isOwnerOrManager: boolean;
+  canManageTeams: boolean;
 }
 
-export const AccessView = ({ teams, environmentId, isOwnerOrManager }: AccessViewProps) => {
+export const AccessView = ({ teams, environmentId, canManageTeams }: AccessViewProps) => {
   const { t } = useTranslation();
   return (
     <>
@@ -20,7 +20,7 @@ export const AccessView = ({ teams, environmentId, isOwnerOrManager }: AccessVie
         title={t("common.team_access")}
         description={t("environments.project.teams.team_settings_description")}>
         <div className="mb-4 flex justify-end">
-          <ManageTeam environmentId={environmentId} isOwnerOrManager={isOwnerOrManager} />
+          <ManageTeam environmentId={environmentId} canManageTeams={canManageTeams} />
         </div>
         <AccessTable teams={teams} />
       </SettingsCard>
