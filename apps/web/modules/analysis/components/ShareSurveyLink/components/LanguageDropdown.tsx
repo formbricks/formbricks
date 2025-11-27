@@ -15,22 +15,20 @@ interface LanguageDropdownProps {
 
 export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdownProps) => {
   const [showLanguageSelect, setShowLanguageSelect] = useState(false);
-  const languageDropdownRef = useRef(null);
+  const containerRef = useRef(null);
   const enabledLanguages = getEnabledLanguages(survey.languages ?? []);
 
-  useClickOutside(languageDropdownRef, () => setShowLanguageSelect(false));
+  useClickOutside(containerRef, () => setShowLanguageSelect(false));
 
   return (
     enabledLanguages.length > 1 && (
-      <div className="relative">
+      <div className="relative" ref={containerRef}>
         {showLanguageSelect && (
-          <div
-            className="absolute top-12 z-30 max-h-64 max-w-48 overflow-auto truncate rounded-lg border bg-slate-900 p-1 text-sm text-white"
-            ref={languageDropdownRef}>
+          <div className="absolute top-12 z-30 max-h-64 max-w-48 overflow-auto rounded-lg border bg-slate-900 p-1 text-sm text-white">
             {enabledLanguages.map((surveyLanguage) => (
               <button
                 key={surveyLanguage.language.code}
-                className="w-full min-w-0 truncate rounded-md p-2 text-start hover:cursor-pointer hover:bg-slate-700"
+                className="w-full rounded-md p-2 text-start hover:cursor-pointer hover:bg-slate-700"
                 onClick={() => {
                   setLanguage(surveyLanguage.language.code);
                   setShowLanguageSelect(false);
