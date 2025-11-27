@@ -145,7 +145,7 @@ const sendTelemetry = async (lastSent: number) => {
     infrastructure: {
       smtp: !!env.SMTP_HOST,
       s3: !!env.S3_BUCKET_NAME,
-      prometheus: !!env.OPENTELEMETRY_LISTENER_URL,
+      prometheus: !!env.PROMETHEUS_ENABLED,
     },
     security: {
       recaptcha: !!(env.RECAPTCHA_SITE_KEY && env.RECAPTCHA_SECRET_KEY),
