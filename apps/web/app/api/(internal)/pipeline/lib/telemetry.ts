@@ -1,5 +1,5 @@
 import { IntegrationType } from "@prisma/client";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { type CacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -31,7 +31,7 @@ export const sendTelemetryEvents = async () => {
 
     const lastSentResult = await cache.get(TELEMETRY_LAST_SENT_KEY);
     const lastSentStr = lastSentResult.ok && lastSentResult.data ? (lastSentResult.data as string) : null;
-    const lastSent = lastSentStr ? parseInt(lastSentStr, 10) : 0;
+    const lastSent = lastSentStr ? Number.parseInt(lastSentStr, 10) : 0;
 
     if (now - lastSent < TELEMETRY_INTERVAL_MS) {
       // Update in-memory check to match the remaining time
