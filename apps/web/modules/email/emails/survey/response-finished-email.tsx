@@ -26,7 +26,7 @@ export async function ResponseFinishedEmail({
   environmentId,
   organization,
 }: ResponseFinishedEmailProps): Promise<React.JSX.Element> {
-  const questions = getElementResponseMapping(survey, response);
+  const elements = getElementResponseMapping(survey, response);
   const t = await getTranslate();
 
   return (
@@ -41,13 +41,13 @@ export async function ResponseFinishedEmail({
               })}
             </Text>
             <Hr />
-            {questions.map((question) => {
-              if (!question.response) return;
+            {elements.map((e) => {
+              if (!e.response) return;
               return (
-                <Row key={question.element}>
+                <Row key={e.element}>
                   <Column className="w-full font-medium">
-                    <Text className="mb-2 text-sm">{question.element}</Text>
-                    {renderEmailResponseValue(question.response, question.type, t)}
+                    <Text className="mb-2 text-sm">{e.element}</Text>
+                    {renderEmailResponseValue(e.response, e.type, t)}
                   </Column>
                 </Row>
               );

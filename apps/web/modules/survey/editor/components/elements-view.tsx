@@ -205,12 +205,12 @@ export const ElementsView = ({
 
   useEffect(() => {
     if (!invalidElements) return;
-    let updatedInvalidElements: string[] = invalidElements;
+    let updatedInvalidElements: string[] = { ...invalidElements };
 
     // Check welcome card
     if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
       if (!updatedInvalidElements.includes("start")) {
-        updatedInvalidElements.push("start");
+        updatedInvalidElements = [...updatedInvalidElements, "start"];
       }
     } else {
       updatedInvalidElements = updatedInvalidElements.filter((elementId) => elementId !== "start");
@@ -220,7 +220,7 @@ export const ElementsView = ({
     localSurvey.endings.forEach((ending) => {
       if (!isEndingCardValid(ending, surveyLanguages)) {
         if (!updatedInvalidElements.includes(ending.id)) {
-          updatedInvalidElements.push(ending.id);
+          updatedInvalidElements = [...updatedInvalidElements, ending.id];
         }
       } else {
         updatedInvalidElements = updatedInvalidElements.filter((elementId) => elementId !== ending.id);

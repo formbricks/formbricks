@@ -10,35 +10,35 @@ import { parseRecallInfo } from "@/lib/utils/recall";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface ElementSkipProps {
-  skippedQuestions: string[] | undefined;
+  skippedElements: string[] | undefined;
   status: string;
-  questions: TSurveyElement[];
-  isFirstQuestionAnswered?: boolean;
+  elements: TSurveyElement[];
+  isFirstElementAnswered?: boolean;
   responseData: TResponseData;
 }
 
 export const ElementSkip = ({
-  skippedQuestions,
+  skippedElements,
   status,
-  questions,
-  isFirstQuestionAnswered,
+  elements,
+  isFirstElementAnswered,
   responseData,
 }: ElementSkipProps) => {
   const { t } = useTranslation();
   return (
     <div>
-      {skippedQuestions && (
+      {skippedElements && (
         <div className="my-2 flex w-full px-2 text-sm text-slate-400">
           {status === "welcomeCard" && (
             <div className="mb-2 flex">
               {
                 <div
                   className={`relative flex ${
-                    isFirstQuestionAnswered ? "h-[100%]" : "h-[200%]"
+                    isFirstElementAnswered ? "h-[100%]" : "h-[200%]"
                   } w-0.5 items-center justify-center`}
                   style={{
                     background:
-                      "repeating-linear-gradient(rgb(148, 163, 184), rgb(148, 163, 184) 5px, transparent 5px, transparent 8px)", // adjust the values to fit your design
+                      "repeating-linear-gradient(rgb(148, 163, 184), rgb(148, 163, 184) 5px, transparent 5px, transparent 8px)",
                   }}>
                   <CheckCircle2Icon className="p-0.25 absolute top-0 w-[1.5rem] min-w-[1.5rem] rounded-full bg-white text-slate-400" />
                 </div>
@@ -52,9 +52,9 @@ export const ElementSkip = ({
                 className="flex w-0.5 items-center justify-center"
                 style={{
                   background:
-                    "repeating-linear-gradient(to bottom,   rgb(148 163 184),  rgb(148 163 184) 8px, transparent 5px, transparent 15px)", // adjust the values to fit your design
+                    "repeating-linear-gradient(to bottom,   rgb(148 163 184),  rgb(148 163 184) 8px, transparent 5px, transparent 15px)",
                 }}>
-                {skippedQuestions.length > 1 && (
+                {skippedElements.length > 1 && (
                   <TooltipProvider delayDuration={50}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -70,13 +70,13 @@ export const ElementSkip = ({
                 )}
               </div>
               <div className="ml-6 flex flex-col">
-                {skippedQuestions?.map((questionId) => {
+                {skippedElements?.map((questionId) => {
                   return (
                     <p className="my-2" key={questionId}>
                       {getTextContent(
                         parseRecallInfo(
                           getLocalizedValue(
-                            questions.find((question) => question.id === questionId)?.headline ?? {
+                            elements.find((question) => question.id === questionId)?.headline ?? {
                               default: "",
                             },
                             "default"
@@ -96,7 +96,7 @@ export const ElementSkip = ({
                 className="flex w-0.5 flex-grow items-start justify-center"
                 style={{
                   background:
-                    "repeating-linear-gradient(to bottom,  rgb(148 163 184),  rgb(148 163 184) 2px, transparent 2px, transparent 10px)", // adjust the 2px to change dot size and 10px to change space between dots
+                    "repeating-linear-gradient(to bottom,  rgb(148 163 184),  rgb(148 163 184) 2px, transparent 2px, transparent 10px)",
                 }}>
                 <div className="flex">
                   <XCircleIcon className="min-h-[1.5rem] min-w-[1.5rem] rounded-full bg-white text-slate-400" />
@@ -108,14 +108,14 @@ export const ElementSkip = ({
                   className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
                   {t("environments.surveys.responses.survey_closed")}
                 </p>
-                {skippedQuestions &&
-                  skippedQuestions.map((questionId) => {
+                {skippedElements &&
+                  skippedElements.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
                         {getTextContent(
                           parseRecallInfo(
                             getLocalizedValue(
-                              questions.find((question) => question.id === questionId)?.headline ?? {
+                              elements.find((question) => question.id === questionId)?.headline ?? {
                                 default: "",
                               },
                               "default"

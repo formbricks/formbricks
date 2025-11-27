@@ -11,14 +11,19 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
-interface UpdatElementIdProps {
+interface UpdateElementIdProps {
   localSurvey: TSurvey;
   element: TSurveyElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: any) => void;
 }
 
-export const UpdateElementId = ({ localSurvey, element, elementIdx, updateElement }: UpdatElementIdProps) => {
+export const UpdateElementId = ({
+  localSurvey,
+  element,
+  elementIdx,
+  updateElement,
+}: UpdateElementIdProps) => {
   const { t } = useTranslation();
   const [currentValue, setCurrentValue] = useState(element.id);
   const [prevValue, setPrevValue] = useState(element.id);
@@ -37,7 +42,7 @@ export const UpdateElementId = ({ localSurvey, element, elementIdx, updateElemen
     const endingCardIds = localSurvey.endings.map((e) => e.id);
     const hiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
 
-    const validateIdError = validateId("Element", currentValue, elementIds, endingCardIds, hiddenFieldIds);
+    const validateIdError = validateId("Question", currentValue, elementIds, endingCardIds, hiddenFieldIds);
 
     if (validateIdError) {
       setIsInputInvalid(true);

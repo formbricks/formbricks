@@ -103,7 +103,7 @@ const evaluateLogicAndGetNextElementId = (
   data: TResponseData,
   localVariables: TResponseVariables,
   currentElementIndex: number,
-  currQuesTemp: TSurveyElement,
+  currElementTemp: TSurveyElement,
   selectedLanguage: string | null
 ): {
   nextElementId: string | undefined;
@@ -115,7 +115,7 @@ const evaluateLogicAndGetNextElementId = (
 
   let firstJumpTarget: string | undefined;
 
-  const { block: currentBlock } = findElementLocation(localSurvey, currQuesTemp.id);
+  const { block: currentBlock } = findElementLocation(localSurvey, currElementTemp.id);
 
   if (currentBlock?.logic && currentBlock.logic.length > 0) {
     for (const logic of currentBlock.logic) {

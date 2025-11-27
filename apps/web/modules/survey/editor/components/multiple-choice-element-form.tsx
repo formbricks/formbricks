@@ -142,7 +142,7 @@ export const MultipleChoiceElementForm = ({
 
     if (choiceToDelete !== "other" && choiceToDelete !== "none") {
       const idx = findOptionUsedInLogic(localSurvey, element.id, choiceToDelete);
-      if (elementIdx !== -1) {
+      if (idx !== -1) {
         toast.error(
           t("environments.surveys.edit.option_used_in_logic_error", {
             questionIndex: idx + 1,
