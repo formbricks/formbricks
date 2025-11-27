@@ -247,11 +247,17 @@ const sendTelemetry = async (lastSent: number) => {
   // This endpoint collects usage statistics for enterprise license validation and analytics.
   const url = `https://ee.formbricks.com/api/v1/instances/${instanceId}/usage-updates`;
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
   await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
+    signal: controller.signal,
   });
+
+  clearTimeout(timeout);
 };
