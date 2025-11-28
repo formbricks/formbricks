@@ -10,7 +10,6 @@ import {
   TResponse,
   TResponseContact,
   TResponseFilterCriteria,
-  TResponseTtc,
   TResponseUpdateInput,
   TResponseWithQuotas,
   ZResponseFilterCriteria,
@@ -509,7 +508,7 @@ export const updateResponse = async (
       ...responseInput.data,
     };
     // merge ttc object (similar to data) to preserve TTC from previous blocks
-    const currentTtc = (currentResponse.ttc as TResponseTtc) ?? {};
+    const currentTtc = currentResponse.ttc;
     const mergedTtc = responseInput.ttc
       ? {
           ...currentTtc,
