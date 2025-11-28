@@ -123,8 +123,8 @@ export function ElementConditional({
     return null;
   }
 
-  // NOSONAR - This is readable enough and can't be changed
   const renderElement = () => {
+    // NOSONAR - This is readable enough and can't be changed
     switch (element.type) {
       case TSurveyElementTypeEnum.OpenText:
         return (

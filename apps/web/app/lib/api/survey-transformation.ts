@@ -439,6 +439,33 @@ const transformBlockLogicToQuestionLogic = (
   });
 };
 
+const applyBlockAttributesToElement = (
+  element: Record<string, unknown>,
+  block: TSurveyBlock,
+  blockIdToQuestionId: Map<string, string>,
+  endingIds: Set<string>
+): void => {
+  if (element.type === "cta" && element.ctaButtonLabel) {
+    element.buttonLabel = element.ctaButtonLabel;
+  }
+
+  if (Array.isArray(block.logic) && block.logic.length > 0) {
+    element.logic = transformBlockLogicToQuestionLogic(block.logic, blockIdToQuestionId, endingIds);
+  }
+
+  if (block.logicFallback) {
+    element.logicFallback = reverseLogicFallback(block.logicFallback, blockIdToQuestionId, endingIds);
+  }
+
+  if (block.buttonLabel) {
+    element.buttonLabel = block.buttonLabel;
+  }
+
+  if (block.backButtonLabel) {
+    element.backButtonLabel = block.backButtonLabel;
+  }
+};
+
 export const transformBlocksToQuestions = (
   blocks: TSurveyBlock[],
   endings: TSurveyEnding[] = []
@@ -459,27 +486,9 @@ export const transformBlocksToQuestions = (
   for (const block of blocks) {
     if (block.elements.length === 0) continue;
 
-    const element = { ...block.elements[0] } as Record<string, unknown>;
+    const element = { ...block.elements[0] };
 
-    if (element.type === "cta" && element.ctaButtonLabel) {
-      element.buttonLabel = element.ctaButtonLabel;
-    }
-
-    if (Array.isArray(block.logic) && block.logic.length > 0) {
-      element.logic = transformBlockLogicToQuestionLogic(block.logic, blockIdToQuestionId, endingIds);
-    }
-
-    if (block.logicFallback) {
-      element.logicFallback = reverseLogicFallback(block.logicFallback, blockIdToQuestionId, endingIds);
-    }
-
-    if (block.buttonLabel) {
-      element.buttonLabel = block.buttonLabel;
-    }
-
-    if (block.backButtonLabel) {
-      element.backButtonLabel = block.backButtonLabel;
-    }
+    applyBlockAttributesToElement(element, block, blockIdToQuestionId, endingIds);
 
     questions.push(element);
   }

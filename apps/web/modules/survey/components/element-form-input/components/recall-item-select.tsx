@@ -141,16 +141,19 @@ export const RecallItemSelect = ({
 
   const getRecallItemIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
-      case "element":
+      case "element": {
         const element = elements.find((element) => element.id === recallItem.id);
         if (element) {
           return elementIconMapping[element?.type as keyof typeof elementIconMapping];
         }
+        return null;
+      }
       case "hiddenField":
         return EyeOffIcon;
-      case "variable":
+      case "variable": {
         const variable = localSurvey.variables.find((variable) => variable.id === recallItem.id);
         return variable?.type === "number" ? FileDigitIcon : FileTextIcon;
+      }
       default:
         return null;
     }
