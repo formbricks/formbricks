@@ -13,6 +13,7 @@ import {
   isElementIdUnique,
   moveBlock,
   moveElementInBlock,
+  renumberBlocks,
   updateBlock,
   updateElementInBlock,
 } from "./blocks";
@@ -81,6 +82,50 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   recaptcha: null,
   isBackButtonHidden: false,
   metadata: {},
+});
+
+describe("renumberBlocks", () => {
+  test("should renumber blocks sequentially starting from 1", () => {
+    const blocks = [
+      createMockBlock("block-1", "Old Name 1"),
+      createMockBlock("block-2", "Old Name 2"),
+      createMockBlock("block-3", "Old Name 3"),
+    ];
+
+    const result = renumberBlocks(blocks);
+
+    expect(result).toHaveLength(3);
+    expect(result[0].name).toBe("Block 1");
+    expect(result[1].name).toBe("Block 2");
+    expect(result[2].name).toBe("Block 3");
+  });
+
+  test("should preserve block IDs and other properties", () => {
+    const blocks = [
+      createMockBlock("block-1", "Old Name 1", [createMockElement("q1")]),
+      createMockBlock("block-2", "Old Name 2", [createMockElement("q2")]),
+    ];
+
+    const result = renumberBlocks(blocks);
+
+    expect(result[0].id).toBe("block-1");
+    expect(result[1].id).toBe("block-2");
+    expect(result[0].elements).toHaveLength(1);
+    expect(result[1].elements).toHaveLength(1);
+  });
+
+  test("should handle empty array", () => {
+    const result = renumberBlocks([]);
+    expect(result).toHaveLength(0);
+  });
+
+  test("should handle single block", () => {
+    const blocks = [createMockBlock("block-1", "Old Name")];
+    const result = renumberBlocks(blocks);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("Block 1");
+  });
 });
 
 describe("isElementIdUnique", () => {
