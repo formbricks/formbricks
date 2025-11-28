@@ -174,7 +174,7 @@ describe("Response Processing", () => {
     });
   });
 
-  describe("getQuestionResponseMapping", () => {
+  describe("getElementResponseMapping", () => {
     const mockSurvey = {
       id: "survey1",
       type: "link" as const,

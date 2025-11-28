@@ -8,7 +8,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
-import { extractRecallInfo } from "@/lib/utils/recall";
 import { findVariableUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
@@ -133,26 +132,9 @@ export const SurveyVariablesCardItem = ({
       return;
     }
 
-    // remove recall references from blocks
     setLocalSurvey((prevSurvey) => {
-      const updatedBlocks = prevSurvey.blocks.map((block) => ({
-        ...block,
-        elements: block.elements.map((element) => {
-          const updatedHeadline = { ...element.headline };
-          for (const [languageCode, headline] of Object.entries(element.headline)) {
-            if (headline.includes(`recall:${variableToDelete.id}`)) {
-              const recallInfo = extractRecallInfo(headline);
-              if (recallInfo) {
-                updatedHeadline[languageCode] = headline.replace(recallInfo, "");
-              }
-            }
-          }
-          return { ...element, headline: updatedHeadline };
-        }),
-      }));
-
       const updatedVariables = prevSurvey.variables.filter((v) => v.id !== variableToDelete.id);
-      return { ...prevSurvey, variables: updatedVariables, blocks: updatedBlocks };
+      return { ...prevSurvey, variables: updatedVariables };
     });
   };
 

@@ -1,7 +1,11 @@
 import { createId } from "@paralleldrive/cuid2";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { type TSurveyBlock, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import {
+  type TSurveyBlock,
+  TSurveyBlockLogic,
+  TSurveyBlockLogicAction,
+} from "@formbricks/types/surveys/blocks";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   type TSurveyEnding,
@@ -415,6 +419,26 @@ export const transformQuestionsToBlocks = (
   return blocks as TSurveyBlock[];
 };
 
+const transformBlockLogicToQuestionLogic = (
+  blockLogic: TSurveyBlockLogic[],
+  blockIdToQuestionId: Map<string, string>,
+  endingIds: Set<string>
+): unknown[] => {
+  return blockLogic.map((item) => {
+    const updatedConditions = convertElementToQuestionType(item.conditions);
+
+    if (!updatedConditions || !isConditionGroup(updatedConditions)) {
+      return item;
+    }
+
+    return {
+      ...item,
+      conditions: updatedConditions,
+      actions: reverseLogicActions(item.actions, blockIdToQuestionId, endingIds),
+    };
+  });
+};
+
 export const transformBlocksToQuestions = (
   blocks: TSurveyBlock[],
   endings: TSurveyEnding[] = []
@@ -442,21 +466,7 @@ export const transformBlocksToQuestions = (
     }
 
     if (Array.isArray(block.logic) && block.logic.length > 0) {
-      element.logic = block.logic.map(
-        (item: { id: string; conditions: TConditionGroup; actions: TSurveyBlockLogicAction[] }) => {
-          const updatedConditions = convertElementToQuestionType(item.conditions);
-
-          if (!updatedConditions || !isConditionGroup(updatedConditions)) {
-            return item;
-          }
-
-          return {
-            ...item,
-            conditions: updatedConditions,
-            actions: reverseLogicActions(item.actions, blockIdToQuestionId, endingIds),
-          };
-        }
-      );
+      element.logic = transformBlockLogicToQuestionLogic(block.logic, blockIdToQuestionId, endingIds);
     }
 
     if (block.logicFallback) {

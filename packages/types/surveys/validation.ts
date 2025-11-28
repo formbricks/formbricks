@@ -313,7 +313,7 @@ export const validateId = (
   const combinedIds = [...existingElementIds, ...existingHiddenFieldIds, ...existingEndingCardIds];
 
   if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
-    return `${type} ID already exists in questions, hidden fields, or elements.`;
+    return `${type} ID already exists in questions or hidden fields`;
   }
 
   if (FORBIDDEN_IDS.includes(field)) {

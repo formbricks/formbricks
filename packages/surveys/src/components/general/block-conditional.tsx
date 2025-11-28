@@ -3,7 +3,11 @@ import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyElement,
+  TSurveyElementTypeEnum,
+  TSurveyRankingElement,
+} from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ElementConditional } from "@/components/general/element-conditional";
@@ -108,82 +112,85 @@ export function BlockConditional({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run once when block mounts
   }, []);
 
-  const handleBlockSubmit = (e?: Event) => {
-    if (e) {
-      e.preventDefault();
+  // Validate ranking element
+  const validateRankingElement = (
+    element: TSurveyRankingElement,
+    response: unknown,
+    form: HTMLFormElement
+  ): boolean => {
+    const rankingElement = element;
+    const hasIncompleteRanking =
+      (rankingElement.required &&
+        (!Array.isArray(response) || response.length !== rankingElement.choices.length)) ||
+      (!rankingElement.required &&
+        Array.isArray(response) &&
+        response.length > 0 &&
+        response.length < rankingElement.choices.length);
+
+    if (hasIncompleteRanking) {
+      form.requestSubmit();
+      return false;
+    }
+    return true;
+  };
+
+  // Check if response is empty
+  const isEmptyResponse = (response: unknown): boolean => {
+    return (
+      response === undefined ||
+      response === null ||
+      response === "" ||
+      (Array.isArray(response) && response.length === 0) ||
+      (typeof response === "object" && !Array.isArray(response) && Object.keys(response).length === 0)
+    );
+  };
+
+  // Validate a single element's form
+  const validateElementForm = (element: TSurveyElement, form: HTMLFormElement): boolean => {
+    // Check HTML5 validity first
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return false;
     }
 
-    // Validate all forms and check for custom validation rules
+    const response = value[element.id];
+
+    // Custom validation for ranking questions
+    if (element.type === TSurveyElementTypeEnum.Ranking && !validateRankingElement(element, response, form)) {
+      return false;
+    }
+
+    // For other element types, check if required fields are empty
+    if (element.required && isEmptyResponse(response)) {
+      form.requestSubmit();
+      return false;
+    }
+
+    return true;
+  };
+
+  // Find the first invalid form
+  const findFirstInvalidForm = (): HTMLFormElement | null => {
     let firstInvalidForm: HTMLFormElement | null = null;
 
     for (const element of block.elements) {
       const form = elementFormRefs.current.get(element.id);
-      if (form) {
-        // Check HTML5 validity first
-        if (!form.checkValidity()) {
-          if (!firstInvalidForm) {
-            firstInvalidForm = form;
-          }
-          form.reportValidity();
-          continue;
-        }
-
-        // Custom validation for ranking questions
-        if (element.type === TSurveyElementTypeEnum.Ranking) {
-          const response = value[element.id];
-          const rankingElement = element;
-
-          // Check if ranking is incomplete
-          const hasIncompleteRanking =
-            (rankingElement.required &&
-              (!Array.isArray(response) || response.length !== rankingElement.choices.length)) ||
-            (!rankingElement.required &&
-              Array.isArray(response) &&
-              response.length > 0 &&
-              response.length < rankingElement.choices.length);
-
-          if (hasIncompleteRanking) {
-            // Trigger the ranking form's submit to show the error message
-            form.requestSubmit();
-            if (!firstInvalidForm) {
-              firstInvalidForm = form;
-            }
-            continue;
-          }
-        }
-
-        // For other element types, check if required fields are empty
-        if (element.required) {
-          const response = value[element.id];
-          const isEmpty =
-            response === undefined ||
-            response === null ||
-            response === "" ||
-            (Array.isArray(response) && response.length === 0) ||
-            (typeof response === "object" && !Array.isArray(response) && Object.keys(response).length === 0);
-
-          if (isEmpty) {
-            form.requestSubmit();
-            if (!firstInvalidForm) {
-              firstInvalidForm = form;
-            }
-            continue;
-          }
+      if (form && !validateElementForm(element, form)) {
+        if (!firstInvalidForm) {
+          firstInvalidForm = form;
         }
       }
     }
 
-    // If any form is invalid, scroll to it and stop
-    if (firstInvalidForm) {
-      firstInvalidForm.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
+    return firstInvalidForm;
+  };
 
+  // Collect TTC values from forms
+  const collectTtcValues = (): TResponseTtc => {
     // Clear the TTC collector before collecting new values
     ttcCollectorRef.current = {};
 
     // Call each form's submit method to trigger TTC calculation
-    // The forms will call handleTtcCollect synchronously with their TTC values
     block.elements.forEach((element) => {
       const form = elementFormRefs.current.get(element.id);
       if (form) {
@@ -192,10 +199,8 @@ export function BlockConditional({
     });
 
     // Collect TTC from the ref (populated synchronously by form submissions)
-    // Falls back to state for elements that may have TTC from user interactions
     const blockTtc: TResponseTtc = {};
     block.elements.forEach((element) => {
-      // Prefer freshly calculated TTC from form submission, fall back to state
       if (ttcCollectorRef.current[element.id] !== undefined) {
         blockTtc[element.id] = ttcCollectorRef.current[element.id];
       } else if (ttc[element.id] !== undefined) {
@@ -203,14 +208,37 @@ export function BlockConditional({
       }
     });
 
-    // Collect responses for all elements in this block
+    return blockTtc;
+  };
+
+  // Collect responses for all elements in this block
+  const collectBlockResponses = (): TResponseData => {
     const blockResponses: TResponseData = {};
     block.elements.forEach((element) => {
       if (value[element.id] !== undefined) {
         blockResponses[element.id] = value[element.id];
       }
     });
+    return blockResponses;
+  };
 
+  const handleBlockSubmit = (e?: Event) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    // Validate all forms and check for custom validation rules
+    const firstInvalidForm = findFirstInvalidForm();
+
+    // If any form is invalid, scroll to it and stop
+    if (firstInvalidForm) {
+      firstInvalidForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    // Collect TTC and responses, then submit
+    const blockTtc = collectTtcValues();
+    const blockResponses = collectBlockResponses();
     onSubmit(blockResponses, blockTtc);
   };
 

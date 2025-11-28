@@ -9,6 +9,8 @@ import type {
   TResponseVariables,
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -350,20 +352,21 @@ export function Survey({
   };
 
   const makeQuestionsRequired = (requiredQuestionIds: string[]): void => {
+    const updateElementIfRequired = (element: TSurveyElement) => {
+      if (requiredQuestionIds.includes(element.id)) {
+        return { ...element, required: true };
+      }
+      return element;
+    };
+
+    const updateBlockElements = (block: TSurveyBlock) => ({
+      ...block,
+      elements: block.elements.map(updateElementIfRequired),
+    });
+
     setlocalSurvey((prevSurvey) => ({
       ...prevSurvey,
-      blocks: prevSurvey.blocks.map((block) => ({
-        ...block,
-        elements: block.elements.map((element) => {
-          if (requiredQuestionIds.includes(element.id)) {
-            return {
-              ...element,
-              required: true,
-            };
-          }
-          return element;
-        }),
-      })),
+      blocks: prevSurvey.blocks.map(updateBlockElements),
     }));
   };
 
@@ -371,20 +374,24 @@ export function Survey({
     const questionsToRevert = questionRequiredByMap.current[questionId] || [];
 
     if (questionsToRevert.length > 0) {
+      const revertElementIfNeeded = (element: TSurveyElement) => {
+        if (questionsToRevert.includes(element.id)) {
+          return {
+            ...element,
+            required: originalQuestionRequiredStates[element.id] ?? element.required,
+          };
+        }
+        return element;
+      };
+
+      const updateBlockElements = (block: TSurveyBlock) => ({
+        ...block,
+        elements: block.elements.map(revertElementIfNeeded),
+      });
+
       setlocalSurvey((prevSurvey) => ({
         ...prevSurvey,
-        blocks: prevSurvey.blocks.map((block) => ({
-          ...block,
-          elements: block.elements.map((element) => {
-            if (questionsToRevert.includes(element.id)) {
-              return {
-                ...element,
-                required: originalQuestionRequiredStates[element.id] ?? element.required,
-              };
-            }
-            return element;
-          }),
-        })),
+        blocks: prevSurvey.blocks.map(updateBlockElements),
       }));
 
       // remove the question from the map
@@ -428,54 +435,85 @@ export function Survey({
       throw new Error("Block not found");
     }
 
-    let firstJumpTarget: string | undefined;
-    const allRequiredQuestionIds: string[] = [];
-
-    let calculationResults = { ...currentVariables };
     const localResponseData = { ...responseData, ...data };
+    let calculationResults = { ...currentVariables };
+
+    // Process a single logic rule
+    const processLogicRule = (
+      logic: TSurveyBlockLogic,
+      currentJumpTarget: string | undefined,
+      currentRequiredIds: string[]
+    ): { jumpTarget: string | undefined; requiredIds: string[]; updatedCalculations: TResponseVariables } => {
+      const isLogicMet = evaluateLogic(
+        localSurvey,
+        localResponseData,
+        calculationResults,
+        logic.conditions,
+        selectedLanguage
+      );
+
+      if (!isLogicMet) {
+        return {
+          jumpTarget: currentJumpTarget,
+          requiredIds: currentRequiredIds,
+          updatedCalculations: calculationResults,
+        };
+      }
+
+      const { jumpTarget, requiredQuestionIds, calculations } = performActions(
+        localSurvey,
+        logic.actions,
+        localResponseData,
+        calculationResults
+      );
+
+      const newJumpTarget = jumpTarget && !currentJumpTarget ? jumpTarget : currentJumpTarget;
+      const newRequiredIds = [...currentRequiredIds, ...requiredQuestionIds];
+      const updatedCalculations = { ...calculationResults, ...calculations };
+
+      return {
+        jumpTarget: newJumpTarget,
+        requiredIds: newRequiredIds,
+        updatedCalculations,
+      };
+    };
 
     // Evaluate block-level logic
-    if (currentBlock.logic && currentBlock.logic.length > 0) {
-      for (const logic of currentBlock.logic) {
-        if (
-          evaluateLogic(
-            localSurvey,
-            localResponseData,
-            calculationResults,
-            logic.conditions,
-            selectedLanguage
-          )
-        ) {
-          const { jumpTarget, requiredQuestionIds, calculations } = performActions(
-            localSurvey,
-            logic.actions,
-            localResponseData,
-            calculationResults
-          );
+    const evaluateBlockLogic = () => {
+      let firstJumpTarget: string | undefined;
+      const allRequiredQuestionIds: string[] = [];
 
-          if (jumpTarget && !firstJumpTarget) {
-            firstJumpTarget = jumpTarget; // This is already a block ID from performActions
-          }
-
-          allRequiredQuestionIds.push(...requiredQuestionIds);
-          calculationResults = { ...calculationResults, ...calculations };
+      if (currentBlock.logic && currentBlock.logic.length > 0) {
+        for (const logic of currentBlock.logic) {
+          const result = processLogicRule(logic, firstJumpTarget, allRequiredQuestionIds);
+          firstJumpTarget = result.jumpTarget;
+          allRequiredQuestionIds.length = 0;
+          allRequiredQuestionIds.push(...result.requiredIds);
+          calculationResults = result.updatedCalculations;
         }
       }
-    }
 
-    // Use logicFallback if no jump target was set (logicFallback is at block level)
-    if (!firstJumpTarget && currentBlock.logicFallback) {
-      firstJumpTarget = currentBlock.logicFallback;
-    }
-
-    if (allRequiredQuestionIds.length > 0) {
-      // Track which questions are being made required by this block
-      if (currentBlock.elements[0]) {
-        questionRequiredByMap.current[currentBlock.elements[0].id] = allRequiredQuestionIds;
+      // Use logicFallback if no jump target was set
+      if (!firstJumpTarget && currentBlock.logicFallback) {
+        firstJumpTarget = currentBlock.logicFallback;
       }
 
-      makeQuestionsRequired(allRequiredQuestionIds);
-    }
+      return { firstJumpTarget, allRequiredQuestionIds };
+    };
+
+    const { firstJumpTarget, allRequiredQuestionIds } = evaluateBlockLogic();
+
+    // Handle required questions
+    const handleRequiredQuestions = (requiredIds: string[]) => {
+      if (requiredIds.length > 0) {
+        if (currentBlock.elements[0]) {
+          questionRequiredByMap.current[currentBlock.elements[0].id] = requiredIds;
+        }
+        makeQuestionsRequired(requiredIds);
+      }
+    };
+
+    handleRequiredQuestions(allRequiredQuestionIds);
 
     // Return the jump target (which is a block ID) or the next block in sequence
     const nextBlockId = firstJumpTarget || localSurvey.blocks[currentBlockIndex + 1]?.id;
