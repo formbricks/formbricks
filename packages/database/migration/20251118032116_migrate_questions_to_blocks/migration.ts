@@ -31,72 +31,71 @@ export const migrateQuestionsToBlocks: MigrationScript = {
 
     if (surveys.length === 0) {
       logger.info("No surveys found that need migration");
-      return;
-    }
+    } else {
+      logger.info(`Found ${surveys.length.toString()} surveys to migrate`);
 
-    logger.info(`Found ${surveys.length.toString()} surveys to migrate`);
+      // 2. Process each survey
+      const updates: { id: string; blocks: Block[] }[] = [];
 
-    // 2. Process each survey
-    const updates: { id: string; blocks: Block[] }[] = [];
-
-    for (const survey of surveys) {
-      try {
-        const migrated = migrateQuestionsSurveyToBlocks(survey, createId, ctaStats);
-        updates.push({
-          id: migrated.id,
-          blocks: migrated.blocks,
-        });
-      } catch (error) {
-        logger.error(error, `Failed to migrate survey ${survey.id}`);
-        throw new Error(
-          `Migration failed for survey ${survey.id}: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    }
-
-    logger.info(`Successfully processed ${updates.length.toString()} surveys`);
-
-    // 3. Update surveys individually for safety (avoids SQL injection risks with complex JSONB arrays)
-    let updatedCount = 0;
-
-    for (const update of updates) {
-      try {
-        // PostgreSQL requires proper array format for jsonb[]
-        // We need to convert the JSON array to a PostgreSQL jsonb array using array_to_json
-        // The trick is to use jsonb_array_elements to convert the JSON array into rows, then array_agg to collect them back
-        await tx.$executeRawUnsafe(
-          `UPDATE "Survey" 
-           SET blocks = (
-             SELECT array_agg(elem)
-             FROM jsonb_array_elements($1::jsonb) AS elem
-           ), 
-           questions = '[]'::jsonb 
-           WHERE id = $2`,
-          JSON.stringify(update.blocks),
-          update.id
-        );
-
-        updatedCount++;
-
-        // Log progress every 10000 surveys
-        if (updatedCount % 10000 === 0) {
-          logger.info(`Progress: ${updatedCount.toString()}/${updates.length.toString()} surveys updated`);
+      for (const survey of surveys) {
+        try {
+          const migrated = migrateQuestionsSurveyToBlocks(survey, createId, ctaStats);
+          updates.push({
+            id: migrated.id,
+            blocks: migrated.blocks,
+          });
+        } catch (error) {
+          logger.error(error, `Failed to migrate survey ${survey.id}`);
+          throw new Error(
+            `Migration failed for survey ${survey.id}: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
-      } catch (error) {
-        logger.error(error, `Failed to update survey ${update.id} in database`);
-        throw new Error(
-          `Database update failed for survey ${update.id}: ${error instanceof Error ? error.message : String(error)}`
+      }
+
+      logger.info(`Successfully processed ${updates.length.toString()} surveys`);
+
+      // 3. Update surveys individually for safety (avoids SQL injection risks with complex JSONB arrays)
+      let updatedCount = 0;
+
+      for (const update of updates) {
+        try {
+          // PostgreSQL requires proper array format for jsonb[]
+          // We need to convert the JSON array to a PostgreSQL jsonb array using array_to_json
+          // The trick is to use jsonb_array_elements to convert the JSON array into rows, then array_agg to collect them back
+          await tx.$executeRawUnsafe(
+            `UPDATE "Survey" 
+             SET blocks = (
+               SELECT array_agg(elem)
+               FROM jsonb_array_elements($1::jsonb) AS elem
+             ), 
+             questions = '[]'::jsonb 
+             WHERE id = $2`,
+            JSON.stringify(update.blocks),
+            update.id
+          );
+
+          updatedCount++;
+
+          // Log progress every 10000 surveys
+          if (updatedCount % 10000 === 0) {
+            logger.info(`Progress: ${updatedCount.toString()}/${updates.length.toString()} surveys updated`);
+          }
+        } catch (error) {
+          logger.error(error, `Failed to update survey ${update.id} in database`);
+          throw new Error(
+            `Database update failed for survey ${update.id}: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
+
+      logger.info(`Migration complete: ${updatedCount.toString()} surveys migrated to blocks`);
+
+      // 4. Log CTA migration statistics
+      if (ctaStats.totalCTAElements > 0) {
+        logger.info(
+          `CTA elements processed: ${ctaStats.totalCTAElements.toString()} total (${ctaStats.ctaWithExternalLink.toString()} with external link, ${ctaStats.ctaWithoutExternalLink.toString()} without)`
         );
       }
-    }
-
-    logger.info(`Migration complete: ${updatedCount.toString()} surveys migrated to blocks`);
-
-    // 4. Log CTA migration statistics
-    if (ctaStats.totalCTAElements > 0) {
-      logger.info(
-        `CTA elements processed: ${ctaStats.totalCTAElements.toString()} total (${ctaStats.ctaWithExternalLink.toString()} with external link, ${ctaStats.ctaWithoutExternalLink.toString()} without)`
-      );
     }
 
     // 5. Migrate Integration configs
