@@ -1,6 +1,6 @@
+import { TSurveyCTAElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
-  TSurveyCTAQuestion,
   TSurveyCalQuestion,
   TSurveyConsentQuestion,
   TSurveyDateQuestion,
@@ -173,20 +173,17 @@ export const mockNpsQuestion: TSurveyNPSQuestion = {
   isColorCodingEnabled: false,
 };
 
-export const mockCtaQuestion: TSurveyCTAQuestion = {
+export const mockCtaQuestion: TSurveyCTAElement = {
   required: true,
   headline: {
     default: "You are one of our power users!",
   },
-  buttonLabel: {
+  ctaButtonLabel: {
     default: "Book interview",
   },
-  buttonExternal: false,
-  dismissButtonLabel: {
-    default: "Skip",
-  },
+  buttonExternal: true,
   id: "gwn15urom4ffnhfimwbz3vgc",
-  type: TSurveyQuestionTypeEnum.CTA,
+  type: TSurveyElementTypeEnum.CTA,
   isDraft: true,
 };
 
@@ -445,15 +442,13 @@ export const mockLegacyNpsQuestion = {
 export const mockTranslatedCtaQuestion = {
   ...mockCtaQuestion,
   headline: { default: "You are one of our power users!", de: "" },
-  buttonLabel: { default: "Book interview", de: "" },
-  dismissButtonLabel: { default: "Skip", de: "" },
+  ctaButtonLabel: { default: "Book interview", de: "" },
 };
 
 export const mockLegacyCtaQuestion = {
   ...mockCtaQuestion,
   headline: "You are one of our power users!",
-  buttonLabel: "Book interview",
-  dismissButtonLabel: "Skip",
+  ctaButtonLabel: "Book interview",
 };
 
 export const mockTranslatedConsentQuestion = {

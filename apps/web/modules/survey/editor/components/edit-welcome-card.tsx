@@ -4,10 +4,10 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
@@ -15,8 +15,8 @@ import { Switch } from "@/modules/ui/components/switch";
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  setActiveQuestionId: (id: string | null) => void;
-  activeQuestionId: TSurveyQuestionId | null;
+  setActiveElementId: (id: string | null) => void;
+  activeElementId: string | null;
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -27,8 +27,8 @@ interface EditWelcomeCardProps {
 export const EditWelcomeCard = ({
   localSurvey,
   setLocalSurvey,
-  setActiveQuestionId,
-  activeQuestionId,
+  setActiveElementId,
+  activeElementId,
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
@@ -40,13 +40,13 @@ export const EditWelcomeCard = ({
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
 
-  let open = activeQuestionId == "start";
+  let open = activeElementId == "start";
 
   const setOpen = (e) => {
     if (e) {
-      setActiveQuestionId("start");
+      setActiveElementId("start");
     } else {
-      setActiveQuestionId(null);
+      setActiveElementId(null);
     }
   };
 
@@ -123,12 +123,12 @@ export const EditWelcomeCard = ({
               />
             </div>
             <div className="mt-3">
-              <QuestionFormInput
+              <ElementFormInput
                 id="headline"
                 value={localSurvey.welcomeCard.headline}
                 label={t("common.note") + "*"}
                 localSurvey={localSurvey}
-                questionIdx={-1}
+                elementIdx={-1}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
@@ -138,12 +138,12 @@ export const EditWelcomeCard = ({
               />
             </div>
             <div className="mt-3">
-              <QuestionFormInput
+              <ElementFormInput
                 id="subheader"
                 value={localSurvey.welcomeCard.subheader}
                 label={t("environments.surveys.edit.welcome_message")}
                 localSurvey={localSurvey}
-                questionIdx={-1}
+                elementIdx={-1}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
@@ -156,11 +156,11 @@ export const EditWelcomeCard = ({
             <div className="mt-3 flex justify-between gap-8">
               <div className="flex w-full space-x-2">
                 <div className="w-full">
-                  <QuestionFormInput
+                  <ElementFormInput
                     id="buttonLabel"
                     value={localSurvey.welcomeCard.buttonLabel}
                     localSurvey={localSurvey}
-                    questionIdx={-1}
+                    elementIdx={-1}
                     maxLength={48}
                     placeholder={t("common.next")}
                     isInvalid={isInvalid}

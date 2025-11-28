@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { TI18nString } from "@formbricks/types/surveys/types";
+import { TI18nString } from "@formbricks/types/i18n";
 import { getLocalizedValue } from "./i18n";
 
 describe("i18n", () => {

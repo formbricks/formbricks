@@ -21,10 +21,9 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
-import {
-  getDefaultOperatorForQuestion,
-  replaceEndingCardHeadlineRecall,
-} from "@/modules/survey/editor/lib/utils";
+import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
+import { replaceEndingCardHeadlineRecall } from "@/modules/survey/editor/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -93,7 +92,10 @@ export const QuotaModal = ({
     return modifiedSurvey;
   }, [survey]);
 
+  const elements = useMemo(() => getElementsFromBlocks(transformedSurvey.blocks), [transformedSurvey.blocks]);
+
   const defaultValues = useMemo(() => {
+    const firstElement = elements[0];
     return {
       name: quota?.name || "",
       limit: quota?.limit || 1,
@@ -102,8 +104,8 @@ export const QuotaModal = ({
         conditions: [
           {
             id: createId(),
-            leftOperand: { type: "question", value: survey.questions[0]?.id },
-            operator: getDefaultOperatorForQuestion(survey.questions[0], t),
+            leftOperand: { type: "element", value: firstElement?.id },
+            operator: firstElement ? getDefaultOperatorForElement(firstElement, t) : "equals",
           },
         ],
       },
@@ -112,7 +114,7 @@ export const QuotaModal = ({
       countPartialSubmissions: quota?.countPartialSubmissions || false,
       surveyId: survey.id,
     };
-  }, [quota, survey]);
+  }, [quota, survey, elements, t]);
 
   const form = useForm<TSurveyQuotaInput>({
     defaultValues,
@@ -377,7 +379,7 @@ export const QuotaModal = ({
                             <div className="space-y-2">
                               <FormControl>
                                 <EndingCardSelector
-                                  endings={survey.endings}
+                                  survey={survey}
                                   value={endingCardField.value || ""}
                                   onChange={(value) => {
                                     form.setValue("endingCardId", value, {

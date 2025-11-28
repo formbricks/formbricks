@@ -1,6 +1,7 @@
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
+import { TI18nString } from "@formbricks/types/i18n";
 import { TLanguage } from "@formbricks/types/project";
-import { TI18nString, TSurveyLanguage } from "@formbricks/types/surveys/types";
+import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
 // Helper function to create an i18nString from a regular string.
@@ -29,7 +30,7 @@ export const createI18nString = (
     return i18nString;
   } else {
     // It's a regular string, so create a new i18n object
-    const i18nString: any = {
+    const i18nString = {
       [targetLanguageCode ?? "default"]: text,
     };
 
@@ -45,7 +46,7 @@ export const createI18nString = (
 };
 
 // Type guard to check if an object is an I18nString
-export const isI18nObject = (obj: any): obj is TI18nString => {
+export const isI18nObject = (obj: unknown): obj is TI18nString => {
   return typeof obj === "object" && obj !== null && Object.keys(obj).includes("default");
 };
 
@@ -91,7 +92,7 @@ export const iso639Identifiers = iso639Languages.map((language) => language.alph
 
 // Helper function to add language keys to a multi-language object (e.g. survey or question)
 // Iterates over the object recursively and adds empty strings for new language keys
-export const addMultiLanguageLabels = (object: any, languageSymbols: string[]): any => {
+export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[]): any => {
   // Helper function to add language keys to a multi-language object
   function addLanguageKeys(obj: { default: string; [key: string]: string }) {
     languageSymbols.forEach((lang) => {
@@ -102,14 +103,14 @@ export const addMultiLanguageLabels = (object: any, languageSymbols: string[]): 
   }
 
   // Recursive function to process an object or array
-  function processObject(obj: any) {
+  function processObject(obj: unknown) {
     if (Array.isArray(obj)) {
       obj.forEach((item) => processObject(item));
     } else if (obj && typeof obj === "object") {
       for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
           if (key === "default" && typeof obj[key] === "string") {
-            addLanguageKeys(obj);
+            addLanguageKeys(obj as { default: string; [key: string]: string });
           } else {
             processObject(obj[key]);
           }

@@ -3,7 +3,7 @@
 import { TFunction } from "i18next";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Control, Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -14,14 +14,15 @@ import {
   TIntegrationAirtableInput,
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { BaseSelectDropdown } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable";
 import AirtableLogo from "@/images/airtableLogo.svg";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -44,6 +45,45 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { IntegrationModalInputs } from "../lib/types";
+
+const ElementCheckbox = ({
+  element,
+  selectedSurvey,
+  field,
+}: {
+  element: TSurveyElement;
+  selectedSurvey: TSurvey;
+  field: {
+    value: string[] | undefined;
+    onChange: (value: string[]) => void;
+  };
+}) => {
+  const handleCheckedChange = (checked: boolean) => {
+    if (checked) {
+      field.onChange([...(field.value || []), element.id]);
+    } else {
+      field.onChange(field.value?.filter((value) => value !== element.id) || []);
+    }
+  };
+
+  return (
+    <div className="my-1 flex items-center space-x-2">
+      <label htmlFor={element.id} className="flex cursor-pointer items-center">
+        <Checkbox
+          type="button"
+          id={element.id}
+          value={element.id}
+          className="bg-white"
+          checked={field.value?.includes(element.id)}
+          onCheckedChange={handleCheckedChange}
+        />
+        <span className="ml-2">
+          {getTextContent(recallToHeadline(element.headline, selectedSurvey, false, "default")["default"])}
+        </span>
+      </label>
+    </div>
+  );
+};
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }
@@ -68,9 +108,10 @@ const NoBaseFoundError = () => {
   );
 };
 
-const renderQuestionSelection = ({
+const renderElementSelection = ({
   t,
   selectedSurvey,
+  elements,
   control,
   includeVariables,
   setIncludeVariables,
@@ -83,6 +124,7 @@ const renderQuestionSelection = ({
 }: {
   t: TFunction;
   selectedSurvey: TSurvey;
+  elements: TSurveyElement[];
   control: Control<IntegrationModalInputs>;
   includeVariables: boolean;
   setIncludeVariables: (value: boolean) => void;
@@ -99,31 +141,13 @@ const renderQuestionSelection = ({
         <Label htmlFor="Surveys">{t("common.questions")}</Label>
         <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
           <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-            {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
+            {elements.map((element) => (
               <Controller
-                key={question.id}
+                key={element.id}
                 control={control}
-                name={"questions"}
+                name={"elements"}
                 render={({ field }) => (
-                  <div className="my-1 flex items-center space-x-2">
-                    <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                      <Checkbox
-                        type="button"
-                        id={question.id}
-                        value={question.id}
-                        className="bg-white"
-                        checked={field.value?.includes(question.id)}
-                        onCheckedChange={(checked) => {
-                          return checked
-                            ? field.onChange([...field.value, question.id])
-                            : field.onChange(field.value?.filter((value) => value !== question.id));
-                        }}
-                      />
-                      <span className="ml-2">
-                        {getTextContent(getLocalizedValue(question.headline, "default"))}
-                      </span>
-                    </label>
-                  </div>
+                  <ElementCheckbox element={element} selectedSurvey={selectedSurvey} field={field} />
                 )}
               />
             ))}
@@ -194,6 +218,11 @@ export const AddIntegrationModal = ({
   };
 
   const selectedSurvey = surveys.find((item) => item.id === survey);
+  const elements = useMemo(
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
+    [selectedSurvey]
+  );
+
   const submitHandler = async (data: IntegrationModalInputs) => {
     try {
       if (!data.base || data.base === "") {
@@ -208,7 +237,7 @@ export const AddIntegrationModal = ({
         throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
 
-      if (data.questions.length === 0) {
+      if (data.elements.length === 0) {
         throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
 
@@ -216,9 +245,9 @@ export const AddIntegrationModal = ({
       const integrationData: TIntegrationAirtableConfigData = {
         surveyId: selectedSurvey.id,
         surveyName: selectedSurvey.name,
-        questionIds: data.questions,
-        questions:
-          data.questions.length === selectedSurvey.questions.length
+        elementIds: data.elements,
+        elements:
+          data.elements.length === elements.length
             ? t("common.all_questions")
             : t("common.selected_questions"),
         createdAt: new Date(),
@@ -366,7 +395,7 @@ export const AddIntegrationModal = ({
                           required
                           onValueChange={(val) => {
                             field.onChange(val);
-                            setValue("questions", []);
+                            setValue("elements", []);
                           }}
                           defaultValue={defaultData?.survey}>
                           <SelectTrigger>
@@ -392,9 +421,10 @@ export const AddIntegrationModal = ({
 
               {survey &&
                 selectedSurvey &&
-                renderQuestionSelection({
+                renderElementSelection({
                   t,
                   selectedSurvey,
+                  elements: elements,
                   control,
                   includeVariables,
                   setIncludeVariables,

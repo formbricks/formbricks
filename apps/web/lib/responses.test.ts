@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
-import { TSurveyQuestionType, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { convertResponseValue, getQuestionResponseMapping, processResponseData } from "./responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { convertResponseValue, getElementResponseMapping, processResponseData } from "./responses";
 
 // Mock the recall and i18n utils
 vi.mock("@/lib/utils/recall", () => ({
@@ -63,7 +63,7 @@ describe("Response Processing", () => {
   describe("convertResponseValue", () => {
     const mockOpenTextQuestion = {
       id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText as const,
+      type: TSurveyElementTypeEnum.OpenText as const,
       headline: { default: "Test Question" },
       required: true,
       inputType: "text" as const,
@@ -73,7 +73,7 @@ describe("Response Processing", () => {
 
     const mockRankingQuestion = {
       id: "q1",
-      type: TSurveyQuestionTypeEnum.Ranking as const,
+      type: TSurveyElementTypeEnum.Ranking as const,
       headline: { default: "Test Question" },
       required: true,
       choices: [
@@ -85,7 +85,7 @@ describe("Response Processing", () => {
 
     const mockFileUploadQuestion = {
       id: "q1",
-      type: TSurveyQuestionTypeEnum.FileUpload as const,
+      type: TSurveyElementTypeEnum.FileUpload as const,
       headline: { default: "Test Question" },
       required: true,
       allowMultipleFiles: true,
@@ -93,7 +93,7 @@ describe("Response Processing", () => {
 
     const mockPictureSelectionQuestion = {
       id: "q1",
-      type: TSurveyQuestionTypeEnum.PictureSelection as const,
+      type: TSurveyElementTypeEnum.PictureSelection as const,
       headline: { default: "Test Question" },
       required: true,
       allowMulti: false,
@@ -174,7 +174,7 @@ describe("Response Processing", () => {
     });
   });
 
-  describe("getQuestionResponseMapping", () => {
+  describe("getElementResponseMapping", () => {
     const mockSurvey = {
       id: "survey1",
       type: "link" as const,
@@ -184,28 +184,36 @@ describe("Response Processing", () => {
       name: "Test Survey",
       environmentId: "env1",
       createdBy: null,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.OpenText as const,
-          headline: { default: "Question 1" },
-          required: true,
-          inputType: "text" as const,
-          longAnswer: false,
-          charLimit: { enabled: false },
-        },
-        {
-          id: "q2",
-          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti as const,
-          headline: { default: "Question 2" },
-          required: true,
-          choices: [
-            { id: "1", label: { default: "Option 1" } },
-            { id: "2", label: { default: "Option 2" } },
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.OpenText as const,
+              headline: { default: "Question 1" },
+              required: true,
+              inputType: "text" as const,
+              longAnswer: false,
+              charLimit: { enabled: false },
+            },
+            {
+              id: "q2",
+              type: TSurveyElementTypeEnum.MultipleChoiceMulti as const,
+              headline: { default: "Question 2" },
+              required: true,
+              choices: [
+                { id: "1", label: { default: "Option 1" } },
+                { id: "2", label: { default: "Option 2" } },
+              ],
+              shuffleOption: "none" as const,
+              buttonLabel: { default: "Next" },
+            },
           ],
-          shuffleOption: "none" as const,
         },
       ],
+      questions: [],
       hiddenFields: {
         enabled: false,
         fieldIds: [],
@@ -255,6 +263,7 @@ describe("Response Processing", () => {
         enabled: false,
         isEncrypted: false,
       },
+      metadata: {},
     };
 
     const mockResponse = {
@@ -286,17 +295,17 @@ describe("Response Processing", () => {
     };
 
     test("should map questions to responses correctly", () => {
-      const mapping = getQuestionResponseMapping(mockSurvey, mockResponse);
+      const mapping = getElementResponseMapping(mockSurvey, mockResponse);
       expect(mapping).toHaveLength(2);
       expect(mapping[0]).toEqual({
-        question: "Question 1",
+        element: "Question 1",
         response: "Answer 1",
-        type: TSurveyQuestionTypeEnum.OpenText,
+        type: TSurveyElementTypeEnum.OpenText,
       });
       expect(mapping[1]).toEqual({
-        question: "Question 2",
+        element: "Question 2",
         response: "Option 1; Option 2",
-        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
       });
     });
 
@@ -325,7 +334,7 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(mockSurvey, response);
+      const mapping = getElementResponseMapping(mockSurvey, response);
       expect(mapping).toHaveLength(2);
       expect(mapping[0].response).toBe("");
       expect(mapping[1].response).toBe("");
@@ -334,17 +343,24 @@ describe("Response Processing", () => {
     test("should handle different language", () => {
       const survey = {
         ...mockSurvey,
-        questions: [
+        blocks: [
           {
-            id: "q1",
-            type: TSurveyQuestionTypeEnum.OpenText as const,
-            headline: { default: "Question 1", en: "Question 1 EN" },
-            required: true,
-            inputType: "text" as const,
-            longAnswer: false,
-            charLimit: { enabled: false },
+            id: "block1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyElementTypeEnum.OpenText as const,
+                headline: { default: "Question 1", en: "Question 1 EN" },
+                required: true,
+                inputType: "text" as const,
+                longAnswer: false,
+                charLimit: { enabled: false },
+              },
+            ],
           },
         ],
+        questions: [],
         languages: [
           {
             language: {
@@ -396,8 +412,8 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(survey, response);
-      expect(mapping[0].question).toBe("Question 1 EN");
+      const mapping = getElementResponseMapping(survey, response);
+      expect(mapping[0].element).toBe("Question 1 EN");
     });
 
     test("should handle null response language", () => {
@@ -425,9 +441,9 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(mockSurvey, response);
+      const mapping = getElementResponseMapping(mockSurvey, response);
       expect(mapping).toHaveLength(2);
-      expect(mapping[0].question).toBe("Question 1");
+      expect(mapping[0].element).toBe("Question 1");
     });
 
     test("should handle undefined response language", () => {
@@ -455,9 +471,9 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(mockSurvey, response);
+      const mapping = getElementResponseMapping(mockSurvey, response);
       expect(mapping).toHaveLength(2);
-      expect(mapping[0].question).toBe("Question 1");
+      expect(mapping[0].element).toBe("Question 1");
     });
 
     test("should handle empty survey languages", () => {
@@ -489,9 +505,9 @@ describe("Response Processing", () => {
         contactAttributes: {},
         singleUseId: null,
       };
-      const mapping = getQuestionResponseMapping(survey, response);
+      const mapping = getElementResponseMapping(survey, response);
       expect(mapping).toHaveLength(2);
-      expect(mapping[0].question).toBe("Question 1"); // Should fallback to default
+      expect(mapping[0].element).toBe("Question 1"); // Should fallback to default
     });
   });
 });

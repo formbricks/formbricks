@@ -109,7 +109,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
           {channelTag}
         </div>
       )}
-      {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
+      {template.preset.blocks.some((block) => block.logic && block.logic.length > 0) && (
         <TooltipRenderer
           tooltipContent={t("environments.surveys.templates.uses_branching_logic")}
           shouldRender={true}>
