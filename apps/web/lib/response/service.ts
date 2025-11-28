@@ -507,11 +507,16 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
-    const ttc = responseInput.ttc
-      ? responseInput.finished
-        ? calculateTtcTotal(responseInput.ttc)
-        : responseInput.ttc
-      : {};
+    // merge ttc object (similar to data) to preserve TTC from previous blocks
+    const currentTtc = currentResponse.ttc;
+    const mergedTtc = responseInput.ttc
+      ? {
+          ...currentTtc,
+          ...responseInput.ttc,
+        }
+      : currentTtc;
+    // Calculate total only when finished
+    const ttc = responseInput.finished ? calculateTtcTotal(mergedTtc) : mergedTtc;
     const language = responseInput.language;
     const variables = {
       ...currentResponse.variables,

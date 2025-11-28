@@ -42,6 +42,7 @@ interface ElementConditionalProps {
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
   formRef?: (ref: HTMLFormElement | null) => void; // Callback to expose the form element
+  onTtcCollect?: (elementId: string, ttc: number) => void; // Callback to collect TTC synchronously
 }
 
 export function ElementConditional({
@@ -60,6 +61,7 @@ export function ElementConditional({
   onOpenExternalURL,
   dir,
   formRef,
+  onTtcCollect,
 }: ElementConditionalProps) {
   // Ref to the container div, used to find and expose the form element inside
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,6 +76,16 @@ export function ElementConditional({
       return () => formRef(null);
     }
   }, [formRef]);
+
+  // Wrap setTtc to also call onTtcCollect synchronously
+  // This allows the block to collect TTC values without waiting for async state updates
+  const wrappedSetTtc = (newTtc: TResponseTtc) => {
+    setTtc(newTtc);
+    // Extract this element's TTC and call the collector if provided
+    if (onTtcCollect && newTtc[element.id] !== undefined) {
+      onTtcCollect(element.id, newTtc[element.id]);
+    }
+  };
 
   const getResponseValueForRankingElement = (value: string[], choices: TSurveyElementChoice[]): string[] => {
     return value
@@ -122,7 +134,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
@@ -137,7 +149,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
@@ -152,7 +164,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
@@ -167,7 +179,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
@@ -182,7 +194,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             onOpenExternalURL={onOpenExternalURL}
@@ -197,7 +209,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
@@ -212,7 +224,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
@@ -227,7 +239,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
           />
@@ -241,7 +253,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
@@ -258,7 +270,7 @@ export function ElementConditional({
             onFileUpload={onFileUpload}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
           />
@@ -272,7 +284,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
           />
         );
@@ -284,7 +296,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
           />
         );
@@ -296,7 +308,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
             autoFocusEnabled={autoFocusEnabled}
             dir={dir}
@@ -310,7 +322,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
           />
@@ -323,7 +335,7 @@ export function ElementConditional({
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
-            setTtc={setTtc}
+            setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
             autoFocusEnabled={autoFocusEnabled}
             dir={dir}
