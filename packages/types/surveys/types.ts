@@ -1307,18 +1307,7 @@ export const ZSurvey = z
         });
       }
 
-      // 2. Validate block names are unique (for editor usability)
-      const blockNames = blocks.map((b) => b.name);
-      const uniqueBlockNames = new Set(blockNames);
-      if (uniqueBlockNames.size !== blockNames.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Block names must be unique",
-          path: ["blocks", blockNames.findIndex((name, index) => blockNames.indexOf(name) !== index), "name"],
-        });
-      }
-
-      // 3. Build map of all elements across all blocks
+      // 2. Build map of all elements across all blocks
       const allElements = new Map<string, { block: number; element: number; data: TSurveyElement }>();
       blocks.forEach((block, blockIdx) => {
         block.elements.forEach((element, elemIdx) => {

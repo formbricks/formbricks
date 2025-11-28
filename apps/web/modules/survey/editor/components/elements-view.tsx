@@ -45,6 +45,7 @@ import {
   findElementLocation,
   moveBlock as moveBlockHelper,
   moveElementInBlock,
+  renumberBlocks,
   updateElementInBlock,
 } from "@/modules/survey/editor/lib/blocks";
 import { findElementUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
@@ -765,7 +766,10 @@ export const ElementsView = ({
       const [movedBlock] = blocks.splice(sourceBlockIndex, 1);
       blocks.splice(destBlockIndex, 0, movedBlock);
 
-      setLocalSurvey({ ...localSurvey, blocks });
+      // Renumber blocks sequentially after drag-and-drop reordering
+      const renumberedBlocks = renumberBlocks(blocks);
+
+      setLocalSurvey({ ...localSurvey, blocks: renumberedBlocks });
     }
   };
 

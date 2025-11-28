@@ -13,6 +13,7 @@ import {
   isElementIdUnique,
   moveBlock,
   moveElementInBlock,
+  renumberBlocks,
   updateBlock,
   updateElementInBlock,
 } from "./blocks";
@@ -83,6 +84,50 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   metadata: {},
 });
 
+describe("renumberBlocks", () => {
+  test("should renumber blocks sequentially starting from 1", () => {
+    const blocks = [
+      createMockBlock("block-1", "Old Name 1"),
+      createMockBlock("block-2", "Old Name 2"),
+      createMockBlock("block-3", "Old Name 3"),
+    ];
+
+    const result = renumberBlocks(blocks);
+
+    expect(result).toHaveLength(3);
+    expect(result[0].name).toBe("Block 1");
+    expect(result[1].name).toBe("Block 2");
+    expect(result[2].name).toBe("Block 3");
+  });
+
+  test("should preserve block IDs and other properties", () => {
+    const blocks = [
+      createMockBlock("block-1", "Old Name 1", [createMockElement("q1")]),
+      createMockBlock("block-2", "Old Name 2", [createMockElement("q2")]),
+    ];
+
+    const result = renumberBlocks(blocks);
+
+    expect(result[0].id).toBe("block-1");
+    expect(result[1].id).toBe("block-2");
+    expect(result[0].elements).toHaveLength(1);
+    expect(result[1].elements).toHaveLength(1);
+  });
+
+  test("should handle empty array", () => {
+    const result = renumberBlocks([]);
+    expect(result).toHaveLength(0);
+  });
+
+  test("should handle single block", () => {
+    const blocks = [createMockBlock("block-1", "Old Name")];
+    const result = renumberBlocks(blocks);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("Block 1");
+  });
+});
+
 describe("isElementIdUnique", () => {
   test("should return true for a unique element ID", () => {
     const blocks = [
@@ -151,12 +196,12 @@ describe("findElementLocation", () => {
 describe("addBlock", () => {
   test("should add a block to empty survey", () => {
     const survey = createMockSurvey([]);
-    const result = addBlock(mockT, survey, { name: "New Block" });
+    const result = addBlock(mockT, survey, { name: "Block 1" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.blocks).toHaveLength(1);
-      expect(result.data.blocks[0].name).toBe("New Block");
+      expect(result.data.blocks[0].name).toBe("Block 1");
       expect(result.data.blocks[0].elements).toEqual([]);
     }
   });
@@ -182,19 +227,9 @@ describe("addBlock", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.blocks).toHaveLength(3);
-      expect(result.data.blocks[1].name).toBe("Block 1.5");
+      expect(result.data.blocks[1].name).toBe("Block 2");
       expect(result.data.blocks[0].name).toBe("Block 1");
-      expect(result.data.blocks[2].name).toBe("Block 2");
-    }
-  });
-
-  test("should use default name if not provided", () => {
-    const survey = createMockSurvey([]);
-    const result = addBlock(mockT, survey, {});
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data.blocks[0].name).toBe("environments.surveys.edit.untitled_block");
+      expect(result.data.blocks[2].name).toBe("Block 3");
     }
   });
 
@@ -321,7 +356,7 @@ describe("duplicateBlock", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.blocks).toHaveLength(2);
-      expect(result.data.blocks[1].name).toBe("Block 1 (copy)");
+      expect(result.data.blocks[1].name).toBe("Block 2");
       expect(result.data.blocks[1].id).not.toBe("block-1");
       expect(result.data.blocks[1].elements[0].id).not.toBe("q1");
       expect(result.data.blocks[1].elements[1].id).not.toBe("q2");
@@ -366,7 +401,7 @@ describe("duplicateBlock", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.blocks).toHaveLength(4);
-      expect(result.data.blocks[2].name).toBe("Block 2 (copy)");
+      expect(result.data.blocks[2].name).toBe("Block 3");
       expect(result.data.blocks[1].id).toBe("block-2");
       expect(result.data.blocks[3].id).toBe("block-3");
     }

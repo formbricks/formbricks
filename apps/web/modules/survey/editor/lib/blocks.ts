@@ -53,6 +53,19 @@ export const findElementLocation = (
 // ============================================
 
 /**
+ * Renumbers all blocks sequentially (Block 1, Block 2, Block 3, etc.)
+ * This ensures block names stay in sync with their positions
+ * @param blocks - Array of blocks to renumber
+ * @returns Array of blocks with updated sequential names
+ */
+export const renumberBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] => {
+  return blocks.map((block, index) => ({
+    ...block,
+    name: `Block ${index + 1}`,
+  }));
+};
+
+/**
  * Adds a new block to the survey. Always generates a new CUID for the block ID to prevent conflicts
  * @param survey - The survey to add the block to
  * @param block - Block data (without id, which is auto-generated)
@@ -87,7 +100,10 @@ export const addBlock = (
     blocks.splice(index, 0, newBlock);
   }
 
-  updatedSurvey.blocks = blocks;
+  // Renumber blocks sequentially after adding
+  const renumberedBlocks = renumberBlocks(blocks);
+
+  updatedSurvey.blocks = renumberedBlocks;
   return ok(updatedSurvey);
 };
 
@@ -144,9 +160,12 @@ export const deleteBlock = (survey: TSurvey, blockId: string): Result<TSurvey, E
     return err(new Error(`Block with ID "${blockId}" not found`));
   }
 
+  // Renumber blocks sequentially after deletion
+  const renumberedBlocks = renumberBlocks(filteredBlocks);
+
   return ok({
     ...survey,
-    blocks: filteredBlocks,
+    blocks: renumberedBlocks,
   });
 };
 
@@ -173,7 +192,7 @@ export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey
 
   // Assign new IDs
   duplicatedBlock.id = createId();
-  duplicatedBlock.name = `${blockToDuplicate.name} (copy)`;
+  // Name will be set by renumberBlocks to maintain sequential naming
 
   // Generate new element IDs to avoid conflicts
   duplicatedBlock.elements = duplicatedBlock.elements.map((element) => ({
@@ -190,9 +209,12 @@ export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey
   const updatedBlocks = [...blocks];
   updatedBlocks.splice(blockIndex + 1, 0, duplicatedBlock);
 
+  // Renumber blocks sequentially after duplication
+  const renumberedBlocks = renumberBlocks(updatedBlocks);
+
   return ok({
     ...survey,
-    blocks: updatedBlocks,
+    blocks: renumberedBlocks,
   });
 };
 
@@ -228,9 +250,12 @@ export const moveBlock = (
   // Swap using destructuring assignment
   [blocks[blockIndex], blocks[targetIndex]] = [blocks[targetIndex], blocks[blockIndex]];
 
+  // Renumber blocks sequentially after reordering
+  const renumberedBlocks = renumberBlocks(blocks);
+
   return ok({
     ...survey,
-    blocks,
+    blocks: renumberedBlocks,
   });
 };
 
