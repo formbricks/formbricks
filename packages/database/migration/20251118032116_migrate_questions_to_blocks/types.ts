@@ -76,6 +76,28 @@ export interface CTAMigrationStats {
   ctaWithoutExternalLink: number;
 }
 
+// Integration migration types
+export interface IntegrationRecord {
+  id: string;
+  type: string;
+  config: any;
+}
+
+export interface MigratedIntegration {
+  id: string;
+  config: any;
+}
+
+export interface IntegrationMigrationStats {
+  totalIntegrations: number;
+  googleSheets: { processed: number; skipped: number };
+  airtable: { processed: number; skipped: number };
+  slack: { processed: number; skipped: number };
+  notion: { processed: number; skipped: number };
+  n8n: { skipped: number };
+  errors: number;
+}
+
 // Type guards
 export const isSingleCondition = (condition: Condition): condition is SingleCondition => {
   return "leftOperand" in condition && "operator" in condition;

@@ -414,3 +414,159 @@ export const migrateQuestionsSurveyToBlocks = (
     blocks,
   };
 };
+
+/**
+ * Check if config item is already migrated (has elementIds/elements)
+ */
+const isAlreadyMigrated = (item: any): boolean => {
+  return "elementIds" in item || "elements" in item;
+};
+
+/**
+ * Check if config item needs migration (has questionIds/questions)
+ */
+const needsMigration = (item: any): boolean => {
+  return "questionIds" in item || "questions" in item;
+};
+
+/**
+ * Migrate Airtable/Google Sheets/Slack config (shared base type)
+ * Returns { migrated: true/false, config: newConfig }
+ */
+export const migrateSharedIntegrationConfig = (config: any): { migrated: boolean; config: any } => {
+  // Validate config structure
+  if (!config || typeof config !== "object") {
+    return { migrated: false, config };
+  }
+
+  if (!config.data || !Array.isArray(config.data)) {
+    return { migrated: false, config };
+  }
+
+  let anyMigrated = false;
+
+  const newData = config.data.map((item: any) => {
+    // Skip if already migrated
+    if (isAlreadyMigrated(item)) {
+      return item;
+    }
+
+    // Skip if nothing to migrate
+    if (!needsMigration(item)) {
+      return item;
+    }
+
+    anyMigrated = true;
+    const migrated = { ...item };
+
+    // Rename questionIds to elementIds
+    if ("questionIds" in migrated) {
+      migrated.elementIds = migrated.questionIds;
+      delete migrated.questionIds;
+    }
+
+    // Rename questions to elements
+    if ("questions" in migrated) {
+      migrated.elements = migrated.questions;
+      delete migrated.questions;
+    }
+
+    // All other fields (includeVariables, etc.) are preserved automatically via spread
+
+    return migrated;
+  });
+
+  return {
+    migrated: anyMigrated,
+    config: { ...config, data: newData },
+  };
+};
+
+/**
+ * Check if Notion config item has any mapping entries that need migration
+ */
+const needsNotionMigration = (item: any): boolean => {
+  if (!item.mapping || !Array.isArray(item.mapping) || item.mapping.length === 0) {
+    return false;
+  }
+
+  // Check if ANY mapping item has "question" field (needs migration)
+  return item.mapping.some((mapItem: any) => "question" in mapItem && !("element" in mapItem));
+};
+
+/**
+ * Migrate Notion config (custom mapping structure)
+ * Returns { migrated: true/false, config: newConfig }
+ */
+export const migrateNotionIntegrationConfig = (config: any): { migrated: boolean; config: any } => {
+  // Validate config structure
+  if (!config || typeof config !== "object") {
+    return { migrated: false, config };
+  }
+
+  if (!config.data || !Array.isArray(config.data)) {
+    return { migrated: false, config };
+  }
+
+  let anyMigrated = false;
+
+  const newData = config.data.map((item: any) => {
+    // Skip if nothing to migrate
+    if (!needsNotionMigration(item)) {
+      return item;
+    }
+
+    anyMigrated = true;
+
+    // Migrate mapping array - check EACH item individually
+    const newMapping = item.mapping.map((mapItem: any) => {
+      // Already has element field - skip this item
+      if ("element" in mapItem) {
+        return mapItem;
+      }
+
+      // Has question field - migrate it
+      if ("question" in mapItem) {
+        const { question, ...rest } = mapItem;
+        return {
+          ...rest,
+          element: question,
+        };
+      }
+
+      // Neither element nor question - return as is
+      return mapItem;
+    });
+
+    return {
+      ...item,
+      mapping: newMapping,
+    };
+  });
+
+  return {
+    migrated: anyMigrated,
+    config: { ...config, data: newData },
+  };
+};
+
+/**
+ * Migrate integration config based on type
+ * Returns { migrated: true/false, config: newConfig }
+ */
+export const migrateIntegrationConfig = (type: string, config: any): { migrated: boolean; config: any } => {
+  switch (type) {
+    case "googleSheets":
+    case "airtable":
+    case "slack":
+      return migrateSharedIntegrationConfig(config);
+    case "notion":
+      return migrateNotionIntegrationConfig(config);
+    case "n8n":
+      // n8n has no config schema to migrate
+      return { migrated: false, config };
+    default:
+      // Unknown type - return unchanged
+      return { migrated: false, config };
+  }
+};
