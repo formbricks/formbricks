@@ -3,7 +3,7 @@ import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
 import { type TSurvey } from "@formbricks/types/surveys/types";
-import { getQuestionResponseMapping } from "@/lib/responses";
+import { getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
 import { EmailButton } from "../../components/email-button";
@@ -26,7 +26,7 @@ export async function ResponseFinishedEmail({
   environmentId,
   organization,
 }: ResponseFinishedEmailProps): Promise<React.JSX.Element> {
-  const questions = getQuestionResponseMapping(survey, response);
+  const elements = getElementResponseMapping(survey, response);
   const t = await getTranslate();
 
   return (
@@ -41,16 +41,17 @@ export async function ResponseFinishedEmail({
               })}
             </Text>
             <Hr />
-            {questions
-              .filter((question) => question.response)
-              .map((question) => (
-                <Row key={question.question}>
+            {elements.map((e) => {
+              if (!e.response) return;
+              return (
+                <Row key={e.element}>
                   <Column className="w-full font-medium">
-                    <Text className="mb-2 text-sm">{question.question}</Text>
-                    {renderEmailResponseValue(question.response, question.type, t)}
+                    <Text className="mb-2 text-sm">{e.element}</Text>
+                    {renderEmailResponseValue(e.response, e.type, t)}
                   </Column>
                 </Row>
-              ))}
+              );
+            })}
             {survey.variables
               .filter((variable) => {
                 const variableResponse = response.variables[variable.id];

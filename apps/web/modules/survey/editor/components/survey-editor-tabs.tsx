@@ -33,7 +33,7 @@ export const SurveyEditorTabs = ({
   const tabsComputed = useMemo(() => {
     const tabs: Tab[] = [
       {
-        id: "questions",
+        id: "elements",
         label: t("common.questions"),
         icon: <Rows3Icon className="h-5 w-5" />,
       },
@@ -59,7 +59,7 @@ export const SurveyEditorTabs = ({
       return tabs;
     }
     return tabs.filter((tab) => tab.id !== "styling");
-  }, [isStylingTabVisible, isSurveyFollowUpsAllowed]);
+  }, [isStylingTabVisible, isSurveyFollowUpsAllowed, t]);
 
   // Hide settings tab in CX mode
   let tabsToDisplay = isCxMode ? tabsComputed.filter((tab) => tab.id !== "settings") : tabsComputed;

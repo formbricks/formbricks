@@ -33,6 +33,7 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   type: true,
   environmentId: true,
   questions: true,
+  blocks: true,
   endings: true,
   hiddenFields: true,
   variables: true,

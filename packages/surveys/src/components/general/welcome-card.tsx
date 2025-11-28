@@ -1,13 +1,13 @@
 import { useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { type TI18nString } from "@formbricks/types/i18n";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
-import { type TI18nString } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
-import { calculateElementIdx } from "@/lib/utils";
+import { calculateElementIdx, getElementsFromSurveyBlocks } from "@/lib/utils";
 import { Headline } from "./headline";
 import { Subheader } from "./subheader";
 
@@ -84,13 +84,14 @@ export function WelcomeCard({
   const { t } = useTranslation();
 
   const calculateTimeToComplete = () => {
-    let totalCards = survey.questions.length;
+    const questions = getElementsFromSurveyBlocks(survey.blocks);
+    let totalCards = questions.length;
     if (survey.endings.length > 0) totalCards += 1;
     let idx = calculateElementIdx(survey, 0, totalCards);
     if (idx === 0.5) {
       idx = 1;
     }
-    const timeInSeconds = (survey.questions.length / idx) * 15; //15 seconds per question.
+    const timeInSeconds = (questions.length / idx) * 15; //15 seconds per question.
     if (timeInSeconds > 360) {
       // If it's more than 6 minutes
       return t("common.x_plus_minutes", { count: 6 });
@@ -153,7 +154,7 @@ export function WelcomeCard({
 
         <Headline
           headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), responseData, variablesData)}
-          questionId="welcomeCard"
+          elementId="welcomeCard"
         />
         <Subheader
           subheader={replaceRecallInfo(
@@ -161,7 +162,7 @@ export function WelcomeCard({
             responseData,
             variablesData
           )}
-          questionId="welcomeCard"
+          elementId="welcomeCard"
         />
         <div className="fb-mt-4 fb-flex fb-gap-4 fb-pt-4">
           <SubmitButton

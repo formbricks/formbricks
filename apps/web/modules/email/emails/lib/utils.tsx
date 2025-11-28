@@ -1,17 +1,17 @@
 import { Column, Container, Img, Link, Row, Text } from "@react-email/components";
 import { TFunction } from "i18next";
 import { FileIcon } from "lucide-react";
-import { TSurveyQuestionType, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
 
 export const renderEmailResponseValue = async (
   response: string | string[],
-  questionType: TSurveyQuestionType,
+  questionType: TSurveyElementTypeEnum,
   t: TFunction,
   overrideFileUploadResponse = false
 ): Promise<React.JSX.Element> => {
   switch (questionType) {
-    case TSurveyQuestionTypeEnum.FileUpload:
+    case TSurveyElementTypeEnum.FileUpload:
       return (
         <Container>
           {overrideFileUploadResponse ? (
@@ -35,7 +35,7 @@ export const renderEmailResponseValue = async (
         </Container>
       );
 
-    case TSurveyQuestionTypeEnum.PictureSelection:
+    case TSurveyElementTypeEnum.PictureSelection:
       return (
         <Container>
           <Row>
@@ -49,7 +49,7 @@ export const renderEmailResponseValue = async (
         </Container>
       );
 
-    case TSurveyQuestionTypeEnum.Ranking:
+    case TSurveyElementTypeEnum.Ranking:
       return (
         <Container>
           <Row className="mb-2 text-sm text-slate-700" dir="auto">

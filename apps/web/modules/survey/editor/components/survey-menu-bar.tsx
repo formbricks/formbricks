@@ -9,10 +9,10 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSegment } from "@formbricks/types/segment";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurvey,
   TSurveyEditorTabs,
-  TSurveyQuestion,
   ZSurvey,
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
@@ -33,7 +33,7 @@ interface SurveyMenuBarProps {
   environmentId: string;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
-  setInvalidQuestions: React.Dispatch<React.SetStateAction<string[]>>;
+  setInvalidElements: React.Dispatch<React.SetStateAction<string[]>>;
   project: Project;
   responseCount: number;
   selectedLanguageCode: string;
@@ -51,7 +51,7 @@ export const SurveyMenuBar = ({
   setLocalSurvey,
   activeId,
   setActiveId,
-  setInvalidQuestions,
+  setInvalidElements,
   project,
   responseCount,
   selectedLanguageCode,
@@ -171,23 +171,32 @@ export const SurveyMenuBar = ({
     if (!localSurveyValidation.success) {
       const currentError = localSurveyValidation.error.errors[0];
 
-      if (currentError.path[0] === "questions") {
-        const questionIdx = currentError.path[1];
-        const question: TSurveyQuestion = localSurvey.questions[questionIdx];
-        if (question) {
-          setInvalidQuestions((prevInvalidQuestions) =>
-            prevInvalidQuestions ? [...prevInvalidQuestions, question.id] : [question.id]
-          );
+      if (currentError.path[0] === "blocks") {
+        const blockIdx = currentError.path[1];
+
+        // Check if this is an element-level error (path includes "elements")
+        // Element errors: ["blocks", blockIdx, "elements", elementIdx, ...]
+        // Block errors: ["blocks", blockIdx, "buttonLabel"] or ["blocks", blockIdx, "logic"]
+        if (currentError.path[2] === "elements" && typeof currentError.path[3] === "number") {
+          const elementIdx = currentError.path[3];
+          const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
+          const element = block?.elements[elementIdx];
+
+          if (element) {
+            setInvalidElements((prevInvalidElements) =>
+              prevInvalidElements ? [...prevInvalidElements, element.id] : [element.id]
+            );
+          }
         }
       } else if (currentError.path[0] === "welcomeCard") {
-        setInvalidQuestions((prevInvalidQuestions) =>
-          prevInvalidQuestions ? [...prevInvalidQuestions, "start"] : ["start"]
+        setInvalidElements((prevInvalidElements) =>
+          prevInvalidElements ? [...prevInvalidElements, "start"] : ["start"]
         );
       } else if (currentError.path[0] === "endings") {
         const endingIdx = typeof currentError.path[1] === "number" ? currentError.path[1] : -1;
-        setInvalidQuestions((prevInvalidQuestions) =>
-          prevInvalidQuestions
-            ? [...prevInvalidQuestions, localSurvey.endings[endingIdx].id]
+        setInvalidElements((prevInvalidElements) =>
+          prevInvalidElements
+            ? [...prevInvalidElements, localSurvey.endings[endingIdx].id]
             : [localSurvey.endings[endingIdx].id]
         );
       }
@@ -235,10 +244,19 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      localSurvey.questions = localSurvey.questions.map((question) => {
-        const { isDraft, ...rest } = question;
-        return rest;
-      });
+      // Clean up blocks by removing isDraft from elements
+      if (localSurvey.blocks) {
+        localSurvey.blocks = localSurvey.blocks.map((block) => ({
+          ...block,
+          elements: block.elements.map((element) => {
+            const { isDraft, ...rest } = element;
+            return rest;
+          }),
+        }));
+      }
+
+      // Set questions to empty array for blocks-based surveys
+      localSurvey.questions = [];
 
       localSurvey.endings = localSurvey.endings.map((ending) => {
         if (ending.type === "redirectToUrl") {

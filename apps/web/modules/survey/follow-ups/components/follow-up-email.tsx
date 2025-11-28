@@ -4,7 +4,7 @@ import React from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getQuestionResponseMapping } from "@/lib/responses";
+import { getElementResponseMapping } from "@/lib/responses";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { getTranslate } from "@/lingodotdev/server";
 import { EmailTemplate } from "@/modules/email/components/email-template";
@@ -27,7 +27,7 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
   // Parse recall tags and replace with actual response values
   body = parseRecallInfo(body, props.response.data, props.response.variables);
 
-  const questions = props.attachResponseData ? getQuestionResponseMapping(props.survey, props.response) : [];
+  const elements = props.attachResponseData ? getElementResponseMapping(props.survey, props.response) : [];
   const t = await getTranslate();
 
   return (
@@ -44,26 +44,24 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
           }}
         />
 
-        {questions.length > 0 ? (
+        {elements.length > 0 ? (
           <>
             <Hr />
             <Text className="mb-4 text-base font-semibold text-slate-900">{t("emails.response_data")}</Text>
           </>
         ) : null}
 
-        {questions
-          .filter(
-            (question) =>
-              question.response && !(Array.isArray(question.response) && question.response.length === 0)
-          )
-          .map((question) => (
-            <Row key={question.question}>
+        {elements.map((e) => {
+          if (!e.response) return;
+          return (
+            <Row key={e.element}>
               <Column className="w-full">
-                <Text className="mb-2 text-sm font-semibold text-slate-900">{question.question}</Text>
-                {renderEmailResponseValue(question.response, question.type, t, true)}
+                <Text className="mb-2 text-sm font-semibold text-slate-900">{e.element}</Text>
+                {renderEmailResponseValue(e.response, e.type, t, true)}
               </Column>
             </Row>
-          ))}
+          );
+        })}
 
         {props.includeVariables &&
           props.survey.variables

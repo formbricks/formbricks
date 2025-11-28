@@ -23,12 +23,8 @@ import {
   TIntegrationSlackCredential,
 } from "@formbricks/types/integration/slack";
 import { TResponse, TResponseMeta } from "@formbricks/types/responses";
-import {
-  TSurvey,
-  TSurveyOpenTextQuestion,
-  TSurveyPictureSelectionQuestion,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
 import { writeData as googleSheetWriteData } from "@/lib/googleSheet/service";
@@ -101,33 +97,47 @@ const mockPipelineInput = {
 const mockSurvey = {
   id: surveyId,
   name: "Test Survey",
-  questions: [
+  blocks: [
     {
-      id: questionId1,
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: { default: "Question 1 {{recall:q2}}" },
-      required: true,
-    } as unknown as TSurveyOpenTextQuestion,
-    {
-      id: questionId2,
-      type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-      headline: { default: "Question 2" },
-      required: true,
-      choices: [
-        { id: "choice1", label: { default: "Choice 1" } },
-        { id: "choice2", label: { default: "Choice 2" } },
+      id: "block1",
+      name: "Block 1",
+      elements: [
+        {
+          id: questionId1,
+          type: TSurveyElementTypeEnum.OpenText,
+          headline: { default: "Question 1 {{recall:q2}}" },
+          required: true,
+          inputType: "text",
+          charLimit: 1000,
+          subheader: { default: "" },
+          placeholder: { default: "" },
+        },
+        {
+          id: questionId2,
+          type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+          headline: { default: "Question 2" },
+          required: true,
+          choices: [
+            { id: "choice1", label: { default: "Choice 1" } },
+            { id: "choice2", label: { default: "Choice 2" } },
+          ],
+          shuffleOption: "none",
+          subheader: { default: "" },
+        },
+        {
+          id: questionId3,
+          type: TSurveyElementTypeEnum.PictureSelection,
+          headline: { default: "Question 3" },
+          required: true,
+          choices: [
+            { id: "picChoice1", imageUrl: "http://image.com/1" },
+            { id: "picChoice2", imageUrl: "http://image.com/2" },
+          ],
+          allowMultiple: false,
+          subheader: { default: "" },
+        },
       ],
     },
-    {
-      id: questionId3,
-      type: TSurveyQuestionTypeEnum.PictureSelection,
-      headline: { default: "Question 3" },
-      required: true,
-      choices: [
-        { id: "picChoice1", imageUrl: "http://image.com/1" },
-        { id: "picChoice2", imageUrl: "http://image.com/2" },
-      ],
-    } as unknown as TSurveyPictureSelectionQuestion,
   ],
   hiddenFields: {
     enabled: true,
@@ -162,7 +172,7 @@ const mockAirtableIntegration: TIntegrationAirtable = {
     data: [
       {
         surveyId: surveyId,
-        questionIds: [questionId1, questionId2],
+        elementIds: [questionId1, questionId2],
         baseId: "base1",
         tableId: "table1",
         createdAt: new Date(),
@@ -186,8 +196,8 @@ const mockGoogleSheetsIntegration: TIntegrationGoogleSheets = {
         surveyId: surveyId,
         spreadsheetId: "sheet1",
         spreadsheetName: "Sheet Name",
-        questionIds: [questionId1],
-        questions: "What is Q1?",
+        elementIds: [questionId1],
+        elements: "What is Q1?",
         createdAt: new Date("2024-01-01T00:00:00.000Z"),
         includeHiddenFields: false,
         includeMetadata: false,
@@ -209,8 +219,8 @@ const mockSlackIntegration: TIntegrationSlack = {
         surveyId: surveyId,
         channelId: "channel1",
         channelName: "Channel 1",
-        questionIds: [questionId1, questionId2, questionId3],
-        questions: "Q1, Q2, Q3",
+        elementIds: [questionId1, questionId2, questionId3],
+        elements: "Q1, Q2, Q3",
         createdAt: new Date(),
         includeHiddenFields: true,
         includeMetadata: true,
@@ -239,19 +249,19 @@ const mockNotionIntegration: TIntegrationNotion = {
         databaseName: "DB 1",
         mapping: [
           {
-            question: { id: questionId1, name: "Question 1", type: TSurveyQuestionTypeEnum.OpenText },
+            element: { id: questionId1, name: "Question 1", type: TSurveyQuestionTypeEnum.OpenText },
             column: { id: "col1", name: "Column 1", type: "rich_text" },
           },
           {
-            question: { id: questionId3, name: "Question 3", type: TSurveyQuestionTypeEnum.PictureSelection },
+            element: { id: questionId3, name: "Question 3", type: TSurveyQuestionTypeEnum.PictureSelection },
             column: { id: "col3", name: "Column 3", type: "url" },
           },
           {
-            question: { id: "metadata", name: "Metadata", type: "metadata" },
+            element: { id: "metadata", name: "Metadata", type: "metadata" },
             column: { id: "col_meta", name: "Metadata Col", type: "rich_text" },
           },
           {
-            question: { id: "createdAt", name: "Created At", type: "createdAt" },
+            element: { id: "createdAt", name: "Created At", type: "createdAt" },
             column: { id: "col_created", name: "Created Col", type: "date" },
           },
         ],
@@ -341,16 +351,14 @@ describe("handleIntegrations", () => {
         mockAirtableIntegration.config.key,
         mockAirtableIntegration.config.data[0],
         [
-          [
-            "Answer 1",
-            "Choice 1, Choice 2",
-            "Hidden Value",
-            expectedMetadataString,
-            "Variable Value",
-            "2024-01-01 12:00",
-          ], // responses + hidden + meta + var + created
-          ["Question 1 {{recall:q2}}", "Question 2", hiddenFieldId, "Metadata", "Variable 1", "Created At"], // questions (raw headline for Airtable) + hidden + meta + var + created
-        ]
+          "Answer 1",
+          "Choice 1, Choice 2",
+          "Hidden Value",
+          expectedMetadataString,
+          "Variable Value",
+          "2024-01-01 12:00",
+        ], // responses + hidden + meta + var + created
+        ["Question 1 {{recall:q2}}", "Question 2", hiddenFieldId, "Metadata", "Variable 1", "Created At"] // elements (raw headline for Airtable) + hidden + meta + var + created
       );
     });
 
@@ -385,10 +393,8 @@ describe("handleIntegrations", () => {
       expect(googleSheetWriteData).toHaveBeenCalledWith(
         expectedIntegrationData,
         mockGoogleSheetsIntegration.config.data[0].spreadsheetId,
-        [
-          ["Answer 1"], // responses
-          ["Question 1 {{recall:q2}}"], // questions (raw headline for Google Sheets)
-        ]
+        ["Answer 1"], // responses
+        ["Question 1 {{recall:q2}}"] // elements (raw headline for Google Sheets)
       );
     });
 
