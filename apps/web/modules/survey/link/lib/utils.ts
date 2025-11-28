@@ -1,5 +1,12 @@
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyCTAElement,
+  TSurveyConsentElement,
+  TSurveyElement,
+  TSurveyElementTypeEnum,
+  TSurveyMultipleChoiceElement,
+  TSurveyRatingElement,
+} from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -36,72 +43,135 @@ export const getPrefillValue = (
   return Object.keys(prefillAnswer).length > 0 ? prefillAnswer : undefined;
 };
 
+const validateOpenText = (): boolean => {
+  return true;
+};
+
+const validateMultipleChoiceSingle = (
+  question: TSurveyMultipleChoiceElement,
+  answer: string,
+  language: string
+): boolean => {
+  if (question.type !== TSurveyElementTypeEnum.MultipleChoiceSingle) return false;
+  const choices = question.choices;
+  const hasOther = choices[choices.length - 1].id === "other";
+
+  if (!hasOther) {
+    return choices.some((choice) => choice.label[language] === answer);
+  }
+
+  const matchesAnyChoice = choices.some((choice) => choice.label[language] === answer);
+
+  if (matchesAnyChoice) {
+    return true;
+  }
+
+  const trimmedAnswer = answer.trim();
+  return trimmedAnswer !== "";
+};
+
+const validateMultipleChoiceMulti = (question: TSurveyElement, answer: string, language: string): boolean => {
+  if (question.type !== TSurveyElementTypeEnum.MultipleChoiceMulti) return false;
+  const choices = (
+    question as TSurveyElement & { choices: Array<{ id: string; label: Record<string, string> }> }
+  ).choices;
+  const hasOther = choices[choices.length - 1].id === "other";
+  const lastChoiceLabel = hasOther ? choices[choices.length - 1].label[language] : undefined;
+
+  const answerChoices = answer
+    .split(",")
+    .map((ans) => ans.trim())
+    .filter((ans) => ans !== "");
+
+  if (answerChoices.length === 0) {
+    return false;
+  }
+
+  if (!hasOther) {
+    return answerChoices.every((ans: string) => choices.some((choice) => choice.label[language] === ans));
+  }
+
+  let freeTextOtherCount = 0;
+  for (const ans of answerChoices) {
+    const matchesChoice = choices.some((choice) => choice.label[language] === ans);
+
+    if (matchesChoice) {
+      continue;
+    }
+
+    if (ans === lastChoiceLabel) {
+      continue;
+    }
+
+    freeTextOtherCount++;
+    if (freeTextOtherCount > 1) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const validateNPS = (answer: string): boolean => {
+  try {
+    const cleanedAnswer = answer.replace(/&/g, ";");
+    const answerNumber = Number(JSON.parse(cleanedAnswer));
+    return !isNaN(answerNumber) && answerNumber >= 0 && answerNumber <= 10;
+  } catch {
+    return false;
+  }
+};
+
+const validateCTA = (question: TSurveyCTAElement, answer: string): boolean => {
+  if (question.required && answer === "dismissed") return false;
+  return answer === "clicked" || answer === "dismissed";
+};
+
+const validateConsent = (question: TSurveyConsentElement, answer: string): boolean => {
+  if (question.required && answer === "dismissed") return false;
+  return answer === "accepted" || answer === "dismissed";
+};
+
+const validateRating = (question: TSurveyRatingElement, answer: string): boolean => {
+  if (question.type !== TSurveyElementTypeEnum.Rating) return false;
+  const ratingQuestion = question;
+  try {
+    const cleanedAnswer = answer.replace(/&/g, ";");
+    const answerNumber = Number(JSON.parse(cleanedAnswer));
+    return answerNumber >= 1 && answerNumber <= (ratingQuestion.range ?? 5);
+  } catch {
+    return false;
+  }
+};
+
+const validatePictureSelection = (answer: string): boolean => {
+  const answerChoices = answer.split(",");
+  return answerChoices.every((ans: string) => !isNaN(Number(ans)));
+};
+
 const checkValidity = (question: TSurveyElement, answer: string, language: string): boolean => {
   if (question.required && (!answer || answer === "")) return false;
+
+  const validators: Partial<
+    Record<TSurveyElementTypeEnum, (q: TSurveyElement, a: string, l: string) => boolean>
+  > = {
+    [TSurveyElementTypeEnum.OpenText]: () => validateOpenText(),
+    [TSurveyElementTypeEnum.MultipleChoiceSingle]: (q, a, l) =>
+      validateMultipleChoiceSingle(q as TSurveyMultipleChoiceElement, a, l),
+    [TSurveyElementTypeEnum.MultipleChoiceMulti]: (q, a, l) => validateMultipleChoiceMulti(q, a, l),
+    [TSurveyElementTypeEnum.NPS]: (_, a) => validateNPS(a),
+    [TSurveyElementTypeEnum.CTA]: (q, a) => validateCTA(q as TSurveyCTAElement, a),
+    [TSurveyElementTypeEnum.Consent]: (q, a) => validateConsent(q as TSurveyConsentElement, a),
+    [TSurveyElementTypeEnum.Rating]: (q, a) => validateRating(q as TSurveyRatingElement, a),
+    [TSurveyElementTypeEnum.PictureSelection]: (_, a) => validatePictureSelection(a),
+  };
+
+  const validator = validators[question.type];
+  if (!validator) return false;
+
   try {
-    switch (question.type) {
-      case TSurveyElementTypeEnum.OpenText: {
-        return true;
-      }
-      case TSurveyElementTypeEnum.MultipleChoiceSingle: {
-        const hasOther = question.choices[question.choices.length - 1].id === "other";
-        if (!hasOther) {
-          if (!question.choices.find((choice) => choice.label[language] === answer)) return false;
-          return true;
-        }
-
-        if (question.choices[question.choices.length - 1].label[language] === answer) {
-          return false;
-        }
-
-        return true;
-      }
-      case TSurveyElementTypeEnum.MultipleChoiceMulti: {
-        const answerChoices = answer.split(",");
-        const hasOther = question.choices[question.choices.length - 1].id === "other";
-        if (!hasOther) {
-          if (
-            !answerChoices.every((ans: string) =>
-              question.choices.find((choice) => choice.label[language] === ans)
-            )
-          )
-            return false;
-          return true;
-        }
-        return true;
-      }
-      case TSurveyElementTypeEnum.NPS: {
-        const cleanedAnswer = answer.replace(/&/g, ";");
-        const answerNumber = Number(JSON.parse(cleanedAnswer));
-
-        if (isNaN(answerNumber)) return false;
-        if (answerNumber < 0 || answerNumber > 10) return false;
-        return true;
-      }
-      case TSurveyElementTypeEnum.CTA: {
-        if (question.required && answer === "dismissed") return false;
-        if (answer !== "clicked" && answer !== "dismissed") return false;
-        return true;
-      }
-      case TSurveyElementTypeEnum.Consent: {
-        if (question.required && answer === "dismissed") return false;
-        if (answer !== "accepted" && answer !== "dismissed") return false;
-        return true;
-      }
-      case TSurveyElementTypeEnum.Rating: {
-        const cleanedAnswer = answer.replace(/&/g, ";");
-        const answerNumber = Number(JSON.parse(cleanedAnswer));
-        if (answerNumber < 1 || answerNumber > question.range) return false;
-        return true;
-      }
-      case TSurveyElementTypeEnum.PictureSelection: {
-        const answerChoices = answer.split(",");
-        return answerChoices.every((ans: string) => !isNaN(Number(ans)));
-      }
-      default:
-        return false;
-    }
-  } catch (e) {
+    return validator(question, answer, language);
+  } catch {
     return false;
   }
 };

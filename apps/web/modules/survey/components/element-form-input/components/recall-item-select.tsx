@@ -151,6 +151,8 @@ export const RecallItemSelect = ({
       case "variable":
         const variable = localSurvey.variables.find((variable) => variable.id === recallItem.id);
         return variable?.type === "number" ? FileDigitIcon : FileTextIcon;
+      default:
+        return null;
     }
   };
 

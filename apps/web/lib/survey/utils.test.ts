@@ -351,7 +351,6 @@ describe("checkForInvalidMediaInBlocks", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      console.log(result.error);
       expect(result.error.message).toBe(
         'Invalid image URL in choice 1 of question 1 of block "Welcome Block"'
       );

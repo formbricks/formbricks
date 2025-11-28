@@ -209,6 +209,12 @@ export const writeData = async (
   responses: string[],
   elements: string[]
 ) => {
+  if (responses.length !== elements.length) {
+    throw new Error(
+      `Array length mismatch: responses (${responses.length}) and elements (${elements.length}) must be equal`
+    );
+  }
+
   // 1) Build the record payload
   const data: Record<string, string> = {};
   for (let i = 0; i < elements.length; i++) {
