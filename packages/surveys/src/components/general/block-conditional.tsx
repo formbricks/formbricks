@@ -60,6 +60,9 @@ export function BlockConditional({
   // Refs to store form elements for each element so we can trigger their validation
   const elementFormRefs = useRef<Map<string, HTMLFormElement>>(new Map());
 
+  // Ref to collect TTC values synchronously (state updates are async)
+  const ttcCollectorRef = useRef<TResponseTtc>({});
+
   // Handle change for an individual element
   const handleElementChange = (elementId: string, responseData: TResponseData) => {
     // If user moved to a different element, we should track it
@@ -67,6 +70,11 @@ export function BlockConditional({
       setCurrentElementId(elementId);
     }
     onChange(responseData);
+  };
+
+  // Handler to collect TTC values synchronously (called from element form submissions)
+  const handleTtcCollect = (elementId: string, elementTtc: number) => {
+    ttcCollectorRef.current[elementId] = elementTtc;
   };
 
   // Handle skipPrefilled at block level
@@ -171,10 +179,26 @@ export function BlockConditional({
       return;
     }
 
-    // All validations passed - collect TTC for all elements in this block
+    // Clear the TTC collector before collecting new values
+    ttcCollectorRef.current = {};
+
+    // Call each form's submit method to trigger TTC calculation
+    // The forms will call handleTtcCollect synchronously with their TTC values
+    block.elements.forEach((element) => {
+      const form = elementFormRefs.current.get(element.id);
+      if (form) {
+        form.requestSubmit();
+      }
+    });
+
+    // Collect TTC from the ref (populated synchronously by form submissions)
+    // Falls back to state for elements that may have TTC from user interactions
     const blockTtc: TResponseTtc = {};
     block.elements.forEach((element) => {
-      if (ttc[element.id] !== undefined) {
+      // Prefer freshly calculated TTC from form submission, fall back to state
+      if (ttcCollectorRef.current[element.id] !== undefined) {
+        blockTtc[element.id] = ttcCollectorRef.current[element.id];
+      } else if (ttc[element.id] !== undefined) {
         blockTtc[element.id] = ttc[element.id];
       }
     });
@@ -225,6 +249,7 @@ export function BlockConditional({
                         elementFormRefs.current.delete(element.id);
                       }
                     }}
+                    onTtcCollect={handleTtcCollect}
                   />
                 </div>
               );

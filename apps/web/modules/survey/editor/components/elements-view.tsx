@@ -690,7 +690,9 @@ export const ElementsView = ({
       return;
     }
 
-    // Set active element to the first element of the first remaining block or ending card
+    setLocalSurvey(result.data);
+
+    // Then set active element to the first element of the first remaining block or ending card
     const newBlocks = result.data.blocks ?? [];
     if (newBlocks.length > 0 && newBlocks[0].elements.length > 0) {
       setActiveElementId(newBlocks[0].elements[0].id);
@@ -698,7 +700,6 @@ export const ElementsView = ({
       setActiveElementId(result.data.endings[0].id);
     }
 
-    setLocalSurvey(result.data);
     toast.success(t("environments.surveys.edit.block_deleted"));
   };
 
