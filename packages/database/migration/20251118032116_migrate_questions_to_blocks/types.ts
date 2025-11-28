@@ -76,16 +76,139 @@ export interface CTAMigrationStats {
   ctaWithoutExternalLink: number;
 }
 
+// Base integration config data (shared between all integrations except Notion)
+// This represents both old (questionIds/questions) and new (elementIds/elements) formats
+export interface IntegrationBaseSurveyData {
+  createdAt: Date;
+  surveyId: string;
+  surveyName: string;
+  // Old format fields
+  questionIds?: string[];
+  questions?: string;
+  // New format fields
+  elementIds?: string[];
+  elements?: string;
+  // Optional fields
+  includeVariables?: boolean;
+  includeHiddenFields?: boolean;
+  includeMetadata?: boolean;
+  includeCreatedAt?: boolean;
+}
+
+// Google Sheets specific config
+export interface GoogleSheetsConfigData extends IntegrationBaseSurveyData {
+  spreadsheetId: string;
+  spreadsheetName: string;
+}
+
+export interface GoogleSheetsConfig {
+  key: {
+    token_type: "Bearer";
+    access_token: string;
+    scope: string;
+    expiry_date: number;
+    refresh_token: string;
+  };
+  data: GoogleSheetsConfigData[];
+  email: string;
+}
+
+// Airtable specific config
+export interface AirtableConfigData extends IntegrationBaseSurveyData {
+  tableId: string;
+  baseId: string;
+  tableName: string;
+}
+
+export interface AirtableConfig {
+  key: {
+    expiry_date: string;
+    access_token: string;
+    refresh_token: string;
+  };
+  data: AirtableConfigData[];
+  email: string;
+}
+
+// Slack specific config
+export interface SlackConfigData extends IntegrationBaseSurveyData {
+  channelId: string;
+  channelName: string;
+}
+
+export interface SlackConfig {
+  key: {
+    app_id: string;
+    authed_user: { id: string };
+    token_type: "bot";
+    access_token: string;
+    bot_user_id: string;
+    team: { id: string; name: string };
+  };
+  data: SlackConfigData[];
+}
+
+// Notion specific config (different structure - uses mapping instead of elementIds/elements)
+export interface NotionMappingItem {
+  // Old format
+  question?: { id: string; name: string; type: string };
+  // New format
+  element?: { id: string; name: string; type: string };
+  column: { id: string; name: string; type: string };
+}
+
+export interface NotionConfigData {
+  createdAt: Date;
+  surveyId: string;
+  surveyName: string;
+  mapping: NotionMappingItem[];
+  databaseId: string;
+  databaseName: string;
+}
+
+export interface NotionConfig {
+  key: {
+    access_token: string;
+    bot_id: string;
+    token_type: string;
+    duplicated_template_id: string | null;
+    owner: {
+      type: string;
+      workspace?: boolean | null;
+      user: {
+        id: string;
+        name?: string | null;
+        type?: string | null;
+        object: string;
+        person?: { email: string } | null;
+        avatar_url?: string | null;
+      } | null;
+    };
+    workspace_icon: string | null;
+    workspace_id: string;
+    workspace_name: string | null;
+  };
+  data: NotionConfigData[];
+}
+
+// Union type for all integration configs
+export type IntegrationConfig =
+  | GoogleSheetsConfig
+  | AirtableConfig
+  | SlackConfig
+  | NotionConfig
+  | Record<string, unknown>;
+
 // Integration migration types
 export interface IntegrationRecord {
   id: string;
   type: string;
-  config: any;
+  config: IntegrationConfig;
 }
 
 export interface MigratedIntegration {
   id: string;
-  config: any;
+  config: IntegrationConfig;
 }
 
 export interface IntegrationMigrationStats {

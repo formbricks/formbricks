@@ -3,8 +3,10 @@ import {
   type CTAMigrationStats,
   type Condition,
   type ConditionGroup,
+  type IntegrationConfig,
   type LogicAction,
   type MigratedSurvey,
+  type NotionConfig,
   type SingleCondition,
   type SurveyLogic,
   type SurveyQuestion,
@@ -415,37 +417,50 @@ export const migrateQuestionsSurveyToBlocks = (
   };
 };
 
+// Type guard for config items with data array
+interface ConfigWithData {
+  data: Record<string, unknown>[];
+  [key: string]: unknown;
+}
+
+const hasDataArray = (config: unknown): config is ConfigWithData => {
+  return (
+    typeof config === "object" &&
+    config !== null &&
+    "data" in config &&
+    Array.isArray((config as ConfigWithData).data)
+  );
+};
+
 /**
  * Check if config item is already migrated (has elementIds/elements)
  */
-const isAlreadyMigrated = (item: any): boolean => {
+const isAlreadyMigrated = (item: Record<string, unknown>): boolean => {
   return "elementIds" in item || "elements" in item;
 };
 
 /**
  * Check if config item needs migration (has questionIds/questions)
  */
-const needsMigration = (item: any): boolean => {
+const needsMigration = (item: Record<string, unknown>): boolean => {
   return "questionIds" in item || "questions" in item;
 };
 
 /**
  * Migrate Airtable/Google Sheets/Slack config (shared base type)
- * Returns { migrated: true/false, config: newConfig }
+ * Returns an object with migrated flag and updated config
  */
-export const migrateSharedIntegrationConfig = (config: any): { migrated: boolean; config: any } => {
+export const migrateSharedIntegrationConfig = (
+  config: IntegrationConfig
+): { migrated: boolean; config: IntegrationConfig } => {
   // Validate config structure
-  if (!config || typeof config !== "object") {
-    return { migrated: false, config };
-  }
-
-  if (!config.data || !Array.isArray(config.data)) {
+  if (!hasDataArray(config)) {
     return { migrated: false, config };
   }
 
   let anyMigrated = false;
 
-  const newData = config.data.map((item: any) => {
+  const newData = config.data.map((item) => {
     // Skip if already migrated
     if (isAlreadyMigrated(item)) {
       return item;
@@ -457,7 +472,7 @@ export const migrateSharedIntegrationConfig = (config: any): { migrated: boolean
     }
 
     anyMigrated = true;
-    const migrated = { ...item };
+    const migrated: Record<string, unknown> = { ...item };
 
     // Rename questionIds to elementIds
     if ("questionIds" in migrated) {
@@ -482,44 +497,65 @@ export const migrateSharedIntegrationConfig = (config: any): { migrated: boolean
   };
 };
 
+// Type guard for Notion config
+const isNotionConfig = (config: unknown): config is NotionConfig => {
+  return (
+    typeof config === "object" &&
+    config !== null &&
+    "data" in config &&
+    Array.isArray((config as NotionConfig).data)
+  );
+};
+
+// Type for Notion mapping entry
+interface NotionMappingEntry {
+  question?: { id: string; name: string; type: string };
+  element?: { id: string; name: string; type: string };
+  column: { id: string; name: string; type: string };
+}
+
 /**
  * Check if Notion config item has any mapping entries that need migration
+ * @param mapping - Notion mapping entries
+ * @returns boolean
  */
-const needsNotionMigration = (item: any): boolean => {
-  if (!item.mapping || !Array.isArray(item.mapping) || item.mapping.length === 0) {
+const needsNotionMigration = (mapping: NotionMappingEntry[] | undefined): boolean => {
+  if (!mapping || !Array.isArray(mapping) || mapping.length === 0) {
     return false;
   }
 
   // Check if ANY mapping item has "question" field (needs migration)
-  return item.mapping.some((mapItem: any) => "question" in mapItem && !("element" in mapItem));
+  return mapping.some((mapItem) => "question" in mapItem && !("element" in mapItem));
 };
 
 /**
  * Migrate Notion config (custom mapping structure)
- * Returns { migrated: true/false, config: newConfig }
+ * @param config - Notion config
+ * @returns \{ migrated: boolean; config: IntegrationConfig \}
  */
-export const migrateNotionIntegrationConfig = (config: any): { migrated: boolean; config: any } => {
+export const migrateNotionIntegrationConfig = (
+  config: IntegrationConfig
+): { migrated: boolean; config: IntegrationConfig } => {
   // Validate config structure
-  if (!config || typeof config !== "object") {
-    return { migrated: false, config };
-  }
-
-  if (!config.data || !Array.isArray(config.data)) {
+  if (!isNotionConfig(config)) {
     return { migrated: false, config };
   }
 
   let anyMigrated = false;
 
-  const newData = config.data.map((item: any) => {
+  const newData = config.data.map((item) => {
+    // Cast mapping to the migration type that includes both old and new formats
+    const mapping = item.mapping as NotionMappingEntry[] | undefined;
+
     // Skip if nothing to migrate
-    if (!needsNotionMigration(item)) {
+    if (!needsNotionMigration(mapping)) {
       return item;
     }
 
     anyMigrated = true;
 
     // Migrate mapping array - check EACH item individually
-    const newMapping = item.mapping.map((mapItem: any) => {
+    const newMapping = mapping?.map((mapItem) => {
       // Already has element field - skip this item
       if ("element" in mapItem) {
         return mapItem;
@@ -552,9 +588,14 @@ export const migrateNotionIntegrationConfig = (config: any): { migrated: boolean
 
 /**
  * Migrate integration config based on type
- * Returns { migrated: true/false, config: newConfig }
+ * @param type - Integration type
+ * @param config - Integration config
+ * @returns \{ migrated: boolean; config: IntegrationConfig \}
  */
-export const migrateIntegrationConfig = (type: string, config: any): { migrated: boolean; config: any } => {
+export const migrateIntegrationConfig = (
+  type: string,
+  config: IntegrationConfig
+): { migrated: boolean; config: IntegrationConfig } => {
   switch (type) {
     case "googleSheets":
     case "airtable":

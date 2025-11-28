@@ -4,6 +4,7 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
 import type {
   Block,
   CTAMigrationStats,
+  IntegrationConfig,
   IntegrationMigrationStats,
   MigratedIntegration,
   SurveyRecord,
@@ -123,7 +124,7 @@ export const migrateQuestionsToBlocks: MigrationScript = {
     };
 
     // Query all integrations
-    const integrations = await tx.$queryRaw<{ id: string; type: string; config: unknown }[]>`
+    const integrations = await tx.$queryRaw<{ id: string; type: string; config: IntegrationConfig }[]>`
       SELECT id, type, config
       FROM "Integration"
     `;
@@ -140,9 +141,8 @@ export const migrateQuestionsToBlocks: MigrationScript = {
 
       for (const integration of integrations) {
         try {
-          // Config is JSON from database, needs runtime validation
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const result = migrateIntegrationConfig(integration.type, integration.config as any);
+          // Config is JSON from database - cast to IntegrationConfig for runtime processing
+          const result = migrateIntegrationConfig(integration.type, integration.config);
 
           // Track statistics
           const typeStats = integrationStats[integration.type as keyof typeof integrationStats];
@@ -189,8 +189,7 @@ export const migrateQuestionsToBlocks: MigrationScript = {
                   `UPDATE "Integration" 
                    SET config = $1::jsonb 
                    WHERE id = $2`,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  JSON.stringify(update.config as any),
+                  JSON.stringify(update.config),
                   update.id
                 )
               )
