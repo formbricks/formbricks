@@ -54,36 +54,46 @@ export const migrateQuestionsToBlocks: MigrationScript = {
 
       logger.info(`Successfully processed ${updates.length.toString()} surveys`);
 
-      // 3. Update surveys individually for safety (avoids SQL injection risks with complex JSONB arrays)
+      // 3. Update surveys in batches using UNNEST for performance
+      // Batch size of 150 balances performance with query size safety (~7.5MB per batch)
+      const SURVEY_BATCH_SIZE = 150;
       let updatedCount = 0;
 
-      for (const update of updates) {
+      for (let i = 0; i < updates.length; i += SURVEY_BATCH_SIZE) {
+        const batch = updates.slice(i, i + SURVEY_BATCH_SIZE);
+
         try {
-          // PostgreSQL requires proper array format for jsonb[]
-          // We need to convert the JSON array to a PostgreSQL jsonb array using array_to_json
-          // The trick is to use jsonb_array_elements to convert the JSON array into rows, then array_agg to collect them back
+          // Build arrays for batch update
+          const ids = batch.map((u) => u.id);
+          const blocksJsonStrings = batch.map((u) => JSON.stringify(u.blocks));
+
+          // Use UNNEST to update multiple surveys in a single query
           await tx.$executeRawUnsafe(
-            `UPDATE "Survey" 
-             SET blocks = (
-               SELECT array_agg(elem)
-               FROM jsonb_array_elements($1::jsonb) AS elem
-             ), 
-             questions = '[]'::jsonb 
-             WHERE id = $2`,
-            JSON.stringify(update.blocks),
-            update.id
+            `UPDATE "Survey" AS s
+             SET 
+               blocks = (
+                 SELECT array_agg(elem)
+                 FROM jsonb_array_elements(data.blocks_json::jsonb) AS elem
+               ),
+               questions = '[]'::jsonb
+             FROM (
+               SELECT 
+                 unnest($1::text[]) AS id,
+                 unnest($2::text[]) AS blocks_json
+             ) AS data
+             WHERE s.id = data.id`,
+            ids,
+            blocksJsonStrings
           );
 
-          updatedCount++;
+          updatedCount += batch.length;
 
-          // Log progress every 10000 surveys
-          if (updatedCount % 10000 === 0) {
-            logger.info(`Progress: ${updatedCount.toString()}/${updates.length.toString()} surveys updated`);
-          }
+          // Log progress
+          logger.info(`Progress: ${updatedCount.toString()}/${updates.length.toString()} surveys updated`);
         } catch (error) {
-          logger.error(error, `Failed to update survey ${update.id} in database`);
+          logger.error(error, `Failed to update survey batch starting at index ${i.toString()}`);
           throw new Error(
-            `Database update failed for survey ${update.id}: ${error instanceof Error ? error.message : String(error)}`
+            `Database batch update failed at index ${i.toString()}: ${error instanceof Error ? error.message : String(error)}`
           );
         }
       }
@@ -162,34 +172,40 @@ export const migrateQuestionsToBlocks: MigrationScript = {
         `Processed ${integrations.length.toString()} integrations: ${integrationUpdates.length.toString()} to update, ${(integrations.length - integrationUpdates.length).toString()} skipped`
       );
 
-      // Update integrations individually
+      // Update integrations using Promise.all for better throughput
       if (integrationUpdates.length > 0) {
+        // Batch size of 150 provides good parallelization (~750KB per batch)
+        const INTEGRATION_BATCH_SIZE = 150;
         let integrationUpdatedCount = 0;
 
-        for (const update of integrationUpdates) {
+        for (let i = 0; i < integrationUpdates.length; i += INTEGRATION_BATCH_SIZE) {
+          const batch = integrationUpdates.slice(i, i + INTEGRATION_BATCH_SIZE);
+
           try {
-            // Config is migrated JSON data
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await tx.$executeRawUnsafe(
-              `UPDATE "Integration" 
-               SET config = $1::jsonb 
-               WHERE id = $2`,
-              JSON.stringify(update.config as any),
-              update.id
+            // Execute all updates in parallel for this batch
+            await Promise.all(
+              batch.map((update) =>
+                tx.$executeRawUnsafe(
+                  `UPDATE "Integration" 
+                   SET config = $1::jsonb 
+                   WHERE id = $2`,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  JSON.stringify(update.config as any),
+                  update.id
+                )
+              )
             );
 
-            integrationUpdatedCount++;
+            integrationUpdatedCount += batch.length;
 
-            // Log progress every 1000 integrations
-            if (integrationUpdatedCount % 1000 === 0) {
-              logger.info(
-                `Integration progress: ${integrationUpdatedCount.toString()}/${integrationUpdates.length.toString()} updated`
-              );
-            }
+            // Log progress
+            logger.info(
+              `Integration progress: ${integrationUpdatedCount.toString()}/${integrationUpdates.length.toString()} updated`
+            );
           } catch (error) {
-            logger.error(error, `Failed to update integration ${update.id} in database`);
+            logger.error(error, `Failed to update integration batch starting at index ${i.toString()}`);
             throw new Error(
-              `Database update failed for integration ${update.id}: ${error instanceof Error ? error.message : String(error)}`
+              `Database update failed for integration batch at index ${i.toString()}: ${error instanceof Error ? error.message : String(error)}`
             );
           }
         }
