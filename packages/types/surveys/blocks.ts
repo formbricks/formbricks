@@ -61,7 +61,20 @@ export type TSurveyBlockLogicActionObjective = "calculate" | "requireAnswer" | "
 export const ZActionRequireAnswer = z.object({
   id: ZId,
   objective: z.literal("requireAnswer"),
-  target: ZSurveyElementId,
+  target: z
+    .string()
+    .min(1, "Conditional Logic: Target question id cannot be empty")
+    .superRefine((id, ctx) => {
+      const idParsed = ZSurveyElementId.safeParse(id);
+      if (!idParsed.success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          // This is not possible from the UI hence we can use the term "element" instead of "question"
+          message: "Conditional Logic: Target element id is not a valid element id",
+          path: ["target"],
+        });
+      }
+    }),
 });
 
 export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
@@ -71,7 +84,18 @@ export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
 export const ZActionJumpToBlock = z.object({
   id: ZId,
   objective: z.literal("jumpToBlock"),
-  target: ZSurveyBlockId, // Must be a valid CUID
+  target: z
+    .string()
+    .min(1, "Conditional Logic: Target block id cannot be empty")
+    .superRefine((id, ctx) => {
+      const idParsed = ZSurveyBlockId.safeParse(id);
+      if (!idParsed.success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Conditional Logic: Target block id is not a valid block id",
+        });
+      }
+    }),
 });
 
 export type TActionJumpToBlock = z.infer<typeof ZActionJumpToBlock>;

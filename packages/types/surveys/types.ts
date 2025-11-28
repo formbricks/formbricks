@@ -1606,7 +1606,7 @@ export const ZSurvey = z
 
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+                message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
                 path: ["blocks", blockIndex, "elements", elementIndex, "rows"],
                 params: isDefaultOnly ? undefined : { invalidLanguageCodes },
               });
@@ -1624,7 +1624,7 @@ export const ZSurvey = z
 
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+                message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
                 path: ["blocks", blockIndex, "elements", elementIndex, "columns"],
                 params: isDefaultOnly ? undefined : { invalidLanguageCodes },
               });
@@ -1635,7 +1635,7 @@ export const ZSurvey = z
             if (element.allowedFileExtensions && element.allowedFileExtensions.length === 0) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have atleast one allowed file extension`,
+                message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have atleast one allowed file extension`,
                 path: ["blocks", blockIndex, "elements", elementIndex, "allowedFileExtensions"],
               });
             }
@@ -1647,7 +1647,7 @@ export const ZSurvey = z
               if (!hostnameRegex.test(element.calHost)) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
-                  message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have a valid host name`,
+                  message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have a valid host name`,
                   path: ["blocks", blockIndex, "elements", elementIndex, "calHost"],
                 });
               }
@@ -1667,7 +1667,7 @@ export const ZSurvey = z
             if (fields.every((field) => !field.show)) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: `At least one field must be shown in the Contact Info element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
+                message: `At least one field must be shown in the Contact Info question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
                 path: ["blocks", blockIndex, "elements", elementIndex],
               });
             }
@@ -1709,7 +1709,7 @@ export const ZSurvey = z
             if (fields.every((field) => !field.show)) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: `At least one field must be shown in the Address element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
+                message: `At least one field must be shown in the Address question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
                 path: ["blocks", blockIndex, "elements", elementIndex],
               });
             }
@@ -3103,7 +3103,7 @@ const validateBlockConditions = (
       if (!elementInfo) {
         issues.push({
           code: z.ZodIssueCode.custom,
-          message: `Conditional Logic: Element ID ${elementId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: `Conditional Logic: Element Id ${elementId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
         return;

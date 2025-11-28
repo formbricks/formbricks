@@ -61,7 +61,7 @@ export const validateElementLabels = (
     ) {
       return {
         code: z.ZodIssueCode.custom,
-        message: `The ${field} in element ${String(elementIndex + 1)} of block ${String(blockIndex + 1)} is not present for the following languages: ${language.language.code}`,
+        message: `The ${field} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)} is not present for the following languages: ${language.language.code}`,
         path: ["blocks", blockIndex, "elements", elementIndex, field],
       };
     }
@@ -75,8 +75,8 @@ export const validateElementLabels = (
   const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
 
   const message = isDefaultOnly
-    ? `${messagePrefix}${messageField} in element ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix}`
-    : `${messagePrefix}${messageField} in element ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
+    ? `${messagePrefix}${messageField} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix}`
+    : `${messagePrefix}${messageField} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
 
   if (invalidLanguageCodes.length) {
     return {
