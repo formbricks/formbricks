@@ -135,17 +135,22 @@ export function RatingElement({
     );
   };
 
+  const getRatingInputId = (number: number) => `${element.id}-${number}`;
+
+  const handleKeyDown = (number: number) => (e: KeyboardEvent) => {
+    if (e.key === " ") {
+      e.preventDefault();
+      const inputId = getRatingInputId(number);
+      document.getElementById(inputId)?.click();
+      document.getElementById(inputId)?.focus();
+    }
+  };
+
   const renderNumberScale = (number: number, totalLength: number) => {
     return (
       <label
         tabIndex={isCurrent ? 0 : -1}
-        onKeyDown={(e) => {
-          if (e.key === " ") {
-            e.preventDefault();
-            document.getElementById(number.toString())?.click();
-            document.getElementById(number.toString())?.focus();
-          }
-        }}
+        onKeyDown={handleKeyDown(number)}
         className={getNumberLabelClassName(number, totalLength)}>
         {element.isColorCodingEnabled && (
           <div
@@ -154,7 +159,7 @@ export function RatingElement({
         )}
         <input
           type="radio"
-          id={number.toString()}
+          id={getRatingInputId(number)}
           name="rating"
           value={number}
           className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
@@ -173,20 +178,15 @@ export function RatingElement({
   const renderStarScale = (number: number) => {
     return (
       <label
+        aria-label={`Rate ${number} out of ${element.range}`}
         tabIndex={isCurrent ? 0 : -1}
-        onKeyDown={(e) => {
-          if (e.key === " ") {
-            e.preventDefault();
-            document.getElementById(number.toString())?.click();
-            document.getElementById(number.toString())?.focus();
-          }
-        }}
+        onKeyDown={handleKeyDown(number)}
         className={getStarLabelClassName(number)}
         onFocus={handleFocus(number)}
         onBlur={handleBlur}>
         <input
           type="radio"
-          id={number.toString()}
+          id={getRatingInputId(number)}
           name="rating"
           value={number}
           className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
@@ -212,20 +212,15 @@ export function RatingElement({
   const renderSmileyScale = (number: number, idx: number) => {
     return (
       <label
+        aria-label={`Rate ${number} out of ${element.range}`}
         tabIndex={isCurrent ? 0 : -1}
         className={getSmileyLabelClassName(number)}
-        onKeyDown={(e) => {
-          if (e.key === " ") {
-            e.preventDefault();
-            document.getElementById(number.toString())?.click();
-            document.getElementById(number.toString())?.focus();
-          }
-        }}
+        onKeyDown={handleKeyDown(number)}
         onFocus={handleFocus(number)}
         onBlur={handleBlur}>
         <input
           type="radio"
-          id={number.toString()}
+          id={getRatingInputId(number)}
           name="rating"
           value={number}
           className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
