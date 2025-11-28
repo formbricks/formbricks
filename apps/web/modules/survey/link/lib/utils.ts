@@ -55,12 +55,19 @@ const validateMultipleChoiceSingle = (
   if (question.type !== TSurveyElementTypeEnum.MultipleChoiceSingle) return false;
   const choices = question.choices;
   const hasOther = choices[choices.length - 1].id === "other";
+
   if (!hasOther) {
     return choices.some((choice) => choice.label[language] === answer);
   }
 
-  const lastChoiceLabel = choices[choices.length - 1].label[language];
-  return lastChoiceLabel !== answer;
+  const matchesAnyChoice = choices.some((choice) => choice.label[language] === answer);
+
+  if (matchesAnyChoice) {
+    return true;
+  }
+
+  const trimmedAnswer = answer.trim();
+  return trimmedAnswer !== "";
 };
 
 const validateMultipleChoiceMulti = (question: TSurveyElement, answer: string, language: string): boolean => {
@@ -68,11 +75,40 @@ const validateMultipleChoiceMulti = (question: TSurveyElement, answer: string, l
   const choices = (
     question as TSurveyElement & { choices: Array<{ id: string; label: Record<string, string> }> }
   ).choices;
-  const answerChoices = answer.split(",");
   const hasOther = choices[choices.length - 1].id === "other";
+  const lastChoiceLabel = hasOther ? choices[choices.length - 1].label[language] : undefined;
+
+  const answerChoices = answer
+    .split(",")
+    .map((ans) => ans.trim())
+    .filter((ans) => ans !== "");
+
+  if (answerChoices.length === 0) {
+    return false;
+  }
+
   if (!hasOther) {
     return answerChoices.every((ans: string) => choices.some((choice) => choice.label[language] === ans));
   }
+
+  let freeTextOtherCount = 0;
+  for (const ans of answerChoices) {
+    const matchesChoice = choices.some((choice) => choice.label[language] === ans);
+
+    if (matchesChoice) {
+      continue;
+    }
+
+    if (ans === lastChoiceLabel) {
+      continue;
+    }
+
+    freeTextOtherCount++;
+    if (freeTextOtherCount > 1) {
+      return false;
+    }
+  }
+
   return true;
 };
 

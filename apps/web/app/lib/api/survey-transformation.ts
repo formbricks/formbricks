@@ -3,8 +3,8 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
 import {
   type TSurveyBlock,
-  TSurveyBlockLogic,
-  TSurveyBlockLogicAction,
+  type TSurveyBlockLogic,
+  type TSurveyBlockLogicAction,
 } from "@formbricks/types/surveys/blocks";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
