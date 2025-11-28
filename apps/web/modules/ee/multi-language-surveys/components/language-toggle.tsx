@@ -19,7 +19,7 @@ export function LanguageToggle({ language, isChecked, onToggle, onEdit, locale }
   const { t } = useTranslation();
   return (
     <div className="flex flex-col space-y-4">
-      <div className="flex items-center space-x-4">
+      <div className="flex max-w-96 items-center space-x-4">
         <Switch
           checked={isChecked}
           id={`${language.code}-toggle`}
@@ -28,15 +28,18 @@ export function LanguageToggle({ language, isChecked, onToggle, onEdit, locale }
             onToggle();
           }}
         />
-        <Label className="font-medium text-slate-800" htmlFor={`${language.code}-toggle`}>
+        <Label className="truncate font-medium text-slate-800" htmlFor={`${language.code}-toggle`}>
           {getLanguageLabel(language.code, locale)}
         </Label>
         {isChecked ? (
-          <p className="cursor-pointer text-xs text-slate-600 underline" onClick={onEdit}>
+          <button
+            className="truncate text-xs text-slate-600 underline hover:text-slate-800"
+            onClick={onEdit}
+            type="button">
             {t("environments.surveys.edit.edit_translations", {
               lang: getLanguageLabel(language.code, locale),
             })}
-          </p>
+          </button>
         ) : null}
       </div>
     </div>
