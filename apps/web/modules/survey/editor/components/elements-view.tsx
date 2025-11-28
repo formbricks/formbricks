@@ -18,13 +18,12 @@ import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { findBlocksWithCyclicLogic } from "@formbricks/types/surveys/blocks-validation";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
-import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
+import { addMultiLanguageLabels, createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
@@ -37,7 +36,6 @@ import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome
 import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
 import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
 import {
-  addBlock,
   addElementToBlock,
   deleteBlock,
   deleteElementFromBlock,
@@ -50,12 +48,7 @@ import {
 } from "@/modules/survey/editor/lib/blocks";
 import { findElementUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import {
-  isEndingCardValid,
-  isWelcomeCardValid,
-  validateElement,
-  validateSurveyElementsInBatch,
-} from "../lib/validation";
+import { isEndingCardValid, isWelcomeCardValid, validateSurveyElementsInBatch } from "../lib/validation";
 
 interface ElementsViewProps {
   localSurvey: TSurvey;
@@ -112,8 +105,6 @@ export const ElementsView = ({
   }, [elements]);
 
   const surveyLanguages = localSurvey.languages;
-
-  const getElementIdFromBlockId = (block: TSurveyBlock): string => block.elements[0].id;
 
   const getBlockName = (index: number): string => {
     return `Block ${index + 1}`;
@@ -233,121 +224,116 @@ export const ElementsView = ({
     }
   }, [localSurvey.welcomeCard, localSurvey.endings, surveyLanguages, invalidElements, setInvalidElements]);
 
-  // function to validate individual elements
-  const validateSurveyElement = (element: TSurveyElement) => {
-    // prevent this function to execute further if user hasnt still tried to save the survey
-    if (invalidElements === null) {
-      return;
-    }
-
-    if (validateElement(element, surveyLanguages)) {
-      const blocksWithCyclicLogic = findBlocksWithCyclicLogic(localSurvey.blocks);
-
-      for (const blockId of blocksWithCyclicLogic) {
-        const block = localSurvey.blocks.find((b) => b.id === blockId);
-        if (block) {
-          const elementId = getElementIdFromBlockId(block);
-          if (elementId === element.id) {
-            setInvalidElements([...invalidElements, element.id]);
-            return;
-          }
-        }
-      }
-
-      setInvalidElements(invalidElements.filter((id) => id !== element.id));
-      return;
-    }
-
-    setInvalidElements([...invalidElements, element.id]);
-    return;
-  };
-
   const updateElement = (elementIdx: number, updatedAttributes: any) => {
+    // Get element ID from current elements array (for validation)
     const element = elements[elementIdx];
     if (!element) return;
 
-    const { blockId, blockIndex } = findElementLocation(localSurvey, element.id);
-    if (!blockId || blockIndex === -1) return;
+    // Store element ID for use in functional updater
+    const elementId = element.id;
 
-    let updatedSurvey = { ...localSurvey };
+    // Track side effects that need to happen after state update
+    let newActiveElementId: string | null = null;
+    let invalidElementsUpdate: string[] | null = null;
 
-    // Handle block-level attributes (logic, logicFallback, buttonLabel, backButtonLabel) separately
-    const blockLevelAttributes: any = {};
-    const elementLevelAttributes: any = {};
+    // Use functional update to ensure we work with the latest state
+    setLocalSurvey((prevSurvey) => {
+      // Re-find element location in the CURRENT state to avoid stale data
+      const { blockId, blockIndex } = findElementLocation(prevSurvey, elementId);
 
-    Object.keys(updatedAttributes).forEach((key) => {
-      if (key === "logic" || key === "logicFallback" || key === "buttonLabel" || key === "backButtonLabel") {
-        blockLevelAttributes[key] = updatedAttributes[key];
-      } else {
-        elementLevelAttributes[key] = updatedAttributes[key];
-      }
-    });
-
-    // Update block-level attributes if any
-    if (Object.keys(blockLevelAttributes).length > 0) {
-      const blocks = [...(updatedSurvey.blocks ?? [])];
-      blocks[blockIndex] = {
-        ...blocks[blockIndex],
-        ...blockLevelAttributes,
-      };
-      updatedSurvey = { ...updatedSurvey, blocks };
-    }
-
-    // Handle element ID changes
-    if ("id" in elementLevelAttributes) {
-      // if the survey element whose id is to be changed is linked to logic of any other survey then changing it
-      const initialElementId = element.id;
-      updatedSurvey = handleElementLogicChange(updatedSurvey, initialElementId, elementLevelAttributes.id);
-      if (invalidElements?.includes(initialElementId)) {
-        setInvalidElements(
-          invalidElements.map((id) => (id === initialElementId ? elementLevelAttributes.id : id))
-        );
+      // If element no longer exists in survey (e.g., block was deleted), don't update
+      if (!blockId || blockIndex === -1) {
+        return prevSurvey;
       }
 
-      // relink the element to internal Id
-      internalElementIdMap[elementLevelAttributes.id] = internalElementIdMap[element.id];
-      delete internalElementIdMap[element.id];
-      setActiveElementId(elementLevelAttributes.id);
-    }
+      let updatedSurvey = { ...prevSurvey };
 
-    // Update element-level attributes if any
-    if (Object.keys(elementLevelAttributes).length > 0) {
-      const attributesToCheck = ["upperLabel", "lowerLabel"];
+      // Handle block-level attributes (logic, logicFallback, buttonLabel, backButtonLabel) separately
+      const blockLevelAttributes: any = {};
+      const elementLevelAttributes: any = {};
 
-      // If the value of upperLabel or lowerLabel is equal to {default:""}, then delete the key
-      const cleanedAttributes = { ...elementLevelAttributes };
-      attributesToCheck.forEach((attribute) => {
-        if (Object.keys(cleanedAttributes).includes(attribute)) {
-          const currentLabel = cleanedAttributes[attribute];
-          if (
-            currentLabel &&
-            Object.keys(currentLabel).length === 1 &&
-            currentLabel["default"].trim() === ""
-          ) {
-            delete cleanedAttributes[attribute];
-          }
+      Object.keys(updatedAttributes).forEach((key) => {
+        if (
+          key === "logic" ||
+          key === "logicFallback" ||
+          key === "buttonLabel" ||
+          key === "backButtonLabel"
+        ) {
+          blockLevelAttributes[key] = updatedAttributes[key];
+        } else {
+          elementLevelAttributes[key] = updatedAttributes[key];
         }
       });
 
-      const result = updateElementInBlock(updatedSurvey, blockId, element.id, cleanedAttributes);
-
-      if (!result.ok) {
-        toast.error(result.error.message);
-        return;
+      // Update block-level attributes if any
+      if (Object.keys(blockLevelAttributes).length > 0) {
+        const blocks = [...(updatedSurvey.blocks ?? [])];
+        blocks[blockIndex] = {
+          ...blocks[blockIndex],
+          ...blockLevelAttributes,
+        };
+        updatedSurvey = { ...updatedSurvey, blocks };
       }
 
-      updatedSurvey = result.data;
+      // Handle element ID changes
+      if ("id" in elementLevelAttributes) {
+        const initialElementId = elementId;
+        updatedSurvey = handleElementLogicChange(updatedSurvey, initialElementId, elementLevelAttributes.id);
 
-      // Validate the updated element
-      const updatedElement = updatedSurvey.blocks
-        ?.flatMap((b) => b.elements)
-        .find((q) => q.id === (cleanedAttributes.id ?? element.id));
-      if (updatedElement) {
-        validateSurveyElement(updatedElement);
+        // Track side effects to apply after state update
+        if (invalidElements?.includes(initialElementId)) {
+          invalidElementsUpdate = invalidElements.map((id) =>
+            id === initialElementId ? elementLevelAttributes.id : id
+          );
+        }
+
+        // Track new active element ID
+        newActiveElementId = elementLevelAttributes.id;
+
+        // Update internal element ID map
+        internalElementIdMap[elementLevelAttributes.id] = internalElementIdMap[elementId];
+        delete internalElementIdMap[elementId];
       }
+
+      // Update element-level attributes if any
+      if (Object.keys(elementLevelAttributes).length > 0) {
+        const attributesToCheck = ["upperLabel", "lowerLabel"];
+
+        // If the value of upperLabel or lowerLabel is equal to {default:""}, then delete the key
+        const cleanedAttributes = { ...elementLevelAttributes };
+        attributesToCheck.forEach((attribute) => {
+          if (Object.keys(cleanedAttributes).includes(attribute)) {
+            const currentLabel = cleanedAttributes[attribute];
+            if (
+              currentLabel &&
+              Object.keys(currentLabel).length === 1 &&
+              currentLabel["default"].trim() === ""
+            ) {
+              delete cleanedAttributes[attribute];
+            }
+          }
+        });
+
+        const result = updateElementInBlock(updatedSurvey, blockId, elementId, cleanedAttributes);
+
+        if (!result.ok) {
+          // Can't show toast inside functional updater, return unchanged
+          return prevSurvey;
+        }
+
+        updatedSurvey = result.data;
+      }
+
+      return updatedSurvey;
+    });
+
+    // Apply side effects after state update is queued
+    if (invalidElementsUpdate) {
+      setInvalidElements(invalidElementsUpdate);
     }
-
-    setLocalSurvey(updatedSurvey);
+    if (newActiveElementId) {
+      setActiveElementId(newActiveElementId);
+    }
   };
 
   // Update block logic (block-level property)
@@ -516,23 +502,27 @@ export const ElementsView = ({
   };
 
   const addElement = (element: TSurveyElement, index?: number) => {
-    const languageSymbols = extractLanguageCodes(localSurvey.languages);
-    const updatedElement = addMultiLanguageLabels(element, languageSymbols);
+    // Use functional update to ensure we work with the latest state
+    const newBlockId = createId();
 
-    const blockName = getBlockName(index ?? localSurvey.blocks.length);
-    const newBlock = {
-      name: blockName,
-      elements: [{ ...updatedElement, isDraft: true }],
-    };
+    setLocalSurvey((prevSurvey) => {
+      const languageSymbols = extractLanguageCodes(prevSurvey.languages);
+      const updatedElement = addMultiLanguageLabels(element, languageSymbols);
 
-    const result = addBlock(t, localSurvey, newBlock, index);
+      const newBlock = {
+        id: newBlockId,
+        name: getBlockName(index ?? prevSurvey.blocks.length),
+        elements: [{ ...updatedElement, isDraft: true }],
+        buttonLabel: createI18nString(t("templates.next"), []),
+        backButtonLabel: createI18nString(t("templates.back"), []),
+      };
 
-    if (!result.ok) {
-      toast.error(result.error.message);
-      return;
-    }
+      return {
+        ...prevSurvey,
+        blocks: [...prevSurvey.blocks, newBlock],
+      };
+    });
 
-    setLocalSurvey(result.data);
     setActiveElementId(element.id);
     internalElementIdMap[element.id] = createId();
   };
@@ -683,24 +673,40 @@ export const ElementsView = ({
   };
 
   const deleteBlockById = (blockId: string) => {
-    const result = deleteBlock(localSurvey, blockId);
-
-    if (!result.ok) {
-      toast.error(result.error.message);
+    // First check if block exists in current state (for validation and calculating next active element)
+    const blockExists = localSurvey.blocks.some((b) => b.id === blockId);
+    if (!blockExists) {
       return;
     }
 
-    setLocalSurvey(result.data);
-
-    // Then set active element to the first element of the first remaining block or ending card
-    const newBlocks = result.data.blocks ?? [];
-    if (newBlocks.length > 0 && newBlocks[0].elements.length > 0) {
-      setActiveElementId(newBlocks[0].elements[0].id);
-    } else if (result.data.endings[0]) {
-      setActiveElementId(result.data.endings[0].id);
+    // Prevent deleting the last block
+    if (localSurvey.blocks.length === 1) {
+      return;
     }
 
-    toast.success(t("environments.surveys.edit.block_deleted"));
+    // Calculate the new active element before deletion
+    const remainingBlocks = localSurvey.blocks.filter((b) => b.id !== blockId);
+    let newActiveElementId: string | null = null;
+    if (remainingBlocks.length > 0 && remainingBlocks[0].elements.length > 0) {
+      newActiveElementId = remainingBlocks[0].elements[0].id;
+    } else if (localSurvey.endings[0]) {
+      newActiveElementId = localSurvey.endings[0].id;
+    }
+
+    // Use functional update to ensure we work with the latest state
+    setLocalSurvey((prevSurvey) => {
+      const result = deleteBlock(prevSurvey, blockId);
+      if (!result.ok) {
+        // Return unchanged if block not found (shouldn't happen but be safe)
+        return prevSurvey;
+      }
+      return result.data;
+    });
+
+    // Set active element after queuing the survey update
+    if (newActiveElementId) {
+      setActiveElementId(newActiveElementId);
+    }
   };
 
   const moveBlockById = (blockId: string, direction: "up" | "down") => {
