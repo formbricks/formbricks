@@ -4,14 +4,9 @@ import { InboxIcon } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyQuestionId,
-  TSurveyQuestionSummaryMultipleChoice,
-  TSurveyQuestionTypeEnum,
-  TSurveyType,
-} from "@formbricks/types/surveys/types";
+import { TI18nString } from "@formbricks/types/i18n";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyElementSummaryMultipleChoice, TSurveyType } from "@formbricks/types/surveys/types";
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
@@ -19,24 +14,24 @@ import { Button } from "@/modules/ui/components/button";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
-import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface MultipleChoiceSummaryProps {
-  questionSummary: TSurveyQuestionSummaryMultipleChoice;
+  elementSummary: TSurveyElementSummaryMultipleChoice;
   environmentId: string;
   surveyType: TSurveyType;
   survey: TSurvey;
   setFilter: (
-    questionId: TSurveyQuestionId,
+    elementId: string,
     label: TI18nString,
-    questionType: TSurveyQuestionTypeEnum,
+    elementType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
 }
 
 export const MultipleChoiceSummary = ({
-  questionSummary,
+  elementSummary,
   environmentId,
   surveyType,
   survey,
@@ -44,9 +39,9 @@ export const MultipleChoiceSummary = ({
 }: MultipleChoiceSummaryProps) => {
   const { t } = useTranslation();
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
-  const otherValue = questionSummary.question.choices.find((choice) => choice.id === "other")?.label.default;
+  const otherValue = elementSummary.element.choices.find((choice) => choice.id === "other")?.label.default;
   // sort by count and transform to array
-  const results = Object.values(questionSummary.choices).sort((a, b) => {
+  const results = Object.values(elementSummary.choices).sort((a, b) => {
     const aHasOthers = (a.others?.length ?? 0) > 0;
     const bHasOthers = (b.others?.length ?? 0) > 0;
 
@@ -73,14 +68,14 @@ export const MultipleChoiceSummary = ({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
+      <ElementSummaryHeader
+        elementSummary={elementSummary}
         survey={survey}
         additionalInfo={
-          questionSummary.type === "multipleChoiceMulti" ? (
+          elementSummary.type === "multipleChoiceMulti" ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">
               <InboxIcon className="mr-2 h-4 w-4" />
-              {`${questionSummary.selectionCount} ${t("common.selections")}`}
+              {`${elementSummary.selectionCount} ${t("common.selections")}`}
             </div>
           ) : undefined
         }
@@ -88,7 +83,7 @@ export const MultipleChoiceSummary = ({
       <div className="px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div className="space-y-5">
           {results.map((result) => {
-            const choiceId = getChoiceIdByValue(result.value, questionSummary.question);
+            const choiceId = getChoiceIdByValue(result.value, elementSummary.element);
             return (
               <Fragment key={result.value}>
                 <button
@@ -96,10 +91,11 @@ export const MultipleChoiceSummary = ({
                   className="group w-full cursor-pointer"
                   onClick={() =>
                     setFilter(
-                      questionSummary.question.id,
-                      questionSummary.question.headline,
-                      questionSummary.question.type,
-                      questionSummary.type === "multipleChoiceSingle" || otherValue === result.value
+                      elementSummary.element.id,
+                      elementSummary.element.headline,
+                      elementSummary.element.type,
+                      elementSummary.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+                        otherValue === result.value
                         ? t("environments.surveys.summary.includes_either")
                         : t("environments.surveys.summary.includes_all"),
                       [result.value]

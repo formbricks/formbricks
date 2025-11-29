@@ -2,9 +2,9 @@
 
 import { HandshakeIcon, Undo2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TSurveyEndings } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { getLocalizedValue } from "@/lib/i18n/utils";
+import { recallToHeadline } from "@/lib/utils/recall";
 import {
   Select,
   SelectContent,
@@ -15,16 +15,16 @@ import {
 } from "@/modules/ui/components/select";
 
 interface EndingCardSelectorProps {
-  endings: TSurveyEndings;
+  survey: TSurvey;
   value: string;
   onChange: (value: string) => void;
 }
 
-export const EndingCardSelector = ({ endings, value, onChange }: EndingCardSelectorProps) => {
-  const availableEndings = endings;
+export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelectorProps) => {
+  const endings = survey.endings;
   const { t } = useTranslation();
-  const endingCards = availableEndings.filter((ending) => ending.type === "endScreen");
-  const redirectToUrls = availableEndings.filter((ending) => ending.type === "redirectToUrl");
+  const endingCards = endings.filter((ending) => ending.type === "endScreen");
+  const redirectToUrls = endings.filter((ending) => ending.type === "redirectToUrl");
 
   return (
     <div className="space-y-1 text-sm">
@@ -42,7 +42,9 @@ export const EndingCardSelector = ({ endings, value, onChange }: EndingCardSelec
               {/* Custom endings */}
               {endingCards.map((ending) => (
                 <SelectItem key={ending.id} value={ending.id}>
-                  {getTextContent(getLocalizedValue(ending.headline, "default"))}
+                  {getTextContent(
+                    recallToHeadline(ending.headline ?? {}, survey, false, "default")["default"]
+                  )}
                 </SelectItem>
               ))}
             </SelectGroup>

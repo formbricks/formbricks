@@ -2,7 +2,7 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { cn } from "@/lib/cn";
 import { IS_STORAGE_CONFIGURED, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
+import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
@@ -26,7 +26,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
     throw new Error("Project not found");
   }
 
-  const canRemoveBranding = await getWhiteLabelPermission(organization.billing.plan);
+  const canRemoveBranding = await getRemoveBrandingPermission(organization.billing.plan);
 
   return (
     <PageContentWrapper>

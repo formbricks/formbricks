@@ -20,7 +20,7 @@ describe("xm-templates", () => {
     expect(result).toEqual({
       name: "",
       endings: expect.any(Array),
-      questions: [],
+      blocks: [],
       styling: {
         overwriteThemeStyling: true,
       },

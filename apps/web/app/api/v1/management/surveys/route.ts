@@ -4,6 +4,11 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import { responses } from "@/app/lib/api/response";
+import {
+  transformBlocksToQuestions,
+  transformQuestionsToBlocks,
+  validateSurveyInput,
+} from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
@@ -27,10 +32,30 @@ export const GET = withV1ApiWrapper({
       const environmentIds = authentication.environmentPermissions.map(
         (permission) => permission.environmentId
       );
+
       const surveys = await getSurveys(environmentIds, limit, offset);
 
+      const surveysWithQuestions = surveys.map((survey) => {
+        // If the survey has blocks and each block has ONLY ONE element, we can transform the blocks to questions
+        // This is only for backwards compatibility with the older surveys
+        const shouldTransformToQuestions =
+          survey.blocks &&
+          survey.blocks.length > 0 &&
+          survey.blocks.every((block) => block.elements.length === 1);
+
+        if (shouldTransformToQuestions) {
+          return {
+            ...survey,
+            questions: transformBlocksToQuestions(survey.blocks, survey.endings),
+            blocks: [],
+          };
+        }
+
+        return survey;
+      });
+
       return {
-        response: responses.successResponse(surveys),
+        response: responses.successResponse(surveysWithQuestions),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {
@@ -63,6 +88,7 @@ export const POST = withV1ApiWrapper({
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
       }
+
       const inputValidation = ZSurveyCreateInputWithEnvironmentId.safeParse(surveyInput);
 
       if (!inputValidation.success) {
@@ -92,6 +118,20 @@ export const POST = withV1ApiWrapper({
 
       const surveyData = { ...inputValidation.data, environmentId };
 
+      const validateResult = validateSurveyInput(surveyData);
+      if (!validateResult.ok) {
+        return {
+          response: responses.badRequestResponse(validateResult.error.message),
+        };
+      }
+
+      const { hasQuestions } = validateResult.data;
+
+      if (hasQuestions) {
+        surveyData.blocks = transformQuestionsToBlocks(surveyData.questions, surveyData.endings || []);
+        surveyData.questions = [];
+      }
+
       const featureCheckResult = await checkFeaturePermissions(surveyData, organization);
       if (featureCheckResult) {
         return {
@@ -102,6 +142,18 @@ export const POST = withV1ApiWrapper({
       const survey = await createSurvey(environmentId, { ...surveyData, environmentId: undefined });
       auditLog.targetId = survey.id;
       auditLog.newObject = survey;
+
+      if (hasQuestions) {
+        const surveyWithQuestions = {
+          ...survey,
+          questions: transformBlocksToQuestions(survey.blocks, survey.endings),
+          blocks: [],
+        };
+
+        return {
+          response: responses.successResponse(surveyWithQuestions),
+        };
+      }
 
       return {
         response: responses.successResponse(survey),

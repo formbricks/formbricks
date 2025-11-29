@@ -1,8 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TJsEnvironmentStateSurvey } from "../../../types/js";
 import { type TAllowedFileExtension, mimeTypes } from "../../../types/storage";
-import type { TSurveyLanguage, TSurveyQuestionChoice } from "../../../types/surveys/types";
-import { getDefaultLanguageCode, getMimeType, getShuffledChoicesIds, getShuffledRowIndices } from "./utils";
+import { TSurveyElementTypeEnum } from "../../../types/surveys/elements";
+import type { TSurveyLanguage } from "../../../types/surveys/types";
+import {
+  findBlockByElementId,
+  getDefaultLanguageCode,
+  getElementsFromSurveyBlocks,
+  getMimeType,
+  getShuffledChoicesIds,
+  getShuffledRowIndices,
+} from "./utils";
 
 // Mock crypto.getRandomValues for deterministic shuffle tests
 const mockGetRandomValues = vi.fn();
@@ -18,6 +26,29 @@ describe("getMimeType", () => {
     });
   });
 });
+
+// Base mock for TJsEnvironmentStateSurvey to satisfy stricter type checks
+const baseMockSurvey: TJsEnvironmentStateSurvey = {
+  id: "survey1",
+  name: "Test Survey",
+  type: "link",
+  status: "inProgress",
+  questions: [],
+  blocks: [],
+  endings: [],
+  welcomeCard: { enabled: false, timeToFinish: true, showResponseCount: false },
+  variables: [],
+  styling: { overwriteThemeStyling: false },
+  recontactDays: null,
+  displayLimit: null,
+  displayPercentage: null,
+  languages: [],
+  segment: null,
+  hiddenFields: { enabled: false, fieldIds: [] },
+  projectOverwrites: null,
+  triggers: [],
+  displayOption: "displayOnce",
+} as unknown as TJsEnvironmentStateSurvey;
 
 describe("getDefaultLanguageCode", () => {
   const mockSurveyLanguageEn: TSurveyLanguage = {
@@ -43,20 +74,6 @@ describe("getDefaultLanguageCode", () => {
       updatedAt: new Date(),
       projectId: "proj1",
     },
-  };
-
-  // Base mock for TJsEnvironmentStateSurvey to satisfy stricter type checks
-  const baseMockSurvey: Partial<TJsEnvironmentStateSurvey> = {
-    id: "survey1",
-    name: "Test Survey",
-    type: "link", // Corrected: 'link' or 'app'
-    status: "inProgress", // Assuming 'inProgress' is a valid TSurveyStatus
-    questions: [],
-    endings: [],
-    welcomeCard: { enabled: false, timeToFinish: true, showResponseCount: false }, // Added missing properties
-    variables: [],
-    styling: { overwriteThemeStyling: false },
-    // ... other mandatory fields with default/mock values if needed
   };
 
   test("should return the code of the default language", () => {
@@ -123,12 +140,12 @@ describe("getShuffledChoicesIds", () => {
     mockGetRandomValues.mockReset();
   });
 
-  const choicesBase: TSurveyQuestionChoice[] = [
+  const choicesBase = [
     { id: "c1", label: { en: "Choice 1" } },
     { id: "c2", label: { en: "Choice 2" } },
     { id: "c3", label: { en: "Choice 3" } },
   ];
-  const choicesWithOther: TSurveyQuestionChoice[] = [...choicesBase, { id: "other", label: { en: "Other" } }];
+  const choicesWithOther = [...choicesBase, { id: "other", label: { en: "Other" } }];
 
   test('should return unshuffled for "none"', () => {
     expect(getShuffledChoicesIds(choicesBase, "none")).toEqual(["c1", "c2", "c3"]);
@@ -162,5 +179,151 @@ describe("getShuffledChoicesIds", () => {
     const singleChoice = [{ id: "s1", label: { en: "Single" } }];
     expect(getShuffledChoicesIds(singleChoice, "all")).toEqual(["s1"]);
     expect(getShuffledChoicesIds(singleChoice, "exceptLast")).toEqual(["s1"]);
+  });
+});
+describe("getQuestionsFromSurvey", () => {
+  test("should return elements from blocks", () => {
+    const survey: TJsEnvironmentStateSurvey = {
+      ...baseMockSurvey,
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { en: "Question 1" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+            {
+              id: "q2",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { en: "Question 2" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+          ],
+        },
+        {
+          id: "block2",
+          name: "Block 2",
+          elements: [
+            {
+              id: "q3",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { en: "Question 3" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+          ],
+        },
+      ],
+    };
+
+    const questions = getElementsFromSurveyBlocks(survey.blocks);
+    expect(questions).toHaveLength(3);
+    expect(questions[0].id).toBe("q1");
+    expect(questions[1].id).toBe("q2");
+    expect(questions[2].id).toBe("q3");
+  });
+
+  test("should return empty array when blocks is empty", () => {
+    const survey = {
+      ...baseMockSurvey,
+      blocks: [],
+    } as TJsEnvironmentStateSurvey;
+
+    expect(getElementsFromSurveyBlocks(survey.blocks)).toEqual([]);
+  });
+
+  test("should handle blocks with no elements", () => {
+    const survey: TJsEnvironmentStateSurvey = {
+      ...baseMockSurvey,
+      blocks: [
+        { id: "block1", name: "Block 1", elements: [] },
+        {
+          id: "block2",
+          name: "Block 2",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { en: "Q1" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+          ],
+        },
+      ],
+    };
+
+    const questions = getElementsFromSurveyBlocks(survey.blocks);
+    expect(questions).toHaveLength(1);
+    expect(questions[0].id).toBe("q1");
+  });
+});
+
+describe("findBlockByElementId", () => {
+  const survey: TJsEnvironmentStateSurvey = {
+    ...baseMockSurvey,
+    blocks: [
+      {
+        id: "block1",
+        name: "Block 1",
+        elements: [
+          {
+            id: "q1",
+            type: TSurveyElementTypeEnum.OpenText,
+            headline: { en: "Question 1" },
+            required: false,
+            inputType: "text",
+            charLimit: { enabled: false },
+          },
+          {
+            id: "q2",
+            type: TSurveyElementTypeEnum.OpenText,
+            headline: { en: "Question 2" },
+            required: false,
+            inputType: "text",
+            charLimit: { enabled: false },
+          },
+        ],
+      },
+      {
+        id: "block2",
+        name: "Block 2",
+        elements: [
+          {
+            id: "q3",
+            type: TSurveyElementTypeEnum.OpenText,
+            headline: { en: "Question 3" },
+            required: false,
+            inputType: "text",
+            charLimit: { enabled: false },
+          },
+        ],
+      },
+    ],
+  };
+
+  test("should find block containing the element", () => {
+    const block = findBlockByElementId(survey.blocks, "q1");
+    expect(block).toBeDefined();
+    expect(block?.id).toBe("block1");
+
+    const block2 = findBlockByElementId(survey.blocks, "q3");
+    expect(block2).toBeDefined();
+    expect(block2?.id).toBe("block2");
+  });
+
+  test("should return undefined for non-existent element", () => {
+    const block = findBlockByElementId(survey.blocks, "nonexistent");
+    expect(block).toBeUndefined();
   });
 });

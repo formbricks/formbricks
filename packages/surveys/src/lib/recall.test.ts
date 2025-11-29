@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
-import { type TSurveyQuestion, TSurveyQuestionTypeEnum } from "../../../types/surveys/types";
+import { TSurveyElementTypeEnum, type TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
 import { parseRecallInformation, replaceRecallInfo } from "./recall";
 
 // Mock getLocalizedValue (assuming path and simple behavior)
@@ -153,18 +153,17 @@ describe("parseRecallInformation", () => {
     surveyType: "Onboarding",
   };
 
-  const baseQuestion: TSurveyQuestion = {
+  const baseQuestion: TSurveyOpenTextElement = {
     id: "survey1",
-    type: TSurveyQuestionTypeEnum.OpenText,
+    type: TSurveyElementTypeEnum.OpenText,
     headline: { en: "Original Headline" },
     required: false,
     inputType: "text",
     charLimit: { enabled: false },
-    // other necessary TSurveyQuestion fields can be added here with default values
   };
 
   test("should replace recall info in headline", () => {
-    const question: TSurveyQuestion = {
+    const question: TSurveyOpenTextElement = {
       ...baseQuestion,
       headline: { en: "Welcome, #recall:name/fallback:Guest#!" },
     };
@@ -174,7 +173,7 @@ describe("parseRecallInformation", () => {
   });
 
   test("should replace recall info in subheader", () => {
-    const question: TSurveyQuestion = {
+    const question: TSurveyOpenTextElement = {
       ...baseQuestion,
       headline: { en: "Main Question" },
       subheader: { en: "Details: #recall:productName/fallback:N/A#." },
@@ -185,7 +184,7 @@ describe("parseRecallInformation", () => {
   });
 
   test("should replace recall info in both headline and subheader", () => {
-    const question: TSurveyQuestion = {
+    const question: TSurveyOpenTextElement = {
       ...baseQuestion,
       headline: { en: "User: #recall:name/fallback:User#" },
       subheader: { en: "Survey: #recall:surveyType/fallback:General#" },
@@ -196,7 +195,7 @@ describe("parseRecallInformation", () => {
   });
 
   test("should not change text if no recall info is present", () => {
-    const question: TSurveyQuestion = {
+    const question: TSurveyOpenTextElement = {
       ...baseQuestion,
       headline: { en: "A simple question." },
       subheader: { en: "With a simple subheader." },
@@ -212,7 +211,7 @@ describe("parseRecallInformation", () => {
   });
 
   test("should handle undefined subheader gracefully", () => {
-    const question: TSurveyQuestion = {
+    const question: TSurveyOpenTextElement = {
       ...baseQuestion,
       headline: { en: "Question with #recall:name/fallback:User#" },
       subheader: undefined,
@@ -223,7 +222,7 @@ describe("parseRecallInformation", () => {
   });
 
   test("should not modify subheader if languageCode content is missing, even if recall is in other lang", () => {
-    const question: TSurveyQuestion = {
+    const question: TSurveyOpenTextElement = {
       ...baseQuestion,
       headline: { en: "Hello #recall:name/fallback:User#" },
       subheader: { fr: "Bonjour #recall:name/fallback:Utilisateur#", en: "" },
@@ -237,7 +236,7 @@ describe("parseRecallInformation", () => {
   test("should handle malformed recall string (empty ID) leading to no replacement for that pattern", () => {
     // This tests extractId returning null because extractRecallInfo won't match '#recall:/fallback:foo#'
     // due to idPattern requiring at least one char for ID.
-    const question: TSurveyQuestion = {
+    const question: TSurveyOpenTextElement = {
       ...baseQuestion,
       headline: { en: "Malformed: #recall:/fallback:foo# and valid: #recall:name/fallback:User#" },
     };
@@ -247,7 +246,7 @@ describe("parseRecallInformation", () => {
 
   test("should use empty string for empty fallback value", () => {
     // This tests extractFallbackValue returning ""
-    const question: TSurveyQuestion = {
+    const question: TSurveyOpenTextElement = {
       ...baseQuestion,
       headline: { en: "Data: #recall:nonExistentData/fallback:#" },
     };
@@ -256,7 +255,7 @@ describe("parseRecallInformation", () => {
   });
 
   test("should handle recall info if subheader is present but no text for languageCode", () => {
-    const question: TSurveyQuestion = {
+    const question: TSurveyOpenTextElement = {
       ...baseQuestion,
       headline: { en: "Headline #recall:name/fallback:User#" },
       subheader: { fr: "French subheader #recall:productName/fallback:Produit#", en: "" },
