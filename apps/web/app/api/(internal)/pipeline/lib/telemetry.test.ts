@@ -209,7 +209,14 @@ describe("sendTelemetryEvents", () => {
     expect(mockCacheService.tryLock).toHaveBeenCalledWith("telemetry_lock", "locked", 60 * 1000);
 
     // The error should be caught in the inner catch block
-    expect(logger.error).toHaveBeenCalledWith(networkError, "Failed to send telemetry");
+    // The actual implementation logs as warning, not error
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: networkError,
+        message: "Network error",
+      }),
+      "Failed to send telemetry - applying 1h cooldown"
+    );
 
     // Lock should be released in finally block
     expect(mockCacheService.del).toHaveBeenCalledWith(["telemetry_lock"]);
