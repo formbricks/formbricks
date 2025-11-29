@@ -35,7 +35,7 @@ export const DropdownSelector = ({
             <button
               disabled={disabled ? disabled : false}
               type="button"
-              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
+              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50">
               <span className="flex w-4/5 flex-1">
                 <span className="w-full truncate text-left">
                   {selectedItem ? selectedItem.name || placeholder || label : `${placeholder || label}`}

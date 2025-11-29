@@ -37,9 +37,9 @@ export const TemplateFilters = ({
               disabled={templateSearch && templateSearch.length > 0 ? true : false}
               className={cn(
                 selectedFilter[index] === null
-                  ? "bg-slate-800 font-semibold text-white"
-                  : "bg-white text-slate-900 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
-                "rounded border border-slate-900 px-2 py-1 text-xs transition-all duration-150"
+                  ? "template-filter-btn-selected bg-black font-semibold text-white"
+                  : "template-filter-btn bg-gray-200 text-slate-900 hover:bg-slate-300 focus:scale-105 focus:bg-slate-300 focus:outline-none focus:ring-0",
+                "rounded border border-slate-300 px-2 py-1 text-xs transition-all duration-150"
               )}>
               {index === 0
                 ? t("environments.surveys.templates.all_channels")
@@ -55,9 +55,9 @@ export const TemplateFilters = ({
                 disabled={templateSearch && templateSearch.length > 0 ? true : false}
                 className={cn(
                   selectedFilter[index] === filter.value
-                    ? "bg-slate-800 font-semibold text-white"
-                    : "bg-white text-slate-900 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0 dark:bg-gray-100 dark:text-slate-900 dark:hover:bg-gray-300",
-                  "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
+                    ? "template-filter-btn-selected bg-black font-semibold text-white"
+                    : "template-filter-btn bg-gray-200 text-slate-900 hover:bg-slate-300 focus:scale-105 focus:bg-slate-300 focus:outline-none focus:ring-0",
+                  "rounded border border-slate-300 px-2 py-1 text-xs transition-all duration-150"
                 )}>
                 {filter.label}
               </button>

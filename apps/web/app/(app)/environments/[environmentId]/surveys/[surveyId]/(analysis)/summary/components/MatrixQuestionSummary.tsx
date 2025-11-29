@@ -52,7 +52,7 @@ export const MatrixQuestionSummary = ({ questionSummary, survey, setFilter }: Ma
         <table className="mx-auto border-collapse cursor-default text-left">
           <thead>
             <tr>
-              <th className="p-4 pb-3 pt-0 font-medium text-slate-400 dark:border-slate-600 dark:text-slate-200"></th>
+              <th className="p-4 pb-3 pt-0 font-medium text-slate-400"></th>
               {columns.map((column) => (
                 <th key={column} className="text-center font-medium">
                   <TooltipRenderer tooltipContent={getTooltipContent(column)} shouldRender={true}>
@@ -71,9 +71,7 @@ export const MatrixQuestionSummary = ({ questionSummary, survey, setFilter }: Ma
                   </TooltipRenderer>
                 </td>
                 {columnPercentages.map(({ column, percentage }) => (
-                  <td
-                    key={column}
-                    className="text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  <td key={column} className="text-center text-slate-500">
                     <TooltipRenderer
                       shouldRender={true}
                       tooltipContent={getTooltipContent(

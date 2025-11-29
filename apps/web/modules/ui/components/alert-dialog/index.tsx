@@ -37,7 +37,7 @@ export const AlertDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-lg" hideCloseButton={true}>
         <DialogHeader>
-          <DialogTitle className="dark:text-gray-100">{headerText}</DialogTitle>
+          <DialogTitle className="">{headerText}</DialogTitle>
         </DialogHeader>
         <DialogBody>{mainText}</DialogBody>
         <DialogFooter>

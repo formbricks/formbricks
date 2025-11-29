@@ -89,16 +89,14 @@ export const FileUploadSummary = ({
 
                           <div className="flex flex-col items-center justify-center p-2">
                             <FileIcon className="h-6 text-slate-500" />
-                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{fileName}</p>
+                            <p className="mt-2 text-sm text-slate-500">{fileName}</p>
                           </div>
                         </div>
                       );
                     })
                   ) : (
                     <div className="flex w-full flex-col items-center justify-center p-2">
-                      <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                        {t("common.skipped")}
-                      </p>
+                      <p className="mt-2 text-sm font-semibold text-slate-500">{t("common.skipped")}</p>
                     </div>
                   ))}
               </div>

@@ -56,7 +56,7 @@ export function DefaultLanguageSelect({
               });
             }}
             value={`${defaultLanguage?.code}`}>
-            <SelectTrigger className="xs:w-[180px] xs:text-sm w-full px-4 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
+            <SelectTrigger className="xs:w-[180px] xs:text-sm w-full px-4 text-xs text-slate-800">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

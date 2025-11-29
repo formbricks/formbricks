@@ -20,17 +20,17 @@ type NonNullabeChannel = NonNullable<TProjectConfigChannel>;
 export const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   switch (role) {
     case "productManager":
-      return "border-blue-300 bg-blue-50 text-blue-500 dark:border-blue-600 dark:bg-blue-950 dark:text-blue-400";
+      return "border-blue-300 bg-blue-100 text-blue-500";
     case "marketing":
-      return "border-orange-300 bg-orange-50 text-orange-500 dark:border-orange-600 dark:bg-orange-950 dark:text-orange-400";
+      return "border-orange-300 bg-orange-100 text-orange-500";
     case "sales":
-      return "border-emerald-300 bg-emerald-50 text-emerald-500 dark:border-emerald-600 dark:bg-emerald-950 dark:text-emerald-400";
+      return "border-emerald-300 bg-emerald-100 text-emerald-500";
     case "customerSuccess":
-      return "border-violet-300 bg-violet-50 text-violet-500 dark:border-violet-600 dark:bg-violet-950 dark:text-violet-400";
+      return "border-violet-300 bg-violet-100 text-violet-500";
     case "peopleManager":
-      return "border-pink-300 bg-pink-50 text-pink-500 dark:border-pink-600 dark:bg-pink-950 dark:text-pink-400";
+      return "border-pink-300 bg-pink-100 text-pink-500";
     default:
-      return "border-slate-300 bg-slate-50 text-slate-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-400";
+      return "border-slate-300 bg-slate-100 text-slate-500";
   }
 };
 
