@@ -1,13 +1,10 @@
 import "server-only";
 import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { captureTelemetry } from "@/lib/telemetry";
 import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/contact";
 import {
   getMonthlyOrganizationResponseCount,
@@ -51,8 +48,6 @@ export const createResponse = async (
   responseInput: TResponseInput,
   tx?: Prisma.TransactionClient
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
-  captureTelemetry("response created");
-
   const {
     surveyId,
     displayId,
@@ -126,7 +121,6 @@ export const createResponse = async (
     if (!billing.ok) {
       return err(billing.error as ApiErrorResponseV2);
     }
-    const billingData = billing.data;
 
     const prismaClient = tx ?? prisma;
 
@@ -140,26 +134,7 @@ export const createResponse = async (
         return err(responsesCountResult.error as ApiErrorResponseV2);
       }
 
-      const responsesCount = responsesCountResult.data;
-      const responsesLimit = billingData.limits?.monthly.responses;
-
-      if (responsesLimit && responsesCount >= responsesLimit) {
-        try {
-          await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-            plan: billingData.plan,
-            limits: {
-              projects: null,
-              monthly: {
-                responses: responsesLimit,
-                miu: null,
-              },
-            },
-          });
-        } catch (err) {
-          // Log error but do not throw it
-          logger.error(err, "Error sending plan limits reached event to Posthog");
-        }
-      }
+      // Limit check completed
     }
 
     return ok(response);

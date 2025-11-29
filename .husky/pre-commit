@@ -1,10 +1,10 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
-# Load environment variables from .env files
+# Load environment variables from .env files (if they exist)
 if [ -f .env ]; then
   set -a
-  . .env
+  # shellcheck disable=SC1091
+  . ./.env
   set +a
 fi
 

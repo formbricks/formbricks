@@ -70,12 +70,12 @@ export const GET = withV1ApiWrapper({
             expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour for SDK to recheck
           },
           true,
-          // Optimized cache headers for Cloudflare CDN and browser caching
-          // max-age=3600: 1hr browser cache (per guidelines)
-          // s-maxage=1800: 30min Cloudflare cache (per guidelines)
-          // stale-while-revalidate=1800: 30min stale serving during revalidation
-          // stale-if-error=3600: 1hr stale serving on origin errors
-          "public, s-maxage=1800, max-age=3600, stale-while-revalidate=1800, stale-if-error=3600"
+          // Cache headers aligned with Redis cache TTL (1 minute)
+          // max-age=60: 1min browser cache
+          // s-maxage=60: 1min Cloudflare CDN cache
+          // stale-while-revalidate=60: 1min stale serving during revalidation
+          // stale-if-error=60: 1min stale serving on origin errors
+          "public, s-maxage=60, max-age=60, stale-while-revalidate=60, stale-if-error=60"
         ),
       };
     } catch (err) {

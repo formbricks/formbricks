@@ -25,7 +25,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   DateRange,
   useResponseFilter,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";

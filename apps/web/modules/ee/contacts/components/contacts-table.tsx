@@ -300,7 +300,7 @@ export const ContactsTable = ({
           </Table>
         </div>
 
-        {data && hasMore && data.length > 0 && (
+        {data && hasMore && data.length > 0 && isDataLoaded && (
           <div className="mt-4 flex justify-center">
             <Button onClick={fetchNextPage}>{t("common.load_more")}</Button>
           </div>

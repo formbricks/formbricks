@@ -47,9 +47,9 @@
   "devDependencies": {
     "@azure/microsoft-playwright-testing": "1.0.0-beta.7",
     "@formbricks/eslint-config": "workspace:*",
-    "@playwright/test": "1.52.0",
+    "@playwright/test": "1.56.1",
     "eslint": "8.57.0",
-    "glob": "^11.0.2",
+    "glob": "^11.1.0",
     "husky": "9.1.7",
     "lint-staged": "16.0.0",
     "rimraf": "6.0.1",
@@ -83,10 +83,11 @@
     },
     "overrides": {
       "axios": ">=1.12.2",
-      "tar-fs": "2.1.4"
+      "tar-fs": "2.1.4",
+      "typeorm": ">=0.3.26"
     },
     "comments": {
-      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: axios (CVE-2025-58754) - awaiting @boxyhq/saml-jackson update | tar-fs (Dependabot #205) - awaiting upstream dependency updates"
+      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: axios (CVE-2025-58754) - awaiting @boxyhq/saml-jackson update | tar-fs (Dependabot #205) - awaiting upstream dependency updates | typeorm (Dependabot #223) - awaiting @boxyhq/saml-jackson update"
     }
   }
 }

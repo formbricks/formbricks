@@ -2,7 +2,6 @@ import { ProjectTeam } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { captureTelemetry } from "@/lib/telemetry";
 import { getProjectTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/utils";
 import {
   TGetProjectTeamsFilter,
@@ -44,8 +43,6 @@ export const getProjectTeams = async (
 export const createProjectTeam = async (
   teamInput: TProjectTeamInput
 ): Promise<Result<ProjectTeam, ApiErrorResponseV2>> => {
-  captureTelemetry("project team created");
-
   const { teamId, projectId, permission } = teamInput;
 
   try {

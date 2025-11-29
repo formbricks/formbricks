@@ -64,7 +64,6 @@ export const NotionWrapper = ({
             selectedIntegration={selectedIntegration}
           />
           <ManageIntegration
-            environment={environment}
             notionIntegration={notionIntegration}
             setOpenAddIntegrationModal={setIsModalOpen}
             setIsConnected={setIsConnected}

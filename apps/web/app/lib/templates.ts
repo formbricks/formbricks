@@ -1504,7 +1504,7 @@ const docsFeedback = (t: TFunction): TTemplate => {
         buildOpenTextQuestion({
           headline: t("templates.docs_feedback_question_2_headline"),
           required: false,
-          inputType: "text",
+          inputType: "url",
           t,
         }),
         buildOpenTextQuestion({
@@ -2073,7 +2073,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.career_development_survey_name"),
-      role: "productManager",
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.career_development_survey_description"),
@@ -2160,7 +2160,7 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.professional_development_survey_name"),
-      role: "productManager",
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.professional_development_survey_description"),

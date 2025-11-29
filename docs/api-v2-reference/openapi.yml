@@ -612,6 +612,16 @@ paths:
             type: string
             description: End date
         - in: query
+          name: filterDateField
+          description: Date field to filter by
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - updatedAt
+            default: createdAt
+            description: Date field to filter by
+        - in: query
           name: surveyId
           schema:
             type: string
@@ -1709,6 +1719,16 @@ paths:
             type: string
             description: End date
         - in: query
+          name: filterDateField
+          description: Date field to filter by
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - updatedAt
+            default: createdAt
+            description: Date field to filter by
+        - in: query
           name: environmentId
           description: The environment ID to filter by
           schema:
@@ -2243,6 +2263,16 @@ paths:
             type: string
             description: End date
         - in: query
+          name: filterDateField
+          description: Date field to filter by
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - updatedAt
+            default: createdAt
+            description: Date field to filter by
+        - in: query
           name: surveyIds
           schema:
             type: array
@@ -2699,6 +2729,16 @@ paths:
           schema:
             type: string
             description: End date
+        - in: query
+          name: filterDateField
+          description: Date field to filter by
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - updatedAt
+            default: createdAt
+            description: Date field to filter by
       responses:
         "200":
           description: Teams retrieved successfully.
@@ -3004,6 +3044,16 @@ paths:
             type: string
             description: End date
         - in: query
+          name: filterDateField
+          description: Date field to filter by
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - updatedAt
+            default: createdAt
+            description: Date field to filter by
+        - in: query
           name: teamId
           schema:
             type: string
@@ -3301,6 +3351,16 @@ paths:
           schema:
             type: string
             description: End date
+        - in: query
+          name: filterDateField
+          description: Date field to filter by
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - updatedAt
+            default: createdAt
+            description: Date field to filter by
         - in: query
           name: id
           schema:

@@ -35,7 +35,7 @@
     "scan-translations": "tsx src/scan-translations.ts"
   },
   "dependencies": {
-    "glob": "^11.0.2"
+    "glob": "^11.1.0"
   },
   "devDependencies": {
     "vite": "6.4.1",

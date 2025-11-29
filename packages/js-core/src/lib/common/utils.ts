@@ -234,12 +234,23 @@ export const checkUrlMatch = (
   }
 };
 
-export const handleUrlFilters = (urlFilters: TActionClassNoCodeConfig["urlFilters"]): boolean => {
+export const handleUrlFilters = (
+  urlFilters: TActionClassNoCodeConfig["urlFilters"],
+  connector: "or" | "and" = "or"
+): boolean => {
   if (urlFilters.length === 0) {
     return true;
   }
 
   const windowUrl = window.location.href;
+
+  if (connector === "and") {
+    const isMatch = urlFilters.every((filter) => {
+      const match = checkUrlMatch(windowUrl, filter.value, filter.rule);
+      return match;
+    });
+    return isMatch;
+  }
 
   const isMatch = urlFilters.some((filter) => {
     const match = checkUrlMatch(windowUrl, filter.value, filter.rule);
@@ -307,7 +318,8 @@ export const evaluateNoCodeConfigClick = (
     }
   }
 
-  const isValidUrl = handleUrlFilters(urlFilters);
+  const connector = action.noCodeConfig.urlFiltersConnector ?? "or";
+  const isValidUrl = handleUrlFilters(urlFilters, connector);
 
   if (!isValidUrl) return false;
 
