@@ -1,0 +1,73 @@
+{
+  "common": {
+    "and": "och",
+    "apply": "Tillämpa",
+    "auto_close_wrapper": "Automatisk stängning",
+    "back": "Tillbaka",
+    "click_or_drag_to_upload_files": "Klicka eller dra för att ladda upp filer.",
+    "close_survey": "Stäng enkät",
+    "company_logo": "Företagslogotyp",
+    "delete_file": "Ta bort fil",
+    "file_upload": "Ladda upp fil",
+    "finish": "Slutför",
+    "language_switch": "Språkväxlare",
+    "less_than_x_minutes": "{count, plural, one {mindre än 1 minut} other {mindre än {count} minuter}}",
+    "move_down": "Flytta {item} nedåt",
+    "move_up": "Flytta {item} uppåt",
+    "next": "Nästa",
+    "open_in_new_tab": "Öppna i ny flik",
+    "optional": "Valfritt",
+    "options": "Alternativ",
+    "people_responded": "{count, plural, one {1 person har svarat} other {{count} personer har svarat}}",
+    "please_retry_now_or_try_again_later": "Försök igen nu eller försök igen senare.",
+    "powered_by": "Drivs av",
+    "privacy_policy": "Integritetspolicy",
+    "protected_by_reCAPTCHA_and_the_Google": "Skyddas av reCAPTCHA och Googles",
+    "question": "Fråga",
+    "question_video": "Frågevideo",
+    "ranking_items": "Rangordna objekt",
+    "respondents_will_not_see_this_card": "Respondenter kommer inte att se detta kort",
+    "retry": "Försök igen",
+    "select_a_date": "Välj ett datum",
+    "select_for_ranking": "Välj {item} för rangordning",
+    "sending_responses": "Skickar svar...",
+    "takes": "Tar",
+    "terms_of_service": "Användarvillkor",
+    "the_servers_cannot_be_reached_at_the_moment": "Servrarna kan inte nås för tillfället.",
+    "they_will_be_redirected_immediately": "De kommer att omdirigeras omedelbart",
+    "upload_files_by_clicking_or_dragging_them_here": "Ladda upp filer genom att klicka eller dra dem hit",
+    "uploading": "Laddar upp",
+    "x_minutes": "{count, plural, one {1 minut} other {{count} minuter}}",
+    "x_plus_minutes": "{count}+ minuter",
+    "you_have_selected_x_date": "Du har valt {date}",
+    "you_have_successfully_uploaded_the_file": "Du har framgångsrikt laddat upp filen {fileName}",
+    "your_feedback_is_stuck": "Din feedback fastnade :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "Följande filer är redan uppladdade: {duplicateNames}. Dubbletter av filer är inte tillåtna.",
+      "file_size_exceeded": "Följande filer överstiger maxstorleken på {maxSizeInMB} MB och togs bort: {fileNames}",
+      "file_size_exceeded_alert": "Filen måste vara mindre än {maxSizeInMB} MB",
+      "no_valid_file_types_selected": "Inga giltiga filtyper valda. Vänligen välj en giltig filtyp.",
+      "only_one_file_can_be_uploaded_at_a_time": "Endast en fil kan laddas upp åt gången.",
+      "upload_failed": "Uppladdning misslyckades! Försök igen.",
+      "you_can_only_upload_a_maximum_of_files": "Du kan ladda upp maximalt {FILE_LIMIT} filer."
+    },
+    "invalid_device_error": {
+      "message": "Vänligen inaktivera skräppostskyddet i enkätinställningarna för att fortsätta använda denna enhet.",
+      "title": "Denna enhet stöder inte skräppostskydd."
+    },
+    "please_book_an_appointment": "Vänligen boka ett möte",
+    "please_enter_a_valid_email_address": "Vänligen ange en giltig e-postadress",
+    "please_enter_a_valid_phone_number": "Vänligen ange ett giltigt telefonnummer",
+    "please_enter_a_valid_url": "Vänligen ange en giltig URL",
+    "please_fill_out_this_field": "Vänligen fyll i detta fält",
+    "please_rank_all_items_before_submitting": "Vänligen rangordna alla objekt innan du skickar",
+    "please_select_a_date": "Vänligen välj ett datum",
+    "please_upload_a_file": "Vänligen ladda upp en fil",
+    "recaptcha_error": {
+      "message": "Ditt svar kunde inte skickas eftersom det flaggades som automatiserad aktivitet. Om du andas, försök igen.",
+      "title": "Vi kunde inte verifiera att du är människa."
+    }
+  }
+}
