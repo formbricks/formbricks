@@ -43,7 +43,7 @@ function Button({
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
     style?: React.CSSProperties;
-  }) {
+  }): React.JSX.Element {
   const Comp = asChild ? Slot : "button";
 
   return (

@@ -50,7 +50,55 @@ src/
 
 ## Adding New Components
 
-1. Create a new component directory under `src/components/`
-2. Export the component from `src/components/index.ts`
-3. The component will be available from the main package export
+### Using shadcn CLI (Recommended)
+
+This package is configured to work with shadcn/ui CLI. You can add components using:
+
+```bash
+cd packages/ui
+pnpm ui:add <component-name>
+```
+
+**Important**: After adding a component, reorganize it into a folder structure:
+
+```bash
+# The CLI creates: src/components/badge.tsx
+# Reorganize to: src/components/badge/index.tsx
+pnpm ui:organize <component-name>
+```
+
+For example:
+```bash
+pnpm ui:add button
+pnpm ui:organize button
+```
+
+Then export the component from `src/components/index.ts`.
+
+### Manual Component Creation
+
+1. Create a new component directory under `src/components/<component-name>/`
+2. Create `index.tsx` inside that directory
+3. Export the component from `src/components/index.ts`
+4. The component will be available from the main package export
+
+## Component Structure
+
+Components follow this folder structure:
+
+```
+src/components/
+├── button/
+│   ├── index.tsx
+│   └── stories.tsx (optional)
+├── badge/
+│   └── index.tsx
+└── index.ts (exports all components)
+```
+
+## Theming
+
+This package uses CSS variables for theming. The theme can be customized by modifying `src/styles/globals.css`.
+
+Both light and dark modes are supported out of the box.
 
