@@ -1356,10 +1356,10 @@ export const ZSurvey = z
         }
 
         if (
-          block.backButtonLabel?.[defaultLanguageCode] &&
-          block.backButtonLabel[defaultLanguageCode].trim() !== "" &&
           !isBackButtonHidden &&
-          blockIndex > 0
+          blockIndex > 0 &&
+          block.backButtonLabel?.[defaultLanguageCode] &&
+          block.backButtonLabel[defaultLanguageCode].trim() !== ""
         ) {
           // Validate back button label for all enabled languages
           const enabledLanguages = languages.filter((lang) => lang.enabled);
