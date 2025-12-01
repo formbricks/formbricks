@@ -64,6 +64,8 @@
     "please_fill_out_this_field": "Por favor, complete este campo",
     "please_rank_all_items_before_submitting": "Por favor, clasifique todos los elementos antes de enviar",
     "please_select_a_date": "Por favor, seleccione una fecha",
+    "please_select_a_rating": "Por favor selecciona una calificación",
+    "please_select_a_value": "Por favor selecciona un valor",
     "please_upload_a_file": "Por favor, suba un archivo",
     "recaptcha_error": {
       "message": "Su respuesta no pudo ser enviada porque fue marcada como actividad automatizada. Si respira, por favor inténtelo de nuevo.",

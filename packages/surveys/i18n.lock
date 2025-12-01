@@ -59,6 +59,8 @@ checksums:
     errors/please_fill_out_this_field: 88d4fd502ae8d423277aef723afcd1a7
     errors/please_rank_all_items_before_submitting: 24fb14a2550bd7ec3e253dda0997cea8
     errors/please_select_a_date: 1abdc8ffb887dbbdcc0d05486cd84de7
+    errors/please_select_a_rating: e871aa58c243589768f8b266ed6bb0aa
+    errors/please_select_a_value: 0c86021b2b819e94c99ae70bfccfd3f0
     errors/please_upload_a_file: 4356dfca88553acb377664c923c2d6b7
     errors/recaptcha_error/message: b3f2c5950cbc0887f391f9e2bccb676e
     errors/recaptcha_error/title: 8e923ec38a92041569879a39c6467131

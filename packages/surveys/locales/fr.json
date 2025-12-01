@@ -64,6 +64,8 @@
     "please_fill_out_this_field": "Veuillez remplir ce champ",
     "please_rank_all_items_before_submitting": "Veuillez classer tous les éléments avant de soumettre",
     "please_select_a_date": "Veuillez sélectionner une date",
+    "please_select_a_rating": "Veuillez sélectionner une note",
+    "please_select_a_value": "Veuillez sélectionner une valeur",
     "please_upload_a_file": "Veuillez télécharger un fichier",
     "recaptcha_error": {
       "message": "Votre réponse n'a pas pu être soumise car elle a été signalée comme une activité automatisée. Si vous respirez, veuillez réessayer.",

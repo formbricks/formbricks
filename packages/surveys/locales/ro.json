@@ -64,6 +64,8 @@
     "please_fill_out_this_field": "Vă rugăm să completați acest câmp",
     "please_rank_all_items_before_submitting": "Vă rugăm să clasificați toate elementele înainte de a trimite",
     "please_select_a_date": "Vă rugăm să selectați o dată",
+    "please_select_a_rating": "Vă rugăm să selectați o evaluare",
+    "please_select_a_value": "Vă rugăm să selectați o valoare",
     "please_upload_a_file": "Vă rugăm să încărcați un fișier",
     "recaptcha_error": {
       "message": "Răspunsul dumneavoastră nu a putut fi trimis deoarece a fost marcat ca activitate automată. Dacă respirați, încercați din nou.",

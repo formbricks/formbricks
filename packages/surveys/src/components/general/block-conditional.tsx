@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -66,6 +66,16 @@ export function BlockConditional({
 
   // Ref to collect TTC values synchronously (state updates are async)
   const ttcCollectorRef = useRef<TResponseTtc>({});
+
+  // Determine if we should auto-advance (single required NPS or Rating element in block)
+  const shouldAutoAdvance = useMemo(() => {
+    if (block.elements.length !== 1) return false;
+    const element = block.elements[0];
+    return (
+      (element.type === TSurveyElementTypeEnum.NPS || element.type === TSurveyElementTypeEnum.Rating) &&
+      element.required
+    );
+  }, [block.elements]);
 
   // Handle change for an individual element
   const handleElementChange = (elementId: string, responseData: TResponseData) => {
@@ -278,37 +288,42 @@ export function BlockConditional({
                       }
                     }}
                     onTtcCollect={handleTtcCollect}
+                    shouldAutoAdvance={shouldAutoAdvance}
+                    onAutoSubmit={onSubmit}
                   />
                 </div>
               );
             })}
           </div>
 
-          <div
-            className={cn(
-              "fb-flex fb-w-full fb-flex-row-reverse fb-justify-between",
-              fullSizeCards ? "fb-sticky fb-bottom-0 fb-bg-white" : ""
-            )}>
-            <div>
-              <SubmitButton
-                buttonLabel={
-                  block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined
-                }
-                isLastQuestion={isLastBlock}
-                onClick={handleBlockSubmit}
-                tabIndex={0}
-              />
+          {/* Hide navigation buttons when auto-advancing (check the condition for auto-advance above) */}
+          {!shouldAutoAdvance && (
+            <div
+              className={cn(
+                "fb-flex fb-w-full fb-flex-row-reverse fb-justify-between",
+                fullSizeCards ? "fb-sticky fb-bottom-0 fb-bg-white" : ""
+              )}>
+              <div>
+                <SubmitButton
+                  buttonLabel={
+                    block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined
+                  }
+                  isLastQuestion={isLastBlock}
+                  onClick={handleBlockSubmit}
+                  tabIndex={0}
+                />
+              </div>
+              {!isFirstBlock && !isBackButtonHidden && (
+                <BackButton
+                  backButtonLabel={
+                    block.backButtonLabel ? getLocalizedValue(block.backButtonLabel, languageCode) : undefined
+                  }
+                  onClick={onBack}
+                  tabIndex={0}
+                />
+              )}
             </div>
-            {!isFirstBlock && !isBackButtonHidden && (
-              <BackButton
-                backButtonLabel={
-                  block.backButtonLabel ? getLocalizedValue(block.backButtonLabel, languageCode) : undefined
-                }
-                onClick={onBack}
-                tabIndex={0}
-              />
-            )}
-          </div>
+          )}
         </div>
       </ScrollableContainer>
     </div>

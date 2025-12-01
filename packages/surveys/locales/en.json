@@ -64,6 +64,8 @@
     "please_fill_out_this_field": "Please fill out this field",
     "please_rank_all_items_before_submitting": "Please rank all items before submitting",
     "please_select_a_date": "Please select a date",
+    "please_select_a_rating": "Please select a rating",
+    "please_select_a_value": "Please select a value",
     "please_upload_a_file": "Please upload a file",
     "recaptcha_error": {
       "message": "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",

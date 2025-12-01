@@ -64,6 +64,8 @@
     "please_fill_out_this_field": "Iltimos, ushbu maydonni to'ldiring",
     "please_rank_all_items_before_submitting": "Iltimos, yuborishdan oldin barcha elementlarni baholang",
     "please_select_a_date": "Iltimos, sanani tanlang",
+    "please_select_a_rating": "Iltimos, reytingni tanlang",
+    "please_select_a_value": "Iltimos, qiymatni tanlang",
     "please_upload_a_file": "Iltimos, faylni yuklang",
     "recaptcha_error": {
       "message": "Sizning javobingiz avtomatlashtirilgan faoliyat sifatida belgilanganligi sababli yuborilmadi. Agar siz nafas olayotgan bo'lsangiz, qayta urinib ko'ring.",

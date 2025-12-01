@@ -1,5 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import type { JSX } from "react";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { ElementMedia } from "@/components/general/element-media";
@@ -31,6 +32,8 @@ interface RatingElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  shouldAutoAdvance?: boolean;
+  onAutoSubmit?: (responseData: TResponseData, ttc: TResponseTtc) => void;
 }
 
 export function RatingElement({
@@ -42,17 +45,28 @@ export function RatingElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  shouldAutoAdvance,
+  onAutoSubmit,
 }: RatingElementProps) {
+  const { t } = useTranslation();
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
+  const [errorMessage, setErrorMessage] = useState("");
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   const isCurrent = element.id === currentElementId;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
   const handleSelect = (number: number) => {
-    onChange({ [element.id]: number });
+    setErrorMessage("");
+    const responseData = { [element.id]: number };
+    onChange(responseData);
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
+
+    // Auto-advance if enabled (single required Rating element in block)
+    if (shouldAutoAdvance && onAutoSubmit) {
+      onAutoSubmit(responseData, updatedTtcObj);
+    }
   };
 
   function HiddenRadioInput({ number, id }: { number: number; id?: string }) {
@@ -66,7 +80,7 @@ export function RatingElement({
         onClick={() => {
           handleSelect(number);
         }}
-        required={element.required}
+        // Note: We handle required validation manually via handleFormSubmit to show custom error messages
         checked={value === number}
       />
     );
@@ -93,6 +107,13 @@ export function RatingElement({
 
   const handleFormSubmit = (e: Event) => {
     e.preventDefault();
+
+    if (element.required && value === undefined) {
+      setErrorMessage(t("errors.please_select_a_rating"));
+      return;
+    }
+
+    setErrorMessage("");
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -246,6 +267,11 @@ export function RatingElement({
         subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
         elementId={element.id}
       />
+      {errorMessage && (
+        <div className="fb-mt-2 fb-text-sm fb-text-red-500" role="alert" aria-live="assertive">
+          {errorMessage}
+        </div>
+      )}
       <div className="fb-mb-4 fb-mt-6 fb-flex fb-items-center fb-justify-center">
         <fieldset className="fb-w-full">
           <legend className="fb-sr-only">Choices</legend>

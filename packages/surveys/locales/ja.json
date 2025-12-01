@@ -64,6 +64,8 @@
     "please_fill_out_this_field": "このフィールドに入力してください",
     "please_rank_all_items_before_submitting": "送信する前にすべての項目をランク付けしてください",
     "please_select_a_date": "日付を選択してください",
+    "please_select_a_rating": "評価を選択してください",
+    "please_select_a_value": "値を選択してください",
     "please_upload_a_file": "ファイルをアップロードしてください",
     "recaptcha_error": {
       "message": "自動化された活動としてフラグが立てられたため、回答を送信できませんでした。人間の方は、もう一度お試しください。",

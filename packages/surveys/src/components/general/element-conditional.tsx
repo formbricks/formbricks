@@ -43,6 +43,8 @@ interface ElementConditionalProps {
   dir?: "ltr" | "rtl" | "auto";
   formRef?: (ref: HTMLFormElement | null) => void; // Callback to expose the form element
   onTtcCollect?: (elementId: string, ttc: number) => void; // Callback to collect TTC synchronously
+  shouldAutoAdvance?: boolean;
+  onAutoSubmit?: (responseData: TResponseData, ttc: TResponseTtc) => void; // Ideally just calls onSubmit from the block conditional
 }
 
 export function ElementConditional({
@@ -62,6 +64,8 @@ export function ElementConditional({
   dir,
   formRef,
   onTtcCollect,
+  shouldAutoAdvance,
+  onAutoSubmit,
 }: ElementConditionalProps) {
   // Ref to the container div, used to find and expose the form element inside
   const containerRef = useRef<HTMLDivElement>(null);
@@ -184,6 +188,8 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            shouldAutoAdvance={shouldAutoAdvance}
+            onAutoSubmit={onAutoSubmit}
           />
         );
       case TSurveyElementTypeEnum.CTA:
@@ -214,6 +220,8 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            shouldAutoAdvance={shouldAutoAdvance}
+            onAutoSubmit={onAutoSubmit}
           />
         );
       case TSurveyElementTypeEnum.Consent:

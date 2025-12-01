@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyNPSElement } from "@formbricks/types/surveys/elements";
 import { ElementMedia } from "@/components/general/element-media";
@@ -18,6 +19,8 @@ interface NPSElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  shouldAutoAdvance?: boolean;
+  onAutoSubmit?: (responseData: TResponseData, ttc: TResponseTtc) => void;
 }
 
 export function NPSElement({
@@ -29,17 +32,27 @@ export function NPSElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  shouldAutoAdvance,
+  onAutoSubmit,
 }: Readonly<NPSElementProps>) {
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
+  const [errorMessage, setErrorMessage] = useState("");
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   const isCurrent = element.id === currentElementId;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
   const handleClick = (number: number) => {
-    onChange({ [element.id]: number });
+    setErrorMessage("");
+    const responseData = { [element.id]: number };
+    onChange(responseData);
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
+
+    if (shouldAutoAdvance && onAutoSubmit) {
+      onAutoSubmit(responseData, updatedTtcObj);
+    }
   };
 
   const getNPSOptionColor = (idx: number) => {
@@ -53,6 +66,13 @@ export function NPSElement({
       key={element.id}
       onSubmit={(e) => {
         e.preventDefault();
+
+        if (element.required && value === undefined) {
+          setErrorMessage(t("errors.please_select_a_value"));
+          return;
+        }
+
+        setErrorMessage("");
         const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
       }}>
@@ -66,6 +86,11 @@ export function NPSElement({
         subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
         elementId={element.id}
       />
+      {errorMessage && (
+        <div className="fb-mt-2 fb-text-sm fb-text-red-500" role="alert" aria-live="assertive">
+          {errorMessage}
+        </div>
+      )}
       <div className="fb-my-4">
         <fieldset>
           <legend className="fb-sr-only">Options</legend>
@@ -121,7 +146,7 @@ export function NPSElement({
                     onClick={() => {
                       handleClick(number);
                     }}
-                    required={element.required}
+                    // Note: We handle required validation manually via onSubmit to show custom error messages
                     tabIndex={-1}
                   />
                   {number}

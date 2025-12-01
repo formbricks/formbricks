@@ -64,6 +64,8 @@
     "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
     "please_rank_all_items_before_submitting": "Bitte ordnen Sie alle Elemente vor dem Absenden",
     "please_select_a_date": "Bitte wählen Sie ein Datum aus",
+    "please_select_a_rating": "Bitte wählen Sie eine Bewertung aus",
+    "please_select_a_value": "Bitte wählen Sie einen Wert aus",
     "please_upload_a_file": "Bitte laden Sie eine Datei hoch",
     "recaptcha_error": {
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
