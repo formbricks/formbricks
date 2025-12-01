@@ -25,8 +25,16 @@ https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id_1=answer_1&qu
 ## How it works
 
 1. To prefill survey questions, add query parameters to the survey URL using the format `questionId=answer`. 
-2. The answer must match the question’s expected type to pass [validation](/xm-and-surveys/surveys/link-surveys/data-prefilling#validation).
-3. The answer needs to be [URL encoded](https://www.urlencoder.org/) (if it contains spaces or special characters)
+2. For choice-based questions, you can use either **option IDs** (recommended) or **option labels** (backward compatible).
+3. The answer must match the question's expected type to pass [validation](/xm-and-surveys/surveys/link-surveys/data-prefilling#validation).
+4. The answer needs to be [URL encoded](https://www.urlencoder.org/) (if it contains spaces or special characters)
+
+### Option IDs vs Option Labels
+
+- **Option IDs (Recommended):** Use the unique ID of each option. These don't change with translations and are more reliable. Example: `?country=choice-us`
+- **Option Labels (Backward Compatible):** Use the exact text of the option. Example: `?country=United%20States`
+
+If you provide a value that matches an option ID, it will be used. Otherwise, the system will try to match it as an option label.
 
 
 ### Skip prefilled questions
@@ -77,9 +85,15 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id
 
 ### Multi Select Question (Checkbox)
 
-Selects three options 'Sun, Palms and Beach' in the multi select question. The strings have to be identical to the options in your question:
+Selects multiple options in the multi select question using comma-separated values. You can use either option IDs or labels:
 
-```sh Multi-select Question
+**Using Option IDs (Recommended):**
+```sh Multi-select Question (by ID)
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=sport%2Cmusic%2Ctravel
+```
+
+**Using Option Labels (Backward Compatible):**
+```sh Multi-select Question (by Label)
 https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=Sun%2CPalms%2CBeach
 ```
 
@@ -113,11 +127,21 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?consent_question_id=accep
 
 ### Picture Selection Question
 
-Adds index of the selected image(s) as the answer to the Picture Selection question. The index starts from 1
+Selects image options in the Picture Selection question using comma-separated option IDs:
 
-```txt Picture Selection Question.
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?pictureSelection_question_id=1%2C2%2C3
+```txt Picture Selection Question
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?pictureSelection_question_id=choice-1%2Cchoice-2%2Cchoice-3
 ```
+
+### Ranking Question
+
+Orders items in a Ranking question using comma-separated option IDs. The order matters and determines the rank:
+
+```txt Ranking Question (order matters)
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?ranking_question_id=item-3%2Citem-1%2Citem-2
+```
+
+<Note>The order of comma-separated values determines the ranking order.</Note>
 
 <Note>All other question types, you currently cannot prefill via the URL.</Note>
 
@@ -130,10 +154,17 @@ The URL validation works as follows:
 - For Rating or NPS questions, the response is parsed as a number and verified if it's accepted by the schema.
 - For CTA type questions, the valid values are "clicked" (main CTA) and "dismissed" (skip CTA).
 - For Consent type questions, the valid values are "accepted" (consent given) and "dismissed" (consent not given).
-- For Picture Selection type questions, the response is parsed as an array of numbers and verified if it's accepted by the schema.
+- For Picture Selection, Multi-select, and Ranking questions, the response can be comma-separated option IDs or labels.
+- For choice-based questions (Single-select, Multi-select, Ranking, Picture Selection), the system will first try to match as an option ID, then fallback to matching as an option label.
 - All other question types are strings.
 
 <Note>
   If an answer is invalid, the prefilling will be ignored and the question is
   presented as if not prefilled.
 </Note>
+
+## Finding Option IDs
+
+Option IDs are unique identifiers for each choice option in your survey. You can find them in the **Advanced Settings** at the bottom of each question card in the Survey Editor. For choice-based questions (Single-select, Multi-select, Ranking, Picture Selection), the option ID is displayed next to each option.
+
+You can update option IDs to any string you like **before you publish a survey.** After you publish a survey, you cannot change the IDs anymore.

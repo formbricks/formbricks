@@ -67,22 +67,10 @@ export function MultipleChoiceSingleElement({
   const noneOption = useMemo(() => element.choices.find((choice) => choice.id === "none"), [element.choices]);
 
   useEffect(() => {
-    if (!value) {
-      const prefillAnswer = new URLSearchParams(window.location.search).get(element.id);
-      if (
-        prefillAnswer &&
-        otherOption &&
-        prefillAnswer === getLocalizedValue(otherOption.label, languageCode)
-      ) {
-        setOtherSelected(true);
-        return;
-      }
-    }
-
     const isOtherSelected =
       value !== undefined && !elementChoices.some((choice) => choice?.label[languageCode] === value);
     setOtherSelected(isOtherSelected);
-  }, [languageCode, otherOption, element.id, elementChoices, value]);
+  }, [languageCode, elementChoices, value]);
 
   useEffect(() => {
     // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true

@@ -81,32 +81,32 @@ export function BlockConditional({
     ttcCollectorRef.current[elementId] = elementTtc;
   };
 
-  // Handle skipPrefilled at block level
+  // Handle prefilled data at block level
   useEffect(() => {
-    if (skipPrefilled && prefilledResponseData) {
-      // Check if ALL elements in this block have prefilled values
-      const allElementsPrefilled = block.elements.every(
-        (element) => prefilledResponseData[element.id] !== undefined
-      );
+    if (prefilledResponseData) {
+      // Populate ALL available prefilled values for this block
+      const prefilledData: TResponseData = {};
+      const prefilledTtc: TResponseTtc = {};
 
-      if (allElementsPrefilled) {
-        // Auto-populate all prefilled values
-        const prefilledData: TResponseData = {};
-        const prefilledTtc: TResponseTtc = {};
-
-        block.elements.forEach((element) => {
+      block.elements.forEach((element) => {
+        if (prefilledResponseData[element.id] !== undefined) {
           prefilledData[element.id] = prefilledResponseData[element.id];
-          prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
-        });
+          prefilledTtc[element.id] = 0; // 0 TTC for prefilled questions
+        }
+      });
 
-        // Update state with prefilled data
+      // ALWAYS populate what we have
+      if (Object.keys(prefilledData).length > 0) {
         onChange(prefilledData);
         setTtc({ ...ttc, ...prefilledTtc });
 
-        // Auto-submit the entire block (skip to next)
-        setTimeout(() => {
-          onSubmit(prefilledData, prefilledTtc);
-        }, 0);
+        // Only auto-skip if skipPrefilled=true AND all elements are filled
+        const allElementsPrefilled = Object.keys(prefilledData).length === block.elements.length;
+        if (skipPrefilled && allElementsPrefilled) {
+          setTimeout(() => {
+            onSubmit(prefilledData, prefilledTtc);
+          }, 0);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run once when block mounts

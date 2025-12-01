@@ -25,6 +25,7 @@ import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
 import { evaluateLogic, performActions } from "@/lib/logic";
+import { parsePrefillFromURL } from "@/lib/prefill";
 import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
@@ -55,7 +56,6 @@ export function Survey({
   onResponseCreated,
   onOpenExternalURL,
   isRedirectDisabled = false,
-  prefillResponseData,
   skipPrefilled,
   languageCode,
   getSetIsError,
@@ -202,6 +202,14 @@ export function Survey({
     }
     return styling.cardArrangement?.appSurveys ?? "straight";
   }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
+
+  // Parse prefill data from URL
+  const effectivePrefillData = useMemo(() => {
+    if (typeof window !== "undefined") {
+      return parsePrefillFromURL(localSurvey, selectedLanguage);
+    }
+    return undefined;
+  }, [localSurvey, selectedLanguage]);
 
   // Current block tracking (replaces currentQuestionIndex)
   const currentBlockIndex = localSurvey.blocks.findIndex((b) => b.id === blockId);
@@ -811,7 +819,7 @@ export function Survey({
               onFileUpload={onFileUpload}
               isFirstBlock={block.id === localSurvey.blocks[0]?.id}
               skipPrefilled={skipPrefilled}
-              prefilledResponseData={offset === 0 ? prefillResponseData : undefined}
+              prefilledResponseData={offset === 0 ? effectivePrefillData : undefined}
               isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
