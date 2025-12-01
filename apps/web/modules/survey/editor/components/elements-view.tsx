@@ -23,7 +23,7 @@ import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/s
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
-import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
+import { addMultiLanguageLabels, createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
@@ -513,6 +513,8 @@ export const ElementsView = ({
         id: newBlockId,
         name: getBlockName(index ?? prevSurvey.blocks.length),
         elements: [{ ...updatedElement, isDraft: true }],
+        buttonLabel: createI18nString(t(""), []),
+        backButtonLabel: createI18nString(t(""), []),
       };
 
       return {
