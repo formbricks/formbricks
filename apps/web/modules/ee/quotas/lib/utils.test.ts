@@ -126,13 +126,13 @@ describe("Quota Utils", () => {
       conditions: [
         {
           id: "c1",
-          leftOperand: { type: "question", value: "q1" },
+          leftOperand: { type: "element", value: "q1" },
           operator: "isGreaterThanOrEqual",
           rightOperand: { type: "static", value: 18 },
         },
         {
           id: "c2",
-          leftOperand: { type: "question", value: "q1" },
+          leftOperand: { type: "element", value: "q1" },
           operator: "isLessThanOrEqual",
           rightOperand: { type: "static", value: 25 },
         },
@@ -155,7 +155,7 @@ describe("Quota Utils", () => {
       conditions: [
         {
           id: "c3",
-          leftOperand: { type: "question", value: "q1" },
+          leftOperand: { type: "element", value: "q1" },
           operator: "isGreaterThan",
           rightOperand: { type: "static", value: 25 },
         },

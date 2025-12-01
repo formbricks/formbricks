@@ -8,8 +8,8 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
-import { extractRecallInfo } from "@/lib/utils/recall";
 import { findVariableUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -78,30 +78,30 @@ export const SurveyVariablesCardItem = ({
   // Removed auto-submit effect
 
   const onVariableDelete = (variableToDelete: TSurveyVariable) => {
-    const questions = [...localSurvey.questions];
-    const quesIdx = findVariableUsedInLogic(localSurvey, variableToDelete.id);
+    const elements = getElementsFromBlocks(localSurvey.blocks);
+    const elementIdx = findVariableUsedInLogic(localSurvey, variableToDelete.id);
 
-    if (quesIdx !== -1) {
+    if (elementIdx !== -1) {
       toast.error(
         t(
           "environments.surveys.edit.variable_is_used_in_logic_of_question_please_remove_it_from_logic_first",
           {
             variable: variableToDelete.name,
-            questionIndex: quesIdx + 1,
+            questionIndex: elementIdx + 1,
           }
         )
       );
       return;
     }
-    const recallQuestionIdx = isUsedInRecall(localSurvey, variableToDelete.id);
-    if (recallQuestionIdx === -2) {
+    const recallElementIdx = isUsedInRecall(localSurvey, variableToDelete.id);
+    if (recallElementIdx === -2) {
       toast.error(
         t("environments.surveys.edit.variable_used_in_recall_welcome", { variable: variableToDelete.name })
       );
       return;
     }
 
-    if (recallQuestionIdx === localSurvey.questions.length) {
+    if (recallElementIdx === elements.length) {
       toast.error(
         t("environments.surveys.edit.variable_used_in_recall_ending_card", {
           variable: variableToDelete.name,
@@ -110,11 +110,11 @@ export const SurveyVariablesCardItem = ({
       return;
     }
 
-    if (recallQuestionIdx !== -1) {
+    if (recallElementIdx !== -1) {
       toast.error(
         t("environments.surveys.edit.variable_used_in_recall", {
           variable: variableToDelete.name,
-          questionIndex: recallQuestionIdx + 1,
+          questionIndex: recallElementIdx + 1,
         })
       );
       return;
@@ -131,21 +131,10 @@ export const SurveyVariablesCardItem = ({
       );
       return;
     }
-    // remove recall references
-    questions.forEach((question) => {
-      for (const [languageCode, headline] of Object.entries(question.headline)) {
-        if (headline.includes(`recall:${variableToDelete.id}`)) {
-          const recallInfo = extractRecallInfo(headline);
-          if (recallInfo) {
-            question.headline[languageCode] = headline.replace(recallInfo, "");
-          }
-        }
-      }
-    });
 
     setLocalSurvey((prevSurvey) => {
       const updatedVariables = prevSurvey.variables.filter((v) => v.id !== variableToDelete.id);
-      return { ...prevSurvey, variables: updatedVariables, questions };
+      return { ...prevSurvey, variables: updatedVariables };
     });
   };
 
@@ -225,7 +214,7 @@ export const SurveyVariablesCardItem = ({
                       form.setValue("value", value === "number" ? 0 : "");
                       field.onChange(value);
                     }}>
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="h-10 w-24">
                       <SelectValue placeholder={t("environments.surveys.edit.select_type")} />
                     </SelectTrigger>
                     <SelectContent>

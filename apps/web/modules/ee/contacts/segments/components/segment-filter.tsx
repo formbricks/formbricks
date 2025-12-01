@@ -37,7 +37,6 @@ import {
 } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { isCapitalized } from "@/lib/utils/strings";
 import {
   convertOperatorToText,
   convertOperatorToTitle,
@@ -149,8 +148,10 @@ function SegmentFilterItemContextMenu({
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
-        <DropdownMenuTrigger disabled={viewOnly}>
-          <MoreVertical className="h-4 w-4" />
+        <DropdownMenuTrigger asChild disabled={viewOnly}>
+          <Button variant="outline" size="icon">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
@@ -185,13 +186,13 @@ function SegmentFilterItemContextMenu({
       </DropdownMenu>
 
       <Button
-        className="mr-4 p-0"
+        size="icon"
         disabled={viewOnly}
         onClick={() => {
           if (viewOnly) return;
           onDeleteFilter(filterId);
         }}
-        variant="ghost">
+        variant="outline">
         <Trash2 className={cn("h-4 w-4 cursor-pointer", viewOnly && "cursor-not-allowed")} />
       </Button>
     </div>
@@ -317,7 +318,7 @@ function AttributeSegmentFilter({
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
           hideArrow>
           <SelectValue>
-            <div className={cn("flex items-center gap-2", !isCapitalized(attrKeyValue ?? "") && "lowercase")}>
+            <div className="flex items-center gap-2">
               <TagIcon className="h-4 w-4 text-sm" />
               <p>{attrKeyValue}</p>
             </div>
@@ -357,7 +358,7 @@ function AttributeSegmentFilter({
       {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
         <div className="relative flex flex-col gap-1">
           <Input
-            className={cn("w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
+            className={cn("h-9 w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
             disabled={viewOnly}
             onChange={(e) => {
               if (viewOnly) return;
@@ -537,7 +538,7 @@ function PersonSegmentFilter({
       {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
         <div className="relative flex flex-col gap-1">
           <Input
-            className={cn("w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
+            className={cn("h-8 w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
             disabled={viewOnly}
             onChange={(e) => {
               if (viewOnly) return;

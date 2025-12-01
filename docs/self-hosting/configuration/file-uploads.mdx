@@ -297,6 +297,47 @@ Example least-privileged S3 bucket policy:
   Replace `your-bucket-name` with your actual bucket name and `arn:aws:iam::123456789012:user/formbricks-service` with the ARN of your IAM user. This policy allows public read access only to specific paths while restricting write access to your Formbricks service user.
 </Note>
 
+### S3 CORS Configuration
+
+CORS (Cross-Origin Resource Sharing) must be configured on your S3 bucket to allow Formbricks to upload files using presigned POST URLs. Without proper CORS configuration, file uploads from the browser will fail.
+
+Configure CORS on your S3 bucket with the following settings:
+
+```json
+[
+  {
+    "AllowedHeaders": [
+      "*"
+    ],
+    "AllowedMethods": [
+      "POST",
+      "GET",
+      "HEAD",
+      "DELETE",
+      "PUT"
+    ],
+    "AllowedOrigins": [
+      "*"
+    ],
+    "ExposeHeaders": [
+      "ETag",
+      "x-amz-meta-custom-header"
+    ],
+    "MaxAgeSeconds": 3000
+  }
+]
+```
+
+<Note>
+  For production environments, consider restricting `AllowedOrigins` to your specific Formbricks domain(s) instead of using `"*"` for better security. For example: `["https://app.yourdomain.com", "https://yourdomain.com"]`.
+</Note>
+
+**How to configure CORS:**
+
+- **AWS S3**: Navigate to your bucket → Permissions → Cross-origin resource sharing (CORS) → Edit → Paste the JSON configuration
+- **DigitalOcean Spaces**: Navigate to your Space → Settings → CORS Configurations → Add CORS configuration → Paste the JSON
+- **Other S3-compatible providers**: Refer to your provider's documentation for CORS configuration
+
 ### MinIO Security
 
 When using bundled MinIO:

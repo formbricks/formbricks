@@ -6,8 +6,8 @@ import { useTranslation } from "react-i18next";
 import { TTemplate } from "@formbricks/types/templates";
 import { customSurveyTemplate } from "@/app/lib/templates";
 import { cn } from "@/lib/cn";
+import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { Button } from "@/modules/ui/components/button";
-import { replacePresetPlaceholders } from "../lib/utils";
 
 interface StartFromScratchTemplateProps {
   activeTemplate: TTemplate | null;

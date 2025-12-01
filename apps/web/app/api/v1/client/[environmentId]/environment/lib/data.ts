@@ -92,6 +92,7 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
             welcomeCard: true,
             name: true,
             questions: true,
+            blocks: true,
             variables: true,
             type: true,
             showLanguageSwitch: true,

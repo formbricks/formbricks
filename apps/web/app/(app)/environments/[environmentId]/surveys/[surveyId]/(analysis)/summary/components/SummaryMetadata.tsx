@@ -8,6 +8,7 @@ import { cn } from "@/modules/ui/lib/utils";
 
 interface SummaryMetadataProps {
   surveySummary: TSurveySummary["meta"];
+  quotasCount: number;
   isLoading: boolean;
   tab: "dropOffs" | "quotas" | undefined;
   setTab: React.Dispatch<React.SetStateAction<"dropOffs" | "quotas" | undefined>>;
@@ -31,6 +32,7 @@ const formatTime = (ttc) => {
 
 export const SummaryMetadata = ({
   surveySummary,
+  quotasCount,
   isLoading,
   tab,
   setTab,
@@ -61,7 +63,7 @@ export const SummaryMetadata = ({
       <div
         className={cn(
           `grid gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-x-2 lg:grid-cols-3 2xl:grid-cols-5`,
-          isQuotasAllowed && "2xl:grid-cols-6"
+          isQuotasAllowed && quotasCount > 0 && "2xl:grid-cols-6"
         )}>
         <StatCard
           label={t("environments.surveys.summary.impressions")}
@@ -105,7 +107,7 @@ export const SummaryMetadata = ({
           isLoading={isLoading}
         />
 
-        {isQuotasAllowed && (
+        {isQuotasAllowed && quotasCount > 0 && (
           <InteractiveCard
             key="quotas"
             tab="quotas"

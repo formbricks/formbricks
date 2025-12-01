@@ -126,7 +126,7 @@ export const ManageIntegration = ({
                   }}>
                   <div className="col-span-2 text-center">{data.surveyName}</div>
                   <div className="col-span-2 text-center">{data.channelName}</div>
-                  <div className="col-span-2 text-center">{data.questions}</div>
+                  <div className="col-span-2 text-center">{data.elements}</div>
                   <div className="col-span-2 text-center">{timeSince(data.createdAt.toString(), locale)}</div>
                 </button>
               );

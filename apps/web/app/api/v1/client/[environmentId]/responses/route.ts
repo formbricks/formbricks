@@ -10,7 +10,6 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
@@ -171,11 +170,6 @@ export const POST = withV1ApiWrapper({
         response: responseData,
       });
     }
-
-    await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
-      surveyId: responseData.surveyId,
-      surveyType: survey.type,
-    });
 
     const quotaObj = createQuotaFullObject(quotaFull);
 

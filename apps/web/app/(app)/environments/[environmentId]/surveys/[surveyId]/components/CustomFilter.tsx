@@ -25,7 +25,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   DateRange,
   useResponseFilter,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
@@ -164,12 +164,12 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
-  const extracMetadataKeys = useCallback((obj, parentKey = "") => {
+  const extractMetadataKeys = useCallback((obj, parentKey = "") => {
     let keys: string[] = [];
 
     for (let key in obj) {
       if (typeof obj[key] === "object" && obj[key] !== null) {
-        keys = keys.concat(extracMetadataKeys(obj[key], parentKey + key + " - "));
+        keys = keys.concat(extractMetadataKeys(obj[key], parentKey + key + " - "));
       } else {
         keys.push(parentKey + key);
       }

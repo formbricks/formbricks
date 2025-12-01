@@ -8,6 +8,7 @@ import { getPublishedLinkSurveys } from "@/modules/ee/contacts/lib/surveys";
 import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { ResponseSection } from "./components/response-section";
@@ -47,6 +48,7 @@ export const SingleContactPage = async (props: {
 
   return (
     <PageContentWrapper>
+      <GoBackButton url={`/environments/${params.environmentId}/contacts`} />
       <PageHeader pageTitle={getContactIdentifier(contactAttributes)} cta={getContactControlBar()} />
       <section className="pb-24 pt-6">
         <div className="grid grid-cols-4 gap-x-8">
