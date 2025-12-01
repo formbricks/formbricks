@@ -1357,7 +1357,7 @@ export const ZSurvey = z
 
         //only validate back button label for blocks other than the first one and if back button is not hidden
         if (
-          survey.isBackButtonHidden === false &&
+          !isBackButtonHidden &&
           blockIndex > 0 &&
           block.backButtonLabel?.[defaultLanguageCode] &&
           block.backButtonLabel[defaultLanguageCode].trim() !== ""
