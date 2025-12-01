@@ -513,8 +513,8 @@ export const ElementsView = ({
         id: newBlockId,
         name: getBlockName(index ?? prevSurvey.blocks.length),
         elements: [{ ...updatedElement, isDraft: true }],
-        buttonLabel: createI18nString(t(""), []),
-        backButtonLabel: createI18nString(t(""), []),
+        buttonLabel: createI18nString("", []),
+        backButtonLabel: createI18nString("", []),
       };
 
       return {
