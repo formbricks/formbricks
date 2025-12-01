@@ -1356,6 +1356,8 @@ export const ZSurvey = z
         }
 
         if (
+          !isBackButtonHidden &&
+          blockIndex > 0 &&
           block.backButtonLabel?.[defaultLanguageCode] &&
           block.backButtonLabel[defaultLanguageCode].trim() !== ""
         ) {
