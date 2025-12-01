@@ -74,8 +74,7 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 FROM base AS runner
 
 RUN npm install --ignore-scripts -g corepack@latest && \
-    corepack enable && \
-    corepack prepare pnpm@9.15.9 --activate
+    corepack enable
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
@@ -134,6 +133,9 @@ RUN chown nextjs:nextjs /home/nextjs/start.sh && chmod +x /home/nextjs/start.sh
 EXPOSE 3000
 ENV HOSTNAME="0.0.0.0"
 USER nextjs
+
+# Prepare pnpm as the nextjs user to ensure it's available at runtime
+RUN corepack prepare pnpm@9.15.9 --activate
 
 # Prepare volume for uploads
 RUN mkdir -p /home/nextjs/apps/web/uploads/
