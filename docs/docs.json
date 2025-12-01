@@ -230,11 +230,11 @@
             "group": "Configuration",
             "pages": [
               "self-hosting/configuration/custom-ssl",
-              "self-hosting/configuration/custom-subpath",
               "self-hosting/configuration/environment-variables",
               "self-hosting/configuration/smtp",
               "self-hosting/configuration/file-uploads",
               "self-hosting/configuration/domain-configuration",
+              "self-hosting/configuration/custom-subpath",
               {
                 "group": "Auth & SSO",
                 "icon": "lock",
