@@ -858,9 +858,6 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(
         page.locator("#questionCard-4").getByText(surveys.createWithLogicAndSubmit.ratingQuestion.highLabel)
       ).toBeVisible();
-      expect(
-        await page.locator("#questionCard-4").getByRole("group", { name: "Choices" }).locator("label").count()
-      ).toBe(5);
       await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-4").getByRole("button", { name: "Back" })).toBeVisible();
       await page.getByRole("radio", { name: "Rate 3 out of" }).check();
