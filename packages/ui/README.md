@@ -29,11 +29,6 @@ pnpm build
 # Watch mode for development
 pnpm dev
 
-# Run tests
-pnpm test
-
-# Run tests with coverage
-pnpm test:coverage
 
 # Lint
 pnpm lint
@@ -61,12 +56,6 @@ pnpm ui:add <component-name>
 
 **Important**: After adding a component, reorganize it into a folder structure:
 
-```bash
-# The CLI creates: src/components/badge.tsx
-# Reorganize to: src/components/badge/index.tsx
-pnpm ui:organize <component-name>
-```
-
 For example:
 ```bash
 pnpm ui:add button
@@ -88,12 +77,8 @@ Components follow this folder structure:
 
 ```
 src/components/
-├── button/
-│   ├── index.tsx
-│   └── stories.tsx (optional)
-├── badge/
-│   └── index.tsx
-└── index.ts (exports all components)
+├── button.tsx
+├── button.stories.tsx
 ```
 
 ## Theming
