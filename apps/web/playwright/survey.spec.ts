@@ -232,7 +232,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {
         await page.getByText(surveys.createAndSubmit.ranking.choices[i]).click();
       }
-      await page.locator("#questionCard-12").getByRole("button", { name: "Next" }).click();
+      await page.locator("#questionCard-12").getByRole("button", { name: "Finish" }).click();
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     });
