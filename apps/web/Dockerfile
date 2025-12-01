@@ -73,8 +73,9 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 #
 FROM base AS runner
 
-RUN npm install --ignore-scripts -g corepack@latest 
-RUN corepack enable
+RUN npm install --ignore-scripts -g corepack@latest && \
+    corepack enable && \
+    corepack prepare pnpm@9.15.9 --activate
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
