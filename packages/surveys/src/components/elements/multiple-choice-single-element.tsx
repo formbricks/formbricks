@@ -36,7 +36,6 @@ export function MultipleChoiceSingleElement({
   const otherSpecify = useRef<HTMLInputElement | null>(null);
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
   const isMediaAvailable = element.imageUrl || element.videoUrl;
-  const isCurrent = element.id === currentElementId;
   const shuffledChoicesIds = useMemo(() => {
     if (element.shuffleOption) {
       return getShuffledChoicesIds(element.choices, element.shuffleOption);
@@ -158,7 +157,7 @@ export function MultipleChoiceSingleElement({
     return (
       <label
         key={choice.id}
-        tabIndex={isCurrent ? 0 : -1}
+        tabIndex={0}
         className={labelClassName}
         onKeyDown={handleKeyDown(choice.id)}
         autoFocus={idx === 0 && autoFocusEnabled}>
@@ -197,7 +196,7 @@ export function MultipleChoiceSingleElement({
         : "Please specify";
 
     return (
-      <label tabIndex={isCurrent ? 0 : -1} className={labelClassName} onKeyDown={handleOtherKeyDown}>
+      <label tabIndex={0} className={labelClassName} onKeyDown={handleOtherKeyDown}>
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             tabIndex={-1}
@@ -245,10 +244,7 @@ export function MultipleChoiceSingleElement({
     );
 
     return (
-      <label
-        tabIndex={isCurrent ? 0 : -1}
-        className={labelClassName}
-        onKeyDown={handleKeyDown(noneOption.id)}>
+      <label tabIndex={0} className={labelClassName} onKeyDown={handleKeyDown(noneOption.id)}>
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             tabIndex={-1}

@@ -86,7 +86,6 @@ export function DateElement({
   const [errorMessage, setErrorMessage] = useState("");
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
-  const isCurrent = element.id === currentElementId;
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
   const [hideInvalid, setHideInvalid] = useState(!selectedDate);
@@ -161,7 +160,7 @@ export function DateElement({
               onClick={() => {
                 setDatePickerOpen(true);
               }}
-              tabIndex={isCurrent ? 0 : -1}
+              tabIndex={0}
               type="button"
               onKeyDown={(e) => {
                 if (e.key === " ") setDatePickerOpen(true);

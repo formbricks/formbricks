@@ -57,7 +57,6 @@ export function MultipleChoiceMultiElement({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
-  const isCurrent = element.id === currentElementId;
   const shuffledChoicesIds = useMemo(() => {
     if (element.shuffleOption) {
       return getShuffledChoicesIds(element.choices, element.shuffleOption);
@@ -212,7 +211,7 @@ export function MultipleChoiceMultiElement({
     return (
       <label
         key={choice.id}
-        tabIndex={isCurrent ? 0 : -1}
+        tabIndex={0}
         className={labelClassName}
         onKeyDown={handleKeyDown(choice.id)}
         autoFocus={idx === 0 && autoFocusEnabled}>
@@ -260,15 +259,12 @@ export function MultipleChoiceMultiElement({
         : "Please specify";
 
     return (
-      <label
-        tabIndex={isCurrent ? 0 : -1}
-        className={labelClassName}
-        onKeyDown={handleKeyDown(otherOption.id)}>
+      <label tabIndex={0} className={labelClassName} onKeyDown={handleKeyDown(otherOption.id)}>
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             type="checkbox"
             dir={dir}
-            tabIndex={isCurrent ? 0 : -1}
+            tabIndex={-1}
             id={otherOption.id}
             name={element.id}
             value={otherLabel}
@@ -289,7 +285,7 @@ export function MultipleChoiceMultiElement({
             id={`${otherOption.id}-specify`}
             maxLength={250}
             name={element.id}
-            tabIndex={isCurrent ? 0 : -1}
+            tabIndex={0}
             value={otherValue}
             pattern=".*\S+.*"
             onChange={(e) => setOtherValue(e.currentTarget.value)}
@@ -313,10 +309,7 @@ export function MultipleChoiceMultiElement({
     );
 
     return (
-      <label
-        tabIndex={isCurrent ? 0 : -1}
-        className={labelClassName}
-        onKeyDown={handleKeyDown(noneOption.id)}>
+      <label tabIndex={0} className={labelClassName} onKeyDown={handleKeyDown(noneOption.id)}>
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             type="checkbox"
