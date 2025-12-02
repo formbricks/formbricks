@@ -15,7 +15,8 @@
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
     "generate-api-specs": "./scripts/openapi/generate.sh",
     "merge-client-endpoints": "tsx ./scripts/openapi/merge-client-endpoints.ts",
-    "generate-and-merge-api-specs": "pnpm run generate-api-specs && pnpm run merge-client-endpoints"
+    "generate-and-merge-api-specs": "pnpm run generate-api-specs && pnpm run merge-client-endpoints",
+    "i18n:generate": "npx lingo.dev@latest i18n"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.879.0",
