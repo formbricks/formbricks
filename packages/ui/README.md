@@ -36,7 +36,7 @@ pnpm lint
 
 ## Structure
 
-```
+```text
 src/
 ├── components/     # React components
 ├── lib/           # Utility functions
@@ -75,7 +75,7 @@ Then export the component from `src/components/index.ts`.
 
 Components follow this folder structure:
 
-```
+```text
 src/components/
 ├── button.tsx
 ├── button.stories.tsx
