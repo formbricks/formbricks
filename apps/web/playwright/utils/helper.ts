@@ -656,7 +656,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-operator").click();
   await page.getByRole("option", { name: "Assign =" }).click();
   await page.locator("#action-2-value-input").click();
-  await page.locator("#action-2-value-input").fill("1");
+  await page.locator("#action-2-value-input").fill("This ");
   // Close Block 1 settings before moving to Block 2
   await page
     .locator("div")

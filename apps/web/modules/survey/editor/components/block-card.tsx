@@ -294,30 +294,30 @@ export const BlockCard = ({
           open={!isBlockCollapsed}
           onOpenChange={() => setIsBlockCollapsed(!isBlockCollapsed)}
           className={cn(isBlockCollapsed ? "h-full" : "")}>
-          <Collapsible.CollapsibleTrigger
-            asChild
-            className="block h-full w-full cursor-pointer hover:bg-slate-100">
-            <div className="flex h-full items-center justify-between px-4 py-2">
-              <div className="flex items-center gap-2">
-                <div>
-                  <h4 className="text-sm font-medium text-slate-700">{block.name}</h4>
-                  <p className="text-xs text-slate-500">
-                    {blockElementsCount} {blockElementsCountText}
-                  </p>
+          <Collapsible.CollapsibleTrigger asChild>
+            <button type="button" className="block h-full w-full cursor-pointer hover:bg-slate-100">
+              <div className="flex h-full items-center justify-between px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-700">{block.name}</h4>
+                    <p className="text-xs text-slate-500">
+                      {blockElementsCount} {blockElementsCountText}
+                    </p>
+                  </div>
+                </div>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <BlockMenu
+                    isFirstBlock={blockIdx === 0}
+                    isLastBlock={blockIdx === totalBlocks - 1}
+                    isOnlyBlock={totalBlocks === 1}
+                    onDuplicate={() => duplicateBlock(block.id)}
+                    onDelete={() => deleteBlock(block.id)}
+                    onMoveUp={() => moveBlock(block.id, "up")}
+                    onMoveDown={() => moveBlock(block.id, "down")}
+                  />
                 </div>
               </div>
-              <div>
-                <BlockMenu
-                  isFirstBlock={blockIdx === 0}
-                  isLastBlock={blockIdx === totalBlocks - 1}
-                  isOnlyBlock={totalBlocks === 1}
-                  onDuplicate={() => duplicateBlock(block.id)}
-                  onDelete={() => deleteBlock(block.id)}
-                  onMoveUp={() => moveBlock(block.id, "up")}
-                  onMoveDown={() => moveBlock(block.id, "down")}
-                />
-              </div>
-            </div>
+            </button>
           </Collapsible.CollapsibleTrigger>
 
           <Collapsible.CollapsibleContent>
@@ -345,14 +345,14 @@ export const BlockCard = ({
                         }
                       }}
                       className="w-full">
-                      <Collapsible.CollapsibleTrigger
-                        asChild
-                        className={cn(
-                          isOpen ? "bg-slate-50" : "",
-                          "flex w-full cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50"
-                        )}
-                        aria-label="Toggle question details">
-                        <div>
+                      <Collapsible.CollapsibleTrigger asChild>
+                        <button
+                          type="button"
+                          className={cn(
+                            isOpen ? "bg-slate-50" : "",
+                            "flex w-full cursor-pointer justify-between gap-4 p-4 text-left hover:bg-slate-50"
+                          )}
+                          aria-label="Toggle question details">
                           <div className="flex grow">
                             <div className="flex grow items-center gap-3" dir="auto">
                               <div className="flex items-center text-slate-600">
@@ -378,7 +378,7 @@ export const BlockCard = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                             <EditorCardMenu
                               survey={localSurvey}
                               cardIdx={elementIdx}
@@ -403,7 +403,7 @@ export const BlockCard = ({
                               isCxMode={isCxMode}
                             />
                           </div>
-                        </div>
+                        </button>
                       </Collapsible.CollapsibleTrigger>
                       <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
                         {shouldShowCautionAlert(element.type) && (
