@@ -211,9 +211,9 @@ export function MultipleChoiceMultiElement({
     return (
       <label
         key={choice.id}
-        tabIndex={0} // NOSONAR
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         className={labelClassName}
-        onKeyDown={handleKeyDown(choice.id)} // NOSONAR
+        onKeyDown={handleKeyDown(choice.id)} // NOSONAR - needed for keyboard navigation through options
         autoFocus={idx === 0 && autoFocusEnabled}>
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
@@ -259,9 +259,11 @@ export function MultipleChoiceMultiElement({
         : "Please specify";
 
     return (
-      <label tabIndex={0} className={labelClassName} onKeyDown={handleKeyDown(otherOption.id)}>
-        {" "}
-        // NOSONAR
+      <label
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
+        className={labelClassName}
+        onKeyDown={handleKeyDown(otherOption.id)} // NOSONAR - needed for keyboard navigation through options
+      >
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             type="checkbox"
@@ -311,7 +313,11 @@ export function MultipleChoiceMultiElement({
     );
 
     return (
-      <label tabIndex={0} className={labelClassName} onKeyDown={handleKeyDown(noneOption.id)}>
+      <label
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
+        className={labelClassName}
+        onKeyDown={handleKeyDown(noneOption.id)} // NOSONAR - needed for keyboard navigation through options
+      >
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             type="checkbox"

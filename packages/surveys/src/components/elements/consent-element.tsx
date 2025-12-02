@@ -65,7 +65,7 @@ export function ConsentElement({
       />
       <label
         ref={consentRef}
-        tabIndex={0}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         id={`${element.id}-label`}
         onKeyDown={(e) => {
           // Accessibility: if spacebar was pressed pass this down to the input

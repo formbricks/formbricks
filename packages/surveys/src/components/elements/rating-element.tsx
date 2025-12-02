@@ -162,7 +162,7 @@ export function RatingElement({
   const renderNumberScale = (number: number, totalLength: number) => {
     return (
       <label
-        tabIndex={0}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         onKeyDown={handleKeyDown(number)}
         className={getNumberLabelClassName(number, totalLength)}>
         {element.isColorCodingEnabled && (
@@ -179,7 +179,7 @@ export function RatingElement({
   const renderStarScale = (number: number) => {
     return (
       <label
-        tabIndex={0}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         onKeyDown={handleKeyDown(number)}
         className={getStarLabelClassName(number)}
         onFocus={handleFocus(number)}
@@ -200,7 +200,7 @@ export function RatingElement({
   const renderSmileyScale = (number: number, idx: number) => {
     return (
       <label
-        tabIndex={0}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         className={getSmileyLabelClassName(number)}
         onKeyDown={handleKeyDown(number)}
         onFocus={handleFocus(number)}

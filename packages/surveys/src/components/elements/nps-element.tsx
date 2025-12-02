@@ -73,7 +73,7 @@ export function NPSElement({
               return (
                 <label
                   key={number}
-                  tabIndex={0}
+                  tabIndex={0} // NOSONAR - needed for keyboard navigation through options
                   onMouseOver={() => {
                     setHoveredNumber(number);
                   }}

@@ -157,9 +157,9 @@ export function MultipleChoiceSingleElement({
     return (
       <label
         key={choice.id}
-        tabIndex={0}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         className={labelClassName}
-        onKeyDown={handleKeyDown(choice.id)}
+        onKeyDown={handleKeyDown(choice.id)} // NOSONAR - needed for keyboard navigation through options
         autoFocus={idx === 0 && autoFocusEnabled}>
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
@@ -196,7 +196,11 @@ export function MultipleChoiceSingleElement({
         : "Please specify";
 
     return (
-      <label tabIndex={0} className={labelClassName} onKeyDown={handleOtherKeyDown}>
+      <label
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
+        className={labelClassName}
+        onKeyDown={handleOtherKeyDown} // NOSONAR - needed for keyboard navigation through options
+      >
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             tabIndex={-1}
@@ -244,7 +248,10 @@ export function MultipleChoiceSingleElement({
     );
 
     return (
-      <label tabIndex={0} className={labelClassName} onKeyDown={handleKeyDown(noneOption.id)}>
+      <label
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
+        className={labelClassName}
+        onKeyDown={handleKeyDown(noneOption.id)}>
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             tabIndex={-1}
