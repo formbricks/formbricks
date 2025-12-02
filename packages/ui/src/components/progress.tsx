@@ -13,7 +13,8 @@ function Progress({
 }: React.ComponentProps<typeof ProgressPrimitive.Root> & {
   indicatorStyle?: React.CSSProperties;
   trackStyle?: React.CSSProperties;
-}) {
+}): React.JSX.Element {
+  const progressValue = value ?? 0;
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
@@ -23,7 +24,7 @@ function Progress({
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
         className="bg-primary h-full w-full flex-1 transition-all"
-        style={{ transform: `translateX(-${100 - (value || 0)}%)`, ...indicatorStyle }}
+        style={{ transform: `translateX(-${100 - progressValue}%)`, ...indicatorStyle }}
       />
     </ProgressPrimitive.Root>
   );
