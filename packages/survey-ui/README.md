@@ -1,4 +1,4 @@
-# @formbricks/ui
+# @formbricks/survey-ui
 
 Reusable UI components package for Formbricks applications.
 
@@ -9,11 +9,11 @@ This package is part of the Formbricks monorepo and is available as a workspace 
 ## Usage
 
 ```tsx
-import { Button, cn } from "@formbricks/ui";
+import { Button } from "@formbricks/survey-ui";
 
 function MyComponent() {
   return (
-    <Button variant="primary" size="md">
+    <Button variant="default" size="default">
       Click me
     </Button>
   );
@@ -36,7 +36,7 @@ pnpm lint
 
 ## Structure
 
-```
+```text
 src/
 ├── components/     # React components
 ├── lib/           # Utility functions
@@ -50,7 +50,7 @@ src/
 This package is configured to work with shadcn/ui CLI. You can add components using:
 
 ```bash
-cd packages/ui
+cd packages/survey-ui
 pnpm ui:add <component-name>
 ```
 
@@ -75,7 +75,7 @@ Then export the component from `src/components/index.ts`.
 
 Components follow this folder structure:
 
-```
+```text
 src/components/
 ├── button.tsx
 ├── button.stories.tsx
