@@ -32,7 +32,6 @@ export function ConsentElement({
 }: Readonly<ConsentElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = element.imageUrl || element.videoUrl;
-  const isCurrent = element.id === currentElementId;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
@@ -66,7 +65,7 @@ export function ConsentElement({
       />
       <label
         ref={consentRef}
-        tabIndex={isCurrent ? 0 : -1}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         id={`${element.id}-label`}
         onKeyDown={(e) => {
           // Accessibility: if spacebar was pressed pass this down to the input

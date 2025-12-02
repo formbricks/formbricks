@@ -33,7 +33,6 @@ export function NPSElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
   const isMediaAvailable = element.imageUrl || element.videoUrl;
-  const isCurrent = element.id === currentElementId;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
   const handleClick = (number: number) => {
@@ -74,7 +73,7 @@ export function NPSElement({
               return (
                 <label
                   key={number}
-                  tabIndex={isCurrent ? 0 : -1}
+                  tabIndex={0} // NOSONAR - needed for keyboard navigation through options
                   onMouseOver={() => {
                     setHoveredNumber(number);
                   }}
