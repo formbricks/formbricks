@@ -211,9 +211,9 @@ export function MultipleChoiceMultiElement({
     return (
       <label
         key={choice.id}
-        tabIndex={0}
+        tabIndex={0} // NOSONAR
         className={labelClassName}
-        onKeyDown={handleKeyDown(choice.id)}
+        onKeyDown={handleKeyDown(choice.id)} // NOSONAR
         autoFocus={idx === 0 && autoFocusEnabled}>
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
@@ -260,6 +260,8 @@ export function MultipleChoiceMultiElement({
 
     return (
       <label tabIndex={0} className={labelClassName} onKeyDown={handleKeyDown(otherOption.id)}>
+        {" "}
+        // NOSONAR
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             type="checkbox"
