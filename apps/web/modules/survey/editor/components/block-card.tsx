@@ -295,7 +295,7 @@ export const BlockCard = ({
           onOpenChange={() => setIsBlockCollapsed(!isBlockCollapsed)}
           className={cn(isBlockCollapsed ? "h-full" : "")}>
           <Collapsible.CollapsibleTrigger asChild>
-            <button type="button" className="block h-full w-full cursor-pointer hover:bg-slate-100">
+            <div className="block h-full w-full cursor-pointer hover:bg-slate-100">
               <div className="flex h-full items-center justify-between px-4 py-2">
                 <div className="flex items-center gap-2">
                   <div>
@@ -317,7 +317,7 @@ export const BlockCard = ({
                   />
                 </div>
               </div>
-            </button>
+            </div>
           </Collapsible.CollapsibleTrigger>
 
           <Collapsible.CollapsibleContent>
@@ -345,14 +345,14 @@ export const BlockCard = ({
                         }
                       }}
                       className="w-full">
-                      <Collapsible.CollapsibleTrigger asChild>
-                        <button
-                          type="button"
-                          className={cn(
-                            isOpen ? "bg-slate-50" : "",
-                            "flex w-full cursor-pointer justify-between gap-4 p-4 text-left hover:bg-slate-50"
-                          )}
-                          aria-label="Toggle question details">
+                      <Collapsible.CollapsibleTrigger
+                        asChild
+                        className={cn(
+                          isOpen ? "bg-slate-50" : "",
+                          "flex w-full cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50"
+                        )}
+                        aria-label="Toggle question details">
+                        <div>
                           <div className="flex grow">
                             <div className="flex grow items-center gap-3" dir="auto">
                               <div className="flex items-center text-slate-600">
@@ -378,7 +378,7 @@ export const BlockCard = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center space-x-2">
                             <EditorCardMenu
                               survey={localSurvey}
                               cardIdx={elementIdx}
@@ -403,7 +403,7 @@ export const BlockCard = ({
                               isCxMode={isCxMode}
                             />
                           </div>
-                        </button>
+                        </div>
                       </Collapsible.CollapsibleTrigger>
                       <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
                         {shouldShowCautionAlert(element.type) && (
