@@ -34,8 +34,9 @@
     "prepare": "husky install",
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
-    "i18n:generate": " pnpm --filter @formbricks/surveys i18n:generate",
-    "generate-translations": "cd apps/web && npx lingo.dev@latest i18n",
+    "i18n:surveys:generate": "pnpm --filter @formbricks/surveys i18n:generate",
+    "i18n:web:generate": "pnpm --filter @formbricks/web i18n:generate",
+    "generate-translations": "pnpm i18n:web:generate && pnpm i18n:surveys:generate",
     "scan-translations": "pnpm --filter @formbricks/i18n-utils scan-translations",
     "i18n": "pnpm generate-translations && pnpm scan-translations",
     "i18n:validate": "pnpm scan-translations"
