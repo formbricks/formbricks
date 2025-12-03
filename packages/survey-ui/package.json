@@ -1,0 +1,68 @@
+{
+  "name": "@formbricks/survey-ui",
+  "license": "MIT",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reusable UI components for Formbricks applications",
+  "homepage": "https://formbricks.com",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formbricks/formbricks"
+  },
+  "sideEffects": false,
+  "source": "src/index.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite build --watch --mode dev",
+    "build": "vite build",
+    "build:dev": "vite build --mode dev",
+    "go": "vite build --watch --mode dev",
+    "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
+    "preview": "vite preview",
+    "clean": "rimraf .turbo node_modules dist",
+    "ui:add": "npx shadcn@latest add"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@radix-ui/react-checkbox": "1.3.1",
+    "@radix-ui/react-progress": "1.1.8",
+    "@radix-ui/react-radio-group": "1.3.6",
+    "@radix-ui/react-slot": "1.2.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.5"
+  },
+  "devDependencies": {
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
+    "@storybook/react": "^8.5.4",
+    "@storybook/react-vite": "^8.5.4",
+    "@types/react": "19.1.4",
+    "@types/react-dom": "19.1.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^4.1.1",
+    "terser": "5.39.1",
+    "tw-animate-css": "^1.0.0",
+    "vite": "6.4.1",
+    "vite-plugin-dts": "4.5.3",
+    "vite-tsconfig-paths": "5.1.4"
+  }
+}
