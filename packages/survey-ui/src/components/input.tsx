@@ -1,6 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import * as React from "react";
-import { cn } from "../../../ui/src/lib/utils";
+import { cn } from "../lib/utils";
 
 type InputProps = React.ComponentProps<"input"> & {
   dir?: "ltr" | "rtl";
@@ -8,7 +8,7 @@ type InputProps = React.ComponentProps<"input"> & {
   style?: React.CSSProperties;
 };
 
-function Input({ className, type, errorMessage, dir, style, ...props }: InputProps) {
+function Input({ className, type, errorMessage, dir, style, ...props }: InputProps): React.JSX.Element {
   const hasError = Boolean(errorMessage);
 
   return (

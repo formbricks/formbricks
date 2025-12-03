@@ -1,6 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import * as React from "react";
-import { cn } from "../../../ui/src/lib/utils";
+import { cn } from "../lib/utils";
 
 type TextareaProps = React.ComponentProps<"textarea"> & {
   dir?: "ltr" | "rtl";
@@ -8,7 +8,7 @@ type TextareaProps = React.ComponentProps<"textarea"> & {
   style?: React.CSSProperties;
 };
 
-function Textarea({ className, errorMessage, dir, style, ...props }: TextareaProps) {
+function Textarea({ className, errorMessage, dir, style, ...props }: TextareaProps): React.JSX.Element {
   const hasError = Boolean(errorMessage);
 
   return (

@@ -2,7 +2,7 @@
 
 import * as ProgressPrimitive from "@radix-ui/react-progress";
 import * as React from "react";
-import { cn } from "../../../ui/src/lib/utils";
+import { cn } from "../lib/utils";
 
 function Progress({
   className,
@@ -24,7 +24,7 @@ function Progress({
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
         className="bg-primary h-full w-full flex-1 transition-all"
-        style={{ transform: `translateX(-${100 - progressValue}%)`, ...indicatorStyle }}
+        style={{ transform: `translateX(-${String(100 - progressValue)}%)`, ...indicatorStyle }}
       />
     </ProgressPrimitive.Root>
   );

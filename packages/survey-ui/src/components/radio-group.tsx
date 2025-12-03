@@ -3,7 +3,7 @@
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import { AlertCircle, CircleIcon } from "lucide-react";
 import * as React from "react";
-import { cn } from "../../../ui/src/lib/utils";
+import { cn } from "../lib/utils";
 
 function RadioGroup({
   className,
@@ -13,7 +13,7 @@ function RadioGroup({
 }: React.ComponentProps<typeof RadioGroupPrimitive.Root> & {
   errorMessage?: string;
   dir?: "ltr" | "rtl";
-}) {
+}): React.JSX.Element {
   return (
     <div className="flex gap-2" dir={dir}>
       {errorMessage ? <div className="bg-destructive min-h-full w-1" /> : null}
@@ -36,7 +36,10 @@ function RadioGroup({
   );
 }
 
-function RadioGroupItem({ className, ...props }: React.ComponentProps<typeof RadioGroupPrimitive.Item>) {
+function RadioGroupItem({
+  className,
+  ...props
+}: React.ComponentProps<typeof RadioGroupPrimitive.Item>): React.JSX.Element {
   return (
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
