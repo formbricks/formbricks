@@ -1,13 +1,12 @@
 import DOMPurify from "isomorphic-dompurify";
-import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { isValidHTML, stripInlineStyles } from "@/lib/html-utils";
 
 interface SubheaderProps {
   subheader?: string;
-  questionId: TSurveyQuestionId;
+  elementId: string;
 }
 
-export function Subheader({ subheader, questionId }: SubheaderProps) {
+export function Subheader({ subheader, elementId }: SubheaderProps) {
   // Strip inline styles BEFORE parsing to avoid CSP violations
   const strippedSubheader = subheader ? stripInlineStyles(subheader) : "";
   const isHtml = strippedSubheader ? isValidHTML(strippedSubheader) : false;
@@ -23,7 +22,7 @@ export function Subheader({ subheader, questionId }: SubheaderProps) {
 
   return (
     <label
-      htmlFor={questionId}
+      htmlFor={elementId}
       className="fb-text-subheading fb-block fb-break-words fb-text-sm fb-font-normal fb-leading-6"
       data-testid="subheader"
       dir="auto">

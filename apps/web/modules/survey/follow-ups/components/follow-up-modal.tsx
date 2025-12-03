@@ -17,10 +17,10 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
@@ -29,7 +29,8 @@ import {
   ZCreateSurveyFollowUpFormSchema,
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
-import { getQuestionIconMap } from "@/modules/survey/lib/questions";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { getElementIconMap } from "@/modules/survey/lib/elements";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -77,7 +78,7 @@ interface AddFollowUpModalProps {
 }
 
 type EmailSendToOption = {
-  type: "openTextQuestion" | "contactInfoQuestion" | "hiddenField" | "user";
+  type: "openTextElement" | "contactInfoElement" | "hiddenField" | "user";
   label: string;
   id: string;
 };
@@ -96,20 +97,20 @@ export const FollowUpModal = ({
   locale,
 }: AddFollowUpModalProps) => {
   const { t } = useTranslation();
-  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+  const ELEMENTS_ICON_MAP = getElementIconMap(t);
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);
 
   const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
-    const { questions } = localSurvey;
+    const elements = getElementsFromBlocks(localSurvey.blocks);
 
-    const openTextAndContactQuestions = questions.filter((question) => {
-      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
-        return question.email.show;
+    const openTextAndContactElements = elements.filter((element) => {
+      if (element.type === TSurveyElementTypeEnum.ContactInfo) {
+        return element.email.show;
       }
 
-      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
-        if (question.inputType === "email") {
+      if (element.type === TSurveyElementTypeEnum.OpenText) {
+        if (element.inputType === "email") {
           return true;
         }
 
@@ -140,15 +141,15 @@ export const FollowUpModal = ({
       : [...updatedTeamMemberDetails, { email: userEmail, name: "Yourself" }];
 
     return [
-      ...openTextAndContactQuestions.map((question) => ({
+      ...openTextAndContactElements.map((element) => ({
         label: getTextContent(
-          recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]
+          recallToHeadline(element.headline, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]
         ),
-        id: question.id,
+        id: element.id,
         type:
-          question.type === TSurveyQuestionTypeEnum.OpenText
-            ? "openTextQuestion"
-            : ("contactInfoQuestion" as EmailSendToOption["type"]),
+          element.type === TSurveyElementTypeEnum.OpenText
+            ? "openTextElement"
+            : ("contactInfoElement" as EmailSendToOption["type"]),
       })),
 
       ...hiddenFields.fieldIds.map((fieldId: string) => ({
@@ -162,7 +163,7 @@ export const FollowUpModal = ({
         id: member.email,
         type: "user" as EmailSendToOption["type"],
       })),
-    ];
+    ] satisfies EmailSendToOption[];
   }, [localSurvey, selectedLanguageCode, teamMemberDetails, userEmail]);
 
   const form = useForm<TCreateSurveyFollowUpForm>({
@@ -371,8 +372,8 @@ export const FollowUpModal = ({
     setOpen(open);
   };
 
-  const emailSendToQuestionOptions = emailSendToOptions.filter(
-    (option) => option.type === "openTextQuestion" || option.type === "contactInfoQuestion"
+  const emailSendToElementOptions = emailSendToOptions.filter(
+    (option) => option.type === "openTextElement" || option.type === "contactInfoElement"
   );
   const emailSendToHiddenFieldOptions = emailSendToOptions.filter((option) => option.type === "hiddenField");
   const userSendToEmailOptions = emailSendToOptions.filter((option) => option.type === "user");
@@ -393,7 +394,7 @@ export const FollowUpModal = ({
         ) : (
           <div className="flex items-center space-x-2">
             <div className="h-4 w-4">
-              {QUESTIONS_ICON_MAP[option.type === "openTextQuestion" ? "openText" : "contactInfo"]}
+              {ELEMENTS_ICON_MAP[option.type === "openTextElement" ? "openText" : "contactInfo"]}
             </div>
             <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
           </div>
@@ -519,7 +520,12 @@ export const FollowUpModal = ({
                                     if (ending.type === "endScreen") {
                                       return (
                                         getTextContent(
-                                          getLocalizedValue(ending.headline, selectedLanguageCode)
+                                          recallToHeadline(
+                                            ending.headline ?? {},
+                                            localSurvey,
+                                            false,
+                                            selectedLanguageCode
+                                          )[selectedLanguageCode]
                                         ) || "Ending"
                                       );
                                     }
@@ -642,13 +648,15 @@ export const FollowUpModal = ({
                                       </SelectTrigger>
 
                                       <SelectContent>
-                                        {emailSendToQuestionOptions.length > 0 ? (
+                                        {emailSendToElementOptions.length > 0 ? (
                                           <div className="flex flex-col">
                                             <div className="flex items-center space-x-2 p-2">
-                                              <p className="text-sm text-slate-500">Questions</p>
+                                              <p className="text-sm text-slate-500">
+                                                {t("common.questions")}
+                                              </p>
                                             </div>
 
-                                            {emailSendToQuestionOptions.map((option) =>
+                                            {emailSendToElementOptions.map((option) =>
                                               renderSelectItem(option)
                                             )}
                                           </div>
@@ -802,7 +810,7 @@ export const FollowUpModal = ({
                                   }}
                                   isInvalid={!!formErrors.body}
                                   localSurvey={localSurvey}
-                                  questionId="follow-up"
+                                  elementId="follow-up"
                                   selectedLanguageCode={selectedLanguageCode}
                                 />
                               </FormControl>

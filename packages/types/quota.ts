@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "./common";
 import type { TResponse } from "./responses";
-import { ZConnector, ZSingleCondition } from "./surveys/types";
+import { ZConnector, ZSingleCondition } from "./surveys/logic";
 
 // Complete quota conditions structure
 export const ZSurveyQuotaLogic = z.object({

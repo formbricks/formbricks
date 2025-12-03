@@ -1,14 +1,14 @@
 import snippet from "@calcom/embed-snippet";
 import { useEffect, useMemo } from "preact/hooks";
-import { type TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { type TSurveyCalElement } from "@formbricks/types/surveys/elements";
 import { cn } from "@/lib/utils";
 
 interface CalEmbedProps {
-  question: TSurveyCalQuestion;
+  element: TSurveyCalElement;
   onSuccessfulBooking: () => void;
 }
 
-export function CalEmbed({ question, onSuccessfulBooking }: CalEmbedProps) {
+export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
   const cal = useMemo(() => {
     const calInline = snippet("https://cal.com/embed.js");
 
@@ -46,12 +46,12 @@ export function CalEmbed({ question, onSuccessfulBooking }: CalEmbedProps) {
     document.querySelectorAll("cal-inline").forEach((el) => {
       el.remove();
     });
-    cal("init", { calOrigin: question.calHost ? `https://${question.calHost}` : "https://cal.com" });
+    cal("init", { calOrigin: element.calHost ? `https://${element.calHost}` : "https://cal.com" });
     cal("inline", {
       elementOrSelector: "#fb-cal-embed",
-      calLink: question.calUserName,
+      calLink: element.calUserName,
     });
-  }, [cal, question.calHost, question.calUserName]);
+  }, [cal, element.calHost, element.calUserName]);
 
   return (
     <div className="fb-relative fb-mt-4 fb-overflow-auto">

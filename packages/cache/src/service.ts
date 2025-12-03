@@ -3,7 +3,7 @@ import type { RedisClient } from "@/types/client";
 import { type CacheError, CacheErrorClass, ErrorCode, type Result, err, ok } from "@/types/error";
 import type { CacheKey } from "@/types/keys";
 import { ZCacheKey } from "@/types/keys";
-import { ZTtlMs } from "@/types/service";
+import { ZTtlMs, ZTtlMsOptional } from "@/types/service";
 import { validateInputs } from "./utils/validation";
 
 /**
@@ -116,13 +116,13 @@ export class CacheService {
   }
 
   /**
-   * Set a value in cache with automatic JSON serialization and TTL
+   * Set a value in cache with automatic JSON serialization and optional TTL
    * @param key - Cache key to store under
    * @param value - Value to store
-   * @param ttlMs - Time to live in milliseconds
+   * @param ttlMs - Time to live in milliseconds (optional - if omitted, key persists indefinitely)
    * @returns Result containing void or an error
    */
-  async set(key: CacheKey, value: unknown, ttlMs: number): Promise<Result<void, CacheError>> {
+  async set(key: CacheKey, value: unknown, ttlMs?: number): Promise<Result<void, CacheError>> {
     // Check Redis availability first
     if (!this.isRedisClientReady()) {
       return err({
@@ -130,8 +130,8 @@ export class CacheService {
       });
     }
 
-    // Validate both key and TTL in one call
-    const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
+    // Validate key and optional TTL
+    const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMsOptional]);
     if (!validation.ok) {
       return validation;
     }
@@ -141,7 +141,13 @@ export class CacheService {
       const normalizedValue = value === undefined ? null : value;
       const serialized = JSON.stringify(normalizedValue);
 
-      await this.withTimeout(this.redis.setEx(key, Math.floor(ttlMs / 1000), serialized));
+      if (ttlMs === undefined) {
+        // Set without expiration (persists indefinitely)
+        await this.withTimeout(this.redis.set(key, serialized));
+      } else {
+        // Set with expiration
+        await this.withTimeout(this.redis.setEx(key, Math.floor(ttlMs / 1000), serialized));
+      }
       return ok(undefined);
     } catch (error) {
       logger.error({ error, key, ttlMs }, "Cache set operation failed");
@@ -179,6 +185,44 @@ export class CacheService {
       return ok(undefined);
     } catch (error) {
       logger.error({ error, keys }, "Cache delete operation failed");
+      return err({
+        code: ErrorCode.RedisOperationError,
+      });
+    }
+  }
+
+  /**
+   * Try to acquire a distributed lock (atomic SET NX operation)
+   * @param key - Lock key
+   * @param value - Lock value (typically "locked" or instance identifier)
+   * @param ttlMs - Time to live in milliseconds (lock expiration)
+   * @returns Result containing boolean indicating if lock was acquired, or an error
+   */
+  async tryLock(key: CacheKey, value: string, ttlMs: number): Promise<Result<boolean, CacheError>> {
+    // Check Redis availability first
+    if (!this.isRedisClientReady()) {
+      return err({
+        code: ErrorCode.RedisConnectionError,
+      });
+    }
+
+    const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
+    if (!validation.ok) {
+      return validation;
+    }
+
+    try {
+      // Use SET with NX (only set if not exists) and PX (expiration in milliseconds) for atomic lock acquisition
+      const result = await this.withTimeout(
+        this.redis.set(key, value, {
+          NX: true,
+          PX: ttlMs,
+        })
+      );
+      // SET returns "OK" if lock was acquired, null if key already exists
+      return ok(result === "OK");
+    } catch (error) {
+      logger.error({ error, key, ttlMs }, "Cache lock operation failed");
       return err({
         code: ErrorCode.RedisOperationError,
       });
@@ -243,7 +287,7 @@ export class CacheService {
   }
 
   private async trySetCache(key: CacheKey, value: unknown, ttlMs: number): Promise<void> {
-    if (typeof value === "undefined") {
+    if (value === undefined) {
       return; // Skip caching undefined values
     }
 

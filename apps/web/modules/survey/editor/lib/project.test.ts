@@ -91,7 +91,13 @@ describe("getProjectLanguages", () => {
     expect(languages).toEqual(mockProject.languages);
     expect(prisma.project.findUnique).toHaveBeenCalledWith({
       where: { id: "testProjectId" },
-      select: { languages: true },
+      select: {
+        languages: {
+          orderBy: {
+            code: "asc",
+          },
+        },
+      },
     });
   });
 

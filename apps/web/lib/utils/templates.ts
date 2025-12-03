@@ -1,37 +1,46 @@
-import { TProject } from "@formbricks/types/project";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { TTemplate } from "@formbricks/types/templates";
+import type { TProject } from "@formbricks/types/project";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import type { TTemplate } from "@formbricks/types/templates";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
-export const replaceQuestionPresetPlaceholders = (
-  question: TSurveyQuestion,
+export const replaceElementPresetPlaceholders = (
+  element: TSurveyElement,
   project: TProject
-): TSurveyQuestion => {
-  if (!project) return question;
-  const newQuestion = structuredClone(question);
+): TSurveyElement => {
+  if (!project) return element;
+  const newElement = structuredClone(element);
   const defaultLanguageCode = "default";
-  if (newQuestion.headline) {
-    newQuestion.headline[defaultLanguageCode] = getLocalizedValue(
-      newQuestion.headline,
+
+  if (newElement.headline) {
+    newElement.headline[defaultLanguageCode] = getLocalizedValue(
+      newElement.headline,
       defaultLanguageCode
     ).replace("$[projectName]", project.name);
   }
-  if (newQuestion.subheader) {
-    newQuestion.subheader[defaultLanguageCode] = getLocalizedValue(
-      newQuestion.subheader,
+
+  if (newElement.subheader) {
+    newElement.subheader[defaultLanguageCode] = getLocalizedValue(
+      newElement.subheader,
       defaultLanguageCode
     )?.replace("$[projectName]", project.name);
   }
-  return newQuestion;
+
+  return newElement;
 };
 
 // replace all occurences of projectName with the actual project name in the current template
 export const replacePresetPlaceholders = (template: TTemplate, project: any) => {
   const preset = structuredClone(template.preset);
   preset.name = preset.name.replace("$[projectName]", project.name);
-  preset.questions = preset.questions.map((question) => {
-    return replaceQuestionPresetPlaceholders(question, project);
-  });
+
+  // Handle blocks if present
+  if (preset.blocks && preset.blocks.length > 0) {
+    preset.blocks = preset.blocks.map((block) => ({
+      ...block,
+      elements: block.elements.map((element) => replaceElementPresetPlaceholders(element, project)),
+    }));
+  }
+
   return { ...template, preset };
 };

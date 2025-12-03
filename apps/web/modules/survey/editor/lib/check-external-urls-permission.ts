@@ -1,5 +1,6 @@
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
@@ -19,6 +20,9 @@ export const checkExternalUrlsPermission = async (
   newSurvey: TSurvey,
   oldSurvey: TSurvey | null
 ): Promise<void> => {
+  const newQuestions = getElementsFromBlocks(newSurvey.blocks);
+  const oldQuestions = oldSurvey?.blocks ? getElementsFromBlocks(oldSurvey.blocks) : [];
+
   const organizationBilling = await getOrganizationBilling(organizationId);
   if (!organizationBilling) {
     throw new ResourceNotFoundError("Organization", organizationId);
@@ -43,8 +47,8 @@ export const checkExternalUrlsPermission = async (
   }
 
   // Check CTA questions for new/changed external button URLs
-  for (const newQuestion of newSurvey.questions) {
-    const oldQuestion = oldSurvey?.questions.find((q) => q.id === newQuestion.id);
+  for (const newQuestion of newQuestions) {
+    const oldQuestion = oldQuestions.find((q) => q.id === newQuestion.id);
 
     if (newQuestion.type === "cta" && newQuestion.buttonExternal) {
       if (

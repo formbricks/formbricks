@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry";
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -225,6 +226,10 @@ export const POST = async (request: Request) => {
         logger.error({ error: result.reason, url: request.url }, "Promise rejected");
       }
     });
+  }
+  if (event === "responseCreated") {
+    // Send telemetry events
+    await sendTelemetryEvents();
   }
 
   return Response.json({ data: {} });

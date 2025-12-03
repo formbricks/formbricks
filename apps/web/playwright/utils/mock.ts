@@ -106,51 +106,51 @@ export const surveys = {
   createAndSubmit: {
     welcomeCard: {
       headline: "Welcome to My Testing Survey Welcome Card!",
-      description: "This is the description of my Welcome Card!",
+      description: "the description of my Welcome Card!",
     },
     openTextQuestion: {
-      question: "This is my Open Text Question",
-      description: "This is my Open Text Description",
-      placeholder: "This is my Placeholder",
+      question: "Open Text Question",
+      description: "Open Text Description",
+      placeholder: "Placeholder",
     },
     singleSelectQuestion: {
-      question: "This is my Single Select Question",
-      description: "This is my Single Select Description",
+      question: "Single Select Question",
+      description: "Single Select Description",
       options: ["Option 1", "Option 2"],
     },
     multiSelectQuestion: {
-      question: "This is my Multi Select Question",
-      description: "This is Multi Select Description",
+      question: "Multi Select Question",
+      description: "Multi Select Description",
       options: ["Option 1", "Option 2", "Option 3"],
     },
     ratingQuestion: {
-      question: "This is my Rating Question",
-      description: "This is Rating Description",
+      question: "Rating Question",
+      description: "Rating Description",
       lowLabel: "My Lower Label",
       highLabel: "My Upper Label",
     },
     npsQuestion: {
-      question: "This is my NPS Question",
+      question: "NPS Question",
       lowLabel: "My Lower Label",
       highLabel: "My Upper Label",
     },
     ctaQuestion: {
-      question: "This is my CTA Question",
+      question: "CTA Question",
       buttonLabel: "My Button Label",
     },
     consentQuestion: {
-      question: "This is my Consent Question",
+      question: "Consent Question",
       checkboxLabel: "My Checkbox Label",
     },
     pictureSelectQuestion: {
-      question: "This is my Picture Select Question",
-      description: "This is Picture Select Description",
+      question: "Picture Select Question",
+      description: "Picture Select Description",
     },
     dateQuestion: {
-      question: "This is my Date Question",
+      question: "Date Question",
     },
     fileUploadQuestion: {
-      question: "This is my File Upload Question",
+      question: "File Upload Question",
     },
     matrix: {
       question: "How much do you love these flowers?",
@@ -178,57 +178,57 @@ export const surveys = {
   createWithLogicAndSubmit: {
     welcomeCard: {
       headline: "Welcome to My Testing Survey Welcome Card!",
-      description: "This is the description of my Welcome Card!",
+      description: "the description of my Welcome Card!",
     },
     openTextQuestion: {
-      question: "This is my Open Text Question",
-      description: "This is my Open Text Description",
-      placeholder: "This is my Placeholder",
+      question: "Open Text Question",
+      description: "Open Text Description",
+      placeholder: "Placeholder",
     },
     singleSelectQuestion: {
-      question: "This is my Single Select Question",
-      description: "This is my Single Select Description",
+      question: "Single Select Question",
+      description: "Single Select Description",
       options: ["Option 1", "Option 2"],
     },
     multiSelectQuestion: {
-      question: "This is my Multi Select Question",
-      description: "This is Multi Select Description",
+      question: "Multi Select Question",
+      description: "Multi Select Description",
       options: ["Option 1", "Option 2", "Option 3"],
     },
     ratingQuestion: {
-      question: "This is my Rating Question",
-      description: "This is Rating Description",
+      question: "Rating Question",
+      description: "Rating Description",
       lowLabel: "My Lower Label",
       highLabel: "My Upper Label",
     },
     npsQuestion: {
-      question: "This is my NPS Question",
+      question: "NPS Question",
       lowLabel: "My Lower Label",
       highLabel: "My Upper Label",
     },
     ctaQuestion: {
-      question: "This is my CTA Question",
+      question: "CTA Question",
       buttonLabel: "My Button Label",
     },
     consentQuestion: {
-      question: "This is my Consent Question",
+      question: "Consent Question",
       checkboxLabel: "My Checkbox Label",
     },
     pictureSelectQuestion: {
-      question: "This is my Picture Select Question",
-      description: "This is Picture Select Description",
+      question: "Picture Select Question",
+      description: "Picture Select Description",
     },
     fileUploadQuestion: {
-      question: "This is my File Upload Question",
+      question: "File Upload Question",
     },
     date: {
-      question: "This is my Date Question",
+      question: "Date Question",
     },
     cal: {
-      question: "This is my cal Question",
+      question: "cal Question",
     },
     matrix: {
-      question: "This is my Matrix Question",
+      question: "Matrix Question",
       description: "0: Not at all, 3: Love it",
       rows: ["Roses", "Trees", "Ocean"],
       columns: ["0", "1", "2", "3"],
@@ -242,7 +242,7 @@ export const surveys = {
       },
     },
     ranking: {
-      question: "This is my Ranking Question",
+      question: "Ranking Question",
       choices: ["Work", "Money", "Travel", "Family", "Friends"],
     },
     endingCard: {
@@ -342,12 +342,12 @@ export const actions = {
     noCode: {
       click: {
         name: "Create Click Action (CSS Selector)",
-        description: "This is my Create Action (click, CSS Selector)",
+        description: "Create Action (click, CSS Selector)",
         selector: ".my-custom-class",
       },
       pageView: {
         name: "Create Page view Action (specific Page URL)",
-        description: "This is my Create Action (Page view)",
+        description: "Create Action (Page view)",
         matcher: {
           label: "Contains",
           value: "custom-url",
@@ -355,16 +355,16 @@ export const actions = {
       },
       exitIntent: {
         name: "Create Exit Intent Action",
-        description: "This is my Create Action (Exit Intent)",
+        description: "Create Action (Exit Intent)",
       },
       fiftyPercentScroll: {
         name: "Create 50% Scroll Action",
-        description: "This is my Create Action (50% Scroll)",
+        description: "Create Action (50% Scroll)",
       },
     },
     code: {
       name: "Create Action (Code)",
-      description: "This is my Create Action (Code)",
+      description: "Create Action (Code)",
       key: "Create Action (Code)",
     },
   },
@@ -372,12 +372,12 @@ export const actions = {
     noCode: {
       click: {
         name: "Edit Click Action (CSS Selector)",
-        description: "This is my Edit Action (click, CSS Selector)",
+        description: "Edit Action (click, CSS Selector)",
         selector: ".my-custom-class-edited",
       },
       pageView: {
         name: "Edit Page view Action (specific Page URL)",
-        description: "This is my Edit Action (Page view)",
+        description: "Edit Action (Page view)",
         matcher: {
           label: "Starts with",
           value: "custom-url0-edited",
@@ -386,26 +386,26 @@ export const actions = {
       },
       exitIntent: {
         name: "Edit Exit Intent Action",
-        description: "This is my Edit Action (Exit Intent)",
+        description: "Edit Action (Exit Intent)",
       },
       fiftyPercentScroll: {
         name: "Edit 50% Scroll Action",
-        description: "This is my Edit Action (50% Scroll)",
+        description: "Edit Action (50% Scroll)",
       },
     },
     code: {
-      description: "This is my Edit Action (Code)",
+      description: "Edit Action (Code)",
     },
   },
   delete: {
     noCode: {
       name: "Delete click Action (CSS Selector)",
-      description: "This is my Delete Action (CSS Selector)",
+      description: "Delete Action (CSS Selector)",
       selector: ".my-custom-class-deleted",
     },
     code: {
       name: "Delete Action (Code)",
-      description: "This is my Delete Action (Code)",
+      description: "Delete Action (Code)",
     },
   },
 };

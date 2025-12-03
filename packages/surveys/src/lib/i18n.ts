@@ -1,4 +1,4 @@
-import { TI18nString } from "@formbricks/types/surveys/types";
+import { TI18nString } from "@formbricks/types/i18n";
 
 // Type guard to check if an object is an I18nString
 const isI18nObject = (obj: any): obj is TI18nString => {

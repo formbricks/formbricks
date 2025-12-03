@@ -180,7 +180,7 @@ export const fillRichTextEditor = async (page: Page, labelText: string, content:
 };
 
 export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
-  const addQuestion = "Add questionAdd a new question to your survey";
+  const addBlock = "Add BlockChoose the first question on your Block";
 
   await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
@@ -211,7 +211,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // Single Select Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Single-Select" }).click();
@@ -225,7 +225,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // Multi Select Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Multi-Select Ask respondents" }).click();
@@ -239,7 +239,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // Rating Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Rating" }).click();
@@ -252,7 +252,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // NPS Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
@@ -263,17 +263,21 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // CTA Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Statement (Call to Action)" }).click();
   await fillRichTextEditor(page, "Question*", params.ctaQuestion.question);
+
+  // Enable external button and fill URL
+  await page.locator("#buttonExternal").check();
+  await page.getByRole("textbox", { name: "https://website.com" }).fill("https://example.com");
   await page.getByPlaceholder("Finish").fill(params.ctaQuestion.buttonLabel);
 
   // Consent Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Consent" }).click();
@@ -283,7 +287,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // Picture Select Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Picture Selection" }).click();
@@ -297,7 +301,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // File Upload Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "File Upload" }).click();
@@ -306,7 +310,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // Matrix Upload Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Matrix" }).click();
@@ -334,7 +338,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // Fill Address Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Address" }).click();
@@ -348,7 +352,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // Fill Contact Info Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Contact Info" }).click();
@@ -361,7 +365,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   // Fill Ranking question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Ranking" }).click();
@@ -382,7 +386,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 };
 
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
-  const addQuestion = "Add questionAdd a new question to your survey";
+  const addBlock = "Add BlockChoose the first question on your Block";
 
   await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
@@ -427,7 +431,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Single Select Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Single-Select" }).click();
@@ -441,7 +445,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Multi Select Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Multi-Select Ask respondents" }).click();
@@ -455,7 +459,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Picture Select Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Picture Selection" }).click();
@@ -484,7 +488,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Rating Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Rating" }).click();
@@ -497,7 +501,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // NPS Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
@@ -508,7 +512,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Fill Ranking question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Ranking" }).click();
@@ -530,7 +534,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Matrix Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Matrix" }).click();
@@ -558,17 +562,21 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // CTA Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Statement (Call to Action)" }).click();
   await fillRichTextEditor(page, "Question*", params.ctaQuestion.question);
+
+  // Enable external button and fill URL
+  await page.locator("#buttonExternal").check();
+  await page.getByRole("textbox", { name: "https://website.com" }).fill("https://example.com");
   await page.getByPlaceholder("Finish").fill(params.ctaQuestion.buttonLabel);
 
   // Consent Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Consent" }).click();
@@ -578,7 +586,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // File Upload Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "File Upload" }).click();
@@ -587,7 +595,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Date Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Date" }).click();
@@ -596,7 +604,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Cal Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Schedule a meeting" }).click();
@@ -605,7 +613,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Fill Address Question
   await page
     .locator("div")
-    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .filter({ hasText: new RegExp(`^${addBlock}$`) })
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Address" }).click();
@@ -616,22 +624,24 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("row", { name: "Zip" }).getByRole("cell").nth(2).click();
   await page.getByRole("row", { name: "Country" }).getByRole("switch").nth(1).click();
 
-  // Adding logic
-  // Open Text Question
+  // Adding logic to blocks
+  // Block 1 (Open Text Question)
   await page.getByRole("heading", { name: params.openTextQuestion.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
-  await page.locator("#condition-0-0-conditionOperator").click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").first().click();
+  await page.getByRole("option", { name: params.openTextQuestion.question }).click();
+  await page.locator("#condition-0-0-conditionOperator").first().click();
   await page.getByRole("option", { name: "is submitted" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
-  await page.locator("#action-0-variableId").click();
+  await page.locator("#action-0-variableId").first().click();
   await page.getByRole("option", { name: "score" }).click();
-  await page.locator("#action-0-operator").click();
+  await page.locator("#action-0-operator").first().click();
   await page.getByRole("option", { name: "Assign =" }).click();
-  await page.locator("#action-0-value-input").click();
-  await page.locator("#action-0-value-input").fill("1");
-  await page.locator("#actions-0-dropdown").click();
+  await page.locator("#action-0-value-input").first().click();
+  await page.locator("#action-0-value-input").first().fill("1");
+  await page.locator("#actions-0-dropdown").first().click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
   await page.getByRole("option", { name: "Require Answer" }).click();
@@ -646,20 +656,28 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-operator").click();
   await page.getByRole("option", { name: "Assign =" }).click();
   await page.locator("#action-2-value-input").click();
-  await page.locator("#action-2-value-input").fill("1");
+  await page.locator("#action-2-value-input").fill("This ");
+  // Close Block 1 settings before moving to Block 2
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 11 question$/ })
+    .first()
+    .click();
 
-  // Single Select Question
+  // Block 2 (Single Select Question)
   await page.getByRole("heading", { name: params.singleSelectQuestion.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
-  await page.locator("#condition-0-0-conditionOperator").click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").first().click();
+  await page.getByRole("option", { name: params.singleSelectQuestion.question }).click();
+  await page.locator("#condition-0-0-conditionOperator").first().click();
   await page.getByRole("option", { name: "Equals one of" }).click();
-  await page.locator("#condition-0-0-conditionMatchValue").click();
+  await page.locator("#condition-0-0-conditionMatchValue").first().click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[1] }).click();
   await page.locator("html").click();
   await page.waitForSelector('[data-testid="dropdown-menu-content"]', { state: "hidden", timeout: 3000 });
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -677,11 +695,19 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Concat +" }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("is ");
+  // Close Block 2 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 21 question$/ })
+    .first()
+    .click();
 
-  // Multi Select Question
+  // Block 3 (Multi Select Question)
   await page.getByRole("heading", { name: params.multiSelectQuestion.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: params.multiSelectQuestion.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "Includes all of" }).click();
   await page.locator("#condition-0-0-conditionMatchValue").click();
@@ -696,7 +722,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: params.singleSelectQuestion.question }).click();
   await page.locator("#condition-0-1-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -720,14 +746,22 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Concat +" }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("a ");
+  // Close Block 3 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 31 question$/ })
+    .first()
+    .click();
 
-  // Picture Select Question
+  // Block 4 (Picture Select Question)
   await page.getByRole("heading", { name: params.pictureSelectQuestion.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: params.pictureSelectQuestion.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -745,16 +779,24 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Concat +" }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("secret ");
+  // Close Block 4 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 41 question$/ })
+    .first()
+    .click();
 
-  // Rating Question
+  // Block 5 (Rating Question)
   await page.getByRole("heading", { name: params.ratingQuestion.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: params.ratingQuestion.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: ">=" }).click();
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: "3" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -772,17 +814,27 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Concat +" }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("message ");
+  // Close Block 5 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 51 question$/ })
+    .first()
+    .click();
 
-  // NPS Question
+  // Block 6 (NPS Question)
   await page.getByRole("heading", { name: params.npsQuestion.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: params.npsQuestion.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: ">", exact: true }).click();
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: "2" }).click();
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
+  await page.locator("#condition-0-1-conditionValue").click();
+  await page.getByRole("option", { name: params.npsQuestion.question }).click();
   await page.locator("#condition-0-1-conditionOperator").click();
   await page.getByRole("option", { name: "<", exact: true }).click();
   await page.locator("#condition-0-1-conditionMatchValue").click();
@@ -818,7 +870,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.locator("#condition-1-1-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -836,14 +888,22 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Concat +" }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("for ");
+  // Close Block 6 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 61 question$/ })
+    .first()
+    .click();
 
-  // Ranking Question
+  // Block 7 (Ranking Question)
   await page.getByRole("heading", { name: params.ranking.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: params.ranking.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is skipped" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -861,14 +921,25 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Concat +" }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("e2e ");
+  // Close Block 7 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 71 question$/ })
+    .first()
+    .click();
 
-  // Matrix Question
+  // Block 8 (Matrix Question)
   await page.getByRole("heading", { name: params.matrix.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
-  await page.locator("#condition-0-0-conditionOperator").click();
-  await page.getByRole("option", { name: "is completely submitted" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").first().click();
+  await page.getByTestId("dropdown-menu-content").getByText(params.matrix.question).click();
+  await page.getByRole("menuitem", { name: "All fields" }).click();
+  // Click the operator dropdown (currently shows "Is partially submitted")
+  await page.getByText("Is partially submitted").click();
+  // Select "Is completely submitted" from the dropdown
+  await page.getByText("Is completely submitted").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -894,19 +965,29 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Require Answer" }).click();
   await page.locator("#action-2-target").click();
   await page.getByRole("option", { name: params.ctaQuestion.question }).click();
+  // Close Block 8 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 81 question$/ })
+    .first()
+    .click();
 
-  // CTA Question
+  // Block 9 (CTA Question)
   await page.getByRole("heading", { name: params.ctaQuestion.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: params.ctaQuestion.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
-  await page.getByRole("option", { name: "is skipped" }).click();
+  await page.getByRole("option", { name: "is not clicked" }).click();
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.getByRole("combobox").filter({ hasText: "all are true" }).first().click();
   await page.getByText("any is true").click();
   await page.locator("#condition-0-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Create group" }).click();
+  await page.locator("#condition-1-0-conditionValue").click();
+  await page.getByRole("option", { name: params.ctaQuestion.question }).click();
   await page.locator("#condition-1-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.locator("#condition-1-1-conditionValue").click();
@@ -915,7 +996,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "contains" }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("test");
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -923,12 +1004,18 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Add +" }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
+  // Close Block 9 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 91 question$/ })
+    .first()
+    .click();
 
-  // Consent Question
+  // Block 10 (Consent Question)
   await page.getByRole("heading", { name: params.consentQuestion.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -936,12 +1023,18 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Add +" }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("2");
+  // Close Block 10 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 101 question$/ })
+    .first()
+    .click();
 
-  // File Upload Question
+  // Block 11 (File Upload Question)
   await page.getByRole("heading", { name: params.fileUploadQuestion.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -949,33 +1042,47 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Add +" }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
+  // Close Block 11 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 111 question$/ })
+    .first()
+    .click();
 
-  // Date Question
+  // Block 12 (Date Question)
   const today = new Date().toISOString().split("T")[0];
   const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split("T")[0];
   const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0];
 
   await page.getByRole("main").getByText(params.date.question).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
 
+  await page.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: params.date.question }).click();
   await page.getByPlaceholder("Value").fill(today);
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
+  await page.locator("#condition-0-1-conditionValue").click();
+  await page.getByRole("option", { name: params.date.question }).click();
   await page.locator("#condition-0-1-conditionOperator").click();
   await page.getByRole("option", { name: "does not equal" }).click();
   await page.locator("#condition-0-1-conditionMatchValue-input").fill(yesterday);
   await page.locator("#condition-0-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
+  await page.locator("#condition-0-2-conditionValue").click();
+  await page.getByRole("option", { name: params.date.question }).click();
   await page.locator("#condition-0-2-conditionOperator").click();
   await page.getByRole("option", { name: "is before" }).click();
   await page.locator("#condition-0-2-conditionMatchValue-input").fill(tomorrow);
   await page.locator("#condition-0-2-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
+  await page.locator("#condition-0-3-conditionValue").click();
+  await page.getByRole("option", { name: params.date.question }).click();
   await page.locator("#condition-0-3-conditionOperator").click();
   await page.getByRole("option", { name: "is after" }).click();
   await page.locator("#condition-0-3-conditionMatchValue-input").fill(yesterday);
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -983,14 +1090,22 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Add +" }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
+  // Close Block 12 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 121 question$/ })
+    .first()
+    .click();
 
-  // Cal Question
+  // Block 13 (Cal Question)
   await page.getByRole("heading", { name: params.cal.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: params.cal.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is skipped" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
@@ -998,12 +1113,18 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Add +" }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
+  // Close Block 13 settings
+  await page
+    .locator("div")
+    .filter({ hasText: /^Block 131 question$/ })
+    .first()
+    .click();
 
-  // Address Question
+  // Block 14 (Address Question)
   await page.getByRole("heading", { name: params.address.question }).click();
-  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
-  await page.getByRole("button", { name: "Add logic" }).click();
-  await page.locator("#action-0-objective").click();
+  await page.getByText("Show Block settings").first().click();
+  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
