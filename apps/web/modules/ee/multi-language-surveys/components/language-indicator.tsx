@@ -48,29 +48,33 @@ export function LanguageIndicator({
       <button
         aria-expanded={showLanguageDropdown}
         aria-haspopup="true"
-        className="relative z-20 flex items-center justify-center rounded-md bg-slate-900 p-1 px-2 text-xs text-white hover:bg-slate-700"
+        className="relative z-20 flex max-w-[120px] items-center justify-center rounded-md bg-slate-900 p-1 px-2 text-xs text-white hover:bg-slate-700"
         onClick={toggleDropdown}
         tabIndex={-1}
         type="button">
-        {languageToBeDisplayed ? getLanguageLabel(languageToBeDisplayed.language.code, locale) : ""}
-        <ChevronDown className="ml-1 h-4 w-4" />
+        <span className="max-w-full truncate">
+          {languageToBeDisplayed ? getLanguageLabel(languageToBeDisplayed.language.code, locale) : ""}
+        </span>
+        <ChevronDown className="ml-1 h-4 w-4 flex-shrink-0" />
       </button>
       {showLanguageDropdown ? (
         <div
-          className="absolute right-0 z-30 mt-1 max-h-64 space-y-2 overflow-auto rounded-md bg-slate-900 p-1 text-xs text-white"
+          className="absolute right-0 z-30 mt-1 max-h-64 w-48 space-y-2 overflow-auto rounded-md bg-slate-900 p-1 text-xs text-white"
           ref={languageDropdownRef}>
           {surveyLanguages.map(
             (language) =>
               language.language.code !== languageToBeDisplayed?.language.code &&
               language.enabled && (
                 <button
-                  className="block w-full rounded-sm p-1 text-left hover:bg-slate-700"
+                  className="flex w-full rounded-sm p-1 text-left hover:bg-slate-700"
                   key={language.language.id}
                   onClick={() => {
                     changeLanguage(language);
                   }}
                   type="button">
-                  {getLanguageLabel(language.language.code, locale)}
+                  <span className="min-w-0 flex-1 truncate">
+                    {getLanguageLabel(language.language.code, locale)}
+                  </span>
                 </button>
               )
           )}
