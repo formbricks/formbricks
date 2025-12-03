@@ -294,28 +294,28 @@ export const BlockCard = ({
           open={!isBlockCollapsed}
           onOpenChange={() => setIsBlockCollapsed(!isBlockCollapsed)}
           className={cn(isBlockCollapsed ? "h-full" : "")}>
-          <Collapsible.CollapsibleTrigger
-            asChild
-            className="block h-full w-full cursor-pointer hover:bg-slate-100">
-            <div className="flex h-full items-center justify-between px-4 py-2">
-              <div className="flex items-center gap-2">
-                <div>
-                  <h4 className="text-sm font-medium text-slate-700">{block.name}</h4>
-                  <p className="text-xs text-slate-500">
-                    {blockElementsCount} {blockElementsCountText}
-                  </p>
+          <Collapsible.CollapsibleTrigger asChild>
+            <div className="block h-full w-full cursor-pointer hover:bg-slate-100">
+              <div className="flex h-full items-center justify-between px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-700">{block.name}</h4>
+                    <p className="text-xs text-slate-500">
+                      {blockElementsCount} {blockElementsCountText}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <BlockMenu
-                  isFirstBlock={blockIdx === 0}
-                  isLastBlock={blockIdx === totalBlocks - 1}
-                  isOnlyBlock={totalBlocks === 1}
-                  onDuplicate={() => duplicateBlock(block.id)}
-                  onDelete={() => deleteBlock(block.id)}
-                  onMoveUp={() => moveBlock(block.id, "up")}
-                  onMoveDown={() => moveBlock(block.id, "down")}
-                />
+                <div>
+                  <BlockMenu
+                    isFirstBlock={blockIdx === 0}
+                    isLastBlock={blockIdx === totalBlocks - 1}
+                    isOnlyBlock={totalBlocks === 1}
+                    onDuplicate={() => duplicateBlock(block.id)}
+                    onDelete={() => deleteBlock(block.id)}
+                    onMoveUp={() => moveBlock(block.id, "up")}
+                    onMoveDown={() => moveBlock(block.id, "down")}
+                  />
+                </div>
               </div>
             </div>
           </Collapsible.CollapsibleTrigger>
