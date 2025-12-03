@@ -43,8 +43,6 @@ export function AddressElement({
     return Array.isArray(value) ? value : ["", "", "", "", "", ""];
   }, [value]);
 
-  const isCurrent = element.id === currentElementId;
-
   const fields = useMemo(
     () => [
       {
@@ -166,7 +164,7 @@ export function AddressElement({
                       handleChange(field.id, e.currentTarget.value);
                     }}
                     ref={index === 0 ? addressRef : null}
-                    tabIndex={isCurrent ? 0 : -1}
+                    tabIndex={0}
                     aria-label={field.label}
                     dir={!safeValue[index] ? dir : "auto"}
                   />

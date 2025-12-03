@@ -46,7 +46,6 @@ export function RatingElement({
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = element.imageUrl || element.videoUrl;
-  const isCurrent = element.id === currentElementId;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
   const handleSelect = (number: number) => {
@@ -163,7 +162,7 @@ export function RatingElement({
   const renderNumberScale = (number: number, totalLength: number) => {
     return (
       <label
-        tabIndex={isCurrent ? 0 : -1}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         onKeyDown={handleKeyDown(number)}
         className={getNumberLabelClassName(number, totalLength)}>
         {element.isColorCodingEnabled && (
@@ -180,7 +179,7 @@ export function RatingElement({
   const renderStarScale = (number: number) => {
     return (
       <label
-        tabIndex={isCurrent ? 0 : -1}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         onKeyDown={handleKeyDown(number)}
         className={getStarLabelClassName(number)}
         onFocus={handleFocus(number)}
@@ -201,7 +200,7 @@ export function RatingElement({
   const renderSmileyScale = (number: number, idx: number) => {
     return (
       <label
-        tabIndex={isCurrent ? 0 : -1}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         className={getSmileyLabelClassName(number)}
         onKeyDown={handleKeyDown(number)}
         onFocus={handleFocus(number)}

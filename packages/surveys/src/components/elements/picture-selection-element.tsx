@@ -148,7 +148,7 @@ export function PictureSelectionElement({
       <div className="fb-relative" key={choice.id}>
         <button
           type="button"
-          tabIndex={isCurrent ? 0 : -1}
+          tabIndex={0}
           onKeyDown={handleKeyDown}
           onClick={() => handleChange(choice.id)}
           className={getButtonClassName(choice.id)}>
