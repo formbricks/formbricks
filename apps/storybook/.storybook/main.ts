@@ -16,7 +16,7 @@ const config: StorybookConfig = {
   stories: [
     "../src/**/*.mdx",
     "../../web/modules/ui/**/stories.@(js|jsx|mjs|ts|tsx)",
-    "../../../packages/ui/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../../../packages/survey-ui/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   addons: [
     getAbsolutePath("@storybook/addon-onboarding"),

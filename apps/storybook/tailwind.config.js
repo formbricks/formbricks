@@ -7,6 +7,6 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
     "../web/modules/ui/**/*.{js,ts,jsx,tsx}",
-    "../../packages/ui/src/**/*.{js,ts,jsx,tsx}",
+    "../../packages/survey-ui/src/**/*.{js,ts,jsx,tsx}",
   ],
 };
