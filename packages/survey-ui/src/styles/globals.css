@@ -1,6 +1,3 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-
 :root {
     --background: hsl(0 0% 100%);
     --foreground: hsl(222.2 84% 4.9%);
@@ -27,6 +24,25 @@
     --chart-3: hsl(197 37% 24%);
     --chart-4: hsl(43 74% 66%);
     --chart-5: hsl(27 87% 67%);
+
+    /* Input-specific CSS variables for theming */
+    --fb-input-bg-color: transparent;
+    --fb-input-bg-opacity: 1;
+    --fb-input-hover-bg-color: var(--input);
+    --fb-input-hover-bg-opacity: 0.3;
+    --fb-input-border-color: var(--input);
+    --fb-input-border-radius: var(--radius);
+    --fb-input-font-family: inherit;
+    --fb-input-font-size: 0.875rem;
+    --fb-input-font-weight: 400;
+    --fb-input-color: var(--foreground);
+    --fb-input-placeholder-color: var(--muted-foreground);
+    --fb-input-placeholder-opacity: 1;
+    --fb-input-width: 100%;
+    --fb-input-height: 2.25rem;
+    --fb-input-padding-x: 0.75rem;
+    --fb-input-padding-y: 0.25rem;
+    --fb-input-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 .dark {
@@ -54,44 +70,13 @@
     --chart-3: hsl(30 80% 55%);
     --chart-4: hsl(280 65% 60%);
     --chart-5: hsl(340 75% 55%);
-}
 
-@theme inline {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
-}
-
-@layer base {
-    * {
-        @apply border-border;
-    }
-
-    body {
-        @apply bg-background text-foreground;
-    }
+    /* Input-specific CSS variables for dark mode */
+    --fb-input-bg-color: var(--input);
+    --fb-input-bg-opacity: 0.3;
+    --fb-input-hover-bg-color: var(--input);
+    --fb-input-hover-bg-opacity: 0.5;
+    --fb-input-border-color: var(--input);
+    --fb-input-color: var(--foreground);
+    --fb-input-placeholder-color: var(--muted-foreground);
 }
