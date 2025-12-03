@@ -305,7 +305,7 @@ export const BlockCard = ({
                     </p>
                   </div>
                 </div>
-                <div onClick={(e) => e.stopPropagation()}>
+                <div>
                   <BlockMenu
                     isFirstBlock={blockIdx === 0}
                     isLastBlock={blockIdx === totalBlocks - 1}
