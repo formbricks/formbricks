@@ -1171,7 +1171,6 @@ checksums:
     environments/surveys/edit/automatically_mark_the_survey_as_complete_after: c6ede2a5515a4ca72b36aec2583f43aa
     environments/surveys/edit/back_button_label: 25af945e77336724b5276de291cc92d9
     environments/surveys/edit/background_styling: 4e1e6fd2ec767bbff8767f6c0f68a731
-    environments/surveys/edit/block_deleted: c682259eb138ad84f8b4441abfd9b572
     environments/surveys/edit/block_duplicated: dc9e9fab2b1cd91f6c265324b34c6376
     environments/surveys/edit/bold: 4d7306bc355ed2befd6a9237c5452ee6
     environments/surveys/edit/brand_color: 84ddb5736deb9f5c081ffe4962a6c63e
