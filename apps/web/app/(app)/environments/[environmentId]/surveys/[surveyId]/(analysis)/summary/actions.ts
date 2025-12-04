@@ -3,7 +3,10 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
+import { TResponseInput } from "@formbricks/types/responses";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
+import { createResponseWithQuotaEvaluation } from "@/app/api/v1/client/[environmentId]/responses/lib/response";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -16,6 +19,29 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 import { deleteResponsesAndDisplaysForSurvey } from "./lib/survey";
+
+const loremIpsumSentences = [
+  "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+  "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+  "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+  "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.",
+  "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit.",
+  "Nisi ut aliquip ex ea commodo consequat.",
+  "Pellentesque habitant morbi tristique senectus et netus et malesuada fames.",
+  "Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante.",
+  "Donec eu libero sit amet quam egestas semper.",
+  "Aenean ultricies mi vitae est. Mauris placerat eleifend leo.",
+];
+
+function generateLoremIpsum(): string {
+  const sentenceCount = Math.floor(Math.random() * 3) + 1;
+  const selectedSentences: string[] = [];
+  for (let i = 0; i < sentenceCount; i++) {
+    const randomIndex = Math.floor(Math.random() * loremIpsumSentences.length);
+    selectedSentences.push(loremIpsumSentences[randomIndex]);
+  }
+  return selectedSentences.join(" ");
+}
 
 const ZSendEmbedSurveyPreviewEmailAction = z.object({
   surveyId: ZId,
@@ -259,4 +285,101 @@ export const updateSingleUseLinksAction = authenticatedActionClient
     });
 
     return updatedSurvey;
+  });
+
+const ZGenerateTestResponsesAction = z.object({
+  surveyId: ZId,
+  environmentId: ZId,
+});
+
+export const generateTestResponsesAction = authenticatedActionClient
+  .schema(ZGenerateTestResponsesAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
+
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+
+    if (survey.environmentId !== parsedInput.environmentId) {
+      throw new OperationNotAllowedError("Survey does not belong to the specified environment");
+    }
+
+    const supportedQuestionTypes = [
+      TSurveyQuestionTypeEnum.OpenText,
+      TSurveyQuestionTypeEnum.NPS,
+      TSurveyQuestionTypeEnum.Rating,
+    ];
+
+    const supportedQuestions = survey.questions.filter((question) =>
+      supportedQuestionTypes.includes(question.type)
+    );
+
+    if (supportedQuestions.length === 0) {
+      throw new OperationNotAllowedError(
+        "Survey does not contain any supported question types (OpenText, NPS, or Rating)"
+      );
+    }
+
+    const responsesToCreate = 5;
+    const createdResponses: string[] = [];
+
+    for (let i = 0; i < responsesToCreate; i++) {
+      const responseData: Record<string, string | number> = {};
+
+      for (const question of supportedQuestions) {
+        if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+          responseData[question.id] = generateLoremIpsum();
+        } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
+          responseData[question.id] = Math.floor(Math.random() * 11);
+        } else if (question.type === TSurveyQuestionTypeEnum.Rating) {
+          const range = "range" in question && typeof question.range === "number" ? question.range : 5;
+          responseData[question.id] = Math.floor(Math.random() * range) + 1;
+        }
+      }
+
+      const responseInput: TResponseInput = {
+        environmentId: parsedInput.environmentId,
+        surveyId: parsedInput.surveyId,
+        finished: true,
+        data: responseData,
+        meta: {
+          source: "test",
+          userAgent: {
+            browser: "Test Generator",
+            device: "desktop",
+            os: "Test OS",
+          },
+        },
+      };
+
+      try {
+        const response = await createResponseWithQuotaEvaluation(responseInput);
+        createdResponses.push(response.id);
+      } catch (error) {
+        throw new UnknownError(
+          `Failed to create response: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    }
+
+    return {
+      success: true,
+      createdCount: createdResponses.length,
+    };
   });
