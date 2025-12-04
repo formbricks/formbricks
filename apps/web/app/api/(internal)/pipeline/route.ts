@@ -55,7 +55,16 @@ export const POST = async (request: Request) => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
     logger.error({ url: request.url, surveyId }, `Survey with id ${surveyId} not found`);
-    return new Response("Survey not found", { status: 404 });
+
+    return responses.notFoundResponse("Survey", surveyId, true);
+  }
+
+  if (survey.environmentId !== environmentId) {
+    logger.error(
+      { url: request.url, surveyId, environmentId, surveyEnvironmentId: survey.environmentId },
+      `Survey ${surveyId} does not belong to environment ${environmentId}`
+    );
+    return responses.badRequestResponse("Survey not found in this environment");
   }
 
   // Fetch webhooks
@@ -105,7 +114,7 @@ export const POST = async (request: Request) => {
   );
 
   if (event === "responseFinished") {
-    // Fetch integrations and responseCount in parallel (survey already fetched above)
+    // Fetch integrations and responseCount in parallel
     const [integrations, responseCount] = await Promise.all([
       getIntegrations(environmentId),
       getResponseCountBySurveyId(surveyId),
