@@ -7,11 +7,9 @@ interface InputProps extends React.ComponentProps<"input"> {
   dir?: "ltr" | "rtl";
   /** Error message to display above the input */
   errorMessage?: string;
-  /** Custom inline styles (merged last, can override CSS variables) */
-  style?: React.CSSProperties;
 }
 
-function Input({ className, type, errorMessage, dir, style, ...props }: InputProps): React.JSX.Element {
+function Input({ className, type, errorMessage, dir, ...props }: InputProps): React.JSX.Element {
   const hasError = Boolean(errorMessage);
 
   // Default styles driven by CSS variables
@@ -32,9 +30,6 @@ function Input({ className, type, errorMessage, dir, style, ...props }: InputPro
     boxShadow: "var(--fb-input-shadow)",
   };
 
-  // Merge CSS variable styles with consumer-provided styles (consumer wins)
-  const mergedStyles: React.CSSProperties = { ...cssVarStyles, ...style };
-
   return (
     <div className="space-y-1">
       {errorMessage ? (
@@ -46,7 +41,7 @@ function Input({ className, type, errorMessage, dir, style, ...props }: InputPro
       <input
         type={type}
         dir={dir}
-        style={mergedStyles}
+        style={cssVarStyles}
         data-slot="input"
         aria-invalid={hasError || undefined}
         className={cn(

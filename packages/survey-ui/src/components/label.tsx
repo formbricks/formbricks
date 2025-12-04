@@ -6,12 +6,10 @@ import { cn } from "../lib/utils";
 
 interface LabelProps extends React.ComponentProps<typeof LabelPrimitive.Root> {
   /** Label variant for different styling contexts */
-  variant?: "default" | "headline" | "description" | "custom";
-  /** Custom inline styles (merged last, can override CSS variables) */
-  style?: React.CSSProperties;
+  variant?: "default" | "headline" | "description";
 }
 
-function Label({ className, variant = "default", style, ...props }: LabelProps): React.JSX.Element {
+function Label({ className, variant = "default", ...props }: LabelProps): React.JSX.Element {
   // Default styles driven by CSS variables based on variant
   const getCssVarStyles = (): React.CSSProperties => {
     if (variant === "headline") {
@@ -34,23 +32,17 @@ function Label({ className, variant = "default", style, ...props }: LabelProps):
       };
     }
 
-    if (variant === "custom") {
-      return {
-        fontFamily: "var(--fb-label-font-family)",
-        fontWeight: "var(--fb-label-font-weight)" as React.CSSProperties["fontWeight"],
-        fontSize: "var(--fb-label-font-size)",
-        color: "var(--fb-label-color)",
-        opacity: "var(--fb-label-opacity)",
-      };
-    }
-
-    return {};
+    // Default variant styles
+    return {
+      fontFamily: "var(--fb-label-font-family)",
+      fontWeight: "var(--fb-label-font-weight)" as React.CSSProperties["fontWeight"],
+      fontSize: "var(--fb-label-font-size)",
+      color: "var(--fb-label-color)",
+      opacity: "var(--fb-label-opacity)",
+    };
   };
 
   const cssVarStyles = getCssVarStyles();
-
-  // Merge CSS variable styles with consumer-provided styles (consumer wins)
-  const mergedStyles: React.CSSProperties = { ...cssVarStyles, ...style };
 
   return (
     <LabelPrimitive.Root
@@ -60,7 +52,7 @@ function Label({ className, variant = "default", style, ...props }: LabelProps):
         "flex select-none items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
         className
       )}
-      style={variant !== "default" ? mergedStyles : style}
+      style={cssVarStyles}
       {...props}
     />
   );

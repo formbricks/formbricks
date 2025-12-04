@@ -1,4 +1,4 @@
-import type { Meta, StoryContext, StoryObj } from "@storybook/react";
+import type { Decorator, Meta, StoryObj } from "@storybook/react";
 import React from "react";
 import { Checkbox } from "./checkbox";
 import { Input } from "./input";
@@ -22,7 +22,7 @@ interface DescriptionStylingOptions {
   descriptionOpacity: string;
 }
 
-interface CustomStylingOptions {
+interface DefaultStylingOptions {
   labelFontFamily: string;
   labelFontWeight: string;
   labelFontSize: string;
@@ -31,7 +31,7 @@ interface CustomStylingOptions {
 }
 
 type StoryProps = LabelProps &
-  Partial<HeadlineStylingOptions & DescriptionStylingOptions & CustomStylingOptions>;
+  Partial<HeadlineStylingOptions & DescriptionStylingOptions & DefaultStylingOptions>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Label",
@@ -49,7 +49,7 @@ const meta: Meta<StoryProps> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "headline", "description", "custom"],
+      options: ["default", "headline", "description"],
       description: "Visual style variant of the label",
       table: { category: "Component Props" },
     },
@@ -72,68 +72,72 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables for headline variant
-function withHeadlineCSSVariables(Story: React.ComponentType, context: StoryContext<StoryProps>) {
-  const { headlineFontFamily, headlineFontWeight, headlineFontSize, headlineColor, headlineOpacity } =
-    context.args;
+const withHeadlineCSSVariables: Decorator<StoryProps> = (Story, context) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
+  const args = context.args as StoryProps;
+  const { headlineFontFamily, headlineFontWeight, headlineFontSize, headlineColor, headlineOpacity } = args;
 
-  const cssVarStyle = {
-    "--fb-question-headline-font-family": headlineFontFamily,
-    "--fb-question-headline-font-weight": headlineFontWeight,
-    "--fb-question-headline-font-size": headlineFontSize,
-    "--fb-question-headline-color": headlineColor,
-    "--fb-question-headline-opacity": headlineOpacity,
-  } as React.CSSProperties;
+  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
+    "--fb-question-headline-font-family": headlineFontFamily ?? undefined,
+    "--fb-question-headline-font-weight": headlineFontWeight ?? undefined,
+    "--fb-question-headline-font-size": headlineFontSize ?? undefined,
+    "--fb-question-headline-color": headlineColor ?? undefined,
+    "--fb-question-headline-opacity": headlineOpacity ?? undefined,
+  };
 
   return (
     <div style={cssVarStyle}>
       <Story />
     </div>
   );
-}
+};
 
 // Decorator to apply CSS variables for description variant
-function withDescriptionCSSVariables(Story: React.ComponentType, context: StoryContext<StoryProps>) {
+const withDescriptionCSSVariables: Decorator<StoryProps> = (Story, context) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
+  const args = context.args as StoryProps;
   const {
     descriptionFontFamily,
     descriptionFontWeight,
     descriptionFontSize,
     descriptionColor,
     descriptionOpacity,
-  } = context.args;
+  } = args;
 
-  const cssVarStyle = {
-    "--fb-question-description-font-family": descriptionFontFamily,
-    "--fb-question-description-font-weight": descriptionFontWeight,
-    "--fb-question-description-font-size": descriptionFontSize,
-    "--fb-question-description-color": descriptionColor,
-    "--fb-question-description-opacity": descriptionOpacity,
-  } as React.CSSProperties;
-
-  return (
-    <div style={cssVarStyle}>
-      <Story />
-    </div>
-  );
-}
-
-// Decorator to apply CSS variables for custom variant
-function withCustomCSSVariables(Story: React.ComponentType, context: StoryContext<StoryProps>) {
-  const { labelFontFamily, labelFontWeight, labelFontSize, labelColor, labelOpacity } = context.args;
-
-  const cssVarStyle = {
-    "--fb-label-font-family": labelFontFamily,
-    "--fb-label-font-weight": labelFontWeight,
-    "--fb-label-font-size": labelFontSize,
-    "--fb-label-color": labelColor,
-    "--fb-label-opacity": labelOpacity,
-  } as React.CSSProperties;
+  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
+    "--fb-question-description-font-family": descriptionFontFamily ?? undefined,
+    "--fb-question-description-font-weight": descriptionFontWeight ?? undefined,
+    "--fb-question-description-font-size": descriptionFontSize ?? undefined,
+    "--fb-question-description-color": descriptionColor ?? undefined,
+    "--fb-question-description-opacity": descriptionOpacity ?? undefined,
+  };
 
   return (
     <div style={cssVarStyle}>
       <Story />
     </div>
   );
-}
+};
+
+const withCustomCSSVariables: Decorator<StoryProps> = (Story, context) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
+  const args = context.args as StoryProps;
+  const { labelFontFamily, labelFontWeight, labelFontSize, labelColor, labelOpacity } = args;
+
+  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
+    "--fb-label-font-family": labelFontFamily ?? undefined,
+    "--fb-label-font-weight": labelFontWeight ?? undefined,
+    "--fb-label-font-size": labelFontSize ?? undefined,
+    "--fb-label-color": labelColor ?? undefined,
+    "--fb-label-opacity": labelOpacity ?? undefined,
+  };
+
+  return (
+    <div style={cssVarStyle}>
+      <Story />
+    </div>
+  );
+};
 
 export const Default: Story = {
   args: {},
@@ -356,10 +360,10 @@ export const DescriptionVariant: Story = {
   decorators: [withDescriptionCSSVariables],
 };
 
-export const CustomVariant: Story = {
+export const DefaultVariant: Story = {
   args: {
-    variant: "custom",
-    children: "Custom Label",
+    variant: "default",
+    children: "Default Label",
     labelFontFamily: "system-ui, sans-serif",
     labelFontWeight: "500",
     labelFontSize: "0.875rem",
@@ -369,23 +373,23 @@ export const CustomVariant: Story = {
   argTypes: {
     labelFontFamily: {
       control: "text",
-      table: { category: "Custom Label Styling" },
+      table: { category: "Default Label Styling" },
     },
     labelFontWeight: {
       control: "text",
-      table: { category: "Custom Label Styling" },
+      table: { category: "Default Label Styling" },
     },
     labelFontSize: {
       control: "text",
-      table: { category: "Custom Label Styling" },
+      table: { category: "Default Label Styling" },
     },
     labelColor: {
       control: "color",
-      table: { category: "Custom Label Styling" },
+      table: { category: "Default Label Styling" },
     },
     labelOpacity: {
       control: "text",
-      table: { category: "Custom Label Styling" },
+      table: { category: "Default Label Styling" },
     },
   },
   decorators: [withCustomCSSVariables],

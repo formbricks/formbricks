@@ -1,4 +1,4 @@
-import type { Meta, StoryContext, StoryObj } from "@storybook/react";
+import type { Decorator, Meta, StoryObj } from "@storybook/react";
 import React from "react";
 import { Input, type InputProps } from "./input";
 
@@ -51,10 +51,6 @@ const meta: Meta<StoryProps> = {
       options: ["ltr", "rtl"],
       table: { category: "Component Props" },
     },
-    style: {
-      control: "object",
-      table: { category: "Component Props" },
-    },
   },
 };
 
@@ -62,7 +58,9 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-function withCSSVariables(Story: React.ComponentType, context: StoryContext<StoryProps>) {
+const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
+  const args = context.args as StoryProps;
   const {
     inputWidth,
     inputHeight,
@@ -77,9 +75,9 @@ function withCSSVariables(Story: React.ComponentType, context: StoryContext<Stor
     inputPaddingX,
     inputPaddingY,
     inputShadow,
-  } = context.args;
+  } = args;
 
-  const cssVarStyle = {
+  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
     "--fb-input-width": inputWidth,
     "--fb-input-height": inputHeight,
     "--fb-input-bg-color": inputBgColor,
@@ -93,14 +91,14 @@ function withCSSVariables(Story: React.ComponentType, context: StoryContext<Stor
     "--fb-input-padding-x": inputPaddingX,
     "--fb-input-padding-y": inputPaddingY,
     "--fb-input-shadow": inputShadow,
-  } as React.CSSProperties;
+  };
 
   return (
     <div style={cssVarStyle}>
       <Story />
     </div>
   );
-}
+};
 
 export const StylingPlayground: Story = {
   args: {
@@ -306,18 +304,6 @@ export const RTL: Story = {
     dir: "rtl",
     placeholder: "أدخل النص هنا",
     defaultValue: "نص تجريبي",
-  },
-};
-
-export const CustomStyling: Story = {
-  args: {
-    placeholder: "Custom styled input",
-    style: {
-      height: "48px",
-      borderRadius: "12px",
-      padding: "16px",
-      backgroundColor: "#f8f9fa",
-    },
   },
 };
 

@@ -1,4 +1,4 @@
-import type { Meta, StoryContext, StoryObj } from "@storybook/react";
+import type { Decorator, Meta, StoryObj } from "@storybook/react";
 import React from "react";
 import { Button } from "./button";
 
@@ -15,7 +15,7 @@ interface StylingOptions {
 }
 
 type ButtonProps = React.ComponentProps<typeof Button>;
-type StoryProps = ButtonProps & Partial<StylingOptions>;
+type StoryProps = ButtonProps & StylingOptions;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Button",
@@ -27,7 +27,7 @@ const meta: Meta<StoryProps> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "destructive", "outline", "secondary", "ghost", "link", "custom"],
+      options: ["default", "destructive", "outline", "secondary", "ghost", "link"],
       description: "Visual style variant of the button",
       table: { category: "Component Props" },
     },
@@ -39,11 +39,6 @@ const meta: Meta<StoryProps> = {
     },
     disabled: {
       control: "boolean",
-      table: { category: "Component Props" },
-    },
-    style: {
-      control: "object",
-      description: "Custom style for the button (only works with variant 'custom')",
       table: { category: "Component Props" },
     },
     asChild: {
@@ -59,7 +54,9 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-function withCSSVariables(Story: React.ComponentType, context: StoryContext<StoryProps>) {
+const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
+  const args = context.args as StoryProps;
   const {
     buttonHeight,
     buttonWidth,
@@ -69,7 +66,7 @@ function withCSSVariables(Story: React.ComponentType, context: StoryContext<Stor
     buttonTextColor,
     buttonPaddingX,
     buttonPaddingY,
-  } = context.args;
+  } = args;
 
   const cssVarStyle = {
     "--fb-button-height": buttonHeight,
@@ -87,11 +84,10 @@ function withCSSVariables(Story: React.ComponentType, context: StoryContext<Stor
       <Story />
     </div>
   );
-}
+};
 
 export const StylingPlayground: Story = {
   args: {
-    variant: "custom",
     children: "Custom Button",
     // Default styling values
     buttonHeight: "40px",
@@ -231,16 +227,5 @@ export const Disabled: Story = {
   args: {
     disabled: true,
     children: "Disabled Button",
-  },
-};
-
-export const WithCustomStyle: Story = {
-  args: {
-    style: {
-      fontWeight: "bold",
-      backgroundColor: "red",
-    },
-    variant: "custom",
-    children: "Custom Style Button",
   },
 };
