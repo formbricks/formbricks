@@ -1,6 +1,7 @@
 import * as nextHeaders from "next/headers";
 import { describe, expect, test, vi } from "vitest";
 import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/constants";
+import { appLanguages } from "@/lib/i18n/utils";
 import { findMatchingLocale } from "./locale";
 
 // Mock the Next.js headers function
@@ -82,6 +83,27 @@ describe("locale", () => {
     const result = await findMatchingLocale();
 
     expect(result).toBe(germanLocale);
+    expect(nextHeaders.headers).toHaveBeenCalled();
+  });
+
+  test("Swedish locale (sv-SE) is available and selectable", async () => {
+    // Verify sv-SE is in AVAILABLE_LOCALES
+    expect(AVAILABLE_LOCALES).toContain("sv-SE");
+
+    // Verify Swedish has a language entry with proper labels
+    const swedishLanguage = appLanguages.find((lang) => lang.code === "sv-SE");
+    expect(swedishLanguage).toBeDefined();
+    expect(swedishLanguage?.label["en-US"]).toBe("Swedish");
+    expect(swedishLanguage?.label["sv-SE"]).toBe("Svenska");
+
+    // Verify the locale can be matched from Accept-Language header
+    vi.mocked(nextHeaders.headers).mockReturnValue({
+      get: vi.fn().mockReturnValue("sv-SE,en-US"),
+    } as any);
+
+    const result = await findMatchingLocale();
+
+    expect(result).toBe("sv-SE");
     expect(nextHeaders.headers).toHaveBeenCalled();
   });
 });

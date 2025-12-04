@@ -69,6 +69,12 @@ describe("Time Utilities", () => {
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       expect(timeSince(oneHourAgo.toISOString(), "de-DE")).toBe("vor etwa 1 Stunde");
     });
+
+    test("should format time since in Swedish", () => {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      expect(timeSince(oneHourAgo.toISOString(), "sv-SE")).toBe("ungefär en timme sedan");
+    });
   });
 
   describe("timeSinceDate", () => {
