@@ -115,7 +115,7 @@ const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
       <div
         ref={ref}
         className={cn(
-          "[&_p]:leading-relaxed",
+          "text-red-600 [&_p]:leading-relaxed",
           size === "small" ? "flex-shrink flex-grow-0 truncate" : "col-start-1 row-start-2",
           className
         )}

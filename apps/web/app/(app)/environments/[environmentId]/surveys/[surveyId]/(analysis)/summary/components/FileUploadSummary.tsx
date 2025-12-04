@@ -30,7 +30,6 @@ export const FileUploadSummary = ({
   const [visibleResponses, setVisibleResponses] = useState(10);
   const { t } = useTranslation();
   const handleLoadMore = () => {
-    // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>
       Math.min(prevVisibleResponses + 10, elementSummary.files.length)
     );

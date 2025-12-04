@@ -327,7 +327,7 @@ export function FileInput({
   }, [allowedFileExtensions]);
 
   return (
-    <div className="fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-items-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800">
+    <div className="fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-items-center fb-rounded-lg fb-border-2 fb-border-dashed">
       <div ref={parent}>
         {fileUrls?.map((fileUrl, index) => {
           const fileName = getOriginalFileNameFromUrl(fileUrl);
@@ -411,9 +411,7 @@ export function FileInput({
                   d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                 />
               </svg>
-              <span
-                className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
-                id={`${uniqueHtmlFor}-label`}>
+              <span className="fb-text-placeholder fb-mt-2 fb-text-sm" id={`${uniqueHtmlFor}-label`}>
                 {t("common.click_or_drag_to_upload_files")}
               </span>
               <input

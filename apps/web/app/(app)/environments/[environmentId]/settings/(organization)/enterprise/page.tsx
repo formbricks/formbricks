@@ -95,8 +95,8 @@ const Page = async (props) => {
           <div className="mt-8 max-w-4xl rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
             <div className="space-y-4 p-8">
               <div className="flex items-center gap-x-2">
-                <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                  <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
+                <div className="rounded-full border border-green-300 bg-green-100 p-0.5">
+                  <CheckIcon className="h-5 w-5 p-0.5 text-green-500" />
                 </div>
                 <p className="text-slate-800">
                   {t(
@@ -155,17 +155,17 @@ const Page = async (props) => {
               <ul className="my-4 space-y-4">
                 {paidFeatures.map((feature, index) => (
                   <li key={index} className="flex items-center">
-                    <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                      <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
+                    <div className="rounded-full border border-green-300 bg-green-100 p-0.5">
+                      <CheckIcon className="h-5 w-5 p-0.5 text-green-500" />
                     </div>
-                    <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature.title}</span>
+                    <span className="ml-2 text-sm text-slate-500">{feature.title}</span>
                     {feature.comingSoon && (
-                      <span className="mx-2 rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700 dark:bg-slate-700 dark:text-teal-500">
+                      <span className="mx-2 rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700">
                         {t("environments.settings.enterprise.coming_soon")}
                       </span>
                     )}
                     {feature.onRequest && (
-                      <span className="mx-2 rounded-full bg-violet-100 px-3 py-1 text-xs text-violet-700 dark:bg-slate-700 dark:text-teal-500">
+                      <span className="mx-2 rounded-full bg-violet-100 px-3 py-1 text-xs text-violet-700">
                         {t("environments.settings.enterprise.on_request")}
                       </span>
                     )}

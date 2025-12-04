@@ -36,7 +36,7 @@ export const Card: React.FC<CardProps> = ({
 }) => (
   <div className="relative rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
     {connected != undefined && statusText != undefined && (
-      <div className="absolute right-4 top-4 flex items-center rounded bg-slate-100 px-2 py-1 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+      <div className="absolute right-4 top-4 flex items-center rounded bg-slate-100 px-2 py-1 text-xs text-slate-500">
         {connected === true ? (
           <span className="relative mr-1 flex h-2 w-2">
             <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
@@ -56,7 +56,7 @@ export const Card: React.FC<CardProps> = ({
     <p className="text-xs text-slate-500">{description}</p>
     <div className="mt-4 flex space-x-2">
       {connectHref && (
-        <Button disabled={disabled} size="sm">
+        <Button disabled={disabled} size="sm" asChild>
           <Link href={connectHref} target={connectNewTab ? "_blank" : "_self"}>
             {connectText}
           </Link>
@@ -64,7 +64,10 @@ export const Card: React.FC<CardProps> = ({
       )}
       {docsHref && (
         <Button disabled={disabled} size="sm" variant="secondary">
-          <Link href={docsHref} target={docsNewTab ? "_blank" : "_self"}>
+          <Link
+            className="text-gray-700 hover:text-gray-800"
+            href={docsHref}
+            target={docsNewTab ? "_blank" : "_self"}>
             {docsText}
           </Link>
         </Button>

@@ -39,7 +39,7 @@ export const BillingSlider = React.forwardRef<React.ElementRef<typeof SliderPrim
 
         <div
           style={{ left: `calc(${Math.min(value / max, 0.93) * 100}% + 0.5rem)` }}
-          className="absolute mt-16 text-sm text-slate-700 dark:text-slate-200">
+          className="absolute mt-16 text-sm text-slate-700">
           <p className="text-xs">
             {t("environments.settings.billing.current")}:
             <br />
