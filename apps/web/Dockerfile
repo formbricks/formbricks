@@ -135,14 +135,12 @@ ENV HOSTNAME="0.0.0.0"
 USER nextjs
 
 # Prepare pnpm as the nextjs user to ensure it's available at runtime
-RUN corepack prepare pnpm@9.15.9 --activate
+# Prepare volumes for uploads and SAML connections
+RUN corepack prepare pnpm@9.15.9 --activate && \
+    mkdir -p /home/nextjs/apps/web/uploads/ && \
+    mkdir -p /home/nextjs/apps/web/saml-connection
 
-# Prepare volume for uploads
-RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
-
-# Prepare volume for SAML preloaded connection
-RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
 
 CMD ["/home/nextjs/start.sh"]
