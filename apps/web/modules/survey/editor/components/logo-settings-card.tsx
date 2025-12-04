@@ -4,17 +4,20 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { ChangeEvent, useRef, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 import { Switch } from "@/modules/ui/components/switch";
 
@@ -37,61 +40,76 @@ export const LogoSettingsCard = ({
 }: LogoSettingsCardProps) => {
   const { t } = useTranslation();
   const [parent] = useAutoAnimate();
-  const [logoUrl, setLogoUrl] = useState<string | undefined>(form.watch("logo")?.url);
-  const [logoBgColor, setLogoBgColor] = useState<string | undefined>(form.watch("logo")?.bgColor);
-  const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!form.watch("logo")?.bgColor);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const logoUrl = form.watch("logo")?.url;
+  const logoBgColor = form.watch("logo")?.bgColor;
+  const isBgColorEnabled = !!logoBgColor;
   const isLogoHidden = form.watch("isLogoHidden");
 
-  useEffect(() => {
-    const subscription = form.watch((data: TProjectStyling | TSurveyStyling) => {
-      setLogoUrl(data.logo?.url);
-      setLogoBgColor(data.logo?.bgColor);
-      setIsBgColorEnabled(!!data.logo?.bgColor);
-    });
+  const setLogoUrl = (url: string | undefined) => {
+    const currentLogo = form.getValues("logo");
+    form.setValue("logo", url ? { ...currentLogo, url } : undefined);
+  };
 
-    return () => subscription.unsubscribe();
-  }, [form]);
+  const setLogoBgColor = (bgColor: string | undefined) => {
+    const currentLogo = form.getValues("logo");
+    form.setValue("logo", {
+      ...currentLogo,
+      url: logoUrl,
+      bgColor,
+    });
+  };
 
   const handleFileInputChange = async (files: string[]) => {
     if (files.length > 0) {
       setLogoUrl(files[0]);
-      form.setValue("logo", {
-        url: files[0],
-        bgColor: logoBgColor,
-      });
+    }
+  };
+
+  const handleHiddenFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!isStorageConfigured) {
+      showStorageNotConfiguredToast();
+      return;
+    }
+
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    try {
+      const uploadResult = await handleFileUpload(file, environmentId);
+      if (uploadResult.error) {
+        toast.error(t("common.upload_failed"));
+        return;
+      }
+      setLogoUrl(uploadResult.url);
+    } catch {
+      toast.error(t("common.upload_failed"));
+    } finally {
+      setIsLoading(false);
+      // Reset the input so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
   const handleRemoveLogo = () => {
-    setLogoUrl(undefined);
-    setLogoBgColor(undefined);
-    setIsBgColorEnabled(false);
     form.setValue("logo", undefined);
   };
 
   const toggleBackgroundColor = (enabled: boolean) => {
-    setIsBgColorEnabled(enabled);
     if (!enabled) {
       setLogoBgColor(undefined);
-      form.setValue("logo", {
-        url: logoUrl,
-        bgColor: undefined,
-      });
-    } else if (!logoBgColor) {
-      setLogoBgColor("#f8f8f8");
-      form.setValue("logo", {
-        url: logoUrl,
-        bgColor: "#f8f8f8",
-      });
+    } else {
+      setLogoBgColor(logoBgColor || "#f8f8f8");
     }
   };
 
   const handleBgColorChange = (color: string) => {
     setLogoBgColor(color);
-    form.setValue("logo", {
-      url: logoUrl,
-      bgColor: color,
-    });
   };
 
   return (
@@ -158,6 +176,16 @@ export const LogoSettingsCard = ({
                 {t("environments.surveys.edit.overwrite_survey_logo")}
               </div>
 
+              {/* Hidden file input for replacing logo */}
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg, image/png, image/webp, image/heic"
+                className="hidden"
+                disabled={disabled}
+                onChange={handleHiddenFileChange}
+              />
+
               {logoUrl ? (
                 <>
                   <div className="flex items-center gap-4">
@@ -177,11 +205,14 @@ export const LogoSettingsCard = ({
                       onClick={() => {
                         if (!isStorageConfigured) {
                           showStorageNotConfiguredToast();
+                          return;
                         }
+
+                        fileInputRef.current?.click();
                       }}
                       variant="secondary"
                       size="sm"
-                      disabled={disabled}>
+                      disabled={disabled || isLoading}>
                       {t("environments.project.look.replace_logo")}
                     </Button>
                     <Button

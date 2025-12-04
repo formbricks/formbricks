@@ -422,6 +422,7 @@
     "updated": "更新済み",
     "updated_at": "更新日時",
     "upload": "アップロード",
+    "upload_failed": "アップロードに失敗しました。もう一度お試しください。",
     "upload_input_description": "クリックまたはドラッグしてファイルをアップロードしてください。",
     "url": "URL",
     "user": "ユーザー",

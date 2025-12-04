@@ -422,6 +422,7 @@
     "updated": "atualizado",
     "updated_at": "Atualizado em",
     "upload": "Enviar",
+    "upload_failed": "Falha no upload. Tente novamente.",
     "upload_input_description": "Clique ou arraste para fazer o upload de arquivos.",
     "url": "URL",
     "user": "Usuário",

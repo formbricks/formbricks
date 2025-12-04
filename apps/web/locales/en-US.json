@@ -422,6 +422,7 @@
     "updated": "Updated",
     "updated_at": "Updated at",
     "upload": "Upload",
+    "upload_failed": "Upload failed. Please try again.",
     "upload_input_description": "Click or drag to upload files.",
     "url": "URL",
     "user": "User",

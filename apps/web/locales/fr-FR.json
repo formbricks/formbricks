@@ -422,6 +422,7 @@
     "updated": "Mise à jour",
     "updated_at": "Mis à jour à",
     "upload": "Télécharger",
+    "upload_failed": "Échec du téléchargement. Veuillez réessayer.",
     "upload_input_description": "Cliquez ou faites glisser pour charger un fichier.",
     "url": "URL",
     "user": "Utilisateur",

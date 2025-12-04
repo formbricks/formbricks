@@ -422,6 +422,7 @@
     "updated": "已更新",
     "updated_at": "更新時間",
     "upload": "上傳",
+    "upload_failed": "上傳失敗。請再試一次。",
     "upload_input_description": "點擊或拖曳以上傳檔案。",
     "url": "網址",
     "user": "使用者",

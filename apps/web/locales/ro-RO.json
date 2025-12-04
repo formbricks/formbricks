@@ -422,6 +422,7 @@
     "updated": "Actualizat",
     "updated_at": "Actualizat la",
     "upload": "Încărcați",
+    "upload_failed": "Încărcarea a eșuat. Vă rugăm să încercați din nou.",
     "upload_input_description": "Faceți clic sau trageți pentru a încărca fișiere.",
     "url": "URL",
     "user": "Utilizator",

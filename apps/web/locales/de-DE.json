@@ -422,6 +422,7 @@
     "updated": "Aktualisiert",
     "updated_at": "Aktualisiert am",
     "upload": "Hochladen",
+    "upload_failed": "Upload fehlgeschlagen. Bitte versuche es erneut.",
     "upload_input_description": "Klicke oder ziehe, um Dateien hochzuladen.",
     "url": "URL",
     "user": "Benutzer",

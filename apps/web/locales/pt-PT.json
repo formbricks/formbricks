@@ -422,6 +422,7 @@
     "updated": "Atualizado",
     "updated_at": "Atualizado em",
     "upload": "Carregar",
+    "upload_failed": "Falha no carregamento. Por favor, tente novamente.",
     "upload_input_description": "Clique ou arraste para carregar ficheiros.",
     "url": "URL",
     "user": "Utilizador",

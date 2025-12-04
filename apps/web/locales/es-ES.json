@@ -422,6 +422,7 @@
     "updated": "Actualizado",
     "updated_at": "Actualizado el",
     "upload": "Subir",
+    "upload_failed": "La subida ha fallado. Por favor, inténtalo de nuevo.",
     "upload_input_description": "Haz clic o arrastra para subir archivos.",
     "url": "URL",
     "user": "Usuario",

@@ -422,6 +422,7 @@
     "updated": "Bijgewerkt",
     "updated_at": "Bijgewerkt op",
     "upload": "Uploaden",
+    "upload_failed": "Upload mislukt. Probeer het opnieuw.",
     "upload_input_description": "Klik of sleep om bestanden te uploaden.",
     "url": "URL",
     "user": "Gebruiker",

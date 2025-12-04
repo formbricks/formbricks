@@ -422,6 +422,7 @@
     "updated": "已更新",
     "updated_at": "更新 于",
     "upload": "上传",
+    "upload_failed": "上传失败，请重试。",
     "upload_input_description": "点击 或 拖动 上传 文件",
     "url": "URL",
     "user": "用户",
