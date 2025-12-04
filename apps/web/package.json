@@ -106,7 +106,7 @@
     "next-auth": "4.24.12",
     "next-safe-action": "7.10.8",
     "node-fetch": "3.3.2",
-    "nodemailer": "7.0.9",
+    "nodemailer": "7.0.11",
     "otplib": "12.0.1",
     "papaparse": "5.5.2",
     "prismjs": "1.30.0",
