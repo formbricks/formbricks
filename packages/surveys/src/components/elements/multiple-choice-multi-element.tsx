@@ -263,7 +263,7 @@ export function MultipleChoiceMultiElement({
       <label
         tabIndex={isCurrent ? 0 : -1}
         className={labelClassName}
-        onKeyDown={handleKeyDown(otherOption.id)}>
+        onKeyDown={otherSelected ? undefined : handleKeyDown(otherOption.id)}>
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
             type="checkbox"
