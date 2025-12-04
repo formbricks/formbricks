@@ -31,7 +31,6 @@ export function MatrixElement({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
-  const isCurrent = element.id === currentElementId;
   const rowShuffleIdx = useMemo(() => {
     if (element.shuffleOption !== "none") {
       return getShuffledRowIndices(element.rows.length, element.shuffleOption);
@@ -127,7 +126,7 @@ export function MatrixElement({
                 {element.columns.map((column, columnIndex) => (
                   <td
                     key={`column-${columnIndex.toString()}`}
-                    tabIndex={isCurrent ? 0 : -1}
+                    tabIndex={0}
                     className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === element.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
                     onClick={() => {
                       handleSelect(

@@ -37,7 +37,6 @@ export function ContactInfoElement({
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
-  const isCurrent = element.id === currentElementId;
   const safeValue = useMemo(() => {
     return Array.isArray(value) ? value : ["", "", "", "", ""];
   }, [value]);
@@ -149,7 +148,7 @@ export function ContactInfoElement({
                   onChange={(e) => {
                     handleChange(field.id, e.currentTarget.value);
                   }}
-                  tabIndex={isCurrent ? 0 : -1}
+                  tabIndex={0}
                   aria-label={field.label}
                   dir={!safeValue[index] ? dir : "auto"}
                 />
