@@ -8,6 +8,7 @@ import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
+import { ImportSurveyButton } from "@/modules/survey/list/components/import-survey-button";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
@@ -46,14 +47,17 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
 
   const currentProjectChannel = project.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
-  const CreateSurveyButton = () => {
+  const SurveyListCTA = () => {
     return (
-      <Button size="sm" asChild>
-        <Link href={`/environments/${environment.id}/surveys/templates`}>
-          {t("environments.surveys.new_survey")}
-          <PlusIcon />
-        </Link>
-      </Button>
+      <div className="flex gap-2">
+        <ImportSurveyButton environmentId={environment.id} />
+        <Button size="sm" asChild>
+          <Link href={`/environments/${environment.id}/surveys/templates`}>
+            {t("environments.surveys.new_survey")}
+            <PlusIcon />
+          </Link>
+        </Button>
+      </div>
     );
   };
 
@@ -77,7 +81,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   if (surveyCount > 0) {
     content = (
       <>
-        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
+        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <SurveyListCTA />} />
         <SurveysList
           environmentId={environment.id}
           isReadOnly={isReadOnly}
