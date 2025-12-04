@@ -43,6 +43,13 @@
     --fb-input-padding-x: 0.75rem;
     --fb-input-padding-y: 0.25rem;
     --fb-input-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
+    /* Label-specific CSS variables for theming */
+    --fb-label-font-family: inherit;
+    --fb-label-font-weight: 500;
+    --fb-label-font-size: 0.875rem;
+    --fb-label-color: var(--foreground);
+    --fb-label-opacity: 1;
 }
 
 .dark {
@@ -79,4 +86,7 @@
     --fb-input-border-color: var(--input);
     --fb-input-color: var(--foreground);
     --fb-input-placeholder-color: var(--muted-foreground);
+
+    /* Label-specific CSS variables for dark mode */
+    --fb-label-color: var(--foreground);
 }

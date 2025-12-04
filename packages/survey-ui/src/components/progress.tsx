@@ -4,17 +4,23 @@ import * as ProgressPrimitive from "@radix-ui/react-progress";
 import * as React from "react";
 import { cn } from "../lib/utils";
 
+interface ProgressProps extends React.ComponentProps<typeof ProgressPrimitive.Root> {
+  /** Custom inline styles for the progress indicator */
+  indicatorStyle?: React.CSSProperties;
+  /** Custom inline styles for the progress track */
+  trackStyle?: React.CSSProperties;
+  className?: string;
+  value?: number;
+}
+
 function Progress({
   className,
   value,
   indicatorStyle,
   trackStyle,
   ...props
-}: React.ComponentProps<typeof ProgressPrimitive.Root> & {
-  indicatorStyle?: React.CSSProperties;
-  trackStyle?: React.CSSProperties;
-}): React.JSX.Element {
-  const progressValue = value ?? 0;
+}: ProgressProps): React.JSX.Element {
+  const progressValue: number = typeof value === "number" ? value : 0;
   return (
     <ProgressPrimitive.Root
       data-slot="progress"

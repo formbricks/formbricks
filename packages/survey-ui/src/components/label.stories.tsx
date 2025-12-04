@@ -285,3 +285,108 @@ export const LongLabel: Story = {
     </div>
   ),
 };
+
+export const HeadlineVariant: Story = {
+  args: {
+    variant: "headline",
+    children: "Headline Label",
+    headlineFontFamily: "system-ui, sans-serif",
+    headlineFontWeight: "600",
+    headlineFontSize: "1.25rem",
+    headlineColor: "#1e293b",
+    headlineOpacity: "1",
+  },
+  argTypes: {
+    headlineFontFamily: {
+      control: "text",
+      table: { category: "Headline Styling" },
+    },
+    headlineFontWeight: {
+      control: "text",
+      table: { category: "Headline Styling" },
+    },
+    headlineFontSize: {
+      control: "text",
+      table: { category: "Headline Styling" },
+    },
+    headlineColor: {
+      control: "color",
+      table: { category: "Headline Styling" },
+    },
+    headlineOpacity: {
+      control: "text",
+      table: { category: "Headline Styling" },
+    },
+  },
+  decorators: [withHeadlineCSSVariables],
+};
+
+export const DescriptionVariant: Story = {
+  args: {
+    variant: "description",
+    children: "Description Label",
+    descriptionFontFamily: "system-ui, sans-serif",
+    descriptionFontWeight: "400",
+    descriptionFontSize: "0.875rem",
+    descriptionColor: "#64748b",
+    descriptionOpacity: "1",
+  },
+  argTypes: {
+    descriptionFontFamily: {
+      control: "text",
+      table: { category: "Description Styling" },
+    },
+    descriptionFontWeight: {
+      control: "text",
+      table: { category: "Description Styling" },
+    },
+    descriptionFontSize: {
+      control: "text",
+      table: { category: "Description Styling" },
+    },
+    descriptionColor: {
+      control: "color",
+      table: { category: "Description Styling" },
+    },
+    descriptionOpacity: {
+      control: "text",
+      table: { category: "Description Styling" },
+    },
+  },
+  decorators: [withDescriptionCSSVariables],
+};
+
+export const CustomVariant: Story = {
+  args: {
+    variant: "custom",
+    children: "Custom Label",
+    labelFontFamily: "system-ui, sans-serif",
+    labelFontWeight: "500",
+    labelFontSize: "0.875rem",
+    labelColor: "#1e293b",
+    labelOpacity: "1",
+  },
+  argTypes: {
+    labelFontFamily: {
+      control: "text",
+      table: { category: "Custom Label Styling" },
+    },
+    labelFontWeight: {
+      control: "text",
+      table: { category: "Custom Label Styling" },
+    },
+    labelFontSize: {
+      control: "text",
+      table: { category: "Custom Label Styling" },
+    },
+    labelColor: {
+      control: "color",
+      table: { category: "Custom Label Styling" },
+    },
+    labelOpacity: {
+      control: "text",
+      table: { category: "Custom Label Styling" },
+    },
+  },
+  decorators: [withCustomCSSVariables],
+};
