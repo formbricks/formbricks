@@ -101,11 +101,7 @@ export const LogoSettingsCard = ({
   };
 
   const toggleBackgroundColor = (enabled: boolean) => {
-    if (!enabled) {
-      setLogoBgColor(undefined);
-    } else {
-      setLogoBgColor(logoBgColor || "#f8f8f8");
-    }
+    setLogoBgColor(enabled ? logoBgColor || "#f8f8f8" : undefined);
   };
 
   const handleBgColorChange = (color: string) => {
