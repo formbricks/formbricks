@@ -1,10 +1,39 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryContext, StoryObj } from "@storybook/react";
+import React from "react";
 import { Checkbox } from "./checkbox";
 import { Input } from "./input";
-import { Label } from "./label";
+import { Label, type LabelProps } from "./label";
 import { Textarea } from "./textarea";
 
-const meta: Meta<typeof Label> = {
+// Styling options for the StylingPlayground stories
+interface HeadlineStylingOptions {
+  headlineFontFamily: string;
+  headlineFontWeight: string;
+  headlineFontSize: string;
+  headlineColor: string;
+  headlineOpacity: string;
+}
+
+interface DescriptionStylingOptions {
+  descriptionFontFamily: string;
+  descriptionFontWeight: string;
+  descriptionFontSize: string;
+  descriptionColor: string;
+  descriptionOpacity: string;
+}
+
+interface CustomStylingOptions {
+  labelFontFamily: string;
+  labelFontWeight: string;
+  labelFontSize: string;
+  labelColor: string;
+  labelOpacity: string;
+}
+
+type StoryProps = LabelProps &
+  Partial<HeadlineStylingOptions & DescriptionStylingOptions & CustomStylingOptions>;
+
+const meta: Meta<StoryProps> = {
   title: "UI-package/Label",
   component: Label,
   parameters: {
@@ -18,9 +47,20 @@ const meta: Meta<typeof Label> = {
   },
   tags: ["autodocs"],
   argTypes: {
+    variant: {
+      control: "select",
+      options: ["default", "headline", "description", "custom"],
+      description: "Visual style variant of the label",
+      table: { category: "Component Props" },
+    },
     htmlFor: {
       control: { type: "text" },
       description: "The id of the form control this label is associated with",
+      table: { category: "Component Props" },
+    },
+    style: {
+      control: "object",
+      table: { category: "Component Props" },
     },
   },
   args: {
@@ -29,7 +69,71 @@ const meta: Meta<typeof Label> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<StoryProps>;
+
+// Decorator to apply CSS variables for headline variant
+function withHeadlineCSSVariables(Story: React.ComponentType, context: StoryContext<StoryProps>) {
+  const { headlineFontFamily, headlineFontWeight, headlineFontSize, headlineColor, headlineOpacity } =
+    context.args;
+
+  const cssVarStyle = {
+    "--fb-question-headline-font-family": headlineFontFamily,
+    "--fb-question-headline-font-weight": headlineFontWeight,
+    "--fb-question-headline-font-size": headlineFontSize,
+    "--fb-question-headline-color": headlineColor,
+    "--fb-question-headline-opacity": headlineOpacity,
+  } as React.CSSProperties;
+
+  return (
+    <div style={cssVarStyle}>
+      <Story />
+    </div>
+  );
+}
+
+// Decorator to apply CSS variables for description variant
+function withDescriptionCSSVariables(Story: React.ComponentType, context: StoryContext<StoryProps>) {
+  const {
+    descriptionFontFamily,
+    descriptionFontWeight,
+    descriptionFontSize,
+    descriptionColor,
+    descriptionOpacity,
+  } = context.args;
+
+  const cssVarStyle = {
+    "--fb-question-description-font-family": descriptionFontFamily,
+    "--fb-question-description-font-weight": descriptionFontWeight,
+    "--fb-question-description-font-size": descriptionFontSize,
+    "--fb-question-description-color": descriptionColor,
+    "--fb-question-description-opacity": descriptionOpacity,
+  } as React.CSSProperties;
+
+  return (
+    <div style={cssVarStyle}>
+      <Story />
+    </div>
+  );
+}
+
+// Decorator to apply CSS variables for custom variant
+function withCustomCSSVariables(Story: React.ComponentType, context: StoryContext<StoryProps>) {
+  const { labelFontFamily, labelFontWeight, labelFontSize, labelColor, labelOpacity } = context.args;
+
+  const cssVarStyle = {
+    "--fb-label-font-family": labelFontFamily,
+    "--fb-label-font-weight": labelFontWeight,
+    "--fb-label-font-size": labelFontSize,
+    "--fb-label-color": labelColor,
+    "--fb-label-opacity": labelOpacity,
+  } as React.CSSProperties;
+
+  return (
+    <div style={cssVarStyle}>
+      <Story />
+    </div>
+  );
+}
 
 export const Default: Story = {
   args: {},

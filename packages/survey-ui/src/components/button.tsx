@@ -46,12 +46,29 @@ function Button({
   }): React.JSX.Element {
   const Comp = asChild ? Slot : "button";
 
+  // Default styles driven by CSS variables
+  const cssVarStyles: React.CSSProperties = {
+    height: "var(--fb-button-height)",
+    width: "var(--fb-button-width)",
+    fontSize: "var(--fb-button-font-size)",
+    borderRadius: "var(--fb-button-border-radius)",
+    backgroundColor: "var(--fb-button-bg-color)",
+    color: "var(--fb-button-text-color)",
+    paddingLeft: "var(--fb-button-padding-x)",
+    paddingRight: "var(--fb-button-padding-x)",
+    paddingTop: "var(--fb-button-padding-y)",
+    paddingBottom: "var(--fb-button-padding-y)",
+  };
+
+  // Merge CSS variable styles with consumer-provided styles (consumer wins)
+  const mergedStyles: React.CSSProperties = { ...cssVarStyles, ...style };
+
   return (
     <Comp
       data-slot="button"
       aria-label={props["aria-label"]}
       className={cn(buttonVariants({ variant, size }), className)}
-      style={variant === "custom" ? style : undefined}
+      style={variant === "custom" ? mergedStyles : undefined}
       {...props}
     />
   );
