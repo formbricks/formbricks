@@ -262,7 +262,8 @@ export function MultipleChoiceMultiElement({
       <label
         tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         className={labelClassName}
-        onKeyDown={handleKeyDown(otherOption.id)} // NOSONAR - needed for keyboard navigation through options
+        // Disable keyboard navigation when 'other' option is selected to allow space key in input field
+        onKeyDown={otherSelected ? undefined : handleKeyDown(otherOption.id)} // NOSONAR - needed for keyboard navigation through options
       >
         <span className="fb-flex fb-items-center fb-text-sm">
           <input
