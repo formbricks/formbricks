@@ -34,7 +34,7 @@ type StoryProps = LabelProps &
   Partial<HeadlineStylingOptions & DescriptionStylingOptions & DefaultStylingOptions>;
 
 const meta: Meta<StoryProps> = {
-  title: "UI-package/Label",
+  title: "UI-package/General/Label",
   component: Label,
   parameters: {
     layout: "centered",

@@ -1,2 +1,2 @@
 // Export custom hooks here
-export {};
+export { useTextDirection, type UseTextDirectionOptions } from "./use-text-direction";

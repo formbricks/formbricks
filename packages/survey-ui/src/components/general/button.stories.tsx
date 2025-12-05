@@ -18,7 +18,7 @@ type ButtonProps = React.ComponentProps<typeof Button>;
 type StoryProps = ButtonProps & StylingOptions;
 
 const meta: Meta<StoryProps> = {
-  title: "UI-package/Button",
+  title: "UI-package/General/Button",
   component: Button,
   tags: ["autodocs"],
   parameters: {

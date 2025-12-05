@@ -22,7 +22,7 @@ interface StylingOptions {
 type StoryProps = InputProps & Partial<StylingOptions>;
 
 const meta: Meta<StoryProps> = {
-  title: "UI-package/Input",
+  title: "UI-package/General/Input",
   component: Input,
   parameters: {
     layout: "centered",
