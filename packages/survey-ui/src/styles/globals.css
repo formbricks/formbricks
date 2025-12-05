@@ -4,6 +4,7 @@
     --muted-foreground: hsl(215.4 16.3% 46.9%);
     --input: hsl(214.3 31.8% 91.4%);
     --radius: 0.5rem;
+    --destructive: hsl(0 84.2% 97%);
 
     /* Question Headline CSS variables */
     --fb-question-headline-font-family: inherit;

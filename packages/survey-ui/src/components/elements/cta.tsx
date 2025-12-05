@@ -1,0 +1,100 @@
+import { LinkIcon } from "lucide-react";
+import * as React from "react";
+import { useTextDirection } from "../../hooks/use-text-direction";
+import { cn } from "../../lib/utils";
+import { Button } from "../general/button";
+import { ElementHeader } from "../general/element-header";
+
+/**
+ * Props for the CTA (Call to Action) question component
+ */
+export interface CTAProps {
+  /** Unique identifier for the element container */
+  elementId: string;
+  /** The main question or prompt text displayed as the headline */
+  headline: string;
+  /** Optional descriptive text displayed below the headline */
+  description?: string;
+  /** Unique identifier for the CTA button */
+  inputId: string;
+  /** Label text for the CTA button */
+  buttonLabel: string;
+  /** URL to open when button is clicked (if external button) */
+  buttonUrl?: string;
+  /** Whether the button opens an external URL */
+  buttonExternal?: boolean;
+  /** Callback function called when button is clicked */
+  onClick: () => void;
+  /** Whether the field is required (shows asterisk indicator) */
+  required?: boolean;
+  /** Error message to display */
+  errorMessage?: string;
+  /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
+  dir?: "ltr" | "rtl" | "auto";
+  /** Whether the button is disabled */
+  disabled?: boolean;
+}
+
+function CTA({
+  elementId,
+  headline,
+  description,
+  inputId,
+  buttonLabel,
+  buttonUrl,
+  buttonExternal = false,
+  onClick,
+  required = false,
+  errorMessage,
+  dir = "auto",
+  disabled = false,
+}: CTAProps): React.JSX.Element {
+  // Detect text direction from content
+  const detectedDir = useTextDirection({
+    dir,
+    textContent: [headline, description ?? "", buttonLabel],
+  });
+
+  const handleButtonClick = () => {
+    if (disabled) return;
+    onClick();
+
+    if (buttonExternal && buttonUrl) {
+      window.open(buttonUrl, "_blank")?.focus();
+    }
+  };
+
+  return (
+    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+      {/* Headline */}
+      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+
+      {/* CTA Button */}
+      <div className="relative space-y-2">
+        {/* Error indicator bar */}
+        {errorMessage && <div className="bg-destructive absolute bottom-0 left-[-12px] top-0 w-[4px]" />}
+        {/* Error message - shown at top */}
+        {errorMessage && (
+          <div className="text-destructive flex items-center gap-1 text-sm" dir={detectedDir}>
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        <div className="flex w-full justify-start">
+          <Button
+            id={inputId}
+            type="button"
+            onClick={handleButtonClick}
+            disabled={disabled}
+            className="flex items-center gap-2">
+            {buttonLabel}
+            {buttonExternal && <LinkIcon className="size-4" />}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export { CTA };
+export type { CTAProps };
