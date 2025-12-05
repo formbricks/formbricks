@@ -1,7 +1,23 @@
-import { type Meta, type StoryObj } from "@storybook/react";
+import type { Decorator, Meta, StoryObj } from "@storybook/react";
+import React from "react";
 import { Button } from "./button";
 
-const meta: Meta<typeof Button> = {
+// Styling options for the StylingPlayground story
+interface StylingOptions {
+  buttonHeight: string;
+  buttonWidth: string;
+  buttonFontSize: string;
+  buttonBorderRadius: string;
+  buttonBgColor: string;
+  buttonTextColor: string;
+  buttonPaddingX: string;
+  buttonPaddingY: string;
+}
+
+type ButtonProps = React.ComponentProps<typeof Button>;
+type StoryProps = ButtonProps & StylingOptions;
+
+const meta: Meta<StoryProps> = {
   title: "UI-package/Button",
   component: Button,
   tags: ["autodocs"],
@@ -11,17 +27,19 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "destructive", "outline", "secondary", "ghost", "link", "custom"],
+      options: ["default", "destructive", "outline", "secondary", "ghost", "link"],
       description: "Visual style variant of the button",
+      table: { category: "Component Props" },
     },
     size: {
       control: "select",
-      options: ["default", "sm", "lg", "icon", "icon-sm", "icon-lg"],
+      options: ["default", "sm", "lg", "icon"],
       description: "Size of the button",
+      table: { category: "Component Props" },
     },
-    style: {
-      control: "object",
-      description: "Custom style for the button (only works with variant 'custom')",
+    disabled: {
+      control: "boolean",
+      table: { category: "Component Props" },
     },
     asChild: {
       table: { disable: true },
@@ -33,7 +51,115 @@ const meta: Meta<typeof Button> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof Button>;
+type Story = StoryObj<StoryProps>;
+
+// Decorator to apply CSS variables from story args
+const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
+  const args = context.args as StoryProps;
+  const {
+    buttonHeight,
+    buttonWidth,
+    buttonFontSize,
+    buttonBorderRadius,
+    buttonBgColor,
+    buttonTextColor,
+    buttonPaddingX,
+    buttonPaddingY,
+  } = args;
+
+  const cssVarStyle = {
+    "--fb-button-height": buttonHeight,
+    "--fb-button-width": buttonWidth,
+    "--fb-button-font-size": buttonFontSize,
+    "--fb-button-border-radius": buttonBorderRadius,
+    "--fb-button-bg-color": buttonBgColor,
+    "--fb-button-text-color": buttonTextColor,
+    "--fb-button-padding-x": buttonPaddingX,
+    "--fb-button-padding-y": buttonPaddingY,
+  } as React.CSSProperties;
+
+  return (
+    <div style={cssVarStyle}>
+      <Story />
+    </div>
+  );
+};
+
+export const StylingPlayground: Story = {
+  args: {
+    children: "Custom Button",
+    // Default styling values
+    buttonHeight: "40px",
+    buttonWidth: "auto",
+    buttonFontSize: "14px",
+    buttonBorderRadius: "0.5rem",
+    buttonBgColor: "#3b82f6",
+    buttonTextColor: "#ffffff",
+    buttonPaddingX: "16px",
+    buttonPaddingY: "8px",
+  },
+  argTypes: {
+    // Button Styling (CSS Variables) - Only for this story
+    buttonHeight: {
+      control: "text",
+      table: {
+        category: "Button Styling",
+        defaultValue: { summary: "40px" },
+      },
+    },
+    buttonWidth: {
+      control: "text",
+      table: {
+        category: "Button Styling",
+        defaultValue: { summary: "auto" },
+      },
+    },
+    buttonFontSize: {
+      control: "text",
+      table: {
+        category: "Button Styling",
+        defaultValue: { summary: "14px" },
+      },
+    },
+    buttonBorderRadius: {
+      control: "text",
+      table: {
+        category: "Button Styling",
+        defaultValue: { summary: "var(--fb-border-radius)" },
+      },
+    },
+    buttonBgColor: {
+      control: "color",
+      table: {
+        category: "Button Styling",
+        defaultValue: { summary: "var(--fb-brand-color)" },
+      },
+    },
+    buttonTextColor: {
+      control: "color",
+      table: {
+        category: "Button Styling",
+        defaultValue: { summary: "var(--fb-brand-text-color)" },
+      },
+    },
+    buttonPaddingX: {
+      control: "text",
+      table: {
+        category: "Button Styling",
+        defaultValue: { summary: "16px" },
+      },
+    },
+    buttonPaddingY: {
+      control: "text",
+      table: {
+        category: "Button Styling",
+        defaultValue: { summary: "8px" },
+      },
+    },
+  },
+  decorators: [withCSSVariables],
+};
 
 export const Default: Story = {
   args: {
@@ -101,16 +227,5 @@ export const Disabled: Story = {
   args: {
     disabled: true,
     children: "Disabled Button",
-  },
-};
-
-export const WithCustomStyle: Story = {
-  args: {
-    style: {
-      fontWeight: "bold",
-      backgroundColor: "red",
-    },
-    variant: "custom",
-    children: "Custom Style Button",
   },
 };

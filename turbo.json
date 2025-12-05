@@ -100,6 +100,19 @@
       "dependsOn": ["@formbricks/surveys#build"],
       "persistent": true
     },
+    "@formbricks/ui#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/ui#build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/ui#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/ui#build"],
+      "persistent": true
+    },
     "@formbricks/web#go": {
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup"],
