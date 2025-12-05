@@ -55,10 +55,4 @@
     --fb-input-padding-x: 0.75rem;
     --fb-input-padding-y: 0.25rem;
     --fb-input-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-
-    /* Option Label CSS variables */
-    --fb-option-label-font-family: inherit;
-    --fb-option-label-font-weight: 400;
-    --fb-option-label-font-size: 0.875rem;
-    --fb-option-label-color: var(--foreground);
 }
