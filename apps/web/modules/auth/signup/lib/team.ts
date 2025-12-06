@@ -16,16 +16,22 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
   const isOwnerOrManager = isOwner || isManager;
   try {
     for (const teamId of teamIds) {
-      const team = await getTeamProjectIds(teamId, invite.organizationId);
+      try {
+        const team = await getTeamProjectIds(teamId, invite.organizationId);
 
-      if (team) {
-        await prisma.teamUser.create({
-          data: {
-            teamId,
-            userId,
-            role: isOwnerOrManager ? "admin" : "contributor",
-          },
-        });
+        if (team) {
+          await prisma.teamUser.create({
+            data: {
+              teamId,
+              userId,
+              role: isOwnerOrManager ? "admin" : "contributor",
+            },
+          });
+        }
+      } catch (teamError) {
+        // If team was deleted between invite creation and acceptance, log warning but don't fail
+        // User still gets organization membership
+        logger.warn({ teamId, userId, error: teamError }, "Team no longer exists during invite acceptance");
       }
     }
   } catch (error) {

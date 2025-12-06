@@ -7,10 +7,10 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface ManageTeamProps {
   environmentId: string;
-  isOwnerOrManager: boolean;
+  canManageTeams: boolean;
 }
 
-export const ManageTeam = ({ environmentId, isOwnerOrManager }: ManageTeamProps) => {
+export const ManageTeam = ({ environmentId, canManageTeams }: ManageTeamProps) => {
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -19,7 +19,7 @@ export const ManageTeam = ({ environmentId, isOwnerOrManager }: ManageTeamProps)
     router.push(`/environments/${environmentId}/settings/teams`);
   };
 
-  if (isOwnerOrManager) {
+  if (canManageTeams) {
     return (
       <Button variant="secondary" size="sm" onClick={handleManageTeams}>
         {t("environments.project.teams.manage_teams")}
@@ -28,8 +28,7 @@ export const ManageTeam = ({ environmentId, isOwnerOrManager }: ManageTeamProps)
   }
 
   return (
-    <TooltipRenderer
-      tooltipContent={t("environments.project.teams.only_organization_owners_and_managers_can_manage_teams")}>
+    <TooltipRenderer tooltipContent={t("environments.settings.teams.manage_team_disabled")}>
       <Button variant="secondary" size="sm" disabled>
         {t("environments.project.teams.manage_teams")}
       </Button>
