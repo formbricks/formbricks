@@ -46,7 +46,7 @@
     "react-dom": "19.1.2"
   },
   "devDependencies": {
-    "@azure/microsoft-playwright-testing": "1.0.0-beta.7",
+    "@azure/playwright": "1.0.0",
     "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.56.1",
     "eslint": "8.57.0",
