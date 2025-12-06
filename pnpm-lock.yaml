@@ -25,6 +25,9 @@ importers:
         specifier: 19.1.2
         version: 19.1.2(react@19.1.2)
     devDependencies:
+      '@azure/identity':
+        specifier: 4.13.0
+        version: 4.13.0
       '@azure/playwright':
         specifier: 1.0.0
         version: 1.0.0(@playwright/test@1.56.1)

@@ -1,24 +1,15 @@
-import { ServiceOS, getServiceConfig } from "@azure/microsoft-playwright-testing";
-import { defineConfig } from "@playwright/test";
-import config from "./playwright.config";
+import { defineConfig } from '@playwright/test';
+import { createAzurePlaywrightConfig, ServiceOS } from '@azure/playwright';
+import { DefaultAzureCredential } from '@azure/identity';
+import config from './playwright.config';
 
-/* Learn more about service configuration at https://aka.ms/mpt/config */
+/* Learn more about service configuration at https://aka.ms/pww/docs/config */
 export default defineConfig(
   config,
-  getServiceConfig(config, {
-    exposeNetwork: "<loopback>",
-    timeout: 120000, // Increased timeout for cloud environment with network latency
+  createAzurePlaywrightConfig(config, {
+    exposeNetwork: '<loopback>',
+    connectTimeout: 3 * 60 * 1000, // 3 minutes
     os: ServiceOS.LINUX,
-    useCloudHostedBrowsers: true, // Set to false if you want to only use reporting and not cloud hosted browsers
-  }),
-  {
-    /* 
-    Playwright Testing service reporter is added by default.
-    This will override any reporter options specified in the base playwright config.
-    If you are using more reporters, please update your configuration accordingly.
-    */
-    reporter: [["list"], ["@azure/microsoft-playwright-testing/reporter"]],
-    retries: 2, // Always retry in cloud environment due to potential network/timing issues
-    maxFailures: undefined, // Don't stop on first failure to avoid cascading shutdowns with high parallelism
-  }
+    credential: new DefaultAzureCredential(),
+  })
 );
