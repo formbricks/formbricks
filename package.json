@@ -84,7 +84,7 @@
     },
     "overrides": {
       "axios": ">=1.12.2",
-      "node-forge": ">=1.3.3",
+      "node-forge": ">=1.3.2",
       "tar-fs": "2.1.4",
       "typeorm": ">=0.3.26"
     },
