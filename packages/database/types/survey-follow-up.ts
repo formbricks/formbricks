@@ -40,6 +40,8 @@ export const ZSurveyFollowUpAction = z.object({
     subject: z.string(),
     body: z.string(),
     attachResponseData: z.boolean(),
+    includeVariables: z.boolean().optional(),
+    includeHiddenFields: z.boolean().optional(),
   }),
 });
 

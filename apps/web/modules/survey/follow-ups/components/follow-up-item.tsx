@@ -46,6 +46,11 @@ export const FollowUpItem = ({
 
     if (!to) return true;
 
+    // Verified email is always valid as an option (handled at execution time)
+    if (to === "verifiedEmail") {
+      return false;
+    }
+
     // Derive questions from blocks
     const questions = getElementsFromBlocks(localSurvey.blocks);
 
@@ -196,6 +201,8 @@ export const FollowUpItem = ({
           emailTo: followUp.action.properties.to,
           replyTo: followUp.action.properties.replyTo,
           attachResponseData: followUp.action.properties.attachResponseData,
+          includeVariables: followUp.action.properties.includeVariables ?? false,
+          includeHiddenFields: followUp.action.properties.includeHiddenFields ?? false,
         }}
         mode="edit"
         teamMemberDetails={teamMemberDetails}
