@@ -383,6 +383,7 @@ checksums:
     common/team_id: 134e32d6f7184577a46b2fd83e85e532
     common/team_name: 549d949de4b9adad4afd6427a60a329e
     common/team_role: 66db395781aef64ef3791417b3b67c0b
+    common/teams: b63448c05270497973ac4407047dae02
     common/teams_not_found: 02f333a64a83c1c014d8900ec9666345
     common/text: 4ddccc1974775ed7357f9beaf9361cec
     common/time: b504a03d52e8001bfdc5cb6205364f42
