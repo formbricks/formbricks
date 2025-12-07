@@ -26,6 +26,8 @@ interface InviteMemberModalProps {
   environmentId: string;
   membershipRole?: TOrganizationRole;
   isStorageConfigured: boolean;
+  isTeamAdmin: boolean;
+  userAdminTeamIds?: string[];
 }
 
 export const InviteMemberModal = ({
@@ -38,10 +40,15 @@ export const InviteMemberModal = ({
   environmentId,
   membershipRole,
   isStorageConfigured,
+  isTeamAdmin,
+  userAdminTeamIds,
 }: InviteMemberModalProps) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
   const { t } = useTranslation();
+
+  const filteredTeams =
+    isTeamAdmin && userAdminTeamIds ? teams.filter((t) => userAdminTeamIds.includes(t.id)) : teams;
 
   const tabs = {
     individual: (
@@ -51,8 +58,9 @@ export const InviteMemberModal = ({
         onSubmit={onSubmit}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
-        teams={teams}
+        teams={filteredTeams}
         membershipRole={membershipRole}
+        isTeamAdmin={isTeamAdmin}
       />
     ),
     bulk: (
@@ -75,16 +83,18 @@ export const InviteMemberModal = ({
         </DialogHeader>
 
         <DialogBody className="flex flex-col gap-6" unconstrained>
-          <TabToggle
-            id="type"
-            options={[
-              { value: "individual", label: t("environments.settings.teams.individual") },
-              { value: "bulk", label: t("environments.settings.teams.bulk_invite") },
-            ]}
-            onChange={(inviteType) => setType(inviteType)}
-            defaultSelected={type}
-          />
-          {tabs[type]}
+          {!isTeamAdmin && (
+            <TabToggle
+              id="type"
+              options={[
+                { value: "individual", label: t("environments.settings.teams.individual") },
+                { value: "bulk", label: t("environments.settings.teams.bulk_invite") },
+              ]}
+              onChange={(inviteType) => setType(inviteType)}
+              defaultSelected={type}
+            />
+          )}
+          {isTeamAdmin ? tabs.individual : tabs[type]}
         </DialogBody>
       </DialogContent>
     </Dialog>

@@ -16,6 +16,8 @@ import {
   updateTeamDetails,
 } from "@/modules/ee/teams/team-list/lib/team";
 import { ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
+import { sendInviteMemberEmail } from "@/modules/email";
+import { inviteUser } from "@/modules/organization/settings/teams/lib/invite";
 
 const ZCreateTeamAction = z.object({
   organizationId: z.string().cuid(),
@@ -161,3 +163,72 @@ export const getTeamRoleAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     return await getTeamRoleByTeamIdUserId(parsedInput.teamId, ctx.user.id);
   });
+
+const ZInviteToTeamAction = z.object({
+  teamId: ZId,
+  email: z.string().email(),
+  name: z.string(),
+});
+
+/**
+ * Allows team admins to invite new users to their team.
+ * Invited users are added to the organization with "member" role
+ * and to the team with "contributor" role.
+ */
+export const inviteToTeamAction = authenticatedActionClient.schema(ZInviteToTeamAction).action(
+  withAuditLogging(
+    "created",
+    "invite",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      // Get organization ID from team ID
+      const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
+      // Check authorization - allow org owner/manager OR team admin
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "team",
+            teamId: parsedInput.teamId,
+            minPermission: "admin",
+          },
+        ],
+      });
+
+      await checkRoleManagementPermission(organizationId);
+
+      // Create invite with fixed role="member" and teamIds=[teamId]
+      const inviteId = await inviteUser({
+        organizationId,
+        invitee: {
+          email: parsedInput.email,
+          name: parsedInput.name,
+          role: "member", // Hardcoded to prevent privilege escalation
+          teamIds: [parsedInput.teamId], // User joins this specific team
+        },
+        currentUserId: ctx.user.id,
+      });
+
+      // Send email
+      await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name || "", parsedInput.name);
+
+      // Set audit logging context
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.teamId = parsedInput.teamId;
+      ctx.auditLoggingCtx.inviteId = inviteId;
+      ctx.auditLoggingCtx.newObject = {
+        email: parsedInput.email,
+        name: parsedInput.name,
+        role: "member",
+        teamIds: [parsedInput.teamId],
+      };
+
+      return inviteId;
+    }
+  )
+);

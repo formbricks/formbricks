@@ -27,6 +27,7 @@ interface IndividualInviteTabProps {
   isFormbricksCloud: boolean;
   environmentId: string;
   membershipRole?: TOrganizationRole;
+  isTeamAdmin: boolean;
 }
 
 export const IndividualInviteTab = ({
@@ -37,22 +38,32 @@ export const IndividualInviteTab = ({
   isFormbricksCloud,
   environmentId,
   membershipRole,
+  isTeamAdmin,
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
     email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email" }),
     role: ZOrganizationRole,
-    teamIds: z.array(z.string()),
+    teamIds: isTeamAdmin
+      ? z.array(z.string()).min(1, { message: "Team admins must select at least one team" })
+      : z.array(z.string()),
   });
 
   const router = useRouter();
 
   type TFormData = z.infer<typeof ZFormSchema>;
   const { t } = useTranslation();
+
+  // Determine default role based on permissions
+  let defaultRole: TOrganizationRole = "owner";
+  if (isTeamAdmin || isAccessControlAllowed) {
+    defaultRole = "member";
+  }
+
   const form = useForm<TFormData>({
     resolver: zodResolver(ZFormSchema),
     defaultValues: {
-      role: isAccessControlAllowed ? "member" : "owner",
+      role: defaultRole,
       teamIds: [],
     },
   });
@@ -104,43 +115,60 @@ export const IndividualInviteTab = ({
           {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
         </div>
         <div>
-          <AddMemberRole
-            control={control}
-            isAccessControlAllowed={isAccessControlAllowed}
-            isFormbricksCloud={isFormbricksCloud}
-            membershipRole={membershipRole}
-          />
-          {watch("role") === "member" && (
-            <Alert className="mt-2" variant="info">
-              <AlertDescription>{t("environments.settings.teams.member_role_info_message")}</AlertDescription>
-            </Alert>
+          {isTeamAdmin ? (
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="memberRoleSelect">{t("environments.settings.teams.organization_role")}</Label>
+              <Input value={t("environments.settings.teams.member")} disabled />
+            </div>
+          ) : (
+            <>
+              <AddMemberRole
+                control={control}
+                isAccessControlAllowed={isAccessControlAllowed}
+                isFormbricksCloud={isFormbricksCloud}
+                membershipRole={membershipRole}
+              />
+              {watch("role") === "member" && (
+                <Alert className="mt-2" variant="info">
+                  <AlertDescription>
+                    {t("environments.settings.teams.member_role_info_message")}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
           )}
         </div>
 
         {isAccessControlAllowed && (
-          <FormField
-            control={control}
-            name="teamIds"
-            render={({ field }) => (
-              <FormItem className="flex flex-col space-y-2">
-                <FormLabel>{t("common.add_to_team")} </FormLabel>
-                <div className="space-y-2">
-                  <MultiSelect
-                    value={field.value}
-                    options={teamOptions}
-                    placeholder={t("environments.settings.teams.team_select_placeholder")}
-                    disabled={!teamOptions.length}
-                    onChange={(val) => field.onChange(val)}
-                  />
-                  {!teamOptions.length && (
-                    <Small className="font-normal text-amber-600">
-                      {t("environments.settings.teams.create_first_team_message")}
-                    </Small>
-                  )}
-                </div>
-              </FormItem>
-            )}
-          />
+          <>
+            <FormField
+              control={control}
+              name="teamIds"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-2">
+                  <FormLabel>{t("common.add_to_team")} </FormLabel>
+                  <div className="space-y-2">
+                    <MultiSelect
+                      value={field.value}
+                      options={teamOptions}
+                      placeholder={t("environments.settings.teams.team_select_placeholder")}
+                      disabled={!teamOptions.length}
+                      onChange={(val) => field.onChange(val)}
+                    />
+                    {!teamOptions.length && (
+                      <Small className="font-normal text-amber-600">
+                        {t("environments.settings.teams.create_first_team_message")}
+                      </Small>
+                    )}
+                  </div>
+                </FormItem>
+              )}
+            />
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="teamRoleInput">{t("common.team_role")}</Label>
+              <Input value={t("environments.settings.teams.contributor")} disabled />
+            </div>
+          </>
         )}
 
         {!isAccessControlAllowed && (

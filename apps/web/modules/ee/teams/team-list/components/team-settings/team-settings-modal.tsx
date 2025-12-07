@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash2Icon, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
@@ -79,6 +79,16 @@ export const TeamSettingsModal = ({
   const isTeamContributorMember = isMember && isContributor;
 
   const router = useRouter();
+
+  // Track initial member IDs to distinguish existing members from newly added ones
+  const initialMemberIds = useMemo(() => {
+    return new Set(team.members.map((member) => member.userId));
+  }, [team.members]);
+
+  // Track initial project IDs to distinguish existing projects from newly added ones
+  const initialProjectIds = useMemo(() => {
+    return new Set(team.projects.map((project) => project.projectId));
+  }, [team.projects]);
 
   const initialMembers = useMemo(() => {
     const members = team.members.map((member) => ({
@@ -259,34 +269,42 @@ export const TeamSettingsModal = ({
                               <FormField
                                 control={control}
                                 name={`members.${index}.userId`}
-                                render={({ field, fieldState: { error } }) => (
-                                  <FormItem className="flex-1">
-                                    <Select
-                                      onValueChange={(val) => {
-                                        field.onChange(val);
-                                        handleMemberSelectionChange(index, val);
-                                      }}
-                                      disabled={!isOwnerOrManager && !isTeamAdminMember}
-                                      value={member.userId}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select member" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {memberOpts.map((option) => (
-                                          <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                            id={`member-${index}-option`}>
-                                            {option.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    {error?.message && (
-                                      <FormError className="text-left">{error.message}</FormError>
-                                    )}
-                                  </FormItem>
-                                )}
+                                render={({ field, fieldState: { error } }) => {
+                                  // Disable user select for existing members (can only remove or change role)
+                                  const isExistingMember =
+                                    member.userId && initialMemberIds.has(member.userId);
+                                  const isSelectDisabled =
+                                    isExistingMember || (!isOwnerOrManager && !isTeamAdminMember);
+
+                                  return (
+                                    <FormItem className="flex-1">
+                                      <Select
+                                        onValueChange={(val) => {
+                                          field.onChange(val);
+                                          handleMemberSelectionChange(index, val);
+                                        }}
+                                        disabled={isSelectDisabled}
+                                        value={member.userId}>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select member" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {memberOpts.map((option) => (
+                                            <SelectItem
+                                              key={option.value}
+                                              value={option.value}
+                                              id={`member-${index}-option`}>
+                                              {option.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      {error?.message && (
+                                        <FormError className="text-left">{error.message}</FormError>
+                                      )}
+                                    </FormItem>
+                                  );
+                                }}
                               />
 
                               <FormField
@@ -328,18 +346,20 @@ export const TeamSettingsModal = ({
 
                               {/* Delete Button for Member */}
                               {watchMembers.length > 1 && (
-                                <Button
-                                  size="icon"
-                                  type="button"
-                                  variant="secondary"
-                                  className="shrink-0"
-                                  disabled={
-                                    !isOwnerOrManager &&
-                                    (!isTeamAdminMember || member.userId === currentUserId)
-                                  }
-                                  onClick={() => handleRemoveMember(index)}>
-                                  <Trash2Icon className="h-4 w-4" />
-                                </Button>
+                                <TooltipRenderer tooltipContent={t("common.remove_from_team")}>
+                                  <Button
+                                    size="icon"
+                                    type="button"
+                                    variant="destructive"
+                                    className="shrink-0"
+                                    disabled={
+                                      !isOwnerOrManager &&
+                                      (!isTeamAdminMember || member.userId === currentUserId)
+                                    }
+                                    onClick={() => handleRemoveMember(index)}>
+                                    <XIcon className="h-4 w-4" />
+                                  </Button>
+                                </TooltipRenderer>
                               )}
                             </div>
                           );
@@ -360,7 +380,7 @@ export const TeamSettingsModal = ({
                       : t("environments.settings.teams.all_members_added")
                   }>
                   <Button
-                    size="default"
+                    size="sm"
                     type="button"
                     variant="secondary"
                     onClick={handleAddMember}
@@ -396,31 +416,38 @@ export const TeamSettingsModal = ({
                               <FormField
                                 control={control}
                                 name={`projects.${index}.projectId`}
-                                render={({ field, fieldState: { error } }) => (
-                                  <FormItem className="flex-1">
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      value={project.projectId}
-                                      disabled={!isOwnerOrManager}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select project" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {projectOpts.map((option) => (
-                                          <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                            id={`project-${index}-option`}>
-                                            {option.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    {error?.message && (
-                                      <FormError className="text-left">{error.message}</FormError>
-                                    )}
-                                  </FormItem>
-                                )}
+                                render={({ field, fieldState: { error } }) => {
+                                  // Disable project select for existing projects (can only remove or change permission)
+                                  const isExistingProject =
+                                    project.projectId && initialProjectIds.has(project.projectId);
+                                  const isSelectDisabled = isExistingProject || !isOwnerOrManager;
+
+                                  return (
+                                    <FormItem className="flex-1">
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        value={project.projectId}
+                                        disabled={isSelectDisabled}>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select project" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {projectOpts.map((option) => (
+                                            <SelectItem
+                                              key={option.value}
+                                              value={option.value}
+                                              id={`project-${index}-option`}>
+                                              {option.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      {error?.message && (
+                                        <FormError className="text-left">{error.message}</FormError>
+                                      )}
+                                    </FormItem>
+                                  );
+                                }}
                               />
 
                               <FormField
@@ -481,7 +508,7 @@ export const TeamSettingsModal = ({
                       : t("environments.settings.teams.all_projects_added")
                   }>
                   <Button
-                    size="default"
+                    size="sm"
                     type="button"
                     variant="secondary"
                     onClick={handleAddProject}
