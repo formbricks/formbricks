@@ -841,7 +841,6 @@ checksums:
     environments/project/tags/tags_merged: 544471de666f93fbb0ab600321d1e553
     environments/project/teams/manage_teams: d7b5f26335cea450c333832adbe0b6ad
     environments/project/teams/no_teams_found: fb6680d4b5b73731697b100713afb50d
-    environments/project/teams/only_organization_owners_and_managers_can_manage_teams: 179056fade669d34f63fb1ee965b8024
     environments/project/teams/permission: cc2ed7274bd8267f9e0a10b079584d8b
     environments/project/teams/team_name: d1a5f99dbf503ca53f06b3a98b511d02
     environments/project/teams/team_settings_description: da32d77993f5c5c7547cdf3e1d3fc7d5
@@ -1070,8 +1069,6 @@ checksums:
     environments/settings/teams/add_projects_description: 4cc88a869322af51c11deb3ef638cce1
     environments/settings/teams/all_members_added: 0541be1777b5c838f2e039035488506c
     environments/settings/teams/all_projects_added: dc0701f74b51236b3ffbbfbb614581d7
-    environments/settings/teams/already_invited_error: c78114973ba3ae32ce9c8136fc299fc1
-    environments/settings/teams/already_member_error: 2d4f25a45171c7a4cacec53f43295012
     environments/settings/teams/are_you_sure_you_want_to_delete_this_team: 35c990fa4aecc1851ae7bb333f54529f
     environments/settings/teams/billing_role_description: dfcfc3730c3dff59b983c5d9c3d6df12
     environments/settings/teams/bulk_invite: 9c237edb8782df589c25ae1723942bf7
@@ -1079,18 +1076,12 @@ checksums:
     environments/settings/teams/create: 757ccd28dd533ff3a933355273c1e32a
     environments/settings/teams/create_first_team_message: 0b76c0173691938561868c4bcaa7dee6
     environments/settings/teams/create_new_team: 3f4d388a473f979d4bd366c3ef08e425
-    environments/settings/teams/current_members: a7118332af077080a14685ebce5987ed
     environments/settings/teams/delete_team: 23e9200d46d42c7b89d42ae25c987ab6
     environments/settings/teams/empty_teams_state: 785c1a638eb62211224fae951217fe3c
     environments/settings/teams/enter_team_name: c324ef4c0ca524496a25a4afffda4f37
     environments/settings/teams/individual: 52ebce389ed97a13b6089802055ed667
-    environments/settings/teams/invite_email_placeholder: 45265e8bad3b6806a63bd6946080cd4c
-    environments/settings/teams/invite_info: 59ab15b8dbf57a2ab4c46d1dd4396634
     environments/settings/teams/invite_member: ade922db1be6b26bc979565ce5de2bc7
     environments/settings/teams/invite_member_description: 5d05259a8cd46f24834cad0860f7a2f9
-    environments/settings/teams/invite_member_to_team: ffb5043c2e26a2c32e6811b26215c776
-    environments/settings/teams/invite_name_placeholder: 31128d59672aa9c0a0990de3e0f8d979
-    environments/settings/teams/invite_success: a57a6ce7624ecf3ccc55909a867426c5
     environments/settings/teams/manage: a3d40c0267b81ae53c9598eaeb05087d
     environments/settings/teams/manage_team: 4c52e636cfd1451a08179fb7a68042ab
     environments/settings/teams/manage_team_disabled: 2aaa0557b403a5bc657ec9e8b19ac5ac
@@ -1104,7 +1095,6 @@ checksums:
     environments/settings/teams/please_fill_all_project_fields: 6712059df63c432ecd31f3c52b8e4d87
     environments/settings/teams/read: 2494ca23d10e5b6381eb271aceeb5270
     environments/settings/teams/read_write: 278a90dade128198d4c93ac00c345320
-    environments/settings/teams/send_invite: 24970596115a76b1947bdaa342e84e1f
     environments/settings/teams/team_admin: 5df68214685738029af678ae1d5912bb
     environments/settings/teams/team_created_successfully: 45f83048fcabf466551144858a761eca
     environments/settings/teams/team_deleted_successfully: 972c86b0abe87f229f7bf1a691c0a253
