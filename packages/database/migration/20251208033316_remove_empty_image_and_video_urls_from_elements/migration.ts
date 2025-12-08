@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 import { type SurveyRecord } from "./types";
 
@@ -9,7 +10,7 @@ export const removeEmptyImageAndVideoUrlsFromElements: MigrationScript = {
   run: async ({ tx }) => {
     // Find all surveys with empty imageUrl or videoUrl
     const surveysFindQuery = `
-      SELECT s.id,s.blocks
+      SELECT s.id, s.blocks, s."welcomeCard", s.endings
       FROM "Survey" AS s 
       WHERE EXISTS (
         SELECT 1 
@@ -17,11 +18,18 @@ export const removeEmptyImageAndVideoUrlsFromElements: MigrationScript = {
         CROSS JOIN jsonb_array_elements(block->'elements') AS element 
         WHERE element->>'imageUrl' = '' 
           OR element->>'videoUrl' = ''
+      ) OR s."welcomeCard"->>'fileUrl' = '' 
+          OR s."welcomeCard"->>'videoUrl' = ''
+      OR EXISTS (
+        SELECT 1 
+        FROM unnest(s.endings) AS ending 
+        WHERE ending->>'imageUrl' = '' 
+          OR ending->>'videoUrl' = ''
       )
     `;
     const surveysWithEmptyUrls: SurveyRecord[] = await tx.$queryRaw`${Prisma.raw(surveysFindQuery)}`;
 
-    console.log(`Found ${surveysWithEmptyUrls.length.toString()} surveys with empty imageUrl or videoUrl`);
+    logger.info(`Found ${surveysWithEmptyUrls.length.toString()} surveys with empty imageUrl or videoUrl`);
 
     // Process each survey
     for (const survey of surveysWithEmptyUrls) {
@@ -50,16 +58,40 @@ export const removeEmptyImageAndVideoUrlsFromElements: MigrationScript = {
         };
       });
 
-      // Update the survey with cleaned blocks
-      // Convert JSON array to PostgreSQL jsonb[] using array_agg + jsonb_array_elements
+      const cleanedWelcomeCard = { ...survey.welcomeCard };
+      if (cleanedWelcomeCard.fileUrl === "") {
+        delete cleanedWelcomeCard.fileUrl;
+      }
+      if (cleanedWelcomeCard.videoUrl === "") {
+        delete cleanedWelcomeCard.videoUrl;
+      }
+
+      const cleanedEndings = survey.endings.map((ending) => {
+        const cleanedEnding = { ...ending };
+        if (cleanedEnding.imageUrl === "") {
+          delete cleanedEnding.imageUrl;
+        }
+        if (cleanedEnding.videoUrl === "") {
+          delete cleanedEnding.videoUrl;
+        }
+        return cleanedEnding;
+      });
+
+      // Convert JSON arrays to PostgreSQL jsonb[] using array_agg + jsonb_array_elements
       const blocksJson = JSON.stringify(cleanedBlocks);
+      const endingsJson = JSON.stringify(cleanedEndings);
+      const welcomeCardJson = JSON.stringify(cleanedWelcomeCard);
+
       await tx.$executeRaw`
         UPDATE "Survey"
-        SET blocks = (SELECT array_agg(elem) FROM jsonb_array_elements(${blocksJson}::jsonb) AS elem)
+        SET 
+          blocks = (SELECT array_agg(elem) FROM jsonb_array_elements(${blocksJson}::jsonb) AS elem),
+          endings = (SELECT array_agg(elem) FROM jsonb_array_elements(${endingsJson}::jsonb) AS elem),
+          "welcomeCard" = ${welcomeCardJson}::jsonb
         WHERE id = ${survey.id}
       `;
     }
 
-    console.log(`Successfully cleaned ${surveysWithEmptyUrls.length.toString()} surveys`);
+    logger.info(`Successfully cleaned ${surveysWithEmptyUrls.length.toString()} surveys`);
   },
 };

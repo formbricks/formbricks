@@ -11,4 +11,12 @@ export interface Block {
 export interface SurveyRecord {
   id: string;
   blocks: Block[];
+  welcomeCard: {
+    fileUrl?: string;
+    videoUrl?: string;
+  };
+  endings: {
+    imageUrl?: string;
+    videoUrl?: string;
+  }[];
 }
