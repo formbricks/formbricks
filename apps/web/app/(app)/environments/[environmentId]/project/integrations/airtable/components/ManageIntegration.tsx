@@ -108,7 +108,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
               onClick={() => {
                 setDefaultValues({
                   base: data.baseId,
-                  questions: data.questionIds,
+                  elements: data.elementIds,
                   survey: data.surveyId,
                   table: data.tableId,
                   includeVariables: !!data.includeVariables,
@@ -121,7 +121,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
               }}>
               <div className="col-span-2 text-center">{data.surveyName}</div>
               <div className="col-span-2 text-center">{data.tableName}</div>
-              <div className="col-span-2 text-center">{data.questions}</div>
+              <div className="col-span-2 text-center">{data.elements}</div>
               <div className="col-span-2 text-center">
                 {timeSince(data.createdAt.toString(), props.locale)}
               </div>

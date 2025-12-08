@@ -134,7 +134,7 @@ describe("Quota Evaluation Service", () => {
       conditions: [
         {
           id: "c1",
-          leftOperand: { type: "question", value: "q1" },
+          leftOperand: { type: "element", value: "q1" },
           operator: "isGreaterThanOrEqual",
           rightOperand: { type: "static", value: 18 },
         },

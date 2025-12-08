@@ -5,10 +5,10 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
@@ -249,6 +249,7 @@ const getExistingSurvey = async (surveyId: string) => {
       },
       welcomeCard: true,
       questions: true,
+      blocks: true,
       endings: true,
       variables: true,
       hiddenFields: true,
@@ -340,7 +341,7 @@ export const copySurveyToOtherEnvironment = async (
       type: existingSurvey.type,
       status: "draft",
       welcomeCard: structuredClone(existingSurvey.welcomeCard),
-      questions: structuredClone(existingSurvey.questions),
+      blocks: structuredClone(existingSurvey.blocks),
       endings: structuredClone(existingSurvey.endings),
       variables: structuredClone(existingSurvey.variables),
       hiddenFields: structuredClone(existingSurvey.hiddenFields),
@@ -551,7 +552,12 @@ export const copySurveyToOtherEnvironment = async (
       }
     }
 
-    if (surveyData.questions) checkForInvalidImagesInQuestions(surveyData.questions);
+    if (surveyData.blocks) {
+      const result = checkForInvalidMediaInBlocks(surveyData.blocks);
+      if (!result.ok) {
+        throw new InvalidInputError(result.error.message);
+      }
+    }
 
     const newSurvey = await prisma.survey.create({
       data: surveyData,

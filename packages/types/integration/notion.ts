@@ -33,10 +33,10 @@ export type TIntegrationNotionCredential = z.infer<typeof ZIntegrationNotionCred
 
 export const ZIntegrationNotionConfigData = z
   .object({
-    // question -> notion database column mapping
+    // element -> notion database column mapping
     mapping: z.array(
       z.object({
-        question: z.object({
+        element: z.object({
           id: z.string(),
           name: z.string(),
           type: z.string(),
@@ -53,8 +53,8 @@ export const ZIntegrationNotionConfigData = z
   })
   .merge(
     ZIntegrationBaseSurveyData.omit({
-      questionIds: true,
-      questions: true,
+      elementIds: true,
+      elements: true,
     })
   );
 

@@ -1,46 +1,42 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyQuestionId,
-  TSurveyQuestionSummaryConsent,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { type TI18nString } from "@formbricks/types/i18n";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyElementSummaryConsent } from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
-import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface ConsentSummaryProps {
-  questionSummary: TSurveyQuestionSummaryConsent;
+  elementSummary: TSurveyElementSummaryConsent;
   survey: TSurvey;
   setFilter: (
-    questionId: TSurveyQuestionId,
+    elementId: string,
     label: TI18nString,
-    questionType: TSurveyQuestionTypeEnum,
+    elementType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
 }
 
-export const ConsentSummary = ({ questionSummary, survey, setFilter }: ConsentSummaryProps) => {
+export const ConsentSummary = ({ elementSummary, survey, setFilter }: ConsentSummaryProps) => {
   const { t } = useTranslation();
   const summaryItems = [
     {
       title: t("common.accepted"),
-      percentage: questionSummary.accepted.percentage,
-      count: questionSummary.accepted.count,
+      percentage: elementSummary.accepted.percentage,
+      count: elementSummary.accepted.count,
     },
     {
       title: t("common.dismissed"),
-      percentage: questionSummary.dismissed.percentage,
-      count: questionSummary.dismissed.count,
+      percentage: elementSummary.dismissed.percentage,
+      count: elementSummary.dismissed.count,
     },
   ];
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
+      <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {summaryItems.map((summaryItem) => {
           return (
@@ -49,9 +45,9 @@ export const ConsentSummary = ({ questionSummary, survey, setFilter }: ConsentSu
               key={summaryItem.title}
               onClick={() =>
                 setFilter(
-                  questionSummary.question.id,
-                  questionSummary.question.headline,
-                  questionSummary.question.type,
+                  elementSummary.element.id,
+                  elementSummary.element.headline,
+                  elementSummary.element.type,
                   "is",
                   summaryItem.title
                 )

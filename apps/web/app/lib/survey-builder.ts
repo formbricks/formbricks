@@ -1,283 +1,16 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TFunction } from "i18next";
-import {
-  TShuffleOption,
-  TSurveyCTAQuestion,
-  TSurveyConsentQuestion,
+import type { TFunction } from "i18next";
+import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import type {
   TSurveyEndScreenCard,
   TSurveyEnding,
   TSurveyHiddenFields,
   TSurveyLanguage,
   TSurveyLogic,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyNPSQuestion,
-  TSurveyOpenTextQuestion,
-  TSurveyOpenTextQuestionInputType,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyRatingQuestion,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
+import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-
-const getDefaultButtonLabel = (label: string | undefined, t: TFunction) =>
-  createI18nString(label || t("common.next"), []);
-
-const getDefaultBackButtonLabel = (label: string | undefined, t: TFunction) =>
-  createI18nString(label || t("common.back"), []);
-
-export const buildMultipleChoiceQuestion = ({
-  id,
-  headline,
-  type,
-  subheader,
-  choices,
-  choiceIds,
-  buttonLabel,
-  backButtonLabel,
-  shuffleOption,
-  required,
-  logic,
-  containsOther = false,
-  t,
-}: {
-  id?: string;
-  headline: string;
-  type: TSurveyQuestionTypeEnum.MultipleChoiceMulti | TSurveyQuestionTypeEnum.MultipleChoiceSingle;
-  subheader?: string;
-  choices: string[];
-  choiceIds?: string[];
-  buttonLabel?: string;
-  backButtonLabel?: string;
-  shuffleOption?: TShuffleOption;
-  required?: boolean;
-  logic?: TSurveyLogic[];
-  containsOther?: boolean;
-  t: TFunction;
-}): TSurveyMultipleChoiceQuestion => {
-  return {
-    id: id ?? createId(),
-    type,
-    subheader: subheader ? createI18nString(subheader, []) : undefined,
-    headline: createI18nString(headline, []),
-    choices: choices.map((choice, index) => {
-      const isLastIndex = index === choices.length - 1;
-      const id = containsOther && isLastIndex ? "other" : choiceIds ? choiceIds[index] : createId();
-      return { id, label: createI18nString(choice, []) };
-    }),
-    buttonLabel: getDefaultButtonLabel(buttonLabel, t),
-    backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
-    shuffleOption: shuffleOption || "none",
-    required: required ?? false,
-    logic,
-  };
-};
-
-export const buildOpenTextQuestion = ({
-  id,
-  headline,
-  subheader,
-  placeholder,
-  inputType,
-  buttonLabel,
-  backButtonLabel,
-  required,
-  logic,
-  longAnswer,
-  t,
-}: {
-  id?: string;
-  headline: string;
-  subheader?: string;
-  placeholder?: string;
-  buttonLabel?: string;
-  backButtonLabel?: string;
-  required?: boolean;
-  logic?: TSurveyLogic[];
-  inputType: TSurveyOpenTextQuestionInputType;
-  longAnswer?: boolean;
-  t: TFunction;
-}): TSurveyOpenTextQuestion => {
-  return {
-    id: id ?? createId(),
-    type: TSurveyQuestionTypeEnum.OpenText,
-    inputType,
-    subheader: subheader ? createI18nString(subheader, []) : undefined,
-    placeholder: placeholder ? createI18nString(placeholder, []) : undefined,
-    headline: createI18nString(headline, []),
-    buttonLabel: getDefaultButtonLabel(buttonLabel, t),
-    backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
-    required: required ?? false,
-    longAnswer,
-    logic,
-    charLimit: {
-      enabled: false,
-    },
-  };
-};
-
-export const buildRatingQuestion = ({
-  id,
-  headline,
-  subheader,
-  scale,
-  range,
-  lowerLabel,
-  upperLabel,
-  buttonLabel,
-  backButtonLabel,
-  required,
-  logic,
-  isColorCodingEnabled = false,
-  t,
-}: {
-  id?: string;
-  headline: string;
-  scale: TSurveyRatingQuestion["scale"];
-  range: TSurveyRatingQuestion["range"];
-  lowerLabel?: string;
-  upperLabel?: string;
-  subheader?: string;
-  placeholder?: string;
-  buttonLabel?: string;
-  backButtonLabel?: string;
-  required?: boolean;
-  logic?: TSurveyLogic[];
-  isColorCodingEnabled?: boolean;
-  t: TFunction;
-}): TSurveyRatingQuestion => {
-  return {
-    id: id ?? createId(),
-    type: TSurveyQuestionTypeEnum.Rating,
-    subheader: subheader ? createI18nString(subheader, []) : undefined,
-    headline: createI18nString(headline, []),
-    scale,
-    range,
-    buttonLabel: getDefaultButtonLabel(buttonLabel, t),
-    backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
-    required: required ?? false,
-    isColorCodingEnabled,
-    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
-    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
-    logic,
-  };
-};
-
-export const buildNPSQuestion = ({
-  id,
-  headline,
-  subheader,
-  lowerLabel,
-  upperLabel,
-  buttonLabel,
-  backButtonLabel,
-  required,
-  logic,
-  isColorCodingEnabled = false,
-  t,
-}: {
-  id?: string;
-  headline: string;
-  lowerLabel?: string;
-  upperLabel?: string;
-  subheader?: string;
-  placeholder?: string;
-  buttonLabel?: string;
-  backButtonLabel?: string;
-  required?: boolean;
-  logic?: TSurveyLogic[];
-  isColorCodingEnabled?: boolean;
-  t: TFunction;
-}): TSurveyNPSQuestion => {
-  return {
-    id: id ?? createId(),
-    type: TSurveyQuestionTypeEnum.NPS,
-    subheader: subheader ? createI18nString(subheader, []) : undefined,
-    headline: createI18nString(headline, []),
-    buttonLabel: getDefaultButtonLabel(buttonLabel, t),
-    backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
-    required: required ?? false,
-    isColorCodingEnabled,
-    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
-    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
-    logic,
-  };
-};
-
-export const buildConsentQuestion = ({
-  id,
-  headline,
-  subheader,
-  label,
-  buttonLabel,
-  backButtonLabel,
-  required,
-  logic,
-  t,
-}: {
-  id?: string;
-  headline: string;
-  subheader: string;
-  buttonLabel?: string;
-  backButtonLabel?: string;
-  required?: boolean;
-  logic?: TSurveyLogic[];
-  label: string;
-  t: TFunction;
-}): TSurveyConsentQuestion => {
-  return {
-    id: id ?? createId(),
-    type: TSurveyQuestionTypeEnum.Consent,
-    subheader: createI18nString(subheader, []),
-    headline: createI18nString(headline, []),
-    buttonLabel: getDefaultButtonLabel(buttonLabel, t),
-    backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
-    required: required ?? false,
-    label: createI18nString(label, []),
-    logic,
-  };
-};
-
-export const buildCTAQuestion = ({
-  id,
-  headline,
-  subheader,
-  buttonLabel,
-  buttonExternal,
-  backButtonLabel,
-  required,
-  logic,
-  dismissButtonLabel,
-  buttonUrl,
-  t,
-}: {
-  id?: string;
-  headline: string;
-  buttonExternal: boolean;
-  subheader: string;
-  buttonLabel?: string;
-  backButtonLabel?: string;
-  required?: boolean;
-  logic?: TSurveyLogic[];
-  dismissButtonLabel?: string;
-  buttonUrl?: string;
-  t: TFunction;
-}): TSurveyCTAQuestion => {
-  return {
-    id: id ?? createId(),
-    type: TSurveyQuestionTypeEnum.CTA,
-    subheader: createI18nString(subheader, []),
-    headline: createI18nString(headline, []),
-    buttonLabel: getDefaultButtonLabel(buttonLabel, t),
-    backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
-    dismissButtonLabel: dismissButtonLabel ? createI18nString(dismissButtonLabel, []) : undefined,
-    required: required ?? false,
-    buttonExternal,
-    buttonUrl,
-    logic,
-  };
-};
 
 // Helper function to create standard jump logic based on operator
 export const createJumpLogic = (
@@ -294,7 +27,7 @@ export const createJumpLogic = (
         id: createId(),
         leftOperand: {
           value: sourceQuestionId,
-          type: "question",
+          type: "element",
         },
         operator: operator,
       },
@@ -324,7 +57,7 @@ export const createChoiceJumpLogic = (
         id: createId(),
         leftOperand: {
           value: sourceQuestionId,
-          type: "question",
+          type: "element",
         },
         operator: "equals",
         rightOperand: {
@@ -377,13 +110,13 @@ export const getDefaultSurveyPreset = (t: TFunction): TTemplate["preset"] => {
     welcomeCard: getDefaultWelcomeCard(t),
     endings: [getDefaultEndingCard([], t)],
     hiddenFields: hiddenFieldsDefault,
-    questions: [],
+    blocks: [],
   };
 };
 
 /**
  * Generic builder for survey.
- * @param config - The configuration for survey settings and questions.
+ * @param config - The configuration for survey settings and blocks.
  * @param t - The translation function.
  */
 export const buildSurvey = (
@@ -393,9 +126,9 @@ export const buildSurvey = (
     channels: ("link" | "app" | "website")[];
     role: TTemplateRole;
     description: string;
-    questions: TSurveyQuestion[];
-    endings?: TSurveyEnding[];
-    hiddenFields?: TSurveyHiddenFields;
+    blocks: TSurveyBlock[];
+    endings: TSurveyEnding[];
+    hiddenFields: TSurveyHiddenFields;
   },
   t: TFunction
 ): TTemplate => {
@@ -409,7 +142,7 @@ export const buildSurvey = (
     preset: {
       ...localSurvey,
       name: config.name,
-      questions: config.questions,
+      blocks: config.blocks ?? [],
       endings: config.endings ?? localSurvey.endings,
       hiddenFields: config.hiddenFields ?? hiddenFieldsDefault,
     },

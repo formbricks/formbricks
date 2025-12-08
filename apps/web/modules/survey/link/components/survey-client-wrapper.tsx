@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { getPrefillValue } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
@@ -30,8 +31,7 @@ interface SurveyClientWrapperProps {
   IS_FORMBRICKS_CLOUD: boolean;
 }
 
-// Module-level functions to allow SurveyInline to control survey state
-let setQuestionId = (_: string) => {};
+let setBlockId = (_: string) => {};
 let setResponseData = (_: TResponseData) => {};
 
 export const SurveyClientWrapper = ({
@@ -55,17 +55,19 @@ export const SurveyClientWrapper = ({
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
+  const elements = useMemo(() => getElementsFromBlocks(survey.blocks), [survey.blocks]);
+
   const startAt = searchParams.get("startAt");
 
   // Extract survey properties outside useMemo to create stable references
   const welcomeCardEnabled = survey.welcomeCard.enabled;
-  const surveyQuestions = survey.questions;
 
-  // Validate startAt parameter against survey questions
+  // Validate startAt parameter against survey elements
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
     if (welcomeCardEnabled && startAt === "start") return true;
-    const isValid = surveyQuestions.some((q) => q.id === startAt);
+
+    const isValid = elements.some((element) => element.id === startAt);
 
     // Clean up invalid startAt from URL to prevent confusion
     if (!isValid && globalThis.window !== undefined) {
@@ -75,7 +77,7 @@ export const SurveyClientWrapper = ({
     }
 
     return isValid;
-  }, [welcomeCardEnabled, surveyQuestions, startAt]);
+  }, [welcomeCardEnabled, elements, startAt]);
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
   const [autoFocus, setAutoFocus] = useState(false);
@@ -106,7 +108,11 @@ export const SurveyClientWrapper = ({
   }, [survey.isVerifyEmailEnabled, verifiedEmail]);
 
   const handleResetSurvey = () => {
-    setQuestionId(survey.welcomeCard.enabled ? "start" : survey.questions[0].id);
+    if (survey.welcomeCard.enabled) {
+      setBlockId("start");
+    } else if (survey.blocks[0]) {
+      setBlockId(survey.blocks[0].id);
+    }
     setResponseData({});
   };
 
@@ -138,8 +144,8 @@ export const SurveyClientWrapper = ({
         prefillResponseData={prefillValue}
         skipPrefilled={skipPrefilled}
         responseCount={responseCount}
-        getSetQuestionId={(f: (value: string) => void) => {
-          setQuestionId = f;
+        getSetBlockId={(f: (value: string) => void) => {
+          setBlockId = f;
         }}
         getSetResponseData={(f: (value: TResponseData) => void) => {
           setResponseData = f;

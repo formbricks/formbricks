@@ -14,7 +14,7 @@ interface OptionsSwitchProps {
 }
 
 export const OptionsSwitch = ({
-  options: questionTypes,
+  options: elementTypes,
   currentOption,
   handleOptionChange,
 }: OptionsSwitchProps) => {
@@ -52,7 +52,7 @@ export const OptionsSwitch = ({
         className="absolute bottom-1 top-1 rounded-md bg-slate-100 transition-all duration-300 ease-in-out"
         style={highlightStyle}
       />
-      {questionTypes.map((type) => (
+      {elementTypes.map((type) => (
         <button
           key={type.value}
           data-value={type.value}
