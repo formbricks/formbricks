@@ -61,15 +61,14 @@ function PictureSelect({
   disabled = false,
 }: PictureSelectProps): React.JSX.Element {
   // Ensure value is always the correct type
-  const selectedValues = allowMulti
-    ? Array.isArray(value)
-      ? value
-      : []
-    : typeof value === "string"
-      ? value
-      : undefined;
+  let selectedValues: string[] | string | undefined;
+  if (allowMulti) {
+    selectedValues = Array.isArray(value) ? value : [];
+  } else {
+    selectedValues = typeof value === "string" ? value : undefined;
+  }
 
-  const handleOptionChange = (optionId: string) => {
+  const handleOptionChange = (optionId: string): void => {
     if (disabled) return;
 
     if (allowMulti) {
@@ -117,7 +116,9 @@ function PictureSelect({
                   backgroundColor: "var(--fb-input-bg-color)",
                   borderRadius: "5px",
                 }}
-                onClick={() => handleOptionChange(option.id)}
+                onClick={() => {
+                  handleOptionChange(option.id);
+                }}
                 role="button"
                 tabIndex={disabled ? -1 : 0}
                 onKeyDown={(e) => {
@@ -149,7 +150,9 @@ function PictureSelect({
                   <div className="absolute right-[5%] top-[5%]">
                     <Checkbox
                       checked={isSelected}
-                      onCheckedChange={() => handleOptionChange(option.id)}
+                      onCheckedChange={() => {
+                        handleOptionChange(option.id);
+                      }}
                       disabled={disabled}
                       className="h-4 w-4"
                       aria-label={option.alt ?? `Select ${option.id}`}

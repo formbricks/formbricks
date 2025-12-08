@@ -69,9 +69,12 @@ function FileUpload({
   const validateFile = (file: File): string | null => {
     // Check file extension
     if (allowedFileExtensions && allowedFileExtensions.length > 0) {
-      const fileExtension = `.${file.name.split(".").pop()?.toLowerCase()}`;
-      if (!allowedFileExtensions.includes(fileExtension)) {
-        return `File type ${fileExtension} is not allowed. Allowed types: ${allowedFileExtensions.join(", ")}`;
+      const fileExtensionPart = file.name.split(".").pop()?.toLowerCase();
+      if (fileExtensionPart) {
+        const fileExtension = `.${fileExtensionPart}`;
+        if (!allowedFileExtensions.includes(fileExtension)) {
+          return `File type ${fileExtension} is not allowed. Allowed types: ${allowedFileExtensions.join(", ")}`;
+        }
       }
     }
 
@@ -79,7 +82,7 @@ function FileUpload({
     if (maxSizeInMB) {
       const fileSizeInMB = file.size / (1024 * 1024);
       if (fileSizeInMB > maxSizeInMB) {
-        return `File size exceeds the maximum allowed size of ${maxSizeInMB}MB`;
+        return `File size exceeds the maximum allowed size of ${String(maxSizeInMB)}MB`;
       }
     }
 
@@ -94,6 +97,7 @@ function FileUpload({
       const error = validateFile(file);
       if (error) {
         // In a real implementation, you might want to show this error
+        // eslint-disable-next-line no-console -- Error logging needed for file validation
         console.error(error);
         continue;
       }
@@ -101,7 +105,9 @@ function FileUpload({
       // Create a data URL for preview (in real implementation, upload to server)
       const url = await new Promise<string>((resolve) => {
         const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onload = (e) => {
+          resolve(e.target?.result as string);
+        };
         reader.readAsDataURL(file);
       });
 
@@ -115,7 +121,7 @@ function FileUpload({
     return processedFiles;
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     if (!e.target.files || disabled) return;
 
     const newFiles = await processFiles(e.target.files);
@@ -131,7 +137,7 @@ function FileUpload({
     }
   };
 
-  const handleBrowseClick = (e: React.MouseEvent) => {
+  const handleBrowseClick = (e: React.MouseEvent): void => {
     e.preventDefault();
     e.stopPropagation();
     if (!disabled && fileInputRef.current) {
@@ -151,12 +157,14 @@ function FileUpload({
     .join(",");
 
   // Get display file name (first file if single, count if multiple)
-  const displayFileName =
-    uploadedFiles.length > 0
-      ? allowMultiple
-        ? `${uploadedFiles.length} file${uploadedFiles.length > 1 ? "s" : ""} selected`
-        : (uploadedFiles[0]?.name ?? "No file selected")
-      : "No file selected";
+  let displayFileName = "No file selected";
+  if (uploadedFiles.length > 0) {
+    if (allowMultiple) {
+      displayFileName = `${String(uploadedFiles.length)} file${uploadedFiles.length > 1 ? "s" : ""} selected`;
+    } else {
+      displayFileName = uploadedFiles[0]?.name ?? "No file selected";
+    }
+  }
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
@@ -226,7 +234,9 @@ function FileUpload({
               className="hidden"
               multiple={allowMultiple}
               accept={acceptAttribute}
-              onChange={handleFileChange}
+              onChange={(e) => {
+                void handleFileChange(e);
+              }}
               disabled={disabled}
               required={required}
               dir={detectedDir}
@@ -234,14 +244,14 @@ function FileUpload({
           </div>
 
           {/* Error ring overlay */}
-          {errorMessage && (
+          {errorMessage ? (
             <div
               className="pointer-events-none absolute inset-[-1px] rounded-md border-2"
               style={{
                 borderColor: "var(--destructive, hsl(0 84.2% 60%))",
               }}
             />
-          )}
+          ) : null}
         </div>
       </div>
     </div>

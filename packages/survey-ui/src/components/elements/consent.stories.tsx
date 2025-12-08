@@ -274,7 +274,7 @@ export const MultipleQuestions: Story = {
         headline="Privacy Policy"
         description="Please review our privacy policy"
         checkboxLabel="I agree to the privacy policy"
-        value={true}
+        value
         onChange={() => {}}
       />
     </div>

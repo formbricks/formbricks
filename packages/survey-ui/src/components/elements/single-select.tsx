@@ -89,7 +89,7 @@ function SingleSelect({
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = hasOtherOption && selectedValue === otherOptionId;
 
-  const handleOtherInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOtherInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onOtherValueChange?.(e.target.value);
   };
 
@@ -146,18 +146,18 @@ function SingleSelect({
                       </DropdownMenuRadioItem>
                     );
                   })}
-                  {hasOtherOption && otherOptionId && (
+                  {hasOtherOption && otherOptionId ? (
                     <DropdownMenuRadioItem
                       value={otherOptionId}
                       id={`${inputId}-${otherOptionId}`}
                       disabled={disabled}>
                       <Label>{otherOptionLabel}</Label>
                     </DropdownMenuRadioItem>
-                  )}
+                  ) : null}
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-            {isOtherSelected && (
+            {isOtherSelected ? (
               <Input
                 type="text"
                 value={otherValue}
@@ -166,9 +166,8 @@ function SingleSelect({
                 disabled={disabled}
                 dir={detectedDir}
                 className="w-full"
-                autoFocus
               />
-            )}
+            ) : null}
           </>
         ) : (
           <RadioGroup
@@ -196,7 +195,7 @@ function SingleSelect({
                 </label>
               );
             })}
-            {hasOtherOption && otherOptionId && (
+            {hasOtherOption && otherOptionId ? (
               <div className="space-y-2">
                 <Label
                   htmlFor={`${inputId}-${otherOptionId}`}
@@ -211,7 +210,7 @@ function SingleSelect({
                   />
                   <span>{otherOptionLabel}</span>
                 </Label>
-                {isOtherSelected && (
+                {isOtherSelected ? (
                   <Input
                     type="text"
                     value={otherValue}
@@ -220,9 +219,9 @@ function SingleSelect({
                     disabled={disabled}
                     dir={detectedDir}
                   />
-                )}
+                ) : null}
               </div>
-            )}
+            ) : null}
           </RadioGroup>
         )}
       </div>

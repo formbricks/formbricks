@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 /**
  * Get smiley color class based on range and index
  */
-const getSmileyColor = (range: number, idx: number) => {
+const getSmileyColor = (range: number, idx: number): string => {
   if (range > 5) {
     if (range - idx < 3) return "fill-emerald-100";
     if (range - idx < 5) return "fill-orange-100";
@@ -39,7 +39,7 @@ const getSmileyColor = (range: number, idx: number) => {
 /**
  * Get active smiley color class based on range and index
  */
-const getActiveSmileyColor = (range: number, idx: number) => {
+const getActiveSmileyColor = (range: number, idx: number): string => {
   if (range > 5) {
     if (range - idx < 3) return "fill-emerald-300";
     if (range - idx < 5) return "fill-orange-300";
@@ -57,7 +57,13 @@ const getActiveSmileyColor = (range: number, idx: number) => {
 /**
  * Get the appropriate smiley icon based on range and index
  */
-const getSmileyIcon = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {
+const getSmileyIcon = (
+  iconIdx: number,
+  idx: number,
+  range: number,
+  active: boolean,
+  addColors: boolean
+): React.JSX.Element => {
   const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fill-primary";
   const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
 
@@ -95,7 +101,7 @@ const RatingSmiley = ({
   idx: number;
   range: number;
   addColors?: boolean;
-}) => {
+}): React.JSX.Element => {
   let iconsIdx: number[] = [];
   if (range === 10) iconsIdx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   else if (range === 7) iconsIdx = [1, 3, 4, 5, 6, 8, 9];
@@ -169,7 +175,7 @@ function Rating({
   });
 
   // Handle rating selection
-  const handleSelect = (ratingValue: number) => {
+  const handleSelect = (ratingValue: number): void => {
     if (!disabled) {
       onChange(ratingValue);
     }
@@ -190,29 +196,38 @@ function Rating({
   };
 
   // Get number option color for color coding
-  const getRatingNumberOptionColor = (range: number, idx: number) => {
-    if (range > 5) {
-      if (range - idx < 2) return "bg-emerald-100";
-      if (range - idx < 4) return "bg-orange-100";
+  const getRatingNumberOptionColor = (ratingRange: number, idx: number): string => {
+    if (ratingRange > 5) {
+      if (ratingRange - idx < 2) return "bg-emerald-100";
+      if (ratingRange - idx < 4) return "bg-orange-100";
       return "bg-rose-100";
-    } else if (range < 5) {
-      if (range - idx < 1) return "bg-emerald-100";
-      if (range - idx < 2) return "bg-orange-100";
+    } else if (ratingRange < 5) {
+      if (ratingRange - idx < 1) return "bg-emerald-100";
+      if (ratingRange - idx < 2) return "bg-orange-100";
       return "bg-rose-100";
     }
-    if (range - idx < 2) return "bg-emerald-100";
-    if (range - idx < 3) return "bg-orange-100";
+    if (ratingRange - idx < 2) return "bg-emerald-100";
+    if (ratingRange - idx < 3) return "bg-orange-100";
     return "bg-rose-100";
   };
 
   // Render number scale option
-  const renderNumberOption = (number: number, totalLength: number) => {
+  const renderNumberOption = (number: number, totalLength: number): React.JSX.Element => {
     const isSelected = currentValue === number;
     const isHovered = hoveredValue === number;
     const isLast = totalLength === number;
     const isFirst = number === 1;
 
+    // Determine border radius classes
+    let borderRadiusClasses = "";
+    if (isLast) {
+      borderRadiusClasses = detectedDir === "rtl" ? "rounded-l-md border-l" : "rounded-r-md border-r";
+    } else if (isFirst) {
+      borderRadiusClasses = detectedDir === "rtl" ? "rounded-r-md border-r" : "rounded-l-md border-l";
+    }
+
     return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
         tabIndex={disabled ? -1 : 0}
@@ -220,32 +235,45 @@ function Rating({
         className={cn(
           "relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t transition-colors focus:border-2 focus:outline-none",
           isSelected ? "bg-accent border-primary z-10 border-2" : "border-input",
-          isLast ? (detectedDir === "rtl" ? "rounded-l-md border-l" : "rounded-r-md border-r") : "",
-          isFirst ? (detectedDir === "rtl" ? "rounded-r-md border-r" : "rounded-l-md border-l") : "",
+          borderRadiusClasses,
           isHovered && !isSelected && "bg-accent/50",
           colorCoding ? "min-h-[47px]" : "min-h-[41px]",
           disabled && "cursor-not-allowed opacity-50",
           "focus:border-primary"
         )}
-        onMouseEnter={() => !disabled && setHoveredValue(number)}
-        onMouseLeave={() => setHoveredValue(null)}
-        onFocus={() => !disabled && setHoveredValue(number)}
-        onBlur={() => setHoveredValue(null)}>
-        {colorCoding && (
+        onMouseEnter={() => {
+          if (!disabled) {
+            setHoveredValue(number);
+          }
+        }}
+        onMouseLeave={() => {
+          setHoveredValue(null);
+        }}
+        onFocus={() => {
+          if (!disabled) {
+            setHoveredValue(number);
+          }
+        }}
+        onBlur={() => {
+          setHoveredValue(null);
+        }}>
+        {colorCoding ? (
           <div
             className={cn("absolute left-0 top-0 h-[6px] w-full", getRatingNumberOptionColor(range, number))}
           />
-        )}
+        ) : null}
         <input
           type="radio"
           name={inputId}
           value={number}
           checked={isSelected}
-          onChange={() => handleSelect(number)}
+          onChange={() => {
+            handleSelect(number);
+          }}
           disabled={disabled}
           required={required}
           className="sr-only"
-          aria-label={`Rate ${number} out of ${range}`}
+          aria-label={`Rate ${String(number)} out of ${String(range)}`}
         />
         <span className="text-sm">{number}</span>
       </label>
@@ -253,22 +281,35 @@ function Rating({
   };
 
   // Render star scale option
-  const renderStarOption = (number: number) => {
+  const renderStarOption = (number: number): React.JSX.Element => {
     const isSelected = currentValue === number;
     const isHovered = hoveredValue === number;
     const isActive = isSelected || isHovered;
 
     return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
         className={cn(
           "flex min-h-[48px] flex-1 cursor-pointer items-center justify-center transition-opacity",
           disabled && "cursor-not-allowed opacity-50"
         )}
-        onMouseEnter={() => !disabled && setHoveredValue(number)}
-        onMouseLeave={() => setHoveredValue(null)}
-        onFocus={() => !disabled && setHoveredValue(number)}
-        onBlur={() => setHoveredValue(null)}
+        onMouseEnter={() => {
+          if (!disabled) {
+            setHoveredValue(number);
+          }
+        }}
+        onMouseLeave={() => {
+          setHoveredValue(null);
+        }}
+        onFocus={() => {
+          if (!disabled) {
+            setHoveredValue(number);
+          }
+        }}
+        onBlur={() => {
+          setHoveredValue(null);
+        }}
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown(number)}>
         <input
@@ -276,11 +317,13 @@ function Rating({
           name={inputId}
           value={number}
           checked={isSelected}
-          onChange={() => handleSelect(number)}
+          onChange={() => {
+            handleSelect(number);
+          }}
           disabled={disabled}
           required={required}
           className="sr-only"
-          aria-label={`Rate ${number} out of ${range} stars`}
+          aria-label={`Rate ${String(number)} out of ${String(range)} stars`}
         />
         <div className="flex w-full max-w-[74px] items-center justify-center">
           {isActive ? (
@@ -294,12 +337,13 @@ function Rating({
   };
 
   // Render smiley scale option
-  const renderSmileyOption = (number: number, index: number) => {
+  const renderSmileyOption = (number: number, index: number): React.JSX.Element => {
     const isSelected = currentValue === number;
     const isHovered = hoveredValue === number;
     const isActive = isSelected || isHovered;
 
     return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
         tabIndex={disabled ? -1 : 0}
@@ -311,20 +355,34 @@ function Rating({
             : "stroke-muted-foreground text-muted-foreground focus:border-accent focus:border-2",
           disabled && "cursor-not-allowed opacity-50"
         )}
-        onMouseEnter={() => !disabled && setHoveredValue(number)}
-        onMouseLeave={() => setHoveredValue(null)}
-        onFocus={() => !disabled && setHoveredValue(number)}
-        onBlur={() => setHoveredValue(null)}>
+        onMouseEnter={() => {
+          if (!disabled) {
+            setHoveredValue(number);
+          }
+        }}
+        onMouseLeave={() => {
+          setHoveredValue(null);
+        }}
+        onFocus={() => {
+          if (!disabled) {
+            setHoveredValue(number);
+          }
+        }}
+        onBlur={() => {
+          setHoveredValue(null);
+        }}>
         <input
           type="radio"
           name={inputId}
           value={number}
           checked={isSelected}
-          onChange={() => handleSelect(number)}
+          onChange={() => {
+            handleSelect(number);
+          }}
           disabled={disabled}
           required={required}
           className="sr-only"
-          aria-label={`Rate ${number} out of ${range}`}
+          aria-label={`Rate ${String(number)} out of ${String(range)}`}
         />
         <div className="h-full w-full max-w-[74px] object-contain">
           <RatingSmiley active={isActive} idx={index} range={range} addColors={colorCoding} />
@@ -352,30 +410,29 @@ function Rating({
                 return renderNumberOption(number, ratingOptions.length);
               } else if (scale === "star") {
                 return renderStarOption(number);
-              } else {
-                return renderSmileyOption(number, index);
               }
+              return renderSmileyOption(number, index);
             })}
           </div>
 
           {/* Labels */}
-          {(lowerLabel || upperLabel) && (
+          {(lowerLabel ?? upperLabel) ? (
             <div className="mt-4 flex justify-between gap-8 px-1.5">
-              {lowerLabel && (
+              {lowerLabel ? (
                 <Label variant="default" className="max-w-[50%] text-xs leading-6" dir={detectedDir}>
                   {lowerLabel}
                 </Label>
-              )}
-              {upperLabel && (
+              ) : null}
+              {upperLabel ? (
                 <Label
                   variant="default"
                   className="max-w-[50%] text-right text-xs leading-6"
                   dir={detectedDir}>
                   {upperLabel}
                 </Label>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
         </fieldset>
       </div>
     </div>

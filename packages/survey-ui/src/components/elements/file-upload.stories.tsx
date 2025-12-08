@@ -377,7 +377,7 @@ export const MultipleQuestions: Story = {
         inputId="file-2-input"
         headline="Upload multiple images"
         description="You can upload multiple images"
-        allowMultiple={true}
+        allowMultiple
         allowedFileExtensions={[".jpg", ".png", ".gif"]}
         maxSizeInMB={5}
         onChange={() => {}}

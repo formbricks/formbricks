@@ -89,7 +89,7 @@ function MultiSelect({
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = Boolean(hasOtherOption && otherOptionId && selectedValues.includes(otherOptionId));
 
-  const handleOptionChange = (optionId: string, checked: boolean) => {
+  const handleOptionChange = (optionId: string, checked: boolean): void => {
     if (checked) {
       onChange([...selectedValues, optionId]);
     } else {
@@ -97,7 +97,7 @@ function MultiSelect({
     }
   };
 
-  const handleOtherInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOtherInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onOtherValueChange?.(e.target.value);
   };
 
@@ -115,12 +115,11 @@ function MultiSelect({
   // Get selected option labels for dropdown display
   const selectedLabels = options.filter((opt) => selectedValues.includes(opt.id)).map((opt) => opt.label);
 
-  const displayText =
-    selectedLabels.length > 0
-      ? selectedLabels.length === 1
-        ? selectedLabels[0]
-        : `${selectedLabels.length} selected`
-      : placeholder;
+  let displayText = placeholder;
+  if (selectedLabels.length > 0) {
+    displayText =
+      selectedLabels.length === 1 ? selectedLabels[0] : `${String(selectedLabels.length)} selected`;
+  }
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
@@ -155,26 +154,30 @@ function MultiSelect({
                       key={option.id}
                       id={optionId}
                       checked={isChecked}
-                      onCheckedChange={(checked) => handleOptionChange(option.id, checked === true)}
+                      onCheckedChange={(checked) => {
+                        handleOptionChange(option.id, checked);
+                      }}
                       disabled={disabled}
                       className="cursor-pointer">
                       <Label>{option.label}</Label>
                     </DropdownMenuCheckboxItem>
                   );
                 })}
-                {hasOtherOption && otherOptionId && (
+                {hasOtherOption && otherOptionId ? (
                   <DropdownMenuCheckboxItem
                     id={`${inputId}-${otherOptionId}`}
                     checked={isOtherSelected}
-                    onCheckedChange={(checked) => handleOptionChange(otherOptionId, checked === true)}
+                    onCheckedChange={(checked) => {
+                      handleOptionChange(otherOptionId, checked);
+                    }}
                     disabled={disabled}
                     className="cursor-pointer">
                     <Label>{otherOptionLabel}</Label>
                   </DropdownMenuCheckboxItem>
-                )}
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
-            {isOtherSelected && (
+            {isOtherSelected ? (
               <Input
                 type="text"
                 value={otherValue}
@@ -183,9 +186,8 @@ function MultiSelect({
                 disabled={disabled}
                 dir={detectedDir}
                 className="w-full"
-                autoFocus
               />
-            )}
+            ) : null}
           </>
         ) : (
           <div className="space-y-3" role="group" aria-labelledby={inputId}>
@@ -204,7 +206,9 @@ function MultiSelect({
                   <Checkbox
                     id={optionId}
                     checked={isChecked}
-                    onCheckedChange={(checked) => handleOptionChange(option.id, checked === true)}
+                    onCheckedChange={(checked) => {
+                      handleOptionChange(option.id, checked === true);
+                    }}
                     disabled={disabled}
                     aria-invalid={Boolean(errorMessage)}
                   />
@@ -214,7 +218,7 @@ function MultiSelect({
                 </Label>
               );
             })}
-            {hasOtherOption && otherOptionId && (
+            {hasOtherOption && otherOptionId ? (
               <div className="space-y-2">
                 <label
                   htmlFor={`${inputId}-${otherOptionId}`}
@@ -225,7 +229,9 @@ function MultiSelect({
                   <Checkbox
                     id={`${inputId}-${otherOptionId}`}
                     checked={isOtherSelected}
-                    onCheckedChange={(checked) => handleOptionChange(otherOptionId, checked === true)}
+                    onCheckedChange={(checked) => {
+                      handleOptionChange(otherOptionId, checked === true);
+                    }}
                     disabled={disabled}
                     aria-invalid={Boolean(errorMessage)}
                   />
@@ -233,7 +239,7 @@ function MultiSelect({
                     {otherOptionLabel}
                   </span>
                 </label>
-                {isOtherSelected && (
+                {isOtherSelected ? (
                   <Input
                     type="text"
                     value={otherValue}
@@ -242,9 +248,9 @@ function MultiSelect({
                     disabled={disabled}
                     dir={detectedDir}
                   />
-                )}
+                ) : null}
               </div>
-            )}
+            ) : null}
           </div>
         )}
       </div>

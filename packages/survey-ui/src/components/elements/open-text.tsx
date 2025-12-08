@@ -45,13 +45,13 @@ function OpenText({
 }: OpenTextProps): React.JSX.Element {
   const [currentLength, setCurrentLength] = React.useState(value.length);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     const newValue = e.target.value;
     setCurrentLength(newValue.length);
-    onChange?.(newValue);
+    onChange(newValue);
   };
 
-  const renderCharLimit = () => {
+  const renderCharLimit = (): React.JSX.Element | null => {
     if (charLimit?.max === undefined) return null;
     const isOverLimit = currentLength >= charLimit.max;
     return (

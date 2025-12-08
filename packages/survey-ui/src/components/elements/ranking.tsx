@@ -74,7 +74,7 @@ function Ranking({
   }, [options, rankedIds]);
 
   // Handle item click (add to ranking or remove from ranking)
-  const handleItemClick = (item: RankingOption) => {
+  const handleItemClick = (item: RankingOption): void => {
     if (disabled) return;
 
     const isAlreadyRanked = rankedIds.includes(item.id);
@@ -84,7 +84,7 @@ function Ranking({
   };
 
   // Handle move up/down
-  const handleMove = (itemId: string, direction: "up" | "down") => {
+  const handleMove = (itemId: string, direction: "up" | "down"): void => {
     if (disabled) return;
 
     const index = rankedIds.findIndex((id) => id === itemId);
@@ -131,7 +131,9 @@ function Ranking({
                   )}>
                   <button
                     type="button"
-                    onClick={() => handleItemClick(item)}
+                    onClick={() => {
+                      handleItemClick(item);
+                    }}
                     disabled={disabled}
                     onKeyDown={(e) => {
                       if (disabled) return;
@@ -159,7 +161,7 @@ function Ranking({
                   </button>
 
                   {/* Up/Down buttons for ranked items */}
-                  {isRanked && (
+                  {isRanked ? (
                     <div className="border-input flex h-full grow-0 flex-col border-l">
                       <button
                         type="button"
@@ -192,7 +194,7 @@ function Ranking({
                         <ChevronDown className="h-5 w-5" />
                       </button>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               );
             })}

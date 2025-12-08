@@ -24,15 +24,15 @@ function ElementHeader({
         <Label htmlFor={htmlFor} variant="headline">
           {headline}
         </Label>
-        {required && <span>*</span>}
+        {required ? <span>*</span> : null}
       </div>
 
       {/* Description/Subheader */}
-      {description && (
+      {description ? (
         <Label htmlFor={htmlFor} variant="description">
           {description}
         </Label>
-      )}
+      ) : null}
     </div>
   );
 }

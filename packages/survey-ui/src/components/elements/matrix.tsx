@@ -58,22 +58,22 @@ function Matrix({
   dir = "auto",
   disabled = false,
 }: MatrixProps): React.JSX.Element {
-  // Ensure value is always an object
-  const selectedValues = value && typeof value === "object" ? value : {};
+  // Ensure value is always an object (value already has default of {})
+  const selectedValues = value;
 
   // Check which rows have errors (no selection when required)
   const hasError = Boolean(errorMessage);
   const rowsWithErrors = hasError && required ? rows.filter((row) => !selectedValues[row.id]) : [];
 
-  const handleRowChange = (rowId: string, columnId: string) => {
-    const newValue = { ...selectedValues };
+  const handleRowChange = (rowId: string, columnId: string): void => {
     // Toggle: if same column is selected, deselect it
-    if (newValue[rowId] === columnId) {
-      delete newValue[rowId];
+    if (selectedValues[rowId] === columnId) {
+      // Create new object without the rowId property
+      const { [rowId]: _, ...rest } = selectedValues;
+      onChange(rest);
     } else {
-      newValue[rowId] = columnId;
+      onChange({ ...selectedValues, [rowId]: columnId });
     }
-    onChange(newValue);
   };
 
   // Detect text direction from content
@@ -129,17 +129,19 @@ function Matrix({
                     <td className="px-1 py-2 align-middle">
                       <div className="flex flex-col gap-0 leading-none">
                         <Label className="text-xs font-medium">{row.label}</Label>
-                        {rowHasError && (
+                        {rowHasError ? (
                           <span className="text-xs font-normal" style={{ color: "hsl(0 65% 51%)" }}>
                             Select one option
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </td>
                     {/* Column options for this row - use RadioGroupPrimitive directly to avoid wrapper divs */}
                     <RadioGroupPrimitive.Root
                       value={selectedColumnId}
-                      onValueChange={(newColumnId) => handleRowChange(row.id, newColumnId)}
+                      onValueChange={(newColumnId) => {
+                        handleRowChange(row.id, newColumnId);
+                      }}
                       disabled={disabled}
                       dir={detectedDir}
                       className="contents"

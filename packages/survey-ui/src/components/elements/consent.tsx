@@ -52,7 +52,7 @@ function Consent({
     textContent: [headline, description ?? "", checkboxLabel],
   });
 
-  const handleCheckboxChange = (checked: boolean) => {
+  const handleCheckboxChange = (checked: boolean): void => {
     if (disabled) return;
     onChange(checked);
   };

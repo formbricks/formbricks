@@ -47,7 +47,7 @@ function DateQuestion({
   // Ensure value is always a string or undefined
   const currentValue = value ?? "";
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newValue = e.target.value;
     onChange(newValue);
   };

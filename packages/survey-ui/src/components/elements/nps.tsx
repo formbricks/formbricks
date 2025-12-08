@@ -61,7 +61,7 @@ function NPS({
   });
 
   // Handle NPS selection
-  const handleSelect = (npsValue: number) => {
+  const handleSelect = (npsValue: number): void => {
     if (!disabled) {
       onChange(npsValue);
     }
@@ -82,20 +82,29 @@ function NPS({
   };
 
   // Get NPS option color for color coding
-  const getNPSOptionColor = (idx: number) => {
+  const getNPSOptionColor = (idx: number): string => {
     if (idx > 8) return "bg-emerald-100"; // 9-10: Promoters (green)
     if (idx > 6) return "bg-orange-100"; // 7-8: Passives (orange)
     return "bg-rose-100"; // 0-6: Detractors (red)
   };
 
   // Render NPS option (0-10)
-  const renderNPSOption = (number: number) => {
+  const renderNPSOption = (number: number): React.JSX.Element => {
     const isSelected = currentValue === number;
     const isHovered = hoveredValue === number;
     const isLast = number === 10; // Last option is 10
     const isFirst = number === 0; // First option is 0
 
+    // Determine border radius classes
+    let borderRadiusClasses = "";
+    if (isLast) {
+      borderRadiusClasses = detectedDir === "rtl" ? "rounded-l-md border-l" : "rounded-r-md border-r";
+    } else if (isFirst) {
+      borderRadiusClasses = detectedDir === "rtl" ? "rounded-r-md border-r" : "rounded-l-md border-l";
+    }
+
     return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
         tabIndex={disabled ? -1 : 0}
@@ -103,30 +112,43 @@ function NPS({
         className={cn(
           "relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t transition-colors focus:border-2 focus:outline-none",
           isSelected ? "bg-accent border-primary z-10 border-2" : "border-input",
-          isLast ? (detectedDir === "rtl" ? "rounded-l-md border-l" : "rounded-r-md border-r") : "",
-          isFirst ? (detectedDir === "rtl" ? "rounded-r-md border-r" : "rounded-l-md border-l") : "",
+          borderRadiusClasses,
           isHovered && !isSelected && "bg-accent/50",
           colorCoding ? "min-h-[47px]" : "min-h-[41px]",
           disabled && "cursor-not-allowed opacity-50",
           "focus:border-primary"
         )}
-        onMouseEnter={() => !disabled && setHoveredValue(number)}
-        onMouseLeave={() => setHoveredValue(null)}
-        onFocus={() => !disabled && setHoveredValue(number)}
-        onBlur={() => setHoveredValue(null)}>
-        {colorCoding && (
+        onMouseEnter={() => {
+          if (!disabled) {
+            setHoveredValue(number);
+          }
+        }}
+        onMouseLeave={() => {
+          setHoveredValue(null);
+        }}
+        onFocus={() => {
+          if (!disabled) {
+            setHoveredValue(number);
+          }
+        }}
+        onBlur={() => {
+          setHoveredValue(null);
+        }}>
+        {colorCoding ? (
           <div className={cn("absolute left-0 top-0 h-[6px] w-full", getNPSOptionColor(number))} />
-        )}
+        ) : null}
         <input
           type="radio"
           name={inputId}
           value={number}
           checked={isSelected}
-          onChange={() => handleSelect(number)}
+          onChange={() => {
+            handleSelect(number);
+          }}
           disabled={disabled}
           required={required}
           className="sr-only"
-          aria-label={`Rate ${number} out of 10`}
+          aria-label={`Rate ${String(number)} out of 10`}
         />
         <span className="text-sm">{number}</span>
       </label>
@@ -149,23 +171,23 @@ function NPS({
           <div className="flex w-full">{npsOptions.map((number) => renderNPSOption(number))}</div>
 
           {/* Labels */}
-          {(lowerLabel || upperLabel) && (
+          {(lowerLabel ?? upperLabel) ? (
             <div className="mt-2 flex justify-between gap-8 px-1.5">
-              {lowerLabel && (
+              {lowerLabel ? (
                 <Label variant="default" className="max-w-[50%] text-xs leading-6" dir={detectedDir}>
                   {lowerLabel}
                 </Label>
-              )}
-              {upperLabel && (
+              ) : null}
+              {upperLabel ? (
                 <Label
                   variant="default"
                   className="max-w-[50%] text-right text-xs leading-6"
                   dir={detectedDir}>
                   {upperLabel}
                 </Label>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
         </fieldset>
       </div>
     </div>

@@ -423,7 +423,7 @@ export const MultipleQuestions: Story = {
         headline="How do you feel?"
         scale="smiley"
         range={5}
-        colorCoding={true}
+        colorCoding
       />
     </div>
   ),

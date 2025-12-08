@@ -60,7 +60,8 @@ function FormField({
 }: FormFieldProps): React.JSX.Element {
   // Ensure value is always an object
   const currentValues = React.useMemo(() => {
-    return typeof value === "object" && value !== null && !Array.isArray(value) ? value : {};
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- value can be undefined
+    return value ?? {};
   }, [value]);
 
   // Detect text direction from content
@@ -91,7 +92,7 @@ function FormField({
   };
 
   // Handle field value change
-  const handleFieldChange = (fieldId: string, fieldValue: string) => {
+  const handleFieldChange = (fieldId: string, fieldValue: string): void => {
     onChange({
       ...currentValues,
       [fieldId]: fieldValue,
@@ -131,7 +132,9 @@ function FormField({
                 type={inputType}
                 placeholder={field.placeholder}
                 value={fieldValue}
-                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                onChange={(e) => {
+                  handleFieldChange(field.id, e.target.value);
+                }}
                 required={fieldRequired}
                 disabled={disabled}
                 dir={!fieldValue ? detectedDir : "auto"}
@@ -143,9 +146,9 @@ function FormField({
       </div>
 
       {/* Error message (if not shown on first field) */}
-      {errorMessage && visibleFields.length === 0 && (
+      {errorMessage && visibleFields.length === 0 ? (
         <ElementError errorMessage={errorMessage} dir={detectedDir} />
-      )}
+      ) : null}
     </div>
   );
 }

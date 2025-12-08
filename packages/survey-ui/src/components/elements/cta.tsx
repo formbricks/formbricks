@@ -55,7 +55,7 @@ function CTA({
     textContent: [headline, description ?? "", buttonLabel],
   });
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (): void => {
     if (disabled) return;
     onClick();
 
@@ -81,7 +81,7 @@ function CTA({
             disabled={disabled}
             className="flex items-center gap-2">
             {buttonLabel}
-            {buttonExternal && <LinkIcon className="size-4" />}
+            {buttonExternal ? <LinkIcon className="size-4" /> : null}
           </Button>
         </div>
       </div>

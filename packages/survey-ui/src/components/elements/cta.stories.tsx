@@ -270,7 +270,7 @@ export const MultipleQuestions: Story = {
         description="Visit our website"
         buttonLabel="Visit Website"
         buttonUrl="https://example.com"
-        buttonExternal={true}
+        buttonExternal
         onClick={() => {}}
       />
     </div>

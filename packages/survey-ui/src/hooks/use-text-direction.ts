@@ -10,7 +10,7 @@ import { useMemo } from "react";
  * @example
  * detectTextDirection("Hello world") // returns 'ltr'
  * detectTextDirection("مرحبا بالعالم") // returns 'rtl'
- * detectTextDirection("123 !@#") // returns 'neutral'
+ * detectTextDirection("123 !#") // returns 'neutral'
  */
 function detectTextDirection(text: string): "rtl" | "ltr" | "neutral" {
   if (!text || text.trim().length === 0) {
@@ -65,9 +65,7 @@ export interface UseTextDirectionOptions {
 /**
  * Hook to detect and determine text direction for form elements
  *
- * @param options - Configuration options
- * @param options.dir - Explicit direction prop (if provided, takes precedence)
- * @param options.textContent - Text content(s) to analyze for automatic detection
+ * @param options - Configuration options containing dir and textContent
  * @returns The detected or provided text direction ("ltr" | "rtl" | undefined)
  *
  * @example
@@ -94,7 +92,7 @@ export function useTextDirection({ dir, textContent }: UseTextDirectionOptions):
     const textsToCheck = Array.isArray(textContent) ? textContent : [textContent];
 
     // Find the first non-empty text
-    const textToCheck = textsToCheck.find((text) => text && text.trim().length > 0) || "";
+    const textToCheck = textsToCheck.find((text) => text && text.trim().length > 0) ?? "";
 
     // Detect direction from text
     const detected = detectTextDirection(textToCheck);

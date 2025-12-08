@@ -369,7 +369,7 @@ export const MultipleQuestions: Story = {
         headline="How likely are you to recommend our service?"
         description="Please rate from 0 to 10"
         value={9}
-        colorCoding={true}
+        colorCoding
         lowerLabel="Not at all likely"
         upperLabel="Extremely likely"
       />

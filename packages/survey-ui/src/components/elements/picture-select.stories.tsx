@@ -340,7 +340,7 @@ export const MultipleQuestions: Story = {
         headline="Select all images you like"
         description="You can select multiple images"
         options={defaultOptions}
-        allowMulti={true}
+        allowMulti
         value={["option-1", "option-3"]}
         onChange={() => {}}
       />
