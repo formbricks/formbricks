@@ -329,7 +329,7 @@ export const validateSurveyImportAction = authenticatedActionClient
             : [parseResult.error],
         warnings: [],
         infos: [],
-        surveyName: parsedInput.surveyData.name || "",
+        surveyName: parsedInput.surveyData.data.name || "",
       };
     }
 

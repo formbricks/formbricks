@@ -30,8 +30,11 @@ export const ZExportedLanguage = z.object({
 
 export type TExportedLanguage = z.infer<typeof ZExportedLanguage>;
 
-// Full export payload schema - based on ZSurveyCreateInput input type with custom trigger/language format
-export const ZSurveyExportPayload = z.object({
+// Current export format version
+export const SURVEY_EXPORT_VERSION = "1.0.0";
+
+// Survey data schema - the actual survey content (nested under "data" in export)
+export const ZSurveyExportData = z.object({
   // Use the input shape from ZSurveyCreateInput and override what we need
   name: z.string(),
   type: z.string().optional(),
@@ -50,7 +53,7 @@ export const ZSurveyExportPayload = z.object({
   isBackButtonHidden: z.boolean().optional(),
   pin: z.string().nullable().optional(),
   welcomeCard: z.any().optional(),
-  questions: z.array(z.any()),
+  blocks: z.array(z.any()),
   endings: z.array(z.any()).optional(),
   hiddenFields: z.any().optional(),
   variables: z.array(z.any()).optional(),
@@ -64,10 +67,19 @@ export const ZSurveyExportPayload = z.object({
   followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).default([]),
 });
 
+export type TSurveyExportData = z.infer<typeof ZSurveyExportData>;
+
+// Full export payload with version and metadata wrapper
+export const ZSurveyExportPayload = z.object({
+  version: z.string(),
+  exportDate: z.string().datetime(),
+  data: ZSurveyExportData,
+});
+
 export type TSurveyExportPayload = z.infer<typeof ZSurveyExportPayload>;
 
 export const transformSurveyForExport = (survey: TSurvey): TSurveyExportPayload => {
-  const exportData: TSurveyExportPayload = {
+  const surveyData: TSurveyExportData = {
     name: survey.name,
     type: survey.type,
     status: survey.status,
@@ -83,7 +95,7 @@ export const transformSurveyForExport = (survey: TSurvey): TSurveyExportPayload 
     isBackButtonHidden: survey.isBackButtonHidden,
     pin: survey.pin,
     welcomeCard: survey.welcomeCard,
-    questions: survey.questions,
+    blocks: survey.blocks,
     endings: survey.endings,
     hiddenFields: survey.hiddenFields,
     variables: survey.variables,
@@ -125,5 +137,9 @@ export const transformSurveyForExport = (survey: TSurvey): TSurveyExportPayload 
       })) ?? [],
   };
 
-  return exportData;
+  return {
+    version: SURVEY_EXPORT_VERSION,
+    exportDate: new Date().toISOString(),
+    data: surveyData,
+  };
 };

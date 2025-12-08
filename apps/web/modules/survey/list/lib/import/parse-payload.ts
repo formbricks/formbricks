@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { TSurveyCreateInput, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import {
+  SURVEY_EXPORT_VERSION,
   type TExportedLanguage,
   type TExportedTrigger,
   ZExportedLanguage,
   ZExportedTrigger,
+  ZSurveyExportPayload,
 } from "../export-survey";
 
 export interface TParsedPayload {
@@ -23,7 +25,28 @@ export const parseSurveyPayload = (surveyData: unknown): TParsedPayload | TParse
     return { error: "Invalid survey data: expected an object" };
   }
 
-  const surveyDataCopy = { ...surveyData } as Record<string, unknown>;
+  let actualSurveyData: Record<string, unknown>;
+
+  // Check if this is the new versioned format (with version, exportDate, and data wrapper)
+  const versionedFormatCheck = ZSurveyExportPayload.safeParse(surveyData);
+  if (versionedFormatCheck.success) {
+    // New format: extract the data from the wrapper
+    const { version, data } = versionedFormatCheck.data;
+
+    // Validate version (for future compatibility)
+    if (version !== SURVEY_EXPORT_VERSION) {
+      console.warn(
+        `Import: Survey export version ${version} differs from current version ${SURVEY_EXPORT_VERSION}`
+      );
+    }
+
+    actualSurveyData = data as Record<string, unknown>;
+  } else {
+    // Legacy format or pre-versioning format: use data as-is
+    actualSurveyData = surveyData as Record<string, unknown>;
+  }
+
+  const surveyDataCopy = { ...actualSurveyData } as Record<string, unknown>;
 
   // Validate and extract languages
   const languagesResult = z.array(ZExportedLanguage).safeParse(surveyDataCopy.languages ?? []);

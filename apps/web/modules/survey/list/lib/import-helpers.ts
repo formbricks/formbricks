@@ -97,10 +97,15 @@ export const buildImportWarnings = async (
 export const detectImagesInSurvey = (survey: TSurveyCreateInput): boolean => {
   if (survey.welcomeCard?.fileUrl || survey.welcomeCard?.videoUrl) return true;
 
-  for (const q of survey.questions) {
-    if (q.imageUrl || q.videoUrl) return true;
-    if (q.type === "pictureSelection" && q.choices?.some((c) => c.imageUrl)) {
-      return true;
+  // Check blocks for images
+  if (survey.blocks) {
+    for (const block of survey.blocks) {
+      for (const element of block.elements) {
+        if (element.imageUrl || element.videoUrl) return true;
+        if (element.type === "pictureSelection" && element.choices?.some((c) => c.imageUrl)) {
+          return true;
+        }
+      }
     }
   }
 
