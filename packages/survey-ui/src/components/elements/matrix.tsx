@@ -119,33 +119,33 @@ function Matrix({
                 const baseBgColor = index % 2 === 0 ? "var(--fb-input-bg-color)" : "transparent";
 
                 return (
-                  <tr
+                  <RadioGroupPrimitive.Root
                     key={row.id}
-                    className={cn("relative")}
-                    style={{
-                      backgroundColor: rowHasError ? "var(--destructive-muted)" : baseBgColor, // destructive background muted (#fef2f2)
-                    }}>
-                    {/* Row label */}
-                    <td className="px-1 py-2 align-middle">
-                      <div className="flex flex-col gap-0 leading-none">
-                        <Label className="text-xs font-medium">{row.label}</Label>
-                        {rowHasError ? (
-                          <span className="text-xs font-normal" style={{ color: "hsl(0 65% 51%)" }}>
-                            Select one option
-                          </span>
-                        ) : null}
-                      </div>
-                    </td>
-                    {/* Column options for this row - use RadioGroupPrimitive directly to avoid wrapper divs */}
-                    <RadioGroupPrimitive.Root
-                      value={selectedColumnId}
-                      onValueChange={(newColumnId) => {
-                        handleRowChange(row.id, newColumnId);
-                      }}
-                      disabled={disabled}
-                      dir={detectedDir}
-                      className="contents"
-                      aria-invalid={Boolean(errorMessage)}>
+                    asChild
+                    value={selectedColumnId}
+                    onValueChange={(newColumnId) => {
+                      handleRowChange(row.id, newColumnId);
+                    }}
+                    disabled={disabled}
+                    dir={detectedDir}
+                    aria-invalid={Boolean(errorMessage)}>
+                    <tr
+                      className={cn("relative")}
+                      style={{
+                        backgroundColor: rowHasError ? "var(--destructive-muted)" : baseBgColor, // destructive background muted (#fef2f2)
+                      }}>
+                      {/* Row label */}
+                      <td className="px-1 py-2 align-middle">
+                        <div className="flex flex-col gap-0 leading-none">
+                          <Label className="text-xs font-medium">{row.label}</Label>
+                          {rowHasError ? (
+                            <span className="text-xs font-normal" style={{ color: "hsl(0 65% 51%)" }}>
+                              Select one option
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                      {/* Column options for this row */}
                       {columns.map((column) => {
                         const cellId = `${rowGroupId}-${column.id}`;
 
@@ -157,8 +157,8 @@ function Matrix({
                           </td>
                         );
                       })}
-                    </RadioGroupPrimitive.Root>
-                  </tr>
+                    </tr>
+                  </RadioGroupPrimitive.Root>
                 );
               })}
             </tbody>

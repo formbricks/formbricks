@@ -233,6 +233,8 @@ export const StylingPlayground: Story = {
 
 export const Default: Story = {
   args: {
+    elementId: "matrix-default",
+    inputId: "matrix-default-input",
     headline: "Rate each item",
     rows: defaultRows,
     columns: defaultColumns,
@@ -241,6 +243,8 @@ export const Default: Story = {
 
 export const WithDescription: Story = {
   args: {
+    elementId: "matrix-with-description",
+    inputId: "matrix-with-description-input",
     headline: "How satisfied are you with each feature?",
     description: "Please rate each feature on a scale from 1 to 5",
     rows: [
@@ -260,6 +264,8 @@ export const WithDescription: Story = {
 
 export const Required: Story = {
   args: {
+    elementId: "matrix-required",
+    inputId: "matrix-required-input",
     headline: "Rate each item",
     description: "Please select a value for each row",
     rows: defaultRows,
@@ -270,6 +276,8 @@ export const Required: Story = {
 
 export const WithSelections: Story = {
   args: {
+    elementId: "matrix-selections",
+    inputId: "matrix-selections-input",
     headline: "Rate each item",
     description: "Select a value for each row",
     rows: defaultRows,
@@ -283,6 +291,8 @@ export const WithSelections: Story = {
 
 export const WithError: Story = {
   args: {
+    elementId: "matrix-error",
+    inputId: "matrix-error-input",
     headline: "Rate each item",
     description: "Please select a value for each row",
     rows: defaultRows,
@@ -294,6 +304,8 @@ export const WithError: Story = {
 
 export const Disabled: Story = {
   args: {
+    elementId: "matrix-disabled",
+    inputId: "matrix-disabled-input",
     headline: "This question is disabled",
     description: "You cannot change the selection",
     rows: defaultRows,
@@ -308,6 +320,8 @@ export const Disabled: Story = {
 
 export const RatingScale: Story = {
   args: {
+    elementId: "matrix-rating-scale",
+    inputId: "matrix-rating-scale-input",
     headline: "Rate your experience",
     description: "How would you rate each aspect?",
     rows: [
@@ -328,6 +342,8 @@ export const RatingScale: Story = {
 
 export const NumericScale: Story = {
   args: {
+    elementId: "matrix-numeric-scale",
+    inputId: "matrix-numeric-scale-input",
     headline: "Rate from 0 to 10",
     description: "Select a number for each item",
     rows: [
@@ -353,6 +369,8 @@ export const NumericScale: Story = {
 
 export const RTL: Story = {
   args: {
+    elementId: "matrix-rtl",
+    inputId: "matrix-rtl-input",
     headline: "قيم كل عنصر",
     description: "اختر قيمة لكل صف",
     rows: [
@@ -371,6 +389,8 @@ export const RTL: Story = {
 
 export const RTLWithSelections: Story = {
   args: {
+    elementId: "matrix-rtl-selections",
+    inputId: "matrix-rtl-selections-input",
     headline: "قيم كل عنصر",
     description: "يرجى اختيار قيمة لكل صف",
     rows: [

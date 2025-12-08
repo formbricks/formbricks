@@ -13,6 +13,7 @@ function Progress({ className, value, ...props }: ProgressProps): React.JSX.Elem
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
+      value={progressValue}
       className={cn("relative w-full overflow-hidden", className)}
       style={{
         height: "var(--fb-progress-track-height)",

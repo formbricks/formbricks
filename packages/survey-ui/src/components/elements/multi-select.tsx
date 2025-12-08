@@ -190,7 +190,7 @@ function MultiSelect({
             ) : null}
           </>
         ) : (
-          <div className="space-y-3" role="group" aria-labelledby={inputId}>
+          <div className="space-y-3" role="group" aria-label={headline}>
             {options.map((option) => {
               const isChecked = selectedValues.includes(option.id);
               const optionId = `${inputId}-${option.id}`;

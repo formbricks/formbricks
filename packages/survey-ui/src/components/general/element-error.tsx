@@ -1,5 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface ElementErrorProps {
   /** Error message to display */
@@ -16,7 +17,12 @@ function ElementError({ errorMessage, dir = "auto" }: ElementErrorProps): React.
   return (
     <>
       {/* Error indicator bar */}
-      <div className="bg-destructive absolute bottom-0 left-[-12px] top-0 w-[4px]" />
+      <div
+        className={cn(
+          "bg-destructive absolute bottom-0 top-0 w-[4px]",
+          dir === "rtl" ? "right-[-12px]" : "left-[-12px]"
+        )}
+      />
       {/* Error message - shown at top */}
       <div className="text-destructive flex items-center gap-1 text-sm" dir={dir}>
         <AlertCircle className="size-4" />

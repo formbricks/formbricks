@@ -54,7 +54,7 @@ function Ranking({
   disabled = false,
 }: RankingProps): React.JSX.Element {
   // Ensure value is always an array
-  const rankedIds = Array.isArray(value) ? value : [];
+  const rankedIds = React.useMemo(() => (Array.isArray(value) ? value : []), [value]);
 
   // Detect text direction from content
   const detectedDir = useTextDirection({

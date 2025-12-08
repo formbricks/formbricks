@@ -8,6 +8,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/general/dropdown-menu";
+import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { Label } from "@/components/general/label";
@@ -119,6 +120,7 @@ function SingleSelect({
       <div className="space-y-3">
         {variant === "dropdown" ? (
           <>
+            <ElementError errorMessage={errorMessage} dir={detectedDir} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
