@@ -13,9 +13,9 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       style={{
-        borderColor: "var(--fb-input-border-color, currentColor)",
-        backgroundColor: "var(--fb-input-bg-color, currentColor)",
-        color: "var(--fb-input-color, currentColor)",
+        borderColor: "var(--fb-input-border-color)",
+        backgroundColor: "var(--fb-input-bg-color)",
+        color: "var(--fb-input-color)",
       }}
       className={cn(
         "border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:data-[state=checked]:bg-primary data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive shadow-xs peer size-4 shrink-0 rounded-[4px] border outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",

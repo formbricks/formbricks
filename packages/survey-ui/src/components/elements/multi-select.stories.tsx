@@ -81,6 +81,17 @@ const meta: Meta<StoryProps> = {
       description: "Whether the options are disabled",
       table: { category: "State" },
     },
+    variant: {
+      control: { type: "select" },
+      options: ["list", "dropdown"],
+      description: "Display variant: 'list' shows checkboxes, 'dropdown' shows a dropdown menu",
+      table: { category: "Layout" },
+    },
+    placeholder: {
+      control: "text",
+      description: "Placeholder text for dropdown button when no options are selected",
+      table: { category: "Content" },
+    },
     onChange: {
       action: "changed",
       table: { category: "Events" },
@@ -359,4 +370,105 @@ export const MultipleQuestions: Story = {
       />
     </div>
   ),
+};
+
+export const Dropdown: Story = {
+  args: {
+    headline: "Which features do you use?",
+    description: "Select all that apply",
+    options: defaultOptions,
+    variant: "dropdown",
+    placeholder: "Select options...",
+  },
+};
+
+export const DropdownWithSelections: Story = {
+  args: {
+    headline: "Which features do you use?",
+    description: "Select all that apply",
+    options: defaultOptions,
+    value: ["option-1", "option-3"],
+    variant: "dropdown",
+    placeholder: "Select options...",
+  },
+};
+
+export const WithOtherOption: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string[]>([]);
+    const [otherValue, setOtherValue] = React.useState<string>("");
+
+    return (
+      <div className="w-[600px]">
+        <MultiSelect
+          elementId="multi-select-other"
+          inputId="multi-select-other-input"
+          headline="Which features do you use?"
+          description="Select all that apply"
+          options={defaultOptions}
+          value={value}
+          onChange={setValue}
+          otherOptionId="other"
+          otherOptionLabel="Other"
+          otherOptionPlaceholder="Please specify"
+          otherValue={otherValue}
+          onOtherValueChange={setOtherValue}
+        />
+      </div>
+    );
+  },
+};
+
+export const WithOtherOptionSelected: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string[]>(["option-1", "other"]);
+    const [otherValue, setOtherValue] = React.useState<string>("Custom feature");
+
+    return (
+      <div className="w-[600px]">
+        <MultiSelect
+          elementId="multi-select-other-selected"
+          inputId="multi-select-other-selected-input"
+          headline="Which features do you use?"
+          description="Select all that apply"
+          options={defaultOptions}
+          value={value}
+          onChange={setValue}
+          otherOptionId="other"
+          otherOptionLabel="Other"
+          otherOptionPlaceholder="Please specify"
+          otherValue={otherValue}
+          onOtherValueChange={setOtherValue}
+        />
+      </div>
+    );
+  },
+};
+
+export const DropdownWithOtherOption: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string[]>([]);
+    const [otherValue, setOtherValue] = React.useState<string>("");
+
+    return (
+      <div className="w-[600px]">
+        <MultiSelect
+          elementId="multi-select-dropdown-other"
+          inputId="multi-select-dropdown-other-input"
+          headline="Which features do you use?"
+          description="Select all that apply"
+          options={defaultOptions}
+          value={value}
+          onChange={setValue}
+          variant="dropdown"
+          placeholder="Select options..."
+          otherOptionId="other"
+          otherOptionLabel="Other"
+          otherOptionPlaceholder="Please specify"
+          otherValue={otherValue}
+          onOtherValueChange={setOtherValue}
+        />
+      </div>
+    );
+  },
 };

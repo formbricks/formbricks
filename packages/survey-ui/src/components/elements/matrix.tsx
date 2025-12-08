@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTextDirection } from "../../hooks/use-text-direction";
 import { cn } from "../../lib/utils";
 import { ElementHeader } from "../general/element-header";
+import { Label } from "../general/label";
 import { RadioGroupItem } from "../general/radio-group";
 
 /**
@@ -116,17 +117,8 @@ function Matrix({
               <tr>
                 <th className="p-2 text-left" />
                 {columns.map((column) => (
-                  <th
-                    key={column.id}
-                    className="p-2 text-center font-normal"
-                    style={{
-                      fontFamily: "var(--fb-option-label-font-family, inherit)",
-                      fontSize: "var(--fb-option-label-font-size, 0.875rem)",
-                      fontWeight:
-                        "var(--fb-option-label-font-weight, 400)" as React.CSSProperties["fontWeight"],
-                      color: "var(--fb-option-label-color, currentColor)",
-                    }}>
-                    {column.label}
+                  <th key={column.id} className="p-2 text-center font-normal">
+                    <Label>{column.label}</Label>
                   </th>
                 ))}
               </tr>
@@ -137,8 +129,7 @@ function Matrix({
                 const rowGroupId = `${inputId}-row-${row.id}`;
                 const selectedColumnId = selectedValues[row.id];
                 const rowHasError = rowsWithErrors.includes(row);
-                const baseBgColor =
-                  index % 2 === 0 ? "var(--fb-input-bg-color, currentColor)" : "transparent";
+                const baseBgColor = index % 2 === 0 ? "var(--fb-input-bg-color)" : "transparent";
 
                 return (
                   <tr
@@ -148,23 +139,9 @@ function Matrix({
                       backgroundColor: rowHasError ? "var(--destructive)" : baseBgColor, // destructive background muted (#fef2f2)
                     }}>
                     {/* Row label */}
-                    <td
-                      className="px-1 py-2 align-middle"
-                      style={{
-                        fontFamily: "var(--fb-option-label-font-family, inherit)",
-                        fontSize: "var(--fb-option-label-font-size, 0.875rem)",
-                        fontWeight:
-                          "var(--fb-option-label-font-weight, 400)" as React.CSSProperties["fontWeight"],
-                        color: "var(--fb-option-label-color, currentColor)",
-                      }}>
+                    <td className="px-1 py-2 align-middle">
                       <div className="flex flex-col gap-0 leading-none">
-                        <span
-                          className="text-xs"
-                          style={{
-                            fontWeight: "500" as React.CSSProperties["fontWeight"],
-                          }}>
-                          {row.label}
-                        </span>
+                        <Label className="text-xs font-medium">{row.label}</Label>
                         {rowHasError && (
                           <span className="text-xs font-normal" style={{ color: "hsl(0 65% 51%)" }}>
                             Select one option

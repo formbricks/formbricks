@@ -43,8 +43,8 @@ function RadioGroupItem({
   return (
     <RadioGroupPrimitive.Item
       style={{
-        borderColor: "var(--fb-input-border-color, currentColor)",
-        color: "var(--fb-input-color, currentColor)",
+        borderColor: "var(--fb-input-border-color)",
+        color: "var(--fb-input-color)",
       }}
       data-slot="radio-group-item"
       className={cn(
@@ -56,7 +56,7 @@ function RadioGroupItem({
         data-slot="radio-group-indicator"
         className="relative flex items-center justify-center">
         <CircleIcon
-          style={{ fill: "var(--fb-input-color, currentColor)" }}
+          style={{ fill: "var(--fb-input-color)" }}
           className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2"
         />
       </RadioGroupPrimitive.Indicator>

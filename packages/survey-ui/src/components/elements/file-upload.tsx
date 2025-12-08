@@ -180,11 +180,9 @@ function FileUpload({
             errorMessage && "border-destructive"
           )}
           style={{
-            borderColor: errorMessage
-              ? "var(--destructive, hsl(0 84.2% 60%))"
-              : "var(--fb-input-border-color, hsl(214.3 31.8% 91.4%))",
-            borderRadius: "var(--fb-input-border-radius, 0.5rem)",
-            boxShadow: "var(--fb-input-shadow, 0 1px 2px 0 rgb(0 0 0 / 0.05))",
+            borderColor: errorMessage ? "var(--destructive)" : "var(--fb-input-border-color)",
+            borderRadius: "var(--fb-input-border-radius)",
+            boxShadow: "var(--fb-input-shadow)",
           }}>
           {/* Input Field Content */}
           <div
@@ -193,10 +191,8 @@ function FileUpload({
               disabled && "cursor-not-allowed opacity-50"
             )}
             style={{
-              backgroundColor: "var(--fb-input-bg-color, transparent)",
-              borderColor: errorMessage
-                ? "var(--destructive, hsl(0 84.2% 60%))"
-                : "var(--fb-input-border-color, hsl(214.3 31.8% 91.4%))",
+              backgroundColor: "var(--fb-input-bg-color)",
+              borderColor: errorMessage ? "var(--destructive)" : "var(--fb-input-border-color)",
             }}>
             {/* Browse button - first (left for LTR, right for RTL) */}
             <button
@@ -209,7 +205,7 @@ function FileUpload({
                 disabled && "cursor-not-allowed opacity-50"
               )}
               style={{
-                color: "var(--fb-input-color, hsl(222.2 84% 4.9%))",
+                color: "var(--fb-input-color)",
               }}
               dir={detectedDir}>
               Browse...
@@ -219,10 +215,10 @@ function FileUpload({
             <p
               className="flex-1 truncate whitespace-nowrap text-sm"
               style={{
-                fontFamily: "var(--fb-input-font-family, inherit)",
-                fontSize: "var(--fb-input-font-size, 0.875rem)",
-                fontWeight: "var(--fb-input-font-weight, 400)" as React.CSSProperties["fontWeight"],
-                color: "var(--fb-input-color, hsl(222.2 84% 4.9%))",
+                fontFamily: "var(--fb-input-font-family)",
+                fontSize: "var(--fb-input-font-size)",
+                fontWeight: "var(--fb-input-font-weight)" as React.CSSProperties["fontWeight"],
+                color: "var(--fb-input-color)",
               }}
               dir={detectedDir}>
               {displayFileName}

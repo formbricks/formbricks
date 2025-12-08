@@ -118,7 +118,7 @@ function PictureSelect({
                 disabled && "cursor-not-allowed opacity-50"
               )}
               style={{
-                backgroundColor: "var(--fb-input-bg-color, hsl(0 0% 96%))",
+                backgroundColor: "var(--fb-input-bg-color)",
                 borderRadius: "5px",
               }}
               onClick={() => handleOptionChange(option.id)}

@@ -81,6 +81,17 @@ const meta: Meta<StoryProps> = {
       description: "Whether the options are disabled",
       table: { category: "State" },
     },
+    variant: {
+      control: { type: "select" },
+      options: ["list", "dropdown"],
+      description: "Display variant: 'list' shows radio buttons, 'dropdown' shows a dropdown menu",
+      table: { category: "Layout" },
+    },
+    placeholder: {
+      control: "text",
+      description: "Placeholder text for dropdown button when no option is selected",
+      table: { category: "Content" },
+    },
     onChange: {
       action: "changed",
       table: { category: "Events" },
@@ -339,4 +350,105 @@ export const MultipleQuestions: Story = {
       />
     </div>
   ),
+};
+
+export const Dropdown: Story = {
+  args: {
+    headline: "Which option do you prefer?",
+    description: "Select one option",
+    options: defaultOptions,
+    variant: "dropdown",
+    placeholder: "Choose an option...",
+  },
+};
+
+export const DropdownWithSelection: Story = {
+  args: {
+    headline: "Which option do you prefer?",
+    description: "Select one option",
+    options: defaultOptions,
+    value: "option-2",
+    variant: "dropdown",
+    placeholder: "Choose an option...",
+  },
+};
+
+export const WithOtherOption: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string | undefined>(undefined);
+    const [otherValue, setOtherValue] = React.useState<string>("");
+
+    return (
+      <div className="w-[600px]">
+        <SingleSelect
+          elementId="single-select-other"
+          inputId="single-select-other-input"
+          headline="Which option do you prefer?"
+          description="Select one option"
+          options={defaultOptions}
+          value={value}
+          onChange={setValue}
+          otherOptionId="other"
+          otherOptionLabel="Other"
+          otherOptionPlaceholder="Please specify"
+          otherValue={otherValue}
+          onOtherValueChange={setOtherValue}
+        />
+      </div>
+    );
+  },
+};
+
+export const WithOtherOptionSelected: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string>("other");
+    const [otherValue, setOtherValue] = React.useState<string>("Custom option");
+
+    return (
+      <div className="w-[600px]">
+        <SingleSelect
+          elementId="single-select-other-selected"
+          inputId="single-select-other-selected-input"
+          headline="Which option do you prefer?"
+          description="Select one option"
+          options={defaultOptions}
+          value={value}
+          onChange={setValue}
+          otherOptionId="other"
+          otherOptionLabel="Other"
+          otherOptionPlaceholder="Please specify"
+          otherValue={otherValue}
+          onOtherValueChange={setOtherValue}
+        />
+      </div>
+    );
+  },
+};
+
+export const DropdownWithOtherOption: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string | undefined>(undefined);
+    const [otherValue, setOtherValue] = React.useState<string>("");
+
+    return (
+      <div className="w-[600px]">
+        <SingleSelect
+          elementId="single-select-dropdown-other"
+          inputId="single-select-dropdown-other-input"
+          headline="Which option do you prefer?"
+          description="Select one option"
+          options={defaultOptions}
+          value={value}
+          onChange={setValue}
+          variant="dropdown"
+          placeholder="Choose an option..."
+          otherOptionId="other"
+          otherOptionLabel="Other"
+          otherOptionPlaceholder="Please specify"
+          otherValue={otherValue}
+          onOtherValueChange={setOtherValue}
+        />
+      </div>
+    );
+  },
 };
