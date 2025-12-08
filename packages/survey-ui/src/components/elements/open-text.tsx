@@ -1,9 +1,9 @@
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { cn } from "../../lib/utils";
-import { ElementHeader } from "../general/element-header";
-import { Input } from "../general/input";
-import { Textarea } from "../general/textarea";
+import { ElementHeader } from "@/components/general/element-header";
+import { Input } from "@/components/general/input";
+import { Textarea } from "@/components/general/textarea";
+import { useTextDirection } from "@/hooks/use-text-direction";
+import { cn } from "@/lib/utils";
 
 interface OpenTextProps {
   elementId: string;

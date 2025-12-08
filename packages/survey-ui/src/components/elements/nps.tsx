@@ -1,9 +1,9 @@
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { cn } from "../../lib/utils";
-import { ElementError } from "../general/element-error";
-import { ElementHeader } from "../general/element-header";
-import { Label } from "../general/label";
+import { ElementError } from "@/components/general/element-error";
+import { ElementHeader } from "@/components/general/element-header";
+import { Label } from "@/components/general/label";
+import { useTextDirection } from "@/hooks/use-text-direction";
+import { cn } from "@/lib/utils";
 
 interface NPSProps {
   /** Unique identifier for the element container */

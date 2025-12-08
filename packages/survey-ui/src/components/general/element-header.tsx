@@ -1,6 +1,6 @@
 import * as React from "react";
-import { cn } from "../../lib/utils";
-import { Label } from "./label";
+import { Label } from "@/components/general/label";
+import { cn } from "@/lib/utils";
 
 interface ElementHeaderProps extends React.ComponentProps<"div"> {
   headline: string;

@@ -1,11 +1,11 @@
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { cn } from "../../lib/utils";
-import { Checkbox } from "../general/checkbox";
-import { ElementError } from "../general/element-error";
-import { ElementHeader } from "../general/element-header";
-import { RadioGroupItem } from "../general/radio-group";
+import { Checkbox } from "@/components/general/checkbox";
+import { ElementError } from "@/components/general/element-error";
+import { ElementHeader } from "@/components/general/element-header";
+import { RadioGroupItem } from "@/components/general/radio-group";
+import { useTextDirection } from "@/hooks/use-text-direction";
+import { cn } from "@/lib/utils";
 
 /**
  * Picture option for picture select question

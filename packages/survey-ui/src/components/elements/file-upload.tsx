@@ -1,9 +1,9 @@
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { cn } from "../../lib/utils";
-import { ElementError } from "../general/element-error";
-import { ElementHeader } from "../general/element-header";
-import { Input } from "../general/input";
+import { ElementError } from "@/components/general/element-error";
+import { ElementHeader } from "@/components/general/element-header";
+import { Input } from "@/components/general/input";
+import { useTextDirection } from "@/hooks/use-text-direction";
+import { cn } from "@/lib/utils";
 
 /**
  * Uploaded file information

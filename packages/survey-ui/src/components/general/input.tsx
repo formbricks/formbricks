@@ -1,10 +1,10 @@
 import { AlertCircle } from "lucide-react";
 import * as React from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 
 interface InputProps extends React.ComponentProps<"input"> {
   /** Text direction for RTL language support */
-  dir?: "ltr" | "rtl";
+  dir?: "ltr" | "rtl" | "auto";
   /** Error message to display above the input */
   errorMessage?: string;
 }

@@ -1,7 +1,7 @@
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { ElementHeader } from "../general/element-header";
-import { Input } from "../general/input";
+import { ElementHeader } from "@/components/general/element-header";
+import { Input } from "@/components/general/input";
+import { useTextDirection } from "@/hooks/use-text-direction";
 
 interface DateQuestionProps {
   /** Unique identifier for the element container */

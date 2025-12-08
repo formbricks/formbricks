@@ -1,19 +1,19 @@
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { cn } from "../../lib/utils";
-import { Button } from "../general/button";
+import { Button } from "@/components/general/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "../general/dropdown-menu";
-import { ElementHeader } from "../general/element-header";
-import { Input } from "../general/input";
-import { Label } from "../general/label";
-import { RadioGroup, RadioGroupItem } from "../general/radio-group";
+} from "@/components/general/dropdown-menu";
+import { ElementHeader } from "@/components/general/element-header";
+import { Input } from "@/components/general/input";
+import { Label } from "@/components/general/label";
+import { RadioGroup, RadioGroupItem } from "@/components/general/radio-group";
+import { useTextDirection } from "@/hooks/use-text-direction";
+import { cn } from "@/lib/utils";
 
 /**
  * Option for single-select question

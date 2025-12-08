@@ -1,10 +1,9 @@
 import { LinkIcon } from "lucide-react";
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { cn } from "../../lib/utils";
-import { Button } from "../general/button";
-import { ElementError } from "../general/element-error";
-import { ElementHeader } from "../general/element-header";
+import { Button } from "@/components/general/button";
+import { ElementError } from "@/components/general/element-error";
+import { ElementHeader } from "@/components/general/element-header";
+import { useTextDirection } from "@/hooks/use-text-direction";
 
 /**
  * Props for the CTA (Call to Action) question component
@@ -91,4 +90,3 @@ function CTA({
 }
 
 export { CTA };
-export type { CTAProps };

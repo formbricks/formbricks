@@ -1,10 +1,8 @@
 import { Star } from "lucide-react";
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { cn } from "../../lib/utils";
-import { ElementError } from "../general/element-error";
-import { ElementHeader } from "../general/element-header";
-import { Label } from "../general/label";
+import { ElementError } from "@/components/general/element-error";
+import { ElementHeader } from "@/components/general/element-header";
+import { Label } from "@/components/general/label";
 import {
   ConfusedFace,
   FrowningFace,
@@ -16,7 +14,9 @@ import {
   SmilingFaceWithSmilingEyes,
   TiredFace,
   WearyFace,
-} from "../general/smileys";
+} from "@/components/general/smileys";
+import { useTextDirection } from "@/hooks/use-text-direction";
+import { cn } from "@/lib/utils";
 
 /**
  * Get smiley color class based on range and index

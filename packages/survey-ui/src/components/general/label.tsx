@@ -3,7 +3,7 @@
 import * as LabelPrimitive from "@radix-ui/react-label";
 import DOMPurify from "isomorphic-dompurify";
 import * as React from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 
 interface LabelProps extends React.ComponentProps<typeof LabelPrimitive.Root> {
   /** Label variant for different styling contexts */

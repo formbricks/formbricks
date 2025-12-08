@@ -1,19 +1,19 @@
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { cn } from "../../lib/utils";
-import { Button } from "../general/button";
-import { Checkbox } from "../general/checkbox";
+import { Button } from "@/components/general/button";
+import { Checkbox } from "@/components/general/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "../general/dropdown-menu";
-import { ElementError } from "../general/element-error";
-import { ElementHeader } from "../general/element-header";
-import { Input } from "../general/input";
-import { Label } from "../general/label";
+} from "@/components/general/dropdown-menu";
+import { ElementError } from "@/components/general/element-error";
+import { ElementHeader } from "@/components/general/element-header";
+import { Input } from "@/components/general/input";
+import { Label } from "@/components/general/label";
+import { useTextDirection } from "@/hooks/use-text-direction";
+import { cn } from "@/lib/utils";
 
 /**
  * Option for multi-select question

@@ -1,9 +1,9 @@
 import * as React from "react";
-import { useTextDirection } from "../../hooks/use-text-direction";
-import { cn } from "../../lib/utils";
-import { Checkbox } from "../general/checkbox";
-import { ElementError } from "../general/element-error";
-import { ElementHeader } from "../general/element-header";
+import { Checkbox } from "@/components/general/checkbox";
+import { ElementError } from "@/components/general/element-error";
+import { ElementHeader } from "@/components/general/element-header";
+import { useTextDirection } from "@/hooks/use-text-direction";
+import { cn } from "@/lib/utils";
 
 /**
  * Props for the Consent question component
