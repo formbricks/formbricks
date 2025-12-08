@@ -51,6 +51,22 @@ export const POST = async (request: Request) => {
     throw new ResourceNotFoundError("Organization", "Organization not found");
   }
 
+  // Fetch survey for webhook payload
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    logger.error({ url: request.url, surveyId }, `Survey with id ${surveyId} not found`);
+
+    return responses.notFoundResponse("Survey", surveyId, true);
+  }
+
+  if (survey.environmentId !== environmentId) {
+    logger.error(
+      { url: request.url, surveyId, environmentId, surveyEnvironmentId: survey.environmentId },
+      `Survey ${surveyId} does not belong to environment ${environmentId}`
+    );
+    return responses.badRequestResponse("Survey not found in this environment");
+  }
+
   // Fetch webhooks
   const getWebhooksForPipeline = async (environmentId: string, event: PipelineTriggers, surveyId: string) => {
     const webhooks = await prisma.webhook.findMany({
@@ -81,7 +97,16 @@ export const POST = async (request: Request) => {
       body: JSON.stringify({
         webhookId: webhook.id,
         event,
-        data: response,
+        data: {
+          ...response,
+          survey: {
+            title: survey.name,
+            type: survey.type,
+            status: survey.status,
+            createdAt: survey.createdAt,
+            updatedAt: survey.updatedAt,
+          },
+        },
       }),
     }).catch((error) => {
       logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
@@ -89,17 +114,11 @@ export const POST = async (request: Request) => {
   );
 
   if (event === "responseFinished") {
-    // Fetch integrations, survey, and responseCount in parallel
-    const [integrations, survey, responseCount] = await Promise.all([
+    // Fetch integrations and responseCount in parallel
+    const [integrations, responseCount] = await Promise.all([
       getIntegrations(environmentId),
-      getSurvey(surveyId),
       getResponseCountBySurveyId(surveyId),
     ]);
-
-    if (!survey) {
-      logger.error({ url: request.url, surveyId }, `Survey with id ${surveyId} not found`);
-      return new Response("Survey not found", { status: 404 });
-    }
 
     if (integrations.length > 0) {
       await handleIntegrations(integrations, inputValidation.data, survey);
