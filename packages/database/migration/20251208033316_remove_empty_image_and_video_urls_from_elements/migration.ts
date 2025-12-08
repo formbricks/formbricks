@@ -9,7 +9,7 @@ export const removeEmptyImageAndVideoUrlsFromElements: MigrationScript = {
   run: async ({ tx }) => {
     // Find all surveys with empty imageUrl or videoUrl
     const countQuery = `
-      SELECT s.*
+      SELECT s.id,s.blocks
       FROM "Survey" AS s 
       WHERE EXISTS (
         SELECT 1 
