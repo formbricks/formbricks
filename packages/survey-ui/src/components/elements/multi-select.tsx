@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "../general/dropdown-menu";
+import { ElementError } from "../general/element-error";
 import { ElementHeader } from "../general/element-header";
 import { Input } from "../general/input";
 import { Label } from "../general/label";
@@ -127,12 +128,8 @@ function MultiSelect({
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Options */}
-      <div className="space-y-3">
-        {errorMessage && (
-          <div className="text-destructive flex items-center gap-1 text-sm" dir={detectedDir}>
-            <span>{errorMessage}</span>
-          </div>
-        )}
+      <div className="relative space-y-3">
+        <ElementError errorMessage={errorMessage} dir={detectedDir} />
 
         {variant === "dropdown" ? (
           <DropdownMenu>

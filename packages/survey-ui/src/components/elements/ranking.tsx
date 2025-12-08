@@ -1,7 +1,8 @@
-import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 import { useTextDirection } from "../../hooks/use-text-direction";
 import { cn } from "../../lib/utils";
+import { ElementError } from "../general/element-error";
 import { ElementHeader } from "../general/element-header";
 
 /**
@@ -107,15 +108,7 @@ function Ranking({
 
       {/* Ranking Options */}
       <div className="relative space-y-2">
-        {/* Error indicator bar */}
-        {errorMessage && <div className="bg-destructive absolute bottom-0 left-[-12px] top-0 w-[4px]" />}
-        {/* Error message - shown at top */}
-        {errorMessage && (
-          <div className="text-destructive flex items-center gap-1 text-sm" dir={detectedDir}>
-            <AlertCircle className="size-4" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
+        <ElementError errorMessage={errorMessage} dir={detectedDir} />
 
         <fieldset className="w-full">
           <legend className="sr-only">Ranking options</legend>

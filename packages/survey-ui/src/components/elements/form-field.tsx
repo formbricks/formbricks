@@ -1,6 +1,6 @@
-import { AlertCircle } from "lucide-react";
 import * as React from "react";
 import { useTextDirection } from "../../hooks/use-text-direction";
+import { ElementError } from "../general/element-error";
 import { ElementHeader } from "../general/element-header";
 import { Input } from "../general/input";
 import { Label } from "../general/label";
@@ -144,10 +144,7 @@ function FormField({
 
       {/* Error message (if not shown on first field) */}
       {errorMessage && visibleFields.length === 0 && (
-        <div className="text-destructive flex items-center gap-1 text-sm" dir={detectedDir}>
-          <AlertCircle className="size-4" />
-          <span>{errorMessage}</span>
-        </div>
+        <ElementError errorMessage={errorMessage} dir={detectedDir} />
       )}
     </div>
   );

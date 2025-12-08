@@ -3,6 +3,7 @@ import * as React from "react";
 import { useTextDirection } from "../../hooks/use-text-direction";
 import { cn } from "../../lib/utils";
 import { Checkbox } from "../general/checkbox";
+import { ElementError } from "../general/element-error";
 import { ElementHeader } from "../general/element-header";
 import { RadioGroupItem } from "../general/radio-group";
 
@@ -95,86 +96,82 @@ function PictureSelect({
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
-      {/* Error message */}
-      {errorMessage && (
-        <div className="text-destructive flex items-center gap-1 text-sm" dir={detectedDir}>
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
       {/* Picture Grid - 2 columns */}
-      <div className="grid grid-cols-2 gap-2">
-        {options.map((option) => {
-          const optionId = `${inputId}-${option.id}`;
-          const isSelected = allowMulti
-            ? (selectedValues as string[]).includes(option.id)
-            : selectedValues === option.id;
+      <div className="relative space-y-2">
+        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <div className="grid grid-cols-2 gap-2">
+          {options.map((option) => {
+            const optionId = `${inputId}-${option.id}`;
+            const isSelected = allowMulti
+              ? (selectedValues as string[]).includes(option.id)
+              : selectedValues === option.id;
 
-          return (
-            <div
-              key={option.id}
-              className={cn(
-                "relative aspect-[162/97] w-full cursor-pointer transition-all",
-                disabled && "cursor-not-allowed opacity-50"
-              )}
-              style={{
-                backgroundColor: "var(--fb-input-bg-color)",
-                borderRadius: "5px",
-              }}
-              onClick={() => handleOptionChange(option.id)}
-              role="button"
-              tabIndex={disabled ? -1 : 0}
-              onKeyDown={(e) => {
-                if ((e.key === "Enter" || e.key === " ") && !disabled) {
-                  e.preventDefault();
-                  handleOptionChange(option.id);
-                }
-              }}
-              aria-pressed={isSelected}
-              aria-disabled={disabled}>
-              {/* Image container with border when selected */}
+            return (
               <div
+                key={option.id}
                 className={cn(
-                  "absolute inset-[2px] overflow-hidden rounded-[5px]",
-                  isSelected && "border-4 border-solid"
+                  "relative aspect-[162/97] w-full cursor-pointer transition-all",
+                  disabled && "cursor-not-allowed opacity-50"
                 )}
                 style={{
-                  borderColor: isSelected ? "var(--fb-input-color)" : "transparent",
-                }}>
-                <img
-                  src={option.imageUrl}
-                  alt={option.alt ?? `Option ${option.id}`}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              {/* Selection indicator - Radio button for single select, Checkbox for multi select */}
-              {allowMulti ? (
-                <div className="absolute right-[5%] top-[5%]">
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={() => handleOptionChange(option.id)}
-                    disabled={disabled}
-                    className="h-4 w-4"
-                    aria-label={option.alt ?? `Select ${option.id}`}
+                  backgroundColor: "var(--fb-input-bg-color)",
+                  borderRadius: "5px",
+                }}
+                onClick={() => handleOptionChange(option.id)}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                onKeyDown={(e) => {
+                  if ((e.key === "Enter" || e.key === " ") && !disabled) {
+                    e.preventDefault();
+                    handleOptionChange(option.id);
+                  }
+                }}
+                aria-pressed={isSelected}
+                aria-disabled={disabled}>
+                {/* Image container with border when selected */}
+                <div
+                  className={cn(
+                    "absolute inset-[2px] overflow-hidden rounded-[5px]",
+                    isSelected && "border-4 border-solid"
+                  )}
+                  style={{
+                    borderColor: isSelected ? "var(--fb-input-color)" : "transparent",
+                  }}>
+                  <img
+                    src={option.imageUrl}
+                    alt={option.alt ?? `Option ${option.id}`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
                   />
                 </div>
-              ) : (
-                <div className="absolute right-[5%] top-[5%]">
-                  <RadioGroupPrimitive.Root value={isSelected ? option.id : undefined} className="contents">
-                    <RadioGroupItem
-                      value={option.id}
-                      id={optionId}
+                {/* Selection indicator - Radio button for single select, Checkbox for multi select */}
+                {allowMulti ? (
+                  <div className="absolute right-[5%] top-[5%]">
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => handleOptionChange(option.id)}
                       disabled={disabled}
-                      className="h-4 w-4 bg-white"
+                      className="h-4 w-4"
                       aria-label={option.alt ?? `Select ${option.id}`}
                     />
-                  </RadioGroupPrimitive.Root>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  </div>
+                ) : (
+                  <div className="absolute right-[5%] top-[5%]">
+                    <RadioGroupPrimitive.Root value={isSelected ? option.id : undefined} className="contents">
+                      <RadioGroupItem
+                        value={option.id}
+                        id={optionId}
+                        disabled={disabled}
+                        className="h-4 w-4 bg-white"
+                        aria-label={option.alt ?? `Select ${option.id}`}
+                      />
+                    </RadioGroupPrimitive.Root>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
