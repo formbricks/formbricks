@@ -31,65 +31,67 @@ export const removeEmptyImageAndVideoUrlsFromElements: MigrationScript = {
 
     logger.info(`Found ${surveysWithEmptyUrls.length.toString()} surveys with empty imageUrl or videoUrl`);
 
-    // Process each survey
-    for (const survey of surveysWithEmptyUrls) {
-      // Clean the blocks
-      const cleanedBlocks = survey.blocks.map((block) => {
-        // Clean elements within each block
-        const cleanedElements = block.elements.map((element) => {
-          const cleanedElement = { ...element };
+    // Process in batches to avoid overwhelming the connection pool
+    const BATCH_SIZE = 1000;
 
-          // Remove imageUrl if it's empty
-          if (cleanedElement.imageUrl === "") {
-            delete cleanedElement.imageUrl;
-          }
+    for (let i = 0; i < surveysWithEmptyUrls.length; i += BATCH_SIZE) {
+      const batch = surveysWithEmptyUrls.slice(i, i + BATCH_SIZE);
 
-          // Remove videoUrl if it's empty
-          if (cleanedElement.videoUrl === "") {
-            delete cleanedElement.videoUrl;
-          }
+      const batchPromises = batch.map((survey) => {
+        // Clean the blocks
+        const cleanedBlocks = survey.blocks.map((block) => {
+          const cleanedElements = block.elements.map((element) => {
+            const cleanedElement = { ...element };
+            if (cleanedElement.imageUrl === "") {
+              delete cleanedElement.imageUrl;
+            }
+            if (cleanedElement.videoUrl === "") {
+              delete cleanedElement.videoUrl;
+            }
+            return cleanedElement;
+          });
 
-          return cleanedElement;
+          return { ...block, elements: cleanedElements };
         });
 
-        return {
-          ...block,
-          elements: cleanedElements,
-        };
+        const cleanedWelcomeCard = { ...survey.welcomeCard };
+        if (cleanedWelcomeCard.fileUrl === "") {
+          delete cleanedWelcomeCard.fileUrl;
+        }
+        if (cleanedWelcomeCard.videoUrl === "") {
+          delete cleanedWelcomeCard.videoUrl;
+        }
+
+        const cleanedEndings = survey.endings.map((ending) => {
+          const cleanedEnding = { ...ending };
+          if (cleanedEnding.imageUrl === "") {
+            delete cleanedEnding.imageUrl;
+          }
+          if (cleanedEnding.videoUrl === "") {
+            delete cleanedEnding.videoUrl;
+          }
+          return cleanedEnding;
+        });
+
+        // Convert JSON arrays to PostgreSQL jsonb[] using array_agg + jsonb_array_elements
+        const blocksJson = JSON.stringify(cleanedBlocks);
+        const endingsJson = JSON.stringify(cleanedEndings);
+        const welcomeCardJson = JSON.stringify(cleanedWelcomeCard);
+
+        return tx.$executeRaw`
+          UPDATE "Survey"
+          SET 
+            blocks = (SELECT array_agg(elem) FROM jsonb_array_elements(${blocksJson}::jsonb) AS elem),
+            endings = (SELECT array_agg(elem) FROM jsonb_array_elements(${endingsJson}::jsonb) AS elem),
+            "welcomeCard" = ${welcomeCardJson}::jsonb
+          WHERE id = ${survey.id}
+        `;
       });
 
-      const cleanedWelcomeCard = { ...survey.welcomeCard };
-      if (cleanedWelcomeCard.fileUrl === "") {
-        delete cleanedWelcomeCard.fileUrl;
-      }
-      if (cleanedWelcomeCard.videoUrl === "") {
-        delete cleanedWelcomeCard.videoUrl;
-      }
-
-      const cleanedEndings = survey.endings.map((ending) => {
-        const cleanedEnding = { ...ending };
-        if (cleanedEnding.imageUrl === "") {
-          delete cleanedEnding.imageUrl;
-        }
-        if (cleanedEnding.videoUrl === "") {
-          delete cleanedEnding.videoUrl;
-        }
-        return cleanedEnding;
-      });
-
-      // Convert JSON arrays to PostgreSQL jsonb[] using array_agg + jsonb_array_elements
-      const blocksJson = JSON.stringify(cleanedBlocks);
-      const endingsJson = JSON.stringify(cleanedEndings);
-      const welcomeCardJson = JSON.stringify(cleanedWelcomeCard);
-
-      await tx.$executeRaw`
-        UPDATE "Survey"
-        SET 
-          blocks = (SELECT array_agg(elem) FROM jsonb_array_elements(${blocksJson}::jsonb) AS elem),
-          endings = (SELECT array_agg(elem) FROM jsonb_array_elements(${endingsJson}::jsonb) AS elem),
-          "welcomeCard" = ${welcomeCardJson}::jsonb
-        WHERE id = ${survey.id}
-      `;
+      await Promise.all(batchPromises);
+      logger.info(
+        `Processed batch ${(Math.floor(i / BATCH_SIZE) + 1).toString()}/${Math.ceil(surveysWithEmptyUrls.length / BATCH_SIZE).toString()}`
+      );
     }
 
     logger.info(`Successfully cleaned ${surveysWithEmptyUrls.length.toString()} surveys`);
