@@ -118,57 +118,58 @@ function SingleSelect({
       {/* Options */}
       <div className="space-y-3">
         {variant === "dropdown" ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                disabled={disabled}
-                className="w-full justify-between"
-                aria-invalid={Boolean(errorMessage)}
-                aria-label={headline}>
-                <span className="truncate">{displayText}</span>
-                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
-              <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
-                {options.map((option) => {
-                  const optionId = `${inputId}-${option.id}`;
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={disabled}
+                  className="w-full justify-between"
+                  aria-invalid={Boolean(errorMessage)}
+                  aria-label={headline}>
+                  <span className="truncate">{displayText}</span>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
+                  {options.map((option) => {
+                    const optionId = `${inputId}-${option.id}`;
 
-                  return (
+                    return (
+                      <DropdownMenuRadioItem
+                        key={option.id}
+                        value={option.id}
+                        id={optionId}
+                        disabled={disabled}>
+                        <Label>{option.label}</Label>
+                      </DropdownMenuRadioItem>
+                    );
+                  })}
+                  {hasOtherOption && otherOptionId && (
                     <DropdownMenuRadioItem
-                      key={option.id}
-                      value={option.id}
-                      id={optionId}
+                      value={otherOptionId}
+                      id={`${inputId}-${otherOptionId}`}
                       disabled={disabled}>
-                      <Label>{option.label}</Label>
+                      <Label>{otherOptionLabel}</Label>
                     </DropdownMenuRadioItem>
-                  );
-                })}
-                {hasOtherOption && otherOptionId && (
-                  <DropdownMenuRadioItem
-                    value={otherOptionId}
-                    id={`${inputId}-${otherOptionId}`}
-                    disabled={disabled}>
-                    <Label>{otherOptionLabel}</Label>
-                  </DropdownMenuRadioItem>
-                )}
-              </DropdownMenuRadioGroup>
-              {isOtherSelected && (
-                <div className="px-2 py-1.5">
-                  <Input
-                    type="text"
-                    value={otherValue}
-                    onChange={handleOtherInputChange}
-                    placeholder={otherOptionPlaceholder}
-                    disabled={disabled}
-                    dir={detectedDir}
-                    className="w-full"
-                  />
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  )}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {isOtherSelected && (
+              <Input
+                type="text"
+                value={otherValue}
+                onChange={handleOtherInputChange}
+                placeholder={otherOptionPlaceholder}
+                disabled={disabled}
+                dir={detectedDir}
+                className="w-full"
+                autoFocus
+              />
+            )}
+          </>
         ) : (
           <RadioGroup
             value={selectedValue}

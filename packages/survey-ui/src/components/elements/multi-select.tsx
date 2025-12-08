@@ -132,37 +132,37 @@ function MultiSelect({
         <ElementError errorMessage={errorMessage} dir={detectedDir} />
 
         {variant === "dropdown" ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                disabled={disabled}
-                className="w-full justify-between"
-                aria-invalid={Boolean(errorMessage)}
-                aria-label={headline}>
-                <span className="truncate">{displayText}</span>
-                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
-              {options.map((option) => {
-                const isChecked = selectedValues.includes(option.id);
-                const optionId = `${inputId}-${option.id}`;
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={disabled}
+                  className="w-full justify-between"
+                  aria-invalid={Boolean(errorMessage)}
+                  aria-label={headline}>
+                  <span className="truncate">{displayText}</span>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                {options.map((option) => {
+                  const isChecked = selectedValues.includes(option.id);
+                  const optionId = `${inputId}-${option.id}`;
 
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={option.id}
-                    id={optionId}
-                    checked={isChecked}
-                    onCheckedChange={(checked) => handleOptionChange(option.id, checked === true)}
-                    disabled={disabled}
-                    className="cursor-pointer">
-                    <Label>{option.label}</Label>
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-              {hasOtherOption && otherOptionId && (
-                <>
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={option.id}
+                      id={optionId}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => handleOptionChange(option.id, checked === true)}
+                      disabled={disabled}
+                      className="cursor-pointer">
+                      <Label>{option.label}</Label>
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+                {hasOtherOption && otherOptionId && (
                   <DropdownMenuCheckboxItem
                     id={`${inputId}-${otherOptionId}`}
                     checked={isOtherSelected}
@@ -171,23 +171,22 @@ function MultiSelect({
                     className="cursor-pointer">
                     <Label>{otherOptionLabel}</Label>
                   </DropdownMenuCheckboxItem>
-                  {isOtherSelected && (
-                    <div className="px-2 py-1.5">
-                      <Input
-                        type="text"
-                        value={otherValue}
-                        onChange={handleOtherInputChange}
-                        placeholder={otherOptionPlaceholder}
-                        disabled={disabled}
-                        dir={detectedDir}
-                        className="w-full"
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {isOtherSelected && (
+              <Input
+                type="text"
+                value={otherValue}
+                onChange={handleOtherInputChange}
+                placeholder={otherOptionPlaceholder}
+                disabled={disabled}
+                dir={detectedDir}
+                className="w-full"
+                autoFocus
+              />
+            )}
+          </>
         ) : (
           <div className="space-y-3" role="group" aria-labelledby={inputId}>
             {options.map((option) => {
