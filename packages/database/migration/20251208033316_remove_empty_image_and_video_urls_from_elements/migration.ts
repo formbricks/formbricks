@@ -8,7 +8,7 @@ export const removeEmptyImageAndVideoUrlsFromElements: MigrationScript = {
   name: "20251208033316_remove_empty_image_and_video_urls_from_elements",
   run: async ({ tx }) => {
     // Find all surveys with empty imageUrl or videoUrl
-    const countQuery = `
+    const surveysFindQuery = `
       SELECT s.id,s.blocks
       FROM "Survey" AS s 
       WHERE EXISTS (
@@ -19,7 +19,7 @@ export const removeEmptyImageAndVideoUrlsFromElements: MigrationScript = {
           OR element->>'videoUrl' = ''
       )
     `;
-    const surveysWithEmptyUrls: SurveyRecord[] = await tx.$queryRaw`${Prisma.raw(countQuery)}`;
+    const surveysWithEmptyUrls: SurveyRecord[] = await tx.$queryRaw`${Prisma.raw(surveysFindQuery)}`;
 
     console.log(`Found ${surveysWithEmptyUrls.length.toString()} surveys with empty imageUrl or videoUrl`);
 
