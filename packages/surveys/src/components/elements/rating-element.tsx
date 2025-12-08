@@ -46,7 +46,6 @@ export function RatingElement({
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = element.imageUrl || element.videoUrl;
-  const isCurrent = element.id === currentElementId;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
   const handleSelect = (number: number) => {
@@ -54,23 +53,6 @@ export function RatingElement({
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
-
-  function HiddenRadioInput({ number, id }: { number: number; id?: string }) {
-    return (
-      <input
-        type="radio"
-        id={id}
-        name="rating"
-        value={number}
-        className="fb-invisible fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
-        onClick={() => {
-          handleSelect(number);
-        }}
-        required={element.required}
-        checked={value === number}
-      />
-    );
-  }
 
   useEffect(() => {
     setHoveredNumber(0);
@@ -95,14 +77,6 @@ export function RatingElement({
     e.preventDefault();
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
-  };
-
-  const handleKeyDown = (number: number) => (e: KeyboardEvent) => {
-    const isActivationKey = e.key === " " || e.key === "Enter";
-    if (isActivationKey) {
-      e.preventDefault();
-      handleSelect(number);
-    }
   };
 
   const handleMouseOver = (number: number) => () => {
@@ -160,10 +134,21 @@ export function RatingElement({
     );
   };
 
+  const getRatingInputId = (number: number) => `${element.id}-${number}`;
+
+  const handleKeyDown = (number: number) => (e: KeyboardEvent) => {
+    if (e.key === " ") {
+      e.preventDefault();
+      const inputId = getRatingInputId(number);
+      document.getElementById(inputId)?.click();
+      document.getElementById(inputId)?.focus();
+    }
+  };
+
   const renderNumberScale = (number: number, totalLength: number) => {
     return (
       <label
-        tabIndex={isCurrent ? 0 : -1}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         onKeyDown={handleKeyDown(number)}
         className={getNumberLabelClassName(number, totalLength)}>
         {element.isColorCodingEnabled && (
@@ -171,7 +156,19 @@ export function RatingElement({
             className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(element.range, number)}`}
           />
         )}
-        <HiddenRadioInput number={number} id={number.toString()} />
+        <input
+          type="radio"
+          id={getRatingInputId(number)}
+          name="rating"
+          value={number}
+          className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+          onClick={() => {
+            handleSelect(number);
+          }}
+          required={element.required}
+          checked={value === number}
+          tabIndex={-1}
+        />
         {number}
       </label>
     );
@@ -180,12 +177,25 @@ export function RatingElement({
   const renderStarScale = (number: number) => {
     return (
       <label
-        tabIndex={isCurrent ? 0 : -1}
+        aria-label={`Rate ${number} out of ${element.range}`}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         onKeyDown={handleKeyDown(number)}
         className={getStarLabelClassName(number)}
         onFocus={handleFocus(number)}
         onBlur={handleBlur}>
-        <HiddenRadioInput number={number} id={number.toString()} />
+        <input
+          type="radio"
+          id={getRatingInputId(number)}
+          name="rating"
+          value={number}
+          className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+          onClick={() => {
+            handleSelect(number);
+          }}
+          required={element.required}
+          checked={value === number}
+          tabIndex={-1}
+        />
         <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path
@@ -201,12 +211,25 @@ export function RatingElement({
   const renderSmileyScale = (number: number, idx: number) => {
     return (
       <label
-        tabIndex={isCurrent ? 0 : -1}
+        aria-label={`Rate ${number} out of ${element.range}`}
+        tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         className={getSmileyLabelClassName(number)}
         onKeyDown={handleKeyDown(number)}
         onFocus={handleFocus(number)}
         onBlur={handleBlur}>
-        <HiddenRadioInput number={number} id={number.toString()} />
+        <input
+          type="radio"
+          id={getRatingInputId(number)}
+          name="rating"
+          value={number}
+          className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+          onClick={() => {
+            handleSelect(number);
+          }}
+          required={element.required}
+          checked={value === number}
+          tabIndex={-1}
+        />
         <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
           <RatingSmiley
             active={value === number || hoveredNumber === number}
@@ -254,7 +277,7 @@ export function RatingElement({
               renderRatingOption(number, i, a.length)
             )}
           </div>
-          <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-gap-8">
+          <div className="fb-text-subheading fb-mt-8 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-gap-8">
             <p className="fb-max-w-[50%]" dir="auto">
               {getLocalizedValue(element.lowerLabel, languageCode)}
             </p>

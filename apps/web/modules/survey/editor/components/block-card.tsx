@@ -133,13 +133,16 @@ export const BlockCard = ({
   // A button label is invalid if it exists but doesn't have valid text for all enabled languages
   const surveyLanguages = localSurvey.languages ?? [];
   const hasInvalidButtonLabel =
-    block.buttonLabel !== undefined && !isLabelValidForAllLanguages(block.buttonLabel, surveyLanguages);
+    block.buttonLabel !== undefined &&
+    block.buttonLabel["default"]?.trim() !== "" &&
+    !isLabelValidForAllLanguages(block.buttonLabel, surveyLanguages);
 
   // Check if back button label is invalid
   // Back button label should exist for all blocks except the first one
   const hasInvalidBackButtonLabel =
     blockIdx > 0 &&
     block.backButtonLabel !== undefined &&
+    block.backButtonLabel["default"]?.trim() !== "" &&
     !isLabelValidForAllLanguages(block.backButtonLabel, surveyLanguages);
 
   // Block should be highlighted if it has invalid elements OR invalid button labels
@@ -291,28 +294,28 @@ export const BlockCard = ({
           open={!isBlockCollapsed}
           onOpenChange={() => setIsBlockCollapsed(!isBlockCollapsed)}
           className={cn(isBlockCollapsed ? "h-full" : "")}>
-          <Collapsible.CollapsibleTrigger
-            asChild
-            className="block h-full w-full cursor-pointer hover:bg-slate-100">
-            <div className="flex h-full items-center justify-between px-4 py-2">
-              <div className="flex items-center gap-2">
-                <div>
-                  <h4 className="text-sm font-medium text-slate-700">{block.name}</h4>
-                  <p className="text-xs text-slate-500">
-                    {blockElementsCount} {blockElementsCountText}
-                  </p>
+          <Collapsible.CollapsibleTrigger asChild>
+            <div className="block h-full w-full cursor-pointer hover:bg-slate-100">
+              <div className="flex h-full items-center justify-between px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-700">{block.name}</h4>
+                    <p className="text-xs text-slate-500">
+                      {blockElementsCount} {blockElementsCountText}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <BlockMenu
-                  isFirstBlock={blockIdx === 0}
-                  isLastBlock={blockIdx === totalBlocks - 1}
-                  isOnlyBlock={totalBlocks === 1}
-                  onDuplicate={() => duplicateBlock(block.id)}
-                  onDelete={() => deleteBlock(block.id)}
-                  onMoveUp={() => moveBlock(block.id, "up")}
-                  onMoveDown={() => moveBlock(block.id, "down")}
-                />
+                <div>
+                  <BlockMenu
+                    isFirstBlock={blockIdx === 0}
+                    isLastBlock={blockIdx === totalBlocks - 1}
+                    isOnlyBlock={totalBlocks === 1}
+                    onDuplicate={() => duplicateBlock(block.id)}
+                    onDelete={() => deleteBlock(block.id)}
+                    onMoveUp={() => moveBlock(block.id, "up")}
+                    onMoveDown={() => moveBlock(block.id, "down")}
+                  />
+                </div>
               </div>
             </div>
           </Collapsible.CollapsibleTrigger>

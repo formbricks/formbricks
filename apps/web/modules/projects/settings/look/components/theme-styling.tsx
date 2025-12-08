@@ -154,7 +154,6 @@ export const ThemeStyling = ({
                   open={cardStylingOpen}
                   setOpen={setCardStylingOpen}
                   isSettingsPage
-                  project={project}
                   surveyType={previewSurveyType}
                   form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
                 />

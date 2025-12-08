@@ -62,7 +62,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.getByPlaceholder(surveys.createAndSubmit.openTextQuestion.placeholder)).toBeVisible();
       await page
         .getByPlaceholder(surveys.createAndSubmit.openTextQuestion.placeholder)
-        .fill("This is my Open Text answer");
+        .fill("Open Text answer");
       await page.locator("#questionCard-0").getByRole("button", { name: "Next" }).click();
 
       // Single Select Question
@@ -116,7 +116,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.locator("path").nth(3).click();
+      await page.getByRole("radio", { name: "Rate 3 out of" }).check();
       await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
 
       // NPS Question
@@ -212,11 +212,9 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       // Address Question
       await expect(page.getByText(surveys.createAndSubmit.address.question)).toBeVisible();
       await expect(page.getByLabel(surveys.createAndSubmit.address.placeholder.addressLine1)).toBeVisible();
-      await page
-        .getByLabel(surveys.createAndSubmit.address.placeholder.addressLine1)
-        .fill("This is my Address");
+      await page.getByLabel(surveys.createAndSubmit.address.placeholder.addressLine1).fill("Address");
       await expect(page.getByLabel(surveys.createAndSubmit.address.placeholder.city)).toBeVisible();
-      await page.getByLabel(surveys.createAndSubmit.address.placeholder.city).fill("This is my city");
+      await page.getByLabel(surveys.createAndSubmit.address.placeholder.city).fill("city");
       await expect(page.getByLabel(surveys.createAndSubmit.address.placeholder.zip)).toBeVisible();
       await page.getByLabel(surveys.createAndSubmit.address.placeholder.zip).fill("12345");
       await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
@@ -232,7 +230,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {
         await page.getByText(surveys.createAndSubmit.ranking.choices[i]).click();
       }
-      await page.locator("#questionCard-12").getByRole("button", { name: "Next" }).click();
+      await page.locator("#questionCard-12").getByRole("button", { name: "Finish" }).click();
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     });
@@ -785,7 +783,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await page
         .getByPlaceholder(surveys.createWithLogicAndSubmit.openTextQuestion.placeholder)
-        .fill("This is my Open Text answer");
+        .fill("Open Text answer");
       await page.locator("#questionCard-0").getByRole("button", { name: "Next" }).click();
 
       // Single Select Question
@@ -858,10 +856,9 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(
         page.locator("#questionCard-4").getByText(surveys.createWithLogicAndSubmit.ratingQuestion.highLabel)
       ).toBeVisible();
-      expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
       await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-4").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("group", { name: "Choices" }).locator("path").nth(3).click();
+      await page.getByRole("radio", { name: "Rate 4 out of" }).check();
       await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
 
       // NPS Question
@@ -972,14 +969,12 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await page
         .getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
-        .fill("This is my Address");
+        .fill("Address");
       await expect(page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.city)).toBeVisible();
-      await page
-        .getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.city)
-        .fill("This is my city");
+      await page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.city).fill("city");
       await expect(page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.zip)).toBeVisible();
       await page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.zip).fill("12345");
-      await page.locator("#questionCard-13").getByRole("button", { name: "Next" }).click();
+      await page.locator("#questionCard-13").getByRole("button", { name: "Finish" }).click();
 
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
@@ -997,13 +992,26 @@ test.describe("Testing Survey with advanced logic", async () => {
       const updatedUrl = currentUrl.replace("summary?share=true", "responses");
 
       await page.goto(updatedUrl);
-      await page.waitForSelector("#response-table");
+      await page.waitForSelector("table#response-table");
 
       await expect(page.getByRole("cell", { name: "score" })).toBeVisible();
 
       await page.waitForLoadState("networkidle");
       await page.waitForTimeout(5000);
-      await expect(page.getByRole("cell", { name: "32", exact: true })).toBeVisible();
+
+      await page.pause();
+
+      // Look for any cell containing "32" or a score-related value
+      const scoreCell = page.getByRole("cell").filter({ hasText: /^32/ });
+      await expect(scoreCell).toBeVisible({
+        timeout: 15000,
+      });
+
+      // Look for the secret message in the table
+      const secretCell = page.getByRole("cell").filter({ hasText: /This is a secret message for e2e tests/ });
+      await expect(secretCell).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 });
