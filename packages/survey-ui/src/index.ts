@@ -1,4 +1,21 @@
 export { Button, buttonVariants } from "./components/general/button";
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+} from "./components/general/dropdown-menu";
 export { Input, type InputProps } from "./components/general/input";
 export { OpenText, type OpenTextProps } from "./components/elements/open-text";
 export {
