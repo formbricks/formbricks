@@ -33,6 +33,8 @@ export interface CTAProps {
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the button is disabled */
   disabled?: boolean;
+  /** Variant for the button */
+  buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "custom";
 }
 
 function CTA({
@@ -48,6 +50,7 @@ function CTA({
   errorMessage,
   dir = "auto",
   disabled = false,
+  buttonVariant = "default",
 }: CTAProps): React.JSX.Element {
   // Detect text direction from content
   const detectedDir = useTextDirection({
@@ -79,7 +82,8 @@ function CTA({
             type="button"
             onClick={handleButtonClick}
             disabled={disabled}
-            className="flex items-center gap-2">
+            className="flex items-center gap-2"
+            variant={buttonVariant}>
             {buttonLabel}
             {buttonExternal ? <LinkIcon className="size-4" /> : null}
           </Button>

@@ -13,9 +13,66 @@ interface StylingOptions {
   elementDescriptionFontWeight: string;
   elementDescriptionFontSize: string;
   elementDescriptionColor: string;
+  // Button styling
+  buttonHeight: string;
+  buttonWidth: string;
+  buttonFontSize: string;
+  buttonBorderRadius: string;
+  buttonBgColor: string;
+  buttonTextColor: string;
+  buttonPaddingX: string;
+  buttonPaddingY: string;
 }
 
 type StoryProps = CTAProps & Partial<StylingOptions>;
+
+// Decorator to apply CSS variables from story args
+const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
+  const args = context.args as StoryProps;
+  const {
+    elementHeadlineFontFamily,
+    elementHeadlineFontSize,
+    elementHeadlineFontWeight,
+    elementHeadlineColor,
+    elementDescriptionFontFamily,
+    elementDescriptionFontSize,
+    elementDescriptionFontWeight,
+    elementDescriptionColor,
+    buttonHeight,
+    buttonWidth,
+    buttonFontSize,
+    buttonBorderRadius,
+    buttonBgColor,
+    buttonTextColor,
+    buttonPaddingX,
+    buttonPaddingY,
+  } = args;
+
+  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
+    "--fb-element-headline-font-family": elementHeadlineFontFamily,
+    "--fb-element-headline-font-size": elementHeadlineFontSize,
+    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
+    "--fb-element-headline-color": elementHeadlineColor,
+    "--fb-element-description-font-family": elementDescriptionFontFamily,
+    "--fb-element-description-font-size": elementDescriptionFontSize,
+    "--fb-element-description-font-weight": elementDescriptionFontWeight,
+    "--fb-element-description-color": elementDescriptionColor,
+    "--fb-button-height": buttonHeight,
+    "--fb-button-width": buttonWidth,
+    "--fb-button-font-size": buttonFontSize,
+    "--fb-button-border-radius": buttonBorderRadius,
+    "--fb-button-bg-color": buttonBgColor,
+    "--fb-button-text-color": buttonTextColor,
+    "--fb-button-padding-x": buttonPaddingX,
+    "--fb-button-padding-y": buttonPaddingY,
+  };
+
+  return (
+    <div style={cssVarStyle} className="w-[600px]">
+      <Story />
+    </div>
+  );
+};
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/CTA",
@@ -78,65 +135,11 @@ const meta: Meta<StoryProps> = {
       table: { category: "State" },
     },
     onClick: {
-      action: "clicked",
+      action: () => {
+        alert("clicked");
+      },
       table: { category: "Events" },
     },
-  },
-};
-
-export default meta;
-type Story = StoryObj<StoryProps>;
-
-// Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
-
-export const StylingPlayground: Story = {
-  args: {
-    elementId: "cta-1",
-    inputId: "cta-input-1",
-    headline: "Ready to get started?",
-    description: "Click the button below to begin",
-    buttonLabel: "Get Started",
-    elementHeadlineFontFamily: "system-ui, sans-serif",
-    elementHeadlineFontSize: "1.125rem",
-    elementHeadlineFontWeight: "600",
-    elementHeadlineColor: "#1e293b",
-    elementDescriptionFontFamily: "system-ui, sans-serif",
-    elementDescriptionFontSize: "0.875rem",
-    elementDescriptionFontWeight: "400",
-    elementDescriptionColor: "#64748b",
-    onClick: () => {},
-  },
-  argTypes: {
     elementHeadlineFontFamily: {
       control: "text",
       table: { category: "Element Styling" },
@@ -169,9 +172,53 @@ export const StylingPlayground: Story = {
       control: "color",
       table: { category: "Element Styling" },
     },
+    buttonHeight: {
+      control: "text",
+      description: "Font family for the button",
+      table: { category: "Button Styling (Only applicable when buttonVariant is 'custom')" },
+    },
+    buttonFontSize: {
+      control: "text",
+      description: "Font size for the button",
+      table: { category: "Button Styling (Only applicable when buttonVariant is 'custom')" },
+    },
+    buttonBorderRadius: {
+      control: "text",
+      description: "Border radius for the button",
+      table: { category: "Button Styling (Only applicable when buttonVariant is 'custom')" },
+    },
+    buttonBgColor: {
+      control: "color",
+      description: "Background color for the button",
+      table: { category: "Button Styling (Only applicable when buttonVariant is 'custom')" },
+    },
+    buttonTextColor: {
+      control: "color",
+      description: "Text color for the button",
+      table: { category: "Button Styling (Only applicable when buttonVariant is 'custom')" },
+    },
+    buttonPaddingX: {
+      control: "text",
+      description: "Padding x for the button",
+      table: { category: "Button Styling (Only applicable when buttonVariant is 'custom')" },
+    },
+    buttonPaddingY: {
+      control: "text",
+      description: "Padding y for the button",
+      table: { category: "Button Styling (Only applicable when buttonVariant is 'custom')" },
+    },
+    buttonVariant: {
+      control: "select",
+      options: ["default", "destructive", "outline", "secondary", "ghost", "link", "custom"],
+      description: "Variant for the button. Must be 'custom' for button styling controls to work.",
+      table: { category: "Button Styling (Only applicable when buttonVariant is 'custom')" },
+    },
   },
   decorators: [withCSSVariables],
 };
+
+export default meta;
+type Story = StoryObj<StoryProps>;
 
 export const Default: Story = {
   args: {
@@ -179,7 +226,9 @@ export const Default: Story = {
     inputId: "cta-input-1",
     headline: "Ready to get started?",
     buttonLabel: "Get Started",
-    onClick: () => {},
+    onClick: () => {
+      alert("clicked");
+    },
   },
 };
 
@@ -190,7 +239,9 @@ export const WithDescription: Story = {
     headline: "Ready to get started?",
     description: "Click the button below to begin your journey",
     buttonLabel: "Get Started",
-    onClick: () => {},
+    onClick: () => {
+      alert("clicked");
+    },
   },
 };
 
@@ -203,7 +254,9 @@ export const ExternalButton: Story = {
     buttonLabel: "Visit Website",
     buttonUrl: "https://example.com",
     buttonExternal: true,
-    onClick: () => {},
+    onClick: () => {
+      alert("clicked");
+    },
   },
 };
 
@@ -214,7 +267,9 @@ export const Required: Story = {
     headline: "Ready to get started?",
     buttonLabel: "Get Started",
     required: true,
-    onClick: () => {},
+    onClick: () => {
+      alert("clicked");
+    },
   },
 };
 
@@ -226,7 +281,9 @@ export const WithError: Story = {
     buttonLabel: "Get Started",
     required: true,
     errorMessage: "Please click the button to continue",
-    onClick: () => {},
+    onClick: () => {
+      alert("clicked");
+    },
   },
 };
 
@@ -237,7 +294,9 @@ export const Disabled: Story = {
     headline: "Ready to get started?",
     buttonLabel: "Get Started",
     disabled: true,
-    onClick: () => {},
+    onClick: () => {
+      alert("clicked");
+    },
   },
 };
 
@@ -248,7 +307,9 @@ export const RTL: Story = {
     headline: "هل أنت مستعد للبدء؟",
     description: "انقر على الزر أدناه للبدء",
     buttonLabel: "ابدأ الآن",
-    onClick: () => {},
+    onClick: () => {
+      alert("clicked");
+    },
   },
 };
 
@@ -261,7 +322,9 @@ export const MultipleElements: Story = {
         headline="Ready to get started?"
         description="Click the button below to begin"
         buttonLabel="Get Started"
-        onClick={() => {}}
+        onClick={() => {
+          alert("clicked");
+        }}
       />
       <CTA
         elementId="cta-2"
@@ -271,7 +334,9 @@ export const MultipleElements: Story = {
         buttonLabel="Visit Website"
         buttonUrl="https://example.com"
         buttonExternal
-        onClick={() => {}}
+        onClick={() => {
+          alert("clicked");
+        }}
       />
     </div>
   ),
