@@ -4,15 +4,15 @@ import { Ranking, type RankingOption, type RankingProps } from "./ranking";
 
 // Styling options for the StylingPlayground story
 interface StylingOptions {
-  // Question styling
-  questionHeadlineFontFamily: string;
-  questionHeadlineFontSize: string;
-  questionHeadlineFontWeight: string;
-  questionHeadlineColor: string;
-  questionDescriptionFontFamily: string;
-  questionDescriptionFontWeight: string;
-  questionDescriptionFontSize: string;
-  questionDescriptionColor: string;
+  // Element styling
+  elementHeadlineFontFamily: string;
+  elementHeadlineFontSize: string;
+  elementHeadlineFontWeight: string;
+  elementHeadlineColor: string;
+  elementDescriptionFontFamily: string;
+  elementDescriptionFontWeight: string;
+  elementDescriptionFontSize: string;
+  elementDescriptionColor: string;
 }
 
 type StoryProps = RankingProps & Partial<StylingOptions>;
@@ -25,7 +25,7 @@ const meta: Meta<StoryProps> = {
     docs: {
       description: {
         component:
-          "A ranking question element that allows users to order items by clicking them. Users can reorder ranked items using up/down buttons.",
+          "A ranking element that allows users to order items by clicking them. Users can reorder ranked items using up/down buttons.",
       },
     },
   },
@@ -33,7 +33,7 @@ const meta: Meta<StoryProps> = {
   argTypes: {
     headline: {
       control: "text",
-      description: "The main question text",
+      description: "The main element text",
       table: { category: "Content" },
     },
     description: {
@@ -104,25 +104,25 @@ type Story = StoryObj<StoryProps>;
 const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
   const args = context.args as StoryProps;
   const {
-    questionHeadlineFontFamily,
-    questionHeadlineFontSize,
-    questionHeadlineFontWeight,
-    questionHeadlineColor,
-    questionDescriptionFontFamily,
-    questionDescriptionFontSize,
-    questionDescriptionFontWeight,
-    questionDescriptionColor,
+    elementHeadlineFontFamily,
+    elementHeadlineFontSize,
+    elementHeadlineFontWeight,
+    elementHeadlineColor,
+    elementDescriptionFontFamily,
+    elementDescriptionFontSize,
+    elementDescriptionFontWeight,
+    elementDescriptionColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-question-headline-font-family": questionHeadlineFontFamily,
-    "--fb-question-headline-font-size": questionHeadlineFontSize,
-    "--fb-question-headline-font-weight": questionHeadlineFontWeight,
-    "--fb-question-headline-color": questionHeadlineColor,
-    "--fb-question-description-font-family": questionDescriptionFontFamily,
-    "--fb-question-description-font-size": questionDescriptionFontSize,
-    "--fb-question-description-font-weight": questionDescriptionFontWeight,
-    "--fb-question-description-color": questionDescriptionColor,
+    "--fb-element-headline-font-family": elementHeadlineFontFamily,
+    "--fb-element-headline-font-size": elementHeadlineFontSize,
+    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
+    "--fb-element-headline-color": elementHeadlineColor,
+    "--fb-element-description-font-family": elementDescriptionFontFamily,
+    "--fb-element-description-font-size": elementDescriptionFontSize,
+    "--fb-element-description-font-weight": elementDescriptionFontWeight,
+    "--fb-element-description-color": elementDescriptionColor,
   };
 
   return (
@@ -148,47 +148,47 @@ export const StylingPlayground: Story = {
     headline: "Rank these items in order of importance",
     description: "Click items to add them to your ranking, then use arrows to reorder",
     options: defaultOptions,
-    questionHeadlineFontFamily: "system-ui, sans-serif",
-    questionHeadlineFontSize: "1.125rem",
-    questionHeadlineFontWeight: "600",
-    questionHeadlineColor: "#1e293b",
-    questionDescriptionFontFamily: "system-ui, sans-serif",
-    questionDescriptionFontSize: "0.875rem",
-    questionDescriptionFontWeight: "400",
-    questionDescriptionColor: "#64748b",
+    elementHeadlineFontFamily: "system-ui, sans-serif",
+    elementHeadlineFontSize: "1.125rem",
+    elementHeadlineFontWeight: "600",
+    elementHeadlineColor: "#1e293b",
+    elementDescriptionFontFamily: "system-ui, sans-serif",
+    elementDescriptionFontSize: "0.875rem",
+    elementDescriptionFontWeight: "400",
+    elementDescriptionColor: "#64748b",
   },
   argTypes: {
-    questionHeadlineFontFamily: {
+    elementHeadlineFontFamily: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineFontSize: {
+    elementHeadlineFontSize: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineFontWeight: {
+    elementHeadlineFontWeight: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineColor: {
+    elementHeadlineColor: {
       control: "color",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontFamily: {
+    elementDescriptionFontFamily: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontSize: {
+    elementDescriptionFontSize: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontWeight: {
+    elementDescriptionFontWeight: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionColor: {
+    elementDescriptionColor: {
       control: "color",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
   },
   decorators: [withCSSVariables],
@@ -314,7 +314,7 @@ export const RTLWithRanking: Story = {
   },
 };
 
-export const MultipleQuestions: Story = {
+export const MultipleElements: Story = {
   render: () => (
     <div className="w-[600px] space-y-8">
       <Ranking

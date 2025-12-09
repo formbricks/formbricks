@@ -29,7 +29,7 @@ export {
   type SingleSelectOption,
 } from "@/components/elements/single-select";
 export { Matrix, type MatrixProps, type MatrixOption } from "@/components/elements/matrix";
-export { DateQuestion, type DateQuestionProps } from "@/components/elements/date";
+export { DateElement, type DateElementProps } from "@/components/elements/date";
 export {
   PictureSelect,
   type PictureSelectProps,

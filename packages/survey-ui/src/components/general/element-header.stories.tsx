@@ -27,7 +27,7 @@ const meta: Meta<typeof ElementHeader> = {
     },
   },
   args: {
-    headline: "Question Title",
+    headline: "Element Title",
   },
 };
 

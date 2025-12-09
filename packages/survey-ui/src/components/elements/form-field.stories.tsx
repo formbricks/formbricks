@@ -4,15 +4,15 @@ import { FormField, type FormFieldConfig, type FormFieldProps } from "./form-fie
 
 // Styling options for the StylingPlayground story
 interface StylingOptions {
-  // Question styling
-  questionHeadlineFontFamily: string;
-  questionHeadlineFontSize: string;
-  questionHeadlineFontWeight: string;
-  questionHeadlineColor: string;
-  questionDescriptionFontFamily: string;
-  questionDescriptionFontWeight: string;
-  questionDescriptionFontSize: string;
-  questionDescriptionColor: string;
+  // Element styling
+  elementHeadlineFontFamily: string;
+  elementHeadlineFontSize: string;
+  elementHeadlineFontWeight: string;
+  elementHeadlineColor: string;
+  elementDescriptionFontFamily: string;
+  elementDescriptionFontWeight: string;
+  elementDescriptionFontSize: string;
+  elementDescriptionColor: string;
   // Label styling
   labelFontFamily: string;
   labelFontSize: string;
@@ -43,7 +43,7 @@ const meta: Meta<StoryProps> = {
     docs: {
       description: {
         component:
-          "A flexible form field question element that can display multiple input fields with different configurations. Replaces Contact Info and Address questions.",
+          "A flexible form field element that can display multiple input fields with different configurations. Replaces Contact Info and Address elements.",
       },
     },
   },
@@ -51,7 +51,7 @@ const meta: Meta<StoryProps> = {
   argTypes: {
     headline: {
       control: "text",
-      description: "The main question text",
+      description: "The main element text",
       table: { category: "Content" },
     },
     description: {
@@ -122,14 +122,14 @@ type Story = StoryObj<StoryProps>;
 const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
   const args = context.args as StoryProps;
   const {
-    questionHeadlineFontFamily,
-    questionHeadlineFontSize,
-    questionHeadlineFontWeight,
-    questionHeadlineColor,
-    questionDescriptionFontFamily,
-    questionDescriptionFontSize,
-    questionDescriptionFontWeight,
-    questionDescriptionColor,
+    elementHeadlineFontFamily,
+    elementHeadlineFontSize,
+    elementHeadlineFontWeight,
+    elementHeadlineColor,
+    elementDescriptionFontFamily,
+    elementDescriptionFontSize,
+    elementDescriptionFontWeight,
+    elementDescriptionColor,
     labelFontFamily,
     labelFontSize,
     labelFontWeight,
@@ -149,14 +149,14 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-question-headline-font-family": questionHeadlineFontFamily,
-    "--fb-question-headline-font-size": questionHeadlineFontSize,
-    "--fb-question-headline-font-weight": questionHeadlineFontWeight,
-    "--fb-question-headline-color": questionHeadlineColor,
-    "--fb-question-description-font-family": questionDescriptionFontFamily,
-    "--fb-question-description-font-size": questionDescriptionFontSize,
-    "--fb-question-description-font-weight": questionDescriptionFontWeight,
-    "--fb-question-description-color": questionDescriptionColor,
+    "--fb-element-headline-font-family": elementHeadlineFontFamily,
+    "--fb-element-headline-font-size": elementHeadlineFontSize,
+    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
+    "--fb-element-headline-color": elementHeadlineColor,
+    "--fb-element-description-font-family": elementDescriptionFontFamily,
+    "--fb-element-description-font-size": elementDescriptionFontSize,
+    "--fb-element-description-font-weight": elementDescriptionFontWeight,
+    "--fb-element-description-color": elementDescriptionColor,
     "--fb-label-font-family": labelFontFamily,
     "--fb-label-font-size": labelFontSize,
     "--fb-label-font-weight": labelFontWeight,
@@ -207,14 +207,14 @@ export const StylingPlayground: Story = {
     headline: "Please provide your contact information",
     description: "We'll use this to contact you",
     fields: contactInfoFields,
-    questionHeadlineFontFamily: "system-ui, sans-serif",
-    questionHeadlineFontSize: "1.125rem",
-    questionHeadlineFontWeight: "600",
-    questionHeadlineColor: "#1e293b",
-    questionDescriptionFontFamily: "system-ui, sans-serif",
-    questionDescriptionFontSize: "0.875rem",
-    questionDescriptionFontWeight: "400",
-    questionDescriptionColor: "#64748b",
+    elementHeadlineFontFamily: "system-ui, sans-serif",
+    elementHeadlineFontSize: "1.125rem",
+    elementHeadlineFontWeight: "600",
+    elementHeadlineColor: "#1e293b",
+    elementDescriptionFontFamily: "system-ui, sans-serif",
+    elementDescriptionFontSize: "0.875rem",
+    elementDescriptionFontWeight: "400",
+    elementDescriptionColor: "#64748b",
     labelFontFamily: "system-ui, sans-serif",
     labelFontSize: "0.875rem",
     labelFontWeight: "500",
@@ -233,37 +233,37 @@ export const StylingPlayground: Story = {
     inputShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
   },
   argTypes: {
-    questionHeadlineFontFamily: {
+    elementHeadlineFontFamily: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineFontSize: {
+    elementHeadlineFontSize: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineFontWeight: {
+    elementHeadlineFontWeight: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineColor: {
+    elementHeadlineColor: {
       control: "color",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontFamily: {
+    elementDescriptionFontFamily: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontSize: {
+    elementDescriptionFontSize: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontWeight: {
+    elementDescriptionFontWeight: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionColor: {
+    elementDescriptionColor: {
       control: "color",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
     labelFontFamily: {
       control: "text",
@@ -493,7 +493,7 @@ export const RTLWithValues: Story = {
   },
 };
 
-export const MultipleQuestions: Story = {
+export const MultipleElements: Story = {
   render: () => (
     <div className="w-[600px] space-y-8">
       <FormField

@@ -144,7 +144,7 @@ export const PaymentMethod: Story = {
   ),
 };
 
-export const SurveyQuestion: Story = {
+export const SurveyElement: Story = {
   render: () => (
     <div className="w-[400px] space-y-4">
       <div>

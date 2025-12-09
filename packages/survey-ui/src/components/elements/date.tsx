@@ -3,10 +3,10 @@ import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { useTextDirection } from "@/hooks/use-text-direction";
 
-interface DateQuestionProps {
+interface DateElementProps {
   /** Unique identifier for the element container */
   elementId: string;
-  /** The main question or prompt text displayed as the headline */
+  /** The main element or prompt text displayed as the headline */
   headline: string;
   /** Optional descriptive text displayed below the headline */
   description?: string;
@@ -30,7 +30,7 @@ interface DateQuestionProps {
   disabled?: boolean;
 }
 
-function DateQuestion({
+function DateElement({
   elementId,
   headline,
   description,
@@ -43,7 +43,7 @@ function DateQuestion({
   errorMessage,
   dir = "auto",
   disabled = false,
-}: DateQuestionProps): React.JSX.Element {
+}: DateElementProps): React.JSX.Element {
   // Ensure value is always a string or undefined
   const currentValue = value ?? "";
 
@@ -82,5 +82,5 @@ function DateQuestion({
   );
 }
 
-export { DateQuestion };
-export type { DateQuestionProps };
+export { DateElement };
+export type { DateElementProps };

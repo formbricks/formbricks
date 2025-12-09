@@ -34,19 +34,19 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
 
-    /* Question Headline CSS variables */
-    --fb-question-headline-font-family: inherit;
-    --fb-question-headline-font-weight: 600;
-    --fb-question-headline-font-size: 1.125rem;
-    --fb-question-headline-color: hsl(222.2 84% 4.9%);
-    --fb-question-headline-opacity: 1;
+    /* Element Headline CSS variables */
+    --fb-element-headline-font-family: inherit;
+    --fb-element-headline-font-weight: 600;
+    --fb-element-headline-font-size: 1.125rem;
+    --fb-element-headline-color: hsl(222.2 84% 4.9%);
+    --fb-element-headline-opacity: 1;
 
-    /* Question Description CSS variables */
-    --fb-question-description-font-family: inherit;
-    --fb-question-description-font-weight: 400;
-    --fb-question-description-font-size: 0.875rem;
-    --fb-question-description-color: hsl(215.4 16.3% 46.9%);
-    --fb-question-description-opacity: 1;
+    /* Element Description CSS variables */
+    --fb-element-description-font-family: inherit;
+    --fb-element-description-font-weight: 400;
+    --fb-element-description-font-size: 0.875rem;
+    --fb-element-description-color: hsl(215.4 16.3% 46.9%);
+    --fb-element-description-opacity: 1;
 
     /* Label CSS variables */
     --fb-label-font-family: inherit;

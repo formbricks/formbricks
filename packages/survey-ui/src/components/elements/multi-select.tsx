@@ -16,7 +16,7 @@ import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
- * Option for multi-select question
+ * Option for multi-select element
  */
 export interface MultiSelectOption {
   /** Unique identifier for the option */
@@ -28,7 +28,7 @@ export interface MultiSelectOption {
 interface MultiSelectProps {
   /** Unique identifier for the element container */
   elementId: string;
-  /** The main question or prompt text displayed as the headline */
+  /** The main element or prompt text displayed as the headline */
   headline: string;
   /** Optional descriptive text displayed below the headline */
   description?: string;

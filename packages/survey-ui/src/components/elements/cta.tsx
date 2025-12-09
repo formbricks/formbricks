@@ -6,12 +6,12 @@ import { ElementHeader } from "@/components/general/element-header";
 import { useTextDirection } from "@/hooks/use-text-direction";
 
 /**
- * Props for the CTA (Call to Action) question component
+ * Props for the CTA (Call to Action) element component
  */
 export interface CTAProps {
   /** Unique identifier for the element container */
   elementId: string;
-  /** The main question or prompt text displayed as the headline */
+  /** The main element or prompt text displayed as the headline */
   headline: string;
   /** Optional descriptive text displayed below the headline */
   description?: string;

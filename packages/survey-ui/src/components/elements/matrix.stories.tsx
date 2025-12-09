@@ -4,15 +4,15 @@ import { Matrix, type MatrixOption, type MatrixProps } from "./matrix";
 
 // Styling options for the StylingPlayground story
 interface StylingOptions {
-  // Question styling
-  questionHeadlineFontFamily: string;
-  questionHeadlineFontSize: string;
-  questionHeadlineFontWeight: string;
-  questionHeadlineColor: string;
-  questionDescriptionFontFamily: string;
-  questionDescriptionFontWeight: string;
-  questionDescriptionFontSize: string;
-  questionDescriptionColor: string;
+  // Element styling
+  elementHeadlineFontFamily: string;
+  elementHeadlineFontSize: string;
+  elementHeadlineFontWeight: string;
+  elementHeadlineColor: string;
+  elementDescriptionFontFamily: string;
+  elementDescriptionFontWeight: string;
+  elementDescriptionFontSize: string;
+  elementDescriptionColor: string;
   // Option label styling
   optionLabelFontFamily: string;
   optionLabelFontSize: string;
@@ -34,7 +34,7 @@ const meta: Meta<StoryProps> = {
     docs: {
       description: {
         component:
-          "A complete matrix question element that combines headline, description, and a table with rows and columns. Each row can have one selected column value. Supports validation and RTL text direction.",
+          "A complete matrix element that combines headline, description, and a table with rows and columns. Each row can have one selected column value. Supports validation and RTL text direction.",
       },
     },
   },
@@ -42,7 +42,7 @@ const meta: Meta<StoryProps> = {
   argTypes: {
     headline: {
       control: "text",
-      description: "The main question text",
+      description: "The main element text",
       table: { category: "Content" },
     },
     description: {
@@ -119,14 +119,14 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const {
-    questionHeadlineFontFamily,
-    questionHeadlineFontSize,
-    questionHeadlineFontWeight,
-    questionHeadlineColor,
-    questionDescriptionFontFamily,
-    questionDescriptionFontSize,
-    questionDescriptionFontWeight,
-    questionDescriptionColor,
+    elementHeadlineFontFamily,
+    elementHeadlineFontSize,
+    elementHeadlineFontWeight,
+    elementHeadlineColor,
+    elementDescriptionFontFamily,
+    elementDescriptionFontSize,
+    elementDescriptionFontWeight,
+    elementDescriptionColor,
     optionLabelFontFamily,
     optionLabelFontSize,
     optionLabelFontWeight,
@@ -137,14 +137,14 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-question-headline-font-family": questionHeadlineFontFamily,
-    "--fb-question-headline-font-size": questionHeadlineFontSize,
-    "--fb-question-headline-font-weight": questionHeadlineFontWeight,
-    "--fb-question-headline-color": questionHeadlineColor,
-    "--fb-question-description-font-family": questionDescriptionFontFamily,
-    "--fb-question-description-font-size": questionDescriptionFontSize,
-    "--fb-question-description-font-weight": questionDescriptionFontWeight,
-    "--fb-question-description-color": questionDescriptionColor,
+    "--fb-element-headline-font-family": elementHeadlineFontFamily,
+    "--fb-element-headline-font-size": elementHeadlineFontSize,
+    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
+    "--fb-element-headline-color": elementHeadlineColor,
+    "--fb-element-description-font-family": elementDescriptionFontFamily,
+    "--fb-element-description-font-size": elementDescriptionFontSize,
+    "--fb-element-description-font-weight": elementDescriptionFontWeight,
+    "--fb-element-description-color": elementDescriptionColor,
     "--fb-option-label-font-family": optionLabelFontFamily,
     "--fb-option-label-font-size": optionLabelFontSize,
     "--fb-option-label-font-weight": optionLabelFontWeight,
@@ -182,38 +182,38 @@ export const StylingPlayground: Story = {
     columns: defaultColumns,
   },
   argTypes: {
-    // Question styling
-    questionHeadlineFontFamily: {
+    // Element styling
+    elementHeadlineFontFamily: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineFontSize: {
+    elementHeadlineFontSize: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineFontWeight: {
+    elementHeadlineFontWeight: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineColor: {
+    elementHeadlineColor: {
       control: "color",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontFamily: {
+    elementDescriptionFontFamily: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontSize: {
+    elementDescriptionFontSize: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontWeight: {
+    elementDescriptionFontWeight: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionColor: {
+    elementDescriptionColor: {
       control: "color",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
     // Option label styling
     optionLabelFontFamily: {
@@ -324,7 +324,7 @@ export const Disabled: Story = {
   args: {
     elementId: "matrix-disabled",
     inputId: "matrix-disabled-input",
-    headline: "This question is disabled",
+    headline: "This element is disabled",
     description: "You cannot change the selection",
     rows: defaultRows,
     columns: defaultColumns,
@@ -430,7 +430,7 @@ export const RTLWithSelections: Story = {
   },
 };
 
-export const MultipleQuestions: Story = {
+export const MultipleElements: Story = {
   render: () => (
     <div className="w-[600px] space-y-8">
       <Matrix

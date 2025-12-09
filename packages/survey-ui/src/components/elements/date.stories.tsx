@@ -1,18 +1,18 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react";
 import React, { useEffect, useState } from "react";
-import { DateQuestion, type DateQuestionProps } from "./date";
+import { DateElement, type DateElementProps } from "./date";
 
 // Styling options for the StylingPlayground story
 interface StylingOptions {
-  // Question styling
-  questionHeadlineFontFamily: string;
-  questionHeadlineFontSize: string;
-  questionHeadlineFontWeight: string;
-  questionHeadlineColor: string;
-  questionDescriptionFontFamily: string;
-  questionDescriptionFontWeight: string;
-  questionDescriptionFontSize: string;
-  questionDescriptionColor: string;
+  // Element styling
+  elementHeadlineFontFamily: string;
+  elementHeadlineFontSize: string;
+  elementHeadlineFontWeight: string;
+  elementHeadlineColor: string;
+  elementDescriptionFontFamily: string;
+  elementDescriptionFontWeight: string;
+  elementDescriptionFontSize: string;
+  elementDescriptionColor: string;
   // Input styling
   inputWidth: string;
   inputHeight: string;
@@ -25,17 +25,17 @@ interface StylingOptions {
   inputPaddingY: string;
 }
 
-type StoryProps = DateQuestionProps & Partial<StylingOptions>;
+type StoryProps = DateElementProps & Partial<StylingOptions>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Date",
-  component: DateQuestion,
+  component: DateElement,
   parameters: {
     layout: "centered",
     docs: {
       description: {
         component:
-          "A complete date question element that combines headline, description, and a date input. Supports date range constraints, validation, and RTL text direction.",
+          "A complete date element that combines headline, description, and a date input. Supports date range constraints, validation, and RTL text direction.",
       },
     },
   },
@@ -43,7 +43,7 @@ const meta: Meta<StoryProps> = {
   argTypes: {
     headline: {
       control: "text",
-      description: "The main question text",
+      description: "The main element text",
       table: { category: "Content" },
     },
     description: {
@@ -100,7 +100,7 @@ const meta: Meta<StoryProps> = {
     }, [args.value]);
 
     return (
-      <DateQuestion
+      <DateElement
         {...args}
         value={value}
         onChange={(v) => {
@@ -120,14 +120,14 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const {
-    questionHeadlineFontFamily,
-    questionHeadlineFontSize,
-    questionHeadlineFontWeight,
-    questionHeadlineColor,
-    questionDescriptionFontFamily,
-    questionDescriptionFontSize,
-    questionDescriptionFontWeight,
-    questionDescriptionColor,
+    elementHeadlineFontFamily,
+    elementHeadlineFontSize,
+    elementHeadlineFontWeight,
+    elementHeadlineColor,
+    elementDescriptionFontFamily,
+    elementDescriptionFontSize,
+    elementDescriptionFontWeight,
+    elementDescriptionColor,
     inputWidth,
     inputHeight,
     inputBgColor,
@@ -140,14 +140,14 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-question-headline-font-family": questionHeadlineFontFamily,
-    "--fb-question-headline-font-size": questionHeadlineFontSize,
-    "--fb-question-headline-font-weight": questionHeadlineFontWeight,
-    "--fb-question-headline-color": questionHeadlineColor,
-    "--fb-question-description-font-family": questionDescriptionFontFamily,
-    "--fb-question-description-font-size": questionDescriptionFontSize,
-    "--fb-question-description-font-weight": questionDescriptionFontWeight,
-    "--fb-question-description-color": questionDescriptionColor,
+    "--fb-element-headline-font-family": elementHeadlineFontFamily,
+    "--fb-element-headline-font-size": elementHeadlineFontSize,
+    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
+    "--fb-element-headline-color": elementHeadlineColor,
+    "--fb-element-description-font-family": elementDescriptionFontFamily,
+    "--fb-element-description-font-size": elementDescriptionFontSize,
+    "--fb-element-description-font-weight": elementDescriptionFontWeight,
+    "--fb-element-description-color": elementDescriptionColor,
     "--fb-input-width": inputWidth,
     "--fb-input-height": inputHeight,
     "--fb-input-bg-color": inputBgColor,
@@ -172,38 +172,38 @@ export const StylingPlayground: Story = {
     description: "Please select a date",
   },
   argTypes: {
-    // Question styling
-    questionHeadlineFontFamily: {
+    // Element styling
+    elementHeadlineFontFamily: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineFontSize: {
+    elementHeadlineFontSize: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineFontWeight: {
+    elementHeadlineFontWeight: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionHeadlineColor: {
+    elementHeadlineColor: {
       control: "color",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontFamily: {
+    elementDescriptionFontFamily: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontSize: {
+    elementDescriptionFontSize: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionFontWeight: {
+    elementDescriptionFontWeight: {
       control: "text",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
-    questionDescriptionColor: {
+    elementDescriptionColor: {
       control: "color",
-      table: { category: "Question Styling" },
+      table: { category: "Element Styling" },
     },
     // Input styling
     inputWidth: {
@@ -332,17 +332,17 @@ export const RTLWithValue: Story = {
   },
 };
 
-export const MultipleQuestions: Story = {
+export const MultipleElements: Story = {
   render: () => (
     <div className="w-[600px] space-y-8">
-      <DateQuestion
+      <DateElement
         elementId="date-1"
         inputId="date-1-input"
         headline="What is your date of birth?"
         description="Please select your date of birth"
         onChange={() => {}}
       />
-      <DateQuestion
+      <DateElement
         elementId="date-2"
         inputId="date-2-input"
         headline="When would you like to schedule the appointment?"

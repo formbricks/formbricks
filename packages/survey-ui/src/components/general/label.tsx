@@ -42,21 +42,21 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
   const getCssVarStyles = (): React.CSSProperties => {
     if (variant === "headline") {
       return {
-        fontFamily: "var(--fb-question-headline-font-family)",
-        fontWeight: "var(--fb-question-headline-font-weight)" as React.CSSProperties["fontWeight"],
-        fontSize: "var(--fb-question-headline-font-size)",
-        color: "var(--fb-question-headline-color)",
-        opacity: "var(--fb-question-headline-opacity)",
+        fontFamily: "var(--fb-element-headline-font-family)",
+        fontWeight: "var(--fb-element-headline-font-weight)" as React.CSSProperties["fontWeight"],
+        fontSize: "var(--fb-element-headline-font-size)",
+        color: "var(--fb-element-headline-color)",
+        opacity: "var(--fb-element-headline-opacity)",
       };
     }
 
     if (variant === "description") {
       return {
-        fontFamily: "var(--fb-question-description-font-family)",
-        fontWeight: "var(--fb-question-description-font-weight)" as React.CSSProperties["fontWeight"],
-        fontSize: "var(--fb-question-description-font-size)",
-        color: "var(--fb-question-description-color)",
-        opacity: "var(--fb-question-description-opacity)",
+        fontFamily: "var(--fb-element-description-font-family)",
+        fontWeight: "var(--fb-element-description-font-weight)" as React.CSSProperties["fontWeight"],
+        fontSize: "var(--fb-element-description-font-size)",
+        color: "var(--fb-element-description-color)",
+        opacity: "var(--fb-element-description-opacity)",
       };
     }
 

@@ -17,7 +17,7 @@ import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
- * Option for single-select question
+ * Option for single-select element
  */
 export interface SingleSelectOption {
   /** Unique identifier for the option */
@@ -29,7 +29,7 @@ export interface SingleSelectOption {
 interface SingleSelectProps {
   /** Unique identifier for the element container */
   elementId: string;
-  /** The main question or prompt text displayed as the headline */
+  /** The main element or prompt text displayed as the headline */
   headline: string;
   /** Optional descriptive text displayed below the headline */
   description?: string;

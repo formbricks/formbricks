@@ -20,7 +20,7 @@ export interface UploadedFile {
 interface FileUploadProps {
   /** Unique identifier for the element container */
   elementId: string;
-  /** The main question or prompt text displayed as the headline */
+  /** The main element or prompt text displayed as the headline */
   headline: string;
   /** Optional descriptive text displayed below the headline */
   description?: string;
