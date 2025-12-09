@@ -105,7 +105,7 @@ function Matrix({
                 <th className="p-2 text-left" />
                 {columns.map((column) => (
                   <th key={column.id} className="p-2 text-center font-normal">
-                    <Label>{column.label}</Label>
+                    <Label className="justify-center">{column.label}</Label>
                   </th>
                 ))}
               </tr>
