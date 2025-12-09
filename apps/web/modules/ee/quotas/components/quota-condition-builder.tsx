@@ -18,6 +18,7 @@ interface QuotaConditionBuilderProps {
   conditions: TSurveyQuotaLogic;
   onChange: (conditions: TSurveyQuotaLogic) => void;
   quotaErrors?: FieldErrors<TSurveyQuotaInput>;
+  isSubmitted?: boolean;
 }
 
 export const QuotaConditionBuilder = ({
@@ -25,6 +26,7 @@ export const QuotaConditionBuilder = ({
   conditions,
   onChange,
   quotaErrors,
+  isSubmitted,
 }: QuotaConditionBuilderProps) => {
   const { t } = useTranslation();
 
@@ -66,6 +68,7 @@ export const QuotaConditionBuilder = ({
         config={config}
         callbacks={callbacks}
         quotaErrors={quotaErrors}
+        isSubmitted={isSubmitted}
       />
     </div>
   );

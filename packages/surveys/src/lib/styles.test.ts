@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
-import { addCustomThemeToDom, addStylesToDom } from "./styles";
+import { addCustomThemeToDom, addStylesToDom, getStyleNonce, setStyleNonce } from "./styles";
 
 // Mock CSS module imports
 vi.mock("@/styles/global.css?inline", () => ({ default: ".global {}" }));
@@ -40,11 +40,85 @@ const getBaseProjectStyling = (overrides: Partial<TProjectStyling> = {}): TProje
   };
 };
 
+describe("setStyleNonce and getStyleNonce", () => {
+  beforeEach(() => {
+    // Reset the DOM and nonce before each test
+    document.head.innerHTML = "";
+    document.body.innerHTML = "";
+    setStyleNonce(undefined);
+  });
+
+  test("should set and get the nonce value", () => {
+    const nonce = "test-nonce-123";
+    setStyleNonce(nonce);
+    expect(getStyleNonce()).toBe(nonce);
+  });
+
+  test("should allow clearing the nonce with undefined", () => {
+    setStyleNonce("initial-nonce");
+    expect(getStyleNonce()).toBe("initial-nonce");
+    setStyleNonce(undefined);
+    expect(getStyleNonce()).toBeUndefined();
+  });
+
+  test("should update existing formbricks__css element with nonce", () => {
+    // Create an existing style element
+    const existingElement = document.createElement("style");
+    existingElement.id = "formbricks__css";
+    document.head.appendChild(existingElement);
+
+    const nonce = "test-nonce-456";
+    setStyleNonce(nonce);
+
+    expect(existingElement.getAttribute("nonce")).toBe(nonce);
+  });
+
+  test("should update existing formbricks__css__custom element with nonce", () => {
+    // Create an existing custom style element
+    const existingElement = document.createElement("style");
+    existingElement.id = "formbricks__css__custom";
+    document.head.appendChild(existingElement);
+
+    const nonce = "test-nonce-789";
+    setStyleNonce(nonce);
+
+    expect(existingElement.getAttribute("nonce")).toBe(nonce);
+  });
+
+  test("should not update nonce on existing elements when nonce is undefined", () => {
+    // Create existing style elements
+    const mainElement = document.createElement("style");
+    mainElement.id = "formbricks__css";
+    mainElement.setAttribute("nonce", "existing-nonce");
+    document.head.appendChild(mainElement);
+
+    const customElement = document.createElement("style");
+    customElement.id = "formbricks__css__custom";
+    customElement.setAttribute("nonce", "existing-nonce");
+    document.head.appendChild(customElement);
+
+    setStyleNonce(undefined);
+
+    // Elements should retain their existing nonce (or be cleared if implementation removes it)
+    // The current implementation doesn't remove nonce when undefined, so we check it's not changed
+    expect(mainElement.getAttribute("nonce")).toBe("existing-nonce");
+    expect(customElement.getAttribute("nonce")).toBe("existing-nonce");
+  });
+
+  test("should handle setting nonce when elements don't exist", () => {
+    const nonce = "test-nonce-no-elements";
+    setStyleNonce(nonce);
+    expect(getStyleNonce()).toBe(nonce);
+    // Should not throw and should store the nonce for future use
+  });
+});
+
 describe("addStylesToDom", () => {
   beforeEach(() => {
     // Reset the DOM before each test
     document.head.innerHTML = "";
     document.body.innerHTML = "";
+    setStyleNonce(undefined);
   });
 
   afterEach(() => {
@@ -52,6 +126,7 @@ describe("addStylesToDom", () => {
     if (styleElement) {
       styleElement.remove();
     }
+    setStyleNonce(undefined);
   });
 
   test("should add a style element to the head with combined CSS", () => {
@@ -78,12 +153,68 @@ describe("addStylesToDom", () => {
     expect(secondStyleElement).toBe(firstStyleElement);
     expect(secondStyleElement?.innerHTML).toBe(initialInnerHTML);
   });
+
+  test("should apply nonce to new style element when nonce is set", () => {
+    const nonce = "test-nonce-styles";
+    setStyleNonce(nonce);
+    addStylesToDom();
+
+    const styleElement = document.getElementById("formbricks__css") as HTMLStyleElement;
+    expect(styleElement).not.toBeNull();
+    expect(styleElement.getAttribute("nonce")).toBe(nonce);
+  });
+
+  test("should not apply nonce when nonce is not set", () => {
+    addStylesToDom();
+    const styleElement = document.getElementById("formbricks__css") as HTMLStyleElement;
+    expect(styleElement).not.toBeNull();
+    expect(styleElement.getAttribute("nonce")).toBeNull();
+  });
+
+  test("should update nonce on existing style element if nonce is set after creation", () => {
+    addStylesToDom(); // Create element without nonce
+    const styleElement = document.getElementById("formbricks__css") as HTMLStyleElement;
+    expect(styleElement.getAttribute("nonce")).toBeNull();
+
+    const nonce = "test-nonce-update";
+    setStyleNonce(nonce);
+    addStylesToDom(); // Call again to trigger update logic
+
+    expect(styleElement.getAttribute("nonce")).toBe(nonce);
+  });
+
+  test("should not overwrite existing nonce when updating via addStylesToDom", () => {
+    const existingElement = document.createElement("style");
+    existingElement.id = "formbricks__css";
+    existingElement.setAttribute("nonce", "existing-nonce");
+    document.head.appendChild(existingElement);
+
+    // Don't call setStyleNonce - just verify addStylesToDom doesn't overwrite
+    addStylesToDom(); // Should not overwrite since nonce already exists
+
+    // The update logic in addStylesToDom only sets nonce if it doesn't exist
+    expect(existingElement.getAttribute("nonce")).toBe("existing-nonce");
+  });
+
+  test("should overwrite existing nonce when setStyleNonce is called directly", () => {
+    const existingElement = document.createElement("style");
+    existingElement.id = "formbricks__css";
+    existingElement.setAttribute("nonce", "existing-nonce");
+    document.head.appendChild(existingElement);
+
+    const newNonce = "new-nonce";
+    setStyleNonce(newNonce); // setStyleNonce always updates existing elements
+
+    // setStyleNonce directly updates the nonce attribute
+    expect(existingElement.getAttribute("nonce")).toBe(newNonce);
+  });
 });
 
 describe("addCustomThemeToDom", () => {
   beforeEach(() => {
     document.head.innerHTML = "";
     document.body.innerHTML = "";
+    setStyleNonce(undefined);
   });
 
   afterEach(() => {
@@ -91,6 +222,7 @@ describe("addCustomThemeToDom", () => {
     if (styleElement) {
       styleElement.remove();
     }
+    setStyleNonce(undefined);
   });
 
   const getCssVariables = (styleElement: HTMLStyleElement | null): Record<string, string> => {
@@ -270,6 +402,66 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-heading-color"]).toBeUndefined();
     expect(variables["--fb-survey-background-color"]).toBeUndefined();
     expect(variables["--fb-input-background-color"]).toBeUndefined();
+  });
+
+  test("should apply nonce to new custom theme style element when nonce is set", () => {
+    const nonce = "test-nonce-custom";
+    setStyleNonce(nonce);
+    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    addCustomThemeToDom({ styling });
+
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    expect(styleElement).not.toBeNull();
+    expect(styleElement.getAttribute("nonce")).toBe(nonce);
+  });
+
+  test("should not apply nonce when nonce is not set", () => {
+    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    addCustomThemeToDom({ styling });
+
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    expect(styleElement).not.toBeNull();
+    expect(styleElement.getAttribute("nonce")).toBeNull();
+  });
+
+  test("should update nonce on existing custom style element if nonce is set after creation", () => {
+    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    addCustomThemeToDom({ styling }); // Create element without nonce
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    expect(styleElement.getAttribute("nonce")).toBeNull();
+
+    const nonce = "test-nonce-custom-update";
+    setStyleNonce(nonce);
+    addCustomThemeToDom({ styling }); // Call again to trigger update logic
+
+    expect(styleElement.getAttribute("nonce")).toBe(nonce);
+  });
+
+  test("should not overwrite existing nonce when updating custom theme via addCustomThemeToDom", () => {
+    const existingElement = document.createElement("style");
+    existingElement.id = "formbricks__css__custom";
+    existingElement.setAttribute("nonce", "existing-custom-nonce");
+    document.head.appendChild(existingElement);
+
+    // Don't call setStyleNonce - just verify addCustomThemeToDom doesn't overwrite
+    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    addCustomThemeToDom({ styling }); // Should not overwrite since nonce already exists
+
+    // The update logic in addCustomThemeToDom only sets nonce if it doesn't exist
+    expect(existingElement.getAttribute("nonce")).toBe("existing-custom-nonce");
+  });
+
+  test("should overwrite existing nonce when setStyleNonce is called directly on custom theme", () => {
+    const existingElement = document.createElement("style");
+    existingElement.id = "formbricks__css__custom";
+    existingElement.setAttribute("nonce", "existing-custom-nonce");
+    document.head.appendChild(existingElement);
+
+    const newNonce = "new-custom-nonce";
+    setStyleNonce(newNonce); // setStyleNonce directly updates the nonce attribute
+
+    // setStyleNonce directly updates the nonce attribute
+    expect(existingElement.getAttribute("nonce")).toBe(newNonce);
   });
 });
 

@@ -18,6 +18,7 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   displayLimit: null,
   welcomeCard: getDefaultWelcomeCard(t),
   questions: [],
+  blocks: [],
   endings: [getDefaultEndingCard([], t)],
   hiddenFields: {
     enabled: false,

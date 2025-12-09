@@ -2,7 +2,7 @@ export type IntegrationModalInputs = {
   base: string;
   table: string;
   survey: string;
-  questions: string[];
+  elements: string[];
   includeVariables: boolean;
   includeHiddenFields: boolean;
   includeMetadata: boolean;

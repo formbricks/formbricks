@@ -75,11 +75,11 @@ export const getSlackChannels = async (environmentId: string): Promise<TIntegrat
 export const writeDataToSlack = async (
   credentials: TIntegrationSlackCredential,
   channelId: string,
-  values: string[][],
+  responses: string[],
+  elements: string[],
   surveyName: string | undefined
 ) => {
   try {
-    const [responses, questions] = values;
     let blockResponse = [
       {
         type: "section",
@@ -92,12 +92,12 @@ export const writeDataToSlack = async (
         type: "divider",
       },
     ];
-    for (let i = 0; i < values[0].length; i++) {
+    for (let i = 0; i < responses.length; i++) {
       let questionSection = {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${questions[i]}*`,
+          text: `*${elements[i]}*`,
         },
       };
       const responseText = responses[i];

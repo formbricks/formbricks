@@ -4,12 +4,11 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
   TSurveyCreateInput,
   TSurveyLanguage,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -172,12 +171,12 @@ export const mockContactAttributeKey: TContactAttributeKey = {
   ...commonMockProperties,
 };
 
-const mockQuestion: TSurveyQuestion = {
+const mockQuestion = {
   id: mockId,
-  type: TSurveyQuestionTypeEnum.OpenText,
+  type: TSurveyElementTypeEnum.OpenText as typeof TSurveyElementTypeEnum.OpenText,
   headline: { default: "Question Text", de: "Fragetext" },
   required: false,
-  inputType: "text",
+  inputType: "text" as const,
   charLimit: {
     enabled: false,
   },
@@ -200,7 +199,14 @@ const baseSurveyProperties = {
   recontactDays: 3,
   displayLimit: 3,
   welcomeCard: mockWelcomeCard,
-  questions: [mockQuestion],
+  questions: [],
+  blocks: [
+    {
+      id: "block1",
+      name: "Block 1",
+      elements: [mockQuestion],
+    },
+  ],
   isBackButtonHidden: false,
   endings: [
     {
@@ -297,22 +303,22 @@ export const updateSurveyInput: TSurvey = {
   type: "link",
   status: "inProgress",
   displayOption: "respondMultiple",
+  metadata: {},
   triggers: [{ actionClass: mockActionClass }],
   projectOverwrites: null,
-  styling: null,
+  recaptcha: null,
   singleUse: null,
+  styling: null,
   displayPercentage: null,
   createdBy: null,
   pin: null,
-  recaptcha: null,
   segment: null,
   languages: [],
   showLanguageSwitch: null,
   variables: [],
   followUps: [],
-  metadata: {},
-  ...commonMockProperties,
   ...baseSurveyProperties,
+  ...commonMockProperties,
 };
 
 export const mockTransformedSurveyOutput = {
@@ -331,16 +337,78 @@ export const mockSurveyWithLogic: TSurvey = {
   type: "link",
   endings: [],
   hiddenFields: { enabled: true, fieldIds: ["name"] },
-  questions: [
+  blocks: [
     {
-      id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      inputType: "text",
-      headline: { default: "What is your favorite color?" },
-      required: true,
-      charLimit: {
-        enabled: false,
-      },
+      id: "block1",
+      name: "Block 1",
+      elements: [
+        {
+          id: "q1",
+          type: TSurveyElementTypeEnum.OpenText,
+          inputType: "text" as const,
+          headline: { default: "What is your favorite color?" },
+          required: true,
+          charLimit: {
+            enabled: false,
+          },
+        },
+        {
+          id: "q2",
+          type: TSurveyElementTypeEnum.OpenText,
+          inputType: "text" as const,
+          headline: { default: "What is your favorite food?" },
+          required: true,
+          charLimit: {
+            enabled: false,
+          },
+        },
+        {
+          id: "q3",
+          type: TSurveyElementTypeEnum.OpenText,
+          inputType: "text" as const,
+          headline: { default: "What is your favorite movie?" },
+          required: true,
+          charLimit: {
+            enabled: false,
+          },
+        },
+        {
+          id: "q4",
+          type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+          headline: { default: "Select a number:" },
+          choices: [
+            { id: "mvedaklp0gxxycprpyhhwen7", label: { default: "lol" } },
+            { id: "i7ws8uqyj66q5x086vbqtm8n", label: { default: "lmao" } },
+            { id: "cy8hbbr9e2q6ywbfjbzwdsqn", label: { default: "XD" } },
+            { id: "sojc5wwxc5gxrnuib30w7t6s", label: { default: "hehe" } },
+          ],
+          required: true,
+          shuffleOption: "none" as const,
+        },
+        {
+          id: "q5",
+          type: TSurveyElementTypeEnum.OpenText,
+          inputType: "number" as const,
+          headline: { default: "Select your age group:" },
+          required: true,
+          charLimit: {
+            enabled: false,
+          },
+        },
+        {
+          id: "q6",
+          type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+          headline: { default: "Select your age group:" },
+          required: true,
+          choices: [
+            { id: "mvedaklp0gxxycprpyhhwen7", label: { default: "lol" } },
+            { id: "i7ws8uqyj66q5x086vbqtm8n", label: { default: "lmao" } },
+            { id: "cy8hbbr9e2q6ywbfjbzwdsqn", label: { default: "XD" } },
+            { id: "sojc5wwxc5gxrnuib30w7t6s", label: { default: "hehe" } },
+          ],
+          shuffleOption: "none" as const,
+        },
+      ],
       logic: [
         {
           id: "cdu9vgtmmd9b24l35pp9bodk",
@@ -350,7 +418,7 @@ export const mockSurveyWithLogic: TSurvey = {
             conditions: [
               {
                 id: "swlje0bsnh6lkyk8vqs13oyr",
-                leftOperand: { type: "question", value: "q1" },
+                leftOperand: { type: "element", value: "q1" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "blue" },
               },
@@ -358,18 +426,6 @@ export const mockSurveyWithLogic: TSurvey = {
           },
           actions: [],
         },
-      ],
-    },
-    {
-      id: "q2",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      inputType: "text",
-      headline: { default: "What is your favorite food?" },
-      required: true,
-      charLimit: {
-        enabled: false,
-      },
-      logic: [
         {
           id: "uwlm6kazj5pbt6licpa1hw5c",
           conditions: {
@@ -378,13 +434,13 @@ export const mockSurveyWithLogic: TSurvey = {
             conditions: [
               {
                 id: "n74oght3ozqgwm9rifp2fxrr",
-                leftOperand: { type: "question", value: "q1" },
+                leftOperand: { type: "element", value: "q1" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "blue" },
               },
               {
                 id: "fg4c9dwt9qjy8aba7zxbfdqd",
-                leftOperand: { type: "question", value: "q2" },
+                leftOperand: { type: "element", value: "q2" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "pizza" },
               },
@@ -392,18 +448,6 @@ export const mockSurveyWithLogic: TSurvey = {
           },
           actions: [],
         },
-      ],
-    },
-    {
-      id: "q3",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      inputType: "text",
-      headline: { default: "What is your favorite movie?" },
-      required: true,
-      charLimit: {
-        enabled: false,
-      },
-      logic: [
         {
           id: "dpi3zipezuo1idplztb1abes",
           conditions: {
@@ -412,13 +456,13 @@ export const mockSurveyWithLogic: TSurvey = {
             conditions: [
               {
                 id: "tmj7p9d3kpz1v4mcgpguqytw",
-                leftOperand: { type: "question", value: "q2" },
+                leftOperand: { type: "element", value: "q2" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "pizza" },
               },
               {
                 id: "rs7v5mmoetff7x8lo1gdsgpr",
-                leftOperand: { type: "question", value: "q3" },
+                leftOperand: { type: "element", value: "q3" },
                 operator: "equals",
                 rightOperand: { type: "static", value: "Inception" },
               },
@@ -426,20 +470,6 @@ export const mockSurveyWithLogic: TSurvey = {
           },
           actions: [],
         },
-      ],
-    },
-    {
-      id: "q4",
-      type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-      headline: { default: "Select a number:" },
-      choices: [
-        { id: "mvedaklp0gxxycprpyhhwen7", label: { default: "lol" } },
-        { id: "i7ws8uqyj66q5x086vbqtm8n", label: { default: "lmao" } },
-        { id: "cy8hbbr9e2q6ywbfjbzwdsqn", label: { default: "XD" } },
-        { id: "sojc5wwxc5gxrnuib30w7t6s", label: { default: "hehe" } },
-      ],
-      required: true,
-      logic: [
         {
           id: "fbim31ttxe1s7qkrjzkj1mtc",
           conditions: {
@@ -450,24 +480,12 @@ export const mockSurveyWithLogic: TSurvey = {
                 id: "ddhaccfqy7rr3d5jdswl8yl8",
                 leftOperand: { type: "variable", value: "siog1dabtpo3l0a3xoxw2922" },
                 operator: "equals",
-                rightOperand: { type: "question", value: "q4" },
+                rightOperand: { type: "element", value: "q4" },
               },
             ],
           },
           actions: [],
         },
-      ],
-    },
-    {
-      id: "q5",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      inputType: "number",
-      headline: { default: "Select your age group:" },
-      required: true,
-      charLimit: {
-        enabled: false,
-      },
-      logic: [
         {
           id: "o6n73uq9rysih9mpcbzlehfs",
           conditions: {
@@ -484,35 +502,21 @@ export const mockSurveyWithLogic: TSurvey = {
                 id: "ot894j7nwna24i6jo2zpk59o",
                 leftOperand: { type: "variable", value: "km1srr55owtn2r7lkoh5ny1u" },
                 operator: "isLessThan",
-                rightOperand: { type: "question", value: "q5" },
+                rightOperand: { type: "element", value: "q5" },
               },
             ],
           },
           actions: [],
         },
-      ],
-    },
-    {
-      id: "q6",
-      type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-      headline: { default: "Select your age group:" },
-      required: true,
-      choices: [
-        { id: "mvedaklp0gxxycprpyhhwen7", label: { default: "lol" } },
-        { id: "i7ws8uqyj66q5x086vbqtm8n", label: { default: "lmao" } },
-        { id: "cy8hbbr9e2q6ywbfjbzwdsqn", label: { default: "XD" } },
-        { id: "sojc5wwxc5gxrnuib30w7t6s", label: { default: "hehe" } },
-      ],
-      logic: [
         {
-          id: "o6n73uq9rysih9mpcbzlehfs",
+          id: "o6n73uq9rysih9mpcbzlehfs2",
           conditions: {
-            id: "szdkmtz17j9008n4i2d1t040",
+            id: "szdkmtz17j9008n4i2d1t041",
             connector: "and",
             conditions: [
               {
                 id: "rb223vmzuuzo3ag1bp2m3i69",
-                leftOperand: { type: "question", value: "q6" },
+                leftOperand: { type: "element", value: "q6" },
                 operator: "includesOneOf",
                 rightOperand: {
                   type: "static",
@@ -521,7 +525,7 @@ export const mockSurveyWithLogic: TSurvey = {
               },
               {
                 id: "ot894j7nwna24i6jo2zpk59o",
-                leftOperand: { type: "question", value: "q1" },
+                leftOperand: { type: "element", value: "q1" },
                 operator: "doesNotEqual",
                 rightOperand: { type: "static", value: "teal" },
               },
@@ -531,7 +535,7 @@ export const mockSurveyWithLogic: TSurvey = {
                 conditions: [
                   {
                     id: "gy6xowchkv8bp1qj7ur79jvc",
-                    leftOperand: { type: "question", value: "q2" },
+                    leftOperand: { type: "element", value: "q2" },
                     operator: "doesNotEqual",
                     rightOperand: { type: "static", value: "pizza" },
                   },
@@ -539,13 +543,13 @@ export const mockSurveyWithLogic: TSurvey = {
                     id: "vxyccgwsbq34s3l0syom7y2w",
                     leftOperand: { type: "hiddenField", value: "name" },
                     operator: "contains",
-                    rightOperand: { type: "question", value: "q2" },
+                    rightOperand: { type: "element", value: "q2" },
                   },
                 ],
               },
               {
                 id: "yunz0k9w0xwparogz2n1twoy",
-                leftOperand: { type: "question", value: "q3" },
+                leftOperand: { type: "element", value: "q3" },
                 operator: "doesNotEqual",
                 rightOperand: { type: "static", value: "Inception" },
               },
@@ -562,6 +566,7 @@ export const mockSurveyWithLogic: TSurvey = {
       ],
     },
   ],
+  questions: [],
   variables: [
     { id: "siog1dabtpo3l0a3xoxw2922", type: "text", name: "var1", value: "lmao" },
     { id: "km1srr55owtn2r7lkoh5ny1u", type: "number", name: "var2", value: 32 },

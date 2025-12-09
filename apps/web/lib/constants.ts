@@ -176,6 +176,7 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
   "ja-JP",
   "zh-Hans-CN",
   "es-ES",
+  "sv-SE",
 ];
 
 // Billing constants
@@ -217,10 +218,6 @@ export const BILLING_LIMITS = {
 export const INTERCOM_SECRET_KEY = env.INTERCOM_SECRET_KEY;
 export const INTERCOM_APP_ID = env.INTERCOM_APP_ID;
 export const IS_INTERCOM_CONFIGURED = Boolean(env.INTERCOM_APP_ID && INTERCOM_SECRET_KEY);
-
-export const POSTHOG_API_KEY = env.POSTHOG_API_KEY;
-export const POSTHOG_API_HOST = env.POSTHOG_API_HOST;
-export const IS_POSTHOG_CONFIGURED = Boolean(POSTHOG_API_KEY && POSTHOG_API_HOST);
 
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
 export const TURNSTILE_SITE_KEY = env.TURNSTILE_SITE_KEY;

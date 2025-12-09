@@ -57,7 +57,6 @@ export default defineConfig({
         "**/actions.ts", // Server actions (plural)
         "**/action.ts", // Server actions (singular)
         "lib/env.ts", // Environment configuration
-        "lib/posthogServer.ts", // PostHog server integration
         "**/cache.ts", // Cache files
         "**/cache/**", // Cache directories
 

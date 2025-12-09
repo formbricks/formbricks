@@ -10,7 +10,7 @@ export interface SurveyBaseProps {
   isBrandingEnabled: boolean;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
   getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;
-  getSetQuestionId?: (getSetQuestionId: (value: string) => void) => void;
+  getSetBlockId?: (getSetBlockId: (value: string) => void) => void;
   getSetResponseData?: (getSetResponseData: (value: TResponseData) => void) => void;
   onDisplay?: () => Promise<void>;
   onResponse?: (response: TResponseUpdate) => void;

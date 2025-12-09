@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZColor, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
-import { ZBaseStyling } from "./styling";
+import { ZBaseStyling, ZLogo } from "./styling";
 
 export const ZProjectStyling = ZBaseStyling.extend({
   allowStyleOverwrite: z.boolean(),
@@ -45,11 +45,6 @@ export const ZLanguageUpdate = z.object({
   alias: z.string().nullable(),
 });
 export type TLanguageUpdate = z.infer<typeof ZLanguageUpdate>;
-
-export const ZLogo = z.object({
-  url: z.string().optional(),
-  bgColor: z.string().optional(),
-});
 
 export type TLogo = z.infer<typeof ZLogo>;
 

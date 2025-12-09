@@ -1,0 +1,90 @@
+---
+title: "Custom Subpath"
+description: "Serve Formbricks from a custom URL prefix when you cannot expose it on the root domain."
+icon: "link"
+---
+
+<Note>
+  Custom subpath deployments are currently under internal review. If you need early access, please reach out via
+  [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
+</Note>
+
+### When to use a custom subpath
+
+Use a custom subpath (also called a Next.js base path) when your reverse proxy reserves the root domain for another
+service, but you still want Formbricks to live under the same hostname—for example `https://example.com/feedback`.
+Support for a build-time `BASE_PATH` variable is available in the Formbricks web app so that all internal routes,
+assets, and sign-in redirects honor the prefix.
+
+### Requirements and limitations
+
+- `BASE_PATH` must be present during `pnpm build`; changing it afterward requires a rebuild.
+- Official Formbricks Docker images do **not** accept this flag for technical reasons, so you must build your own image.
+- All public URLs (`WEBAPP_URL`, `NEXTAUTH_URL`, webhook targets, OAuth callbacks, etc.) need the same prefix.
+- Your proxy must rewrite `/custom-path/*` to the Formbricks container while keeping the prefix visible to clients.
+
+### Configure environment variables
+
+Add the following variables to the environment you use for builds (local, CI, or Docker build args):
+
+```bash
+BASE_PATH="/custom-path"
+WEBAPP_URL="https://yourdomain.com/custom-path"
+NEXTAUTH_URL="https://yourdomain.com/custom-path/api/auth"
+```
+
+If you use email links, webhooks, or third-party OAuth providers, ensure every URL you register includes the prefix.
+
+### Build a Docker image with a custom subpath
+
+<Steps>
+  <Step title="Clone Formbricks and prepare secrets">
+    Make sure you have the repository checked out and create temporary files (or use <code>--secret</code>) for the
+    required build-time secrets such as <code>DATABASE_URL</code>, <code>ENCRYPTION_KEY</code>, <code>REDIS_URL</code>,
+    and optional telemetry tokens.
+  </Step>
+  <Step title="Pass BASE_PATH as a build argument">
+    Use the Formbricks web Dockerfile and supply the custom subpath via <code>--build-arg</code>. Example:
+
+```bash
+docker build \
+  --progress=plain \
+  --no-cache \
+  --build-arg BASE_PATH=/custom-path \
+  --secret id=database_url,src=<(printf "postgresql://user:password@localhost:5432/formbricks?schema=public") \
+  --secret id=encryption_key,src=<(printf "your-32-character-encryption-key-here") \
+  --secret id=redis_url,src=<(printf "redis://localhost:6379") \
+  --secret id=sentry_auth_token,src=<(printf "") \
+  -f apps/web/Dockerfile \
+  -t formbricks-web \
+  .
+```
+
+    During the build logs you should see <code>BASE PATH /custom-path</code>, confirming that Next.js picked up the
+    prefix.
+  </Step>
+  <Step title="Run the container behind your proxy">
+    Start the resulting image with the same runtime environment variables you normally use (database credentials,
+    mailing provider, etc.). Point your reverse proxy so that <code>/custom-path</code> requests forward to
+    <code>http://formbricks-web:3000/custom-path</code> without stripping the prefix.
+  </Step>
+</Steps>
+
+### Verify the deployment
+
+1. Open `https://yourdomain.com/custom-path` and complete the onboarding flow.
+2. Create a survey and preview it—embedded scripts now load assets relative to the subpath.
+3. Sign out and confirm the login page still includes `/custom-path`.
+
+### Troubleshooting checklist
+
+- Confirm your build pipeline actually passes `BASE_PATH` (and, if needed, `WEBAPP_URL`/`NEXTAUTH_URL`) into the build
+  stage—check CI logs for the `BASE PATH /your-prefix` line and make sure custom Dockerfiles or wrappers forward
+  `--build-arg BASE_PATH=...` correctly.
+- If you cannot log in, double-check that `NEXTAUTH_URL` includes the prefix and uses the full route to the API as stated above. NextAuth rejects callbacks that do not
+  match exactly.
+- Re-run the Docker build when changing `BASE_PATH`; simply editing the container environment is not sufficient.
+- Inspect your proxy configuration to ensure it does not rewrite paths internally (e.g., `strip_prefix` needs to stay
+  disabled).
+- When in doubt, rebuild locally with `--progress=plain` and verify that the `BASE PATH` line reflects your prefix.
+

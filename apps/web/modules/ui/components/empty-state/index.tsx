@@ -2,9 +2,18 @@
 
 interface EmptyStateProps {
   text: string;
+  variant?: "default" | "simple";
 }
 
-export const EmptyState = ({ text }: EmptyStateProps) => {
+export const EmptyState = ({ text, variant = "default" }: EmptyStateProps) => {
+  if (variant === "simple") {
+    return (
+      <div className="shadow-xs rounded-xl border border-slate-100 bg-white p-4 text-center">
+        <p className="text-sm text-slate-500">{text}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="shadow-xs rounded-xl border border-slate-100 bg-white p-4">
       <div className="w-full space-y-3">
