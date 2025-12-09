@@ -15,9 +15,9 @@ function RadioGroup({
   dir?: "ltr" | "rtl";
 }): React.JSX.Element {
   return (
-    <div className="flex gap-2" dir={dir}>
+    <div className="flex w-full gap-2" dir={dir}>
       {errorMessage ? <div className="bg-destructive min-h-full w-1" /> : null}
-      <div className="space-y-2">
+      <div className="w-full space-y-2">
         {errorMessage ? (
           <div className="text-destructive flex items-center gap-1 text-sm">
             <AlertCircle className="size-4" />
@@ -28,7 +28,7 @@ function RadioGroup({
           aria-invalid={Boolean(errorMessage)}
           data-slot="radio-group"
           dir={dir}
-          className={cn("grid gap-3", className)}
+          className={className}
           {...props}
         />
       </div>

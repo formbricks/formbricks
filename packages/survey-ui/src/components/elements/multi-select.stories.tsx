@@ -18,6 +18,19 @@ interface StylingOptions {
   labelFontSize: string;
   labelFontWeight: string;
   labelColor: string;
+  // Option styling
+  optionBorderColor: string;
+  optionBgColor: string;
+  optionLabelColor: string;
+  optionHoverBgColor: string;
+  optionSelectedBorder: string;
+  optionSelectedBackground: string;
+  optionBorderRadius: string;
+  optionPaddingX: string;
+  optionPaddingY: string;
+  optionFontFamily: string;
+  optionFontSize: string;
+  optionFontWeight: string;
   // Checkbox Input styling
   checkboxInputBorderColor: string;
   checkboxInputBgColor: string;
@@ -128,7 +141,7 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
+const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const {
@@ -144,6 +157,18 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     labelFontSize,
     labelFontWeight,
     labelColor,
+    optionBorderColor,
+    optionBgColor,
+    optionLabelColor,
+    optionHoverBgColor,
+    optionSelectedBorder,
+    optionSelectedBackground,
+    optionBorderRadius,
+    optionPaddingX,
+    optionPaddingY,
+    optionFontFamily,
+    optionFontSize,
+    optionFontWeight,
     checkboxInputBorderColor,
     checkboxInputBgColor,
     checkboxInputColor,
@@ -162,6 +187,18 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-label-font-size": labelFontSize,
     "--fb-label-font-weight": labelFontWeight,
     "--fb-label-color": labelColor,
+    "--fb-option-border-color": optionBorderColor,
+    "--fb-option-bg-color": optionBgColor,
+    "--fb-option-label-color": optionLabelColor,
+    "--fb-option-hover-bg-color": optionHoverBgColor,
+    "--fb-option-selected-border": optionSelectedBorder,
+    "--fb-option-selected-background": optionSelectedBackground,
+    "--fb-option-border-radius": optionBorderRadius,
+    "--fb-option-padding-x": optionPaddingX,
+    "--fb-option-padding-y": optionPaddingY,
+    "--fb-option-font-family": optionFontFamily,
+    "--fb-option-font-size": optionFontSize,
+    "--fb-option-font-weight": optionFontWeight,
     "--fb-input-border-color": checkboxInputBorderColor,
     "--fb-input-bg-color": checkboxInputBgColor,
     "--fb-input-color": checkboxInputColor,
@@ -238,18 +275,67 @@ export const StylingPlayground: Story = {
       control: "color",
       table: { category: "Label Styling" },
     },
+    // Option styling
+    optionBorderColor: {
+      control: "color",
+      table: { category: "Option Styling" },
+    },
+    optionBgColor: {
+      control: "color",
+      table: { category: "Option Styling" },
+    },
+    optionLabelColor: {
+      control: "color",
+      table: { category: "Option Styling" },
+    },
+    optionHoverBgColor: {
+      control: "color",
+      table: { category: "Option Styling" },
+    },
+    optionSelectedBorder: {
+      control: "color",
+      table: { category: "Option Styling" },
+    },
+    optionSelectedBackground: {
+      control: "color",
+      table: { category: "Option Styling" },
+    },
+    optionBorderRadius: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
+    optionPaddingX: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
+    optionPaddingY: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
+    optionFontFamily: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
+    optionFontSize: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
+    optionFontWeight: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
     // Checkbox Input styling
-    checkboxInputBorderColor: {
+    inputBorderColor: {
       control: "color",
-      table: { category: "Checkbox Input Styling" },
+      table: { category: "Input Styling" },
     },
-    checkboxInputBgColor: {
+    inputBgColor: {
       control: "color",
-      table: { category: "Checkbox Input Styling" },
+      table: { category: "Input Styling" },
     },
-    checkboxInputColor: {
+    inputColor: {
       control: "color",
-      table: { category: "Checkbox Input Styling" },
+      table: { category: "Input Styling" },
     },
   },
   decorators: [withCSSVariables],

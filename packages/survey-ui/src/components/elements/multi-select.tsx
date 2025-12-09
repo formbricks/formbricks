@@ -101,6 +101,30 @@ function MultiSelect({
     onOtherValueChange?.(e.target.value);
   };
 
+  // Helper function to get option container styles
+  const getOptionContainerStyle = (isSelected: boolean): React.CSSProperties => ({
+    borderRadius: "var(--fb-option-border-radius)",
+    padding: "var(--fb-option-padding-y) var(--fb-option-padding-x)",
+    backgroundColor: isSelected ? "var(--fb-option-selected-background)" : "var(--fb-option-bg-color)",
+    borderColor: isSelected ? "var(--fb-option-selected-border)" : "var(--fb-option-border-color)",
+  });
+
+  // Helper function to get option label styles
+  const getOptionLabelStyle = (): React.CSSProperties => ({
+    color: "var(--fb-option-label-color)",
+    fontFamily: "var(--fb-option-font-family)",
+    fontSize: "var(--fb-option-font-size)",
+    fontWeight: "var(--fb-option-font-weight)",
+  });
+
+  // Shared className for option containers
+  const optionContainerClassName = cn(
+    "relative flex cursor-pointer flex-col border transition-colors outline-none",
+    "focus-within:border-[var(--fb-option-selected-border)] focus-within:bg-[var(--fb-option-selected-background)]",
+    "hover:bg-[var(--fb-option-hover-bg-color)]",
+    disabled && "cursor-not-allowed opacity-50"
+  );
+
   // Detect text direction from content
   const detectedDir = useTextDirection({
     dir,
@@ -157,9 +181,8 @@ function MultiSelect({
                       onCheckedChange={(checked) => {
                         handleOptionChange(option.id, checked);
                       }}
-                      disabled={disabled}
-                      className="cursor-pointer">
-                      <Label>{option.label}</Label>
+                      disabled={disabled}>
+                      <span style={getOptionLabelStyle()}>{option.label}</span>
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -170,9 +193,8 @@ function MultiSelect({
                     onCheckedChange={(checked) => {
                       handleOptionChange(otherOptionId, checked);
                     }}
-                    disabled={disabled}
-                    className="cursor-pointer">
-                    <Label>{otherOptionLabel}</Label>
+                    disabled={disabled}>
+                    <span style={getOptionLabelStyle()}>{otherOptionLabel}</span>
                   </DropdownMenuCheckboxItem>
                 ) : null}
               </DropdownMenuContent>
@@ -190,65 +212,66 @@ function MultiSelect({
             ) : null}
           </>
         ) : (
-          <div className="space-y-3" role="group" aria-label={headline}>
+          <div className="space-y-2" role="group" aria-label={headline}>
             {options.map((option) => {
               const isChecked = selectedValues.includes(option.id);
               const optionId = `${inputId}-${option.id}`;
 
               return (
-                <Label
+                <label
                   key={option.id}
                   htmlFor={optionId}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-3 rounded-md transition-colors",
-                    disabled && "cursor-not-allowed opacity-50"
-                  )}>
-                  <Checkbox
-                    id={optionId}
-                    checked={isChecked}
-                    onCheckedChange={(checked) => {
-                      handleOptionChange(option.id, checked === true);
-                    }}
-                    disabled={disabled}
-                    aria-invalid={Boolean(errorMessage)}
-                  />
-                  <span className="leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
-                    {option.label}
+                  style={getOptionContainerStyle(isChecked)}
+                  className={cn(optionContainerClassName, isChecked && "z-10")}>
+                  <span className="flex items-center text-sm">
+                    <Checkbox
+                      id={optionId}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => {
+                        handleOptionChange(option.id, checked === true);
+                      }}
+                      disabled={disabled}
+                      aria-invalid={Boolean(errorMessage)}
+                    />
+                    <span className="ml-3 mr-3 grow font-medium" style={getOptionLabelStyle()}>
+                      {option.label}
+                    </span>
                   </span>
-                </Label>
+                </label>
               );
             })}
             {hasOtherOption && otherOptionId ? (
               <div className="space-y-2">
-                <Label
+                <label
                   htmlFor={`${inputId}-${otherOptionId}`}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-3 rounded-md transition-colors",
-                    disabled && "cursor-not-allowed opacity-50"
-                  )}>
-                  <Checkbox
-                    id={`${inputId}-${otherOptionId}`}
-                    checked={isOtherSelected}
-                    onCheckedChange={(checked) => {
-                      handleOptionChange(otherOptionId, checked === true);
-                    }}
-                    disabled={disabled}
-                    aria-invalid={Boolean(errorMessage)}
-                  />
-                  <span className="leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
-                    {otherOptionLabel}
+                  style={getOptionContainerStyle(isOtherSelected)}
+                  className={cn(optionContainerClassName, isOtherSelected && "z-10")}>
+                  <span className="flex items-center text-sm">
+                    <Checkbox
+                      id={`${inputId}-${otherOptionId}`}
+                      checked={isOtherSelected}
+                      onCheckedChange={(checked) => {
+                        handleOptionChange(otherOptionId, checked === true);
+                      }}
+                      disabled={disabled}
+                      aria-invalid={Boolean(errorMessage)}
+                    />
+                    <span className="ml-3 mr-3 grow font-medium" style={getOptionLabelStyle()}>
+                      {otherOptionLabel}
+                    </span>
                   </span>
-                </Label>
-                {isOtherSelected ? (
-                  <Input
-                    type="text"
-                    value={otherValue}
-                    onChange={handleOtherInputChange}
-                    placeholder={otherOptionPlaceholder}
-                    disabled={disabled}
-                    dir={detectedDir}
-                  />
-                ) : null}
+                  {isOtherSelected ? (
+                    <Input
+                      type="text"
+                      value={otherValue}
+                      onChange={handleOtherInputChange}
+                      placeholder={otherOptionPlaceholder}
+                      disabled={disabled}
+                      dir={detectedDir}
+                      className="mt-2 w-full"
+                    />
+                  ) : null}
+                </label>
               </div>
             ) : null}
           </div>

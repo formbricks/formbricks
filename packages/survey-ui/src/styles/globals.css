@@ -66,7 +66,7 @@
     --fb-button-padding-y: 0.5rem;
 
     /* Input CSS variables */
-    --fb-input-bg-color: transparent;
+    --fb-input-bg-color: white;
     --fb-input-bg-opacity: 1;
     --fb-input-hover-bg-color: var(--input);
     --fb-input-hover-bg-opacity: 0.3;
@@ -79,9 +79,9 @@
     --fb-input-placeholder-color: var(--muted-foreground);
     --fb-input-placeholder-opacity: 1;
     --fb-input-width: 100%;
-    --fb-input-height: 2.25rem;
-    --fb-input-padding-x: 0.75rem;
-    --fb-input-padding-y: 0.25rem;
+    --fb-input-height: 40px;
+    --fb-input-padding-x: 16px;
+    --fb-input-padding-y: 16px;
     --fb-input-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 
     /* Progress Track CSS variables */
@@ -92,4 +92,18 @@
     /* Progress Indicator CSS variables */
     --fb-progress-indicator-bg-color: hsl(222.2 47.4% 11.2%);
     --fb-progress-indicator-border-radius: var(--radius);
+
+    /* Option CSS variables */
+    --fb-option-border-color: var(--fb-input-border-color);
+    --fb-option-bg-color: var(--fb-input-bg-color);
+    --fb-option-label-color: var(--fb-input-color);
+    --fb-option-selected-border: var(--fb-input-color);
+    --fb-option-selected-background: var(--fb-input-hover-bg-color);
+    --fb-option-hover-bg-color: var(--fb-input-hover-bg-color);
+    --fb-option-border-radius: var(--fb-input-border-radius);
+    --fb-option-padding-x: var(--fb-input-padding-x);
+    --fb-option-padding-y: var(--fb-input-padding-y);
+    --fb-option-font-family: var(--fb-input-font-family);
+    --fb-option-font-size: var(--fb-input-font-size);
+    --fb-option-font-weight: var(--fb-input-font-weight);
 }

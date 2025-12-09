@@ -18,9 +18,28 @@ interface StylingOptions {
   labelFontSize: string;
   labelFontWeight: string;
   labelColor: string;
-  // Input styling
-  inputBorderColor: string;
+  // Option styling
+  optionBorderColor: string;
+  optionBgColor: string;
+  optionLabelColor: string;
+  optionHoverBgColor: string;
+  optionSelectedBorder: string;
+  optionSelectedBackground: string;
+  optionBorderRadius: string;
+  optionPaddingX: string;
+  optionPaddingY: string;
+  optionFontFamily: string;
+  optionFontSize: string;
+  optionFontWeight: string;
+  //input styling
   inputBgColor: string;
+  inputBorderColor: string;
+  inputBorderRadius: string;
+  inputPaddingX: string;
+  inputPaddingY: string;
+  inputFontFamily: string;
+  inputFontSize: string;
+  inputFontWeight: string;
   inputColor: string;
 }
 
@@ -128,7 +147,7 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
+const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const {
@@ -140,13 +159,26 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     elementDescriptionFontSize,
     elementDescriptionFontWeight,
     elementDescriptionColor,
-    labelFontFamily,
-    labelFontSize,
-    labelFontWeight,
-    labelColor,
-    inputBorderColor,
+    optionBorderColor,
+    optionBgColor,
+    optionLabelColor,
+    optionHoverBgColor,
+    optionSelectedBorder,
+    optionSelectedBackground,
+    optionBorderRadius,
+    optionPaddingX,
+    optionPaddingY,
+    optionFontFamily,
+    optionFontSize,
+    optionFontWeight,
     inputBgColor,
-    inputColor,
+    inputBorderColor,
+    inputBorderRadius,
+    inputPaddingX,
+    inputPaddingY,
+    inputFontFamily,
+    inputFontSize,
+    inputFontWeight,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -158,13 +190,26 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-element-description-font-size": elementDescriptionFontSize,
     "--fb-element-description-font-weight": elementDescriptionFontWeight,
     "--fb-element-description-color": elementDescriptionColor,
-    "--fb-label-font-family": labelFontFamily,
-    "--fb-label-font-size": labelFontSize,
-    "--fb-label-font-weight": labelFontWeight,
-    "--fb-label-color": labelColor,
-    "--fb-input-border-color": inputBorderColor,
+    "--fb-option-border-color": optionBorderColor,
+    "--fb-option-bg-color": optionBgColor,
+    "--fb-option-label-color": optionLabelColor,
+    "--fb-option-hover-bg-color": optionHoverBgColor,
+    "--fb-option-selected-border": optionSelectedBorder,
+    "--fb-option-selected-background": optionSelectedBackground,
+    "--fb-option-border-radius": optionBorderRadius,
+    "--fb-option-padding-x": optionPaddingX,
+    "--fb-option-padding-y": optionPaddingY,
+    "--fb-option-font-family": optionFontFamily,
+    "--fb-option-font-size": optionFontSize,
+    "--fb-option-font-weight": optionFontWeight,
     "--fb-input-bg-color": inputBgColor,
-    "--fb-input-color": inputColor,
+    "--fb-input-border-color": inputBorderColor,
+    "--fb-input-border-radius": inputBorderRadius,
+    "--fb-input-padding-x": inputPaddingX,
+    "--fb-input-padding-y": inputPaddingY,
+    "--fb-input-font-family": inputFontFamily,
+    "--fb-input-font-size": inputFontSize,
+    "--fb-input-font-weight": inputFontWeight,
   };
 
   return (
@@ -221,34 +266,111 @@ export const StylingPlayground: Story = {
       control: "color",
       table: { category: "Element Styling" },
     },
-    // Option label styling
-    labelFontFamily: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelFontSize: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelFontWeight: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelColor: {
+    // Option styling
+    optionBorderColor: {
       control: "color",
-      table: { category: "Label Styling" },
+      description: "Border color for unselected options",
+      table: { category: "Option Styling" },
     },
-    // Input styling
-    inputBorderColor: {
+    optionBgColor: {
       control: "color",
-      table: { category: "Input Styling" },
+      description: "Background color for unselected options",
+      table: { category: "Option Styling" },
     },
+    optionLabelColor: {
+      control: "color",
+      description: "Text/label color for options",
+      table: { category: "Option Styling" },
+    },
+    optionHoverBgColor: {
+      control: "color",
+      description: "Background color on hover",
+      table: { category: "Option Styling" },
+    },
+    optionSelectedBorder: {
+      control: "color",
+      description: "Border color when option is selected",
+      table: { category: "Option Styling" },
+    },
+    optionSelectedBackground: {
+      control: "color",
+      description: "Background color when option is selected",
+      table: { category: "Option Styling" },
+    },
+    optionBorderRadius: {
+      control: "text",
+      description: "Border radius for option containers",
+      table: { category: "Option Styling" },
+    },
+    optionPaddingX: {
+      control: "text",
+      description: "Horizontal padding for option containers",
+      table: { category: "Option Styling" },
+    },
+    optionPaddingY: {
+      control: "text",
+      description: "Vertical padding for option containers",
+      table: { category: "Option Styling" },
+    },
+    optionFontFamily: {
+      control: "text",
+      description: "Font family for option labels",
+      table: { category: "Option Styling" },
+    },
+    optionFontSize: {
+      control: "text",
+      description: "Font size for option labels",
+      table: { category: "Option Styling" },
+    },
+    optionFontWeight: {
+      control: "text",
+      description: "Font weight for option labels",
+      table: { category: "Option Styling" },
+    },
+    // input styling
     inputBgColor: {
       control: "color",
+      description: "Background color for input",
+      table: { category: "Input Styling" },
+    },
+    inputBorderColor: {
+      control: "color",
+      description: "Border color for input",
+      table: { category: "Input Styling" },
+    },
+    inputBorderRadius: {
+      control: "text",
+      description: "Border radius for input",
+      table: { category: "Input Styling" },
+    },
+    inputPaddingX: {
+      control: "text",
+      description: "Horizontal padding for input",
+      table: { category: "Input Styling" },
+    },
+    inputPaddingY: {
+      control: "text",
+      description: "Vertical padding for input",
+      table: { category: "Input Styling" },
+    },
+    inputFontFamily: {
+      control: "text",
+      description: "Font family for input",
+      table: { category: "Input Styling" },
+    },
+    inputFontSize: {
+      control: "text",
+      description: "Font size for input",
+      table: { category: "Input Styling" },
+    },
+    inputFontWeight: {
+      control: "text",
+      description: "Font weight for input",
       table: { category: "Input Styling" },
     },
     inputColor: {
       control: "color",
+      description: "Text/label color for input",
       table: { category: "Input Styling" },
     },
   },
@@ -467,6 +589,85 @@ export const DropdownWithOtherOption: Story = {
           onChange={setValue}
           variant="dropdown"
           placeholder="Choose an option..."
+          otherOptionId="other"
+          otherOptionLabel="Other"
+          otherOptionPlaceholder="Please specify"
+          otherValue={otherValue}
+          onOtherValueChange={setOtherValue}
+        />
+      </div>
+    );
+  },
+};
+
+export const WithContainerStyling: Story = {
+  args: {
+    headline: "Select your preferred option",
+    description: "Each option has a container with custom styling",
+    options: [
+      { id: "option-1", label: "Option 1" },
+      { id: "option-2", label: "Option 2" },
+      { id: "option-3", label: "Option 3" },
+      { id: "option-4", label: "Option 4" },
+    ],
+    value: "option-2",
+  },
+  decorators: [withCSSVariables],
+};
+
+export const WithCustomContainerColors: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string>("option-2");
+
+    return (
+      <div
+        className="w-[600px]"
+        style={
+          {
+            "--fb-option-bg-color": "hsl(210 40% 98%)",
+            "--fb-option-hover-bg-color": "hsl(210 40% 96%)",
+            "--fb-option-border-color": "hsl(214.3 31.8% 91.4%)",
+            "--fb-option-label-color": "hsl(222.2 47.4% 11.2%)",
+            "--fb-option-selected-border": "hsl(222.2 47.4% 11.2%)",
+            "--fb-option-selected-background": "hsl(210 40% 96%)",
+            "--fb-option-border-radius": "0.5rem",
+            "--fb-option-padding-x": "1rem",
+            "--fb-option-padding-y": "0.75rem",
+          } as React.CSSProperties
+        }>
+        <SingleSelect
+          elementId="custom-container-colors"
+          inputId="custom-container-colors-input"
+          headline="Custom container styling"
+          description="Options have custom background and border colors"
+          options={[
+            { id: "option-1", label: "Option 1" },
+            { id: "option-2", label: "Option 2" },
+            { id: "option-3", label: "Option 3" },
+          ]}
+          value={value}
+          onChange={setValue}
+        />
+      </div>
+    );
+  },
+};
+
+export const WithContainerStylingAndOther: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string | undefined>(undefined);
+    const [otherValue, setOtherValue] = React.useState<string>("");
+
+    return (
+      <div className="w-[600px]">
+        <SingleSelect
+          elementId="container-styling-other"
+          inputId="container-styling-other-input"
+          headline="Select an option"
+          description="Options have containers, including the 'Other' option"
+          options={defaultOptions}
+          value={value}
+          onChange={setValue}
           otherOptionId="other"
           otherOptionLabel="Other"
           otherOptionPlaceholder="Please specify"
