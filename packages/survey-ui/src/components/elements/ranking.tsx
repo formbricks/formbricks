@@ -1,3 +1,4 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
@@ -101,6 +102,9 @@ function Ranking({
   // Combine sorted and unsorted items for display
   const allItems = [...sortedItems, ...unsortedItems];
 
+  // Animation ref for smooth transitions
+  const [parent] = useAutoAnimate();
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
       {/* Headline */}
@@ -112,7 +116,7 @@ function Ranking({
 
         <fieldset className="w-full">
           <legend className="sr-only">Ranking options</legend>
-          <div className="space-y-2">
+          <div className="space-y-2" ref={parent as React.Ref<HTMLDivElement>}>
             {allItems.map((item) => {
               const isRanked = rankedIds.includes(item.id);
               const rankIndex = rankedIds.findIndex((id) => id === item.id);
