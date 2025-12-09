@@ -345,6 +345,8 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
 
 ## Swift
 
+<Info>**Minimum iOS Version:** The Formbricks iOS SDK requires **iOS 16.4** or higher.</Info>
+
 Install the Formbricks iOS SDK using the following steps:
 
 **Swift Package Manager**
@@ -363,7 +365,7 @@ Install the Formbricks iOS SDK using the following steps:
 1. Add the following to your `Podfile`:
 
    ```ruby
-   platform :ios, '16.6'
+   platform :ios, '16.4'
    use_frameworks! :linkage => :static
 
    target 'YourTargetName' do
@@ -428,6 +430,10 @@ Formbricks.cleanup(waitForOperations: true) {
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
 ## Android
+
+<Info>
+  **Minimum Android Version:** The Formbricks Android SDK requires **Android 10 (API level 29)** or higher.
+</Info>
 
 Install the Formbricks Android SDK using the following steps:
 
