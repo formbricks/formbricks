@@ -42,8 +42,8 @@
     "i18n:validate": "pnpm scan-translations"
   },
   "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
   },
   "devDependencies": {
     "@azure/microsoft-playwright-testing": "1.0.0-beta.7",
@@ -86,8 +86,8 @@
       "axios": ">=1.12.2",
       "tar-fs": "2.1.4",
       "typeorm": ">=0.3.26",
-      "react": "19.1.0",
-      "react-dom": "19.1.0"
+      "react": "19.2.1",
+      "react-dom": "19.2.1"
     },
     "comments": {
       "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: axios (CVE-2025-58754) - awaiting @boxyhq/saml-jackson update | tar-fs (Dependabot #205) - awaiting upstream dependency updates | typeorm (Dependabot #223) - awaiting @boxyhq/saml-jackson update"

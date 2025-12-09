@@ -132,17 +132,13 @@
     "webpack": "5.99.8",
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "zod": "3.24.4",
-    "zod-openapi": "4.2.4",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "zod-openapi": "4.2.4"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.3.0",
-    "@types/react": "19.1.4",
-    "@types/react-dom": "19.1.0",
     "@types/bcryptjs": "2.4.6",
     "@types/heic-convert": "2.1.0",
     "@types/jsonwebtoken": "9.0.9",
