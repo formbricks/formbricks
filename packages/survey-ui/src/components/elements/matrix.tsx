@@ -151,9 +151,9 @@ function Matrix({
 
                         return (
                           <td key={column.id} className="p-2 text-center align-middle">
-                            <label htmlFor={cellId} className="flex cursor-pointer justify-center">
+                            <Label htmlFor={cellId} className="flex cursor-pointer justify-center">
                               <RadioGroupItem value={column.id} id={cellId} disabled={disabled} />
-                            </label>
+                            </Label>
                           </td>
                         );
                       })}

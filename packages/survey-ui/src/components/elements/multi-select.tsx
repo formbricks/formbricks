@@ -220,7 +220,7 @@ function MultiSelect({
             })}
             {hasOtherOption && otherOptionId ? (
               <div className="space-y-2">
-                <label
+                <Label
                   htmlFor={`${inputId}-${otherOptionId}`}
                   className={cn(
                     "flex cursor-pointer items-center gap-3 rounded-md transition-colors",
@@ -238,7 +238,7 @@ function MultiSelect({
                   <span className="leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                     {otherOptionLabel}
                   </span>
-                </label>
+                </Label>
                 {isOtherSelected ? (
                   <Input
                     type="text"

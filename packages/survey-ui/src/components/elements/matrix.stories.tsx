@@ -14,10 +14,10 @@ interface StylingOptions {
   elementDescriptionFontSize: string;
   elementDescriptionColor: string;
   // Option label styling
-  optionLabelFontFamily: string;
-  optionLabelFontSize: string;
-  optionLabelFontWeight: string;
-  optionLabelColor: string;
+  labelFontFamily: string;
+  labelFontSize: string;
+  labelFontWeight: string;
+  labelColor: string;
   // Input styling
   inputBorderColor: string;
   inputBgColor: string;
@@ -127,13 +127,13 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     elementDescriptionFontSize,
     elementDescriptionFontWeight,
     elementDescriptionColor,
-    optionLabelFontFamily,
-    optionLabelFontSize,
-    optionLabelFontWeight,
-    optionLabelColor,
     inputBorderColor,
     inputBgColor,
     inputColor,
+    labelFontFamily,
+    labelFontSize,
+    labelFontWeight,
+    labelColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -145,10 +145,10 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-element-description-font-size": elementDescriptionFontSize,
     "--fb-element-description-font-weight": elementDescriptionFontWeight,
     "--fb-element-description-color": elementDescriptionColor,
-    "--fb-option-label-font-family": optionLabelFontFamily,
-    "--fb-option-label-font-size": optionLabelFontSize,
-    "--fb-option-label-font-weight": optionLabelFontWeight,
-    "--fb-option-label-color": optionLabelColor,
+    "--fb-label-font-family": labelFontFamily,
+    "--fb-label-font-size": labelFontSize,
+    "--fb-label-font-weight": labelFontWeight,
+    "--fb-label-color": labelColor,
     "--fb-input-border-color": inputBorderColor,
     "--fb-input-bg-color": inputBgColor,
     "--fb-input-color": inputColor,
@@ -216,21 +216,21 @@ export const StylingPlayground: Story = {
       table: { category: "Element Styling" },
     },
     // Option label styling
-    optionLabelFontFamily: {
+    labelFontFamily: {
       control: "text",
-      table: { category: "Option Label Styling" },
+      table: { category: "Label Styling" },
     },
-    optionLabelFontSize: {
+    labelFontSize: {
       control: "text",
-      table: { category: "Option Label Styling" },
+      table: { category: "Label Styling" },
     },
-    optionLabelFontWeight: {
+    labelFontWeight: {
       control: "text",
-      table: { category: "Option Label Styling" },
+      table: { category: "Label Styling" },
     },
-    optionLabelColor: {
+    labelColor: {
       control: "color",
-      table: { category: "Option Label Styling" },
+      table: { category: "Label Styling" },
     },
     // Input styling
     inputBorderColor: {

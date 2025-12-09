@@ -183,7 +183,7 @@ function SingleSelect({
               const optionId = `${inputId}-${option.id}`;
 
               return (
-                <label
+                <Label
                   key={option.id}
                   htmlFor={optionId}
                   className={cn(
@@ -194,7 +194,7 @@ function SingleSelect({
                   <span className="leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                     {option.label}
                   </span>
-                </label>
+                </Label>
               );
             })}
             {hasOtherOption && otherOptionId ? (

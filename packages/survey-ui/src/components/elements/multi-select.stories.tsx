@@ -14,10 +14,10 @@ interface StylingOptions {
   elementDescriptionFontSize: string;
   elementDescriptionColor: string;
   // Option label styling
-  optionLabelFontFamily: string;
-  optionLabelFontSize: string;
-  optionLabelFontWeight: string;
-  optionLabelColor: string;
+  labelFontFamily: string;
+  labelFontSize: string;
+  labelFontWeight: string;
+  labelColor: string;
   // Checkbox Input styling
   checkboxInputBorderColor: string;
   checkboxInputBgColor: string;
@@ -99,6 +99,11 @@ const meta: Meta<StoryProps> = {
   },
   render: function Render(args: StoryProps) {
     const [value, setValue] = useState(args.value);
+    const [otherValue, setOtherValue] = useState(args.otherValue);
+    const handleOtherValueChange = (v: string) => {
+      setOtherValue(v);
+      args.onOtherValueChange?.(v);
+    };
 
     useEffect(() => {
       setValue(args.value);
@@ -112,6 +117,8 @@ const meta: Meta<StoryProps> = {
           setValue(v);
           args.onChange?.(v);
         }}
+        otherValue={otherValue}
+        onOtherValueChange={handleOtherValueChange}
       />
     );
   },
@@ -133,10 +140,10 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     elementDescriptionFontSize,
     elementDescriptionFontWeight,
     elementDescriptionColor,
-    optionLabelFontFamily,
-    optionLabelFontSize,
-    optionLabelFontWeight,
-    optionLabelColor,
+    labelFontFamily,
+    labelFontSize,
+    labelFontWeight,
+    labelColor,
     checkboxInputBorderColor,
     checkboxInputBgColor,
     checkboxInputColor,
@@ -151,10 +158,10 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-element-description-font-size": elementDescriptionFontSize,
     "--fb-element-description-font-weight": elementDescriptionFontWeight,
     "--fb-element-description-color": elementDescriptionColor,
-    "--fb-option-label-font-family": optionLabelFontFamily,
-    "--fb-option-label-font-size": optionLabelFontSize,
-    "--fb-option-label-font-weight": optionLabelFontWeight,
-    "--fb-option-label-color": optionLabelColor,
+    "--fb-label-font-family": labelFontFamily,
+    "--fb-label-font-size": labelFontSize,
+    "--fb-label-font-weight": labelFontWeight,
+    "--fb-label-color": labelColor,
     "--fb-input-border-color": checkboxInputBorderColor,
     "--fb-input-bg-color": checkboxInputBgColor,
     "--fb-input-color": checkboxInputColor,
@@ -215,21 +222,21 @@ export const StylingPlayground: Story = {
       table: { category: "Element Styling" },
     },
     // Option label styling
-    optionLabelFontFamily: {
+    labelFontFamily: {
       control: "text",
-      table: { category: "Option Label Styling" },
+      table: { category: "Label Styling" },
     },
-    optionLabelFontSize: {
+    labelFontSize: {
       control: "text",
-      table: { category: "Option Label Styling" },
+      table: { category: "Label Styling" },
     },
-    optionLabelFontWeight: {
+    labelFontWeight: {
       control: "text",
-      table: { category: "Option Label Styling" },
+      table: { category: "Label Styling" },
     },
-    optionLabelColor: {
+    labelColor: {
       control: "color",
-      table: { category: "Option Label Styling" },
+      table: { category: "Label Styling" },
     },
     // Checkbox Input styling
     checkboxInputBorderColor: {
