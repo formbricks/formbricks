@@ -68,7 +68,7 @@
     /* Input CSS variables */
     --fb-input-bg-color: white;
     --fb-input-bg-opacity: 1;
-    --fb-input-hover-bg-color: var(--input);
+    --fb-input-hover-bg-color: var(--secondary);
     --fb-input-hover-bg-opacity: 0.3;
     --fb-input-border-color: var(--input);
     --fb-input-border-radius: var(--radius);

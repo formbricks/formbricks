@@ -24,11 +24,63 @@ interface StylingOptions {
   inputPlaceholderColor: string;
   inputPaddingX: string;
   inputPaddingY: string;
+  inputHoverBgColor: string;
 }
 
 type StoryProps = FileUploadProps & Partial<StylingOptions>;
 
-const meta: Meta<StoryProps> = {
+type Story = StoryObj<StoryProps>;
+
+// Decorator to apply CSS variables from story args
+const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
+  const args = context.args as StoryProps;
+  const {
+    elementHeadlineFontFamily,
+    elementHeadlineFontSize,
+    elementHeadlineFontWeight,
+    elementHeadlineColor,
+    elementDescriptionFontFamily,
+    elementDescriptionFontSize,
+    elementDescriptionFontWeight,
+    elementDescriptionColor,
+    inputBorderColor,
+    inputColor,
+    inputBgColor,
+    inputBorderRadius,
+    inputFontSize,
+    inputPaddingX,
+    inputPaddingY,
+    inputHoverBgColor,
+  } = args;
+
+  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
+    "--fb-element-headline-font-family": elementHeadlineFontFamily,
+    "--fb-element-headline-font-size": elementHeadlineFontSize,
+    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
+    "--fb-element-headline-color": elementHeadlineColor,
+    "--fb-element-description-font-family": elementDescriptionFontFamily,
+    "--fb-element-description-font-size": elementDescriptionFontSize,
+    "--fb-element-description-font-weight": elementDescriptionFontWeight,
+    "--fb-element-description-color": elementDescriptionColor,
+    "--fb-input-border-color": inputBorderColor,
+    "--fb-input-color": inputColor,
+    "--fb-input-bg-color": inputBgColor,
+    "--fb-input-border-radius": inputBorderRadius,
+    "--fb-input-font-size": inputFontSize,
+    "--fb-input-padding-x": inputPaddingX,
+    "--fb-input-padding-y": inputPaddingY,
+    "--fb-input-hover-bg-color": inputHoverBgColor,
+  };
+
+  return (
+    <div style={cssVarStyle} className="w-[600px]">
+      <Story />
+    </div>
+  );
+};
+
+export default {
   title: "UI-package/Elements/FileUpload",
   component: FileUpload,
   parameters: {
@@ -41,6 +93,7 @@ const meta: Meta<StoryProps> = {
     },
   },
   tags: ["autodocs"],
+  decorators: [withCSSVariables],
   argTypes: {
     headline: {
       control: "text",
@@ -97,123 +150,6 @@ const meta: Meta<StoryProps> = {
       action: "changed",
       table: { category: "Events" },
     },
-  },
-  render: function Render(args: StoryProps) {
-    const [value, setValue] = useState(args.value);
-
-    useEffect(() => {
-      setValue(args.value);
-    }, [args.value]);
-
-    return (
-      <FileUpload
-        {...args}
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-          args.onChange?.(v);
-        }}
-      />
-    );
-  },
-  inputWidth: {
-    control: "text",
-    table: { category: "Input Styling" },
-  },
-  inputHeight: {
-    control: "text",
-    table: { category: "Input Styling" },
-  },
-  inputBgColor: {
-    control: "color",
-    table: { category: "Input Styling" },
-  },
-  inputBorderColor: {
-    control: "color",
-    table: { category: "Input Styling" },
-  },
-  inputBorderRadius: {
-    control: "text",
-    table: { category: "Input Styling" },
-  },
-  inputFontSize: {
-    control: "text",
-    table: { category: "Input Styling" },
-  },
-  inputColor: {
-    control: "color",
-    table: { category: "Input Styling" },
-  },
-  inputPlaceholderColor: {
-    control: "color",
-    table: { category: "Input Styling" },
-  },
-  inputPaddingX: {
-    control: "text",
-    table: { category: "Input Styling" },
-  },
-  inputPaddingY: {
-    control: "text",
-    table: { category: "Input Styling" },
-  },
-};
-
-export default meta;
-type Story = StoryObj<StoryProps>;
-
-// Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    inputBorderColor,
-    inputColor,
-    inputBgColor,
-    inputBorderRadius,
-    inputFontSize,
-    inputPaddingX,
-    inputPaddingY,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-input-border-color": inputBorderColor,
-    "--fb-input-color": inputColor,
-    "--fb-input-bg-color": inputBgColor,
-    "--fb-input-border-radius": inputBorderRadius,
-    "--fb-input-font-size": inputFontSize,
-    "--fb-input-padding-x": inputPaddingX,
-    "--fb-input-padding-y": inputPaddingY,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
-
-export const StylingPlayground: Story = {
-  args: {
-    headline: "Upload your file",
-    description: "Please select a file to upload",
-  },
-  argTypes: {
     // Element styling
     elementHeadlineFontFamily: {
       control: "text",
@@ -247,8 +183,53 @@ export const StylingPlayground: Story = {
       control: "color",
       table: { category: "Element Styling" },
     },
+    inputPaddingX: {
+      control: "text",
+      table: { category: "Input Styling" },
+    },
+    inputPaddingY: {
+      control: "text",
+      table: { category: "Input Styling" },
+    },
+    inputBorderRadius: {
+      control: "text",
+      table: { category: "Input Styling" },
+    },
+    inputBorderColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputBgColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputHoverBgColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
   },
-  decorators: [withCSSVariables],
+  render: function Render(args: StoryProps) {
+    const [value, setValue] = useState(args.value);
+
+    useEffect(() => {
+      setValue(args.value);
+    }, [args.value]);
+
+    return (
+      <FileUpload
+        {...args}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          args.onChange?.(v);
+        }}
+      />
+    );
+  },
 };
 
 export const Default: Story = {
