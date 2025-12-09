@@ -1,0 +1,100 @@
+"use client";
+
+import { Download, Expand } from "lucide-react";
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
+
+// Function to add extra params to videoUrls in order to reduce video controls
+const getVideoUrlWithParams = (videoUrl: string): string | undefined => {
+  // First convert to embed URL
+  const embedUrl = convertToEmbedUrl(videoUrl);
+  if (!embedUrl) return undefined;
+
+  const isYoutubeVideo = checkForYoutubeUrl(videoUrl);
+  const isVimeoUrl = checkForVimeoUrl(videoUrl);
+  const isLoomUrl = checkForLoomUrl(videoUrl);
+
+  if (isYoutubeVideo) {
+    // For YouTube, add parameters to embed URL
+    const separator = embedUrl.includes("?") ? "&" : "?";
+    return `${embedUrl}${separator}controls=0`;
+  } else if (isVimeoUrl) {
+    // For Vimeo, add parameters to embed URL
+    const separator = embedUrl.includes("?") ? "&" : "?";
+    return `${embedUrl}${separator}title=false&transcript=false&speed=false&quality_selector=false&progress_bar=false&pip=false&fullscreen=false&cc=false&chromecast=false`;
+  } else if (isLoomUrl) {
+    // For Loom, add parameters to embed URL
+    const separator = embedUrl.includes("?") ? "&" : "?";
+    return `${embedUrl}${separator}hide_share=true&hideEmbedTopBar=true&hide_title=true`;
+  }
+  return embedUrl;
+};
+
+interface ElementMediaProps {
+  imgUrl?: string;
+  videoUrl?: string;
+  altText?: string;
+}
+
+function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMediaProps): React.JSX.Element {
+  const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  if (!imgUrl && !videoUrl) {
+    return <></>;
+  }
+
+  return (
+    <div className="group/image relative mb-6 block min-h-40 rounded-md">
+      {isLoading ? (
+        <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
+      ) : null}
+      {imgUrl ? (
+        <img
+          key={imgUrl}
+          src={imgUrl}
+          alt={altText}
+          className={cn("mx-auto max-h-[40dvh] rounded-md object-contain", isLoading ? "opacity-0" : "")}
+          onLoad={() => {
+            setIsLoading(false);
+          }}
+          onError={() => {
+            setIsLoading(false);
+          }}
+        />
+      ) : null}
+      {videoUrlWithParams ? (
+        <div className="relative">
+          <div className="rounded-md bg-black">
+            <iframe
+              src={videoUrlWithParams}
+              title="Question video"
+              frameBorder="0"
+              className={cn("aspect-video w-full rounded-md", isLoading ? "opacity-0" : "")}
+              onLoad={() => {
+                setIsLoading(false);
+              }}
+              onError={() => {
+                setIsLoading(false);
+              }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          </div>
+        </div>
+      ) : null}
+      <a
+        href={imgUrl ? imgUrl : convertToEmbedUrl(videoUrl ?? "")}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Open in new tab"
+        className="absolute bottom-2 right-2 flex items-center gap-2 rounded-md bg-slate-800 bg-opacity-40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out hover:bg-opacity-65 group-hover/image:opacity-100">
+        {imgUrl ? <Download size={20} /> : <Expand size={20} />}
+      </a>
+    </div>
+  );
+}
+
+export { ElementMedia };
+export type { ElementMediaProps };

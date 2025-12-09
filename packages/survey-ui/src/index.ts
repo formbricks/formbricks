@@ -16,6 +16,8 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
 } from "@/components/general/dropdown-menu";
+export { ElementHeader, type ElementHeaderProps } from "@/components/general/element-header";
+export { ElementMedia, type ElementMediaProps } from "@/components/general/element-media";
 export { Input, type InputProps } from "@/components/general/input";
 export { OpenText, type OpenTextProps } from "@/components/elements/open-text";
 export {
