@@ -11,7 +11,6 @@ import {
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
-import { Label } from "@/components/general/label";
 import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
@@ -161,7 +160,7 @@ function MultiSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="w-full justify-between"
+                  className="w-full justify-between rounded-[var(--fb-input-border-radius)]"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
                   <span className="truncate">{displayText}</span>

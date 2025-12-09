@@ -148,7 +148,7 @@ function SingleSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="w-full justify-between"
+                  className="w-full justify-between rounded-[var(--fb-input-border-radius)]"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
                   <span className="truncate">{displayText}</span>
