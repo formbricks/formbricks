@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NPS, type NPSProps } from "./nps";
 
 // Styling options for the StylingPlayground story
@@ -93,13 +93,31 @@ const meta: Meta<StoryProps> = {
       table: { category: "Events" },
     },
   },
+  render: function Render(args: StoryProps) {
+    const [value, setValue] = useState(args.value);
+
+    useEffect(() => {
+      setValue(args.value);
+    }, [args.value]);
+
+    return (
+      <NPS
+        {...args}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          args.onChange?.(v);
+        }}
+      />
+    );
+  },
 };
 
 export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
+const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
   const args = context.args as StoryProps;
   const {
     questionHeadlineFontFamily,
@@ -362,6 +380,7 @@ export const MultipleQuestions: Story = {
         headline="How likely are you to recommend our product?"
         lowerLabel="Not at all likely"
         upperLabel="Extremely likely"
+        onChange={() => {}}
       />
       <NPS
         elementId="nps-2"
@@ -372,6 +391,7 @@ export const MultipleQuestions: Story = {
         colorCoding
         lowerLabel="Not at all likely"
         upperLabel="Extremely likely"
+        onChange={() => {}}
       />
     </div>
   ),

@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FormField, type FormFieldConfig, type FormFieldProps } from "./form-field";
 
 // Styling options for the StylingPlayground story
@@ -94,6 +94,24 @@ const meta: Meta<StoryProps> = {
       action: "changed",
       table: { category: "Events" },
     },
+  },
+  render: function Render(args: StoryProps) {
+    const [value, setValue] = useState(args.value);
+
+    useEffect(() => {
+      setValue(args.value);
+    }, [args.value]);
+
+    return (
+      <FormField
+        {...args}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          args.onChange?.(v);
+        }}
+      />
+    );
   },
 };
 
@@ -483,12 +501,14 @@ export const MultipleQuestions: Story = {
         headline="Contact Information"
         description="Please provide your contact details"
         fields={contactInfoFields}
+        onChange={() => {}}
       />
       <FormField
         elementId="form-field-2"
         headline="Shipping Address"
         description="Where should we ship your order?"
         fields={addressFields}
+        onChange={() => {}}
       />
     </div>
   ),

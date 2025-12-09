@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FileUpload, type FileUploadProps, type UploadedFile } from "./file-upload";
 
 // Styling options for the StylingPlayground story
@@ -97,46 +97,64 @@ const meta: Meta<StoryProps> = {
       action: "changed",
       table: { category: "Events" },
     },
-    inputWidth: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputHeight: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputBgColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputBorderColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputBorderRadius: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputFontSize: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputPlaceholderColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputPaddingX: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputPaddingY: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
+  },
+  render: function Render(args: StoryProps) {
+    const [value, setValue] = useState(args.value);
+
+    useEffect(() => {
+      setValue(args.value);
+    }, [args.value]);
+
+    return (
+      <FileUpload
+        {...args}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          args.onChange?.(v);
+        }}
+      />
+    );
+  },
+  inputWidth: {
+    control: "text",
+    table: { category: "Input Styling" },
+  },
+  inputHeight: {
+    control: "text",
+    table: { category: "Input Styling" },
+  },
+  inputBgColor: {
+    control: "color",
+    table: { category: "Input Styling" },
+  },
+  inputBorderColor: {
+    control: "color",
+    table: { category: "Input Styling" },
+  },
+  inputBorderRadius: {
+    control: "text",
+    table: { category: "Input Styling" },
+  },
+  inputFontSize: {
+    control: "text",
+    table: { category: "Input Styling" },
+  },
+  inputColor: {
+    control: "color",
+    table: { category: "Input Styling" },
+  },
+  inputPlaceholderColor: {
+    control: "color",
+    table: { category: "Input Styling" },
+  },
+  inputPaddingX: {
+    control: "text",
+    table: { category: "Input Styling" },
+  },
+  inputPaddingY: {
+    control: "text",
+    table: { category: "Input Styling" },
   },
 };
 
@@ -144,7 +162,7 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
+const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const {

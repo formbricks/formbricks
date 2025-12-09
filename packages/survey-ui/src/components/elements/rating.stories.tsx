@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Rating, type RatingProps } from "./rating";
 
 // Styling options for the StylingPlayground story
@@ -104,6 +104,24 @@ const meta: Meta<StoryProps> = {
       action: "changed",
       table: { category: "Events" },
     },
+  },
+  render: function Render(args: StoryProps) {
+    const [value, setValue] = useState(args.value);
+
+    useEffect(() => {
+      setValue(args.value);
+    }, [args.value]);
+
+    return (
+      <Rating
+        {...args}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          args.onChange?.(v);
+        }}
+      />
+    );
   },
 };
 
@@ -408,6 +426,7 @@ export const MultipleQuestions: Story = {
         range={5}
         lowerLabel="Not satisfied"
         upperLabel="Very satisfied"
+        onChange={() => {}}
       />
       <Rating
         elementId="rating-2"
@@ -416,6 +435,7 @@ export const MultipleQuestions: Story = {
         description="Please rate from 1 to 5 stars"
         scale="star"
         range={5}
+        onChange={() => {}}
       />
       <Rating
         elementId="rating-3"
@@ -424,6 +444,7 @@ export const MultipleQuestions: Story = {
         scale="smiley"
         range={5}
         colorCoding
+        onChange={() => {}}
       />
     </div>
   ),

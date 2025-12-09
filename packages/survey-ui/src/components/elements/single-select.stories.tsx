@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { SingleSelect, type SingleSelectOption, type SingleSelectProps } from "./single-select";
 
 // Styling options for the StylingPlayground story
@@ -96,6 +96,24 @@ const meta: Meta<StoryProps> = {
       action: "changed",
       table: { category: "Events" },
     },
+  },
+  render: function Render(args: StoryProps) {
+    const [value, setValue] = useState(args.value);
+
+    useEffect(() => {
+      setValue(args.value);
+    }, [args.value]);
+
+    return (
+      <SingleSelect
+        {...args}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          args.onChange?.(v);
+        }}
+      />
+    );
   },
 };
 

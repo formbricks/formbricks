@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MultiSelect, type MultiSelectOption, type MultiSelectProps } from "./multi-select";
 
 // Styling options for the StylingPlayground story
@@ -96,6 +96,24 @@ const meta: Meta<StoryProps> = {
       action: "changed",
       table: { category: "Events" },
     },
+  },
+  render: function Render(args: StoryProps) {
+    const [value, setValue] = useState(args.value);
+
+    useEffect(() => {
+      setValue(args.value);
+    }, [args.value]);
+
+    return (
+      <MultiSelect
+        {...args}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          args.onChange?.(v);
+        }}
+      />
+    );
   },
 };
 
