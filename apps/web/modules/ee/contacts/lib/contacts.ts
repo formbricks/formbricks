@@ -287,22 +287,36 @@ export const createContactsFromCSV = async (
     });
 
     const attributeKeyMap = new Map<string, string>();
+    // Map from lowercase key to actual DB key (for case-insensitive lookup)
+    const lowercaseToActualKeyMap = new Map<string, string>();
+
     existingAttributeKeys.forEach((attrKey) => {
       attributeKeyMap.set(attrKey.key, attrKey.id);
+      lowercaseToActualKeyMap.set(attrKey.key.toLowerCase(), attrKey.key);
     });
 
-    // Identify missing attribute keys (normalize keys to lowercase)
+    // Collect all unique CSV keys
     const csvKeys = new Set<string>();
     csvData.forEach((record) => {
-      Object.keys(record).forEach((key) => csvKeys.add(key.toLowerCase()));
+      Object.keys(record).forEach((key) => csvKeys.add(key));
     });
 
-    const missingKeys = Array.from(csvKeys).filter((key) => !attributeKeyMap.has(key));
+    // Identify missing attribute keys (case-insensitive check)
+    const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
 
-    // Create missing attribute keys
+    // Create missing attribute keys (use original CSV casing for new keys)
     if (missingKeys.length > 0) {
+      // Deduplicate by lowercase to avoid creating duplicates like "firstName" and "firstname"
+      const uniqueMissingKeys = new Map<string, string>();
+      missingKeys.forEach((key) => {
+        const lowerKey = key.toLowerCase();
+        if (!uniqueMissingKeys.has(lowerKey)) {
+          uniqueMissingKeys.set(lowerKey, key);
+        }
+      });
+
       await prisma.contactAttributeKey.createMany({
-        data: missingKeys.map((key) => ({
+        data: Array.from(uniqueMissingKeys.values()).map((key) => ({
           key,
           name: key,
           environmentId,
@@ -310,10 +324,10 @@ export const createContactsFromCSV = async (
         skipDuplicates: true,
       });
 
-      // Fetch and update the attributeKeyMap with new keys
+      // Fetch and update the maps with new keys
       const newAttributeKeys = await prisma.contactAttributeKey.findMany({
         where: {
-          key: { in: missingKeys },
+          key: { in: Array.from(uniqueMissingKeys.values()) },
           environmentId,
         },
         select: { key: true, id: true },
@@ -321,6 +335,7 @@ export const createContactsFromCSV = async (
 
       newAttributeKeys.forEach((attrKey) => {
         attributeKeyMap.set(attrKey.key, attrKey.id);
+        lowercaseToActualKeyMap.set(attrKey.key.toLowerCase(), attrKey.key);
       });
     }
 
@@ -328,18 +343,23 @@ export const createContactsFromCSV = async (
 
     // Process contacts in parallel
     const contactPromises = csvData.map(async (record) => {
-      // Normalize record keys to lowercase
-      const normalizedRecord: Record<string, string> = {};
+      // Map CSV keys to actual DB keys (case-insensitive matching, preserving DB key casing)
+      const mappedRecord: Record<string, string> = {};
       Object.entries(record).forEach(([key, value]) => {
-        normalizedRecord[key.toLowerCase()] = value;
+        const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
+        if (!actualKey) {
+          // This should never happen since we create missing keys above
+          throw new ValidationError(`Attribute key "${key}" not found in attribute key map`);
+        }
+        mappedRecord[actualKey] = value;
       });
 
       // Skip records without email
-      if (!normalizedRecord.email) {
+      if (!mappedRecord.email) {
         throw new ValidationError("Email is required for all contacts");
       }
 
-      const existingContact = emailToContactMap.get(normalizedRecord.email);
+      const existingContact = emailToContactMap.get(mappedRecord.email);
 
       if (existingContact) {
         // Handle duplicates based on duplicateContactsAction
@@ -350,11 +370,11 @@ export const createContactsFromCSV = async (
           case "update": {
             // if the record has a userId, check if it already exists
             const existingUserId = existingUserIds.find(
-              (attr) => attr.value === normalizedRecord.userid && attr.contactId !== existingContact.id
+              (attr) => attr.value === mappedRecord.userId && attr.contactId !== existingContact.id
             );
-            let recordToProcess = { ...normalizedRecord };
+            let recordToProcess = { ...mappedRecord };
             if (existingUserId) {
-              const { userid, ...rest } = recordToProcess;
+              const { userId: _userId, ...rest } = recordToProcess;
 
               const existingContactUserId = existingContact.attributes.find(
                 (attr) => attr.attributeKey.key === "userId"
@@ -407,11 +427,11 @@ export const createContactsFromCSV = async (
           case "overwrite": {
             // if the record has a userId, check if it already exists
             const existingUserId = existingUserIds.find(
-              (attr) => attr.value === normalizedRecord.userid && attr.contactId !== existingContact.id
+              (attr) => attr.value === mappedRecord.userId && attr.contactId !== existingContact.id
             );
-            let recordToProcess = { ...normalizedRecord };
+            let recordToProcess = { ...mappedRecord };
             if (existingUserId) {
-              const { userid, ...rest } = recordToProcess;
+              const { userId: _userId, ...rest } = recordToProcess;
               const existingContactUserId = existingContact.attributes.find(
                 (attr) => attr.attributeKey.key === "userId"
               )?.value;
@@ -457,8 +477,8 @@ export const createContactsFromCSV = async (
           }
         }
       } else {
-        // Create new contact
-        const newAttributes = Object.entries(record).map(([key, value]) => ({
+        // Create new contact - use mappedRecord with proper DB key casing
+        const newAttributes = Object.entries(mappedRecord).map(([key, value]) => ({
           attributeKey: {
             connect: { key_environmentId: { key, environmentId } },
           },
