@@ -32,6 +32,7 @@ import type {
 import {
   ARITHMETIC_OPERATORS,
   ATTRIBUTE_OPERATORS,
+  DATE_OPERATORS,
   DEVICE_OPERATORS,
   PERSON_OPERATORS,
 } from "@formbricks/types/segment";
@@ -64,6 +65,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { AddFilterModal } from "./add-filter-modal";
+import { DateFilterValue } from "./date-filter-value";
 
 interface TSegmentFilterProps {
   connector: TSegmentConnector;
@@ -239,16 +241,18 @@ function AttributeSegmentFilter({
     }
   }, [resource.qualifier, resource.value, t]);
 
-  const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
+  const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
+  const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
+  const isDateAttribute = attributeKey?.dataType === "date";
+
+  // Show date operators for date attributes, otherwise show standard attribute operators
+  const availableOperators = isDateAttribute ? DATE_OPERATORS : ATTRIBUTE_OPERATORS;
+  const operatorArr = availableOperators.map((operator) => {
     return {
       id: operator,
       name: convertOperatorToText(operator),
     };
   });
-
-  const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
-
-  const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
     const updatedSegment = structuredClone(segment);
@@ -356,23 +360,39 @@ function AttributeSegmentFilter({
       </Select>
 
       {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
-        <div className="relative flex flex-col gap-1">
-          <Input
-            className={cn("h-9 w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
-            disabled={viewOnly}
-            onChange={(e) => {
-              if (viewOnly) return;
-              checkValueAndUpdate(e);
-            }}
-            value={resource.value}
-          />
+        <>
+          {isDateAttribute && DATE_OPERATORS.includes(resource.qualifier.operator as any) ? (
+            <DateFilterValue
+              operator={resource.qualifier.operator as any}
+              value={resource.value}
+              onChange={(newValue) => {
+                updateValueInLocalSurvey(resource.id, newValue);
+              }}
+              viewOnly={viewOnly}
+            />
+          ) : (
+            <div className="relative flex flex-col gap-1">
+              <Input
+                className={cn(
+                  "h-9 w-auto bg-white",
+                  valueError && "border border-red-500 focus:border-red-500"
+                )}
+                disabled={viewOnly}
+                onChange={(e) => {
+                  if (viewOnly) return;
+                  checkValueAndUpdate(e);
+                }}
+                value={resource.value}
+              />
 
-          {valueError ? (
-            <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">
-              {valueError}
-            </p>
-          ) : null}
-        </div>
+              {valueError ? (
+                <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">
+                  {valueError}
+                </p>
+              ) : null}
+            </div>
+          )}
+        </>
       )}
 
       <SegmentFilterItemContextMenu

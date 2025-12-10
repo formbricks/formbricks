@@ -27,10 +27,15 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   key: true,
   name: true,
   description: true,
+  dataType: true,
   environmentId: true,
-}).openapi({
-  ref: "contactAttributeKeyInput",
-  description: "Input data for creating or updating a contact attribute",
-});
+})
+  .extend({
+    dataType: ZContactAttributeKey.shape.dataType.optional(),
+  })
+  .openapi({
+    ref: "contactAttributeKeyInput",
+    description: "Input data for creating or updating a contact attribute",
+  });
 
 export type TContactAttributeKeyInput = z.infer<typeof ZContactAttributeKeyInput>;

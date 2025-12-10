@@ -37,7 +37,7 @@ export const getContactAttributeKeys = reactCache(
 export const createContactAttributeKey = async (
   contactAttributeKey: TContactAttributeKeyInput
 ): Promise<Result<ContactAttributeKey, ApiErrorResponseV2>> => {
-  const { environmentId, name, description, key } = contactAttributeKey;
+  const { environmentId, name, description, key, dataType } = contactAttributeKey;
 
   try {
     const prismaData: Prisma.ContactAttributeKeyCreateInput = {
@@ -49,6 +49,8 @@ export const createContactAttributeKey = async (
       name,
       description,
       key,
+      // If dataType is provided, use it; otherwise Prisma will use the default (text)
+      ...(dataType && { dataType }),
     };
 
     const createdContactAttributeKey = await prisma.contactAttributeKey.create({

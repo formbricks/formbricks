@@ -5,6 +5,7 @@ import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
+import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 
 export const updateAttributes = async (
   contactId: string,
@@ -95,19 +96,22 @@ export const updateAttributes = async (
       );
     } else {
       // Create new attributes since we're under the limit
+      // Auto-detect the data type based on the first value
       await prisma.$transaction(
-        newAttributes.map(({ key, value }) =>
-          prisma.contactAttributeKey.create({
+        newAttributes.map(({ key, value }) => {
+          const dataType = detectAttributeDataType(value);
+          return prisma.contactAttributeKey.create({
             data: {
               key,
               type: "custom",
+              dataType,
               environment: { connect: { id: environmentId } },
               attributes: {
                 create: { contactId, value },
               },
             },
-          })
-        )
+          });
+        })
       );
     }
   }

@@ -37,8 +37,21 @@ export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
 // operators for device filters
 export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
 
+// operators for date filters
+export const DATE_OPERATORS = [
+  "isOlderThan",
+  "isNewerThan",
+  "isBefore",
+  "isAfter",
+  "isBetween",
+  "isSameDay",
+] as const;
+
+// time units for relative date operators
+export const TIME_UNITS = ["days", "weeks", "months", "years"] as const;
+
 // all operators
-export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS] as const;
+export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS, ...DATE_OPERATORS] as const;
 
 export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
 export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
@@ -52,9 +65,27 @@ export type TSegmentOperator = z.infer<typeof ZSegmentOperator>;
 export const ZDeviceOperator = z.enum(DEVICE_OPERATORS);
 export type TDeviceOperator = z.infer<typeof ZDeviceOperator>;
 
+export const ZDateOperator = z.enum(DATE_OPERATORS);
+export type TDateOperator = z.infer<typeof ZDateOperator>;
+
+export const ZTimeUnit = z.enum(TIME_UNITS);
+export type TTimeUnit = z.infer<typeof ZTimeUnit>;
+
 export type TAllOperators = (typeof ALL_OPERATORS)[number];
 
-export const ZSegmentFilterValue = z.union([z.string(), z.number()]);
+// Relative date value for operators like "isOlderThan" and "isNewerThan"
+export const ZRelativeDateValue = z.object({
+  amount: z.number(),
+  unit: ZTimeUnit,
+});
+export type TRelativeDateValue = z.infer<typeof ZRelativeDateValue>;
+
+export const ZSegmentFilterValue = z.union([
+  z.string(),
+  z.number(),
+  ZRelativeDateValue,
+  z.tuple([z.string(), z.string()]), // for "isBetween" operator
+]);
 export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 
 // Each filter has a qualifier, which usually contains the operator for evaluating the filter.

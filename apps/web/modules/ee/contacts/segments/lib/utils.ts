@@ -50,6 +50,18 @@ export const convertOperatorToText = (operator: TAllOperators) => {
       return "User is in";
     case "userIsNotIn":
       return "User is not in";
+    case "isOlderThan":
+      return "is older than";
+    case "isNewerThan":
+      return "is newer than";
+    case "isBefore":
+      return "is before";
+    case "isAfter":
+      return "is after";
+    case "isBetween":
+      return "is between";
+    case "isSameDay":
+      return "is same day";
     default:
       return operator;
   }
@@ -85,6 +97,18 @@ export const convertOperatorToTitle = (operator: TAllOperators) => {
       return "User is in";
     case "userIsNotIn":
       return "User is not in";
+    case "isOlderThan":
+      return "Is older than";
+    case "isNewerThan":
+      return "Is newer than";
+    case "isBefore":
+      return "Is before";
+    case "isAfter":
+      return "Is after";
+    case "isBetween":
+      return "Is between";
+    case "isSameDay":
+      return "Is same day";
     default:
       return operator;
   }
