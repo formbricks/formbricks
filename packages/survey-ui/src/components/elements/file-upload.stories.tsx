@@ -1,86 +1,18 @@
-import type { Decorator, StoryObj } from "@storybook/react";
-import React, { useEffect, useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
+import { useEffect, useState } from "react";
 import { FileUpload, type FileUploadProps, type UploadedFile } from "./file-upload";
+import {
+  type BaseStylingOptions,
+  type ExtendedInputStylingOptions,
+  commonArgTypes,
+  createCSSVariablesDecorator,
+  elementStylingArgTypes,
+  extendedInputStylingArgTypes,
+} from "./story-helpers";
 
-// Styling options for the StylingPlayground story
-interface StylingOptions {
-  // Element styling
-  elementHeadlineFontFamily: string;
-  elementHeadlineFontSize: string;
-  elementHeadlineFontWeight: string;
-  elementHeadlineColor: string;
-  elementDescriptionFontFamily: string;
-  elementDescriptionFontWeight: string;
-  elementDescriptionFontSize: string;
-  elementDescriptionColor: string;
-  // Input styling
-  inputWidth: string;
-  inputHeight: string;
-  inputBgColor: string;
-  inputBorderColor: string;
-  inputBorderRadius: string;
-  inputFontSize: string;
-  inputColor: string;
-  inputPlaceholderColor: string;
-  inputFontWeight: string;
-  inputPaddingX: string;
-  inputPaddingY: string;
-}
+type StoryProps = FileUploadProps & Partial<BaseStylingOptions & ExtendedInputStylingOptions>;
 
-type StoryProps = FileUploadProps & Partial<StylingOptions>;
-
-type Story = StoryObj<StoryProps>;
-
-// Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    inputBorderColor,
-    inputColor,
-    inputBgColor,
-    inputBorderRadius,
-    inputFontSize,
-    inputFontWeight,
-    inputPaddingX,
-    inputPaddingY,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-input-border-color": inputBorderColor,
-    "--fb-input-color": inputColor,
-    "--fb-input-bg-color": inputBgColor,
-    "--fb-input-border-radius": inputBorderRadius,
-    "--fb-input-font-size": inputFontSize,
-    "--fb-input-font-weight": inputFontWeight,
-    "--fb-input-padding-x": inputPaddingX,
-    "--fb-input-padding-y": inputPaddingY,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
-
-export default {
+const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/FileUpload",
   component: FileUpload,
   parameters: {
@@ -93,18 +25,9 @@ export default {
     },
   },
   tags: ["autodocs"],
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
   argTypes: {
-    headline: {
-      control: "text",
-      description: "The main element text",
-      table: { category: "Content" },
-    },
-    description: {
-      control: "text",
-      description: "Optional description or subheader text",
-      table: { category: "Content" },
-    },
+    ...commonArgTypes,
     value: {
       control: "object",
       description: "Array of uploaded files",
@@ -125,96 +48,8 @@ export default {
       description: "Allowed file extensions (e.g., ['.pdf', '.jpg'])",
       table: { category: "Validation" },
     },
-    required: {
-      control: "boolean",
-      description: "Whether the field is required",
-      table: { category: "Validation" },
-    },
-    errorMessage: {
-      control: "text",
-      description: "Error message to display",
-      table: { category: "Validation" },
-    },
-    dir: {
-      control: { type: "select" },
-      options: ["ltr", "rtl", "auto"],
-      description: "Text direction for RTL support",
-      table: { category: "Layout" },
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the file input is disabled",
-      table: { category: "State" },
-    },
-    onChange: {
-      action: "changed",
-      table: { category: "Events" },
-    },
-    // Element styling
-    elementHeadlineFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    inputPaddingX: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputPaddingY: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputBorderRadius: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputBorderColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputBgColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputFontWeight: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputFontSize: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
+    ...elementStylingArgTypes,
+    ...extendedInputStylingArgTypes,
   },
   render: function Render(args: StoryProps) {
     const [value, setValue] = useState(args.value);
@@ -235,6 +70,9 @@ export default {
     );
   },
 };
+
+export default meta;
+type Story = StoryObj<StoryProps>;
 
 export const Default: Story = {
   args: {

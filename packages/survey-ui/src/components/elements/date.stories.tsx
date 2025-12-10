@@ -1,28 +1,17 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React, { useEffect, useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { DateElement, type DateElementProps } from "./date";
+import {
+  type BaseStylingOptions,
+  type ExtendedInputStylingOptions,
+  commonArgTypes,
+  createCSSVariablesDecorator,
+  createStatefulRender,
+  elementStylingArgTypes,
+  surveyStylingArgTypes,
+} from "./story-helpers";
 
-// Styling options for the StylingPlayground story
-interface StylingOptions {
-  // Element styling
-  elementHeadlineFontFamily: string;
-  elementHeadlineFontSize: string;
-  elementHeadlineFontWeight: string;
-  elementHeadlineColor: string;
-  elementDescriptionFontFamily: string;
-  elementDescriptionFontWeight: string;
-  elementDescriptionFontSize: string;
-  elementDescriptionColor: string;
-  // Input styling
-  inputBgColor: string;
-  inputBorderColor: string;
-  inputBorderRadius: string;
-  inputColor: string;
-  //brand color
-  brandColor: string;
-}
-
-type StoryProps = DateElementProps & Partial<StylingOptions>;
+type StoryProps = DateElementProps &
+  Partial<BaseStylingOptions & Pick<ExtendedInputStylingOptions, "inputBorderRadius">>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Date",
@@ -38,16 +27,7 @@ const meta: Meta<StoryProps> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    headline: {
-      control: "text",
-      description: "The main element text",
-      table: { category: "Content" },
-    },
-    description: {
-      control: "text",
-      description: "Optional description or subheader text",
-      table: { category: "Content" },
-    },
+    ...commonArgTypes,
     value: {
       control: "text",
       description: "Current date value in ISO format (YYYY-MM-DD)",
@@ -62,27 +42,6 @@ const meta: Meta<StoryProps> = {
       control: "text",
       description: "Maximum date allowed (ISO format: YYYY-MM-DD)",
       table: { category: "Validation" },
-    },
-    required: {
-      control: "boolean",
-      description: "Whether the field is required",
-      table: { category: "Validation" },
-    },
-    errorMessage: {
-      control: "text",
-      description: "Error message to display",
-      table: { category: "Validation" },
-    },
-    dir: {
-      control: { type: "select" },
-      options: ["ltr", "rtl", "auto"],
-      description: "Text direction for RTL support",
-      table: { category: "Layout" },
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the date input is disabled",
-      table: { category: "State" },
     },
     locale: {
       control: { type: "select" },
@@ -107,76 +66,12 @@ const meta: Meta<StoryProps> = {
       description: "Locale code for date formatting (survey language codes: 'en', 'de', 'ar', etc.)",
       table: { category: "Localization" },
     },
-    onChange: {
-      action: "changed",
-      table: { category: "Events" },
-    },
   },
-  render: function Render(args: StoryProps) {
-    const [value, setValue] = useState(args.value);
-
-    useEffect(() => {
-      setValue(args.value);
-    }, [args.value]);
-
-    return (
-      <DateElement
-        {...args}
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-          args.onChange?.(v);
-        }}
-      />
-    );
-  },
+  render: createStatefulRender(DateElement),
 };
 
 export default meta;
 type Story = StoryObj<StoryProps>;
-
-// Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    inputBgColor,
-    inputBorderColor,
-    inputBorderRadius,
-    inputColor,
-    brandColor,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-input-bg-color": inputBgColor,
-    "--fb-input-color": inputColor,
-    "--fb-input-border-color": inputBorderColor,
-    "--fb-input-border-radius": inputBorderRadius,
-    "--fb-brand-color": brandColor,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
 
 export const StylingPlayground: Story = {
   args: {
@@ -184,44 +79,8 @@ export const StylingPlayground: Story = {
     description: "Please select a date",
   },
   argTypes: {
-    // Element styling
-    elementHeadlineFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    brandColor: {
-      control: "color",
-      table: { category: "Survey Styling" },
-    },
-    // Input styling
+    ...elementStylingArgTypes,
+    ...surveyStylingArgTypes,
     inputBgColor: {
       control: "color",
       table: { category: "Input Styling" },
@@ -239,7 +98,7 @@ export const StylingPlayground: Story = {
       table: { category: "Input Styling" },
     },
   },
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {

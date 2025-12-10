@@ -1,31 +1,16 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React, { useEffect, useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Matrix, type MatrixOption, type MatrixProps } from "./matrix";
+import {
+  type BaseStylingOptions,
+  type ExtendedInputStylingOptions,
+  type LabelStylingOptions,
+  commonArgTypes,
+  createCSSVariablesDecorator,
+  createStatefulRender,
+} from "./story-helpers";
 
-// Styling options for the StylingPlayground story
-interface StylingOptions {
-  // Element styling
-  elementHeadlineFontFamily: string;
-  elementHeadlineFontSize: string;
-  elementHeadlineFontWeight: string;
-  elementHeadlineColor: string;
-  elementDescriptionFontFamily: string;
-  elementDescriptionFontWeight: string;
-  elementDescriptionFontSize: string;
-  elementDescriptionColor: string;
-  // Option label styling
-  labelFontFamily: string;
-  labelFontSize: string;
-  labelFontWeight: string;
-  labelColor: string;
-  // Input styling
-  inputBorderColor: string;
-  inputBgColor: string;
-  inputColor: string;
-  inputBorderRadius: string;
-}
-
-type StoryProps = MatrixProps & Partial<StylingOptions>;
+type StoryProps = MatrixProps &
+  Partial<BaseStylingOptions & LabelStylingOptions & ExtendedInputStylingOptions>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Matrix",
@@ -41,16 +26,7 @@ const meta: Meta<StoryProps> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    headline: {
-      control: "text",
-      description: "The main element text",
-      table: { category: "Content" },
-    },
-    description: {
-      control: "text",
-      description: "Optional description or subheader text",
-      table: { category: "Content" },
-    },
+    ...commonArgTypes,
     rows: {
       control: "object",
       description: "Array of row options (left side)",
@@ -66,103 +42,14 @@ const meta: Meta<StoryProps> = {
       description: "Record mapping row ID to column ID",
       table: { category: "State" },
     },
-    required: {
-      control: "boolean",
-      description: "Whether the field is required",
-      table: { category: "Validation" },
-    },
-    errorMessage: {
-      control: "text",
-      description: "Error message to display",
-      table: { category: "Validation" },
-    },
-    dir: {
-      control: { type: "select" },
-      options: ["ltr", "rtl", "auto"],
-      description: "Text direction for RTL support",
-      table: { category: "Layout" },
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the options are disabled",
-      table: { category: "State" },
-    },
-    onChange: {
-      action: "changed",
-      table: { category: "Events" },
-    },
   },
-  render: function Render(args: StoryProps) {
-    const [value, setValue] = useState(args.value);
-
-    useEffect(() => {
-      setValue(args.value);
-    }, [args.value]);
-
-    return (
-      <Matrix
-        {...args}
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-          args.onChange?.(v);
-        }}
-      />
-    );
-  },
+  render: createStatefulRender(Matrix),
 };
 
 export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    inputBorderColor,
-    inputBgColor,
-    inputColor,
-    inputBorderRadius,
-    labelFontFamily,
-    labelFontSize,
-    labelFontWeight,
-    labelColor,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-label-font-family": labelFontFamily,
-    "--fb-label-font-size": labelFontSize,
-    "--fb-label-font-weight": labelFontWeight,
-    "--fb-label-color": labelColor,
-    "--fb-input-border-color": inputBorderColor,
-    "--fb-input-bg-color": inputBgColor,
-    "--fb-input-color": inputColor,
-    "--fb-input-border-radius": inputBorderRadius,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
 
 const defaultRows: MatrixOption[] = [
   { id: "row-1", label: "Row 1" },
@@ -253,7 +140,7 @@ export const StylingPlayground: Story = {
       table: { category: "Input Styling" },
     },
   },
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {

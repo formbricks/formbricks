@@ -1,46 +1,23 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React, { useEffect, useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
+import * as React from "react";
+import { useEffect, useState } from "react";
 import { SingleSelect, type SingleSelectOption, type SingleSelectProps } from "./single-select";
+import {
+  type BaseStylingOptions,
+  type ExtendedInputStylingOptions,
+  type LabelStylingOptions,
+  type OptionStylingOptions,
+  commonArgTypes,
+  createCSSVariablesDecorator,
+  elementStylingArgTypes,
+  extendedInputStylingArgTypes,
+  labelStylingArgTypes,
+  optionStylingArgTypes,
+  surveyStylingArgTypes,
+} from "./story-helpers";
 
-// Styling options for the StylingPlayground story
-interface StylingOptions {
-  // Element styling
-  elementHeadlineFontFamily: string;
-  elementHeadlineFontSize: string;
-  elementHeadlineFontWeight: string;
-  elementHeadlineColor: string;
-  elementDescriptionFontFamily: string;
-  elementDescriptionFontWeight: string;
-  elementDescriptionFontSize: string;
-  elementDescriptionColor: string;
-  // Option label styling
-  labelFontFamily: string;
-  labelFontSize: string;
-  labelFontWeight: string;
-  labelColor: string;
-  // Option styling
-  optionBorderColor: string;
-  optionBgColor: string;
-  optionLabelColor: string;
-  optionBorderRadius: string;
-  optionPaddingX: string;
-  optionPaddingY: string;
-  optionFontFamily: string;
-  optionFontSize: string;
-  optionFontWeight: string;
-  //input styling
-  inputBgColor: string;
-  inputBorderColor: string;
-  inputBorderRadius: string;
-  inputPaddingX: string;
-  inputPaddingY: string;
-  inputFontFamily: string;
-  inputFontSize: string;
-  inputFontWeight: string;
-  inputColor: string;
-}
-
-type StoryProps = SingleSelectProps & Partial<StylingOptions>;
+type StoryProps = SingleSelectProps &
+  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & ExtendedInputStylingOptions>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/SingleSelect",
@@ -56,16 +33,7 @@ const meta: Meta<StoryProps> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    headline: {
-      control: "text",
-      description: "The main element text",
-      table: { category: "Content" },
-    },
-    description: {
-      control: "text",
-      description: "Optional description or subheader text",
-      table: { category: "Content" },
-    },
+    ...commonArgTypes,
     options: {
       control: "object",
       description: "Array of options to choose from",
@@ -74,27 +42,6 @@ const meta: Meta<StoryProps> = {
     value: {
       control: "text",
       description: "Selected option ID",
-      table: { category: "State" },
-    },
-    required: {
-      control: "boolean",
-      description: "Whether the field is required",
-      table: { category: "Validation" },
-    },
-    errorMessage: {
-      control: "text",
-      description: "Error message to display",
-      table: { category: "Validation" },
-    },
-    dir: {
-      control: { type: "select" },
-      options: ["ltr", "rtl", "auto"],
-      description: "Text direction for RTL support",
-      table: { category: "Layout" },
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the options are disabled",
       table: { category: "State" },
     },
     variant: {
@@ -107,10 +54,6 @@ const meta: Meta<StoryProps> = {
       control: "text",
       description: "Placeholder text for dropdown button when no option is selected",
       table: { category: "Content" },
-    },
-    onChange: {
-      action: "changed",
-      table: { category: "Events" },
     },
   },
   render: function Render(args: StoryProps) {
@@ -143,73 +86,6 @@ const meta: Meta<StoryProps> = {
 export default meta;
 type Story = StoryObj<StoryProps>;
 
-// Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    optionBorderColor,
-    optionBgColor,
-    optionLabelColor,
-    optionBorderRadius,
-    optionPaddingX,
-    optionPaddingY,
-    optionFontFamily,
-    optionFontSize,
-    optionFontWeight,
-    inputBgColor,
-    inputBorderColor,
-    inputBorderRadius,
-    inputPaddingX,
-    inputPaddingY,
-    inputFontFamily,
-    inputFontSize,
-    inputFontWeight,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-option-border-color": optionBorderColor,
-    "--fb-option-bg-color": optionBgColor,
-    "--fb-option-label-color": optionLabelColor,
-    "--fb-option-border-radius": optionBorderRadius,
-    "--fb-option-padding-x": optionPaddingX,
-    "--fb-option-padding-y": optionPaddingY,
-    "--fb-option-font-family": optionFontFamily,
-    "--fb-option-font-size": optionFontSize,
-    "--fb-option-font-weight": optionFontWeight,
-    "--fb-input-bg-color": inputBgColor,
-    "--fb-input-border-color": inputBorderColor,
-    "--fb-input-border-radius": inputBorderRadius,
-    "--fb-input-padding-x": inputPaddingX,
-    "--fb-input-padding-y": inputPaddingY,
-    "--fb-input-font-family": inputFontFamily,
-    "--fb-input-font-size": inputFontSize,
-    "--fb-input-font-weight": inputFontWeight,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
-
 const defaultOptions: SingleSelectOption[] = [
   { id: "option-1", label: "Option 1" },
   { id: "option-2", label: "Option 2" },
@@ -224,133 +100,13 @@ export const StylingPlayground: Story = {
     options: defaultOptions,
   },
   argTypes: {
-    // Element styling
-    elementHeadlineFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    // Option styling
-    optionBorderColor: {
-      control: "color",
-      description: "Border color for unselected options",
-      table: { category: "Option Styling" },
-    },
-    optionBgColor: {
-      control: "color",
-      description: "Background color for unselected options",
-      table: { category: "Option Styling" },
-    },
-    optionLabelColor: {
-      control: "color",
-      description: "Text/label color for options",
-      table: { category: "Option Styling" },
-    },
-    optionBorderRadius: {
-      control: "text",
-      description: "Border radius for option containers",
-      table: { category: "Option Styling" },
-    },
-    optionPaddingX: {
-      control: "text",
-      description: "Horizontal padding for option containers",
-      table: { category: "Option Styling" },
-    },
-    optionPaddingY: {
-      control: "text",
-      description: "Vertical padding for option containers",
-      table: { category: "Option Styling" },
-    },
-    optionFontFamily: {
-      control: "text",
-      description: "Font family for option labels",
-      table: { category: "Option Styling" },
-    },
-    optionFontSize: {
-      control: "text",
-      description: "Font size for option labels",
-      table: { category: "Option Styling" },
-    },
-    optionFontWeight: {
-      control: "text",
-      description: "Font weight for option labels",
-      table: { category: "Option Styling" },
-    },
-    // input styling
-    inputBgColor: {
-      control: "color",
-      description: "Background color for input",
-      table: { category: "Input Styling" },
-    },
-    inputBorderColor: {
-      control: "color",
-      description: "Border color for input",
-      table: { category: "Input Styling" },
-    },
-    inputBorderRadius: {
-      control: "text",
-      description: "Border radius for input",
-      table: { category: "Input Styling" },
-    },
-    inputPaddingX: {
-      control: "text",
-      description: "Horizontal padding for input",
-      table: { category: "Input Styling" },
-    },
-    inputPaddingY: {
-      control: "text",
-      description: "Vertical padding for input",
-      table: { category: "Input Styling" },
-    },
-    inputFontFamily: {
-      control: "text",
-      description: "Font family for input",
-      table: { category: "Input Styling" },
-    },
-    inputFontSize: {
-      control: "text",
-      description: "Font size for input",
-      table: { category: "Input Styling" },
-    },
-    inputFontWeight: {
-      control: "text",
-      description: "Font weight for input",
-      table: { category: "Input Styling" },
-    },
-    inputColor: {
-      control: "color",
-      description: "Text/label color for input",
-      table: { category: "Input Styling" },
-    },
+    ...elementStylingArgTypes,
+    ...labelStylingArgTypes,
+    ...optionStylingArgTypes,
+    ...extendedInputStylingArgTypes,
+    ...surveyStylingArgTypes,
   },
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {
@@ -449,30 +205,36 @@ export const RTLWithSelection: Story = {
 };
 
 export const MultipleElements: Story = {
-  render: () => (
-    <div className="w-[600px] space-y-8">
-      <SingleSelect
-        elementId="preference"
-        inputId="preference-input"
-        headline="Which option do you prefer?"
-        description="Select one option"
-        options={defaultOptions}
-        onChange={() => {}}
-      />
-      <SingleSelect
-        elementId="language"
-        inputId="language-input"
-        headline="What is your favorite programming language?"
-        options={[
-          { id: "js", label: "JavaScript" },
-          { id: "ts", label: "TypeScript" },
-          { id: "python", label: "Python" },
-        ]}
-        value="js"
-        onChange={() => {}}
-      />
-    </div>
-  ),
+  render: () => {
+    const [value1, setValue1] = React.useState<string | undefined>(undefined);
+    const [value2, setValue2] = React.useState<string>("js");
+
+    return (
+      <div className="w-[600px] space-y-8">
+        <SingleSelect
+          elementId="preference"
+          inputId="preference-input"
+          headline="Which option do you prefer?"
+          description="Select one option"
+          options={defaultOptions}
+          value={value1}
+          onChange={setValue1}
+        />
+        <SingleSelect
+          elementId="language"
+          inputId="language-input"
+          headline="What is your favorite programming language?"
+          options={[
+            { id: "js", label: "JavaScript" },
+            { id: "ts", label: "TypeScript" },
+            { id: "python", label: "Python" },
+          ]}
+          value={value2}
+          onChange={setValue2}
+        />
+      </div>
+    );
+  },
 };
 
 export const Dropdown: Story = {
@@ -588,7 +350,7 @@ export const WithContainerStyling: Story = {
     ],
     value: "option-2",
   },
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const WithContainerStylingAndOther: Story = {

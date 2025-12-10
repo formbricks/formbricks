@@ -1,25 +1,14 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React, { useEffect, useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
+import * as React from "react";
 import { PictureSelect, type PictureSelectOption, type PictureSelectProps } from "./picture-select";
+import {
+  type BaseStylingOptions,
+  commonArgTypes,
+  createCSSVariablesDecorator,
+  createStatefulRender,
+} from "./story-helpers";
 
-// Styling options for the StylingPlayground story
-interface StylingOptions {
-  // Element styling
-  elementHeadlineFontFamily: string;
-  elementHeadlineFontSize: string;
-  elementHeadlineFontWeight: string;
-  elementHeadlineColor: string;
-  elementDescriptionFontFamily: string;
-  elementDescriptionFontWeight: string;
-  elementDescriptionFontSize: string;
-  elementDescriptionColor: string;
-  // Survey styling
-  brandColor: string;
-  // Option styling
-  optionBorderRadius: string;
-}
-
-type StoryProps = PictureSelectProps & Partial<StylingOptions>;
+type StoryProps = PictureSelectProps & Partial<BaseStylingOptions & { optionBorderRadius: string }>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/PictureSelect",
@@ -35,16 +24,7 @@ const meta: Meta<StoryProps> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    headline: {
-      control: "text",
-      description: "The main element text",
-      table: { category: "Content" },
-    },
-    description: {
-      control: "text",
-      description: "Optional description or subheader text",
-      table: { category: "Content" },
-    },
+    ...commonArgTypes,
     options: {
       control: "object",
       description: "Array of picture options to choose from",
@@ -60,91 +40,14 @@ const meta: Meta<StoryProps> = {
       description: "Whether multiple selections are allowed",
       table: { category: "Behavior" },
     },
-    required: {
-      control: "boolean",
-      description: "Whether the field is required",
-      table: { category: "Validation" },
-    },
-    errorMessage: {
-      control: "text",
-      description: "Error message to display",
-      table: { category: "Validation" },
-    },
-    dir: {
-      control: { type: "select" },
-      options: ["ltr", "rtl", "auto"],
-      description: "Text direction for RTL support",
-      table: { category: "Layout" },
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the options are disabled",
-      table: { category: "State" },
-    },
-    onChange: {
-      action: "changed",
-      table: { category: "Events" },
-    },
   },
-  render: function Render(args: StoryProps) {
-    const [value, setValue] = useState(args.value);
-
-    useEffect(() => {
-      setValue(args.value);
-    }, [args.value]);
-
-    return (
-      <PictureSelect
-        {...args}
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-          args.onChange?.(v);
-        }}
-      />
-    );
-  },
+  render: createStatefulRender(PictureSelect),
 };
 
 export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    brandColor,
-    optionBorderRadius,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-brand-color": brandColor,
-    "--fb-option-border-radius": optionBorderRadius,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
 
 // Sample image URLs - using placeholder images
 const defaultOptions: PictureSelectOption[] = [
@@ -221,7 +124,7 @@ export const StylingPlayground: Story = {
       table: { category: "Option Styling" },
     },
   },
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {
@@ -344,26 +247,32 @@ export const RTLWithSelection: Story = {
 };
 
 export const MultipleElements: Story = {
-  render: () => (
-    <div className="w-[600px] space-y-8">
-      <PictureSelect
-        elementId="picture-1"
-        inputId="picture-1-input"
-        headline="Which image do you prefer?"
-        description="Select one image"
-        options={defaultOptions}
-        onChange={() => {}}
-      />
-      <PictureSelect
-        elementId="picture-2"
-        inputId="picture-2-input"
-        headline="Select all images you like"
-        description="You can select multiple images"
-        options={defaultOptions}
-        allowMulti
-        value={["option-1", "option-3"]}
-        onChange={() => {}}
-      />
-    </div>
-  ),
+  render: () => {
+    const [value1, setValue1] = React.useState<string | string[] | undefined>(undefined);
+    const [value2, setValue2] = React.useState<string | string[]>(["option-1", "option-3"]);
+
+    return (
+      <div className="w-[600px] space-y-8">
+        <PictureSelect
+          elementId="picture-1"
+          inputId="picture-1-input"
+          headline="Which image do you prefer?"
+          description="Select one image"
+          options={defaultOptions}
+          value={value1}
+          onChange={setValue1}
+        />
+        <PictureSelect
+          elementId="picture-2"
+          inputId="picture-2-input"
+          headline="Select all images you like"
+          description="You can select multiple images"
+          options={defaultOptions}
+          allowMulti
+          value={value2}
+          onChange={setValue2}
+        />
+      </div>
+    );
+  },
 };
