@@ -233,13 +233,13 @@ function Rating({
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown(number)}
         className={cn(
-          "relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t transition-colors focus:border-2 focus:outline-none",
-          isSelected ? "bg-accent border-primary z-10 border-2" : "border-input",
+          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t transition-colors focus:border-2 focus:outline-none",
+          isSelected ? "bg-brand-20 border-brand z-10 border-2" : "border-input-border bg-input-bg",
           borderRadiusClasses,
-          isHovered && !isSelected && "bg-accent/50",
+          isHovered && !isSelected && "bg-input-selected-bg",
           colorCoding ? "min-h-[47px]" : "min-h-[41px]",
           disabled && "cursor-not-allowed opacity-50",
-          "focus:border-primary"
+          "focus:border-brand"
         )}
         onMouseEnter={() => {
           if (!disabled) {

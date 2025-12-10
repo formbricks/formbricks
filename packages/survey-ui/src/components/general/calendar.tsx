@@ -3,10 +3,52 @@
 import { type Locale, format } from "date-fns";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import * as React from "react";
-import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
+import { type DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
 import { Button, buttonVariants } from "@/components/general/button";
 import { getDateFnsLocale } from "@/lib/locale";
 import { cn } from "@/lib/utils";
+
+// Extracted components to avoid defining during render
+function CalendarRoot({
+  className,
+  rootRef,
+  ...props
+}: {
+  className?: string;
+  rootRef?: React.Ref<HTMLDivElement>;
+  children?: React.ReactNode;
+}): React.JSX.Element {
+  return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />;
+}
+
+function CalendarChevron({
+  className,
+  orientation,
+  ...props
+}: {
+  className?: string;
+  orientation?: "left" | "right" | "up" | "down";
+}): React.JSX.Element {
+  if (orientation === "left") {
+    return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
+  }
+
+  if (orientation === "right") {
+    return <ChevronRightIcon className={cn("size-4", className)} {...props} />;
+  }
+
+  return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
+}
+
+function CalendarWeekNumber({ children, ...props }: { children?: React.ReactNode }): React.JSX.Element {
+  return (
+    <td {...props}>
+      <div className="flex h-[--cell-size] w-[--cell-size] items-center justify-center text-center">
+        {children}
+      </div>
+    </td>
+  );
+}
 
 function Calendar({
   className,
@@ -21,7 +63,7 @@ function Calendar({
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"];
   locale?: Locale | string;
-}) {
+}): React.JSX.Element {
   const defaultClassNames = getDefaultClassNames();
 
   // Resolve locale to Locale object if string is provided
@@ -80,7 +122,7 @@ function Calendar({
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
-          "relative has-focus:border-ring border border-input shadow-xs has-focus:ring-ring/50 has-focus:ring-[3px] rounded-md",
+          "relative has-focus:border-ring border border-input-border shadow-xs has-focus:ring-ring/50 has-focus:ring-[3px] rounded-md",
           defaultClassNames.dropdown_root
         ),
         dropdown: cn("absolute bg-popover inset-0 opacity-0", defaultClassNames.dropdown),
@@ -123,37 +165,10 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Root: ({ className, rootRef, ...props }) => {
-          return (
-            <div
-              data-slot="calendar"
-              ref={rootRef as React.Ref<HTMLDivElement>}
-              className={cn(className)}
-              {...props}
-            />
-          );
-        },
-        Chevron: ({ className, orientation, ...props }) => {
-          if (orientation === "left") {
-            return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
-          }
-
-          if (orientation === "right") {
-            return <ChevronRightIcon className={cn("size-4", className)} {...props} />;
-          }
-
-          return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
-        },
+        Root: CalendarRoot,
+        Chevron: CalendarChevron,
         DayButton: CalendarDayButton,
-        WeekNumber: ({ children, ...props }) => {
-          return (
-            <td {...props}>
-              <div className="flex h-[--cell-size] w-[--cell-size] items-center justify-center text-center">
-                {children}
-              </div>
-            </td>
-          );
-        },
+        WeekNumber: CalendarWeekNumber,
         ...components,
       }}
       {...props}
@@ -161,7 +176,12 @@ function Calendar({
   );
 }
 
-function CalendarDayButton({ className, day, modifiers, ...props }: React.ComponentProps<typeof DayButton>) {
+function CalendarDayButton({
+  className,
+  day,
+  modifiers,
+  ...props
+}: React.ComponentProps<typeof DayButton>): React.JSX.Element {
   const defaultClassNames = getDefaultClassNames();
 
   const ref = React.useRef<HTMLButtonElement>(null);
@@ -176,13 +196,13 @@ function CalendarDayButton({ className, day, modifiers, ...props }: React.Compon
       size="icon"
       data-day={day.date.toLocaleDateString()}
       data-selected-single={
-        modifiers.selected && !modifiers.range_start && !modifiers.range_end && !modifiers.range_middle
+        modifiers.selected && !modifiers.range_start && !modifiers.range_end ? !modifiers.range_middle : null
       }
       data-range-start={modifiers.range_start}
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "data-[selected-single=true]:bg-brand data-[selected-single=true]:text-primary-foreground data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground hover:text-primary-foreground data-[selected-single=true]:hover:bg-brand data-[selected-single=true]:hover:text-primary-foreground data-[range-start=true]:hover:bg-primary data-[range-start=true]:hover:text-primary-foreground data-[range-end=true]:hover:bg-primary data-[range-end=true]:hover:text-primary-foreground group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 dark:hover:text-accent-foreground flex aspect-square h-auto w-full min-w-[--cell-size] flex-col gap-1 font-normal leading-none hover:bg-[color-mix(in_srgb,var(--fb-brand-default)_70%,transparent)] data-[range-end=true]:rounded-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-start=true]:rounded-l-md group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] [&>span]:text-xs [&>span]:opacity-70",
+        "data-[selected-single=true]:bg-brand data-[selected-single=true]:text-primary-foreground data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground hover:text-primary-foreground data-[selected-single=true]:hover:bg-brand data-[selected-single=true]:hover:text-primary-foreground data-[range-start=true]:hover:bg-primary data-[range-start=true]:hover:text-primary-foreground data-[range-end=true]:hover:bg-primary data-[range-end=true]:hover:text-primary-foreground group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 dark:hover:text-accent-foreground flex aspect-square h-auto w-full min-w-[--cell-size] flex-col gap-1 font-normal leading-none hover:bg-[color-mix(in_srgb,var(--fb-brand-color)_70%,transparent)] data-[range-end=true]:rounded-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-start=true]:rounded-l-md group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className
       )}

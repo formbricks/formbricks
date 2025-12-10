@@ -13,6 +13,14 @@ interface StylingOptions {
   elementDescriptionFontWeight: string;
   elementDescriptionFontSize: string;
   elementDescriptionColor: string;
+  // Input styling
+  inputBgColor: string;
+  inputBorderColor: string;
+  inputColor: string;
+  inputFontSize: string;
+  inputFontWeight: string;
+  //Survey color
+  brandColor: string;
 }
 
 type StoryProps = ConsentProps & Partial<StylingOptions>;
@@ -112,6 +120,12 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     elementDescriptionFontSize,
     elementDescriptionFontWeight,
     elementDescriptionColor,
+    inputBgColor,
+    inputBorderColor,
+    inputColor,
+    inputFontSize,
+    inputFontWeight,
+    brandColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -123,6 +137,12 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     "--fb-element-description-font-size": elementDescriptionFontSize,
     "--fb-element-description-font-weight": elementDescriptionFontWeight,
     "--fb-element-description-color": elementDescriptionColor,
+    "--fb-input-bg-color": inputBgColor,
+    "--fb-input-border-color": inputBorderColor,
+    "--fb-input-color": inputColor,
+    "--fb-input-font-size": inputFontSize,
+    "--fb-input-font-weight": inputFontWeight,
+    "--fb-brand-color": brandColor,
   };
 
   return (
@@ -139,14 +159,6 @@ export const StylingPlayground: Story = {
     headline: "Terms and Conditions",
     description: "Please read and accept the terms",
     checkboxLabel: "I agree to the terms and conditions",
-    elementHeadlineFontFamily: "system-ui, sans-serif",
-    elementHeadlineFontSize: "1.125rem",
-    elementHeadlineFontWeight: "600",
-    elementHeadlineColor: "#1e293b",
-    elementDescriptionFontFamily: "system-ui, sans-serif",
-    elementDescriptionFontSize: "0.875rem",
-    elementDescriptionFontWeight: "400",
-    elementDescriptionColor: "#64748b",
     onChange: () => {},
   },
   argTypes: {
@@ -181,6 +193,30 @@ export const StylingPlayground: Story = {
     elementDescriptionColor: {
       control: "color",
       table: { category: "Element Styling" },
+    },
+    inputBgColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputBorderColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputFontSize: {
+      control: "text",
+      table: { category: "Input Styling" },
+    },
+    inputFontWeight: {
+      control: "text",
+      table: { category: "Input Styling" },
+    },
+    brandColor: {
+      control: "color",
+      table: { category: "Survey Styling" },
     },
   },
   decorators: [withCSSVariables],

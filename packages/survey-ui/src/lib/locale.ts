@@ -33,18 +33,18 @@ export function getDateFnsLocale(localeCode?: string): Locale {
   // Map survey language codes to date-fns locales
   const localeMap: Record<string, Locale> = {
     en: enUS,
-    de: de,
-    es: es,
-    fr: fr,
-    ja: ja,
-    nl: nl,
+    de,
+    es,
+    fr,
+    ja,
+    nl,
     pt: ptBR, // Default Portuguese to Brazilian
-    ro: ro,
-    ar: ar,
-    it: it,
-    ru: ru,
-    uz: uz,
-    hi: hi,
+    ro,
+    ar,
+    it,
+    ru,
+    uz,
+    hi,
     zh: zhCN, // Default Chinese to Simplified
   };
 

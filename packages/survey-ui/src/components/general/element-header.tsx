@@ -24,7 +24,7 @@ function ElementHeader({
   imageAltText,
   ...props
 }: ElementHeaderProps): React.JSX.Element {
-  const isMediaAvailable = imageUrl || videoUrl;
+  const isMediaAvailable = imageUrl ?? videoUrl;
 
   return (
     <div className={cn("space-y-2", className)} {...props}>

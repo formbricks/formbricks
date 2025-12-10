@@ -116,7 +116,7 @@ function Matrix({
                 const rowGroupId = `${inputId}-row-${row.id}`;
                 const selectedColumnId = selectedValues[row.id];
                 const rowHasError = rowsWithErrors.includes(row);
-                const baseBgColor = index % 2 === 0 ? "var(--fb-input-bg-color)" : "transparent";
+                const baseBgColor = index % 2 === 0 ? "bg-input-bg" : "bg-transparent";
 
                 return (
                   <RadioGroupPrimitive.Root
@@ -129,28 +129,28 @@ function Matrix({
                     disabled={disabled}
                     dir={detectedDir}
                     aria-invalid={Boolean(errorMessage)}>
-                    <tr
-                      className={cn("relative")}
-                      style={{
-                        backgroundColor: rowHasError ? "var(--destructive-muted)" : baseBgColor, // destructive background muted (#fef2f2)
-                      }}>
+                    <tr className={cn("relative", baseBgColor, rowHasError ? "bg-destructive-muted" : "")}>
                       {/* Row label */}
-                      <td className="px-1 py-2 align-middle">
+                      <td className={cn("p-2 align-middle", !rowHasError && "rounded-l-input")}>
                         <div className="flex flex-col gap-0 leading-none">
                           <Label className="text-xs font-medium">{row.label}</Label>
                           {rowHasError ? (
-                            <span className="text-xs font-normal" style={{ color: "hsl(0 65% 51%)" }}>
-                              Select one option
-                            </span>
+                            <span className="text-destructive text-xs font-normal">Select one option</span>
                           ) : null}
                         </div>
                       </td>
                       {/* Column options for this row */}
-                      {columns.map((column) => {
+                      {columns.map((column, colIndex) => {
                         const cellId = `${rowGroupId}-${column.id}`;
+                        const isLastColumn = colIndex === columns.length - 1;
 
                         return (
-                          <td key={column.id} className="p-2 text-center align-middle">
+                          <td
+                            key={column.id}
+                            className={cn(
+                              "p-2 text-center align-middle",
+                              isLastColumn && !rowHasError && "rounded-r-input"
+                            )}>
                             <Label htmlFor={cellId} className="flex cursor-pointer justify-center">
                               <RadioGroupItem value={column.id} id={cellId} disabled={disabled} />
                             </Label>

@@ -128,9 +128,10 @@ function Ranking({
                 <div
                   key={item.id}
                   className={cn(
-                    "flex h-12 cursor-pointer items-center rounded-md border transition-all",
-                    "hover:bg-accent focus-within:border-primary focus-within:bg-accent focus-within:shadow-sm",
-                    isRanked && "bg-accent border-primary",
+                    "rounded-option flex h-12 cursor-pointer items-center border pl-3 transition-all",
+                    "bg-option-bg border-option-border",
+                    "hover:bg-option-hover-bg focus-within:border-brand focus-within:bg-option-selected-bg focus-within:shadow-sm",
+                    isRanked && "bg-option-selected-bg border-brand",
                     disabled && "cursor-not-allowed opacity-50"
                   )}>
                   <button
@@ -146,7 +147,7 @@ function Ranking({
                         handleItemClick(item);
                       }
                     }}
-                    className="group flex h-full grow items-center gap-4 px-4 text-left focus:outline-none"
+                    className="group flex h-full grow items-center gap-4 text-left focus:outline-none"
                     aria-label={
                       isRanked ? `Remove ${item.label} from ranking` : `Add ${item.label} to ranking`
                     }>
@@ -154,19 +155,22 @@ function Ranking({
                       className={cn(
                         "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
                         isRanked
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-input group-hover:bg-background group-hover:text-foreground border-dashed text-transparent"
+                          ? "bg-brand border-brand text-white"
+                          : "border-option-border group-hover:bg-background group-hover:text-foreground border-dashed text-transparent"
                       )}>
                       {displayNumber}
                     </span>
-                    <span className="shrink grow text-start text-sm font-medium" dir={detectedDir}>
+                    <span
+                      className="font-option text-option font-option-weight shrink grow text-start"
+                      style={{ color: "var(--fb-option-label-color)" }}
+                      dir={detectedDir}>
                       {item.label}
                     </span>
                   </button>
 
                   {/* Up/Down buttons for ranked items */}
                   {isRanked ? (
-                    <div className="border-input flex h-full grow-0 flex-col border-l">
+                    <div className="border-option-border flex h-full grow-0 flex-col border-l">
                       <button
                         type="button"
                         tabIndex={isFirst ? -1 : 0}
@@ -178,7 +182,7 @@ function Ranking({
                         aria-label={`Move ${item.label} up`}
                         className={cn(
                           "flex flex-1 items-center justify-center px-2 transition-colors",
-                          isFirst ? "cursor-not-allowed opacity-30" : "hover:bg-accent rounded-tr-md"
+                          isFirst ? "cursor-not-allowed opacity-30" : "rounded-tr-md"
                         )}>
                         <ChevronUp className="h-5 w-5" />
                       </button>
@@ -192,8 +196,8 @@ function Ranking({
                         disabled={isLast || disabled}
                         aria-label={`Move ${item.label} down`}
                         className={cn(
-                          "border-input flex flex-1 items-center justify-center border-t px-2 transition-colors",
-                          isLast ? "cursor-not-allowed opacity-30" : "hover:bg-accent rounded-br-md"
+                          "border-option-border flex flex-1 items-center justify-center border-t px-2 transition-colors",
+                          isLast ? "cursor-not-allowed opacity-30" : "rounded-br-md"
                         )}>
                         <ChevronDown className="h-5 w-5" />
                       </button>

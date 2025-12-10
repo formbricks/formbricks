@@ -93,29 +93,19 @@ function SingleSelect({
     onOtherValueChange?.(e.target.value);
   };
 
-  // Helper function to get option container styles
-  const getOptionContainerStyle = (isSelected: boolean): React.CSSProperties => ({
-    borderRadius: "var(--fb-option-border-radius)",
-    padding: "var(--fb-option-padding-y) var(--fb-option-padding-x)",
-    backgroundColor: isSelected ? "var(--fb-option-selected-background)" : "var(--fb-option-bg-color)",
-    borderColor: isSelected ? "var(--fb-option-selected-border)" : "var(--fb-option-border-color)",
-  });
-
-  // Helper function to get option label styles
-  const getOptionLabelStyle = (): React.CSSProperties => ({
-    color: "var(--fb-option-label-color)",
-    fontFamily: "var(--fb-option-font-family)",
-    fontSize: "var(--fb-option-font-size)",
-    fontWeight: "var(--fb-option-font-weight)",
-  });
-
   // Shared className for option containers
-  const optionContainerClassName = cn(
-    "relative flex cursor-pointer flex-col border transition-colors outline-none",
-    "focus-within:border-[var(--fb-option-selected-border)] focus-within:bg-[var(--fb-option-selected-background)]",
-    "hover:bg-[var(--fb-option-hover-bg-color)]",
-    disabled && "cursor-not-allowed opacity-50"
-  );
+  const getOptionContainerClassName = (isSelected: boolean): string =>
+    cn(
+      "relative flex cursor-pointer flex-col border transition-colors outline-none",
+      "rounded-option px-option-x py-option-y",
+      isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",
+      "focus-within:border-brand focus-within:bg-option-selected-bg",
+      "hover:bg-option-hover-bg",
+      disabled && "cursor-not-allowed opacity-50"
+    );
+
+  // Shared className for option labels
+  const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
   // Detect text direction from content
   const detectedDir = useTextDirection({
     dir,
@@ -148,7 +138,7 @@ function SingleSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="w-full justify-between rounded-[var(--fb-input-border-radius)]"
+                  className="rounded-input w-full justify-between"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
                   <span className="truncate">{displayText}</span>
@@ -156,9 +146,8 @@ function SingleSelect({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[var(--radix-dropdown-menu-trigger-width)]"
-                align="start"
-                style={{ backgroundColor: "var(--fb-option-bg-color)" }}>
+                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
+                align="start">
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
                   {options.map((option) => {
                     const optionId = `${inputId}-${option.id}`;
@@ -169,7 +158,7 @@ function SingleSelect({
                         value={option.id}
                         id={optionId}
                         disabled={disabled}>
-                        <span style={getOptionLabelStyle()}>{option.label}</span>
+                        <span className={optionLabelClassName}>{option.label}</span>
                       </DropdownMenuRadioItem>
                     );
                   })}
@@ -178,7 +167,7 @@ function SingleSelect({
                       value={otherOptionId}
                       id={`${inputId}-${otherOptionId}`}
                       disabled={disabled}>
-                      <span style={getOptionLabelStyle()}>{otherOptionLabel}</span>
+                      <span className={optionLabelClassName}>{otherOptionLabel}</span>
                     </DropdownMenuRadioItem>
                   ) : null}
                 </DropdownMenuRadioGroup>
@@ -212,13 +201,10 @@ function SingleSelect({
                 <label
                   key={option.id}
                   htmlFor={optionId}
-                  style={getOptionContainerStyle(isSelected)}
-                  className={cn(optionContainerClassName, isSelected && "z-10")}>
+                  className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
                   <span className="flex items-center text-sm">
                     <RadioGroupItem value={option.id} id={optionId} disabled={disabled} />
-                    <span className="ml-3 mr-3 grow font-medium" style={getOptionLabelStyle()}>
-                      {option.label}
-                    </span>
+                    <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{option.label}</span>
                   </span>
                 </label>
               );
@@ -226,17 +212,14 @@ function SingleSelect({
             {hasOtherOption && otherOptionId ? (
               <label
                 htmlFor={`${inputId}-${otherOptionId}`}
-                style={getOptionContainerStyle(isOtherSelected)}
-                className={cn(optionContainerClassName, isOtherSelected && "z-10")}>
+                className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
                 <span className="flex items-center text-sm">
                   <RadioGroupItem
                     value={otherOptionId}
                     id={`${inputId}-${otherOptionId}`}
                     disabled={disabled}
                   />
-                  <span className="ml-3 mr-3 grow font-medium" style={getOptionLabelStyle()}>
-                    {otherOptionLabel}
-                  </span>
+                  <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
                 </span>
                 {isOtherSelected ? (
                   <Input

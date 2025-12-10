@@ -13,8 +13,10 @@ interface StylingOptions {
   elementDescriptionFontWeight: string;
   elementDescriptionFontSize: string;
   elementDescriptionColor: string;
-  inputBorderColor: string;
-  inputColor: string;
+  // Survey styling
+  brandColor: string;
+  // Option styling
+  optionBorderRadius: string;
 }
 
 type StoryProps = PictureSelectProps & Partial<StylingOptions>;
@@ -120,8 +122,8 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     elementDescriptionFontSize,
     elementDescriptionFontWeight,
     elementDescriptionColor,
-    inputBorderColor,
-    inputColor,
+    brandColor,
+    optionBorderRadius,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -133,8 +135,8 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-element-description-font-size": elementDescriptionFontSize,
     "--fb-element-description-font-weight": elementDescriptionFontWeight,
     "--fb-element-description-color": elementDescriptionColor,
-    "--fb-input-border-color": inputBorderColor,
-    "--fb-input-color": inputColor,
+    "--fb-brand-color": brandColor,
+    "--fb-option-border-radius": optionBorderRadius,
   };
 
   return (
@@ -209,14 +211,14 @@ export const StylingPlayground: Story = {
       control: "color",
       table: { category: "Element Styling" },
     },
-    // Input styling
-    inputBorderColor: {
+    brandColor: {
       control: "color",
-      table: { category: "Input Styling" },
+      table: { category: "Survey Styling" },
     },
-    inputColor: {
-      control: "color",
-      table: { category: "Input Styling" },
+    optionBorderRadius: {
+      control: "text",
+      description: "Border radius for picture options",
+      table: { category: "Option Styling" },
     },
   },
   decorators: [withCSSVariables],

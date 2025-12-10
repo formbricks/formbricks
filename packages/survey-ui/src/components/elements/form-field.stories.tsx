@@ -31,6 +31,8 @@ interface StylingOptions {
   inputPaddingX: string;
   inputPaddingY: string;
   inputShadow: string;
+  // Survey styling
+  brandColor: string;
 }
 
 type StoryProps = FormFieldProps & Partial<StylingOptions>;
@@ -146,6 +148,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     inputPaddingX,
     inputPaddingY,
     inputShadow,
+    brandColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -173,6 +176,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-input-padding-x": inputPaddingX,
     "--fb-input-padding-y": inputPaddingY,
     "--fb-input-shadow": inputShadow,
+    "--fb-brand-color": brandColor,
   };
 
   return (
@@ -207,30 +211,6 @@ export const StylingPlayground: Story = {
     headline: "Please provide your contact information",
     description: "We'll use this to contact you",
     fields: contactInfoFields,
-    elementHeadlineFontFamily: "system-ui, sans-serif",
-    elementHeadlineFontSize: "1.125rem",
-    elementHeadlineFontWeight: "600",
-    elementHeadlineColor: "#1e293b",
-    elementDescriptionFontFamily: "system-ui, sans-serif",
-    elementDescriptionFontSize: "0.875rem",
-    elementDescriptionFontWeight: "400",
-    elementDescriptionColor: "#64748b",
-    labelFontFamily: "system-ui, sans-serif",
-    labelFontSize: "0.875rem",
-    labelFontWeight: "500",
-    labelColor: "#1e293b",
-    inputWidth: "100%",
-    inputHeight: "auto",
-    inputBgColor: "transparent",
-    inputBorderColor: "hsl(214.3 31.8% 91.4%)",
-    inputBorderRadius: "0.5rem",
-    inputFontFamily: "system-ui, sans-serif",
-    inputFontSize: "0.875rem",
-    inputFontWeight: "400",
-    inputColor: "hsl(222.2 84% 4.9%)",
-    inputPaddingX: "0.75rem",
-    inputPaddingY: "0.5rem",
-    inputShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
   },
   argTypes: {
     elementHeadlineFontFamily: {
@@ -328,6 +308,10 @@ export const StylingPlayground: Story = {
     inputShadow: {
       control: "text",
       table: { category: "Input Styling" },
+    },
+    brandColor: {
+      control: "color",
+      table: { category: "Survey Styling" },
     },
   },
   decorators: [withCSSVariables],

@@ -13,6 +13,16 @@ interface StylingOptions {
   elementDescriptionFontWeight: string;
   elementDescriptionFontSize: string;
   elementDescriptionColor: string;
+  // Option styling
+  optionBgColor: string;
+  optionBorderColor: string;
+  optionLabelColor: string;
+  optionFontFamily: string;
+  optionFontSize: string;
+  optionFontWeight: string;
+  optionBorderRadius: string;
+  //Survey styling
+  brandColor: string;
 }
 
 type StoryProps = RankingProps & Partial<StylingOptions>;
@@ -112,6 +122,14 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     elementDescriptionFontSize,
     elementDescriptionFontWeight,
     elementDescriptionColor,
+    optionBgColor,
+    optionBorderColor,
+    optionLabelColor,
+    optionFontFamily,
+    optionFontSize,
+    optionFontWeight,
+    optionBorderRadius,
+    brandColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -123,6 +141,14 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     "--fb-element-description-font-size": elementDescriptionFontSize,
     "--fb-element-description-font-weight": elementDescriptionFontWeight,
     "--fb-element-description-color": elementDescriptionColor,
+    "--fb-option-bg-color": optionBgColor,
+    "--fb-option-border-color": optionBorderColor,
+    "--fb-option-label-color": optionLabelColor,
+    "--fb-option-font-family": optionFontFamily,
+    "--fb-option-font-size": optionFontSize,
+    "--fb-option-font-weight": optionFontWeight,
+    "--fb-option-border-radius": optionBorderRadius,
+    "--fb-brand-color": brandColor,
   };
 
   return (
@@ -148,14 +174,6 @@ export const StylingPlayground: Story = {
     headline: "Rank these items in order of importance",
     description: "Click items to add them to your ranking, then use arrows to reorder",
     options: defaultOptions,
-    elementHeadlineFontFamily: "system-ui, sans-serif",
-    elementHeadlineFontSize: "1.125rem",
-    elementHeadlineFontWeight: "600",
-    elementHeadlineColor: "#1e293b",
-    elementDescriptionFontFamily: "system-ui, sans-serif",
-    elementDescriptionFontSize: "0.875rem",
-    elementDescriptionFontWeight: "400",
-    elementDescriptionColor: "#64748b",
   },
   argTypes: {
     elementHeadlineFontFamily: {
@@ -189,6 +207,38 @@ export const StylingPlayground: Story = {
     elementDescriptionColor: {
       control: "color",
       table: { category: "Element Styling" },
+    },
+    optionBgColor: {
+      control: "color",
+      table: { category: "Option Styling" },
+    },
+    optionBorderColor: {
+      control: "color",
+      table: { category: "Option Styling" },
+    },
+    optionLabelColor: {
+      control: "color",
+      table: { category: "Option Styling" },
+    },
+    optionFontFamily: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
+    optionFontSize: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
+    optionFontWeight: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
+    optionBorderRadius: {
+      control: "text",
+      table: { category: "Option Styling" },
+    },
+    brandColor: {
+      control: "color",
+      table: { category: "Survey Styling" },
     },
   },
   decorators: [withCSSVariables],

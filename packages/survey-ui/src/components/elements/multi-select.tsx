@@ -100,29 +100,22 @@ function MultiSelect({
     onOtherValueChange?.(e.target.value);
   };
 
-  // Helper function to get option container styles
-  const getOptionContainerStyle = (isSelected: boolean): React.CSSProperties => ({
-    borderRadius: "var(--fb-option-border-radius)",
-    padding: "var(--fb-option-padding-y) var(--fb-option-padding-x)",
-    backgroundColor: isSelected ? "var(--fb-option-selected-background)" : "var(--fb-option-bg-color)",
-    borderColor: isSelected ? "var(--fb-option-selected-border)" : "var(--fb-option-border-color)",
-  });
-
-  // Helper function to get option label styles
-  const getOptionLabelStyle = (): React.CSSProperties => ({
-    color: "var(--fb-option-label-color)",
-    fontFamily: "var(--fb-option-font-family)",
-    fontSize: "var(--fb-option-font-size)",
-    fontWeight: "var(--fb-option-font-weight)",
-  });
-
   // Shared className for option containers
-  const optionContainerClassName = cn(
-    "relative flex cursor-pointer flex-col border transition-colors outline-none",
-    "focus-within:border-[var(--fb-option-selected-border)] focus-within:bg-[var(--fb-option-selected-background)]",
-    "hover:bg-[var(--fb-option-hover-bg-color)]",
-    disabled && "cursor-not-allowed opacity-50"
-  );
+  const getOptionContainerClassName = (isSelected: boolean): string =>
+    cn(
+      "relative flex cursor-pointer flex-col border transition-colors outline-none",
+      "rounded-option px-option-x py-option-y",
+      isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",
+      "focus-within:border-brand focus-within:bg-option-selected-bg",
+      "hover:bg-option-hover-bg",
+      disabled && "cursor-not-allowed opacity-50"
+    );
+
+  // Shared className for option labels
+  const optionLabelClassName = "font-option text-option font-option-weight";
+  const optionLabelColorStyle: React.CSSProperties = {
+    color: "var(--fb-option-label-color)",
+  };
 
   // Detect text direction from content
   const detectedDir = useTextDirection({
@@ -181,7 +174,9 @@ function MultiSelect({
                         handleOptionChange(option.id, checked);
                       }}
                       disabled={disabled}>
-                      <span style={getOptionLabelStyle()}>{option.label}</span>
+                      <span className={optionLabelClassName} style={optionLabelColorStyle}>
+                        {option.label}
+                      </span>
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -193,7 +188,9 @@ function MultiSelect({
                       handleOptionChange(otherOptionId, checked);
                     }}
                     disabled={disabled}>
-                    <span style={getOptionLabelStyle()}>{otherOptionLabel}</span>
+                    <span className={optionLabelClassName} style={optionLabelColorStyle}>
+                      {otherOptionLabel}
+                    </span>
                   </DropdownMenuCheckboxItem>
                 ) : null}
               </DropdownMenuContent>
@@ -220,8 +217,7 @@ function MultiSelect({
                 <label
                   key={option.id}
                   htmlFor={optionId}
-                  style={getOptionContainerStyle(isChecked)}
-                  className={cn(optionContainerClassName, isChecked && "z-10")}>
+                  className={cn(getOptionContainerClassName(isChecked), isChecked && "z-10")}>
                   <span className="flex items-center text-sm">
                     <Checkbox
                       id={optionId}
@@ -232,7 +228,9 @@ function MultiSelect({
                       disabled={disabled}
                       aria-invalid={Boolean(errorMessage)}
                     />
-                    <span className="ml-3 mr-3 grow font-medium" style={getOptionLabelStyle()}>
+                    <span
+                      className={cn("ml-3 mr-3 grow", optionLabelClassName)}
+                      style={optionLabelColorStyle}>
                       {option.label}
                     </span>
                   </span>
@@ -243,8 +241,7 @@ function MultiSelect({
               <div className="space-y-2">
                 <label
                   htmlFor={`${inputId}-${otherOptionId}`}
-                  style={getOptionContainerStyle(isOtherSelected)}
-                  className={cn(optionContainerClassName, isOtherSelected && "z-10")}>
+                  className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
                   <span className="flex items-center text-sm">
                     <Checkbox
                       id={`${inputId}-${otherOptionId}`}
@@ -255,7 +252,9 @@ function MultiSelect({
                       disabled={disabled}
                       aria-invalid={Boolean(errorMessage)}
                     />
-                    <span className="ml-3 mr-3 grow font-medium" style={getOptionLabelStyle()}>
+                    <span
+                      className={cn("ml-3 mr-3 grow", optionLabelClassName)}
+                      style={optionLabelColorStyle}>
                       {otherOptionLabel}
                     </span>
                   </span>

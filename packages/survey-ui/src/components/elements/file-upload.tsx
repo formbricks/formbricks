@@ -175,17 +175,13 @@ function FileUpload({
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>): void => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = "copy";
-    }
+    e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>): Promise<void> => {
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>): void => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.dataTransfer?.files) {
-      await handleFileSelection(e.dataTransfer.files);
-    }
+    void handleFileSelection(e.dataTransfer.files);
   };
 
   const handleDeleteFile = (index: number, e: React.MouseEvent): void => {
@@ -232,36 +228,33 @@ function FileUpload({
             "relative flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
             errorMessage
               ? "border-destructive"
-              : "border-[var(--fb-input-border-color)] bg-[var(--fb-input-bg-color)] hover:bg-[var(--fb-input-hover-bg-color)]",
+              : "border-input-border bg-input-bg hover:bg-input-hover-bg rounded-input",
             disabled && "cursor-not-allowed opacity-50"
-          )}
-          style={{
-            borderRadius: "var(--fb-input-border-radius)",
-          }}>
+          )}>
           {/* Uploaded files */}
           {uploadedFiles.length > 0 ? (
             <div className="flex w-full flex-col gap-2 p-2">
               {uploadedFiles.map((file, index) => (
                 <div
                   key={index}
-                  className={cn("relative m-1 rounded-md border")}
-                  style={{
-                    borderRadius: "var(--fb-input-border-radius)",
-                    borderColor: "var(--fb-input-border-color)",
-                  }}>
+                  className={cn(
+                    "border-input-border bg-input-bg text-input-text rounded-input relative m-1 rounded-md border"
+                  )}>
                   {/* Delete button */}
                   <div className="absolute right-0 top-0 m-2">
                     <button
                       type="button"
-                      onClick={(e) => handleDeleteFile(index, e)}
+                      onClick={(e) => {
+                        handleDeleteFile(index, e);
+                      }}
                       disabled={disabled}
                       className={cn(
                         "flex h-5 w-5 cursor-pointer items-center justify-center rounded-md",
-                        "bg-[var(--background)] hover:bg-[var(--accent)]",
+                        "bg-background hover:bg-accent",
                         disabled && "cursor-not-allowed opacity-50"
                       )}
                       aria-label={`Delete ${file.name}`}>
-                      <X className="h-5 text-[var(--foreground)]" />
+                      <X className="text-foreground h-5" />
                     </button>
                   </div>
                   {/* File icon and name */}
@@ -282,7 +275,7 @@ function FileUpload({
           <div className="w-full">
             {isUploading ? (
               <div className="flex animate-pulse items-center justify-center rounded-lg py-4">
-                <p className="text-sm font-medium text-[var(--muted-foreground)]">Uploading...</p>
+                <p className="text-muted-foreground text-sm font-medium">Uploading...</p>
               </div>
             ) : null}
 
@@ -297,13 +290,19 @@ function FileUpload({
                 disabled={disabled}
                 className={cn(
                   "flex w-full flex-col items-center justify-center py-6",
-                  "focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2",
                   "hover:cursor-pointer",
                   disabled && "cursor-not-allowed opacity-50"
                 )}
                 aria-label="Upload files by clicking or dragging them here">
-                <Upload className="h-6 text-[var(--fb-input-color)]" aria-hidden="true" />
-                <span className="m-2 text-sm text-[var(--fb-input-color)]" id={`${inputId}-label`}>
+                <Upload className="text-input-text h-6" aria-hidden="true" />
+                {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
+                <span
+                  className="text-input-text m-2 text-sm"
+                  id={`${inputId}-label`}
+                  style={{
+                    fontSize: "var(--fb-input-font-size)",
+                    fontWeight: "var(--fb-input-font-weight)",
+                  }}>
                   {placeholderText}
                 </span>
                 <Input

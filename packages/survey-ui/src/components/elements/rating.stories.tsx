@@ -19,6 +19,13 @@ interface StylingOptions {
   labelFontWeight: string;
   labelColor: string;
   labelOpacity: string;
+  // Input styling
+  inputBgColor: string;
+  inputBorderColor: string;
+  inputColor: string;
+  inputFontWeight: string;
+  // Survey styling
+  brandColor: string;
 }
 
 type StoryProps = RatingProps & Partial<StylingOptions>;
@@ -145,6 +152,11 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     labelFontWeight,
     labelColor,
     labelOpacity,
+    inputBgColor,
+    inputBorderColor,
+    inputColor,
+    inputFontWeight,
+    brandColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -161,6 +173,11 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-label-font-weight": labelFontWeight,
     "--fb-label-color": labelColor,
     "--fb-label-opacity": labelOpacity,
+    "--fb-brand-color": brandColor,
+    "--fb-input-bg-color": inputBgColor,
+    "--fb-input-border-color": inputBorderColor,
+    "--fb-input-color": inputColor,
+    "--fb-input-font-weight": inputFontWeight,
   };
 
   return (
@@ -246,6 +263,26 @@ export const StylingPlayground: Story = {
     labelOpacity: {
       control: "text",
       table: { category: "Label Styling" },
+    },
+    brandColor: {
+      control: "color",
+      table: { category: "Survey Styling" },
+    },
+    inputBgColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputBorderColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputFontWeight: {
+      control: "text",
+      table: { category: "Input Styling" },
     },
   },
   decorators: [withCSSVariables],

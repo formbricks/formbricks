@@ -107,13 +107,9 @@ function PictureSelect({
                 <div
                   key={option.id}
                   className={cn(
-                    "relative aspect-[162/97] w-full cursor-pointer transition-all",
+                    "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"
                   )}
-                  style={{
-                    backgroundColor: "var(--fb-input-bg-color)",
-                    borderRadius: "5px",
-                  }}
                   onClick={() => {
                     handleOptionChange(option.id);
                   }}
@@ -130,12 +126,9 @@ function PictureSelect({
                   {/* Image container with border when selected */}
                   <div
                     className={cn(
-                      "absolute inset-[2px] overflow-hidden rounded-[5px]",
-                      isSelected && "border-4 border-solid"
-                    )}
-                    style={{
-                      borderColor: isSelected ? "var(--fb-input-color)" : "transparent",
-                    }}>
+                      "rounded-option absolute inset-[2px] overflow-hidden",
+                      isSelected && "border-brand border-4 border-solid"
+                    )}>
                     <img
                       src={option.imageUrl}
                       alt={option.alt ?? `Option ${option.id}`}
@@ -173,13 +166,9 @@ function PictureSelect({
                 <div
                   key={option.id}
                   className={cn(
-                    "relative aspect-[162/97] w-full cursor-pointer transition-all",
+                    "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"
                   )}
-                  style={{
-                    backgroundColor: "var(--fb-input-bg-color)",
-                    borderRadius: "5px",
-                  }}
                   onClick={() => {
                     handleOptionChange(option.id);
                   }}
@@ -196,12 +185,9 @@ function PictureSelect({
                   {/* Image container with border when selected */}
                   <div
                     className={cn(
-                      "absolute inset-[2px] overflow-hidden rounded-[5px]",
-                      isSelected && "border-4 border-solid"
-                    )}
-                    style={{
-                      borderColor: isSelected ? "var(--fb-input-color)" : "transparent",
-                    }}>
+                      "rounded-option absolute inset-[2px] overflow-hidden",
+                      isSelected && "border-brand border-4 border-solid"
+                    )}>
                     <img
                       src={option.imageUrl}
                       alt={option.alt ?? `Option ${option.id}`}

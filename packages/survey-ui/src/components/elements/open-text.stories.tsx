@@ -24,6 +24,7 @@ interface StylingOptions {
   inputPlaceholderColor: string;
   inputPaddingX: string;
   inputPaddingY: string;
+  brandColor: string;
 }
 
 type StoryProps = OpenTextProps & Partial<StylingOptions>;
@@ -155,6 +156,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     inputPlaceholderColor,
     inputPaddingX,
     inputPaddingY,
+    brandColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -176,6 +178,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-input-placeholder-color": inputPlaceholderColor,
     "--fb-input-padding-x": inputPaddingX,
     "--fb-input-padding-y": inputPaddingY,
+    "--fb-brand-color": brandColor,
   };
 
   return (
@@ -190,25 +193,6 @@ export const StylingPlayground: Story = {
     headline: "What's your feedback?",
     description: "Please share your thoughts with us",
     placeholder: "Type your answer here...",
-    // Default styling values
-    elementHeadlineFontFamily: "system-ui, sans-serif",
-    elementHeadlineFontSize: "1.125rem",
-    elementHeadlineFontWeight: "600",
-    elementHeadlineColor: "#1e293b",
-    elementDescriptionFontFamily: "system-ui, sans-serif",
-    elementDescriptionFontSize: "0.875rem",
-    elementDescriptionFontWeight: "400",
-    elementDescriptionColor: "#64748b",
-    inputWidth: "100%",
-    inputHeight: "2.5rem",
-    inputBgColor: "#ffffff",
-    inputBorderColor: "#e2e8f0",
-    inputBorderRadius: "0.5rem",
-    inputFontSize: "0.875rem",
-    inputColor: "#1e293b",
-    inputPlaceholderColor: "#94a3b8",
-    inputPaddingX: "0.75rem",
-    inputPaddingY: "0.5rem",
   },
   argTypes: {
     // Element styling
@@ -284,6 +268,10 @@ export const StylingPlayground: Story = {
     inputPaddingY: {
       control: "text",
       table: { category: "Input Styling" },
+    },
+    brandColor: {
+      control: "color",
+      table: { category: "Survey Styling" },
     },
   },
   decorators: [withCSSVariables],

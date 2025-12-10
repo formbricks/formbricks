@@ -119,7 +119,7 @@ function DateElement({
           fromYear={minDateObj?.getFullYear() ?? 1900}
           toYear={maxDateObj?.getFullYear() ?? 2100}
           locale={dateLocale}
-          className="w-full rounded-[var(--fb-input-border-radius)] rounded-md border border-[var(--fb-input-border-color)] bg-[var(--fb-input-bg-color)] text-[var(--fb-input-color)] shadow-sm"
+          className="rounded-input border-input-border bg-input-bg text-input-text shadow-input w-full border"
           classNames={{
             root: "w-full",
           }}

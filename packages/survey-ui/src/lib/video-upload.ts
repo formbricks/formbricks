@@ -58,16 +58,16 @@ const extractYoutubeId = (url: string): string | null => {
 
   // Regular expressions for various YouTube URL formats
   const regExpList = [
-    /youtu\.be\/([a-zA-Z0-9_-]+)/, // youtu.be/<id>
-    /youtube\.com.*v=([a-zA-Z0-9_-]+)/, // youtube.com/watch?v=<id>
-    /youtube\.com.*embed\/([a-zA-Z0-9_-]+)/, // youtube.com/embed/<id>
-    /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]+)/, // youtube-nocookie.com/embed/<id>
+    /youtu\.be\/(?<videoId>[a-zA-Z0-9_-]+)/, // youtu.be/<id>
+    /youtube\.com.*v=(?<videoId>[a-zA-Z0-9_-]+)/, // youtube.com/watch?v=<id>
+    /youtube\.com.*embed\/(?<videoId>[a-zA-Z0-9_-]+)/, // youtube.com/embed/<id>
+    /youtube-nocookie\.com\/embed\/(?<videoId>[a-zA-Z0-9_-]+)/, // youtube-nocookie.com/embed/<id>
   ];
 
   regExpList.some((regExp) => {
     const match = url.match(regExp);
-    if (match && match[1]) {
-      id = match[1];
+    if (match?.groups?.videoId) {
+      id = match.groups.videoId;
       return true;
     }
     return false;
@@ -77,23 +77,17 @@ const extractYoutubeId = (url: string): string | null => {
 };
 
 const extractVimeoId = (url: string): string | null => {
-  const regExp = /vimeo\.com\/(\d+)/;
-  const match = url.match(regExp);
+  const regExp = /vimeo\.com\/(?<videoId>\d+)/;
+  const match = regExp.exec(url);
 
-  if (match && match[1]) {
-    return match[1];
-  }
-  return null;
+  return match?.groups?.videoId ?? null;
 };
 
 const extractLoomId = (url: string): string | null => {
-  const regExp = /loom\.com\/share\/([a-zA-Z0-9]+)/;
-  const match = url.match(regExp);
+  const regExp = /loom\.com\/share\/(?<videoId>[a-zA-Z0-9]+)/;
+  const match = regExp.exec(url);
 
-  if (match && match[1]) {
-    return match[1];
-  }
-  return null;
+  return match?.groups?.videoId ?? null;
 };
 
 // Always convert a given URL into its embed form if supported.

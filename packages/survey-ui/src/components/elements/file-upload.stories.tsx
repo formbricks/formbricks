@@ -1,4 +1,4 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
+import type { Decorator, StoryObj } from "@storybook/react";
 import React, { useEffect, useState } from "react";
 import { FileUpload, type FileUploadProps, type UploadedFile } from "./file-upload";
 
@@ -22,9 +22,9 @@ interface StylingOptions {
   inputFontSize: string;
   inputColor: string;
   inputPlaceholderColor: string;
+  inputFontWeight: string;
   inputPaddingX: string;
   inputPaddingY: string;
-  inputHoverBgColor: string;
 }
 
 type StoryProps = FileUploadProps & Partial<StylingOptions>;
@@ -49,9 +49,9 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     inputBgColor,
     inputBorderRadius,
     inputFontSize,
+    inputFontWeight,
     inputPaddingX,
     inputPaddingY,
-    inputHoverBgColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -68,9 +68,9 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     "--fb-input-bg-color": inputBgColor,
     "--fb-input-border-radius": inputBorderRadius,
     "--fb-input-font-size": inputFontSize,
+    "--fb-input-font-weight": inputFontWeight,
     "--fb-input-padding-x": inputPaddingX,
     "--fb-input-padding-y": inputPaddingY,
-    "--fb-input-hover-bg-color": inputHoverBgColor,
   };
 
   return (
@@ -207,8 +207,12 @@ export default {
       control: "color",
       table: { category: "Input Styling" },
     },
-    inputHoverBgColor: {
-      control: "color",
+    inputFontWeight: {
+      control: "text",
+      table: { category: "Input Styling" },
+    },
+    inputFontSize: {
+      control: "text",
       table: { category: "Input Styling" },
     },
   },

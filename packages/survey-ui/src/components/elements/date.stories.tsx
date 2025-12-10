@@ -168,7 +168,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-input-color": inputColor,
     "--fb-input-border-color": inputBorderColor,
     "--fb-input-border-radius": inputBorderRadius,
-    "--fb-brand-default": brandColor,
+    "--fb-brand-color": brandColor,
   };
 
   return (
@@ -222,14 +222,6 @@ export const StylingPlayground: Story = {
       table: { category: "Survey Styling" },
     },
     // Input styling
-    inputWidth: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputHeight: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
     inputBgColor: {
       control: "color",
       table: { category: "Input Styling" },
@@ -243,18 +235,6 @@ export const StylingPlayground: Story = {
       table: { category: "Input Styling" },
     },
     inputBorderRadius: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputFontSize: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputPaddingX: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputPaddingY: {
       control: "text",
       table: { category: "Input Styling" },
     },

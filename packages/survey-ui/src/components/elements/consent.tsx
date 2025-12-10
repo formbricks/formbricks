@@ -69,8 +69,8 @@ function Consent({
         <label
           htmlFor={inputId}
           className={cn(
-            "flex cursor-pointer items-center gap-3 rounded-md border p-4 transition-colors",
-            "hover:bg-accent focus-within:border-primary focus-within:bg-accent focus-within:shadow-sm",
+            "bg-input-bg border-input-border text-input-text flex cursor-pointer items-center gap-3 rounded-md border p-4 transition-colors",
+            "focus-within:border-ring focus-within:ring-ring/50 font-fontWeight focus-within:shadow-sm",
             errorMessage && "border-destructive",
             disabled && "cursor-not-allowed opacity-50"
           )}
@@ -83,7 +83,11 @@ function Consent({
             aria-invalid={Boolean(errorMessage)}
             aria-required={required}
           />
-          <span className="flex-1 text-sm font-medium leading-none" dir={detectedDir}>
+          {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
+          <span
+            className="flex-1 font-medium leading-none"
+            dir={detectedDir}
+            style={{ fontSize: "var(--fb-input-font-size)", fontWeight: "var(--fb-input-font-weight)" }}>
             {checkboxLabel}
           </span>
         </label>

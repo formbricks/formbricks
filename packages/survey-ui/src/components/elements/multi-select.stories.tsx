@@ -22,9 +22,6 @@ interface StylingOptions {
   optionBorderColor: string;
   optionBgColor: string;
   optionLabelColor: string;
-  optionHoverBgColor: string;
-  optionSelectedBorder: string;
-  optionSelectedBackground: string;
   optionBorderRadius: string;
   optionPaddingX: string;
   optionPaddingY: string;
@@ -35,6 +32,8 @@ interface StylingOptions {
   checkboxInputBorderColor: string;
   checkboxInputBgColor: string;
   checkboxInputColor: string;
+  // Survey styling
+  brandColor: string;
 }
 
 type StoryProps = MultiSelectProps & Partial<StylingOptions>;
@@ -160,9 +159,6 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     optionBorderColor,
     optionBgColor,
     optionLabelColor,
-    optionHoverBgColor,
-    optionSelectedBorder,
-    optionSelectedBackground,
     optionBorderRadius,
     optionPaddingX,
     optionPaddingY,
@@ -172,6 +168,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     checkboxInputBorderColor,
     checkboxInputBgColor,
     checkboxInputColor,
+    brandColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -190,9 +187,6 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     "--fb-option-border-color": optionBorderColor,
     "--fb-option-bg-color": optionBgColor,
     "--fb-option-label-color": optionLabelColor,
-    "--fb-option-hover-bg-color": optionHoverBgColor,
-    "--fb-option-selected-border": optionSelectedBorder,
-    "--fb-option-selected-background": optionSelectedBackground,
     "--fb-option-border-radius": optionBorderRadius,
     "--fb-option-padding-x": optionPaddingX,
     "--fb-option-padding-y": optionPaddingY,
@@ -202,6 +196,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     "--fb-input-border-color": checkboxInputBorderColor,
     "--fb-input-bg-color": checkboxInputBgColor,
     "--fb-input-color": checkboxInputColor,
+    "--fb-brand-color": brandColor,
   };
 
   return (
@@ -288,18 +283,6 @@ export const StylingPlayground: Story = {
       control: "color",
       table: { category: "Option Styling" },
     },
-    optionHoverBgColor: {
-      control: "color",
-      table: { category: "Option Styling" },
-    },
-    optionSelectedBorder: {
-      control: "color",
-      table: { category: "Option Styling" },
-    },
-    optionSelectedBackground: {
-      control: "color",
-      table: { category: "Option Styling" },
-    },
     optionBorderRadius: {
       control: "text",
       table: { category: "Option Styling" },
@@ -336,6 +319,11 @@ export const StylingPlayground: Story = {
     inputColor: {
       control: "color",
       table: { category: "Input Styling" },
+    },
+    // Survey styling
+    brandColor: {
+      control: "color",
+      table: { category: "Survey Styling" },
     },
   },
   decorators: [withCSSVariables],

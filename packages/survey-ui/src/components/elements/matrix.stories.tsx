@@ -22,6 +22,7 @@ interface StylingOptions {
   inputBorderColor: string;
   inputBgColor: string;
   inputColor: string;
+  inputBorderRadius: string;
 }
 
 type StoryProps = MatrixProps & Partial<StylingOptions>;
@@ -130,6 +131,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     inputBorderColor,
     inputBgColor,
     inputColor,
+    inputBorderRadius,
     labelFontFamily,
     labelFontSize,
     labelFontWeight,
@@ -152,6 +154,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-input-border-color": inputBorderColor,
     "--fb-input-bg-color": inputBgColor,
     "--fb-input-color": inputColor,
+    "--fb-input-border-radius": inputBorderRadius,
   };
 
   return (
@@ -243,6 +246,10 @@ export const StylingPlayground: Story = {
     },
     inputColor: {
       control: "color",
+      table: { category: "Input Styling" },
+    },
+    inputBorderRadius: {
+      control: "text",
       table: { category: "Input Styling" },
     },
   },

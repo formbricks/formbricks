@@ -12,24 +12,6 @@ interface InputProps extends React.ComponentProps<"input"> {
 function Input({ className, type, errorMessage, dir, ...props }: InputProps): React.JSX.Element {
   const hasError = Boolean(errorMessage);
 
-  // Default styles driven by CSS variables
-  const cssVarStyles: React.CSSProperties = {
-    width: "var(--fb-input-width)",
-    height: "var(--fb-input-height)",
-    backgroundColor: "var(--fb-input-bg-color)",
-    borderColor: "var(--fb-input-border-color)",
-    borderRadius: "var(--fb-input-border-radius)",
-    fontFamily: "var(--fb-input-font-family)",
-    fontSize: "var(--fb-input-font-size)",
-    fontWeight: "var(--fb-input-font-weight)" as React.CSSProperties["fontWeight"],
-    color: "var(--fb-input-color)",
-    paddingLeft: "var(--fb-input-padding-x)",
-    paddingRight: "var(--fb-input-padding-x)",
-    paddingTop: "var(--fb-input-padding-y)",
-    paddingBottom: "var(--fb-input-padding-y)",
-    boxShadow: "var(--fb-input-shadow)",
-  };
-
   return (
     <div className="space-y-1">
       {errorMessage ? (
@@ -41,21 +23,31 @@ function Input({ className, type, errorMessage, dir, ...props }: InputProps): Re
       <input
         type={type}
         dir={dir}
-        style={cssVarStyles}
         data-slot="input"
+        style={{
+          // need to use style here because tailwind is not able to use css variables for font size
+          fontSize: "var(--fb-input-font-size)",
+        }}
         aria-invalid={hasError || undefined}
         className={cn(
-          // Layout and behavior (Tailwind)
+          // Layout and behavior
           "flex min-w-0 border outline-none transition-[color,box-shadow]",
-          // Placeholder styling via CSS variable
-          "[&::placeholder]:opacity-[var(--fb-input-placeholder-opacity)]",
-          "placeholder:[color:var(--fb-input-placeholder-color)]",
+          // Customizable styles via CSS variables (using Tailwind theme extensions)
+          "w-input h-input",
+          "bg-input-bg border-input-border rounded-input",
+          "font-input font-input-weight",
+          "text-input-text",
+          "px-input-x py-input-y",
+          "shadow-input",
+          // Placeholder styling
+          "[&::placeholder]:opacity-input-placeholder",
+          "placeholder:text-input-placeholder",
           // Selection styling
           "selection:bg-primary selection:text-primary-foreground",
           // File input specifics
           "file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
           // Focus ring
-          "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+          "focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px]",
           // Error state ring
           "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
           // Disabled state

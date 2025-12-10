@@ -22,9 +22,6 @@ interface StylingOptions {
   optionBorderColor: string;
   optionBgColor: string;
   optionLabelColor: string;
-  optionHoverBgColor: string;
-  optionSelectedBorder: string;
-  optionSelectedBackground: string;
   optionBorderRadius: string;
   optionPaddingX: string;
   optionPaddingY: string;
@@ -162,9 +159,6 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     optionBorderColor,
     optionBgColor,
     optionLabelColor,
-    optionHoverBgColor,
-    optionSelectedBorder,
-    optionSelectedBackground,
     optionBorderRadius,
     optionPaddingX,
     optionPaddingY,
@@ -193,9 +187,6 @@ const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
     "--fb-option-border-color": optionBorderColor,
     "--fb-option-bg-color": optionBgColor,
     "--fb-option-label-color": optionLabelColor,
-    "--fb-option-hover-bg-color": optionHoverBgColor,
-    "--fb-option-selected-border": optionSelectedBorder,
-    "--fb-option-selected-background": optionSelectedBackground,
     "--fb-option-border-radius": optionBorderRadius,
     "--fb-option-padding-x": optionPaddingX,
     "--fb-option-padding-y": optionPaddingY,
@@ -280,21 +271,6 @@ export const StylingPlayground: Story = {
     optionLabelColor: {
       control: "color",
       description: "Text/label color for options",
-      table: { category: "Option Styling" },
-    },
-    optionHoverBgColor: {
-      control: "color",
-      description: "Background color on hover",
-      table: { category: "Option Styling" },
-    },
-    optionSelectedBorder: {
-      control: "color",
-      description: "Border color when option is selected",
-      table: { category: "Option Styling" },
-    },
-    optionSelectedBackground: {
-      control: "color",
-      description: "Background color when option is selected",
       table: { category: "Option Styling" },
     },
     optionBorderRadius: {
@@ -613,44 +589,6 @@ export const WithContainerStyling: Story = {
     value: "option-2",
   },
   decorators: [withCSSVariables],
-};
-
-export const WithCustomContainerColors: Story = {
-  render: () => {
-    const [value, setValue] = React.useState<string>("option-2");
-
-    return (
-      <div
-        className="w-[600px]"
-        style={
-          {
-            "--fb-option-bg-color": "hsl(210 40% 98%)",
-            "--fb-option-hover-bg-color": "hsl(210 40% 96%)",
-            "--fb-option-border-color": "hsl(214.3 31.8% 91.4%)",
-            "--fb-option-label-color": "hsl(222.2 47.4% 11.2%)",
-            "--fb-option-selected-border": "hsl(222.2 47.4% 11.2%)",
-            "--fb-option-selected-background": "hsl(210 40% 96%)",
-            "--fb-option-border-radius": "0.5rem",
-            "--fb-option-padding-x": "1rem",
-            "--fb-option-padding-y": "0.75rem",
-          } as React.CSSProperties
-        }>
-        <SingleSelect
-          elementId="custom-container-colors"
-          inputId="custom-container-colors-input"
-          headline="Custom container styling"
-          description="Options have custom background and border colors"
-          options={[
-            { id: "option-1", label: "Option 1" },
-            { id: "option-2", label: "Option 2" },
-            { id: "option-3", label: "Option 3" },
-          ]}
-          value={value}
-          onChange={setValue}
-        />
-      </div>
-    );
-  },
 };
 
 export const WithContainerStylingAndOther: Story = {
