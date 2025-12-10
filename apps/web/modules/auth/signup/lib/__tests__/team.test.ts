@@ -3,7 +3,7 @@ import { OrganizationRole } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
-import { createTeamMembership } from "../team";
+import { createTeamMembership, getTeamProjectIds } from "../team";
 
 // Setup all mocks
 const setupMocks = () => {
@@ -31,6 +31,7 @@ const setupMocks = () => {
   vi.mock("@formbricks/logger", () => ({
     logger: {
       error: vi.fn(),
+      warn: vi.fn(),
     },
   }));
 
@@ -55,7 +56,7 @@ describe("Team Management", () => {
   describe("createTeamMembership", () => {
     describe("when user is an admin", () => {
       test("creates a team membership with admin role", async () => {
-        vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM);
+        vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM as unknown as any);
         vi.mocked(prisma.teamUser.create).mockResolvedValue(MOCK_TEAM_USER);
 
         await createTeamMembership(MOCK_INVITE, MOCK_IDS.userId);
@@ -90,7 +91,7 @@ describe("Team Management", () => {
           role: "member" as OrganizationRole,
         };
 
-        vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM);
+        vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM as unknown as any);
         vi.mocked(prisma.teamUser.create).mockResolvedValue({
           ...MOCK_TEAM_USER,
           role: "contributor",
@@ -110,11 +111,68 @@ describe("Team Management", () => {
 
     describe("error handling", () => {
       test("throws error when database operation fails", async () => {
-        vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM);
+        vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM as unknown as any);
         vi.mocked(prisma.teamUser.create).mockRejectedValue(new Error("Database error"));
 
         await expect(createTeamMembership(MOCK_INVITE, MOCK_IDS.userId)).rejects.toThrow("Database error");
       });
+    });
+
+    describe("when team does not exist", () => {
+      test("skips membership creation and continues to next team", async () => {
+        const inviteWithMultipleTeams: CreateMembershipInvite = {
+          ...MOCK_INVITE,
+          teamIds: ["non-existent-team", MOCK_IDS.teamId],
+        };
+
+        vi.mocked(prisma.team.findUnique)
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(MOCK_TEAM as unknown as any);
+        vi.mocked(prisma.teamUser.create).mockResolvedValue(MOCK_TEAM_USER);
+
+        await createTeamMembership(inviteWithMultipleTeams, MOCK_IDS.userId);
+
+        expect(prisma.team.findUnique).toHaveBeenCalledTimes(2);
+        expect(prisma.teamUser.create).toHaveBeenCalledTimes(1);
+        expect(prisma.teamUser.create).toHaveBeenCalledWith({
+          data: {
+            teamId: MOCK_IDS.teamId,
+            userId: MOCK_IDS.userId,
+            role: "admin",
+          },
+        });
+      });
+    });
+  });
+
+  describe("getTeamProjectIds", () => {
+    test("returns team with projectTeams when team exists", async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM as unknown as any);
+
+      const result = await getTeamProjectIds(MOCK_IDS.teamId, MOCK_IDS.organizationId);
+
+      expect(result).toEqual(MOCK_TEAM);
+      expect(prisma.team.findUnique).toHaveBeenCalledWith({
+        where: {
+          id: MOCK_IDS.teamId,
+          organizationId: MOCK_IDS.organizationId,
+        },
+        select: {
+          projectTeams: {
+            select: {
+              projectId: true,
+            },
+          },
+        },
+      });
+    });
+
+    test("returns null when team does not exist", async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
+
+      const result = await getTeamProjectIds(MOCK_IDS.teamId, MOCK_IDS.organizationId);
+
+      expect(result).toBeNull();
     });
   });
 });
