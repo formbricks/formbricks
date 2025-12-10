@@ -110,7 +110,7 @@ export function Survey({
         {
           appUrl,
           environmentId,
-          retryAttempts: 2,
+          retryAttempts: 4,
           onResponseSendingFailed: (_, errorCode?: TResponseErrorCodesEnum) => {
             setShowError(true);
             setErrorType(errorCode);
@@ -185,6 +185,7 @@ export function Survey({
 
   const [errorType, setErrorType] = useState<TResponseErrorCodesEnum | undefined>(undefined);
   const [showError, setShowError] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
     !getSetIsResponseSendingFinished
   );
@@ -710,11 +711,16 @@ export function Survey({
     setBlockId(prevBlockId);
   };
 
-  const retryResponse = () => {
+  const retryResponse = async () => {
     if (responseQueue) {
-      setShowError(false);
-      setErrorType(undefined);
-      void responseQueue.processQueue();
+      setIsRetrying(true);
+      const result = await responseQueue.processQueueAsync();
+      setIsRetrying(false);
+
+      if (result.success) {
+        setShowError(false);
+        setErrorType(undefined);
+      }
     } else {
       onRetry?.();
     }
@@ -729,6 +735,7 @@ export function Survey({
               responseData={responseData}
               questions={questions}
               onRetry={retryResponse}
+              isRetrying={isRetrying}
             />
           );
         case TResponseErrorCodesEnum.RecaptchaError:

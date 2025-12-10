@@ -28,6 +28,7 @@
     "ranking_items": "रैंकिंग आइटम",
     "respondents_will_not_see_this_card": "उत्तरदाता इस कार्ड को नहीं देखेंगे",
     "retry": "पुनः प्रयास करें",
+    "retrying": "पुनः प्रयास कर रहे हैं...",
     "select_a_date": "एक तिथि चुनें",
     "select_for_ranking": "रैंकिंग के लिए {item} चुनें",
     "sending_responses": "प्रतिक्रियाएँ भेज रहे हैं...",

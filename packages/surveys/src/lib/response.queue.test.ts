@@ -192,4 +192,60 @@ describe("ResponseQueue", () => {
     queue.updateSurveyState(newState);
     expect(queue["surveyState"]).toBe(newState);
   });
+
+  test("processQueueAsync returns success false if queue empty", async () => {
+    const result = await queue.processQueueAsync();
+    expect(result.success).toBe(false);
+  });
+
+  test("processQueueAsync returns success false if request in progress", async () => {
+    queue["isRequestInProgress"] = true;
+    const result = await queue.processQueueAsync();
+    expect(result.success).toBe(false);
+  });
+
+  test("processQueueAsync returns success true on successful send", async () => {
+    queue.queue.push(responseUpdate);
+    vi.spyOn(queue, "sendResponse").mockResolvedValue(ok(true));
+    const result = await queue.processQueueAsync();
+    expect(result.success).toBe(true);
+    expect(queue.queue.length).toBe(0);
+  });
+
+  test("processQueueAsync returns success false after max attempts", async () => {
+    queue.queue.push(responseUpdate);
+    vi.spyOn(queue, "sendResponse").mockResolvedValue(
+      err({
+        code: "internal_server_error",
+        message: "An error occurred while sending the response.",
+        status: 500,
+      })
+    );
+    const result = await queue.processQueueAsync();
+    expect(result.success).toBe(false);
+    expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
+      responseUpdate,
+      TResponseErrorCodesEnum.ResponseSendingError
+    );
+  });
+
+  test("processQueueAsync returns success false on recaptcha error", async () => {
+    queue.queue.push(responseUpdate);
+    vi.spyOn(queue, "sendResponse").mockResolvedValue(
+      err({
+        code: "internal_server_error",
+        message: "An error occurred while sending the response.",
+        status: 500,
+        details: {
+          code: "recaptcha_verification_failed",
+        },
+      })
+    );
+    const result = await queue.processQueueAsync();
+    expect(result.success).toBe(false);
+    expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
+      responseUpdate,
+      TResponseErrorCodesEnum.RecaptchaError
+    );
+  });
 });
