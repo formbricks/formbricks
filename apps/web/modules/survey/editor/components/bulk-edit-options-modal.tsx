@@ -33,6 +33,31 @@ interface BulkEditOptionsModalProps {
   locale: TUserLocale;
 }
 
+const parseUniqueLines = (content: string): string[] => {
+  return [
+    ...new Set(
+      content
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+    ),
+  ];
+};
+
+const updateChoiceLabel = (
+  choice: TSurveyMultipleChoiceElement["choices"][number],
+  newLabel: string,
+  selectedLangCode: string,
+  allLangCodes: string[]
+): TSurveyMultipleChoiceElement["choices"][number] => {
+  const label = Object.fromEntries([
+    ...allLangCodes.map((code) => [code, choice.label[code] ?? ""]),
+    [selectedLangCode, newLabel],
+  ]) as TI18nString;
+
+  return { ...choice, label };
+};
+
 export const BulkEditOptionsModal = ({
   isOpen,
   onClose,
@@ -48,116 +73,52 @@ export const BulkEditOptionsModal = ({
   const [textareaValue, setTextareaValue] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Get the display name for the selected language
   const selectedLanguageName = useMemo(() => {
     if (localSurvey.languages.length <= 1) return null;
-
-    const languageCode =
+    const code =
       selectedLanguageCode === "default"
         ? localSurvey.languages.find((lang) => lang.default)?.language.code
         : selectedLanguageCode;
-
-    return languageCode ? getLanguageLabel(languageCode, locale) : null;
+    return code ? getLanguageLabel(code, locale) : null;
   }, [localSurvey.languages, selectedLanguageCode, locale]);
 
-  // Update textarea content whenever modal opens or regularChoices change
   useEffect(() => {
     if (isOpen) {
-      setTextareaValue(regularChoices.map((choice) => choice.label[selectedLanguageCode] || "").join("\n"));
+      setTextareaValue(regularChoices.map((c) => c.label[selectedLanguageCode] || "").join("\n"));
       setValidationError(null);
     }
   }, [isOpen, regularChoices, selectedLanguageCode]);
 
-  const parseTextareaContent = (content: string): string[] => {
-    const lines = content
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+  const validateRemovedOptions = (newLabels: string[]): string | null => {
+    if (newLabels.length >= regularChoices.length) return null;
 
-    // Remove duplicates, keeping the first occurrence
-    const seen = new Set<string>();
-    return lines.filter((line) => {
-      if (seen.has(line)) {
-        return false;
-      }
-      seen.add(line);
-      return true;
+    const problematicQuestions = regularChoices
+      .slice(newLabels.length)
+      .map((choice) => findOptionUsedInLogic(localSurvey, element.id, choice.id))
+      .filter((idx) => idx !== -1)
+      .map((idx) => idx + 1);
+
+    if (problematicQuestions.length === 0) return null;
+
+    return t("environments.surveys.edit.options_used_in_logic_bulk_error", {
+      questionIndexes: [...new Set(problematicQuestions)].sort((a, b) => a - b).join(", "),
     });
-  };
-
-  const checkRemovedOptionsLogic = (newLabels: string[]): { valid: boolean; error: string | null } => {
-    // If the new array is shorter, some options were removed
-    if (newLabels.length >= regularChoices.length) {
-      return { valid: true, error: null };
-    }
-
-    const problematicQuestions = new Set<number>();
-
-    // Check each removed option
-    regularChoices.slice(newLabels.length).forEach((removedChoice) => {
-      const questionIdx = findOptionUsedInLogic(localSurvey, element.id, removedChoice.id);
-      if (questionIdx !== -1) {
-        problematicQuestions.add(questionIdx + 1);
-      }
-    });
-
-    if (problematicQuestions.size > 0) {
-      const questionIndexes = Array.from(problematicQuestions)
-        .sort((a, b) => a - b)
-        .join(", ");
-      return {
-        valid: false,
-        error: t("environments.surveys.edit.options_used_in_logic_bulk_error", {
-          questionIndexes,
-        }),
-      };
-    }
-
-    return { valid: true, error: null };
   };
 
   const handleSave = () => {
-    setValidationError(null);
+    const newLabels = parseUniqueLines(textareaValue);
+    const error = validateRemovedOptions(newLabels);
 
-    // Parse content and remove duplicates
-    const newLabels = parseTextareaContent(textareaValue);
-
-    // Check if removed options are used in logic
-    const logicCheck = checkRemovedOptionsLogic(newLabels);
-    if (!logicCheck.valid) {
-      setValidationError(logicCheck.error);
+    if (error) {
+      setValidationError(error);
       return;
     }
 
-    // Create updated choices array
-    const updatedChoices = newLabels.map((label, idx) => {
-      if (idx < regularChoices.length) {
-        // Update existing choice, preserving ID and updating label for selected language
-        // Ensure all language codes exist in the label object to prevent validation errors
-        const updatedLabel = { ...regularChoices[idx].label };
-
-        // Fill in any missing language codes with empty strings
-        surveyLanguageCodes.forEach((code) => {
-          if (updatedLabel[code] === undefined) {
-            updatedLabel[code] = "";
-          }
-        });
-
-        // Update the selected language
-        updatedLabel[selectedLanguageCode] = label;
-
-        return {
-          ...regularChoices[idx],
-          label: updatedLabel as TI18nString,
-        };
-      } else {
-        // Create new choice
-        return {
-          id: createId(),
-          label: createI18nString(label, surveyLanguageCodes),
-        };
-      }
-    });
+    const updatedChoices = newLabels.map((label, idx) =>
+      idx < regularChoices.length
+        ? updateChoiceLabel(regularChoices[idx], label, selectedLanguageCode, surveyLanguageCodes)
+        : { id: createId(), label: createI18nString(label, surveyLanguageCodes) }
+    );
 
     onSave(updatedChoices);
     onClose();
