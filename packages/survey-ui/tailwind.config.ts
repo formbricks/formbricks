@@ -39,6 +39,7 @@ export default {
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
+        brand: "var(--fb-brand-default)",
       },
     },
   },

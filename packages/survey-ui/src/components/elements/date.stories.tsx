@@ -14,15 +14,12 @@ interface StylingOptions {
   elementDescriptionFontSize: string;
   elementDescriptionColor: string;
   // Input styling
-  inputWidth: string;
-  inputHeight: string;
   inputBgColor: string;
   inputBorderColor: string;
   inputBorderRadius: string;
-  inputFontSize: string;
   inputColor: string;
-  inputPaddingX: string;
-  inputPaddingY: string;
+  //brand color
+  brandColor: string;
 }
 
 type StoryProps = DateElementProps & Partial<StylingOptions>;
@@ -87,6 +84,29 @@ const meta: Meta<StoryProps> = {
       description: "Whether the date input is disabled",
       table: { category: "State" },
     },
+    locale: {
+      control: { type: "select" },
+      options: [
+        "en",
+        "de",
+        "fr",
+        "es",
+        "ja",
+        "pt",
+        "pt-BR",
+        "ro",
+        "zh-Hans",
+        "zh-Hant",
+        "nl",
+        "ar",
+        "it",
+        "ru",
+        "uz",
+        "hi",
+      ],
+      description: "Locale code for date formatting (survey language codes: 'en', 'de', 'ar', etc.)",
+      table: { category: "Localization" },
+    },
     onChange: {
       action: "changed",
       table: { category: "Events" },
@@ -128,15 +148,11 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     elementDescriptionFontSize,
     elementDescriptionFontWeight,
     elementDescriptionColor,
-    inputWidth,
-    inputHeight,
     inputBgColor,
     inputBorderColor,
     inputBorderRadius,
-    inputFontSize,
     inputColor,
-    inputPaddingX,
-    inputPaddingY,
+    brandColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -148,15 +164,11 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-element-description-font-size": elementDescriptionFontSize,
     "--fb-element-description-font-weight": elementDescriptionFontWeight,
     "--fb-element-description-color": elementDescriptionColor,
-    "--fb-input-width": inputWidth,
-    "--fb-input-height": inputHeight,
     "--fb-input-bg-color": inputBgColor,
+    "--fb-input-color": inputColor,
     "--fb-input-border-color": inputBorderColor,
     "--fb-input-border-radius": inputBorderRadius,
-    "--fb-input-font-size": inputFontSize,
-    "--fb-input-color": inputColor,
-    "--fb-input-padding-x": inputPaddingX,
-    "--fb-input-padding-y": inputPaddingY,
+    "--fb-brand-default": brandColor,
   };
 
   return (
@@ -205,6 +217,10 @@ export const StylingPlayground: Story = {
       control: "color",
       table: { category: "Element Styling" },
     },
+    brandColor: {
+      control: "color",
+      table: { category: "Survey Styling" },
+    },
     // Input styling
     inputWidth: {
       control: "text",
@@ -222,16 +238,16 @@ export const StylingPlayground: Story = {
       control: "color",
       table: { category: "Input Styling" },
     },
+    inputColor: {
+      control: "color",
+      table: { category: "Input Styling" },
+    },
     inputBorderRadius: {
       control: "text",
       table: { category: "Input Styling" },
     },
     inputFontSize: {
       control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputColor: {
-      control: "color",
       table: { category: "Input Styling" },
     },
     inputPaddingX: {
@@ -349,6 +365,109 @@ export const MultipleElements: Story = {
         value="2024-12-25"
         onChange={() => {}}
       />
+    </div>
+  ),
+};
+
+export const WithLocale: Story = {
+  args: {
+    headline: "What is your date of birth?",
+    description: "Date picker with locale-specific formatting",
+    locale: "en",
+  },
+};
+
+export const LocaleExamples: Story = {
+  render: () => (
+    <div className="w-[600px] space-y-8">
+      <div>
+        <h3 className="mb-4 text-sm font-semibold">English (en)</h3>
+        <DateElement
+          elementId="date-en"
+          inputId="date-en-input"
+          headline="What is your date of birth?"
+          locale="en"
+          value="2024-12-25"
+          onChange={() => {}}
+        />
+      </div>
+      <div>
+        <h3 className="mb-4 text-sm font-semibold">German (de)</h3>
+        <DateElement
+          elementId="date-de"
+          inputId="date-de-input"
+          headline="Was ist Ihr Geburtsdatum?"
+          locale="de"
+          value="2024-12-25"
+          onChange={() => {}}
+        />
+      </div>
+      <div>
+        <h3 className="mb-4 text-sm font-semibold">French (fr)</h3>
+        <DateElement
+          elementId="date-fr"
+          inputId="date-fr-input"
+          headline="Quelle est votre date de naissance ?"
+          locale="fr"
+          value="2024-12-25"
+          onChange={() => {}}
+        />
+      </div>
+      <div>
+        <h3 className="mb-4 text-sm font-semibold">Spanish (es)</h3>
+        <DateElement
+          elementId="date-es"
+          inputId="date-es-input"
+          headline="¿Cuál es su fecha de nacimiento?"
+          locale="es"
+          value="2024-12-25"
+          onChange={() => {}}
+        />
+      </div>
+      <div>
+        <h3 className="mb-4 text-sm font-semibold">Japanese (ja)</h3>
+        <DateElement
+          elementId="date-ja"
+          inputId="date-ja-input"
+          headline="生年月日を教えてください"
+          locale="ja"
+          value="2024-12-25"
+          onChange={() => {}}
+        />
+      </div>
+      <div>
+        <h3 className="mb-4 text-sm font-semibold">Arabic (ar)</h3>
+        <DateElement
+          elementId="date-ar"
+          inputId="date-ar-input"
+          headline="ما هو تاريخ ميلادك؟"
+          locale="ar"
+          value="2024-12-25"
+          onChange={() => {}}
+        />
+      </div>
+      <div>
+        <h3 className="mb-4 text-sm font-semibold">Russian (ru)</h3>
+        <DateElement
+          elementId="date-ru"
+          inputId="date-ru-input"
+          headline="Какова ваша дата рождения?"
+          locale="ru"
+          value="2024-12-25"
+          onChange={() => {}}
+        />
+      </div>
+      <div>
+        <h3 className="mb-4 text-sm font-semibold">Chinese Simplified (zh-Hans)</h3>
+        <DateElement
+          elementId="date-zh"
+          inputId="date-zh-input"
+          headline="您的出生日期是什么？"
+          locale="zh-Hans"
+          value="2024-12-25"
+          onChange={() => {}}
+        />
+      </div>
     </div>
   ),
 };

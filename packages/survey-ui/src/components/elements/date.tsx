@@ -1,7 +1,8 @@
 import * as React from "react";
+import { Calendar } from "@/components/general/calendar";
 import { ElementHeader } from "@/components/general/element-header";
-import { Input } from "@/components/general/input";
 import { useTextDirection } from "@/hooks/use-text-direction";
+import { getDateFnsLocale } from "@/lib/locale";
 
 interface DateElementProps {
   /** Unique identifier for the element container */
@@ -28,6 +29,8 @@ interface DateElementProps {
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the date input is disabled */
   disabled?: boolean;
+  /** Locale code for date formatting (e.g., "en-US", "de-DE", "fr-FR"). Defaults to browser locale or "en-US" */
+  locale?: string;
 }
 
 function DateElement({
@@ -40,17 +43,54 @@ function DateElement({
   required = false,
   minDate,
   maxDate,
-  errorMessage,
   dir = "auto",
   disabled = false,
+  locale = "en-US",
 }: DateElementProps): React.JSX.Element {
-  // Ensure value is always a string or undefined
-  const currentValue = value ?? "";
+  const [date, setDate] = React.useState<Date | undefined>(value ? new Date(value) : undefined);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const newValue = e.target.value;
-    onChange(newValue);
+  // Convert Date to ISO string (YYYY-MM-DD) when date changes
+  const handleDateSelect = (selectedDate: Date | undefined): void => {
+    setDate(selectedDate);
+    if (selectedDate) {
+      // Convert to ISO format (YYYY-MM-DD)
+      const isoString = selectedDate.toISOString().split("T")[0];
+      onChange(isoString);
+    } else {
+      onChange("");
+    }
   };
+
+  // Convert minDate/maxDate strings to Date objects
+  const minDateObj = minDate ? new Date(minDate) : undefined;
+  const maxDateObj = maxDate ? new Date(maxDate) : undefined;
+
+  // Create disabled function for date restrictions
+  const isDateDisabled = React.useCallback(
+    (dateToCheck: Date): boolean => {
+      if (disabled) return true;
+      if (minDateObj) {
+        const minAtMidnight = new Date(minDateObj.getFullYear(), minDateObj.getMonth(), minDateObj.getDate());
+        const checkAtMidnight = new Date(
+          dateToCheck.getFullYear(),
+          dateToCheck.getMonth(),
+          dateToCheck.getDate()
+        );
+        if (checkAtMidnight < minAtMidnight) return true;
+      }
+      if (maxDateObj) {
+        const maxAtMidnight = new Date(maxDateObj.getFullYear(), maxDateObj.getMonth(), maxDateObj.getDate());
+        const checkAtMidnight = new Date(
+          dateToCheck.getFullYear(),
+          dateToCheck.getMonth(),
+          dateToCheck.getDate()
+        );
+        if (checkAtMidnight > maxAtMidnight) return true;
+      }
+      return false;
+    },
+    [disabled, minDateObj, maxDateObj]
+  );
 
   // Detect text direction from content
   const detectedDir = useTextDirection({
@@ -58,24 +98,31 @@ function DateElement({
     textContent: [headline, description ?? ""],
   });
 
+  // Get locale for date formatting
+  const dateLocale = React.useMemo(() => {
+    return locale ? getDateFnsLocale(locale) : undefined;
+  }, [locale]);
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
-      {/* Date Input */}
-      <div className="space-y-1">
-        <Input
-          id={inputId}
-          type="date"
-          value={currentValue}
-          onChange={handleChange}
-          required={required}
-          dir={detectedDir}
-          disabled={disabled}
-          errorMessage={errorMessage}
-          min={minDate}
-          max={maxDate}
+      {/* Calendar - Always visible */}
+      <div className="w-full">
+        <Calendar
+          mode="single"
+          selected={date}
+          captionLayout="dropdown"
+          disabled={isDateDisabled}
+          onSelect={handleDateSelect}
+          fromYear={minDateObj?.getFullYear() ?? 1900}
+          toYear={maxDateObj?.getFullYear() ?? 2100}
+          locale={dateLocale}
+          className="w-full rounded-[var(--fb-input-border-radius)] rounded-md border border-[var(--fb-input-border-color)] bg-[var(--fb-input-bg-color)] text-[var(--fb-input-color)] shadow-sm"
+          classNames={{
+            root: "w-full",
+          }}
         />
       </div>
     </div>
