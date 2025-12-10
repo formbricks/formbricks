@@ -3,7 +3,7 @@ import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constan
 import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
-import { isUserTeamAdmin } from "@/modules/ee/teams/lib/roles";
+import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
@@ -25,7 +25,8 @@ export const TeamsPage = async (props) => {
   );
 
   // Also check if user is a team admin (they get limited user management for invites)
-  const isTeamAdminUser = await isUserTeamAdmin(session.user.id, organization.id);
+  const userAdminTeamIds = await getTeamsWhereUserIsAdmin(session.user.id, organization.id);
+  const isTeamAdminUser = userAdminTeamIds.length > 0;
 
   // Allow user management UI if they're owner/manager OR team admin (when access control is enabled)
   const hasUserManagementAccess =

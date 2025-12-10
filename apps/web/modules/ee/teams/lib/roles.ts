@@ -84,32 +84,6 @@ export const getTeamRoleByTeamIdUserId = reactCache(
   }
 );
 
-export const isUserTeamAdmin = reactCache(
-  async (userId: string, organizationId: string): Promise<boolean> => {
-    validateInputs([userId, ZId], [organizationId, ZId]);
-    try {
-      const adminTeamUser = await prisma.teamUser.findFirst({
-        where: {
-          userId,
-          role: "admin",
-          team: {
-            organizationId,
-          },
-        },
-      });
-
-      const result = Boolean(adminTeamUser);
-      return result;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
-
 export const getTeamsWhereUserIsAdmin = reactCache(
   async (userId: string, organizationId: string): Promise<string[]> => {
     validateInputs([userId, ZId], [organizationId, ZId]);

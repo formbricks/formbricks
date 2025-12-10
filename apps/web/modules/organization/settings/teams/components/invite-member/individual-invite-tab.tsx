@@ -7,13 +7,14 @@ import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserName } from "@formbricks/types/user";
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
@@ -45,8 +46,8 @@ export const IndividualInviteTab = ({
     email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email" }),
     role: ZOrganizationRole,
     teamIds: isTeamAdmin
-      ? z.array(z.string()).min(1, { message: "Team admins must select at least one team" })
-      : z.array(z.string()),
+      ? z.array(ZId).min(1, { message: "Team admins must select at least one team" })
+      : z.array(ZId),
   });
 
   const router = useRouter();
@@ -161,6 +162,7 @@ export const IndividualInviteTab = ({
                       </Small>
                     )}
                   </div>
+                  <FormError>{errors.teamIds?.message}</FormError>
                 </FormItem>
               )}
             />

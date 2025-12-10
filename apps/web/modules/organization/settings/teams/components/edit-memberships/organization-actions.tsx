@@ -66,7 +66,6 @@ export const OrganizationActions = ({
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
 
-  // Org owners/managers can always invite; team admins can invite only if access control is enabled
   const canInvite = isOwnerOrManager || (isAccessControlAllowed && isTeamAdmin);
 
   const handleLeaveOrganization = async () => {

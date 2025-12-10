@@ -286,7 +286,9 @@ export const TeamSettingsModal = ({
                                         disabled={isSelectDisabled}
                                         value={member.userId}>
                                         <SelectTrigger>
-                                          <SelectValue placeholder="Select member" />
+                                          <SelectValue
+                                            placeholder={t("environments.settings.teams.select_member")}
+                                          />
                                         </SelectTrigger>
                                         <SelectContent>
                                           {memberOpts.map((option) => (
@@ -429,7 +431,9 @@ export const TeamSettingsModal = ({
                                         value={project.projectId}
                                         disabled={isSelectDisabled}>
                                         <SelectTrigger>
-                                          <SelectValue placeholder="Select project" />
+                                          <SelectValue
+                                            placeholder={t("environments.settings.teams.select_project")}
+                                          />
                                         </SelectTrigger>
                                         <SelectContent>
                                           {projectOpts.map((option) => (

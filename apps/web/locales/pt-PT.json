@@ -1177,6 +1177,8 @@
         "please_fill_all_project_fields": "Por favor, preencha todos os campos para adicionar um novo projeto.",
         "read": "Ler",
         "read_write": "Ler e Escrever",
+        "select_member": "Selecionar membro",
+        "select_project": "Selecionar projeto",
         "team_admin": "Administrador da Equipa",
         "team_created_successfully": "Equipa criada com sucesso.",
         "team_deleted_successfully": "Equipa eliminada com sucesso.",

@@ -1177,6 +1177,8 @@
         "please_fill_all_project_fields": "Vul alle velden in om een ​​nieuw project toe te voegen.",
         "read": "Lezen",
         "read_write": "Lezen en schrijven",
+        "select_member": "Selecteer lid",
+        "select_project": "Selecteer project",
         "team_admin": "Teambeheerder",
         "team_created_successfully": "Team succesvol aangemaakt.",
         "team_deleted_successfully": "Team succesvol verwijderd.",

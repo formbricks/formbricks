@@ -229,16 +229,22 @@ const validateTeamAdminInvitePermissions = (
 const ZInviteUserAction = z.object({
   organizationId: ZId,
   email: z.string(),
-  name: z.string(),
+  name: z.string().trim().min(1, "Name is required"),
   role: ZOrganizationRole,
-  teamIds: z.array(z.string()),
+  teamIds: z.array(ZId),
 });
 
 export const inviteUserAction = authenticatedActionClient.schema(ZInviteUserAction).action(
   withAuditLogging(
     "created",
     "invite",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZInviteUserAction>;
+    }) => {
       if (INVITE_DISABLED) {
         throw new AuthenticationError("Invite disabled");
       }

@@ -1177,6 +1177,8 @@
         "please_fill_all_project_fields": "Bitte fülle alle Felder aus, um ein neues Projekt hinzuzufügen.",
         "read": "Lesen",
         "read_write": "Lesen & Schreiben",
+        "select_member": "Mitglied auswählen",
+        "select_project": "Projekt auswählen",
         "team_admin": "Team-Admin",
         "team_created_successfully": "Team erfolgreich erstellt.",
         "team_deleted_successfully": "Team erfolgreich gelöscht.",

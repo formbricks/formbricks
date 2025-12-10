@@ -1177,6 +1177,8 @@
         "please_fill_all_project_fields": "Vă rugăm să completați toate câmpurile pentru a adăuga un proiect nou.",
         "read": "Citește",
         "read_write": "Citire & Scriere",
+        "select_member": "Selectează membrul",
+        "select_project": "Selectează proiectul",
         "team_admin": "Administrator Echipe",
         "team_created_successfully": "Echipă creată cu succes",
         "team_deleted_successfully": "Echipă ștearsă cu succes.",
