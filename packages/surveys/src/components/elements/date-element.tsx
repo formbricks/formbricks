@@ -137,7 +137,7 @@ export function DateElement({
         const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
       }}
-      className="fb-w-full">
+      className="fb:w-full">
       {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}
@@ -148,13 +148,13 @@ export function DateElement({
         subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
         elementId={element.id}
       />
-      <div id="error-message" className="fb-text-red-600" aria-live="assertive">
+      <div id="error-message" className="fb:text-red-600" aria-live="assertive">
         <span>{errorMessage}</span>
       </div>
       <div
-        className={cn("fb-mt-4 fb-w-full", errorMessage && "fb-rounded-lg fb-border-2 fb-border-red-500")}
+        className={cn("fb:mt-4 fb:w-full", errorMessage && "fb:rounded-lg fb:border-2 fb:border-red-500")}
         id="date-picker-root">
-        <div className="fb-relative">
+        <div className="fb:relative">
           {!datePickerOpen && (
             <button
               onClick={() => {
@@ -171,14 +171,14 @@ export function DateElement({
                   : t("common.select_a_date")
               }
               aria-describedby={errorMessage ? "error-message" : undefined}
-              className="focus:fb-outline-brand fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
-              <div className="fb-flex fb-items-center fb-gap-2">
+              className="fb:focus:outline-brand fb:bg-input-bg fb:hover:bg-input-bg-selected fb:border-border fb:text-heading fb:rounded-custom fb:relative fb:flex fb:h-[12dvh] fb:w-full fb:cursor-pointer fb:appearance-none fb:items-center fb:justify-center fb:border fb:text-left fb:text-base fb:font-normal">
+              <div className="fb:flex fb:items-center fb:gap-2">
                 {selectedDate ? (
-                  <div className="fb-flex fb-items-center fb-gap-2">
+                  <div className="fb:flex fb:items-center fb:gap-2">
                     <CalendarCheckIcon /> <span>{formattedDate}</span>
                   </div>
                 ) : (
-                  <div className="fb-flex fb-items-center fb-gap-2">
+                  <div className="fb:flex fb:items-center fb:gap-2">
                     <CalendarIcon /> <span>{t("common.select_a_date")}</span>
                   </div>
                 )}
@@ -220,13 +220,13 @@ export function DateElement({
             monthPlaceholder="MM"
             yearPlaceholder="YYYY"
             format={element.format ?? "M-d-y"}
-            className={`dp-input-root fb-rounded-custom wrapper-hide ${!datePickerOpen ? "" : "fb-h-[46dvh] sm:fb-h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
+            className={`dp-input-root fb:rounded-custom wrapper-hide ${!datePickerOpen ? "" : "fb:h-[46dvh] fb:sm:h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
             calendarProps={{
               className:
-                "calendar-root !fb-text-heading !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto",
+                "calendar-root fb:text-heading! fb:bg-input-bg! fb:border fb:border-border fb:rounded-custom fb:p-3 fb:h-[46dvh] fb:sm:h-[33dvh] fb:overflow-auto",
               tileClassName: ({ date }: { date: Date }) => {
                 const baseClass =
-                  "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
+                  "fb:hover:bg-input-bg-selected fb:rounded-custom fb:h-9 fb:p-0 fb:mt-1 fb:font-normal fb:aria-selected:opacity-100 fb:focus:ring-2 fb:focus:bg-slate-200";
                 // active date class (check first to take precedence over today's date)
                 if (
                   selectedDate &&
@@ -234,7 +234,7 @@ export function DateElement({
                   date.getMonth() === selectedDate.getMonth() &&
                   date.getFullYear() === selectedDate.getFullYear()
                 ) {
-                  return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-calendar-tile`;
+                  return `${baseClass} fb:bg-brand! fb:border-border-highlight! fb:text-calendar-tile!`;
                 }
                 // today's date class
                 if (
@@ -242,10 +242,10 @@ export function DateElement({
                   date.getMonth() === new Date().getMonth() &&
                   date.getFullYear() === new Date().getFullYear()
                 ) {
-                  return `${baseClass} !fb-bg-brand !fb-opacity-50 !fb-border-border-highlight !fb-text-calendar-tile focus:fb-ring-2 focus:fb-bg-slate-200`;
+                  return `${baseClass} fb:bg-brand! fb:opacity-50! fb:border-border-highlight! fb:text-calendar-tile! fb:focus:ring-2 fb:focus:bg-slate-200`;
                 }
 
-                return `${baseClass} !fb-text-heading`;
+                return `${baseClass} fb:text-heading!`;
               },
               formatShortWeekday: (_: any, date: Date) => {
                 return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);

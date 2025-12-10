@@ -75,7 +75,7 @@ export function ConsentElement({
             document.getElementById(`${element.id}-label`)?.focus();
           }
         }}
-        className="fb-border-border fb-bg-input-bg fb-text-heading hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected focus:fb-ring-brand fb-rounded-custom fb-relative fb-z-10 fb-my-2 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-border fb-p-4 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
+        className="fb:border-border fb:bg-input-bg fb:text-heading fb:hover:bg-input-bg-selected fb:focus:bg-input-bg-selected fb:focus:ring-brand fb:rounded-custom fb:relative fb:z-10 fb:my-2 fb:flex fb:w-full fb:cursor-pointer fb:items-center fb:border fb:p-4 fb:text-sm fb:focus:outline-hidden fb:focus:ring-2 fb:focus:ring-offset-2">
         <input
           tabIndex={-1}
           type="checkbox"
@@ -91,11 +91,11 @@ export function ConsentElement({
             }
           }}
           checked={value === "accepted"}
-          className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+          className="fb:border-brand fb:text-brand fb:h-4 fb:w-4 fb:border fb:focus:ring-0 fb:focus:ring-offset-0"
           aria-labelledby={`${element.id}-label`}
           required={element.required}
         />
-        <span className="fb-ml-3 fb-mr-3 fb-font-medium fb-flex-1" dir="auto">
+        <span className="fb:ml-3 fb:mr-3 fb:font-medium fb:flex-1" dir="auto">
           {getLocalizedValue(element.label, languageCode)}
         </span>
       </label>

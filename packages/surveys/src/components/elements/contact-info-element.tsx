@@ -97,7 +97,7 @@ export function ContactInfoElement({
   );
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
+    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full" ref={formRef}>
       {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}
@@ -109,7 +109,7 @@ export function ContactInfoElement({
         elementId={element.id}
       />
 
-      <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
+      <div className="fb:flex fb:flex-col fb:space-y-2 fb:mt-4 fb:w-full">
         {fields.map((field, index) => {
           const isFieldRequired = () => {
             if (field.required) {
@@ -136,7 +136,7 @@ export function ContactInfoElement({
 
           return (
             field.show && (
-              <div className="fb-space-y-1">
+              <div className="fb:space-y-1">
                 <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
                 <Input
                   id={field.id}

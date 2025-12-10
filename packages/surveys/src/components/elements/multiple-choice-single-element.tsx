@@ -150,8 +150,8 @@ export function MultipleChoiceSingleElement({
     const choiceLabel = getLocalizedValue(choice.label, languageCode);
     const isChecked = value === choiceLabel;
     const labelClassName = cn(
-      isChecked ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
-      "fb-text-heading fb-bg-input-bg focus-within:fb-border-brand focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+      isChecked ? "fb:border-brand fb:bg-input-bg-selected fb:z-10" : "fb:border-border",
+      "fb:text-heading fb:bg-input-bg fb:focus-within:border-brand fb:focus-within:bg-input-bg-selected fb:hover:bg-input-bg-selected fb:rounded-custom fb:relative fb:flex fb:cursor-pointer fb:flex-col fb:border fb:p-4 fb:focus:outline-hidden"
     );
 
     return (
@@ -161,7 +161,7 @@ export function MultipleChoiceSingleElement({
         className={labelClassName}
         onKeyDown={handleKeyDown(choice.id)} // NOSONAR - needed for keyboard navigation through options
         autoFocus={idx === 0 && autoFocusEnabled}>
-        <span className="fb-flex fb-items-center fb-text-sm">
+        <span className="fb:flex fb:items-center fb:text-sm">
           <input
             tabIndex={-1}
             type="radio"
@@ -169,13 +169,13 @@ export function MultipleChoiceSingleElement({
             name={element.id}
             value={choiceLabel}
             dir={dir}
-            className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+            className="fb:border-brand fb:text-brand fb:h-4 fb:w-4 fb:shrink-0 fb:border fb:focus:ring-0 fb:focus:ring-offset-0"
             aria-labelledby={`${choice.id}-label`}
             onClick={() => handleChoiceClick(choiceLabel)}
             checked={isChecked}
             required={element.required ? idx === 0 : undefined}
           />
-          <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium" dir="auto">
+          <span id={`${choice.id}-label`} className="fb:ml-3 fb:mr-3 fb:grow fb:font-medium" dir="auto">
             {choiceLabel}
           </span>
         </span>
@@ -187,8 +187,8 @@ export function MultipleChoiceSingleElement({
     if (!otherOption) return null;
     const otherLabel = getLocalizedValue(otherOption.label, languageCode);
     const labelClassName = cn(
-      otherSelected ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
-      "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+      otherSelected ? "fb:border-brand fb:bg-input-bg-selected fb:z-10" : "fb:border-border",
+      "fb:text-heading fb:focus-within:border-brand fb:bg-input-bg fb:focus-within:bg-input-bg-selected fb:hover:bg-input-bg-selected fb:rounded-custom fb:relative fb:flex fb:cursor-pointer fb:flex-col fb:border fb:p-4 fb:focus:outline-hidden"
     );
     const placeholder =
       getLocalizedValue(element.otherOptionPlaceholder, languageCode).length > 0
@@ -201,7 +201,7 @@ export function MultipleChoiceSingleElement({
         className={labelClassName}
         onKeyDown={handleOtherKeyDown} // NOSONAR - needed for keyboard navigation through options
       >
-        <span className="fb-flex fb-items-center fb-text-sm">
+        <span className="fb:flex fb:items-center fb:text-sm">
           <input
             tabIndex={-1}
             dir={dir}
@@ -209,12 +209,12 @@ export function MultipleChoiceSingleElement({
             id={otherOption.id}
             name={element.id}
             value={otherLabel}
-            className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+            className="fb:border-brand fb:text-brand fb:h-4 fb:w-4 fb:shrink-0 fb:border fb:focus:ring-0 fb:focus:ring-offset-0"
             aria-labelledby={`${otherOption.id}-label`}
             onClick={handleOtherOptionClick}
             checked={otherSelected}
           />
-          <span id={`${otherOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium" dir="auto">
+          <span id={`${otherOption.id}-label`} className="fb:ml-3 fb:mr-3 fb:grow fb:font-medium" dir="auto">
             {otherLabel}
           </span>
         </span>
@@ -227,7 +227,7 @@ export function MultipleChoiceSingleElement({
             pattern=".*\S+.*"
             value={value ?? ""}
             onChange={(e) => onChange({ [element.id]: e.currentTarget.value })}
-            className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
+            className="fb:placeholder:text-placeholder fb:border-border fb:bg-survey-bg fb:text-heading fb:focus:ring-focus fb:rounded-custom fb:mt-3 fb:flex fb:h-10 fb:w-full fb:border fb:px-3 fb:py-2 fb:text-sm fb:focus:outline-hidden fb:focus:ring-2 fb:focus:ring-offset-2 fb:disabled:cursor-not-allowed fb:disabled:opacity-50"
             placeholder={placeholder}
             required={element.required}
             aria-labelledby={`${otherOption.id}-label`}
@@ -243,8 +243,8 @@ export function MultipleChoiceSingleElement({
     const noneLabel = getLocalizedValue(noneOption.label, languageCode);
     const isChecked = value === noneLabel;
     const labelClassName = cn(
-      isChecked ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
-      "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+      isChecked ? "fb:border-brand fb:bg-input-bg-selected fb:z-10" : "fb:border-border",
+      "fb:text-heading fb:focus-within:border-brand fb:bg-input-bg fb:focus-within:bg-input-bg-selected fb:hover:bg-input-bg-selected fb:rounded-custom fb:relative fb:flex fb:cursor-pointer fb:flex-col fb:border fb:p-4 fb:focus:outline-hidden"
     );
 
     return (
@@ -252,7 +252,7 @@ export function MultipleChoiceSingleElement({
         tabIndex={0} // NOSONAR - needed for keyboard navigation through options
         className={labelClassName}
         onKeyDown={handleKeyDown(noneOption.id)}>
-        <span className="fb-flex fb-items-center fb-text-sm">
+        <span className="fb:flex fb:items-center fb:text-sm">
           <input
             tabIndex={-1}
             dir={dir}
@@ -260,12 +260,12 @@ export function MultipleChoiceSingleElement({
             id={noneOption.id}
             name={element.id}
             value={noneLabel}
-            className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+            className="fb:border-brand fb:text-brand fb:h-4 fb:w-4 fb:shrink-0 fb:border fb:focus:ring-0 fb:focus:ring-offset-0"
             aria-labelledby={`${noneOption.id}-label`}
             onClick={handleNoneOptionClick}
             checked={isChecked}
           />
-          <span id={`${noneOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium" dir="auto">
+          <span id={`${noneOption.id}-label`} className="fb:ml-3 fb:mr-3 fb:grow fb:font-medium" dir="auto">
             {noneLabel}
           </span>
         </span>
@@ -274,7 +274,7 @@ export function MultipleChoiceSingleElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleFormSubmit} className="fb-w-full">
+    <form key={element.id} onSubmit={handleFormSubmit} className="fb:w-full">
       {isMediaAvailable && <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} />}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}
@@ -285,11 +285,11 @@ export function MultipleChoiceSingleElement({
         subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
         elementId={element.id}
       />
-      <div className="fb-mt-4">
+      <div className="fb:mt-4">
         <fieldset>
-          <legend className="fb-sr-only">Options</legend>
+          <legend className="fb:sr-only">Options</legend>
           <div
-            className="fb-bg-survey-bg fb-relative fb-space-y-2"
+            className="fb:bg-survey-bg fb:relative fb:space-y-2"
             role="radiogroup"
             ref={choicesContainerRef}>
             {elementChoices.map((choice, idx) => choice && renderChoice(choice, idx))}

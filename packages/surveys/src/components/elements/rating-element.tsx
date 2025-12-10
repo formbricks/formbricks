@@ -60,17 +60,17 @@ export function RatingElement({
 
   const getRatingNumberOptionColor = (range: number, idx: number) => {
     if (range > 5) {
-      if (range - idx < 2) return "fb-bg-emerald-100";
-      if (range - idx < 4) return "fb-bg-orange-100";
-      return "fb-bg-rose-100";
+      if (range - idx < 2) return "fb:bg-emerald-100";
+      if (range - idx < 4) return "fb:bg-orange-100";
+      return "fb:bg-rose-100";
     } else if (range < 5) {
-      if (range - idx < 1) return "fb-bg-emerald-100";
-      if (range - idx < 2) return "fb-bg-orange-100";
-      return "fb-bg-rose-100";
+      if (range - idx < 1) return "fb:bg-emerald-100";
+      if (range - idx < 2) return "fb:bg-orange-100";
+      return "fb:bg-rose-100";
     }
-    if (range - idx < 2) return "fb-bg-emerald-100";
-    if (range - idx < 3) return "fb-bg-orange-100";
-    return "fb-bg-rose-100";
+    if (range - idx < 2) return "fb:bg-emerald-100";
+    if (range - idx < 3) return "fb:bg-orange-100";
+    return "fb:bg-rose-100";
   };
 
   const handleFormSubmit = (e: Event) => {
@@ -103,13 +103,13 @@ export function RatingElement({
 
     return cn(
       isSelected
-        ? "fb-bg-accent-selected-bg fb-border-border-highlight fb-z-10 fb-border"
-        : "fb-border-border",
-      isLast ? (dir === "rtl" ? "fb-rounded-l-custom fb-border-l" : "fb-rounded-r-custom fb-border-r") : "",
-      isFirst ? (dir === "rtl" ? "fb-rounded-r-custom fb-border-r" : "fb-rounded-l-custom fb-border-l") : "",
-      isHovered ? "fb-bg-accent-bg" : "",
-      element.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
-      "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
+        ? "fb:bg-accent-selected-bg fb:border-border-highlight fb:z-10 fb:border"
+        : "fb:border-border",
+      isLast ? (dir === "rtl" ? "fb:rounded-l-custom fb:border-l" : "fb:rounded-r-custom fb:border-r") : "",
+      isFirst ? (dir === "rtl" ? "fb:rounded-r-custom fb:border-r" : "fb:rounded-l-custom fb:border-l") : "",
+      isHovered ? "fb:bg-accent-bg" : "",
+      element.isColorCodingEnabled ? "fb:min-h-[47px]" : "fb:min-h-[41px]",
+      "fb:text-heading fb:focus:border-brand fb:relative fb:flex fb:w-full fb:cursor-pointer fb:items-center fb:justify-center fb:overflow-hidden fb:border-b fb:border-l fb:border-t fb:focus:border-2 fb:focus:outline-hidden"
     );
   };
 
@@ -118,8 +118,8 @@ export function RatingElement({
     const isHovered = hoveredNumber === number;
 
     return cn(
-      isActive || isHovered ? "fb-text-amber-400" : "fb-text-[#8696AC]",
-      "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-cursor-pointer fb-justify-center focus:fb-outline-none"
+      isActive || isHovered ? "fb:text-amber-400" : "fb:text-[#8696AC]",
+      "fb:relative fb:flex fb:max-h-16 fb:min-h-9 fb:cursor-pointer fb:justify-center fb:focus:outline-hidden"
     );
   };
 
@@ -127,10 +127,10 @@ export function RatingElement({
     const isActive = value === number || hoveredNumber === number;
 
     return cn(
-      "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-w-full fb-cursor-pointer fb-justify-center",
+      "fb:relative fb:flex fb:max-h-16 fb:min-h-9 fb:w-full fb:cursor-pointer fb:justify-center",
       isActive
-        ? "fb-stroke-rating-selected fb-text-rating-selected"
-        : "fb-stroke-heading fb-text-heading focus:fb-border-accent-bg focus:fb-border-2 focus:fb-outline-none"
+        ? "fb:stroke-rating-selected fb:text-rating-selected"
+        : "fb:stroke-heading fb:text-heading fb:focus:border-accent-bg fb:focus:border-2 fb:focus:outline-hidden"
     );
   };
 
@@ -153,7 +153,7 @@ export function RatingElement({
         className={getNumberLabelClassName(number, totalLength)}>
         {element.isColorCodingEnabled && (
           <div
-            className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(element.range, number)}`}
+            className={`fb:absolute fb:left-0 fb:top-0 fb:h-[6px] fb:w-full ${getRatingNumberOptionColor(element.range, number)}`}
           />
         )}
         <input
@@ -161,7 +161,7 @@ export function RatingElement({
           id={getRatingInputId(number)}
           name="rating"
           value={number}
-          className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+          className="fb:absolute fb:left-0 fb:h-full fb:w-full fb:cursor-pointer fb:opacity-0"
           onClick={() => {
             handleSelect(number);
           }}
@@ -188,7 +188,7 @@ export function RatingElement({
           id={getRatingInputId(number)}
           name="rating"
           value={number}
-          className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+          className="fb:absolute fb:left-0 fb:h-full fb:w-full fb:cursor-pointer fb:opacity-0"
           onClick={() => {
             handleSelect(number);
           }}
@@ -196,7 +196,7 @@ export function RatingElement({
           checked={value === number}
           tabIndex={-1}
         />
-        <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
+        <div className="fb:h-full fb:w-full fb:max-w-[74px] fb:object-contain">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path
               fillRule="evenodd"
@@ -222,7 +222,7 @@ export function RatingElement({
           id={getRatingInputId(number)}
           name="rating"
           value={number}
-          className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+          className="fb:absolute fb:left-0 fb:h-full fb:w-full fb:cursor-pointer fb:opacity-0"
           onClick={() => {
             handleSelect(number);
           }}
@@ -230,7 +230,7 @@ export function RatingElement({
           checked={value === number}
           tabIndex={-1}
         />
-        <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
+        <div className="fb:h-full fb:w-full fb:max-w-[74px] fb:object-contain">
           <RatingSmiley
             active={value === number || hoveredNumber === number}
             idx={idx}
@@ -249,7 +249,7 @@ export function RatingElement({
         onMouseOver={handleMouseOver(number)}
         onMouseLeave={handleMouseLeave}
         onFocus={handleFocus(number)}
-        className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
+        className="fb:bg-survey-bg fb:flex-1 fb:text-center fb:text-sm">
         {element.scale === "number" && renderNumberScale(number, totalLength)}
         {element.scale === "star" && renderStarScale(number)}
         {element.scale !== "number" && element.scale !== "star" && renderSmileyScale(number, idx)}
@@ -258,7 +258,7 @@ export function RatingElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleFormSubmit} className="fb-w-full">
+    <form key={element.id} onSubmit={handleFormSubmit} className="fb:w-full">
       {isMediaAvailable && <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} />}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}
@@ -269,19 +269,19 @@ export function RatingElement({
         subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
         elementId={element.id}
       />
-      <div className="fb-mb-4 fb-mt-6 fb-flex fb-items-center fb-justify-center">
-        <fieldset className="fb-w-full">
-          <legend className="fb-sr-only">Choices</legend>
-          <div className="fb-flex fb-w-full">
+      <div className="fb:mb-4 fb:mt-6 fb:flex fb:items-center fb:justify-center">
+        <fieldset className="fb:w-full">
+          <legend className="fb:sr-only">Choices</legend>
+          <div className="fb:flex fb:w-full">
             {Array.from({ length: element.range }, (_, i) => i + 1).map((number, i, a) =>
               renderRatingOption(number, i, a.length)
             )}
           </div>
-          <div className="fb-text-subheading fb-mt-8 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-gap-8">
-            <p className="fb-max-w-[50%]" dir="auto">
+          <div className="fb:text-subheading fb:mt-8 fb:flex fb:justify-between fb:px-1.5 fb:text-xs fb:leading-6 fb:gap-8">
+            <p className="fb:max-w-[50%]" dir="auto">
               {getLocalizedValue(element.lowerLabel, languageCode)}
             </p>
-            <p className="fb-max-w-[50%]" dir="auto">
+            <p className="fb:max-w-[50%]" dir="auto">
               {getLocalizedValue(element.upperLabel, languageCode)}
             </p>
           </div>
@@ -300,37 +300,37 @@ interface RatingSmileyProps {
 
 const getSmileyColor = (range: number, idx: number) => {
   if (range > 5) {
-    if (range - idx < 3) return "fb-fill-emerald-100";
-    if (range - idx < 5) return "fb-fill-orange-100";
-    return "fb-fill-rose-100";
+    if (range - idx < 3) return "fb:fill-emerald-100";
+    if (range - idx < 5) return "fb:fill-orange-100";
+    return "fb:fill-rose-100";
   } else if (range < 5) {
-    if (range - idx < 2) return "fb-fill-emerald-100";
-    if (range - idx < 3) return "fb-fill-orange-100";
-    return "fb-fill-rose-100";
+    if (range - idx < 2) return "fb:fill-emerald-100";
+    if (range - idx < 3) return "fb:fill-orange-100";
+    return "fb:fill-rose-100";
   }
-  if (range - idx < 3) return "fb-fill-emerald-100";
-  if (range - idx < 4) return "fb-fill-orange-100";
-  return "fb-fill-rose-100";
+  if (range - idx < 3) return "fb:fill-emerald-100";
+  if (range - idx < 4) return "fb:fill-orange-100";
+  return "fb:fill-rose-100";
 };
 
 const getActiveSmileyColor = (range: number, idx: number) => {
   if (range > 5) {
-    if (range - idx < 3) return "fb-fill-emerald-300";
-    if (range - idx < 5) return "fb-fill-orange-300";
-    return "fb-fill-rose-300";
+    if (range - idx < 3) return "fb:fill-emerald-300";
+    if (range - idx < 5) return "fb:fill-orange-300";
+    return "fb:fill-rose-300";
   } else if (range < 5) {
-    if (range - idx < 2) return "fb-fill-emerald-300";
-    if (range - idx < 3) return "fb-fill-orange-300";
-    return "fb-fill-rose-300";
+    if (range - idx < 2) return "fb:fill-emerald-300";
+    if (range - idx < 3) return "fb:fill-orange-300";
+    return "fb:fill-rose-300";
   }
-  if (range - idx < 3) return "fb-fill-emerald-300";
-  if (range - idx < 4) return "fb-fill-orange-300";
-  return "fb-fill-rose-300";
+  if (range - idx < 3) return "fb:fill-emerald-300";
+  if (range - idx < 4) return "fb:fill-orange-300";
+  return "fb:fill-rose-300";
 };
 
 const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {
-  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fb-fill-rating-fill";
-  const inactiveColor = addColors ? getSmileyColor(range, idx) : "fb-fill-none";
+  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fb:fill-rating-fill";
+  const inactiveColor = addColors ? getSmileyColor(range, idx) : "fb:fill-none";
 
   const icons = [
     <TiredFace key="tired-face" className={active ? activeColor : inactiveColor} />,

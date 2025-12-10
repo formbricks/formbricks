@@ -155,7 +155,7 @@ export function OpenTextElement({
   const renderCharLimit = () => {
     if (element.inputType !== "text" || element.charLimit?.max === undefined) return null;
     const isOverLimit = currentLength >= element.charLimit.max;
-    const className = `fb-text-xs ${isOverLimit ? "fb-text-red-500 fb-font-semibold" : "fb-text-neutral-400"}`;
+    const className = `fb:text-xs ${isOverLimit ? "fb:text-red-500 fb:font-semibold" : "fb:text-neutral-400"}`;
     return (
       <span className={className}>
         {currentLength}/{element.charLimit.max}
@@ -179,7 +179,7 @@ export function OpenTextElement({
         value={value || ""}
         type={element.inputType}
         onInput={handleInputOnInput}
-        className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
+        className="fb:border-border fb:placeholder:text-placeholder fb:text-subheading fb:focus:border-brand fb:bg-input-bg fb:rounded-custom fb:block fb:w-full fb:border fb:p-2 fb:shadow-xs fb:focus:outline-hidden fb:focus:ring-0 fb:sm:text-sm"
         pattern={getInputPattern()}
         title={getInputTitle()}
         minLength={getInputMinLength()}
@@ -203,7 +203,7 @@ export function OpenTextElement({
         required={element.required}
         value={value}
         onInput={handleTextareaOnInput}
-        className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
+        className="fb:border-border fb:placeholder:text-placeholder fb:bg-input-bg fb:text-subheading fb:focus:border-brand fb:rounded-custom fb:block fb:w-full fb:border fb:p-2 fb:shadow-xs fb:focus:ring-0 fb:sm:text-sm"
         minLength={getInputMinLength()}
         maxLength={getInputMaxLength()}
       />
@@ -211,7 +211,7 @@ export function OpenTextElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleOnSubmit} className="fb-w-full">
+    <form key={element.id} onSubmit={handleOnSubmit} className="fb:w-full">
       {isMediaAvailable && <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} />}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}
@@ -222,7 +222,7 @@ export function OpenTextElement({
         subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
         elementId={element.id}
       />
-      <div className="fb-mt-4">
+      <div className="fb:mt-4">
         {element.longAnswer === false ? renderInput() : renderTextarea()}
         {renderCharLimit()}
       </div>

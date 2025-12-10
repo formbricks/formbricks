@@ -62,16 +62,16 @@ export function CTAElement({
           elementId={element.id}
         />
         {element.buttonExternal && (
-          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
-            <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
+          <div className="fb:flex fb:flex-row-reverse fb:w-full fb:justify-between fb:pt-4">
+            <div className="fb:flex fb:flex-row-reverse fb:w-full fb:justify-start">
               <button
                 dir="auto"
                 type="button"
                 tabIndex={0}
                 onClick={handleExternalButtonClick}
-                className="fb-text-heading focus:fb-ring-focus fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
+                className="fb:text-heading fb:focus:ring-focus fb:flex fb:items-center fb:rounded-md fb:px-3 fb:py-3 fb:text-base fb:font-medium fb:leading-4 fb:hover:opacity-90 fb:focus:outline-hidden fb:focus:ring-2 fb:focus:ring-offset-2">
                 {getLocalizedValue(element.ctaButtonLabel, languageCode)}
-                <LinkIcon className="fb-ml-2 fb-h-4 fb-w-4" />
+                <LinkIcon className="fb:ml-2 fb:h-4 fb:w-4" />
               </button>
             </div>
           </div>

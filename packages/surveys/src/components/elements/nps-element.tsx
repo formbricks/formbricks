@@ -42,9 +42,9 @@ export function NPSElement({
   };
 
   const getNPSOptionColor = (idx: number) => {
-    if (idx > 8) return "fb-bg-emerald-100";
-    if (idx > 6) return "fb-bg-orange-100";
-    return "fb-bg-rose-100";
+    if (idx > 8) return "fb:bg-emerald-100";
+    if (idx > 6) return "fb:bg-orange-100";
+    return "fb:bg-rose-100";
   };
 
   return (
@@ -65,10 +65,10 @@ export function NPSElement({
         subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
         elementId={element.id}
       />
-      <div className="fb-my-4">
+      <div className="fb:my-4">
         <fieldset>
-          <legend className="fb-sr-only">Options</legend>
-          <div className="fb-flex">
+          <legend className="fb:sr-only">Options</legend>
+          <div className="fb:flex">
             {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => {
               return (
                 <label
@@ -96,18 +96,18 @@ export function NPSElement({
                   }}
                   className={cn(
                     value === number
-                      ? "fb-border-border-highlight fb-bg-accent-selected-bg fb-z-10 fb-border"
-                      : "fb-border-border",
-                    "fb-text-heading focus:fb-border-brand fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-overflow-hidden fb-border-b fb-border-l fb-border-t fb-text-center fb-text-sm focus:fb-border-2 focus:fb-outline-none",
-                    element.isColorCodingEnabled ? "fb-h-[46px] fb-leading-[3.5em]" : "fb-h fb-leading-10",
-                    hoveredNumber === number ? "fb-bg-accent-bg" : "",
+                      ? "fb:border-border-highlight fb:bg-accent-selected-bg fb:z-10 fb:border"
+                      : "fb:border-border",
+                    "fb:text-heading fb:focus:border-brand fb:relative fb:h-10 fb:flex-1 fb:cursor-pointer fb:overflow-hidden fb:border-b fb:border-l fb:border-t fb:text-center fb:text-sm fb:focus:border-2 fb:focus:outline-hidden",
+                    element.isColorCodingEnabled ? "fb:h-[46px] fb:leading-[3.5em]" : "fb-h fb:leading-10",
+                    hoveredNumber === number ? "fb:bg-accent-bg" : "",
                     dir === "rtl"
-                      ? "first:fb-rounded-r-custom first:fb-border-r last:fb-rounded-l-custom last:fb-border-l"
-                      : "first:fb-rounded-l-custom first:fb-border-l last:fb-rounded-r-custom last:fb-border-r"
+                      ? "fb:first:rounded-r-custom fb:first:border-r fb:last:rounded-l-custom fb:last:border-l"
+                      : "fb:first:rounded-l-custom fb:first:border-l fb:last:rounded-r-custom fb:last:border-r"
                   )}>
                   {element.isColorCodingEnabled ? (
                     <div
-                      className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getNPSOptionColor(idx)}`}
+                      className={`fb:absolute fb:left-0 fb:top-0 fb:h-[6px] fb:w-full ${getNPSOptionColor(idx)}`}
                     />
                   ) : null}
                   <input
@@ -116,7 +116,7 @@ export function NPSElement({
                     name="nps"
                     value={number}
                     checked={value === number}
-                    className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+                    className="fb:absolute fb:left-0 fb:h-full fb:w-full fb:cursor-pointer fb:opacity-0"
                     onClick={() => {
                       handleClick(number);
                     }}
@@ -128,11 +128,11 @@ export function NPSElement({
               );
             })}
           </div>
-          <div className="fb-text-subheading fb-mt-2 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-gap-8">
-            <p dir="auto" className="fb-max-w-[50%]">
+          <div className="fb:text-subheading fb:mt-2 fb:flex fb:justify-between fb:px-1.5 fb:text-xs fb:leading-6 fb:gap-8">
+            <p dir="auto" className="fb:max-w-[50%]">
               {getLocalizedValue(element.lowerLabel, languageCode)}
             </p>
-            <p dir="auto" className="fb-max-w-[50%]">
+            <p dir="auto" className="fb:max-w-[50%]">
               {getLocalizedValue(element.upperLabel, languageCode)}
             </p>
           </div>

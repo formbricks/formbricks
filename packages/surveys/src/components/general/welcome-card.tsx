@@ -30,7 +30,7 @@ interface WelcomeCardProps {
 
 function TimerIcon() {
   return (
-    <div className="fb-mr-1">
+    <div className="fb:mr-1">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="16"
@@ -47,14 +47,14 @@ function TimerIcon() {
 
 function UsersIcon() {
   return (
-    <div className="fb-mr-1">
+    <div className="fb:mr-1">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth="1.5"
         stroke="currentColor"
-        className="fb-h-4 fb-w-4">
+        className="fb:h-4 fb:w-4">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -147,7 +147,7 @@ export function WelcomeCard({
         {fileUrl ? (
           <img
             src={fileUrl}
-            className="fb-mb-8 fb-max-h-96 fb-w-1/4 fb-object-contain"
+            className="fb:mb-8 fb:max-h-96 fb:w-1/4 fb:object-contain"
             alt={t("common.company_logo")}
           />
         ) : null}
@@ -164,7 +164,7 @@ export function WelcomeCard({
           )}
           elementId="welcomeCard"
         />
-        <div className="fb-mt-4 fb-flex fb-gap-4 fb-pt-4">
+        <div className="fb:mt-4 fb:flex fb:gap-4 fb:pt-4">
           <SubmitButton
             buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
             isLastQuestion={false}
@@ -181,10 +181,10 @@ export function WelcomeCard({
         </div>
         {timeToFinish && !showResponseCount ? (
           <div
-            className="fb-items-center fb-text-subheading fb-my-4 fb-flex"
+            className="fb:items-center fb:text-subheading fb:my-4 fb:flex"
             data-testid="fb__surveys__welcome-card__time-display">
             <TimerIcon />
-            <p className="fb-pt-1 fb-text-xs">
+            <p className="fb:pt-1 fb:text-xs">
               <span>
                 {t("common.takes")} {calculateTimeToComplete()}{" "}
               </span>
@@ -192,9 +192,9 @@ export function WelcomeCard({
           </div>
         ) : null}
         {showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
+          <div className="fb:items-center fb:text-subheading fb:my-4 fb:flex">
             <UsersIcon />
-            <p className="fb-pt-1 fb-text-xs">
+            <p className="fb:pt-1 fb:text-xs">
               <span data-testid="fb__surveys__welcome-card__response-count">
                 {t("common.people_responded", { count: responseCount })}
               </span>
@@ -202,9 +202,9 @@ export function WelcomeCard({
           </div>
         ) : null}
         {timeToFinish && showResponseCount ? (
-          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
+          <div className="fb:items-center fb:text-subheading fb:my-4 fb:flex">
             <TimerIcon />
-            <p className="fb-pt-1 fb-text-xs" data-testid="fb__surveys__welcome-card__info-text-test">
+            <p className="fb:pt-1 fb:text-xs" data-testid="fb__surveys__welcome-card__info-text-test">
               <span>
                 {t("common.takes")} {calculateTimeToComplete()}{" "}
               </span>

@@ -243,11 +243,11 @@ export function BlockConditional({
   };
 
   return (
-    <div className={cn("fb-space-y-6", fullSizeCards ? "fb-h-full" : "")}>
+    <div className={cn("fb:space-y-6", fullSizeCards ? "fb:h-full" : "")}>
       {/* Scrollable container for the entire block */}
       <ScrollableContainer fullSizeCards={fullSizeCards}>
-        <div className="fb-space-y-6">
-          <div className="fb-space-y-6">
+        <div className="fb:space-y-6">
+          <div className="fb:space-y-6">
             {block.elements.map((element, index) => {
               const isFirstElement = index === 0;
 
@@ -286,8 +286,8 @@ export function BlockConditional({
 
           <div
             className={cn(
-              "fb-flex fb-w-full fb-flex-row-reverse fb-justify-between",
-              fullSizeCards ? "fb-sticky fb-bottom-0 fb-bg-white" : ""
+              "fb:flex fb:w-full fb:flex-row-reverse fb:justify-between",
+              fullSizeCards ? "fb:sticky fb:bottom-0 fb:bg-white" : ""
             )}>
             <div>
               <SubmitButton

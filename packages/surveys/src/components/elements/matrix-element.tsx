@@ -89,7 +89,7 @@ export function MatrixElement({
         <th
           key={index}
           scope="col"
-          className="fb-text-heading fb-max-w-40 fb-break-words fb-px-4 fb-py-2 fb-font-normal"
+          className="fb:text-heading fb:max-w-40 fb:wrap-break-word fb:px-4 fb:py-2 fb:font-normal"
           dir="auto">
           {getLocalizedValue(column.label, languageCode)}
         </th>
@@ -98,7 +98,7 @@ export function MatrixElement({
   );
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb-w-full">
+    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full">
       {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}
@@ -106,20 +106,20 @@ export function MatrixElement({
         required={element.required}
       />
       <Subheader subheader={getLocalizedValue(element.subheader, languageCode)} elementId={element.id} />
-      <div className="fb-overflow-x-auto fb-py-4">
-        <table className="fb-no-scrollbar fb-min-w-full fb-table-auto fb-border-collapse fb-text-sm">
+      <div className="fb:overflow-x-auto fb:py-4">
+        <table className="fb-no-scrollbar fb:min-w-full fb:table-auto fb:border-collapse fb:text-sm">
           <thead>
             <tr>
-              <th className="fb-px-4 fb-py-2" />
+              <th className="fb:px-4 fb:py-2" />
               {columnsHeaders}
             </tr>
           </thead>
           <tbody>
             {elementRows.map((row, rowIndex) => (
-              <tr key={`row-${rowIndex.toString()}`} className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
+              <tr key={`row-${rowIndex.toString()}`} className={rowIndex % 2 === 0 ? "fb:bg-input-bg" : ""}>
                 <th
                   scope="row"
-                  className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
+                  className="fb:text-heading fb:rounded-l-custom fb:max-w-40 fb:wrap-break-word fb:pr-4 fb:pl-2 fb:py-2 fb:text-left fb:min-w-[20%] fb:font-semibold"
                   dir="auto">
                   {getLocalizedValue(row.label, languageCode)}
                 </th>
@@ -127,7 +127,7 @@ export function MatrixElement({
                   <td
                     key={`column-${columnIndex.toString()}`}
                     tabIndex={0}
-                    className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === element.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
+                    className={`fb:outline-brand fb:px-4 fb:py-2 fb:text-slate-800 ${columnIndex === element.columns.length - 1 ? "fb:rounded-r-custom" : ""}`}
                     onClick={() => {
                       handleSelect(
                         getLocalizedValue(column.label, languageCode),
@@ -144,7 +144,7 @@ export function MatrixElement({
                       }
                     }}
                     dir="auto">
-                    <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
+                    <div className="fb:flex fb:items-center fb:justify-center fb:p-2">
                       <input
                         dir="auto"
                         type="radio"
@@ -163,7 +163,7 @@ export function MatrixElement({
                           column.label,
                           languageCode
                         )}`}
-                        className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                        className="fb:border-brand fb:text-brand fb:h-5 fb:w-5 fb:border fb:focus:ring-0 fb:focus:ring-offset-0"
                       />
                     </div>
                   </td>

@@ -53,7 +53,7 @@ export function FileUploadElement({
           }
         }
       }}
-      className="fb-w-full">
+      className="fb:w-full">
       {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}

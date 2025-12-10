@@ -31,9 +31,9 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMed
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="fb-group/image fb-relative fb-mb-6 fb-block fb-min-h-40 fb-rounded-md">
+    <div className="fb:group/image fb:relative fb:mb-6 fb:block fb:min-h-40 fb:rounded-md">
       {isLoading ? (
-        <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" />
+        <div className="fb:absolute fb:inset-auto fb:flex fb:h-full fb:w-full fb:animate-pulse fb:items-center fb:justify-center fb:rounded-md fb:bg-slate-200" />
       ) : null}
       {imgUrl ? (
         <img
@@ -41,8 +41,8 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMed
           src={imgUrl}
           alt={altText}
           className={cn(
-            "fb-rounded-custom fb-max-h-[40dvh] fb-mx-auto fb-object-contain",
-            isLoading ? "fb-opacity-0" : ""
+            "fb:rounded-custom fb:max-h-[40dvh] fb:mx-auto fb:object-contain",
+            isLoading ? "fb:opacity-0" : ""
           )}
           onLoad={() => {
             setIsLoading(false);
@@ -53,13 +53,13 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMed
         />
       ) : null}
       {videoUrlWithParams ? (
-        <div className="fb-relative">
-          <div className="fb-rounded-custom fb-bg-black">
+        <div className="fb:relative">
+          <div className="fb:rounded-custom fb:bg-black">
             <iframe
               src={videoUrlWithParams}
               title={t("common.question_video")}
               frameBorder="0"
-              className={cn("fb-rounded-custom fb-aspect-video fb-w-full", isLoading ? "fb-opacity-0" : "")}
+              className={cn("fb:rounded-custom fb:aspect-video fb:w-full", isLoading ? "fb:opacity-0" : "")}
               onLoad={() => {
                 setIsLoading(false);
               }}
@@ -77,7 +77,7 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMed
         target="_blank"
         rel="noreferrer"
         aria-label={t("common.open_in_new_tab")}
-        className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
+        className="fb:absolute fb:bottom-2 fb:right-2 fb:flex fb:items-center fb:gap-2 fb:rounded-md fb:bg-slate-800 fb-bg-opacity-40 fb:p-1.5 fb:text-white fb:opacity-0 fb:backdrop-blur-lg fb:transition fb:duration-300 fb:ease-in-out hover:fb-bg-opacity-65 fb:group-hover/image:opacity-100">
         {imgUrl ? <ImageDownIcon size={20} /> : <ExpandIcon size={20} />}
       </a>
     </div>

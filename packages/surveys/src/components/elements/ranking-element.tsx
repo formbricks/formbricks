@@ -129,7 +129,7 @@ export function RankingElement({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="fb-w-full">
+    <form onSubmit={handleSubmit} className="fb:w-full">
       {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
       <Headline
         headline={getLocalizedValue(element.headline, languageCode)}
@@ -140,10 +140,10 @@ export function RankingElement({
         subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
         elementId={element.id}
       />
-      <div className="fb-mt-4">
+      <div className="fb:mt-4">
         <fieldset>
-          <legend className="fb-sr-only">{t("common.ranking_items")}</legend>
-          <div className="fb-relative" ref={parent}>
+          <legend className="fb:sr-only">{t("common.ranking_items")}</legend>
+          <div className="fb:relative" ref={parent}>
             {[...sortedItems, ...unsortedItems].map((item, idx) => {
               if (!item) return null;
               const isSorted = sortedItems.includes(item);
@@ -154,8 +154,8 @@ export function RankingElement({
                 <div
                   key={item.id}
                   className={cn(
-                    "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading hover:fb-bg-input-bg-selected focus-within:fb-border-brand focus-within:fb-shadow-outline focus-within:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer w-full focus:outline-none",
-                    isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
+                    "fb:flex fb:h-12 fb:items-center fb:mb-2 fb:border fb:border-border fb:transition-all fb:text-heading fb:hover:bg-input-bg-selected fb:focus-within:border-brand focus-within:fb-shadow-outline fb:focus-within:bg-input-bg-selected fb:rounded-custom fb:relative fb:cursor-pointer w-full focus:outline-hidden",
+                    isSorted ? "fb:bg-input-bg-selected" : "fb:bg-input-bg"
                   )}>
                   <button
                     autoFocus={idx === 0 && autoFocusEnabled}
@@ -174,22 +174,22 @@ export function RankingElement({
                     aria-label={t("common.select_for_ranking", {
                       item: getLocalizedValue(item.label, languageCode),
                     })}
-                    className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group text-left focus:outline-none">
+                    className="fb:flex fb:gap-x-4 fb:px-4 fb:items-center fb:grow fb:h-full group text-left focus:outline-hidden">
                     <span
                       className={cn(
-                        "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
+                        "fb:w-6 fb:grow-0 fb:h-6 fb:flex fb:items-center fb:justify-center fb:rounded-full fb:text-xs fb:font-semibold fb:border-brand fb:border",
                         isSorted
-                          ? "fb-bg-brand fb-text-white fb-border"
-                          : "fb-border-dashed group-hover:fb-bg-white fb-text-transparent group-hover:fb-text-heading"
+                          ? "fb:bg-brand fb:text-white fb:border"
+                          : "fb:border-dashed fb:group-hover:bg-white fb:text-transparent fb:group-hover:text-heading"
                       )}>
                       {(idx + 1).toString()}
                     </span>
-                    <div className="fb-grow fb-shrink fb-font-medium fb-text-sm fb-text-start" dir="auto">
+                    <div className="fb:grow fb:shrink fb:font-medium fb:text-sm fb:text-start" dir="auto">
                       {getLocalizedValue(item.label, languageCode)}
                     </div>
                   </button>
                   {isSorted ? (
-                    <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
+                    <div className="fb:flex fb:flex-col fb:h-full fb:grow-0 fb:border-l fb:border-border">
                       <button
                         tabIndex={isFirst ? -1 : 0}
                         type="button"
@@ -201,10 +201,10 @@ export function RankingElement({
                           item: getLocalizedValue(item.label, languageCode),
                         })}
                         className={cn(
-                          "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
+                          "fb:px-2 fb:flex fb:flex-1 fb:items-center fb:justify-center",
                           isFirst
-                            ? "fb-opacity-30 fb-cursor-not-allowed"
-                            : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
+                            ? "fb:opacity-30 fb:cursor-not-allowed"
+                            : "fb:hover:bg-black/5 fb:rounded-tr-custom fb:transition-colors"
                         )}
                         disabled={isFirst}>
                         <svg
@@ -229,10 +229,10 @@ export function RankingElement({
                           handleMove(item.id, "down");
                         }}
                         className={cn(
-                          "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
+                          "fb:px-2 fb:flex-1 fb:border-t fb:border-border fb:flex fb:items-center fb:justify-center",
                           isLast
-                            ? "fb-opacity-30 fb-cursor-not-allowed"
-                            : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
+                            ? "fb:opacity-30 fb:cursor-not-allowed"
+                            : "fb:hover:bg-black/5 fb:rounded-br-custom fb:transition-colors"
                         )}
                         aria-label={t("common.move_down", {
                           item: getLocalizedValue(item.label, languageCode),
@@ -260,7 +260,7 @@ export function RankingElement({
           </div>
         </fieldset>
       </div>
-      {error ? <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div> : null}
+      {error ? <div className="fb:text-red-500 fb:mt-2 fb:text-sm">{error}</div> : null}
     </form>
   );
 }

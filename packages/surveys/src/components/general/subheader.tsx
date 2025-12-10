@@ -23,7 +23,7 @@ export function Subheader({ subheader, elementId }: SubheaderProps) {
   return (
     <label
       htmlFor={elementId}
-      className="fb-text-subheading fb-block fb-break-words fb-text-sm fb-font-normal fb-leading-6"
+      className="fb:text-subheading fb:block fb:wrap-break-word fb:text-sm fb:font-normal fb:leading-6"
       data-testid="subheader"
       dir="auto">
       {isHtml ? (

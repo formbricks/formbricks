@@ -134,7 +134,7 @@ export function AddressElement({
   );
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
+    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full" ref={formRef}>
       <div>
         {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
         <Headline
@@ -147,13 +147,13 @@ export function AddressElement({
           elementId={element.id}
         />
 
-        <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
+        <div className="fb:flex fb:flex-col fb:space-y-2 fb:mt-4 fb:w-full">
           {fields.map((field, index) => {
             const isRequired = isFieldRequired(field);
 
             return (
               field.show && (
-                <div className="fb-space-y-1" key={field.id}>
+                <div className="fb:space-y-1" key={field.id}>
                   <Label htmlForId={field.id} text={isRequired ? `${field.label}*` : field.label} />
                   <Input
                     id={field.id}
