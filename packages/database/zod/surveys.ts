@@ -1,7 +1,10 @@
+/* eslint-disable import/no-relative-packages -- Need to import from parent package */
 import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
+import { ZLogo } from "../../types/styling";
+import { ZSurveyBlocks } from "../../types/surveys/blocks";
 import {
   ZSurveyEnding,
   ZSurveyMetadata,
@@ -96,6 +99,9 @@ const ZSurveyBase = z.object({
   questions: z.array(ZSurveyQuestion).openapi({
     description: "The questions of the survey",
   }),
+  blocks: ZSurveyBlocks.default([]).openapi({
+    description: "The blocks of the survey",
+  }),
   endings: z.array(ZSurveyEnding).default([]).openapi({
     description: "The endings of the survey",
   }),
@@ -168,6 +174,7 @@ const ZSurveyBase = z.object({
       background: ZSurveyStylingBackground.nullish(),
       hideProgressBar: z.boolean().nullish(),
       isLogoHidden: z.boolean().nullish(),
+      logo: ZLogo.nullish(),
     })
     .nullable()
     .openapi({

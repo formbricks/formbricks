@@ -1,6 +1,7 @@
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
+import { TI18nString } from "@formbricks/types/i18n";
 import { TLanguage } from "@formbricks/types/project";
-import { TI18nString, TSurveyLanguage } from "@formbricks/types/surveys/types";
+import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
 // Helper function to create an i18nString from a regular string.
@@ -29,7 +30,7 @@ export const createI18nString = (
     return i18nString;
   } else {
     // It's a regular string, so create a new i18n object
-    const i18nString: any = {
+    const i18nString = {
       [targetLanguageCode ?? "default"]: text,
     };
 
@@ -45,7 +46,7 @@ export const createI18nString = (
 };
 
 // Type guard to check if an object is an I18nString
-export const isI18nObject = (obj: any): obj is TI18nString => {
+export const isI18nObject = (obj: unknown): obj is TI18nString => {
   return typeof obj === "object" && obj !== null && Object.keys(obj).includes("default");
 };
 
@@ -91,7 +92,7 @@ export const iso639Identifiers = iso639Languages.map((language) => language.alph
 
 // Helper function to add language keys to a multi-language object (e.g. survey or question)
 // Iterates over the object recursively and adds empty strings for new language keys
-export const addMultiLanguageLabels = (object: any, languageSymbols: string[]): any => {
+export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[]): any => {
   // Helper function to add language keys to a multi-language object
   function addLanguageKeys(obj: { default: string; [key: string]: string }) {
     languageSymbols.forEach((lang) => {
@@ -102,14 +103,14 @@ export const addMultiLanguageLabels = (object: any, languageSymbols: string[]): 
   }
 
   // Recursive function to process an object or array
-  function processObject(obj: any) {
+  function processObject(obj: unknown) {
     if (Array.isArray(obj)) {
       obj.forEach((item) => processObject(item));
     } else if (obj && typeof obj === "object") {
       for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
           if (key === "default" && typeof obj[key] === "string") {
-            addLanguageKeys(obj);
+            addLanguageKeys(obj as { default: string; [key: string]: string });
           } else {
             processObject(obj[key]);
           }
@@ -139,6 +140,7 @@ export const appLanguages = [
       "zh-Hans-CN": "英语（美国）",
       "nl-NL": "Engels (VS)",
       "es-ES": "Inglés (EE.UU.)",
+      "sv-SE": "Engelska (USA)",
     },
   },
   {
@@ -155,6 +157,7 @@ export const appLanguages = [
       "zh-Hans-CN": "德语",
       "nl-NL": "Duits",
       "es-ES": "Alemán",
+      "sv-SE": "Tyska",
     },
   },
   {
@@ -171,6 +174,7 @@ export const appLanguages = [
       "zh-Hans-CN": "葡萄牙语（巴西）",
       "nl-NL": "Portugees (Brazilië)",
       "es-ES": "Portugués (Brasil)",
+      "sv-SE": "Portugisiska (Brasilien)",
     },
   },
   {
@@ -187,6 +191,7 @@ export const appLanguages = [
       "zh-Hans-CN": "法语",
       "nl-NL": "Frans",
       "es-ES": "Francés",
+      "sv-SE": "Franska",
     },
   },
   {
@@ -198,11 +203,12 @@ export const appLanguages = [
       "fr-FR": "Chinois (Traditionnel)",
       "zh-Hant-TW": "繁體中文",
       "pt-PT": "Chinês (Tradicional)",
-      "ro-RO": "Chineză (Tradicională)",
+      "ro-RO": "Chineza (Tradițională)",
       "ja-JP": "中国語（繁体字）",
       "zh-Hans-CN": "繁体中文",
       "nl-NL": "Chinees (Traditioneel)",
       "es-ES": "Chino (Tradicional)",
+      "sv-SE": "Kinesiska (traditionell)",
     },
   },
   {
@@ -219,6 +225,7 @@ export const appLanguages = [
       "zh-Hans-CN": "葡萄牙语（葡萄牙）",
       "nl-NL": "Portugees (Portugal)",
       "es-ES": "Portugués (Portugal)",
+      "sv-SE": "Portugisiska (Portugal)",
     },
   },
   {
@@ -235,6 +242,7 @@ export const appLanguages = [
       "zh-Hans-CN": "罗马尼亚语",
       "nl-NL": "Roemeens",
       "es-ES": "Rumano",
+      "sv-SE": "Rumänska",
     },
   },
   {
@@ -251,6 +259,7 @@ export const appLanguages = [
       "zh-Hans-CN": "日语",
       "nl-NL": "Japans",
       "es-ES": "Japonés",
+      "sv-SE": "Japanska",
     },
   },
   {
@@ -262,11 +271,12 @@ export const appLanguages = [
       "fr-FR": "Chinois (Simplifié)",
       "zh-Hant-TW": "簡體中文",
       "pt-PT": "Chinês (Simplificado)",
-      "ro-RO": "Chineză (Simplificată)",
+      "ro-RO": "Chineza (Simplificată)",
       "ja-JP": "中国語（簡体字）",
       "zh-Hans-CN": "简体中文",
       "nl-NL": "Chinees (Vereenvoudigd)",
       "es-ES": "Chino (Simplificado)",
+      "sv-SE": "Kinesiska (förenklad)",
     },
   },
   {
@@ -278,11 +288,12 @@ export const appLanguages = [
       "fr-FR": "Néerlandais",
       "zh-Hant-TW": "荷蘭語",
       "pt-PT": "Holandês",
-      "ro-RO": "Olandeză",
+      "ro-RO": "Olandeza",
       "ja-JP": "オランダ語",
       "zh-Hans-CN": "荷兰语",
       "nl-NL": "Nederlands",
       "es-ES": "Neerlandés",
+      "sv-SE": "Nederländska",
     },
   },
   {
@@ -299,6 +310,24 @@ export const appLanguages = [
       "zh-Hans-CN": "西班牙语",
       "nl-NL": "Spaans",
       "es-ES": "Español",
+      "sv-SE": "Spanska",
+    },
+  },
+  {
+    code: "sv-SE",
+    label: {
+      "en-US": "Swedish",
+      "de-DE": "Schwedisch",
+      "pt-BR": "Sueco",
+      "fr-FR": "Suédois",
+      "zh-Hant-TW": "瑞典語",
+      "pt-PT": "Sueco",
+      "ro-RO": "Suedeză",
+      "ja-JP": "スウェーデン語",
+      "zh-Hans-CN": "瑞典语",
+      "nl-NL": "Zweeds",
+      "es-ES": "Sueco",
+      "sv-SE": "Svenska",
     },
   },
 ];

@@ -274,7 +274,7 @@ export const ContactsTable = ({
                       }}
                       style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
                       className={cn(
-                        "px-4 py-2 border-slate-200 bg-white shadow-none group-hover:bg-slate-100",
+                        "border-slate-200 bg-white px-4 py-2 shadow-none group-hover:bg-slate-100",
                         row.getIsSelected() && "bg-slate-100",
                         {
                           "border-r": !cell.column.getIsLastColumn(),

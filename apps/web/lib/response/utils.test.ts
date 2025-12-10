@@ -1,12 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { describe, expect, test } from "vitest";
 import { TResponse } from "@formbricks/types/responses";
-import {
-  TSurvey,
-  TSurveyOpenTextQuestion,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   buildWhereClause,
   calculateTtcTotal,
@@ -44,20 +40,8 @@ describe("Response Utils", () => {
     const mockSurvey: Partial<TSurvey> = {
       id: "survey1",
       name: "Test Survey",
-      questions: [
-        {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "Question 1" },
-          required: true,
-          choices: [
-            { id: "1", label: { default: "Option 1" } },
-            { id: "other", label: { default: "Other" } },
-          ],
-          shuffleOption: "none",
-          isDraft: false,
-        },
-      ],
+      blocks: [],
+      questions: [],
       type: "app",
       hiddenFields: { enabled: true, fieldIds: [] },
       createdAt: new Date(),
@@ -115,6 +99,7 @@ describe("Response Utils", () => {
     const baseSurvey: Partial<TSurvey> = {
       id: "s1",
       name: "Survey",
+      blocks: [],
       questions: [],
       type: "app",
       hiddenFields: { enabled: false, fieldIds: [] },
@@ -203,26 +188,33 @@ describe("Response Utils", () => {
     const textSurvey: Partial<TSurvey> = {
       id: "s2",
       name: "TextSurvey",
-      questions: [
+      blocks: [
         {
-          id: "qText",
-          type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Text Q" },
-          required: false,
-          isDraft: false,
-          charLimit: {},
-          inputType: "text",
-        },
-        {
-          id: "qNum",
-          type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Num Q" },
-          required: false,
-          isDraft: false,
-          charLimit: {},
-          inputType: "number",
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "qText",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Text Q" },
+              required: false,
+              isDraft: false,
+              charLimit: {},
+              inputType: "text",
+            },
+            {
+              id: "qNum",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Num Q" },
+              required: false,
+              isDraft: false,
+              charLimit: {},
+              inputType: "number",
+            },
+          ],
         },
       ],
+      questions: [],
       type: "app",
       hiddenFields: { enabled: false, fieldIds: [] },
       createdAt: new Date(),
@@ -232,7 +224,7 @@ describe("Response Utils", () => {
       status: "inProgress",
     };
 
-    const ops: Array<[keyof TSurveyQuestionTypeEnum | string, any, any]> = [
+    const ops: Array<[keyof TSurveyElementTypeEnum | string, any, any]> = [
       ["submitted", { op: "submitted" }, { path: ["qText"], not: Prisma.DbNull }],
       ["filledOut", { op: "filledOut" }, { path: ["qText"], not: [] }],
       ["skipped", { op: "skipped" }, "OR"],
@@ -295,18 +287,25 @@ describe("Response Utils", () => {
       const matrixSurvey: Partial<TSurvey> = {
         id: "s3",
         name: "MatrixSurvey",
-        questions: [
+        blocks: [
           {
-            id: "qM",
-            type: TSurveyQuestionTypeEnum.Matrix,
-            headline: { default: "Matrix" },
-            required: false,
-            rows: [{ default: "R1" }],
-            columns: [{ default: "C1" }],
-            shuffleOption: "none",
-            isDraft: false,
+            id: "block1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "qM",
+                type: TSurveyElementTypeEnum.Matrix,
+                headline: { default: "Matrix" },
+                required: false,
+                rows: [{ id: "r1", label: { default: "R1" } }],
+                columns: [{ id: "c1", label: { default: "C1" } }],
+                shuffleOption: "none",
+                isDraft: false,
+              },
+            ],
           },
         ],
+        questions: [],
         type: "app",
         hiddenFields: { enabled: false, fieldIds: [] },
         createdAt: new Date(),
@@ -360,34 +359,48 @@ describe("Response Utils", () => {
     });
   });
 
+  // TODO: Fix this test after the survey editor poc is merged
   describe("extractSurveyDetails", () => {
     const mockSurvey: Partial<TSurvey> = {
       id: "survey1",
       name: "Test Survey",
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "Question 1" },
-          required: true,
-          choices: [
-            { id: "1", label: { default: "Option 1" } },
-            { id: "2", label: { default: "Option 2" } },
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: { default: "Question 1" },
+              required: true,
+              choices: [
+                { id: "1", label: { default: "Option 1" } },
+                { id: "2", label: { default: "Option 2" } },
+              ],
+              shuffleOption: "none",
+              isDraft: false,
+            },
+            {
+              id: "q2",
+              type: TSurveyElementTypeEnum.Matrix,
+              headline: { default: "Matrix Question" },
+              required: true,
+              rows: [
+                { id: "r1", label: { default: "Row 1" } },
+                { id: "r2", label: { default: "Row 2" } },
+              ],
+              columns: [
+                { id: "c1", label: { default: "Column 1" } },
+                { id: "c2", label: { default: "Column 2" } },
+              ],
+              shuffleOption: "none",
+              isDraft: false,
+            },
           ],
-          shuffleOption: "none",
-          isDraft: false,
-        },
-        {
-          id: "q2",
-          type: TSurveyQuestionTypeEnum.Matrix,
-          headline: { default: "Matrix Question" },
-          required: true,
-          rows: [{ default: "Row 1" }, { default: "Row 2" }],
-          columns: [{ default: "Column 1" }, { default: "Column 2" }],
-          shuffleOption: "none",
-          isDraft: false,
         },
       ],
+      questions: [],
       type: "app",
       hiddenFields: { enabled: true, fieldIds: ["hidden1"] },
       createdAt: new Date(),
@@ -414,7 +427,7 @@ describe("Response Utils", () => {
     test("should extract survey details correctly", () => {
       const result = extractSurveyDetails(mockSurvey as TSurvey, mockResponses as TResponse[]);
       expect(result.metaDataFields).toContain("userAgent - browser");
-      expect(result.questions).toHaveLength(2); // 1 regular question + 2 matrix rows
+      expect(result.elements).toHaveLength(2); // 1 regular question + 2 matrix rows
       expect(result.hiddenFields).toContain("hidden1");
       expect(result.userAttributes).toContain("email");
     });
@@ -424,20 +437,27 @@ describe("Response Utils", () => {
     const mockSurvey: Partial<TSurvey> = {
       id: "survey1",
       name: "Test Survey",
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "Question 1" },
-          required: true,
-          choices: [
-            { id: "1", label: { default: "Option 1" } },
-            { id: "2", label: { default: "Option 2" } },
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: { default: "Question 1" },
+              required: true,
+              choices: [
+                { id: "1", label: { default: "Option 1" } },
+                { id: "2", label: { default: "Option 2" } },
+              ],
+              shuffleOption: "none",
+              isDraft: false,
+            },
           ],
-          shuffleOption: "none",
-          isDraft: false,
         },
       ],
+      questions: [],
       type: "app",
       hiddenFields: { enabled: true, fieldIds: [] },
       createdAt: new Date(),
@@ -690,9 +710,9 @@ describe("Response Utils", () => {
 });
 
 describe("extractChoiceIdsFromResponse", () => {
-  const multipleChoiceMultiQuestion: TSurveyQuestion = {
+  const multipleChoiceMultiQuestion = {
     id: "multi-choice-id",
-    type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+    type: TSurveyElementTypeEnum.MultipleChoiceMulti as typeof TSurveyElementTypeEnum.MultipleChoiceMulti,
     headline: { default: "Select multiple options" },
     required: false,
     choices: [
@@ -709,11 +729,12 @@ describe("extractChoiceIdsFromResponse", () => {
         label: { default: "Option 3", es: "Opción 3" },
       },
     ],
+    shuffleOption: "none" as const,
   };
 
-  const multipleChoiceSingleQuestion: TSurveyQuestion = {
+  const multipleChoiceSingleQuestion = {
     id: "single-choice-id",
-    type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+    type: TSurveyElementTypeEnum.MultipleChoiceSingle as typeof TSurveyElementTypeEnum.MultipleChoiceSingle,
     headline: { default: "Select one option" },
     required: false,
     choices: [
@@ -726,14 +747,15 @@ describe("extractChoiceIdsFromResponse", () => {
         label: { default: "Choice B", fr: "Choix B" },
       },
     ],
+    shuffleOption: "none" as const,
   };
 
-  const textQuestion: TSurveyOpenTextQuestion = {
+  const textQuestion = {
     id: "text-id",
-    type: TSurveyQuestionTypeEnum.OpenText,
+    type: TSurveyElementTypeEnum.OpenText as typeof TSurveyElementTypeEnum.OpenText,
     headline: { default: "What do you think?" },
     required: false,
-    inputType: "text",
+    inputType: "text" as const,
     charLimit: { enabled: false, min: 0, max: 0 },
   };
 

@@ -12,8 +12,8 @@ import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
+import { ElementsView } from "@/modules/survey/editor/components/elements-view";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
-import { QuestionsView } from "@/modules/survey/editor/components/questions-view";
 import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
@@ -80,10 +80,10 @@ export const SurveyEditor = ({
   quotas,
   isExternalUrlsAllowed,
 }: SurveyEditorProps) => {
-  const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
-  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
+  const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
-  const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
+  const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<Project>(project);
@@ -109,8 +109,10 @@ export const SurveyEditor = ({
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
 
-      if (survey.questions.length > 0) {
-        setActiveQuestionId(survey.questions[0].id);
+      // Set first element from first block
+      const firstBlock = survey.blocks[0];
+      if (firstBlock) {
+        setActiveElementId(firstBlock.elements?.[0]?.id);
       }
     }
 
@@ -135,13 +137,14 @@ export const SurveyEditor = ({
     };
   }, [localProject.id]);
 
-  // when the survey type changes, we need to reset the active question id to the first question
+  // when the survey type changes, we need to reset the active element id to the first element
   useEffect(() => {
-    if (localSurvey?.questions?.length && localSurvey.questions.length > 0) {
-      setActiveQuestionId(localSurvey.questions[0].id);
+    const firstBlock = localSurvey?.blocks[0];
+    if (firstBlock) {
+      setActiveElementId(firstBlock.elements[0]?.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey?.type, survey?.questions]);
+  }, [localSurvey?.type]);
 
   useEffect(() => {
     if (!localSurvey?.languages) return;
@@ -164,7 +167,7 @@ export const SurveyEditor = ({
         environmentId={environment.id}
         activeId={activeView}
         setActiveId={setActiveView}
-        setInvalidQuestions={setInvalidQuestions}
+        setInvalidElements={setInvalidElements}
         project={localProject}
         responseCount={responseCount}
         selectedLanguageCode={selectedLanguageCode}
@@ -186,16 +189,16 @@ export const SurveyEditor = ({
             isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
           />
 
-          {activeView === "questions" && (
-            <QuestionsView
+          {activeView === "elements" && (
+            <ElementsView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
-              activeQuestionId={activeQuestionId}
-              setActiveQuestionId={setActiveQuestionId}
+              activeElementId={activeElementId}
+              setActiveElementId={setActiveElementId}
               project={localProject}
               projectLanguages={projectLanguages}
-              invalidQuestions={invalidQuestions}
-              setInvalidQuestions={setInvalidQuestions}
+              invalidElements={invalidElements}
+              setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isMultiLanguageAllowed={isMultiLanguageAllowed}
@@ -263,7 +266,7 @@ export const SurveyEditor = ({
         <aside className="group hidden w-1/3 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
           <PreviewSurvey
             survey={localSurvey}
-            questionId={activeQuestionId}
+            elementId={activeElementId}
             project={localProject}
             environment={environment}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}

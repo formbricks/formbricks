@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
 import { checkExternalUrlsPermission } from "./check-external-urls-permission";
 
@@ -27,7 +28,7 @@ describe("checkExternalUrlsPermission", () => {
     createdBy: "user123",
     status: "draft",
     displayOption: "displayOnce",
-    questions: [],
+    blocks: [],
     endings: [],
     hiddenFields: { enabled: false },
     delay: 0,
@@ -211,15 +212,20 @@ describe("checkExternalUrlsPermission", () => {
 
     const surveyWithExternalCTA: TSurvey = {
       ...baseSurvey,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.CTA,
-          headline: createI18nString("Click here", ["en"]),
-          buttonLabel: createI18nString("Visit", ["en"]),
-          buttonExternal: true,
-          buttonUrl: "https://example.com",
-          required: false,
+          id: "block1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.CTA,
+              headline: createI18nString("Click here", ["en"]),
+              buttonLabel: createI18nString("Visit", ["en"]),
+              buttonExternal: true,
+              buttonUrl: "https://example.com",
+              required: false,
+            },
+          ],
         },
       ],
     };
@@ -238,30 +244,40 @@ describe("checkExternalUrlsPermission", () => {
 
     const oldSurvey: TSurvey = {
       ...baseSurvey,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.CTA,
-          headline: createI18nString("Click here", ["en"]),
-          buttonLabel: createI18nString("Visit", ["en"]),
-          buttonExternal: true,
-          buttonUrl: "https://example.com",
-          required: false,
+          id: "block1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.CTA,
+              headline: createI18nString("Click here", ["en"]),
+              buttonLabel: createI18nString("Visit", ["en"]),
+              buttonExternal: true,
+              buttonUrl: "https://example.com",
+              required: false,
+            },
+          ],
         },
       ],
     };
 
     const newSurvey: TSurvey = {
       ...baseSurvey,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.CTA,
-          headline: createI18nString("Click here now", ["en"]),
-          buttonLabel: createI18nString("Visit", ["en"]),
-          buttonExternal: true,
-          buttonUrl: "https://example.com",
-          required: false,
+          id: "block1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.CTA,
+              headline: createI18nString("Click here now", ["en"]),
+              buttonLabel: createI18nString("Visit", ["en"]),
+              buttonExternal: true,
+              buttonUrl: "https://example.com",
+              required: false,
+            },
+          ],
         },
       ],
     };
@@ -277,30 +293,40 @@ describe("checkExternalUrlsPermission", () => {
 
     const oldSurvey: TSurvey = {
       ...baseSurvey,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.CTA,
-          headline: createI18nString("Click here", ["en"]),
-          buttonLabel: createI18nString("Visit", ["en"]),
-          buttonExternal: false,
-          buttonUrl: "",
-          required: false,
+          id: "block1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.CTA,
+              headline: createI18nString("Click here", ["en"]),
+              buttonLabel: createI18nString("Visit", ["en"]),
+              buttonExternal: false,
+              buttonUrl: "",
+              required: false,
+            },
+          ],
         },
       ],
     };
 
     const newSurvey: TSurvey = {
       ...baseSurvey,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.CTA,
-          headline: createI18nString("Click here", ["en"]),
-          buttonLabel: createI18nString("Visit", ["en"]),
-          buttonExternal: true,
-          buttonUrl: "https://example.com",
-          required: false,
+          id: "block1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.CTA,
+              headline: createI18nString("Click here", ["en"]),
+              buttonLabel: createI18nString("Visit", ["en"]),
+              buttonExternal: true,
+              buttonUrl: "https://example.com",
+              required: false,
+            },
+          ],
         },
       ],
     };
@@ -316,30 +342,40 @@ describe("checkExternalUrlsPermission", () => {
 
     const oldSurvey: TSurvey = {
       ...baseSurvey,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.CTA,
-          headline: createI18nString("Click here", ["en"]),
-          buttonLabel: createI18nString("Visit", ["en"]),
-          buttonExternal: true,
-          buttonUrl: "https://example.com",
-          required: false,
+          id: "block1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.CTA,
+              headline: createI18nString("Click here", ["en"]),
+              buttonLabel: createI18nString("Visit", ["en"]),
+              buttonExternal: true,
+              buttonUrl: "https://example.com",
+              required: false,
+            },
+          ],
         },
       ],
     };
 
     const newSurvey: TSurvey = {
       ...baseSurvey,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.CTA,
-          headline: createI18nString("Click here", ["en"]),
-          buttonLabel: createI18nString("Visit", ["en"]),
-          buttonExternal: true,
-          buttonUrl: "https://different-url.com",
-          required: false,
+          id: "block1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.CTA,
+              headline: createI18nString("Click here", ["en"]),
+              buttonLabel: createI18nString("Visit", ["en"]),
+              buttonExternal: true,
+              buttonUrl: "https://different-url.com",
+              required: false,
+            },
+          ],
         },
       ],
     };
@@ -355,15 +391,20 @@ describe("checkExternalUrlsPermission", () => {
 
     const surveyWithInternalCTA: TSurvey = {
       ...baseSurvey,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.CTA,
-          headline: createI18nString("Click here", ["en"]),
-          buttonLabel: createI18nString("Visit", ["en"]),
-          buttonExternal: false,
-          buttonUrl: "",
-          required: false,
+          id: "block1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.CTA,
+              headline: createI18nString("Click here", ["en"]),
+              buttonLabel: createI18nString("Visit", ["en"]),
+              buttonExternal: false,
+              buttonUrl: "",
+              required: false,
+            },
+          ],
         },
       ],
     };
@@ -379,23 +420,28 @@ describe("checkExternalUrlsPermission", () => {
 
     const complexSurvey: TSurvey = {
       ...baseSurvey,
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.OpenText,
-          headline: createI18nString("Question 1", ["en"]),
-          required: false,
-          inputType: "text",
-          charLimit: { enabled: false },
-        },
-        {
-          id: "q2",
-          type: TSurveyQuestionTypeEnum.CTA,
-          headline: createI18nString("Click here", ["en"]),
-          buttonLabel: createI18nString("Visit", ["en"]),
-          buttonExternal: false,
-          buttonUrl: "",
-          required: false,
+          id: "block1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: createI18nString("Question 1", ["en"]),
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+            {
+              id: "q2",
+              type: TSurveyElementTypeEnum.CTA,
+              headline: createI18nString("Click here", ["en"]),
+              buttonLabel: createI18nString("Visit", ["en"]),
+              buttonExternal: false,
+              buttonUrl: "",
+              required: false,
+            },
+          ],
         },
       ],
       endings: [

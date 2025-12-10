@@ -7,7 +7,7 @@ import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
-import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
@@ -62,7 +62,10 @@ export const createSurvey = async (
       delete data.followUps;
     }
 
-    if (data.questions) checkForInvalidImagesInQuestions(data.questions);
+    // Validate and prepare blocks
+    if (data.blocks && data.blocks.length > 0) {
+      data.blocks = validateMediaAndPrepareBlocks(data.blocks);
+    }
 
     const survey = await prisma.survey.create({
       data: {

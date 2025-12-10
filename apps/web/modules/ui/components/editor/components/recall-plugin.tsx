@@ -18,12 +18,12 @@ import { useCallback, useEffect, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getFallbackValues, getRecallItems } from "@/lib/utils/recall";
-import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
+import { RecallItemSelect } from "@/modules/survey/components/element-form-input/components/recall-item-select";
 import { $createRecallNode, RecallNode } from "./recall-node";
 
 interface RecallPluginProps {
   localSurvey: TSurvey;
-  questionId: string;
+  elementId: string;
   selectedLanguageCode: string;
   recallItems: TSurveyRecallItem[];
   setRecallItems: (recallItems: TSurveyRecallItem[]) => void;
@@ -37,7 +37,7 @@ interface RecallPluginProps {
 
 export const RecallPlugin = ({
   localSurvey,
-  questionId,
+  elementId,
   selectedLanguageCode,
   recallItems,
   setRecallItems,
@@ -433,7 +433,7 @@ export const RecallPlugin = ({
       {showRecallItemSelect && (
         <RecallItemSelect
           localSurvey={localSurvey}
-          questionId={questionId}
+          elementId={elementId}
           addRecallItem={addRecallItem}
           setShowRecallItemSelect={setShowRecallItemSelect}
           recallItems={recallItems}

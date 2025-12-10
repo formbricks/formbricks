@@ -1,6 +1,7 @@
-import { TFunction } from "react-i18next";
+import { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
-import { TSurveyQuestionTypeEnum, ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/types";
+import { ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
 // Mock the translation function
@@ -9,8 +10,8 @@ const logicRules = getLogicRules(mockT as unknown as TFunction);
 
 describe("getLogicRules", () => {
   test("should return correct structure for question rules", () => {
-    expect(logicRules).toHaveProperty("question");
-    expect(logicRules.question).toBeInstanceOf(Object);
+    expect(logicRules).toHaveProperty("element");
+    expect(logicRules.element).toBeInstanceOf(Object);
   });
 
   test("should return correct structure for variable rules", () => {
@@ -34,7 +35,7 @@ describe("getLogicRules", () => {
 
   describe("Question Specific Rules", () => {
     test("OpenText.text", () => {
-      const openTextTextRules = logicRules.question[TSurveyQuestionTypeEnum.OpenText + ".text"];
+      const openTextTextRules = logicRules.element[TSurveyQuestionTypeEnum.OpenText + ".text"];
       expect(openTextTextRules).toBeDefined();
       expect(openTextTextRules.options).toEqual([
         {
@@ -81,7 +82,7 @@ describe("getLogicRules", () => {
     });
 
     test("OpenText.number", () => {
-      const openTextNumberRules = logicRules.question[TSurveyQuestionTypeEnum.OpenText + ".number"];
+      const openTextNumberRules = logicRules.element[TSurveyQuestionTypeEnum.OpenText + ".number"];
       expect(openTextNumberRules).toBeDefined();
       expect(openTextNumberRules.options).toEqual([
         { label: "=", value: ZSurveyLogicConditionsOperator.Enum.equals },
@@ -102,7 +103,7 @@ describe("getLogicRules", () => {
     });
 
     test("MultipleChoiceSingle", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.MultipleChoiceSingle];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.MultipleChoiceSingle];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -129,7 +130,7 @@ describe("getLogicRules", () => {
     });
 
     test("MultipleChoiceMulti", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.MultipleChoiceMulti];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.MultipleChoiceMulti];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -168,7 +169,7 @@ describe("getLogicRules", () => {
     });
 
     test("PictureSelection", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.PictureSelection];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.PictureSelection];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -207,7 +208,7 @@ describe("getLogicRules", () => {
     });
 
     test("Rating", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.Rating];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.Rating];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         { label: "=", value: ZSurveyLogicConditionsOperator.Enum.equals },
@@ -228,7 +229,7 @@ describe("getLogicRules", () => {
     });
 
     test("NPS", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.NPS];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.NPS];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         { label: "=", value: ZSurveyLogicConditionsOperator.Enum.equals },
@@ -249,7 +250,7 @@ describe("getLogicRules", () => {
     });
 
     test("CTA", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.CTA];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.CTA];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -257,14 +258,14 @@ describe("getLogicRules", () => {
           value: ZSurveyLogicConditionsOperator.Enum.isClicked,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
+          label: "mockTranslate(environments.surveys.edit.is_not_clicked)",
+          value: ZSurveyLogicConditionsOperator.Enum.isNotClicked,
         },
       ]);
     });
 
     test("Consent", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.Consent];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.Consent];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -279,7 +280,7 @@ describe("getLogicRules", () => {
     });
 
     test("Date", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.Date];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.Date];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -310,7 +311,7 @@ describe("getLogicRules", () => {
     });
 
     test("FileUpload", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.FileUpload];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.FileUpload];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -325,7 +326,7 @@ describe("getLogicRules", () => {
     });
 
     test("Ranking", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.Ranking];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.Ranking];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -340,7 +341,7 @@ describe("getLogicRules", () => {
     });
 
     test("Cal", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.Cal];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.Cal];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -355,7 +356,7 @@ describe("getLogicRules", () => {
     });
 
     test("Matrix", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.Matrix];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.Matrix];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -374,7 +375,7 @@ describe("getLogicRules", () => {
     });
 
     test("Matrix.row", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.Matrix + ".row"];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.Matrix + ".row"];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -401,7 +402,7 @@ describe("getLogicRules", () => {
     });
 
     test("Address", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.Address];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.Address];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -416,7 +417,7 @@ describe("getLogicRules", () => {
     });
 
     test("ContactInfo", () => {
-      const rules = logicRules.question[TSurveyQuestionTypeEnum.ContactInfo];
+      const rules = logicRules.element[TSurveyQuestionTypeEnum.ContactInfo];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {

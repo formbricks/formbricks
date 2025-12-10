@@ -15,8 +15,10 @@ import {
   ZResponseFilterCriteria,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteFile } from "@/modules/storage/service";
@@ -368,7 +370,7 @@ export const getResponseDownloadFile = async (
       }
     }
 
-    const { metaDataFields, questions, hiddenFields, variables, userAttributes } = extractSurveyDetails(
+    const { metaDataFields, elements, hiddenFields, variables, userAttributes } = extractSurveyDetails(
       survey,
       responses
     );
@@ -397,7 +399,7 @@ export const getResponseDownloadFile = async (
       "Notes",
       "Tags",
       ...metaDataFields,
-      ...questions.flat(),
+      ...elements.flat(),
       ...variables,
       ...hiddenFields,
       ...userAttributes,
@@ -409,7 +411,7 @@ export const getResponseDownloadFile = async (
     const jsonData = getResponsesJson(
       survey,
       responses,
-      questions,
+      elements,
       userAttributes,
       hiddenFields,
       isQuotasAllowed
@@ -505,11 +507,16 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
-    const ttc = responseInput.ttc
-      ? responseInput.finished
-        ? calculateTtcTotal(responseInput.ttc)
-        : responseInput.ttc
-      : {};
+    // merge ttc object (similar to data) to preserve TTC from previous blocks
+    const currentTtc = currentResponse.ttc;
+    const mergedTtc = responseInput.ttc
+      ? {
+          ...currentTtc,
+          ...responseInput.ttc,
+        }
+      : currentTtc;
+    // Calculate total only when finished
+    const ttc = responseInput.finished ? calculateTtcTotal(mergedTtc) : mergedTtc;
     const language = responseInput.language;
     const variables = {
       ...currentResponse.variables,
@@ -548,15 +555,15 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const fileUploadQuestions = new Set(
-    survey.questions
-      .filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload)
-      .map((q) => q.id)
+  const elements = getElementsFromBlocks(survey.blocks);
+
+  const fileUploadElements = new Set(
+    elements.filter((element) => element.type === TSurveyElementTypeEnum.FileUpload).map((q) => q.id)
   );
 
   const fileUrls = Object.entries(response.data)
-    .filter(([questionId]) => fileUploadQuestions.has(questionId))
-    .flatMap(([, questionResponse]) => questionResponse as string[]);
+    .filter(([elementId]) => fileUploadElements.has(elementId))
+    .flatMap(([, elementResponse]) => elementResponse as string[]);
 
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {

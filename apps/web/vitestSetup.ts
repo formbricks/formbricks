@@ -220,6 +220,7 @@ vi.mock("@/lib/constants", () => ({
     "ja-JP",
     "zh-Hans-CN",
     "es-ES",
+    "sv-SE",
   ],
   DEFAULT_LOCALE: "en-US",
   BREVO_API_KEY: "mock-brevo-api-key",

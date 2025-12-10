@@ -15,7 +15,7 @@ import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
-import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
+import { FallbackInput } from "@/modules/survey/components/element-form-input/components/fallback-input";
 import "@/modules/ui/components/editor/styles-editor-frontend.css";
 import "@/modules/ui/components/editor/styles-editor.css";
 import { exampleTheme } from "../lib/example-theme";
@@ -51,7 +51,7 @@ export type TextEditorProps = {
   onEmptyChange?: (isEmpty: boolean) => void;
   isInvalid?: boolean;
   localSurvey?: TSurvey;
-  questionId?: string;
+  elementId?: string;
   selectedLanguageCode?: string;
   fallbacks?: { [id: string]: string };
   addFallback?: () => void;
@@ -109,7 +109,7 @@ export const Editor = (props: TextEditorProps) => {
               firstRender={props.firstRender}
               setFirstRender={props.setFirstRender}
               localSurvey={props.localSurvey}
-              questionId={props.questionId}
+              elementId={props.elementId}
               selectedLanguageCode={props.selectedLanguageCode}
               setShowRecallItemSelect={setShowRecallItemSelect}
               recallItemsCount={recallItems.length}
@@ -141,10 +141,10 @@ export const Editor = (props: TextEditorProps) => {
               {props.isExternalUrlsAllowed && <LinkPlugin />}
               {props.isExternalUrlsAllowed && <AutoLinkPlugin />}
               {props.autoFocus && <AutoFocusPlugin />}
-              {props.localSurvey && props.questionId && props.selectedLanguageCode && (
+              {props.localSurvey && props.elementId && props.selectedLanguageCode && (
                 <RecallPlugin
                   localSurvey={props.localSurvey}
-                  questionId={props.questionId}
+                  elementId={props.elementId}
                   selectedLanguageCode={props.selectedLanguageCode}
                   recallItems={recallItems}
                   setRecallItems={setRecallItems}

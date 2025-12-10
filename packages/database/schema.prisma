@@ -340,6 +340,8 @@ model Survey {
   welcomeCard         Json                    @default("{\"enabled\": false}")
   /// [SurveyQuestions]
   questions           Json                    @default("[]")
+  /// [SurveyBlocks]
+  blocks              Json[]                  @default([])
   /// [SurveyEnding]
   endings             Json[]                  @default([])
   /// [SurveyHiddenFields]

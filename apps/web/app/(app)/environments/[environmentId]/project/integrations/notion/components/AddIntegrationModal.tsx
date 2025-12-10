@@ -12,7 +12,8 @@ import {
   TIntegrationNotionConfigData,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import {
@@ -21,10 +22,10 @@ import {
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/project/integrations/notion/constants";
 import NotionLogo from "@/images/notion.png";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
-import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { getElementTypes } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -37,6 +38,59 @@ import {
 } from "@/modules/ui/components/dialog";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
+
+const MappingErrorMessage = ({
+  error,
+  col,
+  elem,
+  t,
+}: {
+  error: { type: string; msg?: React.ReactNode | string } | null | undefined;
+  col: { id: string; name: string; type: string };
+  elem: { id: string; name: string; type: string };
+  t: ReturnType<typeof useTranslation>["t"];
+}) => {
+  const showErrorMsg = useMemo(() => {
+    switch (error?.type) {
+      case ERRORS.UNSUPPORTED_TYPE:
+        return (
+          <>
+            -{" "}
+            {t("environments.integrations.notion.col_name_of_type_is_not_supported", {
+              col_name: col.name,
+              type: col.type,
+            })}
+          </>
+        );
+      case ERRORS.MAPPING:
+        const element = getElementTypes(t).find((et) => et.id === elem.type);
+        if (!element) return null;
+        return (
+          <>
+            {t("environments.integrations.notion.que_name_of_type_cant_be_mapped_to", {
+              que_name: elem.name,
+              question_label: element.label,
+              col_name: col.name,
+              col_type: col.type,
+              mapped_type: TYPE_MAPPING[element.id].join(" ,"),
+            })}
+          </>
+        );
+      default:
+        return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error, col, elem, t]);
+
+  if (!error) return null;
+
+  return (
+    <div className="my-4 w-full rounded-lg bg-red-100 p-4 text-sm text-red-800">
+      <span className="mb-2 block">{error.type}</span>
+      {showErrorMsg}
+    </div>
+  );
+};
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -64,7 +118,7 @@ export const AddIntegrationModal = ({
   const [mapping, setMapping] = useState<
     {
       column: { id: string; name: string; type: string };
-      question: { id: string; name: string; type: string };
+      element: { id: string; name: string; type: string };
       error?: {
         type: string;
         msg: React.ReactNode | string;
@@ -73,7 +127,7 @@ export const AddIntegrationModal = ({
   >([
     {
       column: { id: "", name: "", type: "" },
-      question: { id: "", name: "", type: "" },
+      element: { id: "", name: "", type: "" },
     },
   ]);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -86,11 +140,16 @@ export const AddIntegrationModal = ({
     mapping: [
       {
         column: { id: "", name: "", type: "" },
-        question: { id: "", name: "", type: "" },
+        element: { id: "", name: "", type: "" },
       },
     ],
     createdAt: new Date(),
   };
+
+  const elements = useMemo(
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
+    [selectedSurvey]
+  );
 
   const notionIntegrationData: TIntegrationInput = {
     type: "notion",
@@ -119,12 +178,12 @@ export const AddIntegrationModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDatabase?.id]);
 
-  const questionItems = useMemo(() => {
-    const questions = selectedSurvey
-      ? replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((q) => ({
-          id: q.id,
-          name: getTextContent(getLocalizedValue(q.headline, "default")),
-          type: q.type,
+  const elementItems = useMemo(() => {
+    const mappedElements = selectedSurvey
+      ? elements.map((el) => ({
+          id: el.id,
+          name: getTextContent(recallToHeadline(el.headline, selectedSurvey, false, "default")["default"]),
+          type: el.type,
         }))
       : [];
 
@@ -132,31 +191,31 @@ export const AddIntegrationModal = ({
       selectedSurvey?.variables.map((variable) => ({
         id: variable.id,
         name: variable.name,
-        type: TSurveyQuestionTypeEnum.OpenText,
+        type: TSurveyElementTypeEnum.OpenText,
       })) || [];
 
     const hiddenFields =
       selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
         id: fId,
         name: `${t("common.hidden_field")} : ${fId}`,
-        type: TSurveyQuestionTypeEnum.OpenText,
+        type: TSurveyElementTypeEnum.OpenText,
       })) || [];
     const Metadata = [
       {
         id: "metadata",
         name: t("common.metadata"),
-        type: TSurveyQuestionTypeEnum.OpenText,
+        type: TSurveyElementTypeEnum.OpenText,
       },
     ];
     const createdAt = [
       {
         id: "createdAt",
         name: t("common.created_at"),
-        type: TSurveyQuestionTypeEnum.Date,
+        type: TSurveyElementTypeEnum.Date,
       },
     ];
 
-    return [...questions, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
+    return [...mappedElements, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 
@@ -190,7 +249,7 @@ export const AddIntegrationModal = ({
         throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
 
-      if (mapping.length === 1 && (!mapping[0].question.id || !mapping[0].column.id)) {
+      if (mapping.length === 1 && (!mapping[0].element.id || !mapping[0].column.id)) {
         throw new Error(t("environments.integrations.notion.please_select_at_least_one_mapping"));
       }
 
@@ -199,8 +258,8 @@ export const AddIntegrationModal = ({
       }
 
       if (
-        mapping.filter((m) => m.column.id && !m.question.id).length >= 1 ||
-        mapping.filter((m) => m.question.id && !m.column.id).length >= 1
+        mapping.filter((m) => m.column.id && !m.element.id).length >= 1 ||
+        mapping.filter((m) => m.element.id && !m.column.id).length >= 1
       ) {
         throw new Error(
           t("environments.integrations.notion.please_complete_mapping_fields_with_notion_property")
@@ -261,23 +320,23 @@ export const AddIntegrationModal = ({
     setSelectedDatabase(null);
     setSelectedSurvey(null);
   };
-  const getFilteredQuestionItems = (selectedIdx) => {
-    const selectedQuestionIds = mapping.filter((_, idx) => idx !== selectedIdx).map((m) => m.question.id);
+  const getFilteredElementItems = (selectedIdx) => {
+    const selectedElementIds = mapping.filter((_, idx) => idx !== selectedIdx).map((m) => m.element.id);
 
-    return questionItems.filter((q) => !selectedQuestionIds.includes(q.id));
+    return elementItems.filter((el) => !selectedElementIds.includes(el.id));
   };
 
   const createCopy = (item) => structuredClone(item);
 
   const MappingRow = ({ idx }: { idx: number }) => {
-    const filteredQuestionItems = getFilteredQuestionItems(idx);
+    const filteredElementItems = getFilteredElementItems(idx);
 
     const addRow = () => {
       setMapping((prev) => [
         ...prev,
         {
           column: { id: "", name: "", type: "" },
-          question: { id: "", name: "", type: "" },
+          element: { id: "", name: "", type: "" },
         },
       ]);
     };
@@ -288,49 +347,6 @@ export const AddIntegrationModal = ({
       });
     };
 
-    const ErrorMsg = ({ error, col, ques }) => {
-      const showErrorMsg = useMemo(() => {
-        switch (error?.type) {
-          case ERRORS.UNSUPPORTED_TYPE:
-            return (
-              <>
-                -{" "}
-                {t("environments.integrations.notion.col_name_of_type_is_not_supported", {
-                  col_name: col.name,
-                  type: col.type,
-                })}
-              </>
-            );
-          case ERRORS.MAPPING:
-            const question = getQuestionTypes(t).find((qt) => qt.id === ques.type);
-            if (!question) return null;
-            return (
-              <>
-                {t("environments.integrations.notion.que_name_of_type_cant_be_mapped_to", {
-                  que_name: ques.name,
-                  question_label: question.label,
-                  col_name: col.name,
-                  col_type: col.type,
-                  mapped_type: TYPE_MAPPING[question.id].join(" ,"),
-                })}
-              </>
-            );
-          default:
-            return null;
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [error]);
-
-      if (!error) return null;
-
-      return (
-        <div className="my-4 w-full rounded-lg bg-red-100 p-4 text-sm text-red-800">
-          <span className="mb-2 block">{error.type}</span>
-          {showErrorMsg}
-        </div>
-      );
-    };
-
     const getFilteredDbItems = () => {
       const colMapping = mapping.map((m) => m.column.id);
       return dbItems.filter((item) => !colMapping.includes(item.id));
@@ -338,19 +354,20 @@ export const AddIntegrationModal = ({
 
     return (
       <div className="w-full">
-        <ErrorMsg
+        <MappingErrorMessage
           key={idx}
           error={mapping[idx]?.error}
           col={mapping[idx].column}
-          ques={mapping[idx].question}
+          elem={mapping[idx].element}
+          t={t}
         />
         <div className="flex w-full items-center space-x-2">
           <div className="flex w-full items-center">
             <div className="max-w-full flex-1">
               <DropdownSelector
                 placeholder={t("environments.integrations.notion.select_a_survey_question")}
-                items={filteredQuestionItems}
-                selectedItem={mapping?.[idx]?.question}
+                items={filteredElementItems}
+                selectedItem={mapping?.[idx]?.element}
                 setSelectedItem={(item) => {
                   setMapping((prev) => {
                     const copy = createCopy(prev);
@@ -362,7 +379,7 @@ export const AddIntegrationModal = ({
                           error: {
                             type: ERRORS.UNSUPPORTED_TYPE,
                           },
-                          question: item,
+                          element: item,
                         };
                         return copy;
                       }
@@ -374,7 +391,7 @@ export const AddIntegrationModal = ({
                           error: {
                             type: ERRORS.MAPPING,
                           },
-                          question: item,
+                          element: item,
                         };
                         return copy;
                       }
@@ -382,13 +399,13 @@ export const AddIntegrationModal = ({
 
                     copy[idx] = {
                       ...copy[idx],
-                      question: item,
+                      element: item,
                       error: null,
                     };
                     return copy;
                   });
                 }}
-                disabled={questionItems.length === 0}
+                disabled={elementItems.length === 0}
               />
             </div>
             <div className="h-px w-4 border-t border-t-slate-300" />
@@ -400,9 +417,9 @@ export const AddIntegrationModal = ({
                 setSelectedItem={(item) => {
                   setMapping((prev) => {
                     const copy = createCopy(prev);
-                    const ques = copy[idx].question;
-                    if (ques.id) {
-                      const isValidQuesType = TYPE_MAPPING[ques.type].includes(item.type);
+                    const elem = copy[idx].element;
+                    if (elem.id) {
+                      const isValidElemType = TYPE_MAPPING[elem.type].includes(item.type);
 
                       if (UNSUPPORTED_TYPES_BY_NOTION.includes(item.type)) {
                         copy[idx] = {
@@ -415,7 +432,7 @@ export const AddIntegrationModal = ({
                         return copy;
                       }
 
-                      if (!isValidQuesType) {
+                      if (!isValidElemType) {
                         copy[idx] = {
                           ...copy[idx],
                           error: {
