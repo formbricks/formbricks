@@ -1097,6 +1097,8 @@ checksums:
     environments/settings/teams/please_fill_all_project_fields: 6712059df63c432ecd31f3c52b8e4d87
     environments/settings/teams/read: 2494ca23d10e5b6381eb271aceeb5270
     environments/settings/teams/read_write: 278a90dade128198d4c93ac00c345320
+    environments/settings/teams/select_member: 7f4a38312aabbbe3fe92756b57bd5d75
+    environments/settings/teams/select_project: 6e4f4a24178660851d9ae0874706be9f
     environments/settings/teams/team_admin: 5df68214685738029af678ae1d5912bb
     environments/settings/teams/team_created_successfully: 45f83048fcabf466551144858a761eca
     environments/settings/teams/team_deleted_successfully: 972c86b0abe87f229f7bf1a691c0a253

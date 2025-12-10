@@ -167,6 +167,7 @@ export const OrganizationActions = ({
         environmentId={environmentId}
         teams={teams}
         isStorageConfigured={isStorageConfigured}
+        isOwnerOrManager={isOwnerOrManager}
         isTeamAdmin={isTeamAdmin}
         userAdminTeamIds={userAdminTeamIds}
       />

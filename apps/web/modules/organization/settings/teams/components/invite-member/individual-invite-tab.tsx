@@ -28,7 +28,7 @@ interface IndividualInviteTabProps {
   isFormbricksCloud: boolean;
   environmentId: string;
   membershipRole?: TOrganizationRole;
-  isTeamAdmin: boolean;
+  showTeamAdminRestrictions: boolean;
 }
 
 export const IndividualInviteTab = ({
@@ -39,13 +39,13 @@ export const IndividualInviteTab = ({
   isFormbricksCloud,
   environmentId,
   membershipRole,
-  isTeamAdmin,
+  showTeamAdminRestrictions,
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
     email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email" }),
     role: ZOrganizationRole,
-    teamIds: isTeamAdmin
+    teamIds: showTeamAdminRestrictions
       ? z.array(ZId).min(1, { message: "Team admins must select at least one team" })
       : z.array(ZId),
   });
@@ -57,7 +57,7 @@ export const IndividualInviteTab = ({
 
   // Determine default role based on permissions
   let defaultRole: TOrganizationRole = "owner";
-  if (isTeamAdmin || isAccessControlAllowed) {
+  if (showTeamAdminRestrictions || isAccessControlAllowed) {
     defaultRole = "member";
   }
 
@@ -116,7 +116,7 @@ export const IndividualInviteTab = ({
           {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
         </div>
         <div>
-          {isTeamAdmin ? (
+          {showTeamAdminRestrictions ? (
             <div className="flex flex-col space-y-2">
               <Label htmlFor="memberRoleSelect">{t("environments.settings.teams.organization_role")}</Label>
               <Input value={t("environments.settings.teams.member")} disabled />

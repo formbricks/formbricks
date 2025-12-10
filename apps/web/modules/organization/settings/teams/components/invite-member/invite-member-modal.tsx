@@ -26,6 +26,7 @@ interface InviteMemberModalProps {
   environmentId: string;
   membershipRole?: TOrganizationRole;
   isStorageConfigured: boolean;
+  isOwnerOrManager: boolean;
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
 }
@@ -40,6 +41,7 @@ export const InviteMemberModal = ({
   environmentId,
   membershipRole,
   isStorageConfigured,
+  isOwnerOrManager,
   isTeamAdmin,
   userAdminTeamIds,
 }: InviteMemberModalProps) => {
@@ -47,8 +49,12 @@ export const InviteMemberModal = ({
 
   const { t } = useTranslation();
 
+  const showTeamAdminRestrictions = !isOwnerOrManager && isTeamAdmin;
+
   const filteredTeams =
-    isTeamAdmin && userAdminTeamIds ? teams.filter((t) => userAdminTeamIds.includes(t.id)) : teams;
+    showTeamAdminRestrictions && userAdminTeamIds
+      ? teams.filter((t) => userAdminTeamIds.includes(t.id))
+      : teams;
 
   const tabs = {
     individual: (
@@ -60,7 +66,7 @@ export const InviteMemberModal = ({
         isFormbricksCloud={isFormbricksCloud}
         teams={filteredTeams}
         membershipRole={membershipRole}
-        isTeamAdmin={isTeamAdmin}
+        showTeamAdminRestrictions={showTeamAdminRestrictions}
       />
     ),
     bulk: (
@@ -83,7 +89,7 @@ export const InviteMemberModal = ({
         </DialogHeader>
 
         <DialogBody className="flex flex-col gap-6" unconstrained>
-          {!isTeamAdmin && (
+          {!showTeamAdminRestrictions && (
             <TabToggle
               id="type"
               options={[
@@ -94,7 +100,7 @@ export const InviteMemberModal = ({
               defaultSelected={type}
             />
           )}
-          {isTeamAdmin ? tabs.individual : tabs[type]}
+          {showTeamAdminRestrictions ? tabs.individual : tabs[type]}
         </DialogBody>
       </DialogContent>
     </Dialog>
