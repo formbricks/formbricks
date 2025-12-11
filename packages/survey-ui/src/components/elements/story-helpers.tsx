@@ -1,4 +1,4 @@
-import type { Decorator } from "@storybook/react";
+import type { Decorator, StoryContext } from "@storybook/react";
 import React, { useEffect, useState } from "react";
 
 // ============================================================================
@@ -372,14 +372,20 @@ const CSS_VAR_MAP: CSSVarMapping = {
   checkboxInputColor: "--fb-checkbox-input-color",
 };
 
-export function createCSSVariablesDecorator<T>(
+export function createCSSVariablesDecorator<T extends Record<string, unknown> = Record<string, unknown>>(
   width = "600px",
   additionalMappings?: CSSVarMapping
 ): Decorator<T> {
   const fullMapping = { ...CSS_VAR_MAP, ...additionalMappings };
 
-  return (Story, context) => {
-    const args = context.args as Record<string, string | undefined>;
+  function CSSVariablesDecorator(Story: React.ComponentType, context: StoryContext<T>): React.ReactElement {
+    // Storybook's Decorator type doesn't properly infer args type, so we safely extract it
+    // Access args through a type-safe helper
+    interface ContextWithArgs {
+      args?: T;
+    }
+    const safeContext = context as unknown as ContextWithArgs;
+    const args = (safeContext.args ?? {}) as Record<string, string | undefined>;
 
     const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {};
 
@@ -394,18 +400,22 @@ export function createCSSVariablesDecorator<T>(
         <Story />
       </div>
     );
-  };
+  }
+
+  CSSVariablesDecorator.displayName = "CSSVariablesDecorator";
+  return CSSVariablesDecorator;
 }
 
 // ============================================================================
 // Stateful Render Function Creator
 // ============================================================================
 
-export function createStatefulRender<TProps extends { value?: any; onChange?: (v: any) => void }>(
-  Component: React.ComponentType<TProps>
-) {
-  return function Render(args: TProps) {
-    const [value, setValue] = useState(args.value);
+export function createStatefulRender<
+  TValue,
+  TProps extends { value?: TValue; onChange?: (v: TValue) => void },
+>(Component: React.ComponentType<TProps>): (args: TProps) => React.ReactElement {
+  function StatefulRender(args: TProps): React.ReactElement {
+    const [value, setValue] = useState<TValue | undefined>(args.value);
 
     useEffect(() => {
       setValue(args.value);
@@ -415,11 +425,14 @@ export function createStatefulRender<TProps extends { value?: any; onChange?: (v
       <Component
         {...args}
         value={value}
-        onChange={(v: any) => {
+        onChange={(v: TValue) => {
           setValue(v);
           args.onChange?.(v);
         }}
       />
     );
-  };
+  }
+
+  StatefulRender.displayName = "StatefulRender";
+  return StatefulRender;
 }
