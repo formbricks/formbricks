@@ -290,7 +290,7 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
       body: JSON.stringify({
         licenseKey: env.ENTERPRISE_LICENSE_KEY,
         usage: { responseCount },
-        instanceId: E2E_TESTING ? null : instanceId,
+        instanceId,
       }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
