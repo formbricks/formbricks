@@ -326,6 +326,7 @@ checksums:
     common/saas: f01686245bcfb35a3590ab56db677bdb
     common/sales: 38758eb50094cd8190a71fe67be4d647
     common/save: f7a2929f33bc420195e59ac5a8bcd454
+    common/save_as_draft: b1b38812110113627d141db981fb1b12
     common/save_changes: 53dd9f4f0a4accc822fa5c1f2f6d118a
     common/saving: 27ad05746d65e2f3f17d327eb181725d
     common/search: 49dd6c21604b5e8d4153ff1aff2177e1
