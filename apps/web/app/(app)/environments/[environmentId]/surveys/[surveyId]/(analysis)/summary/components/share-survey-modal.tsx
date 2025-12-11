@@ -3,7 +3,7 @@
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   Code2Icon,
-  LinkIcon,
+  Link2Icon,
   MailIcon,
   QrCodeIcon,
   Settings,
@@ -22,6 +22,7 @@ import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/survey
 import { EmailTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/email-tab";
 import { LinkSettingsTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/link-settings-tab";
 import { PersonalLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/personal-links-tab";
+import { PrettyUrlTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/pretty-url-tab";
 import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
 import { SocialMediaTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/social-media-tab";
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
@@ -86,7 +87,7 @@ export const ShareSurveyModal = ({
         id: ShareViaType.ANON_LINKS,
         type: LinkTabsType.SHARE_VIA,
         label: t("environments.surveys.share.anonymous_links.nav_title"),
-        icon: LinkIcon,
+        icon: Link2Icon,
         title: t("environments.surveys.share.anonymous_links.nav_title"),
         description: t("environments.surveys.share.anonymous_links.description"),
         componentType: AnonymousLinksTab,
@@ -179,6 +180,16 @@ export const ShareSurveyModal = ({
         description: t("environments.surveys.share.link_settings.description"),
         componentType: LinkSettingsTab,
         componentProps: { isReadOnly, locale: user.locale, isStorageConfigured },
+      },
+      {
+        id: ShareSettingsType.PRETTY_URL,
+        type: LinkTabsType.SHARE_SETTING,
+        label: t("environments.surveys.share.pretty_url.title"),
+        icon: Link2Icon,
+        title: t("environments.surveys.share.pretty_url.title"),
+        description: t("environments.surveys.share.pretty_url.description"),
+        componentType: PrettyUrlTab,
+        componentProps: { survey, publicDomain, isReadOnly },
       },
     ],
     [
