@@ -13,7 +13,6 @@ import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import {
   mockActionClass,
@@ -45,11 +44,6 @@ vi.mock("@/lib/organization/service", () => ({
   subscribeOrganizationMembersToSurveyResponses: vi.fn(),
 }));
 
-// Mock posthogServer
-vi.mock("@/lib/posthogServer", () => ({
-  capturePosthogEnvironmentEvent: vi.fn(),
-}));
-
 // Mock actionClass service
 vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
@@ -68,7 +62,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![0].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -82,7 +76,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![0].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -96,7 +90,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![1].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -110,7 +104,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![1].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -124,7 +118,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[2].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![2].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -138,7 +132,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![3].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -152,7 +146,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![3].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -166,7 +160,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![4].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -180,7 +174,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![4].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -194,7 +188,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[5].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![5].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -647,7 +641,6 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
-      expect(capturePosthogEnvironmentEvent).toHaveBeenCalled();
     });
 
     test("creates a private segment for app surveys", async () => {

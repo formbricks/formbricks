@@ -11,6 +11,7 @@ export const getSurveyQuestions = reactCache(async (surveyId: string) => {
       select: {
         environmentId: true,
         questions: true,
+        blocks: true,
       },
     });
 

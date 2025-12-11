@@ -3,19 +3,21 @@ import { TFunction } from "i18next";
 import { logger } from "@formbricks/logger";
 import { TXMTemplate } from "@formbricks/types/templates";
 import {
-  buildCTAQuestion,
-  buildNPSQuestion,
-  buildOpenTextQuestion,
-  buildRatingQuestion,
-  getDefaultEndingCard,
-} from "@/app/lib/survey-builder";
+  buildBlock,
+  buildCTAElement,
+  buildNPSElement,
+  buildOpenTextElement,
+  buildRatingElement,
+  createBlockJumpLogic,
+} from "@/app/lib/survey-block-builder";
+import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 
 export const getXMSurveyDefault = (t: TFunction): TXMTemplate => {
   try {
     return {
       name: "",
       endings: [getDefaultEndingCard([], t)],
-      questions: [],
+      blocks: [],
       styling: {
         overwriteThemeStyling: true,
       },
@@ -30,25 +32,40 @@ const npsSurvey = (t: TFunction): TXMTemplate => {
   return {
     ...getXMSurveyDefault(t),
     name: t("templates.nps_survey_name"),
-    questions: [
-      buildNPSQuestion({
-        headline: t("templates.nps_survey_question_1_headline"),
-        required: true,
-        lowerLabel: t("templates.nps_survey_question_1_lower_label"),
-        upperLabel: t("templates.nps_survey_question_1_upper_label"),
-        isColorCodingEnabled: true,
+    blocks: [
+      buildBlock({
+        name: "Block 1",
+        elements: [
+          buildNPSElement({
+            headline: t("templates.nps_survey_question_1_headline"),
+            required: true,
+            lowerLabel: t("templates.nps_survey_question_1_lower_label"),
+            upperLabel: t("templates.nps_survey_question_1_upper_label"),
+            isColorCodingEnabled: true,
+          }),
+        ],
         t,
       }),
-      buildOpenTextQuestion({
-        headline: t("templates.nps_survey_question_2_headline"),
-        required: false,
-        inputType: "text",
+      buildBlock({
+        name: "Block 2",
+        elements: [
+          buildOpenTextElement({
+            headline: t("templates.nps_survey_question_2_headline"),
+            required: false,
+            inputType: "text",
+          }),
+        ],
         t,
       }),
-      buildOpenTextQuestion({
-        headline: t("templates.nps_survey_question_3_headline"),
-        required: false,
-        inputType: "text",
+      buildBlock({
+        name: "Block 3",
+        elements: [
+          buildOpenTextElement({
+            headline: t("templates.nps_survey_question_3_headline"),
+            required: false,
+            inputType: "text",
+          }),
+        ],
         t,
       }),
     ],
@@ -56,15 +73,27 @@ const npsSurvey = (t: TFunction): TXMTemplate => {
 };
 
 const starRatingSurvey = (t: TFunction): TXMTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId()];
+  const reusableElementIds = [createId(), createId(), createId()];
+  const block3Id = createId(); // Pre-generate Block 3 ID for logic reference
   const defaultSurvey = getXMSurveyDefault(t);
 
   return {
     ...defaultSurvey,
     name: t("templates.star_rating_survey_name"),
-    questions: [
-      buildRatingQuestion({
-        id: reusableQuestionIds[0],
+    blocks: [
+      buildBlock({
+        name: "Block 1",
+        elements: [
+          buildRatingElement({
+            id: reusableElementIds[0],
+            range: 5,
+            scale: "number",
+            headline: t("templates.star_rating_survey_question_1_headline"),
+            required: true,
+            lowerLabel: t("templates.star_rating_survey_question_1_lower_label"),
+            upperLabel: t("templates.star_rating_survey_question_1_upper_label"),
+          }),
+        ],
         logic: [
           {
             id: createId(),
@@ -75,8 +104,8 @@ const starRatingSurvey = (t: TFunction): TXMTemplate => {
                 {
                   id: createId(),
                   leftOperand: {
-                    value: reusableQuestionIds[0],
-                    type: "question",
+                    value: reusableElementIds[0],
+                    type: "element",
                   },
                   operator: "isLessThanOrEqual",
                   rightOperand: {
@@ -89,64 +118,44 @@ const starRatingSurvey = (t: TFunction): TXMTemplate => {
             actions: [
               {
                 id: createId(),
-                objective: "jumpToQuestion",
-                target: reusableQuestionIds[2],
+                objective: "jumpToBlock",
+                target: block3Id,
               },
             ],
           },
         ],
-        range: 5,
-        scale: "number",
-        headline: t("templates.star_rating_survey_question_1_headline"),
-        required: true,
-        lowerLabel: t("templates.star_rating_survey_question_1_lower_label"),
-        upperLabel: t("templates.star_rating_survey_question_1_upper_label"),
         t,
       }),
-      buildCTAQuestion({
-        id: reusableQuestionIds[1],
-        subheader: t("templates.star_rating_survey_question_2_html"),
-        logic: [
-          {
-            id: createId(),
-            conditions: {
-              id: createId(),
-              connector: "and",
-              conditions: [
-                {
-                  id: createId(),
-                  leftOperand: {
-                    value: reusableQuestionIds[1],
-                    type: "question",
-                  },
-                  operator: "isClicked",
-                },
-              ],
-            },
-            actions: [
-              {
-                id: createId(),
-                objective: "jumpToQuestion",
-                target: defaultSurvey.endings[0].id,
-              },
-            ],
-          },
+      buildBlock({
+        name: "Block 2",
+        elements: [
+          buildCTAElement({
+            id: reusableElementIds[1],
+            subheader: t("templates.star_rating_survey_question_2_html"),
+            headline: t("templates.star_rating_survey_question_2_headline"),
+            required: false,
+            buttonUrl: "https://formbricks.com/github",
+            buttonExternal: true,
+            ctaButtonLabel: t("templates.star_rating_survey_question_2_button_label"),
+          }),
         ],
-        headline: t("templates.star_rating_survey_question_2_headline"),
-        required: true,
-        buttonUrl: "https://formbricks.com/github",
-        buttonLabel: t("templates.star_rating_survey_question_2_button_label"),
-        buttonExternal: true,
+        logic: [createBlockJumpLogic(reusableElementIds[1], defaultSurvey.endings[0].id, "isClicked")],
         t,
       }),
-      buildOpenTextQuestion({
-        id: reusableQuestionIds[2],
-        headline: t("templates.star_rating_survey_question_3_headline"),
-        required: true,
-        subheader: t("templates.star_rating_survey_question_3_subheader"),
+      buildBlock({
+        id: block3Id,
+        name: "Block 3",
+        elements: [
+          buildOpenTextElement({
+            id: reusableElementIds[2],
+            headline: t("templates.star_rating_survey_question_3_headline"),
+            required: true,
+            subheader: t("templates.star_rating_survey_question_3_subheader"),
+            placeholder: t("templates.star_rating_survey_question_3_placeholder"),
+            inputType: "text",
+          }),
+        ],
         buttonLabel: t("templates.star_rating_survey_question_3_button_label"),
-        placeholder: t("templates.star_rating_survey_question_3_placeholder"),
-        inputType: "text",
         t,
       }),
     ],
@@ -154,15 +163,27 @@ const starRatingSurvey = (t: TFunction): TXMTemplate => {
 };
 
 const csatSurvey = (t: TFunction): TXMTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId()];
+  const reusableElementIds = [createId(), createId(), createId()];
+  const block3Id = createId(); // Pre-generate Block 3 ID for logic reference
   const defaultSurvey = getXMSurveyDefault(t);
 
   return {
     ...defaultSurvey,
     name: t("templates.csat_survey_name"),
-    questions: [
-      buildRatingQuestion({
-        id: reusableQuestionIds[0],
+    blocks: [
+      buildBlock({
+        name: "Block 1",
+        elements: [
+          buildRatingElement({
+            id: reusableElementIds[0],
+            range: 5,
+            scale: "smiley",
+            headline: t("templates.csat_survey_question_1_headline"),
+            required: true,
+            lowerLabel: t("templates.csat_survey_question_1_lower_label"),
+            upperLabel: t("templates.csat_survey_question_1_upper_label"),
+          }),
+        ],
         logic: [
           {
             id: createId(),
@@ -173,8 +194,8 @@ const csatSurvey = (t: TFunction): TXMTemplate => {
                 {
                   id: createId(),
                   leftOperand: {
-                    value: reusableQuestionIds[0],
-                    type: "question",
+                    value: reusableElementIds[0],
+                    type: "element",
                   },
                   operator: "isLessThanOrEqual",
                   rightOperand: {
@@ -187,60 +208,40 @@ const csatSurvey = (t: TFunction): TXMTemplate => {
             actions: [
               {
                 id: createId(),
-                objective: "jumpToQuestion",
-                target: reusableQuestionIds[2],
+                objective: "jumpToBlock",
+                target: block3Id,
               },
             ],
           },
         ],
-        range: 5,
-        scale: "smiley",
-        headline: t("templates.csat_survey_question_1_headline"),
-        required: true,
-        lowerLabel: t("templates.csat_survey_question_1_lower_label"),
-        upperLabel: t("templates.csat_survey_question_1_upper_label"),
         t,
       }),
-      buildOpenTextQuestion({
-        id: reusableQuestionIds[1],
-        logic: [
-          {
-            id: createId(),
-            conditions: {
-              id: createId(),
-              connector: "and",
-              conditions: [
-                {
-                  id: createId(),
-                  leftOperand: {
-                    value: reusableQuestionIds[1],
-                    type: "question",
-                  },
-                  operator: "isSubmitted",
-                },
-              ],
-            },
-            actions: [
-              {
-                id: createId(),
-                objective: "jumpToQuestion",
-                target: defaultSurvey.endings[0].id,
-              },
-            ],
-          },
+      buildBlock({
+        name: "Block 2",
+        elements: [
+          buildOpenTextElement({
+            id: reusableElementIds[1],
+            headline: t("templates.csat_survey_question_2_headline"),
+            required: false,
+            placeholder: t("templates.csat_survey_question_2_placeholder"),
+            inputType: "text",
+          }),
         ],
-        headline: t("templates.csat_survey_question_2_headline"),
-        required: false,
-        placeholder: t("templates.csat_survey_question_2_placeholder"),
-        inputType: "text",
+        logic: [createBlockJumpLogic(reusableElementIds[1], defaultSurvey.endings[0].id, "isSubmitted")],
         t,
       }),
-      buildOpenTextQuestion({
-        id: reusableQuestionIds[2],
-        headline: t("templates.csat_survey_question_3_headline"),
-        required: false,
-        placeholder: t("templates.csat_survey_question_3_placeholder"),
-        inputType: "text",
+      buildBlock({
+        id: block3Id,
+        name: "Block 3",
+        elements: [
+          buildOpenTextElement({
+            id: reusableElementIds[2],
+            headline: t("templates.csat_survey_question_3_headline"),
+            required: false,
+            placeholder: t("templates.csat_survey_question_3_placeholder"),
+            inputType: "text",
+          }),
+        ],
         t,
       }),
     ],
@@ -251,21 +252,31 @@ const cessSurvey = (t: TFunction): TXMTemplate => {
   return {
     ...getXMSurveyDefault(t),
     name: t("templates.cess_survey_name"),
-    questions: [
-      buildRatingQuestion({
-        range: 5,
-        scale: "number",
-        headline: t("templates.cess_survey_question_1_headline"),
-        required: true,
-        lowerLabel: t("templates.cess_survey_question_1_lower_label"),
-        upperLabel: t("templates.cess_survey_question_1_upper_label"),
+    blocks: [
+      buildBlock({
+        name: "Block 1",
+        elements: [
+          buildRatingElement({
+            range: 5,
+            scale: "number",
+            headline: t("templates.cess_survey_question_1_headline"),
+            required: true,
+            lowerLabel: t("templates.cess_survey_question_1_lower_label"),
+            upperLabel: t("templates.cess_survey_question_1_upper_label"),
+          }),
+        ],
         t,
       }),
-      buildOpenTextQuestion({
-        headline: t("templates.cess_survey_question_2_headline"),
-        required: true,
-        placeholder: t("templates.cess_survey_question_2_placeholder"),
-        inputType: "text",
+      buildBlock({
+        name: "Block 2",
+        elements: [
+          buildOpenTextElement({
+            headline: t("templates.cess_survey_question_2_headline"),
+            required: true,
+            placeholder: t("templates.cess_survey_question_2_placeholder"),
+            inputType: "text",
+          }),
+        ],
         t,
       }),
     ],
@@ -273,15 +284,27 @@ const cessSurvey = (t: TFunction): TXMTemplate => {
 };
 
 const smileysRatingSurvey = (t: TFunction): TXMTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId()];
+  const reusableElementIds = [createId(), createId(), createId()];
+  const block3Id = createId(); // Pre-generate Block 3 ID for logic reference
   const defaultSurvey = getXMSurveyDefault(t);
 
   return {
     ...defaultSurvey,
     name: t("templates.smileys_survey_name"),
-    questions: [
-      buildRatingQuestion({
-        id: reusableQuestionIds[0],
+    blocks: [
+      buildBlock({
+        name: "Block 1",
+        elements: [
+          buildRatingElement({
+            id: reusableElementIds[0],
+            range: 5,
+            scale: "smiley",
+            headline: t("templates.smileys_survey_question_1_headline"),
+            required: true,
+            lowerLabel: t("templates.smileys_survey_question_1_lower_label"),
+            upperLabel: t("templates.smileys_survey_question_1_upper_label"),
+          }),
+        ],
         logic: [
           {
             id: createId(),
@@ -292,8 +315,8 @@ const smileysRatingSurvey = (t: TFunction): TXMTemplate => {
                 {
                   id: createId(),
                   leftOperand: {
-                    value: reusableQuestionIds[0],
-                    type: "question",
+                    value: reusableElementIds[0],
+                    type: "element",
                   },
                   operator: "isLessThanOrEqual",
                   rightOperand: {
@@ -306,64 +329,44 @@ const smileysRatingSurvey = (t: TFunction): TXMTemplate => {
             actions: [
               {
                 id: createId(),
-                objective: "jumpToQuestion",
-                target: reusableQuestionIds[2],
+                objective: "jumpToBlock",
+                target: block3Id,
               },
             ],
           },
         ],
-        range: 5,
-        scale: "smiley",
-        headline: t("templates.smileys_survey_question_1_headline"),
-        required: true,
-        lowerLabel: t("templates.smileys_survey_question_1_lower_label"),
-        upperLabel: t("templates.smileys_survey_question_1_upper_label"),
         t,
       }),
-      buildCTAQuestion({
-        id: reusableQuestionIds[1],
-        subheader: t("templates.smileys_survey_question_2_html"),
-        logic: [
-          {
-            id: createId(),
-            conditions: {
-              id: createId(),
-              connector: "and",
-              conditions: [
-                {
-                  id: createId(),
-                  leftOperand: {
-                    value: reusableQuestionIds[1],
-                    type: "question",
-                  },
-                  operator: "isClicked",
-                },
-              ],
-            },
-            actions: [
-              {
-                id: createId(),
-                objective: "jumpToQuestion",
-                target: defaultSurvey.endings[0].id,
-              },
-            ],
-          },
+      buildBlock({
+        name: "Block 2",
+        elements: [
+          buildCTAElement({
+            id: reusableElementIds[1],
+            subheader: t("templates.smileys_survey_question_2_html"),
+            headline: t("templates.smileys_survey_question_2_headline"),
+            required: false,
+            buttonUrl: "https://formbricks.com/github",
+            buttonExternal: true,
+            ctaButtonLabel: t("templates.smileys_survey_question_2_button_label"),
+          }),
         ],
-        headline: t("templates.smileys_survey_question_2_headline"),
-        required: true,
-        buttonUrl: "https://formbricks.com/github",
-        buttonLabel: t("templates.smileys_survey_question_2_button_label"),
-        buttonExternal: true,
+        logic: [createBlockJumpLogic(reusableElementIds[1], defaultSurvey.endings[0].id, "isClicked")],
         t,
       }),
-      buildOpenTextQuestion({
-        id: reusableQuestionIds[2],
-        headline: t("templates.smileys_survey_question_3_headline"),
-        required: true,
-        subheader: t("templates.smileys_survey_question_3_subheader"),
+      buildBlock({
+        id: block3Id,
+        name: "Block 3",
+        elements: [
+          buildOpenTextElement({
+            id: reusableElementIds[2],
+            headline: t("templates.smileys_survey_question_3_headline"),
+            required: true,
+            subheader: t("templates.smileys_survey_question_3_subheader"),
+            placeholder: t("templates.smileys_survey_question_3_placeholder"),
+            inputType: "text",
+          }),
+        ],
         buttonLabel: t("templates.smileys_survey_question_3_button_label"),
-        placeholder: t("templates.smileys_survey_question_3_placeholder"),
-        inputType: "text",
         t,
       }),
     ],
@@ -374,25 +377,40 @@ const enpsSurvey = (t: TFunction): TXMTemplate => {
   return {
     ...getXMSurveyDefault(t),
     name: t("templates.enps_survey_name"),
-    questions: [
-      buildNPSQuestion({
-        headline: t("templates.enps_survey_question_1_headline"),
-        required: false,
-        lowerLabel: t("templates.enps_survey_question_1_lower_label"),
-        upperLabel: t("templates.enps_survey_question_1_upper_label"),
-        isColorCodingEnabled: true,
+    blocks: [
+      buildBlock({
+        name: "Block 1",
+        elements: [
+          buildNPSElement({
+            headline: t("templates.enps_survey_question_1_headline"),
+            required: false,
+            lowerLabel: t("templates.enps_survey_question_1_lower_label"),
+            upperLabel: t("templates.enps_survey_question_1_upper_label"),
+            isColorCodingEnabled: true,
+          }),
+        ],
         t,
       }),
-      buildOpenTextQuestion({
-        headline: t("templates.enps_survey_question_2_headline"),
-        required: false,
-        inputType: "text",
+      buildBlock({
+        name: "Block 2",
+        elements: [
+          buildOpenTextElement({
+            headline: t("templates.enps_survey_question_2_headline"),
+            required: false,
+            inputType: "text",
+          }),
+        ],
         t,
       }),
-      buildOpenTextQuestion({
-        headline: t("templates.enps_survey_question_3_headline"),
-        required: false,
-        inputType: "text",
+      buildBlock({
+        name: "Block 3",
+        elements: [
+          buildOpenTextElement({
+            headline: t("templates.enps_survey_question_3_headline"),
+            required: false,
+            inputType: "text",
+          }),
+        ],
         t,
       }),
     ],

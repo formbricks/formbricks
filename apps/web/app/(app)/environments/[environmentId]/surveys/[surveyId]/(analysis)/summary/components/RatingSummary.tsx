@@ -3,65 +3,61 @@
 import { BarChart, BarChartHorizontal, CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyQuestionId,
-  TSurveyQuestionSummaryRating,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { type TI18nString } from "@formbricks/types/i18n";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyElementSummaryRating } from "@formbricks/types/surveys/types";
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { TooltipProvider } from "@/modules/ui/components/tooltip";
 import { ClickableBarSegment } from "./ClickableBarSegment";
-import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
+import { ElementSummaryHeader } from "./ElementSummaryHeader";
 import { RatingScaleLegend } from "./RatingScaleLegend";
 import { SatisfactionIndicator } from "./SatisfactionIndicator";
 
 interface RatingSummaryProps {
-  questionSummary: TSurveyQuestionSummaryRating;
+  elementSummary: TSurveyElementSummaryRating;
   survey: TSurvey;
   setFilter: (
-    questionId: TSurveyQuestionId,
+    elementId: string,
     label: TI18nString,
-    questionType: TSurveyQuestionTypeEnum,
+    elementType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
 }
 
-export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSummaryProps) => {
+export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSummaryProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"aggregated" | "individual">("aggregated");
 
   const getIconBasedOnScale = useMemo(() => {
-    const scale = questionSummary.question.scale;
+    const scale = elementSummary.element.scale;
     if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;
     else if (scale === "star") return <StarIcon fill="rgb(250 204 21)" className="h-4 w-4 text-yellow-400" />;
     else if (scale === "smiley") return <SmileIcon className="h-4 w-4" />;
-  }, [questionSummary]);
+  }, [elementSummary]);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
+      <ElementSummaryHeader
+        elementSummary={elementSummary}
         survey={survey}
         additionalInfo={
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
               {getIconBasedOnScale}
               <div>
-                {t("environments.surveys.summary.overall")}: {questionSummary.average.toFixed(2)}
+                {t("environments.surveys.summary.overall")}: {elementSummary.average.toFixed(2)}
               </div>
             </div>
 
             <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
-              <SatisfactionIndicator percentage={questionSummary.csat.satisfiedPercentage} />
+              <SatisfactionIndicator percentage={elementSummary.csat.satisfiedPercentage} />
               <div>
-                CSAT: {questionSummary.csat.satisfiedPercentage}%{" "}
-                {t("environments.surveys.summary.satisfied")}
+                CSAT: {elementSummary.csat.satisfiedPercentage}% {t("environments.surveys.summary.satisfied")}
               </div>
             </div>
           </div>
@@ -82,29 +78,25 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
 
         <TabsContent value="aggregated" className="mt-4">
           <div className="px-4 pb-6 pt-4 md:px-6">
-            {questionSummary.responseCount === 0 ? (
+            {elementSummary.responseCount === 0 ? (
               <>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center">
-                  <p className="text-sm text-slate-500">
-                    {t("environments.surveys.summary.no_responses_found")}
-                  </p>
-                </div>
+                <EmptyState text={t("environments.surveys.summary.no_responses_found")} variant="simple" />
                 <RatingScaleLegend
-                  scale={questionSummary.question.scale}
-                  range={questionSummary.question.range}
+                  scale={elementSummary.element.scale}
+                  range={elementSummary.element.range}
                 />
               </>
             ) : (
               <>
                 <TooltipProvider delayDuration={200}>
                   <div className="flex h-12 w-full overflow-hidden rounded-t-lg border border-slate-200">
-                    {questionSummary.choices.map((result, index) => {
+                    {elementSummary.choices.map((result, index) => {
                       if (result.percentage === 0) return null;
 
-                      const range = questionSummary.question.range;
+                      const range = elementSummary.element.range;
                       const opacity = 0.3 + (result.rating / range) * 0.8;
                       const isFirst = index === 0;
-                      const isLast = index === questionSummary.choices.length - 1;
+                      const isLast = index === elementSummary.choices.length - 1;
 
                       return (
                         <ClickableBarSegment
@@ -116,9 +108,9 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                           }}
                           onClick={() =>
                             setFilter(
-                              questionSummary.question.id,
-                              questionSummary.question.headline,
-                              questionSummary.question.type,
+                              elementSummary.element.id,
+                              elementSummary.element.headline,
+                              elementSummary.element.type,
                               t("environments.surveys.summary.is_equal_to"),
                               result.rating.toString()
                             )
@@ -133,7 +125,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                   </div>
                 </TooltipProvider>
                 <div className="flex w-full overflow-hidden rounded-b-lg border border-t-0 border-slate-200 bg-slate-50">
-                  {questionSummary.choices.map((result, index) => {
+                  {elementSummary.choices.map((result, index) => {
                     if (result.percentage === 0) return null;
 
                     return (
@@ -143,15 +135,15 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                         style={{
                           width: `${result.percentage}%`,
                           borderRight:
-                            index < questionSummary.choices.length - 1
+                            index < elementSummary.choices.length - 1
                               ? "1px solid rgb(226, 232, 240)"
                               : "none",
                         }}>
                         <div className="mb-1 flex items-center justify-center">
                           <RatingResponse
-                            scale={questionSummary.question.scale}
+                            scale={elementSummary.element.scale}
                             answer={result.rating}
-                            range={questionSummary.question.range}
+                            range={elementSummary.element.range}
                             addColors={false}
                             variant="aggregated"
                           />
@@ -164,8 +156,8 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                   })}
                 </div>
                 <RatingScaleLegend
-                  scale={questionSummary.question.scale}
-                  range={questionSummary.question.range}
+                  scale={elementSummary.element.scale}
+                  range={elementSummary.element.range}
                 />
               </>
             )}
@@ -175,15 +167,15 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
         <TabsContent value="individual" className="mt-4">
           <div className="px-4 pb-6 pt-4 md:px-6">
             <div className="space-y-5 text-sm md:text-base">
-              {questionSummary.choices.map((result) => (
+              {elementSummary.choices.map((result) => (
                 <div key={result.rating}>
                   <button
                     className="w-full cursor-pointer hover:opacity-80"
                     onClick={() =>
                       setFilter(
-                        questionSummary.question.id,
-                        questionSummary.question.headline,
-                        questionSummary.question.type,
+                        elementSummary.element.id,
+                        elementSummary.element.headline,
+                        elementSummary.element.type,
                         t("environments.surveys.summary.is_equal_to"),
                         result.rating.toString()
                       )
@@ -192,10 +184,10 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
                       <div className="mr-8 flex items-center space-x-1">
                         <div className="font-semibold text-slate-700">
                           <RatingResponse
-                            scale={questionSummary.question.scale}
+                            scale={elementSummary.element.scale}
                             answer={result.rating}
-                            range={questionSummary.question.range}
-                            addColors={questionSummary.question.isColorCodingEnabled}
+                            range={elementSummary.element.range}
+                            addColors={elementSummary.element.isColorCodingEnabled}
                             variant="individual"
                           />
                         </div>
@@ -217,14 +209,14 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
           </div>
         </TabsContent>
       </Tabs>
-      {questionSummary.dismissed && questionSummary.dismissed.count > 0 && (
+      {elementSummary.dismissed && elementSummary.dismissed.count > 0 && (
         <div className="rounded-b-lg border-t bg-white px-6 py-4">
           <div key="dismissed">
             <div className="text flex justify-between px-2">
               <p className="font-semibold text-slate-700">{t("common.dismissed")}</p>
               <p className="flex w-32 items-end justify-end text-slate-600">
-                {questionSummary.dismissed.count}{" "}
-                {questionSummary.dismissed.count === 1 ? t("common.response") : t("common.responses")}
+                {elementSummary.dismissed.count}{" "}
+                {elementSummary.dismissed.count === 1 ? t("common.response") : t("common.responses")}
               </p>
             </div>
           </div>

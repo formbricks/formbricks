@@ -18,9 +18,12 @@ import {
 } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
-import { getDefaultOperatorForQuestion } from "@/modules/survey/editor/lib/utils";
+import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
+import { replaceEndingCardHeadlineRecall } from "@/modules/survey/editor/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -80,7 +83,19 @@ export const QuotaModal = ({
   const { t } = useTranslation();
   const [openConfirmationModal, setOpenConfirmationModal] = useState(false);
   const [openConfirmChangesInInclusionCriteria, setOpenConfirmChangesInInclusionCriteria] = useState(false);
+
+  // Transform survey to replace recall: with actual question headlines
+  const transformedSurvey = useMemo(() => {
+    let modifiedSurvey = replaceHeadlineRecall(survey, "default");
+    modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default");
+
+    return modifiedSurvey;
+  }, [survey]);
+
+  const elements = useMemo(() => getElementsFromBlocks(transformedSurvey.blocks), [transformedSurvey.blocks]);
+
   const defaultValues = useMemo(() => {
+    const firstElement = elements[0];
     return {
       name: quota?.name || "",
       limit: quota?.limit || 1,
@@ -89,8 +104,8 @@ export const QuotaModal = ({
         conditions: [
           {
             id: createId(),
-            leftOperand: { type: "question", value: survey.questions[0]?.id },
-            operator: getDefaultOperatorForQuestion(survey.questions[0], t),
+            leftOperand: { type: "element", value: firstElement?.id },
+            operator: firstElement ? getDefaultOperatorForElement(firstElement, t) : "equals",
           },
         ],
       },
@@ -99,7 +114,7 @@ export const QuotaModal = ({
       countPartialSubmissions: quota?.countPartialSubmissions || false,
       surveyId: survey.id,
     };
-  }, [quota, survey]);
+  }, [quota, survey, elements, t]);
 
   const form = useForm<TSurveyQuotaInput>({
     defaultValues,
@@ -124,7 +139,7 @@ export const QuotaModal = ({
     reset,
     watch,
     control,
-    formState: { isSubmitting, isDirty, errors, isValid },
+    formState: { isSubmitting, isDirty, errors, isValid, isSubmitted },
   } = form;
 
   // Watch form values for conditional logic
@@ -312,14 +327,17 @@ export const QuotaModal = ({
                 render={({ field }) => (
                   <FormItem>
                     <div className="space-y-4 rounded-lg bg-slate-50 p-3">
-                      <FormLabel>{t("environments.surveys.edit.quotas.inclusion_criteria")}</FormLabel>
+                      <label className="text-sm font-medium text-slate-800">
+                        {t("environments.surveys.edit.quotas.inclusion_criteria")}
+                      </label>
                       <FormControl>
                         {field.value && (
                           <QuotaConditionBuilder
-                            survey={survey}
+                            survey={transformedSurvey}
                             conditions={field.value}
                             onChange={handleConditionsChange}
                             quotaErrors={errors}
+                            isSubmitted={isSubmitted}
                           />
                         )}
                       </FormControl>
@@ -361,7 +379,7 @@ export const QuotaModal = ({
                             <div className="space-y-2">
                               <FormControl>
                                 <EndingCardSelector
-                                  endings={survey.endings}
+                                  survey={survey}
                                   value={endingCardField.value || ""}
                                   onChange={(value) => {
                                     form.setValue("endingCardId", value, {

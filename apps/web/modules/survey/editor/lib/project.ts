@@ -28,7 +28,11 @@ export const getProjectLanguages = reactCache(async (projectId: string): Promise
       id: projectId,
     },
     select: {
-      languages: true,
+      languages: {
+        orderBy: {
+          code: "asc",
+        },
+      },
     },
   });
   if (!project) {

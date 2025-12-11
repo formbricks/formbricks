@@ -8,6 +8,7 @@ import { type TProjectConfig, type TProjectStyling } from "../types/project";
 import type { TSurveyQuotaLogic } from "../types/quota";
 import { type TResponseContactAttributes, type TResponseData, type TResponseMeta } from "../types/responses";
 import { type TBaseFilters } from "../types/segment";
+import { type TSurveyBlocks } from "../types/surveys/blocks";
 import {
   type TSurveyClosedMessage,
   type TSurveyEnding,
@@ -35,6 +36,7 @@ declare global {
     export type ResponseContactAttributes = TResponseContactAttributes;
     export type SurveyWelcomeCard = TSurveyWelcomeCard;
     export type SurveyQuestions = TSurveyQuestions;
+    export type SurveyBlocks = TSurveyBlocks;
     export type SurveyEnding = TSurveyEnding;
     export type SurveyHiddenFields = TSurveyHiddenFields;
     export type SurveyVariables = TSurveyVariables;

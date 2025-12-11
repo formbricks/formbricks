@@ -112,6 +112,7 @@
                 "pages": [
                   "xm-and-surveys/surveys/website-app-surveys/quickstart",
                   "xm-and-surveys/surveys/website-app-surveys/framework-guides",
+                  "xm-and-surveys/surveys/website-app-surveys/google-tag-manager",
                   {
                     "group": "Features",
                     "icon": "wrench",
@@ -233,6 +234,7 @@
               "self-hosting/configuration/smtp",
               "self-hosting/configuration/file-uploads",
               "self-hosting/configuration/domain-configuration",
+              "self-hosting/configuration/custom-subpath",
               {
                 "group": "Auth & SSO",
                 "icon": "lock",

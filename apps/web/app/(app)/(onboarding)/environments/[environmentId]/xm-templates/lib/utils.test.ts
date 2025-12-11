@@ -32,14 +32,22 @@ const mockProject: TProject = {
 };
 const mockTemplate: TXMTemplate = {
   name: "$[projectName] Survey",
-  questions: [
+  blocks: [
     {
-      id: "q1",
-      inputType: "text",
-      type: "email" as any,
-      headline: { default: "$[projectName] Question" },
-      required: false,
-      charLimit: { enabled: true, min: 400, max: 1000 },
+      id: "block1",
+      name: "Block 1",
+      elements: [
+        {
+          id: "q1",
+          type: "openText" as const,
+          inputType: "text" as const,
+          headline: { default: "$[projectName] Question" },
+          subheader: { default: "" },
+          required: false,
+          placeholder: { default: "" },
+          charLimit: 1000,
+        },
+      ],
     },
   ],
   endings: [
@@ -66,9 +74,9 @@ describe("replacePresetPlaceholders", () => {
     expect(result.name).toBe("Test Project Survey");
   });
 
-  test("replaces projectName placeholder in question headline", () => {
+  test("replaces projectName placeholder in element headline", () => {
     const result = replacePresetPlaceholders(mockTemplate, mockProject);
-    expect(result.questions[0].headline.default).toBe("Test Project Question");
+    expect(result.blocks[0].elements[0].headline.default).toBe("Test Project Question");
   });
 
   test("returns a new object without mutating the original template", () => {

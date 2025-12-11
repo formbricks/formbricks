@@ -30,8 +30,8 @@ export type TIntegration = z.infer<typeof ZIntegration>;
 
 export const ZIntegrationBaseSurveyData = z.object({
   createdAt: z.date(),
-  questionIds: z.array(z.string()),
-  questions: z.string(),
+  elementIds: z.array(z.string()),
+  elements: z.string(),
   surveyId: z.string(),
   surveyName: z.string(),
 });

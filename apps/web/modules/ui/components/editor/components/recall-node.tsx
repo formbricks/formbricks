@@ -96,7 +96,7 @@ export class RecallNode extends DecoratorNode<ReactNode> {
   constructor(payload?: RecallPayload, key?: NodeKey) {
     super(key);
     const defaultPayload: RecallPayload = {
-      recallItem: { id: "", label: "", type: "question" },
+      recallItem: { id: "", label: "", type: "element" },
       fallbackValue: "",
     };
     const actualPayload = payload || defaultPayload;

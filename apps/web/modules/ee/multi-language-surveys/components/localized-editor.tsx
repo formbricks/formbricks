@@ -3,12 +3,14 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { TI18nString, TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
+import type { TI18nString } from "@formbricks/types/i18n";
+import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { getTextContent, isValidHTML } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { md } from "@/lib/markdownIt";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { isLabelValidForAllLanguages } from "@/modules/survey/editor/lib/validation";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Editor } from "@/modules/ui/components/editor";
 import { LanguageIndicator } from "./language-indicator";
 
@@ -17,17 +19,18 @@ interface LocalizedEditorProps {
   value: TI18nString | undefined;
   localSurvey: TSurvey;
   isInvalid: boolean;
-  updateQuestion: any;
+  updateElement: any;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  questionIdx: number;
+  elementIdx: number;
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   locale: TUserLocale;
-  questionId: string;
+  elementId: string;
   isCard?: boolean; // Flag to indicate if this is a welcome/ending card
   autoFocus?: boolean;
   isExternalUrlsAllowed?: boolean;
+  suppressUpdates?: () => boolean; // Function to check if updates should be suppressed (e.g., during deletion)
 }
 
 const checkIfValueIsIncomplete = (
@@ -49,18 +52,21 @@ export function LocalizedEditor({
   value,
   localSurvey,
   isInvalid,
-  updateQuestion,
+  updateElement,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  questionIdx,
+  elementIdx,
   firstRender,
   setFirstRender,
   locale,
-  questionId,
+  elementId,
   isCard,
   autoFocus,
   isExternalUrlsAllowed,
+  suppressUpdates,
 }: Readonly<LocalizedEditorProps>) {
+  // Derive elements from blocks for migrated surveys
+  const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
   const { t } = useTranslation();
 
   const isInComplete = useMemo(
@@ -89,25 +95,31 @@ export function LocalizedEditor({
 
           return html;
         }}
-        key={`${questionId}-${id}-${selectedLanguageCode}`}
+        key={`${elementId}-${id}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
+          // Early exit if updates are suppressed (e.g., during deletion)
+          // This prevents race conditions where setText fires with stale props before React updates state
+          if (suppressUpdates?.()) {
+            return;
+          }
+
           let sanitizedContent = v;
           if (!isExternalUrlsAllowed) {
             sanitizedContent = v.replaceAll(/<a[^>]*>(.*?)<\/a>/gi, "$1");
           }
 
-          // Check if the question still exists before updating
-          const currentQuestion = localSurvey.questions[questionIdx];
+          // Check if the elements still exists before updating
+          const currentElement = elements[elementIdx];
 
           // if this is a card, we wanna check if the card exists in the localSurvey
           if (isCard) {
-            const isWelcomeCard = questionIdx === -1;
-            const isEndingCard = questionIdx >= localSurvey.questions.length;
+            const isWelcomeCard = elementIdx === -1;
+            const isEndingCard = elementIdx >= elements.length;
 
             // For ending cards, check if the field exists before updating
             if (isEndingCard) {
-              const ending = localSurvey.endings.find((ending) => ending.id === questionId);
+              const ending = localSurvey.endings.find((ending) => ending.id === elementId);
               // If the field doesn't exist on the ending card, don't create it
               if (!ending || ending[id] === undefined) {
                 return;
@@ -123,20 +135,21 @@ export function LocalizedEditor({
               ...value,
               [selectedLanguageCode]: sanitizedContent,
             };
-            updateQuestion({ [id]: translatedContent });
+            updateElement({ [id]: translatedContent });
             return;
           }
 
-          if (currentQuestion && currentQuestion[id] !== undefined) {
+          // Check if the field exists on the element (not just if it's not undefined)
+          if (currentElement && id in currentElement && currentElement[id] !== undefined) {
             const translatedContent = {
               ...value,
               [selectedLanguageCode]: sanitizedContent,
             };
-            updateQuestion(questionIdx, { [id]: translatedContent });
+            updateElement(elementIdx, { [id]: translatedContent });
           }
         }}
         localSurvey={localSurvey}
-        questionId={questionId}
+        elementId={elementId}
         selectedLanguageCode={selectedLanguageCode}
         isExternalUrlsAllowed={isExternalUrlsAllowed}
       />

@@ -13,12 +13,13 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { duplicateLogicItem } from "@/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import {
-  getDefaultOperatorForQuestion,
+  getDefaultOperatorForElement,
   replaceEndingCardHeadlineRecall,
 } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -32,16 +33,18 @@ import { Label } from "@/modules/ui/components/label";
 
 interface ConditionalLogicProps {
   localSurvey: TSurvey;
-  questionIdx: number;
-  question: TSurveyQuestion;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  blockIdx: number;
+  block: TSurveyBlock;
+  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
 }
 
 export function ConditionalLogic({
   localSurvey,
-  question,
-  questionIdx,
-  updateQuestion,
+  blockIdx,
+  block,
+  updateBlockLogic,
+  updateBlockLogicFallback,
 }: ConditionalLogicProps) {
   const { t } = useTranslation();
   const transformedSurvey = useMemo(() => {
@@ -51,10 +54,18 @@ export function ConditionalLogic({
     return modifiedSurvey;
   }, [localSurvey]);
 
-  const addLogic = () => {
-    const operator = getDefaultOperatorForQuestion(question, t);
+  const blockLogic = useMemo(() => block.logic ?? [], [block.logic]);
+  const blockLogicFallback = block.logicFallback;
 
-    const initialCondition: TSurveyLogic = {
+  // Use the first element in the block as the reference element for default operators
+  const firstElement = block.elements[0];
+
+  const addLogic = () => {
+    if (!firstElement) return;
+
+    const operator = getDefaultOperatorForElement(firstElement, t);
+
+    const initialCondition: TSurveyBlockLogic = {
       id: createId(),
       conditions: {
         id: createId(),
@@ -63,8 +74,8 @@ export function ConditionalLogic({
           {
             id: createId(),
             leftOperand: {
-              value: question.id,
-              type: "question",
+              value: firstElement.id,
+              type: "element",
             },
             operator,
           },
@@ -73,55 +84,50 @@ export function ConditionalLogic({
       actions: [
         {
           id: createId(),
-          objective: "jumpToQuestion",
+          objective: "jumpToBlock",
           target: "",
         },
       ],
     };
 
-    updateQuestion(questionIdx, {
-      logic: [...(question?.logic ?? []), initialCondition],
-    });
+    updateBlockLogic(blockIdx, [...blockLogic, initialCondition]);
   };
 
   const handleRemoveLogic = (logicItemIdx: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
+    const logicCopy = structuredClone(blockLogic);
     const isLast = logicCopy.length === 1;
     logicCopy.splice(logicItemIdx, 1);
 
-    updateQuestion(questionIdx, {
-      logic: logicCopy,
-      logicFallback: isLast ? undefined : question.logicFallback,
-    });
+    updateBlockLogic(blockIdx, logicCopy);
+    if (isLast) {
+      updateBlockLogicFallback(blockIdx, undefined);
+    }
   };
 
   const moveLogic = (from: number, to: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
+    const logicCopy = structuredClone(blockLogic);
     const [movedItem] = logicCopy.splice(from, 1);
     logicCopy.splice(to, 0, movedItem);
 
-    updateQuestion(questionIdx, {
-      logic: logicCopy,
-    });
+    updateBlockLogic(blockIdx, logicCopy);
   };
 
   const duplicateLogic = (logicItemIdx: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
+    const logicCopy = structuredClone(blockLogic);
     const logicItem = logicCopy[logicItemIdx];
     const newLogicItem = duplicateLogicItem(logicItem);
     logicCopy.splice(logicItemIdx + 1, 0, newLogicItem);
 
-    updateQuestion(questionIdx, {
-      logic: logicCopy,
-    });
+    updateBlockLogic(blockIdx, logicCopy);
   };
+
   const [parent] = useAutoAnimate();
 
   useEffect(() => {
-    if (question.logic?.length === 0 && question.logicFallback) {
-      updateQuestion(questionIdx, { logicFallback: undefined });
+    if (blockLogic.length === 0 && blockLogicFallback) {
+      updateBlockLogicFallback(blockIdx, undefined);
     }
-  }, [question.logic, questionIdx, question.logicFallback, updateQuestion]);
+  }, [blockLogic, blockIdx, blockLogicFallback, updateBlockLogicFallback]);
 
   return (
     <div className="mt-4" ref={parent}>
@@ -130,20 +136,21 @@ export function ConditionalLogic({
         <SplitIcon className="h-4 w-4 rotate-90" />
       </Label>
 
-      {question.logic && question.logic.length > 0 && (
+      {blockLogic.length > 0 && (
         <div className="mt-2 flex flex-col gap-4" ref={parent}>
-          {question.logic.map((logicItem, logicItemIdx) => (
+          {blockLogic.map((logicItem, logicItemIdx) => (
             <div
               key={logicItem.id}
               className="relative flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <LogicEditor
                 localSurvey={transformedSurvey}
                 logicItem={logicItem}
-                updateQuestion={updateQuestion}
-                question={question}
-                questionIdx={questionIdx}
+                updateBlockLogic={updateBlockLogic}
+                updateBlockLogicFallback={updateBlockLogicFallback}
+                block={block}
+                blockIdx={blockIdx}
                 logicIdx={logicItemIdx}
-                isLast={logicItemIdx === (question.logic ?? []).length - 1}
+                isLast={logicItemIdx === blockLogic.length - 1}
               />
 
               {logicItem.conditions.conditions.length > 1 && (
@@ -173,7 +180,7 @@ export function ConditionalLogic({
                       {t("common.move_up")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      disabled={logicItemIdx === (question.logic ?? []).length - 1}
+                      disabled={logicItemIdx === blockLogic.length - 1}
                       onClick={() => {
                         moveLogic(logicItemIdx, logicItemIdx + 1);
                       }}

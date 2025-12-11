@@ -200,21 +200,23 @@ export const FileInput = ({
     setSelectedFiles(getSelectedFiles());
   }, [fileUrl]);
 
-  // useEffect to handle the state when switching between 'image' and 'video' tabs.
   useEffect(() => {
     if (activeTab === "image" && typeof imageUrlTemp === "string") {
       // Temporarily store the current video URL before switching tabs.
       setVideoUrlTemp(videoUrl ?? "");
 
-      // Re-upload the image using the temporary image URL.
-      onFileUpload([imageUrlTemp], "image");
+      if (imageUrlTemp) {
+        onFileUpload([imageUrlTemp], "image");
+      }
     } else if (activeTab === "video") {
       // Temporarily store the current image URL before switching tabs.
       setImageUrlTemp(fileUrl ?? "");
 
-      // Re-upload the video using the temporary video URL.
-      onFileUpload([videoUrlTemp], "video");
+      if (videoUrlTemp) {
+        onFileUpload([videoUrlTemp], "video");
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run when activeTab changes to avoid infinite loops
   }, [activeTab]);
 
   return (

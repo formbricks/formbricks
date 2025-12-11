@@ -124,3 +124,12 @@ export const convertToEmbedUrl = (url: string): string | undefined => {
   // If no supported platform found, return undefined
   return undefined;
 };
+
+/**
+ * Validates if a URL is from a supported video platform (YouTube, Vimeo, or Loom)
+ * @param url - URL to validate
+ * @returns true if URL is from a supported platform, false otherwise
+ */
+export const isValidVideoUrl = (url: string): boolean => {
+  return checkForYoutubeUrl(url) || checkForVimeoUrl(url) || checkForLoomUrl(url);
+};

@@ -4,9 +4,9 @@ import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/submit-button";
+import { ElementMedia } from "@/components/general/element-media";
 import { Headline } from "@/components/general/headline";
 import { LoadingSpinner } from "@/components/general/loading-spinner";
-import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -44,7 +44,7 @@ export function EndingCard({
   const { t } = useTranslation();
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl ?? endingCard.videoUrl) ? (
-      <QuestionMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
+      <ElementMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
     ) : null;
 
   const checkmark = (
@@ -129,7 +129,7 @@ export function EndingCard({
                       responseData,
                       variablesData
                     )}
-                    questionId="EndingCard"
+                    elementId="EndingCard"
                   />
                   <Subheader
                     subheader={replaceRecallInfo(
@@ -137,7 +137,7 @@ export function EndingCard({
                       responseData,
                       variablesData
                     )}
-                    questionId="EndingCard"
+                    elementId="EndingCard"
                   />
                   {endingCard.buttonLabel ? (
                     <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
@@ -163,11 +163,11 @@ export function EndingCard({
                     <Headline
                       alignTextCenter
                       headline={t("common.respondents_will_not_see_this_card")}
-                      questionId="EndingCard"
+                      elementId="EndingCard"
                     />
                     <Subheader
                       subheader={t("common.they_will_be_redirected_immediately")}
-                      questionId="EndingCard"
+                      elementId="EndingCard"
                     />
                   </div>
                 ) : (
