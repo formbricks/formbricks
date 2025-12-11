@@ -1,3 +1,15 @@
+/* =============================================================================
+   Survey UI - Global Styles
+   
+   This file contains:
+   1. Tailwind CSS setup and configuration
+   2. Base design tokens (colors, radius)
+   3. Survey-specific theming tokens (--fb-* variables)
+   
+   All tokens are designed to be overridden by consumers for custom theming.
+   Components use Tailwind utilities backed by these CSS variables.
+   ============================================================================= */
+
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) important;
@@ -5,8 +17,15 @@
 @config "../../tailwind.config.ts";
 @source "../../src/**/*.{ts,tsx,js,jsx}";
 
+/* =============================================================================
+   Design Tokens
+   ============================================================================= */
+
 :root {
-  /* Base variables used by other variables */
+  /* ---------------------------------------------------------------------------
+     Base Primitives
+     These are the foundation tokens used throughout the design system.
+     --------------------------------------------------------------------------- */
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -27,44 +46,47 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
 
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-
+  /* ---------------------------------------------------------------------------
+     Survey Brand Color
+     The primary accent color used throughout the survey. Override this to 
+     customize the brand appearance.
+     --------------------------------------------------------------------------- */
   --fb-survey-brand-color: #64748b;
 
-  /* Element Headline CSS variables */
+  /* ---------------------------------------------------------------------------
+     Element Headline Tokens
+     Used for question headlines and main element titles.
+     --------------------------------------------------------------------------- */
   --fb-element-headline-font-family: inherit;
   --fb-element-headline-font-weight: 600;
   --fb-element-headline-font-size: 1.125rem;
   --fb-element-headline-color: hsl(222.2 84% 4.9%);
   --fb-element-headline-opacity: 1;
 
-  /* Element Description CSS variables */
+  /* ---------------------------------------------------------------------------
+     Element Description Tokens
+     Used for descriptive text below headlines.
+     --------------------------------------------------------------------------- */
   --fb-element-description-font-family: inherit;
   --fb-element-description-font-weight: 400;
   --fb-element-description-font-size: 0.875rem;
   --fb-element-description-color: hsl(215.4 16.3% 46.9%);
   --fb-element-description-opacity: 1;
 
-  /* Label CSS variables */
+  /* ---------------------------------------------------------------------------
+     Label Tokens
+     Used for form labels and secondary text.
+     --------------------------------------------------------------------------- */
   --fb-label-font-family: inherit;
   --fb-label-font-weight: 500;
   --fb-label-font-size: 0.875rem;
   --fb-label-color: var(--foreground);
   --fb-label-opacity: 1;
 
-  /* Button CSS variables */
+  /* ---------------------------------------------------------------------------
+     Button Tokens
+     Used for the custom button variant. Standard variants use Tailwind defaults.
+     --------------------------------------------------------------------------- */
   --fb-button-height: 2.25rem;
   --fb-button-width: auto;
   --fb-button-font-size: 0.875rem;
@@ -76,10 +98,11 @@
   --fb-button-padding-x: 1rem;
   --fb-button-padding-y: 0.5rem;
 
-  /* Input CSS variables */
+  /* ---------------------------------------------------------------------------
+     Input Tokens
+     Used for text inputs, textareas, and other form controls.
+     --------------------------------------------------------------------------- */
   --fb-input-bg-color: white;
-  --fb-input-bg-opacity: 1;
-  --fb-input-hover-bg-opacity: 0.3;
   --fb-input-border-color: var(--fb-survey-brand-color);
   --fb-input-border-radius: var(--radius);
   --fb-input-font-family: inherit;
@@ -94,16 +117,21 @@
   --fb-input-padding-y: 16px;
   --fb-input-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 
-  /* Progress Track CSS variables */
+  /* ---------------------------------------------------------------------------
+     Progress Tokens
+     Used for the Progress component track and indicator.
+     --------------------------------------------------------------------------- */
   --fb-progress-track-height: 0.5rem;
   --fb-progress-track-bg-color: hsl(222.2 47.4% 11.2% / 0.2);
   --fb-progress-track-border-radius: var(--radius);
-
-  /* Progress Indicator CSS variables */
   --fb-progress-indicator-bg-color: hsl(222.2 47.4% 11.2%);
   --fb-progress-indicator-border-radius: var(--radius);
 
-  /* Option CSS variables */
+  /* ---------------------------------------------------------------------------
+     Option Tokens
+     Used for selectable options (radio, checkbox, multi-select).
+     These inherit from input tokens by default for consistency.
+     --------------------------------------------------------------------------- */
   --fb-option-border-color: var(--fb-input-border-color);
   --fb-option-bg-color: var(--fb-input-bg-color);
   --fb-option-label-color: var(--fb-input-color);
