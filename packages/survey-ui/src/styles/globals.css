@@ -1,3 +1,10 @@
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) important;
+
+@config "../../tailwind.config.ts";
+@source "../../src/**/*.{ts,tsx,js,jsx}";
+
 :root {
     /* Base variables used by other variables */
     --radius: 0.625rem;
@@ -34,7 +41,7 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
 
-    --fb-brand-color: #64748b;
+    --fb-survey-brand-color: #64748b;
 
     /* Element Headline CSS variables */
     --fb-element-headline-font-family: inherit;
@@ -71,7 +78,7 @@
     --fb-input-bg-color: white;
     --fb-input-bg-opacity: 1;
     --fb-input-hover-bg-opacity: 0.3;
-    --fb-input-border-color: var(--fb-brand-color);
+    --fb-input-border-color: var(--fb-survey-brand-color);
     --fb-input-border-radius: var(--radius);
     --fb-input-font-family: inherit;
     --fb-input-font-size: 0.875rem;

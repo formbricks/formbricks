@@ -133,7 +133,7 @@ export const StylingPlayground: Story = {
       control: "color",
       table: {
         category: "Button Styling",
-        defaultValue: { summary: "var(--fb-brand-color)" },
+        defaultValue: { summary: "var(--fb-survey-brand-color)" },
       },
     },
     buttonTextColor: {

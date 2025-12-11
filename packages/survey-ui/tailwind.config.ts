@@ -39,14 +39,14 @@ export default {
         },
         border: "var(--border)",
         input: "var(--input)",
-        ring: "var(--fb-brand-color)",
+        ring: "var(--fb-survey-brand-color)",
         brand: {
-          DEFAULT: "var(--fb-brand-color)",
-          "20": "color-mix(in srgb, var(--fb-brand-color) 20%, white)",
+          DEFAULT: "var(--fb-survey-brand-color)",
+          "20": "color-mix(in srgb, var(--fb-survey-brand-color) 20%, white)",
         },
         // Input CSS variables (shorter names)
         "input-bg": "var(--fb-input-bg-color)",
-        "input-border": "var(--fb-input-border-color, var(--fb-brand-color))",
+        "input-border": "var(--fb-input-border-color, var(--fb-survey-brand-color))",
         "input-text": "var(--fb-input-color)",
         "input-placeholder": "var(--fb-input-placeholder-color)",
         // Option CSS variables
