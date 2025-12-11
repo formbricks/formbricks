@@ -714,7 +714,7 @@ export function Survey({
   const retryResponse = async () => {
     if (responseQueue) {
       setIsRetrying(true);
-      const result = await responseQueue.processQueueAsync();
+      const result = await responseQueue.processQueue();
       setIsRetrying(false);
 
       if (result.success) {

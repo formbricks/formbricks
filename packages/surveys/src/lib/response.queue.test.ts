@@ -82,7 +82,7 @@ describe("ResponseQueue", () => {
   });
 
   test("add accumulates response, sets survey state, and processes queue", async () => {
-    vi.spyOn(queue, "processQueue").mockImplementation(() => Promise.resolve());
+    vi.spyOn(queue, "processQueue").mockImplementation(() => Promise.resolve({ success: true }));
     queue.add(responseUpdate);
     expect(surveyState.accumulateResponse).toHaveBeenCalledWith(responseUpdate);
     expect(config.setSurveyState).toHaveBeenCalledWith(surveyState);
@@ -194,20 +194,20 @@ describe("ResponseQueue", () => {
   });
 
   test("processQueueAsync returns success false if queue empty", async () => {
-    const result = await queue.processQueueAsync();
+    const result = await queue.processQueue();
     expect(result.success).toBe(false);
   });
 
   test("processQueueAsync returns success false if request in progress", async () => {
     queue["isRequestInProgress"] = true;
-    const result = await queue.processQueueAsync();
+    const result = await queue.processQueue();
     expect(result.success).toBe(false);
   });
 
   test("processQueueAsync returns success true on successful send", async () => {
     queue.queue.push(responseUpdate);
     vi.spyOn(queue, "sendResponse").mockResolvedValue(ok(true));
-    const result = await queue.processQueueAsync();
+    const result = await queue.processQueue();
     expect(result.success).toBe(true);
     expect(queue.queue.length).toBe(0);
   });
@@ -221,7 +221,7 @@ describe("ResponseQueue", () => {
         status: 500,
       })
     );
-    const result = await queue.processQueueAsync();
+    const result = await queue.processQueue();
     expect(result.success).toBe(false);
     expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
       responseUpdate,
@@ -241,7 +241,7 @@ describe("ResponseQueue", () => {
         },
       })
     );
-    const result = await queue.processQueueAsync();
+    const result = await queue.processQueue();
     expect(result.success).toBe(false);
     expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
       responseUpdate,

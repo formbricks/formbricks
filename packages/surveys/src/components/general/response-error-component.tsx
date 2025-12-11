@@ -5,10 +5,10 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { processResponseData } from "@/lib/response";
 
 interface ResponseErrorComponentProps {
-  questions: TSurveyElement[];
-  responseData: TResponseData;
-  onRetry?: () => void;
-  isRetrying?: boolean;
+  readonly questions: TSurveyElement[];
+  readonly responseData: TResponseData;
+  readonly onRetry?: () => void;
+  readonly isRetrying?: boolean;
 }
 
 export function ResponseErrorComponent({

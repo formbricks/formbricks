@@ -55,22 +55,7 @@ export class ResponseQueue {
     this.processQueue();
   }
 
-  async processQueue() {
-    if (this.isRequestInProgress || this.queue.length === 0) return;
-
-    this.isRequestInProgress = true;
-    const responseUpdate = this.queue[0];
-
-    const result = await this.sendResponseWithRetry(responseUpdate);
-
-    if (result.success) {
-      this.handleSuccessfulResponse(responseUpdate, result.quotaFullResponse);
-    } else {
-      this.handleFailedResponse(responseUpdate, result.isRecaptchaError);
-    }
-  }
-
-  async processQueueAsync(): Promise<{ success: boolean }> {
+  async processQueue(): Promise<{ success: boolean }> {
     if (this.isRequestInProgress || this.queue.length === 0) {
       return { success: false };
     }
