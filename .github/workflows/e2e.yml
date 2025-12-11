@@ -95,6 +95,19 @@ jobs:
           echo "S3_FORCE_PATH_STYLE=1" >> .env
         shell: bash
 
+      - name: Verify E2E_TESTING env var is set
+        run: |
+          echo "Checking E2E_TESTING environment variable..."
+          if grep -q "^E2E_TESTING=1" .env; then
+            echo "✓ E2E_TESTING is set to 1"
+          else
+            echo "✗ E2E_TESTING is NOT set or has wrong value"
+            echo "Current .env content for E2E_TESTING:"
+            grep "E2E_TESTING" .env || echo "E2E_TESTING not found in .env"
+            exit 1
+          fi
+        shell: bash
+
       - name: Install MinIO client (mc)
         run: |
           set -euo pipefail
@@ -114,7 +127,7 @@ jobs:
       - name: Start MinIO Server
         run: |
           set -euo pipefail
-          
+
           # Start MinIO server in background
           docker run -d \
             --name minio-server \
@@ -124,7 +137,7 @@ jobs:
             -e MINIO_ROOT_PASSWORD=devminio123 \
             minio/minio:RELEASE.2025-09-07T16-13-09Z \
             server /data --console-address :9001
-          
+
           echo "MinIO server started"
 
       - name: Wait for MinIO and create S3 bucket
