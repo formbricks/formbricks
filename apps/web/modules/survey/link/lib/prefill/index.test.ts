@@ -3,9 +3,9 @@ import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
-import { getPrefillValue } from "./utils";
+import { getPrefillValue } from "./index";
 
-describe("survey link utils", () => {
+describe("prefill integration tests", () => {
   const mockSurvey = {
     id: "survey1",
     name: "Test Survey",
@@ -124,6 +124,18 @@ describe("survey link utils", () => {
             ],
             allowMulti: true,
           },
+          {
+            id: "q12",
+            type: TSurveyElementTypeEnum.Ranking,
+            headline: { default: "Ranking Question" },
+            required: false,
+            choices: [
+              { id: "r1", label: { default: "First Choice" } },
+              { id: "r2", label: { default: "Second Choice" } },
+              { id: "r3", label: { default: "Third Choice" } },
+            ],
+            shuffleOption: "none",
+          },
         ],
       },
     ],
@@ -162,11 +174,19 @@ describe("survey link utils", () => {
     expect(result).toEqual({ q1: "Open text answer" });
   });
 
-  test("validates MultipleChoiceSingle questions", () => {
+  test("validates MultipleChoiceSingle questions with label", () => {
     const searchParams = new URLSearchParams();
     searchParams.set("q2", "Option 1");
     const result = getPrefillValue(mockSurvey, searchParams, "default");
     expect(result).toEqual({ q2: "Option 1" });
+  });
+
+  test("validates MultipleChoiceSingle questions with option ID", () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q2", "c2");
+    const result = getPrefillValue(mockSurvey, searchParams, "default");
+    // Option ID is converted to label
+    expect(result).toEqual({ q2: "Option 2" });
   });
 
   test("invalidates MultipleChoiceSingle with non-existent option", () => {
@@ -183,10 +203,26 @@ describe("survey link utils", () => {
     expect(result).toEqual({ q3: "Custom answer" });
   });
 
-  test("handles MultipleChoiceMulti questions", () => {
+  test("handles MultipleChoiceMulti questions with labels", () => {
     const searchParams = new URLSearchParams();
     searchParams.set("q4", "Option 4,Option 5");
     const result = getPrefillValue(mockSurvey, searchParams, "default");
+    expect(result).toEqual({ q4: ["Option 4", "Option 5"] });
+  });
+
+  test("handles MultipleChoiceMulti questions with option IDs", () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q4", "c4,c5");
+    const result = getPrefillValue(mockSurvey, searchParams, "default");
+    // Option IDs are converted to labels
+    expect(result).toEqual({ q4: ["Option 4", "Option 5"] });
+  });
+
+  test("handles MultipleChoiceMulti with mixed IDs and labels", () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q4", "c4,Option 5");
+    const result = getPrefillValue(mockSurvey, searchParams, "default");
+    // Mixed: ID converted to label + label stays as-is
     expect(result).toEqual({ q4: ["Option 4", "Option 5"] });
   });
 
@@ -267,6 +303,27 @@ describe("survey link utils", () => {
     expect(result).toEqual({ q11: ["p3", "p4"] });
   });
 
+  test("handles Ranking with labels", () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q12", "Third Choice,First Choice,Second Choice");
+    const result = getPrefillValue(mockSurvey, searchParams, "default");
+    expect(result).toEqual({ q12: ["Third Choice", "First Choice", "Second Choice"] });
+  });
+
+  test("handles Ranking with option IDs", () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q12", "r3,r1,r2");
+    const result = getPrefillValue(mockSurvey, searchParams, "default");
+    expect(result).toEqual({ q12: ["Third Choice", "First Choice", "Second Choice"] });
+  });
+
+  test("handles Ranking with mixed IDs and labels", () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q12", "r3,First Choice,r2");
+    const result = getPrefillValue(mockSurvey, searchParams, "default");
+    expect(result).toEqual({ q12: ["Third Choice", "First Choice", "Second Choice"] });
+  });
+
   test("handles multiple valid questions", () => {
     const searchParams = new URLSearchParams();
     searchParams.set("q1", "Open text answer");
@@ -292,5 +349,19 @@ describe("survey link utils", () => {
     searchParams.set("q1", "");
     const result = getPrefillValue(mockSurvey, searchParams, "default");
     expect(result).toBeUndefined();
+  });
+
+  test("handles whitespace in comma-separated values", () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q4", "Option 4 ,  Option 5");
+    const result = getPrefillValue(mockSurvey, searchParams, "default");
+    expect(result).toEqual({ q4: ["Option 4", "Option 5"] });
+  });
+
+  test("ignores trailing commas in multi-select", () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q4", "Option 4,Option 5,");
+    const result = getPrefillValue(mockSurvey, searchParams, "default");
+    expect(result).toEqual({ q4: ["Option 4", "Option 5"] });
   });
 });
