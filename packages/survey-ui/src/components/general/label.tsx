@@ -51,12 +51,12 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
       : "";
 
   // Determine variant class
-  const variantClass =
-    variant === "headline"
-      ? "label-headline"
-      : variant === "description"
-        ? "label-description"
-        : "label-default";
+  let variantClass = "label-default";
+  if (variant === "headline") {
+    variantClass = "label-headline";
+  } else if (variant === "description") {
+    variantClass = "label-description";
+  }
 
   // If HTML, render with dangerouslySetInnerHTML, otherwise render normally
   if (isHtml && safeHtml) {

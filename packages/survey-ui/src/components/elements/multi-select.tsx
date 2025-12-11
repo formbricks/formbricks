@@ -197,6 +197,8 @@ function MultiSelect({
                 disabled={disabled}
                 dir={detectedDir}
                 className="w-full"
+                // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
+                autoFocus
               />
             ) : null}
           </>
@@ -252,6 +254,8 @@ function MultiSelect({
                       disabled={disabled}
                       dir={detectedDir}
                       className="mt-2 w-full"
+                      // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
+                      autoFocus
                     />
                   ) : null}
                 </label>

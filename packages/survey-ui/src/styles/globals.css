@@ -192,3 +192,32 @@
   background-color: var(--fb-progress-indicator-bg-color);
   border-radius: var(--fb-progress-indicator-border-radius);
 }
+
+/* ---------------------------------------------------------------------------
+   Textarea Scrollbar Styling
+   Smaller, more subtle scrollbars for textarea elements.
+   --------------------------------------------------------------------------- */
+textarea {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: hsl(215.4 16.3% 46.9% / 0.3) transparent;
+}
+
+/* Chrome, Edge, and Safari */
+textarea::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background-color: hsl(215.4 16.3% 46.9% / 0.3);
+  border-radius: 2px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(215.4 16.3% 46.9% / 0.5);
+}

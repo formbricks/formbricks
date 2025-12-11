@@ -131,23 +131,19 @@ function Ranking({
               const borderClass = detectedDir === "rtl" ? "border-r" : "border-l";
 
               // RTL-aware border radius classes for control buttons
-              const topButtonRadiusClass =
-                detectedDir === "rtl"
-                  ? isFirst
-                    ? "cursor-not-allowed opacity-30"
-                    : "rounded-tl-md"
-                  : isFirst
-                    ? "cursor-not-allowed opacity-30"
-                    : "rounded-tr-md";
+              let topButtonRadiusClass = "rounded-tr-md";
+              if (isFirst) {
+                topButtonRadiusClass = "cursor-not-allowed opacity-30";
+              } else if (detectedDir === "rtl") {
+                topButtonRadiusClass = "rounded-tl-md";
+              }
 
-              const bottomButtonRadiusClass =
-                detectedDir === "rtl"
-                  ? isLast
-                    ? "cursor-not-allowed opacity-30"
-                    : "rounded-bl-md"
-                  : isLast
-                    ? "cursor-not-allowed opacity-30"
-                    : "rounded-br-md";
+              let bottomButtonRadiusClass = "rounded-br-md";
+              if (isLast) {
+                bottomButtonRadiusClass = "cursor-not-allowed opacity-30";
+              } else if (detectedDir === "rtl") {
+                bottomButtonRadiusClass = "rounded-bl-md";
+              }
 
               return (
                 <div

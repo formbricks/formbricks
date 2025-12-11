@@ -267,34 +267,6 @@ export const DisabledWithValue: Story = {
   },
 };
 
-export const FileUpload: Story = {
-  args: {
-    type: "file",
-  },
-};
-
-export const FileUploadWithRTL: Story = {
-  args: {
-    type: "file",
-    dir: "rtl",
-  },
-};
-
-export const FileUploadWithError: Story = {
-  args: {
-    type: "file",
-    errorMessage: "Please upload a valid file",
-  },
-};
-
-export const FileUploadWithErrorAndRTL: Story = {
-  args: {
-    type: "file",
-    errorMessage: "Please upload a valid file",
-    dir: "rtl",
-  },
-};
-
 export const RTL: Story = {
   args: {
     dir: "rtl",

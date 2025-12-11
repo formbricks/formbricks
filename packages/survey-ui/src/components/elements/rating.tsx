@@ -64,7 +64,7 @@ const getSmileyIcon = (
   active: boolean,
   addColors: boolean
 ): React.JSX.Element => {
-  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fill-primary";
+  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fill-yellow-200";
   const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
 
   const icons = [
@@ -283,8 +283,9 @@ function Rating({
   // Render star scale option
   const renderStarOption = (number: number): React.JSX.Element => {
     const isSelected = currentValue === number;
-    const isHovered = hoveredValue === number;
-    const isActive = isSelected || isHovered;
+    // Fill all stars up to the hovered value (if hovering) or selected value
+    const activeValue = hoveredValue ?? currentValue ?? 0;
+    const isActive = number <= activeValue;
 
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
@@ -351,7 +352,7 @@ function Rating({
         className={cn(
           "relative flex max-h-16 min-h-9 w-full cursor-pointer justify-center transition-colors focus:outline-none",
           isActive
-            ? "stroke-primary text-primary"
+            ? "stroke-brand text-brand"
             : "stroke-muted-foreground text-muted-foreground focus:border-accent focus:border-2",
           disabled && "cursor-not-allowed opacity-50"
         )}
