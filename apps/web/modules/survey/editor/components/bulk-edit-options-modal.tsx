@@ -10,7 +10,9 @@ import { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString } from "@/lib/i18n/utils";
+import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -90,18 +92,42 @@ export const BulkEditOptionsModal = ({
   }, [isOpen, regularChoices, selectedLanguageCode]);
 
   const validateRemovedOptions = (newLabels: string[]): string | null => {
-    if (newLabels.length >= regularChoices.length) return null;
+    const originalLabels = regularChoices.map((c) => c.label[selectedLanguageCode] || "");
+    const missingLabels = originalLabels.filter((label) => label && !newLabels.includes(label));
 
-    const problematicQuestions = regularChoices
-      .slice(newLabels.length)
-      .map((choice) => findOptionUsedInLogic(localSurvey, element.id, choice.id))
-      .filter((idx) => idx !== -1)
-      .map((idx) => idx + 1);
+    if (missingLabels.length === 0) return null;
 
-    if (problematicQuestions.length === 0) return null;
+    // Find which choices have missing labels and check if they're used in logic
+    const choicesWithMissingLabels = missingLabels
+      .map((label) => regularChoices.find((c) => c.label[selectedLanguageCode] === label))
+      .filter((c): c is TSurveyMultipleChoiceElement["choices"][number] => c !== undefined);
+
+    // Get all elements to find which block has the logic
+    const allElements = getElementsFromBlocks(localSurvey.blocks);
+
+    // Build detailed error info: option label -> block name where it's used
+    const problematicOptions: { optionLabel: string; blockName: string }[] = [];
+
+    for (const choice of choicesWithMissingLabels) {
+      const elementIndex = findOptionUsedInLogic(localSurvey, element.id, choice.id);
+      if (elementIndex !== -1) {
+        const elementWithLogic = allElements[elementIndex];
+        // Find which block contains this element
+        const { block } = findElementLocation(localSurvey, elementWithLogic.id);
+        if (block) {
+          const optionLabel = choice.label[selectedLanguageCode] || "";
+          problematicOptions.push({ optionLabel, blockName: block.name });
+        }
+      }
+    }
+
+    if (problematicOptions.length === 0) return null;
+
+    // Format: "Option '3' is used in logic at 'Block Name'"
+    const details = problematicOptions.map((opt) => `"${opt.optionLabel}" → ${opt.blockName}`).join(", ");
 
     return t("environments.surveys.edit.options_used_in_logic_bulk_error", {
-      questionIndexes: [...new Set(problematicQuestions)].sort((a, b) => a - b).join(", "),
+      questionIndexes: details,
     });
   };
 
