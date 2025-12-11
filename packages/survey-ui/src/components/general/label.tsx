@@ -1,11 +1,10 @@
 "use client";
 
-import * as LabelPrimitive from "@radix-ui/react-label";
 import DOMPurify from "isomorphic-dompurify";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-interface LabelProps extends React.ComponentProps<typeof LabelPrimitive.Root> {
+interface LabelProps extends React.ComponentProps<"label"> {
   /** Label variant for different styling contexts */
   variant?: "default" | "headline" | "description";
 }
@@ -87,11 +86,11 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
   // If HTML, render with dangerouslySetInnerHTML, otherwise render normally
   if (isHtml && safeHtml) {
     return (
-      <LabelPrimitive.Root
+      <label
         data-slot="label"
         data-variant={variant}
         className={cn(
-          "flex select-none items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
+          "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
           className
         )}
         style={cssVarStyles}
@@ -102,17 +101,17 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
   }
 
   return (
-    <LabelPrimitive.Root
+    <label
       data-slot="label"
       data-variant={variant}
       className={cn(
-        "flex select-none items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
         className
       )}
       style={cssVarStyles}
       {...props}>
       {children}
-    </LabelPrimitive.Root>
+    </label>
   );
 }
 

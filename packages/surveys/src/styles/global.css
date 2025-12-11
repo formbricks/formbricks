@@ -1,4 +1,6 @@
-@import 'tailwindcss' prefix(fb);
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme) prefix(fb);
+@import "tailwindcss/utilities.css" layer(utilities) prefix(fb) important;
 
 @config '../../tailwind.config.cjs';
 
@@ -11,6 +13,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
   *,
   ::after,
   ::before,

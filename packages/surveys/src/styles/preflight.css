@@ -13,10 +13,12 @@
   font-family: Inter, Helvetica, Arial, sans-serif;
   font-size: 1em;
 }
+
 #fbjs ::before,
 #fbjs ::after {
   --tw-content: "";
 }
+
 #fbjs html {
   line-height: 1.5;
   /* 1 */
@@ -27,12 +29,14 @@
   tab-size: 4;
   /* 3 */
 }
+
 #fbjs body {
   margin: 0;
   /* 1 */
   line-height: inherit;
   /* 2 */
 }
+
 #fbjs hr {
   height: 0;
   /* 1 */
@@ -41,9 +45,11 @@
   border-top-width: 1px;
   /* 3 */
 }
+
 #fbjs abbr:where([title]) {
   text-decoration: underline dotted;
 }
+
 #fbjs h1,
 #fbjs h2,
 #fbjs h3,
@@ -53,36 +59,39 @@
   font-size: inherit;
   font-weight: inherit;
 }
+
 #fbjs a {
   color: inherit;
   text-decoration: inherit;
 }
+
 #fbjs b,
 #fbjs strong {
   font-weight: bolder;
 }
+
 #fbjs code,
 #fbjs kbd,
 #fbjs samp,
 #fbjs pre {
-  font-family: theme(
-    "fontFamily.mono",
-    ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    Monaco,
-    Consolas,
-    "Liberation Mono",
-    "Courier New",
-    monospace
-  );
+  font-family: theme("fontFamily.mono",
+      ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      Monaco,
+      Consolas,
+      "Liberation Mono",
+      "Courier New",
+      monospace);
   /* 1 */
   font-size: 1em;
   /* 2 */
 }
+
 #fbjs small {
   font-size: 80%;
 }
+
 #fbjs sub,
 #fbjs sup {
   font-size: 75%;
@@ -90,12 +99,15 @@
   position: relative;
   vertical-align: baseline;
 }
+
 #fbjs sub {
   bottom: -0.25em;
 }
+
 #fbjs sup {
   top: -0.5em;
 }
+
 #fbjs table {
   text-indent: 0;
   /* 1 */
@@ -104,6 +116,7 @@
   border-collapse: collapse;
   /* 3 */
 }
+
 #fbjs button,
 #fbjs input,
 #fbjs optgroup,
@@ -124,10 +137,12 @@
   padding: 0;
   /* 3 */
 }
+
 #fbjs button,
 #fbjs select {
   text-transform: none;
 }
+
 #fbjs button,
 #fbjs [type="button"],
 #fbjs [type="reset"],
@@ -139,37 +154,46 @@
   background-image: none;
   /* 2 */
 }
+
 #fbjs :-moz-focusring {
   outline: auto;
 }
+
 #fbjs :-moz-ui-invalid {
   box-shadow: none;
 }
+
 #fbjs progress {
   vertical-align: baseline;
 }
+
 #fbjs ::-webkit-inner-spin-button,
 #fbjs ::-webkit-outer-spin-button {
   height: auto;
 }
+
 #fbjs [type="search"] {
   -webkit-appearance: textfield;
   /* 1 */
   outline-offset: -2px;
   /* 2 */
 }
+
 #fbjs ::-webkit-search-decoration {
   -webkit-appearance: none;
 }
+
 #fbjs ::-webkit-file-upload-button {
   -webkit-appearance: button;
   /* 1 */
   font: inherit;
   /* 2 */
 }
+
 #fbjs summary {
   display: list-item;
 }
+
 #fbjs blockquote,
 #fbjs dl,
 #fbjs dd,
@@ -185,13 +209,16 @@
 #fbjs pre {
   margin: 0;
 }
+
 #fbjs fieldset {
   margin: 0;
   padding: 0;
 }
+
 #fbjs legend {
   padding: 0;
 }
+
 #fbjs ol,
 #fbjs ul,
 #fbjs menu {
@@ -199,9 +226,11 @@
   margin: 0;
   padding: 0;
 }
+
 #fbjs textarea {
   resize: vertical;
 }
+
 #fbjs input::placeholder,
 #fbjs textarea::placeholder {
   opacity: 1;
@@ -209,13 +238,16 @@
   color: theme("colors.gray.400", #9ca3af);
   /* 2 */
 }
+
 #fbjs button,
 #fbjs [role="button"] {
   cursor: pointer;
 }
+
 #fbjs :disabled {
   cursor: default;
 }
+
 #fbjs img,
 #fbjs svg,
 #fbjs video,
@@ -229,11 +261,13 @@
   vertical-align: middle;
   /* 2 */
 }
+
 #fbjs img,
 #fbjs video {
   max-width: 100%;
   height: auto;
 }
+
 #fbjs [hidden] {
   display: none;
 }

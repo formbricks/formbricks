@@ -2,6 +2,9 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: "class",
+  // Scope all utilities to #fbjs when used in surveys package
+  // This ensures proper specificity and prevents conflicts with preflight CSS
+  important: "#fbjs",
   content: ["./src/**/*.{tsx,ts,jsx,js}"],
   theme: {
     extend: {
@@ -41,7 +44,7 @@ export default {
         input: "var(--input)",
         ring: "var(--fb-brand-color)",
         brand: {
-          DEFAULT: "var(--fb-brand-color)",
+          DEFAULT: "var(--fb-survey-brand-color)",
           "20": "color-mix(in srgb, var(--fb-brand-color) 20%, white)",
         },
         // Input CSS variables (shorter names)

@@ -1,5 +1,7 @@
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
+// Add this import for survey-ui CSS variables
+import surveyUiCss from "@formbricks/survey-ui/styles?inline";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { isLight, mixColor } from "@/lib/color";
@@ -44,8 +46,9 @@ export const addStylesToDom = () => {
       styleElement.setAttribute("nonce", styleNonce);
     }
 
+    // Include survey-ui CSS variables before other styles
     styleElement.innerHTML =
-      preflight + global + editorCss + datePickerCss + calendarCss + datePickerCustomCss;
+      preflight + global + editorCss + datePickerCss + calendarCss + datePickerCustomCss + surveyUiCss;
     document.head.appendChild(styleElement);
   } else {
     // If style element already exists, update its nonce if needed
@@ -94,6 +97,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
+  appendCssVariable("survey-brand-color", styling.brandColor?.light);
+
   appendCssVariable("focus-color", styling.brandColor?.light);
   if (styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
@@ -103,8 +108,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("brand-text-color", "#ffffff");
   }
 
-  appendCssVariable("heading-color", styling.questionColor?.light);
-  appendCssVariable("subheading-color", styling.questionColor?.light);
+  // appendCssVariable("heading-color", styling.questionColor?.light);
+  appendCssVariable("element-headline-color", styling.questionColor?.light);
+  appendCssVariable("element-description-color", styling.questionColor?.light);
+  appendCssVariable("input-color", styling.questionColor?.light);
+  // appendCssVariable("subheading-color", styling.questionColor?.light);
 
   if (styling.questionColor?.light) {
     appendCssVariable("placeholder-color", mixColor(styling.questionColor.light, "#ffffff", 0.3));
@@ -114,12 +122,14 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   if (styling.inputBorderColor?.light) {
     appendCssVariable("border-color-highlight", mixColor(styling.inputBorderColor.light, "#000000", 0.1));
+    appendCssVariable("input-border-color", styling.inputBorderColor?.light);
   }
 
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
   appendCssVariable("border-radius", `${Number(roundness).toString()}px`);
   appendCssVariable("input-background-color", styling.inputColor?.light);
+  appendCssVariable("input-bg-color", styling.inputColor?.light);
 
   if (styling.questionColor?.light) {
     const isLightQuestionColor = isLight(styling.questionColor.light);

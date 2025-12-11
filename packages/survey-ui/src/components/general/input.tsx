@@ -1,5 +1,5 @@
-import { AlertCircle } from "lucide-react";
 import * as React from "react";
+import { AlertCircleIcon } from "@/components/icons/alert-circle";
 import { cn } from "@/lib/utils";
 
 interface InputProps extends React.ComponentProps<"input"> {
@@ -16,7 +16,7 @@ function Input({ className, type, errorMessage, dir, ...props }: InputProps): Re
     <div className="space-y-1">
       {errorMessage ? (
         <div className="text-destructive flex items-center gap-1 text-sm" dir={dir}>
-          <AlertCircle className="size-4" />
+          <AlertCircleIcon className="size-4" />
           <span>{errorMessage}</span>
         </div>
       ) : null}
@@ -31,7 +31,7 @@ function Input({ className, type, errorMessage, dir, ...props }: InputProps): Re
         aria-invalid={hasError || undefined}
         className={cn(
           // Layout and behavior
-          "flex min-w-0 border outline-none transition-[color,box-shadow]",
+          "flex min-w-0 border transition-[color,box-shadow] outline-none",
           // Customizable styles via CSS variables (using Tailwind theme extensions)
           "w-input h-input",
           "bg-input-bg border-input-border rounded-input",

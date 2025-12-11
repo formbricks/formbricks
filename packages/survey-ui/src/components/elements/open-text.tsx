@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState } from "react";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { Textarea } from "@/components/general/textarea";
@@ -43,7 +43,7 @@ function OpenText({
   rows = 3,
   disabled = false,
 }: OpenTextProps): React.JSX.Element {
-  const [currentLength, setCurrentLength] = React.useState(value.length);
+  const [currentLength, setCurrentLength] = useState(value.length);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     const newValue = e.target.value;
@@ -55,7 +55,7 @@ function OpenText({
     if (charLimit?.max === undefined) return null;
     const isOverLimit = currentLength >= charLimit.max;
     return (
-      <span className={cn("text-xs", isOverLimit ? "font-semibold text-red-500" : "text-neutral-400")}>
+      <span className={cn("text-xs", isOverLimit ? "font-semibold text-red-500" : "text-brand")}>
         {currentLength}/{charLimit.max}
       </span>
     );

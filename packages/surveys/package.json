@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@calcom/embed-snippet": "1.3.3",
+    "@formbricks/survey-ui": "workspace:*",
     "@formkit/auto-animate": "0.8.2",
     "i18next": "25.5.2",
     "i18next-icu": "2.4.0",

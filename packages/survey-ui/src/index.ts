@@ -1,3 +1,5 @@
+import "@/styles/globals.css";
+
 export { Button, buttonVariants } from "@/components/general/button";
 export {
   DropdownMenu,

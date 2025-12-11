@@ -173,7 +173,7 @@ export function PictureSelectionElement({
           rel="noreferrer"
           onClick={handleLinkClick}
           className={cn(
-            "fb:absolute fb:bottom-4 fb:flex fb:items-center fb:gap-2 fb:whitespace-nowrap fb:rounded-md fb:bg-slate-800 fb-bg-opacity-40 fb:p-1.5 fb:text-white fb:backdrop-blur-lg fb:transition fb:duration-300 fb:ease-in-out hover:fb-bg-opacity-65 fb:group-hover/image:opacity-100 fb:z-20",
+            "fb:absolute fb:bottom-4 fb:flex fb:items-center fb:gap-2 fb:whitespace-nowrap fb:rounded-md fb:bg-slate-800/40 fb:p-1.5 fb:text-white fb:backdrop-blur-lg fb:transition fb:duration-300 fb:ease-in-out hover:fb-bg-slate-800/65 fb:group-hover/image:opacity-100 fb:z-20",
             dir === "rtl" ? "fb:left-2" : "fb:right-2"
           )}>
           <span className="fb:sr-only">{t("common.open_in_new_tab")}</span>

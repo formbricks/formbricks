@@ -14,6 +14,14 @@ const config = ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   return defineConfig({
+    resolve: {
+      alias: {
+        // Alias React to Preact for survey-ui components
+        react: "preact/compat",
+        "react-dom": "preact/compat",
+        "react/jsx-runtime": "preact/jsx-runtime",
+      },
+    },
     test: {
       environment: "node",
       environmentMatchGlobs: [
