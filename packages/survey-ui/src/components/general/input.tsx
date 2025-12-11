@@ -1,5 +1,5 @@
-import { AlertCircle } from "lucide-react";
 import * as React from "react";
+import { ElementError } from "@/components/general/element-error";
 import { cn } from "@/lib/utils";
 
 interface InputProps extends React.ComponentProps<"input"> {
@@ -13,13 +13,8 @@ function Input({ className, type, errorMessage, dir, ...props }: InputProps): Re
   const hasError = Boolean(errorMessage);
 
   return (
-    <div className="space-y-1">
-      {errorMessage ? (
-        <div className="text-destructive flex items-center gap-1 text-sm" dir={dir}>
-          <AlertCircle className="size-4" />
-          <span>{errorMessage}</span>
-        </div>
-      ) : null}
+    <div className="relative space-y-2">
+      <ElementError errorMessage={errorMessage} dir={dir} />
       <input
         type={type}
         dir={dir}

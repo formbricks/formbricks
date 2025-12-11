@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { Textarea } from "@/components/general/textarea";
@@ -73,37 +74,40 @@ function OpenText({
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Input or Textarea */}
-      <div className="space-y-1">
-        {longAnswer ? (
-          <Textarea
-            id={inputId}
-            placeholder={placeholder}
-            value={value}
-            onChange={handleChange}
-            required={required}
-            dir={detectedDir}
-            rows={rows}
-            disabled={disabled}
-            errorMessage={errorMessage}
-            minLength={charLimit?.min}
-            maxLength={charLimit?.max}
-          />
-        ) : (
-          <Input
-            id={inputId}
-            type={inputType}
-            placeholder={placeholder}
-            value={value}
-            onChange={handleChange}
-            required={required}
-            dir={detectedDir}
-            disabled={disabled}
-            errorMessage={errorMessage}
-            minLength={charLimit?.min}
-            maxLength={charLimit?.max}
-          />
-        )}
-        {renderCharLimit()}
+      <div className="relative space-y-2">
+        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <div className="space-y-1">
+          {longAnswer ? (
+            <Textarea
+              id={inputId}
+              placeholder={placeholder}
+              value={value}
+              onChange={handleChange}
+              required={required}
+              dir={detectedDir}
+              rows={rows}
+              disabled={disabled}
+              aria-invalid={Boolean(errorMessage) || undefined}
+              minLength={charLimit?.min}
+              maxLength={charLimit?.max}
+            />
+          ) : (
+            <Input
+              id={inputId}
+              type={inputType}
+              placeholder={placeholder}
+              value={value}
+              onChange={handleChange}
+              required={required}
+              dir={detectedDir}
+              disabled={disabled}
+              aria-invalid={Boolean(errorMessage) || undefined}
+              minLength={charLimit?.min}
+              maxLength={charLimit?.max}
+            />
+          )}
+          {renderCharLimit()}
+        </div>
       </div>
     </div>
   );

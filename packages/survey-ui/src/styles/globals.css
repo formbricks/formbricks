@@ -44,7 +44,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-muted: oklch(0.97 0.02 27.325);
   --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --input: black;
 
   /* ---------------------------------------------------------------------------
      Survey Brand Color
