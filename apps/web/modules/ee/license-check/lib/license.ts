@@ -7,6 +7,7 @@ import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
+import { E2E_TESTING } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
 import { getInstanceId } from "@/lib/instance";
@@ -262,7 +263,9 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
 
     const [instanceId, responseCount] = await Promise.all([
-      getInstanceId(),
+      // Skip instance ID during E2E tests to avoid license key conflicts
+      // as the instance ID changes with each test run
+      E2E_TESTING ? null : getInstanceId(),
       prisma.response.count({
         where: {
           createdAt: {
@@ -274,7 +277,8 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     ]);
 
     // No organization exists, cannot perform license check
-    if (!instanceId) return null;
+    // (skip this check during E2E tests as we intentionally use null)
+    if (!E2E_TESTING && !instanceId) return null;
 
     const proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
     const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
@@ -286,7 +290,7 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
       body: JSON.stringify({
         licenseKey: env.ENTERPRISE_LICENSE_KEY,
         usage: { responseCount },
-        instanceId,
+        instanceId: E2E_TESTING ? null : instanceId,
       }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
