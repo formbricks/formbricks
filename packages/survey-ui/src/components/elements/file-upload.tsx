@@ -296,13 +296,7 @@ function FileUpload({
                 aria-label="Upload files by clicking or dragging them here">
                 <Upload className="text-input-text h-6" aria-hidden="true" />
                 {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
-                <span
-                  className="text-input-text m-2 text-sm"
-                  id={`${inputId}-label`}
-                  style={{
-                    fontSize: "var(--fb-input-font-size)",
-                    fontWeight: "var(--fb-input-font-weight)",
-                  }}>
+                <span className="text-input-text font-input-weight text-input m-2" id={`${inputId}-label`}>
                   {placeholderText}
                 </span>
                 <Input

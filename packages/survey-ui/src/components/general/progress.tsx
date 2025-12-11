@@ -14,20 +14,13 @@ function Progress({ className, value, ...props }: ProgressProps): React.JSX.Elem
     <ProgressPrimitive.Root
       data-slot="progress"
       value={progressValue}
-      className={cn("relative w-full overflow-hidden", className)}
-      style={{
-        height: "var(--fb-progress-track-height)",
-        backgroundColor: "var(--fb-progress-track-bg-color)",
-        borderRadius: "var(--fb-progress-track-border-radius)",
-      }}
+      className={cn("progress-track relative w-full overflow-hidden", className)}
       {...props}>
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
-        className="h-full w-full flex-1 transition-all"
+        className="progress-indicator h-full w-full flex-1 transition-all"
         style={{
           transform: `translateX(-${String(100 - progressValue)}%)`,
-          backgroundColor: "var(--fb-progress-indicator-bg-color)",
-          borderRadius: "var(--fb-progress-indicator-border-radius)",
         }}
       />
     </ProgressPrimitive.Root>

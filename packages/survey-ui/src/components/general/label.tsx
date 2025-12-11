@@ -38,40 +38,6 @@ const stripInlineStyles = (html: string): string => {
 };
 
 function Label({ className, variant = "default", children, ...props }: LabelProps): React.JSX.Element {
-  // Default styles driven by CSS variables based on variant
-  const getCssVarStyles = (): React.CSSProperties => {
-    if (variant === "headline") {
-      return {
-        fontFamily: "var(--fb-element-headline-font-family)",
-        fontWeight: "var(--fb-element-headline-font-weight)" as React.CSSProperties["fontWeight"],
-        fontSize: "var(--fb-element-headline-font-size)",
-        color: "var(--fb-element-headline-color)",
-        opacity: "var(--fb-element-headline-opacity)",
-      };
-    }
-
-    if (variant === "description") {
-      return {
-        fontFamily: "var(--fb-element-description-font-family)",
-        fontWeight: "var(--fb-element-description-font-weight)" as React.CSSProperties["fontWeight"],
-        fontSize: "var(--fb-element-description-font-size)",
-        color: "var(--fb-element-description-color)",
-        opacity: "var(--fb-element-description-opacity)",
-      };
-    }
-
-    // Default variant styles
-    return {
-      fontFamily: "var(--fb-label-font-family)",
-      fontWeight: "var(--fb-label-font-weight)" as React.CSSProperties["fontWeight"],
-      fontSize: "var(--fb-label-font-size)",
-      color: "var(--fb-label-color)",
-      opacity: "var(--fb-label-opacity)",
-    };
-  };
-
-  const cssVarStyles = getCssVarStyles();
-
   // Check if children is a string and contains HTML
   const childrenString = typeof children === "string" ? children : null;
   const strippedContent = childrenString ? stripInlineStyles(childrenString) : "";
@@ -84,6 +50,14 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
         })
       : "";
 
+  // Determine variant class
+  const variantClass =
+    variant === "headline"
+      ? "label-headline"
+      : variant === "description"
+        ? "label-description"
+        : "label-default";
+
   // If HTML, render with dangerouslySetInnerHTML, otherwise render normally
   if (isHtml && safeHtml) {
     return (
@@ -91,10 +65,10 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
         data-slot="label"
         data-variant={variant}
         className={cn(
-          "flex select-none items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
+          "flex select-none items-center gap-2 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
+          variantClass,
           className
         )}
-        style={cssVarStyles}
         {...props}
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
@@ -106,10 +80,10 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
       data-slot="label"
       data-variant={variant}
       className={cn(
-        "flex select-none items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
+        "flex select-none items-center gap-2 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
+        variantClass,
         className
       )}
-      style={cssVarStyles}
       {...props}>
       {children}
     </LabelPrimitive.Root>

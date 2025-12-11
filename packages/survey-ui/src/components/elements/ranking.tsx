@@ -161,8 +161,7 @@ function Ranking({
                       {displayNumber}
                     </span>
                     <span
-                      className="font-option text-option font-option-weight shrink grow text-start"
-                      style={{ color: "var(--fb-option-label-color)" }}
+                      className="font-option text-option font-option-weight text-option-label shrink grow text-start"
                       dir={detectedDir}>
                       {item.label}
                     </span>

@@ -24,10 +24,6 @@ function Input({ className, type, errorMessage, dir, ...props }: InputProps): Re
         type={type}
         dir={dir}
         data-slot="input"
-        style={{
-          // need to use style here because tailwind is not able to use css variables for font size
-          fontSize: "var(--fb-input-font-size)",
-        }}
         aria-invalid={hasError || undefined}
         className={cn(
           // Layout and behavior
@@ -36,7 +32,7 @@ function Input({ className, type, errorMessage, dir, ...props }: InputProps): Re
           "w-input h-input",
           "bg-input-bg border-input-border rounded-input",
           "font-input font-input-weight",
-          "text-input-text",
+          "text-input",
           "px-input-x py-input-y",
           "shadow-input",
           // Placeholder styling
