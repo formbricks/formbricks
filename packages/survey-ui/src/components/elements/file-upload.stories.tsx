@@ -1,16 +1,19 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useEffect, useState } from "react";
-import { FileUpload, type FileUploadProps, type UploadedFile } from "./file-upload";
 import {
   type BaseStylingOptions,
-  type ExtendedInputStylingOptions,
+  type InputLayoutStylingOptions,
   commonArgTypes,
   createCSSVariablesDecorator,
   elementStylingArgTypes,
-  extendedInputStylingArgTypes,
-} from "./story-helpers";
+  inputStylingArgTypes,
+  pickArgTypes,
+} from "../../lib/story-helpers";
+import { FileUpload, type FileUploadProps, type UploadedFile } from "./file-upload";
 
-type StoryProps = FileUploadProps & Partial<BaseStylingOptions & ExtendedInputStylingOptions>;
+type StoryProps = FileUploadProps &
+  Partial<BaseStylingOptions & InputLayoutStylingOptions> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/FileUpload",
@@ -49,7 +52,18 @@ const meta: Meta<StoryProps> = {
       table: { category: "Validation" },
     },
     ...elementStylingArgTypes,
-    ...extendedInputStylingArgTypes,
+    ...pickArgTypes(inputStylingArgTypes, [
+      "inputBgColor",
+      "inputBorderColor",
+      "inputColor",
+      "inputFontSize",
+      "inputFontWeight",
+      "inputWidth",
+      "inputHeight",
+      "inputBorderRadius",
+      "inputPaddingX",
+      "inputPaddingY",
+    ]),
   },
   render: function Render(args: StoryProps) {
     const [value, setValue] = useState(args.value);

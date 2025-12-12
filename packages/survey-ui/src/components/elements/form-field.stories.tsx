@@ -1,16 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { FormField, type FormFieldConfig, type FormFieldProps } from "./form-field";
 import {
   type BaseStylingOptions,
-  type ExtendedInputStylingOptions,
+  type InputLayoutStylingOptions,
   type LabelStylingOptions,
   commonArgTypes,
   createCSSVariablesDecorator,
   createStatefulRender,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { FormField, type FormFieldConfig, type FormFieldProps } from "./form-field";
 
 type StoryProps = FormFieldProps &
-  Partial<BaseStylingOptions & LabelStylingOptions & ExtendedInputStylingOptions & { inputShadow: string }>;
+  Partial<BaseStylingOptions & LabelStylingOptions & InputLayoutStylingOptions & { inputShadow: string }> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/FormField",

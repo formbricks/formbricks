@@ -33,7 +33,7 @@ export interface LabelStylingOptions {
   labelOpacity: string;
 }
 
-export interface ExtendedInputStylingOptions {
+export interface InputLayoutStylingOptions {
   inputWidth: string;
   inputHeight: string;
   inputBorderRadius: string;
@@ -69,6 +69,27 @@ export interface CheckboxInputStylingOptions {
   checkboxInputBorderColor: string;
   checkboxInputBgColor: string;
   checkboxInputColor: string;
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Selects a subset of argTypes by key, with type safety.
+ * Useful for stories that only need specific styling controls.
+ *
+ * @example
+ * pickArgTypes(inputStylingArgTypes, ['inputBgColor', 'inputBorderColor'])
+ */
+export function pickArgTypes<T extends Record<string, any>>(argTypes: T, keys: (keyof T)[]): Partial<T> {
+  const result: Partial<T> = {};
+  for (const key of keys) {
+    if (key in argTypes) {
+      result[key] = argTypes[key];
+    }
+  }
+  return result;
 }
 
 // ============================================================================
@@ -169,10 +190,6 @@ export const inputStylingArgTypes = {
     control: "text",
     table: { category: "Input Styling" },
   },
-};
-
-export const extendedInputStylingArgTypes = {
-  ...inputStylingArgTypes,
   inputWidth: {
     control: "text",
     table: { category: "Input Styling" },
@@ -303,21 +320,6 @@ export const buttonStylingArgTypes = {
   },
 };
 
-export const checkboxInputStylingArgTypes = {
-  checkboxInputBorderColor: {
-    control: "color",
-    table: { category: "Checkbox Input Styling" },
-  },
-  checkboxInputBgColor: {
-    control: "color",
-    table: { category: "Checkbox Input Styling" },
-  },
-  checkboxInputColor: {
-    control: "color",
-    table: { category: "Checkbox Input Styling" },
-  },
-};
-
 // ============================================================================
 // CSS Variable Mapping and Decorator Factory
 // ============================================================================
@@ -413,7 +415,7 @@ export function createCSSVariablesDecorator<T extends Record<string, unknown> = 
 export function createStatefulRender<
   TValue,
   TProps extends { value?: TValue; onChange?: (v: TValue) => void },
->(Component: React.ComponentType<TProps>): (args: TProps) => React.ReactElement {
+>(Component: React.ComponentType<any>): (args: TProps) => React.ReactElement {
   function StatefulRender(args: TProps): React.ReactElement {
     const [value, setValue] = useState<TValue | undefined>(args.value);
 
@@ -423,7 +425,7 @@ export function createStatefulRender<
 
     return (
       <Component
-        {...args}
+        {...(args as any)}
         value={value}
         onChange={(v: TValue) => {
           setValue(v);

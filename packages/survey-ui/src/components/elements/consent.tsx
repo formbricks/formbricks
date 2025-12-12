@@ -69,7 +69,7 @@ function Consent({
         <label
           htmlFor={inputId}
           className={cn(
-            "bg-input-bg border-input-border text-input-text flex cursor-pointer items-center gap-3 rounded-md border p-4 transition-colors",
+            "bg-input-bg border-input-border text-input-text w-input px-input-x py-input-y rounded-input flex cursor-pointer items-center gap-3 border p-4 transition-colors",
             "focus-within:border-ring focus-within:ring-ring/50 font-fontWeight focus-within:shadow-sm",
             errorMessage && "border-destructive",
             disabled && "cursor-not-allowed opacity-50"

@@ -112,7 +112,7 @@ function MultiSelect({
     );
 
   // Shared className for option labels
-  const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
+  const optionLabelClassName = "font-option  font-option-weight text-option text-option-label";
 
   // Detect text direction from content
   const detectedDir = useTextDirection({
@@ -150,7 +150,7 @@ function MultiSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="w-full justify-between rounded-[var(--fb-input-border-radius)]"
+                  className="rounded-input w-full justify-between"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
                   <span className="truncate">{displayText}</span>
@@ -213,7 +213,7 @@ function MultiSelect({
                   key={option.id}
                   htmlFor={optionId}
                   className={cn(getOptionContainerClassName(isChecked), isChecked && "z-10")}>
-                  <span className="flex items-center text-sm">
+                  <span className="flex items-center">
                     <Checkbox
                       id={optionId}
                       checked={isChecked}
@@ -223,7 +223,7 @@ function MultiSelect({
                       disabled={disabled}
                       aria-invalid={Boolean(errorMessage)}
                     />
-                    <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{option.label}</span>
+                    <span className={cn("ml-3 mr-3", optionLabelClassName)}>{option.label}</span>
                   </span>
                 </label>
               );
@@ -233,7 +233,7 @@ function MultiSelect({
                 <label
                   htmlFor={`${inputId}-${otherOptionId}`}
                   className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
-                  <span className="flex items-center text-sm">
+                  <span className="flex items-center">
                     <Checkbox
                       id={`${inputId}-${otherOptionId}`}
                       checked={isOtherSelected}

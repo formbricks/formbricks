@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
-import { PictureSelect, type PictureSelectOption, type PictureSelectProps } from "./picture-select";
 import {
   type BaseStylingOptions,
   commonArgTypes,
   createCSSVariablesDecorator,
   createStatefulRender,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { PictureSelect, type PictureSelectOption, type PictureSelectProps } from "./picture-select";
 
 type StoryProps = PictureSelectProps & Partial<BaseStylingOptions & { optionBorderRadius: string }>;
 
