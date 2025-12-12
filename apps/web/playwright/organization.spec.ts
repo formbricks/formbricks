@@ -20,7 +20,7 @@ test.describe("Invite, accept and remove organization member", async () => {
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
-      await page.getByRole("link", { name: "Access Control" }).click();
+      await page.getByRole("link", { name: "Members & Teams" }).click();
 
       // Add member button
       await expect(page.getByRole("button", { name: "Invite member" })).toBeVisible();
@@ -131,8 +131,8 @@ test.describe("Create, update and delete team", async () => {
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
     await page.waitForTimeout(2000);
-    await expect(page.getByText("Access Control")).toBeVisible();
-    await page.getByText("Access Control").click();
+    await expect(page.getByText("Members & Teams")).toBeVisible();
+    await page.getByText("Members & Teams").click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/teams/);
     await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
