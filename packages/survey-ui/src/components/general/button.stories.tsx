@@ -7,6 +7,8 @@ interface StylingOptions {
   buttonHeight: string;
   buttonWidth: string;
   buttonFontSize: string;
+  buttonFontFamily: string;
+  buttonFontWeight: string;
   buttonBorderRadius: string;
   buttonBgColor: string;
   buttonTextColor: string;
@@ -18,7 +20,7 @@ type ButtonProps = React.ComponentProps<typeof Button>;
 type StoryProps = ButtonProps & StylingOptions;
 
 const meta: Meta<StoryProps> = {
-  title: "UI-package/Button",
+  title: "UI-package/General/Button",
   component: Button,
   tags: ["autodocs"],
   parameters: {
@@ -27,7 +29,7 @@ const meta: Meta<StoryProps> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "destructive", "outline", "secondary", "ghost", "link"],
+      options: ["default", "destructive", "outline", "secondary", "ghost", "link", "custom"],
       description: "Visual style variant of the button",
       table: { category: "Component Props" },
     },
@@ -61,6 +63,8 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     buttonHeight,
     buttonWidth,
     buttonFontSize,
+    buttonFontFamily,
+    buttonFontWeight,
     buttonBorderRadius,
     buttonBgColor,
     buttonTextColor,
@@ -68,16 +72,18 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     buttonPaddingY,
   } = args;
 
-  const cssVarStyle = {
+  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
     "--fb-button-height": buttonHeight,
     "--fb-button-width": buttonWidth,
     "--fb-button-font-size": buttonFontSize,
+    "--fb-button-font-family": buttonFontFamily,
+    "--fb-button-font-weight": buttonFontWeight,
     "--fb-button-border-radius": buttonBorderRadius,
     "--fb-button-bg-color": buttonBgColor,
     "--fb-button-text-color": buttonTextColor,
     "--fb-button-padding-x": buttonPaddingX,
     "--fb-button-padding-y": buttonPaddingY,
-  } as React.CSSProperties;
+  };
 
   return (
     <div style={cssVarStyle}>
@@ -88,16 +94,8 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
 
 export const StylingPlayground: Story = {
   args: {
+    variant: "custom",
     children: "Custom Button",
-    // Default styling values
-    buttonHeight: "40px",
-    buttonWidth: "auto",
-    buttonFontSize: "14px",
-    buttonBorderRadius: "0.5rem",
-    buttonBgColor: "#3b82f6",
-    buttonTextColor: "#ffffff",
-    buttonPaddingX: "16px",
-    buttonPaddingY: "8px",
   },
   argTypes: {
     // Button Styling (CSS Variables) - Only for this story
@@ -105,56 +103,60 @@ export const StylingPlayground: Story = {
       control: "text",
       table: {
         category: "Button Styling",
-        defaultValue: { summary: "40px" },
       },
     },
     buttonWidth: {
       control: "text",
       table: {
         category: "Button Styling",
-        defaultValue: { summary: "auto" },
       },
     },
     buttonFontSize: {
       control: "text",
       table: {
         category: "Button Styling",
-        defaultValue: { summary: "14px" },
+      },
+    },
+    buttonFontFamily: {
+      control: "text",
+      table: {
+        category: "Button Styling",
+      },
+    },
+    buttonFontWeight: {
+      control: "text",
+      table: {
+        category: "Button Styling",
       },
     },
     buttonBorderRadius: {
       control: "text",
       table: {
         category: "Button Styling",
-        defaultValue: { summary: "var(--fb-border-radius)" },
       },
     },
     buttonBgColor: {
       control: "color",
       table: {
         category: "Button Styling",
-        defaultValue: { summary: "var(--fb-brand-color)" },
       },
     },
     buttonTextColor: {
       control: "color",
       table: {
         category: "Button Styling",
-        defaultValue: { summary: "var(--fb-brand-text-color)" },
       },
     },
     buttonPaddingX: {
       control: "text",
       table: {
         category: "Button Styling",
-        defaultValue: { summary: "16px" },
       },
     },
     buttonPaddingY: {
       control: "text",
       table: {
         category: "Button Styling",
-        defaultValue: { summary: "8px" },
       },
     },
   },
@@ -220,6 +222,13 @@ export const Icon: Story = {
   args: {
     size: "icon",
     children: "×",
+  },
+};
+
+export const Custom: Story = {
+  args: {
+    variant: "custom",
+    children: "Custom Button",
   },
 };
 

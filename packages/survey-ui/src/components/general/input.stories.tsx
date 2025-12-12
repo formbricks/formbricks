@@ -17,12 +17,13 @@ interface StylingOptions {
   inputPaddingX: string;
   inputPaddingY: string;
   inputShadow: string;
+  brandColor: string;
 }
 
 type StoryProps = InputProps & Partial<StylingOptions>;
 
 const meta: Meta<StoryProps> = {
-  title: "UI-package/Input",
+  title: "UI-package/General/Input",
   component: Input,
   parameters: {
     layout: "centered",
@@ -75,6 +76,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     inputPaddingX,
     inputPaddingY,
     inputShadow,
+    brandColor,
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -91,6 +93,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-input-padding-x": inputPaddingX,
     "--fb-input-padding-y": inputPaddingY,
     "--fb-input-shadow": inputShadow,
+    "--fb-survey-brand-color": brandColor,
   };
 
   return (
@@ -103,20 +106,6 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
 export const StylingPlayground: Story = {
   args: {
     placeholder: "Enter text...",
-    // Default styling values
-    inputWidth: "400px",
-    inputHeight: "2.5rem",
-    inputBgColor: "#ffffff",
-    inputBorderColor: "#e2e8f0",
-    inputBorderRadius: "0.5rem",
-    inputFontFamily: "system-ui, sans-serif",
-    inputFontSize: "0.875rem",
-    inputFontWeight: "400",
-    inputColor: "#1e293b",
-    inputPlaceholderColor: "#94a3b8",
-    inputPaddingX: "0.75rem",
-    inputPaddingY: "0.5rem",
-    inputShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
   },
   argTypes: {
     // Input Styling (CSS Variables) - Only for this story
@@ -211,6 +200,13 @@ export const StylingPlayground: Story = {
         defaultValue: { summary: "0 1px 2px 0 rgb(0 0 0 / 0.05)" },
       },
     },
+    brandColor: {
+      control: "color",
+      table: {
+        category: "Input Styling",
+        defaultValue: { summary: "var(--fb-survey-brand-color)" },
+      },
+    },
   },
   decorators: [withCSSVariables],
 };
@@ -268,34 +264,6 @@ export const DisabledWithValue: Story = {
   args: {
     defaultValue: "Cannot edit this",
     disabled: true,
-  },
-};
-
-export const FileUpload: Story = {
-  args: {
-    type: "file",
-  },
-};
-
-export const FileUploadWithRTL: Story = {
-  args: {
-    type: "file",
-    dir: "rtl",
-  },
-};
-
-export const FileUploadWithError: Story = {
-  args: {
-    type: "file",
-    errorMessage: "Please upload a valid file",
-  },
-};
-
-export const FileUploadWithErrorAndRTL: Story = {
-  args: {
-    type: "file",
-    errorMessage: "Please upload a valid file",
-    dir: "rtl",
   },
 };
 

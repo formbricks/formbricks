@@ -34,7 +34,7 @@ type StoryProps = LabelProps &
   Partial<HeadlineStylingOptions & DescriptionStylingOptions & DefaultStylingOptions>;
 
 const meta: Meta<StoryProps> = {
-  title: "UI-package/Label",
+  title: "UI-package/General/Label",
   component: Label,
   parameters: {
     layout: "centered",
@@ -78,11 +78,11 @@ const withHeadlineCSSVariables: Decorator<StoryProps> = (Story, context) => {
   const { headlineFontFamily, headlineFontWeight, headlineFontSize, headlineColor, headlineOpacity } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-question-headline-font-family": headlineFontFamily ?? undefined,
-    "--fb-question-headline-font-weight": headlineFontWeight ?? undefined,
-    "--fb-question-headline-font-size": headlineFontSize ?? undefined,
-    "--fb-question-headline-color": headlineColor ?? undefined,
-    "--fb-question-headline-opacity": headlineOpacity ?? undefined,
+    "--fb-element-headline-font-family": headlineFontFamily ?? undefined,
+    "--fb-element-headline-font-weight": headlineFontWeight ?? undefined,
+    "--fb-element-headline-font-size": headlineFontSize ?? undefined,
+    "--fb-element-headline-color": headlineColor ?? undefined,
+    "--fb-element-headline-opacity": headlineOpacity ?? undefined,
   };
 
   return (
@@ -105,11 +105,11 @@ const withDescriptionCSSVariables: Decorator<StoryProps> = (Story, context) => {
   } = args;
 
   const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-question-description-font-family": descriptionFontFamily ?? undefined,
-    "--fb-question-description-font-weight": descriptionFontWeight ?? undefined,
-    "--fb-question-description-font-size": descriptionFontSize ?? undefined,
-    "--fb-question-description-color": descriptionColor ?? undefined,
-    "--fb-question-description-opacity": descriptionOpacity ?? undefined,
+    "--fb-element-description-font-family": descriptionFontFamily ?? undefined,
+    "--fb-element-description-font-weight": descriptionFontWeight ?? undefined,
+    "--fb-element-description-font-size": descriptionFontSize ?? undefined,
+    "--fb-element-description-color": descriptionColor ?? undefined,
+    "--fb-element-description-opacity": descriptionOpacity ?? undefined,
   };
 
   return (

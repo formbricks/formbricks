@@ -3,7 +3,7 @@ import { Label } from "./label";
 import { RadioGroup, RadioGroupItem } from "./radio-group";
 
 const meta: Meta<typeof RadioGroup> = {
-  title: "UI-package/RadioGroup",
+  title: "UI-package/General/RadioGroup",
   component: RadioGroup,
   parameters: {
     layout: "centered",
@@ -144,7 +144,7 @@ export const PaymentMethod: Story = {
   ),
 };
 
-export const SurveyQuestion: Story = {
+export const SurveyElement: Story = {
   render: () => (
     <div className="w-[400px] space-y-4">
       <div>

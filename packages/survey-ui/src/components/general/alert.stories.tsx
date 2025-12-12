@@ -3,7 +3,7 @@ import { TriangleAlertIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./alert";
 
 const meta: Meta<typeof Alert> = {
-  title: "UI-package/Alert",
+  title: "UI-package/General/Alert",
   component: Alert,
   tags: ["autodocs"],
   parameters: {
