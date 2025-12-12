@@ -286,7 +286,7 @@ export const getSurveyCount = reactCache(async (environmentId: string): Promise<
 
 export const updateSurveyInternal = async (
   updatedSurvey: TSurvey,
-  skipValidation: boolean = false
+  skipValidation = false
 ): Promise<TSurvey> => {
   if (!skipValidation) {
     validateInputs([updatedSurvey, ZSurvey]);
@@ -311,7 +311,7 @@ export const updateSurveyInternal = async (
     }
 
     // Add blocks media validation
-    if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
+    if (!skipValidation && updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
       const blocksValidation = checkForInvalidMediaInBlocks(updatedSurvey.blocks);
       if (!blocksValidation.ok) {
         throw new InvalidInputError(blocksValidation.error.message);
@@ -576,7 +576,7 @@ export const updateSurveyInternal = async (
 };
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
-  return updateSurveyInternal(updatedSurvey, false);
+  return updateSurveyInternal(updatedSurvey);
 };
 
 // Draft update without validation

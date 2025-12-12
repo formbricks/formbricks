@@ -19,6 +19,7 @@ import {
 } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -232,16 +233,12 @@ export const SurveyMenuBar = ({
     setIsSurveySaving(true);
 
     try {
-      if (localSurvey.questions) {
-        localSurvey.questions = localSurvey.questions.map((question) => {
-          const { isDraft, ...rest } = question;
-          return rest;
-        });
-      }
-
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
-      const updatedSurveyResponse = await updateSurveyDraftAction({ ...localSurvey, segment });
+      const updatedSurveyResponse = await updateSurveyDraftAction({
+        ...localSurvey,
+        segment,
+      } as unknown as TSurveyDraft);
 
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
