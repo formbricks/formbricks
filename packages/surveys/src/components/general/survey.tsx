@@ -732,7 +732,7 @@ export function Survey({
         case TResponseErrorCodesEnum.ResponseSendingError:
           return (
             <ResponseErrorComponent
-              responseData={responseData}
+              responseData={responseQueue?.getUnsentData() ?? responseData}
               questions={questions}
               onRetry={retryResponse}
               isRetrying={isRetrying}

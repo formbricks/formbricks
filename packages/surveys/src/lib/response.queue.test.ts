@@ -248,4 +248,30 @@ describe("ResponseQueue", () => {
       TResponseErrorCodesEnum.RecaptchaError
     );
   });
+
+  test("getUnsentData returns empty object when queue is empty", () => {
+    const unsentData = queue.getUnsentData();
+    expect(unsentData).toEqual({});
+  });
+
+  test("getUnsentData returns data from single item in queue", () => {
+    queue.queue.push({ data: { q1: "answer1" }, hiddenFields: {}, finished: false });
+    const unsentData = queue.getUnsentData();
+    expect(unsentData).toEqual({ q1: "answer1" });
+  });
+
+  test("getUnsentData aggregates data from multiple items in queue", () => {
+    queue.queue.push({ data: { q1: "answer1" }, hiddenFields: {}, finished: false });
+    queue.queue.push({ data: { q2: "answer2" }, hiddenFields: {}, finished: false });
+    queue.queue.push({ data: { q3: "answer3" }, hiddenFields: {}, finished: true });
+    const unsentData = queue.getUnsentData();
+    expect(unsentData).toEqual({ q1: "answer1", q2: "answer2", q3: "answer3" });
+  });
+
+  test("getUnsentData overwrites duplicate keys with latest value", () => {
+    queue.queue.push({ data: { q1: "answer1" }, hiddenFields: {}, finished: false });
+    queue.queue.push({ data: { q1: "updated_answer1", q2: "answer2" }, hiddenFields: {}, finished: false });
+    const unsentData = queue.getUnsentData();
+    expect(unsentData).toEqual({ q1: "updated_answer1", q2: "answer2" });
+  });
 });

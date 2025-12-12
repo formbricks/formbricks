@@ -224,4 +224,9 @@ export class ResponseQueue {
   updateSurveyState(surveyState: SurveyState) {
     this.surveyState = surveyState;
   }
+
+  // get unsent response data from queue
+  getUnsentData(): TResponseUpdate["data"] {
+    return this.queue.reduce((acc, item) => ({ ...acc, ...item.data }), {});
+  }
 }
