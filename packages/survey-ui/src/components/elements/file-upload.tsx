@@ -225,7 +225,7 @@ function FileUpload({
         {/* Dashed border container */}
         <div
           className={cn(
-            "relative flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
+            "w-input px-input-x py-input-y relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
             errorMessage
               ? "border-destructive"
               : "border-input-border bg-input-bg hover:bg-input-hover-bg rounded-input",
