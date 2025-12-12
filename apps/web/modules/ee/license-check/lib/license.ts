@@ -286,12 +286,17 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.API.TIMEOUT_MS);
 
+    const payload: Record<string, unknown> = {
+      licenseKey: env.ENTERPRISE_LICENSE_KEY,
+      usage: { responseCount },
+    };
+
+    if (instanceId) {
+      payload.instanceId = instanceId;
+    }
+
     const res = await fetch(CONFIG.API.ENDPOINT, {
-      body: JSON.stringify({
-        licenseKey: env.ENTERPRISE_LICENSE_KEY,
-        usage: { responseCount },
-        instanceId,
-      }),
+      body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" },
       method: "POST",
       agent,
