@@ -82,7 +82,7 @@ export interface CheckboxInputStylingOptions {
  * @example
  * pickArgTypes(inputStylingArgTypes, ['inputBgColor', 'inputBorderColor'])
  */
-export function pickArgTypes<T extends Record<string, any>>(argTypes: T, keys: (keyof T)[]): Partial<T> {
+export function pickArgTypes<T extends Record<string, unknown>>(argTypes: T, keys: (keyof T)[]): Partial<T> {
   const result: Partial<T> = {};
   for (const key of keys) {
     if (key in argTypes) {
@@ -415,8 +415,8 @@ export function createCSSVariablesDecorator<T extends Record<string, unknown> = 
 export function createStatefulRender<
   TValue,
   TProps extends { value?: TValue; onChange?: (v: TValue) => void },
->(Component: React.ComponentType<any>): (args: TProps) => React.ReactElement {
-  function StatefulRender(args: TProps): React.ReactElement {
+>(Component: React.ComponentType<TProps>): (args: TProps & Record<string, unknown>) => React.ReactElement {
+  function StatefulRender(args: TProps & Record<string, unknown>): React.ReactElement {
     const [value, setValue] = useState<TValue | undefined>(args.value);
 
     useEffect(() => {
@@ -425,7 +425,7 @@ export function createStatefulRender<
 
     return (
       <Component
-        {...(args as any)}
+        {...args}
         value={value}
         onChange={(v: TValue) => {
           setValue(v);

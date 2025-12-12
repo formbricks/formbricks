@@ -49,7 +49,7 @@ const meta: Meta<StoryProps> = {
       table: { category: "State" },
     },
   },
-  render: createStatefulRender(Matrix as any),
+  render: createStatefulRender(Matrix),
 };
 
 export default meta;

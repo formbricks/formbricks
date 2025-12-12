@@ -51,7 +51,7 @@ const meta: Meta<StoryProps> = {
       table: { category: "Content" },
     },
   },
-  render: createStatefulRender(NPS as any),
+  render: createStatefulRender(NPS),
 };
 
 export default meta;

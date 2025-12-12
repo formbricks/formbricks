@@ -39,7 +39,7 @@ const meta: Meta<StoryProps> = {
       table: { category: "State" },
     },
   },
-  render: createStatefulRender(Consent as any),
+  render: createStatefulRender(Consent),
 };
 
 export default meta;

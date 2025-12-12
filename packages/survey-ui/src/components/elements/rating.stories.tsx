@@ -64,7 +64,7 @@ const meta: Meta<StoryProps> = {
       table: { category: "Content" },
     },
   },
-  render: createStatefulRender(Rating as any),
+  render: createStatefulRender(Rating),
 };
 
 export default meta;
