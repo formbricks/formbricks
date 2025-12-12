@@ -7,6 +7,7 @@ import enTranslations from "../../locales/en.json";
 import esTranslations from "../../locales/es.json";
 import frTranslations from "../../locales/fr.json";
 import hiTranslations from "../../locales/hi.json";
+import huTranslations from "../../locales/hu.json";
 import itTranslations from "../../locales/it.json";
 import jaTranslations from "../../locales/ja.json";
 import nlTranslations from "../../locales/nl.json";
@@ -23,39 +24,41 @@ i18n
   .init({
     fallbackLng: "en",
     supportedLngs: [
-      "en",
-      "de",
-      "it",
-      "fr",
-      "es",
       "ar",
+      "de",
+      "en",
+      "es",
+      "fr",
+      "hi",
+      "hu",
+      "it",
+      "ja",
+      "nl",
       "pt",
       "ro",
-      "ja",
       "ru",
+      "sv",
       "uz",
       "zh-Hans",
-      "hi",
-      "nl",
-      "sv",
     ],
 
     resources: {
-      en: { translation: enTranslations },
-      de: { translation: deTranslations },
-      it: { translation: itTranslations },
-      fr: { translation: frTranslations },
-      es: { translation: esTranslations },
       ar: { translation: arTranslations },
-      pt: { translation: ptTranslations },
-      ro: { translation: roTranslations },
+      de: { translation: deTranslations },
+      en: { translation: enTranslations },
+      es: { translation: esTranslations },
+      fr: { translation: frTranslations },
+      hi: { translation: hiTranslations },
+      hu: { translation: huTranslations },
+      it: { translation: itTranslations },
       ja: { translation: jaTranslations },
       nl: { translation: nlTranslations },
+      pt: { translation: ptTranslations },
+      ro: { translation: roTranslations },
       ru: { translation: ruTranslations },
-      uz: { translation: uzTranslations },
       sv: { translation: svTranslations },
+      uz: { translation: uzTranslations },
       "zh-Hans": { translation: zhHansTranslations },
-      hi: { translation: hiTranslations },
     },
 
     interpolation: { escapeValue: false },
