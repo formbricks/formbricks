@@ -93,7 +93,7 @@ const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
     "--fb-input-padding-x": inputPaddingX,
     "--fb-input-padding-y": inputPaddingY,
     "--fb-input-shadow": inputShadow,
-    "--fb-brand-color": brandColor,
+    "--fb-survey-brand-color": brandColor,
   };
 
   return (
@@ -204,7 +204,7 @@ export const StylingPlayground: Story = {
       control: "color",
       table: {
         category: "Input Styling",
-        defaultValue: { summary: "var(--fb-brand-color)" },
+        defaultValue: { summary: "var(--fb-survey-brand-color)" },
       },
     },
   },
@@ -264,34 +264,6 @@ export const DisabledWithValue: Story = {
   args: {
     defaultValue: "Cannot edit this",
     disabled: true,
-  },
-};
-
-export const FileUpload: Story = {
-  args: {
-    type: "file",
-  },
-};
-
-export const FileUploadWithRTL: Story = {
-  args: {
-    type: "file",
-    dir: "rtl",
-  },
-};
-
-export const FileUploadWithError: Story = {
-  args: {
-    type: "file",
-    errorMessage: "Please upload a valid file",
-  },
-};
-
-export const FileUploadWithErrorAndRTL: Story = {
-  args: {
-    type: "file",
-    errorMessage: "Please upload a valid file",
-    dir: "rtl",
   },
 };
 

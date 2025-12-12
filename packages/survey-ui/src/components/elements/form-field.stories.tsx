@@ -1,41 +1,16 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React, { useEffect, useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { FormField, type FormFieldConfig, type FormFieldProps } from "./form-field";
+import {
+  type BaseStylingOptions,
+  type ExtendedInputStylingOptions,
+  type LabelStylingOptions,
+  commonArgTypes,
+  createCSSVariablesDecorator,
+  createStatefulRender,
+} from "./story-helpers";
 
-// Styling options for the StylingPlayground story
-interface StylingOptions {
-  // Element styling
-  elementHeadlineFontFamily: string;
-  elementHeadlineFontSize: string;
-  elementHeadlineFontWeight: string;
-  elementHeadlineColor: string;
-  elementDescriptionFontFamily: string;
-  elementDescriptionFontWeight: string;
-  elementDescriptionFontSize: string;
-  elementDescriptionColor: string;
-  // Label styling
-  labelFontFamily: string;
-  labelFontSize: string;
-  labelFontWeight: string;
-  labelColor: string;
-  // Input styling
-  inputWidth: string;
-  inputHeight: string;
-  inputBgColor: string;
-  inputBorderColor: string;
-  inputBorderRadius: string;
-  inputFontFamily: string;
-  inputFontSize: string;
-  inputFontWeight: string;
-  inputColor: string;
-  inputPaddingX: string;
-  inputPaddingY: string;
-  inputShadow: string;
-  // Survey styling
-  brandColor: string;
-}
-
-type StoryProps = FormFieldProps & Partial<StylingOptions>;
+type StoryProps = FormFieldProps &
+  Partial<BaseStylingOptions & LabelStylingOptions & ExtendedInputStylingOptions & { inputShadow: string }>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/FormField",
@@ -51,16 +26,7 @@ const meta: Meta<StoryProps> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    headline: {
-      control: "text",
-      description: "The main element text",
-      table: { category: "Content" },
-    },
-    description: {
-      control: "text",
-      description: "Optional description or subheader text",
-      table: { category: "Content" },
-    },
+    ...commonArgTypes,
     fields: {
       control: "object",
       description: "Array of form field configurations",
@@ -71,120 +37,14 @@ const meta: Meta<StoryProps> = {
       description: "Current values as a record mapping field IDs to their values",
       table: { category: "State" },
     },
-    required: {
-      control: "boolean",
-      description: "Whether the entire form is required",
-      table: { category: "Validation" },
-    },
-    errorMessage: {
-      control: "text",
-      description: "Error message to display",
-      table: { category: "Validation" },
-    },
-    dir: {
-      control: { type: "select" },
-      options: ["ltr", "rtl", "auto"],
-      description: "Text direction for RTL support",
-      table: { category: "Layout" },
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the controls are disabled",
-      table: { category: "State" },
-    },
-    onChange: {
-      action: "changed",
-      table: { category: "Events" },
-    },
   },
-  render: function Render(args: StoryProps) {
-    const [value, setValue] = useState(args.value);
-
-    useEffect(() => {
-      setValue(args.value);
-    }, [args.value]);
-
-    return (
-      <FormField
-        {...args}
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-          args.onChange?.(v);
-        }}
-      />
-    );
-  },
+  render: createStatefulRender(FormField),
 };
 
 export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    labelFontFamily,
-    labelFontSize,
-    labelFontWeight,
-    labelColor,
-    inputWidth,
-    inputHeight,
-    inputBgColor,
-    inputBorderColor,
-    inputBorderRadius,
-    inputFontFamily,
-    inputFontSize,
-    inputFontWeight,
-    inputColor,
-    inputPaddingX,
-    inputPaddingY,
-    inputShadow,
-    brandColor,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-label-font-family": labelFontFamily,
-    "--fb-label-font-size": labelFontSize,
-    "--fb-label-font-weight": labelFontWeight,
-    "--fb-label-color": labelColor,
-    "--fb-input-width": inputWidth,
-    "--fb-input-height": inputHeight,
-    "--fb-input-bg-color": inputBgColor,
-    "--fb-input-border-color": inputBorderColor,
-    "--fb-input-border-radius": inputBorderRadius,
-    "--fb-input-font-family": inputFontFamily,
-    "--fb-input-font-size": inputFontSize,
-    "--fb-input-font-weight": inputFontWeight,
-    "--fb-input-color": inputColor,
-    "--fb-input-padding-x": inputPaddingX,
-    "--fb-input-padding-y": inputPaddingY,
-    "--fb-input-shadow": inputShadow,
-    "--fb-brand-color": brandColor,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
 
 // Contact Info fields preset
 const contactInfoFields: FormFieldConfig[] = [
@@ -314,7 +174,7 @@ export const StylingPlayground: Story = {
       table: { category: "Survey Styling" },
     },
   },
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {

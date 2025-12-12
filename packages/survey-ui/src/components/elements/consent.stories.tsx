@@ -1,29 +1,16 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React, { useEffect, useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Consent, type ConsentProps } from "./consent";
+import {
+  type BaseStylingOptions,
+  commonArgTypes,
+  createCSSVariablesDecorator,
+  createStatefulRender,
+  elementStylingArgTypes,
+  inputStylingArgTypes,
+  surveyStylingArgTypes,
+} from "./story-helpers";
 
-// Styling options for the StylingPlayground story
-interface StylingOptions {
-  // Element styling
-  elementHeadlineFontFamily: string;
-  elementHeadlineFontSize: string;
-  elementHeadlineFontWeight: string;
-  elementHeadlineColor: string;
-  elementDescriptionFontFamily: string;
-  elementDescriptionFontWeight: string;
-  elementDescriptionFontSize: string;
-  elementDescriptionColor: string;
-  // Input styling
-  inputBgColor: string;
-  inputBorderColor: string;
-  inputColor: string;
-  inputFontSize: string;
-  inputFontWeight: string;
-  //Survey color
-  brandColor: string;
-}
-
-type StoryProps = ConsentProps & Partial<StylingOptions>;
+type StoryProps = ConsentProps & Partial<BaseStylingOptions>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Consent",
@@ -39,16 +26,7 @@ const meta: Meta<StoryProps> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    headline: {
-      control: "text",
-      description: "The main element text",
-      table: { category: "Content" },
-    },
-    description: {
-      control: "text",
-      description: "Optional description or subheader text",
-      table: { category: "Content" },
-    },
+    ...commonArgTypes,
     checkboxLabel: {
       control: "text",
       description: "Label text for the consent checkbox",
@@ -59,98 +37,12 @@ const meta: Meta<StoryProps> = {
       description: "Whether consent is checked",
       table: { category: "State" },
     },
-    required: {
-      control: "boolean",
-      description: "Whether the field is required",
-      table: { category: "Validation" },
-    },
-    errorMessage: {
-      control: "text",
-      description: "Error message to display",
-      table: { category: "Validation" },
-    },
-    dir: {
-      control: { type: "select" },
-      options: ["ltr", "rtl", "auto"],
-      description: "Text direction for RTL support",
-      table: { category: "Layout" },
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the checkbox is disabled",
-      table: { category: "State" },
-    },
-    onChange: {
-      action: "changed",
-      table: { category: "Events" },
-    },
   },
-  render: function Render(args: StoryProps) {
-    const [value, setValue] = useState(args.value);
-
-    useEffect(() => {
-      setValue(args.value);
-    }, [args.value]);
-
-    return (
-      <Consent
-        {...args}
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-          args.onChange?.(v);
-        }}
-      />
-    );
-  },
+  render: createStatefulRender(Consent),
 };
 
 export default meta;
 type Story = StoryObj<StoryProps>;
-
-// Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    inputBgColor,
-    inputBorderColor,
-    inputColor,
-    inputFontSize,
-    inputFontWeight,
-    brandColor,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-input-bg-color": inputBgColor,
-    "--fb-input-border-color": inputBorderColor,
-    "--fb-input-color": inputColor,
-    "--fb-input-font-size": inputFontSize,
-    "--fb-input-font-weight": inputFontWeight,
-    "--fb-brand-color": brandColor,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
 
 export const StylingPlayground: Story = {
   args: {
@@ -162,64 +54,11 @@ export const StylingPlayground: Story = {
     onChange: () => {},
   },
   argTypes: {
-    elementHeadlineFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    inputBgColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputBorderColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputFontSize: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    inputFontWeight: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
-    brandColor: {
-      control: "color",
-      table: { category: "Survey Styling" },
-    },
+    ...elementStylingArgTypes,
+    ...inputStylingArgTypes,
+    ...surveyStylingArgTypes,
   },
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {

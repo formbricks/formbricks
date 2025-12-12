@@ -112,10 +112,7 @@ function MultiSelect({
     );
 
   // Shared className for option labels
-  const optionLabelClassName = "font-option text-option font-option-weight";
-  const optionLabelColorStyle: React.CSSProperties = {
-    color: "var(--fb-option-label-color)",
-  };
+  const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
 
   // Detect text direction from content
   const detectedDir = useTextDirection({
@@ -174,9 +171,7 @@ function MultiSelect({
                         handleOptionChange(option.id, checked);
                       }}
                       disabled={disabled}>
-                      <span className={optionLabelClassName} style={optionLabelColorStyle}>
-                        {option.label}
-                      </span>
+                      <span className={optionLabelClassName}>{option.label}</span>
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -188,9 +183,7 @@ function MultiSelect({
                       handleOptionChange(otherOptionId, checked);
                     }}
                     disabled={disabled}>
-                    <span className={optionLabelClassName} style={optionLabelColorStyle}>
-                      {otherOptionLabel}
-                    </span>
+                    <span className={optionLabelClassName}>{otherOptionLabel}</span>
                   </DropdownMenuCheckboxItem>
                 ) : null}
               </DropdownMenuContent>
@@ -204,6 +197,8 @@ function MultiSelect({
                 disabled={disabled}
                 dir={detectedDir}
                 className="w-full"
+                // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
+                autoFocus
               />
             ) : null}
           </>
@@ -228,11 +223,7 @@ function MultiSelect({
                       disabled={disabled}
                       aria-invalid={Boolean(errorMessage)}
                     />
-                    <span
-                      className={cn("ml-3 mr-3 grow", optionLabelClassName)}
-                      style={optionLabelColorStyle}>
-                      {option.label}
-                    </span>
+                    <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{option.label}</span>
                   </span>
                 </label>
               );
@@ -252,11 +243,7 @@ function MultiSelect({
                       disabled={disabled}
                       aria-invalid={Boolean(errorMessage)}
                     />
-                    <span
-                      className={cn("ml-3 mr-3 grow", optionLabelClassName)}
-                      style={optionLabelColorStyle}>
-                      {otherOptionLabel}
-                    </span>
+                    <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
                   </span>
                   {isOtherSelected ? (
                     <Input
@@ -267,6 +254,8 @@ function MultiSelect({
                       disabled={disabled}
                       dir={detectedDir}
                       className="mt-2 w-full"
+                      // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
+                      autoFocus
                     />
                   ) : null}
                 </label>

@@ -241,7 +241,7 @@ function FileUpload({
                     "border-input-border bg-input-bg text-input-text rounded-input relative m-1 rounded-md border"
                   )}>
                   {/* Delete button */}
-                  <div className="absolute right-0 top-0 m-2">
+                  <div className="absolute top-0 right-0 m-2">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -261,7 +261,7 @@ function FileUpload({
                   <div className="flex flex-col items-center justify-center p-2">
                     <UploadIcon />
                     <p
-                      className="mt-1 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-center text-sm text-[var(--foreground)]"
+                      className="mt-1 w-full overflow-hidden px-2 text-center text-sm overflow-ellipsis whitespace-nowrap text-[var(--foreground)]"
                       title={file.name}>
                       {file.name}
                     </p>
@@ -296,13 +296,7 @@ function FileUpload({
                 aria-label="Upload files by clicking or dragging them here">
                 <Upload className="text-input-text h-6" aria-hidden="true" />
                 {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
-                <span
-                  className="text-input-text m-2 text-sm"
-                  id={`${inputId}-label`}
-                  style={{
-                    fontSize: "var(--fb-input-font-size)",
-                    fontWeight: "var(--fb-input-font-weight)",
-                  }}>
+                <span className="text-input-text font-input-weight text-input m-2" id={`${inputId}-label`}>
                   {placeholderText}
                 </span>
                 <Input

@@ -1,5 +1,4 @@
-import * as React from "react";
-import { AlertCircleIcon } from "@/components/icons/alert-circle";
+import { ElementError } from "@/components/general/element-error";
 import { cn } from "@/lib/utils";
 
 type TextareaProps = React.ComponentProps<"textarea"> & {
@@ -11,41 +10,14 @@ function Textarea({ className, errorMessage, dir = "auto", ...props }: TextareaP
   const hasError = Boolean(errorMessage);
 
   return (
-    <div className="space-y-1">
-      {errorMessage ? (
-        <div className="text-destructive flex items-center gap-1 text-sm" dir={dir}>
-          <AlertCircleIcon className="size-4" />
-          <span>{errorMessage}</span>
-        </div>
-      ) : null}
+    <div className="relative space-y-2">
+      <ElementError errorMessage={errorMessage} dir={dir} />
       <textarea
         data-slot="textarea"
         dir={dir}
-        style={{
-          fontSize: "var(--fb-input-font-size)",
-        }}
         aria-invalid={hasError || undefined}
         className={cn(
-          // Layout and behavior
-          "flex min-w-0 border transition-[color,box-shadow] outline-none",
-          // Customizable styles via CSS variables (using Tailwind theme extensions)
-          "w-input",
-          "bg-input-bg border-input-border rounded-input",
-          "font-input font-input-weight",
-          "text-input-text",
-          "px-input-x py-input-y",
-          "shadow-input",
-          // Placeholder styling
-          "[&::placeholder]:opacity-input-placeholder",
-          "placeholder:text-input-placeholder",
-          // Selection styling
-          "selection:bg-primary selection:text-primary-foreground",
-          // Focus ring
-          "focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px]",
-          // Error state ring
-          "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-          // Disabled state
-          "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+          "w-input h-input bg-input-bg border-input-border rounded-input font-input font-input-weight text-input-text px-input-x py-input-y shadow-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 text-input flex field-sizing-content min-h-16 border transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}

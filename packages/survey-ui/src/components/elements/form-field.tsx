@@ -108,8 +108,9 @@ function FormField({
       <ElementHeader headline={headline} description={description} required={required} />
 
       {/* Form Fields */}
-      <div className="space-y-3">
-        {visibleFields.map((field, index) => {
+      <div className="relative space-y-3">
+        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        {visibleFields.map((field) => {
           const fieldRequired = isFieldRequired(field);
           const fieldValue = currentValues[field.id] ?? "";
           const fieldInputId = `${elementId}-${field.id}`;
@@ -138,17 +139,12 @@ function FormField({
                 required={fieldRequired}
                 disabled={disabled}
                 dir={!fieldValue ? detectedDir : "auto"}
-                errorMessage={index === 0 && errorMessage ? errorMessage : undefined}
+                aria-invalid={Boolean(errorMessage) || undefined}
               />
             </div>
           );
         })}
       </div>
-
-      {/* Error message (if not shown on first field) */}
-      {errorMessage && visibleFields.length === 0 ? (
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
-      ) : null}
     </div>
   );
 }

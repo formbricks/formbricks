@@ -114,7 +114,7 @@ function Ranking({
       <div className="relative space-y-2">
         <ElementError errorMessage={errorMessage} dir={detectedDir} />
 
-        <fieldset className="w-full">
+        <fieldset className="w-full" dir={detectedDir}>
           <legend className="sr-only">Ranking options</legend>
           <div className="space-y-2" ref={parent as React.Ref<HTMLDivElement>}>
             {allItems.map((item) => {
@@ -124,11 +124,33 @@ function Ranking({
               const isLast = isRanked && rankIndex === rankedIds.length - 1;
               const displayNumber = isRanked ? rankIndex + 1 : undefined;
 
+              // RTL-aware padding class
+              const paddingClass = detectedDir === "rtl" ? "pr-3" : "pl-3";
+
+              // RTL-aware border class for control buttons
+              const borderClass = detectedDir === "rtl" ? "border-r" : "border-l";
+
+              // RTL-aware border radius classes for control buttons
+              let topButtonRadiusClass = "rounded-tr-md";
+              if (isFirst) {
+                topButtonRadiusClass = "cursor-not-allowed opacity-30";
+              } else if (detectedDir === "rtl") {
+                topButtonRadiusClass = "rounded-tl-md";
+              }
+
+              let bottomButtonRadiusClass = "rounded-br-md";
+              if (isLast) {
+                bottomButtonRadiusClass = "cursor-not-allowed opacity-30";
+              } else if (detectedDir === "rtl") {
+                bottomButtonRadiusClass = "rounded-bl-md";
+              }
+
               return (
                 <div
                   key={item.id}
                   className={cn(
-                    "rounded-option flex h-12 cursor-pointer items-center border pl-3 transition-all",
+                    "rounded-option flex h-12 cursor-pointer items-center border transition-all",
+                    paddingClass,
                     "bg-option-bg border-option-border",
                     "hover:bg-option-hover-bg focus-within:border-brand focus-within:bg-option-selected-bg focus-within:shadow-sm",
                     isRanked && "bg-option-selected-bg border-brand",
@@ -147,7 +169,7 @@ function Ranking({
                         handleItemClick(item);
                       }
                     }}
-                    className="group flex h-full grow items-center gap-4 text-left focus:outline-none"
+                    className="group flex h-full grow items-center gap-4 text-start focus:outline-none"
                     aria-label={
                       isRanked ? `Remove ${item.label} from ranking` : `Add ${item.label} to ranking`
                     }>
@@ -161,8 +183,7 @@ function Ranking({
                       {displayNumber}
                     </span>
                     <span
-                      className="font-option text-option font-option-weight shrink grow text-start"
-                      style={{ color: "var(--fb-option-label-color)" }}
+                      className="font-option text-option font-option-weight text-option-label shrink grow text-start"
                       dir={detectedDir}>
                       {item.label}
                     </span>
@@ -170,7 +191,7 @@ function Ranking({
 
                   {/* Up/Down buttons for ranked items */}
                   {isRanked ? (
-                    <div className="border-option-border flex h-full grow-0 flex-col border-l">
+                    <div className={cn("border-option-border flex h-full grow-0 flex-col", borderClass)}>
                       <button
                         type="button"
                         tabIndex={isFirst ? -1 : 0}
@@ -182,7 +203,7 @@ function Ranking({
                         aria-label={`Move ${item.label} up`}
                         className={cn(
                           "flex flex-1 items-center justify-center px-2 transition-colors",
-                          isFirst ? "cursor-not-allowed opacity-30" : "rounded-tr-md"
+                          topButtonRadiusClass
                         )}>
                         <ChevronUp className="h-5 w-5" />
                       </button>
@@ -197,7 +218,7 @@ function Ranking({
                         aria-label={`Move ${item.label} down`}
                         className={cn(
                           "border-option-border flex flex-1 items-center justify-center border-t px-2 transition-colors",
-                          isLast ? "cursor-not-allowed opacity-30" : "rounded-br-md"
+                          bottomButtonRadiusClass
                         )}>
                         <ChevronDown className="h-5 w-5" />
                       </button>

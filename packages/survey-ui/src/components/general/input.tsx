@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AlertCircleIcon } from "@/components/icons/alert-circle";
+import { ElementError } from "@/components/general/element-error";
 import { cn } from "@/lib/utils";
 
 interface InputProps extends React.ComponentProps<"input"> {
@@ -14,12 +14,7 @@ function Input({ className, type, errorMessage, dir, ...props }: InputProps): Re
 
   return (
     <div className="space-y-1">
-      {errorMessage ? (
-        <div className="text-destructive flex items-center gap-1 text-sm" dir={dir}>
-          <AlertCircleIcon className="size-4" />
-          <span>{errorMessage}</span>
-        </div>
-      ) : null}
+      <ElementError errorMessage={errorMessage} dir={dir} />
       <input
         type={type}
         dir={dir}

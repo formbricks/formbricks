@@ -1,42 +1,22 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import React, { useEffect, useState } from "react";
 import { MultiSelect, type MultiSelectOption, type MultiSelectProps } from "./multi-select";
+import {
+  type BaseStylingOptions,
+  type CheckboxInputStylingOptions,
+  type LabelStylingOptions,
+  type OptionStylingOptions,
+  checkboxInputStylingArgTypes,
+  commonArgTypes,
+  createCSSVariablesDecorator,
+  elementStylingArgTypes,
+  labelStylingArgTypes,
+  optionStylingArgTypes,
+  surveyStylingArgTypes,
+} from "./story-helpers";
 
-// Styling options for the StylingPlayground story
-interface StylingOptions {
-  // Element styling
-  elementHeadlineFontFamily: string;
-  elementHeadlineFontSize: string;
-  elementHeadlineFontWeight: string;
-  elementHeadlineColor: string;
-  elementDescriptionFontFamily: string;
-  elementDescriptionFontWeight: string;
-  elementDescriptionFontSize: string;
-  elementDescriptionColor: string;
-  // Option label styling
-  labelFontFamily: string;
-  labelFontSize: string;
-  labelFontWeight: string;
-  labelColor: string;
-  // Option styling
-  optionBorderColor: string;
-  optionBgColor: string;
-  optionLabelColor: string;
-  optionBorderRadius: string;
-  optionPaddingX: string;
-  optionPaddingY: string;
-  optionFontFamily: string;
-  optionFontSize: string;
-  optionFontWeight: string;
-  // Checkbox Input styling
-  checkboxInputBorderColor: string;
-  checkboxInputBgColor: string;
-  checkboxInputColor: string;
-  // Survey styling
-  brandColor: string;
-}
-
-type StoryProps = MultiSelectProps & Partial<StylingOptions>;
+type StoryProps = MultiSelectProps &
+  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & CheckboxInputStylingOptions>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/MultiSelect",
@@ -52,16 +32,7 @@ const meta: Meta<StoryProps> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    headline: {
-      control: "text",
-      description: "The main element text",
-      table: { category: "Content" },
-    },
-    description: {
-      control: "text",
-      description: "Optional description or subheader text",
-      table: { category: "Content" },
-    },
+    ...commonArgTypes,
     options: {
       control: "object",
       description: "Array of options to choose from",
@@ -70,27 +41,6 @@ const meta: Meta<StoryProps> = {
     value: {
       control: "object",
       description: "Array of selected option IDs",
-      table: { category: "State" },
-    },
-    required: {
-      control: "boolean",
-      description: "Whether the field is required",
-      table: { category: "Validation" },
-    },
-    errorMessage: {
-      control: "text",
-      description: "Error message to display",
-      table: { category: "Validation" },
-    },
-    dir: {
-      control: { type: "select" },
-      options: ["ltr", "rtl", "auto"],
-      description: "Text direction for RTL support",
-      table: { category: "Layout" },
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the options are disabled",
       table: { category: "State" },
     },
     variant: {
@@ -103,10 +53,6 @@ const meta: Meta<StoryProps> = {
       control: "text",
       description: "Placeholder text for dropdown button when no options are selected",
       table: { category: "Content" },
-    },
-    onChange: {
-      action: "changed",
-      table: { category: "Events" },
     },
   },
   render: function Render(args: StoryProps) {
@@ -139,73 +85,6 @@ const meta: Meta<StoryProps> = {
 export default meta;
 type Story = StoryObj<StoryProps>;
 
-// Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story: any, context: any) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    labelFontFamily,
-    labelFontSize,
-    labelFontWeight,
-    labelColor,
-    optionBorderColor,
-    optionBgColor,
-    optionLabelColor,
-    optionBorderRadius,
-    optionPaddingX,
-    optionPaddingY,
-    optionFontFamily,
-    optionFontSize,
-    optionFontWeight,
-    checkboxInputBorderColor,
-    checkboxInputBgColor,
-    checkboxInputColor,
-    brandColor,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-label-font-family": labelFontFamily,
-    "--fb-label-font-size": labelFontSize,
-    "--fb-label-font-weight": labelFontWeight,
-    "--fb-label-color": labelColor,
-    "--fb-option-border-color": optionBorderColor,
-    "--fb-option-bg-color": optionBgColor,
-    "--fb-option-label-color": optionLabelColor,
-    "--fb-option-border-radius": optionBorderRadius,
-    "--fb-option-padding-x": optionPaddingX,
-    "--fb-option-padding-y": optionPaddingY,
-    "--fb-option-font-family": optionFontFamily,
-    "--fb-option-font-size": optionFontSize,
-    "--fb-option-font-weight": optionFontWeight,
-    "--fb-input-border-color": checkboxInputBorderColor,
-    "--fb-input-bg-color": checkboxInputBgColor,
-    "--fb-input-color": checkboxInputColor,
-    "--fb-brand-color": brandColor,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
-
 const defaultOptions: MultiSelectOption[] = [
   { id: "option-1", label: "Option 1" },
   { id: "option-2", label: "Option 2" },
@@ -220,113 +99,13 @@ export const StylingPlayground: Story = {
     options: defaultOptions,
   },
   argTypes: {
-    // Element styling
-    elementHeadlineFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    // Option label styling
-    labelFontFamily: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelFontSize: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelFontWeight: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelColor: {
-      control: "color",
-      table: { category: "Label Styling" },
-    },
-    // Option styling
-    optionBorderColor: {
-      control: "color",
-      table: { category: "Option Styling" },
-    },
-    optionBgColor: {
-      control: "color",
-      table: { category: "Option Styling" },
-    },
-    optionLabelColor: {
-      control: "color",
-      table: { category: "Option Styling" },
-    },
-    optionBorderRadius: {
-      control: "text",
-      table: { category: "Option Styling" },
-    },
-    optionPaddingX: {
-      control: "text",
-      table: { category: "Option Styling" },
-    },
-    optionPaddingY: {
-      control: "text",
-      table: { category: "Option Styling" },
-    },
-    optionFontFamily: {
-      control: "text",
-      table: { category: "Option Styling" },
-    },
-    optionFontSize: {
-      control: "text",
-      table: { category: "Option Styling" },
-    },
-    optionFontWeight: {
-      control: "text",
-      table: { category: "Option Styling" },
-    },
-    // Checkbox Input styling
-    inputBorderColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputBgColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    // Survey styling
-    brandColor: {
-      control: "color",
-      table: { category: "Survey Styling" },
-    },
+    ...elementStylingArgTypes,
+    ...labelStylingArgTypes,
+    ...optionStylingArgTypes,
+    ...checkboxInputStylingArgTypes,
+    ...surveyStylingArgTypes,
   },
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {

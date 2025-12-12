@@ -1,34 +1,19 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import React, { useEffect, useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
+import * as React from "react";
 import { Rating, type RatingProps } from "./rating";
+import {
+  type BaseStylingOptions,
+  type LabelStylingOptions,
+  commonArgTypes,
+  createCSSVariablesDecorator,
+  createStatefulRender,
+  elementStylingArgTypes,
+  inputStylingArgTypes,
+  labelStylingArgTypes,
+  surveyStylingArgTypes,
+} from "./story-helpers";
 
-// Styling options for the StylingPlayground story
-interface StylingOptions {
-  // Element styling
-  elementHeadlineFontFamily: string;
-  elementHeadlineFontSize: string;
-  elementHeadlineFontWeight: string;
-  elementHeadlineColor: string;
-  elementDescriptionFontFamily: string;
-  elementDescriptionFontWeight: string;
-  elementDescriptionFontSize: string;
-  elementDescriptionColor: string;
-  // Label styling
-  labelFontFamily: string;
-  labelFontSize: string;
-  labelFontWeight: string;
-  labelColor: string;
-  labelOpacity: string;
-  // Input styling
-  inputBgColor: string;
-  inputBorderColor: string;
-  inputColor: string;
-  inputFontWeight: string;
-  // Survey styling
-  brandColor: string;
-}
-
-type StoryProps = RatingProps & Partial<StylingOptions>;
+type StoryProps = RatingProps & Partial<BaseStylingOptions & LabelStylingOptions>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Rating",
@@ -44,16 +29,7 @@ const meta: Meta<StoryProps> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    headline: {
-      control: "text",
-      description: "The main element text",
-      table: { category: "Content" },
-    },
-    description: {
-      control: "text",
-      description: "Optional description or subheader text",
-      table: { category: "Content" },
-    },
+    ...commonArgTypes,
     scale: {
       control: { type: "select" },
       options: ["number", "star", "smiley"],
@@ -86,106 +62,12 @@ const meta: Meta<StoryProps> = {
       description: "Whether color coding is enabled (for smiley scale)",
       table: { category: "Content" },
     },
-    required: {
-      control: "boolean",
-      description: "Whether the field is required",
-      table: { category: "Validation" },
-    },
-    errorMessage: {
-      control: "text",
-      description: "Error message to display",
-      table: { category: "Validation" },
-    },
-    dir: {
-      control: { type: "select" },
-      options: ["ltr", "rtl", "auto"],
-      description: "Text direction for RTL support",
-      table: { category: "Layout" },
-    },
-    disabled: {
-      control: "boolean",
-      description: "Whether the controls are disabled",
-      table: { category: "State" },
-    },
-    onChange: {
-      action: "changed",
-      table: { category: "Events" },
-    },
   },
-  render: function Render(args: StoryProps) {
-    const [value, setValue] = useState(args.value);
-
-    useEffect(() => {
-      setValue(args.value);
-    }, [args.value]);
-
-    return (
-      <Rating
-        {...args}
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-          args.onChange?.(v);
-        }}
-      />
-    );
-  },
+  render: createStatefulRender(Rating),
 };
 
 export default meta;
 type Story = StoryObj<StoryProps>;
-
-// Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
-  const args = context.args as StoryProps;
-  const {
-    elementHeadlineFontFamily,
-    elementHeadlineFontSize,
-    elementHeadlineFontWeight,
-    elementHeadlineColor,
-    elementDescriptionFontFamily,
-    elementDescriptionFontSize,
-    elementDescriptionFontWeight,
-    elementDescriptionColor,
-    labelFontFamily,
-    labelFontSize,
-    labelFontWeight,
-    labelColor,
-    labelOpacity,
-    inputBgColor,
-    inputBorderColor,
-    inputColor,
-    inputFontWeight,
-    brandColor,
-  } = args;
-
-  const cssVarStyle: React.CSSProperties & Record<string, string | undefined> = {
-    "--fb-element-headline-font-family": elementHeadlineFontFamily,
-    "--fb-element-headline-font-size": elementHeadlineFontSize,
-    "--fb-element-headline-font-weight": elementHeadlineFontWeight,
-    "--fb-element-headline-color": elementHeadlineColor,
-    "--fb-element-description-font-family": elementDescriptionFontFamily,
-    "--fb-element-description-font-size": elementDescriptionFontSize,
-    "--fb-element-description-font-weight": elementDescriptionFontWeight,
-    "--fb-element-description-color": elementDescriptionColor,
-    "--fb-label-font-family": labelFontFamily,
-    "--fb-label-font-size": labelFontSize,
-    "--fb-label-font-weight": labelFontWeight,
-    "--fb-label-color": labelColor,
-    "--fb-label-opacity": labelOpacity,
-    "--fb-brand-color": brandColor,
-    "--fb-input-bg-color": inputBgColor,
-    "--fb-input-border-color": inputBorderColor,
-    "--fb-input-color": inputColor,
-    "--fb-input-font-weight": inputFontWeight,
-  };
-
-  return (
-    <div style={cssVarStyle} className="w-[600px]">
-      <Story />
-    </div>
-  );
-};
 
 export const StylingPlayground: Story = {
   args: {
@@ -212,80 +94,12 @@ export const StylingPlayground: Story = {
     labelOpacity: "1",
   },
   argTypes: {
-    elementHeadlineFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    labelFontFamily: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelFontSize: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelFontWeight: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelColor: {
-      control: "color",
-      table: { category: "Label Styling" },
-    },
-    labelOpacity: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    brandColor: {
-      control: "color",
-      table: { category: "Survey Styling" },
-    },
-    inputBgColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputBorderColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputFontWeight: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
+    ...elementStylingArgTypes,
+    ...labelStylingArgTypes,
+    ...inputStylingArgTypes,
+    ...surveyStylingArgTypes,
   },
-  decorators: [withCSSVariables],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {
@@ -453,36 +267,45 @@ export const RTLWithSelection: Story = {
 };
 
 export const MultipleElements: Story = {
-  render: () => (
-    <div className="w-[600px] space-y-8">
-      <Rating
-        elementId="rating-1"
-        inputId="rating-input-1"
-        headline="How satisfied are you with our service?"
-        scale="number"
-        range={5}
-        lowerLabel="Not satisfied"
-        upperLabel="Very satisfied"
-        onChange={() => {}}
-      />
-      <Rating
-        elementId="rating-2"
-        inputId="rating-input-2"
-        headline="Rate this product"
-        description="Please rate from 1 to 5 stars"
-        scale="star"
-        range={5}
-        onChange={() => {}}
-      />
-      <Rating
-        elementId="rating-3"
-        inputId="rating-input-3"
-        headline="How do you feel?"
-        scale="smiley"
-        range={5}
-        colorCoding
-        onChange={() => {}}
-      />
-    </div>
-  ),
+  render: () => {
+    const [value1, setValue1] = React.useState<number | undefined>(undefined);
+    const [value2, setValue2] = React.useState<number | undefined>(undefined);
+    const [value3, setValue3] = React.useState<number | undefined>(undefined);
+
+    return (
+      <div className="w-[600px] space-y-8">
+        <Rating
+          elementId="rating-1"
+          inputId="rating-input-1"
+          headline="How satisfied are you with our service?"
+          scale="number"
+          range={5}
+          lowerLabel="Not satisfied"
+          upperLabel="Very satisfied"
+          value={value1}
+          onChange={setValue1}
+        />
+        <Rating
+          elementId="rating-2"
+          inputId="rating-input-2"
+          headline="Rate this product"
+          description="Please rate from 1 to 5 stars"
+          scale="star"
+          range={5}
+          value={value2}
+          onChange={setValue2}
+        />
+        <Rating
+          elementId="rating-3"
+          inputId="rating-input-3"
+          headline="How do you feel?"
+          scale="smiley"
+          range={5}
+          colorCoding
+          value={value3}
+          onChange={setValue3}
+        />
+      </div>
+    );
+  },
 };

@@ -167,7 +167,7 @@ function SingleSelect({
                       value={otherOptionId}
                       id={`${inputId}-${otherOptionId}`}
                       disabled={disabled}>
-                      <span className={optionLabelClassName}>{otherOptionLabel}</span>
+                      <span className={optionLabelClassName}>{otherValue || otherOptionLabel}</span>
                     </DropdownMenuRadioItem>
                   ) : null}
                 </DropdownMenuRadioGroup>
@@ -182,6 +182,8 @@ function SingleSelect({
                 disabled={disabled}
                 dir={detectedDir}
                 className="w-full"
+                // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
+                autoFocus
               />
             ) : null}
           </>
@@ -204,7 +206,7 @@ function SingleSelect({
                   className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
                   <span className="flex items-center text-sm">
                     <RadioGroupItem value={option.id} id={optionId} disabled={disabled} />
-                    <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{option.label}</span>
+                    <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{option.label}</span>
                   </span>
                 </label>
               );
@@ -219,7 +221,7 @@ function SingleSelect({
                     id={`${inputId}-${otherOptionId}`}
                     disabled={disabled}
                   />
-                  <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
+                  <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
                 </span>
                 {isOtherSelected ? (
                   <Input
@@ -230,6 +232,8 @@ function SingleSelect({
                     disabled={disabled}
                     dir={detectedDir}
                     className="mt-2 w-full"
+                    // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
+                    autoFocus
                   />
                 ) : null}
               </label>

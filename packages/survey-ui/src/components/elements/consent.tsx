@@ -85,9 +85,8 @@ function Consent({
           />
           {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
           <span
-            className="flex-1 font-medium leading-none"
-            dir={detectedDir}
-            style={{ fontSize: "var(--fb-input-font-size)", fontWeight: "var(--fb-input-font-weight)" }}>
+            className="text-input font-input-weight text-input-text flex-1 leading-none"
+            dir={detectedDir}>
             {checkboxLabel}
           </span>
         </label>
