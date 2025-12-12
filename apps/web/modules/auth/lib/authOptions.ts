@@ -1,6 +1,9 @@
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { Account, NextAuthOptions } from "next-auth";
+import type { Adapter } from "next-auth/adapters";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
+import crypto from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TUser } from "@formbricks/types/user";
@@ -13,7 +16,7 @@ import {
 } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
-import { getUserByEmail, updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
+import { updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import {
   logAuthAttempt,
   logAuthEvent,
@@ -31,6 +34,8 @@ import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import { createBrevoCustomer } from "./brevo";
 
 export const authOptions: NextAuthOptions = {
+  // Note: Adapter is only used for OAuth providers, not for CredentialsProvider
+  adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     CredentialsProvider({
       id: "credentials",
@@ -310,30 +315,120 @@ export const authOptions: NextAuthOptions = {
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
   session: {
+    // Use JWT strategy for CredentialsProvider compatibility
+    // Database sessions via adapter work for OAuth providers only
+    strategy: "jwt",
     maxAge: SESSION_MAX_AGE,
   },
   callbacks: {
-    async jwt({ token }) {
-      const existingUser = await getUserByEmail(token?.email!);
+    async jwt({ token, user }) {
+      // IMPORTANT:
+      // This code runs inside `/api/auth/[...nextauth]/route.ts` which wraps and rethrows
+      // callback errors. So we must NEVER throw here; instead, return an empty token to
+      // force `getServerSession()` to return null (unauthenticated).
 
-      if (!existingUser) {
-        return token;
+      // On sign in (when user object is available), create a server-side session record
+      // and bind it to the JWT as `sessionToken`. This enables revocation on logout.
+      if (user) {
+        token.email = user.email;
+        token.profile = { id: user.id };
       }
 
-      return {
-        ...token,
-        profile: { id: existingUser.id },
-        isActive: existingUser.isActive,
-      };
+      if (user && !token.sessionToken) {
+        try {
+          const sessionToken = crypto.randomUUID();
+          const expires = new Date(Date.now() + SESSION_MAX_AGE * 1000);
+
+          await prisma.session.create({
+            data: {
+              sessionToken,
+              userId: user.id,
+              expires,
+            },
+          });
+
+          token.sessionToken = sessionToken;
+        } catch (err) {
+          logger.error({ err }, "Failed to create server-side session record");
+          return {};
+        }
+      }
+
+      // Validate that the server-side session record still exists (revocation).
+      if (token.sessionToken) {
+        try {
+          const session = await prisma.session.findUnique({
+            where: { sessionToken: token.sessionToken as string },
+            select: { expires: true },
+          });
+
+          if (!session || session.expires < new Date()) {
+            return {};
+          }
+        } catch (err) {
+          logger.error({ err }, "Failed to validate server-side session record");
+          return {};
+        }
+      }
+
+      // Attach latest user state (e.g., isActive) to token.
+      const userId = (token.profile as { id?: string } | undefined)?.id;
+      if (!userId) return {};
+
+      // Backfill sessionToken for existing JWTs (e.g. after deploying this change),
+      // so that logout revocation works without requiring an explicit re-login.
+      if (!token.sessionToken) {
+        try {
+          const sessionToken = crypto.randomUUID();
+          const expires = new Date(Date.now() + SESSION_MAX_AGE * 1000);
+
+          await prisma.session.create({
+            data: {
+              sessionToken,
+              userId,
+              expires,
+            },
+          });
+
+          token.sessionToken = sessionToken;
+        } catch (err) {
+          logger.error({ err }, "Failed to backfill server-side session record");
+          return {};
+        }
+      }
+
+      try {
+        const existingUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, isActive: true },
+        });
+
+        if (!existingUser) return {};
+
+        return {
+          ...token,
+          profile: { id: existingUser.id },
+          isActive: existingUser.isActive,
+        };
+      } catch (err) {
+        logger.error({ err }, "Failed to load user for session token");
+        return {};
+      }
     },
     async session({ session, token }) {
-      // @ts-expect-error
-      session.user.id = token?.id;
-      // @ts-expect-error
-      session.user = token.profile;
-      // @ts-expect-error
-      session.user.isActive = token.isActive;
+      // If token was invalidated (empty token), treat as unauthenticated.
+      const profile = token.profile as { id?: string } | undefined;
+      if (!profile?.id) {
+        // Make downstream checks like `if (!session?.user)` work reliably.
+        // (Default NextAuth session type allows `user` to be undefined.)
+        session.user = undefined;
+        return session;
+      }
 
+      const sessionUser = session.user ?? ({} as NonNullable<typeof session.user>);
+      sessionUser.id = profile.id;
+      (sessionUser as { id: string; isActive: boolean }).isActive = token.isActive !== false;
+      session.user = sessionUser;
       return session;
     },
     async signIn({ user, account }: { user: TUser; account: Account }) {
