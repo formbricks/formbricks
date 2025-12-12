@@ -26,9 +26,12 @@ importers:
         specifier: 19.1.2
         version: 19.1.2(react@19.1.2)
     devDependencies:
-      '@azure/microsoft-playwright-testing':
-        specifier: 1.0.0-beta.7
-        version: 1.0.0-beta.7(@playwright/test@1.56.1)
+      '@azure/identity':
+        specifier: 4.13.0
+        version: 4.13.0
+      '@azure/playwright':
+        specifier: 1.0.0
+        version: 1.0.0(@playwright/test@1.56.1)
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:packages/config-eslint
@@ -1347,10 +1350,6 @@ packages:
     resolution: {integrity: sha512-XPArKLzsvl0Hf0CaGyKHUyVgF7oDnhKoP85Xv6M4StF/1AhfORhZudHtOyf2s+FcbuQ9dPRAjB8J2KvRRMUK2A==}
     engines: {node: '>=20.0.0'}
 
-  '@azure/core-xml@1.5.0':
-    resolution: {integrity: sha512-D/sdlJBMJfx7gqoj66PKVmhDDaU6TKA49ptcolxdas29X7AfvLTmfAGLjAcIMBK7UZ2o4lygHIqVckOlQU3xWw==}
-    engines: {node: '>=20.0.0'}
-
   '@azure/identity@4.13.0':
     resolution: {integrity: sha512-uWC0fssc+hs1TGGVkkghiaFkkS7NkTxfnCH+Hdg+yTehTpMcehpok4PgUKKdyCH+9ldu6FhiHRv84Ntqj1vVcw==}
     engines: {node: '>=20.0.0'}
@@ -1367,13 +1366,6 @@ packages:
     resolution: {integrity: sha512-fCqPIfOcLE+CGqGPd66c8bZpwAji98tZ4JI9i/mlTNTlsIWslCfpg48s/ypyLxZTump5sypjrKn2/kY7q8oAbA==}
     engines: {node: '>=20.0.0'}
 
-  '@azure/microsoft-playwright-testing@1.0.0-beta.7':
-    resolution: {integrity: sha512-Y6C35LWUfLevHu5NG+7vvFfhpmUrGWKRumcz7/CSCmWlx8RVfWgP6NuL8rIPDuTeJyjaTczNfeg1ppGW26TjBw==}
-    engines: {node: '>=18.0.0'}
-    deprecated: This package has been deprecated and will no longer be maintained after March 8, 2026. Upgrade to the replacement package, @azure/playwright, to continue receiving updates.
-    peerDependencies:
-      '@playwright/test': ^1.43.1
-
   '@azure/msal-browser@4.26.0':
     resolution: {integrity: sha512-Ie3SZ4IMrf9lSwWVzzJrhTPE+g9+QDUfeor1LKMBQzcblp+3J/U1G8hMpNSfLL7eA5F/DjjPXkATJ5JRUdDJLA==}
     engines: {node: '>=0.8.0'}
@@ -1386,13 +1378,11 @@ packages:
     resolution: {integrity: sha512-HszfqoC+i2C9+BRDQfuNUGp15Re7menIhCEbFCQ49D3KaqEDrgZIgQ8zSct4T59jWeUIL9N/Dwiv4o2VueTdqQ==}
     engines: {node: '>=16'}
 
-  '@azure/storage-blob@12.29.1':
-    resolution: {integrity: sha512-7ktyY0rfTM0vo7HvtK6E3UvYnI9qfd6Oz6z/+92VhGRveWng3kJwMKeUpqmW/NmwcDNbxHpSlldG+vsUnRFnBg==}
+  '@azure/playwright@1.0.0':
+    resolution: {integrity: sha512-HG0XuYT0z7TcyffJZrEZ9fWrP/WsK/jDAmKFB7MuYNy9WMW0oQItUy+o6uIv2IiZzUeO8OpyhompOhpFddf+eQ==}
     engines: {node: '>=20.0.0'}
-
-  '@azure/storage-common@12.1.1':
-    resolution: {integrity: sha512-eIOH1pqFwI6UmVNnDQvmFeSg0XppuzDLFeUNO/Xht7ODAzRLgGDh7h550pSxoA+lPDxBl1+D2m/KG3jWzCUjTg==}
-    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@playwright/test': ^1.47.0
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -6445,10 +6435,6 @@ packages:
     resolution: {integrity: sha512-pfX9uG9Ki0yekDHx2SiuRIyFdyAr1kMIMitPvb0YBo8SUfKvia7w7FIyd/l6av85pFYRhZscS75MwMnbvY+hcQ==}
     hasBin: true
 
-  fast-xml-parser@5.3.0:
-    resolution: {integrity: sha512-gkWGshjYcQCF+6qtlrqBqELqNqnt4CxruY6UVAWWnqb3DQ6qaNFEIKqzYep1XzHLM/QtrHVCxyPOtTk4LTQ7Aw==}
-    hasBin: true
-
   fastest-stable-stringify@2.0.2:
     resolution: {integrity: sha512-bijHueCGd0LqqNK9b5oCMHc0MluJAx0cwqASgbWMvkO01lCYgIhacVRLcaDz3QnyYIRNJRDwMb41VuT6pHJ91Q==}
 
@@ -7771,6 +7757,7 @@ packages:
   next@15.5.9:
     resolution: {integrity: sha512-agNLK89seZEtC5zUHwtut0+tNrc0Xw4FT/Dg+B/VLEo9pAcS9rtTKpek3V6kVcVwsB2YlqMaHdfZL4eLEVYuCg==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -11423,11 +11410,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@azure/core-xml@1.5.0':
-    dependencies:
-      fast-xml-parser: 5.3.0
-      tslib: 2.8.1
-
   '@azure/identity@4.13.0':
     dependencies:
       '@azure/abort-controller': 2.1.2
@@ -11481,17 +11463,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@azure/microsoft-playwright-testing@1.0.0-beta.7(@playwright/test@1.56.1)':
-    dependencies:
-      '@azure/core-rest-pipeline': 1.22.1
-      '@azure/identity': 4.13.0
-      '@azure/logger': 1.3.0
-      '@azure/storage-blob': 12.29.1
-      '@playwright/test': 1.56.1
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
-
   '@azure/msal-browser@4.26.0':
     dependencies:
       '@azure/msal-common': 15.13.1
@@ -11504,35 +11475,12 @@ snapshots:
       jsonwebtoken: 9.0.2
       uuid: 8.3.2
 
-  '@azure/storage-blob@12.29.1':
+  '@azure/playwright@1.0.0(@playwright/test@1.56.1)':
     dependencies:
-      '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.10.1
-      '@azure/core-client': 1.10.1
-      '@azure/core-http-compat': 2.3.1
-      '@azure/core-lro': 2.7.2
-      '@azure/core-paging': 1.6.2
       '@azure/core-rest-pipeline': 1.22.1
-      '@azure/core-tracing': 1.3.1
-      '@azure/core-util': 1.13.1
-      '@azure/core-xml': 1.5.0
       '@azure/logger': 1.3.0
-      '@azure/storage-common': 12.1.1
-      events: 3.3.0
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
-
-  '@azure/storage-common@12.1.1':
-    dependencies:
-      '@azure/abort-controller': 2.1.2
-      '@azure/core-auth': 1.10.1
-      '@azure/core-http-compat': 2.3.1
-      '@azure/core-rest-pipeline': 1.22.1
-      '@azure/core-tracing': 1.3.1
-      '@azure/core-util': 1.13.1
-      '@azure/logger': 1.3.0
-      events: 3.3.0
+      '@playwright/test': 1.56.1
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -17234,10 +17182,6 @@ snapshots:
       strnum: 1.1.2
 
   fast-xml-parser@5.2.5:
-    dependencies:
-      strnum: 2.1.1
-
-  fast-xml-parser@5.3.0:
     dependencies:
       strnum: 2.1.1
 
