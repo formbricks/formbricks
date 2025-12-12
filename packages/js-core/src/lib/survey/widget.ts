@@ -174,9 +174,8 @@ export const renderWidget = async (
 export const closeSurvey = (): void => {
   const config = Config.getInstance();
 
-  // remove container element from DOM
+  // remove the survey modal container from DOM
   removeWidgetContainer();
-  addWidgetContainer();
 
   const { environment, user } = config.get();
   const filteredSurveys = filterSurveys(environment, user);

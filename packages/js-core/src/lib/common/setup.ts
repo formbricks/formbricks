@@ -7,7 +7,7 @@ import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
-import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "@/lib/survey/widget";
+import { closeSurvey } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
 import {
@@ -141,9 +141,6 @@ export const setup = async (
       field: "appUrl",
     });
   }
-
-  logger.debug("Adding widget container to DOM");
-  addWidgetContainer();
 
   if (
     existingConfig?.environment &&
@@ -344,10 +341,7 @@ export const tearDown = (): void => {
     filteredSurveys,
   });
 
-  // remove container element from DOM
-  removeWidgetContainer();
-  addWidgetContainer();
-  setIsSurveyRunning(false);
+  closeSurvey();
 };
 
 export const handleErrorOnFirstSetup = (e: { code: string; responseMessage: string }): Promise<never> => {

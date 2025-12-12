@@ -4,7 +4,7 @@ import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
-import { ZOrganizationRole } from "@formbricks/types/memberships";
+import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -16,6 +16,7 @@ import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
+import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { sendInviteMemberEmail } from "@/modules/email";
 import {
   deleteMembership,
@@ -195,19 +196,55 @@ export const resendInviteAction = authenticatedActionClient.schema(ZResendInvite
   )
 );
 
+const validateTeamAdminInvitePermissions = (
+  inviterRole: TOrganizationRole,
+  inviterAdminTeams: string[],
+  inviteRole: TOrganizationRole,
+  inviteTeamIds: string[]
+): void => {
+  const isOrgOwnerOrManager = inviterRole === "owner" || inviterRole === "manager";
+  const isTeamAdmin = inviterAdminTeams.length > 0;
+
+  if (!isOrgOwnerOrManager && !isTeamAdmin) {
+    throw new AuthenticationError("Only organization owners, managers, or team admins can invite members");
+  }
+
+  // Team admins have restrictions
+  if (isTeamAdmin && !isOrgOwnerOrManager) {
+    if (inviteRole !== "member") {
+      throw new OperationNotAllowedError("Team admins can only invite users as members");
+    }
+
+    const invalidTeams = inviteTeamIds.filter((id) => !inviterAdminTeams.includes(id));
+    if (invalidTeams.length > 0) {
+      throw new OperationNotAllowedError("Team admins can only add users to teams where they are admin");
+    }
+
+    if (inviteTeamIds.length === 0) {
+      throw new ValidationError("Team admins must add invited users to at least one team");
+    }
+  }
+};
+
 const ZInviteUserAction = z.object({
   organizationId: ZId,
   email: z.string(),
-  name: z.string(),
+  name: z.string().trim().min(1, "Name is required"),
   role: ZOrganizationRole,
-  teamIds: z.array(z.string()),
+  teamIds: z.array(ZId),
 });
 
 export const inviteUserAction = authenticatedActionClient.schema(ZInviteUserAction).action(
   withAuditLogging(
     "created",
     "invite",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZInviteUserAction>;
+    }) => {
       if (INVITE_DISABLED) {
         throw new AuthenticationError("Invite disabled");
       }
@@ -224,16 +261,41 @@ export const inviteUserAction = authenticatedActionClient.schema(ZInviteUserActi
         throw new AuthenticationError("User not a member of this organization");
       }
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-        ],
-      });
+      const isOrgOwnerOrManager =
+        currentUserMembership.role === "owner" || currentUserMembership.role === "manager";
+
+      // Fetch user's admin teams (empty array if owner/manager to skip unnecessary query)
+      const userAdminTeams = isOrgOwnerOrManager
+        ? []
+        : await getTeamsWhereUserIsAdmin(ctx.user.id, parsedInput.organizationId);
+
+      const isTeamAdmin = userAdminTeams.length > 0;
+
+      if (!isOrgOwnerOrManager && !isTeamAdmin) {
+        throw new AuthenticationError("Not authorized to invite members");
+      }
+
+      if (isOrgOwnerOrManager) {
+        // Standard org-level auth check
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId: parsedInput.organizationId,
+          access: [
+            {
+              type: "organization",
+              roles: ["owner", "manager"],
+            },
+          ],
+        });
+      }
+
+      // Validate team admin restrictions
+      validateTeamAdminInvitePermissions(
+        currentUserMembership.role,
+        userAdminTeams,
+        parsedInput.role,
+        parsedInput.teamIds
+      );
 
       if (currentUserMembership.role === "manager" && parsedInput.role !== "member") {
         throw new OperationNotAllowedError("Managers can only invite users as members");

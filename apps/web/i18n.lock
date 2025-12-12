@@ -234,6 +234,7 @@ checksums:
     common/maximum: 4c07541dd1f093775bdc61b559cca6c8
     common/member: 1606dc30b369856b9dba1fe9aec425d2
     common/members: 0932e80cba1e3e0a7f52bb67ff31da32
+    common/members_and_teams: bf5c3fadcb9fc23533ec1532b805ac08
     common/membership_not_found: 7ac63584af23396aace9992ad919ffd4
     common/metadata: 695d4f7da261ba76e3be4de495491028
     common/minimum: d9759235086d0169928b3c1401115e22
@@ -313,6 +314,7 @@ checksums:
     common/read_docs: 426ba960bfedf186a878b7467867f9d2
     common/recipients: f90e7f266be3f5a724858f21a9fd855e
     common/remove: dba2fe5fe9f83f8078c687f28cba4b52
+    common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
     common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
     common/report_survey: 147dd05db52e35f5d1f837460fb720f5
     common/request_pricing: 58eb24af4f098632709cb7482b70a1cb
@@ -380,7 +382,8 @@ checksums:
     common/team_access: 45c6232c71b760eaa33b932dabab4c1c
     common/team_id: 134e32d6f7184577a46b2fd83e85e532
     common/team_name: 549d949de4b9adad4afd6427a60a329e
-    common/teams: a2fbdec69342366a2b6033d119aa279a
+    common/team_role: 66db395781aef64ef3791417b3b67c0b
+    common/teams: b63448c05270497973ac4407047dae02
     common/teams_not_found: 02f333a64a83c1c014d8900ec9666345
     common/text: 4ddccc1974775ed7357f9beaf9361cec
     common/time: b504a03d52e8001bfdc5cb6205364f42
@@ -840,7 +843,6 @@ checksums:
     environments/project/tags/tags_merged: 544471de666f93fbb0ab600321d1e553
     environments/project/teams/manage_teams: d7b5f26335cea450c333832adbe0b6ad
     environments/project/teams/no_teams_found: fb6680d4b5b73731697b100713afb50d
-    environments/project/teams/only_organization_owners_and_managers_can_manage_teams: 179056fade669d34f63fb1ee965b8024
     environments/project/teams/permission: cc2ed7274bd8267f9e0a10b079584d8b
     environments/project/teams/team_name: d1a5f99dbf503ca53f06b3a98b511d02
     environments/project/teams/team_settings_description: da32d77993f5c5c7547cdf3e1d3fc7d5
@@ -1086,13 +1088,17 @@ checksums:
     environments/settings/teams/manage_team: 4c52e636cfd1451a08179fb7a68042ab
     environments/settings/teams/manage_team_disabled: 2aaa0557b403a5bc657ec9e8b19ac5ac
     environments/settings/teams/manager_role_description: 39846863fa85ff8b1c6e4f354eb5018f
+    environments/settings/teams/member: 1606dc30b369856b9dba1fe9aec425d2
     environments/settings/teams/member_role_description: 1c5deaece65798b74cc0d34525506c18
     environments/settings/teams/member_role_info_message: 0a276eef3c3b907d6f396ebfdc693b12
+    environments/settings/teams/organization_role: 979b75fcc3696952e5922d659c839c10
     environments/settings/teams/owner_role_description: 8f577e6f9d1368fed4eba5a91ffc8cbf
     environments/settings/teams/please_fill_all_member_fields: 60e38d9906ec9a02a44d16c736bd9fe9
     environments/settings/teams/please_fill_all_project_fields: 6712059df63c432ecd31f3c52b8e4d87
     environments/settings/teams/read: 2494ca23d10e5b6381eb271aceeb5270
     environments/settings/teams/read_write: 278a90dade128198d4c93ac00c345320
+    environments/settings/teams/select_member: 7f4a38312aabbbe3fe92756b57bd5d75
+    environments/settings/teams/select_project: 6e4f4a24178660851d9ae0874706be9f
     environments/settings/teams/team_admin: 5df68214685738029af678ae1d5912bb
     environments/settings/teams/team_created_successfully: 45f83048fcabf466551144858a761eca
     environments/settings/teams/team_deleted_successfully: 972c86b0abe87f229f7bf1a691c0a253
