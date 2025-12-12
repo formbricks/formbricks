@@ -109,8 +109,8 @@
   --fb-input-font-size: 0.875rem;
   --fb-input-font-weight: 400;
   --fb-input-color: var(--foreground);
-  --fb-input-placeholder-color: var(--muted-foreground);
-  --fb-input-placeholder-opacity: 1;
+  --fb-input-placeholder-color: var(--fb-input-color);
+  --fb-input-placeholder-opacity: 0.5;
   --fb-input-width: 100%;
   --fb-input-height: 40px;
   --fb-input-padding-x: 16px;

@@ -1,10 +1,7 @@
 import { useState } from "preact/hooks";
+import { CTA } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
-import { ElementMedia } from "@/components/general/element-media";
-import { Headline } from "@/components/general/headline";
-import { Subheader } from "@/components/general/subheader";
-import { LinkIcon } from "@/components/icons/link-icon";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
@@ -30,53 +27,43 @@ export function CTAElement({
   onOpenExternalURL,
 }: Readonly<CTAElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = element.imageUrl || element.videoUrl;
   const isCurrent = element.id === currentElementId;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
-  const handleExternalButtonClick = () => {
+  const handleClick = () => {
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
     onChange({ [element.id]: "clicked" });
 
-    if (element.buttonUrl) {
+    // Handle external URL opening if needed
+    if (element.buttonExternal && element.buttonUrl) {
       if (onOpenExternalURL) {
         onOpenExternalURL(element.buttonUrl);
-      } else {
-        window.open(element.buttonUrl, "_blank")?.focus();
       }
+      // Note: The survey-ui CTA component handles external URL opening itself
     }
   };
 
   return (
-    <div key={element.id}>
-      <div>
-        {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
-        <Headline
-          headline={getLocalizedValue(element.headline, languageCode)}
-          elementId={element.id}
-          required={true}
-        />
-        <Subheader
-          subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
-          elementId={element.id}
-        />
-        {element.buttonExternal && (
-          <div className="fb:flex fb:flex-row-reverse fb:w-full fb:justify-between fb:pt-4">
-            <div className="fb:flex fb:flex-row-reverse fb:w-full fb:justify-start">
-              <button
-                dir="auto"
-                type="button"
-                tabIndex={0}
-                onClick={handleExternalButtonClick}
-                className="fb:text-heading fb:focus:ring-focus fb:flex fb:items-center fb:rounded-md fb:px-3 fb:py-3 fb:text-base fb:font-medium fb:leading-4 fb:hover:opacity-90 fb:focus:outline-hidden fb:focus:ring-2 fb:focus:ring-offset-2">
-                {getLocalizedValue(element.ctaButtonLabel, languageCode)}
-                <LinkIcon className="fb:ml-2 fb:h-4 fb:w-4" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+    <form
+      key={element.id}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+      }}
+      className="fb:w-full">
+      <CTA
+        elementId={element.id}
+        inputId={element.id}
+        headline={getLocalizedValue(element.headline, languageCode)}
+        description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
+        buttonLabel={getLocalizedValue(element.ctaButtonLabel, languageCode)}
+        buttonUrl={element.buttonUrl}
+        buttonExternal={element.buttonExternal}
+        onClick={handleClick}
+        required={true}
+      />
+    </form>
   );
 }

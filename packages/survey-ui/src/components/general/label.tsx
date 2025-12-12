@@ -37,6 +37,8 @@ const stripInlineStyles = (html: string): string => {
 };
 
 function Label({ className, variant = "default", children, ...props }: LabelProps): React.JSX.Element {
+  const { htmlFor, form, ...restProps } = props;
+
   // Check if children is a string and contains HTML
   const childrenString = typeof children === "string" ? children : null;
   const strippedContent = childrenString ? stripInlineStyles(childrenString) : "";
@@ -59,6 +61,40 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
 
   // If HTML, render with dangerouslySetInnerHTML, otherwise render normally
   if (isHtml && safeHtml) {
+    if (htmlFor) {
+      return (
+        <label
+          data-slot="label"
+          data-variant={variant}
+          className={cn(
+            "flex items-center gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+            variantClass,
+            className
+          )}
+          htmlFor={htmlFor}
+          form={form}
+          {...restProps}
+          dangerouslySetInnerHTML={{ __html: safeHtml }}
+        />
+      );
+    }
+
+    return (
+      <span
+        data-slot="label"
+        data-variant={variant}
+        className={cn(
+          "flex items-center gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+          variantClass,
+          className
+        )}
+        {...(restProps as React.HTMLAttributes<HTMLSpanElement>)}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
+    );
+  }
+
+  if (htmlFor) {
     return (
       <label
         data-slot="label"
@@ -68,14 +104,16 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
           variantClass,
           className
         )}
-        {...props}
-        dangerouslySetInnerHTML={{ __html: safeHtml }}
-      />
+        htmlFor={htmlFor}
+        form={form}
+        {...restProps}>
+        {children}
+      </label>
     );
   }
 
   return (
-    <label
+    <span
       data-slot="label"
       data-variant={variant}
       className={cn(
@@ -83,9 +121,9 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
         variantClass,
         className
       )}
-      {...props}>
+      {...(restProps as React.HTMLAttributes<HTMLSpanElement>)}>
       {children}
-    </label>
+    </span>
   );
 }
 

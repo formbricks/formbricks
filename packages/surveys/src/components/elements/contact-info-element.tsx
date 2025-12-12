@@ -1,11 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
+import { FormField, type FormFieldConfig } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyContactInfoElement } from "@formbricks/types/surveys/elements";
-import { ElementMedia } from "@/components/general/element-media";
-import { Headline } from "@/components/general/headline";
-import { Input } from "@/components/general/input";
-import { Label } from "@/components/general/label";
-import { Subheader } from "@/components/general/subheader";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
@@ -30,54 +26,35 @@ export function ContactInfoElement({
   ttc,
   setTtc,
   currentElementId,
-  autoFocusEnabled,
   dir = "auto",
 }: Readonly<ContactInfoElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = element.imageUrl || element.videoUrl;
-  const formRef = useRef<HTMLFormElement>(null);
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
-  const safeValue = useMemo(() => {
-    return Array.isArray(value) ? value : ["", "", "", "", ""];
-  }, [value]);
+  const isCurrent = element.id === currentElementId;
 
-  const fields = [
-    {
-      id: "firstName",
-      ...element.firstName,
-      label: element.firstName.placeholder[languageCode],
-    },
-    {
-      id: "lastName",
-      ...element.lastName,
-      label: element.lastName.placeholder[languageCode],
-    },
-    {
-      id: "email",
-      ...element.email,
-      label: element.email.placeholder[languageCode],
-    },
-    {
-      id: "phone",
-      ...element.phone,
-      label: element.phone.placeholder[languageCode],
-    },
-    {
-      id: "company",
-      ...element.company,
-      label: element.company.placeholder[languageCode],
-    },
-  ];
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
-  const handleChange = (fieldId: string, fieldValue: string) => {
-    const newValue = fields.map((field) => {
-      if (field.id === fieldId) {
-        return fieldValue;
-      }
-      const existingValue = safeValue[fields.findIndex((f) => f.id === field.id)] || "";
-      return field.show ? existingValue : "";
+  // Convert array value to object for FormField
+  const convertToValueObject = (arrayValue: string[] | undefined): Record<string, string> => {
+    if (!Array.isArray(arrayValue)) return {};
+
+    const fieldIds = ["firstName", "lastName", "email", "phone", "company"];
+    const result: Record<string, string> = {};
+
+    fieldIds.forEach((fieldId, index) => {
+      result[fieldId] = arrayValue[index] || "";
     });
-    onChange({ [element.id]: newValue });
+
+    return result;
+  };
+
+  // Convert object value back to array for onChange
+  const convertToValueArray = (objectValue: Record<string, string>): string[] => {
+    const fieldIds = ["firstName", "lastName", "email", "phone", "company"];
+    return fieldIds.map((fieldId) => objectValue[fieldId] || "");
+  };
+
+  const handleChange = (newValue: Record<string, string>) => {
+    onChange({ [element.id]: convertToValueArray(newValue) });
   };
 
   const handleSubmit = (e: Event) => {
@@ -86,77 +63,59 @@ export function ContactInfoElement({
     setTtc(updatedTtc);
   };
 
-  const contactInfoRef = useCallback(
-    (currentElement: HTMLInputElement | null) => {
-      // will focus on current element when the element ID matches the current element
-      if (element.id && currentElement && autoFocusEnabled && element.id === currentElementId) {
-        currentElement.focus();
-      }
+  // Convert element fields to FormFieldConfig
+  const formFields: FormFieldConfig[] = [
+    {
+      id: "firstName",
+      label: element.firstName.placeholder[languageCode],
+      placeholder: getLocalizedValue(element.firstName.placeholder, languageCode),
+      required: element.firstName.required,
+      show: element.firstName.show,
     },
-    [element.id, autoFocusEnabled, currentElementId]
-  );
+    {
+      id: "lastName",
+      label: element.lastName.placeholder[languageCode],
+      placeholder: getLocalizedValue(element.lastName.placeholder, languageCode),
+      required: element.lastName.required,
+      show: element.lastName.show,
+    },
+    {
+      id: "email",
+      label: element.email.placeholder[languageCode],
+      placeholder: getLocalizedValue(element.email.placeholder, languageCode),
+      required: element.email.required,
+      show: element.email.show,
+      type: "email",
+    },
+    {
+      id: "phone",
+      label: element.phone.placeholder[languageCode],
+      placeholder: getLocalizedValue(element.phone.placeholder, languageCode),
+      required: element.phone.required,
+      show: element.phone.show,
+      type: "tel",
+    },
+    {
+      id: "company",
+      label: element.company.placeholder[languageCode],
+      placeholder: getLocalizedValue(element.company.placeholder, languageCode),
+      required: element.company.required,
+      show: element.company.show,
+    },
+  ];
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full" ref={formRef}>
-      {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
-      <Headline
+    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full">
+      <FormField
+        elementId={element.id}
         headline={getLocalizedValue(element.headline, languageCode)}
-        elementId={element.id}
+        description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
+        fields={formFields}
+        value={convertToValueObject(value)}
+        onChange={handleChange}
         required={element.required}
+        dir={dir}
       />
-      <Subheader
-        subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
-        elementId={element.id}
-      />
-
-      <div className="fb:flex fb:flex-col fb:space-y-2 fb:mt-4 fb:w-full">
-        {fields.map((field, index) => {
-          const isFieldRequired = () => {
-            if (field.required) {
-              return true;
-            }
-
-            // if all fields are optional and the element is required, then the fields should be required
-            if (
-              fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
-              element.required
-            ) {
-              return true;
-            }
-
-            return false;
-          };
-
-          let inputType = "text";
-          if (field.id === "email") {
-            inputType = "email";
-          } else if (field.id === "phone") {
-            inputType = "number";
-          }
-
-          return (
-            field.show && (
-              <div className="fb:space-y-1">
-                <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
-                <Input
-                  id={field.id}
-                  ref={index === 0 ? contactInfoRef : null}
-                  key={field.id}
-                  required={isFieldRequired()}
-                  value={safeValue[index] || ""}
-                  type={inputType}
-                  onChange={(e) => {
-                    handleChange(field.id, e.currentTarget.value);
-                  }}
-                  tabIndex={0}
-                  aria-label={field.label}
-                  dir={!safeValue[index] ? dir : "auto"}
-                />
-              </div>
-            )
-          );
-        })}
-      </div>
     </form>
   );
 }

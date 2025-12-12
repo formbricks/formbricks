@@ -9,13 +9,17 @@ interface InputProps extends React.ComponentProps<"input"> {
   errorMessage?: string;
 }
 
-function Input({ className, type, errorMessage, dir, ...props }: InputProps): React.JSX.Element {
+const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
+  { className, type, errorMessage, dir, ...props },
+  ref
+): React.JSX.Element {
   const hasError = Boolean(errorMessage);
 
   return (
     <div className="space-y-1">
       <ElementError errorMessage={errorMessage} dir={dir} />
       <input
+        ref={ref}
         type={type}
         dir={dir}
         data-slot="input"
@@ -53,7 +57,7 @@ function Input({ className, type, errorMessage, dir, ...props }: InputProps): Re
       />
     </div>
   );
-}
+});
 
 export { Input };
 export type { InputProps };

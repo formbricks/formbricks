@@ -88,6 +88,22 @@ function SingleSelect({
   const selectedValue = value ?? undefined;
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = hasOtherOption && selectedValue === otherOptionId;
+  const otherInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (!isOtherSelected || disabled) return;
+
+    // Delay focus to win against Radix focus restoration when dropdown closes / radio item receives focus.
+    const timeoutId = window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        otherInputRef.current?.focus();
+      });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isOtherSelected, disabled, variant]);
 
   const handleOtherInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onOtherValueChange?.(e.target.value);
@@ -175,6 +191,7 @@ function SingleSelect({
             </DropdownMenu>
             {isOtherSelected ? (
               <Input
+                ref={otherInputRef}
                 type="text"
                 value={otherValue}
                 onChange={handleOtherInputChange}
@@ -182,8 +199,6 @@ function SingleSelect({
                 disabled={disabled}
                 dir={detectedDir}
                 className="w-full"
-                // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
-                autoFocus
               />
             ) : null}
           </>
@@ -225,6 +240,7 @@ function SingleSelect({
                 </span>
                 {isOtherSelected ? (
                   <Input
+                    ref={otherInputRef}
                     type="text"
                     value={otherValue}
                     onChange={handleOtherInputChange}
@@ -232,8 +248,6 @@ function SingleSelect({
                     disabled={disabled}
                     dir={detectedDir}
                     className="mt-2 w-full"
-                    // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
-                    autoFocus
                   />
                 ) : null}
               </label>

@@ -1,5 +1,12 @@
 import type { Config } from "tailwindcss";
 
+function getForeground(color: string) {
+  // simple luminance check
+  const rgb = color.match(/\w\w/g)!.map((x) => parseInt(x, 16));
+  const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+  return luminance > 0.5 ? "#000000" : "#ffffff";
+}
+
 export default {
   darkMode: "class",
   // Scope all utilities to #fbjs when used in surveys package
@@ -46,6 +53,7 @@ export default {
         brand: {
           DEFAULT: "var(--fb-survey-brand-color)",
           "20": "color-mix(in srgb, var(--fb-survey-brand-color) 20%, white)",
+          foreground: getForeground("var(--fb-survey-brand-color)"),
         },
         // Input CSS variables (shorter names)
         "input-bg": "var(--fb-input-bg-color)",
@@ -56,9 +64,9 @@ export default {
         "option-bg": "var(--fb-option-bg-color)",
         "option-border": "var(--fb-option-border-color)",
         "option-label": "var(--fb-option-label-color)",
-        "option-selected-bg": "color-mix(in srgb, var(--fb-option-bg-color) 90%, black)",
-        "option-hover-bg": "color-mix(in srgb, var(--fb-option-bg-color) 90%, black)",
-        "input-selected-bg": "color-mix(in srgb, var(--fb-input-bg-color) 90%, black)",
+        "option-selected-bg": "color-mix(in srgb, var(--fb-option-bg-color) 95%, black)",
+        "option-hover-bg": "color-mix(in srgb, var(--fb-option-bg-color) 95%, black)",
+        "input-selected-bg": "color-mix(in srgb, var(--fb-input-bg-color) 95%, black)",
         // Button CSS variables
         "button-bg": "var(--fb-button-bg-color)",
         "button-text": "var(--fb-button-text-color)",

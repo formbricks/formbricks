@@ -1,21 +1,16 @@
 import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { FileUpload, type UploadedFile } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import { type TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
-import { ElementMedia } from "@/components/general/element-media";
-import { Headline } from "@/components/general/headline";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { FileInput } from "../general/file-input";
-import { Subheader } from "../general/subheader";
 
 interface FileUploadElementProps {
   element: TSurveyFileUploadElement;
   value: string[];
   onChange: (responseData: TResponseData) => void;
-  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: any, config?: any) => Promise<string>;
   surveyId: string;
   languageCode: string;
   ttc: TResponseTtc;
@@ -28,57 +23,70 @@ export function FileUploadElement({
   element,
   value,
   onChange,
-  surveyId,
-  onFileUpload,
   languageCode,
   ttc,
   setTtc,
   currentElementId,
 }: Readonly<FileUploadElementProps>) {
-  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = element.imageUrl || element.videoUrl;
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const isCurrent = element.id === currentElementId;
+
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
+
+  // Convert string[] to UploadedFile[] for survey-ui component
+  const convertToUploadedFiles = (urls: string[]): UploadedFile[] => {
+    return urls.map((url, index) => ({
+      name: `File ${index + 1}`,
+      url,
+    }));
+  };
+
+  // Convert UploadedFile[] to string[] for the onChange callback
+  const convertToStringArray = (files: UploadedFile[]): string[] => {
+    return files.map((file) => file.url);
+  };
+
+  const handleChange = (files: UploadedFile[]) => {
+    // Clear error when user uploads files
+    setErrorMessage(undefined);
+    const urls = convertToStringArray(files);
+    onChange({ [element.id]: urls });
+  };
+
+  const validateRequired = (): boolean => {
+    if (element.required && (!value || value.length === 0)) {
+      setErrorMessage(t("errors.please_upload_a_file"));
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = (e: Event) => {
+    e.preventDefault();
+    if (!validateRequired()) return;
+
+    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+  };
 
   return (
-    <form
-      key={element.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
-        setTtc(updatedTtcObj);
-        if (element.required) {
-          if (!(value && value.length > 0)) {
-            alert(t("errors.please_upload_a_file"));
-          }
-        }
-      }}
-      className="fb:w-full">
-      {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
-      <Headline
+    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full">
+      <FileUpload
+        elementId={element.id}
+        inputId={element.id}
         headline={getLocalizedValue(element.headline, languageCode)}
-        elementId={element.id}
+        description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
+        value={value ? convertToUploadedFiles(value) : undefined}
+        onChange={handleChange}
+        allowMultiple={element.allowMultipleFiles}
+        maxSizeInMB={element.maxSizeInMB}
+        allowedFileExtensions={element.allowedFileExtensions}
         required={element.required}
-      />
-      <Subheader
-        subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
-        elementId={element.id}
-      />
-      <FileInput
-        htmlFor={element.id}
-        surveyId={surveyId}
-        onFileUpload={onFileUpload}
-        onUploadCallback={(urls: string[]) => {
-          if (urls) {
-            onChange({ [element.id]: urls });
-          } else {
-            onChange({ [element.id]: "skipped" });
-          }
-        }}
-        fileUrls={value}
-        allowMultipleFiles={element.allowMultipleFiles}
-        {...(element.allowedFileExtensions ? { allowedFileExtensions: element.allowedFileExtensions } : {})}
-        {...(element.maxSizeInMB ? { maxSizeInMB: element.maxSizeInMB } : {})}
+        errorMessage={errorMessage}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

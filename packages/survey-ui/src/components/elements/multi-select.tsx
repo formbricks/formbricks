@@ -87,6 +87,22 @@ function MultiSelect({
   const selectedValues = Array.isArray(value) ? value : [];
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = Boolean(hasOtherOption && otherOptionId && selectedValues.includes(otherOptionId));
+  const otherInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (!isOtherSelected || disabled) return;
+
+    // Delay focus to win against Radix focus restoration when dropdown closes / checkbox receives focus.
+    const timeoutId = window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        otherInputRef.current?.focus();
+      });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isOtherSelected, disabled, variant]);
 
   const handleOptionChange = (optionId: string, checked: boolean): void => {
     if (checked) {
@@ -190,6 +206,7 @@ function MultiSelect({
             </DropdownMenu>
             {isOtherSelected ? (
               <Input
+                ref={otherInputRef}
                 type="text"
                 value={otherValue}
                 onChange={handleOtherInputChange}
@@ -197,8 +214,6 @@ function MultiSelect({
                 disabled={disabled}
                 dir={detectedDir}
                 className="w-full"
-                // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
-                autoFocus
               />
             ) : null}
           </>
@@ -247,6 +262,7 @@ function MultiSelect({
                   </span>
                   {isOtherSelected ? (
                     <Input
+                      ref={otherInputRef}
                       type="text"
                       value={otherValue}
                       onChange={handleOtherInputChange}
@@ -254,8 +270,6 @@ function MultiSelect({
                       disabled={disabled}
                       dir={detectedDir}
                       className="mt-2 w-full"
-                      // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
-                      autoFocus
                     />
                   ) : null}
                 </label>

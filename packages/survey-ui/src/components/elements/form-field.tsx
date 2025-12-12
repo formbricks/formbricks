@@ -131,7 +131,6 @@ function FormField({
               <Input
                 id={fieldInputId}
                 type={inputType}
-                placeholder={field.placeholder}
                 value={fieldValue}
                 onChange={(e) => {
                   handleFieldChange(field.id, e.target.value);

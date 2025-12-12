@@ -91,14 +91,12 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
       cssVariables += `--fb-${variableName}: ${value};\n`;
     }
   };
-
   // if roundness is defined, even if it's 0, set the border-radius
   const roundness = styling.roundness ?? 8;
 
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
   appendCssVariable("survey-brand-color", styling.brandColor?.light);
-
   appendCssVariable("focus-color", styling.brandColor?.light);
   if (styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
@@ -112,6 +110,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   appendCssVariable("element-headline-color", styling.questionColor?.light);
   appendCssVariable("element-description-color", styling.questionColor?.light);
   appendCssVariable("input-color", styling.questionColor?.light);
+  appendCssVariable("label-color", styling.questionColor?.light);
   // appendCssVariable("subheading-color", styling.questionColor?.light);
 
   if (styling.questionColor?.light) {
