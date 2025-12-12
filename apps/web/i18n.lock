@@ -1182,6 +1182,10 @@ checksums:
     environments/surveys/edit/bold: 4d7306bc355ed2befd6a9237c5452ee6
     environments/surveys/edit/brand_color: 84ddb5736deb9f5c081ffe4962a6c63e
     environments/surveys/edit/brightness: 45425b6db1872225bfff71cf619d0e64
+    environments/surveys/edit/bulk_edit: 59bd1a55587c8cbad716afbf2509e5bb
+    environments/surveys/edit/bulk_edit_description: 9b5b2c6183c6c51689e16d7ba02ec9bb
+    environments/surveys/edit/bulk_edit_options: 74ebec7c53be729f33e38d7605b25815
+    environments/surveys/edit/bulk_edit_options_for: 986af3a8286f34c9e4ad7c74d3c65ada
     environments/surveys/edit/button_external: d2de24e06574622baf1c0cdd1b718b1a
     environments/surveys/edit/button_external_description: cbd10d494a70b362bfee811e012c45b1
     environments/surveys/edit/button_label: db3cd7c74f393187bd780c5c3d8b9b4f
@@ -1428,6 +1432,7 @@ checksums:
     environments/surveys/edit/option_used_in_logic_error: c682ac2cfd286c3cc07dd21ac863dd4c
     environments/surveys/edit/optional: 396fb9a0472daf401c392bdc3e248943
     environments/surveys/edit/options: 59156082418d80acb211f973b1218f11
+    environments/surveys/edit/options_used_in_logic_bulk_error: 1720e7a01a0bcb67c152cfe6a68c5355
     environments/surveys/edit/override_theme_with_individual_styles_for_this_survey: edffc97f5d3372419fe0444de0a5aa3f
     environments/surveys/edit/overwrite_global_waiting_time: 7bc23bd502b6bd048356b67acd956d9d
     environments/surveys/edit/overwrite_global_waiting_time_description: 795cf6e93d4c01d2e43aa0ebab601c6e
@@ -1575,6 +1580,7 @@ checksums:
     environments/surveys/edit/unsaved_changes_warning: a164f276c9f7344022aa4640b32abcf9
     environments/surveys/edit/until_they_submit_a_response: 2a0fd5dcc6cc40a72ed9b974f22eaf68
     environments/surveys/edit/untitled_block: fdaa045139deff5cc65fa027df0cc22e
+    environments/surveys/edit/update_options: 3499161b010acdefba2d878daa5fb6fa
     environments/surveys/edit/upgrade_notice_description: 32b66a4f257ad8d38bc38dcc95fe23c4
     environments/surveys/edit/upgrade_notice_title: 40866066ebc558ad0c92a4f19f12090c
     environments/surveys/edit/upload: 4a6c84aa16db0f4e5697f49b45257bc7
