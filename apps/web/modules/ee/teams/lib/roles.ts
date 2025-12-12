@@ -83,3 +83,31 @@ export const getTeamRoleByTeamIdUserId = reactCache(
     }
   }
 );
+
+export const getTeamsWhereUserIsAdmin = reactCache(
+  async (userId: string, organizationId: string): Promise<string[]> => {
+    validateInputs([userId, ZId], [organizationId, ZId]);
+    try {
+      const adminTeams = await prisma.teamUser.findMany({
+        where: {
+          userId,
+          role: "admin",
+          team: {
+            organizationId,
+          },
+        },
+        select: {
+          teamId: true,
+        },
+      });
+
+      return adminTeams.map((at) => at.teamId);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
