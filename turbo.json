@@ -100,6 +100,12 @@
       "dependsOn": ["@formbricks/surveys#build"],
       "persistent": true
     },
+    "@formbricks/surveys#test": {
+      "dependsOn": ["@formbricks/survey-ui#build"]
+    },
+    "@formbricks/surveys#test:coverage": {
+      "dependsOn": ["@formbricks/survey-ui#build"]
+    },
     "@formbricks/ui#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]

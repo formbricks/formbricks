@@ -106,12 +106,14 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("brand-text-color", "#ffffff");
   }
 
-  // appendCssVariable("heading-color", styling.questionColor?.light);
+  // Backwards-compat: legacy variables still used by some consumers/tests
+  appendCssVariable("heading-color", styling.questionColor?.light);
   appendCssVariable("element-headline-color", styling.questionColor?.light);
   appendCssVariable("element-description-color", styling.questionColor?.light);
   appendCssVariable("input-color", styling.questionColor?.light);
   appendCssVariable("label-color", styling.questionColor?.light);
-  // appendCssVariable("subheading-color", styling.questionColor?.light);
+  // Backwards-compat: legacy variables still used by some consumers/tests
+  appendCssVariable("subheading-color", styling.questionColor?.light);
 
   if (styling.questionColor?.light) {
     appendCssVariable("placeholder-color", mixColor(styling.questionColor.light, "#ffffff", 0.3));
