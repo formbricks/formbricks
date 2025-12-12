@@ -15,7 +15,8 @@
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
     "generate-api-specs": "./scripts/openapi/generate.sh",
     "merge-client-endpoints": "tsx ./scripts/openapi/merge-client-endpoints.ts",
-    "generate-and-merge-api-specs": "pnpm run generate-api-specs && pnpm run merge-client-endpoints"
+    "generate-and-merge-api-specs": "pnpm run generate-api-specs && pnpm run merge-client-endpoints",
+    "i18n:generate": "npx lingo.dev@latest i18n"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.879.0",
@@ -101,11 +102,11 @@
     "lucide-react": "0.507.0",
     "markdown-it": "14.1.0",
     "mime-types": "3.0.1",
-    "next": "15.5.6",
+    "next": "15.5.9",
     "next-auth": "4.24.12",
     "next-safe-action": "7.10.8",
     "node-fetch": "3.3.2",
-    "nodemailer": "7.0.9",
+    "nodemailer": "7.0.11",
     "otplib": "12.0.1",
     "papaparse": "5.5.2",
     "prismjs": "1.30.0",

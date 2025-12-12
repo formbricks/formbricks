@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { Mock } from "vitest";
 import { prisma } from "@formbricks/database";
+import { getInstanceId, getInstanceInfo } from "@/lib/instance";
 import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
@@ -55,6 +56,7 @@ vi.mock("@formbricks/database", () => ({
     },
     organization: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -68,6 +70,11 @@ const mockLogger = {
 
 vi.mock("@formbricks/logger", () => ({
   logger: mockLogger,
+}));
+
+vi.mock("@/lib/instance", () => ({
+  getInstanceId: vi.fn(),
+  getInstanceInfo: vi.fn(),
 }));
 
 // Mock constants as they are used in the original license.ts indirectly
@@ -102,6 +109,15 @@ describe("License Core Logic", () => {
     mockCache.withCache.mockImplementation(async (fn) => await fn());
 
     vi.mocked(prisma.response.count).mockResolvedValue(100);
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({
+      id: "test-org-id",
+      createdAt: new Date("2024-01-01"),
+    } as any);
+    vi.mocked(getInstanceId).mockResolvedValue("test-hashed-instance-id");
+    vi.mocked(getInstanceInfo).mockResolvedValue({
+      instanceId: "test-hashed-instance-id",
+      createdAt: new Date("2024-01-01"),
+    });
     vi.clearAllMocks();
     // Mock window to be undefined for server-side tests
     vi.stubGlobal("window", undefined);

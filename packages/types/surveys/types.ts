@@ -1,7 +1,7 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
+import { ZColor, ZId, ZPlacement, ZUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { ZLanguage } from "../project";
@@ -60,16 +60,16 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().optional(),
-  imageUrl: z.string().optional(),
-  videoUrl: z.string().optional(),
+  buttonLink: ZUrl.optional(),
+  imageUrl: ZUrl.optional(),
+  videoUrl: ZUrl.optional(),
 });
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: z.string().optional(),
+  url: ZUrl.optional(),
   label: z.string().optional(),
 });
 
@@ -143,11 +143,11 @@ export const ZSurveyWelcomeCard = z
     enabled: z.boolean(),
     headline: ZI18nString.optional(),
     subheader: ZI18nString.optional(),
-    fileUrl: z.string().optional(),
+    fileUrl: ZUrl.optional(),
     buttonLabel: ZI18nString.optional(),
     timeToFinish: z.boolean().default(true),
     showResponseCount: z.boolean().default(false),
-    videoUrl: z.string().optional(),
+    videoUrl: ZUrl.optional(),
   })
   .refine((schema) => !(schema.enabled && !schema.headline), {
     message: "Welcome card must have a headline",
@@ -1355,7 +1355,10 @@ export const ZSurvey = z
           }
         }
 
+        //only validate back button label for blocks other than the first one and if back button is not hidden
         if (
+          !isBackButtonHidden &&
+          blockIndex > 0 &&
           block.backButtonLabel?.[defaultLanguageCode] &&
           block.backButtonLabel[defaultLanguageCode].trim() !== ""
         ) {

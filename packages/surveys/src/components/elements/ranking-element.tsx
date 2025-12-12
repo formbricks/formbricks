@@ -159,7 +159,7 @@ export function RankingElement({
                   )}>
                   <button
                     autoFocus={idx === 0 && autoFocusEnabled}
-                    tabIndex={isCurrent ? 0 : -1}
+                    tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key === " ") {
                         e.preventDefault();
