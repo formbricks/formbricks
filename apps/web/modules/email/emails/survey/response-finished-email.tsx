@@ -55,7 +55,11 @@ export async function ResponseFinishedEmail({
             {survey.variables
               .filter((variable) => {
                 const variableResponse = response.variables[variable.id];
-                return variableResponse && ["number", "string"].includes(typeof variableResponse);
+                if (typeof variableResponse !== "string" && typeof variableResponse !== "number") {
+                  return false;
+                }
+
+                return variableResponse !== undefined;
               })
               .map((variable) => {
                 const variableResponse = response.variables[variable.id];
