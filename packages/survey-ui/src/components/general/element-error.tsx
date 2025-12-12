@@ -1,5 +1,5 @@
+import { AlertCircle } from "lucide-react";
 import * as React from "react";
-import { AlertCircleIcon } from "@/components/icons/alert-circle";
 import { cn } from "@/lib/utils";
 
 interface ElementErrorProps {
@@ -25,7 +25,7 @@ function ElementError({ errorMessage, dir = "auto" }: ElementErrorProps): React.
       />
       {/* Error message - shown at top */}
       <div className="text-destructive flex items-center gap-1 text-sm" dir={dir}>
-        <AlertCircleIcon className="size-4" />
+        <AlertCircle className="size-4" />
         <span>{errorMessage}</span>
       </div>
     </>
