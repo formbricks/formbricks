@@ -10,7 +10,7 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
   const t = await getTranslate();
   const params = await props.params;
 
-  const { project, isOwner, isManager } = await getEnvironmentAuth(params.environmentId);
+  const { project } = await getEnvironmentAuth(params.environmentId);
 
   const teams = await getTeamsByProjectId(project.id);
 
@@ -18,14 +18,12 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
     throw new Error(t("common.teams_not_found"));
   }
 
-  const isOwnerOrManager = isOwner || isManager;
-
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.project_configuration")}>
         <ProjectConfigNavigation environmentId={params.environmentId} activeId="teams" />
       </PageHeader>
-      <AccessView environmentId={params.environmentId} teams={teams} isOwnerOrManager={isOwnerOrManager} />
+      <AccessView environmentId={params.environmentId} teams={teams} />
     </PageContentWrapper>
   );
 };
