@@ -114,7 +114,7 @@ jobs:
       - name: Start MinIO Server
         run: |
           set -euo pipefail
-          
+
           # Start MinIO server in background
           docker run -d \
             --name minio-server \
@@ -124,7 +124,7 @@ jobs:
             -e MINIO_ROOT_PASSWORD=devminio123 \
             minio/minio:RELEASE.2025-09-07T16-13-09Z \
             server /data --console-address :9001
-          
+
           echo "MinIO server started"
 
       - name: Wait for MinIO and create S3 bucket
