@@ -95,19 +95,6 @@ jobs:
           echo "S3_FORCE_PATH_STYLE=1" >> .env
         shell: bash
 
-      - name: Verify E2E_TESTING env var is set
-        run: |
-          echo "Checking E2E_TESTING environment variable..."
-          if grep -q "^E2E_TESTING=1" .env; then
-            echo "✓ E2E_TESTING is set to 1"
-          else
-            echo "✗ E2E_TESTING is NOT set or has wrong value"
-            echo "Current .env content for E2E_TESTING:"
-            grep "E2E_TESTING" .env || echo "E2E_TESTING not found in .env"
-            exit 1
-          fi
-        shell: bash
-
       - name: Install MinIO client (mc)
         run: |
           set -euo pipefail
