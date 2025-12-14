@@ -28,6 +28,7 @@
     "ranking_items": "ランキング項目",
     "respondents_will_not_see_this_card": "回答者はこのカードを見ることができません",
     "retry": "再試行",
+    "retrying": "再試行中...",
     "select_a_date": "日付を選択",
     "select_for_ranking": "ランキング用に{item}を選択",
     "sending_responses": "回答を送信中...",

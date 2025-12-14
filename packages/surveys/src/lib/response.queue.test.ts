@@ -82,7 +82,7 @@ describe("ResponseQueue", () => {
   });
 
   test("add accumulates response, sets survey state, and processes queue", async () => {
-    vi.spyOn(queue, "processQueue").mockImplementation(() => Promise.resolve());
+    vi.spyOn(queue, "processQueue").mockImplementation(() => Promise.resolve({ success: true }));
     queue.add(responseUpdate);
     expect(surveyState.accumulateResponse).toHaveBeenCalledWith(responseUpdate);
     expect(config.setSurveyState).toHaveBeenCalledWith(surveyState);
@@ -191,5 +191,87 @@ describe("ResponseQueue", () => {
     const newState = getSurveyState();
     queue.updateSurveyState(newState);
     expect(queue["surveyState"]).toBe(newState);
+  });
+
+  test("processQueueAsync returns success false if queue empty", async () => {
+    const result = await queue.processQueue();
+    expect(result.success).toBe(false);
+  });
+
+  test("processQueueAsync returns success false if request in progress", async () => {
+    queue["isRequestInProgress"] = true;
+    const result = await queue.processQueue();
+    expect(result.success).toBe(false);
+  });
+
+  test("processQueueAsync returns success true on successful send", async () => {
+    queue.queue.push(responseUpdate);
+    vi.spyOn(queue, "sendResponse").mockResolvedValue(ok(true));
+    const result = await queue.processQueue();
+    expect(result.success).toBe(true);
+    expect(queue.queue.length).toBe(0);
+  });
+
+  test("processQueueAsync returns success false after max attempts", async () => {
+    queue.queue.push(responseUpdate);
+    vi.spyOn(queue, "sendResponse").mockResolvedValue(
+      err({
+        code: "internal_server_error",
+        message: "An error occurred while sending the response.",
+        status: 500,
+      })
+    );
+    const result = await queue.processQueue();
+    expect(result.success).toBe(false);
+    expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
+      responseUpdate,
+      TResponseErrorCodesEnum.ResponseSendingError
+    );
+  });
+
+  test("processQueueAsync returns success false on recaptcha error", async () => {
+    queue.queue.push(responseUpdate);
+    vi.spyOn(queue, "sendResponse").mockResolvedValue(
+      err({
+        code: "internal_server_error",
+        message: "An error occurred while sending the response.",
+        status: 500,
+        details: {
+          code: "recaptcha_verification_failed",
+        },
+      })
+    );
+    const result = await queue.processQueue();
+    expect(result.success).toBe(false);
+    expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
+      responseUpdate,
+      TResponseErrorCodesEnum.RecaptchaError
+    );
+  });
+
+  test("getUnsentData returns empty object when queue is empty", () => {
+    const unsentData = queue.getUnsentData();
+    expect(unsentData).toEqual({});
+  });
+
+  test("getUnsentData returns data from single item in queue", () => {
+    queue.queue.push({ data: { q1: "answer1" }, hiddenFields: {}, finished: false });
+    const unsentData = queue.getUnsentData();
+    expect(unsentData).toEqual({ q1: "answer1" });
+  });
+
+  test("getUnsentData aggregates data from multiple items in queue", () => {
+    queue.queue.push({ data: { q1: "answer1" }, hiddenFields: {}, finished: false });
+    queue.queue.push({ data: { q2: "answer2" }, hiddenFields: {}, finished: false });
+    queue.queue.push({ data: { q3: "answer3" }, hiddenFields: {}, finished: true });
+    const unsentData = queue.getUnsentData();
+    expect(unsentData).toEqual({ q1: "answer1", q2: "answer2", q3: "answer3" });
+  });
+
+  test("getUnsentData overwrites duplicate keys with latest value", () => {
+    queue.queue.push({ data: { q1: "answer1" }, hiddenFields: {}, finished: false });
+    queue.queue.push({ data: { q1: "updated_answer1", q2: "answer2" }, hiddenFields: {}, finished: false });
+    const unsentData = queue.getUnsentData();
+    expect(unsentData).toEqual({ q1: "updated_answer1", q2: "answer2" });
   });
 });
