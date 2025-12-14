@@ -7,13 +7,14 @@ import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserName } from "@formbricks/types/user";
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
@@ -27,6 +28,7 @@ interface IndividualInviteTabProps {
   isFormbricksCloud: boolean;
   environmentId: string;
   membershipRole?: TOrganizationRole;
+  showTeamAdminRestrictions: boolean;
 }
 
 export const IndividualInviteTab = ({
@@ -37,22 +39,32 @@ export const IndividualInviteTab = ({
   isFormbricksCloud,
   environmentId,
   membershipRole,
+  showTeamAdminRestrictions,
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
     email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email" }),
     role: ZOrganizationRole,
-    teamIds: z.array(z.string()),
+    teamIds: showTeamAdminRestrictions
+      ? z.array(ZId).min(1, { message: "Team admins must select at least one team" })
+      : z.array(ZId),
   });
 
   const router = useRouter();
 
   type TFormData = z.infer<typeof ZFormSchema>;
   const { t } = useTranslation();
+
+  // Determine default role based on permissions
+  let defaultRole: TOrganizationRole = "owner";
+  if (showTeamAdminRestrictions || isAccessControlAllowed) {
+    defaultRole = "member";
+  }
+
   const form = useForm<TFormData>({
     resolver: zodResolver(ZFormSchema),
     defaultValues: {
-      role: isAccessControlAllowed ? "member" : "owner",
+      role: defaultRole,
       teamIds: [],
     },
   });
@@ -104,43 +116,61 @@ export const IndividualInviteTab = ({
           {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
         </div>
         <div>
-          <AddMemberRole
-            control={control}
-            isAccessControlAllowed={isAccessControlAllowed}
-            isFormbricksCloud={isFormbricksCloud}
-            membershipRole={membershipRole}
-          />
-          {watch("role") === "member" && (
-            <Alert className="mt-2" variant="info">
-              <AlertDescription>{t("environments.settings.teams.member_role_info_message")}</AlertDescription>
-            </Alert>
+          {showTeamAdminRestrictions ? (
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="memberRoleSelect">{t("environments.settings.teams.organization_role")}</Label>
+              <Input value={t("environments.settings.teams.member")} disabled />
+            </div>
+          ) : (
+            <>
+              <AddMemberRole
+                control={control}
+                isAccessControlAllowed={isAccessControlAllowed}
+                isFormbricksCloud={isFormbricksCloud}
+                membershipRole={membershipRole}
+              />
+              {watch("role") === "member" && (
+                <Alert className="mt-2" variant="info">
+                  <AlertDescription>
+                    {t("environments.settings.teams.member_role_info_message")}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
           )}
         </div>
 
         {isAccessControlAllowed && (
-          <FormField
-            control={control}
-            name="teamIds"
-            render={({ field }) => (
-              <FormItem className="flex flex-col space-y-2">
-                <FormLabel>{t("common.add_to_team")} </FormLabel>
-                <div className="space-y-2">
-                  <MultiSelect
-                    value={field.value}
-                    options={teamOptions}
-                    placeholder={t("environments.settings.teams.team_select_placeholder")}
-                    disabled={!teamOptions.length}
-                    onChange={(val) => field.onChange(val)}
-                  />
-                  {!teamOptions.length && (
-                    <Small className="font-normal text-amber-600">
-                      {t("environments.settings.teams.create_first_team_message")}
-                    </Small>
-                  )}
-                </div>
-              </FormItem>
-            )}
-          />
+          <>
+            <FormField
+              control={control}
+              name="teamIds"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-2">
+                  <FormLabel>{t("common.add_to_team")} </FormLabel>
+                  <div className="space-y-2">
+                    <MultiSelect
+                      value={field.value}
+                      options={teamOptions}
+                      placeholder={t("environments.settings.teams.team_select_placeholder")}
+                      disabled={!teamOptions.length}
+                      onChange={(val) => field.onChange(val)}
+                    />
+                    {!teamOptions.length && (
+                      <Small className="font-normal text-amber-600">
+                        {t("environments.settings.teams.create_first_team_message")}
+                      </Small>
+                    )}
+                  </div>
+                  <FormError>{errors.teamIds?.message}</FormError>
+                </FormItem>
+              )}
+            />
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="teamRoleInput">{t("common.team_role")}</Label>
+              <Input value={t("environments.settings.teams.contributor")} disabled />
+            </div>
+          </>
         )}
 
         {!isAccessControlAllowed && (

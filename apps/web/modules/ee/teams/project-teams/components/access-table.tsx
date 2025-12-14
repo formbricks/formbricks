@@ -43,7 +43,7 @@ export const AccessTable = ({ teams }: AccessTableProps) => {
                 {team.memberCount} {team.memberCount === 1 ? t("common.member") : t("common.members")}
               </TableCell>
               <TableCell>
-                <IdBadge id={team.id} showCopyIconOnHover={true} />
+                <IdBadge id={team.id} />
               </TableCell>
               <TableCell>
                 <p className="capitalize">{TeamPermissionMapping[team.permission]}</p>
