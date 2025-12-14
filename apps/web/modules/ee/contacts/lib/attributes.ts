@@ -5,6 +5,7 @@ import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
+import { detectAttributeType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 
 export const updateAttributes = async (
   contactId: string,
@@ -24,7 +25,7 @@ export const updateAttributes = async (
   // Fetch contact attribute keys and email check in parallel
   const [contactAttributeKeys, existingEmailAttribute] = await Promise.all([
     getContactAttributeKeys(environmentId),
-    contactAttributesParam.email
+    contactAttributesParam.email && typeof contactAttributesParam.email === "string"
       ? hasEmailAttribute(contactAttributesParam.email, environmentId, contactId)
       : Promise.resolve(null),
   ]);
@@ -42,6 +43,14 @@ export const updateAttributes = async (
     (acc, [key, value]) => {
       const attributeKey = contactAttributeKeyMap.get(key);
       if (attributeKey) {
+        // Validate type
+        if (attributeKey.dataType === "number") {
+          const num = Number(value);
+          if (isNaN(num)) return acc; // Skip invalid number
+        } else if (attributeKey.dataType === "date") {
+          const date = new Date(value as string | number | Date);
+          if (isNaN(date.getTime())) return acc; // Skip invalid date
+        }
         acc.existingAttributes.push({ key, value, attributeKeyId: attributeKey.id });
       } else {
         acc.newAttributes.push({ key, value });
@@ -49,8 +58,8 @@ export const updateAttributes = async (
       return acc;
     },
     { existingAttributes: [], newAttributes: [] } as {
-      existingAttributes: { key: string; value: string; attributeKeyId: string }[];
-      newAttributes: { key: string; value: string }[];
+      existingAttributes: { key: string; value: string | number | Date; attributeKeyId: string }[];
+      newAttributes: { key: string; value: string | number | Date }[];
     }
   );
 
@@ -65,22 +74,29 @@ export const updateAttributes = async (
   // First, update all existing attributes
   if (existingAttributes.length > 0) {
     await prisma.$transaction(
-      existingAttributes.map(({ attributeKeyId, value }) =>
-        prisma.contactAttribute.upsert({
+      existingAttributes.map(({ attributeKeyId, value }) => {
+        let stringValue = value;
+        if (value instanceof Date) {
+          stringValue = value.toISOString();
+        } else {
+          stringValue = String(value);
+        }
+
+        return prisma.contactAttribute.upsert({
           where: {
             contactId_attributeKeyId: {
               contactId,
               attributeKeyId,
             },
           },
-          update: { value },
+          update: { value: stringValue },
           create: {
             contactId,
             attributeKeyId,
-            value,
+            value: stringValue,
           },
-        })
-      )
+        });
+      })
     );
   }
 
@@ -96,18 +112,26 @@ export const updateAttributes = async (
     } else {
       // Create new attributes since we're under the limit
       await prisma.$transaction(
-        newAttributes.map(({ key, value }) =>
-          prisma.contactAttributeKey.create({
+        newAttributes.map(({ key, value }) => {
+          let stringValue = value;
+          if (value instanceof Date) {
+            stringValue = value.toISOString();
+          } else {
+            stringValue = String(value);
+          }
+
+          return prisma.contactAttributeKey.create({
             data: {
               key,
               type: "custom",
+              dataType: detectAttributeType(value),
               environment: { connect: { id: environmentId } },
               attributes: {
-                create: { contactId, value },
+                create: { contactId, value: stringValue },
               },
             },
-          })
-        )
+          });
+        })
       );
     }
   }

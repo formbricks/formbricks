@@ -81,7 +81,7 @@ export type TConfigUpdateInput = Omit<TConfig, "status"> & {
   };
 };
 
-export type TAttributes = Record<string, string>;
+export type TAttributes = Record<string, string | number | Date>;
 
 export interface TConfigInput {
   environmentId: string;
@@ -133,7 +133,7 @@ export interface TLegacyConfigInput {
   apiHost: string;
   environmentId: string;
   userId?: string;
-  attributes?: Record<string, string>;
+  attributes?: TAttributes;
 }
 
 export type TLegacyConfig = TConfig & {

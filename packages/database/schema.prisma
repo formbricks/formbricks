@@ -81,6 +81,12 @@ enum ContactAttributeType {
   custom
 }
 
+enum ContactAttributeDataType {
+  text
+  number
+  date
+}
+
 /// Defines the possible attributes that can be assigned to contacts.
 /// Acts as a schema for contact attributes within an environment.
 ///
@@ -89,17 +95,19 @@ enum ContactAttributeType {
 /// @property key - The attribute identifier used in the system
 /// @property name - Display name for the attribute
 /// @property type - Whether this is a default or custom attribute
+/// @property dataType - The data type of the attribute (text, number, date)
 /// @property environment - The environment this attribute belongs to
 model ContactAttributeKey {
-  id               String                  @id @default(cuid())
-  createdAt        DateTime                @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                @updatedAt @map(name: "updated_at")
-  isUnique         Boolean                 @default(false)
+  id               String                   @id @default(cuid())
+  createdAt        DateTime                 @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                 @updatedAt @map(name: "updated_at")
+  isUnique         Boolean                  @default(false)
   key              String
   name             String?
   description      String?
-  type             ContactAttributeType    @default(custom)
-  environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  type             ContactAttributeType     @default(custom)
+  dataType         ContactAttributeDataType @default(text)
+  environment      Environment              @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
   attributes       ContactAttribute[]
   attributeFilters SurveyAttributeFilter[]

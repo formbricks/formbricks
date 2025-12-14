@@ -6,7 +6,6 @@ import {
   FingerprintIcon,
   MonitorSmartphoneIcon,
   MoreVertical,
-  TagIcon,
   Trash2,
   Users2Icon,
 } from "lucide-react";
@@ -14,11 +13,16 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type {
+import {
+  ARITHMETIC_OPERATORS,
+  DATE_OPERATORS,
+  DEVICE_OPERATORS,
+  PERSON_OPERATORS,
   TArithmeticOperator,
   TAttributeOperator,
   TBaseFilter,
   TDeviceOperator,
+  TEXT_ATTRIBUTE_OPERATORS,
   TSegment,
   TSegmentAttributeFilter,
   TSegmentConnector,
@@ -29,14 +33,9 @@ import type {
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
 } from "@formbricks/types/segment";
-import {
-  ARITHMETIC_OPERATORS,
-  ATTRIBUTE_OPERATORS,
-  DEVICE_OPERATORS,
-  PERSON_OPERATORS,
-} from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { DateFilterValue } from "@/modules/ee/contacts/segments/components/date-filter-value";
 import {
   convertOperatorToText,
   convertOperatorToTitle,
@@ -64,6 +63,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { AddFilterModal } from "./add-filter-modal";
+import { AttributeIcon } from "./attribute-icon";
 
 interface TSegmentFilterProps {
   connector: TSegmentConnector;
@@ -224,6 +224,10 @@ function AttributeSegmentFilter({
 
   const [valueError, setValueError] = useState("");
 
+  const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
+  const dataType = attributeKey?.dataType ?? "text";
+  const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
+
   // when the operator changes, we need to check if the value is valid
   useEffect(() => {
     const { operator } = resource.qualifier;
@@ -239,16 +243,26 @@ function AttributeSegmentFilter({
     }
   }, [resource.qualifier, resource.value, t]);
 
-  const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
+  const getAvailableOperators = () => {
+    switch (dataType) {
+      case "number":
+        return [...ARITHMETIC_OPERATORS, "isSet", "isNotSet"] as const;
+      case "date":
+        return [...DATE_OPERATORS, "isSet", "isNotSet"] as const;
+      default:
+        // Text is default
+        return TEXT_ATTRIBUTE_OPERATORS;
+    }
+  };
+
+  const availableOperators = getAvailableOperators();
+
+  const operatorArr = availableOperators.map((operator) => {
     return {
       id: operator,
       name: convertOperatorToText(operator),
     };
   });
-
-  const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
-
-  const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
     const updatedSegment = structuredClone(segment);
@@ -279,7 +293,7 @@ function AttributeSegmentFilter({
 
     const { operator } = resource.qualifier;
 
-    if (ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
+    if (dataType === "number" && ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
       const isNumber = z.coerce.number().safeParse(value);
 
       if (isNumber.success) {
@@ -319,7 +333,7 @@ function AttributeSegmentFilter({
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-2">
-              <TagIcon className="h-4 w-4 text-sm" />
+              <AttributeIcon dataType={dataType} className="h-4 w-4 text-sm" />
               <p>{attrKeyValue}</p>
             </div>
           </SelectValue>
@@ -355,25 +369,37 @@ function AttributeSegmentFilter({
         </SelectContent>
       </Select>
 
-      {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
-        <div className="relative flex flex-col gap-1">
-          <Input
-            className={cn("h-9 w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
-            disabled={viewOnly}
-            onChange={(e) => {
-              if (viewOnly) return;
-              checkValueAndUpdate(e);
-            }}
+      {!["isSet", "isNotSet"].includes(resource.qualifier.operator) &&
+        (dataType === "date" ? (
+          <DateFilterValue
+            filterId={resource.id}
+            operator={resource.qualifier.operator}
             value={resource.value}
+            onChange={(newValue) => updateValueInLocalSurvey(resource.id, newValue)}
           />
+        ) : (
+          <div className="relative flex flex-col gap-1">
+            <Input
+              className={cn(
+                "h-9 w-auto bg-white",
+                valueError && "border border-red-500 focus:border-red-500"
+              )}
+              disabled={viewOnly}
+              onChange={(e) => {
+                if (viewOnly) return;
+                checkValueAndUpdate(e);
+              }}
+              value={resource.value as any}
+              type={dataType === "number" ? "number" : "text"}
+            />
 
-          {valueError ? (
-            <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">
-              {valueError}
-            </p>
-          ) : null}
-        </div>
-      )}
+            {valueError ? (
+              <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">
+                {valueError}
+              </p>
+            ) : null}
+          </div>
+        ))}
 
       <SegmentFilterItemContextMenu
         filterId={resource.id}
@@ -544,7 +570,7 @@ function PersonSegmentFilter({
               if (viewOnly) return;
               checkValueAndUpdate(e);
             }}
-            value={resource.value}
+            value={resource.value as any}
           />
 
           {valueError ? (

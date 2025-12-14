@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -12,6 +13,7 @@ import {
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { createContactAttributeKey, updateContactAttributeKey } from "./lib/contact-attribute-keys";
 import { createContactsFromCSV, deleteContact, getContacts } from "./lib/contacts";
 import {
   ZContactCSVAttributeMap,
@@ -129,3 +131,71 @@ export const createContactsFromCSVAction = authenticatedActionClient.schema(ZCre
     }
   )
 );
+
+const ZUpdateAttributeKeyAction = z.object({
+  id: ZId,
+  environmentId: ZId,
+  name: z.string(),
+  description: z.string().optional(),
+  dataType: ZContactAttributeDataType,
+});
+
+export const updateAttributeKeyAction = authenticatedActionClient
+  .schema(ZUpdateAttributeKeyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
+    });
+
+    return await updateContactAttributeKey(parsedInput.environmentId, parsedInput.id, {
+      name: parsedInput.name,
+      description: parsedInput.description,
+      dataType: parsedInput.dataType,
+    });
+  });
+
+const ZCreateAttributeKeyAction = z.object({
+  environmentId: ZId,
+  key: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  dataType: ZContactAttributeDataType,
+});
+
+export const createAttributeKeyAction = authenticatedActionClient
+  .schema(ZCreateAttributeKeyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
+    });
+
+    return await createContactAttributeKey(parsedInput.environmentId, parsedInput.key, "custom", {
+      name: parsedInput.name,
+      description: parsedInput.description,
+      dataType: parsedInput.dataType,
+    });
+  });

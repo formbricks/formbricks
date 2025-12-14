@@ -13,12 +13,27 @@ export const ARITHMETIC_OPERATORS = ["lessThan", "lessEqual", "greaterThan", "gr
 export type TArithmeticOperator = (typeof ARITHMETIC_OPERATORS)[number];
 export const STRING_OPERATORS = ["contains", "doesNotContain", "startsWith", "endsWith"] as const;
 export type TStringOperator = (typeof STRING_OPERATORS)[number];
+
+export const DATE_OPERATORS = [
+  "isOlderThan",
+  "isNewerThan",
+  "isBefore",
+  "isAfter",
+  "isBetween",
+  "isSameDay",
+] as const;
+export type TDateOperator = (typeof DATE_OPERATORS)[number];
+
+export const TIME_UNITS = ["days", "weeks", "months", "years"] as const;
+export type TTimeUnit = (typeof TIME_UNITS)[number];
+
 export const ZBaseOperator = z.enum(BASE_OPERATORS);
 export type TBaseOperator = z.infer<typeof ZBaseOperator>;
 
 // An attribute filter can have these operators
 export const ATTRIBUTE_OPERATORS = [
   ...BASE_OPERATORS,
+  ...DATE_OPERATORS,
   "isSet",
   "isNotSet",
   "contains",
@@ -30,6 +45,15 @@ export const ATTRIBUTE_OPERATORS = [
 // the person filter currently has the same operators as the attribute filter
 // but we might want to add more operators in the future, so we keep it separated
 export const PERSON_OPERATORS = ATTRIBUTE_OPERATORS;
+export const TEXT_ATTRIBUTE_OPERATORS = [
+  ...BASE_OPERATORS,
+  "isSet",
+  "isNotSet",
+  "contains",
+  "doesNotContain",
+  "startsWith",
+  "endsWith",
+] as const;
 
 // operators for segment filters
 export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
@@ -54,7 +78,12 @@ export type TDeviceOperator = z.infer<typeof ZDeviceOperator>;
 
 export type TAllOperators = (typeof ALL_OPERATORS)[number];
 
-export const ZSegmentFilterValue = z.union([z.string(), z.number()]);
+export const ZSegmentFilterValue = z.union([
+  z.string(),
+  z.number(),
+  z.object({ amount: z.number(), unit: z.enum(TIME_UNITS) }),
+  z.tuple([z.string(), z.string()]),
+]);
 export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 
 // Each filter has a qualifier, which usually contains the operator for evaluating the filter.
@@ -141,6 +170,41 @@ export const ZSegmentFilter = z
     },
     {
       message: "Value must be a string for string operators and a number for arithmetic operators",
+    }
+  )
+  .refine(
+    (filter) => {
+      // Relative date operators
+      if (
+        ["isOlderThan", "isNewerThan"].includes(filter.qualifier.operator as string) &&
+        (typeof filter.value !== "object" ||
+          Array.isArray(filter.value) ||
+          !("amount" in filter.value) ||
+          !("unit" in filter.value))
+      ) {
+        return false;
+      }
+
+      // Absolute date operators that expect string/date
+      if (
+        ["isBefore", "isAfter", "isSameDay"].includes(filter.qualifier.operator as string) &&
+        typeof filter.value !== "string"
+      ) {
+        return false;
+      }
+
+      // Between operator
+      if (
+        filter.qualifier.operator === "isBetween" &&
+        (!Array.isArray(filter.value) || filter.value.length !== 2)
+      ) {
+        return false;
+      }
+
+      return true;
+    },
+    {
+      message: "Invalid value type for the selected operator",
     }
   )
   .refine(

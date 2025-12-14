@@ -46,8 +46,9 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
             ...personState,
             data: {
               ...personState.data,
-              // Copy over language from attributes if it exists
-              ...(attributes?.language && { language: attributes.language }),
+              // Copy over language from attributes if it exists and is a string
+              ...(attributes?.language &&
+                typeof attributes.language === "string" && { language: attributes.language }),
             },
           },
         }),

@@ -1,28 +1,10 @@
 "use client";
 
 import { format } from "date-fns";
-import { CalendarCheckIcon, CalendarIcon, XIcon } from "lucide-react";
-import { useRef, useState } from "react";
-import Calendar from "react-calendar";
+import { XIcon } from "lucide-react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { Button } from "@/modules/ui/components/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import "./styles.css";
-
-const getOrdinalSuffix = (day: number) => {
-  if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
-  switch (day % 10) {
-    case 1:
-      return "st";
-    case 2:
-      return "nd";
-    case 3:
-      return "rd";
-    default:
-      return "th";
-  }
-};
 
 interface DatePickerProps {
   date: Date | null;
@@ -33,103 +15,52 @@ interface DatePickerProps {
 
 export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: DatePickerProps) => {
   const { t } = useTranslation();
-  const [value, onChange] = useState<Date | undefined>(date ? new Date(date) : undefined);
-  const [formattedDate, setFormattedDate] = useState<string | undefined>(
-    date ? format(new Date(date), "do MMM, yyyy") : undefined
-  );
-  const [isOpen, setIsOpen] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
-  const btnRef = useRef<HTMLButtonElement>(null);
-
-  const onDateChange = (date: Date) => {
-    if (date) {
-      updateSurveyDate(date);
-      const day = date.getDate();
-      const ordinalSuffix = getOrdinalSuffix(day);
-      const formatted = format(date, `d'${ordinalSuffix}' MMM, yyyy`);
-      setFormattedDate(formatted);
-      onChange(date);
-      setIsOpen(false);
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value) {
+      updateSurveyDate(new Date(e.target.value));
     }
   };
 
   const handleClearDate = () => {
     if (onClearDate) {
       onClearDate();
-      setFormattedDate(undefined);
-      onChange(undefined);
+      if (dateInputRef.current) {
+        dateInputRef.current.value = "";
+      }
     }
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          {formattedDate ? (
-            <Button
-              variant={"ghost"}
-              className={cn(
-                "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal",
-                !formattedDate && "text-muted-foreground bg-slate-800"
-              )}
-              ref={btnRef}>
-              <CalendarCheckIcon className="mr-2 h-4 w-4" />
-              {formattedDate}
-            </Button>
-          ) : (
-            <Button
-              variant={"ghost"}
-              className={cn(
-                "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal",
-                !formattedDate && "text-muted-foreground"
-              )}
-              onClick={() => setIsOpen(true)}
-              ref={btnRef}>
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              <span>{t("common.pick_a_date")}</span>
-            </Button>
+    <div className="relative flex w-full items-center">
+      <div className="relative w-full">
+        <input
+          ref={dateInputRef}
+          type="date"
+          min={minDate ? format(minDate, "yyyy-MM-dd") : undefined}
+          value={date ? format(date, "yyyy-MM-dd") : ""}
+          onChange={handleDateChange}
+          placeholder={t("common.pick_a_date")}
+          className={cn(
+            "flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            !date && "text-slate-400"
           )}
-        </PopoverTrigger>
-        <PopoverContent align="start" className="min-w-96 rounded-lg px-4 py-3">
-          <Calendar
-            value={value}
-            onChange={(date) => onDateChange(date as Date)}
-            minDate={minDate || new Date()}
-            className="!border-0"
-            tileClassName={({ date }: { date: Date }) => {
-              const baseClass =
-                "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
-              // today's date class
-              if (
-                date.getDate() === new Date().getDate() &&
-                date.getMonth() === new Date().getMonth() &&
-                date.getFullYear() === new Date().getFullYear()
-              ) {
-                return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
-              }
-              // active date class
-              if (
-                date.getDate() === value?.getDate() &&
-                date.getMonth() === value?.getMonth() &&
-                date.getFullYear() === value?.getFullYear()
-              ) {
-                return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading`;
-              }
+        />
+        {!date && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3 text-slate-400">
+            {t("common.pick_a_date")}
+          </div>
+        )}
+      </div>
 
-              return baseClass;
-            }}
-            showNeighboringMonth={false}
-          />
-        </PopoverContent>
-      </Popover>
-      {formattedDate && onClearDate && (
-        <Button
-          variant="outline"
-          size="sm"
+      {date && onClearDate && (
+        <button
+          type="button"
           onClick={handleClearDate}
-          className="h-8 w-8 p-0 hover:bg-slate-200">
+          className="absolute right-3 rounded-sm opacity-50 hover:opacity-100 focus:outline-none">
           <XIcon className="h-4 w-4" />
-        </Button>
+        </button>
       )}
     </div>
   );

@@ -3,19 +3,76 @@ import { cache as reactCache } from "react";
 import { logger } from "@formbricks/logger";
 import { err, ok } from "@formbricks/types/error-handlers";
 import {
+  DATE_OPERATORS,
   TBaseFilters,
+  TDateOperator,
   TSegmentAttributeFilter,
   TSegmentDeviceFilter,
   TSegmentFilter,
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
+  TTimeUnit,
 } from "@formbricks/types/segment";
+import { endOfDay, startOfDay, subtractTimeUnit } from "@/modules/ee/contacts/segments/lib/date-utils";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { getSegment } from "../segments";
 
-// Type for the result of the segment filter to prisma query generation
-export type SegmentFilterQueryResult = {
-  whereClause: Prisma.ContactWhereInput;
+const isDateOperator = (operator: string): operator is TDateOperator => {
+  return DATE_OPERATORS.includes(operator as TDateOperator);
+};
+
+const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prisma.StringFilter => {
+  const { qualifier, value } = filter;
+  const { operator } = qualifier;
+
+  if (operator === "isOlderThan" || operator === "isNewerThan") {
+    if (typeof value !== "object" || Array.isArray(value) || !("amount" in value) || !("unit" in value)) {
+      return {};
+    }
+
+    const { amount, unit } = value as { amount: number; unit: TTimeUnit };
+    const now = new Date();
+    const thresholdDate = subtractTimeUnit(now, amount, unit);
+
+    if (operator === "isOlderThan") {
+      return { lt: thresholdDate.toISOString() };
+    } else {
+      return { gt: thresholdDate.toISOString() };
+    }
+  }
+
+  if (operator === "isBetween") {
+    if (!Array.isArray(value) || value.length !== 2) {
+      return {};
+    }
+    const [startStr, endStr] = value as [string, string];
+    const startDate = startOfDay(new Date(startStr));
+    const endDate = endOfDay(new Date(endStr));
+
+    return {
+      gte: startDate.toISOString(),
+      lte: endDate.toISOString(),
+    };
+  }
+
+  if (typeof value !== "string") {
+    return {};
+  }
+  const compareDate = new Date(value);
+
+  switch (operator) {
+    case "isBefore":
+      return { lt: startOfDay(compareDate).toISOString() };
+    case "isAfter":
+      return { gt: endOfDay(compareDate).toISOString() };
+    case "isSameDay":
+      return {
+        gte: startOfDay(compareDate).toISOString(),
+        lte: endOfDay(compareDate).toISOString(),
+      };
+    default:
+      return {};
+  }
 };
 
 /**
@@ -60,39 +117,56 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
     },
   } satisfies Prisma.ContactWhereInput;
 
+  if (isDateOperator(operator)) {
+    // @ts-ignore
+    valueQuery.attributes.some.value = buildDateAttributeFilterWhereClause(filter);
+    return valueQuery;
+  }
+
   // Apply the appropriate operator to the attribute value
   switch (operator) {
     case "equals":
+      // @ts-ignore
       valueQuery.attributes.some.value = { equals: String(value), mode: "insensitive" };
       break;
     case "notEquals":
+      // @ts-ignore
       valueQuery.attributes.some.value = { not: String(value), mode: "insensitive" };
       break;
     case "contains":
+      // @ts-ignore
       valueQuery.attributes.some.value = { contains: String(value), mode: "insensitive" };
       break;
     case "doesNotContain":
+      // @ts-ignore
       valueQuery.attributes.some.value = { not: { contains: String(value) }, mode: "insensitive" };
       break;
     case "startsWith":
+      // @ts-ignore
       valueQuery.attributes.some.value = { startsWith: String(value), mode: "insensitive" };
       break;
     case "endsWith":
+      // @ts-ignore
       valueQuery.attributes.some.value = { endsWith: String(value), mode: "insensitive" };
       break;
     case "greaterThan":
+      // @ts-ignore
       valueQuery.attributes.some.value = { gt: String(value) };
       break;
     case "greaterEqual":
+      // @ts-ignore
       valueQuery.attributes.some.value = { gte: String(value) };
       break;
     case "lessThan":
+      // @ts-ignore
       valueQuery.attributes.some.value = { lt: String(value) };
       break;
     case "lessEqual":
+      // @ts-ignore
       valueQuery.attributes.some.value = { lte: String(value) };
       break;
     default:
+      // @ts-ignore
       valueQuery.attributes.some.value = String(value);
   }
 

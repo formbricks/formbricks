@@ -2,14 +2,14 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
+import { CreateSegmentModal } from "@/modules/ee/contacts/segments/components/create-segment-modal";
+import { SegmentsDataTable } from "@/modules/ee/contacts/segments/components/segments-data-table";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { CreateSegmentModal } from "./components/create-segment-modal";
 
 export const SegmentsPage = async ({
   params: paramsProps,
@@ -17,22 +17,11 @@ export const SegmentsPage = async ({
   params: Promise<{ environmentId: string }>;
 }) => {
   const params = await paramsProps;
-  const t = await getTranslate();
-
   const { isReadOnly } = await getEnvironmentAuth(params.environmentId);
-
-  const [segments, contactAttributeKeys] = await Promise.all([
-    getSegments(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
-  ]);
-
+  const t = await getTranslate();
   const isContactsEnabled = await getIsContactsEnabled();
-
-  if (!segments) {
-    throw new Error("Failed to fetch segments");
-  }
-
-  const filteredSegments = segments.filter((segment) => !segment.isPrivate);
+  const contactAttributeKeys = await getContactAttributeKeys(params.environmentId);
+  const segments = await getSegments(params.environmentId);
 
   return (
     <PageContentWrapper>
@@ -43,7 +32,7 @@ export const SegmentsPage = async ({
             <CreateSegmentModal
               environmentId={params.environmentId}
               contactAttributeKeys={contactAttributeKeys}
-              segments={filteredSegments}
+              segments={segments}
             />
           ) : undefined
         }>
@@ -51,8 +40,8 @@ export const SegmentsPage = async ({
       </PageHeader>
 
       {isContactsEnabled ? (
-        <SegmentTable
-          segments={filteredSegments}
+        <SegmentsDataTable
+          segments={segments}
           contactAttributeKeys={contactAttributeKeys}
           isContactsEnabled={isContactsEnabled}
           isReadOnly={isReadOnly}

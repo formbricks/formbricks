@@ -93,7 +93,10 @@ export class UpdateQueue {
                   ...config.get().user,
                   data: {
                     ...config.get().user.data,
-                    language: currentUpdates.attributes?.language,
+                    language:
+                      typeof currentUpdates.attributes?.language === "string"
+                        ? currentUpdates.attributes.language
+                        : undefined,
                   },
                 },
               });

@@ -69,7 +69,7 @@ export class ApiClient {
 
   async createOrUpdateUser(userUpdateInput: {
     userId: string;
-    attributes?: Record<string, string>;
+    attributes?: Record<string, string | number | Date>;
   }): Promise<Result<CreateOrUpdateUserResponse, ApiErrorResponse>> {
     // transform all attributes to string if attributes are present into a new attributes copy
     const attributes: Record<string, string> = {};

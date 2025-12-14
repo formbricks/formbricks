@@ -5,6 +5,7 @@ import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "luc
 import React, { type JSX, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,
   TSegment,
@@ -15,6 +16,7 @@ import { cn } from "@/lib/cn";
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { TabBar } from "@/modules/ui/components/tab-bar";
+import { AttributeIcon } from "./attribute-icon";
 import AttributeTabContent from "./attribute-tab-content";
 import FilterButton from "./filter-button";
 
@@ -35,6 +37,7 @@ export const handleAddFilter = ({
   contactAttributeKey,
   deviceType,
   segmentId,
+  dataType,
 }: {
   type: TFilterType;
   onAddFilter: (filter: TBaseFilter) => void;
@@ -42,9 +45,21 @@ export const handleAddFilter = ({
   contactAttributeKey?: string;
   segmentId?: string;
   deviceType?: string;
+  dataType?: TContactAttributeDataType;
 }): void => {
   if (type === "attribute") {
     if (!contactAttributeKey) return;
+
+    let operator: string = "equals";
+    let value: any = "";
+
+    if (dataType === "date") {
+      operator = "isOlderThan";
+      value = { amount: 7, unit: "days" };
+    } else if (dataType === "number") {
+      operator = "equals";
+      value = 0;
+    }
 
     const newFilterResource: TSegmentAttributeFilter = {
       id: createId(),
@@ -53,9 +68,9 @@ export const handleAddFilter = ({
         contactAttributeKey,
       },
       qualifier: {
-        operator: "equals",
+        operator: operator as any,
       },
-      value: "",
+      value,
     };
     const newFilter: TBaseFilter = {
       id: createId(),
@@ -239,7 +254,7 @@ export function AddFilterModal({
               <FilterButton
                 key={attributeKey.id}
                 data-testid={`filter-btn-attribute-${attributeKey.key}`}
-                icon={<TagIcon className="h-4 w-4" />}
+                icon={<AttributeIcon dataType={attributeKey.dataType} className="h-4 w-4" />}
                 label={attributeKey.name ?? attributeKey.key}
                 onClick={() => {
                   handleAddFilter({
@@ -247,6 +262,7 @@ export function AddFilterModal({
                     onAddFilter,
                     setOpen,
                     contactAttributeKey: attributeKey.key,
+                    dataType: attributeKey.dataType,
                   });
                 }}
                 onKeyDown={(e) => {
@@ -257,6 +273,7 @@ export function AddFilterModal({
                       onAddFilter,
                       setOpen,
                       contactAttributeKey: attributeKey.key,
+                      dataType: attributeKey.dataType,
                     });
                   }
                 }}

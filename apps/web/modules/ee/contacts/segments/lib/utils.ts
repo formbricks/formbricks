@@ -10,6 +10,7 @@ import {
   TSegmentConnector,
   TSegmentDeviceFilter,
   TSegmentFilter,
+  TSegmentFilterValue,
   TSegmentOperator,
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
@@ -50,6 +51,18 @@ export const convertOperatorToText = (operator: TAllOperators) => {
       return "User is in";
     case "userIsNotIn":
       return "User is not in";
+    case "isOlderThan":
+      return "is older than";
+    case "isNewerThan":
+      return "is newer than";
+    case "isBefore":
+      return "is before";
+    case "isAfter":
+      return "is after";
+    case "isBetween":
+      return "is between";
+    case "isSameDay":
+      return "is on";
     default:
       return operator;
   }
@@ -85,6 +98,18 @@ export const convertOperatorToTitle = (operator: TAllOperators) => {
       return "User is in";
     case "userIsNotIn":
       return "User is not in";
+    case "isOlderThan":
+      return "Is older than";
+    case "isNewerThan":
+      return "Is newer than";
+    case "isBefore":
+      return "Is before";
+    case "isAfter":
+      return "Is after";
+    case "isBetween":
+      return "Is between";
+    case "isSameDay":
+      return "Is on";
     default:
       return operator;
   }
@@ -398,7 +423,7 @@ export const updateSegmentIdInFilter = (group: TBaseFilters, filterId: string, n
   }
 };
 
-export const updateFilterValue = (group: TBaseFilters, filterId: string, newValue: string | number) => {
+export const updateFilterValue = (group: TBaseFilters, filterId: string, newValue: TSegmentFilterValue) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 

@@ -22,12 +22,20 @@ import {
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
   TSegmentUpdateInput,
+  TSegmentWithSurveyNames,
   ZSegmentCreateInput,
   ZSegmentFilters,
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
+import { DATE_OPERATORS, TDateOperator, TTimeUnit } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
+import {
+  endOfDay,
+  isSameDay,
+  startOfDay,
+  subtractTimeUnit,
+} from "@/modules/ee/contacts/segments/lib/date-utils";
 import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
@@ -35,6 +43,8 @@ export type PrismaSegment = Prisma.SegmentGetPayload<{
     surveys: {
       select: {
         id: true;
+        name: true;
+        status: true;
       };
     };
   };
@@ -65,6 +75,21 @@ export const transformPrismaSegment = (segment: PrismaSegment): TSegment => {
   };
 };
 
+export const transformPrismaSegmentWithSurveyNames = (segment: PrismaSegment): TSegmentWithSurveyNames => {
+  const activeSurveys = segment.surveys
+    .filter((survey) => survey.status === "inProgress")
+    .map((survey) => survey.name);
+  const inactiveSurveys = segment.surveys
+    .filter((survey) => survey.status !== "inProgress")
+    .map((survey) => survey.name);
+
+  return {
+    ...transformPrismaSegment(segment),
+    activeSurveys,
+    inactiveSurveys,
+  };
+};
+
 export const getSegment = reactCache(async (segmentId: string): Promise<TSegment> => {
   validateInputs([segmentId, ZId]);
   try {
@@ -89,7 +114,7 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
   }
 });
 
-export const getSegments = reactCache(async (environmentId: string): Promise<TSegment[]> => {
+export const getSegments = reactCache(async (environmentId: string): Promise<TSegmentWithSurveyNames[]> => {
   validateInputs([environmentId, ZId]);
   try {
     const segments = await prisma.segment.findMany({
@@ -103,7 +128,7 @@ export const getSegments = reactCache(async (environmentId: string): Promise<TSe
       return [];
     }
 
-    return segments.map((segment) => transformPrismaSegment(segment));
+    return segments.map((segment) => transformPrismaSegmentWithSurveyNames(segment));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -375,6 +400,77 @@ export const getSegmentsByAttributeKey = reactCache(async (environmentId: string
   }
 });
 
+const isDateOperator = (operator: string): operator is TDateOperator => {
+  return DATE_OPERATORS.includes(operator as TDateOperator);
+};
+
+const evaluateDateFilter = (
+  attributeValue: string | number,
+  filterValue: TSegmentAttributeFilter["value"],
+  operator: TDateOperator
+): boolean => {
+  const date = new Date(attributeValue);
+  if (isNaN(date.getTime())) {
+    return false;
+  }
+
+  // Handle relative date operators
+  if (operator === "isOlderThan" || operator === "isNewerThan") {
+    if (
+      typeof filterValue !== "object" ||
+      Array.isArray(filterValue) ||
+      !("amount" in filterValue) ||
+      !("unit" in filterValue)
+    ) {
+      return false;
+    }
+
+    const { amount, unit } = filterValue as { amount: number; unit: TTimeUnit };
+    const now = new Date();
+    const thresholdDate = subtractTimeUnit(now, amount, unit);
+
+    if (operator === "isOlderThan") {
+      // Something is older than 5 days if valid < (now - 5 days)
+      return date < thresholdDate;
+    } else {
+      // Something is newer than 5 days if valid > (now - 5 days)
+      return date > thresholdDate;
+    }
+  }
+
+  // Handle between operator
+  if (operator === "isBetween") {
+    if (!Array.isArray(filterValue) || filterValue.length !== 2) {
+      return false;
+    }
+    const [startStr, endStr] = filterValue as [string, string];
+    const startDate = startOfDay(new Date(startStr));
+    const endDate = endOfDay(new Date(endStr));
+
+    return date >= startDate && date <= endDate;
+  }
+
+  // Handle absolute operators
+  if (typeof filterValue !== "string") {
+    return false;
+  }
+  const compareDate = new Date(filterValue);
+  if (isNaN(compareDate.getTime())) {
+    return false;
+  }
+
+  switch (operator) {
+    case "isBefore":
+      return date < startOfDay(compareDate);
+    case "isAfter":
+      return date > endOfDay(compareDate);
+    case "isSameDay":
+      return isSameDay(date, compareDate);
+    default:
+      return false;
+  }
+};
+
 const evaluateAttributeFilter = (
   attributes: TEvaluateSegmentUserAttributeData,
   filter: TSegmentAttributeFilter
@@ -384,10 +480,21 @@ const evaluateAttributeFilter = (
 
   const attributeValue = attributes[contactAttributeKey];
   if (!attributeValue) {
+    // Special handling for isSet/isNotSet if needed, but compareValues handles it generically
+    // However, if checks below depend on value existence, we might need to delegate earlier
+    // For date operators, if no value, usually false (unless we add isNotSet for dates)
+    // But compareValues handles isSet/isNotSet.
+    // We should check operator type first.
+    if (qualifier.operator === "isNotSet") return true;
+    if (qualifier.operator === "isSet") return false;
     return false;
   }
 
-  const attResult = compareValues(attributeValue, value, qualifier.operator);
+  if (isDateOperator(qualifier.operator)) {
+    return evaluateDateFilter(attributeValue, value, qualifier.operator);
+  }
+
+  const attResult = compareValues(attributeValue, value as string | number, qualifier.operator);
   return attResult;
 };
 
@@ -396,7 +503,7 @@ const evaluatePersonFilter = (userId: string, filter: TSegmentPersonFilter): boo
   const { personIdentifier } = root;
 
   if (personIdentifier === "userId") {
-    const attResult = compareValues(userId, value, qualifier.operator);
+    const attResult = compareValues(userId, value as string | number, qualifier.operator);
     return attResult;
   }
 
@@ -437,7 +544,7 @@ const evaluateSegmentFilter = async (
 
 const evaluateDeviceFilter = (device: "phone" | "desktop", filter: TSegmentDeviceFilter): boolean => {
   const { value, qualifier } = filter;
-  return compareValues(device, value, qualifier.operator);
+  return compareValues(device, value as string | number, qualifier.operator);
 };
 
 export const compareValues = (
