@@ -2,7 +2,11 @@ import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { ContactControlBar } from "@/modules/ee/contacts/[contactId]/components/contact-control-bar";
-import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import {
+  getContactAttributes,
+  getContactAttributesWithMetadata,
+} from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { getPublishedLinkSurveys } from "@/modules/ee/contacts/lib/surveys";
 import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
@@ -21,11 +25,20 @@ export const SingleContactPage = async (props: {
 
   const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
 
-  const [environmentTags, contact, contactAttributes, publishedLinkSurveys] = await Promise.all([
+  const [
+    environmentTags,
+    contact,
+    contactAttributes,
+    publishedLinkSurveys,
+    attributesWithMetadata,
+    allAttributeKeys,
+  ] = await Promise.all([
     getTagsByEnvironmentId(params.environmentId),
     getContact(params.contactId),
     getContactAttributes(params.contactId),
     getPublishedLinkSurveys(params.environmentId),
+    getContactAttributesWithMetadata(params.contactId),
+    getContactAttributeKeys(params.environmentId),
   ]);
 
   if (!contact) {
@@ -42,6 +55,8 @@ export const SingleContactPage = async (props: {
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
         publishedLinkSurveys={publishedLinkSurveys}
+        attributes={attributesWithMetadata}
+        allAttributeKeys={allAttributeKeys}
       />
     );
   };

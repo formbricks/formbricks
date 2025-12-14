@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -21,7 +21,7 @@ import { SegmentEditor } from "./segment-editor";
 interface TSegmentSettingsTabProps {
   environmentId: string;
   setOpen: (open: boolean) => void;
-  initialSegment: TSegmentWithSurveyNames;
+  initialSegment: TSegment;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isReadOnly: boolean;

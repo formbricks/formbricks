@@ -3,7 +3,9 @@
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  Calendar1Icon,
   FingerprintIcon,
+  HashIcon,
   MonitorSmartphoneIcon,
   MoreVertical,
   TagIcon,
@@ -31,10 +33,10 @@ import type {
 } from "@formbricks/types/segment";
 import {
   ARITHMETIC_OPERATORS,
-  ATTRIBUTE_OPERATORS,
   DATE_OPERATORS,
   DEVICE_OPERATORS,
   PERSON_OPERATORS,
+  TEXT_ATTRIBUTE_OPERATORS,
 } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -243,10 +245,12 @@ function AttributeSegmentFilter({
 
   const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
   const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
-  const isDateAttribute = attributeKey?.dataType === "date";
+  // Default to 'text' if dataType is undefined (for backwards compatibility)
+  const attributeDataType = attributeKey?.dataType ?? "text";
+  const isDateAttribute = attributeDataType === "date";
 
-  // Show date operators for date attributes, otherwise show standard attribute operators
-  const availableOperators = isDateAttribute ? DATE_OPERATORS : ATTRIBUTE_OPERATORS;
+  // Show date operators for date attributes, otherwise show standard text/number operators
+  const availableOperators = isDateAttribute ? DATE_OPERATORS : TEXT_ATTRIBUTE_OPERATORS;
   const operatorArr = availableOperators.map((operator) => {
     return {
       id: operator,
@@ -267,6 +271,15 @@ function AttributeSegmentFilter({
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {
       updateContactAttributeKeyInFilter(updatedSegment.filters, filterId, newAttributeClassName);
+
+      // When changing attribute, reset operator to appropriate default for the new attribute type
+      const newAttributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === newAttributeClassName);
+      const newAttributeDataType = newAttributeKey?.dataType ?? "text";
+      const defaultOperator = newAttributeDataType === "date" ? "isOlderThan" : "equals";
+      const defaultValue = newAttributeDataType === "date" ? { amount: 1, unit: "days" as const } : "";
+
+      updateOperatorInFilter(updatedSegment.filters, filterId, defaultOperator as any);
+      updateFilterValue(updatedSegment.filters, filterId, defaultValue as any);
     }
 
     setSegment(updatedSegment);
@@ -323,7 +336,13 @@ function AttributeSegmentFilter({
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-2">
-              <TagIcon className="h-4 w-4 text-sm" />
+              {isDateAttribute ? (
+                <Calendar1Icon className="h-4 w-4 text-sm" />
+              ) : attributeDataType === "number" ? (
+                <HashIcon className="h-4 w-4 text-sm" />
+              ) : (
+                <TagIcon className="h-4 w-4 text-sm" />
+              )}
               <p>{attrKeyValue}</p>
             </div>
           </SelectValue>
@@ -332,7 +351,16 @@ function AttributeSegmentFilter({
         <SelectContent>
           {contactAttributeKeys.map((attrClass) => (
             <SelectItem key={attrClass.id} value={attrClass.key}>
-              {attrClass.name ?? attrClass.key}
+              <div className="flex items-center gap-2">
+                {attrClass.dataType === "date" ? (
+                  <Calendar1Icon className="h-4 w-4" />
+                ) : attrClass.dataType === "number" ? (
+                  <HashIcon className="h-4 w-4" />
+                ) : (
+                  <TagIcon className="h-4 w-4" />
+                )}
+                <span>{attrClass.name ?? attrClass.key}</span>
+              </div>
             </SelectItem>
           ))}
         </SelectContent>

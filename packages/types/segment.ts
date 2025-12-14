@@ -16,27 +16,6 @@ export type TStringOperator = (typeof STRING_OPERATORS)[number];
 export const ZBaseOperator = z.enum(BASE_OPERATORS);
 export type TBaseOperator = z.infer<typeof ZBaseOperator>;
 
-// An attribute filter can have these operators
-export const ATTRIBUTE_OPERATORS = [
-  ...BASE_OPERATORS,
-  "isSet",
-  "isNotSet",
-  "contains",
-  "doesNotContain",
-  "startsWith",
-  "endsWith",
-] as const;
-
-// the person filter currently has the same operators as the attribute filter
-// but we might want to add more operators in the future, so we keep it separated
-export const PERSON_OPERATORS = ATTRIBUTE_OPERATORS;
-
-// operators for segment filters
-export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
-
-// operators for device filters
-export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
-
 // operators for date filters
 export const DATE_OPERATORS = [
   "isOlderThan",
@@ -50,8 +29,32 @@ export const DATE_OPERATORS = [
 // time units for relative date operators
 export const TIME_UNITS = ["days", "weeks", "months", "years"] as const;
 
+// Standard operators for text/number attributes (without date operators)
+export const TEXT_ATTRIBUTE_OPERATORS = [
+  ...BASE_OPERATORS,
+  "isSet",
+  "isNotSet",
+  "contains",
+  "doesNotContain",
+  "startsWith",
+  "endsWith",
+] as const;
+
+// An attribute filter can have these operators (including date operators)
+export const ATTRIBUTE_OPERATORS = [...TEXT_ATTRIBUTE_OPERATORS, ...DATE_OPERATORS] as const;
+
+// the person filter currently has the same operators as the attribute filter
+// but we might want to add more operators in the future, so we keep it separated
+export const PERSON_OPERATORS = ATTRIBUTE_OPERATORS;
+
+// operators for segment filters
+export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
+
+// operators for device filters
+export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
+
 // all operators
-export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS, ...DATE_OPERATORS] as const;
+export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS] as const;
 
 export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
 export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
@@ -168,10 +171,34 @@ export const ZSegmentFilter = z
         return false;
       }
 
+      // if the operator is a relative date operator (isOlderThan, isNewerThan), value must be an object with amount and unit
+      if (
+        (filter.qualifier.operator === "isOlderThan" || filter.qualifier.operator === "isNewerThan") &&
+        (typeof filter.value !== "object" || !("amount" in filter.value) || !("unit" in filter.value))
+      ) {
+        return false;
+      }
+
+      // if the operator is an absolute date operator (isBefore, isAfter, isSameDay), value must be a string
+      if (
+        (filter.qualifier.operator === "isBefore" ||
+          filter.qualifier.operator === "isAfter" ||
+          filter.qualifier.operator === "isSameDay") &&
+        typeof filter.value !== "string"
+      ) {
+        return false;
+      }
+
+      // if the operator is isBetween, value must be a tuple of two strings
+      if (filter.qualifier.operator === "isBetween" && !Array.isArray(filter.value)) {
+        return false;
+      }
+
       return true;
     },
     {
-      message: "Value must be a string for string operators and a number for arithmetic operators",
+      message:
+        "Value must be a string for string operators, a number for arithmetic operators, and an object for relative date operators",
     }
   )
   .refine(
@@ -184,6 +211,34 @@ export const ZSegmentFilter = z
         return true;
       }
 
+      // for relative date operators, validate the object structure
+      if (operator === "isOlderThan" || operator === "isNewerThan") {
+        if (typeof value === "object" && "amount" in value && "unit" in value) {
+          return value.amount > 0 && TIME_UNITS.includes(value.unit);
+        }
+        return false;
+      }
+
+      // for isBetween, validate we have a tuple with two non-empty strings
+      if (operator === "isBetween") {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!Array.isArray(value)) return false;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (value.length !== 2) return false;
+        return (
+          typeof value[0] === "string" &&
+          typeof value[1] === "string" &&
+          value[0].length > 0 &&
+          value[1].length > 0
+        );
+      }
+
+      // for absolute date operators, validate we have a non-empty string
+      if (operator === "isBefore" || operator === "isAfter" || operator === "isSameDay") {
+        return typeof value === "string" && value.length > 0;
+      }
+
+      // for string values, check they're not empty
       if (typeof value === "string") {
         return value.length > 0;
       }

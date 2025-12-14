@@ -65,7 +65,6 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
             <SelectItem value="years">{t("common.years")}</SelectItem>
           </SelectContent>
         </Select>
-        <span className="text-sm text-slate-600">{t("common.ago")}</span>
       </div>
     );
   }

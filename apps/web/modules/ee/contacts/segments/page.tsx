@@ -2,7 +2,7 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
+import { SegmentTableUpdated } from "@/modules/ee/contacts/segments/components/segment-table-updated";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -51,7 +51,7 @@ export const SegmentsPage = async ({
       </PageHeader>
 
       {isContactsEnabled ? (
-        <SegmentTable
+        <SegmentTableUpdated
           segments={filteredSegments}
           contactAttributeKeys={contactAttributeKeys}
           isContactsEnabled={isContactsEnabled}

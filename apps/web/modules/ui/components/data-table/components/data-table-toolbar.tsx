@@ -36,7 +36,7 @@ export const DataTableToolbar = <T,>({
   const router = useRouter();
 
   return (
-    <div className="sticky top-0 z-30 flex w-full items-center justify-between bg-slate-50 py-2">
+    <div className="flex w-full items-center justify-end">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <SelectedRowSettings
           table={table}
@@ -46,9 +46,7 @@ export const DataTableToolbar = <T,>({
           downloadRowsAction={downloadRowsAction}
           isQuotasAllowed={isQuotasAllowed}
         />
-      ) : (
-        <div></div>
-      )}
+      ) : null}
       <div className="flex space-x-2">
         {type === "contact" ? (
           <TooltipRenderer

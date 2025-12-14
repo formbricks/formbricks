@@ -35,10 +35,7 @@ export const DataTableHeader = <T,>({ header, setIsTableSettingsModalOpen }: Dat
       ref={setNodeRef}
       style={style}
       key={header.id}
-      className={cn("group relative h-10 border-b border-slate-200 bg-white px-4 text-center", {
-        "border-r": !header.column.getIsLastColumn(),
-        "border-l": !header.column.getIsFirstColumn(),
-      })}>
+      className="group relative h-10 border-b border-slate-200 bg-white px-4 text-center">
       <div className="flex items-center justify-between">
         <div className="w-full truncate text-left font-semibold">
           {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
