@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
-import { IntercomClientWrapper } from "@/app/intercom/IntercomClientWrapper";
+import { ChatwootClientWrapper } from "@/app/chatwoot/ChatwootClientWrapper";
+import { IS_CHATWOOT_CONFIGURED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -18,7 +19,7 @@ const AppLayout = async ({ children }) => {
   return (
     <>
       <NoMobileOverlay />
-      <IntercomClientWrapper user={user} />
+      {IS_CHATWOOT_CONFIGURED && <ChatwootClientWrapper user={user} />}
       <ToasterClient />
       {children}
     </>
