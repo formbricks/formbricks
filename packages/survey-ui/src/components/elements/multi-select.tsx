@@ -166,7 +166,7 @@ function MultiSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="w-full justify-between rounded-[var(--fb-input-border-radius)]"
+                  className="rounded-input w-full justify-between"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
                   <span className="truncate">{displayText}</span>
@@ -228,7 +228,7 @@ function MultiSelect({
                   key={option.id}
                   htmlFor={optionId}
                   className={cn(getOptionContainerClassName(isChecked), isChecked && "z-10")}>
-                  <span className="flex items-center text-sm">
+                  <span className="flex items-center">
                     <Checkbox
                       id={optionId}
                       checked={isChecked}
@@ -238,7 +238,7 @@ function MultiSelect({
                       disabled={disabled}
                       aria-invalid={Boolean(errorMessage)}
                     />
-                    <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{option.label}</span>
+                    <span className={cn("mr-3 ml-3", optionLabelClassName)}>{option.label}</span>
                   </span>
                 </label>
               );
@@ -248,7 +248,7 @@ function MultiSelect({
                 <label
                   htmlFor={`${inputId}-${otherOptionId}`}
                   className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
-                  <span className="flex items-center text-sm">
+                  <span className="flex items-center">
                     <Checkbox
                       id={`${inputId}-${otherOptionId}`}
                       checked={isOtherSelected}
@@ -262,7 +262,6 @@ function MultiSelect({
                   </span>
                   {isOtherSelected ? (
                     <Input
-                      ref={otherInputRef}
                       type="text"
                       value={otherValue}
                       onChange={handleOtherInputChange}
@@ -270,6 +269,7 @@ function MultiSelect({
                       disabled={disabled}
                       dir={detectedDir}
                       className="mt-2 w-full"
+                      ref={otherInputRef}
                     />
                   ) : null}
                 </label>

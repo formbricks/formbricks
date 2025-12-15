@@ -225,10 +225,8 @@ function FileUpload({
         {/* Dashed border container */}
         <div
           className={cn(
-            "relative flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
-            errorMessage
-              ? "border-destructive"
-              : "border-input-border bg-input-bg hover:bg-input-hover-bg rounded-input",
+            "w-input px-input-x py-input-y rounded-input relative flex flex-col items-center justify-center border-2 border-dashed transition-colors",
+            errorMessage ? "border-destructive" : "border-input-border bg-input-bg hover:bg-input-hover-bg",
             disabled && "cursor-not-allowed opacity-50"
           )}>
           {/* Uploaded files */}

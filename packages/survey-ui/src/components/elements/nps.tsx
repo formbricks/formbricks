@@ -98,9 +98,9 @@ function NPS({
     // Determine border radius classes
     let borderRadiusClasses = "";
     if (isLast) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-l-md border-l" : "rounded-r-md border-r";
+      borderRadiusClasses = detectedDir === "rtl" ? "rounded-l-input border-l" : "rounded-r-input border-r";
     } else if (isFirst) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-r-md border-r" : "rounded-l-md border-l";
+      borderRadiusClasses = detectedDir === "rtl" ? "rounded-r-input border-r" : "rounded-l-input border-l";
     }
 
     return (
@@ -110,7 +110,7 @@ function NPS({
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown(number)}
         className={cn(
-          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t transition-colors focus:border-2 focus:outline-none",
+          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-t border-b border-l transition-colors focus:border-2 focus:outline-none",
           isSelected ? "bg-brand-20 border-brand z-10 border-2" : "border-input-border bg-input-bg",
           borderRadiusClasses,
           isHovered && !isSelected && "bg-input-selected-bg",
@@ -135,7 +135,7 @@ function NPS({
           setHoveredValue(null);
         }}>
         {colorCoding ? (
-          <div className={cn("absolute left-0 top-0 h-[6px] w-full", getNPSOptionColor(number))} />
+          <div className={cn("absolute top-0 left-0 h-[6px] w-full", getNPSOptionColor(number))} />
         ) : null}
         <input
           type="radio"

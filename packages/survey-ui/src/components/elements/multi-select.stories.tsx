@@ -1,19 +1,18 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React, { useEffect, useState } from "react";
-import { MultiSelect, type MultiSelectOption, type MultiSelectProps } from "./multi-select";
 import {
   type BaseStylingOptions,
   type CheckboxInputStylingOptions,
   type LabelStylingOptions,
   type OptionStylingOptions,
-  checkboxInputStylingArgTypes,
   commonArgTypes,
   createCSSVariablesDecorator,
   elementStylingArgTypes,
   labelStylingArgTypes,
   optionStylingArgTypes,
   surveyStylingArgTypes,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { MultiSelect, type MultiSelectOption, type MultiSelectProps } from "./multi-select";
 
 type StoryProps = MultiSelectProps &
   Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & CheckboxInputStylingOptions>;
@@ -102,10 +101,9 @@ export const StylingPlayground: Story = {
     ...elementStylingArgTypes,
     ...labelStylingArgTypes,
     ...optionStylingArgTypes,
-    ...checkboxInputStylingArgTypes,
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps>()],
+  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
 };
 
 export const Default: Story = {

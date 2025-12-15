@@ -1,16 +1,22 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Matrix, type MatrixOption, type MatrixProps } from "./matrix";
 import {
   type BaseStylingOptions,
-  type ExtendedInputStylingOptions,
+  type InputLayoutStylingOptions,
   type LabelStylingOptions,
   commonArgTypes,
   createCSSVariablesDecorator,
   createStatefulRender,
-} from "./story-helpers";
+  elementStylingArgTypes,
+  inputStylingArgTypes,
+  labelStylingArgTypes,
+  pickArgTypes,
+  surveyStylingArgTypes,
+} from "../../lib/story-helpers";
+import { Matrix, type MatrixOption, type MatrixProps } from "./matrix";
 
 type StoryProps = MatrixProps &
-  Partial<BaseStylingOptions & LabelStylingOptions & ExtendedInputStylingOptions>;
+  Partial<BaseStylingOptions & LabelStylingOptions & InputLayoutStylingOptions> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Matrix",
@@ -72,75 +78,12 @@ export const StylingPlayground: Story = {
     columns: defaultColumns,
   },
   argTypes: {
-    // Element styling
-    elementHeadlineFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementHeadlineColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontFamily: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontSize: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionFontWeight: {
-      control: "text",
-      table: { category: "Element Styling" },
-    },
-    elementDescriptionColor: {
-      control: "color",
-      table: { category: "Element Styling" },
-    },
-    // Option label styling
-    labelFontFamily: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelFontSize: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelFontWeight: {
-      control: "text",
-      table: { category: "Label Styling" },
-    },
-    labelColor: {
-      control: "color",
-      table: { category: "Label Styling" },
-    },
-    // Input styling
-    inputBorderColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputBgColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputColor: {
-      control: "color",
-      table: { category: "Input Styling" },
-    },
-    inputBorderRadius: {
-      control: "text",
-      table: { category: "Input Styling" },
-    },
+    ...elementStylingArgTypes,
+    ...labelStylingArgTypes,
+    ...pickArgTypes(inputStylingArgTypes, ["inputBgColor", "inputBorderColor"]),
+    ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps>()],
+  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
 };
 
 export const Default: Story = {

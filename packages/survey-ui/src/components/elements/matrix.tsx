@@ -133,7 +133,7 @@ function Matrix({
                       {/* Row label */}
                       <td className={cn("p-2 align-middle", !rowHasError && "rounded-l-input")}>
                         <div className="flex flex-col gap-0 leading-none">
-                          <Label className="text-xs font-medium">{row.label}</Label>
+                          <Label>{row.label}</Label>
                           {rowHasError ? (
                             <span className="text-destructive text-xs font-normal">Select one option</span>
                           ) : null}

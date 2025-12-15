@@ -221,9 +221,9 @@ function Rating({
     // Determine border radius classes
     let borderRadiusClasses = "";
     if (isLast) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-l-md border-l" : "rounded-r-md border-r";
+      borderRadiusClasses = detectedDir === "rtl" ? "rounded-l-input border-l" : "rounded-r-input border-r";
     } else if (isFirst) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-r-md border-r" : "rounded-l-md border-l";
+      borderRadiusClasses = detectedDir === "rtl" ? "rounded-r-input border-r" : "rounded-l-input border-l";
     }
 
     return (

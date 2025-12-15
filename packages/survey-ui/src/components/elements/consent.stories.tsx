@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Consent, type ConsentProps } from "./consent";
 import {
   type BaseStylingOptions,
   commonArgTypes,
@@ -7,8 +6,10 @@ import {
   createStatefulRender,
   elementStylingArgTypes,
   inputStylingArgTypes,
+  pickArgTypes,
   surveyStylingArgTypes,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { Consent, type ConsentProps } from "./consent";
 
 type StoryProps = ConsentProps & Partial<BaseStylingOptions>;
 
@@ -55,10 +56,20 @@ export const StylingPlayground: Story = {
   },
   argTypes: {
     ...elementStylingArgTypes,
-    ...inputStylingArgTypes,
+    ...pickArgTypes(inputStylingArgTypes, [
+      "inputBgColor",
+      "inputBorderColor",
+      "inputColor",
+      "inputFontSize",
+      "inputFontWeight",
+      "inputWidth",
+      "inputBorderRadius",
+      "inputPaddingX",
+      "inputPaddingY",
+    ]),
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps>()],
+  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
 };
 
 export const Default: Story = {

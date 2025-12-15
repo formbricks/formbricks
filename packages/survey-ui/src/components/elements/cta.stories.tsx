@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { CTA, type CTAProps } from "./cta";
 import {
   type BaseStylingOptions,
   type ButtonStylingOptions,
@@ -7,7 +6,8 @@ import {
   commonArgTypes,
   createCSSVariablesDecorator,
   elementStylingArgTypes,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { CTA, type CTAProps } from "./cta";
 
 type StoryProps = CTAProps & Partial<BaseStylingOptions & ButtonStylingOptions>;
 

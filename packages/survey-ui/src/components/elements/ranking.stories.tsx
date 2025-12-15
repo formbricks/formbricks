@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Ranking, type RankingOption, type RankingProps } from "./ranking";
 import {
   type BaseStylingOptions,
   type OptionStylingOptions,
@@ -9,7 +8,8 @@ import {
   elementStylingArgTypes,
   optionStylingArgTypes,
   surveyStylingArgTypes,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { Ranking, type RankingOption, type RankingProps } from "./ranking";
 
 type StoryProps = RankingProps & Partial<BaseStylingOptions & OptionStylingOptions>;
 

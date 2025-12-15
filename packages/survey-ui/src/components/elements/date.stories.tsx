@@ -1,17 +1,18 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { DateElement, type DateElementProps } from "./date";
 import {
   type BaseStylingOptions,
-  type ExtendedInputStylingOptions,
+  type InputLayoutStylingOptions,
   commonArgTypes,
   createCSSVariablesDecorator,
   createStatefulRender,
   elementStylingArgTypes,
   surveyStylingArgTypes,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { DateElement, type DateElementProps } from "./date";
 
 type StoryProps = DateElementProps &
-  Partial<BaseStylingOptions & Pick<ExtendedInputStylingOptions, "inputBorderRadius">>;
+  Partial<BaseStylingOptions & Pick<InputLayoutStylingOptions, "inputBorderRadius">> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Date",

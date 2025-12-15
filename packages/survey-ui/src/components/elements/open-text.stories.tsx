@@ -1,17 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { OpenText, type OpenTextProps } from "./open-text";
 import {
   type BaseStylingOptions,
-  type ExtendedInputStylingOptions,
+  type InputLayoutStylingOptions,
   commonArgTypes,
   createCSSVariablesDecorator,
   createStatefulRender,
   elementStylingArgTypes,
-  extendedInputStylingArgTypes,
+  inputStylingArgTypes,
+  pickArgTypes,
   surveyStylingArgTypes,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { OpenText, type OpenTextProps } from "./open-text";
 
-type StoryProps = OpenTextProps & Partial<BaseStylingOptions & ExtendedInputStylingOptions>;
+type StoryProps = OpenTextProps &
+  Partial<BaseStylingOptions & InputLayoutStylingOptions> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/OpenText",
@@ -74,7 +77,19 @@ export const StylingPlayground: Story = {
   },
   argTypes: {
     ...elementStylingArgTypes,
-    ...extendedInputStylingArgTypes,
+    ...pickArgTypes(inputStylingArgTypes, [
+      "inputBgColor",
+      "inputBorderColor",
+      "inputColor",
+      "inputFontSize",
+      "inputFontWeight",
+      "inputWidth",
+      "inputHeight",
+      "inputBorderRadius",
+      "inputPlaceholderColor",
+      "inputPaddingX",
+      "inputPaddingY",
+    ]),
     ...surveyStylingArgTypes,
   },
   decorators: [createCSSVariablesDecorator<StoryProps>()],

@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
-import { Rating, type RatingProps } from "./rating";
 import {
   type BaseStylingOptions,
   type LabelStylingOptions,
@@ -10,8 +9,10 @@ import {
   elementStylingArgTypes,
   inputStylingArgTypes,
   labelStylingArgTypes,
+  pickArgTypes,
   surveyStylingArgTypes,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { Rating, type RatingProps } from "./rating";
 
 type StoryProps = RatingProps & Partial<BaseStylingOptions & LabelStylingOptions>;
 
@@ -96,10 +97,16 @@ export const StylingPlayground: Story = {
   argTypes: {
     ...elementStylingArgTypes,
     ...labelStylingArgTypes,
-    ...inputStylingArgTypes,
+    ...pickArgTypes(inputStylingArgTypes, [
+      "inputBgColor",
+      "inputBorderColor",
+      "inputColor",
+      "inputFontWeight",
+      "inputBorderRadius",
+    ]),
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps>()],
+  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
 };
 
 export const Default: Story = {
