@@ -44,7 +44,7 @@ export function RatingElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full">
+    <form key={element.id} onSubmit={handleSubmit} className="w-full">
       <Rating
         elementId={element.id}
         inputId={element.id}

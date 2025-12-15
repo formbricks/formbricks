@@ -31,19 +31,16 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMed
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="fb:group/image fb:relative fb:mb-6 fb:block fb:min-h-40 fb:rounded-md">
+    <div className="group/image relative mb-6 block min-h-40 rounded-md">
       {isLoading ? (
-        <div className="fb:absolute fb:inset-auto fb:flex fb:h-full fb:w-full fb:animate-pulse fb:items-center fb:justify-center fb:rounded-md fb:bg-slate-200" />
+        <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
       ) : null}
       {imgUrl ? (
         <img
           key={imgUrl}
           src={imgUrl}
           alt={altText}
-          className={cn(
-            "fb:rounded-custom fb:max-h-[40dvh] fb:mx-auto fb:object-contain",
-            isLoading ? "fb:opacity-0" : ""
-          )}
+          className={cn("rounded-custom mx-auto max-h-[40dvh] object-contain", isLoading ? "opacity-0" : "")}
           onLoad={() => {
             setIsLoading(false);
           }}
@@ -53,13 +50,13 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMed
         />
       ) : null}
       {videoUrlWithParams ? (
-        <div className="fb:relative">
-          <div className="fb:rounded-custom fb:bg-black">
+        <div className="relative">
+          <div className="rounded-custom bg-black">
             <iframe
               src={videoUrlWithParams}
               title={t("common.question_video")}
               frameBorder="0"
-              className={cn("fb:rounded-custom fb:aspect-video fb:w-full", isLoading ? "fb:opacity-0" : "")}
+              className={cn("rounded-custom aspect-video w-full", isLoading ? "opacity-0" : "")}
               onLoad={() => {
                 setIsLoading(false);
               }}
@@ -77,7 +74,7 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMed
         target="_blank"
         rel="noreferrer"
         aria-label={t("common.open_in_new_tab")}
-        className="fb:absolute fb:bottom-2 fb:right-2 fb:flex fb:items-center fb:gap-2 fb:rounded-md fb:bg-slate-800/40 fb:p-1.5 fb:text-white fb:opacity-0 fb:backdrop-blur-lg fb:transition fb:duration-300 fb:ease-in-out hover:fb:bg-slate-800/65 fb:group-hover/image:opacity-100">
+        className="absolute right-2 bottom-2 flex items-center gap-2 rounded-md bg-slate-800/40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out group-hover/image:opacity-100 hover:bg-slate-800/65">
         {imgUrl ? <ImageDownIcon size={20} /> : <ExpandIcon size={20} />}
       </a>
     </div>

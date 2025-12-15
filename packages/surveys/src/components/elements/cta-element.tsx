@@ -53,7 +53,7 @@ export function CTAElement({
         const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
       }}
-      className="fb:w-full">
+      className="w-full">
       <Cta
         elementId={element.id}
         inputId={element.id}

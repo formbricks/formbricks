@@ -42,7 +42,7 @@ export function ConsentElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full">
+    <form key={element.id} onSubmit={handleSubmit} className="w-full">
       <Consent
         elementId={element.id}
         headline={getLocalizedValue(element.headline, languageCode)}

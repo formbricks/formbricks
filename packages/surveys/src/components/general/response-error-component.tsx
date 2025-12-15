@@ -13,24 +13,24 @@ interface ResponseErrorComponentProps {
 export function ResponseErrorComponent({ questions, responseData, onRetry }: ResponseErrorComponentProps) {
   const { t } = useTranslation();
   return (
-    <div className="fb:flex fb:flex-col fb:bg-white fb:p-4">
-      <span className="fb:mb-1.5 fb:text-base fb:font-bold fb:leading-6 fb:text-slate-900">
+    <div className="flex flex-col bg-white p-4">
+      <span className="mb-1.5 text-base leading-6 font-bold text-slate-900">
         {t("common.your_feedback_is_stuck")}
       </span>
-      <p className="fb:max-w-md fb:text-sm fb:font-normal fb:leading-6 fb:text-slate-600">
+      <p className="max-w-md text-sm leading-6 font-normal text-slate-600">
         {t("common.the_servers_cannot_be_reached_at_the_moment")}
         <br />
         {t("common.please_retry_now_or_try_again_later")}
       </p>
-      <div className="fb:mt-4 fb:rounded-lg fb:border fb:border-slate-200 fb:bg-slate-100 fb:px-4 fb:py-5">
-        <div className="fb:flex fb:max-h-36 fb:flex-1 fb:flex-col fb:space-y-3 fb:overflow-y-scroll">
+      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-100 px-4 py-5">
+        <div className="flex max-h-36 flex-1 flex-col space-y-3 overflow-y-scroll">
           {questions.map((question, index) => {
             const response = responseData[question.id];
             if (!response) return;
             return (
-              <div className="fb:flex fb:flex-col" key={`response-${index.toString()}`}>
-                <span className="fb:text-sm fb:leading-6 fb:text-slate-900">{`${t("common.question")} ${(index + 1).toString()}`}</span>
-                <span className="fb:mt-1 fb:text-sm fb:font-semibold fb:leading-6 fb:text-slate-900">
+              <div className="flex flex-col" key={`response-${index.toString()}`}>
+                <span className="text-sm leading-6 text-slate-900">{`${t("common.question")} ${(index + 1).toString()}`}</span>
+                <span className="mt-1 text-sm leading-6 font-semibold text-slate-900">
                   {processResponseData(response)}
                 </span>
               </div>
@@ -38,7 +38,7 @@ export function ResponseErrorComponent({ questions, responseData, onRetry }: Res
           })}
         </div>
       </div>
-      <div className="fb:mt-4 fb:flex fb:flex-1 fb:flex-row fb:items-center fb:justify-end fb:space-x-2">
+      <div className="mt-4 flex flex-1 flex-row items-center justify-end space-x-2">
         <SubmitButton
           buttonLabel={t("common.retry")}
           isLastQuestion={false}

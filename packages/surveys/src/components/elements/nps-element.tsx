@@ -45,7 +45,7 @@ export function NPSElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full">
+    <form key={element.id} onSubmit={handleSubmit} className="w-full">
       <Nps
         elementId={element.id}
         inputId={element.id}

@@ -122,7 +122,7 @@ export function RankingElement({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="fb:w-full">
+    <form onSubmit={handleSubmit} className="w-full">
       <Ranking
         elementId={element.id}
         inputId={element.id}

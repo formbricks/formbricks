@@ -113,7 +113,7 @@ export function OpenTextElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleOnSubmit} className="fb:w-full">
+    <form key={element.id} onSubmit={handleOnSubmit} className="w-full">
       <OpenText
         elementId={element.id}
         inputId={element.id}

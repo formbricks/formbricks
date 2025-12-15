@@ -66,7 +66,7 @@ export function DateElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full">
+    <form key={element.id} onSubmit={handleSubmit} className="w-full">
       <SurveyUIDateElement
         elementId={element.id}
         inputId={element.id}

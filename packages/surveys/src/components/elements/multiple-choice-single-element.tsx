@@ -156,7 +156,7 @@ export function MultipleChoiceSingleElement({
   }, [value, otherOption, allOptions, isOtherSelected]);
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb:w-full">
+    <form key={element.id} onSubmit={handleSubmit} className="w-full">
       <SingleSelect
         elementId={element.id}
         inputId={element.id}
