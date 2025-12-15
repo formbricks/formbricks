@@ -400,7 +400,7 @@ export function createCSSVariablesDecorator<T extends Record<string, unknown> = 
     });
 
     return (
-      <div style={cssVarStyle} className={`w-[600px]`}>
+      <div style={cssVarStyle} className="w-[600px]">
         <Story />
       </div>
     );
