@@ -27,7 +27,7 @@ function stripUseClientDirective(): Plugin {
       if (!hasTopLevelDirective) return null;
       return {
         // Remove the leading "use client" directive (single or double quotes)
-        code: code.replaceAll(/^['"]use client['"];?\s*/, ""),
+        code: code.replaceAll(/^['"]use client['"];?\s*/g, ""),
         map: null, // No source map needed for this transformation
       };
     },
