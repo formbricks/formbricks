@@ -113,7 +113,8 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(
         page.locator("#questionCard-3").getByText(surveys.createAndSubmit.ratingQuestion.highLabel)
       ).toBeVisible();
-      expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
+      // Rating component uses fieldset with labels, not a group with name "Choices"
+      expect(await page.locator("#questionCard-3").locator("fieldset label").count()).toBe(5);
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
       await page.getByRole("radio", { name: "Rate 3 out of" }).check();
@@ -858,7 +859,8 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-4").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("radio", { name: "Rate 4 out of" }).check();
+      // Click on the label instead of the radio to avoid SVG intercepting pointer events
+      await page.locator("#questionCard-4").locator('label:has(input[value="4"])').click();
       await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
 
       // NPS Question

@@ -130,7 +130,14 @@ function PictureSelect({
                     />
                   </div>
                   {/* Selection indicator - Checkbox for multi select */}
-                  <div className="absolute top-[5%] right-[5%]">
+                  <div
+                    className="absolute top-[5%] right-[5%]"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.stopPropagation();
+                      }
+                    }}>
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => {
@@ -189,7 +196,14 @@ function PictureSelect({
                     />
                   </div>
                   {/* Selection indicator - Radio button for single select */}
-                  <div className="absolute top-[5%] right-[5%]">
+                  <div
+                    className="absolute top-[5%] right-[5%]"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.stopPropagation();
+                      }
+                    }}>
                     <RadioGroupItem
                       value={option.id}
                       id={optionId}

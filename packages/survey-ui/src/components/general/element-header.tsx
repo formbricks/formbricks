@@ -38,7 +38,7 @@ function ElementHeader({
         <Label htmlFor={htmlFor} variant="headline">
           {headline}
         </Label>
-        {required ? <span>*</span> : null}
+        {required ? <span className="label-headline">*</span> : null}
       </div>
 
       {/* Description/Subheader */}
