@@ -41,3 +41,12 @@ OIDC_SIGNING_ALGORITHM=HS256
 - Restart your Formbricks instance.
 
 - You're all set! Users can now sign up & log in using their OIDC credentials.
+
+## Use behind a proxy
+
+If outbound traffic must pass through a corporate proxy and your IdP should bypass it:
+
+- Set `USE_GLOBAL_AGENT_PROXY=1` to enable proxy handling for all Auth.js HTTP requests.
+- Set `HTTP_PROXY` / `HTTPS_PROXY` to your proxy endpoints.
+- Set `NO_PROXY` (or `GLOBAL_AGENT_NO_PROXY`) to include your IdP host (for example, `auth.service.company.local,keycloak`).
+- Restart the app to apply the settings.
