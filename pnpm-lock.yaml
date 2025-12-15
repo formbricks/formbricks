@@ -83,6 +83,9 @@ importers:
       '@storybook/react-vite':
         specifier: 10.0.8
         version: 10.0.8(esbuild@0.27.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(rollup@4.52.5)(storybook@10.0.8(@testing-library/dom@8.20.1)(prettier@3.5.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(vite@7.2.4(@types/node@22.15.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.19.4)(yaml@2.8.1)))(typescript@5.8.3)(vite@7.2.4(@types/node@22.15.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.19.4)(yaml@2.8.1))(webpack@5.99.8(esbuild@0.27.0))
+      '@tailwindcss/vite':
+        specifier: 4.1.17
+        version: 4.1.17(vite@7.2.4(@types/node@22.15.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.19.4)(yaml@2.8.1))
       '@typescript-eslint/eslint-plugin':
         specifier: 8.48.0
         version: 8.48.0(@typescript-eslint/parser@8.48.0(eslint@8.57.0)(typescript@5.8.3))(eslint@8.57.0)(typescript@5.8.3)
@@ -15784,6 +15787,13 @@ snapshots:
       '@tailwindcss/oxide': 4.1.17
       tailwindcss: 4.1.17
       vite: 6.4.1(@types/node@22.15.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.1)
+
+  '@tailwindcss/vite@4.1.17(vite@7.2.4(@types/node@22.15.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.19.4)(yaml@2.8.1))':
+    dependencies:
+      '@tailwindcss/node': 4.1.17
+      '@tailwindcss/oxide': 4.1.17
+      tailwindcss: 4.1.17
+      vite: 7.2.4(@types/node@22.15.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.19.4)(yaml@2.8.1)
 
   '@tanstack/react-table@8.21.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
