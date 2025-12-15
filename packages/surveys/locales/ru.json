@@ -17,6 +17,7 @@
     "optional": "Необязательно",
     "people_responded": "{count, plural, one {1 человек ответил} other {{count} человека ответили}}",
     "please_retry_now_or_try_again_later": "Пожалуйста, повторите попытку сейчас или попробуйте позже.",
+    "please_specify": "Пожалуйста, уточните",
     "powered_by": "Работает на основе",
     "privacy_policy": "Политика конфиденциальности",
     "protected_by_reCAPTCHA_and_the_Google": "Защищено reCAPTCHA и Google",

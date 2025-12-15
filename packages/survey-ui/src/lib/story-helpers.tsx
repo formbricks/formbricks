@@ -418,7 +418,7 @@ export function createStatefulRender<
   TValue,
   TProps extends { value?: TValue; onChange?: (v: TValue) => void } & Record<string, unknown>,
 >(Component: any): (args: TProps) => React.ReactElement {
-  function StatefulRender(args: TProps): React.ReactElement {
+  function StatefulRender(args: Readonly<TProps>): React.ReactElement {
     const [value, setValue] = useState<TValue | undefined>(args.value);
 
     useEffect(() => {

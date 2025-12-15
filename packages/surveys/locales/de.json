@@ -17,6 +17,7 @@
     "optional": "Optional",
     "people_responded": "{count, plural, one {1 Person hat geantwortet} other {{count} Personen haben geantwortet}}",
     "please_retry_now_or_try_again_later": "Bitte versuchen Sie es jetzt erneut oder später noch einmal.",
+    "please_specify": "Bitte angeben",
     "powered_by": "Bereitgestellt von",
     "privacy_policy": "Datenschutzrichtlinie",
     "protected_by_reCAPTCHA_and_the_Google": "Geschützt durch reCAPTCHA und die Google",

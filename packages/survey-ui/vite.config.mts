@@ -20,20 +20,16 @@ function stripUseClientDirective(): Plugin {
   return {
     name: "strip-use-client-directive",
     transform(code, id) {
-      // Only process files from node_modules that contain "use client" directives
-      // This prevents unnecessary processing of our own source files
-      if (id.includes("node_modules") && code.includes('"use client"')) {
-        return {
-          // Remove all variations of "use client" directives:
-          // - "use client"
-          // - 'use client'
-          // - "use client";
-          // - 'use client';
-          code: code.replace(/["']use client["'];?\s*/g, ""),
-          map: null, // No source map needed for this transformation
-        };
-      }
-      return null;
+      // Only process files from node_modules
+      if (!id.includes("node_modules")) return null;
+      // Only act when the file starts with a "use client" directive
+      const hasTopLevelDirective = code.startsWith('"use client"') || code.startsWith("'use client'");
+      if (!hasTopLevelDirective) return null;
+      return {
+        // Remove the leading "use client" directive (single or double quotes)
+        code: code.replaceAll(/^['"]use client['"];?\s*/, ""),
+        map: null, // No source map needed for this transformation
+      };
     },
   };
 }

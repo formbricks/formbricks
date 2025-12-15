@@ -17,6 +17,7 @@
     "optional": "可选",
     "people_responded": "{count, plural, one {1 人已回应} other {{count} 人已回应}}",
     "please_retry_now_or_try_again_later": "请立即重试或稍后再试。",
+    "please_specify": "请具体说明",
     "powered_by": "技术支持",
     "privacy_policy": "隐私政策",
     "protected_by_reCAPTCHA_and_the_Google": "受 reCAPTCHA 和 Google 保护",

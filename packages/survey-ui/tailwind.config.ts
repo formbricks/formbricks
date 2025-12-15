@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 
 function getForeground(color: string) {
   // simple luminance check
-  const rgb = color.match(/\w\w/g)!.map((x) => parseInt(x, 16));
+  const rgb = color.match(/\w\w/g)?.map((x) => Number.parseInt(x, 16)) ?? [0, 0, 0];
   const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
   return luminance > 0.5 ? "#000000" : "#ffffff";
 }

@@ -17,6 +17,7 @@
     "optional": "اختياري",
     "people_responded": "{count, plural, one {شخص واحد استجاب} two {شخصان استجابا} few {{count} أشخاص استجابوا} many {{count} شخصًا استجابوا} other {{count} شخص استجابوا}}",
     "please_retry_now_or_try_again_later": "يرجى إعادة المحاولة الآن أو المحاولة مرة أخرى لاحقًا.",
+    "please_specify": "يرجى التحديد",
     "powered_by": "مشغل بواسطة",
     "privacy_policy": "سياسة الخصوصية",
     "protected_by_reCAPTCHA_and_the_Google": "محمي بواسطة reCAPTCHA و Google",

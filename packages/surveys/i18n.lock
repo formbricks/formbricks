@@ -18,6 +18,7 @@ checksums:
     common/optional: 396fb9a0472daf401c392bdc3e248943
     common/people_responded: b685fb877090d8658db724ad07a0dbd8
     common/please_retry_now_or_try_again_later: 949a3841e2eb01fa249790a42bf23aa5
+    common/please_specify: e1faa6cd085144f7339c7e74dc6fb366
     common/powered_by: 6b6f88e2fa5a1ecec6cebf813abaeebb
     common/privacy_policy: 7459744a63ef8af4e517a09024bd7c08
     common/protected_by_reCAPTCHA_and_the_Google: 32de026bff5d52e9edf5410d7d7b835f

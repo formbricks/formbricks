@@ -17,6 +17,7 @@
     "optional": "任意",
     "people_responded": "{count, plural, other {{count}人が回答しました}}",
     "please_retry_now_or_try_again_later": "今すぐ再試行するか、後でもう一度お試しください。",
+    "please_specify": "具体的に記入してください",
     "powered_by": "提供：",
     "privacy_policy": "プライバシーポリシー",
     "protected_by_reCAPTCHA_and_the_Google": "reCAPTCHAとGoogleによって保護されています",

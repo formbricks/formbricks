@@ -67,21 +67,21 @@ export function ContactInfoElement({
   const formFields: FormFieldConfig[] = [
     {
       id: "firstName",
-      label: element.firstName.placeholder[languageCode],
+      label: getLocalizedValue(element.firstName.placeholder, languageCode),
       placeholder: getLocalizedValue(element.firstName.placeholder, languageCode),
       required: element.firstName.required,
       show: element.firstName.show,
     },
     {
       id: "lastName",
-      label: element.lastName.placeholder[languageCode],
+      label: getLocalizedValue(element.lastName.placeholder, languageCode),
       placeholder: getLocalizedValue(element.lastName.placeholder, languageCode),
       required: element.lastName.required,
       show: element.lastName.show,
     },
     {
       id: "email",
-      label: element.email.placeholder[languageCode],
+      label: getLocalizedValue(element.email.placeholder, languageCode),
       placeholder: getLocalizedValue(element.email.placeholder, languageCode),
       required: element.email.required,
       show: element.email.show,
@@ -89,7 +89,7 @@ export function ContactInfoElement({
     },
     {
       id: "phone",
-      label: element.phone.placeholder[languageCode],
+      label: getLocalizedValue(element.phone.placeholder, languageCode),
       placeholder: getLocalizedValue(element.phone.placeholder, languageCode),
       required: element.phone.required,
       show: element.phone.show,
@@ -97,7 +97,7 @@ export function ContactInfoElement({
     },
     {
       id: "company",
-      label: element.company.placeholder[languageCode],
+      label: getLocalizedValue(element.company.placeholder, languageCode),
       placeholder: getLocalizedValue(element.company.placeholder, languageCode),
       required: element.company.required,
       show: element.company.show,

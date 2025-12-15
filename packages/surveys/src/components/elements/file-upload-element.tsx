@@ -37,10 +37,15 @@ export function FileUploadElement({
 
   // Convert string[] to UploadedFile[] for survey-ui component
   const convertToUploadedFiles = (urls: string[]): UploadedFile[] => {
-    return urls.map((url, index) => ({
-      name: `File ${index + 1}`,
-      url,
-    }));
+    return urls.map((url) => {
+      // Extract filename from URL path
+      const urlPath = url.split("?")[0]; // Remove query params
+      const fileName = urlPath.split("/").pop() || "Unknown file";
+      return {
+        name: decodeURIComponent(fileName),
+        url,
+      };
+    });
   };
 
   // Convert UploadedFile[] to string[] for the onChange callback

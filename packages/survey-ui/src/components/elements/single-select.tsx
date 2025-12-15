@@ -94,14 +94,14 @@ function SingleSelect({
     if (!isOtherSelected || disabled) return;
 
     // Delay focus to win against Radix focus restoration when dropdown closes / radio item receives focus.
-    const timeoutId = window.setTimeout(() => {
-      window.requestAnimationFrame(() => {
+    const timeoutId = globalThis.setTimeout(() => {
+      globalThis.requestAnimationFrame(() => {
         otherInputRef.current?.focus();
       });
     }, 0);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      globalThis.clearTimeout(timeoutId);
     };
   }, [isOtherSelected, disabled, variant]);
 

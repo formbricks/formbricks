@@ -1,10 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
 import { useEffect, useState } from "react";
-import { SingleSelect, type SingleSelectOption, type SingleSelectProps } from "./single-select";
 import {
   type BaseStylingOptions,
-  type ExtendedInputStylingOptions,
   type LabelStylingOptions,
   type OptionStylingOptions,
   commonArgTypes,
@@ -14,10 +12,11 @@ import {
   labelStylingArgTypes,
   optionStylingArgTypes,
   surveyStylingArgTypes,
-} from "./story-helpers";
+} from "../../lib/story-helpers";
+import { SingleSelect, type SingleSelectOption, type SingleSelectProps } from "./single-select";
 
 type StoryProps = SingleSelectProps &
-  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & ExtendedInputStylingOptions> &
+  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions> &
   Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
