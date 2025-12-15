@@ -19,7 +19,7 @@ const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: true,
-  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
+  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty", "global-agent"],
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
   },
@@ -113,6 +113,9 @@ const nextConfig = {
     config.resolve.fallback = {
       http: false, // Prevents Next.js from trying to bundle 'http'
       https: false,
+      net: false, // Prevents Next.js from trying to bundle 'net' (used by global-agent)
+      tls: false, // Prevents Next.js from trying to bundle 'tls' (used by global-agent)
+      domain: false, // Prevents Next.js from trying to bundle 'domain' (used by global-agent dependencies)
     };
     return config;
   },

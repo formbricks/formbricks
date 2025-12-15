@@ -12,7 +12,12 @@ export const setupGlobalAgentProxy = (): void => {
   if (globalThis.window !== undefined) {
     return;
   }
-  if (globalThis.process === undefined || globalThis.process.release?.name !== "node") {
+  // Hard guard: only run in real Node.js runtime (not edge/serverless)
+  if (
+    globalThis.process === undefined ||
+    globalThis.process.release?.name !== "node" ||
+    globalThis.process.versions?.node === undefined
+  ) {
     return;
   }
 
@@ -36,9 +41,10 @@ export const setupGlobalAgentProxy = (): void => {
   }
 
   try {
-    // Dynamic require keeps global-agent out of non-node bundles
+    // Dynamic require prevents bundling into edge/serverless builds
+    // Using string concatenation to prevent webpack from statically analyzing the require
     // eslint-disable-next-line @typescript-eslint/no-var-requires, turbo/no-undeclared-env-vars
-    const { bootstrap } = require("global-agent");
+    const { bootstrap } = require("global" + "-agent");
     bootstrap();
     globalThis.__FORMBRICKS_GLOBAL_AGENT_INITIALIZED = true;
     logger.info("Enabled global-agent proxy support for outbound HTTP requests");
