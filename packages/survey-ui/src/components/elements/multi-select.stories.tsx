@@ -15,7 +15,8 @@ import {
 import { MultiSelect, type MultiSelectOption, type MultiSelectProps } from "./multi-select";
 
 type StoryProps = MultiSelectProps &
-  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & CheckboxInputStylingOptions>;
+  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & CheckboxInputStylingOptions> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/MultiSelect",
@@ -103,7 +104,7 @@ export const StylingPlayground: Story = {
     ...optionStylingArgTypes,
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {

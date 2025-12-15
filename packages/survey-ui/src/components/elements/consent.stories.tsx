@@ -11,7 +11,7 @@ import {
 } from "../../lib/story-helpers";
 import { Consent, type ConsentProps } from "./consent";
 
-type StoryProps = ConsentProps & Partial<BaseStylingOptions>;
+type StoryProps = ConsentProps & Partial<BaseStylingOptions> & Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Consent",
@@ -69,7 +69,7 @@ export const StylingPlayground: Story = {
     ]),
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {

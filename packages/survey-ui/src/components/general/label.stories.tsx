@@ -1,4 +1,4 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
+import type { Decorator, Meta, StoryContext, StoryObj } from "@storybook/react";
 import React from "react";
 import { Checkbox } from "./checkbox";
 import { Input } from "./input";
@@ -72,7 +72,10 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables for headline variant
-const withHeadlineCSSVariables: Decorator<StoryProps> = (Story, context) => {
+const withHeadlineCSSVariables: Decorator<StoryProps> = (
+  Story: React.ComponentType,
+  context: StoryContext<StoryProps>
+) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const { headlineFontFamily, headlineFontWeight, headlineFontSize, headlineColor, headlineOpacity } = args;
@@ -93,7 +96,10 @@ const withHeadlineCSSVariables: Decorator<StoryProps> = (Story, context) => {
 };
 
 // Decorator to apply CSS variables for description variant
-const withDescriptionCSSVariables: Decorator<StoryProps> = (Story, context) => {
+const withDescriptionCSSVariables: Decorator<StoryProps> = (
+  Story: React.ComponentType,
+  context: StoryContext<StoryProps>
+) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const {
@@ -119,7 +125,10 @@ const withDescriptionCSSVariables: Decorator<StoryProps> = (Story, context) => {
   );
 };
 
-const withCustomCSSVariables: Decorator<StoryProps> = (Story, context) => {
+const withCustomCSSVariables: Decorator<StoryProps> = (
+  Story: React.ComponentType,
+  context: StoryContext<StoryProps>
+) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const { labelFontFamily, labelFontWeight, labelFontSize, labelColor, labelOpacity } = args;

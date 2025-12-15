@@ -1,5 +1,3 @@
-"use client";
-
 import { type Locale, format } from "date-fns";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import * as React from "react";
@@ -165,6 +163,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
+        // @ts-ignore - React types version mismatch - the project uses React 19 types, but some Radix UI packages (react-day-picker) bundle their own older React types, creating incompatible Ref type definitions
         Root: CalendarRoot,
         Chevron: CalendarChevron,
         DayButton: CalendarDayButton,

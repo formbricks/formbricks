@@ -14,7 +14,7 @@ import {
 } from "../../lib/story-helpers";
 import { Rating, type RatingProps } from "./rating";
 
-type StoryProps = RatingProps & Partial<BaseStylingOptions & LabelStylingOptions>;
+type StoryProps = RatingProps & Partial<BaseStylingOptions & LabelStylingOptions> & Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Rating",
@@ -106,7 +106,7 @@ export const StylingPlayground: Story = {
     ]),
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {

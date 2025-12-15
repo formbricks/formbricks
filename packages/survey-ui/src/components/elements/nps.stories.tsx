@@ -13,7 +13,7 @@ import {
 } from "../../lib/story-helpers";
 import { NPS, type NPSProps } from "./nps";
 
-type StoryProps = NPSProps & Partial<BaseStylingOptions & LabelStylingOptions>;
+type StoryProps = NPSProps & Partial<BaseStylingOptions & LabelStylingOptions> & Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/NPS",
@@ -78,7 +78,7 @@ export const StylingPlayground: Story = {
     ]),
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {

@@ -2,12 +2,12 @@ import { type ClassValue, clsx } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 
 const twMerge = extendTailwindMerge({
-  theme: {
+  extend: {
     // Custom tokens from `packages/survey-ui/tailwind.config.ts`
     fontSize: ["input", "option", "button"],
     textColor: ["input-text", "input-placeholder", "option-label", "button-text"],
   },
-});
+} as Parameters<typeof extendTailwindMerge>[0]);
 
 /**
  * Utility function to merge Tailwind CSS classes

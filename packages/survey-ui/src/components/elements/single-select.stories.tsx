@@ -17,7 +17,8 @@ import {
 } from "./story-helpers";
 
 type StoryProps = SingleSelectProps &
-  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & ExtendedInputStylingOptions>;
+  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & ExtendedInputStylingOptions> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/SingleSelect",

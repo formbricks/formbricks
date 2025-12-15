@@ -11,7 +11,7 @@ import {
 } from "../../lib/story-helpers";
 import { Ranking, type RankingOption, type RankingProps } from "./ranking";
 
-type StoryProps = RankingProps & Partial<BaseStylingOptions & OptionStylingOptions>;
+type StoryProps = RankingProps & Partial<BaseStylingOptions & OptionStylingOptions> & Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Ranking",

@@ -8,7 +8,9 @@ import {
 } from "../../lib/story-helpers";
 import { PictureSelect, type PictureSelectOption, type PictureSelectProps } from "./picture-select";
 
-type StoryProps = PictureSelectProps & Partial<BaseStylingOptions & { optionBorderRadius: string }>;
+type StoryProps = PictureSelectProps &
+  Partial<BaseStylingOptions & { optionBorderRadius: string }> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/PictureSelect",

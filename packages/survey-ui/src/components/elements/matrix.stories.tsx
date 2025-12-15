@@ -83,7 +83,7 @@ export const StylingPlayground: Story = {
     ...pickArgTypes(inputStylingArgTypes, ["inputBgColor", "inputBorderColor"]),
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {
