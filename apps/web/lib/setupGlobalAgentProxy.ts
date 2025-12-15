@@ -8,7 +8,11 @@ declare global {
 }
 
 export const setupGlobalAgentProxy = (): void => {
+  // Only run in a Node.js runtime; skip edge/serverless where Node built-ins (net/tls) are missing
   if (globalThis.window !== undefined) {
+    return;
+  }
+  if (globalThis.process === undefined || globalThis.process.release?.name !== "node") {
     return;
   }
 
@@ -32,6 +36,8 @@ export const setupGlobalAgentProxy = (): void => {
   }
 
   try {
+    // Dynamic require keeps global-agent out of non-node bundles
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, turbo/no-undeclared-env-vars
     const { bootstrap } = require("global-agent");
     bootstrap();
     globalThis.__FORMBRICKS_GLOBAL_AGENT_INITIALIZED = true;
