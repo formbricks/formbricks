@@ -4,7 +4,6 @@ const AppLayout = async ({ children }) => {
   return (
     <>
       <NoMobileOverlay />
-
       {children}
     </>
   );

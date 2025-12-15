@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
-import { ChatwootClientWrapper } from "@/app/chatwoot/ChatwootClientWrapper";
-import { IS_CHATWOOT_CONFIGURED } from "@/lib/constants";
+import { ChatwootWidget } from "@/app/chatwoot/ChatwootWidget";
+import { CHATWOOT_BASE_URL, CHATWOOT_WEBSITE_TOKEN, IS_CHATWOOT_CONFIGURED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -19,7 +19,15 @@ const AppLayout = async ({ children }) => {
   return (
     <>
       <NoMobileOverlay />
-      {IS_CHATWOOT_CONFIGURED && <ChatwootClientWrapper user={user} />}
+      {IS_CHATWOOT_CONFIGURED && (
+        <ChatwootWidget
+          userEmail={user?.email}
+          userName={user?.name}
+          userId={user?.id}
+          chatwootWebsiteToken={CHATWOOT_WEBSITE_TOKEN}
+          chatwootBaseUrl={CHATWOOT_BASE_URL}
+        />
+      )}
       <ToasterClient />
       {children}
     </>

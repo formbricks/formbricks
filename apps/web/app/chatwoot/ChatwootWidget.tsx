@@ -1,96 +1,79 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 interface ChatwootWidgetProps {
   chatwootBaseUrl: string;
-  isChatwootConfigured: boolean;
   chatwootWebsiteToken?: string;
   userEmail?: string | null;
   userName?: string | null;
   userId?: string | null;
 }
 
+const CHATWOOT_SCRIPT_ID = "chatwoot-script";
+
 export const ChatwootWidget = ({
   userEmail,
   userName,
   userId,
-  isChatwootConfigured,
   chatwootWebsiteToken,
   chatwootBaseUrl,
 }: ChatwootWidgetProps) => {
   const userSetRef = useRef(false);
 
-  const initializeChatwoot = useCallback(() => {
-    if (!isChatwootConfigured) {
-      return;
+  const setUserInfo = () => {
+    const $chatwoot = (window as any).$chatwoot;
+    if (userId && $chatwoot && !userSetRef.current) {
+      $chatwoot.setUser(userId, {
+        email: userEmail,
+        name: userName,
+      });
+      userSetRef.current = true;
     }
+  };
 
-    const script = document.createElement("script") as HTMLScriptElement;
-    const firstScript = document.getElementsByTagName("script")[0];
+  useEffect(() => {
+    if (!chatwootWebsiteToken) return;
 
+    const existingScript = document.getElementById(CHATWOOT_SCRIPT_ID);
+    if (existingScript) return;
+
+    const script = document.createElement("script");
     script.src = `${chatwootBaseUrl}/packs/js/sdk.js`;
-    script.id = "chatwoot-script";
+    script.id = CHATWOOT_SCRIPT_ID;
     script.async = true;
 
     script.onload = () => {
-      (window as any).chatwootSDK.run({
-        websiteToken: chatwootWebsiteToken!,
+      (window as any).chatwootSDK?.run({
+        websiteToken: chatwootWebsiteToken,
         baseUrl: chatwootBaseUrl,
       });
     };
 
-    firstScript.parentNode?.insertBefore(script, firstScript);
-  }, [isChatwootConfigured, chatwootBaseUrl, chatwootWebsiteToken]);
+    document.head.appendChild(script);
 
-  // Set user information when Chatwoot is ready
-  useEffect(() => {
-    if (!isChatwootConfigured) {
-      return;
-    }
-
-    const handleChatwootReady = () => {
-      if (userId && (window as any).$chatwoot && !userSetRef.current) {
-        (window as any).$chatwoot.setUser(userId, {
-          email: userEmail ?? "Unknown",
-          name: userName ?? "Unknown",
-        });
-
-        userSetRef.current = true;
-      }
-    };
-
+    const handleChatwootReady = () => setUserInfo();
     window.addEventListener("chatwoot:ready", handleChatwootReady);
+
+    // Check if Chatwoot is already ready
+    if ((window as any).$chatwoot) {
+      setUserInfo();
+    }
 
     return () => {
       window.removeEventListener("chatwoot:ready", handleChatwootReady);
-    };
-  }, [userId, isChatwootConfigured]);
 
-  useEffect(() => {
-    if (!isChatwootConfigured) {
-      return;
-    }
-
-    try {
-      // Check if script is already loaded
-      if (document.getElementById("chatwoot-script")) {
-        return;
+      const $chatwoot = (window as any).$chatwoot;
+      if ($chatwoot) {
+        $chatwoot.reset();
       }
 
-      initializeChatwoot();
+      const scriptElement = document.getElementById(CHATWOOT_SCRIPT_ID);
+      scriptElement?.remove();
 
-      return () => {
-        // Cleanup Chatwoot when component unmounts
-        if (typeof window !== "undefined" && (window as any).$chatwoot) {
-          (window as any).$chatwoot.reset();
-          userSetRef.current = false;
-        }
-      };
-    } catch (error) {
-      console.error("Failed to initialize Chatwoot:", error);
-    }
-  }, [initializeChatwoot, isChatwootConfigured]);
+      userSetRef.current = false;
+    };
+  }, [chatwootBaseUrl, chatwootWebsiteToken, userId, userEmail, userName]);
 
   return null;
 };
