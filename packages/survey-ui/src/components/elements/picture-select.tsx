@@ -131,13 +131,10 @@ function PictureSelect({
                   </div>
                   {/* Selection indicator - Checkbox for multi select */}
                   <div
-                    role="button"
-                    className="absolute top-[5%] right-[5%]"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.stopPropagation();
-                      }
+                    className="absolute right-[5%] top-[5%]"
+                    role="presentation"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
                     }}>
                     <Checkbox
                       checked={isSelected}
@@ -198,13 +195,10 @@ function PictureSelect({
                   </div>
                   {/* Selection indicator - Radio button for single select */}
                   <div
-                    className="absolute top-[5%] right-[5%]"
-                    role="button"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.stopPropagation();
-                      }
+                    className="absolute right-[5%] top-[5%]"
+                    role="presentation"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
                     }}>
                     <RadioGroupItem
                       value={option.id}

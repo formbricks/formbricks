@@ -117,7 +117,8 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       expect(await page.locator("#questionCard-3").locator("fieldset label").count()).toBe(5);
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("radio", { name: "Rate 3 out of" }).check();
+      // Click on the label instead of the radio to avoid SVG intercepting pointer events
+      await page.locator("#questionCard-3").locator('label:has(input[value="3"])').click();
       await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
 
       // NPS Question

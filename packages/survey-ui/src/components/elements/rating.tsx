@@ -226,7 +226,7 @@ function Rating({
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown(number)}
         className={cn(
-          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-t border-b border-l transition-colors focus:border-2 focus:outline-none",
+          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t transition-colors focus:border-2 focus:outline-none",
           isSelected ? "bg-brand-20 border-brand z-10 border-2" : "border-input-border bg-input-bg",
           borderRadiusClasses,
           isHovered && !isSelected && "bg-input-selected-bg",
@@ -252,7 +252,7 @@ function Rating({
         }}>
         {colorCoding ? (
           <div
-            className={cn("absolute top-0 left-0 h-[6px] w-full", getRatingNumberOptionColor(range, number))}
+            className={cn("absolute left-0 top-0 h-[6px] w-full", getRatingNumberOptionColor(range, number))}
           />
         ) : null}
         <input
@@ -319,7 +319,7 @@ function Rating({
           className="sr-only"
           aria-label={`Rate ${String(number)} out of ${String(range)} stars`}
         />
-        <div className="flex w-full max-w-[74px] items-center justify-center">
+        <div className="pointer-events-none flex w-full max-w-[74px] items-center justify-center">
           {isActive ? (
             <Star className="h-full w-full fill-yellow-400 text-yellow-400 transition-colors" />
           ) : (
@@ -378,7 +378,7 @@ function Rating({
           className="sr-only"
           aria-label={`Rate ${String(number)} out of ${String(range)}`}
         />
-        <div className="h-full w-full max-w-[74px] object-contain">
+        <div className="pointer-events-none h-full w-full max-w-[74px] object-contain">
           <RatingSmiley active={isActive} idx={index} range={range} addColors={colorCoding} />
         </div>
       </label>

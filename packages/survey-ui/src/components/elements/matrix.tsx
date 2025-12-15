@@ -118,14 +118,14 @@ function Matrix({
                     aria-invalid={Boolean(errorMessage)}>
                     <tr className={cn("relative", baseBgColor, rowHasError ? "bg-destructive-muted" : "")}>
                       {/* Row label */}
-                      <td className={cn("p-2 align-middle", !rowHasError && "rounded-l-input")}>
+                      <th scope="row" className={cn("p-2 align-middle", !rowHasError && "rounded-l-input")}>
                         <div className="flex flex-col gap-0 leading-none">
                           <Label>{row.label}</Label>
                           {rowHasError ? (
                             <span className="text-destructive text-xs font-normal">Select one option</span>
                           ) : null}
                         </div>
-                      </td>
+                      </th>
                       {/* Column options for this row */}
                       {columns.map((column, colIndex) => {
                         const cellId = `${rowGroupId}-${column.id}`;
