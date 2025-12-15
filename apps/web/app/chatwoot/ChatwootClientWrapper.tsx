@@ -10,7 +10,9 @@ export const ChatwootClientWrapper = ({ user }: ChatwootClientWrapperProps) => {
   return (
     <ChatwootWidget
       isChatwootConfigured={IS_CHATWOOT_CONFIGURED}
-      user={user}
+      userEmail={user?.email}
+      userName={user?.name}
+      userId={user?.id}
       chatwootWebsiteToken={CHATWOOT_WEBSITE_TOKEN}
       chatwootBaseUrl={CHATWOOT_BASE_URL}
     />

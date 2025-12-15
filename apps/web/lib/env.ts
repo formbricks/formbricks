@@ -40,7 +40,7 @@ export const env = createEnv({
     IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     CHATWOOT_WEBSITE_TOKEN: z.string().optional(),
-    CHATWOOT_BASE_URL: z.string().optional(),
+    CHATWOOT_BASE_URL: z.string().url().optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "fatal"]).optional(),
     MAIL_FROM: z.string().email().optional(),

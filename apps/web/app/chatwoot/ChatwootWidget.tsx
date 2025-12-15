@@ -1,17 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { TUser } from "@formbricks/types/user";
 
 interface ChatwootWidgetProps {
   chatwootBaseUrl: string;
   isChatwootConfigured: boolean;
   chatwootWebsiteToken?: string;
-  user?: TUser | null;
+  userEmail?: string | null;
+  userName?: string | null;
+  userId?: string | null;
 }
 
 export const ChatwootWidget = ({
-  user,
+  userEmail,
+  userName,
+  userId,
   isChatwootConfigured,
   chatwootWebsiteToken,
   chatwootBaseUrl,
@@ -47,10 +50,10 @@ export const ChatwootWidget = ({
     }
 
     const handleChatwootReady = () => {
-      if (user && (window as any).$chatwoot && !userSetRef.current) {
-        (window as any).$chatwoot.setUser(user.id, {
-          email: user.email,
-          name: user.name,
+      if (userId && (window as any).$chatwoot && !userSetRef.current) {
+        (window as any).$chatwoot.setUser(userId, {
+          email: userEmail ?? "Unknown",
+          name: userName ?? "Unknown",
         });
 
         userSetRef.current = true;
@@ -62,7 +65,7 @@ export const ChatwootWidget = ({
     return () => {
       window.removeEventListener("chatwoot:ready", handleChatwootReady);
     };
-  }, [user, isChatwootConfigured]);
+  }, [userId, isChatwootConfigured]);
 
   useEffect(() => {
     if (!isChatwootConfigured) {
