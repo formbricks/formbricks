@@ -375,7 +375,6 @@ const CSS_VAR_MAP: CSSVarMapping = {
 };
 
 export function createCSSVariablesDecorator<T extends Record<string, unknown> = Record<string, unknown>>(
-  width = "600px",
   additionalMappings?: CSSVarMapping
 ): Decorator<T & Record<string, unknown>> {
   const fullMapping = { ...CSS_VAR_MAP, ...additionalMappings };
@@ -401,7 +400,7 @@ export function createCSSVariablesDecorator<T extends Record<string, unknown> = 
     });
 
     return (
-      <div style={cssVarStyle} className={`w-[${width}]`}>
+      <div style={cssVarStyle} className={`w-[600px]`}>
         <Story />
       </div>
     );
