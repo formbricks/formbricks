@@ -101,7 +101,7 @@
     "lucide-react": "0.507.0",
     "markdown-it": "14.1.0",
     "mime-types": "3.0.1",
-    "next": "15.5.7",
+    "next": "15.5.9",
     "next-auth": "4.24.12",
     "next-safe-action": "7.10.8",
     "node-fetch": "3.3.2",
