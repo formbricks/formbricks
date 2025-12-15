@@ -3,7 +3,6 @@ import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -191,12 +190,6 @@ function FileUpload({
     onChange(updatedFiles);
   };
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? ""],
-  });
-
   // Build accept attribute from allowed extensions
   const acceptAttribute = allowedFileExtensions
     ?.map((ext) => (ext.startsWith(".") ? ext : `.${ext}`))
@@ -206,7 +199,7 @@ function FileUpload({
   const showUploader = isUploading || allowMultiple || uploadedFiles.length === 0;
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader
         headline={headline}
@@ -220,7 +213,7 @@ function FileUpload({
 
       {/* File Input */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
         {/* Dashed border container */}
         <div
@@ -309,7 +302,7 @@ function FileUpload({
                   }}
                   disabled={disabled}
                   required={required}
-                  dir={detectedDir}
+                  dir={dir}
                   aria-label="File upload"
                   aria-describedby={`${inputId}-label`}
                 />

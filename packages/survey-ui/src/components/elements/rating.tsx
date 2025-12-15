@@ -15,7 +15,6 @@ import {
   TiredFace,
   WearyFace,
 } from "@/components/general/smileys";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -168,12 +167,6 @@ function Rating({
   // Ensure value is within valid range
   const currentValue = value && value >= 1 && value <= range ? value : undefined;
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", lowerLabel ?? "", upperLabel ?? ""],
-  });
-
   // Handle rating selection
   const handleSelect = (ratingValue: number): void => {
     if (!disabled) {
@@ -221,9 +214,9 @@ function Rating({
     // Determine border radius classes
     let borderRadiusClasses = "";
     if (isLast) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-l-input border-l" : "rounded-r-input border-r";
+      borderRadiusClasses = dir === "rtl" ? "rounded-l-input border-l" : "rounded-r-input border-r";
     } else if (isFirst) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-r-input border-r" : "rounded-l-input border-l";
+      borderRadiusClasses = dir === "rtl" ? "rounded-r-input border-r" : "rounded-l-input border-l";
     }
 
     return (
@@ -396,13 +389,13 @@ function Rating({
   const ratingOptions = Array.from({ length: range }, (_, i) => i + 1);
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Rating Options */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full">
           <legend className="sr-only">Rating options</legend>
           <div className="flex w-full">
@@ -420,15 +413,12 @@ function Rating({
           {(lowerLabel ?? upperLabel) ? (
             <div className="mt-4 flex justify-between gap-8 px-1.5">
               {lowerLabel ? (
-                <Label variant="default" className="max-w-[50%] text-xs leading-6" dir={detectedDir}>
+                <Label variant="default" className="max-w-[50%] text-xs leading-6" dir={dir}>
                   {lowerLabel}
                 </Label>
               ) : null}
               {upperLabel ? (
-                <Label
-                  variant="default"
-                  className="max-w-[50%] text-right text-xs leading-6"
-                  dir={detectedDir}>
+                <Label variant="default" className="max-w-[50%] text-right text-xs leading-6" dir={dir}>
                   {upperLabel}
                 </Label>
               ) : null}

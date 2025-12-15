@@ -4,7 +4,6 @@ import { Checkbox } from "@/components/general/checkbox";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { RadioGroupItem } from "@/components/general/radio-group";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -84,20 +83,14 @@ function PictureSelect({
     }
   };
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", ...options.map((opt) => opt.alt ?? "")],
-  });
-
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Picture Grid - 2 columns */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
         {allowMulti ? (
           <div className="grid grid-cols-2 gap-2">
             {options.map((option) => {
@@ -137,7 +130,7 @@ function PictureSelect({
                     />
                   </div>
                   {/* Selection indicator - Checkbox for multi select */}
-                  <div className="absolute right-[5%] top-[5%]">
+                  <div className="absolute top-[5%] right-[5%]">
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => {
@@ -196,7 +189,7 @@ function PictureSelect({
                     />
                   </div>
                   {/* Selection indicator - Radio button for single select */}
-                  <div className="absolute right-[5%] top-[5%]">
+                  <div className="absolute top-[5%] right-[5%]">
                     <RadioGroupItem
                       value={option.id}
                       id={optionId}

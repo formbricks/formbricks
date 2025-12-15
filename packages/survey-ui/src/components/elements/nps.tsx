@@ -2,7 +2,6 @@ import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 interface NPSProps {
@@ -54,12 +53,6 @@ function NPS({
   // Ensure value is within valid range (0-10)
   const currentValue = value !== undefined && value >= 0 && value <= 10 ? value : undefined;
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", lowerLabel ?? "", upperLabel ?? ""],
-  });
-
   // Handle NPS selection
   const handleSelect = (npsValue: number): void => {
     if (!disabled) {
@@ -98,9 +91,9 @@ function NPS({
     // Determine border radius classes
     let borderRadiusClasses = "";
     if (isLast) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-l-input border-l" : "rounded-r-input border-r";
+      borderRadiusClasses = dir === "rtl" ? "rounded-l-input border-l" : "rounded-r-input border-r";
     } else if (isFirst) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-r-input border-r" : "rounded-l-input border-l";
+      borderRadiusClasses = dir === "rtl" ? "rounded-r-input border-r" : "rounded-l-input border-l";
     }
 
     return (
@@ -159,13 +152,13 @@ function NPS({
   const npsOptions = Array.from({ length: 11 }, (_, i) => i);
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* NPS Options */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full">
           <legend className="sr-only">NPS rating options</legend>
           <div className="flex w-full">{npsOptions.map((number) => renderNPSOption(number))}</div>
@@ -174,15 +167,12 @@ function NPS({
           {(lowerLabel ?? upperLabel) ? (
             <div className="mt-2 flex justify-between gap-8 px-1.5">
               {lowerLabel ? (
-                <Label variant="default" className="max-w-[50%] text-xs leading-6" dir={detectedDir}>
+                <Label variant="default" className="max-w-[50%] text-xs leading-6" dir={dir}>
                   {lowerLabel}
                 </Label>
               ) : null}
               {upperLabel ? (
-                <Label
-                  variant="default"
-                  className="max-w-[50%] text-right text-xs leading-6"
-                  dir={detectedDir}>
+                <Label variant="default" className="max-w-[50%] text-right text-xs leading-6" dir={dir}>
                   {upperLabel}
                 </Label>
               ) : null}

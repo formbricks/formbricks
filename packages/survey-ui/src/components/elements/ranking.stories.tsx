@@ -166,6 +166,7 @@ export const RTL: Story = {
   args: {
     elementId: "ranking-rtl",
     inputId: "ranking-input-rtl",
+    dir: "rtl",
     headline: "رتب هذه العناصر حسب الأهمية",
     description: "انقر على العناصر لإضافتها إلى الترتيب، ثم استخدم الأسهم لإعادة الترتيب",
     options: [
@@ -180,6 +181,7 @@ export const RTL: Story = {
 export const RTLWithRanking: Story = {
   args: {
     elementId: "ranking-rtl-ranked",
+    dir: "rtl",
     inputId: "ranking-input-rtl-ranked",
     headline: "رتب هذه العناصر حسب الأهمية",
     options: [

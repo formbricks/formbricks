@@ -146,6 +146,7 @@ export const RTL: Story = {
     headline: "الشروط والأحكام",
     description: "يرجى قراءة الشروط والموافقة عليها",
     checkboxLabel: "أوافق على الشروط والأحكام",
+    dir: "rtl",
     onChange: () => {},
   },
 };
@@ -157,6 +158,7 @@ export const RTLWithConsent: Story = {
     headline: "الشروط والأحكام",
     checkboxLabel: "أوافق على الشروط والأحكام",
     value: true,
+    dir: "rtl",
     onChange: () => {},
   },
 };

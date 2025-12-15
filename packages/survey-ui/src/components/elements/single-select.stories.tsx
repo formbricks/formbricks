@@ -180,6 +180,7 @@ export const Disabled: Story = {
 export const RTL: Story = {
   args: {
     headline: "ما هو خيارك المفضل؟",
+    dir: "rtl",
     description: "اختر خيارًا واحدًا",
     options: [
       { id: "opt-1", label: "الخيار الأول" },
@@ -193,6 +194,7 @@ export const RTL: Story = {
 export const RTLWithSelection: Story = {
   args: {
     headline: "ما هو تفضيلك؟",
+    dir: "rtl",
     description: "يرجى اختيار خيار واحد",
     options: [
       { id: "tech", label: "التكنولوجيا" },

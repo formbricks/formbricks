@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Calendar } from "@/components/general/calendar";
 import { ElementHeader } from "@/components/general/element-header";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { getDateFnsLocale } from "@/lib/locale";
 
 interface DateElementProps {
@@ -92,19 +91,13 @@ function DateElement({
     [disabled, minDateObj, maxDateObj]
   );
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? ""],
-  });
-
   // Get locale for date formatting
   const dateLocale = React.useMemo(() => {
     return locale ? getDateFnsLocale(locale) : undefined;
   }, [locale]);
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 

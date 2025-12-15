@@ -233,6 +233,7 @@ export const ManyOptions: Story = {
 export const RTL: Story = {
   args: {
     headline: "ما هي الصورة التي تفضلها؟",
+    dir: "rtl",
     description: "اختر صورة واحدة",
     options: defaultOptions.map((opt) => ({ ...opt, alt: "نص بديل" })),
   },
@@ -241,6 +242,7 @@ export const RTL: Story = {
 export const RTLWithSelection: Story = {
   args: {
     headline: "اختر الصور التي تعجبك",
+    dir: "rtl",
     description: "يمكنك اختيار عدة صور",
     options: defaultOptions.map((opt) => ({ ...opt, alt: "نص بديل" })),
     allowMulti: true,

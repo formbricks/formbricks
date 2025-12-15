@@ -218,6 +218,7 @@ export const RTL: Story = {
     headline: "ما هو تقييمك؟",
     description: "يرجى مشاركة أفكارك معنا",
     placeholder: "اكتب إجابتك هنا...",
+    dir: "rtl",
   },
 };
 
@@ -228,6 +229,7 @@ export const RTLLongAnswer: Story = {
     placeholder: "اكتب ردك التفصيلي هنا...",
     longAnswer: true,
     rows: 5,
+    dir: "rtl",
   },
 };
 
@@ -238,6 +240,7 @@ export const WithErrorAndRTL: Story = {
     placeholder: "email@example.com",
     errorMessage: "يرجى إدخال عنوان بريد إلكتروني صالح",
     required: true,
+    dir: "rtl",
   },
 };
 

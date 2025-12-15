@@ -3,7 +3,6 @@ import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { Label } from "@/components/general/label";
-import { useTextDirection } from "@/hooks/use-text-direction";
 
 /**
  * Form field configuration
@@ -64,17 +63,6 @@ function FormField({
     return value ?? {};
   }, [value]);
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [
-      headline,
-      description ?? "",
-      ...fields.map((field) => field.label).filter(Boolean),
-      ...fields.map((field) => field.placeholder ?? "").filter(Boolean),
-    ],
-  });
-
   // Determine if a field is required
   const isFieldRequired = (field: FormFieldConfig): boolean => {
     if (field.required) {
@@ -103,13 +91,13 @@ function FormField({
   const visibleFields = fields.filter((field) => field.show !== false);
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} />
 
       {/* Form Fields */}
       <div className="relative space-y-3">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
         {visibleFields.map((field) => {
           const fieldRequired = isFieldRequired(field);
           const fieldValue = currentValues[field.id] ?? "";
@@ -137,7 +125,7 @@ function FormField({
                 }}
                 required={fieldRequired}
                 disabled={disabled}
-                dir={!fieldValue ? detectedDir : "auto"}
+                dir={dir}
                 aria-invalid={Boolean(errorMessage) || undefined}
               />
             </div>

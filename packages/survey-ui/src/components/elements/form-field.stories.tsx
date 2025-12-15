@@ -299,6 +299,7 @@ export const RTL: Story = {
     elementId: "form-field-rtl",
     headline: "يرجى تقديم معلومات الاتصال الخاصة بك",
     description: "سنستخدم هذا للاتصال بك",
+    dir: "rtl",
     fields: [
       { id: "firstName", label: "الاسم الأول", placeholder: "الاسم الأول", required: true, show: true },
       { id: "lastName", label: "اسم العائلة", placeholder: "اسم العائلة", required: true, show: true },
@@ -317,6 +318,7 @@ export const RTL: Story = {
 export const RTLWithValues: Story = {
   args: {
     elementId: "form-field-rtl-values",
+    dir: "rtl",
     headline: "يرجى تقديم معلومات الاتصال الخاصة بك",
     fields: [
       { id: "firstName", label: "الاسم الأول", placeholder: "الاسم الأول", required: true, show: true },

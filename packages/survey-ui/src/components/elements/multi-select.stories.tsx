@@ -198,6 +198,7 @@ export const ManyOptions: Story = {
 export const RTL: Story = {
   args: {
     headline: "ما هي الميزات التي تستخدمها؟",
+    dir: "rtl",
     description: "اختر كل ما ينطبق",
     options: [
       { id: "opt-1", label: "الخيار الأول" },
@@ -211,6 +212,7 @@ export const RTL: Story = {
 export const RTLWithSelections: Story = {
   args: {
     headline: "ما هي اهتماماتك؟",
+    dir: "rtl",
     description: "يرجى اختيار جميع الخيارات المناسبة",
     options: [
       { id: "tech", label: "التكنولوجيا" },

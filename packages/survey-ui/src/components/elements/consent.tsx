@@ -2,7 +2,6 @@ import * as React from "react";
 import { Checkbox } from "@/components/general/checkbox";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -46,25 +45,19 @@ function Consent({
   dir = "auto",
   disabled = false,
 }: ConsentProps): React.JSX.Element {
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", checkboxLabel],
-  });
-
   const handleCheckboxChange = (checked: boolean): void => {
     if (disabled) return;
     onChange(checked);
   };
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Consent Checkbox */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
         <label
           htmlFor={inputId}
@@ -74,7 +67,7 @@ function Consent({
             errorMessage && "border-destructive",
             disabled && "cursor-not-allowed opacity-50"
           )}
-          dir={detectedDir}>
+          dir={dir}>
           <Checkbox
             id={inputId}
             checked={value}
@@ -84,9 +77,7 @@ function Consent({
             aria-required={required}
           />
           {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
-          <span
-            className="text-input font-input-weight text-input-text flex-1 leading-none"
-            dir={detectedDir}>
+          <span className="text-input font-input-weight text-input-text flex-1 leading-none" dir={dir}>
             {checkboxLabel}
           </span>
         </label>

@@ -149,6 +149,7 @@ export const RTL: Story = {
     headline: "هل أنت مستعد للبدء؟",
     description: "انقر على الزر أدناه للبدء",
     buttonLabel: "ابدأ الآن",
+    dir: "rtl",
     onClick: () => {
       alert("clicked");
     },

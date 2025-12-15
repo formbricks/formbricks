@@ -11,7 +11,6 @@ import {
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -130,17 +129,6 @@ function MultiSelect({
   // Shared className for option labels
   const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [
-      headline,
-      description ?? "",
-      ...options.map((opt) => opt.label),
-      ...(hasOtherOption ? [otherOptionLabel] : []),
-    ],
-  });
-
   // Get selected option labels for dropdown display
   const selectedLabels = options.filter((opt) => selectedValues.includes(opt.id)).map((opt) => opt.label);
 
@@ -151,13 +139,13 @@ function MultiSelect({
   }
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Options */}
       <div className="relative space-y-3">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
         {variant === "dropdown" ? (
           <>
@@ -212,7 +200,7 @@ function MultiSelect({
                 onChange={handleOtherInputChange}
                 placeholder={otherOptionPlaceholder}
                 disabled={disabled}
-                dir={detectedDir}
+                dir={dir}
                 className="w-full"
               />
             ) : null}
@@ -267,7 +255,7 @@ function MultiSelect({
                       onChange={handleOtherInputChange}
                       placeholder={otherOptionPlaceholder}
                       disabled={disabled}
-                      dir={detectedDir}
+                      dir={dir}
                       className="mt-2 w-full"
                       ref={otherInputRef}
                     />

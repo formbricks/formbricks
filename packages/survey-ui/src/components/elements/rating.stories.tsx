@@ -252,6 +252,7 @@ export const ColorCoding: Story = {
 export const RTL: Story = {
   args: {
     elementId: "rating-rtl",
+    dir: "rtl",
     inputId: "rating-input-rtl",
     headline: "كيف تقيم تجربتك؟",
     description: "يرجى تقييم تجربتك من 1 إلى 5",
@@ -265,6 +266,7 @@ export const RTL: Story = {
 export const RTLWithSelection: Story = {
   args: {
     elementId: "rating-rtl-selection",
+    dir: "rtl",
     inputId: "rating-input-rtl-selection",
     headline: "كيف تقيم تجربتك؟",
     scale: "star",

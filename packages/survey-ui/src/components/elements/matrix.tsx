@@ -4,7 +4,6 @@ import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
 import { RadioGroupItem } from "@/components/general/radio-group";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -76,25 +75,14 @@ function Matrix({
     }
   };
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [
-      headline,
-      description ?? "",
-      ...rows.map((row) => row.label),
-      ...columns.map((col) => col.label),
-    ],
-  });
-
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Matrix Table */}
       <div className="relative">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
         {/* Table container with overflow for mobile */}
         <div className="overflow-x-auto">
@@ -127,7 +115,6 @@ function Matrix({
                       handleRowChange(row.id, newColumnId);
                     }}
                     disabled={disabled}
-                    dir={detectedDir}
                     aria-invalid={Boolean(errorMessage)}>
                     <tr className={cn("relative", baseBgColor, rowHasError ? "bg-destructive-muted" : "")}>
                       {/* Row label */}

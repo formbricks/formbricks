@@ -3,7 +3,6 @@ import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { Textarea } from "@/components/general/textarea";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 interface OpenTextProps {
@@ -62,20 +61,14 @@ function OpenText({
     );
   };
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", placeholder ?? ""],
-  });
-
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Input or Textarea */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
         <div className="space-y-1">
           {longAnswer ? (
             <Textarea
@@ -84,7 +77,7 @@ function OpenText({
               value={value}
               onChange={handleChange}
               required={required}
-              dir={detectedDir}
+              dir={dir}
               rows={rows}
               disabled={disabled}
               aria-invalid={Boolean(errorMessage) || undefined}
@@ -99,7 +92,7 @@ function OpenText({
               value={value}
               onChange={handleChange}
               required={required}
-              dir={detectedDir}
+              dir={dir}
               disabled={disabled}
               aria-invalid={Boolean(errorMessage) || undefined}
               minLength={charLimit?.min}

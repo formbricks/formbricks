@@ -3,7 +3,6 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -57,12 +56,6 @@ function Ranking({
   // Ensure value is always an array
   const rankedIds = React.useMemo(() => (Array.isArray(value) ? value : []), [value]);
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", ...options.map((opt) => opt.label)],
-  });
-
   // Get sorted (ranked) items and unsorted items
   const sortedItems = React.useMemo(() => {
     return rankedIds
@@ -106,15 +99,15 @@ function Ranking({
   const [parent] = useAutoAnimate();
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Ranking Options */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
-        <fieldset className="w-full" dir={detectedDir}>
+        <fieldset className="w-full" dir={dir}>
           <legend className="sr-only">Ranking options</legend>
           <div className="space-y-2" ref={parent as React.Ref<HTMLDivElement>}>
             {allItems.map((item) => {
@@ -125,23 +118,23 @@ function Ranking({
               const displayNumber = isRanked ? rankIndex + 1 : undefined;
 
               // RTL-aware padding class
-              const paddingClass = detectedDir === "rtl" ? "pr-3" : "pl-3";
+              const paddingClass = dir === "rtl" ? "pr-3" : "pl-3";
 
               // RTL-aware border class for control buttons
-              const borderClass = detectedDir === "rtl" ? "border-r" : "border-l";
+              const borderClass = dir === "rtl" ? "border-r" : "border-l";
 
               // RTL-aware border radius classes for control buttons
               let topButtonRadiusClass = "rounded-tr-md";
               if (isFirst) {
                 topButtonRadiusClass = "cursor-not-allowed opacity-30";
-              } else if (detectedDir === "rtl") {
+              } else if (dir === "rtl") {
                 topButtonRadiusClass = "rounded-tl-md";
               }
 
               let bottomButtonRadiusClass = "rounded-br-md";
               if (isLast) {
                 bottomButtonRadiusClass = "cursor-not-allowed opacity-30";
-              } else if (detectedDir === "rtl") {
+              } else if (dir === "rtl") {
                 bottomButtonRadiusClass = "rounded-bl-md";
               }
 
@@ -184,7 +177,7 @@ function Ranking({
                     </span>
                     <span
                       className="font-option text-option font-option-weight text-option-label shrink grow text-start"
-                      dir={detectedDir}>
+                      dir={dir}>
                       {item.label}
                     </span>
                   </button>

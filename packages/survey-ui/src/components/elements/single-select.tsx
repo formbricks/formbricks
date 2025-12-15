@@ -12,7 +12,6 @@ import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { RadioGroup, RadioGroupItem } from "@/components/general/radio-group";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -122,16 +121,6 @@ function SingleSelect({
 
   // Shared className for option labels
   const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [
-      headline,
-      description ?? "",
-      ...options.map((opt) => opt.label),
-      ...(hasOtherOption ? [otherOptionLabel] : []),
-    ],
-  });
 
   // Get selected option label for dropdown display
   const selectedOption = options.find((opt) => opt.id === selectedValue);
@@ -140,7 +129,7 @@ function SingleSelect({
     : (selectedOption?.label ?? placeholder);
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
@@ -148,7 +137,7 @@ function SingleSelect({
       <div className="space-y-3">
         {variant === "dropdown" ? (
           <>
-            <ElementError errorMessage={errorMessage} dir={detectedDir} />
+            <ElementError errorMessage={errorMessage} dir={dir} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -197,7 +186,7 @@ function SingleSelect({
                 onChange={handleOtherInputChange}
                 placeholder={otherOptionPlaceholder}
                 disabled={disabled}
-                dir={detectedDir}
+                dir={dir}
                 className="w-full"
               />
             ) : null}
@@ -208,7 +197,6 @@ function SingleSelect({
             onValueChange={onChange}
             disabled={disabled}
             errorMessage={errorMessage}
-            dir={detectedDir}
             className="w-full gap-0 space-y-2">
             {options.map((option) => {
               const optionId = `${inputId}-${option.id}`;
@@ -246,7 +234,7 @@ function SingleSelect({
                     onChange={handleOtherInputChange}
                     placeholder={otherOptionPlaceholder}
                     disabled={disabled}
-                    dir={detectedDir}
+                    dir={dir}
                     className="mt-2 w-full"
                   />
                 ) : null}
