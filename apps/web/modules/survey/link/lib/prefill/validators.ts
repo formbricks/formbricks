@@ -6,7 +6,7 @@ import {
   TSurveyPictureSelectionElement,
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
-import { matchMultipleOptionsByIdOrLabel, matchOptionByIdOrLabel } from "./matchers";
+import { matchOptionByIdOrLabel } from "./matchers";
 import { parseCommaSeparated, parseNumber } from "./parsers";
 import { TValidationResult } from "./types";
 
