@@ -67,38 +67,42 @@ export function RankingElement({
       }));
   }, [elementChoices, languageCode]);
 
-  // Convert value from array of labels to array of IDs
-  const convertValueToIds = (valueArray: string[] | undefined): string[] => {
-    if (!Array.isArray(valueArray)) return [];
+  // For the survey-ui component, we need to map labels to IDs
+  const selectedValues = useMemo(() => {
+    if (!value || !Array.isArray(value)) return [];
 
-    // Map labels back to IDs based on the current element choices
-    const idArray: string[] = [];
-    valueArray.forEach((label) => {
-      const matchingChoice = elementChoices.find(
-        (choice) => choice && getLocalizedValue(choice.label, languageCode) === label
-      );
-      if (matchingChoice) {
-        idArray.push(matchingChoice.id);
+    const selected: string[] = [];
+    value.forEach((val) => {
+      // Backwards-compat: if value is already an option ID
+      const idMatch = options.find((opt) => opt.id === val);
+      if (idMatch) {
+        selected.push(idMatch.id);
+        return;
       }
+
+      // Normal: value is a label
+      const labelMatch = options.find((opt) => opt.label === val);
+      if (labelMatch) selected.push(labelMatch.id);
     });
 
-    return idArray;
-  };
+    return selected;
+  }, [value, options]);
 
-  // Convert value from array of IDs back to array of labels for onChange
-  const convertValueFromIds = (idArray: string[]): string[] => {
-    return idArray.map((id) => {
-      const matchingChoice = elementChoices.find((choice) => choice?.id === id);
-      return matchingChoice ? getLocalizedValue(matchingChoice.label, languageCode) : "";
-    });
-  };
-
-  const handleChange = (newValue: string[]) => {
+  // Handle selection changes - store labels directly instead of IDs
+  const handleChange = (selectedIds: string[]) => {
     // Clear error when user changes ranking
     setErrorMessage(undefined);
 
-    const labelValue = convertValueFromIds(newValue);
-    onChange({ [element.id]: labelValue });
+    const nextLabels: string[] = [];
+    selectedIds.forEach((id) => {
+      const matchingOption = options.find((opt) => opt.id === id);
+      if (matchingOption) nextLabels.push(matchingOption.label);
+    });
+
+    onChange({ [element.id]: nextLabels });
+
+    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
   };
 
   const validateRequired = (): boolean => {
@@ -125,7 +129,7 @@ export function RankingElement({
         headline={getLocalizedValue(element.headline, languageCode)}
         description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
         options={options}
-        value={convertValueToIds(value)}
+        value={selectedValues}
         onChange={handleChange}
         required={element.required}
         errorMessage={errorMessage}
