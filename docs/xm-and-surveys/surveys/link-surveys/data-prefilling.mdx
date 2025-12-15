@@ -91,18 +91,6 @@ Adds 'I love Formbricks' as the answer to the open text question:
 https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20love%20Formbricks
 ```
 
-### CTA Question
-
-Accepts only 'dismissed' as answer option. Due to the risk of domain abuse, this value cannot be set to 'clicked' via prefilling:
-
-```txt CTA Question
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?cta_question_id=dismissed
-```
-
-<Note>
-  Due to the risk of domain abuse, this value cannot be set to 'clicked' via prefilling.
-</Note>
-
 ### Consent Question
 
 Adds 'accepted' as the answer to the Consent question. Alternatively, you can set it to 'dismissed' to skip the question.
@@ -119,29 +107,10 @@ Adds index of the selected image(s) as the answer to the Picture Selection quest
 https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?pictureSelection_question_id=1%2C2%2C3
 ```
 
-### Ranking Question
-
-You can prefill ranking questions with comma-separated values. The order of the values determines the ranking order.
-
-**Using option labels** (backward compatible):
-
-```sh Ranking Question with Labels
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?ranking_id=First%20Choice,Second%20Choice,Third%20Choice
-```
-
-**Using option IDs** (recommended):
-
-```sh Ranking Question with Option IDs
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?ranking_id=choice-abc,choice-xyz,choice-123
-```
-
-<Note>
-  You can find the option ID in the Survey Editor when you click on the option settings. Option IDs are stable even when you change the option label text.
-</Note>
 
 ## Using Option IDs for Choice-Based Questions
 
-All choice-based question types (Single Select, Multi Select, Ranking, Picture Selection) now support prefilling with **option IDs** in addition to option labels. This is the recommended approach as it's more reliable and doesn't break when you update option text.
+All choice-based question types (Single Select, Multi Select, Picture Selection) now support prefilling with **option IDs** in addition to option labels. This is the recommended approach as it's more reliable and doesn't break when you update option text.
 
 ### Benefits of Using Option IDs
 
@@ -189,11 +158,9 @@ Make sure that the answer in the URL matches the expected type for the questions
 The URL validation works as follows:
 
 - **Rating or NPS questions:** The response is parsed as a number and verified to be within the valid range.
-- **CTA type questions:** Valid values are "clicked" (main CTA) and "dismissed" (skip CTA).
 - **Consent type questions:** Valid values are "accepted" (consent given) and "dismissed" (consent not given).
 - **Picture Selection questions:** The response is parsed as comma-separated numbers (1-based indices) and verified against available choices.
 - **Single/Multi Select questions:** Values can be either option IDs or exact label text. The system tries to match by option ID first, then falls back to label matching.
-- **Ranking questions:** Values are comma-separated option IDs or labels. For required ranking questions, all choices must be included.
 - **Open Text questions:** Any string value is accepted.
 
 <Note>

@@ -22,12 +22,6 @@ type TMultiChoiceValidResult = {
   others: string[]; // other text values
 };
 
-// Ranking match result
-type TRankingValidResult = {
-  isValid: true;
-  matchedChoices: TSurveyElementChoice[];
-};
-
 // Picture selection result (indices are already validated)
 type TPictureSelectionValidResult = {
   isValid: true;
@@ -42,12 +36,10 @@ export type TValidationResult =
         | TSurveyElementTypeEnum.OpenText
         | TSurveyElementTypeEnum.NPS
         | TSurveyElementTypeEnum.Rating
-        | TSurveyElementTypeEnum.CTA
         | TSurveyElementTypeEnum.Consent;
     })
   | (TSingleChoiceValidResult & { type: TSurveyElementTypeEnum.MultipleChoiceSingle })
   | (TMultiChoiceValidResult & { type: TSurveyElementTypeEnum.MultipleChoiceMulti })
-  | (TRankingValidResult & { type: TSurveyElementTypeEnum.Ranking })
   | (TPictureSelectionValidResult & { type: TSurveyElementTypeEnum.PictureSelection });
 
 // Type guards for narrowing validation results
@@ -63,11 +55,6 @@ export const isMultiChoiceResult = (
   result: TValidationResult
 ): result is TMultiChoiceValidResult & { type: TSurveyElementTypeEnum.MultipleChoiceMulti } =>
   result.isValid && result.type === TSurveyElementTypeEnum.MultipleChoiceMulti;
-
-export const isRankingResult = (
-  result: TValidationResult
-): result is TRankingValidResult & { type: TSurveyElementTypeEnum.Ranking } =>
-  result.isValid && result.type === TSurveyElementTypeEnum.Ranking;
 
 export const isPictureSelectionResult = (
   result: TValidationResult

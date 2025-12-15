@@ -4,7 +4,6 @@ import {
   TValidationResult,
   isMultiChoiceResult,
   isPictureSelectionResult,
-  isRankingResult,
   isSingleChoiceResult,
 } from "./types";
 
@@ -53,11 +52,6 @@ export const transformRating = (answer: string): number => {
   return num ?? 0;
 };
 
-export const transformCTA = (answer: string): string => {
-  if (answer === "dismissed") return "";
-  return answer;
-};
-
 export const transformConsent = (answer: string): string => {
   if (answer === "dismissed") return "";
   return answer;
@@ -67,15 +61,6 @@ export const transformPictureSelection = (validationResult: TValidationResult): 
   if (!isPictureSelectionResult(validationResult)) return [];
 
   return validationResult.selectedIds;
-};
-
-export const transformRanking = (validationResult: TValidationResult, language: string): string[] => {
-  if (!isRankingResult(validationResult)) return [];
-
-  // Return the labels in the order they were matched
-  return validationResult.matchedChoices
-    .map((choice) => choice.label?.[language] || "")
-    .filter((label) => label !== "");
 };
 
 /**
@@ -98,8 +83,6 @@ export const transformElement = (
         return transformMultipleChoiceSingle(validationResult, answer, language);
       case TSurveyElementTypeEnum.Consent:
         return transformConsent(answer);
-      case TSurveyElementTypeEnum.CTA:
-        return transformCTA(answer);
       case TSurveyElementTypeEnum.Rating:
         return transformRating(answer);
       case TSurveyElementTypeEnum.NPS:
@@ -108,8 +91,6 @@ export const transformElement = (
         return transformPictureSelection(validationResult);
       case TSurveyElementTypeEnum.MultipleChoiceMulti:
         return transformMultipleChoiceMulti(validationResult);
-      case TSurveyElementTypeEnum.Ranking:
-        return transformRanking(validationResult, language);
       default:
         return "";
     }

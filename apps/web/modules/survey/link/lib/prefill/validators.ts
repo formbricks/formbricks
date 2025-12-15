@@ -1,11 +1,9 @@
 import {
-  TSurveyCTAElement,
   TSurveyConsentElement,
   TSurveyElement,
   TSurveyElementTypeEnum,
   TSurveyMultipleChoiceElement,
   TSurveyPictureSelectionElement,
-  TSurveyRankingElement,
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
 import { matchMultipleOptionsByIdOrLabel, matchOptionByIdOrLabel } from "./matchers";
@@ -129,19 +127,6 @@ export const validateNPS = (answer: string): TValidationResult => {
   return { isValid: true, type: TSurveyElementTypeEnum.NPS };
 };
 
-export const validateCTA = (element: TSurveyCTAElement, answer: string): TValidationResult => {
-  if (element.type !== TSurveyElementTypeEnum.CTA) {
-    return invalid(TSurveyElementTypeEnum.CTA);
-  }
-  if (element.required && answer === "dismissed") {
-    return invalid(TSurveyElementTypeEnum.CTA);
-  }
-  if (answer !== "clicked" && answer !== "dismissed") {
-    return invalid(TSurveyElementTypeEnum.CTA);
-  }
-  return { isValid: true, type: TSurveyElementTypeEnum.CTA };
-};
-
 export const validateConsent = (element: TSurveyConsentElement, answer: string): TValidationResult => {
   if (element.type !== TSurveyElementTypeEnum.Consent) {
     return invalid(TSurveyElementTypeEnum.Consent);
@@ -203,47 +188,6 @@ export const validatePictureSelection = (
   };
 };
 
-export const validateRanking = (
-  element: TSurveyRankingElement,
-  answer: string,
-  language: string
-): TValidationResult => {
-  if (element.type !== TSurveyElementTypeEnum.Ranking) {
-    return invalid(TSurveyElementTypeEnum.Ranking);
-  }
-  if (!element.choices || !Array.isArray(element.choices) || element.choices.length === 0) {
-    return invalid(TSurveyElementTypeEnum.Ranking);
-  }
-
-  const values = parseCommaSeparated(answer);
-
-  if (values.length === 0) {
-    return invalid(TSurveyElementTypeEnum.Ranking);
-  }
-
-  // Match all values by ID or label
-  const matchedChoices = matchMultipleOptionsByIdOrLabel(element.choices, values, language);
-
-  // If required, must match all choices
-  if (element.required) {
-    if (matchedChoices.length !== element.choices.length) {
-      return invalid(TSurveyElementTypeEnum.Ranking);
-    }
-  } else {
-    // If not required, at least some values must match (and no duplicates)
-    const uniqueMatches = new Set(matchedChoices.map((c) => c.id));
-    if (matchedChoices.length === 0 || uniqueMatches.size !== matchedChoices.length) {
-      return invalid(TSurveyElementTypeEnum.Ranking);
-    }
-  }
-
-  return {
-    isValid: true,
-    type: TSurveyElementTypeEnum.Ranking,
-    matchedChoices,
-  };
-};
-
 /**
  * Main validation dispatcher
  * Routes to appropriate validator based on element type
@@ -269,16 +213,12 @@ export const validateElement = (
         return validateMultipleChoiceMulti(element, answer, language);
       case TSurveyElementTypeEnum.NPS:
         return validateNPS(answer);
-      case TSurveyElementTypeEnum.CTA:
-        return validateCTA(element, answer);
       case TSurveyElementTypeEnum.Consent:
         return validateConsent(element, answer);
       case TSurveyElementTypeEnum.Rating:
         return validateRating(element, answer);
       case TSurveyElementTypeEnum.PictureSelection:
         return validatePictureSelection(element, answer);
-      case TSurveyElementTypeEnum.Ranking:
-        return validateRanking(element, answer, language);
       default:
         return invalid();
     }

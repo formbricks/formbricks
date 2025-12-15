@@ -76,15 +76,7 @@ describe("prefill integration tests", () => {
             lowerLabel: { default: "Not likely" },
             upperLabel: { default: "Very likely" },
           },
-          {
-            id: "q7",
-            type: TSurveyElementTypeEnum.CTA,
-            headline: { default: "CTA Question" },
-            required: false,
-            buttonLabel: { default: "Click me" },
-            buttonExternal: false,
-            buttonUrl: "",
-          },
+
           {
             id: "q8",
             type: TSurveyElementTypeEnum.Consent,
@@ -123,18 +115,6 @@ describe("prefill integration tests", () => {
               { id: "p4", imageUrl: "image4.jpg" },
             ],
             allowMulti: true,
-          },
-          {
-            id: "q12",
-            type: TSurveyElementTypeEnum.Ranking,
-            headline: { default: "Ranking Question" },
-            required: false,
-            choices: [
-              { id: "r1", label: { default: "First Choice" } },
-              { id: "r2", label: { default: "Second Choice" } },
-              { id: "r3", label: { default: "Third Choice" } },
-            ],
-            shuffleOption: "none",
           },
         ],
       },
@@ -247,20 +227,6 @@ describe("prefill integration tests", () => {
     expect(result).toBeUndefined();
   });
 
-  test("handles CTA questions with clicked value", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q7", "clicked");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q7: "clicked" });
-  });
-
-  test("handles CTA questions with dismissed value", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q7", "dismissed");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q7: "" });
-  });
-
   test("validates Consent questions", () => {
     const searchParams = new URLSearchParams();
     searchParams.set("q8", "accepted");
@@ -301,27 +267,6 @@ describe("prefill integration tests", () => {
     searchParams.set("q11", "1,2");
     const result = getPrefillValue(mockSurvey, searchParams, "default");
     expect(result).toEqual({ q11: ["p3", "p4"] });
-  });
-
-  test("handles Ranking with labels", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q12", "Third Choice,First Choice,Second Choice");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q12: ["Third Choice", "First Choice", "Second Choice"] });
-  });
-
-  test("handles Ranking with option IDs", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q12", "r3,r1,r2");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q12: ["Third Choice", "First Choice", "Second Choice"] });
-  });
-
-  test("handles Ranking with mixed IDs and labels", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q12", "r3,First Choice,r2");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q12: ["Third Choice", "First Choice", "Second Choice"] });
   });
 
   test("handles multiple valid questions", () => {
