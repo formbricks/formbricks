@@ -67,7 +67,7 @@ export function CTAElement({
               <button
                 dir="auto"
                 type="button"
-                tabIndex={isCurrent ? 0 : -1}
+                tabIndex={0}
                 onClick={handleExternalButtonClick}
                 className="fb-text-heading focus:fb-ring-focus fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
                 {getLocalizedValue(element.ctaButtonLabel, languageCode)}

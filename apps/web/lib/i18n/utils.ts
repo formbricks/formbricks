@@ -140,6 +140,7 @@ export const appLanguages = [
       "zh-Hans-CN": "英语（美国）",
       "nl-NL": "Engels (VS)",
       "es-ES": "Inglés (EE.UU.)",
+      "sv-SE": "Engelska (USA)",
     },
   },
   {
@@ -156,6 +157,7 @@ export const appLanguages = [
       "zh-Hans-CN": "德语",
       "nl-NL": "Duits",
       "es-ES": "Alemán",
+      "sv-SE": "Tyska",
     },
   },
   {
@@ -172,6 +174,7 @@ export const appLanguages = [
       "zh-Hans-CN": "葡萄牙语（巴西）",
       "nl-NL": "Portugees (Brazilië)",
       "es-ES": "Portugués (Brasil)",
+      "sv-SE": "Portugisiska (Brasilien)",
     },
   },
   {
@@ -188,6 +191,7 @@ export const appLanguages = [
       "zh-Hans-CN": "法语",
       "nl-NL": "Frans",
       "es-ES": "Francés",
+      "sv-SE": "Franska",
     },
   },
   {
@@ -199,11 +203,12 @@ export const appLanguages = [
       "fr-FR": "Chinois (Traditionnel)",
       "zh-Hant-TW": "繁體中文",
       "pt-PT": "Chinês (Tradicional)",
-      "ro-RO": "Chineză (Tradicională)",
+      "ro-RO": "Chineza (Tradițională)",
       "ja-JP": "中国語（繁体字）",
       "zh-Hans-CN": "繁体中文",
       "nl-NL": "Chinees (Traditioneel)",
       "es-ES": "Chino (Tradicional)",
+      "sv-SE": "Kinesiska (traditionell)",
     },
   },
   {
@@ -220,6 +225,7 @@ export const appLanguages = [
       "zh-Hans-CN": "葡萄牙语（葡萄牙）",
       "nl-NL": "Portugees (Portugal)",
       "es-ES": "Portugués (Portugal)",
+      "sv-SE": "Portugisiska (Portugal)",
     },
   },
   {
@@ -236,6 +242,7 @@ export const appLanguages = [
       "zh-Hans-CN": "罗马尼亚语",
       "nl-NL": "Roemeens",
       "es-ES": "Rumano",
+      "sv-SE": "Rumänska",
     },
   },
   {
@@ -252,6 +259,7 @@ export const appLanguages = [
       "zh-Hans-CN": "日语",
       "nl-NL": "Japans",
       "es-ES": "Japonés",
+      "sv-SE": "Japanska",
     },
   },
   {
@@ -263,11 +271,12 @@ export const appLanguages = [
       "fr-FR": "Chinois (Simplifié)",
       "zh-Hant-TW": "簡體中文",
       "pt-PT": "Chinês (Simplificado)",
-      "ro-RO": "Chineză (Simplificată)",
+      "ro-RO": "Chineza (Simplificată)",
       "ja-JP": "中国語（簡体字）",
       "zh-Hans-CN": "简体中文",
       "nl-NL": "Chinees (Vereenvoudigd)",
       "es-ES": "Chino (Simplificado)",
+      "sv-SE": "Kinesiska (förenklad)",
     },
   },
   {
@@ -279,11 +288,12 @@ export const appLanguages = [
       "fr-FR": "Néerlandais",
       "zh-Hant-TW": "荷蘭語",
       "pt-PT": "Holandês",
-      "ro-RO": "Olandeză",
+      "ro-RO": "Olandeza",
       "ja-JP": "オランダ語",
       "zh-Hans-CN": "荷兰语",
       "nl-NL": "Nederlands",
       "es-ES": "Neerlandés",
+      "sv-SE": "Nederländska",
     },
   },
   {
@@ -300,6 +310,24 @@ export const appLanguages = [
       "zh-Hans-CN": "西班牙语",
       "nl-NL": "Spaans",
       "es-ES": "Español",
+      "sv-SE": "Spanska",
+    },
+  },
+  {
+    code: "sv-SE",
+    label: {
+      "en-US": "Swedish",
+      "de-DE": "Schwedisch",
+      "pt-BR": "Sueco",
+      "fr-FR": "Suédois",
+      "zh-Hant-TW": "瑞典語",
+      "pt-PT": "Sueco",
+      "ro-RO": "Suedeză",
+      "ja-JP": "スウェーデン語",
+      "zh-Hans-CN": "瑞典语",
+      "nl-NL": "Zweeds",
+      "es-ES": "Sueco",
+      "sv-SE": "Svenska",
     },
   },
 ];

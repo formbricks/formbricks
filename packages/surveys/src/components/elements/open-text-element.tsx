@@ -169,7 +169,7 @@ export function OpenTextElement({
       <input
         ref={inputRef as RefObject<HTMLInputElement>}
         autoFocus={isCurrent ? autoFocusEnabled : undefined}
-        tabIndex={isCurrent ? 0 : -1}
+        tabIndex={0}
         name={element.id}
         id={element.id}
         placeholder={getLocalizedValue(element.placeholder, languageCode)}
@@ -195,7 +195,7 @@ export function OpenTextElement({
         rows={3}
         autoFocus={isCurrent ? autoFocusEnabled : undefined}
         name={element.id}
-        tabIndex={isCurrent ? 0 : -1}
+        tabIndex={0}
         aria-label="textarea"
         id={element.id}
         placeholder={getLocalizedValue(element.placeholder, languageCode, true)}
