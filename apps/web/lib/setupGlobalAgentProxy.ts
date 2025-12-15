@@ -40,15 +40,17 @@ export const setupGlobalAgentProxy = (): void => {
     process.env.GLOBAL_AGENT_NO_PROXY = noProxy;
   }
 
+  // Mark as initialized before attempting bootstrap to avoid repeated attempts
+  globalThis.__FORMBRICKS_GLOBAL_AGENT_INITIALIZED = true;
+
   try {
     // Dynamic require prevents bundling into edge/serverless builds
     // Using string concatenation to prevent webpack from statically analyzing the require
     // eslint-disable-next-line @typescript-eslint/no-var-requires, turbo/no-undeclared-env-vars
     const { bootstrap } = require("global" + "-agent");
     bootstrap();
-    globalThis.__FORMBRICKS_GLOBAL_AGENT_INITIALIZED = true;
     logger.info("Enabled global-agent proxy support for outbound HTTP requests");
   } catch (error) {
-    logger.error("Failed to enable global-agent proxy support", error);
+    logger.error(error, "Failed to enable global-agent proxy support");
   }
 };
