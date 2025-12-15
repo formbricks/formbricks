@@ -131,6 +131,7 @@ function PictureSelect({
                   </div>
                   {/* Selection indicator - Checkbox for multi select */}
                   <div
+                    role="button"
                     className="absolute top-[5%] right-[5%]"
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
@@ -198,6 +199,7 @@ function PictureSelect({
                   {/* Selection indicator - Radio button for single select */}
                   <div
                     className="absolute top-[5%] right-[5%]"
+                    role="button"
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
