@@ -59,9 +59,9 @@
      Used for question headlines and main element titles.
      --------------------------------------------------------------------------- */
   --fb-element-headline-font-family: inherit;
-  --fb-element-headline-font-weight: 600;
+  --fb-element-headline-font-weight: 400;
   --fb-element-headline-font-size: 1.125rem;
-  --fb-element-headline-color: hsl(222.2 84% 4.9%);
+  --fb-element-headline-color: (--input);
   --fb-element-headline-opacity: 1;
 
   /* ---------------------------------------------------------------------------
@@ -71,7 +71,7 @@
   --fb-element-description-font-family: inherit;
   --fb-element-description-font-weight: 400;
   --fb-element-description-font-size: 0.875rem;
-  --fb-element-description-color: hsl(215.4 16.3% 46.9%);
+  --fb-element-description-color: var(--input);
   --fb-element-description-opacity: 1;
 
   /* ---------------------------------------------------------------------------
