@@ -428,7 +428,7 @@ export function createStatefulRender<
 
     return (
       <Component
-        {...(args as TProps)}
+        {...args}
         value={value}
         onChange={(v: TValue) => {
           setValue(v);
