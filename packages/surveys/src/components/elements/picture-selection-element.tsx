@@ -40,10 +40,24 @@ export function PictureSelectionElement({
   }));
 
   // Convert value from string[] to string | string[] based on allowMulti
-  const currentValue: string | string[] = element.allowMulti ? value : value.length > 0 ? value[0] : "";
+  let currentValue: string | string[];
+  if (element.allowMulti) {
+    currentValue = value;
+  } else if (value.length > 0) {
+    currentValue = value[0];
+  } else {
+    currentValue = "";
+  }
 
   const handleChange = (newValue: string | string[]) => {
-    const stringArray = Array.isArray(newValue) ? newValue : newValue ? [newValue] : [];
+    let stringArray: string[];
+    if (Array.isArray(newValue)) {
+      stringArray = newValue;
+    } else if (newValue) {
+      stringArray = [newValue];
+    } else {
+      stringArray = [];
+    }
     onChange({ [element.id]: stringArray });
   };
 

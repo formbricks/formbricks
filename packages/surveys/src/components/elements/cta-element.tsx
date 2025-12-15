@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
-import { CTA } from "@formbricks/survey-ui";
+// Import as Cta to fix sonar issue - "Imported JSX component CTA must be in PascalCase"
+import { CTA as Cta } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -53,7 +54,7 @@ export function CTAElement({
         setTtc(updatedTtcObj);
       }}
       className="fb:w-full">
-      <CTA
+      <Cta
         elementId={element.id}
         inputId={element.id}
         headline={getLocalizedValue(element.headline, languageCode)}

@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
-import { NPS } from "@formbricks/survey-ui";
+// Import as Nps to fix sonar issue - "Imported JSX component NPS must be in PascalCase"
+import { NPS as Nps } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyNPSElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -45,7 +46,7 @@ export function NPSElement({
 
   return (
     <form key={element.id} onSubmit={handleSubmit} className="fb:w-full">
-      <NPS
+      <Nps
         elementId={element.id}
         inputId={element.id}
         headline={getLocalizedValue(element.headline, languageCode)}

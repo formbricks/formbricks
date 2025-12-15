@@ -224,9 +224,9 @@ export function MultipleChoiceMultiElement({
     if (isOtherNowSelected) {
       nextLabels.push("");
       if (otherValue.trim()) nextLabels.push(otherValue);
-    } else {
+    } else if (otherValue) {
       // If other was deselected, clear any stale other value
-      if (otherValue) setOtherValue("");
+      setOtherValue("");
     }
 
     onChange({ [element.id]: nextLabels });

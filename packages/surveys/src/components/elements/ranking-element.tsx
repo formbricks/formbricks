@@ -88,7 +88,7 @@ export function RankingElement({
   // Convert value from array of IDs back to array of labels for onChange
   const convertValueFromIds = (idArray: string[]): string[] => {
     return idArray.map((id) => {
-      const matchingChoice = elementChoices.find((choice) => choice && choice.id === id);
+      const matchingChoice = elementChoices.find((choice) => choice?.id === id);
       return matchingChoice ? getLocalizedValue(matchingChoice.label, languageCode) : "";
     });
   };
