@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef } from "react";
 import { TUser } from "@formbricks/types/user";
 
 interface ChatwootWidgetProps {
+  chatwootBaseUrl: string;
   isChatwootConfigured: boolean;
   chatwootWebsiteToken?: string;
-  chatwootBaseUrl?: string;
   user?: TUser | null;
 }
 
@@ -18,32 +18,34 @@ export const ChatwootWidget = ({
 }: ChatwootWidgetProps) => {
   const userSetRef = useRef(false);
 
-  // Early return if Chatwoot is not configured
-  if (!isChatwootConfigured) {
-    return null;
-  }
-
   const initializeChatwoot = useCallback(() => {
-    const BASE_URL = chatwootBaseUrl || "https://app.chatwoot.com";
+    if (!isChatwootConfigured) {
+      return;
+    }
 
-    (function (d, t) {
-      var g = d.createElement(t) as HTMLScriptElement,
-        s = d.getElementsByTagName(t)[0];
-      g.src = BASE_URL + "/packs/js/sdk.js";
-      g.id = "chatwoot-script";
-      g.async = true;
-      s.parentNode?.insertBefore(g, s);
-      g.onload = function () {
-        (window as any).chatwootSDK.run({
-          websiteToken: chatwootWebsiteToken!,
-          baseUrl: BASE_URL,
-        });
-      };
-    })(document, "script");
-  }, [chatwootWebsiteToken, chatwootBaseUrl]);
+    const script = document.createElement("script") as HTMLScriptElement;
+    const firstScript = document.getElementsByTagName("script")[0];
+
+    script.src = `${chatwootBaseUrl}/packs/js/sdk.js`;
+    script.id = "chatwoot-script";
+    script.async = true;
+
+    script.onload = () => {
+      (window as any).chatwootSDK.run({
+        websiteToken: chatwootWebsiteToken!,
+        baseUrl: chatwootBaseUrl,
+      });
+    };
+
+    firstScript.parentNode?.insertBefore(script, firstScript);
+  }, [isChatwootConfigured, chatwootBaseUrl, chatwootWebsiteToken]);
 
   // Set user information when Chatwoot is ready
   useEffect(() => {
+    if (!isChatwootConfigured) {
+      return;
+    }
+
     const handleChatwootReady = () => {
       if (user && (window as any).$chatwoot && !userSetRef.current) {
         (window as any).$chatwoot.setUser(user.id, {
@@ -60,9 +62,13 @@ export const ChatwootWidget = ({
     return () => {
       window.removeEventListener("chatwoot:ready", handleChatwootReady);
     };
-  }, [user]);
+  }, [user, isChatwootConfigured]);
 
   useEffect(() => {
+    if (!isChatwootConfigured) {
+      return;
+    }
+
     try {
       // Check if script is already loaded
       if (document.getElementById("chatwoot-script")) {
@@ -81,7 +87,7 @@ export const ChatwootWidget = ({
     } catch (error) {
       console.error("Failed to initialize Chatwoot:", error);
     }
-  }, [initializeChatwoot]);
+  }, [initializeChatwoot, isChatwootConfigured]);
 
   return null;
 };
