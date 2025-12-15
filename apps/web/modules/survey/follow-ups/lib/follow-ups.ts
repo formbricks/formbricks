@@ -40,6 +40,8 @@ const evaluateFollowUp = async (
         survey,
         response,
         attachResponseData: properties.attachResponseData,
+        includeVariables: properties.includeVariables,
+        includeHiddenFields: properties.includeHiddenFields,
         logoUrl,
       });
 
@@ -71,6 +73,8 @@ const evaluateFollowUp = async (
           survey,
           response,
           attachResponseData: properties.attachResponseData,
+          includeVariables: properties.includeVariables,
+          includeHiddenFields: properties.includeHiddenFields,
         });
 
         return {
@@ -104,6 +108,8 @@ const evaluateFollowUp = async (
           survey,
           response,
           attachResponseData: properties.attachResponseData,
+          includeVariables: properties.includeVariables,
+          includeHiddenFields: properties.includeHiddenFields,
         });
 
         return {

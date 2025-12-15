@@ -290,12 +290,13 @@ describe("setup.ts", () => {
     test("resets user state to default", () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
+          environment: { data: { surveys: [] } },
           user: { data: { userId: "XYZ" } },
         }),
         update: vi.fn(),
       };
 
-      getInstanceConfigMock.mockReturnValueOnce(mockConfig as unknown as Config);
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
 
       tearDown();
 

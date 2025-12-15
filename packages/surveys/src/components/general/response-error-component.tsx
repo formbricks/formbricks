@@ -5,12 +5,18 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { processResponseData } from "@/lib/response";
 
 interface ResponseErrorComponentProps {
-  questions: TSurveyElement[];
-  responseData: TResponseData;
-  onRetry?: () => void;
+  readonly questions: TSurveyElement[];
+  readonly responseData: TResponseData;
+  readonly onRetry?: () => void;
+  readonly isRetrying?: boolean;
 }
 
-export function ResponseErrorComponent({ questions, responseData, onRetry }: ResponseErrorComponentProps) {
+export function ResponseErrorComponent({
+  questions,
+  responseData,
+  onRetry,
+  isRetrying = false,
+}: ResponseErrorComponentProps) {
   const { t } = useTranslation();
   return (
     <div className="fb-flex fb-flex-col fb-bg-white fb-p-4">
@@ -23,14 +29,14 @@ export function ResponseErrorComponent({ questions, responseData, onRetry }: Res
         {t("common.please_retry_now_or_try_again_later")}
       </p>
       <div className="fb-mt-4 fb-rounded-lg fb-border fb-border-slate-200 fb-bg-slate-100 fb-px-4 fb-py-5">
-        <div className="fb-flex fb-max-h-36 fb-flex-1 fb-flex-col fb-space-y-3 fb-overflow-y-scroll">
+        <div className="fb-flex fb-max-h-48 fb-flex-1 fb-flex-col fb-space-y-2 fb-overflow-y-scroll">
           {questions.map((question, index) => {
             const response = responseData[question.id];
             if (!response) return;
             return (
               <div className="fb-flex fb-flex-col" key={`response-${index.toString()}`}>
-                <span className="fb-text-sm fb-leading-6 fb-text-slate-900">{`${t("common.question")} ${(index + 1).toString()}`}</span>
-                <span className="fb-mt-1 fb-text-sm fb-font-semibold fb-leading-6 fb-text-slate-900">
+                <span className="fb-text-sm fb-leading-5 fb-text-slate-900">{`${t("common.question")} ${(index + 1).toString()}`}</span>
+                <span className="fb-text-sm fb-font-semibold fb-leading-5 fb-text-slate-900">
                   {processResponseData(response)}
                 </span>
               </div>
@@ -40,11 +46,14 @@ export function ResponseErrorComponent({ questions, responseData, onRetry }: Res
       </div>
       <div className="fb-mt-4 fb-flex fb-flex-1 fb-flex-row fb-items-center fb-justify-end fb-space-x-2">
         <SubmitButton
-          buttonLabel={t("common.retry")}
+          buttonLabel={isRetrying ? t("common.retrying") : t("common.retry")}
           isLastQuestion={false}
           onClick={() => {
-            onRetry?.();
+            if (!isRetrying) {
+              onRetry?.();
+            }
           }}
+          disabled={isRetrying}
         />
       </div>
     </div>
