@@ -1,67 +1,43 @@
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { parseNumber } from "./parsers";
 import {
-  TSurveyElement,
-  TSurveyElementTypeEnum,
-  TSurveyRankingElement,
-} from "@formbricks/types/surveys/elements";
-import { matchMultipleOptionsByIdOrLabel, matchOptionByIdOrLabel } from "./matchers";
-import { parseCommaSeparated, parseNumber } from "./parsers";
+  TValidationResult,
+  isMultiChoiceResult,
+  isPictureSelectionResult,
+  isRankingResult,
+  isSingleChoiceResult,
+} from "./types";
 
 export const transformOpenText = (answer: string): string => {
   return answer;
 };
 
 export const transformMultipleChoiceSingle = (
-  element: TSurveyElement,
+  validationResult: TValidationResult,
   answer: string,
   language: string
 ): string => {
-  if (element.type !== TSurveyElementTypeEnum.MultipleChoiceSingle) return answer;
-  if (!element.choices || !Array.isArray(element.choices)) return answer;
+  if (!isSingleChoiceResult(validationResult)) return answer;
 
-  // Try to match by ID or label
-  const matchedChoice = matchOptionByIdOrLabel(element.choices, answer, language);
+  const { matchedChoice } = validationResult;
+
+  // If we have a matched choice, return its label
   if (matchedChoice) {
-    // Return the label text (element expects labels, not IDs)
     return matchedChoice.label[language] || answer;
   }
 
-  // If no match, return the original (could be "other" text)
+  // If no matched choice (null), it's an "other" value - return original
   return answer;
 };
 
-export const transformMultipleChoiceMulti = (
-  element: TSurveyElement,
-  answer: string,
-  language: string
-): string[] => {
-  if (element.type !== TSurveyElementTypeEnum.MultipleChoiceMulti) return [];
-  if (!element.choices || !Array.isArray(element.choices)) return [];
+export const transformMultipleChoiceMulti = (validationResult: TValidationResult): string[] => {
+  if (!isMultiChoiceResult(validationResult)) return [];
 
-  const answerChoices = parseCommaSeparated(answer);
-  const hasOthers = element.choices.length > 0 && element.choices[element.choices.length - 1]?.id === "other";
-
-  // Separate matched choices from "other" values
-  const matched: string[] = [];
-  const others: string[] = [];
-
-  for (const ans of answerChoices) {
-    // Check if it matches by label or ID
-    const matchedChoice = matchOptionByIdOrLabel(element.choices, ans, language);
-    if (matchedChoice) {
-      // Return the label text (element expects labels, not IDs)
-      const label = matchedChoice.label[language];
-      if (label) {
-        matched.push(label);
-      }
-    } else if (hasOthers) {
-      // It's a free-text "other" value
-      others.push(ans);
-    }
-  }
+  const { matched, others } = validationResult;
 
   // Return matched choices + joined "other" values as single string
   if (others.length > 0) {
-    matched.push(others.join(","));
+    return [...matched, others.join(",")];
   }
 
   return matched;
@@ -87,78 +63,57 @@ export const transformConsent = (answer: string): string => {
   return answer;
 };
 
-export const transformPictureSelection = (element: TSurveyElement, answer: string): string[] => {
-  if (element.type !== TSurveyElementTypeEnum.PictureSelection) return [];
-  if (!element.choices || !Array.isArray(element.choices)) return [];
+export const transformPictureSelection = (validationResult: TValidationResult): string[] => {
+  if (!isPictureSelectionResult(validationResult)) return [];
 
-  const answerChoicesIdx = parseCommaSeparated(answer);
-  const answerArr: string[] = [];
-
-  answerChoicesIdx.forEach((ansIdx) => {
-    const index = Number(ansIdx) - 1;
-    if (index >= 0 && index < element.choices.length) {
-      const choice = element.choices[index];
-      if (choice && choice.id) {
-        answerArr.push(choice.id);
-      }
-    }
-  });
-
-  if (element.allowMulti) return answerArr;
-  return answerArr.slice(0, 1);
+  return validationResult.selectedIds;
 };
 
-export const transformRanking = (
-  element: TSurveyRankingElement,
-  answer: string,
-  language: string
-): string[] => {
-  if (element.type !== TSurveyElementTypeEnum.Ranking) return [];
-  if (!element.choices || !Array.isArray(element.choices)) return [];
+export const transformRanking = (validationResult: TValidationResult, language: string): string[] => {
+  if (!isRankingResult(validationResult)) return [];
 
-  const values = parseCommaSeparated(answer);
-
-  // Match all values by ID or label
-  const matchedChoices = matchMultipleOptionsByIdOrLabel(element.choices, values, language);
-
-  // Return the labels in the order they were provided
-  return matchedChoices
-    .map((choice) => {
-      const label = choice.label?.[language];
-      return label || "";
-    })
+  // Return the labels in the order they were matched
+  return validationResult.matchedChoices
+    .map((choice) => choice.label?.[language] || "")
     .filter((label) => label !== "");
 };
 
 /**
  * Main transformation dispatcher
  * Routes to appropriate transformer based on element type
+ * Uses pre-matched data from validation result to avoid duplicate matching
  */
 export const transformElement = (
-  element: TSurveyElement,
+  validationResult: TValidationResult,
   answer: string,
   language: string
 ): string | number | string[] => {
-  switch (element.type) {
-    case TSurveyElementTypeEnum.OpenText:
-      return transformOpenText(answer);
-    case TSurveyElementTypeEnum.MultipleChoiceSingle:
-      return transformMultipleChoiceSingle(element, answer, language);
-    case TSurveyElementTypeEnum.Consent:
-      return transformConsent(answer);
-    case TSurveyElementTypeEnum.CTA:
-      return transformCTA(answer);
-    case TSurveyElementTypeEnum.Rating:
-      return transformRating(answer);
-    case TSurveyElementTypeEnum.NPS:
-      return transformNPS(answer);
-    case TSurveyElementTypeEnum.PictureSelection:
-      return transformPictureSelection(element, answer);
-    case TSurveyElementTypeEnum.MultipleChoiceMulti:
-      return transformMultipleChoiceMulti(element, answer, language);
-    case TSurveyElementTypeEnum.Ranking:
-      return transformRanking(element as TSurveyRankingElement, answer, language);
-    default:
-      return "";
+  if (!validationResult.isValid) return "";
+
+  try {
+    switch (validationResult.type) {
+      case TSurveyElementTypeEnum.OpenText:
+        return transformOpenText(answer);
+      case TSurveyElementTypeEnum.MultipleChoiceSingle:
+        return transformMultipleChoiceSingle(validationResult, answer, language);
+      case TSurveyElementTypeEnum.Consent:
+        return transformConsent(answer);
+      case TSurveyElementTypeEnum.CTA:
+        return transformCTA(answer);
+      case TSurveyElementTypeEnum.Rating:
+        return transformRating(answer);
+      case TSurveyElementTypeEnum.NPS:
+        return transformNPS(answer);
+      case TSurveyElementTypeEnum.PictureSelection:
+        return transformPictureSelection(validationResult);
+      case TSurveyElementTypeEnum.MultipleChoiceMulti:
+        return transformMultipleChoiceMulti(validationResult);
+      case TSurveyElementTypeEnum.Ranking:
+        return transformRanking(validationResult, language);
+      default:
+        return "";
+    }
+  } catch {
+    return "";
   }
 };

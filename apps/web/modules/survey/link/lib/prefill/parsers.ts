@@ -11,7 +11,7 @@ export const parseCommaSeparated = (value: string): string[] => {
   return value
     .split(",")
     .map((v) => v.trim())
-    .filter((v) => v !== "");
+    .filter((v) => v.length > 0);
 };
 
 /**
@@ -21,10 +21,10 @@ export const parseCommaSeparated = (value: string): string[] => {
  */
 export const parseNumber = (value: string): number | null => {
   try {
-    // Handle & being used instead of ; in some cases
-    const cleanedValue = value.replace(/&/g, ";");
+    // Handle `&` being used instead of `;` in some cases
+    const cleanedValue = value.replaceAll(/&/g, ";");
     const num = Number(JSON.parse(cleanedValue));
-    return isNaN(num) ? null : num;
+    return Number.isNaN(num) ? null : num;
   } catch {
     return null;
   }

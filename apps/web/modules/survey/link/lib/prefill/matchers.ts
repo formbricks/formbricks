@@ -14,11 +14,9 @@ export const matchOptionByIdOrLabel = (
   value: string,
   languageCode: string
 ): TSurveyElementChoice | null => {
-  // Try matching by ID first (new feature)
   const matchById = choices.find((choice) => choice.id === value);
   if (matchById) return matchById;
 
-  // Fall back to label matching (backward compatibility)
   const matchByLabel = choices.find((choice) => choice.label[languageCode] === value);
   if (matchByLabel) return matchByLabel;
 
@@ -38,15 +36,7 @@ export const matchMultipleOptionsByIdOrLabel = (
   choices: TSurveyElementChoice[],
   values: string[],
   languageCode: string
-): TSurveyElementChoice[] => {
-  const matched: TSurveyElementChoice[] = [];
-
-  for (const value of values) {
-    const match = matchOptionByIdOrLabel(choices, value, languageCode);
-    if (match) {
-      matched.push(match);
-    }
-  }
-
-  return matched;
-};
+): TSurveyElementChoice[] =>
+  values
+    .map((value) => matchOptionByIdOrLabel(choices, value, languageCode))
+    .filter((match) => match !== null);

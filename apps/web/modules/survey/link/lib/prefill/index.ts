@@ -55,14 +55,14 @@ export const getPrefillValue = (
         return;
       }
 
-      // Validate the value for this element type
-      const isValid = validateElement(element, value, languageId);
-      if (!isValid) {
+      // Validate the value for this element type (returns match data)
+      const validationResult = validateElement(element, value, languageId);
+      if (!validationResult.isValid) {
         return;
       }
 
-      // Transform the value to the expected format
-      const transformedValue = transformElement(element, value, languageId);
+      // Transform the value using pre-matched data from validation
+      const transformedValue = transformElement(validationResult, value, languageId);
       prefillData[element.id] = transformedValue;
     } catch (error) {
       // Catch any errors to prevent one bad prefill from breaking all prefills
