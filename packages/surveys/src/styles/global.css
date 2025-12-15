@@ -3,6 +3,7 @@
 @import "tailwindcss/utilities.css" layer(utilities) prefix(fb) important;
 
 @config "../../tailwind.config.cjs";
+@source "../../src/**/*.{ts,tsx,js,jsx}";
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
