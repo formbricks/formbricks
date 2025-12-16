@@ -121,7 +121,6 @@ function PictureSelect({
                   {/* Selection indicator - Checkbox for multi select */}
                   <div
                     className="absolute top-[5%] right-[5%]"
-                    role="presentation"
                     onPointerDown={(e) => {
                       e.stopPropagation();
                     }}>
@@ -176,8 +175,7 @@ function PictureSelect({
                     className="absolute top-[5%] right-[5%]"
                     onPointerDown={(e) => {
                       e.stopPropagation();
-                    }}
-                    role="presentation">
+                    }}>
                     <RadioGroupItem
                       value={option.id}
                       id={optionId}
