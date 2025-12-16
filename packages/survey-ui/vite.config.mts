@@ -39,10 +39,27 @@ export default defineConfig({
     lib: {
       entry: "src/index.ts",
       formats: ["es"],
-      fileName: () => "index.js",
     },
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
+      external: [
+        "react",
+        "react-dom",
+        "react/jsx-runtime",
+        /^@formkit\/auto-animate/,
+        /^@radix-ui/,
+        "class-variance-authority",
+        "clsx",
+        /^date-fns/,
+        "isomorphic-dompurify",
+        "lucide-react",
+        /^react-day-picker/,
+        "tailwind-merge",
+      ],
+      output: {
+        preserveModules: true,
+        preserveModulesRoot: "src",
+        entryFileNames: "[name].js",
+      },
     },
   },
   plugins: [

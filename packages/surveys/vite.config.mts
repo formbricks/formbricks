@@ -49,16 +49,23 @@ const config = ({ mode }) => {
         // Externalize node-html-parser to keep bundle size small (~53KB)
         // It's pulled in via @formbricks/types but not used in browser runtime
         external: ["node-html-parser"],
-        output: {
-          inlineDynamicImports: true,
-        },
+        input: resolve(__dirname, "src/index.ts"),
+        output: [
+          {
+            format: "es",
+            entryFileNames: "index.js",
+            chunkFileNames: "assets/[name]-[hash].js",
+            inlineDynamicImports: false,
+          },
+          {
+            format: "umd",
+            name: "formbricksSurveys",
+            entryFileNames: "index.umd.cjs",
+            inlineDynamicImports: true,
+          },
+        ],
       },
-      lib: {
-        entry: resolve(__dirname, "src/index.ts"),
-        name: "formbricksSurveys",
-        formats: ["es", "umd"],
-        fileName: "index",
-      },
+      outDir: "dist"
     },
     plugins: [
       preact(),
