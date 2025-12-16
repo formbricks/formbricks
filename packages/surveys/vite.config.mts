@@ -23,12 +23,14 @@ const config = ({ mode }) => {
       },
     },
     test: {
+      name: "surveys",
       environment: "node",
       environmentMatchGlobs: [
         ["**/*.test.tsx", "jsdom"],
         ["**/lib/**/*.test.ts", "jsdom"],
       ],
       setupFiles: ["./vitestSetup.ts"],
+      include: ["**/*.test.ts", "**/*.test.tsx"],
       exclude: ["dist/**", "node_modules/**"],
       env: env,
       coverage: {
