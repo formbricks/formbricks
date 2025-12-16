@@ -329,7 +329,7 @@ export const UploadContactsCSVButton = ({
                       <label
                         htmlFor="file"
                         className={cn(
-                          "relative flex cursor-pointer flex-col items-center justify-center rounded-lg hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+                          "relative flex cursor-pointer flex-col items-center justify-center rounded-lg hover:bg-slate-100"
                         )}
                         onDragOver={(e) => handleDragOver(e)}
                         onDrop={(e) => handleDrop(e)}>

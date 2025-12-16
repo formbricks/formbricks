@@ -35,7 +35,7 @@ export const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: 
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
+          className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50">
           <span className="flex flex-1">
             {selectedOption.icon && <selectedOption.icon className="mr-3 h-5 w-5" />}
             <span>{selectedOption ? selectedOption.label : "Select an option"}</span>

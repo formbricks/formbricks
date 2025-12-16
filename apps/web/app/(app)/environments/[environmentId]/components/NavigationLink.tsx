@@ -35,7 +35,7 @@ export const NavigationLink = ({
                   "mb-1 ml-2 rounded-l-md py-2 pl-2 text-sm text-slate-700 hover:text-slate-900",
                   isActive ? activeClass : inactiveClass
                 )}>
-                <Link href={href} className="flex items-center">
+                <Link href={href} className="nav-link flex items-center">
                   {children}
                 </Link>
               </li>
@@ -49,7 +49,7 @@ export const NavigationLink = ({
             "mb-1 rounded-l-md py-2 pl-5 text-sm text-slate-600 hover:text-slate-900",
             isActive ? activeClass : inactiveClass
           )}>
-          <Link href={href} className="flex items-center">
+          <Link href={href} className="nav-link flex items-center">
             {children}
             <span
               className={cn(

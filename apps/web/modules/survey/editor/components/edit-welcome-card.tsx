@@ -187,7 +187,7 @@ export const EditWelcomeCard = ({
               </div>
               <div className="flex-column">
                 <Label htmlFor="timeToFinish">{t("common.time_to_finish")}</Label>
-                <div className="text-sm text-slate-500 dark:text-slate-400">
+                <div className="text-sm text-slate-500">
                   {t("environments.surveys.edit.display_an_estimate_of_completion_time_for_survey")}
                 </div>
               </div>
@@ -206,7 +206,7 @@ export const EditWelcomeCard = ({
                 </div>
                 <div className="flex-column">
                   <Label htmlFor="showResponseCount">{t("common.show_response_count")}</Label>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                  <div className="text-sm text-slate-500">
                     {t("environments.surveys.edit.display_number_of_responses_for_survey")}
                   </div>
                 </div>

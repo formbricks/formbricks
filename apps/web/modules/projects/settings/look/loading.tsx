@@ -115,7 +115,7 @@ export const ProjectLookSettingsLoading = () => {
 
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
         <div className="w-full animate-pulse items-center">
-          <div className="relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
+          <div className="relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:border-slate-500 hover:bg-slate-100">
             <p className="text-xl font-semibold text-slate-700">{t("common.loading")}</p>
           </div>
         </div>

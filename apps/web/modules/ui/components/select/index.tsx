@@ -36,7 +36,7 @@ const SelectContent: React.ComponentType<SelectPrimitive.SelectContentProps> = R
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "animate-in fade-in-80 relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white text-slate-700 shadow-md dark:bg-slate-700 dark:text-slate-300",
+        "animate-in fade-in-80 relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white text-slate-700 shadow-md",
         className
       )}
       {...props}>
@@ -52,7 +52,7 @@ const SelectLabel: React.ComponentType<SelectPrimitive.SelectLabelProps> = React
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold text-slate-900 dark:text-slate-200", className)}
+    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold text-slate-900", className)}
     {...props}
   />
 ));

@@ -38,11 +38,9 @@ export const Uploader = ({
       htmlFor={`${id}-${name}`}
       data-testid="upload-file-label"
       className={cn(
-        "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-700",
+        "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50",
         uploaderClassName,
-        disabled
-          ? "cursor-not-allowed opacity-50"
-          : "hover:bg-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+        disabled ? "cursor-not-allowed opacity-50" : "hover:border-slate-500 hover:bg-slate-100"
       )}
       tabIndex={disabled ? -1 : 0}
       aria-disabled={disabled}
