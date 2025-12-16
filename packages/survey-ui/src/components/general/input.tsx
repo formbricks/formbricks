@@ -23,10 +23,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
         type={type}
         dir={dir}
         data-slot="input"
-        style={{
-          // need to use style here because tailwind is not able to use css variables for font size
-          fontSize: "var(--fb-input-font-size)",
-        }}
         aria-invalid={hasError || undefined}
         className={cn(
           // Layout and behavior

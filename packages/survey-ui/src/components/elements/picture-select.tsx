@@ -89,7 +89,7 @@ function PictureSelect({
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Picture Grid - 2 columns */}
-      <div className="relative space-y-2">
+      <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
         {allowMulti ? (
           <div className="grid grid-cols-2 gap-2">
@@ -157,13 +157,7 @@ function PictureSelect({
                   className={cn(
                     "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"
-                  )}
-                  onKeyDown={(e) => {
-                    if ((e.key === "Enter" || e.key === " ") && !disabled) {
-                      e.preventDefault();
-                      // RadioGroup will handle the selection via the RadioGroupItem
-                    }
-                  }}>
+                  )}>
                   {/* Image container with border when selected */}
                   <div
                     className={cn(

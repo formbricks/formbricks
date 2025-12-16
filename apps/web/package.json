@@ -117,6 +117,7 @@
     "react-day-picker": "9.6.7",
     "react-hook-form": "7.56.2",
     "react-hot-toast": "2.5.2",
+    "react-calendar": "5.1.0",
     "react-i18next": "15.7.3",
     "react-turnstile": "1.1.4",
     "react-use": "17.6.0",

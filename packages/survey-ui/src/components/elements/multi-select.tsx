@@ -124,14 +124,14 @@ function MultiSelect({
   };
 
   // Shared className for option containers
-  const getOptionContainerClassName = (isSelected: boolean): string =>
+  const getOptionContainerClassName = (isSelected: boolean, isDisabled: boolean): string =>
     cn(
-      "relative flex cursor-pointer flex-col border transition-colors outline-none",
+      "relative flex flex-col border transition-colors outline-none",
       "rounded-option px-option-x py-option-y",
       isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",
       "focus-within:border-brand focus-within:bg-option-selected-bg",
       "hover:bg-option-hover-bg",
-      disabled && "cursor-not-allowed opacity-50"
+      isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
     );
 
   // Shared className for option labels
@@ -219,12 +219,12 @@ function MultiSelect({
               {options.map((option) => {
                 const isChecked = selectedValues.includes(option.id);
                 const optionId = `${inputId}-${option.id}`;
-
+                const isDisabled = disabled || (value.includes("none") && option.id !== "none");
                 return (
                   <label
                     key={option.id}
                     htmlFor={optionId}
-                    className={cn(getOptionContainerClassName(isChecked), isChecked && "z-10")}>
+                    className={cn(getOptionContainerClassName(isChecked, isDisabled), isChecked && "z-10")}>
                     <span className="flex items-center">
                       <Checkbox
                         id={optionId}
@@ -232,7 +232,7 @@ function MultiSelect({
                         onCheckedChange={(checked) => {
                           handleOptionChange(option.id, checked === true);
                         }}
-                        disabled={disabled}
+                        disabled={isDisabled}
                         aria-invalid={Boolean(errorMessage)}
                       />
                       <span className={cn("mr-3 ml-3", optionLabelClassName)}>{option.label}</span>
@@ -244,7 +244,7 @@ function MultiSelect({
                 <div className="space-y-2">
                   <label
                     htmlFor={`${inputId}-${otherOptionId}`}
-                    className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
+                    className={cn(getOptionContainerClassName(isOtherSelected, disabled || (value.includes("none"))), isOtherSelected && "z-10")}>
                     <span className="flex items-center">
                       <Checkbox
                         id={`${inputId}-${otherOptionId}`}
@@ -252,7 +252,7 @@ function MultiSelect({
                         onCheckedChange={(checked) => {
                           handleOptionChange(otherOptionId, checked === true);
                         }}
-                        disabled={disabled}
+                        disabled={disabled || (value.includes("none"))}
                         aria-invalid={Boolean(errorMessage)}
                       />
                       <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>

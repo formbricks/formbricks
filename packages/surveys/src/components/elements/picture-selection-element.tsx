@@ -5,6 +5,7 @@ import type { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/e
 import { getLocalizedValue } from "@/lib/i18n";
 import { getOriginalFileNameFromUrl } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { useTranslation } from "react-i18next";
 
 interface PictureSelectionProps {
   element: TSurveyPictureSelectionElement;
@@ -30,8 +31,9 @@ export function PictureSelectionElement({
 }: Readonly<PictureSelectionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
-
+  const { t } = useTranslation();
   // Convert choices to PictureSelectOption format
   const options: PictureSelectOption[] = element.choices.map((choice) => ({
     id: choice.id,
@@ -50,6 +52,7 @@ export function PictureSelectionElement({
   }
 
   const handleChange = (newValue: string | string[]) => {
+    setErrorMessage(undefined);
     let stringArray: string[];
     if (Array.isArray(newValue)) {
       stringArray = newValue;
@@ -63,9 +66,23 @@ export function PictureSelectionElement({
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
-    setTtc(updatedTtcObj);
-  };
+    if (element.required) {
+      if (element.allowMulti) {
+        console.log("currentValue", currentValue);
+        if (!currentValue || !Array.isArray(currentValue) || currentValue.length === 0) {
+          setErrorMessage(t("errors.please_select_an_option"));
+          return;
+        }
+      } else {
+        if (!currentValue) {
+          setErrorMessage(t("errors.please_select_an_option"));
+          return;
+        }
+        const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+      }
+    }
+  }
 
   return (
     <form key={element.id} onSubmit={handleSubmit} className="w-full">
@@ -80,6 +97,7 @@ export function PictureSelectionElement({
         allowMulti={element.allowMulti}
         required={element.required}
         dir={dir}
+        errorMessage={errorMessage}
       />
     </form>
   );

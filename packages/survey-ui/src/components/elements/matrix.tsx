@@ -115,6 +115,7 @@ function Matrix({
                       handleRowChange(row.id, newColumnId);
                     }}
                     disabled={disabled}
+                    required={required}
                     aria-invalid={Boolean(errorMessage)}>
                     <tr className={cn("relative", baseBgColor, rowHasError ? "bg-destructive-muted" : "")}>
                       {/* Row label */}
