@@ -1,12 +1,9 @@
-import { type Locale } from "date-fns";
-import { enUS } from "date-fns/locale/en-US";
-import { useEffect, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { DateElement as SurveyUIDateElement } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
-import { loadLocale } from "@/lib/locale";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface DateElementProps {
@@ -32,19 +29,10 @@ export function DateElement({
 }: Readonly<DateElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-  const [dateLocale, setDateLocale] = useState<Locale>(enUS);
   const isCurrent = element.id === currentElementId;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
-
-  useEffect(() => {
-    async function load() {
-      const loaded = await loadLocale(languageCode);
-      setDateLocale(loaded);
-    }
-    load();
-  }, [languageCode]);
 
   const handleChange = (dateValue: string) => {
     // Clear error when user selects a date
@@ -90,7 +78,7 @@ export function DateElement({
         maxDate={getMaxDate()}
         required={element.required}
         errorMessage={errorMessage}
-        dateHtmlLocale={dateLocale}
+        locale={languageCode}
       />
     </form>
   );

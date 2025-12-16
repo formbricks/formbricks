@@ -1,8 +1,7 @@
-import { type Locale } from "date-fns";
-import { enUS } from "date-fns/locale";
 import * as React from "react";
 import { Calendar } from "@/components/general/calendar";
 import { ElementHeader } from "@/components/general/element-header";
+import { getDateFnsLocale } from "@/lib/locale";
 
 interface DateElementProps {
   /** Unique identifier for the element container */
@@ -29,8 +28,8 @@ interface DateElementProps {
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the date input is disabled */
   disabled?: boolean;
-  /** Locale object for date formatting. Defaults to en-US if not provided */
-  dateHtmlLocale?: Locale;
+  /** Locale code for date formatting (e.g., "en-US", "de-DE", "fr-FR"). Defaults to browser locale or "en-US" */
+  locale?: string;
 }
 
 function DateElement({
@@ -45,7 +44,7 @@ function DateElement({
   maxDate,
   dir = "auto",
   disabled = false,
-  dateHtmlLocale = enUS,
+  locale = "en-US",
 }: Readonly<DateElementProps>): React.JSX.Element {
   const [date, setDate] = React.useState<Date | undefined>(value ? new Date(value) : undefined);
 
@@ -92,6 +91,11 @@ function DateElement({
     [disabled, minDateObj, maxDateObj]
   );
 
+  // Get locale for date formatting
+  const dateLocale = React.useMemo(() => {
+    return locale ? getDateFnsLocale(locale) : undefined;
+  }, [locale]);
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
@@ -107,8 +111,11 @@ function DateElement({
           onSelect={handleDateSelect}
           fromYear={minDateObj?.getFullYear() ?? 1900}
           toYear={maxDateObj?.getFullYear() ?? 2100}
-          locale={dateHtmlLocale}
-          className="rounded-input border-input-border bg-input-bg text-input-text shadow-input mx-auto w-full max-w-[20rem] border"
+          locale={dateLocale}
+          className="rounded-input border-input-border bg-input-bg text-input-text shadow-input w-full border"
+          classNames={{
+            root: "w-full",
+          }}
         />
       </div>
     </div>
