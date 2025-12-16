@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
@@ -16,24 +16,6 @@ import tailwindcss from "@tailwindcss/vite";
  *
  * Related issue: https://github.com/TanStack/query/issues/5175
  */
-function stripUseClientDirective(): Plugin {
-  return {
-    name: "strip-use-client-directive",
-    transform(code, id) {
-      // Only process files from node_modules
-      if (!id.includes("node_modules")) return null;
-      // Only act when the file starts with a "use client" directive
-      const hasTopLevelDirective = code.startsWith('"use client"') || code.startsWith("'use client'");
-      if (!hasTopLevelDirective) return null;
-      return {
-        // Remove the leading "use client" directive (single or double quotes)
-        code: code.replaceAll(/^['"]use client['"];?\s*/g, ""),
-        map: null, // No source map needed for this transformation
-      };
-    },
-  };
-}
-
 export default defineConfig({
   build: {
     lib: {
@@ -63,8 +45,6 @@ export default defineConfig({
     },
   },
   plugins: [
-    // Strip "use client" directives before other plugins process the code
-    stripUseClientDirective(),
     tsconfigPaths(),
     dts({ include: ["src"] }),
     tailwindcss(),
