@@ -1,6 +1,17 @@
-import { render } from "@react-email/render";
 import { createTransport } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import {
+  renderEmailCustomizationPreviewEmail,
+  renderEmbedSurveyPreviewEmail,
+  renderForgotPasswordEmail,
+  renderInviteAcceptedEmail,
+  renderInviteEmail,
+  renderLinkSurveyEmail,
+  renderNewEmailVerification,
+  renderPasswordResetNotifyEmail,
+  renderResponseFinishedEmail,
+  renderVerificationEmail,
+} from "@formbricks/email";
 import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -23,17 +34,8 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
-import NewEmailVerification from "@/modules/email/emails/auth/new-email-verification";
-import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
-import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
-import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
-import { VerificationEmail } from "./emails/auth/verification-email";
-import { InviteAcceptedEmail } from "./emails/invite/invite-accepted-email";
-import { InviteEmail } from "./emails/invite/invite-email";
-import { EmbedSurveyPreviewEmail } from "./emails/survey/embed-survey-preview-email";
-import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
-import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
@@ -89,7 +91,7 @@ export const sendVerificationNewEmail = async (id: string, email: string): Promi
     const token = createEmailChangeToken(id, email);
     const verifyLink = `${WEBAPP_URL}/verify-email-change?token=${encodeURIComponent(token)}`;
 
-    const html = await render(await NewEmailVerification({ verifyLink }));
+    const html = await renderNewEmailVerification({ verifyLink, t });
 
     return await sendEmail({
       to: email,
@@ -117,7 +119,7 @@ export const sendVerificationEmail = async ({
     const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
     const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?token=${encodeURIComponent(token)}`;
 
-    const html = await render(await VerificationEmail({ verificationRequestLink, verifyLink }));
+    const html = await renderVerificationEmail({ verificationRequestLink, verifyLink, t });
 
     return await sendEmail({
       to: email,
@@ -140,7 +142,7 @@ export const sendForgotPasswordEmail = async (user: {
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
-  const html = await render(await ForgotPasswordEmail({ verifyLink }));
+  const html = await renderForgotPasswordEmail({ verifyLink, t });
   return await sendEmail({
     to: user.email,
     subject: t("emails.forgot_password_email_subject"),
@@ -150,7 +152,7 @@ export const sendForgotPasswordEmail = async (user: {
 
 export const sendPasswordResetNotifyEmail = async (user: { email: string }): Promise<boolean> => {
   const t = await getTranslate();
-  const html = await render(await PasswordResetNotifyEmail());
+  const html = await renderPasswordResetNotifyEmail({ t });
   return await sendEmail({
     to: user.email,
     subject: t("emails.password_reset_notify_email_subject"),
@@ -171,7 +173,7 @@ export const sendInviteMemberEmail = async (
 
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
-  const html = await render(await InviteEmail({ inviteeName, inviterName, verifyLink }));
+  const html = await renderInviteEmail({ inviteeName, inviterName, verifyLink, t });
   return await sendEmail({
     to: email,
     subject: t("emails.invite_member_email_subject"),
@@ -185,7 +187,7 @@ export const sendInviteAcceptedEmail = async (
   email: string
 ): Promise<void> => {
   const t = await getTranslate();
-  const html = await render(await InviteAcceptedEmail({ inviteeName, inviterName }));
+  const html = await renderInviteAcceptedEmail({ inviteeName, inviterName, t });
   await sendEmail({
     to: email,
     subject: t("emails.invite_accepted_email_subject"),
@@ -208,16 +210,19 @@ export const sendResponseFinishedEmail = async (
     throw new Error("Organization not found");
   }
 
-  const html = await render(
-    await ResponseFinishedEmail({
-      survey,
-      responseCount,
-      response,
-      WEBAPP_URL,
-      environmentId,
-      organization,
-    })
-  );
+  // Pre-process the element response mapping before passing to email
+  const elements = getElementResponseMapping(survey, response);
+
+  const html = await renderResponseFinishedEmail({
+    survey,
+    responseCount,
+    response,
+    WEBAPP_URL,
+    environmentId,
+    organization,
+    elements,
+    t,
+  });
 
   await sendEmail({
     to: email,
@@ -241,7 +246,7 @@ export const sendEmbedSurveyPreviewEmail = async (
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate();
-  const html = await render(await EmbedSurveyPreviewEmail({ html: innerHtml, environmentId, logoUrl }));
+  const html = await renderEmbedSurveyPreviewEmail({ html: innerHtml, environmentId, logoUrl, t });
   return await sendEmail({
     to,
     subject: t("emails.embed_survey_preview_email_subject"),
@@ -255,7 +260,7 @@ export const sendEmailCustomizationPreviewEmail = async (
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate();
-  const emailHtmlBody = await render(await EmailCustomizationPreviewEmail({ userName, logoUrl }));
+  const emailHtmlBody = await renderEmailCustomizationPreviewEmail({ userName, logoUrl, t });
 
   return await sendEmail({
     to,
@@ -280,7 +285,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   };
   const surveyLink = getSurveyLink();
 
-  const html = await render(await LinkSurveyEmail({ surveyName, surveyLink, logoUrl }));
+  const html = await renderLinkSurveyEmail({ surveyName, surveyLink, logoUrl, t });
   return await sendEmail({
     to: data.email,
     subject: t("emails.verified_link_survey_email_subject"),
