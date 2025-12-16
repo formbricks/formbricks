@@ -58,6 +58,7 @@
     "please_fill_out_this_field": "कृपया इस फील्ड को भरें",
     "please_rank_all_items_before_submitting": "जमा करने से पहले कृपया सभी आइटम्स को रैंक करें",
     "please_select_a_date": "कृपया एक तारीख चुनें",
+    "please_select_an_option": "कृपया एक विकल्प चुनें",
     "please_upload_a_file": "कृपया एक फाइल अपलोड करें",
     "recaptcha_error": {
       "message": "आपका प्रतिसाद जमा नहीं किया जा सका क्योंकि इसे स्वचालित गतिविधि के रूप में चिह्नित किया गया था। यदि आप सांस लेते हैं, तो कृपया पुनः प्रयास करें।",
