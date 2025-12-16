@@ -1,13 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import { TFunction } from "i18next";
 import { TSurveyQuotaLogic } from "@formbricks/types/quota";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TConditionGroup,
   TSingleCondition,
-  TSurvey,
   TSurveyLogicConditionsOperator,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+} from "@formbricks/types/surveys/logic";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
   createGroupFromResource,
@@ -19,11 +19,12 @@ import {
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
-  getDefaultOperatorForQuestion,
+  getDefaultOperatorForElement,
+  getElementOperatorOptions,
   getFormatLeftOperandValue,
   getMatchValueProps,
-  getQuestionOperatorOptions,
 } from "@/modules/survey/editor/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   TConditionsEditorCallbacks,
   TConditionsEditorConfig,
@@ -34,7 +35,7 @@ import {
 export interface SharedConditionsFactoryParams {
   survey: TSurvey;
   t: TFunction;
-  questionIdx?: number;
+  blockIdx?: number;
   getDefaultOperator: () => TSurveyLogicConditionsOperator;
   includeCreateGroup?: boolean;
 }
@@ -52,24 +53,27 @@ export function createSharedConditionsFactory(
   config: TConditionsEditorConfig<TSingleCondition>;
   callbacks: TConditionsEditorCallbacks<TSingleCondition>;
 } {
-  const { survey, t, questionIdx, getDefaultOperator, includeCreateGroup = false } = params;
+  const { survey, t, blockIdx, getDefaultOperator, includeCreateGroup = false } = params;
   const { onConditionsChange } = updateCallbacks;
 
-  // Handles special update logic for matrix questions, setting appropriate operators and metadata
-  const handleMatrixQuestionUpdate = (resourceId: string, updates: Partial<TSingleCondition>): boolean => {
-    if (updates.leftOperand && updates.leftOperand.type === "question") {
-      const [questionId, rowId] = updates.leftOperand.value.split(".");
-      const questionEntity = survey.questions.find((q) => q.id === questionId);
+  // Derive elements from blocks
+  const elements = getElementsFromBlocks(survey.blocks);
 
-      if (questionEntity && questionEntity.type === TSurveyQuestionTypeEnum.Matrix) {
+  // Handles special update logic for matrix elements, setting appropriate operators and metadata
+  const handleMatrixElementUpdate = (resourceId: string, updates: Partial<TSingleCondition>): boolean => {
+    if (updates.leftOperand && updates.leftOperand.type === "element") {
+      const [elementId, rowId] = updates.leftOperand.value.split(".");
+      const element = elements.find((q) => q.id === elementId);
+
+      if (element && element.type === TSurveyElementTypeEnum.Matrix) {
         if (updates.leftOperand.value.includes(".")) {
-          // Matrix question with rowId is selected
+          // Matrix element with rowId is selected
           onConditionsChange((conditions) => {
             const conditionsCopy = structuredClone(conditions);
             updateCondition(conditionsCopy, resourceId, {
               leftOperand: {
-                value: questionId,
-                type: "question",
+                value: elementId,
+                type: "element",
                 meta: {
                   row: rowId,
                 },
@@ -87,15 +91,9 @@ export function createSharedConditionsFactory(
   };
 
   const config: TConditionsEditorConfig<TSingleCondition> = {
-    getLeftOperandOptions: () =>
-      questionIdx !== undefined
-        ? getConditionValueOptions(survey, t, questionIdx)
-        : getConditionValueOptions(survey, t),
+    getLeftOperandOptions: () => getConditionValueOptions(survey, t, blockIdx),
     getOperatorOptions: (condition) => getConditionOperatorOptions(condition, survey, t),
-    getValueProps: (condition) =>
-      questionIdx !== undefined
-        ? getMatchValueProps(condition, survey, t, questionIdx)
-        : getMatchValueProps(condition, survey, t),
+    getValueProps: (condition) => getMatchValueProps(condition, survey, t, blockIdx),
     getDefaultOperator,
     formatLeftOperandValue: (condition) => getFormatLeftOperandValue(condition, survey),
   };
@@ -103,16 +101,12 @@ export function createSharedConditionsFactory(
   const callbacks: TConditionsEditorCallbacks<TSingleCondition> = {
     // Creates and adds a new empty condition below the specified condition
     onAddConditionBelow: (resourceId: string) => {
-      // When adding a condition in the context of a specific question, default to that question
-      const defaultLeftOperandValue =
-        questionIdx !== undefined ? survey.questions[questionIdx].id : survey.questions[0].id;
-      const defaultOperator =
-        questionIdx !== undefined
-          ? getDefaultOperatorForQuestion(survey.questions[questionIdx], t)
-          : getDefaultOperatorForQuestion(survey.questions[0], t);
+      // When adding a condition in the context of a specific block, default to the first element
+      const defaultLeftOperandValue = elements.length > 0 ? elements[0].id : "";
+      const defaultOperator = elements.length > 0 ? getDefaultOperatorForElement(elements[0], t) : "equals";
       const newCondition: TSingleCondition = {
         id: createId(),
-        leftOperand: { value: defaultLeftOperandValue, type: "question" },
+        leftOperand: { value: defaultLeftOperandValue, type: "element" },
         operator: defaultOperator,
       };
 
@@ -141,20 +135,20 @@ export function createSharedConditionsFactory(
       });
     },
 
-    // Updates a condition with new values, handling matrix questions specially
+    // Updates a condition with new values, handling matrix elements specially
     onUpdateCondition: (resourceId: string, updates: Partial<TSingleCondition>) => {
-      // Try matrix question handling first
-      if (handleMatrixQuestionUpdate(resourceId, updates)) {
+      // Try matrix element handling first
+      if (handleMatrixElementUpdate(resourceId, updates)) {
         return;
       }
 
-      // Check if the operator is correct for the question
-      if (updates.leftOperand?.type === "question" && updates.operator) {
-        const questionId = updates.leftOperand.value.split(".")[0];
-        const question = survey.questions.find((q) => q.id === questionId);
+      // Check if the operator is correct for the element
+      if (updates.leftOperand?.type === "element" && updates.operator) {
+        const elementId = updates.leftOperand.value.split(".")[0];
+        const element = elements.find((q) => q.id === elementId);
 
-        if (question) {
-          const operatorOptions = getQuestionOperatorOptions(question, t);
+        if (element) {
+          const operatorOptions = getElementOperatorOptions(element, t);
           const isValidOperator = operatorOptions.some((o) => o.value === updates.operator);
 
           if (!isValidOperator) {
@@ -219,7 +213,7 @@ export const genericConditionsToQuota = (genericConditions: TQuotaConditionGroup
       leftOperand: {
         type: leftOperand.type,
         value: leftOperand.value,
-        ...(leftOperand.type === "question" && leftOperand.meta && { meta: leftOperand.meta }),
+        ...(leftOperand.type === "element" && leftOperand.meta && { meta: leftOperand.meta }),
       },
       operator: condition.operator,
       rightOperand: condition.rightOperand,

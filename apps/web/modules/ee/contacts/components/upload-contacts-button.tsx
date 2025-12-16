@@ -4,6 +4,7 @@ import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, FileUpIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { cn } from "@/lib/cn";
@@ -44,7 +45,7 @@ export const UploadContactsCSVButton = ({
   );
   const [csvResponse, setCSVResponse] = useState<TContactCSVUploadResponse>([]);
   const [attributeMap, setAttributeMap] = useState<Record<string, string>>({});
-  const [error, setErrror] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const processCSVFile = async (file: File) => {
@@ -52,25 +53,25 @@ export const UploadContactsCSVButton = ({
 
     // Check file type
     if (!file.type && !file.name.endsWith(".csv")) {
-      setErrror("Please upload a CSV file");
+      setError("Please upload a CSV file");
       return;
     }
 
     if (file.type && file.type !== "text/csv" && !file.type.includes("csv")) {
-      setErrror("Please upload a CSV file");
+      setError("Please upload a CSV file");
       return;
     }
 
     // Max file size check (800KB)
     const maxSizeInBytes = 800 * 1024;
     if (file.size > maxSizeInBytes) {
-      setErrror("File size exceeds the maximum limit of 800KB");
+      setError("File size exceeds the maximum limit of 800KB");
       return;
     }
 
     const reader = new FileReader();
     reader.onload = async (e) => {
-      setErrror("");
+      setError("");
       const csv = e.target?.result as string;
 
       try {
@@ -82,12 +83,12 @@ export const UploadContactsCSVButton = ({
         const parsedRecords = ZContactCSVUploadResponse.safeParse(records);
         if (!parsedRecords.success) {
           console.error("Error parsing CSV:", parsedRecords.error);
-          setErrror(parsedRecords.error.errors[0].message);
+          setError(parsedRecords.error.errors[0].message);
           return;
         }
 
         if (!parsedRecords.data.length) {
-          setErrror(
+          setError(
             "The uploaded CSV file does not contain any valid contacts, please see the sample CSV file for the correct format."
           );
           return;
@@ -123,7 +124,7 @@ export const UploadContactsCSVButton = ({
   const resetState = (closeModal?: boolean) => {
     setCSVResponse([]);
     setDuplicateContactsAction("skip");
-    setErrror("");
+    setError("");
     setAttributeMap({});
     setLoading(false);
 
@@ -138,7 +139,7 @@ export const UploadContactsCSVButton = ({
     }
 
     setLoading(true);
-    setErrror("");
+    setError("");
 
     const values = Object.values(attributeMap);
 
@@ -156,9 +157,7 @@ export const UploadContactsCSVButton = ({
         .filter(([_, value]) => duplicateValues.includes(value))
         .map(([key, _]) => key);
 
-      setErrror(
-        `Duplicate mappings found for the following attributes: ${duplicateAttributeKeys.join(", ")}`
-      );
+      setError(`Duplicate mappings found for the following attributes: ${duplicateAttributeKeys.join(", ")}`);
       errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       setLoading(false);
       return;
@@ -193,7 +192,8 @@ export const UploadContactsCSVButton = ({
     });
 
     if (result?.data) {
-      setErrror("");
+      setError("");
+      toast.success(t("environments.contacts.upload_contacts_success"));
       resetState(true);
 
       router.refresh();
@@ -201,7 +201,7 @@ export const UploadContactsCSVButton = ({
     }
 
     if (result?.serverError) {
-      setErrror(result.serverError);
+      setError(result.serverError);
     }
 
     if (result?.validationErrors) {
@@ -210,9 +210,9 @@ export const UploadContactsCSVButton = ({
         : result.validationErrors.csvData?._errors?.[0];
 
       if (csvDataErrors) {
-        setErrror(csvDataErrors);
+        setError(csvDataErrors);
       } else {
-        setErrror("An error occurred while uploading the contacts. Please try again later.");
+        setError("An error occurred while uploading the contacts. Please try again later.");
       }
     }
 
@@ -295,8 +295,18 @@ export const UploadContactsCSVButton = ({
         {t("common.upload")} CSV
         <PlusIcon />
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent disableCloseOnOutsideClick={true} className="overflow-auto">
+      <Dialog
+        open={open}
+        onOpenChange={(newOpen) => {
+          setOpen(newOpen);
+          if (!newOpen) {
+            setError("");
+          }
+        }}>
+        <DialogContent
+          disableCloseOnOutsideClick={true}
+          unconstrained={true}
+          style={{ scrollbarGutter: "stable" }}>
           <DialogHeader>
             <FileUpIcon />
             <DialogTitle>{t("common.upload")} CSV</DialogTitle>
@@ -305,8 +315,8 @@ export const UploadContactsCSVButton = ({
             </DialogDescription>
           </DialogHeader>
 
-          <DialogBody>
-            <div className="flex flex-col gap-6">
+          <DialogBody unconstrained={false}>
+            <div className="flex flex-col gap-4">
               {error ? (
                 <Alert variant="error" size="small">
                   {error}
@@ -340,11 +350,11 @@ export const UploadContactsCSVButton = ({
                       </label>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center gap-8">
+                    <div className="flex flex-col items-center gap-4">
                       <h3 className="font-medium text-slate-500">
                         {t("environments.contacts.upload_contacts_modal_preview")}
                       </h3>
-                      <div className="h-[300px] w-full overflow-auto rounded-md border border-slate-300">
+                      <div className="max-h-[300px] w-full overflow-auto rounded-md border border-slate-300">
                         <CsvTable data={[...csvResponse.slice(0, 11)]} />
                       </div>
                     </div>
@@ -384,11 +394,11 @@ export const UploadContactsCSVButton = ({
                 </div>
               ) : null}
 
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-2">
                 <h3 className="font-medium text-slate-900">
                   {t("environments.contacts.upload_contacts_modal_duplicates_title")}
                 </h3>
-                <p className="mb-2 text-slate-500">
+                <p className="text-slate-500">
                   {t("environments.contacts.upload_contacts_modal_duplicates_description")}
                 </p>
                 <StylingTabs
@@ -413,8 +423,8 @@ export const UploadContactsCSVButton = ({
                   tabsContainerClassName="p-1 rounded-lg"
                 />
 
-                <div className="mt-1">
-                  <p className="text-sm font-medium text-slate-500">
+                <div>
+                  <p className="text-xs font-medium text-slate-500">
                     {duplicateContactsAction === "skip" &&
                       t("environments.contacts.upload_contacts_modal_duplicates_skip_description")}
                     {duplicateContactsAction === "update" &&

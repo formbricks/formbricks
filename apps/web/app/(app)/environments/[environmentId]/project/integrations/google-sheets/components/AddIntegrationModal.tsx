@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -20,9 +20,9 @@ import {
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/lib/util";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -62,12 +62,12 @@ export const AddIntegrationModal = ({
     spreadsheetName: "",
     surveyId: "",
     surveyName: "",
-    questionIds: [""],
-    questions: "",
+    elementIds: [""],
+    elements: "",
     createdAt: new Date(),
   };
   const { handleSubmit } = useForm();
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isLinkingSheet, setIsLinkingSheet] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
   const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
@@ -86,12 +86,17 @@ export const AddIntegrationModal = ({
     },
   };
 
+  const surveyElements = useMemo(
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
+    [selectedSurvey]
+  );
+
   useEffect(() => {
     if (selectedSurvey && !selectedIntegration) {
-      const questionIds = selectedSurvey.questions.map((question) => question.id);
-      setSelectedQuestions(questionIds);
+      const elementIds = surveyElements.map((element) => element.id);
+      setSelectedElements(elementIds);
     }
-  }, [selectedIntegration, selectedSurvey]);
+  }, [surveyElements, selectedIntegration, selectedSurvey]);
 
   useEffect(() => {
     if (selectedIntegration) {
@@ -101,7 +106,7 @@ export const AddIntegrationModal = ({
           return survey.id === selectedIntegration.surveyId;
         })!
       );
-      setSelectedQuestions(selectedIntegration.questionIds);
+      setSelectedElements(selectedIntegration.elementIds);
       setIncludeVariables(!!selectedIntegration.includeVariables);
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
@@ -121,7 +126,7 @@ export const AddIntegrationModal = ({
       if (!selectedSurvey) {
         throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
-      if (selectedQuestions.length === 0) {
+      if (selectedElements.length === 0) {
         throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
@@ -143,9 +148,9 @@ export const AddIntegrationModal = ({
       integrationData.spreadsheetName = spreadsheetName;
       integrationData.surveyId = selectedSurvey.id;
       integrationData.surveyName = selectedSurvey.name;
-      integrationData.questionIds = selectedQuestions;
-      integrationData.questions =
-        selectedQuestions.length === selectedSurvey?.questions.length
+      integrationData.elementIds = selectedElements;
+      integrationData.elements =
+        selectedElements.length === surveyElements.length
           ? t("common.all_questions")
           : t("common.selected_questions");
       integrationData.createdAt = new Date();
@@ -176,7 +181,7 @@ export const AddIntegrationModal = ({
   };
 
   const handleCheckboxChange = (questionId: TSurveyQuestionId) => {
-    setSelectedQuestions((prevValues) =>
+    setSelectedElements((prevValues) =>
       prevValues.includes(questionId)
         ? prevValues.filter((value) => value !== questionId)
         : [...prevValues, questionId]
@@ -263,7 +268,7 @@ export const AddIntegrationModal = ({
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
                     <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                        {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
+                        {surveyElements.map((question) => (
                           <div key={question.id} className="my-1 flex items-center space-x-2">
                             <label htmlFor={question.id} className="flex cursor-pointer items-center">
                               <Checkbox
@@ -271,13 +276,17 @@ export const AddIntegrationModal = ({
                                 id={question.id}
                                 value={question.id}
                                 className="bg-white"
-                                checked={selectedQuestions.includes(question.id)}
+                                checked={selectedElements.includes(question.id)}
                                 onCheckedChange={() => {
                                   handleCheckboxChange(question.id);
                                 }}
                               />
                               <span className="ml-2 w-[30rem] truncate">
-                                {getTextContent(getLocalizedValue(question.headline, "default"))}
+                                {getTextContent(
+                                  recallToHeadline(question.headline, selectedSurvey, false, "default")[
+                                    "default"
+                                  ]
+                                )}
                               </span>
                             </label>
                           </div>

@@ -1,13 +1,14 @@
 "use client";
 
 import { ArrowRightIcon } from "lucide-react";
-import { ReactElement, useMemo } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { getLocalizedValue } from "@/lib/i18n/utils";
+import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
-import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import {
   Select,
   SelectContent,
@@ -18,10 +19,11 @@ import {
 
 interface LogicEditorProps {
   localSurvey: TSurvey;
-  logicItem: TSurveyLogic;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  question: TSurveyQuestion;
-  questionIdx: number;
+  logicItem: TSurveyBlockLogic;
+  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
+  block: TSurveyBlock;
+  blockIdx: number;
   logicIdx: number;
   isLast: boolean;
 }
@@ -29,27 +31,32 @@ interface LogicEditorProps {
 export function LogicEditor({
   localSurvey,
   logicItem,
-  updateQuestion,
-  question,
-  questionIdx,
+  updateBlockLogic,
+  updateBlockLogicFallback,
+  block,
+  blockIdx,
   logicIdx,
   isLast,
 }: LogicEditorProps) {
   const { t } = useTranslation();
-  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+
+  const blockLogicFallback = block.logicFallback;
+
   const fallbackOptions = useMemo(() => {
     let options: {
-      icon?: ReactElement;
       label: string;
       value: string;
     }[] = [];
 
-    for (let i = questionIdx + 1; i < localSurvey.questions.length; i++) {
-      const ques = localSurvey.questions[i];
+    const blocks = localSurvey.blocks;
+
+    // Add blocks AFTER the current block
+    for (let i = blockIdx + 1; i < blocks.length; i++) {
+      const currentBlock = blocks[i];
+
       options.push({
-        icon: QUESTIONS_ICON_MAP[ques.type],
-        label: getLocalizedValue(ques.headline, "default"),
-        value: ques.id,
+        label: currentBlock.name,
+        value: currentBlock.id,
       });
     }
 
@@ -57,32 +64,36 @@ export function LogicEditor({
       options.push({
         label:
           ending.type === "endScreen"
-            ? getLocalizedValue(ending.headline, "default") || t("environments.surveys.edit.end_screen_card")
+            ? getTextContent(
+                recallToHeadline(ending.headline ?? { default: "" }, localSurvey, false, "default").default ??
+                  ""
+              ) || t("environments.surveys.edit.end_screen_card")
             : ending.label || t("environments.surveys.edit.redirect_thank_you_card"),
         value: ending.id,
       });
     });
 
     return options;
-  }, [localSurvey.questions, localSurvey.endings, question.id, t]);
+  }, [localSurvey, blockIdx, t]);
 
   return (
     <div className="flex w-full min-w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
       <LogicEditorConditions
         conditions={logicItem.conditions}
-        updateQuestion={updateQuestion}
-        question={question}
-        questionIdx={questionIdx}
+        updateBlockLogic={updateBlockLogic}
+        block={block}
+        blockIdx={blockIdx}
         localSurvey={localSurvey}
         logicIdx={logicIdx}
       />
       <LogicEditorActions
         logicItem={logicItem}
         logicIdx={logicIdx}
-        question={question}
-        updateQuestion={updateQuestion}
+        block={block}
+        updateBlockLogic={updateBlockLogic}
         localSurvey={localSurvey}
-        questionIdx={questionIdx}
+        blockIdx={blockIdx}
+        isLast={isLast}
       />
 
       {isLast ? (
@@ -95,26 +106,21 @@ export function LogicEditor({
           </p>
           <Select
             autoComplete="true"
-            defaultValue={question.logicFallback || "defaultSelection"}
+            defaultValue={blockLogicFallback || "defaultSelection"}
             onValueChange={(val) => {
-              updateQuestion(questionIdx, {
-                logicFallback: val === "defaultSelection" ? undefined : val,
-              });
+              updateBlockLogicFallback(blockIdx, val === "defaultSelection" ? undefined : val);
             }}>
             <SelectTrigger className="w-auto bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem key="fallback_default_selection" value={"defaultSelection"}>
-                {t("environments.surveys.edit.next_question")}
+                {t("environments.surveys.edit.next_block")}
               </SelectItem>
 
               {fallbackOptions.map((option) => (
                 <SelectItem key={`fallback_${option.value}`} value={option.value}>
-                  <div className="flex items-center gap-2">
-                    {option.icon}
-                    {option.label}
-                  </div>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

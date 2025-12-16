@@ -3,13 +3,9 @@ name: E2E Tests
 on:
   workflow_call:
     secrets:
-      AZURE_CLIENT_ID:
-        required: false
-      AZURE_TENANT_ID:
-        required: false
-      AZURE_SUBSCRIPTION_ID:
-        required: false
       PLAYWRIGHT_SERVICE_URL:
+        required: false
+      PLAYWRIGHT_SERVICE_ACCESS_TOKEN:
         required: false
       ENTERPRISE_LICENSE_KEY:
         required: true
@@ -17,12 +13,10 @@ on:
   workflow_dispatch:
 
 env:
-  TELEMETRY_DISABLED: 1
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 permissions:
-  id-token: write
   contents: read
   actions: read
 
@@ -115,7 +109,7 @@ jobs:
       - name: Start MinIO Server
         run: |
           set -euo pipefail
-          
+
           # Start MinIO server in background
           docker run -d \
             --name minio-server \
@@ -125,7 +119,7 @@ jobs:
             -e MINIO_ROOT_PASSWORD=devminio123 \
             minio/minio:RELEASE.2025-09-07T16-13-09Z \
             server /data --console-address :9001
-          
+
           echo "MinIO server started"
 
       - name: Wait for MinIO and create S3 bucket
@@ -208,32 +202,30 @@ jobs:
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps
 
-      - name: Set Azure Secret Variables
-        run: |
-          if [[ -n "${{ secrets.AZURE_CLIENT_ID }}" && -n "${{ secrets.AZURE_TENANT_ID }}" && -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
-            echo "AZURE_ENABLED=true" >> $GITHUB_ENV
-          else
-            echo "AZURE_ENABLED=false" >> $GITHUB_ENV
-          fi
-
-      - name: Azure login
-        if: env.AZURE_ENABLED == 'true'
-        uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2.2.0
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Run E2E Tests (Azure)
-        if: env.AZURE_ENABLED == 'true'
+      - name: Determine Playwright execution mode
+        shell: bash
         env:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
-          CI: true
+          PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
         run: |
-          pnpm test-e2e:azure
+          set -euo pipefail
+
+          if [[ -n "${PLAYWRIGHT_SERVICE_URL}" && -n "${PLAYWRIGHT_SERVICE_ACCESS_TOKEN}" ]]; then
+            echo "PW_MODE=service" >> "$GITHUB_ENV"
+          else
+            echo "PW_MODE=local" >> "$GITHUB_ENV"
+          fi
+
+      - name: Run E2E Tests (Playwright Service)
+        if: env.PW_MODE == 'service'
+        env:
+          PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
+          PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
+          CI: true
+        run: pnpm test-e2e:azure
 
       - name: Run E2E Tests (Local)
-        if: env.AZURE_ENABLED == 'false'
+        if: env.PW_MODE == 'local'
         env:
           CI: true
         run: |

@@ -8,7 +8,6 @@ export interface SurveyBaseProps {
   isBrandingEnabled: boolean;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
   getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;
-  getSetQuestionId?: (getSetQuestionId: (value: string) => void) => void;
   getSetResponseData?: (getSetResponseData: (value: TResponseData) => void) => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
@@ -50,6 +49,7 @@ export type TActionClassNoCodeConfig =
         value: string;
         rule: TActionClassPageUrlRule;
       }[];
+      urlFiltersConnector?: "or" | "and";
       elementSelector: {
         cssSelector?: string | undefined;
         innerHtml?: string | undefined;
@@ -61,6 +61,7 @@ export type TActionClassNoCodeConfig =
         value: string;
         rule: TActionClassPageUrlRule;
       }[];
+      urlFiltersConnector?: "or" | "and";
     }
   | {
       type: "exitIntent";
@@ -68,6 +69,7 @@ export type TActionClassNoCodeConfig =
         value: string;
         rule: TActionClassPageUrlRule;
       }[];
+      urlFiltersConnector?: "or" | "and";
     }
   | {
       type: "fiftyPercentScroll";
@@ -75,6 +77,7 @@ export type TActionClassNoCodeConfig =
         value: string;
         rule: TActionClassPageUrlRule;
       }[];
+      urlFiltersConnector?: "or" | "and";
     };
 
 export interface TTrackProperties {

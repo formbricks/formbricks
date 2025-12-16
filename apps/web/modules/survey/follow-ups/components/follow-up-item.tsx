@@ -5,10 +5,12 @@ import { CopyIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -44,16 +46,24 @@ export const FollowUpItem = ({
 
     if (!to) return true;
 
-    const matchedQuestion = localSurvey.questions.find((question) => {
+    // Verified email is always valid as an option (handled at execution time)
+    if (to === "verifiedEmail") {
+      return false;
+    }
+
+    // Derive questions from blocks
+    const questions = getElementsFromBlocks(localSurvey.blocks);
+
+    const matchedQuestion = questions.find((question) => {
       if (question.id !== to) {
         return false;
       }
 
-      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+      if (question.type === TSurveyElementTypeEnum.OpenText) {
         return question.inputType === "email";
       }
 
-      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+      if (question.type === TSurveyElementTypeEnum.ContactInfo) {
         return question.email.show;
       }
 
@@ -85,8 +95,9 @@ export const FollowUpItem = ({
     return !matchedQuestion && !matchedHiddenField && !matchedEmail;
   }, [
     followUp.action.properties,
+    localSurvey.hiddenFields?.enabled,
     localSurvey.hiddenFields?.fieldIds,
-    localSurvey.questions,
+    localSurvey.blocks,
     teamMemberDetails,
     userEmail,
   ]);
@@ -190,6 +201,8 @@ export const FollowUpItem = ({
           emailTo: followUp.action.properties.to,
           replyTo: followUp.action.properties.replyTo,
           attachResponseData: followUp.action.properties.attachResponseData,
+          includeVariables: followUp.action.properties.includeVariables ?? false,
+          includeHiddenFields: followUp.action.properties.includeHiddenFields ?? false,
         }}
         mode="edit"
         teamMemberDetails={teamMemberDetails}

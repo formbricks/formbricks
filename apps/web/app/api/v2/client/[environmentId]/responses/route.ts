@@ -1,16 +1,16 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
+import { ZEnvironmentId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
-import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
@@ -43,7 +43,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
 
   const { environmentId } = params;
-  const environmentIdValidation = ZId.safeParse(environmentId);
+  const environmentIdValidation = ZEnvironmentId.safeParse(environmentId);
   const responseInputValidation = ZResponseInputV2.safeParse({ ...responseInput, environmentId });
 
   if (!environmentIdValidation.success) {
@@ -91,7 +91,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   // Validate response data for "other" options exceeding character limit
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
     responseData: responseInputData.data,
-    surveyQuestions: survey.questions,
+    surveyQuestions: getElementsFromBlocks(survey.blocks),
     responseLanguage: responseInputData.language,
   });
 
@@ -147,11 +147,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
       response: responseData,
     });
   }
-
-  await capturePosthogEnvironmentEvent(environmentId, "response created", {
-    surveyId: responseData.surveyId,
-    surveyType: survey.type,
-  });
 
   const quotaObj = createQuotaFullObject(quotaFull);
 

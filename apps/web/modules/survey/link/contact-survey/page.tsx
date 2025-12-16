@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
+import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
+import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
 import { getBasicSurveyMetadata } from "@/modules/survey/link/lib/metadata-utils";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
@@ -93,12 +97,30 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   if (isSingleUseSurvey) {
     const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
     if (!validatedSingleUseId) {
-      const project = await getProjectByEnvironmentId(survey.environmentId);
-      return <SurveyInactive status="link invalid" project={project ?? undefined} />;
+      const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
+      return <SurveyInactive status="link invalid" project={environmentContext.project} />;
     }
 
     singleUseId = validatedSingleUseId;
   }
+
+  // Parallel fetch of environment context and locale
+  const [environmentContext, locale, singleUseResponse] = await Promise.all([
+    getEnvironmentContextForLinkSurvey(survey.environmentId),
+    findMatchingLocale(),
+    // Fetch existing response for this contact
+    getExistingContactResponse(survey.id, contactId)(),
+  ]);
+
+  // Get multi-language permission
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(
+    environmentContext.organizationBilling.plan
+  );
+
+  // Fetch responseCount only if needed
+  const responseCount = survey.welcomeCard.showResponseCount
+    ? await getResponseCountBySurveyId(survey.id)
+    : undefined;
 
   return renderSurvey({
     survey,
@@ -106,5 +128,10 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     contactId,
     isPreview,
     singleUseId,
+    singleUseResponse,
+    environmentContext,
+    locale,
+    isMultiLanguageAllowed,
+    responseCount,
   });
 };

@@ -150,7 +150,7 @@ describe("no-code-event-listeners file", () => {
 
     await checkPageUrl();
 
-    expect(handleUrlFilters).toHaveBeenCalledWith([{ value: "/some-path", rule: "contains" }]);
+    expect(handleUrlFilters).toHaveBeenCalledWith([{ value: "/some-path", rule: "contains" }], "or");
     expect(trackNoCodeAction).toHaveBeenCalledWith("pageViewAction");
   });
 
@@ -480,7 +480,8 @@ describe("no-code-event-listeners file", () => {
 
     test("checkScrollDepth filters by URL", async () => {
       (handleUrlFilters as Mock).mockImplementation(
-        (urlFilters: TActionClassNoCodeConfig["urlFilters"]) => urlFilters[0]?.value === "valid-scroll"
+        (urlFilters: TActionClassNoCodeConfig["urlFilters"], _connector?: "or" | "and") =>
+          urlFilters[0]?.value === "valid-scroll"
       );
       (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
 

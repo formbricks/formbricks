@@ -7,8 +7,10 @@ import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
+import { E2E_TESTING } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
+import { getInstanceId } from "@/lib/instance";
 import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
@@ -260,14 +262,23 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     // first millisecond of next year => current year is fully included
     const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
 
-    const responseCount = await prisma.response.count({
-      where: {
-        createdAt: {
-          gte: startOfYear,
-          lt: startOfNextYear,
+    const [instanceId, responseCount] = await Promise.all([
+      // Skip instance ID during E2E tests to avoid license key conflicts
+      // as the instance ID changes with each test run
+      E2E_TESTING ? null : getInstanceId(),
+      prisma.response.count({
+        where: {
+          createdAt: {
+            gte: startOfYear,
+            lt: startOfNextYear,
+          },
         },
-      },
-    });
+      }),
+    ]);
+
+    // No organization exists, cannot perform license check
+    // (skip this check during E2E tests as we intentionally use null)
+    if (!E2E_TESTING && !instanceId) return null;
 
     const proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
     const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
@@ -275,11 +286,17 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.API.TIMEOUT_MS);
 
+    const payload: Record<string, unknown> = {
+      licenseKey: env.ENTERPRISE_LICENSE_KEY,
+      usage: { responseCount },
+    };
+
+    if (instanceId) {
+      payload.instanceId = instanceId;
+    }
+
     const res = await fetch(CONFIG.API.ENDPOINT, {
-      body: JSON.stringify({
-        licenseKey: env.ENTERPRISE_LICENSE_KEY,
-        usage: { responseCount },
-      }),
+      body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" },
       method: "POST",
       agent,

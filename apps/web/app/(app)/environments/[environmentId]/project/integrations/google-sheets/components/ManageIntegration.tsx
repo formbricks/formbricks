@@ -4,7 +4,6 @@ import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -15,10 +14,9 @@ import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 
 interface ManageIntegrationProps {
-  environment: TEnvironment;
   googleSheetIntegration: TIntegrationGoogleSheets;
   setOpenAddIntegrationModal: (v: boolean) => void;
   setIsConnected: (v: boolean) => void;
@@ -27,7 +25,6 @@ interface ManageIntegrationProps {
 }
 
 export const ManageIntegration = ({
-  environment,
   googleSheetIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
@@ -90,12 +87,7 @@ export const ManageIntegration = ({
       </div>
       {!integrationArray || integrationArray.length === 0 ? (
         <div className="mt-4 w-full">
-          <EmptySpaceFiller
-            type="table"
-            environment={environment}
-            noWidgetRequired={true}
-            emptyMessage={t("environments.integrations.google_sheets.no_integrations_yet")}
-          />
+          <EmptyState text={t("environments.integrations.google_sheets.no_integrations_yet")} />
         </div>
       ) : (
         <div className="mt-4 flex w-full flex-col items-center justify-center">
@@ -118,7 +110,7 @@ export const ManageIntegration = ({
                   }}>
                   <div className="col-span-2 text-center">{data.surveyName}</div>
                   <div className="col-span-2 text-center">{data.spreadsheetName}</div>
-                  <div className="col-span-2 text-center">{data.questions}</div>
+                  <div className="col-span-2 text-center">{data.elements}</div>
                   <div className="col-span-2 text-center">{timeSince(data.createdAt.toString(), locale)}</div>
                 </button>
               );

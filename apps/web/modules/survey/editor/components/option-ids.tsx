@@ -1,26 +1,35 @@
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 
-interface OptionIdsProps {
-  question: TSurveyQuestion;
+interface OptionIdsElementProps {
+  type: "element";
+  element: TSurveyElement;
   selectedLanguageCode: string;
 }
 
-export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) => {
+interface OptionIdsVariablesProps {
+  type: "variables";
+  variables: TSurveyVariable[];
+}
+
+type OptionIdsProps = OptionIdsElementProps | OptionIdsVariablesProps;
+
+export const OptionIds = (props: OptionIdsProps) => {
   const { t } = useTranslation();
 
-  const renderChoiceIds = () => {
-    switch (question.type) {
-      case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
-      case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
-      case TSurveyQuestionTypeEnum.Ranking:
+  const renderChoiceIds = (element: TSurveyElement, selectedLanguageCode: string) => {
+    switch (element.type) {
+      case TSurveyElementTypeEnum.MultipleChoiceSingle:
+      case TSurveyElementTypeEnum.MultipleChoiceMulti:
+      case TSurveyElementTypeEnum.Ranking:
         return (
           <div className="flex flex-col gap-2">
-            {question.choices.map((choice) => (
+            {element.choices.map((choice) => (
               <div key={choice.id}>
                 <IdBadge id={choice.id} label={getLocalizedValue(choice.label, selectedLanguageCode)} />
               </div>
@@ -28,10 +37,10 @@ export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) =>
           </div>
         );
 
-      case TSurveyQuestionTypeEnum.PictureSelection:
+      case TSurveyElementTypeEnum.PictureSelection:
         return (
           <div className="flex flex-col gap-3">
-            {question.choices.map((choice) => {
+            {element.choices.map((choice) => {
               const imageUrl = choice.imageUrl;
               if (!imageUrl) return null;
               return (
@@ -59,10 +68,31 @@ export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) =>
     }
   };
 
+  const renderVariableIds = (variables: TSurveyVariable[]) => {
+    return (
+      <div className="flex flex-col gap-2">
+        {variables.map((variable) => (
+          <div key={variable.id}>
+            <IdBadge id={variable.id} label={variable.name} />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  if (props.type === "variables") {
+    return (
+      <div className="space-y-3">
+        <Label className="text-sm font-medium text-gray-700">{t("common.variable_ids")}</Label>
+        <div className="w-full">{renderVariableIds(props.variables)}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium text-gray-700">{t("common.option_ids")}</Label>
-      <div className="w-full">{renderChoiceIds()}</div>
+      <div className="w-full">{renderChoiceIds(props.element, props.selectedLanguageCode)}</div>
     </div>
   );
 };

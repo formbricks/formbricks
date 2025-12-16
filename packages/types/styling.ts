@@ -15,6 +15,12 @@ export const ZCardArrangement = z.object({
   appSurveys: ZCardArrangementOptions,
 });
 
+export const ZLogo = z.object({
+  url: z.string().optional(),
+  bgColor: z.string().optional(),
+});
+export type TLogo = z.infer<typeof ZLogo>;
+
 export const ZSurveyStylingBackground = z
   .object({
     bg: z.string().nullish(),
@@ -48,6 +54,7 @@ export const ZBaseStyling = z.object({
   background: ZSurveyStylingBackground.nullish(),
   hideProgressBar: z.boolean().nullish(),
   isLogoHidden: z.boolean().nullish(),
+  logo: ZLogo.nullish(),
 });
 
 export type TBaseStyling = z.infer<typeof ZBaseStyling>;

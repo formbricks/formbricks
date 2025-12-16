@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
 
 const createContainerId = () => `formbricks-survey-container`;
+
+// Module-level flag to prevent concurrent script loads across component instances
+let isLoadingScript = false;
+
 declare global {
   interface Window {
     formbricksSurveys: {
@@ -10,6 +14,7 @@ declare global {
       renderSurveyModal: (props: SurveyContainerProps) => void;
       renderSurvey: (props: SurveyContainerProps) => void;
       onFilePick: (files: { name: string; type: string; base64: string }[]) => void;
+      setNonce: (nonce: string | undefined) => void;
     };
   }
 }
@@ -26,8 +31,11 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     [containerId, props, getRecaptchaToken]
   );
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const hasLoadedRef = useRef(false);
 
   const loadSurveyScript: () => Promise<void> = async () => {
+    // Set loading flag immediately to prevent concurrent loads
+    isLoadingScript = true;
     try {
       const response = await fetch("/js/surveys.umd.cjs");
 
@@ -42,12 +50,20 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
 
       document.head.appendChild(scriptElement);
       setIsScriptLoaded(true);
+      hasLoadedRef.current = true;
     } catch (error) {
       throw error;
+    } finally {
+      isLoadingScript = false;
     }
   };
 
   useEffect(() => {
+    // Prevent duplicate loads across multiple renders or component instances
+    if (hasLoadedRef.current || isLoadingScript) {
+      return;
+    }
+
     const loadScript = async () => {
       if (!window.formbricksSurveys) {
         try {
@@ -64,7 +80,8 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     };
 
     loadScript();
-  }, [containerId, props, renderInline]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props]);
 
   useEffect(() => {
     if (isScriptLoaded) {

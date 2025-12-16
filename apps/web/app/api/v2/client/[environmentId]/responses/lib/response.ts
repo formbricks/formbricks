@@ -6,12 +6,10 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import { handleBillingLimitsCheck } from "@/app/api/lib/utils";
 import { responseSelection } from "@/app/api/v1/client/[environmentId]/responses/lib/response";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContact } from "./contact";
@@ -91,7 +89,6 @@ export const createResponse = async (
   tx?: Prisma.TransactionClient
 ): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
-  captureTelemetry("response created");
 
   const { environmentId, contactId, finished, ttc: initialTtc } = responseInput;
 
@@ -128,8 +125,6 @@ export const createResponse = async (
         : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
-
-    await handleBillingLimitsCheck(environmentId, organization.id, organization.billing);
 
     return response;
   } catch (error) {

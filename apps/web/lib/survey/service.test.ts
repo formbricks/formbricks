@@ -13,7 +13,6 @@ import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import {
   mockActionClass,
@@ -34,6 +33,7 @@ import {
   handleTriggerUpdates,
   loadNewSegmentInSurvey,
   updateSurvey,
+  updateSurveyInternal,
 } from "./service";
 
 // Mock organization service
@@ -42,11 +42,6 @@ vi.mock("@/lib/organization/service", () => ({
     id: "org123",
   }),
   subscribeOrganizationMembersToSurveyResponses: vi.fn(),
-}));
-
-// Mock posthogServer
-vi.mock("@/lib/posthogServer", () => ({
-  capturePosthogEnvironmentEvent: vi.fn(),
 }));
 
 // Mock actionClass service
@@ -67,7 +62,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![0].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -81,7 +76,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![0].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -95,7 +90,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![1].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -109,7 +104,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![1].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -123,7 +118,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[2].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![2].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -137,7 +132,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![3].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -151,7 +146,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![3].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -165,7 +160,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![4].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -179,7 +174,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![4].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -193,7 +188,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[5].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![5].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -646,7 +641,6 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
-      expect(capturePosthogEnvironmentEvent).toHaveBeenCalled();
     });
 
     test("creates a private segment for app surveys", async () => {
@@ -952,6 +946,77 @@ describe("Tests for getSurveysBySegmentId", () => {
       prisma.survey.findMany.mockRejectedValueOnce(new Error("Unexpected error"));
 
       await expect(getSurveysBySegmentId(mockSegmentId)).rejects.toThrow(Error);
+    });
+  });
+});
+
+describe("updateSurveyDraftAction", () => {
+  beforeEach(() => {
+    vi.mocked(getActionClasses).mockResolvedValue([mockActionClass] as TActionClass[]);
+    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganizationOutput);
+  });
+
+  describe("Happy Path", () => {
+    test("should save draft with missing translations", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockSurveyOutput);
+
+      // Create a survey with incomplete i18n/fields
+      const incompleteSurvey = {
+        ...updateSurveyInput,
+        questions: [
+          {
+            id: "q1",
+            type: TSurveyQuestionTypeEnum.OpenText,
+            // Missing headline or other required fields
+          },
+        ],
+      } as unknown as TSurvey;
+
+      // Expect success (skipValidation = true)
+      const result = await updateSurveyInternal(incompleteSurvey, true);
+      expect(result).toBeDefined();
+      expect(prisma.survey.update).toHaveBeenCalled();
+    });
+
+    test("should allow draft with invalid images if gating is applied", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockSurveyOutput);
+
+      const surveyWithInvalidImage = {
+        ...updateSurveyInput,
+        questions: [
+          {
+            id: "q1",
+            type: TSurveyQuestionTypeEnum.OpenText,
+            headline: { default: "Question" },
+            imageUrl: "http://invalid-image-url.com/image.txt", // Invalid image extension
+          },
+        ],
+      } as unknown as TSurvey;
+
+      // Expect success (skipValidation = true)
+      await updateSurveyInternal(surveyWithInvalidImage, true);
+      expect(prisma.survey.update).toHaveBeenCalled();
+    });
+  });
+
+  describe("Sad Path", () => {
+    test("should reject publishing survey with incomplete translations", async () => {
+      // Create a draft with missing translations
+      const incompleteSurvey = {
+        ...updateSurveyInput,
+        questions: [
+          {
+            id: "q1",
+            type: TSurveyQuestionTypeEnum.OpenText,
+            // Missing headline
+          },
+        ],
+      } as unknown as TSurvey;
+
+      // Expect validation error (skipValidation = false)
+      await expect(updateSurveyInternal(incompleteSurvey, false)).rejects.toThrow();
     });
   });
 });

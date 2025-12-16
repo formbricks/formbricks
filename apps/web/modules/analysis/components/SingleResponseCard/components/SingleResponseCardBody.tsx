@@ -8,9 +8,10 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { isValidValue } from "../util";
+import { ElementSkip } from "./ElementSkip";
 import { HiddenFields } from "./HiddenFields";
-import { QuestionSkip } from "./QuestionSkip";
 import { RenderResponse } from "./RenderResponse";
 import { ResponseVariables } from "./ResponseVariables";
 import { VerifiedEmail } from "./VerifiedEmail";
@@ -26,7 +27,8 @@ export const SingleResponseCardBody = ({
   response,
   skippedQuestions,
 }: SingleResponseCardBodyProps) => {
-  const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
+  const elements = getElementsFromBlocks(survey.blocks);
+  const isFirstElementAnswered = elements[0] ? !!response.data[elements[0].id] : false;
   const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {
     // Updated regex to match content between #/ and \#
@@ -52,11 +54,11 @@ export const SingleResponseCardBody = ({
   return (
     <div className="p-6">
       {survey.welcomeCard.enabled && (
-        <QuestionSkip
-          skippedQuestions={[]}
-          questions={survey.questions}
+        <ElementSkip
+          skippedElements={[]}
+          elements={elements}
           status={"welcomeCard"}
-          isFirstQuestionAnswered={isFirstQuestionAnswered}
+          isFirstElementAnswered={isFirstElementAnswered}
           responseData={response.data}
         />
       )}
@@ -64,7 +66,7 @@ export const SingleResponseCardBody = ({
         {survey.isVerifyEmailEnabled && response.data["verifiedEmail"] && (
           <VerifiedEmail responseData={response.data} />
         )}
-        {survey.questions.map((question) => {
+        {elements.map((question) => {
           const skipped = skippedQuestions.find((skippedQuestionElement) =>
             skippedQuestionElement.includes(question.id)
           );
@@ -92,7 +94,7 @@ export const SingleResponseCardBody = ({
                   </p>
                   <div dir="auto">
                     <RenderResponse
-                      question={question}
+                      element={question}
                       survey={survey}
                       responseData={response.data[question.id]}
                       language={response.language}
@@ -101,9 +103,9 @@ export const SingleResponseCardBody = ({
                   </div>
                 </div>
               ) : (
-                <QuestionSkip
-                  skippedQuestions={skipped}
-                  questions={survey.questions}
+                <ElementSkip
+                  skippedElements={skipped}
+                  elements={elements}
                   responseData={response.data}
                   status={
                     response.finished ||

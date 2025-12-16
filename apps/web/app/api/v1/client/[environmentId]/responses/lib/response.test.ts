@@ -1,15 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseInput } from "@formbricks/types/responses";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@/lib/organization/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { createResponse, createResponseWithQuotaEvaluation } from "./response";
@@ -24,20 +19,11 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/lib/organization/service", () => ({
-  getMonthlyOrganizationResponseCount: vi.fn(),
   getOrganizationByEnvironmentId: vi.fn(),
-}));
-
-vi.mock("@/lib/posthogServer", () => ({
-  sendPlanLimitsReachedEventToPosthogWeekly: vi.fn(),
 }));
 
 vi.mock("@/lib/response/utils", () => ({
   calculateTtcTotal: vi.fn((ttc) => ttc),
-}));
-
-vi.mock("@/lib/telemetry", () => ({
-  captureTelemetry: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/validate", () => ({
@@ -138,35 +124,6 @@ describe("createResponse", () => {
     );
   });
 
-  test("should check response limits if IS_FORMBRICKS_CLOUD is true", async () => {
-    mockIsFormbricksCloud = true;
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
-
-    await createResponse(mockResponseInput, prisma);
-
-    expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
-    expect(sendPlanLimitsReachedEventToPosthogWeekly).not.toHaveBeenCalled();
-  });
-
-  test("should send limit reached event if IS_FORMBRICKS_CLOUD is true and limit reached", async () => {
-    mockIsFormbricksCloud = true;
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(100);
-
-    await createResponse(mockResponseInput, prisma);
-
-    expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
-    expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalledWith(environmentId, {
-      plan: "free",
-      limits: {
-        projects: null,
-        monthly: {
-          responses: 100,
-          miu: null,
-        },
-      },
-    });
-  });
-
   test("should throw ResourceNotFoundError if organization not found", async () => {
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
     await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(ResourceNotFoundError);
@@ -185,20 +142,6 @@ describe("createResponse", () => {
     const genericError = new Error("Generic database error");
     vi.mocked(prisma.response.create).mockRejectedValue(genericError);
     await expect(createResponse(mockResponseInput)).rejects.toThrow(genericError);
-  });
-
-  test("should log error but not throw if sendPlanLimitsReachedEventToPosthogWeekly fails", async () => {
-    mockIsFormbricksCloud = true;
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(100);
-    const posthogError = new Error("PostHog error");
-    vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockRejectedValue(posthogError);
-
-    await createResponse(mockResponseInput);
-
-    expect(logger.error).toHaveBeenCalledWith(
-      posthogError,
-      "Error sending plan limits reached event to Posthog"
-    );
   });
 });
 

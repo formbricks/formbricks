@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -12,7 +13,7 @@ import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 
 interface ResponseTimelineProps {
   surveys: TSurvey[];
@@ -33,6 +34,7 @@ export const ResponseFeed = ({
   locale,
   projectPermission,
 }: ResponseTimelineProps) => {
+  const { t } = useTranslation();
   const [fetchedResponses, setFetchedResponses] = useState(responses);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export const ResponseFeed = ({
   return (
     <>
       {fetchedResponses.length === 0 ? (
-        <EmptySpaceFiller type="response" environment={environment} />
+        <EmptyState text={t("environments.contacts.no_responses_found")} />
       ) : (
         fetchedResponses.map((response) => (
           <ResponseSurveyCard

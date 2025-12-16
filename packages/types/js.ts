@@ -7,17 +7,13 @@ import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
 import { ZUploadFileConfig } from "./storage";
 import { ZSurvey } from "./surveys/types";
 
-export const ZJsPerson = z.object({
-  id: z.string().cuid2().optional(),
-  userId: z.string().optional(),
-});
-
 export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
   .pick({
     id: true,
     name: true,
     welcomeCard: true,
     questions: true,
+    blocks: true,
     variables: true,
     type: true,
     showLanguageSwitch: true,
@@ -109,42 +105,6 @@ export const ZJsUserIdentifyInput = z.object({
 
 export type TJsPersonIdentifyInput = z.infer<typeof ZJsUserIdentifyInput>;
 
-export const ZJsConfig = z.object({
-  environmentId: z.string().cuid(),
-  apiHost: z.string(),
-  environmentState: ZJsEnvironmentState,
-  personState: ZJsPersonState,
-  filteredSurveys: z.array(ZJsEnvironmentStateSurvey).default([]),
-  attributes: z.record(z.string()),
-  status: z.object({
-    value: z.enum(["success", "error"]),
-    expiresAt: z.date().nullable(),
-  }),
-});
-
-export type TJsConfig = z.infer<typeof ZJsConfig>;
-
-export const ZJsConfigUpdateInput = ZJsConfig.omit({ status: true }).extend({
-  status: z
-    .object({
-      value: z.enum(["success", "error"]),
-      expiresAt: z.date().nullable(),
-    })
-    .optional(),
-});
-
-export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
-
-export const ZJsConfigInput = z.object({
-  environmentId: z.string().cuid2(),
-  apiHost: z.string(),
-  errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
-  userId: z.string().optional(),
-  attributes: z.record(z.string()).optional(),
-});
-
-export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
-
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid2(),
   userId: z.string().min(1).max(255),
@@ -152,11 +112,6 @@ export const ZJsPeopleUserIdInput = z.object({
 
 export const ZJsContactsUpdateAttributeInput = z.object({
   attributes: ZAttributes,
-});
-
-export const ZJsUserUpdateInput = z.object({
-  userId: z.string().trim().min(1),
-  attributes: ZAttributes.optional(),
 });
 
 export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsContactsUpdateAttributeInput>;

@@ -7,7 +7,19 @@
   },
   "locale": {
     "source": "en-US",
-    "targets": ["de-DE", "fr-FR", "ja-JP", "pt-BR", "pt-PT", "ro-RO", "zh-Hans-CN", "zh-Hant-TW", "nl-NL"]
+    "targets": [
+      "de-DE",
+      "fr-FR",
+      "ja-JP",
+      "pt-BR",
+      "pt-PT",
+      "ro-RO",
+      "zh-Hans-CN",
+      "zh-Hant-TW",
+      "nl-NL",
+      "es-ES",
+      "sv-SE"
+    ]
   },
   "version": 1.8
 }

@@ -1,10 +1,11 @@
 import { TFunction } from "i18next";
-import { TSurveyQuestionTypeEnum, ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 
 export const getLogicRules = (t: TFunction) => {
   return {
-    question: {
-      [`${TSurveyQuestionTypeEnum.OpenText}.text`]: {
+    element: {
+      [`${TSurveyElementTypeEnum.OpenText}.text`]: {
         options: [
           {
             label: t("environments.surveys.edit.equals"),
@@ -48,7 +49,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [`${TSurveyQuestionTypeEnum.OpenText}.number`]: {
+      [`${TSurveyElementTypeEnum.OpenText}.number`]: {
         options: [
           {
             label: "=",
@@ -84,7 +85,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.MultipleChoiceSingle]: {
+      [TSurveyElementTypeEnum.MultipleChoiceSingle]: {
         options: [
           {
             label: t("environments.surveys.edit.equals"),
@@ -108,7 +109,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.MultipleChoiceMulti]: {
+      [TSurveyElementTypeEnum.MultipleChoiceMulti]: {
         options: [
           {
             label: t("environments.surveys.edit.equals"),
@@ -144,7 +145,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.PictureSelection]: {
+      [TSurveyElementTypeEnum.PictureSelection]: {
         options: [
           {
             label: t("environments.surveys.edit.equals"),
@@ -180,7 +181,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.Rating]: {
+      [TSurveyElementTypeEnum.Rating]: {
         options: [
           {
             label: "=",
@@ -216,7 +217,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.NPS]: {
+      [TSurveyElementTypeEnum.NPS]: {
         options: [
           {
             label: "=",
@@ -252,19 +253,19 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.CTA]: {
+      [TSurveyElementTypeEnum.CTA]: {
         options: [
           {
             label: t("environments.surveys.edit.is_clicked"),
             value: ZSurveyLogicConditionsOperator.Enum.isClicked,
           },
           {
-            label: t("environments.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
+            label: t("environments.surveys.edit.is_not_clicked"),
+            value: ZSurveyLogicConditionsOperator.Enum.isNotClicked,
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.Consent]: {
+      [TSurveyElementTypeEnum.Consent]: {
         options: [
           {
             label: t("environments.surveys.edit.is_accepted"),
@@ -276,7 +277,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.Date]: {
+      [TSurveyElementTypeEnum.Date]: {
         options: [
           {
             label: t("environments.surveys.edit.equals"),
@@ -304,7 +305,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.FileUpload]: {
+      [TSurveyElementTypeEnum.FileUpload]: {
         options: [
           {
             label: t("environments.surveys.edit.is_submitted"),
@@ -316,7 +317,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.Ranking]: {
+      [TSurveyElementTypeEnum.Ranking]: {
         options: [
           {
             label: t("environments.surveys.edit.is_submitted"),
@@ -328,7 +329,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.Cal]: {
+      [TSurveyElementTypeEnum.Cal]: {
         options: [
           {
             label: t("environments.surveys.edit.is_booked"),
@@ -340,7 +341,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.Matrix]: {
+      [TSurveyElementTypeEnum.Matrix]: {
         options: [
           {
             label: t("environments.surveys.edit.is_partially_submitted"),
@@ -356,7 +357,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [`${TSurveyQuestionTypeEnum.Matrix}.row`]: {
+      [`${TSurveyElementTypeEnum.Matrix}.row`]: {
         options: [
           {
             label: t("environments.surveys.edit.equals"),
@@ -381,7 +382,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.Address]: {
+      [TSurveyElementTypeEnum.Address]: {
         options: [
           {
             label: t("environments.surveys.edit.is_submitted"),
@@ -393,7 +394,7 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyQuestionTypeEnum.ContactInfo]: {
+      [TSurveyElementTypeEnum.ContactInfo]: {
         options: [
           {
             label: t("environments.surveys.edit.is_submitted"),
@@ -517,6 +518,6 @@ export const getLogicRules = (t: TFunction) => {
   };
 };
 
-export type TLogicRuleOption = ReturnType<typeof getLogicRules>["question"][keyof ReturnType<
+export type TLogicRuleOption = ReturnType<typeof getLogicRules>["element"][keyof ReturnType<
   typeof getLogicRules
->["question"]]["options"];
+>["element"]]["options"];

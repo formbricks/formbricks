@@ -8,6 +8,7 @@ import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { deleteResponseAction, getResponseAction } from "./actions";
@@ -49,6 +50,9 @@ export const SingleResponseCard = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const skippedQuestions: string[][] = useMemo(() => {
+    // Derive questions from blocks
+    const questions = getElementsFromBlocks(survey.blocks);
+
     const flushTemp = (temp: string[], result: string[][], shouldReverse = false) => {
       if (temp.length > 0) {
         if (shouldReverse) temp.reverse();
@@ -61,7 +65,7 @@ export const SingleResponseCard = ({
       const result: string[][] = [];
       let temp: string[] = [];
 
-      for (const question of survey.questions) {
+      for (const question of questions) {
         if (isValidValue(response.data[question.id])) {
           flushTemp(temp, result);
         } else {
@@ -76,8 +80,8 @@ export const SingleResponseCard = ({
       const result: string[][] = [];
       let temp: string[] = [];
 
-      for (let index = survey.questions.length - 1; index >= 0; index--) {
-        const question = survey.questions[index];
+      for (let index = questions.length - 1; index >= 0; index--) {
+        const question = questions[index];
         const hasNoData = !response.data[question.id];
         const shouldSkip = hasNoData && (result.length === 0 || !isValidValue(response.data[question.id]));
 
@@ -92,7 +96,7 @@ export const SingleResponseCard = ({
     };
 
     return response.finished ? processFinishedResponse() : processUnfinishedResponse();
-  }, [response.id, response.finished, response.data, survey.questions]);
+  }, [response.finished, response.data, survey.blocks]);
 
   const handleDeleteResponse = async () => {
     setIsDeleting(true);
@@ -143,6 +147,8 @@ export const SingleResponseCard = ({
           environmentTags={environmentTags}
           updateFetchedResponses={updateFetchedResponses}
           isReadOnly={isReadOnly}
+          response={response}
+          locale={locale}
         />
 
         <DeleteDialog

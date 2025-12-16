@@ -16,6 +16,7 @@ export const selectSurvey = {
   status: true,
   welcomeCard: true,
   questions: true,
+  blocks: true,
   endings: true,
   hiddenFields: true,
   variables: true,
@@ -45,11 +46,11 @@ export const selectSurvey = {
       language: {
         select: {
           id: true,
-          code: true,
-          alias: true,
           createdAt: true,
           updatedAt: true,
+          code: true,
           projectId: true,
+          alias: true,
         },
       },
     },
@@ -72,7 +73,15 @@ export const selectSurvey = {
     },
   },
   segment: {
-    include: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      environmentId: true,
+      title: true,
+      description: true,
+      isPrivate: true,
+      filters: true,
       surveys: {
         select: {
           id: true,
