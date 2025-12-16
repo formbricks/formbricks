@@ -6,6 +6,11 @@ import { ElementHeader } from "@/components/general/element-header";
 import { cn } from "@/lib/utils";
 
 /**
+ * Text direction type for ranking element
+ */
+type TextDirection = "ltr" | "rtl" | "auto";
+
+/**
  * Option for ranking element
  */
 export interface RankingOption {
@@ -35,7 +40,7 @@ interface RankingProps {
   /** Error message to display */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
-  dir?: "ltr" | "rtl" | "auto";
+  dir?: TextDirection;
   /** Whether the controls are disabled */
   disabled?: boolean;
 }
@@ -46,10 +51,10 @@ interface RankingItemProps {
   onItemClick: (item: RankingOption) => void;
   onMove: (itemId: string, direction: "up" | "down") => void;
   disabled: boolean;
-  dir?: "ltr" | "rtl" | "auto";
+  dir?: TextDirection;
 }
 
-function getTopButtonRadiusClass(isFirst: boolean, dir?: "ltr" | "rtl" | "auto"): string {
+function getTopButtonRadiusClass(isFirst: boolean, dir?: TextDirection): string {
   if (isFirst) {
     return "cursor-not-allowed opacity-30";
   }
@@ -59,7 +64,7 @@ function getTopButtonRadiusClass(isFirst: boolean, dir?: "ltr" | "rtl" | "auto")
   return "rounded-tr-md";
 }
 
-function getBottomButtonRadiusClass(isLast: boolean, dir?: "ltr" | "rtl" | "auto"): string {
+function getBottomButtonRadiusClass(isLast: boolean, dir?: TextDirection): string {
   if (isLast) {
     return "cursor-not-allowed opacity-30";
   }
