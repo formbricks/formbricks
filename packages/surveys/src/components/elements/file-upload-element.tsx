@@ -115,14 +115,16 @@ export function FileUploadElement({
    */
   const filterDuplicateFiles = useCallback(
     (files: File[]): { filteredFiles: File[]; duplicateFiles: File[] } => {
-      const existingFileNames = (value || []).map((url) => {
-        const fileName = fileNames[url] || url.split("/").pop() || "";
-        return fileName.toLowerCase();
-      });
+      const existingFileNames = new Set(
+        (value || []).map((url) => {
+          const fileName = fileNames[url] || url.split("/").pop() || "";
+          return fileName.toLowerCase();
+        })
+      );
 
-      const duplicateFiles = files.filter((file) => existingFileNames.includes(file.name.toLowerCase()));
+      const duplicateFiles = files.filter((file) => existingFileNames.has(file.name.toLowerCase()));
 
-      const filteredFiles = files.filter((file) => !existingFileNames.includes(file.name.toLowerCase()));
+      const filteredFiles = files.filter((file) => !existingFileNames.has(file.name.toLowerCase()));
 
       if (duplicateFiles.length > 0) {
         const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");

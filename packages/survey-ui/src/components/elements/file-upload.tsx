@@ -75,7 +75,7 @@ function FileUpload({
   videoUrl,
   imageAltText,
   placeholderText = "Click or drag to upload files",
-}: FileUploadProps): React.JSX.Element {
+}: Readonly<FileUploadProps>): React.JSX.Element {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Ensure value is always an array

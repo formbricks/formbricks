@@ -143,19 +143,20 @@ function DropdownVariant({
           {options.map((option) => {
             const isChecked = selectedValues.includes(option.id);
             const optionId = `${inputId}-${option.id}`;
+            const handleToggle = () => {
+              if (isChecked) {
+                handleOptionRemove(option.id);
+              } else {
+                handleOptionAdd(option.id);
+              }
+            };
 
             return (
               <DropdownMenuCheckboxItem
                 key={option.id}
                 id={optionId}
                 checked={isChecked}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    handleOptionAdd(option.id);
-                  } else {
-                    handleOptionRemove(option.id);
-                  }
-                }}
+                onCheckedChange={handleToggle}
                 disabled={disabled}>
                 <span className={optionLabelClassName}>{option.label}</span>
               </DropdownMenuCheckboxItem>
@@ -165,11 +166,11 @@ function DropdownVariant({
             <DropdownMenuCheckboxItem
               id={`${inputId}-${otherOptionId}`}
               checked={isOtherSelected}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  handleOptionAdd(otherOptionId);
-                } else {
+              onCheckedChange={() => {
+                if (isOtherSelected) {
                   handleOptionRemove(otherOptionId);
+                } else {
+                  handleOptionAdd(otherOptionId);
                 }
               }}
               disabled={disabled}>
