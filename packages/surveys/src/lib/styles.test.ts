@@ -6,12 +6,9 @@ import { addCustomThemeToDom, addStylesToDom, getStyleNonce, setStyleNonce } fro
 // Mock CSS module imports
 vi.mock("@/styles/global.css?inline", () => ({ default: ".global {}" }));
 vi.mock("@/styles/preflight.css?inline", () => ({ default: ".preflight {}" }));
-vi.mock("react-calendar/dist/Calendar.css?inline", () => ({ default: ".calendar {}" }));
-vi.mock("react-date-picker/dist/DatePicker.css?inline", () => ({ default: ".datePicker {}" }));
 vi.mock("../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline", () => ({
   default: ".editor {}",
 }));
-vi.mock("../styles/date-picker.css?inline", () => ({ default: ".datePickerCustom {}" }));
 
 // Mock color utility functions if they have complex dependencies or for controlled testing
 // For now, we assume they work as expected or are simple enough not to need mocking here.
@@ -136,7 +133,7 @@ describe("addStylesToDom", () => {
     expect(styleElement.tagName).toBe("STYLE");
     expect(document.head.contains(styleElement)).toBe(true);
 
-    const expectedCss = ".preflight {}.global {}.editor {}.datePicker {}.calendar {}.datePickerCustom {}";
+    const expectedCss = ".preflight {}.global {}.editor {}";
     expect(styleElement.innerHTML).toBe(expectedCss);
   });
 

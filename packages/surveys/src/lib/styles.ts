@@ -1,5 +1,3 @@
-import calendarCss from "react-calendar/dist/Calendar.css?inline";
-import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
 // Add this import for survey-ui CSS variables
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
 import { type TProjectStyling } from "@formbricks/types/project";
@@ -8,7 +6,6 @@ import { isLight, mixColor } from "@/lib/color";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
-import datePickerCustomCss from "../styles/date-picker.css?inline";
 
 // Store the nonce globally for style elements
 let styleNonce: string | undefined;
@@ -47,8 +44,7 @@ export const addStylesToDom = () => {
     }
 
     // Include survey-ui CSS variables before other styles
-    styleElement.innerHTML =
-      preflight + global + editorCss + datePickerCss + calendarCss + datePickerCustomCss + surveyUiCss;
+    styleElement.innerHTML = preflight + global + editorCss + surveyUiCss;
     document.head.appendChild(styleElement);
   } else {
     // If style element already exists, update its nonce if needed
