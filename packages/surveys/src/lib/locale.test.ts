@@ -1,5 +1,5 @@
 import { enUS } from "date-fns/locale/en-US";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { loadLocale } from "./locale";
 
 describe("loadLocale", () => {
@@ -161,6 +161,34 @@ describe("loadLocale", () => {
     test("should fall back to enUS when locale code is invalid", async () => {
       const result = await loadLocale("invalid-locale-xyz");
       expect(result).toBe(enUS);
+    });
+
+    test("should fall back to enUS and log error when import fails", async () => {
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      // Mock the date-fns locale module to throw an error
+      vi.doMock("date-fns/locale/de", () => {
+        throw new Error("Module not found");
+      });
+
+      // Clear the module cache to ensure the mock is used
+      vi.resetModules();
+
+      // Re-import the function to use the mocked module
+      const { loadLocale: loadLocaleWithMock } = await import("./locale");
+
+      const result = await loadLocaleWithMock("de");
+
+      expect(result).toBe(enUS);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Failed to load locale: de, falling back to en-US",
+        expect.any(Error)
+      );
+
+      // Restore
+      vi.doUnmock("date-fns/locale/de");
+      vi.resetModules();
+      consoleErrorSpy.mockRestore();
     });
   });
 });
