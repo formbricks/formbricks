@@ -101,7 +101,7 @@ function FileUpload({
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>): void => {
     e.preventDefault();
     e.stopPropagation();
-    if (onFileSelect && e.dataTransfer.files) {
+    if (onFileSelect && e.dataTransfer.files.length > 0) {
       onFileSelect(e.dataTransfer.files);
     }
   };
