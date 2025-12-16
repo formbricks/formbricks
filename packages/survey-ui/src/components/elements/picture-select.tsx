@@ -134,7 +134,8 @@ function PictureSelect({
                     className="absolute top-[5%] right-[5%]"
                     onPointerDown={(e) => {
                       e.stopPropagation();
-                    }}>
+                    }}
+                    role="presentation">
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => {
@@ -197,7 +198,8 @@ function PictureSelect({
                     className="absolute top-[5%] right-[5%]"
                     onPointerDown={(e) => {
                       e.stopPropagation();
-                    }}>
+                    }}
+                    role="presentation">
                     <RadioGroupItem
                       value={option.id}
                       id={optionId}

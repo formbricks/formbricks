@@ -139,7 +139,12 @@ function Matrix({
                               isLastColumn && !rowHasError && "rounded-r-input"
                             )}>
                             <Label htmlFor={cellId} className="flex cursor-pointer justify-center">
-                              <RadioGroupItem value={column.id} id={cellId} disabled={disabled} />
+                              <RadioGroupItem
+                                value={column.id}
+                                id={cellId}
+                                disabled={disabled}
+                                aria-label={`${row.label}-${column.label}`}
+                              />
                             </Label>
                           </td>
                         );

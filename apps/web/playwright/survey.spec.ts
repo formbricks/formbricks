@@ -167,9 +167,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.getByText(surveys.createAndSubmit.fileUploadQuestion.question)).toBeVisible();
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(
-        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("button").nth(0)
-      ).toBeVisible();
+      await expect(page.getByRole("button", { name: "Upload files by clicking or" })).toBeVisible();
 
       await page.locator("input[type=file]").setInputFiles({
         name: "file.doc",
@@ -193,22 +191,22 @@ test.describe("Survey Create & Submit Response without logic", async () => {
         page.getByRole("rowheader", { name: surveys.createAndSubmit.matrix.rows[2] })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[0] })
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[0], exact: true })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[1] })
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[1], exact: true })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[2] })
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[2], exact: true })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[3] })
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[3], exact: true })
       ).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("cell", { name: "Roses – 0" }).locator("div").click();
-      await page.getByRole("cell", { name: "Trees – 0" }).locator("div").click();
-      await page.getByRole("cell", { name: "Ocean – 0" }).locator("div").click();
+      await page.getByRole("radio", { name: "Roses-0" }).click();
+      await page.getByRole("radio", { name: "Trees-0" }).click();
+      await page.getByRole("radio", { name: "Ocean-0" }).click();
       await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
 
       // Address Question
@@ -898,22 +896,22 @@ test.describe("Testing Survey with advanced logic", async () => {
         page.getByRole("rowheader", { name: surveys.createWithLogicAndSubmit.matrix.rows[2] })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[0] })
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[0], exact: true })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[1] })
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[1], exact: true })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[2] })
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[2], exact: true })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[3] })
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[3], exact: true })
       ).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("cell", { name: "Roses – 0" }).locator("div").click();
-      await page.getByRole("cell", { name: "Trees – 0" }).locator("div").click();
-      await page.getByRole("cell", { name: "Ocean – 0" }).locator("div").click();
+      await page.getByRole("radio", { name: "Roses-0" }).click();
+      await page.getByRole("radio", { name: "Trees-0" }).click();
+      await page.getByRole("radio", { name: "Ocean-0" }).click();
       await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
       // CTA Question
@@ -942,9 +940,9 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(
-        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("button").nth(0)
-      ).toBeVisible();
+
+      await expect(page.getByRole("button", { name: "Upload files by clicking or" })).toBeVisible();
+
       await page.locator("input[type=file]").setInputFiles({
         name: "file.doc",
         mimeType: "application/msword",
@@ -955,10 +953,8 @@ test.describe("Testing Survey with advanced logic", async () => {
 
       // Date Question
       await expect(page.getByText(surveys.createWithLogicAndSubmit.date.question)).toBeVisible();
-      await page.getByText("Select a date").click();
-      const date = new Date().getDate();
-      const month = new Date().toLocaleString("default", { month: "long" });
-      await page.getByRole("button", { name: `${month} ${date},` }).click();
+      // Click the "Today" button in the date picker - matches format like "Today, Tuesday, December 16th,"
+      await page.getByRole("button", { name: /^Today,/ }).click();
       await page.locator("#questionCard-11").getByRole("button", { name: "Next" }).click();
 
       // Cal Question
