@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 interface ChatwootWidgetProps {
   chatwootBaseUrl: string;
@@ -21,8 +21,14 @@ export const ChatwootWidget = ({
 }: ChatwootWidgetProps) => {
   const userSetRef = useRef(false);
 
-  const setUserInfo = () => {
-    const $chatwoot = (window as any).$chatwoot;
+  const setUserInfo = useCallback(() => {
+    const $chatwoot = (
+      globalThis as unknown as {
+        $chatwoot: {
+          setUser: (userId: string, userInfo: { email?: string | null; name?: string | null }) => void;
+        };
+      }
+    ).$chatwoot;
     if (userId && $chatwoot && !userSetRef.current) {
       $chatwoot.setUser(userId, {
         email: userEmail,
@@ -30,7 +36,7 @@ export const ChatwootWidget = ({
       });
       userSetRef.current = true;
     }
-  };
+  }, [userId, userEmail, userName]);
 
   useEffect(() => {
     if (!chatwootWebsiteToken) return;
@@ -44,7 +50,11 @@ export const ChatwootWidget = ({
     script.async = true;
 
     script.onload = () => {
-      (window as any).chatwootSDK?.run({
+      (
+        globalThis as unknown as {
+          chatwootSDK: { run: (options: { websiteToken: string; baseUrl: string }) => void };
+        }
+      ).chatwootSDK?.run({
         websiteToken: chatwootWebsiteToken,
         baseUrl: chatwootBaseUrl,
       });
@@ -53,17 +63,25 @@ export const ChatwootWidget = ({
     document.head.appendChild(script);
 
     const handleChatwootReady = () => setUserInfo();
-    window.addEventListener("chatwoot:ready", handleChatwootReady);
+    globalThis.addEventListener("chatwoot:ready", handleChatwootReady);
 
     // Check if Chatwoot is already ready
-    if ((window as any).$chatwoot) {
+    if (
+      (
+        globalThis as unknown as {
+          $chatwoot: {
+            setUser: (userId: string, userInfo: { email?: string | null; name?: string | null }) => void;
+          };
+        }
+      ).$chatwoot
+    ) {
       setUserInfo();
     }
 
     return () => {
-      window.removeEventListener("chatwoot:ready", handleChatwootReady);
+      globalThis.removeEventListener("chatwoot:ready", handleChatwootReady);
 
-      const $chatwoot = (window as any).$chatwoot;
+      const $chatwoot = (globalThis as unknown as { $chatwoot: { reset: () => void } }).$chatwoot;
       if ($chatwoot) {
         $chatwoot.reset();
       }
@@ -73,7 +91,7 @@ export const ChatwootWidget = ({
 
       userSetRef.current = false;
     };
-  }, [chatwootBaseUrl, chatwootWebsiteToken, userId, userEmail, userName]);
+  }, [chatwootBaseUrl, chatwootWebsiteToken, userId, userEmail, userName, setUserInfo]);
 
   return null;
 };
