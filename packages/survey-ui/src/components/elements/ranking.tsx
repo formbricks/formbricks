@@ -49,9 +49,29 @@ interface RankingItemProps {
   dir?: "ltr" | "rtl" | "auto";
 }
 
-function RankingItem({ item, rankedIds, onItemClick, onMove, disabled, dir }: RankingItemProps) {
+function getTopButtonRadiusClass(isFirst: boolean, dir?: "ltr" | "rtl" | "auto"): string {
+  if (isFirst) {
+    return "cursor-not-allowed opacity-30";
+  }
+  if (dir === "rtl") {
+    return "rounded-tl-md";
+  }
+  return "rounded-tr-md";
+}
+
+function getBottomButtonRadiusClass(isLast: boolean, dir?: "ltr" | "rtl" | "auto"): string {
+  if (isLast) {
+    return "cursor-not-allowed opacity-30";
+  }
+  if (dir === "rtl") {
+    return "rounded-bl-md";
+  }
+  return "rounded-br-md";
+}
+
+function RankingItem({ item, rankedIds, onItemClick, onMove, disabled, dir }: Readonly<RankingItemProps>) {
   const isRanked = rankedIds.includes(item.id);
-  const rankIndex = rankedIds.findIndex((id) => id === item.id);
+  const rankIndex = rankedIds.indexOf(item.id);
   const isFirst = isRanked && rankIndex === 0;
   const isLast = isRanked && rankIndex === rankedIds.length - 1;
   const displayNumber = isRanked ? rankIndex + 1 : undefined;
@@ -63,19 +83,8 @@ function RankingItem({ item, rankedIds, onItemClick, onMove, disabled, dir }: Ra
   const borderClass = dir === "rtl" ? "border-r" : "border-l";
 
   // RTL-aware border radius classes for control buttons
-  let topButtonRadiusClass = "rounded-tr-md";
-  if (isFirst) {
-    topButtonRadiusClass = "cursor-not-allowed opacity-30";
-  } else if (dir === "rtl") {
-    topButtonRadiusClass = "rounded-tl-md";
-  }
-
-  let bottomButtonRadiusClass = "rounded-br-md";
-  if (isLast) {
-    bottomButtonRadiusClass = "cursor-not-allowed opacity-30";
-  } else if (dir === "rtl") {
-    bottomButtonRadiusClass = "rounded-bl-md";
-  }
+  const topButtonRadiusClass = getTopButtonRadiusClass(isFirst, dir);
+  const bottomButtonRadiusClass = getBottomButtonRadiusClass(isLast, dir);
 
   return (
     <div

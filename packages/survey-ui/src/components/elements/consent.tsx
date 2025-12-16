@@ -75,6 +75,7 @@ function Consent({
             disabled={disabled}
             aria-invalid={Boolean(errorMessage)}
             aria-required={required}
+            aria-label={checkboxLabel}
           />
           {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
           <span className="text-input font-input-weight text-input-text flex-1 leading-none" dir={dir}>

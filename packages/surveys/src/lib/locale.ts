@@ -56,7 +56,7 @@ export async function loadLocale(localeCode?: string): Promise<Locale> {
         return enUS;
     }
   } catch (error) {
-    console.warn(`Failed to load locale: ${localeCode}, falling back to en-US`);
+    console.error(`Failed to load locale: ${localeCode}, falling back to en-US`, error);
     return enUS;
   }
 }

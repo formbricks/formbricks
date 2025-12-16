@@ -84,7 +84,7 @@ function MultiSelect({
   otherValue = "",
   onOtherValueChange,
   exclusiveOptionIds = [],
-}: MultiSelectProps): React.JSX.Element {
+}: Readonly<MultiSelectProps>): React.JSX.Element {
   // Ensure value is always an array
   const selectedValues = Array.isArray(value) ? value : [];
   const hasOtherOption = Boolean(otherOptionId);

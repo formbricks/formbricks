@@ -46,7 +46,7 @@ function DateElement({
   dir = "auto",
   disabled = false,
   dateHtmlLocale = enUS,
-}: DateElementProps): React.JSX.Element {
+}: Readonly<DateElementProps>): React.JSX.Element {
   const [date, setDate] = React.useState<Date | undefined>(value ? new Date(value) : undefined);
 
   // Convert Date to ISO string (YYYY-MM-DD) when date changes

@@ -131,8 +131,7 @@ function PictureSelect({
                   </div>
                   {/* Selection indicator - Checkbox for multi select */}
                   <div
-                    className="absolute right-[5%] top-[5%]"
-                    role="presentation"
+                    className="absolute top-[5%] right-[5%]"
                     onPointerDown={(e) => {
                       e.stopPropagation();
                     }}>
@@ -195,8 +194,7 @@ function PictureSelect({
                   </div>
                   {/* Selection indicator - Radio button for single select */}
                   <div
-                    className="absolute right-[5%] top-[5%]"
-                    role="presentation"
+                    className="absolute top-[5%] right-[5%]"
                     onPointerDown={(e) => {
                       e.stopPropagation();
                     }}>
