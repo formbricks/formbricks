@@ -152,11 +152,10 @@ function MultiSelect({
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Options */}
-      <div className="relative space-y-3">
-        <ElementError errorMessage={errorMessage} dir={dir} />
-
+      <div className="relative">
         {variant === "dropdown" ? (
           <>
+            <ElementError errorMessage={errorMessage} dir={dir} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -214,64 +213,67 @@ function MultiSelect({
             ) : null}
           </>
         ) : (
-          <div className="space-y-2" role="group" aria-label={headline}>
-            {options.map((option) => {
-              const isChecked = selectedValues.includes(option.id);
-              const optionId = `${inputId}-${option.id}`;
+          <>
+            <ElementError errorMessage={errorMessage} dir={dir} />
+            <div className="space-y-2" role="group" aria-label={headline}>
+              {options.map((option) => {
+                const isChecked = selectedValues.includes(option.id);
+                const optionId = `${inputId}-${option.id}`;
 
-              return (
-                <label
-                  key={option.id}
-                  htmlFor={optionId}
-                  className={cn(getOptionContainerClassName(isChecked), isChecked && "z-10")}>
-                  <span className="flex items-center">
-                    <Checkbox
-                      id={optionId}
-                      checked={isChecked}
-                      onCheckedChange={(checked) => {
-                        handleOptionChange(option.id, checked === true);
-                      }}
-                      disabled={disabled}
-                      aria-invalid={Boolean(errorMessage)}
-                    />
-                    <span className={cn("mr-3 ml-3", optionLabelClassName)}>{option.label}</span>
-                  </span>
-                </label>
-              );
-            })}
-            {hasOtherOption && otherOptionId ? (
-              <div className="space-y-2">
-                <label
-                  htmlFor={`${inputId}-${otherOptionId}`}
-                  className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
-                  <span className="flex items-center">
-                    <Checkbox
-                      id={`${inputId}-${otherOptionId}`}
-                      checked={isOtherSelected}
-                      onCheckedChange={(checked) => {
-                        handleOptionChange(otherOptionId, checked === true);
-                      }}
-                      disabled={disabled}
-                      aria-invalid={Boolean(errorMessage)}
-                    />
-                    <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
-                  </span>
-                  {isOtherSelected ? (
-                    <Input
-                      type="text"
-                      value={otherValue}
-                      onChange={handleOtherInputChange}
-                      placeholder={otherOptionPlaceholder}
-                      disabled={disabled}
-                      dir={dir}
-                      className="mt-2 w-full"
-                      ref={otherInputRef}
-                    />
-                  ) : null}
-                </label>
-              </div>
-            ) : null}
-          </div>
+                return (
+                  <label
+                    key={option.id}
+                    htmlFor={optionId}
+                    className={cn(getOptionContainerClassName(isChecked), isChecked && "z-10")}>
+                    <span className="flex items-center">
+                      <Checkbox
+                        id={optionId}
+                        checked={isChecked}
+                        onCheckedChange={(checked) => {
+                          handleOptionChange(option.id, checked === true);
+                        }}
+                        disabled={disabled}
+                        aria-invalid={Boolean(errorMessage)}
+                      />
+                      <span className={cn("mr-3 ml-3", optionLabelClassName)}>{option.label}</span>
+                    </span>
+                  </label>
+                );
+              })}
+              {hasOtherOption && otherOptionId ? (
+                <div className="space-y-2">
+                  <label
+                    htmlFor={`${inputId}-${otherOptionId}`}
+                    className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
+                    <span className="flex items-center">
+                      <Checkbox
+                        id={`${inputId}-${otherOptionId}`}
+                        checked={isOtherSelected}
+                        onCheckedChange={(checked) => {
+                          handleOptionChange(otherOptionId, checked === true);
+                        }}
+                        disabled={disabled}
+                        aria-invalid={Boolean(errorMessage)}
+                      />
+                      <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
+                    </span>
+                    {isOtherSelected ? (
+                      <Input
+                        type="text"
+                        value={otherValue}
+                        onChange={handleOtherInputChange}
+                        placeholder={otherOptionPlaceholder}
+                        disabled={disabled}
+                        dir={dir}
+                        className="mt-2 w-full"
+                        ref={otherInputRef}
+                      />
+                    ) : null}
+                  </label>
+                </div>
+              ) : null}
+            </div>
+          </>
         )}
       </div>
     </div>

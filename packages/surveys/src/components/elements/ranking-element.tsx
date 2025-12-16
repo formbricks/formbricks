@@ -106,7 +106,9 @@ export function RankingElement({
   };
 
   const validateRequired = (): boolean => {
-    if (element.required && (!Array.isArray(value) || value.length === 0)) {
+    console.log("value", value);
+
+    if (element.required && (!Array.isArray(value) || value.length !== element.choices.length)) {
       setErrorMessage(t("errors.please_rank_all_items_before_submitting"));
       return false;
     }

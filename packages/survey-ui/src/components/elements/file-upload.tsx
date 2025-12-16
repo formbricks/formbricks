@@ -219,7 +219,7 @@ function FileUpload({
         <div
           className={cn(
             "w-input px-input-x py-input-y rounded-input relative flex flex-col items-center justify-center border-2 border-dashed transition-colors",
-            errorMessage ? "border-destructive" : "border-input-border bg-accent hover:bg-accent-selected",
+            errorMessage ? "border-destructive" : "border-input-border bg-accent",
             disabled && "cursor-not-allowed opacity-50"
           )}>
           {/* Uploaded files */}
@@ -229,7 +229,7 @@ function FileUpload({
                 <div
                   key={index}
                   className={cn(
-                    "border-input-border bg-input-bg text-input-text rounded-input relative m-1 rounded-md border"
+                    "border-input-border bg-accent-selected text-input-text rounded-input relative m-1 rounded-md border"
                   )}>
                   {/* Delete button */}
                   <div className="absolute top-0 right-0 m-2">

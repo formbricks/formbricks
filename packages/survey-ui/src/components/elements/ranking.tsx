@@ -221,7 +221,7 @@ function Ranking({
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Ranking Options */}
-      <div className="relative space-y-2">
+      <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
 
         <fieldset className="w-full" dir={dir}>

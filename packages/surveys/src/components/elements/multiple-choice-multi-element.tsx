@@ -32,6 +32,7 @@ export function MultipleChoiceMultiElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [otherValue, setOtherValue] = useState("");
   const isCurrent = element.id === currentElementId;
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -174,6 +175,10 @@ export function MultipleChoiceMultiElement({
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
+    if (element.required && (!Array.isArray(value) || value.length === 0)) {
+      setErrorMessage(t("errors.please_select_an_option"));
+      return;
+    }
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -213,6 +218,7 @@ export function MultipleChoiceMultiElement({
 
   // Handle selection changes - store labels directly instead of IDs
   const handleMultiSelectChange = (selectedIds: string[]) => {
+    setErrorMessage(undefined);
     const nextLabels: string[] = [];
     const isOtherNowSelected = Boolean(otherOption) && selectedIds.includes(otherOption!.id);
 
@@ -258,6 +264,7 @@ export function MultipleChoiceMultiElement({
         otherValue={otherValue}
         onOtherValueChange={handleOtherValueChange}
         exclusiveOptionIds={noneOption ? [noneOption.id] : []}
+        errorMessage={errorMessage}
       />
     </form>
   );
