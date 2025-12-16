@@ -4,11 +4,8 @@
     "apply": "تطبيق",
     "auto_close_wrapper": "غلاف إغلاق تلقائي",
     "back": "رجوع",
-    "click_or_drag_to_upload_files": "انقر أو اسحب لتحميل الملفات.",
     "close_survey": "إغلاق الاستبيان",
     "company_logo": "شعار الشركة",
-    "delete_file": "حذف الملف",
-    "file_upload": "تحميل الملف",
     "finish": "إنهاء",
     "language_switch": "تبديل اللغة",
     "less_than_x_minutes": "{count, plural, one {أقل من دقيقة واحدة} two {أقل من دقيقتين} few {أقل من {count} دقائق} many {أقل من {count} دقيقة} other {أقل من {count} دقيقة}}",
@@ -30,11 +27,8 @@
     "terms_of_service": "شروط الخدمة",
     "the_servers_cannot_be_reached_at_the_moment": "لا يمكن الوصول إلى الخوادم في الوقت الحالي.",
     "they_will_be_redirected_immediately": "سيتم إعادة توجيههم فورًا",
-    "upload_files_by_clicking_or_dragging_them_here": "قم بتحميل الملفات بالنقر عليها أو سحبها إلى هنا",
-    "uploading": "جارٍ التحميل",
     "x_minutes": "{count, plural, one {دقيقة واحدة} two {دقيقتان} few {{count} دقائق} many {{count} دقيقة} other {{count} دقيقة}}",
     "x_plus_minutes": "{count}+ دقيقة",
-    "you_have_successfully_uploaded_the_file": "لقد قمت بتحميل الملف {fileName} بنجاح",
     "your_feedback_is_stuck": "تعليقك عالق :("
   },
   "errors": {

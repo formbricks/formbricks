@@ -4,11 +4,8 @@
     "apply": "appliquer",
     "auto_close_wrapper": "Fermeture automatique du wrapper",
     "back": "Retour",
-    "click_or_drag_to_upload_files": "Cliquez ou glissez pour télécharger des fichiers.",
     "close_survey": "Fermer le sondage",
     "company_logo": "Logo de l'entreprise",
-    "delete_file": "Supprimer le fichier",
-    "file_upload": "Téléchargement de fichier",
     "finish": "Terminer",
     "language_switch": "Changement de langue",
     "less_than_x_minutes": "{count, plural, one {moins d'une minute} other {moins de {count} minutes}}",
@@ -30,11 +27,8 @@
     "terms_of_service": "Conditions d'utilisation",
     "the_servers_cannot_be_reached_at_the_moment": "Les serveurs ne sont pas accessibles pour le moment.",
     "they_will_be_redirected_immediately": "Ils seront redirigés immédiatement",
-    "upload_files_by_clicking_or_dragging_them_here": "Téléchargez des fichiers en cliquant ou en les faisant glisser ici",
-    "uploading": "Téléchargement en cours",
     "x_minutes": "{count, plural, one {1 minute} other {{count} minutes}}",
     "x_plus_minutes": "{count}+ minutes",
-    "you_have_successfully_uploaded_the_file": "Vous avez téléchargé le fichier {fileName} avec succès",
     "your_feedback_is_stuck": "Votre feedback est bloqué :("
   },
   "errors": {

@@ -30,16 +30,18 @@ interface FileUploadProps {
   value?: UploadedFile[];
   /** Callback function called when files change */
   onChange: (files: UploadedFile[]) => void;
+  /** Callback function called when files are selected (before validation) */
+  onFileSelect?: (files: FileList) => void;
   /** Whether multiple files are allowed */
   allowMultiple?: boolean;
-  /** Maximum file size in MB */
-  maxSizeInMB?: number;
   /** Allowed file extensions (e.g., ['.pdf', '.jpg', '.png']) */
   allowedFileExtensions?: string[];
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
   /** Error message to display */
   errorMessage?: string;
+  /** Whether the component is in uploading state */
+  isUploading?: boolean;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the file input is disabled */
@@ -61,11 +63,12 @@ function FileUpload({
   inputId,
   value = [],
   onChange,
+  onFileSelect,
   allowMultiple = false,
-  maxSizeInMB,
   allowedFileExtensions,
   required = false,
   errorMessage,
+  isUploading = false,
   dir = "auto",
   disabled = false,
   imageUrl,
@@ -74,101 +77,19 @@ function FileUpload({
   placeholderText = "Click or drag to upload files",
 }: FileUploadProps): React.JSX.Element {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = React.useState(false);
 
   // Ensure value is always an array
   const uploadedFiles = Array.isArray(value) ? value : [];
 
-  const validateFile = (file: File): string | null => {
-    // Check file extension
-    if (allowedFileExtensions && allowedFileExtensions.length > 0) {
-      const fileExtensionPart = file.name.split(".").pop()?.toLowerCase();
-      if (fileExtensionPart) {
-        const fileExtension = `.${fileExtensionPart}`;
-        if (!allowedFileExtensions.includes(fileExtension)) {
-          return `File type ${fileExtension} is not allowed. Allowed types: ${allowedFileExtensions.join(", ")}`;
-        }
-      }
-    }
-
-    // Check file size
-    if (maxSizeInMB) {
-      const fileSizeInMB = file.size / (1024 * 1024);
-      if (fileSizeInMB > maxSizeInMB) {
-        return `File size exceeds the maximum allowed size of ${String(maxSizeInMB)}MB`;
-      }
-    }
-
-    return null;
-  };
-
-  const processFiles = async (files: FileList | File[]): Promise<UploadedFile[]> => {
-    const fileArray = Array.from(files);
-    const processedFiles: UploadedFile[] = [];
-
-    for (const file of fileArray) {
-      const error = validateFile(file);
-      if (error) {
-        // In a real implementation, you might want to show this error
-        // eslint-disable-next-line no-console -- Error logging needed for file validation
-        console.error(error);
-        continue;
-      }
-
-      // Create a data URL for preview (in real implementation, upload to server)
-      const url = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          resolve(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-      });
-
-      processedFiles.push({
-        name: file.name,
-        url,
-        size: file.size,
-      });
-    }
-
-    return processedFiles;
-  };
-
-  const handleFileSelection = async (files: FileList | File[]): Promise<void> => {
-    if (disabled) return;
-
-    const fileArray = Array.from(files);
-
-    // Validate file limits
-    if (!allowMultiple && fileArray.length > 1) {
-      // eslint-disable-next-line no-alert -- Alert needed for user feedback
-      alert("Only one file can be uploaded at a time");
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      const newFiles = await processFiles(fileArray);
-      if (allowMultiple) {
-        onChange([...uploadedFiles, ...newFiles]);
-      } else {
-        onChange(newFiles.slice(0, 1));
-      }
-    } catch (err) {
-      // eslint-disable-next-line no-console -- Error logging needed
-      console.error("Error uploading files:", err);
-    } finally {
-      setIsUploading(false);
-      // Reset input to allow selecting the same file again
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (!e.target.files || disabled) return;
-    await handleFileSelection(e.target.files);
+    if (onFileSelect) {
+      onFileSelect(e.target.files);
+    }
+    // Reset input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>): void => {
@@ -180,7 +101,9 @@ function FileUpload({
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>): void => {
     e.preventDefault();
     e.stopPropagation();
-    void handleFileSelection(e.dataTransfer.files);
+    if (onFileSelect && e.dataTransfer.files) {
+      onFileSelect(e.dataTransfer.files);
+    }
   };
 
   const handleDeleteFile = (index: number, e: React.MouseEvent): void => {
@@ -212,7 +135,7 @@ function FileUpload({
       />
 
       {/* File Input */}
-      <div className="relative space-y-2">
+      <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
 
         {/* Dashed border container */}
@@ -297,9 +220,7 @@ function FileUpload({
                   className="hidden"
                   multiple={allowMultiple}
                   accept={acceptAttribute}
-                  onChange={(e) => {
-                    void handleFileChange(e);
-                  }}
+                  onChange={handleFileChange}
                   disabled={disabled}
                   required={required}
                   dir={dir}

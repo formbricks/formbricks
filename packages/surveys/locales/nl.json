@@ -4,11 +4,8 @@
     "apply": "Toepassen",
     "auto_close_wrapper": "Automatisch sluitende wrapper",
     "back": "Terug",
-    "click_or_drag_to_upload_files": "Klik of sleep om bestanden te uploaden.",
     "close_survey": "Enquête sluiten",
     "company_logo": "Bedrijfslogo",
-    "delete_file": "Bestand verwijderen",
-    "file_upload": "Bestand uploaden",
     "finish": "Voltooien",
     "language_switch": "Taalschakelaar",
     "less_than_x_minutes": "{count, plural, one {minder dan 1 minuut} other {minder dan {count} minuten}}",
@@ -30,11 +27,8 @@
     "terms_of_service": "Servicevoorwaarden",
     "the_servers_cannot_be_reached_at_the_moment": "De servers zijn momenteel niet bereikbaar.",
     "they_will_be_redirected_immediately": "Ze worden onmiddellijk doorgestuurd",
-    "upload_files_by_clicking_or_dragging_them_here": "Upload bestanden door ze hierheen te klikken of te slepen",
-    "uploading": "Uploaden",
     "x_minutes": "{count, plural, one {1 minuut} other {{count} minuten}}",
     "x_plus_minutes": "{count}+ minuten",
-    "you_have_successfully_uploaded_the_file": "Je hebt het bestand {fileName} succesvol geüpload",
     "your_feedback_is_stuck": "Je feedback blijft hangen :("
   },
   "errors": {

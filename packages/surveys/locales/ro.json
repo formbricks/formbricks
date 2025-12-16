@@ -4,11 +4,8 @@
     "apply": "aplică",
     "auto_close_wrapper": "Închidere automată a învelișului",
     "back": "Înapoi",
-    "click_or_drag_to_upload_files": "Fă clic sau trage pentru a încărca fișiere.",
     "close_survey": "Închide sondajul",
     "company_logo": "Sigla companiei",
-    "delete_file": "Șterge fișierul",
-    "file_upload": "Încărcare fișier",
     "finish": "Finalizează",
     "language_switch": "Schimbare limbă",
     "less_than_x_minutes": "{count, plural, one {mai puțin de 1 minut} other {mai puțin de {count} minute}}",
@@ -30,11 +27,8 @@
     "terms_of_service": "Termeni și condiții",
     "the_servers_cannot_be_reached_at_the_moment": "Serverele nu pot fi accesate momentan.",
     "they_will_be_redirected_immediately": "Vor fi redirecționați imediat",
-    "upload_files_by_clicking_or_dragging_them_here": "Încarcă fișiere făcând clic sau trăgându-le aici",
-    "uploading": "Se încarcă",
     "x_minutes": "{count, plural, one {1 minut} other {{count} minute}}",
     "x_plus_minutes": "{count}+ minute",
-    "you_have_successfully_uploaded_the_file": "Ai încărcat cu succes fișierul {fileName}",
     "your_feedback_is_stuck": "Feedback-ul tău este blocat :("
   },
   "errors": {

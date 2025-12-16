@@ -23,6 +23,11 @@ export interface MultiSelectOption {
   label: string;
 }
 
+/**
+ * Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content)
+ */
+type TextDirection = "ltr" | "rtl" | "auto";
+
 interface MultiSelectProps {
   /** Unique identifier for the element container */
   elementId: string;
@@ -43,7 +48,7 @@ interface MultiSelectProps {
   /** Error message to display below the options */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
-  dir?: "ltr" | "rtl" | "auto";
+  dir?: TextDirection;
   /** Whether the options are disabled */
   disabled?: boolean;
   /** Display variant: 'list' shows checkboxes, 'dropdown' shows a dropdown menu */
@@ -82,7 +87,8 @@ interface DropdownVariantProps {
   inputId: string;
   options: MultiSelectOption[];
   selectedValues: string[];
-  handleOptionChange: (optionId: string, checked: boolean) => void;
+  handleOptionAdd: (optionId: string) => void;
+  handleOptionRemove: (optionId: string) => void;
   disabled: boolean;
   headline: string;
   errorMessage?: string;
@@ -94,7 +100,7 @@ interface DropdownVariantProps {
   otherValue: string;
   handleOtherInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   otherOptionPlaceholder: string;
-  dir: "ltr" | "rtl" | "auto";
+  dir: TextDirection;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
@@ -102,7 +108,8 @@ function DropdownVariant({
   inputId,
   options,
   selectedValues,
-  handleOptionChange,
+  handleOptionAdd,
+  handleOptionRemove,
   disabled,
   headline,
   errorMessage,
@@ -143,7 +150,11 @@ function DropdownVariant({
                 id={optionId}
                 checked={isChecked}
                 onCheckedChange={(checked) => {
-                  handleOptionChange(option.id, checked);
+                  if (checked) {
+                    handleOptionAdd(option.id);
+                  } else {
+                    handleOptionRemove(option.id);
+                  }
                 }}
                 disabled={disabled}>
                 <span className={optionLabelClassName}>{option.label}</span>
@@ -155,7 +166,11 @@ function DropdownVariant({
               id={`${inputId}-${otherOptionId}`}
               checked={isOtherSelected}
               onCheckedChange={(checked) => {
-                handleOptionChange(otherOptionId, checked);
+                if (checked) {
+                  handleOptionAdd(otherOptionId);
+                } else {
+                  handleOptionRemove(otherOptionId);
+                }
               }}
               disabled={disabled}>
               <span className={optionLabelClassName}>{otherOptionLabel}</span>
@@ -184,7 +199,8 @@ interface ListVariantProps {
   options: MultiSelectOption[];
   selectedValues: string[];
   value: string[];
-  handleOptionChange: (optionId: string, checked: boolean) => void;
+  handleOptionAdd: (optionId: string) => void;
+  handleOptionRemove: (optionId: string) => void;
   disabled: boolean;
   headline: string;
   errorMessage?: string;
@@ -195,7 +211,7 @@ interface ListVariantProps {
   otherValue: string;
   handleOtherInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   otherOptionPlaceholder: string;
-  dir: "ltr" | "rtl" | "auto";
+  dir: TextDirection;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
@@ -204,7 +220,8 @@ function ListVariant({
   options,
   selectedValues,
   value,
-  handleOptionChange,
+  handleOptionAdd,
+  handleOptionRemove,
   disabled,
   headline,
   errorMessage,
@@ -238,7 +255,11 @@ function ListVariant({
                   id={optionId}
                   checked={isChecked}
                   onCheckedChange={(checked) => {
-                    handleOptionChange(option.id, checked === true);
+                    if (checked === true) {
+                      handleOptionAdd(option.id);
+                    } else {
+                      handleOptionRemove(option.id);
+                    }
                   }}
                   disabled={isDisabled}
                   aria-invalid={Boolean(errorMessage)}
@@ -261,7 +282,11 @@ function ListVariant({
                   id={`${inputId}-${otherOptionId}`}
                   checked={isOtherSelected}
                   onCheckedChange={(checked) => {
-                    handleOptionChange(otherOptionId, checked === true);
+                    if (checked === true) {
+                      handleOptionAdd(otherOptionId);
+                    } else {
+                      handleOptionRemove(otherOptionId);
+                    }
                   }}
                   disabled={disabled || isNoneSelected}
                   aria-invalid={Boolean(errorMessage)}
@@ -330,17 +355,17 @@ function MultiSelect({
     };
   }, [isOtherSelected, disabled, variant]);
 
-  const handleOptionChange = (optionId: string, checked: boolean): void => {
-    if (checked) {
-      if (exclusiveOptionIds.includes(optionId)) {
-        onChange([optionId]);
-      } else {
-        const newValues = selectedValues.filter((id) => !exclusiveOptionIds.includes(id));
-        onChange([...newValues, optionId]);
-      }
+  const handleOptionAdd = (optionId: string): void => {
+    if (exclusiveOptionIds.includes(optionId)) {
+      onChange([optionId]);
     } else {
-      onChange(selectedValues.filter((id) => id !== optionId));
+      const newValues = selectedValues.filter((id) => !exclusiveOptionIds.includes(id));
+      onChange([...newValues, optionId]);
     }
+  };
+
+  const handleOptionRemove = (optionId: string): void => {
+    onChange(selectedValues.filter((id) => id !== optionId));
   };
 
   const handleOtherInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -368,7 +393,8 @@ function MultiSelect({
             inputId={inputId}
             options={options}
             selectedValues={selectedValues}
-            handleOptionChange={handleOptionChange}
+            handleOptionAdd={handleOptionAdd}
+            handleOptionRemove={handleOptionRemove}
             disabled={disabled}
             headline={headline}
             errorMessage={errorMessage}
@@ -389,7 +415,8 @@ function MultiSelect({
             options={options}
             selectedValues={selectedValues}
             value={value}
-            handleOptionChange={handleOptionChange}
+            handleOptionAdd={handleOptionAdd}
+            handleOptionRemove={handleOptionRemove}
             disabled={disabled}
             headline={headline}
             errorMessage={errorMessage}

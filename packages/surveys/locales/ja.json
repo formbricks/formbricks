@@ -4,11 +4,8 @@
     "apply": "適用",
     "auto_close_wrapper": "自動クローズラッパー",
     "back": "戻る",
-    "click_or_drag_to_upload_files": "クリックまたはドラッグしてファイルをアップロード。",
     "close_survey": "アンケートを閉じる",
     "company_logo": "会社ロゴ",
-    "delete_file": "ファイルを削除",
-    "file_upload": "ファイルアップロード",
     "finish": "完了",
     "language_switch": "言語切替",
     "less_than_x_minutes": "{count, plural, other {{count}分未満}}",
@@ -30,11 +27,8 @@
     "terms_of_service": "利用規約",
     "the_servers_cannot_be_reached_at_the_moment": "現在サーバーに接続できません。",
     "they_will_be_redirected_immediately": "すぐにリダイレクトされます",
-    "upload_files_by_clicking_or_dragging_them_here": "クリックまたはドラッグしてファイルをアップロード",
-    "uploading": "アップロード中",
     "x_minutes": "{count, plural, one {1分} other {{count}分}}",
     "x_plus_minutes": "{count}分以上",
-    "you_have_successfully_uploaded_the_file": "ファイル{fileName}のアップロードに成功しました",
     "your_feedback_is_stuck": "フィードバックが送信できません :("
   },
   "errors": {

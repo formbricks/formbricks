@@ -1,7 +1,8 @@
-import { useState } from "preact/hooks";
+import { useCallback, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { FileUpload, type UploadedFile } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TAllowedFileExtension } from "@formbricks/types/storage";
 import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
@@ -19,10 +20,14 @@ interface FileUploadElementProps {
   currentElementId: string;
 }
 
+const FILE_LIMIT = 25;
+
 export function FileUploadElement({
   element,
   value,
   onChange,
+  onFileUpload,
+  surveyId,
   languageCode,
   ttc,
   setTtc,
@@ -30,6 +35,7 @@ export function FileUploadElement({
 }: Readonly<FileUploadElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
@@ -93,6 +99,221 @@ export function FileUploadElement({
     onChange({ [element.id]: urls });
   };
 
+  /**
+   * Convert File to base64
+   */
+  const toBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
+
+  /**
+   * Filter duplicate files
+   */
+  const filterDuplicateFiles = useCallback(
+    (files: File[]): { filteredFiles: File[]; duplicateFiles: File[] } => {
+      const existingFileNames = (value || []).map((url) => {
+        const fileName = fileNames[url] || url.split("/").pop() || "";
+        return fileName.toLowerCase();
+      });
+
+      const duplicateFiles = files.filter((file) => existingFileNames.includes(file.name.toLowerCase()));
+
+      const filteredFiles = files.filter((file) => !existingFileNames.includes(file.name.toLowerCase()));
+
+      if (duplicateFiles.length > 0) {
+        const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
+        setErrorMessage(t("errors.file_input.duplicate_files", { duplicateNames }));
+      }
+
+      return { filteredFiles, duplicateFiles };
+    },
+    [value, fileNames, t]
+  );
+
+  /**
+   * Validate file extension
+   */
+  const validateFileExtension = useCallback(
+    (file: File): boolean => {
+      if (!element.allowedFileExtensions || element.allowedFileExtensions.length === 0) {
+        return true; // No restrictions
+      }
+
+      const fileExtensionPart = file.name.split(".").pop()?.toLowerCase();
+      if (!fileExtensionPart) {
+        return false; // No extension
+      }
+
+      return element.allowedFileExtensions.includes(fileExtensionPart as TAllowedFileExtension);
+    },
+    [element.allowedFileExtensions]
+  );
+
+  /**
+   * Validate file size
+   */
+  const validateFileSize = useCallback(
+    async (file: File): Promise<boolean> => {
+      if (!element.maxSizeInMB) {
+        return true; // No size restriction
+      }
+
+      const fileSizeInMB = file.size / (1024 * 1024);
+      if (fileSizeInMB > element.maxSizeInMB) {
+        setErrorMessage(
+          t("errors.file_input.file_size_exceeded_alert", { maxSizeInMB: element.maxSizeInMB })
+        );
+        return false;
+      }
+
+      return true;
+    },
+    [element.maxSizeInMB, t]
+  );
+
+  /**
+   * Validate file limits
+   */
+  const validateFileLimits = useCallback(
+    (fileArray: File[]): boolean => {
+      if (!element.allowMultipleFiles && fileArray.length > 1) {
+        setErrorMessage(t("errors.file_input.only_one_file_can_be_uploaded_at_a_time"));
+        return false;
+      }
+
+      if (element.allowMultipleFiles && (value?.length || 0) + fileArray.length > FILE_LIMIT) {
+        setErrorMessage(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
+        return false;
+      }
+
+      return true;
+    },
+    [element.allowMultipleFiles, value, t]
+  );
+
+  /**
+   * Handle file selection and validation
+   */
+  const handleFileSelect = useCallback(
+    async (files: FileList): Promise<void> => {
+      // Clear previous errors
+      setErrorMessage(undefined);
+
+      const fileArray = Array.from(files);
+
+      // Validate file limits first
+      if (!validateFileLimits(fileArray)) {
+        return;
+      }
+
+      // Filter duplicate files
+      const { filteredFiles } = filterDuplicateFiles(fileArray);
+      if (filteredFiles.length === 0) {
+        return; // All files were duplicates
+      }
+
+      // Validate file extensions
+      const validFiles = filteredFiles.filter((file) => validateFileExtension(file));
+      if (validFiles.length === 0) {
+        setErrorMessage(t("errors.file_input.no_valid_file_types_selected"));
+        return;
+      }
+
+      // Validate file sizes and process files
+      const filesToUpload: File[] = [];
+      const sizeRejectedFiles: string[] = [];
+
+      for (const file of validFiles) {
+        const isValidSize = await validateFileSize(file);
+        if (isValidSize) {
+          filesToUpload.push(file);
+        } else {
+          sizeRejectedFiles.push(file.name);
+        }
+      }
+
+      // Show error for files that exceeded size limit
+      if (sizeRejectedFiles.length > 0 && element.maxSizeInMB) {
+        const fileNames = sizeRejectedFiles.join(", ");
+        setErrorMessage(
+          t("errors.file_input.file_size_exceeded", { fileNames, maxSizeInMB: element.maxSizeInMB })
+        );
+      }
+
+      if (filesToUpload.length === 0) {
+        return; // No valid files to upload
+      }
+
+      try {
+        setIsUploading(true);
+
+        // Convert files to base64 and upload
+        const uploadPromises = filesToUpload.map(async (file) => {
+          const base64 = await toBase64(file);
+          const uploadedUrl = await onFileUpload(
+            {
+              name: file.name,
+              type: file.type,
+              base64,
+            },
+            {
+              allowedFileExtensions: element.allowedFileExtensions,
+              surveyId,
+            }
+          );
+          return { name: file.name, url: uploadedUrl };
+        });
+
+        const uploadedFiles = await Promise.all(uploadPromises);
+
+        // Store file names
+        const newFileNames: Record<string, string> = {};
+        uploadedFiles.forEach((f) => {
+          newFileNames[f.url] = f.name;
+        });
+        setFileNames((prev) => ({ ...prev, ...newFileNames }));
+
+        // Update value
+        const newUrls = uploadedFiles.map((f) => f.url);
+        if (element.allowMultipleFiles) {
+          onChange({ [element.id]: [...(value || []), ...newUrls] });
+        } else {
+          onChange({ [element.id]: newUrls.slice(0, 1) });
+        }
+
+        // Clear error on success
+        setErrorMessage(undefined);
+      } catch (err: any) {
+        // Handle upload errors
+        if (err?.name === "FileTooLargeError") {
+          setErrorMessage(err.message);
+        } else if (err?.name === "InvalidFileNameError") {
+          setErrorMessage(t("errors.file_input.upload_failed"));
+        } else {
+          setErrorMessage(t("errors.file_input.upload_failed"));
+        }
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [
+      element,
+      surveyId,
+      value,
+      onChange,
+      onFileUpload,
+      validateFileLimits,
+      filterDuplicateFiles,
+      validateFileExtension,
+      validateFileSize,
+      t,
+    ]
+  );
+
   const validateRequired = (): boolean => {
     if (element.required && (!value || value.length === 0)) {
       setErrorMessage(t("errors.please_upload_a_file"));
@@ -118,11 +339,12 @@ export function FileUploadElement({
         description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
         value={value ? convertToUploadedFiles(value) : undefined}
         onChange={handleChange}
+        onFileSelect={handleFileSelect}
         allowMultiple={element.allowMultipleFiles}
-        maxSizeInMB={element.maxSizeInMB}
         allowedFileExtensions={element.allowedFileExtensions}
         required={element.required}
         errorMessage={errorMessage}
+        isUploading={isUploading}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
       />

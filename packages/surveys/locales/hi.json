@@ -4,11 +4,8 @@
     "apply": "लागू करें",
     "auto_close_wrapper": "स्वचालित बंद रैपर",
     "back": "वापस",
-    "click_or_drag_to_upload_files": "फ़ाइलें अपलोड करने के लिए क्लिक करें या खींचें।",
     "close_survey": "सर्वेक्षण बंद करें",
     "company_logo": "कंपनी लोगो",
-    "delete_file": "फ़ाइल हटाएं",
-    "file_upload": "फ़ाइल अपलोड",
     "finish": "समाप्त करें",
     "language_switch": "भाषा बदलें",
     "less_than_x_minutes": "{count, plural, one {1 मिनट से कम} other {{count} मिनट से कम}}",
@@ -30,11 +27,8 @@
     "terms_of_service": "सेवा की शर्तें",
     "the_servers_cannot_be_reached_at_the_moment": "इस समय सर्वर तक पहुंचा नहीं जा सकता है।",
     "they_will_be_redirected_immediately": "उन्हें तुरंत रीडायरेक्ट किया जाएगा",
-    "upload_files_by_clicking_or_dragging_them_here": "क्लिक करके या यहां खींचकर फ़ाइलें अपलोड करें",
-    "uploading": "अपलोड हो रहा है",
     "x_minutes": "{count, plural, one {1 मिनट} other {{count} मिनट}}",
     "x_plus_minutes": "{count}+ मिनट",
-    "you_have_successfully_uploaded_the_file": "आपने {fileName} फ़ाइल सफलतापूर्वक अपलोड कर दी है",
     "your_feedback_is_stuck": "आपकी प्रतिक्रिया अटक गई है :("
   },
   "errors": {

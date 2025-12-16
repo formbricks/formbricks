@@ -4,11 +4,8 @@
     "apply": "применить",
     "auto_close_wrapper": "Автоматическое закрытие оболочки",
     "back": "Назад",
-    "click_or_drag_to_upload_files": "Нажмите или перетащите, чтобы загрузить файлы.",
     "close_survey": "Закрыть опрос",
     "company_logo": "Логотип компании",
-    "delete_file": "Удалить файл",
-    "file_upload": "Загрузка файла",
     "finish": "Завершить",
     "language_switch": "Переключение языка",
     "less_than_x_minutes": "{count, plural, one {менее 1 минуты} other {менее {count} минут}}",
@@ -30,11 +27,8 @@
     "terms_of_service": "Условия использования",
     "the_servers_cannot_be_reached_at_the_moment": "Сервера в данный момент недоступны.",
     "they_will_be_redirected_immediately": "Они будут немедленно перенаправлены",
-    "upload_files_by_clicking_or_dragging_them_here": "Загрузите файлы, нажав или перетащив их сюда",
-    "uploading": "Загрузка",
     "x_minutes": "{count, plural, one {1 минута} few {{count} минуты} many {{count} минут}}",
     "x_plus_minutes": "{count}+ минут",
-    "you_have_successfully_uploaded_the_file": "Вы успешно загрузили файл {fileName}",
     "your_feedback_is_stuck": "Ваш отзыв застрял :("
   },
   "errors": {

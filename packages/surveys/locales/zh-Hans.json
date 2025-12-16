@@ -4,11 +4,8 @@
     "apply": "应用",
     "auto_close_wrapper": "自动关闭包装器",
     "back": "返回",
-    "click_or_drag_to_upload_files": "点击或拖动上传文件。",
     "close_survey": "关闭调查",
     "company_logo": "公司标志",
-    "delete_file": "删除文件",
-    "file_upload": "文件上传",
     "finish": "完成",
     "language_switch": "语言切换",
     "less_than_x_minutes": "{count, plural, one {少于 1 分钟} other {少于 {count} 分钟}}",
@@ -30,11 +27,8 @@
     "terms_of_service": "服务条款",
     "the_servers_cannot_be_reached_at_the_moment": "目前无法连接到服务器。",
     "they_will_be_redirected_immediately": "他们将立即被重定向",
-    "upload_files_by_clicking_or_dragging_them_here": "通过点击或拖动文件到此处上传",
-    "uploading": "正在上传",
     "x_minutes": "{count, plural, one {1 分钟} other {{count} 分钟}}",
     "x_plus_minutes": "{count}+ 分钟",
-    "you_have_successfully_uploaded_the_file": "您已成功上传文件 {fileName}",
     "your_feedback_is_stuck": "您的反馈卡住了 :("
   },
   "errors": {
