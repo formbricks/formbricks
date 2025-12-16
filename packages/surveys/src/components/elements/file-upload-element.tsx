@@ -34,15 +34,40 @@ export function FileUploadElement({
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
+  const [fileNames, setFileNames] = useState<Record<string, string>>({});
 
   // Convert string[] to UploadedFile[] for survey-ui component
   const convertToUploadedFiles = (urls: string[]): UploadedFile[] => {
     return urls.map((url) => {
+      // Check if we have the name stored locally
+      if (fileNames[url]) {
+        return {
+          name: fileNames[url],
+          url,
+        };
+      }
+
       // Extract filename from URL path
       const urlPath = url.split("?")[0]; // Remove query params
-      const fileName = urlPath.split("/").pop() || "Unknown file";
+      let fileName = urlPath.split("/").pop() || "Unknown file";
+
+      try {
+        fileName = decodeURIComponent(fileName);
+      } catch (e) {
+        // ignore
+      }
+
+      // Clean up Formbricks storage pattern: name--fid--uuid.ext
+      if (fileName.includes("--fid--")) {
+        const parts = fileName.split("--fid--");
+        const extension = fileName.split(".").pop();
+        if (parts[0] && extension) {
+          fileName = `${parts[0]}.${extension}`;
+        }
+      }
+
       return {
-        name: decodeURIComponent(fileName),
+        name: fileName,
         url,
       };
     });
@@ -56,6 +81,14 @@ export function FileUploadElement({
   const handleChange = (files: UploadedFile[]) => {
     // Clear error when user uploads files
     setErrorMessage(undefined);
+
+    // Store names locally
+    const newFileNames: Record<string, string> = {};
+    files.forEach((f) => {
+      newFileNames[f.url] = f.name;
+    });
+    setFileNames((prev) => ({ ...prev, ...newFileNames }));
+
     const urls = convertToStringArray(files);
     onChange({ [element.id]: urls });
   };

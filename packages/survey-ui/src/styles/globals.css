@@ -45,13 +45,20 @@
   --destructive-muted: oklch(0.97 0.02 27.325);
   --border: oklch(0.922 0 0);
   --input: black;
+  --slate-50: rgb(248, 250, 252);
+  --slate-100: rgb(241 245 249);
+  --slate-200: rgb(226 232 240);
 
   /* ---------------------------------------------------------------------------
-     Survey Brand Color
+     Survey general Colors
      The primary accent color used throughout the survey. Override this to 
      customize the brand appearance.
      --------------------------------------------------------------------------- */
   --fb-survey-brand-color: #64748b;
+
+  --fb-accent-background-color: var(--slate-200);
+  --fb-accent-background-color-selected: var(--slate-100);
+
 
   /* ---------------------------------------------------------------------------
      Element Headline Tokens
@@ -102,7 +109,7 @@
      Input Tokens
      Used for text inputs, textareas, and other form controls.
      --------------------------------------------------------------------------- */
-  --fb-input-bg-color: white;
+  --fb-input-bg-color: var(--slate-50);
   --fb-input-border-color: var(--fb-survey-brand-color);
   --fb-input-border-radius: var(--radius);
   --fb-input-font-family: inherit;

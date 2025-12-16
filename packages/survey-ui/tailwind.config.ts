@@ -35,8 +35,8 @@ export default {
           foreground: "var(--secondary-foreground)",
         },
         accent: {
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
+          DEFAULT: "var(--fb-accent-background-color)",
+          selected: "var(--fb-accent-background-color-selected)",
         },
         destructive: {
           DEFAULT: "var(--destructive)",

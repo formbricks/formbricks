@@ -108,10 +108,7 @@ function DateElement({
           fromYear={minDateObj?.getFullYear() ?? 1900}
           toYear={maxDateObj?.getFullYear() ?? 2100}
           locale={dateHtmlLocale}
-          className="rounded-input border-input-border bg-input-bg text-input-text shadow-input w-full border"
-          classNames={{
-            root: "w-full",
-          }}
+          className="rounded-input border-input-border bg-input-bg text-input-text shadow-input mx-auto w-full max-w-[20rem] border"
         />
       </div>
     </div>

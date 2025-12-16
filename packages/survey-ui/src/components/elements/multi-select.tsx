@@ -60,6 +60,8 @@ interface MultiSelectProps {
   otherValue?: string;
   /** Callback when the 'other' input value changes */
   onOtherValueChange?: (value: string) => void;
+  /** IDs of options that should be exclusive (selecting them deselects all others) */
+  exclusiveOptionIds?: string[];
 }
 
 function MultiSelect({
@@ -81,6 +83,7 @@ function MultiSelect({
   otherOptionPlaceholder = "Please specify",
   otherValue = "",
   onOtherValueChange,
+  exclusiveOptionIds = [],
 }: MultiSelectProps): React.JSX.Element {
   // Ensure value is always an array
   const selectedValues = Array.isArray(value) ? value : [];
@@ -105,7 +108,12 @@ function MultiSelect({
 
   const handleOptionChange = (optionId: string, checked: boolean): void => {
     if (checked) {
-      onChange([...selectedValues, optionId]);
+      if (exclusiveOptionIds.includes(optionId)) {
+        onChange([optionId]);
+      } else {
+        const newValues = selectedValues.filter((id) => !exclusiveOptionIds.includes(id));
+        onChange([...newValues, optionId]);
+      }
     } else {
       onChange(selectedValues.filter((id) => id !== optionId));
     }

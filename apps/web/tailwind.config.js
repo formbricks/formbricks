@@ -154,5 +154,5 @@ module.exports = {
   },
   safelist: [{ pattern: /max-w-./, variants: "sm" }],
   darkMode: "class", // Set dark mode to use the 'class' strategy
-  plugins: [require("@tailwindcss/typography")],
+  plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
 };

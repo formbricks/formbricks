@@ -257,6 +257,7 @@ export function MultipleChoiceMultiElement({
         }
         otherValue={otherValue}
         onOtherValueChange={handleOtherValueChange}
+        exclusiveOptionIds={noneOption ? [noneOption.id] : []}
       />
     </form>
   );
