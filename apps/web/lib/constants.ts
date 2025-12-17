@@ -215,9 +215,9 @@ export const BILLING_LIMITS = {
   },
 } as const;
 
-export const INTERCOM_SECRET_KEY = env.INTERCOM_SECRET_KEY;
-export const INTERCOM_APP_ID = env.INTERCOM_APP_ID;
-export const IS_INTERCOM_CONFIGURED = Boolean(env.INTERCOM_APP_ID && INTERCOM_SECRET_KEY);
+export const CHATWOOT_WEBSITE_TOKEN = env.CHATWOOT_WEBSITE_TOKEN;
+export const CHATWOOT_BASE_URL = env.CHATWOOT_BASE_URL || "https://app.chatwoot.com";
+export const IS_CHATWOOT_CONFIGURED = Boolean(env.CHATWOOT_WEBSITE_TOKEN);
 
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
 export const TURNSTILE_SITE_KEY = env.TURNSTILE_SITE_KEY;

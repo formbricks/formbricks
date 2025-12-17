@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { WEBAPP_URL } from "@/lib/constants";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { WEBAPP_URL } from "@/lib/constants";
 import { getEnvironments } from "@/lib/environment/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
