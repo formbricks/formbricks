@@ -23,7 +23,6 @@ export function cn(...inputs: ClassValue[]): string {
  * Uses DOMPurify for secure, proper HTML parsing instead of regex
  * @param html - The HTML string to process
  * @returns HTML string with all style attributes removed
- * @note This is a security measure to prevent CSP violations during HTML parsing
  */
 export const stripInlineStyles = (html: string): string => {
   if (!html) return html;
