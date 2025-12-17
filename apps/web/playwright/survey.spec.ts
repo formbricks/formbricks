@@ -955,7 +955,8 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(page.getByText(surveys.createWithLogicAndSubmit.date.question)).toBeVisible();
       // Click the "Today" button in the date picker - matches format like "Today, Tuesday, December 16th,"
       await page.getByRole("button", { name: /^Today,/ }).click();
-      await page.locator("#questionCard-11").getByRole("button", { name: "Next" }).click();
+      await page.getByRole("button", { name: "Scroll to bottom" }).click();
+      await page.locator("#questionCard-11").getByRole("button", { name: "Next", exact: true }).click();
 
       // Cal Question
       await expect(page.getByText(surveys.createWithLogicAndSubmit.cal.question)).toBeVisible();
