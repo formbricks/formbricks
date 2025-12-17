@@ -42,8 +42,8 @@
     "i18n:validate": "pnpm scan-translations"
   },
   "dependencies": {
-    "react": "19.1.2",
-    "react-dom": "19.1.2"
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
   },
   "devDependencies": {
     "@azure/identity": "4.13.0",
