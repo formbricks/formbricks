@@ -3,8 +3,12 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
+
+/**
+ * Text direction type for ranking element
+ */
+type TextDirection = "ltr" | "rtl" | "auto";
 
 /**
  * Option for ranking element
@@ -36,9 +40,135 @@ interface RankingProps {
   /** Error message to display */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
-  dir?: "ltr" | "rtl" | "auto";
+  dir?: TextDirection;
   /** Whether the controls are disabled */
   disabled?: boolean;
+}
+
+interface RankingItemProps {
+  item: RankingOption;
+  rankedIds: string[];
+  onItemClick: (item: RankingOption) => void;
+  onMove: (itemId: string, direction: "up" | "down") => void;
+  disabled: boolean;
+  dir?: TextDirection;
+}
+
+function getTopButtonRadiusClass(isFirst: boolean, dir?: TextDirection): string {
+  if (isFirst) {
+    return "cursor-not-allowed opacity-30";
+  }
+  if (dir === "rtl") {
+    return "rounded-tl-md";
+  }
+  return "rounded-tr-md";
+}
+
+function getBottomButtonRadiusClass(isLast: boolean, dir?: TextDirection): string {
+  if (isLast) {
+    return "cursor-not-allowed opacity-30";
+  }
+  if (dir === "rtl") {
+    return "rounded-bl-md";
+  }
+  return "rounded-br-md";
+}
+
+function RankingItem({ item, rankedIds, onItemClick, onMove, disabled, dir }: Readonly<RankingItemProps>) {
+  const isRanked = rankedIds.includes(item.id);
+  const rankIndex = rankedIds.indexOf(item.id);
+  const isFirst = isRanked && rankIndex === 0;
+  const isLast = isRanked && rankIndex === rankedIds.length - 1;
+  const displayNumber = isRanked ? rankIndex + 1 : undefined;
+
+  // RTL-aware padding class
+  const paddingClass = dir === "rtl" ? "pr-3" : "pl-3";
+
+  // RTL-aware border class for control buttons
+  const borderClass = dir === "rtl" ? "border-r" : "border-l";
+
+  // RTL-aware border radius classes for control buttons
+  const topButtonRadiusClass = getTopButtonRadiusClass(isFirst, dir);
+  const bottomButtonRadiusClass = getBottomButtonRadiusClass(isLast, dir);
+
+  return (
+    <div
+      className={cn(
+        "rounded-option flex h-12 cursor-pointer items-center border transition-all",
+        paddingClass,
+        "bg-option-bg border-option-border",
+        "hover:bg-option-hover-bg focus-within:border-brand focus-within:bg-option-selected-bg focus-within:shadow-sm",
+        isRanked && "bg-option-selected-bg border-brand",
+        disabled && "cursor-not-allowed opacity-50"
+      )}>
+      <button
+        type="button"
+        onClick={() => {
+          onItemClick(item);
+        }}
+        disabled={disabled}
+        onKeyDown={(e) => {
+          if (disabled) return;
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            onItemClick(item);
+          }
+        }}
+        className="group flex h-full grow items-center gap-4 text-start focus:outline-none"
+        aria-label={isRanked ? `Remove ${item.label} from ranking` : `Add ${item.label} to ranking`}>
+        <span
+          className={cn(
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
+            isRanked
+              ? "bg-brand border-brand text-white"
+              : "border-option-border group-hover:bg-background group-hover:text-foreground border-dashed text-transparent"
+          )}>
+          {displayNumber}
+        </span>
+        <span
+          className="font-option text-option font-option-weight text-option-label shrink grow text-start"
+          dir={dir}>
+          {item.label}
+        </span>
+      </button>
+
+      {/* Up/Down buttons for ranked items */}
+      {isRanked ? (
+        <div className={cn("border-option-border flex h-full grow-0 flex-col", borderClass)}>
+          <button
+            type="button"
+            tabIndex={isFirst ? -1 : 0}
+            onClick={(e) => {
+              e.preventDefault();
+              onMove(item.id, "up");
+            }}
+            disabled={isFirst || disabled}
+            aria-label={`Move ${item.label} up`}
+            className={cn(
+              "flex flex-1 items-center justify-center px-2 transition-colors",
+              topButtonRadiusClass
+            )}>
+            <ChevronUp className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            tabIndex={isLast ? -1 : 0}
+            onClick={(e) => {
+              e.preventDefault();
+              onMove(item.id, "down");
+            }}
+            disabled={isLast || disabled}
+            aria-label={`Move ${item.label} down`}
+            className={cn(
+              "border-option-border flex flex-1 items-center justify-center border-t px-2 transition-colors",
+              bottomButtonRadiusClass
+            )}>
+            <ChevronDown className="h-5 w-5" />
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function Ranking({
@@ -56,12 +186,6 @@ function Ranking({
 }: RankingProps): React.JSX.Element {
   // Ensure value is always an array
   const rankedIds = React.useMemo(() => (Array.isArray(value) ? value : []), [value]);
-
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", ...options.map((opt) => opt.label)],
-  });
 
   // Get sorted (ranked) items and unsorted items
   const sortedItems = React.useMemo(() => {
@@ -106,127 +230,28 @@ function Ranking({
   const [parent] = useAutoAnimate();
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Ranking Options */}
-      <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+      <div className="relative">
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
-        <fieldset className="w-full" dir={detectedDir}>
+        <fieldset className="w-full" dir={dir}>
           <legend className="sr-only">Ranking options</legend>
           <div className="space-y-2" ref={parent as React.Ref<HTMLDivElement>}>
-            {allItems.map((item) => {
-              const isRanked = rankedIds.includes(item.id);
-              const rankIndex = rankedIds.findIndex((id) => id === item.id);
-              const isFirst = isRanked && rankIndex === 0;
-              const isLast = isRanked && rankIndex === rankedIds.length - 1;
-              const displayNumber = isRanked ? rankIndex + 1 : undefined;
-
-              // RTL-aware padding class
-              const paddingClass = detectedDir === "rtl" ? "pr-3" : "pl-3";
-
-              // RTL-aware border class for control buttons
-              const borderClass = detectedDir === "rtl" ? "border-r" : "border-l";
-
-              // RTL-aware border radius classes for control buttons
-              let topButtonRadiusClass = "rounded-tr-md";
-              if (isFirst) {
-                topButtonRadiusClass = "cursor-not-allowed opacity-30";
-              } else if (detectedDir === "rtl") {
-                topButtonRadiusClass = "rounded-tl-md";
-              }
-
-              let bottomButtonRadiusClass = "rounded-br-md";
-              if (isLast) {
-                bottomButtonRadiusClass = "cursor-not-allowed opacity-30";
-              } else if (detectedDir === "rtl") {
-                bottomButtonRadiusClass = "rounded-bl-md";
-              }
-
-              return (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "rounded-option flex h-12 cursor-pointer items-center border transition-all",
-                    paddingClass,
-                    "bg-option-bg border-option-border",
-                    "hover:bg-option-hover-bg focus-within:border-brand focus-within:bg-option-selected-bg focus-within:shadow-sm",
-                    isRanked && "bg-option-selected-bg border-brand",
-                    disabled && "cursor-not-allowed opacity-50"
-                  )}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleItemClick(item);
-                    }}
-                    disabled={disabled}
-                    onKeyDown={(e) => {
-                      if (disabled) return;
-                      if (e.key === " " || e.key === "Enter") {
-                        e.preventDefault();
-                        handleItemClick(item);
-                      }
-                    }}
-                    className="group flex h-full grow items-center gap-4 text-start focus:outline-none"
-                    aria-label={
-                      isRanked ? `Remove ${item.label} from ranking` : `Add ${item.label} to ranking`
-                    }>
-                    <span
-                      className={cn(
-                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
-                        isRanked
-                          ? "bg-brand border-brand text-white"
-                          : "border-option-border group-hover:bg-background group-hover:text-foreground border-dashed text-transparent"
-                      )}>
-                      {displayNumber}
-                    </span>
-                    <span
-                      className="font-option text-option font-option-weight text-option-label shrink grow text-start"
-                      dir={detectedDir}>
-                      {item.label}
-                    </span>
-                  </button>
-
-                  {/* Up/Down buttons for ranked items */}
-                  {isRanked ? (
-                    <div className={cn("border-option-border flex h-full grow-0 flex-col", borderClass)}>
-                      <button
-                        type="button"
-                        tabIndex={isFirst ? -1 : 0}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleMove(item.id, "up");
-                        }}
-                        disabled={isFirst || disabled}
-                        aria-label={`Move ${item.label} up`}
-                        className={cn(
-                          "flex flex-1 items-center justify-center px-2 transition-colors",
-                          topButtonRadiusClass
-                        )}>
-                        <ChevronUp className="h-5 w-5" />
-                      </button>
-                      <button
-                        type="button"
-                        tabIndex={isLast ? -1 : 0}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleMove(item.id, "down");
-                        }}
-                        disabled={isLast || disabled}
-                        aria-label={`Move ${item.label} down`}
-                        className={cn(
-                          "border-option-border flex flex-1 items-center justify-center border-t px-2 transition-colors",
-                          bottomButtonRadiusClass
-                        )}>
-                        <ChevronDown className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
+            {allItems.map((item) => (
+              <RankingItem
+                key={item.id}
+                item={item}
+                rankedIds={rankedIds}
+                onItemClick={handleItemClick}
+                onMove={handleMove}
+                disabled={disabled}
+                dir={dir}
+              />
+            ))}
           </div>
         </fieldset>
       </div>

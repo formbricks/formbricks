@@ -1,4 +1,3 @@
-import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
 import { cn } from "@/lib/utils";
 
@@ -15,10 +14,11 @@ function Textarea({ className, errorMessage, dir = "auto", ...props }: TextareaP
       <ElementError errorMessage={errorMessage} dir={dir} />
       <textarea
         data-slot="textarea"
+        style={{ fontSize: "var(--fb-input-font-size)" }}
         dir={dir}
         aria-invalid={hasError || undefined}
         className={cn(
-          "w-input h-input bg-input-bg border-input-border rounded-input font-input font-input-weight text-input-text px-input-x py-input-y shadow-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 field-sizing-content text-input flex min-h-16 border outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+          "w-input bg-input-bg border-input-border rounded-input font-input font-input-weight px-input-x py-input-y shadow-input placeholder:text-input-placeholder placeholder:opacity-input-placeholder focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 text-input text-input-text flex field-sizing-content min-h-16 border transition-[color,box-shadow] outline-none placeholder:text-sm focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}

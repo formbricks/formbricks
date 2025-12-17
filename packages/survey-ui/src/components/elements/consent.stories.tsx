@@ -11,7 +11,7 @@ import {
 } from "../../lib/story-helpers";
 import { Consent, type ConsentProps } from "./consent";
 
-type StoryProps = ConsentProps & Partial<BaseStylingOptions>;
+type StoryProps = ConsentProps & Partial<BaseStylingOptions> & Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/Consent",
@@ -69,7 +69,7 @@ export const StylingPlayground: Story = {
     ]),
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {
@@ -146,6 +146,7 @@ export const RTL: Story = {
     headline: "الشروط والأحكام",
     description: "يرجى قراءة الشروط والموافقة عليها",
     checkboxLabel: "أوافق على الشروط والأحكام",
+    dir: "rtl",
     onChange: () => {},
   },
 };
@@ -157,6 +158,7 @@ export const RTLWithConsent: Story = {
     headline: "الشروط والأحكام",
     checkboxLabel: "أوافق على الشروط والأحكام",
     value: true,
+    dir: "rtl",
     onChange: () => {},
   },
 };

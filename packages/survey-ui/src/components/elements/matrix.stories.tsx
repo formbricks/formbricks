@@ -83,7 +83,7 @@ export const StylingPlayground: Story = {
     ...pickArgTypes(inputStylingArgTypes, ["inputBgColor", "inputBorderColor"]),
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {
@@ -228,6 +228,7 @@ export const RTL: Story = {
     inputId: "matrix-rtl-input",
     headline: "قيم كل عنصر",
     description: "اختر قيمة لكل صف",
+    dir: "rtl",
     rows: [
       { id: "row-1", label: "الصف الأول" },
       { id: "row-2", label: "الصف الثاني" },
@@ -246,6 +247,7 @@ export const RTLWithSelections: Story = {
   args: {
     elementId: "matrix-rtl-selections",
     inputId: "matrix-rtl-selections-input",
+    dir: "rtl",
     headline: "قيم كل عنصر",
     description: "يرجى اختيار قيمة لكل صف",
     rows: [

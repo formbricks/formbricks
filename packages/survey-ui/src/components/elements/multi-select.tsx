@@ -11,7 +11,6 @@ import {
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -23,6 +22,11 @@ export interface MultiSelectOption {
   /** Display label for the option */
   label: string;
 }
+
+/**
+ * Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content)
+ */
+type TextDirection = "ltr" | "rtl" | "auto";
 
 interface MultiSelectProps {
   /** Unique identifier for the element container */
@@ -44,7 +48,7 @@ interface MultiSelectProps {
   /** Error message to display below the options */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
-  dir?: "ltr" | "rtl" | "auto";
+  dir?: TextDirection;
   /** Whether the options are disabled */
   disabled?: boolean;
   /** Display variant: 'list' shows checkboxes, 'dropdown' shows a dropdown menu */
@@ -61,6 +65,355 @@ interface MultiSelectProps {
   otherValue?: string;
   /** Callback when the 'other' input value changes */
   onOtherValueChange?: (value: string) => void;
+  /** IDs of options that should be exclusive (selecting them deselects all others) */
+  exclusiveOptionIds?: string[];
+}
+
+// Shared className for option labels
+const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
+
+// Shared className for option containers
+const getOptionContainerClassName = (isSelected: boolean, isDisabled: boolean): string =>
+  cn(
+    "relative flex flex-col border transition-colors outline-none",
+    "rounded-option px-option-x py-option-y",
+    isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",
+    "focus-within:border-brand focus-within:bg-option-selected-bg",
+    "hover:bg-option-hover-bg",
+    isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+  );
+
+interface DropdownVariantProps {
+  inputId: string;
+  options: MultiSelectOption[];
+  selectedValues: string[];
+  handleOptionAdd: (optionId: string) => void;
+  handleOptionRemove: (optionId: string) => void;
+  disabled: boolean;
+  headline: string;
+  errorMessage?: string;
+  displayText: string;
+  hasOtherOption: boolean;
+  otherOptionId?: string;
+  isOtherSelected: boolean;
+  otherOptionLabel: string;
+  otherValue: string;
+  handleOtherInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  otherOptionPlaceholder: string;
+  dir: TextDirection;
+  otherInputRef: React.RefObject<HTMLInputElement | null>;
+  required: boolean;
+}
+
+function DropdownVariant({
+  inputId,
+  options,
+  selectedValues,
+  handleOptionAdd,
+  handleOptionRemove,
+  disabled,
+  headline,
+  errorMessage,
+  displayText,
+  hasOtherOption,
+  otherOptionId,
+  isOtherSelected,
+  otherOptionLabel,
+  otherValue,
+  handleOtherInputChange,
+  otherOptionPlaceholder,
+  dir,
+  otherInputRef,
+  required,
+}: Readonly<DropdownVariantProps>): React.JSX.Element {
+  const getIsRequired = (): boolean => {
+    const responseValues = [...selectedValues];
+    if (isOtherSelected && otherValue) {
+      responseValues.push(otherValue);
+    }
+    const hasResponse = Array.isArray(responseValues) && responseValues.length > 0;
+    return required && hasResponse ? false : required;
+  };
+
+  const isRequired = getIsRequired();
+
+  const handleToggle = (optionId: string, isChecked: boolean) => {
+    if (isChecked) {
+      handleOptionRemove(optionId);
+    } else {
+      handleOptionAdd(optionId);
+    }
+  };
+
+  return (
+    <>
+      <ElementError errorMessage={errorMessage} dir={dir} />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            disabled={disabled}
+            className="rounded-input w-full justify-between"
+            aria-invalid={Boolean(errorMessage)}
+            aria-label={headline}>
+            <span className="truncate">{displayText}</span>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+          {options
+            .filter((option) => option.id !== "none")
+            .map((option) => {
+              const isChecked = selectedValues.includes(option.id);
+              const optionId = `${inputId}-${option.id}`;
+
+              return (
+                <DropdownMenuCheckboxItem
+                  key={option.id}
+                  id={optionId}
+                  checked={isChecked}
+                  onCheckedChange={() => handleToggle(option.id, isChecked)}
+                  disabled={disabled}>
+                  <span className={optionLabelClassName}>{option.label}</span>
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+          {hasOtherOption && otherOptionId ? (
+            <DropdownMenuCheckboxItem
+              id={`${inputId}-${otherOptionId}`}
+              checked={isOtherSelected}
+              onCheckedChange={() => {
+                if (isOtherSelected) {
+                  handleOptionRemove(otherOptionId);
+                } else {
+                  handleOptionAdd(otherOptionId);
+                }
+              }}
+              disabled={disabled}>
+              <span className={optionLabelClassName}>{otherOptionLabel}</span>
+            </DropdownMenuCheckboxItem>
+          ) : null}
+          {options
+            .filter((option) => option.id === "none")
+            .map((option) => {
+              const isChecked = selectedValues.includes(option.id);
+              const optionId = `${inputId}-${option.id}`;
+
+              return (
+                <DropdownMenuCheckboxItem
+                  key={option.id}
+                  id={optionId}
+                  checked={isChecked}
+                  onCheckedChange={() => handleToggle(option.id, isChecked)}
+                  disabled={disabled}>
+                  <span className={optionLabelClassName}>{option.label}</span>
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {isOtherSelected ? (
+        <Input
+          ref={otherInputRef}
+          type="text"
+          value={otherValue}
+          onChange={handleOtherInputChange}
+          placeholder={otherOptionPlaceholder}
+          disabled={disabled}
+          required={isRequired}
+          aria-required={required}
+          dir={dir}
+          className="w-full"
+        />
+      ) : null}
+    </>
+  );
+}
+
+interface ListVariantProps {
+  inputId: string;
+  options: MultiSelectOption[];
+  selectedValues: string[];
+  value: string[];
+  handleOptionAdd: (optionId: string) => void;
+  handleOptionRemove: (optionId: string) => void;
+  disabled: boolean;
+  headline: string;
+  errorMessage?: string;
+  hasOtherOption: boolean;
+  otherOptionId?: string;
+  isOtherSelected: boolean;
+  otherOptionLabel: string;
+  otherValue: string;
+  handleOtherInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  otherOptionPlaceholder: string;
+  dir: TextDirection;
+  otherInputRef: React.RefObject<HTMLInputElement | null>;
+  required: boolean;
+}
+
+function ListVariant({
+  inputId,
+  options,
+  selectedValues,
+  value,
+  handleOptionAdd,
+  handleOptionRemove,
+  disabled,
+  headline,
+  errorMessage,
+  hasOtherOption,
+  otherOptionId,
+  isOtherSelected,
+  otherOptionLabel,
+  otherValue,
+  handleOtherInputChange,
+  otherOptionPlaceholder,
+  dir,
+  otherInputRef,
+  required,
+}: Readonly<ListVariantProps>): React.JSX.Element {
+  const isNoneSelected = value.includes("none");
+
+  const getIsRequired = (): boolean => {
+    const responseValues = [...value];
+    if (isOtherSelected && otherValue) {
+      responseValues.push(otherValue);
+    }
+    const hasResponse = Array.isArray(responseValues) && responseValues.length > 0;
+    return required && hasResponse ? false : required;
+  };
+
+  const isRequired = getIsRequired();
+
+  return (
+    <>
+      <ElementError errorMessage={errorMessage} dir={dir} />
+      <fieldset className="space-y-2" aria-label={headline}>
+        {options
+          .filter((option) => option.id !== "none")
+          .map((option, index) => {
+            const isChecked = selectedValues.includes(option.id);
+            const optionId = `${inputId}-${option.id}`;
+            const isDisabled = disabled || (isNoneSelected && option.id !== "none");
+            // Only mark the first checkbox as required for HTML5 validation
+            // This ensures at least one selection is required, not all
+            const isFirstOption = index === 0;
+            return (
+              <label
+                key={option.id}
+                htmlFor={optionId}
+                className={cn(getOptionContainerClassName(isChecked, isDisabled), isChecked && "z-10")}>
+                <span className="flex items-center">
+                  <Checkbox
+                    id={optionId}
+                    name={inputId}
+                    checked={isChecked}
+                    onCheckedChange={(checked) => {
+                      if (checked === true) {
+                        handleOptionAdd(option.id);
+                      } else {
+                        handleOptionRemove(option.id);
+                      }
+                    }}
+                    disabled={isDisabled}
+                    required={isRequired ? isFirstOption : false}
+                    aria-invalid={Boolean(errorMessage)}
+                  />
+                  <span
+                    className={cn("mr-3 ml-3", optionLabelClassName)}
+                    style={{ fontSize: "var(--fb-option-font-size)" }}>
+                    {option.label}
+                  </span>
+                </span>
+              </label>
+            );
+          })}
+        {hasOtherOption && otherOptionId ? (
+          <div className="space-y-2">
+            <label
+              htmlFor={`${inputId}-${otherOptionId}`}
+              className={cn(
+                getOptionContainerClassName(isOtherSelected, disabled || isNoneSelected),
+                isOtherSelected && "z-10"
+              )}>
+              <span className="flex items-center">
+                <Checkbox
+                  id={`${inputId}-${otherOptionId}`}
+                  name={inputId}
+                  checked={isOtherSelected}
+                  onCheckedChange={(checked) => {
+                    if (checked === true) {
+                      handleOptionAdd(otherOptionId);
+                    } else {
+                      handleOptionRemove(otherOptionId);
+                    }
+                  }}
+                  disabled={disabled || isNoneSelected}
+                  aria-invalid={Boolean(errorMessage)}
+                />
+                <span
+                  className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                  style={{ fontSize: "var(--fb-option-font-size)" }}>
+                  {otherOptionLabel}
+                </span>
+              </span>
+              {isOtherSelected ? (
+                <Input
+                  type="text"
+                  value={otherValue}
+                  onChange={handleOtherInputChange}
+                  placeholder={otherOptionPlaceholder}
+                  disabled={disabled}
+                  required
+                  aria-required={required}
+                  dir={dir}
+                  className="mt-2 w-full"
+                  ref={otherInputRef}
+                />
+              ) : null}
+            </label>
+          </div>
+        ) : null}
+        {options
+          .filter((option) => option.id === "none")
+          .map((option) => {
+            const isChecked = selectedValues.includes(option.id);
+            const optionId = `${inputId}-${option.id}`;
+            const isDisabled = disabled || (isNoneSelected && option.id !== "none");
+            return (
+              <label
+                key={option.id}
+                htmlFor={optionId}
+                className={cn(getOptionContainerClassName(isChecked, isDisabled), isChecked && "z-10")}>
+                <span className="flex items-center">
+                  <Checkbox
+                    id={optionId}
+                    name={inputId}
+                    checked={isChecked}
+                    onCheckedChange={(checked) => {
+                      if (checked === true) {
+                        handleOptionAdd(option.id);
+                      } else {
+                        handleOptionRemove(option.id);
+                      }
+                    }}
+                    disabled={isDisabled}
+                    required={false}
+                    aria-invalid={Boolean(errorMessage)}
+                  />
+                  <span
+                    className={cn("mr-3 ml-3", optionLabelClassName)}
+                    style={{ fontSize: "var(--fb-option-font-size)" }}>
+                    {option.label}
+                  </span>
+                </span>
+              </label>
+            );
+          })}
+      </fieldset>
+    </>
+  );
 }
 
 function MultiSelect({
@@ -82,48 +435,45 @@ function MultiSelect({
   otherOptionPlaceholder = "Please specify",
   otherValue = "",
   onOtherValueChange,
-}: MultiSelectProps): React.JSX.Element {
+  exclusiveOptionIds = [],
+}: Readonly<MultiSelectProps>): React.JSX.Element {
   // Ensure value is always an array
   const selectedValues = Array.isArray(value) ? value : [];
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = Boolean(hasOtherOption && otherOptionId && selectedValues.includes(otherOptionId));
+  const otherInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleOptionChange = (optionId: string, checked: boolean): void => {
-    if (checked) {
-      onChange([...selectedValues, optionId]);
+  React.useEffect(() => {
+    if (!isOtherSelected || disabled) return;
+
+    // Delay focus to win against Radix focus restoration when dropdown closes / checkbox receives focus.
+    const timeoutId = globalThis.setTimeout(() => {
+      globalThis.requestAnimationFrame(() => {
+        otherInputRef.current?.focus();
+      });
+    }, 0);
+
+    return () => {
+      globalThis.clearTimeout(timeoutId);
+    };
+  }, [isOtherSelected, disabled, variant]);
+
+  const handleOptionAdd = (optionId: string): void => {
+    if (exclusiveOptionIds.includes(optionId)) {
+      onChange([optionId]);
     } else {
-      onChange(selectedValues.filter((id) => id !== optionId));
+      const newValues = selectedValues.filter((id) => !exclusiveOptionIds.includes(id));
+      onChange([...newValues, optionId]);
     }
+  };
+
+  const handleOptionRemove = (optionId: string): void => {
+    onChange(selectedValues.filter((id) => id !== optionId));
   };
 
   const handleOtherInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onOtherValueChange?.(e.target.value);
   };
-
-  // Shared className for option containers
-  const getOptionContainerClassName = (isSelected: boolean): string =>
-    cn(
-      "relative flex cursor-pointer flex-col border transition-colors outline-none",
-      "rounded-option px-option-x py-option-y",
-      isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",
-      "focus-within:border-brand focus-within:bg-option-selected-bg",
-      "hover:bg-option-hover-bg",
-      disabled && "cursor-not-allowed opacity-50"
-    );
-
-  // Shared className for option labels
-  const optionLabelClassName = "font-option  font-option-weight text-option text-option-label";
-
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [
-      headline,
-      description ?? "",
-      ...options.map((opt) => opt.label),
-      ...(hasOtherOption ? [otherOptionLabel] : []),
-    ],
-  });
 
   // Get selected option labels for dropdown display
   const selectedLabels = options.filter((opt) => selectedValues.includes(opt.id)).map((opt) => opt.label);
@@ -135,133 +485,56 @@ function MultiSelect({
   }
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Options */}
-      <div className="relative space-y-3">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
-
+      <div className="relative">
         {variant === "dropdown" ? (
-          <>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  disabled={disabled}
-                  className="rounded-input w-full justify-between"
-                  aria-invalid={Boolean(errorMessage)}
-                  aria-label={headline}>
-                  <span className="truncate">{displayText}</span>
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
-                {options.map((option) => {
-                  const isChecked = selectedValues.includes(option.id);
-                  const optionId = `${inputId}-${option.id}`;
-
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={option.id}
-                      id={optionId}
-                      checked={isChecked}
-                      onCheckedChange={(checked) => {
-                        handleOptionChange(option.id, checked);
-                      }}
-                      disabled={disabled}>
-                      <span className={optionLabelClassName}>{option.label}</span>
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-                {hasOtherOption && otherOptionId ? (
-                  <DropdownMenuCheckboxItem
-                    id={`${inputId}-${otherOptionId}`}
-                    checked={isOtherSelected}
-                    onCheckedChange={(checked) => {
-                      handleOptionChange(otherOptionId, checked);
-                    }}
-                    disabled={disabled}>
-                    <span className={optionLabelClassName}>{otherOptionLabel}</span>
-                  </DropdownMenuCheckboxItem>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {isOtherSelected ? (
-              <Input
-                type="text"
-                value={otherValue}
-                onChange={handleOtherInputChange}
-                placeholder={otherOptionPlaceholder}
-                disabled={disabled}
-                dir={detectedDir}
-                className="w-full"
-                // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
-                autoFocus
-              />
-            ) : null}
-          </>
+          <DropdownVariant
+            inputId={inputId}
+            options={options}
+            selectedValues={selectedValues}
+            handleOptionAdd={handleOptionAdd}
+            handleOptionRemove={handleOptionRemove}
+            disabled={disabled}
+            headline={headline}
+            errorMessage={errorMessage}
+            displayText={displayText}
+            hasOtherOption={hasOtherOption}
+            otherOptionId={otherOptionId}
+            isOtherSelected={isOtherSelected}
+            otherOptionLabel={otherOptionLabel}
+            otherValue={otherValue}
+            handleOtherInputChange={handleOtherInputChange}
+            otherOptionPlaceholder={otherOptionPlaceholder}
+            dir={dir}
+            otherInputRef={otherInputRef}
+            required={required}
+          />
         ) : (
-          <div className="space-y-2" role="group" aria-label={headline}>
-            {options.map((option) => {
-              const isChecked = selectedValues.includes(option.id);
-              const optionId = `${inputId}-${option.id}`;
-
-              return (
-                <label
-                  key={option.id}
-                  htmlFor={optionId}
-                  className={cn(getOptionContainerClassName(isChecked), isChecked && "z-10")}>
-                  <span className="flex items-center">
-                    <Checkbox
-                      id={optionId}
-                      checked={isChecked}
-                      onCheckedChange={(checked) => {
-                        handleOptionChange(option.id, checked === true);
-                      }}
-                      disabled={disabled}
-                      aria-invalid={Boolean(errorMessage)}
-                    />
-                    <span className={cn("ml-3 mr-3", optionLabelClassName)}>{option.label}</span>
-                  </span>
-                </label>
-              );
-            })}
-            {hasOtherOption && otherOptionId ? (
-              <div className="space-y-2">
-                <label
-                  htmlFor={`${inputId}-${otherOptionId}`}
-                  className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
-                  <span className="flex items-center">
-                    <Checkbox
-                      id={`${inputId}-${otherOptionId}`}
-                      checked={isOtherSelected}
-                      onCheckedChange={(checked) => {
-                        handleOptionChange(otherOptionId, checked === true);
-                      }}
-                      disabled={disabled}
-                      aria-invalid={Boolean(errorMessage)}
-                    />
-                    <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
-                  </span>
-                  {isOtherSelected ? (
-                    <Input
-                      type="text"
-                      value={otherValue}
-                      onChange={handleOtherInputChange}
-                      placeholder={otherOptionPlaceholder}
-                      disabled={disabled}
-                      dir={detectedDir}
-                      className="mt-2 w-full"
-                      // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
-                      autoFocus
-                    />
-                  ) : null}
-                </label>
-              </div>
-            ) : null}
-          </div>
+          <ListVariant
+            inputId={inputId}
+            options={options}
+            selectedValues={selectedValues}
+            value={value}
+            handleOptionAdd={handleOptionAdd}
+            handleOptionRemove={handleOptionRemove}
+            disabled={disabled}
+            headline={headline}
+            errorMessage={errorMessage}
+            hasOtherOption={hasOtherOption}
+            otherOptionId={otherOptionId}
+            isOtherSelected={isOtherSelected}
+            otherOptionLabel={otherOptionLabel}
+            otherValue={otherValue}
+            handleOtherInputChange={handleOtherInputChange}
+            otherOptionPlaceholder={otherOptionPlaceholder}
+            dir={dir}
+            otherInputRef={otherInputRef}
+            required={required}
+          />
         )}
       </div>
     </div>

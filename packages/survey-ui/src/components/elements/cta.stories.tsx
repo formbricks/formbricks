@@ -9,7 +9,7 @@ import {
 } from "../../lib/story-helpers";
 import { CTA, type CTAProps } from "./cta";
 
-type StoryProps = CTAProps & Partial<BaseStylingOptions & ButtonStylingOptions>;
+type StoryProps = CTAProps & Partial<BaseStylingOptions & ButtonStylingOptions> & Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/CTA",
@@ -149,6 +149,7 @@ export const RTL: Story = {
     headline: "هل أنت مستعد للبدء؟",
     description: "انقر على الزر أدناه للبدء",
     buttonLabel: "ابدأ الآن",
+    dir: "rtl",
     onClick: () => {
       alert("clicked");
     },

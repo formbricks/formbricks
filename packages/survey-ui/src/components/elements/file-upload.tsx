@@ -3,7 +3,6 @@ import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,16 +30,18 @@ interface FileUploadProps {
   value?: UploadedFile[];
   /** Callback function called when files change */
   onChange: (files: UploadedFile[]) => void;
+  /** Callback function called when files are selected (before validation) */
+  onFileSelect?: (files: FileList) => void;
   /** Whether multiple files are allowed */
   allowMultiple?: boolean;
-  /** Maximum file size in MB */
-  maxSizeInMB?: number;
   /** Allowed file extensions (e.g., ['.pdf', '.jpg', '.png']) */
   allowedFileExtensions?: string[];
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
   /** Error message to display */
   errorMessage?: string;
+  /** Whether the component is in uploading state */
+  isUploading?: boolean;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the file input is disabled */
@@ -55,6 +56,158 @@ interface FileUploadProps {
   placeholderText?: string;
 }
 
+interface UploadedFileItemProps {
+  file: UploadedFile;
+  index: number;
+  disabled: boolean;
+  onDelete: (index: number, e: React.MouseEvent) => void;
+}
+
+function UploadedFileItem({
+  file,
+  index,
+  disabled,
+  onDelete,
+}: Readonly<UploadedFileItemProps>): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        "border-input-border bg-accent-selected text-input-text rounded-input relative m-1 rounded-md border"
+      )}>
+      <div className="absolute top-0 right-0 m-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            onDelete(index, e);
+          }}
+          disabled={disabled}
+          className={cn(
+            "flex h-5 w-5 cursor-pointer items-center justify-center rounded-md",
+            "bg-background hover:bg-accent",
+            disabled && "cursor-not-allowed opacity-50"
+          )}
+          aria-label={`Delete ${file.name}`}>
+          <X className="text-foreground h-5" />
+        </button>
+      </div>
+      <div className="flex flex-col items-center justify-center p-2">
+        <UploadIcon />
+        <p
+          className="mt-1 w-full overflow-hidden px-2 text-center text-sm overflow-ellipsis whitespace-nowrap text-[var(--foreground)]"
+          title={file.name}>
+          {file.name}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+interface UploadedFilesListProps {
+  files: UploadedFile[];
+  disabled: boolean;
+  onDelete: (index: number, e: React.MouseEvent) => void;
+}
+
+function UploadedFilesList({
+  files,
+  disabled,
+  onDelete,
+}: Readonly<UploadedFilesListProps>): React.JSX.Element | null {
+  if (files.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-2 p-2">
+      {files.map((file, index) => (
+        <UploadedFileItem
+          key={`${file.name}-${file.url}`}
+          file={file}
+          index={index}
+          disabled={disabled}
+          onDelete={onDelete}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface UploadAreaProps {
+  inputId: string;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  placeholderText: string;
+  allowMultiple: boolean;
+  acceptAttribute?: string;
+  required: boolean;
+  disabled: boolean;
+  dir: "ltr" | "rtl" | "auto";
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
+  onDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
+  showUploader: boolean;
+}
+
+function UploadArea({
+  inputId,
+  fileInputRef,
+  placeholderText,
+  allowMultiple,
+  acceptAttribute,
+  required,
+  disabled,
+  dir,
+  onFileChange,
+  onDragOver,
+  onDrop,
+  showUploader,
+}: Readonly<UploadAreaProps>): React.JSX.Element | null {
+  if (!showUploader) {
+    return null;
+  }
+
+  return (
+    <label
+      htmlFor={inputId}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className={cn("block w-full", disabled && "cursor-not-allowed")}>
+      <button
+        type="button"
+        onClick={() => {
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        }}
+        disabled={disabled}
+        className={cn(
+          "flex w-full flex-col items-center justify-center py-6",
+          "hover:cursor-pointer",
+          disabled && "cursor-not-allowed opacity-50"
+        )}
+        aria-label="Upload files by clicking or dragging them here">
+        <Upload className="text-input-text h-6" aria-hidden="true" />
+        <span className="text-input-text font-input-weight text-input m-2" id={`${inputId}-label`}>
+          {placeholderText}
+        </span>
+        <Input
+          ref={fileInputRef}
+          type="file"
+          id={inputId}
+          className="hidden"
+          multiple={allowMultiple}
+          accept={acceptAttribute}
+          onChange={onFileChange}
+          disabled={disabled}
+          required={required}
+          dir={dir}
+          aria-label="File upload"
+          aria-describedby={`${inputId}-label`}
+        />
+      </button>
+    </label>
+  );
+}
+
 function FileUpload({
   elementId,
   headline,
@@ -62,114 +215,33 @@ function FileUpload({
   inputId,
   value = [],
   onChange,
+  onFileSelect,
   allowMultiple = false,
-  maxSizeInMB,
   allowedFileExtensions,
   required = false,
   errorMessage,
+  isUploading = false,
   dir = "auto",
   disabled = false,
   imageUrl,
   videoUrl,
   imageAltText,
   placeholderText = "Click or drag to upload files",
-}: FileUploadProps): React.JSX.Element {
+}: Readonly<FileUploadProps>): React.JSX.Element {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = React.useState(false);
 
   // Ensure value is always an array
   const uploadedFiles = Array.isArray(value) ? value : [];
 
-  const validateFile = (file: File): string | null => {
-    // Check file extension
-    if (allowedFileExtensions && allowedFileExtensions.length > 0) {
-      const fileExtensionPart = file.name.split(".").pop()?.toLowerCase();
-      if (fileExtensionPart) {
-        const fileExtension = `.${fileExtensionPart}`;
-        if (!allowedFileExtensions.includes(fileExtension)) {
-          return `File type ${fileExtension} is not allowed. Allowed types: ${allowedFileExtensions.join(", ")}`;
-        }
-      }
-    }
-
-    // Check file size
-    if (maxSizeInMB) {
-      const fileSizeInMB = file.size / (1024 * 1024);
-      if (fileSizeInMB > maxSizeInMB) {
-        return `File size exceeds the maximum allowed size of ${String(maxSizeInMB)}MB`;
-      }
-    }
-
-    return null;
-  };
-
-  const processFiles = async (files: FileList | File[]): Promise<UploadedFile[]> => {
-    const fileArray = Array.from(files);
-    const processedFiles: UploadedFile[] = [];
-
-    for (const file of fileArray) {
-      const error = validateFile(file);
-      if (error) {
-        // In a real implementation, you might want to show this error
-        // eslint-disable-next-line no-console -- Error logging needed for file validation
-        console.error(error);
-        continue;
-      }
-
-      // Create a data URL for preview (in real implementation, upload to server)
-      const url = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          resolve(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-      });
-
-      processedFiles.push({
-        name: file.name,
-        url,
-        size: file.size,
-      });
-    }
-
-    return processedFiles;
-  };
-
-  const handleFileSelection = async (files: FileList | File[]): Promise<void> => {
-    if (disabled) return;
-
-    const fileArray = Array.from(files);
-
-    // Validate file limits
-    if (!allowMultiple && fileArray.length > 1) {
-      // eslint-disable-next-line no-alert -- Alert needed for user feedback
-      alert("Only one file can be uploaded at a time");
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      const newFiles = await processFiles(fileArray);
-      if (allowMultiple) {
-        onChange([...uploadedFiles, ...newFiles]);
-      } else {
-        onChange(newFiles.slice(0, 1));
-      }
-    } catch (err) {
-      // eslint-disable-next-line no-console -- Error logging needed
-      console.error("Error uploading files:", err);
-    } finally {
-      setIsUploading(false);
-      // Reset input to allow selecting the same file again
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (!e.target.files || disabled) return;
-    await handleFileSelection(e.target.files);
+    if (onFileSelect) {
+      onFileSelect(e.target.files);
+    }
+    // Reset input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>): void => {
@@ -181,7 +253,9 @@ function FileUpload({
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>): void => {
     e.preventDefault();
     e.stopPropagation();
-    void handleFileSelection(e.dataTransfer.files);
+    if (onFileSelect && e.dataTransfer.files.length > 0) {
+      onFileSelect(e.dataTransfer.files);
+    }
   };
 
   const handleDeleteFile = (index: number, e: React.MouseEvent): void => {
@@ -190,12 +264,6 @@ function FileUpload({
     updatedFiles.splice(index, 1);
     onChange(updatedFiles);
   };
-
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? ""],
-  });
 
   // Build accept attribute from allowed extensions
   const acceptAttribute = allowedFileExtensions
@@ -206,8 +274,7 @@ function FileUpload({
   const showUploader = isUploading || allowMultiple || uploadedFiles.length === 0;
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
-      {/* Headline */}
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       <ElementHeader
         headline={headline}
         description={description}
@@ -218,58 +285,17 @@ function FileUpload({
         imageAltText={imageAltText}
       />
 
-      {/* File Input */}
-      <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+      <div className="relative">
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
-        {/* Dashed border container */}
         <div
           className={cn(
             "w-input px-input-x py-input-y rounded-input relative flex flex-col items-center justify-center border-2 border-dashed transition-colors",
-            errorMessage ? "border-destructive" : "border-input-border bg-input-bg hover:bg-input-hover-bg",
+            errorMessage ? "border-destructive" : "border-input-border bg-accent",
             disabled && "cursor-not-allowed opacity-50"
           )}>
-          {/* Uploaded files */}
-          {uploadedFiles.length > 0 ? (
-            <div className="flex w-full flex-col gap-2 p-2">
-              {uploadedFiles.map((file, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    "border-input-border bg-input-bg text-input-text rounded-input relative m-1 rounded-md border"
-                  )}>
-                  {/* Delete button */}
-                  <div className="absolute right-0 top-0 m-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        handleDeleteFile(index, e);
-                      }}
-                      disabled={disabled}
-                      className={cn(
-                        "flex h-5 w-5 cursor-pointer items-center justify-center rounded-md",
-                        "bg-background hover:bg-accent",
-                        disabled && "cursor-not-allowed opacity-50"
-                      )}
-                      aria-label={`Delete ${file.name}`}>
-                      <X className="text-foreground h-5" />
-                    </button>
-                  </div>
-                  {/* File icon and name */}
-                  <div className="flex flex-col items-center justify-center p-2">
-                    <UploadIcon />
-                    <p
-                      className="mt-1 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-center text-sm text-[var(--foreground)]"
-                      title={file.name}>
-                      {file.name}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <UploadedFilesList files={uploadedFiles} disabled={disabled} onDelete={handleDeleteFile} />
 
-          {/* Upload area */}
           <div className="w-full">
             {isUploading ? (
               <div className="flex animate-pulse items-center justify-center rounded-lg py-4">
@@ -277,44 +303,20 @@ function FileUpload({
               </div>
             ) : null}
 
-            <label
-              htmlFor={inputId}
+            <UploadArea
+              inputId={inputId}
+              fileInputRef={fileInputRef}
+              placeholderText={placeholderText}
+              allowMultiple={allowMultiple}
+              acceptAttribute={acceptAttribute}
+              required={required}
+              disabled={disabled}
+              dir={dir}
+              onFileChange={handleFileChange}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              className={cn("block w-full", disabled && "cursor-not-allowed", !showUploader && "hidden")}>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={disabled}
-                className={cn(
-                  "flex w-full flex-col items-center justify-center py-6",
-                  "hover:cursor-pointer",
-                  disabled && "cursor-not-allowed opacity-50"
-                )}
-                aria-label="Upload files by clicking or dragging them here">
-                <Upload className="text-input-text h-6" aria-hidden="true" />
-                {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
-                <span className="text-input-text font-input-weight text-input m-2" id={`${inputId}-label`}>
-                  {placeholderText}
-                </span>
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  id={inputId}
-                  className="hidden"
-                  multiple={allowMultiple}
-                  accept={acceptAttribute}
-                  onChange={(e) => {
-                    void handleFileChange(e);
-                  }}
-                  disabled={disabled}
-                  required={required}
-                  dir={detectedDir}
-                  aria-label="File upload"
-                  aria-describedby={`${inputId}-label`}
-                />
-              </button>
-            </label>
+              showUploader={showUploader}
+            />
           </div>
         </div>
       </div>

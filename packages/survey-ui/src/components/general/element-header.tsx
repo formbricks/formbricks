@@ -1,3 +1,4 @@
+import DOMPurify from "isomorphic-dompurify";
 import * as React from "react";
 import { ElementMedia } from "@/components/general/element-media";
 import { Label } from "@/components/general/label";
@@ -13,6 +14,37 @@ interface ElementHeaderProps extends React.ComponentProps<"div"> {
   imageAltText?: string;
 }
 
+/**
+ * Checks if a string contains valid HTML markup
+ * @param str - The input string to test
+ * @returns true if the string contains valid HTML elements, false otherwise
+ */
+const isValidHTML = (str: string): boolean => {
+  if (!str) return false;
+
+  try {
+    const doc = new DOMParser().parseFromString(str, "text/html");
+    const errorNode = doc.querySelector("parsererror");
+    if (errorNode) return false;
+    return Array.from(doc.body.childNodes).some((node) => node.nodeType === 1);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Strips inline style attributes to prevent CSP violations
+ * Uses a safe regex pattern to avoid ReDoS (Regular Expression Denial of Service) vulnerabilities
+ * @param html - The HTML string to clean
+ * @returns HTML string without inline style attributes
+ */
+export const stripInlineStyles = (html: string): string => {
+  // Remove style="..." or style='...' attributes
+  // Use separate patterns for each quote type to avoid ReDoS vulnerability
+  // The pattern [^"]* and [^']* are safe as they don't cause backtracking
+  return html.replace(/\s+style\s*=\s*["'][^"']*["']/gi, ""); //NOSONAR
+};
+
 function ElementHeader({
   headline,
   description,
@@ -26,6 +58,17 @@ function ElementHeader({
 }: ElementHeaderProps): React.JSX.Element {
   const isMediaAvailable = imageUrl ?? videoUrl;
 
+  // Check if headline is HTML
+  const strippedHeadline = stripInlineStyles(headline);
+  const isHeadlineHtml = isValidHTML(strippedHeadline);
+  const safeHeadlineHtml =
+    isHeadlineHtml && strippedHeadline
+      ? DOMPurify.sanitize(strippedHeadline, {
+          ADD_ATTR: ["target"],
+          FORBID_ATTR: ["style"],
+        })
+      : "";
+
   return (
     <div className={cn("space-y-2", className)} {...props}>
       {/* Media (Image or Video) */}
@@ -34,11 +77,17 @@ function ElementHeader({
       ) : null}
 
       {/* Headline */}
+      <div>{required ? <span className="label-headline text-xs opacity-60">(Required)</span> : null}</div>
       <div className="flex">
-        <Label htmlFor={htmlFor} variant="headline">
-          {headline}
-        </Label>
-        {required ? <span>*</span> : null}
+        {isHeadlineHtml && safeHeadlineHtml ? (
+          <Label htmlFor={htmlFor} variant="headline">
+            {headline}
+          </Label>
+        ) : (
+          <Label htmlFor={htmlFor} variant="headline" className="font-semibold">
+            {headline}
+          </Label>
+        )}
       </div>
 
       {/* Description/Subheader */}

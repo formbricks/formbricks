@@ -198,6 +198,7 @@ export const RTL: Story = {
   args: {
     headline: "قم بتحميل ملفك",
     description: "يرجى اختيار ملف للتحميل",
+    dir: "rtl",
   },
 };
 
@@ -213,6 +214,7 @@ export const RTLWithFiles: Story = {
         size: 1024 * 500,
       },
     ] as UploadedFile[],
+    dir: "rtl",
   },
 };
 

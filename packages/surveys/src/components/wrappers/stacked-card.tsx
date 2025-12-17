@@ -45,7 +45,7 @@ export const StackedCard = ({
   };
 
   const getDummyCardContent = () => {
-    return <div style={{ height: cardHeight }} className="fb-w-full fb-p-6"></div>;
+    return <div style={{ height: cardHeight }} className="w-full p-6"></div>;
   };
 
   const calculateCardTransform = useMemo(() => {
@@ -105,13 +105,13 @@ export const StackedCard = ({
         transform: calculateCardTransform(offset),
         opacity: isHidden ? 0 : (100 - 20 * offset) / 100,
         height: fullSizeCards ? "100%" : currentCardHeight,
-        transitionDuration: "600ms",
+        transition: "all 600ms ease-in-out",
         pointerEvents: offset === 0 ? "auto" : "none",
         ...borderStyles,
         ...straightCardArrangementStyles,
         ...getBottomStyles(),
       }}
-      className="fb-pointer fb-rounded-custom fb-bg-survey-bg fb-absolute fb-inset-x-0 fb-transition-all fb-ease-in-out fb-overflow-hidden">
+      className="pointer rounded-custom bg-survey-bg absolute inset-x-0 overflow-hidden">
       <div
         style={{
           opacity: contentOpacity,

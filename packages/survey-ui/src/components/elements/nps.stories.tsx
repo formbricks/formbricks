@@ -13,7 +13,7 @@ import {
 } from "../../lib/story-helpers";
 import { NPS, type NPSProps } from "./nps";
 
-type StoryProps = NPSProps & Partial<BaseStylingOptions & LabelStylingOptions>;
+type StoryProps = NPSProps & Partial<BaseStylingOptions & LabelStylingOptions> & Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/NPS",
@@ -78,7 +78,7 @@ export const StylingPlayground: Story = {
     ]),
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {
@@ -196,6 +196,7 @@ export const Detractor: Story = {
 export const RTL: Story = {
   args: {
     elementId: "nps-rtl",
+    dir: "rtl",
     inputId: "nps-input-rtl",
     headline: "ما مدى احتمالية أن توصي بنا لصديق أو زميل؟",
     description: "يرجى التقييم من 0 إلى 10",
@@ -207,6 +208,7 @@ export const RTL: Story = {
 export const RTLWithSelection: Story = {
   args: {
     elementId: "nps-rtl-selection",
+    dir: "rtl",
     inputId: "nps-input-rtl-selection",
     headline: "ما مدى احتمالية أن توصي بنا لصديق أو زميل؟",
     value: 8,

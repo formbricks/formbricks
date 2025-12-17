@@ -87,3 +87,15 @@ This package uses CSS variables for theming. The theme can be customized by modi
 
 Both light and dark modes are supported out of the box.
 
+## CSS Scoping
+
+By default, this package builds CSS scoped to `#fbjs` for use in the surveys package. This ensures proper specificity and prevents conflicts with preflight CSS.
+
+To build unscoped CSS (e.g., for standalone usage or Storybook), set the `SURVEY_UI_UNSCOPED` environment variable:
+
+```bash
+SURVEY_UI_UNSCOPED=true pnpm build
+```
+
+**Note:** Storybook imports the source CSS directly and compiles it with its own Tailwind config, so it's not affected by this scoping setting.
+

@@ -4,7 +4,6 @@ import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
 import { RadioGroupItem } from "@/components/general/radio-group";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -76,25 +75,14 @@ function Matrix({
     }
   };
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [
-      headline,
-      description ?? "",
-      ...rows.map((row) => row.label),
-      ...columns.map((col) => col.label),
-    ],
-  });
-
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Matrix Table */}
       <div className="relative">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
         {/* Table container with overflow for mobile */}
         <div className="overflow-x-auto">
@@ -127,18 +115,18 @@ function Matrix({
                       handleRowChange(row.id, newColumnId);
                     }}
                     disabled={disabled}
-                    dir={detectedDir}
+                    required={required}
                     aria-invalid={Boolean(errorMessage)}>
                     <tr className={cn("relative", baseBgColor, rowHasError ? "bg-destructive-muted" : "")}>
                       {/* Row label */}
-                      <td className={cn("p-2 align-middle", !rowHasError && "rounded-l-input")}>
+                      <th scope="row" className={cn("p-2 align-middle", !rowHasError && "rounded-l-input")}>
                         <div className="flex flex-col gap-0 leading-none">
                           <Label>{row.label}</Label>
                           {rowHasError ? (
                             <span className="text-destructive text-xs font-normal">Select one option</span>
                           ) : null}
                         </div>
-                      </td>
+                      </th>
                       {/* Column options for this row */}
                       {columns.map((column, colIndex) => {
                         const cellId = `${rowGroupId}-${column.id}`;
@@ -152,7 +140,12 @@ function Matrix({
                               isLastColumn && !rowHasError && "rounded-r-input"
                             )}>
                             <Label htmlFor={cellId} className="flex cursor-pointer justify-center">
-                              <RadioGroupItem value={column.id} id={cellId} disabled={disabled} />
+                              <RadioGroupItem
+                                value={column.id}
+                                id={cellId}
+                                disabled={disabled}
+                                aria-label={`${row.label}-${column.label}`}
+                              />
                             </Label>
                           </td>
                         );

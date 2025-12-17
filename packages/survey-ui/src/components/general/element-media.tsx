@@ -1,6 +1,4 @@
-"use client";
-
-import { Download, Expand } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
@@ -89,8 +87,8 @@ function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMediaProps
         target="_blank"
         rel="noreferrer"
         aria-label="Open in new tab"
-        className="absolute bottom-2 right-2 flex items-center gap-2 rounded-md bg-slate-800 bg-opacity-40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out hover:bg-opacity-65 group-hover/image:opacity-100">
-        {imgUrl ? <Download size={20} /> : <Expand size={20} />}
+        className="bg-opacity-40 hover:bg-opacity-65 absolute right-2 bottom-2 flex items-center gap-2 rounded-md bg-slate-800 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out group-hover/image:opacity-100">
+        {imgUrl ? <Download size={20} /> : <ExternalLink size={20} />}
       </a>
     </div>
   );

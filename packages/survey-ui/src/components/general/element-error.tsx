@@ -19,12 +19,12 @@ function ElementError({ errorMessage, dir = "auto" }: ElementErrorProps): React.
       {/* Error indicator bar */}
       <div
         className={cn(
-          "bg-destructive absolute bottom-0 top-0 w-[4px]",
-          dir === "rtl" ? "right-[-12px]" : "left-[-12px]"
+          "bg-destructive absolute top-0 bottom-0 w-[4px]",
+          dir === "rtl" ? "right-[-10px]" : "left-[-10px]"
         )}
       />
       {/* Error message - shown at top */}
-      <div className="text-destructive flex items-center gap-1 text-sm" dir={dir}>
+      <div className="text-destructive mb-2 flex items-center gap-1 text-sm" dir={dir}>
         <AlertCircle className="size-4" />
         <span>{errorMessage}</span>
       </div>

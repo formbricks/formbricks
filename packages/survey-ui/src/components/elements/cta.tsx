@@ -1,9 +1,8 @@
-import { LinkIcon } from "lucide-react";
+import { SquareArrowOutUpRightIcon } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/general/button";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
-import { useTextDirection } from "@/hooks/use-text-direction";
 
 /**
  * Props for the CTA (Call to Action) element component
@@ -52,12 +51,6 @@ function CTA({
   disabled = false,
   buttonVariant = "default",
 }: CTAProps): React.JSX.Element {
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", buttonLabel],
-  });
-
   const handleButtonClick = (): void => {
     if (disabled) return;
     onClick();
@@ -68,26 +61,28 @@ function CTA({
   };
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* CTA Button */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
-        <div className="flex w-full justify-start">
-          <Button
-            id={inputId}
-            type="button"
-            onClick={handleButtonClick}
-            disabled={disabled}
-            className="flex items-center gap-2"
-            variant={buttonVariant}>
-            {buttonLabel}
-            {buttonExternal ? <LinkIcon className="size-4" /> : null}
-          </Button>
-        </div>
+        {buttonExternal ? (
+          <div className="flex w-full justify-start">
+            <Button
+              id={inputId}
+              type="button"
+              onClick={handleButtonClick}
+              disabled={disabled}
+              className="flex items-center gap-2"
+              variant={buttonVariant}>
+              {buttonLabel}
+              <SquareArrowOutUpRightIcon className="size-4" />
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

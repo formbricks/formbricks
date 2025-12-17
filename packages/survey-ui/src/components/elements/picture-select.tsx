@@ -4,7 +4,6 @@ import { Checkbox } from "@/components/general/checkbox";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { RadioGroupItem } from "@/components/general/radio-group";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -68,61 +67,44 @@ function PictureSelect({
     selectedValues = typeof value === "string" ? value : undefined;
   }
 
-  const handleOptionChange = (optionId: string): void => {
+  const handleMultiSelectChange = (optionId: string, checked: boolean): void => {
     if (disabled) return;
 
-    if (allowMulti) {
-      const currentArray = Array.isArray(value) ? value : [];
-      const newValue = currentArray.includes(optionId)
-        ? currentArray.filter((id) => id !== optionId)
-        : [...currentArray, optionId];
-      onChange(newValue);
+    const currentArray = Array.isArray(value) ? value : [];
+    if (checked) {
+      onChange([...currentArray, optionId]);
     } else {
-      // Single select - toggle if same option, otherwise select new one
-      const newValue = selectedValues === optionId ? undefined : optionId;
-      onChange(newValue ?? "");
+      onChange(currentArray.filter((id) => id !== optionId));
     }
   };
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", ...options.map((opt) => opt.alt ?? "")],
-  });
+  const handleSingleSelectChange = (newValue: string): void => {
+    if (disabled) return;
+    onChange(newValue);
+  };
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Picture Grid - 2 columns */}
-      <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+      <div className="relative">
+        <ElementError errorMessage={errorMessage} dir={dir} />
         {allowMulti ? (
           <div className="grid grid-cols-2 gap-2">
             {options.map((option) => {
               const isSelected = (selectedValues as string[]).includes(option.id);
+              const optionId = `${inputId}-${option.id}`;
 
               return (
-                <div
+                <label
                   key={option.id}
+                  htmlFor={optionId}
                   className={cn(
                     "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"
-                  )}
-                  onClick={() => {
-                    handleOptionChange(option.id);
-                  }}
-                  role="button"
-                  tabIndex={disabled ? -1 : 0}
-                  onKeyDown={(e) => {
-                    if ((e.key === "Enter" || e.key === " ") && !disabled) {
-                      e.preventDefault();
-                      handleOptionChange(option.id);
-                    }
-                  }}
-                  aria-pressed={isSelected}
-                  aria-disabled={disabled}>
+                  )}>
                   {/* Image container with border when selected */}
                   <div
                     className={cn(
@@ -137,25 +119,30 @@ function PictureSelect({
                     />
                   </div>
                   {/* Selection indicator - Checkbox for multi select */}
-                  <div className="absolute right-[5%] top-[5%]">
+                  <div
+                    className="absolute top-[5%] right-[5%]"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                    }}>
                     <Checkbox
+                      id={optionId}
                       checked={isSelected}
-                      onCheckedChange={() => {
-                        handleOptionChange(option.id);
+                      onCheckedChange={(checked) => {
+                        handleMultiSelectChange(option.id, checked === true);
                       }}
                       disabled={disabled}
                       className="h-4 w-4"
                       aria-label={option.alt ?? `Select ${option.id}`}
                     />
                   </div>
-                </div>
+                </label>
               );
             })}
           </div>
         ) : (
           <RadioGroupPrimitive.Root
             value={selectedValues as string}
-            onValueChange={onChange}
+            onValueChange={handleSingleSelectChange}
             disabled={disabled}
             className="grid grid-cols-2 gap-2">
             {options.map((option) => {
@@ -163,25 +150,13 @@ function PictureSelect({
               const isSelected = selectedValues === option.id;
 
               return (
-                <div
+                <label
                   key={option.id}
+                  htmlFor={optionId}
                   className={cn(
                     "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"
-                  )}
-                  onClick={() => {
-                    handleOptionChange(option.id);
-                  }}
-                  role="button"
-                  tabIndex={disabled ? -1 : 0}
-                  onKeyDown={(e) => {
-                    if ((e.key === "Enter" || e.key === " ") && !disabled) {
-                      e.preventDefault();
-                      handleOptionChange(option.id);
-                    }
-                  }}
-                  aria-pressed={isSelected}
-                  aria-disabled={disabled}>
+                  )}>
                   {/* Image container with border when selected */}
                   <div
                     className={cn(
@@ -196,7 +171,11 @@ function PictureSelect({
                     />
                   </div>
                   {/* Selection indicator - Radio button for single select */}
-                  <div className="absolute right-[5%] top-[5%]">
+                  <div
+                    className="absolute top-[5%] right-[5%]"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                    }}>
                     <RadioGroupItem
                       value={option.id}
                       id={optionId}
@@ -205,7 +184,7 @@ function PictureSelect({
                       aria-label={option.alt ?? `Select ${option.id}`}
                     />
                   </div>
-                </div>
+                </label>
               );
             })}
           </RadioGroupPrimitive.Root>

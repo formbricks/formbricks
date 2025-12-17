@@ -375,16 +375,18 @@ const CSS_VAR_MAP: CSSVarMapping = {
 };
 
 export function createCSSVariablesDecorator<T extends Record<string, unknown> = Record<string, unknown>>(
-  width = "600px",
   additionalMappings?: CSSVarMapping
-): Decorator<T> {
+): Decorator<T & Record<string, unknown>> {
   const fullMapping = { ...CSS_VAR_MAP, ...additionalMappings };
 
-  function CSSVariablesDecorator(Story: React.ComponentType, context: StoryContext<T>): React.ReactElement {
+  function CSSVariablesDecorator(
+    Story: React.ComponentType,
+    context: StoryContext<T & Record<string, unknown>>
+  ): React.ReactElement {
     // Storybook's Decorator type doesn't properly infer args type, so we safely extract it
     // Access args through a type-safe helper
     interface ContextWithArgs {
-      args?: T;
+      args?: T & Record<string, unknown>;
     }
     const safeContext = context as unknown as ContextWithArgs;
     const args = (safeContext.args ?? {}) as Record<string, string | undefined>;
@@ -398,7 +400,7 @@ export function createCSSVariablesDecorator<T extends Record<string, unknown> = 
     });
 
     return (
-      <div style={cssVarStyle} className={`w-[${width}]`}>
+      <div style={cssVarStyle} className="w-[600px]">
         <Story />
       </div>
     );
@@ -414,9 +416,9 @@ export function createCSSVariablesDecorator<T extends Record<string, unknown> = 
 
 export function createStatefulRender<
   TValue,
-  TProps extends { value?: TValue; onChange?: (v: TValue) => void },
->(Component: React.ComponentType<TProps>): (args: TProps & Record<string, unknown>) => React.ReactElement {
-  function StatefulRender(args: TProps & Record<string, unknown>): React.ReactElement {
+  TProps extends { value?: TValue; onChange?: (v: TValue) => void } & Record<string, unknown>,
+>(Component: any): (args: TProps) => React.ReactElement {
+  function StatefulRender(args: Readonly<TProps>): React.ReactElement {
     const [value, setValue] = useState<TValue | undefined>(args.value);
 
     useEffect(() => {

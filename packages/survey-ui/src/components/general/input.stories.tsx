@@ -1,4 +1,4 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
+import type { Decorator, Meta, StoryContext, StoryObj } from "@storybook/react";
 import React from "react";
 import { Input, type InputProps } from "./input";
 
@@ -59,7 +59,10 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
+const withCSSVariables: Decorator<StoryProps> = (
+  Story: React.ComponentType,
+  context: StoryContext<StoryProps>
+) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const {

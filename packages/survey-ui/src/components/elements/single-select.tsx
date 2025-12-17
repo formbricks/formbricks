@@ -12,7 +12,6 @@ import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { RadioGroup, RadioGroupItem } from "@/components/general/radio-group";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -88,6 +87,22 @@ function SingleSelect({
   const selectedValue = value ?? undefined;
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = hasOtherOption && selectedValue === otherOptionId;
+  const otherInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (!isOtherSelected || disabled) return;
+
+    // Delay focus to win against Radix focus restoration when dropdown closes / radio item receives focus.
+    const timeoutId = globalThis.setTimeout(() => {
+      globalThis.requestAnimationFrame(() => {
+        otherInputRef.current?.focus();
+      });
+    }, 0);
+
+    return () => {
+      globalThis.clearTimeout(timeoutId);
+    };
+  }, [isOtherSelected, disabled, variant]);
 
   const handleOtherInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onOtherValueChange?.(e.target.value);
@@ -106,16 +121,6 @@ function SingleSelect({
 
   // Shared className for option labels
   const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [
-      headline,
-      description ?? "",
-      ...options.map((opt) => opt.label),
-      ...(hasOtherOption ? [otherOptionLabel] : []),
-    ],
-  });
 
   // Get selected option label for dropdown display
   const selectedOption = options.find((opt) => opt.id === selectedValue);
@@ -124,7 +129,7 @@ function SingleSelect({
     : (selectedOption?.label ?? placeholder);
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
@@ -132,7 +137,7 @@ function SingleSelect({
       <div className="space-y-3">
         {variant === "dropdown" ? (
           <>
-            <ElementError errorMessage={errorMessage} dir={detectedDir} />
+            <ElementError errorMessage={errorMessage} dir={dir} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -149,19 +154,21 @@ function SingleSelect({
                 className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
                 align="start">
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
-                  {options.map((option) => {
-                    const optionId = `${inputId}-${option.id}`;
+                  {options
+                    .filter((option) => option.id !== "none")
+                    .map((option) => {
+                      const optionId = `${inputId}-${option.id}`;
 
-                    return (
-                      <DropdownMenuRadioItem
-                        key={option.id}
-                        value={option.id}
-                        id={optionId}
-                        disabled={disabled}>
-                        <span className={optionLabelClassName}>{option.label}</span>
-                      </DropdownMenuRadioItem>
-                    );
-                  })}
+                      return (
+                        <DropdownMenuRadioItem
+                          key={option.id}
+                          value={option.id}
+                          id={optionId}
+                          disabled={disabled}>
+                          <span className={optionLabelClassName}>{option.label}</span>
+                        </DropdownMenuRadioItem>
+                      );
+                    })}
                   {hasOtherOption && otherOptionId ? (
                     <DropdownMenuRadioItem
                       value={otherOptionId}
@@ -170,47 +177,73 @@ function SingleSelect({
                       <span className={optionLabelClassName}>{otherValue || otherOptionLabel}</span>
                     </DropdownMenuRadioItem>
                   ) : null}
+                  {options
+                    .filter((option) => option.id === "none")
+                    .map((option) => {
+                      const optionId = `${inputId}-${option.id}`;
+
+                      return (
+                        <DropdownMenuRadioItem
+                          key={option.id}
+                          value={option.id}
+                          id={optionId}
+                          disabled={disabled}>
+                          <span className={optionLabelClassName}>{option.label}</span>
+                        </DropdownMenuRadioItem>
+                      );
+                    })}
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
             {isOtherSelected ? (
               <Input
+                ref={otherInputRef}
                 type="text"
                 value={otherValue}
                 onChange={handleOtherInputChange}
                 placeholder={otherOptionPlaceholder}
                 disabled={disabled}
-                dir={detectedDir}
+                dir={dir}
                 className="w-full"
-                // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
-                autoFocus
               />
             ) : null}
           </>
         ) : (
           <RadioGroup
+            name={inputId}
             value={selectedValue}
             onValueChange={onChange}
             disabled={disabled}
             errorMessage={errorMessage}
-            dir={detectedDir}
+            required={required}
             className="w-full gap-0 space-y-2">
-            {options.map((option) => {
-              const optionId = `${inputId}-${option.id}`;
-              const isSelected = selectedValue === option.id;
+            {options
+              .filter((option) => option.id !== "none")
+              .map((option) => {
+                const optionId = `${inputId}-${option.id}`;
+                const isSelected = selectedValue === option.id;
 
-              return (
-                <label
-                  key={option.id}
-                  htmlFor={optionId}
-                  className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
-                  <span className="flex items-center text-sm">
-                    <RadioGroupItem value={option.id} id={optionId} disabled={disabled} />
-                    <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{option.label}</span>
-                  </span>
-                </label>
-              );
-            })}
+                return (
+                  <label
+                    key={option.id}
+                    htmlFor={optionId}
+                    className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
+                    <span className="flex items-center text-sm">
+                      <RadioGroupItem
+                        value={option.id}
+                        id={optionId}
+                        disabled={disabled}
+                        required={required}
+                      />
+                      <span
+                        className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                        style={{ fontSize: "var(--fb-option-font-size)" }}>
+                        {option.label}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
             {hasOtherOption && otherOptionId ? (
               <label
                 htmlFor={`${inputId}-${otherOptionId}`}
@@ -220,24 +253,57 @@ function SingleSelect({
                     value={otherOptionId}
                     id={`${inputId}-${otherOptionId}`}
                     disabled={disabled}
+                    required={required}
                   />
-                  <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
+                  <span
+                    className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                    style={{ fontSize: "var(--fb-option-font-size)" }}>
+                    {otherOptionLabel}
+                  </span>
                 </span>
                 {isOtherSelected ? (
                   <Input
+                    ref={otherInputRef}
                     type="text"
                     value={otherValue}
                     onChange={handleOtherInputChange}
                     placeholder={otherOptionPlaceholder}
                     disabled={disabled}
-                    dir={detectedDir}
+                    aria-required={required}
+                    dir={dir}
                     className="mt-2 w-full"
-                    // eslint-disable-next-line jsx-a11y/no-autofocus -- Auto-focus is intentional for better UX when "other" option is selected
-                    autoFocus
+                    required={required}
                   />
                 ) : null}
               </label>
             ) : null}
+            {options
+              .filter((option) => option.id === "none")
+              .map((option) => {
+                const optionId = `${inputId}-${option.id}`;
+                const isSelected = selectedValue === option.id;
+
+                return (
+                  <label
+                    key={option.id}
+                    htmlFor={optionId}
+                    className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
+                    <span className="flex items-center text-sm">
+                      <RadioGroupItem
+                        value={option.id}
+                        id={optionId}
+                        disabled={disabled}
+                        required={required}
+                      />
+                      <span
+                        className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                        style={{ fontSize: "var(--fb-option-font-size)" }}>
+                        {option.label}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
           </RadioGroup>
         )}
       </div>

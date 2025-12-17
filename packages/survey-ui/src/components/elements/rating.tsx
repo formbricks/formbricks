@@ -15,7 +15,6 @@ import {
   TiredFace,
   WearyFace,
 } from "@/components/general/smileys";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -168,12 +167,6 @@ function Rating({
   // Ensure value is within valid range
   const currentValue = value && value >= 1 && value <= range ? value : undefined;
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", lowerLabel ?? "", upperLabel ?? ""],
-  });
-
   // Handle rating selection
   const handleSelect = (ratingValue: number): void => {
     if (!disabled) {
@@ -218,12 +211,17 @@ function Rating({
     const isLast = totalLength === number;
     const isFirst = number === 1;
 
-    // Determine border radius classes
+    // Determine border radius and border classes
+    // Use right border for all items to create separators, left border only on first item
     let borderRadiusClasses = "";
-    if (isLast) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-l-input border-l" : "rounded-r-input border-r";
-    } else if (isFirst) {
-      borderRadiusClasses = detectedDir === "rtl" ? "rounded-r-input border-r" : "rounded-l-input border-l";
+    let borderClasses = "border-t border-b border-r";
+
+    if (isFirst) {
+      borderRadiusClasses = dir === "rtl" ? "rounded-r-input" : "rounded-l-input";
+      borderClasses = "border-t border-b border-l border-r";
+    } else if (isLast) {
+      borderRadiusClasses = dir === "rtl" ? "rounded-l-input" : "rounded-r-input";
+      // Last item keeps right border for rounded corner
     }
 
     return (
@@ -233,13 +231,16 @@ function Rating({
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown(number)}
         className={cn(
-          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-b border-l border-t transition-colors focus:border-2 focus:outline-none",
-          isSelected ? "bg-brand-20 border-brand z-10 border-2" : "border-input-border bg-input-bg",
+          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors focus:outline-none",
+          borderClasses,
+          isSelected
+            ? "bg-brand-20 border-brand z-10 -ml-[1px] border-2 first:ml-0"
+            : "border-input-border bg-input-bg",
           borderRadiusClasses,
           isHovered && !isSelected && "bg-input-selected-bg",
           colorCoding ? "min-h-[47px]" : "min-h-[41px]",
           disabled && "cursor-not-allowed opacity-50",
-          "focus:border-brand"
+          "focus:border-brand focus:border-2"
         )}
         onMouseEnter={() => {
           if (!disabled) {
@@ -259,7 +260,7 @@ function Rating({
         }}>
         {colorCoding ? (
           <div
-            className={cn("absolute left-0 top-0 h-[6px] w-full", getRatingNumberOptionColor(range, number))}
+            className={cn("absolute top-0 left-0 h-[6px] w-full", getRatingNumberOptionColor(range, number))}
           />
         ) : null}
         <input
@@ -326,11 +327,11 @@ function Rating({
           className="sr-only"
           aria-label={`Rate ${String(number)} out of ${String(range)} stars`}
         />
-        <div className="flex w-full max-w-[74px] items-center justify-center">
+        <div className="pointer-events-none flex w-full max-w-[74px] items-center justify-center">
           {isActive ? (
             <Star className="h-full w-full fill-yellow-400 text-yellow-400 transition-colors" />
           ) : (
-            <Star className="h-full w-full text-slate-300 transition-colors" />
+            <Star className="h-full w-full fill-slate-300 text-slate-300 transition-colors" />
           )}
         </div>
       </label>
@@ -385,7 +386,7 @@ function Rating({
           className="sr-only"
           aria-label={`Rate ${String(number)} out of ${String(range)}`}
         />
-        <div className="h-full w-full max-w-[74px] object-contain">
+        <div className="pointer-events-none h-full w-full max-w-[74px] object-contain">
           <RatingSmiley active={isActive} idx={index} range={range} addColors={colorCoding} />
         </div>
       </label>
@@ -396,16 +397,16 @@ function Rating({
   const ratingOptions = Array.from({ length: range }, (_, i) => i + 1);
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Rating Options */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full">
           <legend className="sr-only">Rating options</legend>
-          <div className="flex w-full">
+          <div className="flex w-full px-[2px]">
             {ratingOptions.map((number, index) => {
               if (scale === "number") {
                 return renderNumberOption(number, ratingOptions.length);
@@ -420,15 +421,12 @@ function Rating({
           {(lowerLabel ?? upperLabel) ? (
             <div className="mt-4 flex justify-between gap-8 px-1.5">
               {lowerLabel ? (
-                <Label variant="default" className="max-w-[50%] text-xs leading-6" dir={detectedDir}>
+                <Label variant="default" className="max-w-[50%] text-xs leading-6" dir={dir}>
                   {lowerLabel}
                 </Label>
               ) : null}
               {upperLabel ? (
-                <Label
-                  variant="default"
-                  className="max-w-[50%] text-right text-xs leading-6"
-                  dir={detectedDir}>
+                <Label variant="default" className="max-w-[50%] text-right text-xs leading-6" dir={dir}>
                   {upperLabel}
                 </Label>
               ) : null}

@@ -2,7 +2,6 @@ import * as React from "react";
 import { Checkbox } from "@/components/general/checkbox";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -46,37 +45,31 @@ function Consent({
   dir = "auto",
   disabled = false,
 }: ConsentProps): React.JSX.Element {
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? "", checkboxLabel],
-  });
-
   const handleCheckboxChange = (checked: boolean): void => {
     if (disabled) return;
     onChange(checked);
   };
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
       {/* Consent Checkbox */}
       <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={detectedDir} />
+        <ElementError errorMessage={errorMessage} dir={dir} />
 
         <label
-          htmlFor={inputId}
+          htmlFor={`${inputId}-checkbox`}
           className={cn(
             "bg-input-bg border-input-border text-input-text w-input px-input-x py-input-y rounded-input flex cursor-pointer items-center gap-3 border p-4 transition-colors",
             "focus-within:border-ring focus-within:ring-ring/50 font-fontWeight focus-within:shadow-sm",
             errorMessage && "border-destructive",
             disabled && "cursor-not-allowed opacity-50"
           )}
-          dir={detectedDir}>
+          dir={dir}>
           <Checkbox
-            id={inputId}
+            id={`${inputId}-checkbox`}
             checked={value}
             onCheckedChange={handleCheckboxChange}
             disabled={disabled}
@@ -84,9 +77,7 @@ function Consent({
             aria-required={required}
           />
           {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
-          <span
-            className="text-input font-input-weight text-input-text flex-1 leading-none"
-            dir={detectedDir}>
+          <span className="text-input font-input-weight text-input-text flex-1 leading-none" dir={dir}>
             {checkboxLabel}
           </span>
         </label>

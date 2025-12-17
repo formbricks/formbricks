@@ -1,4 +1,4 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
+import type { Decorator, Meta, StoryContext, StoryObj } from "@storybook/react";
 import React from "react";
 import { Progress, type ProgressProps } from "./progress";
 
@@ -11,7 +11,7 @@ interface StylingOptions {
   indicatorBorderRadius: string;
 }
 
-type StoryProps = ProgressProps & Partial<StylingOptions>;
+type StoryProps = ProgressProps & Partial<StylingOptions> & Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/General/Progress",
@@ -33,7 +33,10 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 // Decorator to apply CSS variables from story args
-const withCSSVariables: Decorator<StoryProps> = (Story, context) => {
+const withCSSVariables: Decorator<StoryProps> = (
+  Story: React.ComponentType,
+  context: StoryContext<StoryProps>
+) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Storybook's Decorator type doesn't properly infer args type
   const args = context.args as StoryProps;
   const { trackHeight, trackBgColor, trackBorderRadius, indicatorBgColor, indicatorBorderRadius } = args;

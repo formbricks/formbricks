@@ -177,6 +177,7 @@ export const RTL: Story = {
   args: {
     headline: "ما هو تاريخ ميلادك؟",
     description: "يرجى اختيار تاريخ",
+    dir: "rtl",
   },
 };
 
@@ -185,6 +186,7 @@ export const RTLWithValue: Story = {
     headline: "ما هو تاريخ ميلادك؟",
     description: "يرجى اختيار تاريخ",
     value: "1990-01-15",
+    dir: "rtl",
   },
 };
 

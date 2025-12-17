@@ -15,7 +15,8 @@ import {
 import { MultiSelect, type MultiSelectOption, type MultiSelectProps } from "./multi-select";
 
 type StoryProps = MultiSelectProps &
-  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & CheckboxInputStylingOptions>;
+  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & CheckboxInputStylingOptions> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/MultiSelect",
@@ -103,7 +104,7 @@ export const StylingPlayground: Story = {
     ...optionStylingArgTypes,
     ...surveyStylingArgTypes,
   },
-  decorators: [createCSSVariablesDecorator<StoryProps & Record<string, unknown>>()],
+  decorators: [createCSSVariablesDecorator<StoryProps>()],
 };
 
 export const Default: Story = {
@@ -197,6 +198,7 @@ export const ManyOptions: Story = {
 export const RTL: Story = {
   args: {
     headline: "ما هي الميزات التي تستخدمها؟",
+    dir: "rtl",
     description: "اختر كل ما ينطبق",
     options: [
       { id: "opt-1", label: "الخيار الأول" },
@@ -210,6 +212,7 @@ export const RTL: Story = {
 export const RTLWithSelections: Story = {
   args: {
     headline: "ما هي اهتماماتك؟",
+    dir: "rtl",
     description: "يرجى اختيار جميع الخيارات المناسبة",
     options: [
       { id: "tech", label: "التكنولوجيا" },

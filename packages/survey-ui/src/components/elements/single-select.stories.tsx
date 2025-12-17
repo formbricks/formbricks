@@ -3,7 +3,6 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import {
   type BaseStylingOptions,
-  type InputLayoutStylingOptions,
   type LabelStylingOptions,
   type OptionStylingOptions,
   commonArgTypes,
@@ -17,7 +16,7 @@ import {
 import { SingleSelect, type SingleSelectOption, type SingleSelectProps } from "./single-select";
 
 type StoryProps = SingleSelectProps &
-  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions & InputLayoutStylingOptions> &
+  Partial<BaseStylingOptions & LabelStylingOptions & OptionStylingOptions> &
   Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
@@ -181,6 +180,7 @@ export const Disabled: Story = {
 export const RTL: Story = {
   args: {
     headline: "ما هو خيارك المفضل؟",
+    dir: "rtl",
     description: "اختر خيارًا واحدًا",
     options: [
       { id: "opt-1", label: "الخيار الأول" },
@@ -194,6 +194,7 @@ export const RTL: Story = {
 export const RTLWithSelection: Story = {
   args: {
     headline: "ما هو تفضيلك؟",
+    dir: "rtl",
     description: "يرجى اختيار خيار واحد",
     options: [
       { id: "tech", label: "التكنولوجيا" },

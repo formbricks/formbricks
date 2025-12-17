@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Calendar } from "@/components/general/calendar";
 import { ElementHeader } from "@/components/general/element-header";
-import { useTextDirection } from "@/hooks/use-text-direction";
 import { getDateFnsLocale } from "@/lib/locale";
 
 interface DateElementProps {
@@ -46,15 +45,42 @@ function DateElement({
   dir = "auto",
   disabled = false,
   locale = "en-US",
-}: DateElementProps): React.JSX.Element {
-  const [date, setDate] = React.useState<Date | undefined>(value ? new Date(value) : undefined);
+}: Readonly<DateElementProps>): React.JSX.Element {
+  // Initialize date from value string, parsing as local time to avoid timezone issues
+  const [date, setDate] = React.useState<Date | undefined>(() => {
+    if (!value) return undefined;
+    // Parse YYYY-MM-DD format as local date (not UTC)
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  });
+
+  // Sync date state when value prop changes
+  React.useEffect(() => {
+    if (value) {
+      // Parse YYYY-MM-DD format as local date (not UTC)
+      const [year, month, day] = value.split("-").map(Number);
+      const newDate = new Date(year, month - 1, day);
+      setDate((prevDate) => {
+        // Only update if the date actually changed to avoid unnecessary re-renders
+        if (!prevDate || newDate.getTime() !== prevDate.getTime()) {
+          return newDate;
+        }
+        return prevDate;
+      });
+    } else {
+      setDate(undefined);
+    }
+  }, [value]);
 
   // Convert Date to ISO string (YYYY-MM-DD) when date changes
   const handleDateSelect = (selectedDate: Date | undefined): void => {
     setDate(selectedDate);
     if (selectedDate) {
-      // Convert to ISO format (YYYY-MM-DD)
-      const isoString = selectedDate.toISOString().split("T")[0];
+      // Convert to ISO format (YYYY-MM-DD) using local time to avoid timezone issues
+      const year = String(selectedDate.getFullYear());
+      const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+      const day = String(selectedDate.getDate()).padStart(2, "0");
+      const isoString = `${year}-${month}-${day}`;
       onChange(isoString);
     } else {
       onChange("");
@@ -92,19 +118,13 @@ function DateElement({
     [disabled, minDateObj, maxDateObj]
   );
 
-  // Detect text direction from content
-  const detectedDir = useTextDirection({
-    dir,
-    textContent: [headline, description ?? ""],
-  });
-
   // Get locale for date formatting
   const dateLocale = React.useMemo(() => {
     return locale ? getDateFnsLocale(locale) : undefined;
   }, [locale]);
 
   return (
-    <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
+    <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
@@ -119,10 +139,7 @@ function DateElement({
           fromYear={minDateObj?.getFullYear() ?? 1900}
           toYear={maxDateObj?.getFullYear() ?? 2100}
           locale={dateLocale}
-          className="rounded-input border-input-border bg-input-bg text-input-text shadow-input w-full border"
-          classNames={{
-            root: "w-full",
-          }}
+          className="rounded-input border-input-border bg-input-bg text-input-text shadow-input mx-auto w-full max-w-[25rem] border"
         />
       </div>
     </div>

@@ -1,11 +1,8 @@
-"use client";
-
-import * as LabelPrimitive from "@radix-ui/react-label";
 import DOMPurify from "isomorphic-dompurify";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-interface LabelProps extends React.ComponentProps<typeof LabelPrimitive.Root> {
+interface LabelProps extends React.ComponentProps<"label"> {
   /** Label variant for different styling contexts */
   variant?: "default" | "headline" | "description";
 }
@@ -38,6 +35,8 @@ const stripInlineStyles = (html: string): string => {
 };
 
 function Label({ className, variant = "default", children, ...props }: LabelProps): React.JSX.Element {
+  const { htmlFor, form, ...restProps } = props;
+
   // Check if children is a string and contains HTML
   const childrenString = typeof children === "string" ? children : null;
   const strippedContent = childrenString ? stripInlineStyles(childrenString) : "";
@@ -58,35 +57,69 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
     variantClass = "label-description";
   }
 
+  // Base classes - use flex-col for HTML content to allow line breaks, flex items-center for non-HTML
+  const baseClasses =
+    isHtml && safeHtml
+      ? "flex flex-col gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+      : "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50";
+
   // If HTML, render with dangerouslySetInnerHTML, otherwise render normally
   if (isHtml && safeHtml) {
+    if (htmlFor) {
+      return (
+        <label
+          data-slot="label"
+          data-variant={variant}
+          className={cn(baseClasses, variantClass, className)}
+          htmlFor={htmlFor}
+          form={form}
+          {...restProps}
+          dangerouslySetInnerHTML={{ __html: safeHtml }}
+        />
+      );
+    }
+
     return (
-      <LabelPrimitive.Root
+      <span
         data-slot="label"
         data-variant={variant}
-        className={cn(
-          "flex select-none items-center gap-2 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
-          variantClass,
-          className
-        )}
-        {...props}
+        className={cn(baseClasses, variantClass, className)}
+        {...(restProps as React.HTMLAttributes<HTMLSpanElement>)}
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
     );
   }
 
+  if (htmlFor) {
+    return (
+      <label
+        data-slot="label"
+        data-variant={variant}
+        className={cn(
+          "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+          variantClass,
+          className
+        )}
+        htmlFor={htmlFor}
+        form={form}
+        {...restProps}>
+        {children}
+      </label>
+    );
+  }
+
   return (
-    <LabelPrimitive.Root
+    <span
       data-slot="label"
       data-variant={variant}
       className={cn(
-        "flex select-none items-center gap-2 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
+        "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
         variantClass,
         className
       )}
-      {...props}>
+      {...(restProps as React.HTMLAttributes<HTMLSpanElement>)}>
       {children}
-    </LabelPrimitive.Root>
+    </span>
   );
 }
 

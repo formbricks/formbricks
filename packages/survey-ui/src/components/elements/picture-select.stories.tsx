@@ -8,7 +8,9 @@ import {
 } from "../../lib/story-helpers";
 import { PictureSelect, type PictureSelectOption, type PictureSelectProps } from "./picture-select";
 
-type StoryProps = PictureSelectProps & Partial<BaseStylingOptions & { optionBorderRadius: string }>;
+type StoryProps = PictureSelectProps &
+  Partial<BaseStylingOptions & { optionBorderRadius: string }> &
+  Record<string, unknown>;
 
 const meta: Meta<StoryProps> = {
   title: "UI-package/Elements/PictureSelect",
@@ -231,6 +233,7 @@ export const ManyOptions: Story = {
 export const RTL: Story = {
   args: {
     headline: "ما هي الصورة التي تفضلها؟",
+    dir: "rtl",
     description: "اختر صورة واحدة",
     options: defaultOptions.map((opt) => ({ ...opt, alt: "نص بديل" })),
   },
@@ -239,6 +242,7 @@ export const RTL: Story = {
 export const RTLWithSelection: Story = {
   args: {
     headline: "اختر الصور التي تعجبك",
+    dir: "rtl",
     description: "يمكنك اختيار عدة صور",
     options: defaultOptions.map((opt) => ({ ...opt, alt: "نص بديل" })),
     allowMulti: true,
