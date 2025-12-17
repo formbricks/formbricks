@@ -66,7 +66,7 @@
      --------------------------------------------------------------------------- */
   --fb-element-headline-font-family: inherit;
   --fb-element-headline-font-weight: 400;
-  --fb-element-headline-font-size: 1.125rem;
+  --fb-element-headline-font-size: 1rem;
   --fb-element-headline-color: (--input);
   --fb-element-headline-opacity: 1;
 
@@ -117,7 +117,7 @@
   --fb-input-font-weight: 400;
   --fb-input-color: var(--foreground);
   --fb-input-placeholder-color: var(--fb-input-color);
-  --fb-input-placeholder-opacity: 0.7;
+  --fb-input-placeholder-opacity: 0.5;
   --fb-input-width: 100%;
   --fb-input-height: 40px;
   --fb-input-padding-x: 16px;
@@ -139,7 +139,6 @@
      Used for selectable options (radio, checkbox, multi-select).
      These inherit from input tokens by default for consistency.
      --------------------------------------------------------------------------- */
-  --fb-option-border-color: var(--fb-input-border-color);
   --fb-option-bg-color: var(--fb-input-bg-color);
   --fb-option-label-color: var(--fb-input-color);
   --fb-option-border-radius: var(--fb-input-border-radius);
@@ -168,7 +167,7 @@
 .label-headline {
   font-family: var(--fb-element-headline-font-family);
   font-weight: var(--fb-element-headline-font-weight);
-  font-size: var(--fb-element-headline-font-size);
+  font-size: var(--fb-element-headline-font-size) !important;
   color: var(--fb-element-headline-color);
   opacity: var(--fb-element-headline-opacity);
 }
@@ -176,7 +175,7 @@
 .label-description {
   font-family: var(--fb-element-description-font-family);
   font-weight: var(--fb-element-description-font-weight);
-  font-size: var(--fb-element-description-font-size);
+  font-size: var(--fb-element-description-font-size) !important;
   color: var(--fb-element-description-color);
   opacity: var(--fb-element-description-opacity);
 }
@@ -184,7 +183,7 @@
 .label-default {
   font-family: var(--fb-label-font-family);
   font-weight: var(--fb-label-font-weight);
-  font-size: var(--fb-label-font-size);
+  font-size: var(--fb-label-font-size) !important;
   color: var(--fb-label-color);
   opacity: var(--fb-label-opacity);
 }

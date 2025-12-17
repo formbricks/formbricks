@@ -211,12 +211,17 @@ function Rating({
     const isLast = totalLength === number;
     const isFirst = number === 1;
 
-    // Determine border radius classes
+    // Determine border radius and border classes
+    // Use right border for all items to create separators, left border only on first item
     let borderRadiusClasses = "";
-    if (isLast) {
-      borderRadiusClasses = dir === "rtl" ? "rounded-l-input border-l" : "rounded-r-input border-r";
-    } else if (isFirst) {
-      borderRadiusClasses = dir === "rtl" ? "rounded-r-input border-r" : "rounded-l-input border-l";
+    let borderClasses = "border-t border-b border-r";
+
+    if (isFirst) {
+      borderRadiusClasses = dir === "rtl" ? "rounded-r-input" : "rounded-l-input";
+      borderClasses = "border-t border-b border-l border-r";
+    } else if (isLast) {
+      borderRadiusClasses = dir === "rtl" ? "rounded-l-input" : "rounded-r-input";
+      // Last item keeps right border for rounded corner
     }
 
     return (
@@ -226,13 +231,16 @@ function Rating({
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown(number)}
         className={cn(
-          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden border-t border-b border-l transition-colors focus:border-2 focus:outline-none",
-          isSelected ? "bg-brand-20 border-brand z-10 border-2" : "border-input-border bg-input-bg",
+          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors focus:outline-none",
+          borderClasses,
+          isSelected
+            ? "bg-brand-20 border-brand z-10 -ml-[1px] border-2 first:ml-0"
+            : "border-input-border bg-input-bg",
           borderRadiusClasses,
           isHovered && !isSelected && "bg-input-selected-bg",
           colorCoding ? "min-h-[47px]" : "min-h-[41px]",
           disabled && "cursor-not-allowed opacity-50",
-          "focus:border-brand"
+          "focus:border-brand focus:border-2"
         )}
         onMouseEnter={() => {
           if (!disabled) {
@@ -398,7 +406,7 @@ function Rating({
         <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full">
           <legend className="sr-only">Rating options</legend>
-          <div className="flex w-full">
+          <div className="flex w-full px-[2px]">
             {ratingOptions.map((number, index) => {
               if (scale === "number") {
                 return renderNumberOption(number, ratingOptions.length);

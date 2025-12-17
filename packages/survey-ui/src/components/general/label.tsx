@@ -60,8 +60,8 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
   // Base classes - use flex-col for HTML content to allow line breaks, flex items-center for non-HTML
   const baseClasses =
     isHtml && safeHtml
-      ? "flex flex-col gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
-      : "flex items-center gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50";
+      ? "flex flex-col gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+      : "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50";
 
   // If HTML, render with dangerouslySetInnerHTML, otherwise render normally
   if (isHtml && safeHtml) {
@@ -96,7 +96,7 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
         data-slot="label"
         data-variant={variant}
         className={cn(
-          "flex items-center gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+          "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
           variantClass,
           className
         )}
@@ -113,7 +113,7 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
       data-slot="label"
       data-variant={variant}
       className={cn(
-        "flex items-center gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
         variantClass,
         className
       )}

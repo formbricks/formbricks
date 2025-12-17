@@ -295,7 +295,7 @@ function ListVariant({
                     }
                   }}
                   disabled={isDisabled}
-                  required={isRequired && isFirstOption}
+                  required={isRequired ? isFirstOption : null}
                   aria-invalid={Boolean(errorMessage)}
                 />
                 <span className={cn("mr-3 ml-3", optionLabelClassName)}>{option.label}</span>
@@ -335,7 +335,7 @@ function ListVariant({
                   onChange={handleOtherInputChange}
                   placeholder={otherOptionPlaceholder}
                   disabled={disabled}
-                  required={true}
+                  required
                   aria-required={required}
                   dir={dir}
                   className="mt-2 w-full"

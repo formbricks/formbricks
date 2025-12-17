@@ -1,4 +1,4 @@
-import { LinkIcon } from "lucide-react";
+import { SquareArrowOutUpRightIcon } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/general/button";
 import { ElementError } from "@/components/general/element-error";
@@ -69,7 +69,7 @@ function CTA({
       <div className="relative space-y-2">
         <ElementError errorMessage={errorMessage} dir={dir} />
 
-        {buttonExternal && (
+        {buttonExternal ? (
           <div className="flex w-full justify-start">
             <Button
               id={inputId}
@@ -79,10 +79,10 @@ function CTA({
               className="flex items-center gap-2"
               variant={buttonVariant}>
               {buttonLabel}
-              {buttonExternal ? <LinkIcon className="size-4" /> : null}
+              <SquareArrowOutUpRightIcon className="size-4" />
             </Button>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

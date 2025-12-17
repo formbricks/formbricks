@@ -1,3 +1,4 @@
+import DOMPurify from "isomorphic-dompurify";
 import * as React from "react";
 import { ElementMedia } from "@/components/general/element-media";
 import { Label } from "@/components/general/label";
@@ -13,6 +14,33 @@ interface ElementHeaderProps extends React.ComponentProps<"div"> {
   imageAltText?: string;
 }
 
+/**
+ * Checks if a string contains valid HTML markup
+ * @param str - The input string to test
+ * @returns true if the string contains valid HTML elements, false otherwise
+ */
+const isValidHTML = (str: string): boolean => {
+  if (!str) return false;
+
+  try {
+    const doc = new DOMParser().parseFromString(str, "text/html");
+    const errorNode = doc.querySelector("parsererror");
+    if (errorNode) return false;
+    return Array.from(doc.body.childNodes).some((node) => node.nodeType === 1);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Strips inline style attributes to prevent CSP violations
+ * @param html - The HTML string to clean
+ * @returns HTML string without inline style attributes
+ */
+const stripInlineStyles = (html: string): string => {
+  return html.replace(/\s*style\s*=\s*["'][^"']*["']/gi, "");
+};
+
 function ElementHeader({
   headline,
   description,
@@ -26,6 +54,17 @@ function ElementHeader({
 }: ElementHeaderProps): React.JSX.Element {
   const isMediaAvailable = imageUrl ?? videoUrl;
 
+  // Check if headline is HTML
+  const strippedHeadline = stripInlineStyles(headline);
+  const isHeadlineHtml = isValidHTML(strippedHeadline);
+  const safeHeadlineHtml =
+    isHeadlineHtml && strippedHeadline
+      ? DOMPurify.sanitize(strippedHeadline, {
+          ADD_ATTR: ["target"],
+          FORBID_ATTR: ["style"],
+        })
+      : "";
+
   return (
     <div className={cn("space-y-2", className)} {...props}>
       {/* Media (Image or Video) */}
@@ -34,11 +73,17 @@ function ElementHeader({
       ) : null}
 
       {/* Headline */}
+      <div>{required ? <span className="label-headline text-xs opacity-60">(Required)</span> : null}</div>
       <div className="flex">
-        <Label htmlFor={htmlFor} variant="headline">
-          {headline}
-        </Label>
-        {required ? <span className="label-headline">*</span> : null}
+        {isHeadlineHtml && safeHeadlineHtml ? (
+          <Label htmlFor={htmlFor} variant="headline">
+            {headline}
+          </Label>
+        ) : (
+          <Label htmlFor={htmlFor} variant="headline" className="font-semibold">
+            {headline}
+          </Label>
+        )}
       </div>
 
       {/* Description/Subheader */}

@@ -77,7 +77,7 @@ function DateElement({
     setDate(selectedDate);
     if (selectedDate) {
       // Convert to ISO format (YYYY-MM-DD) using local time to avoid timezone issues
-      const year = selectedDate.getFullYear();
+      const year = String(selectedDate.getFullYear());
       const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
       const day = String(selectedDate.getDate()).padStart(2, "0");
       const isoString = `${year}-${month}-${day}`;

@@ -127,6 +127,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   appendCssVariable("border-radius", `${Number(roundness).toString()}px`);
   appendCssVariable("input-background-color", styling.inputColor?.light);
   appendCssVariable("input-bg-color", styling.inputColor?.light);
+  appendCssVariable("option-bg-color", styling.inputColor?.light);
   appendCssVariable("input-color", styling.questionColor?.light);
 
   if (styling.questionColor?.light) {
