@@ -874,6 +874,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: 4.3.4
         version: 4.3.4(vite@6.4.1(@types/node@22.15.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.19.4)(yaml@2.8.1))
+      '@vitest/coverage-v8':
+        specifier: 3.1.3
+        version: 3.1.3(vitest@3.1.3(@types/node@22.15.18)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.19.4)(yaml@2.8.1))
       react:
         specifier: 19.2.1
         version: 19.2.1
@@ -895,6 +898,9 @@ importers:
       vite-tsconfig-paths:
         specifier: 5.1.4
         version: 5.1.4(typescript@5.8.3)(vite@6.4.1(@types/node@22.15.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.19.4)(yaml@2.8.1))
+      vitest:
+        specifier: 3.1.3
+        version: 3.1.3(@types/node@22.15.18)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.19.4)(yaml@2.8.1)
 
   packages/surveys:
     dependencies:
