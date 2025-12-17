@@ -82,7 +82,7 @@ function SingleSelect({
   otherOptionPlaceholder = "Please specify",
   otherValue = "",
   onOtherValueChange,
-}: SingleSelectProps): React.JSX.Element {
+}: Readonly<SingleSelectProps>): React.JSX.Element {
   // Ensure value is always a string or undefined
   const selectedValue = value ?? undefined;
   const hasOtherOption = Boolean(otherOptionId);

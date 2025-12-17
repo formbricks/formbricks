@@ -25,7 +25,12 @@ const isValidHTML = (str: string): boolean => {
   }
 };
 
-function Label({ className, variant = "default", children, ...props }: LabelProps): React.JSX.Element {
+function Label({
+  className,
+  variant = "default",
+  children,
+  ...props
+}: Readonly<LabelProps>): React.JSX.Element {
   const { htmlFor, form, ...restProps } = props;
 
   // Check if children is a string and contains HTML

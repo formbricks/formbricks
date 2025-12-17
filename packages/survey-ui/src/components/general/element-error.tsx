@@ -9,7 +9,7 @@ interface ElementErrorProps {
   dir?: "ltr" | "rtl" | "auto";
 }
 
-function ElementError({ errorMessage, dir = "auto" }: ElementErrorProps): React.JSX.Element | null {
+function ElementError({ errorMessage, dir = "auto" }: Readonly<ElementErrorProps>): React.JSX.Element | null {
   if (!errorMessage) {
     return null;
   }

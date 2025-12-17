@@ -49,7 +49,7 @@ function ElementHeader({
   videoUrl,
   imageAltText,
   ...props
-}: ElementHeaderProps): React.JSX.Element {
+}: Readonly<ElementHeaderProps>): React.JSX.Element {
   const isMediaAvailable = imageUrl ?? videoUrl;
 
   // Check if headline is HTML

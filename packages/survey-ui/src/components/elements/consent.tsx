@@ -44,7 +44,7 @@ function Consent({
   errorMessage,
   dir = "auto",
   disabled = false,
-}: ConsentProps): React.JSX.Element {
+}: Readonly<ConsentProps>): React.JSX.Element {
   const handleCheckboxChange = (checked: boolean): void => {
     if (disabled) return;
     onChange(checked);

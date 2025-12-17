@@ -58,10 +58,12 @@ function Calendar({
   components,
   locale,
   ...props
-}: React.ComponentProps<typeof DayPicker> & {
-  buttonVariant?: React.ComponentProps<typeof Button>["variant"];
-  locale?: Locale | string;
-}): React.JSX.Element {
+}: Readonly<
+  React.ComponentProps<typeof DayPicker> & {
+    buttonVariant?: React.ComponentProps<typeof Button>["variant"];
+    locale?: Locale | string;
+  }
+>): React.JSX.Element {
   const defaultClassNames = getDefaultClassNames();
 
   // Resolve locale to Locale object if string is provided

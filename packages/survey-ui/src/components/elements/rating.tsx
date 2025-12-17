@@ -161,7 +161,7 @@ function Rating({
   errorMessage,
   dir = "auto",
   disabled = false,
-}: RatingProps): React.JSX.Element {
+}: Readonly<RatingProps>): React.JSX.Element {
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
 
   // Ensure value is within valid range

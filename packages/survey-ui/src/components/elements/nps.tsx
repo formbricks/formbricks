@@ -47,7 +47,7 @@ function NPS({
   errorMessage,
   dir = "auto",
   disabled = false,
-}: NPSProps): React.JSX.Element {
+}: Readonly<NPSProps>): React.JSX.Element {
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
 
   // Ensure value is within valid range (0-10)

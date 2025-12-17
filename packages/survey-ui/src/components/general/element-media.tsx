@@ -35,7 +35,11 @@ interface ElementMediaProps {
   altText?: string;
 }
 
-function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMediaProps): React.JSX.Element {
+function ElementMedia({
+  imgUrl,
+  videoUrl,
+  altText = "Image",
+}: Readonly<ElementMediaProps>): React.JSX.Element {
   const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
   const [isLoading, setIsLoading] = React.useState(true);
 

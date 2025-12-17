@@ -56,7 +56,7 @@ function Matrix({
   errorMessage,
   dir = "auto",
   disabled = false,
-}: MatrixProps): React.JSX.Element {
+}: Readonly<MatrixProps>): React.JSX.Element {
   // Ensure value is always an object (value already has default of {})
   const selectedValues = value;
 

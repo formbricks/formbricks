@@ -42,7 +42,7 @@ function OpenText({
   dir = "auto",
   rows = 3,
   disabled = false,
-}: OpenTextProps): React.JSX.Element {
+}: Readonly<OpenTextProps>): React.JSX.Element {
   const [currentLength, setCurrentLength] = useState(value.length);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {

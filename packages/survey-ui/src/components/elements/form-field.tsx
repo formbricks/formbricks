@@ -56,7 +56,7 @@ function FormField({
   errorMessage,
   dir = "auto",
   disabled = false,
-}: FormFieldProps): React.JSX.Element {
+}: Readonly<FormFieldProps>): React.JSX.Element {
   // Ensure value is always an object
   const currentValues = React.useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- value can be undefined

@@ -58,7 +58,7 @@ function PictureSelect({
   errorMessage,
   dir = "auto",
   disabled = false,
-}: PictureSelectProps): React.JSX.Element {
+}: Readonly<PictureSelectProps>): React.JSX.Element {
   // Ensure value is always the correct type
   let selectedValues: string[] | string | undefined;
   if (allowMulti) {
