@@ -12,12 +12,16 @@ export const sendFollowUpEmail = async ({
   survey,
   response,
   attachResponseData = false,
+  includeVariables = false,
+  includeHiddenFields = false,
   logoUrl,
 }: {
   followUp: TSurveyFollowUp;
   to: string;
   replyTo: string[];
   attachResponseData: boolean;
+  includeVariables?: boolean;
+  includeHiddenFields?: boolean;
   survey: TSurvey;
   response: TResponse;
   logoUrl?: string;
@@ -33,6 +37,8 @@ export const sendFollowUpEmail = async ({
       followUp,
       logoUrl,
       attachResponseData,
+      includeVariables,
+      includeHiddenFields,
       survey,
       response,
     })

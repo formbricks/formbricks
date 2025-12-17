@@ -52,9 +52,17 @@ export async function ResponseFinishedEmail({
                 </Row>
               );
             })}
-            {survey.variables.map((variable) => {
-              const variableResponse = response.variables[variable.id];
-              if (variableResponse && ["number", "string"].includes(typeof variable)) {
+            {survey.variables
+              .filter((variable) => {
+                const variableResponse = response.variables[variable.id];
+                if (typeof variableResponse !== "string" && typeof variableResponse !== "number") {
+                  return false;
+                }
+
+                return variableResponse !== undefined;
+              })
+              .map((variable) => {
+                const variableResponse = response.variables[variable.id];
                 return (
                   <Row key={variable.id}>
                     <Column className="w-full text-sm font-medium">
@@ -66,33 +74,33 @@ export async function ResponseFinishedEmail({
                         )}
                         {variable.name}
                       </Text>
-                      <Text className="mt-0 whitespace-pre-wrap break-words font-medium">
+                      <Text className="mt-0 font-medium break-words whitespace-pre-wrap">
                         {variableResponse}
                       </Text>
                     </Column>
                   </Row>
                 );
-              }
-              return null;
-            })}
-            {survey.hiddenFields.fieldIds?.map((hiddenFieldId) => {
-              const hiddenFieldResponse = response.data[hiddenFieldId];
-              if (hiddenFieldResponse && typeof hiddenFieldResponse === "string") {
+              })}
+            {survey.hiddenFields.fieldIds
+              ?.filter((hiddenFieldId) => {
+                const hiddenFieldResponse = response.data[hiddenFieldId];
+                return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
+              })
+              .map((hiddenFieldId) => {
+                const hiddenFieldResponse = response.data[hiddenFieldId] as string;
                 return (
                   <Row key={hiddenFieldId}>
                     <Column className="w-full font-medium">
                       <Text className="mb-2 flex items-center gap-2 text-sm">
                         {hiddenFieldId} <EyeOffIcon />
                       </Text>
-                      <Text className="mt-0 whitespace-pre-wrap break-words text-sm">
+                      <Text className="mt-0 text-sm break-words whitespace-pre-wrap">
                         {hiddenFieldResponse}
                       </Text>
                     </Column>
                   </Row>
                 );
-              }
-              return null;
-            })}
+              })}
             <EmailButton
               href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
               label={

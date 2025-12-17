@@ -60,7 +60,7 @@ export function AddMemberRole({
       name="role"
       render={({ field: { onChange, value } }) => (
         <div className="flex flex-col space-y-2">
-          <Label>{t("common.role_organization")}</Label>
+          <Label>{t("environments.settings.teams.organization_role")}</Label>
           <Select
             defaultValue={isAccessControlAllowed ? "member" : "owner"}
             disabled={!isAccessControlAllowed}

@@ -42,11 +42,12 @@
     "i18n:validate": "pnpm scan-translations"
   },
   "dependencies": {
-    "react": "19.1.2",
-    "react-dom": "19.1.2"
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
   },
   "devDependencies": {
-    "@azure/microsoft-playwright-testing": "1.0.0-beta.7",
+    "@azure/identity": "4.13.0",
+    "@azure/playwright": "1.0.0",
     "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.56.1",
     "eslint": "8.57.0",
