@@ -1,7 +1,7 @@
 import { Download, ExternalLink } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
+import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video";
 
 // Function to add extra params to videoUrls in order to reduce video controls
 const getVideoUrlWithParams = (videoUrl: string): string | undefined => {

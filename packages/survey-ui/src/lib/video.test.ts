@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "./video-upload";
+import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "./video";
 
 describe("checkForYoutubeUrl", () => {
   test("returns true for valid YouTube URLs with https", () => {
