@@ -23,11 +23,11 @@ export function Subheader({ subheader, elementId }: SubheaderProps) {
   return (
     <label
       htmlFor={elementId}
-      className="fb-text-subheading fb-block fb-break-words fb-text-sm fb-font-normal fb-leading-6"
+      className="text-subheading block text-sm leading-6 font-normal wrap-break-word"
       data-testid="subheader"
       dir="auto">
       {isHtml ? (
-        <span className="fb-htmlbody" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+        <span className="htmlbody" dangerouslySetInnerHTML={{ __html: safeHtml }} />
       ) : (
         <span>{subheader}</span>
       )}
