@@ -2,7 +2,7 @@ import DOMPurify from "isomorphic-dompurify";
 import * as React from "react";
 import { ElementMedia } from "@/components/general/element-media";
 import { Label } from "@/components/general/label";
-import { cn } from "@/lib/utils";
+import { cn, stripInlineStyles } from "@/lib/utils";
 
 interface ElementHeaderProps extends React.ComponentProps<"div"> {
   headline: string;
@@ -38,12 +38,6 @@ const isValidHTML = (str: string): boolean => {
  * @param html - The HTML string to clean
  * @returns HTML string without inline style attributes
  */
-export const stripInlineStyles = (html: string): string => {
-  // Remove style="..." or style='...' attributes
-  // Use separate patterns for each quote type to avoid ReDoS vulnerability
-  // The pattern [^"]* and [^']* are safe as they don't cause backtracking
-  return html.replace(/\s+style\s*=\s*["'][^"']*["']/gi, ""); //NOSONAR
-};
 
 function ElementHeader({
   headline,

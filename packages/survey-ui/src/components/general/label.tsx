@@ -1,6 +1,6 @@
 import DOMPurify from "isomorphic-dompurify";
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn, stripInlineStyles } from "@/lib/utils";
 
 interface LabelProps extends React.ComponentProps<"label"> {
   /** Label variant for different styling contexts */
@@ -23,15 +23,6 @@ const isValidHTML = (str: string): boolean => {
   } catch {
     return false;
   }
-};
-
-/**
- * Strips inline style attributes to prevent CSP violations
- * @param html - The HTML string to clean
- * @returns HTML string without inline style attributes
- */
-const stripInlineStyles = (html: string): string => {
-  return html.replace(/\s*style\s*=\s*["'][^"']*["']/gi, "");
 };
 
 function Label({ className, variant = "default", children, ...props }: LabelProps): React.JSX.Element {

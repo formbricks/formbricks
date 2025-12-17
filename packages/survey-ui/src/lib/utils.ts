@@ -16,3 +16,10 @@ const twMerge = extendTailwindMerge({
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
+
+export const stripInlineStyles = (html: string): string => {
+  // Remove style="..." or style='...' attributes
+  // Use separate patterns for each quote type to avoid ReDoS vulnerability
+  // The pattern [^"]* and [^']* are safe as they don't cause backtracking
+  return html.replace(/\s+style\s*=\s*["'][^"']*["']/gi, ""); //NOSONAR
+};
