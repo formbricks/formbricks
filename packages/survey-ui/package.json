@@ -2,7 +2,6 @@
   "name": "@formbricks/survey-ui",
   "license": "MIT",
   "version": "1.0.0",
-  "private": true,
   "description": "Reusable UI components for Formbricks applications",
   "homepage": "https://formbricks.com",
   "type": "module",
@@ -10,7 +9,7 @@
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
   },
-  "sideEffects": false,
+  "sideEffects": ["**/*.css"],
   "source": "src/index.ts",
   "main": "dist/index.js",
   "module": "dist/index.js",

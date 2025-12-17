@@ -1,23 +1,171 @@
 # @formbricks/survey-ui
 
-Reusable UI components package for Formbricks applications.
+A React UI component library for building survey interfaces. This package provides reusable form elements and survey-specific components built with Radix UI and Tailwind CSS.
 
 ## Installation
 
-This package is part of the Formbricks monorepo and is available as a workspace dependency.
+```bash
+# npm
+npm install @formbricks/survey-ui
 
-## Usage
+# pnpm
+pnpm add @formbricks/survey-ui
+
+# yarn
+yarn add @formbricks/survey-ui
+```
+
+## Peer Dependencies
+
+This package requires React 19:
+
+```bash
+npm install react@^19.0.0 react-dom@^19.0.0
+```
+
+## Quick Start
+
+### 1. Import Styles
+
+**Important:** You must import the CSS file for components to render correctly:
+
+```tsx
+import "@formbricks/survey-ui/styles";
+```
+
+### 2. Wrap Components
+
+**Important:** All components must be wrapped in a container with `id="fbjs"` for styles to apply correctly:
 
 ```tsx
 import { Button } from "@formbricks/survey-ui";
+import "@formbricks/survey-ui/styles";
+
+function App() {
+  return (
+    <div id="fbjs">
+      <Button variant="default" size="default">
+        Click me
+      </Button>
+    </div>
+  );
+}
+```
+
+## Components
+
+### General Components
+
+- **Button** - Button component with multiple variants and sizes
+- **Input** - Text input component
+- **DropdownMenu** - Dropdown menu component with sub-components
+- **ElementHeader** - Header component for form elements
+- **ElementMedia** - Media display component for form elements
+
+### Form Elements
+
+- **OpenText** - Open-ended text input element
+- **SingleSelect** - Single choice selection element
+- **MultiSelect** - Multiple choice selection element
+- **Matrix** - Matrix/table selection element
+- **DateElement** - Date picker element
+- **PictureSelect** - Image-based selection element
+- **FileUpload** - File upload element
+- **Rating** - Rating/star selection element
+- **NPS** - Net Promoter Score element
+- **Ranking** - Ranking/drag-and-drop element
+- **CTA** - Call-to-action button element
+- **Consent** - Consent/checkbox element
+- **FormField** - Generic form field wrapper component
+
+## Usage Examples
+
+### Basic Button
+
+```tsx
+import { Button } from "@formbricks/survey-ui";
+import "@formbricks/survey-ui/styles";
 
 function MyComponent() {
   return (
-    <Button variant="default" size="default">
-      Click me
-    </Button>
+    <div id="fbjs">
+      <Button variant="default" size="default">
+        Submit
+      </Button>
+    </div>
   );
 }
+```
+
+### Form Elements
+
+```tsx
+import { OpenText, SingleSelect, Rating } from "@formbricks/survey-ui";
+import "@formbricks/survey-ui/styles";
+
+function SurveyForm() {
+  return (
+    <div id="fbjs">
+      <OpenText
+        label="What's your name?"
+        placeholder="Enter your name"
+        onChange={(value) => console.log(value)}
+      />
+      
+      <SingleSelect
+        label="Choose an option"
+        options={[
+          { value: "1", label: "Option 1" },
+          { value: "2", label: "Option 2" },
+        ]}
+        onChange={(value) => console.log(value)}
+      />
+      
+      <Rating
+        label="Rate your experience"
+        max={5}
+        onChange={(value) => console.log(value)}
+      />
+    </div>
+  );
+}
+```
+
+## Theming
+
+This package uses CSS variables for theming. You can customize the appearance by overriding CSS variables in your application:
+
+```css
+:root {
+  /* Brand color */
+  --fb-survey-brand-color: #64748b;
+  
+  /* Input styling */
+  --fb-input-bg-color: #f8fafc;
+  --fb-input-border-color: var(--fb-survey-brand-color);
+  --fb-input-border-radius: 0.625rem;
+  
+  /* Button styling */
+  --fb-button-bg-color: hsl(222.2 47.4% 11.2%);
+  --fb-button-text-color: hsl(210 40% 98%);
+  
+  /* And many more... */
+}
+```
+
+See `dist/survey-ui.css` for the complete list of available CSS variables.
+
+## CSS Scoping
+
+This package uses CSS scoped to `#fbjs` to ensure proper specificity and prevent conflicts with other stylesheets. This is why you must wrap components in `<div id="fbjs">`.
+
+## TypeScript Support
+
+This package is written in TypeScript and includes type definitions. All components export their prop types:
+
+```tsx
+import { Button, type ButtonProps } from "@formbricks/survey-ui";
+import { OpenText, type OpenTextProps } from "@formbricks/survey-ui";
 ```
 
 ## Development
@@ -29,73 +177,17 @@ pnpm build
 # Watch mode for development
 pnpm dev
 
+# Run tests
+pnpm test
 
 # Lint
 pnpm lint
 ```
 
-## Structure
+## License
 
-```text
-src/
-├── components/     # React components
-├── lib/           # Utility functions
-└── index.ts       # Main entry point
-```
+MIT
 
-## Adding New Components
+## Repository
 
-### Using shadcn CLI (Recommended)
-
-This package is configured to work with shadcn/ui CLI. You can add components using:
-
-```bash
-cd packages/survey-ui
-pnpm ui:add <component-name>
-```
-
-**Important**: After adding a component, reorganize it into a folder structure:
-
-For example:
-```bash
-pnpm ui:add button
-pnpm ui:organize button
-```
-
-Then export the component from `src/components/index.ts`.
-
-### Manual Component Creation
-
-1. Create a new component directory under `src/components/<component-name>/`
-2. Create `index.tsx` inside that directory
-3. Export the component from `src/components/index.ts`
-4. The component will be available from the main package export
-
-## Component Structure
-
-Components follow this folder structure:
-
-```text
-src/components/
-├── button.tsx
-├── button.stories.tsx
-```
-
-## Theming
-
-This package uses CSS variables for theming. The theme can be customized by modifying `src/styles/globals.css`.
-
-Both light and dark modes are supported out of the box.
-
-## CSS Scoping
-
-By default, this package builds CSS scoped to `#fbjs` for use in the surveys package. This ensures proper specificity and prevents conflicts with preflight CSS.
-
-To build unscoped CSS (e.g., for standalone usage or Storybook), set the `SURVEY_UI_UNSCOPED` environment variable:
-
-```bash
-SURVEY_UI_UNSCOPED=true pnpm build
-```
-
-**Note:** Storybook imports the source CSS directly and compiles it with its own Tailwind config, so it's not affected by this scoping setting.
-
+[https://github.com/formbricks/formbricks](https://github.com/formbricks/formbricks)
