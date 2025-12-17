@@ -119,8 +119,8 @@ function SurveyForm() {
         headline="Choose an option"
         inputId="option-select-field"
         options={[
-          { value: "1", label: "Option 1" },
-          { value: "2", label: "Option 2" },
+          { id: "1", label: "Option 1" },
+          { id: "2", label: "Option 2" },
         ]}
         onChange={(value) => console.log(value)}
       />
@@ -338,8 +338,9 @@ This package uses CSS scoped to `#fbjs` to ensure proper specificity and prevent
 This package is written in TypeScript and includes type definitions. All components export their prop types:
 
 ```tsx
-import { Button, type ButtonProps } from "@formbricks/survey-ui";
 import { OpenText, type OpenTextProps } from "@formbricks/survey-ui";
+import { Rating, type RatingProps } from "@formbricks/survey-ui";
+import { SingleSelect, type SingleSelectProps, type SingleSelectOption } from "@formbricks/survey-ui";
 ```
 
 ## Development
