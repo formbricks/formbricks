@@ -120,7 +120,13 @@ function UploadedFilesList({
   return (
     <div className="flex w-full flex-col gap-2 p-2">
       {files.map((file, index) => (
-        <UploadedFileItem key={index} file={file} index={index} disabled={disabled} onDelete={onDelete} />
+        <UploadedFileItem
+          key={`${file.name}-${file.url}`}
+          file={file}
+          index={index}
+          disabled={disabled}
+          onDelete={onDelete}
+        />
       ))}
     </div>
   );

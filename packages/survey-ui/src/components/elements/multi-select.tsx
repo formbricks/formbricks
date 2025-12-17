@@ -137,6 +137,14 @@ function DropdownVariant({
 
   const isRequired = getIsRequired();
 
+  const handleToggle = (optionId: string, isChecked: boolean) => {
+    if (isChecked) {
+      handleOptionRemove(optionId);
+    } else {
+      handleOptionAdd(optionId);
+    }
+  };
+
   return (
     <>
       <ElementError errorMessage={errorMessage} dir={dir} />
@@ -158,20 +166,13 @@ function DropdownVariant({
             .map((option) => {
               const isChecked = selectedValues.includes(option.id);
               const optionId = `${inputId}-${option.id}`;
-              const handleToggle = () => {
-                if (isChecked) {
-                  handleOptionRemove(option.id);
-                } else {
-                  handleOptionAdd(option.id);
-                }
-              };
 
               return (
                 <DropdownMenuCheckboxItem
                   key={option.id}
                   id={optionId}
                   checked={isChecked}
-                  onCheckedChange={handleToggle}
+                  onCheckedChange={() => handleToggle(option.id, isChecked)}
                   disabled={disabled}>
                   <span className={optionLabelClassName}>{option.label}</span>
                 </DropdownMenuCheckboxItem>
@@ -197,20 +198,13 @@ function DropdownVariant({
             .map((option) => {
               const isChecked = selectedValues.includes(option.id);
               const optionId = `${inputId}-${option.id}`;
-              const handleToggle = () => {
-                if (isChecked) {
-                  handleOptionRemove(option.id);
-                } else {
-                  handleOptionAdd(option.id);
-                }
-              };
 
               return (
                 <DropdownMenuCheckboxItem
                   key={option.id}
                   id={optionId}
                   checked={isChecked}
-                  onCheckedChange={handleToggle}
+                  onCheckedChange={() => handleToggle(option.id, isChecked)}
                   disabled={disabled}>
                   <span className={optionLabelClassName}>{option.label}</span>
                 </DropdownMenuCheckboxItem>
