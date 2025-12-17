@@ -102,6 +102,7 @@ interface DropdownVariantProps {
   otherOptionPlaceholder: string;
   dir: TextDirection;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
+  required: boolean;
 }
 
 function DropdownVariant({
@@ -123,7 +124,19 @@ function DropdownVariant({
   otherOptionPlaceholder,
   dir,
   otherInputRef,
+  required,
 }: Readonly<DropdownVariantProps>): React.JSX.Element {
+  const getIsRequired = (): boolean => {
+    const responseValues = [...selectedValues];
+    if (isOtherSelected && otherValue) {
+      responseValues.push(otherValue);
+    }
+    const hasResponse = Array.isArray(responseValues) && responseValues.length > 0;
+    return required && hasResponse ? false : required;
+  };
+
+  const isRequired = getIsRequired();
+
   return (
     <>
       <ElementError errorMessage={errorMessage} dir={dir} />
@@ -187,6 +200,8 @@ function DropdownVariant({
           onChange={handleOtherInputChange}
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
+          required={isRequired}
+          aria-required={required}
           dir={dir}
           className="w-full"
         />
@@ -214,6 +229,7 @@ interface ListVariantProps {
   otherOptionPlaceholder: string;
   dir: TextDirection;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
+  required: boolean;
 }
 
 function ListVariant({
@@ -235,17 +251,32 @@ function ListVariant({
   otherOptionPlaceholder,
   dir,
   otherInputRef,
+  required,
 }: Readonly<ListVariantProps>): React.JSX.Element {
   const isNoneSelected = value.includes("none");
+
+  const getIsRequired = (): boolean => {
+    const responseValues = [...value];
+    if (isOtherSelected && otherValue) {
+      responseValues.push(otherValue);
+    }
+    const hasResponse = Array.isArray(responseValues) && responseValues.length > 0;
+    return required && hasResponse ? false : required;
+  };
+
+  const isRequired = getIsRequired();
 
   return (
     <>
       <ElementError errorMessage={errorMessage} dir={dir} />
       <div className="space-y-2" role="group" aria-label={headline}>
-        {options.map((option) => {
+        {options.map((option, index) => {
           const isChecked = selectedValues.includes(option.id);
           const optionId = `${inputId}-${option.id}`;
           const isDisabled = disabled || (isNoneSelected && option.id !== "none");
+          // Only mark the first checkbox as required for HTML5 validation
+          // This ensures at least one selection is required, not all
+          const isFirstOption = index === 0;
           return (
             <label
               key={option.id}
@@ -254,6 +285,7 @@ function ListVariant({
               <span className="flex items-center">
                 <Checkbox
                   id={optionId}
+                  name={inputId}
                   checked={isChecked}
                   onCheckedChange={(checked) => {
                     if (checked === true) {
@@ -263,6 +295,7 @@ function ListVariant({
                     }
                   }}
                   disabled={isDisabled}
+                  required={isRequired && isFirstOption}
                   aria-invalid={Boolean(errorMessage)}
                 />
                 <span className={cn("mr-3 ml-3", optionLabelClassName)}>{option.label}</span>
@@ -281,6 +314,7 @@ function ListVariant({
               <span className="flex items-center">
                 <Checkbox
                   id={`${inputId}-${otherOptionId}`}
+                  name={inputId}
                   checked={isOtherSelected}
                   onCheckedChange={(checked) => {
                     if (checked === true) {
@@ -301,6 +335,8 @@ function ListVariant({
                   onChange={handleOtherInputChange}
                   placeholder={otherOptionPlaceholder}
                   disabled={disabled}
+                  required={true}
+                  aria-required={required}
                   dir={dir}
                   className="mt-2 w-full"
                   ref={otherInputRef}
@@ -409,6 +445,7 @@ function MultiSelect({
             otherOptionPlaceholder={otherOptionPlaceholder}
             dir={dir}
             otherInputRef={otherInputRef}
+            required={required}
           />
         ) : (
           <ListVariant
@@ -430,6 +467,7 @@ function MultiSelect({
             otherOptionPlaceholder={otherOptionPlaceholder}
             dir={dir}
             otherInputRef={otherInputRef}
+            required={required}
           />
         )}
       </div>

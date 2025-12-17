@@ -63,7 +63,8 @@ export function CTAElement({
         buttonUrl={element.buttonUrl}
         buttonExternal={element.buttonExternal}
         onClick={handleClick}
-        required={true}
+        // CTA cannot be required
+        required={false}
       />
     </form>
   );

@@ -105,13 +105,13 @@ export const StackedCard = ({
         transform: calculateCardTransform(offset),
         opacity: isHidden ? 0 : (100 - 20 * offset) / 100,
         height: fullSizeCards ? "100%" : currentCardHeight,
-        transitionDuration: "600ms",
+        transition: "all 600ms ease-in-out",
         pointerEvents: offset === 0 ? "auto" : "none",
         ...borderStyles,
         ...straightCardArrangementStyles,
         ...getBottomStyles(),
       }}
-      className="pointer rounded-custom bg-survey-bg absolute inset-x-0 overflow-hidden transition-all ease-in-out">
+      className="pointer rounded-custom bg-survey-bg absolute inset-x-0 overflow-hidden">
       <div
         style={{
           opacity: contentOpacity,

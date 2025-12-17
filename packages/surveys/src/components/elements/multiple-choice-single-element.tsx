@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { SingleSelect, type SingleSelectOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
@@ -32,8 +31,6 @@ export function MultipleChoiceSingleElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [otherValue, setOtherValue] = useState("");
   const isCurrent = element.id === currentElementId;
-  const { t } = useTranslation();
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const shuffledChoicesIds = useMemo(() => {
@@ -90,7 +87,6 @@ export function MultipleChoiceSingleElement({
   }, [isOtherSelected, value]);
 
   const handleChange = (selectedValue: string) => {
-    setErrorMessage(undefined);
     if (selectedValue === otherOption?.id) {
       setOtherValue("");
       onChange({ [element.id]: "" });
@@ -109,10 +105,6 @@ export function MultipleChoiceSingleElement({
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (element.required && !value) {
-      setErrorMessage(t("errors.please_select_an_option"));
-      return;
-    }
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -183,7 +175,6 @@ export function MultipleChoiceSingleElement({
         }
         otherValue={otherValue}
         onOtherValueChange={handleOtherValueChange}
-        errorMessage={errorMessage}
       />
     </form>
   );

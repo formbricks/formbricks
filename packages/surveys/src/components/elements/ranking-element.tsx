@@ -106,12 +106,14 @@ export function RankingElement({
   };
 
   const validateRequired = (): boolean => {
-    console.log("value", value);
+    const isValueArray = Array.isArray(value);
+    const allItemsRanked = isValueArray && value.length === element.choices.length;
 
-    if (element.required && (!Array.isArray(value) || value.length !== element.choices.length)) {
+    if ((element.required && !allItemsRanked) || (!element.required && value.length > 0 && !allItemsRanked)) {
       setErrorMessage(t("errors.please_rank_all_items_before_submitting"));
       return false;
     }
+
     return true;
   };
 

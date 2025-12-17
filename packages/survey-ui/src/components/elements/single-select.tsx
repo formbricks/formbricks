@@ -193,10 +193,12 @@ function SingleSelect({
           </>
         ) : (
           <RadioGroup
+            name={inputId}
             value={selectedValue}
             onValueChange={onChange}
             disabled={disabled}
             errorMessage={errorMessage}
+            required={required}
             className="w-full gap-0 space-y-2">
             {options.map((option) => {
               const optionId = `${inputId}-${option.id}`;
@@ -208,7 +210,7 @@ function SingleSelect({
                   htmlFor={optionId}
                   className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
                   <span className="flex items-center text-sm">
-                    <RadioGroupItem value={option.id} id={optionId} disabled={disabled} />
+                    <RadioGroupItem value={option.id} id={optionId} disabled={disabled} required={required} />
                     <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{option.label}</span>
                   </span>
                 </label>
@@ -223,6 +225,7 @@ function SingleSelect({
                     value={otherOptionId}
                     id={`${inputId}-${otherOptionId}`}
                     disabled={disabled}
+                    required={required}
                   />
                   <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
                 </span>
@@ -234,8 +237,10 @@ function SingleSelect({
                     onChange={handleOtherInputChange}
                     placeholder={otherOptionPlaceholder}
                     disabled={disabled}
+                    aria-required={required}
                     dir={dir}
                     className="mt-2 w-full"
+                    required={required}
                   />
                 ) : null}
               </label>

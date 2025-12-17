@@ -69,18 +69,20 @@ function CTA({
       <div className="relative space-y-2">
         <ElementError errorMessage={errorMessage} dir={dir} />
 
-        <div className="flex w-full justify-start">
-          <Button
-            id={inputId}
-            type="button"
-            onClick={handleButtonClick}
-            disabled={disabled}
-            className="flex items-center gap-2"
-            variant={buttonVariant}>
-            {buttonLabel}
-            {buttonExternal ? <LinkIcon className="size-4" /> : null}
-          </Button>
-        </div>
+        {buttonExternal && (
+          <div className="flex w-full justify-start">
+            <Button
+              id={inputId}
+              type="button"
+              onClick={handleButtonClick}
+              disabled={disabled}
+              className="flex items-center gap-2"
+              variant={buttonVariant}>
+              {buttonLabel}
+              {buttonExternal ? <LinkIcon className="size-4" /> : null}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

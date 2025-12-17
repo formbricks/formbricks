@@ -57,6 +57,12 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
     variantClass = "label-description";
   }
 
+  // Base classes - use flex-col for HTML content to allow line breaks, flex items-center for non-HTML
+  const baseClasses =
+    isHtml && safeHtml
+      ? "flex flex-col gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+      : "flex items-center gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50";
+
   // If HTML, render with dangerouslySetInnerHTML, otherwise render normally
   if (isHtml && safeHtml) {
     if (htmlFor) {
@@ -64,11 +70,7 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
         <label
           data-slot="label"
           data-variant={variant}
-          className={cn(
-            "flex items-center gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-            variantClass,
-            className
-          )}
+          className={cn(baseClasses, variantClass, className)}
           htmlFor={htmlFor}
           form={form}
           {...restProps}
@@ -81,11 +83,7 @@ function Label({ className, variant = "default", children, ...props }: LabelProp
       <span
         data-slot="label"
         data-variant={variant}
-        className={cn(
-          "flex items-center gap-2 leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-          variantClass,
-          className
-        )}
+        className={cn(baseClasses, variantClass, className)}
         {...(restProps as React.HTMLAttributes<HTMLSpanElement>)}
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />

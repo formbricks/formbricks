@@ -60,7 +60,7 @@ function Consent({
         <ElementError errorMessage={errorMessage} dir={dir} />
 
         <label
-          htmlFor={inputId}
+          htmlFor={`${inputId}-checkbox`}
           className={cn(
             "bg-input-bg border-input-border text-input-text w-input px-input-x py-input-y rounded-input flex cursor-pointer items-center gap-3 border p-4 transition-colors",
             "focus-within:border-ring focus-within:ring-ring/50 font-fontWeight focus-within:shadow-sm",
@@ -69,13 +69,12 @@ function Consent({
           )}
           dir={dir}>
           <Checkbox
-            id={inputId}
+            id={`${inputId}-checkbox`}
             checked={value}
             onCheckedChange={handleCheckboxChange}
             disabled={disabled}
             aria-invalid={Boolean(errorMessage)}
             aria-required={required}
-            aria-label={checkboxLabel}
           />
           {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
           <span className="text-input font-input-weight text-input-text flex-1 leading-none" dir={dir}>

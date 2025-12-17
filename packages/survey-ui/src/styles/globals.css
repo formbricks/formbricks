@@ -85,7 +85,7 @@
      Used for form labels and secondary text.
      --------------------------------------------------------------------------- */
   --fb-label-font-family: inherit;
-  --fb-label-font-weight: 500;
+  --fb-label-font-weight: 400;
   --fb-label-font-size: 0.875rem;
   --fb-label-color: var(--foreground);
   --fb-label-opacity: 1;
