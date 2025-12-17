@@ -107,13 +107,17 @@ function SurveyForm() {
   return (
     <div id="fbjs">
       <OpenText
-        label="What's your name?"
+        elementId="name-input"
+        headline="What's your name?"
+        inputId="name-input-field"
         placeholder="Enter your name"
         onChange={(value) => console.log(value)}
       />
       
       <SingleSelect
-        label="Choose an option"
+        elementId="option-select"
+        headline="Choose an option"
+        inputId="option-select-field"
         options={[
           { value: "1", label: "Option 1" },
           { value: "2", label: "Option 2" },
@@ -122,8 +126,11 @@ function SurveyForm() {
       />
       
       <Rating
-        label="Rate your experience"
-        max={5}
+        elementId="rating-input"
+        headline="Rate your experience"
+        inputId="rating-input-field"
+        scale="star"
+        range={5}
         onChange={(value) => console.log(value)}
       />
     </div>
