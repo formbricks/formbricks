@@ -2,6 +2,8 @@
 
 React UI components for building surveys and forms. Includes NPS, rating scales, multi-select, file upload, and more.
 
+![Survey UI Preview](https://cdn.jsdelivr.net/gh/formbricks/formbricks@main/packages/survey-ui/images/survey-preview.png)
+
 ## Installation
 
 ```bash
