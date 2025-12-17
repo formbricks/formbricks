@@ -11,6 +11,7 @@ interface HeadlineProps {
 
 export function Headline({ headline, elementId, required = true, alignTextCenter = false }: HeadlineProps) {
   const { t } = useTranslation();
+  const isQuestionCard = elementId !== "EndingCard" && elementId !== "welcomeCard";
   // Strip inline styles BEFORE parsing to avoid CSP violations
   const strippedHeadline = stripInlineStyles(headline);
   const isHeadlineHtml = isValidHTML(strippedHeadline);
@@ -24,7 +25,7 @@ export function Headline({ headline, elementId, required = true, alignTextCenter
 
   return (
     <label htmlFor={elementId} className="text-heading mb-[3px] flex flex-col">
-      {required && (
+      {required && isQuestionCard && (
         <span
           className="mb-[3px] text-xs leading-6 font-normal opacity-60"
           tabIndex={-1}
