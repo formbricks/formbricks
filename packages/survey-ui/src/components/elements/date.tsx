@@ -136,8 +136,6 @@ function DateElement({
           captionLayout="dropdown"
           disabled={isDateDisabled}
           onSelect={handleDateSelect}
-          fromDate={minDateObj ?? new Date(1900, 0, 1)}
-          toDate={maxDateObj ?? new Date(2100, 11, 31)}
           locale={dateLocale}
           className="rounded-input border-input-border bg-input-bg text-input-text shadow-input mx-auto w-full max-w-[25rem] border"
         />
