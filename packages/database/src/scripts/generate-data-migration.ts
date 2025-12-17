@@ -1,8 +1,8 @@
+import { createId } from "@paralleldrive/cuid2";
 import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
-import { createId } from "@paralleldrive/cuid2";
 import { logger } from "@formbricks/logger";
 
 const __filename = fileURLToPath(import.meta.url);
