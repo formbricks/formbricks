@@ -386,7 +386,7 @@ function Rating({
           className="sr-only"
           aria-label={`Rate ${String(number)} out of ${String(range)}`}
         />
-        <div className="pointer-events-none h-full w-full max-w-[74px] object-contain">
+        <div className="text-input-text pointer-events-none h-full w-full max-w-[74px] object-contain">
           <RatingSmiley active={isActive} idx={index} range={range} addColors={colorCoding} />
         </div>
       </label>

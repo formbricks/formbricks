@@ -11,11 +11,11 @@ function CalendarRoot({
   className,
   rootRef,
   ...props
-}: {
+}: Readonly<{
   className?: string;
   rootRef?: React.Ref<HTMLDivElement>;
   children?: React.ReactNode;
-}): React.JSX.Element {
+}>): React.JSX.Element {
   return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />;
 }
 
@@ -23,10 +23,10 @@ function CalendarChevron({
   className,
   orientation,
   ...props
-}: {
+}: Readonly<{
   className?: string;
   orientation?: "left" | "right" | "up" | "down";
-}): React.JSX.Element {
+}>): React.JSX.Element {
   if (orientation === "left") {
     return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
   }
@@ -38,7 +38,10 @@ function CalendarChevron({
   return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
 }
 
-function CalendarWeekNumber({ children, ...props }: { children?: React.ReactNode }): React.JSX.Element {
+function CalendarWeekNumber({
+  children,
+  ...props
+}: Readonly<{ children?: React.ReactNode }>): React.JSX.Element {
   return (
     <td {...props}>
       <div className="flex h-[--cell-size] w-[--cell-size] items-center justify-center text-center">

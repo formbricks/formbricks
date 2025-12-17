@@ -183,7 +183,7 @@ function Ranking({
   errorMessage,
   dir = "auto",
   disabled = false,
-}: RankingProps): React.JSX.Element {
+}: Readonly<RankingProps>): React.JSX.Element {
   // Ensure value is always an array
   const rankedIds = React.useMemo(() => (Array.isArray(value) ? value : []), [value]);
 
@@ -212,7 +212,7 @@ function Ranking({
   const handleMove = (itemId: string, direction: "up" | "down"): void => {
     if (disabled) return;
 
-    const index = rankedIds.findIndex((id) => id === itemId);
+    const index = rankedIds.indexOf(itemId);
     if (index === -1) return;
 
     const newRankedIds = [...rankedIds];

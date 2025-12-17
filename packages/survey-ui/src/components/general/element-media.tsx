@@ -72,7 +72,7 @@ function ElementMedia({
             <iframe
               src={videoUrlWithParams}
               title="Question video"
-              frameBorder="0"
+              style={{ border: 0 }}
               className={cn("aspect-video w-full rounded-md", isLoading ? "opacity-0" : "")}
               onLoad={() => {
                 setIsLoading(false);
@@ -87,7 +87,7 @@ function ElementMedia({
         </div>
       ) : null}
       <a
-        href={imgUrl ? imgUrl : convertToEmbedUrl(videoUrl ?? "")}
+        href={imgUrl ?? convertToEmbedUrl(videoUrl ?? "")}
         target="_blank"
         rel="noreferrer"
         aria-label="Open in new tab"

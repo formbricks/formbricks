@@ -137,8 +137,8 @@ function DropdownVariant({
 
   const isRequired = getIsRequired();
 
-  const handleToggle = (optionId: string, isChecked: boolean) => {
-    if (isChecked) {
+  const handleOptionToggle = (optionId: string) => {
+    if (selectedValues.includes(optionId)) {
       handleOptionRemove(optionId);
     } else {
       handleOptionAdd(optionId);
@@ -172,7 +172,7 @@ function DropdownVariant({
                   key={option.id}
                   id={optionId}
                   checked={isChecked}
-                  onCheckedChange={() => handleToggle(option.id, isChecked)}
+                  onCheckedChange={() => handleOptionToggle(option.id)}
                   disabled={disabled}>
                   <span className={optionLabelClassName}>{option.label}</span>
                 </DropdownMenuCheckboxItem>
@@ -204,7 +204,7 @@ function DropdownVariant({
                   key={option.id}
                   id={optionId}
                   checked={isChecked}
-                  onCheckedChange={() => handleToggle(option.id, isChecked)}
+                  onCheckedChange={() => handleOptionToggle(option.id)}
                   disabled={disabled}>
                   <span className={optionLabelClassName}>{option.label}</span>
                 </DropdownMenuCheckboxItem>

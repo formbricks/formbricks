@@ -14,8 +14,11 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) important;
 
+/* NOSONAR: Tailwind CSS v4 directives - @config and @source are valid at-rules */
 @config "../../tailwind.config.ts";
+/* NOSONAR */
 @source "../../src/**/*.{ts,tsx,js,jsx}";
+/* NOSONAR */
 
 /* =============================================================================
    Design Tokens
