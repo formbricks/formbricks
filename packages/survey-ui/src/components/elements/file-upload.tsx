@@ -56,6 +56,152 @@ interface FileUploadProps {
   placeholderText?: string;
 }
 
+interface UploadedFileItemProps {
+  file: UploadedFile;
+  index: number;
+  disabled: boolean;
+  onDelete: (index: number, e: React.MouseEvent) => void;
+}
+
+function UploadedFileItem({
+  file,
+  index,
+  disabled,
+  onDelete,
+}: Readonly<UploadedFileItemProps>): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        "border-input-border bg-accent-selected text-input-text rounded-input relative m-1 rounded-md border"
+      )}>
+      <div className="absolute top-0 right-0 m-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            onDelete(index, e);
+          }}
+          disabled={disabled}
+          className={cn(
+            "flex h-5 w-5 cursor-pointer items-center justify-center rounded-md",
+            "bg-background hover:bg-accent",
+            disabled && "cursor-not-allowed opacity-50"
+          )}
+          aria-label={`Delete ${file.name}`}>
+          <X className="text-foreground h-5" />
+        </button>
+      </div>
+      <div className="flex flex-col items-center justify-center p-2">
+        <UploadIcon />
+        <p
+          className="mt-1 w-full overflow-hidden px-2 text-center text-sm overflow-ellipsis whitespace-nowrap text-[var(--foreground)]"
+          title={file.name}>
+          {file.name}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+interface UploadedFilesListProps {
+  files: UploadedFile[];
+  disabled: boolean;
+  onDelete: (index: number, e: React.MouseEvent) => void;
+}
+
+function UploadedFilesList({
+  files,
+  disabled,
+  onDelete,
+}: Readonly<UploadedFilesListProps>): React.JSX.Element | null {
+  if (files.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-2 p-2">
+      {files.map((file, index) => (
+        <UploadedFileItem key={index} file={file} index={index} disabled={disabled} onDelete={onDelete} />
+      ))}
+    </div>
+  );
+}
+
+interface UploadAreaProps {
+  inputId: string;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  placeholderText: string;
+  allowMultiple: boolean;
+  acceptAttribute?: string;
+  required: boolean;
+  disabled: boolean;
+  dir: "ltr" | "rtl" | "auto";
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
+  onDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
+  showUploader: boolean;
+}
+
+function UploadArea({
+  inputId,
+  fileInputRef,
+  placeholderText,
+  allowMultiple,
+  acceptAttribute,
+  required,
+  disabled,
+  dir,
+  onFileChange,
+  onDragOver,
+  onDrop,
+  showUploader,
+}: Readonly<UploadAreaProps>): React.JSX.Element | null {
+  if (!showUploader) {
+    return null;
+  }
+
+  return (
+    <label
+      htmlFor={inputId}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className={cn("block w-full", disabled && "cursor-not-allowed")}>
+      <button
+        type="button"
+        onClick={() => {
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        }}
+        disabled={disabled}
+        className={cn(
+          "flex w-full flex-col items-center justify-center py-6",
+          "hover:cursor-pointer",
+          disabled && "cursor-not-allowed opacity-50"
+        )}
+        aria-label="Upload files by clicking or dragging them here">
+        <Upload className="text-input-text h-6" aria-hidden="true" />
+        <span className="text-input-text font-input-weight text-input m-2" id={`${inputId}-label`}>
+          {placeholderText}
+        </span>
+        <Input
+          ref={fileInputRef}
+          type="file"
+          id={inputId}
+          className="hidden"
+          multiple={allowMultiple}
+          accept={acceptAttribute}
+          onChange={onFileChange}
+          disabled={disabled}
+          required={required}
+          dir={dir}
+          aria-label="File upload"
+          aria-describedby={`${inputId}-label`}
+        />
+      </button>
+    </label>
+  );
+}
+
 function FileUpload({
   elementId,
   headline,
@@ -123,7 +269,6 @@ function FileUpload({
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
-      {/* Headline */}
       <ElementHeader
         headline={headline}
         description={description}
@@ -134,58 +279,17 @@ function FileUpload({
         imageAltText={imageAltText}
       />
 
-      {/* File Input */}
       <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
 
-        {/* Dashed border container */}
         <div
           className={cn(
             "w-input px-input-x py-input-y rounded-input relative flex flex-col items-center justify-center border-2 border-dashed transition-colors",
             errorMessage ? "border-destructive" : "border-input-border bg-accent",
             disabled && "cursor-not-allowed opacity-50"
           )}>
-          {/* Uploaded files */}
-          {uploadedFiles.length > 0 ? (
-            <div className="flex w-full flex-col gap-2 p-2">
-              {uploadedFiles.map((file, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    "border-input-border bg-accent-selected text-input-text rounded-input relative m-1 rounded-md border"
-                  )}>
-                  {/* Delete button */}
-                  <div className="absolute top-0 right-0 m-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        handleDeleteFile(index, e);
-                      }}
-                      disabled={disabled}
-                      className={cn(
-                        "flex h-5 w-5 cursor-pointer items-center justify-center rounded-md",
-                        "bg-background hover:bg-accent",
-                        disabled && "cursor-not-allowed opacity-50"
-                      )}
-                      aria-label={`Delete ${file.name}`}>
-                      <X className="text-foreground h-5" />
-                    </button>
-                  </div>
-                  {/* File icon and name */}
-                  <div className="flex flex-col items-center justify-center p-2">
-                    <UploadIcon />
-                    <p
-                      className="mt-1 w-full overflow-hidden px-2 text-center text-sm overflow-ellipsis whitespace-nowrap text-[var(--foreground)]"
-                      title={file.name}>
-                      {file.name}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <UploadedFilesList files={uploadedFiles} disabled={disabled} onDelete={handleDeleteFile} />
 
-          {/* Upload area */}
           <div className="w-full">
             {isUploading ? (
               <div className="flex animate-pulse items-center justify-center rounded-lg py-4">
@@ -193,42 +297,20 @@ function FileUpload({
               </div>
             ) : null}
 
-            <label
-              htmlFor={inputId}
+            <UploadArea
+              inputId={inputId}
+              fileInputRef={fileInputRef}
+              placeholderText={placeholderText}
+              allowMultiple={allowMultiple}
+              acceptAttribute={acceptAttribute}
+              required={required}
+              disabled={disabled}
+              dir={dir}
+              onFileChange={handleFileChange}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              className={cn("block w-full", disabled && "cursor-not-allowed", !showUploader && "hidden")}>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={disabled}
-                className={cn(
-                  "flex w-full flex-col items-center justify-center py-6",
-                  "hover:cursor-pointer",
-                  disabled && "cursor-not-allowed opacity-50"
-                )}
-                aria-label="Upload files by clicking or dragging them here">
-                <Upload className="text-input-text h-6" aria-hidden="true" />
-                {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
-                <span className="text-input-text font-input-weight text-input m-2" id={`${inputId}-label`}>
-                  {placeholderText}
-                </span>
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  id={inputId}
-                  className="hidden"
-                  multiple={allowMultiple}
-                  accept={acceptAttribute}
-                  onChange={handleFileChange}
-                  disabled={disabled}
-                  required={required}
-                  dir={dir}
-                  aria-label="File upload"
-                  aria-describedby={`${inputId}-label`}
-                />
-              </button>
-            </label>
+              showUploader={showUploader}
+            />
           </div>
         </div>
       </div>

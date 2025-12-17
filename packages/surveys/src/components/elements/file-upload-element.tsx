@@ -198,34 +198,16 @@ export function FileUploadElement({
   );
 
   /**
-   * Handle file selection and validation
+   * Validates and filters files by extension and size
    */
-  const handleFileSelect = useCallback(
-    async (files: FileList): Promise<void> => {
-      // Clear previous errors
-      setErrorMessage(undefined);
-
-      const fileArray = Array.from(files);
-
-      // Validate file limits first
-      if (!validateFileLimits(fileArray)) {
-        return;
-      }
-
-      // Filter duplicate files
-      const { filteredFiles } = filterDuplicateFiles(fileArray);
-      if (filteredFiles.length === 0) {
-        return; // All files were duplicates
-      }
-
-      // Validate file extensions
-      const validFiles = filteredFiles.filter((file) => validateFileExtension(file));
+  const validateAndFilterFiles = useCallback(
+    async (files: File[]): Promise<{ filesToUpload: File[]; sizeRejectedFiles: string[] }> => {
+      const validFiles = files.filter((file) => validateFileExtension(file));
       if (validFiles.length === 0) {
         setErrorMessage(t("errors.file_input.no_valid_file_types_selected"));
-        return;
+        return { filesToUpload: [], sizeRejectedFiles: [] };
       }
 
-      // Validate file sizes and process files
       const filesToUpload: File[] = [];
       const sizeRejectedFiles: string[] = [];
 
@@ -238,7 +220,6 @@ export function FileUploadElement({
         }
       }
 
-      // Show error for files that exceeded size limit
       if (sizeRejectedFiles.length > 0 && element.maxSizeInMB) {
         const fileNames = sizeRejectedFiles.join(", ");
         setErrorMessage(
@@ -246,13 +227,19 @@ export function FileUploadElement({
         );
       }
 
-      if (filesToUpload.length === 0) {
-        return; // No valid files to upload
-      }
+      return { filesToUpload, sizeRejectedFiles };
+    },
+    [validateFileExtension, validateFileSize, element.maxSizeInMB, t]
+  );
+
+  /**
+   * Uploads files and updates state
+   */
+  const uploadFiles = useCallback(
+    async (filesToUpload: File[]): Promise<void> => {
+      setIsUploading(true);
 
       try {
-        setIsUploading(true);
-
         // Convert files to base64 and upload
         const uploadPromises = filesToUpload.map(async (file) => {
           const base64 = await toBase64(file);
@@ -302,18 +289,40 @@ export function FileUploadElement({
         setIsUploading(false);
       }
     },
-    [
-      element,
-      surveyId,
-      value,
-      onChange,
-      onFileUpload,
-      validateFileLimits,
-      filterDuplicateFiles,
-      validateFileExtension,
-      validateFileSize,
-      t,
-    ]
+    [element, surveyId, value, onChange, onFileUpload, t]
+  );
+
+  /**
+   * Handle file selection and validation
+   */
+  const handleFileSelect = useCallback(
+    async (files: FileList): Promise<void> => {
+      // Clear previous errors
+      setErrorMessage(undefined);
+
+      const fileArray = Array.from(files);
+
+      // Validate file limits first
+      if (!validateFileLimits(fileArray)) {
+        return;
+      }
+
+      // Filter duplicate files
+      const { filteredFiles } = filterDuplicateFiles(fileArray);
+      if (filteredFiles.length === 0) {
+        return; // All files were duplicates
+      }
+
+      // Validate and filter files by extension and size
+      const { filesToUpload } = await validateAndFilterFiles(filteredFiles);
+      if (filesToUpload.length === 0) {
+        return; // No valid files to upload
+      }
+
+      // Upload files
+      await uploadFiles(filesToUpload);
+    },
+    [validateFileLimits, filterDuplicateFiles, validateAndFilterFiles, uploadFiles]
   );
 
   const validateRequired = (): boolean => {

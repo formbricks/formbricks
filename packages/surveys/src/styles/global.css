@@ -4,7 +4,9 @@
 
 /* NOSONAR: Tailwind CSS v4 directives - @config and @source are valid at-rules */
 @config "../../tailwind.config.cjs";
+/* NOSONAR */
 @source "../../src/**/*.{ts,tsx,js,jsx}";
+/* NOSONAR */
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,

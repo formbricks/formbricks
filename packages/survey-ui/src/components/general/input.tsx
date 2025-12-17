@@ -23,6 +23,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
         type={type}
         dir={dir}
         data-slot="input"
+        style={{ fontSize: "var(--fb-input-font-size)" }}
         aria-invalid={hasError || undefined}
         className={cn(
           // Layout and behavior
@@ -35,8 +36,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
           "px-input-x py-input-y",
           "shadow-input",
           // Placeholder styling
-          "[&::placeholder]:opacity-input-placeholder",
-          "placeholder:text-input-placeholder",
+          "placeholder:opacity-input-placeholder",
+          "placeholder:text-input-placeholder placeholder:text-sm",
+
           // Selection styling
           "selection:bg-primary selection:text-primary-foreground",
           // File input specifics

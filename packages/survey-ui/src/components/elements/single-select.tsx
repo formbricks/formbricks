@@ -154,19 +154,21 @@ function SingleSelect({
                 className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
                 align="start">
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
-                  {options.map((option) => {
-                    const optionId = `${inputId}-${option.id}`;
+                  {options
+                    .filter((option) => option.id !== "none")
+                    .map((option) => {
+                      const optionId = `${inputId}-${option.id}`;
 
-                    return (
-                      <DropdownMenuRadioItem
-                        key={option.id}
-                        value={option.id}
-                        id={optionId}
-                        disabled={disabled}>
-                        <span className={optionLabelClassName}>{option.label}</span>
-                      </DropdownMenuRadioItem>
-                    );
-                  })}
+                      return (
+                        <DropdownMenuRadioItem
+                          key={option.id}
+                          value={option.id}
+                          id={optionId}
+                          disabled={disabled}>
+                          <span className={optionLabelClassName}>{option.label}</span>
+                        </DropdownMenuRadioItem>
+                      );
+                    })}
                   {hasOtherOption && otherOptionId ? (
                     <DropdownMenuRadioItem
                       value={otherOptionId}
@@ -175,6 +177,21 @@ function SingleSelect({
                       <span className={optionLabelClassName}>{otherValue || otherOptionLabel}</span>
                     </DropdownMenuRadioItem>
                   ) : null}
+                  {options
+                    .filter((option) => option.id === "none")
+                    .map((option) => {
+                      const optionId = `${inputId}-${option.id}`;
+
+                      return (
+                        <DropdownMenuRadioItem
+                          key={option.id}
+                          value={option.id}
+                          id={optionId}
+                          disabled={disabled}>
+                          <span className={optionLabelClassName}>{option.label}</span>
+                        </DropdownMenuRadioItem>
+                      );
+                    })}
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -200,22 +217,33 @@ function SingleSelect({
             errorMessage={errorMessage}
             required={required}
             className="w-full gap-0 space-y-2">
-            {options.map((option) => {
-              const optionId = `${inputId}-${option.id}`;
-              const isSelected = selectedValue === option.id;
+            {options
+              .filter((option) => option.id !== "none")
+              .map((option) => {
+                const optionId = `${inputId}-${option.id}`;
+                const isSelected = selectedValue === option.id;
 
-              return (
-                <label
-                  key={option.id}
-                  htmlFor={optionId}
-                  className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
-                  <span className="flex items-center text-sm">
-                    <RadioGroupItem value={option.id} id={optionId} disabled={disabled} required={required} />
-                    <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{option.label}</span>
-                  </span>
-                </label>
-              );
-            })}
+                return (
+                  <label
+                    key={option.id}
+                    htmlFor={optionId}
+                    className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
+                    <span className="flex items-center text-sm">
+                      <RadioGroupItem
+                        value={option.id}
+                        id={optionId}
+                        disabled={disabled}
+                        required={required}
+                      />
+                      <span
+                        className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                        style={{ fontSize: "var(--fb-option-font-size)" }}>
+                        {option.label}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
             {hasOtherOption && otherOptionId ? (
               <label
                 htmlFor={`${inputId}-${otherOptionId}`}
@@ -227,7 +255,11 @@ function SingleSelect({
                     disabled={disabled}
                     required={required}
                   />
-                  <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
+                  <span
+                    className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                    style={{ fontSize: "var(--fb-option-font-size)" }}>
+                    {otherOptionLabel}
+                  </span>
                 </span>
                 {isOtherSelected ? (
                   <Input
@@ -245,6 +277,33 @@ function SingleSelect({
                 ) : null}
               </label>
             ) : null}
+            {options
+              .filter((option) => option.id === "none")
+              .map((option) => {
+                const optionId = `${inputId}-${option.id}`;
+                const isSelected = selectedValue === option.id;
+
+                return (
+                  <label
+                    key={option.id}
+                    htmlFor={optionId}
+                    className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
+                    <span className="flex items-center text-sm">
+                      <RadioGroupItem
+                        value={option.id}
+                        id={optionId}
+                        disabled={disabled}
+                        required={required}
+                      />
+                      <span
+                        className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                        style={{ fontSize: "var(--fb-option-font-size)" }}>
+                        {option.label}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
           </RadioGroup>
         )}
       </div>

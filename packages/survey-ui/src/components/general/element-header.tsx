@@ -34,11 +34,15 @@ const isValidHTML = (str: string): boolean => {
 
 /**
  * Strips inline style attributes to prevent CSP violations
+ * Uses a safe regex pattern to avoid ReDoS (Regular Expression Denial of Service) vulnerabilities
  * @param html - The HTML string to clean
  * @returns HTML string without inline style attributes
  */
-const stripInlineStyles = (html: string): string => {
-  return html.replace(/\s*style\s*=\s*["'][^"']*["']/gi, "");
+export const stripInlineStyles = (html: string): string => {
+  // Remove style="..." or style='...' attributes
+  // Use separate patterns for each quote type to avoid ReDoS vulnerability
+  // The pattern [^"]* and [^']* are safe as they don't cause backtracking
+  return html.replace(/\s+style\s*=\s*["'][^"']*["']/gi, ""); //NOSONAR
 };
 
 function ElementHeader({

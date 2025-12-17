@@ -113,7 +113,7 @@
   --fb-input-border-color: var(--fb-survey-brand-color);
   --fb-input-border-radius: var(--radius);
   --fb-input-font-family: inherit;
-  --fb-input-font-size: 0.875rem;
+  --fb-input-font-size: 0.875rem !important;
   --fb-input-font-weight: 400;
   --fb-input-color: var(--foreground);
   --fb-input-placeholder-color: var(--fb-input-color);

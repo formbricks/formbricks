@@ -56,9 +56,7 @@ function DateElement({
 
   // Sync date state when value prop changes
   React.useEffect(() => {
-    if (!value) {
-      setDate(undefined);
-    } else {
+    if (value) {
       // Parse YYYY-MM-DD format as local date (not UTC)
       const [year, month, day] = value.split("-").map(Number);
       const newDate = new Date(year, month - 1, day);
@@ -69,6 +67,8 @@ function DateElement({
         }
         return prevDate;
       });
+    } else {
+      setDate(undefined);
     }
   }, [value]);
 

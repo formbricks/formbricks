@@ -153,28 +153,30 @@ function DropdownVariant({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
-          {options.map((option) => {
-            const isChecked = selectedValues.includes(option.id);
-            const optionId = `${inputId}-${option.id}`;
-            const handleToggle = () => {
-              if (isChecked) {
-                handleOptionRemove(option.id);
-              } else {
-                handleOptionAdd(option.id);
-              }
-            };
+          {options
+            .filter((option) => option.id !== "none")
+            .map((option) => {
+              const isChecked = selectedValues.includes(option.id);
+              const optionId = `${inputId}-${option.id}`;
+              const handleToggle = () => {
+                if (isChecked) {
+                  handleOptionRemove(option.id);
+                } else {
+                  handleOptionAdd(option.id);
+                }
+              };
 
-            return (
-              <DropdownMenuCheckboxItem
-                key={option.id}
-                id={optionId}
-                checked={isChecked}
-                onCheckedChange={handleToggle}
-                disabled={disabled}>
-                <span className={optionLabelClassName}>{option.label}</span>
-              </DropdownMenuCheckboxItem>
-            );
-          })}
+              return (
+                <DropdownMenuCheckboxItem
+                  key={option.id}
+                  id={optionId}
+                  checked={isChecked}
+                  onCheckedChange={handleToggle}
+                  disabled={disabled}>
+                  <span className={optionLabelClassName}>{option.label}</span>
+                </DropdownMenuCheckboxItem>
+              );
+            })}
           {hasOtherOption && otherOptionId ? (
             <DropdownMenuCheckboxItem
               id={`${inputId}-${otherOptionId}`}
@@ -190,6 +192,30 @@ function DropdownVariant({
               <span className={optionLabelClassName}>{otherOptionLabel}</span>
             </DropdownMenuCheckboxItem>
           ) : null}
+          {options
+            .filter((option) => option.id === "none")
+            .map((option) => {
+              const isChecked = selectedValues.includes(option.id);
+              const optionId = `${inputId}-${option.id}`;
+              const handleToggle = () => {
+                if (isChecked) {
+                  handleOptionRemove(option.id);
+                } else {
+                  handleOptionAdd(option.id);
+                }
+              };
+
+              return (
+                <DropdownMenuCheckboxItem
+                  key={option.id}
+                  id={optionId}
+                  checked={isChecked}
+                  onCheckedChange={handleToggle}
+                  disabled={disabled}>
+                  <span className={optionLabelClassName}>{option.label}</span>
+                </DropdownMenuCheckboxItem>
+              );
+            })}
         </DropdownMenuContent>
       </DropdownMenu>
       {isOtherSelected ? (
@@ -269,40 +295,46 @@ function ListVariant({
   return (
     <>
       <ElementError errorMessage={errorMessage} dir={dir} />
-      <div className="space-y-2" role="group" aria-label={headline}>
-        {options.map((option, index) => {
-          const isChecked = selectedValues.includes(option.id);
-          const optionId = `${inputId}-${option.id}`;
-          const isDisabled = disabled || (isNoneSelected && option.id !== "none");
-          // Only mark the first checkbox as required for HTML5 validation
-          // This ensures at least one selection is required, not all
-          const isFirstOption = index === 0;
-          return (
-            <label
-              key={option.id}
-              htmlFor={optionId}
-              className={cn(getOptionContainerClassName(isChecked, isDisabled), isChecked && "z-10")}>
-              <span className="flex items-center">
-                <Checkbox
-                  id={optionId}
-                  name={inputId}
-                  checked={isChecked}
-                  onCheckedChange={(checked) => {
-                    if (checked === true) {
-                      handleOptionAdd(option.id);
-                    } else {
-                      handleOptionRemove(option.id);
-                    }
-                  }}
-                  disabled={isDisabled}
-                  required={isRequired ? isFirstOption : null}
-                  aria-invalid={Boolean(errorMessage)}
-                />
-                <span className={cn("mr-3 ml-3", optionLabelClassName)}>{option.label}</span>
-              </span>
-            </label>
-          );
-        })}
+      <fieldset className="space-y-2" aria-label={headline}>
+        {options
+          .filter((option) => option.id !== "none")
+          .map((option, index) => {
+            const isChecked = selectedValues.includes(option.id);
+            const optionId = `${inputId}-${option.id}`;
+            const isDisabled = disabled || (isNoneSelected && option.id !== "none");
+            // Only mark the first checkbox as required for HTML5 validation
+            // This ensures at least one selection is required, not all
+            const isFirstOption = index === 0;
+            return (
+              <label
+                key={option.id}
+                htmlFor={optionId}
+                className={cn(getOptionContainerClassName(isChecked, isDisabled), isChecked && "z-10")}>
+                <span className="flex items-center">
+                  <Checkbox
+                    id={optionId}
+                    name={inputId}
+                    checked={isChecked}
+                    onCheckedChange={(checked) => {
+                      if (checked === true) {
+                        handleOptionAdd(option.id);
+                      } else {
+                        handleOptionRemove(option.id);
+                      }
+                    }}
+                    disabled={isDisabled}
+                    required={isRequired ? isFirstOption : false}
+                    aria-invalid={Boolean(errorMessage)}
+                  />
+                  <span
+                    className={cn("mr-3 ml-3", optionLabelClassName)}
+                    style={{ fontSize: "var(--fb-option-font-size)" }}>
+                    {option.label}
+                  </span>
+                </span>
+              </label>
+            );
+          })}
         {hasOtherOption && otherOptionId ? (
           <div className="space-y-2">
             <label
@@ -326,7 +358,11 @@ function ListVariant({
                   disabled={disabled || isNoneSelected}
                   aria-invalid={Boolean(errorMessage)}
                 />
-                <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
+                <span
+                  className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                  style={{ fontSize: "var(--fb-option-font-size)" }}>
+                  {otherOptionLabel}
+                </span>
               </span>
               {isOtherSelected ? (
                 <Input
@@ -345,7 +381,43 @@ function ListVariant({
             </label>
           </div>
         ) : null}
-      </div>
+        {options
+          .filter((option) => option.id === "none")
+          .map((option) => {
+            const isChecked = selectedValues.includes(option.id);
+            const optionId = `${inputId}-${option.id}`;
+            const isDisabled = disabled || (isNoneSelected && option.id !== "none");
+            return (
+              <label
+                key={option.id}
+                htmlFor={optionId}
+                className={cn(getOptionContainerClassName(isChecked, isDisabled), isChecked && "z-10")}>
+                <span className="flex items-center">
+                  <Checkbox
+                    id={optionId}
+                    name={inputId}
+                    checked={isChecked}
+                    onCheckedChange={(checked) => {
+                      if (checked === true) {
+                        handleOptionAdd(option.id);
+                      } else {
+                        handleOptionRemove(option.id);
+                      }
+                    }}
+                    disabled={isDisabled}
+                    required={false}
+                    aria-invalid={Boolean(errorMessage)}
+                  />
+                  <span
+                    className={cn("mr-3 ml-3", optionLabelClassName)}
+                    style={{ fontSize: "var(--fb-option-font-size)" }}>
+                    {option.label}
+                  </span>
+                </span>
+              </label>
+            );
+          })}
+      </fieldset>
     </>
   );
 }
