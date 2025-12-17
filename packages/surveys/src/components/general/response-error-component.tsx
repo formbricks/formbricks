@@ -19,7 +19,7 @@ export function ResponseErrorComponent({
 }: ResponseErrorComponentProps) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col bg-white p-4">
+    <div className="flex flex-col bg-survey-bg p-4">
       <span className="mb-1.5 text-base leading-6 font-bold text-slate-900">
         {t("common.your_feedback_is_stuck")}
       </span>
