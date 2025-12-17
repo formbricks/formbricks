@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -49,5 +50,18 @@ export default defineConfig({
     dts({ include: ["src"] }),
     tailwindcss(),
   ],
+  test: {
+    environment: "node",
+    globals: true,
+    include: ["src/**/*.test.ts"],
+    exclude: ["dist/**", "node_modules/**"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html", "lcov"],
+      reportsDirectory: "./coverage",
+      include: ["src/lib/**/*.ts"],
+      exclude: ["**/*.test.ts", "**/*.stories.tsx"],
+    },
+  },
 });
 
