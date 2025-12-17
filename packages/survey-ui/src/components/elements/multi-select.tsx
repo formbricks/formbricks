@@ -172,7 +172,9 @@ function DropdownVariant({
                   key={option.id}
                   id={optionId}
                   checked={isChecked}
-                  onCheckedChange={() => handleOptionToggle(option.id)}
+                  onCheckedChange={() => {
+                    handleOptionToggle(option.id);
+                  }}
                   disabled={disabled}>
                   <span className={optionLabelClassName}>{option.label}</span>
                 </DropdownMenuCheckboxItem>
@@ -204,7 +206,9 @@ function DropdownVariant({
                   key={option.id}
                   id={optionId}
                   checked={isChecked}
-                  onCheckedChange={() => handleOptionToggle(option.id)}
+                  onCheckedChange={() => {
+                    handleOptionToggle(option.id);
+                  }}
                   disabled={disabled}>
                   <span className={optionLabelClassName}>{option.label}</span>
                 </DropdownMenuCheckboxItem>
