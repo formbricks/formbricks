@@ -2,12 +2,36 @@
   "name": "@formbricks/survey-ui",
   "license": "MIT",
   "version": "1.0.1",
-  "description": "Reusable UI components for Formbricks applications",
+  "description": "React UI components for building surveys and forms - includes NPS, rating scales, multi-select, file upload, and more. Built with Radix UI and Tailwind CSS.",
   "homepage": "https://formbricks.com",
   "type": "module",
+  "keywords": [
+    "react",
+    "survey",
+    "form",
+    "ui",
+    "components",
+    "nps",
+    "rating",
+    "questionnaire",
+    "feedback",
+    "formbricks",
+    "radix-ui",
+    "tailwindcss",
+    "typescript",
+    "accessible"
+  ],
+  "author": {
+    "name": "Formbricks",
+    "url": "https://formbricks.com"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/formbricks/formbricks"
+    "url": "https://github.com/formbricks/formbricks",
+    "directory": "packages/survey-ui"
+  },
+  "bugs": {
+    "url": "https://github.com/formbricks/formbricks/issues"
   },
   "sideEffects": ["**/*.css"],
   "source": "src/index.ts",
