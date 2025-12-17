@@ -16,7 +16,6 @@
     "questionnaire",
     "feedback",
     "formbricks",
-    "radix-ui",
     "tailwindcss",
     "typescript",
     "accessible"
@@ -33,7 +32,9 @@
   "bugs": {
     "url": "https://github.com/formbricks/formbricks/issues"
   },
-  "sideEffects": ["**/*.css"],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "source": "src/index.ts",
   "main": "dist/index.js",
   "module": "dist/index.js",
