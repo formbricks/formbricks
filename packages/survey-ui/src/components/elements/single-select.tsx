@@ -288,7 +288,7 @@ function SingleSelect({
                     key={option.id}
                     htmlFor={optionId}
                     className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
-                    <span className="flex items-center text-sm">
+                    <span className="flex items-center">
                       <RadioGroupItem
                         value={option.id}
                         id={optionId}
