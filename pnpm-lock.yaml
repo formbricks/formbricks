@@ -12,7 +12,7 @@ overrides:
 
 patchedDependencies:
   next-auth@4.24.12:
-    hash: bdy3m55bopfzpysceipfxj5eei
+    hash: 43pqaaqjvqhdw6jmcjbeq3fjse
     path: patches/next-auth@4.24.12.patch
 
 importers:
@@ -362,7 +362,7 @@ importers:
         version: 15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       next-auth:
         specifier: 4.24.12
-        version: 4.24.12(patch_hash=bdy3m55bopfzpysceipfxj5eei)(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.1.2(react@19.1.2))(react@19.1.2))(nodemailer@7.0.11)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
+        version: 4.24.12(patch_hash=43pqaaqjvqhdw6jmcjbeq3fjse)(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.1.2(react@19.1.2))(react@19.1.2))(nodemailer@7.0.11)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       next-safe-action:
         specifier: 7.10.8
         version: 7.10.8(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.1.2(react@19.1.2))(react@19.1.2))(react-dom@19.1.2(react@19.1.2))(react@19.1.2)(zod@3.24.4)
@@ -18507,7 +18507,7 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next-auth@4.24.12(patch_hash=bdy3m55bopfzpysceipfxj5eei)(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.1.2(react@19.1.2))(react@19.1.2))(nodemailer@7.0.11)(react-dom@19.1.2(react@19.1.2))(react@19.1.2):
+  next-auth@4.24.12(patch_hash=43pqaaqjvqhdw6jmcjbeq3fjse)(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.1.2(react@19.1.2))(react@19.1.2))(nodemailer@7.0.11)(react-dom@19.1.2(react@19.1.2))(react@19.1.2):
     dependencies:
       '@babel/runtime': 7.28.4
       '@panva/hkdf': 1.2.1
