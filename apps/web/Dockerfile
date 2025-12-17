@@ -37,6 +37,10 @@ ENV NODE_OPTIONS=${NODE_OPTIONS}
 # but needs explicit declaration for some build systems (like Depot)
 ARG TARGETARCH
 
+# Base path for the application (optional)
+ARG BASE_PATH=""
+ENV BASE_PATH=${BASE_PATH}
+
 # Set the working directory
 WORKDIR /app
 
