@@ -1,15 +1,15 @@
 import { Container, Heading, Text } from "@react-email/components";
-import { EmailFooter } from "@/src/components/email-footer";
-import { EmailTemplate } from "@/src/components/email-template";
-import { exampleData } from "@/src/lib/example-data";
-import { t as mockT } from "@/src/lib/mock-translate";
+import { EmailFooter } from "../../src/components/email-footer";
+import { EmailTemplate } from "../../src/components/email-template";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
 
 type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
 interface InviteAcceptedEmailProps {
-  inviterName: string;
-  inviteeName: string;
-  t?: TFunction;
+  readonly inviterName: string;
+  readonly inviteeName: string;
+  readonly t?: TFunction;
 }
 
 export function InviteAcceptedEmail({
@@ -33,7 +33,6 @@ export function InviteAcceptedEmail({
   );
 }
 
-// Default export for preview server
 export default function InviteAcceptedEmailPreview(): React.JSX.Element {
   return <InviteAcceptedEmail {...exampleData.inviteAcceptedEmail} />;
 }

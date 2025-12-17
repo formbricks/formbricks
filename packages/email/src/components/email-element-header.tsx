@@ -1,15 +1,11 @@
 import { Container } from "@react-email/components";
+import { cn } from "../../src/lib/cn";
 
 interface ElementHeaderProps {
-  headline: string;
-  subheader?: string;
-  className?: string;
+  readonly headline: string;
+  readonly subheader?: string;
+  readonly className?: string;
 }
-
-// Simple cn utility for className merging
-const cn = (...classes: (string | undefined)[]) => {
-  return classes.filter(Boolean).join(" ");
-};
 
 export function ElementHeader({ headline, subheader, className }: ElementHeaderProps): React.JSX.Element {
   return (

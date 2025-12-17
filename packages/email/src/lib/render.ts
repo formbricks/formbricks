@@ -1,25 +1,20 @@
 import { render } from "@react-email/render";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { FollowUpEmailProps } from "@/emails/survey/follow-up-email";
-import { ResponseFinishedEmailProps } from "@/emails/survey/response-finished-email";
+import { ForgotPasswordEmail } from "../../emails/auth/forgot-password-email";
+import { NewEmailVerification } from "../../emails/auth/new-email-verification";
+import { PasswordResetNotifyEmail } from "../../emails/auth/password-reset-notify-email";
+import { VerificationEmail } from "../../emails/auth/verification-email";
+import { EmailCustomizationPreviewEmail } from "../../emails/general/email-customization-preview-email";
+import { InviteAcceptedEmail } from "../../emails/invite/invite-accepted-email";
+import { InviteEmail } from "../../emails/invite/invite-email";
+import { EmbedSurveyPreviewEmail } from "../../emails/survey/embed-survey-preview-email";
+import { FollowUpEmail, FollowUpEmailProps } from "../../emails/survey/follow-up-email";
+import { LinkSurveyEmail } from "../../emails/survey/link-survey-email";
 import {
-  EmailCustomizationPreviewEmail,
-  EmbedSurveyPreviewEmail,
-  FollowUpEmail,
-  ForgotPasswordEmail,
-  InviteAcceptedEmail,
-  InviteEmail,
-  LinkSurveyEmail,
-  NewEmailVerification,
-  PasswordResetNotifyEmail,
   ResponseFinishedEmail,
-  VerificationEmail,
-} from "@/src/index";
+  ResponseFinishedEmailProps,
+} from "../../emails/survey/response-finished-email";
 
 type TFunction = (key: string, replacements?: Record<string, string>) => string;
-
-// Render helper functions that convert React email components to HTML strings
-// These are used by the web app to send emails without needing to import react-email
 
 export async function renderVerificationEmail(props: {
   verifyLink: string;
@@ -92,25 +87,6 @@ export async function renderEmailCustomizationPreviewEmail(props: {
   t: TFunction;
 }): Promise<string> {
   return await render(EmailCustomizationPreviewEmail(props));
-}
-
-// Follow-up email types - exported for web app use
-export interface ProcessedResponseElement {
-  element: string;
-  response: string | string[];
-  type: TSurveyElementTypeEnum;
-}
-
-export interface ProcessedVariable {
-  id: string;
-  name: string;
-  type: "text" | "number";
-  value: string | number;
-}
-
-export interface ProcessedHiddenField {
-  id: string;
-  value: string;
 }
 
 export async function renderFollowUpEmail(props: FollowUpEmailProps): Promise<string> {

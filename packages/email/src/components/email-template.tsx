@@ -2,8 +2,7 @@ import { Body, Container, Html, Img, Link, Section, Tailwind } from "@react-emai
 
 type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
-const fbLogoUrl =
-  "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
+const fbLogoUrl = "https://app.formbricks.com/logo-transparent.png";
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
 
 interface EmailTemplateProps {

@@ -1,14 +1,14 @@
 import { Container, Heading, Text } from "@react-email/components";
-import { EmailTemplate } from "@/src/components/email-template";
-import { exampleData } from "@/src/lib/example-data";
-import { t as mockT } from "@/src/lib/mock-translate";
+import { EmailTemplate } from "../../src/components/email-template";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
 
 type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
 interface EmailCustomizationPreviewEmailProps {
-  userName: string;
-  logoUrl?: string;
-  t?: TFunction;
+  readonly userName: string;
+  readonly logoUrl?: string;
+  readonly t?: TFunction;
 }
 
 export function EmailCustomizationPreviewEmail({
@@ -26,7 +26,6 @@ export function EmailCustomizationPreviewEmail({
   );
 }
 
-// Default export for preview server
 export default function EmailCustomizationPreviewEmailPreview(): React.JSX.Element {
   return <EmailCustomizationPreviewEmail {...exampleData.emailCustomizationPreviewEmail} />;
 }

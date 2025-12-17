@@ -4,32 +4,26 @@ import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { EmailButton } from "@/src/components/email-button";
-import { EmailTemplate } from "@/src/components/email-template";
-import { renderEmailResponseValue } from "@/src/lib/email-utils";
-import { exampleData } from "@/src/lib/example-data";
-import { t as mockT } from "@/src/lib/mock-translate";
+import { EmailButton } from "../../src/components/email-button";
+import { EmailTemplate } from "../../src/components/email-template";
+import { renderEmailResponseValue } from "../../src/lib/email-utils";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
+import { ProcessedResponseElement } from "../../src/types/follow-up";
 
 type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
-export interface MappedElement {
-  element: string;
-  response: string | string[];
-  type: TSurveyElementTypeEnum;
-}
-
 export interface ResponseFinishedEmailProps {
-  survey: TSurvey;
-  responseCount: number;
-  response: TResponse;
-  WEBAPP_URL: string;
-  environmentId: string;
-  organization: TOrganization;
-  elements: MappedElement[]; // Pre-processed data, not a function
-  t?: TFunction;
+  readonly survey: TSurvey;
+  readonly responseCount: number;
+  readonly response: TResponse;
+  readonly WEBAPP_URL: string;
+  readonly environmentId: string;
+  readonly organization: TOrganization;
+  readonly elements: ProcessedResponseElement[]; // Pre-processed data, not a function
+  readonly t?: TFunction;
 }
 
-// Helper function to get element response mapping (simplified)
 const mockGetElementResponseMapping = (survey: TSurvey, response: TResponse) => {
   // For preview, just return the response data as elements
   return Object.entries(response.data)

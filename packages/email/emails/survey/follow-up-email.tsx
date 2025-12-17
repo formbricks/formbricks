@@ -1,29 +1,11 @@
 import { Column, Hr, Row, Text } from "@react-email/components";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { EmailTemplate } from "@/src/components/email-template";
-import { renderEmailResponseValue } from "@/src/lib/email-utils";
-import { t as mockT } from "@/src/lib/mock-translate";
+import { EmailTemplate } from "../../src/components/email-template";
+import { renderEmailResponseValue } from "../../src/lib/email-utils";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
+import { ProcessedHiddenField, ProcessedResponseElement, ProcessedVariable } from "../../src/types/follow-up";
 
 type TFunction = (key: string, replacements?: Record<string, string>) => string;
-
-// Processed data types - web app does all the processing
-interface ProcessedResponseElement {
-  element: string;
-  response: string | string[];
-  type: TSurveyElementTypeEnum;
-}
-
-interface ProcessedVariable {
-  id: string;
-  name: string;
-  type: "text" | "number";
-  value: string | number;
-}
-
-interface ProcessedHiddenField {
-  id: string;
-  value: string;
-}
 
 export interface FollowUpEmailProps {
   readonly body: string; // Already processed HTML with recall tags replaced
@@ -98,38 +80,6 @@ export function FollowUpEmail({
   );
 }
 
-// Default export for preview server with example data
 export default function FollowUpEmailPreview(): React.JSX.Element {
-  return (
-    <FollowUpEmail
-      body="<p>Thank you for your feedback! We've received your response and will review it shortly.</p><p>Here's a summary of what you submitted:</p>"
-      responseData={[
-        {
-          element: "What did you like most?",
-          response: "The customer service was excellent!",
-          type: TSurveyElementTypeEnum.OpenText,
-        },
-        {
-          element: "How would you rate your experience?",
-          response: "5",
-          type: TSurveyElementTypeEnum.Rating,
-        },
-      ]}
-      variables={[
-        {
-          id: "var-1",
-          name: "Customer ID",
-          type: "text",
-          value: "CUST-456",
-        },
-      ]}
-      hiddenFields={[
-        {
-          id: "userId",
-          value: "user-abc-123",
-        },
-      ]}
-      logoUrl="https://app.formbricks.com/logo.png"
-    />
-  );
+  return <FollowUpEmail {...(exampleData.followUpEmail as unknown as FollowUpEmailProps)} />;
 }

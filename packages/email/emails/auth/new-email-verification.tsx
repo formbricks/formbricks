@@ -1,9 +1,9 @@
 import { Container, Heading, Link, Text } from "@react-email/components";
-import { EmailButton } from "@/src/components/email-button";
-import { EmailFooter } from "@/src/components/email-footer";
-import { EmailTemplate } from "@/src/components/email-template";
-import { exampleData } from "@/src/lib/example-data";
-import { t as mockT } from "@/src/lib/mock-translate";
+import { EmailButton } from "../../src/components/email-button";
+import { EmailFooter } from "../../src/components/email-footer";
+import { EmailTemplate } from "../../src/components/email-template";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
 
 type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
@@ -34,7 +34,6 @@ export function NewEmailVerification({
   );
 }
 
-// Default export for preview server
 export default function NewEmailVerificationPreview(): React.JSX.Element {
   return <NewEmailVerification {...exampleData.newEmailVerification} />;
 }

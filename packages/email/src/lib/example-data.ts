@@ -1,6 +1,7 @@
 // Mock data for email templates to use in React Email preview server
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const exampleData = {
@@ -139,12 +140,42 @@ export const exampleData = {
     } as unknown as TOrganization,
   },
 
+  followUpEmail: {
+    body: "<p>Thank you for your feedback! We've received your response and will review it shortly.</p><p>Here's a summary of what you submitted:</p>",
+    responseData: [
+      {
+        element: "What did you like most?",
+        response: "The customer service was excellent!",
+        type: TSurveyElementTypeEnum.OpenText,
+      },
+      {
+        element: "How would you rate your experience?",
+        response: "5",
+        type: TSurveyElementTypeEnum.Rating,
+      },
+    ],
+    variables: [
+      {
+        id: "var-1",
+        name: "Customer ID",
+        type: "text",
+        value: "CUST-456",
+      },
+    ],
+    hiddenFields: [
+      {
+        id: "userId",
+        value: "user-abc-123",
+      },
+    ],
+    logoUrl: "https://app.formbricks.com/logo-transparent.png",
+  },
+
   emailCustomizationPreviewEmail: {
     userName: "Alex Johnson",
     logoUrl: "https://app.formbricks.com/logo.png",
   },
 };
 
-// Type exports for use in templates
 export type ExampleDataKeys = keyof typeof exampleData;
 export type ExampleData<K extends ExampleDataKeys> = (typeof exampleData)[K];

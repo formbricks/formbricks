@@ -684,12 +684,6 @@ importers:
       '@react-email/components':
         specifier: 1.0.1
         version: 1.0.1(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
-      react:
-        specifier: 19.1.2
-        version: 19.1.2
-      react-dom:
-        specifier: 19.1.2
-        version: 19.1.2(react@19.1.2)
       react-email:
         specifier: 5.0.8
         version: 5.0.8
@@ -706,6 +700,27 @@ importers:
       '@react-email/preview-server':
         specifier: 5.0.8
         version: 5.0.8(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
+      autoprefixer:
+        specifier: 10.4.21
+        version: 10.4.21(postcss@8.5.3)
+      clsx:
+        specifier: 2.1.1
+        version: 2.1.1
+      postcss:
+        specifier: 8.5.3
+        version: 8.5.3
+      react:
+        specifier: 19.1.2
+        version: 19.1.2
+      react-dom:
+        specifier: 19.1.2
+        version: 19.1.2(react@19.1.2)
+      tailwind-merge:
+        specifier: 3.2.0
+        version: 3.2.0
+      tailwindcss:
+        specifier: 3.4.17
+        version: 3.4.17(ts-node@10.9.2(@types/node@22.15.18)(typescript@5.8.3))
 
   packages/i18n-utils:
     dependencies:

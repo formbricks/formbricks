@@ -1,16 +1,16 @@
 import { Container, Heading, Link, Text } from "@react-email/components";
-import { EmailButton } from "@/src/components/email-button";
-import { EmailFooter } from "@/src/components/email-footer";
-import { EmailTemplate } from "@/src/components/email-template";
-import { exampleData } from "@/src/lib/example-data";
-import { t as mockT } from "@/src/lib/mock-translate";
+import { EmailButton } from "../../src/components/email-button";
+import { EmailFooter } from "../../src/components/email-footer";
+import { EmailTemplate } from "../../src/components/email-template";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
 
 type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
 interface VerificationEmailProps {
-  verifyLink: string;
-  verificationRequestLink: string;
-  t?: TFunction;
+  readonly verifyLink: string;
+  readonly verificationRequestLink: string;
+  readonly t?: TFunction;
 }
 
 export function VerificationEmail({
@@ -41,7 +41,6 @@ export function VerificationEmail({
   );
 }
 
-// Default export for preview server
 export default function VerificationEmailPreview(): React.JSX.Element {
   return <VerificationEmail {...exampleData.verificationEmail} />;
 }

@@ -1,15 +1,15 @@
 import { Container, Heading, Text } from "@react-email/components";
-import { EmailTemplate } from "@/src/components/email-template";
-import { exampleData } from "@/src/lib/example-data";
-import { t as mockT } from "@/src/lib/mock-translate";
+import { EmailTemplate } from "../../src/components/email-template";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
 
 type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
 interface EmbedSurveyPreviewEmailProps {
-  html: string;
-  environmentId: string;
-  logoUrl?: string;
-  t?: TFunction;
+  readonly html: string;
+  readonly environmentId: string;
+  readonly logoUrl?: string;
+  readonly t?: TFunction;
 }
 
 export function EmbedSurveyPreviewEmail({
@@ -36,7 +36,6 @@ export function EmbedSurveyPreviewEmail({
   );
 }
 
-// Default export for preview server
 export default function EmbedSurveyPreviewEmailPreview(): React.JSX.Element {
   return <EmbedSurveyPreviewEmail {...exampleData.embedSurveyPreviewEmail} />;
 }
