@@ -284,8 +284,13 @@ export const getSurveyCount = reactCache(async (environmentId: string): Promise<
   }
 });
 
-export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
-  validateInputs([updatedSurvey, ZSurvey]);
+export const updateSurveyInternal = async (
+  updatedSurvey: TSurvey,
+  skipValidation = false
+): Promise<TSurvey> => {
+  if (!skipValidation) {
+    validateInputs([updatedSurvey, ZSurvey]);
+  }
 
   try {
     const surveyId = updatedSurvey.id;
@@ -301,10 +306,12 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
       updatedSurvey;
 
-    checkForInvalidImagesInQuestions(questions);
+    if (!skipValidation) {
+      checkForInvalidImagesInQuestions(questions);
+    }
 
     // Add blocks media validation
-    if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
+    if (!skipValidation && updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
       const blocksValidation = checkForInvalidMediaInBlocks(updatedSurvey.blocks);
       if (!blocksValidation.ok) {
         throw new InvalidInputError(blocksValidation.error.message);
@@ -368,7 +375,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       if (type === "app") {
         // parse the segment filters:
         const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-        if (!parsedFilters.success) {
+        if (!skipValidation && !parsedFilters.success) {
           throw new InvalidInputError("Invalid user segment filters");
         }
 
@@ -566,6 +573,15 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     throw error;
   }
+};
+
+export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
+  return updateSurveyInternal(updatedSurvey);
+};
+
+// Draft update without validation
+export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
+  return updateSurveyInternal(updatedSurvey, true);
 };
 
 export const createSurvey = async (

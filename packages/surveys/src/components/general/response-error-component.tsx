@@ -5,12 +5,18 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { processResponseData } from "@/lib/response";
 
 interface ResponseErrorComponentProps {
-  questions: TSurveyElement[];
-  responseData: TResponseData;
-  onRetry?: () => void;
+  readonly questions: TSurveyElement[];
+  readonly responseData: TResponseData;
+  readonly onRetry?: () => void;
+  readonly isRetrying?: boolean;
 }
 
-export function ResponseErrorComponent({ questions, responseData, onRetry }: ResponseErrorComponentProps) {
+export function ResponseErrorComponent({
+  questions,
+  responseData,
+  onRetry,
+  isRetrying = false,
+}: ResponseErrorComponentProps) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col bg-white p-4">
@@ -23,14 +29,14 @@ export function ResponseErrorComponent({ questions, responseData, onRetry }: Res
         {t("common.please_retry_now_or_try_again_later")}
       </p>
       <div className="mt-4 rounded-lg border border-slate-200 bg-slate-100 px-4 py-5">
-        <div className="flex max-h-36 flex-1 flex-col space-y-3 overflow-y-scroll">
+        <div className="flex max-h-48 flex-1 flex-col space-y-2 overflow-y-scroll">
           {questions.map((question, index) => {
             const response = responseData[question.id];
             if (!response) return;
             return (
               <div className="flex flex-col" key={`response-${index.toString()}`}>
-                <span className="text-sm leading-6 text-slate-900">{`${t("common.question")} ${(index + 1).toString()}`}</span>
-                <span className="mt-1 text-sm leading-6 font-semibold text-slate-900">
+                <span className="text-sm leading-5 text-slate-900">{`${t("common.question")} ${(index + 1).toString()}`}</span>
+                <span className="text-sm leading-5 font-semibold text-slate-900">
                   {processResponseData(response)}
                 </span>
               </div>
@@ -40,11 +46,14 @@ export function ResponseErrorComponent({ questions, responseData, onRetry }: Res
       </div>
       <div className="mt-4 flex flex-1 flex-row items-center justify-end space-x-2">
         <SubmitButton
-          buttonLabel={t("common.retry")}
+          buttonLabel={isRetrying ? t("common.retrying") : t("common.retry")}
           isLastQuestion={false}
           onClick={() => {
-            onRetry?.();
+            if (!isRetrying) {
+              onRetry?.();
+            }
           }}
+          disabled={isRetrying}
         />
       </div>
     </div>

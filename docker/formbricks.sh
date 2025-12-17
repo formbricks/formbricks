@@ -496,7 +496,7 @@ EOF
     if [[ $insert_traefik == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
   traefik:
-    image: "traefik:v2.11.29"
+    image: "traefik:v2.11.31"
     restart: always
     container_name: "traefik"
     depends_on:
@@ -525,7 +525,7 @@ EOF
       cat > "$services_snippet_file" << EOF
 
   traefik:
-    image: "traefik:v2.11.29"
+    image: "traefik:v2.11.31"
     restart: always
     container_name: "traefik"
     depends_on:

@@ -17,36 +17,36 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
 
 <CardGroup cols={2}>
   <Card title="HTML" icon="html5" color="orange" href="#html">
-    [All you need to do is add three lines of code to your HTML script, and that's it!](https://formbricks.com/docs/app-surveys/framework-guides#html)
+   All you need to do is add three lines of code to your HTML script, and that's it!
   </Card>
 
 <Card title="React.js" icon="react" color="lightblue" href="#react-js">
-  [Load our JavaScript library with your environment ID, and you're ready to
-  go!](https://formbricks.com/docs/app-surveys/framework-guides#react-js)
+  Load our JavaScript library with your environment ID, and you're ready to
+  go!
 </Card>
 
 <Card title="Next.js" icon="react" href="#next-js">
-  [Natively add us to your Next.js project, with support for both App and Pages project
-  structure.](https://formbricks.com/docs/app-surveys/framework-guides#next-js)
+  Natively add us to your Next.js project, with support for both App and Pages project
+  structure.
 </Card>
 
 <Card title="Vue.js" icon="vuejs" href="#vue-js">
-  Learn how to use Formbricks' React Native SDK to integrate your surveys into React Native applications.
+  Learn how to use Formbricks' Vue.js SDK to integrate your surveys into Vue.js applications.
 </Card>
 
 <Card title="React Native" icon="react" color="lightblue" href="#react-native">
-  [Easily integrate our SDK with your React Native app for seamless survey
-  support.](https://formbricks.com/docs/app-surveys/framework-guides#react-native)
+  Easily integrate our SDK with your React Native app for seamless survey
+  support.
 </Card>
 
 <Card title="Swift" icon="swift" color="orange" href="#swift">
-  [Use our iOS SDK to quickly integrate surveys into your iOS
-  applications.](https://formbricks.com/docs/app-surveys/framework-guides#swift)
+  Use our iOS SDK to quickly integrate surveys into your iOS
+  applications.
 </Card>
 
 <Card title="Android" icon="android" color="green" href="#android">
-  [Integrate surveys into your Android applications using our native Kotlin
-  SDK.](https://formbricks.com/docs/app-surveys/framework-guides#android)
+  Integrate surveys into your Android applications using our native Kotlin
+  SDK.
 </Card>
 
 </CardGroup>
@@ -345,6 +345,8 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
 
 ## Swift
 
+<Info>**Minimum iOS Version:** The Formbricks iOS SDK requires **iOS 16.4** or higher.</Info>
+
 Install the Formbricks iOS SDK using the following steps:
 
 **Swift Package Manager**
@@ -363,7 +365,7 @@ Install the Formbricks iOS SDK using the following steps:
 1. Add the following to your `Podfile`:
 
    ```ruby
-   platform :ios, '16.6'
+   platform :ios, '16.4'
    use_frameworks! :linkage => :static
 
    target 'YourTargetName' do
@@ -428,6 +430,10 @@ Formbricks.cleanup(waitForOperations: true) {
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
 ## Android
+
+<Info>
+  **Minimum Android Version:** The Formbricks Android SDK requires **Android 10 (API level 29)** or higher.
+</Info>
 
 Install the Formbricks Android SDK using the following steps:
 

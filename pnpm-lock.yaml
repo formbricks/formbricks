@@ -6,6 +6,7 @@ settings:
 
 overrides:
   axios: '>=1.12.2'
+  node-forge: '>=1.3.2'
   tar-fs: 2.1.4
   typeorm: '>=0.3.26'
 
@@ -25,9 +26,12 @@ importers:
         specifier: 19.2.1
         version: 19.2.1(react@19.2.1)
     devDependencies:
-      '@azure/microsoft-playwright-testing':
-        specifier: 1.0.0-beta.7
-        version: 1.0.0-beta.7(@playwright/test@1.56.1)
+      '@azure/identity':
+        specifier: 4.13.0
+        version: 4.13.0
+      '@azure/playwright':
+        specifier: 1.0.0
+        version: 1.0.0(@playwright/test@1.56.1)
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:packages/config-eslint
@@ -164,9 +168,6 @@ importers:
       '@hookform/resolvers':
         specifier: 5.0.1
         version: 5.0.1(react-hook-form@7.56.2(react@19.2.1))
-      '@intercom/messenger-js-sdk':
-        specifier: 0.0.14
-        version: 0.0.14
       '@json2csv/node':
         specifier: 7.0.6
         version: 7.0.6
@@ -274,7 +275,7 @@ importers:
         version: 0.0.38(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@sentry/nextjs':
         specifier: 10.5.0
-        version: 10.5.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.99.8(esbuild@0.25.10))
+        version: 10.5.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.99.8(esbuild@0.25.10))
       '@t3-oss/env-nextjs':
         specifier: 0.13.4
         version: 0.13.4(arktype@2.1.25)(typescript@5.8.3)(zod@3.24.4)
@@ -363,14 +364,14 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       next:
-        specifier: 15.5.7
-        version: 15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+        specifier: 15.5.9
+        version: 15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       next-auth:
         specifier: 4.24.12
-        version: 4.24.12(patch_hash=bdy3m55bopfzpysceipfxj5eei)(next@15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(nodemailer@7.0.11)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+        version: 4.24.12(patch_hash=bdy3m55bopfzpysceipfxj5eei)(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(nodemailer@7.0.11)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       next-safe-action:
         specifier: 7.10.8
-        version: 7.10.8(next@15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(zod@3.24.4)
+        version: 7.10.8(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(zod@3.24.4)
       node-fetch:
         specifier: 3.3.2
         version: 3.3.2
@@ -1455,10 +1456,6 @@ packages:
     resolution: {integrity: sha512-XPArKLzsvl0Hf0CaGyKHUyVgF7oDnhKoP85Xv6M4StF/1AhfORhZudHtOyf2s+FcbuQ9dPRAjB8J2KvRRMUK2A==}
     engines: {node: '>=20.0.0'}
 
-  '@azure/core-xml@1.5.0':
-    resolution: {integrity: sha512-D/sdlJBMJfx7gqoj66PKVmhDDaU6TKA49ptcolxdas29X7AfvLTmfAGLjAcIMBK7UZ2o4lygHIqVckOlQU3xWw==}
-    engines: {node: '>=20.0.0'}
-
   '@azure/identity@4.13.0':
     resolution: {integrity: sha512-uWC0fssc+hs1TGGVkkghiaFkkS7NkTxfnCH+Hdg+yTehTpMcehpok4PgUKKdyCH+9ldu6FhiHRv84Ntqj1vVcw==}
     engines: {node: '>=20.0.0'}
@@ -1475,13 +1472,6 @@ packages:
     resolution: {integrity: sha512-fCqPIfOcLE+CGqGPd66c8bZpwAji98tZ4JI9i/mlTNTlsIWslCfpg48s/ypyLxZTump5sypjrKn2/kY7q8oAbA==}
     engines: {node: '>=20.0.0'}
 
-  '@azure/microsoft-playwright-testing@1.0.0-beta.7':
-    resolution: {integrity: sha512-Y6C35LWUfLevHu5NG+7vvFfhpmUrGWKRumcz7/CSCmWlx8RVfWgP6NuL8rIPDuTeJyjaTczNfeg1ppGW26TjBw==}
-    engines: {node: '>=18.0.0'}
-    deprecated: This package has been deprecated and will no longer be maintained after March 8, 2026. Upgrade to the replacement package, @azure/playwright, to continue receiving updates.
-    peerDependencies:
-      '@playwright/test': ^1.43.1
-
   '@azure/msal-browser@4.26.0':
     resolution: {integrity: sha512-Ie3SZ4IMrf9lSwWVzzJrhTPE+g9+QDUfeor1LKMBQzcblp+3J/U1G8hMpNSfLL7eA5F/DjjPXkATJ5JRUdDJLA==}
     engines: {node: '>=0.8.0'}
@@ -1494,13 +1484,11 @@ packages:
     resolution: {integrity: sha512-HszfqoC+i2C9+BRDQfuNUGp15Re7menIhCEbFCQ49D3KaqEDrgZIgQ8zSct4T59jWeUIL9N/Dwiv4o2VueTdqQ==}
     engines: {node: '>=16'}
 
-  '@azure/storage-blob@12.29.1':
-    resolution: {integrity: sha512-7ktyY0rfTM0vo7HvtK6E3UvYnI9qfd6Oz6z/+92VhGRveWng3kJwMKeUpqmW/NmwcDNbxHpSlldG+vsUnRFnBg==}
+  '@azure/playwright@1.0.0':
+    resolution: {integrity: sha512-HG0XuYT0z7TcyffJZrEZ9fWrP/WsK/jDAmKFB7MuYNy9WMW0oQItUy+o6uIv2IiZzUeO8OpyhompOhpFddf+eQ==}
     engines: {node: '>=20.0.0'}
-
-  '@azure/storage-common@12.1.1':
-    resolution: {integrity: sha512-eIOH1pqFwI6UmVNnDQvmFeSg0XppuzDLFeUNO/Xht7ODAzRLgGDh7h550pSxoA+lPDxBl1+D2m/KG3jWzCUjTg==}
-    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@playwright/test': ^1.47.0
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -2365,9 +2353,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@intercom/messenger-js-sdk@0.0.14':
-    resolution: {integrity: sha512-2dH4BDAh9EI90K7hUkAdZ76W79LM45Sd1OBX7t6Vzy8twpNiQ5X+7sH9G5hlJlkSGnf+vFWlFcy9TOYAyEs1hA==}
-
   '@isaacs/balanced-match@4.0.1':
     resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
     engines: {node: 20 || >=22}
@@ -2559,8 +2544,8 @@ packages:
   '@neoconfetti/react@1.0.0':
     resolution: {integrity: sha512-klcSooChXXOzIm+SE5IISIAn3bYzYfPjbX7D7HoqZL84oAfgREeSg5vSIaSFH+DaGzzvImTyWe1OyrJ67vik4A==}
 
-  '@next/env@15.5.7':
-    resolution: {integrity: sha512-4h6Y2NyEkIEN7Z8YxkA27pq6zTkS09bUSYC0xjd0NpwFxjnIKeZEeH591o5WECSmjpUhLn3H2QLJcDye3Uzcvg==}
+  '@next/env@15.5.9':
+    resolution: {integrity: sha512-4GlTZ+EJM7WaW2HEZcyU317tIQDjkQIyENDLxYJfSWlfqguN+dHkZgyQTV/7ykvobU7yEH5gKvreNrH4B6QgIg==}
 
   '@next/eslint-plugin-next@15.3.2':
     resolution: {integrity: sha512-ijVRTXBgnHT33aWnDtmlG+LJD+5vhc9AKTJPquGG5NKXjpKNjc62woIhFtrAcWdBobt8kqjCoaJ0q6sDQoX7aQ==}
@@ -6816,10 +6801,6 @@ packages:
     resolution: {integrity: sha512-pfX9uG9Ki0yekDHx2SiuRIyFdyAr1kMIMitPvb0YBo8SUfKvia7w7FIyd/l6av85pFYRhZscS75MwMnbvY+hcQ==}
     hasBin: true
 
-  fast-xml-parser@5.3.0:
-    resolution: {integrity: sha512-gkWGshjYcQCF+6qtlrqBqELqNqnt4CxruY6UVAWWnqb3DQ6qaNFEIKqzYep1XzHLM/QtrHVCxyPOtTk4LTQ7Aw==}
-    hasBin: true
-
   fastest-stable-stringify@2.0.2:
     resolution: {integrity: sha512-bijHueCGd0LqqNK9b5oCMHc0MluJAx0cwqASgbWMvkO01lCYgIhacVRLcaDz3QnyYIRNJRDwMb41VuT6pHJ91Q==}
 
@@ -8204,10 +8185,9 @@ packages:
       zod:
         optional: true
 
-  next@15.5.7:
-    resolution: {integrity: sha512-+t2/0jIJ48kUpGKkdlhgkv+zPTEOoXyr60qXe68eB/pl3CMJaLeIGjzp5D6Oqt25hCBiBTt8wEeeAzfJvUKnPQ==}
+  next@15.5.9:
+    resolution: {integrity: sha512-agNLK89seZEtC5zUHwtut0+tNrc0Xw4FT/Dg+B/VLEo9pAcS9rtTKpek3V6kVcVwsB2YlqMaHdfZL4eLEVYuCg==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
-    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -8254,8 +8234,8 @@ packages:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  node-forge@1.3.1:
-    resolution: {integrity: sha512-dPEtOeMvF9VMcYV/1Wb8CPoVAXtp6MKMlcbAt4ddqmGqUJ6fQZFXkNZNkNlfevtNkGtaSoXf/vNNNSvgrdXwtA==}
+  node-forge@1.3.3:
+    resolution: {integrity: sha512-rLvcdSyRCyouf6jcOIPe/BgwG/d7hKjzMKOas33/pHEr6gbq18IK9zV7DiPvzsz0oBJPme6qr6H6kGZuI9/DZg==}
     engines: {node: '>= 6.13.0'}
 
   node-gyp@8.4.1:
@@ -11889,11 +11869,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@azure/core-xml@1.5.0':
-    dependencies:
-      fast-xml-parser: 5.3.0
-      tslib: 2.8.1
-
   '@azure/identity@4.13.0':
     dependencies:
       '@azure/abort-controller': 2.1.2
@@ -11947,17 +11922,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@azure/microsoft-playwright-testing@1.0.0-beta.7(@playwright/test@1.56.1)':
-    dependencies:
-      '@azure/core-rest-pipeline': 1.22.1
-      '@azure/identity': 4.13.0
-      '@azure/logger': 1.3.0
-      '@azure/storage-blob': 12.29.1
-      '@playwright/test': 1.56.1
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
-
   '@azure/msal-browser@4.26.0':
     dependencies:
       '@azure/msal-common': 15.13.1
@@ -11970,35 +11934,12 @@ snapshots:
       jsonwebtoken: 9.0.2
       uuid: 8.3.2
 
-  '@azure/storage-blob@12.29.1':
+  '@azure/playwright@1.0.0(@playwright/test@1.56.1)':
     dependencies:
-      '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.10.1
-      '@azure/core-client': 1.10.1
-      '@azure/core-http-compat': 2.3.1
-      '@azure/core-lro': 2.7.2
-      '@azure/core-paging': 1.6.2
       '@azure/core-rest-pipeline': 1.22.1
-      '@azure/core-tracing': 1.3.1
-      '@azure/core-util': 1.13.1
-      '@azure/core-xml': 1.5.0
       '@azure/logger': 1.3.0
-      '@azure/storage-common': 12.1.1
-      events: 3.3.0
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
-
-  '@azure/storage-common@12.1.1':
-    dependencies:
-      '@azure/abort-controller': 2.1.2
-      '@azure/core-auth': 1.10.1
-      '@azure/core-http-compat': 2.3.1
-      '@azure/core-rest-pipeline': 1.22.1
-      '@azure/core-tracing': 1.3.1
-      '@azure/core-util': 1.13.1
-      '@azure/logger': 1.3.0
-      events: 3.3.0
+      '@playwright/test': 1.56.1
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -12185,7 +12126,7 @@ snapshots:
       mongodb: 6.16.0(@aws-sdk/credential-providers@3.817.0)(socks@2.8.7)
       mssql: 11.0.1
       mysql2: 3.14.1
-      node-forge: 1.3.1
+      node-forge: 1.3.3
       openid-client: 6.5.0
       pg: 8.16.0
       redis: 4.7.0
@@ -12760,8 +12701,6 @@ snapshots:
   '@img/sharp-win32-x64@0.34.4':
     optional: true
 
-  '@intercom/messenger-js-sdk@0.0.14': {}
-
   '@isaacs/balanced-match@4.0.1': {}
 
   '@isaacs/brace-expansion@5.0.0':
@@ -13098,7 +13037,7 @@ snapshots:
 
   '@neoconfetti/react@1.0.0': {}
 
-  '@next/env@15.5.7': {}
+  '@next/env@15.5.9': {}
 
   '@next/eslint-plugin-next@15.3.2':
     dependencies:
@@ -14958,7 +14897,7 @@ snapshots:
 
   '@sentry/core@10.5.0': {}
 
-  '@sentry/nextjs@10.5.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.99.8(esbuild@0.25.10))':
+  '@sentry/nextjs@10.5.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.99.8(esbuild@0.25.10))':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.37.0
@@ -14971,7 +14910,7 @@ snapshots:
       '@sentry/vercel-edge': 10.5.0
       '@sentry/webpack-plugin': 4.6.0(encoding@0.1.13)(webpack@5.99.8(esbuild@0.25.10))
       chalk: 3.0.0
-      next: 15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      next: 15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       resolve: 1.22.8
       rollup: 4.52.5
       stacktrace-parser: 0.1.11
@@ -18326,10 +18265,6 @@ snapshots:
     dependencies:
       strnum: 2.1.1
 
-  fast-xml-parser@5.3.0:
-    dependencies:
-      strnum: 2.1.1
-
   fastest-stable-stringify@2.0.2: {}
 
   fastq@1.19.1:
@@ -19731,13 +19666,13 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next-auth@4.24.12(patch_hash=bdy3m55bopfzpysceipfxj5eei)(next@15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(nodemailer@7.0.11)(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
+  next-auth@4.24.12(patch_hash=bdy3m55bopfzpysceipfxj5eei)(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(nodemailer@7.0.11)(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
       '@babel/runtime': 7.28.4
       '@panva/hkdf': 1.2.1
       cookie: 0.7.2
       jose: 4.15.9
-      next: 15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      next: 15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       oauth: 0.9.15
       openid-client: 5.7.1
       preact: 10.26.6
@@ -19748,17 +19683,17 @@ snapshots:
     optionalDependencies:
       nodemailer: 7.0.11
 
-  next-safe-action@7.10.8(next@15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(zod@3.24.4):
+  next-safe-action@7.10.8(next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(zod@3.24.4):
     dependencies:
-      next: 15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      next: 15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
     optionalDependencies:
       zod: 3.24.4
 
-  next@15.5.7(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
+  next@15.5.9(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
-      '@next/env': 15.5.7
+      '@next/env': 15.5.9
       '@swc/helpers': 0.5.15
       caniuse-lite: 1.0.30001751
       postcss: 8.4.31
@@ -19803,7 +19738,7 @@ snapshots:
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
 
-  node-forge@1.3.1: {}
+  node-forge@1.3.3: {}
 
   node-gyp@8.4.1:
     dependencies:
