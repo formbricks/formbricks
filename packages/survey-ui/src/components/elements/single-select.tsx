@@ -120,7 +120,7 @@ function SingleSelect({
     );
 
   // Shared className for option labels
-  const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
+  const optionLabelClassName = "font-option  font-option-weight text-option-label";
 
   // Get selected option label for dropdown display
   const selectedOption = options.find((opt) => opt.id === selectedValue);
@@ -228,7 +228,7 @@ function SingleSelect({
                     key={option.id}
                     htmlFor={optionId}
                     className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
-                    <span className="flex items-center text-sm">
+                    <span className="flex items-center">
                       <RadioGroupItem
                         value={option.id}
                         id={optionId}
@@ -248,7 +248,7 @@ function SingleSelect({
               <label
                 htmlFor={`${inputId}-${otherOptionId}`}
                 className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
-                <span className="flex items-center text-sm">
+                <span className="flex items-center">
                   <RadioGroupItem
                     value={otherOptionId}
                     id={`${inputId}-${otherOptionId}`}

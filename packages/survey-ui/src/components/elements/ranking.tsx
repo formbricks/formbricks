@@ -118,10 +118,10 @@ function RankingItem({ item, rankedIds, onItemClick, onMove, disabled, dir }: Re
         aria-label={isRanked ? `Remove ${item.label} from ranking` : `Add ${item.label} to ranking`}>
         <span
           className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
+            "border-brand flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
             isRanked
-              ? "bg-brand border-brand text-white"
-              : "border-option-border group-hover:bg-background group-hover:text-foreground border-dashed text-transparent"
+              ? "bg-brand text-white"
+              : "group-hover:bg-background group-hover:text-foreground border-dashed text-transparent"
           )}>
           {displayNumber}
         </span>

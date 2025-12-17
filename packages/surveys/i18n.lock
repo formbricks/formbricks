@@ -12,7 +12,6 @@ checksums:
     common/less_than_x_minutes: 8a8528651d0b60dc93be451abf6a139b
     common/next: 89ddbcf710eba274963494f312bdc8a9
     common/open_in_new_tab: 6844e4922a7a40a7ee25c10ea109cdeb
-    common/optional: 396fb9a0472daf401c392bdc3e248943
     common/people_responded: b685fb877090d8658db724ad07a0dbd8
     common/please_retry_now_or_try_again_later: 949a3841e2eb01fa249790a42bf23aa5
     common/please_specify: e1faa6cd085144f7339c7e74dc6fb366
@@ -21,6 +20,7 @@ checksums:
     common/protected_by_reCAPTCHA_and_the_Google: 32de026bff5d52e9edf5410d7d7b835f
     common/question: 0576462ce60d4263d7c482463fcc9547
     common/question_video: cc554b661fd62ac59db500307b3ba44e
+    common/required: 04d7fb6f37ffe0a6ca97d49e2a8b6eb5
     common/respondents_will_not_see_this_card: 18c3dd44d6ff6ca2310ad196b84f30d3
     common/retry: 6e44d18639560596569a1278f9c83676
     common/retrying: 0cb623dbdcbf16d3680f0180ceac734c

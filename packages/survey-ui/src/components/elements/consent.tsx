@@ -77,7 +77,10 @@ function Consent({
             aria-required={required}
           />
           {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
-          <span className="text-input font-input-weight text-input-text flex-1 leading-none" dir={dir}>
+          <span
+            className="font-input-weight text-input-text flex-1"
+            style={{ fontSize: "var(--fb-input-font-size)" }}
+            dir={dir}>
             {checkboxLabel}
           </span>
         </label>

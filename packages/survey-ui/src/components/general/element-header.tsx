@@ -77,17 +77,21 @@ function ElementHeader({
       ) : null}
 
       {/* Headline */}
-      <div>{required ? <span className="label-headline text-xs opacity-60">(Required)</span> : null}</div>
-      <div className="flex">
-        {isHeadlineHtml && safeHeadlineHtml ? (
-          <Label htmlFor={htmlFor} variant="headline">
-            {headline}
-          </Label>
-        ) : (
-          <Label htmlFor={htmlFor} variant="headline" className="font-semibold">
-            {headline}
-          </Label>
-        )}
+      <div>
+        <div>
+          {required ? <span className="label-headline mb-[3px] text-xs opacity-60">Required</span> : null}
+        </div>
+        <div className="flex">
+          {isHeadlineHtml && safeHeadlineHtml ? (
+            <Label htmlFor={htmlFor} variant="headline">
+              {headline}
+            </Label>
+          ) : (
+            <Label htmlFor={htmlFor} variant="headline" className="font-semibold">
+              {headline}
+            </Label>
+          )}
+        </div>
       </div>
 
       {/* Description/Subheader */}
