@@ -52,7 +52,7 @@ jobs:
         run: pnpm install --config.platform=linux --config.architecture=x64
 
       - name: Run Chromatic
-        uses: chromaui/action@abdb0b7bad7751c6c49e8df297f39ab950940de0 # v13.0.0
+        uses: chromaui/action@4c20b95e9d3209ecfdf9cd6aace6bbde71ba1694 # v13.3.4
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: apps/storybook
