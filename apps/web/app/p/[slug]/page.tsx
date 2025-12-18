@@ -22,7 +22,8 @@ export default async function PrettyUrlPage(props: PrettyUrlPageProps) {
     Object.entries(searchParams).filter(([_, v]) => v !== undefined) as [string, string][]
   ).toString();
 
-  const redirectUrl = `/s/${survey.id}${queryString ? `?${queryString}` : ""}`;
+  const baseUrl = `/s/${survey.id}`;
+  const redirectUrl = queryString ? `${baseUrl}?${queryString}` : baseUrl;
 
   redirect(redirectUrl);
 }

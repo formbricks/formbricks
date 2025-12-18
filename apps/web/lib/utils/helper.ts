@@ -31,7 +31,8 @@ export const getFormattedErrorMessage = (result): string => {
         if (key && fieldError?.toLowerCase().startsWith(key.toLowerCase())) {
           return fieldError;
         }
-        return `${key ? `${key}: ` : ""}${fieldError}`;
+        const keyPrefix = key ? `${key}: ` : "";
+        return `${keyPrefix}${fieldError}`;
       })
       .join("\n");
   }
