@@ -125,6 +125,9 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
   appendCssVariable("border-radius", `${Number(roundness).toString()}px`);
+  appendCssVariable("input-border-radius", `${Number(roundness).toString()}px`);
+  appendCssVariable("option-border-radius", `${Number(roundness).toString()}px`);
+  appendCssVariable("button-border-radius", `${Number(roundness).toString()}px`);
   appendCssVariable("input-background-color", styling.inputColor?.light);
   appendCssVariable("input-bg-color", styling.inputColor?.light);
   appendCssVariable("option-bg-color", styling.inputColor?.light);
