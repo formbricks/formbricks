@@ -101,7 +101,7 @@ describe("user.ts", () => {
 
       const mockUpdateQueue = {
         updateUserId: vi.fn(),
-        processUpdates: vi.fn(),
+        processUpdates: vi.fn().mockResolvedValue(undefined),
       };
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
@@ -112,6 +112,42 @@ describe("user.ts", () => {
       expect(result.ok).toBe(true);
       expect(mockUpdateQueue.updateUserId).toHaveBeenCalledWith(mockUserId);
       expect(mockUpdateQueue.processUpdates).toHaveBeenCalled();
+    });
+
+    test("returns error if processUpdates fails", async () => {
+      const mockConfig = {
+        get: vi.fn().mockReturnValue({
+          user: {
+            data: {
+              userId: null,
+            },
+          },
+        }),
+      };
+
+      const mockLogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+      };
+
+      const mockUpdateQueue = {
+        updateUserId: vi.fn(),
+        processUpdates: vi.fn().mockRejectedValue(new Error("Network error")),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+      getInstanceLoggerMock.mockReturnValue(mockLogger as unknown as Logger);
+      getInstanceUpdateQueueMock.mockReturnValue(mockUpdateQueue as unknown as UpdateQueue);
+      const result = await setUserId(mockUserId);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("network_error");
+        expect(result.error.status).toBe(500);
+      }
+      expect(mockUpdateQueue.updateUserId).toHaveBeenCalledWith(mockUserId);
+      expect(mockUpdateQueue.processUpdates).toHaveBeenCalled();
+      expect(mockLogger.error).toHaveBeenCalled();
     });
   });
 

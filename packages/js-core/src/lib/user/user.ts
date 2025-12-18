@@ -4,7 +4,6 @@ import { tearDown } from "@/lib/common/setup";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type ApiErrorResponse, type Result, err, okVoid } from "@/types/error";
 
-// eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
 export const setUserId = async (userId: string): Promise<Result<void, ApiErrorResponse>> => {
   const appConfig = Config.getInstance();
   const logger = Logger.getInstance();
@@ -27,8 +26,20 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
   }
 
   updateQueue.updateUserId(userId);
-  void updateQueue.processUpdates();
-  return okVoid();
+  try {
+    await updateQueue.processUpdates();
+    return okVoid();
+  } catch (error) {
+    logger.error(
+      `Failed to process userId update: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+    return err({
+      code: "network_error",
+      message: "Failed to sync userId",
+      responseMessage: error instanceof Error ? error.message : "Unknown error",
+      status: 500,
+    });
+  }
 };
 
 export const logout = (): Result<void> => {

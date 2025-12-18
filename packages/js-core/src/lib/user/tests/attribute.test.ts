@@ -17,6 +17,16 @@ vi.mock("@/lib/user/update-queue", () => ({
   },
 }));
 
+// Mock the Logger
+vi.mock("@/lib/common/logger", () => ({
+  Logger: {
+    getInstance: vi.fn(() => ({
+      error: vi.fn(),
+      debug: vi.fn(),
+    })),
+  },
+}));
+
 describe("User Attributes", () => {
   const mockUpdateQueue = {
     updateAttributes: vi.fn(),
@@ -32,6 +42,8 @@ describe("User Attributes", () => {
 
   describe("setAttributes", () => {
     test("successfully updates attributes and triggers processing", async () => {
+      mockUpdateQueue.processUpdates.mockResolvedValue(undefined);
+
       const result = await setAttributes(mockAttributes);
 
       // Verify UpdateQueue methods were called correctly
@@ -43,6 +55,8 @@ describe("User Attributes", () => {
     });
 
     test("processes multiple attribute updates", async () => {
+      mockUpdateQueue.processUpdates.mockResolvedValue(undefined);
+
       const firstAttributes = { name: mockAttributes.name };
       const secondAttributes = { email: mockAttributes.email };
 
@@ -55,22 +69,35 @@ describe("User Attributes", () => {
       expect(mockUpdateQueue.processUpdates).toHaveBeenCalledTimes(2);
     });
 
-    test("processes updates asynchronously", async () => {
+    test("waits for processUpdates to complete", async () => {
       const attributes = { name: mockAttributes.name };
+      let processUpdatesResolved = false;
 
-      // Mock processUpdates to be async
+      // Mock processUpdates to be async and set a flag when resolved
       mockUpdateQueue.processUpdates.mockImplementation(
         () =>
           new Promise((resolve) => {
-            setTimeout(resolve, 100);
+            setTimeout(() => {
+              processUpdatesResolved = true;
+              resolve(undefined);
+            }, 100);
           })
       );
 
-      const result = await setAttributes(attributes);
+      const resultPromise = setAttributes(attributes);
 
-      expect(result.ok).toBe(true);
+      // Verify processUpdates was called
       expect(mockUpdateQueue.processUpdates).toHaveBeenCalled();
-      // The function returns before processUpdates completes due to void operator
+
+      // Verify the function hasn't resolved yet
+      expect(processUpdatesResolved).toBe(false);
+
+      // Wait for setAttributes to complete
+      const result = await resultPromise;
+
+      // Verify it completed after processUpdates
+      expect(processUpdatesResolved).toBe(true);
+      expect(result.ok).toBe(true);
     });
   });
 });

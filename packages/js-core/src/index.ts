@@ -42,22 +42,27 @@ const setup = async (setupConfig: TConfigInput): Promise<void> => {
 
 const setUserId = async (userId: string): Promise<void> => {
   await queue.add(User.setUserId, CommandType.UserAction, true, userId);
+  await queue.wait();
 };
 
 const setEmail = async (email: string): Promise<void> => {
   await queue.add(Attribute.setAttributes, CommandType.UserAction, true, { email });
+  await queue.wait();
 };
 
 const setAttribute = async (key: string, value: string): Promise<void> => {
   await queue.add(Attribute.setAttributes, CommandType.UserAction, true, { [key]: value });
+  await queue.wait();
 };
 
 const setAttributes = async (attributes: Record<string, string>): Promise<void> => {
   await queue.add(Attribute.setAttributes, CommandType.UserAction, true, attributes);
+  await queue.wait();
 };
 
 const setLanguage = async (language: string): Promise<void> => {
   await queue.add(Attribute.setAttributes, CommandType.UserAction, true, { language });
+  await queue.wait();
 };
 
 const logout = async (): Promise<void> => {
