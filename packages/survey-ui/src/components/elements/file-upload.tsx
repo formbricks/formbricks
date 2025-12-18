@@ -193,11 +193,11 @@ function UploadArea({
           id={`${inputId}-label`}>
           {placeholderText}
         </span>
-        <Input
+        <input
           ref={fileInputRef}
           type="file"
           id={inputId}
-          className="hidden"
+          className="sr-only"
           multiple={allowMultiple}
           accept={acceptAttribute}
           onChange={onFileChange}
