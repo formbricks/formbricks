@@ -27,7 +27,11 @@ export const getFormattedErrorMessage = (result): string => {
     message = Object.keys(errors || {})
       .map((key) => {
         if (key === "_errors") return errors[key].join(", ");
-        return `${key ? `${key}` : ""}${errors?.[key]?._errors?.join(", ")}`;
+        const fieldError = errors?.[key]?._errors?.join(", ");
+        if (key && fieldError?.toLowerCase().startsWith(key.toLowerCase())) {
+          return fieldError;
+        }
+        return `${key ? `${key}: ` : ""}${fieldError}`;
       })
       .join("\n");
   }

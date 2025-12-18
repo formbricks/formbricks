@@ -160,6 +160,7 @@ checksums:
     common/delete: 8bcf303dd10a645b5baacb02b47d72c9
     common/description: e17686a22ffad04cc7bb70524ed4478b
     common/dev_env: e650911d5e19ba256358e0cda154c005
+    common/development: 85211dbb918bda7a6e87649dcfc1b17a
     common/development_environment_banner: 90aa859c1f43a9c2d9fbc758853d0c20
     common/disable: 81b754fd7962e0bd9b6ba87f3972e7fc
     common/disallow: 144b91c92ed07f29ff362fa9edc2e4d0
@@ -167,6 +168,7 @@ checksums:
     common/dismissed: f0e21b3fe28726c577a7238a63cc29c2
     common/docs: 1563fcb5ddb5037b0709ccd3dd384a92
     common/documentation: 1563fcb5ddb5037b0709ccd3dd384a92
+    common/domain: 402d46965eacc3af4c5df92e53e95712
     common/download: 56b7d0834952b39ee394b44bd8179178
     common/draft: e8a92958ad300aacfe46c2bf6644927e
     common/duplicate: 27756566785c2b8463e21582c4bb619b
@@ -176,6 +178,7 @@ checksums:
     common/ending_card: 16d30d3a36472159da8c2dbd374dfe22
     common/enter_url: 468c2276d0f2cb971ff5a47a20fa4b97
     common/enterprise_license: e81bf506f47968870c7bd07245648a0d
+    common/environment: 0844e8dc1485339c8de066dc0a9bb6a1
     common/environment_not_found: 4d7610bdb55a8b5e6131bb5b08ce04c5
     common/environment_notice: 0a860e3fa89407726dd8a2083a6b7fd5
     common/error: 3c95bcb32c2104b99a46f5b3dd015248
@@ -293,6 +296,7 @@ checksums:
     common/preview_survey: 7409e9c118e3e5d5f2a86201c2b354f2
     common/privacy: 7459744a63ef8af4e517a09024bd7c08
     common/product_manager: dfeadc96e6d3de22a884ee97974b505e
+    common/production: 226e0ce83b49700bc1b1c08c4c3ed23a
     common/profile: d7878693f91303a438852d617f6d35df
     common/profile_id: 0ef1286cce9d47b148e9a09deccb6655
     common/progress: dd0200d5849ebb7d64c15098ae91d229
@@ -950,6 +954,12 @@ checksums:
     environments/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
     environments/settings/billing/uptime_sla_99: 25ca4060e575e1a7eee47fceb5576d7c
     environments/settings/billing/website_surveys: f4d176cc66ffcc2abf44c0d5da1642e3
+    environments/settings/domain/description: f0b4d8c96da816f793cf1f4fdfaade34
+    environments/settings/domain/no_pretty_urls: 2a83d8e399d325fcd4e2db14e45b1a86
+    environments/settings/domain/pretty_url: 10a4b387b6df844245fc842be29527e3
+    environments/settings/domain/project: e13002ec4570f3fcc2f050f5ce974294
+    environments/settings/domain/survey_name: 169f24df0e2f42254c5458f32eb7bf00
+    environments/settings/domain/title: 402d46965eacc3af4c5df92e53e95712
     environments/settings/enterprise/audit_logs: c7efb33d09676938d07651774b067bf6
     environments/settings/enterprise/coming_soon: ee2b0671e00972773210c5be5a9ccb89
     environments/settings/enterprise/contacts_and_segments: 5795d9e89c0c10e1ddbbc6fc65b8d90f
@@ -1706,6 +1716,15 @@ checksums:
     environments/surveys/share/personal_links/upgrade_prompt_description: 09f394f5adf2d5a47352ceb80b43598b
     environments/surveys/share/personal_links/upgrade_prompt_title: 8068b8c5b27268ec4d804a9c7d153a8f
     environments/surveys/share/personal_links/work_with_segments: 45030e61077c88ae60f011b40566d5d1
+    environments/surveys/share/pretty_url/description: 67173cfc7010ab044428a22f5a4bdaa2
+    environments/surveys/share/pretty_url/remove_description: 7fb0afcb17447101ed4aa6aaffc6e136
+    environments/surveys/share/pretty_url/remove_success: a4a08113d3d4c53889da7c12a0674473
+    environments/surveys/share/pretty_url/save_success: e73e6e0adc93e0db723c765fbef7d82a
+    environments/surveys/share/pretty_url/slug_help: 3c81237bfb50f41b9e0525e9a2754b9d
+    environments/surveys/share/pretty_url/slug_label: b1cc25b6bf5032c75420aa862362808c
+    environments/surveys/share/pretty_url/slug_placeholder: e9266ae26c4993ef285a5b1a927e52a5
+    environments/surveys/share/pretty_url/slug_required: 9f1c28ff24a3507588c7c3710ae0b073
+    environments/surveys/share/pretty_url/title: 10a4b387b6df844245fc842be29527e3
     environments/surveys/share/send_email/copy_embed_code: 04833baca1ed64dee8fc230462965d2d
     environments/surveys/share/send_email/description: 875935d1d039fc5dd2de7b2a25008796
     environments/surveys/share/send_email/email_preview_tab: 84458b39d3fd3bebb92de0e81d41b7da

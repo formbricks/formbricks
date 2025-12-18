@@ -218,6 +218,12 @@ export const ZSurveyVariables = z.array(ZSurveyVariable);
 export type TSurveyVariable = z.infer<typeof ZSurveyVariable>;
 export type TSurveyVariables = z.infer<typeof ZSurveyVariables>;
 
+export const ZSurveySlug = z
+  .string()
+  .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens");
+
+export type TSurveySlug = z.infer<typeof ZSurveySlug>;
+
 export const ZSurveyProjectOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
@@ -893,6 +899,7 @@ export const ZSurvey = z
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
     metadata: ZSurveyMetadata,
+    slug: ZSurveySlug.nullable(),
   })
   .superRefine((survey, ctx) => {
     const { questions, blocks, languages, welcomeCard, endings, isBackButtonHidden } = survey;

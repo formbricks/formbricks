@@ -1,31 +1,31 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { TSurveyStatus } from "@formbricks/types/surveys/types";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 
-interface SurveyWithPrettyUrl {
+interface SurveyWithSlug {
   id: string;
   name: string;
-  prettyUrl: string;
-  status: "draft" | "inProgress" | "paused" | "completed";
-  project: {
-    id: string;
-    name: string;
-  };
+  slug: string | null;
+  status: TSurveyStatus;
   environment: {
     id: string;
     type: "production" | "development";
+    project: {
+      id: string;
+      name: string;
+    };
   };
   createdAt: Date;
 }
 
 interface PrettyUrlsTableProps {
-  organizationId: string;
-  surveys?: SurveyWithPrettyUrl[];
+  surveys?: SurveyWithSlug[];
 }
 
-export const PrettyUrlsTable = ({ organizationId, surveys = [] }: PrettyUrlsTableProps) => {
+export const PrettyUrlsTable = ({ surveys = [] }: PrettyUrlsTableProps) => {
   const { t } = useTranslation();
 
   const getEnvironmentBadgeColor = (type: string) => {
@@ -60,9 +60,9 @@ export const PrettyUrlsTable = ({ organizationId, surveys = [] }: PrettyUrlsTabl
           {surveys.map((survey) => (
             <TableRow key={survey.id} className="border-slate-200 hover:bg-transparent">
               <TableCell className="font-medium">{survey.name}</TableCell>
-              <TableCell>{survey.project.name}</TableCell>
+              <TableCell>{survey.environment.project.name}</TableCell>
               <TableCell>
-                <IdBadge id={survey.prettyUrl} showCopyIconOnHover={true} />
+                <IdBadge id={survey.slug ?? ""} showCopyIconOnHover={true} />
               </TableCell>
               <TableCell>
                 <span

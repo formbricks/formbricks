@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { removeSurveySlugAction, updateSurveySlugAction } from "@/modules/survey/slug/actions";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -18,13 +20,8 @@ import {
 } from "@/modules/ui/components/form";
 import { PrettyUrlInput } from "./components/pretty-url-input";
 
-// TODO: Remove this extension once prettyUrl is added to the Survey model and TSurvey type
-type TSurveyWithPrettyUrl = TSurvey & {
-  prettyUrl?: string | null;
-};
-
 interface PrettyUrlTabProps {
-  survey: TSurveyWithPrettyUrl;
+  survey: TSurvey;
   publicDomain: string;
   isReadOnly?: boolean;
 }
@@ -35,25 +32,47 @@ interface PrettyUrlFormData {
 
 export const PrettyUrlTab = ({ survey, publicDomain, isReadOnly = false }: PrettyUrlTabProps) => {
   const { t } = useTranslation();
-  const [isEditing, setIsEditing] = useState(!survey.prettyUrl);
+  const [isEditing, setIsEditing] = useState(!survey.slug);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<PrettyUrlFormData>({
     defaultValues: {
-      slug: survey.prettyUrl || "",
+      slug: survey.slug || "",
     },
   });
 
   const { handleSubmit, reset } = form;
 
-  const onSubmit = (data: PrettyUrlFormData) => {
+  const onSubmit = async (data: PrettyUrlFormData) => {
     if (!data.slug.trim()) {
       toast.error(t("environments.surveys.share.pretty_url.slug_required"));
       return;
     }
-    // TODO: Implement actual save logic with backend
-    toast.success(t("environments.surveys.share.pretty_url.save_success"));
-    setIsEditing(false);
+
+    setIsSubmitting(true);
+    try {
+      const result = await updateSurveySlugAction({
+        surveyId: survey.id,
+        slug: data.slug,
+      });
+
+      if (result?.data) {
+        if (result.data.ok) {
+          toast.success(t("environments.surveys.share.pretty_url.save_success"));
+          setIsEditing(false);
+        } else {
+          toast.error(result.data.error.message);
+        }
+      } else {
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage || "Failed to update slug");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update slug");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEdit = () => {
@@ -61,16 +80,33 @@ export const PrettyUrlTab = ({ survey, publicDomain, isReadOnly = false }: Prett
   };
 
   const handleCancel = () => {
-    reset({ slug: survey.prettyUrl || "" });
+    reset({ slug: survey.slug || "" });
     setIsEditing(false);
   };
 
-  const handleRemove = () => {
-    // TODO: Implement actual remove logic with backend
-    setShowRemoveDialog(false);
-    reset({ slug: "" });
-    setIsEditing(true);
-    toast.success(t("environments.surveys.share.pretty_url.remove_success"));
+  const handleRemove = async () => {
+    setIsSubmitting(true);
+    try {
+      const result = await removeSurveySlugAction({ surveyId: survey.id });
+
+      if (result?.data) {
+        if (result.data.ok) {
+          setShowRemoveDialog(false);
+          reset({ slug: "" });
+          setIsEditing(true);
+          toast.success(t("environments.surveys.share.pretty_url.remove_success"));
+        } else {
+          toast.error(result.data.error.message);
+        }
+      } else {
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage || "Failed to remove slug");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to remove slug");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -99,11 +135,11 @@ export const PrettyUrlTab = ({ survey, publicDomain, isReadOnly = false }: Prett
           <div className="flex gap-2">
             {isEditing ? (
               <>
-                <Button type="submit" disabled={isReadOnly}>
+                <Button type="submit" disabled={isReadOnly || isSubmitting}>
                   {t("common.save")}
                 </Button>
-                {survey.prettyUrl && (
-                  <Button type="button" variant="secondary" onClick={handleCancel}>
+                {survey.slug && (
+                  <Button type="button" variant="secondary" onClick={handleCancel} disabled={isSubmitting}>
                     {t("common.cancel")}
                   </Button>
                 )}
@@ -114,7 +150,7 @@ export const PrettyUrlTab = ({ survey, publicDomain, isReadOnly = false }: Prett
               </Button>
             )}
 
-            {survey.prettyUrl && !isEditing && (
+            {survey.slug && !isEditing && (
               <Button
                 type="button"
                 variant="destructive"
@@ -135,7 +171,7 @@ export const PrettyUrlTab = ({ survey, publicDomain, isReadOnly = false }: Prett
         onDelete={handleRemove}
         text={t("environments.surveys.share.pretty_url.remove_description")}>
         <div className="rounded bg-slate-100 p-3">
-          <p className="font-mono text-sm text-slate-700">{`${publicDomain}/p/${survey.prettyUrl || ""}`}</p>
+          <p className="font-mono text-sm text-slate-700">{`${publicDomain}/p/${survey.slug || ""}`}</p>
         </div>
       </DeleteDialog>
     </div>

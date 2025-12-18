@@ -187,6 +187,7 @@
     "delete": "Eliminar",
     "description": "Descripción",
     "dev_env": "Entorno de desarrollo",
+    "development": "Desarrollo",
     "development_environment_banner": "Estás en un entorno de desarrollo. Configúralo para probar encuestas, acciones y atributos.",
     "disable": "Desactivar",
     "disallow": "No permitir",
@@ -194,6 +195,7 @@
     "dismissed": "Descartado",
     "docs": "Documentación",
     "documentation": "Documentación",
+    "domain": "Dominio",
     "download": "Descargar",
     "draft": "Borrador",
     "duplicate": "Duplicar",
@@ -203,6 +205,7 @@
     "ending_card": "Tarjeta final",
     "enter_url": "Introducir URL",
     "enterprise_license": "Licencia empresarial",
+    "environment": "Entorno",
     "environment_not_found": "Entorno no encontrado",
     "environment_notice": "Actualmente estás en el entorno {environment}.",
     "error": "Error",
@@ -320,6 +323,7 @@
     "preview_survey": "Vista previa de la encuesta",
     "privacy": "Política de privacidad",
     "product_manager": "Gestor de producto",
+    "production": "Producción",
     "profile": "Perfil",
     "profile_id": "ID de perfil",
     "progress": "Progreso",
@@ -1021,6 +1025,14 @@
         "upgrade": "Actualizar",
         "uptime_sla_99": "Acuerdo de nivel de servicio de tiempo de actividad (99 %)",
         "website_surveys": "Encuestas de sitio web"
+      },
+      "domain": {
+        "description": "Resumen de todas las encuestas que utilizan URL bonitas en tu organización",
+        "no_pretty_urls": "Aún no hay encuestas con URL bonitas configuradas.",
+        "pretty_url": "URL bonita",
+        "project": "Proyecto",
+        "survey_name": "Nombre de la encuesta",
+        "title": "Dominio"
       },
       "enterprise": {
         "audit_logs": "Registros de auditoría",
@@ -1808,6 +1820,17 @@
           "upgrade_prompt_description": "Genera enlaces personales para un segmento y vincula las respuestas de la encuesta a cada contacto.",
           "upgrade_prompt_title": "Usa enlaces personales con un plan superior",
           "work_with_segments": "Los enlaces personales funcionan con segmentos."
+        },
+        "pretty_url": {
+          "description": "Crea una URL personalizada y memorable para tu encuesta",
+          "remove_description": "Tu encuesta seguirá siendo accesible a través de su URL original.",
+          "remove_success": "URL bonita eliminada correctamente",
+          "save_success": "URL bonita guardada correctamente",
+          "slug_help": "Usa solo letras minúsculas, números y guiones.",
+          "slug_label": "Slug personalizado",
+          "slug_placeholder": "comentarios-clientes",
+          "slug_required": "Por favor, introduce un slug válido",
+          "title": "URL bonita"
         },
         "send_email": {
           "copy_embed_code": "Copiar código de inserción",

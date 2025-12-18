@@ -1823,8 +1823,6 @@
         },
         "pretty_url": {
           "description": "Create a custom, memorable URL for your survey",
-          "remove": "Remove Pretty URL",
-          "remove_confirm": "Remove Pretty URL?",
           "remove_description": "Your survey will still be accessible via its original URL.",
           "remove_success": "Pretty URL removed successfully",
           "save_success": "Pretty URL saved successfully",

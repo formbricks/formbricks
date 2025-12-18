@@ -187,6 +187,7 @@
     "delete": "Ta bort",
     "description": "Beskrivning",
     "dev_env": "Utvecklingsmiljö",
+    "development": "Utveckling",
     "development_environment_banner": "Du är i en utvecklingsmiljö. Konfigurera den för att testa enkäter, åtgärder och attribut.",
     "disable": "Inaktivera",
     "disallow": "Tillåt inte",
@@ -194,6 +195,7 @@
     "dismissed": "Avvisad",
     "docs": "Dokumentation",
     "documentation": "Dokumentation",
+    "domain": "Domän",
     "download": "Ladda ner",
     "draft": "Utkast",
     "duplicate": "Duplicera",
@@ -203,6 +205,7 @@
     "ending_card": "Avslutningskort",
     "enter_url": "Ange URL",
     "enterprise_license": "Företagslicens",
+    "environment": "Miljö",
     "environment_not_found": "Miljö hittades inte",
     "environment_notice": "Du är för närvarande i {environment}-miljön.",
     "error": "Fel",
@@ -320,6 +323,7 @@
     "preview_survey": "Förhandsgranska enkät",
     "privacy": "Integritetspolicy",
     "product_manager": "Produktchef",
+    "production": "Produktion",
     "profile": "Profil",
     "profile_id": "Profil-ID",
     "progress": "Framsteg",
@@ -1021,6 +1025,14 @@
         "upgrade": "Uppgradera",
         "uptime_sla_99": "Drifttids-SLA (99%)",
         "website_surveys": "Webbplatsenkäter"
+      },
+      "domain": {
+        "description": "Översikt över alla enkäter som använder Pretty URLs i din organisation",
+        "no_pretty_urls": "Inga enkäter med Pretty URLs har konfigurerats ännu.",
+        "pretty_url": "Pretty URL",
+        "project": "Projekt",
+        "survey_name": "Enkätnamn",
+        "title": "Domän"
       },
       "enterprise": {
         "audit_logs": "Granskningsloggar",
@@ -1808,6 +1820,17 @@
           "upgrade_prompt_description": "Generera personliga länkar för ett segment och koppla enkätsvar till varje kontakt.",
           "upgrade_prompt_title": "Använd personliga länkar med en högre plan",
           "work_with_segments": "Personliga länkar fungerar med segment."
+        },
+        "pretty_url": {
+          "description": "Skapa en anpassad, minnesvärd URL för din enkät",
+          "remove_description": "Din enkät kommer fortfarande att vara tillgänglig via sin ursprungliga URL.",
+          "remove_success": "Pretty URL har tagits bort",
+          "save_success": "Pretty URL har sparats",
+          "slug_help": "Använd endast små bokstäver, siffror och bindestreck.",
+          "slug_label": "Anpassad slug",
+          "slug_placeholder": "customer-feedback",
+          "slug_required": "Ange en giltig slug",
+          "title": "Pretty URL"
         },
         "send_email": {
           "copy_embed_code": "Kopiera inbäddningskod",

@@ -1,6 +1,7 @@
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getSurveysWithSlugsByOrganization } from "@/modules/survey/lib/slug";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsCard } from "../../components/SettingsCard";
@@ -17,6 +18,13 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     throw new Error(t("common.session_not_found"));
   }
 
+  const result = await getSurveysWithSlugsByOrganization(organization.id);
+  if (!result.ok) {
+    throw new Error(t("common.something_went_wrong"));
+  }
+
+  const surveys = result.data;
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
@@ -31,7 +39,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       <SettingsCard
         title={t("environments.settings.domain.title")}
         description={t("environments.settings.domain.description")}>
-        <PrettyUrlsTable organizationId={organization.id} />
+        <PrettyUrlsTable surveys={surveys} />
       </SettingsCard>
     </PageContentWrapper>
   );

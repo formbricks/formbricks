@@ -187,6 +187,7 @@
     "delete": "Löschen",
     "description": "Beschreibung",
     "dev_env": "Entwicklungsumgebung",
+    "development": "Entwicklung",
     "development_environment_banner": "Du bist in einer Entwicklungsumgebung. Richte sie ein, um Umfragen, Aktionen und Attribute zu testen.",
     "disable": "Deaktivieren",
     "disallow": "Nicht erlauben",
@@ -194,6 +195,7 @@
     "dismissed": "Entlassen",
     "docs": "Dokumentation",
     "documentation": "Dokumentation",
+    "domain": "Domain",
     "download": "Herunterladen",
     "draft": "Entwurf",
     "duplicate": "Duplikat",
@@ -203,6 +205,7 @@
     "ending_card": "Abschluss-Karte",
     "enter_url": "URL eingeben",
     "enterprise_license": "Enterprise Lizenz",
+    "environment": "Umgebung",
     "environment_not_found": "Umgebung nicht gefunden",
     "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
     "error": "Fehler",
@@ -320,6 +323,7 @@
     "preview_survey": "Umfragevorschau",
     "privacy": "Datenschutz",
     "product_manager": "Produktmanager",
+    "production": "Produktion",
     "profile": "Profil",
     "profile_id": "Profil-ID",
     "progress": "Fortschritt",
@@ -1021,6 +1025,14 @@
         "upgrade": "Upgrade",
         "uptime_sla_99": "Betriebszeit SLA (99%)",
         "website_surveys": "Website-Umfragen"
+      },
+      "domain": {
+        "description": "Übersicht aller Umfragen mit Pretty URLs in Ihrer Organisation",
+        "no_pretty_urls": "Noch keine Umfragen mit Pretty URLs konfiguriert.",
+        "pretty_url": "Pretty URL",
+        "project": "Projekt",
+        "survey_name": "Umfragename",
+        "title": "Domain"
       },
       "enterprise": {
         "audit_logs": "Audit Logs",
@@ -1808,6 +1820,17 @@
           "upgrade_prompt_description": "Erstellen Sie persönliche Links für ein Segment und verknüpfen Sie Umfrageantworten mit jedem Kontakt.",
           "upgrade_prompt_title": "Verwende persönliche Links mit einem höheren Plan",
           "work_with_segments": "Persönliche Links funktionieren mit Segmenten."
+        },
+        "pretty_url": {
+          "description": "Erstellen Sie eine individuelle, einprägsame URL für Ihre Umfrage",
+          "remove_description": "Ihre Umfrage bleibt über die ursprüngliche URL weiterhin erreichbar.",
+          "remove_success": "Pretty URL erfolgreich entfernt",
+          "save_success": "Pretty URL erfolgreich gespeichert",
+          "slug_help": "Verwenden Sie nur Kleinbuchstaben, Zahlen und Bindestriche.",
+          "slug_label": "Individueller Slug",
+          "slug_placeholder": "kunden-feedback",
+          "slug_required": "Bitte geben Sie einen gültigen Slug ein",
+          "title": "Pretty URL"
         },
         "send_email": {
           "copy_embed_code": "Einbettungscode kopieren",
