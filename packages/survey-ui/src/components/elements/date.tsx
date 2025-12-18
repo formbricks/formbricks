@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Calendar } from "@/components/general/calendar";
+import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { getDateFnsLocale } from "@/lib/locale";
 
@@ -45,6 +46,7 @@ function DateElement({
   dir = "auto",
   disabled = false,
   locale = "en-US",
+  errorMessage,
 }: Readonly<DateElementProps>): React.JSX.Element {
   // Initialize date from value string, parsing as local time to avoid timezone issues
   const [date, setDate] = React.useState<Date | undefined>(() => {
@@ -128,17 +130,21 @@ function DateElement({
       {/* Headline */}
       <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
 
-      {/* Calendar - Always visible */}
-      <div className="w-full">
-        <Calendar
-          mode="single"
-          selected={date}
-          captionLayout="dropdown"
-          disabled={isDateDisabled}
-          onSelect={handleDateSelect}
-          locale={dateLocale}
-          className="rounded-input border-input-border bg-input-bg text-input-text shadow-input mx-auto w-full max-w-[25rem] border"
-        />
+      <div className="relative">
+        <ElementError errorMessage={errorMessage} dir={dir} />
+        {/* Calendar - Always visible */}
+        <div className="w-full">
+          <Calendar
+            mode="single"
+            selected={date}
+            captionLayout="dropdown"
+            disabled={isDateDisabled}
+            onSelect={handleDateSelect}
+            locale={dateLocale}
+            required={required}
+            className="rounded-input border-input-border bg-input-bg text-input-text shadow-input mx-auto w-full max-w-[25rem] border"
+          />
+        </div>
       </div>
     </div>
   );
