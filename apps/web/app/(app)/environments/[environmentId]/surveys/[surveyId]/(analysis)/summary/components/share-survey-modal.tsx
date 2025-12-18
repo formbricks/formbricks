@@ -189,7 +189,7 @@ export const ShareSurveyModal = ({
         title: t("environments.surveys.share.pretty_url.title"),
         description: t("environments.surveys.share.pretty_url.description"),
         componentType: PrettyUrlTab,
-        componentProps: { survey, publicDomain, isReadOnly },
+        componentProps: { publicDomain, isReadOnly },
       },
     ],
     [

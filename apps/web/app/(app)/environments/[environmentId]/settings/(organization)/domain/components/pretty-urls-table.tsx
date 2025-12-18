@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { TSurveyStatus } from "@formbricks/types/surveys/types";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -59,10 +60,16 @@ export const PrettyUrlsTable = ({ surveys = [] }: PrettyUrlsTableProps) => {
           )}
           {surveys.map((survey) => (
             <TableRow key={survey.id} className="border-slate-200 hover:bg-transparent">
-              <TableCell className="font-medium">{survey.name}</TableCell>
+              <TableCell className="font-medium">
+                <Link
+                  href={`/environments/${survey.environment.id}/surveys/${survey.id}/summary`}
+                  className="text-slate-900 hover:text-slate-700 hover:underline">
+                  {survey.name}
+                </Link>
+              </TableCell>
               <TableCell>{survey.environment.project.name}</TableCell>
               <TableCell>
-                <IdBadge id={survey.slug ?? ""} showCopyIconOnHover={true} />
+                <IdBadge id={survey.slug ?? ""} />
               </TableCell>
               <TableCell>
                 <span

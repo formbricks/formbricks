@@ -1038,7 +1038,7 @@
         "pretty_url": "Pretty URL",
         "project": "Project",
         "survey_name": "Survey Name",
-        "title": "Domain"
+        "title": "Pretty URLs"
       },
       "enterprise": {
         "audit_logs": "Audit Logs",
