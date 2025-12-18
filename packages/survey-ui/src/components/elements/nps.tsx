@@ -147,7 +147,7 @@ function NPS({
             handleSelect(number);
           }}
           disabled={disabled}
-          required={required}
+          aria-required={required}
           className="sr-only"
           aria-label={`Rate ${String(number)} out of 10`}
         />

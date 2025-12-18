@@ -116,7 +116,7 @@ function Matrix({
                     }}
                     name={rowGroupId}
                     disabled={disabled}
-                    required={required}
+                    aria-required={required}
                     aria-invalid={Boolean(errorMessage)}>
                     <tr className={cn("relative", baseBgColor, rowHasError ? "bg-destructive-muted" : "")}>
                       {/* Row label */}
@@ -143,7 +143,7 @@ function Matrix({
                             <Label htmlFor={cellId} className="flex cursor-pointer justify-center">
                               <RadioGroupItem
                                 value={column.id}
-                                required={required}
+                                aria-required={required}
                                 id={cellId}
                                 disabled={disabled}
                                 aria-label={`${row.label}-${column.label}`}

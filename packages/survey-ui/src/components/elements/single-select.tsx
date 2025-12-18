@@ -209,102 +209,103 @@ function SingleSelect({
             ) : null}
           </>
         ) : (
-          <RadioGroup
-            name={inputId}
-            value={selectedValue}
-            onValueChange={onChange}
-            disabled={disabled}
-            errorMessage={errorMessage}
-            required={required}
-            className="w-full gap-0 space-y-2">
-            {options
-              .filter((option) => option.id !== "none")
-              .map((option) => {
-                const optionId = `${inputId}-${option.id}`;
-                const isSelected = selectedValue === option.id;
+          <div className="relative">
+            <ElementError errorMessage={errorMessage} dir={dir} />
+            <RadioGroup
+              name={inputId}
+              value={selectedValue}
+              onValueChange={onChange}
+              disabled={disabled}
+              errorMessage={errorMessage}
+              className="w-full gap-0 space-y-2">
+              {options
+                .filter((option) => option.id !== "none")
+                .map((option) => {
+                  const optionId = `${inputId}-${option.id}`;
+                  const isSelected = selectedValue === option.id;
 
-                return (
-                  <label
-                    key={option.id}
-                    htmlFor={optionId}
-                    className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
-                    <span className="flex items-center">
-                      <RadioGroupItem
-                        value={option.id}
-                        id={optionId}
-                        disabled={disabled}
-                        required={required}
-                      />
-                      <span
-                        className={cn("mr-3 ml-3 grow", optionLabelClassName)}
-                        style={{ fontSize: "var(--fb-option-font-size)" }}>
-                        {option.label}
+                  return (
+                    <label
+                      key={option.id}
+                      htmlFor={optionId}
+                      className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
+                      <span className="flex items-center">
+                        <RadioGroupItem
+                          value={option.id}
+                          id={optionId}
+                          disabled={disabled}
+                          aria-required={required}
+                        />
+                        <span
+                          className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                          style={{ fontSize: "var(--fb-option-font-size)" }}>
+                          {option.label}
+                        </span>
                       </span>
+                    </label>
+                  );
+                })}
+              {hasOtherOption && otherOptionId ? (
+                <label
+                  htmlFor={`${inputId}-${otherOptionId}`}
+                  className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
+                  <span className="flex items-center">
+                    <RadioGroupItem
+                      value={otherOptionId}
+                      id={`${inputId}-${otherOptionId}`}
+                      disabled={disabled}
+                      aria-required={required}
+                    />
+                    <span
+                      className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                      style={{ fontSize: "var(--fb-option-font-size)" }}>
+                      {otherOptionLabel}
                     </span>
-                  </label>
-                );
-              })}
-            {hasOtherOption && otherOptionId ? (
-              <label
-                htmlFor={`${inputId}-${otherOptionId}`}
-                className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
-                <span className="flex items-center">
-                  <RadioGroupItem
-                    value={otherOptionId}
-                    id={`${inputId}-${otherOptionId}`}
-                    disabled={disabled}
-                    required={required}
-                  />
-                  <span
-                    className={cn("mr-3 ml-3 grow", optionLabelClassName)}
-                    style={{ fontSize: "var(--fb-option-font-size)" }}>
-                    {otherOptionLabel}
                   </span>
-                </span>
-                {isOtherSelected ? (
-                  <Input
-                    ref={otherInputRef}
-                    type="text"
-                    value={otherValue}
-                    onChange={handleOtherInputChange}
-                    placeholder={otherOptionPlaceholder}
-                    disabled={disabled}
-                    aria-required={required}
-                    dir={dir}
-                    className="mt-2 w-full"
-                    required={required}
-                  />
-                ) : null}
-              </label>
-            ) : null}
-            {options
-              .filter((option) => option.id === "none")
-              .map((option) => {
-                const optionId = `${inputId}-${option.id}`;
-                const isSelected = selectedValue === option.id;
+                  {isOtherSelected ? (
+                    <Input
+                      ref={otherInputRef}
+                      type="text"
+                      value={otherValue}
+                      onChange={handleOtherInputChange}
+                      placeholder={otherOptionPlaceholder}
+                      disabled={disabled}
+                      aria-required={required}
+                      dir={dir}
+                      className="mt-2 w-full"
+                    />
+                  ) : null}
+                </label>
+              ) : null}
+              {options
+                .filter((option) => option.id === "none")
+                .map((option) => {
+                  const optionId = `${inputId}-${option.id}`;
+                  const isSelected = selectedValue === option.id;
 
-                return (
-                  <label
-                    key={option.id}
-                    htmlFor={optionId}
-                    className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
-                    <span className="flex items-center">
-                      <RadioGroupItem
-                        value={option.id}
-                        id={optionId}
-                        disabled={disabled}
-                        required={required}
-                      />
-                      <span
-                        className={cn("mr-3 ml-3 grow", optionLabelClassName)}
-                        style={{ fontSize: "var(--fb-option-font-size)" }}>
-                        {option.label}
+                  return (
+                    <label
+                      key={option.id}
+                      htmlFor={optionId}
+                      className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
+                      <span className="flex items-center">
+                        <RadioGroupItem
+                          value={option.id}
+                          id={optionId}
+                          disabled={disabled}
+                          aria-required={required}
+                        />
+                        <span
+                          className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                          style={{ fontSize: "var(--fb-option-font-size)" }}>
+                          {option.label}
+                        </span>
                       </span>
-                    </span>
-                  </label>
-                );
-              })}
-          </RadioGroup>
+                    </label>
+                  );
+                })}
+            </RadioGroup>
+          </div>
         )}
       </div>
     </div>

@@ -16,7 +16,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
   const hasError = Boolean(errorMessage);
 
   return (
-    <div className="space-y-1">
+    <div className="relative space-y-1">
       <ElementError errorMessage={errorMessage} dir={dir} />
       <input
         ref={ref}

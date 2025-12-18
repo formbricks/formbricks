@@ -159,12 +159,6 @@ export function BlockConditional({
 
   // Validate a single element's form
   const validateElementForm = (element: TSurveyElement, form: HTMLFormElement): boolean => {
-    // Check HTML5 validity first
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return false;
-    }
-
     const response = value[element.id];
 
     // Custom validation for ranking questions
@@ -173,6 +167,7 @@ export function BlockConditional({
     }
 
     // For other element types, check if required fields are empty
+    // Wrapper components handle their own validation and error display
     if (element.required && isEmptyResponse(response)) {
       form.requestSubmit();
       return false;
