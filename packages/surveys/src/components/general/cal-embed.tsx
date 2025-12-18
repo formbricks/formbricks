@@ -55,7 +55,7 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
 
   return (
     <div className="relative mt-4 overflow-auto">
-      <div id="cal-embed" className={cn("border-border rounded-lg border")} />
+      <div id="cal-embed" className={cn("border-border rounded-input border")} />
     </div>
   );
 }
