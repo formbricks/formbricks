@@ -175,6 +175,8 @@ export function MultipleChoiceSingleElement({
         }
         otherValue={otherValue}
         onOtherValueChange={handleOtherValueChange}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

@@ -31,6 +31,10 @@ interface NPSProps {
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the controls are disabled */
   disabled?: boolean;
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 function NPS({
@@ -47,6 +51,8 @@ function NPS({
   errorMessage,
   dir = "auto",
   disabled = false,
+  imageUrl,
+  videoUrl,
 }: Readonly<NPSProps>): React.JSX.Element {
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
 
@@ -162,7 +168,14 @@ function NPS({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* NPS Options */}
       <div className="relative space-y-2">

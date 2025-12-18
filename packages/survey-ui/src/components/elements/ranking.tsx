@@ -43,6 +43,10 @@ interface RankingProps {
   dir?: TextDirection;
   /** Whether the controls are disabled */
   disabled?: boolean;
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 interface RankingItemProps {
@@ -183,6 +187,8 @@ function Ranking({
   errorMessage,
   dir = "auto",
   disabled = false,
+  imageUrl,
+  videoUrl,
 }: Readonly<RankingProps>): React.JSX.Element {
   // Ensure value is always an array
   const rankedIds = React.useMemo(() => (Array.isArray(value) ? value : []), [value]);
@@ -232,7 +238,14 @@ function Ranking({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* Ranking Options */}
       <div className="relative">

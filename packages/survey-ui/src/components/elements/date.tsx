@@ -30,6 +30,10 @@ interface DateElementProps {
   disabled?: boolean;
   /** Locale code for date formatting (e.g., "en-US", "de-DE", "fr-FR"). Defaults to browser locale or "en-US" */
   locale?: string;
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 function DateElement({
@@ -45,6 +49,8 @@ function DateElement({
   dir = "auto",
   disabled = false,
   locale = "en-US",
+  imageUrl,
+  videoUrl,
 }: Readonly<DateElementProps>): React.JSX.Element {
   // Initialize date from value string, parsing as local time to avoid timezone issues
   const [date, setDate] = React.useState<Date | undefined>(() => {
@@ -126,7 +132,14 @@ function DateElement({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* Calendar - Always visible */}
       <div className="w-full">

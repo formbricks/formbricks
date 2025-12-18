@@ -79,6 +79,8 @@ export function DateElement({
         required={element.required}
         errorMessage={errorMessage}
         locale={languageCode}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );
