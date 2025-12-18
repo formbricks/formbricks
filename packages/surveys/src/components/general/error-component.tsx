@@ -21,14 +21,9 @@ export function ErrorComponent({ errorType }: ErrorComponentProps) {
   const error = errorData[errorType];
 
   return (
-    <div
-      className="fb-flex fb-flex-col fb-bg-white fb-p-8 fb-text-center fb-items-center"
-      role="alert"
-      aria-live="assertive">
-      <span className="fb-mb-1.5 fb-text-base fb-font-bold fb-leading-6 fb-text-slate-900">
-        {error.title}
-      </span>
-      <p className="fb-max-w-lg fb-text-sm fb-font-normal fb-leading-6 fb-text-slate-600">{error.message}</p>
+    <div className="flex flex-col items-center bg-white p-8 text-center" role="alert" aria-live="assertive">
+      <span className="mb-1.5 text-base leading-6 font-bold text-slate-900">{error.title}</span>
+      <p className="max-w-lg text-sm leading-6 font-normal text-slate-600">{error.message}</p>
     </div>
   );
 }
