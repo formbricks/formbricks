@@ -22,6 +22,7 @@ interface EditWelcomeCardProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const EditWelcomeCard = ({
@@ -34,6 +35,7 @@ export const EditWelcomeCard = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: EditWelcomeCardProps) => {
   const { t } = useTranslation();
 
@@ -135,6 +137,7 @@ export const EditWelcomeCard = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
             <div className="mt-3">
@@ -150,6 +153,7 @@ export const EditWelcomeCard = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
 
@@ -170,6 +174,7 @@ export const EditWelcomeCard = ({
                     label={t("environments.surveys.edit.next_button_label")}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
+                    isExternalUrlsAllowed={isExternalUrlsAllowed}
                   />
                 </div>
               </div>

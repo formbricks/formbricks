@@ -36,7 +36,7 @@ export const OrganizationSettingsNavbar = ({
     },
     {
       id: "teams",
-      label: t("common.teams"),
+      label: t("common.members_and_teams"),
       href: `/environments/${environmentId}/settings/teams`,
       current: pathname?.includes("/teams"),
     },

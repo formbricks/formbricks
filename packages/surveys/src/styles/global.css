@@ -1,6 +1,31 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) important;
+
+/* NOSONAR: Tailwind CSS v4 directives - @config and @source are valid at-rules */
+@config "../../tailwind.config.cjs";
+/* NOSONAR */
+@source "../../src/**/*.{ts,tsx,js,jsx}";
+/* NOSONAR */
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 /* @import "./survey.css"; */
 
@@ -31,14 +56,14 @@
 }
 
 /* this is for styling the HtmlBody component */
-.fb-htmlbody {
-  @apply fb-block fb-text-sm fb-font-normal fb-leading-6;
-  /* need to use !important because in packages/ui/components/editor/styles-editor-frontend.css the color is defined for some classes */
+.htmlbody {
+  @apply block text-sm font-normal leading-6;
+  /* need to use !important because in packages/survey-ui/components/editor/styles-editor-frontend.css the color is defined for some classes */
   color: var(--fb-subheading-color) !important;
 }
 
 /* without this, it wont override the color */
-p.fb-editor-paragraph {
+p.editor-paragraph {
   overflow-wrap: break-word;
 }
 
@@ -101,7 +126,7 @@ p.fb-editor-paragraph {
   }
 }
 
-.fb-no-scrollbar {
+.no-scrollbar {
   -ms-overflow-style: none !important;
   /* Internet Explorer 10+ */
   scrollbar-width: thin !important;

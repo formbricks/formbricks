@@ -55,8 +55,10 @@ export class ResponseQueue {
     this.processQueue();
   }
 
-  async processQueue() {
-    if (this.isRequestInProgress || this.queue.length === 0) return;
+  async processQueue(): Promise<{ success: boolean }> {
+    if (this.isRequestInProgress || this.queue.length === 0) {
+      return { success: false };
+    }
 
     this.isRequestInProgress = true;
     const responseUpdate = this.queue[0];
@@ -65,8 +67,10 @@ export class ResponseQueue {
 
     if (result.success) {
       this.handleSuccessfulResponse(responseUpdate, result.quotaFullResponse);
+      return { success: true };
     } else {
       this.handleFailedResponse(responseUpdate, result.isRecaptchaError);
+      return { success: false };
     }
   }
 
@@ -88,17 +92,40 @@ export class ResponseQueue {
           quotaFullResponse = res.data;
         }
 
+        if (attempts > 0) {
+          console.log(`Formbricks: Response sent successfully after ${attempts + 1} attempts`);
+        }
+
         return { success: true, quotaFullResponse: quotaFullResponse ?? undefined };
       }
 
       if (this.isRecaptchaError(res.error)) {
+        console.error("Formbricks: Recaptcha verification failed", {
+          error: res.error,
+          responseId: this.surveyState.responseId,
+        });
         return { success: false, isRecaptchaError: true };
       }
 
-      console.error(`Formbricks: Failed to send response. Retrying... ${attempts}`);
-      await delay(1000);
+      console.error(`Formbricks: Response send failed`, {
+        attempt: attempts + 1,
+        maxAttempts: this.config.retryAttempts,
+        error: res.error,
+        responseId: this.surveyState.responseId,
+        queueLength: this.queue.length,
+      });
+
+      // Exponential backoff: 1s, 2s, 4s, 8s
+      const backoffMs = 1000 * Math.pow(2, attempts);
+      await delay(backoffMs);
       attempts++;
     }
+
+    console.error(`Formbricks: Failed to send response after ${this.config.retryAttempts} attempts`, {
+      queueLength: this.queue.length,
+      responseId: this.surveyState.responseId,
+      surveyId: this.surveyState.surveyId,
+    });
 
     return { success: false, isRecaptchaError: false };
   }
@@ -133,7 +160,6 @@ export class ResponseQueue {
       return;
     }
 
-    console.error(`Failed to send response after ${this.config.retryAttempts} attempts.`);
     this.config.onResponseSendingFailed?.(responseUpdate, TResponseErrorCodesEnum.ResponseSendingError);
   }
 
@@ -197,5 +223,10 @@ export class ResponseQueue {
   // update surveyState
   updateSurveyState(surveyState: SurveyState) {
     this.surveyState = surveyState;
+  }
+
+  // get unsent response data from queue
+  getUnsentData(): TResponseUpdate["data"] {
+    return this.queue.reduce((acc, item) => ({ ...acc, ...item.data }), {});
   }
 }

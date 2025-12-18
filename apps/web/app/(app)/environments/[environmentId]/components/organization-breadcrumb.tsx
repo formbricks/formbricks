@@ -135,7 +135,7 @@ export const OrganizationBreadcrumb = ({
     },
     {
       id: "teams",
-      label: t("common.teams"),
+      label: t("common.members_and_teams"),
       href: `/environments/${currentEnvironmentId}/settings/teams`,
     },
     {

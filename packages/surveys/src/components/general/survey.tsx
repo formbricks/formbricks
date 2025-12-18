@@ -110,7 +110,7 @@ export function Survey({
         {
           appUrl,
           environmentId,
-          retryAttempts: 2,
+          retryAttempts: 4,
           onResponseSendingFailed: (_, errorCode?: TResponseErrorCodesEnum) => {
             setShowError(true);
             setErrorType(errorCode);
@@ -185,6 +185,7 @@ export function Survey({
 
   const [errorType, setErrorType] = useState<TResponseErrorCodesEnum | undefined>(undefined);
   const [showError, setShowError] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
     !getSetIsResponseSendingFinished
   );
@@ -710,11 +711,16 @@ export function Survey({
     setBlockId(prevBlockId);
   };
 
-  const retryResponse = () => {
+  const retryResponse = async () => {
     if (responseQueue) {
-      setShowError(false);
-      setErrorType(undefined);
-      void responseQueue.processQueue();
+      setIsRetrying(true);
+      const result = await responseQueue.processQueue();
+      setIsRetrying(false);
+
+      if (result.success) {
+        setShowError(false);
+        setErrorType(undefined);
+      }
     } else {
       onRetry?.();
     }
@@ -726,9 +732,10 @@ export function Survey({
         case TResponseErrorCodesEnum.ResponseSendingError:
           return (
             <ResponseErrorComponent
-              responseData={responseData}
+              responseData={responseQueue?.getUnsentData() ?? responseData}
               questions={questions}
               onRetry={retryResponse}
+              isRetrying={isRetrying}
             />
           );
         case TResponseErrorCodesEnum.RecaptchaError:
@@ -736,7 +743,7 @@ export function Survey({
           return (
             <>
               {localSurvey.type !== "link" ? (
-                <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2 fb-bg-white">
+                <div className="flex h-6 justify-end bg-white pr-2 pt-2">
                   <SurveyCloseButton onClose={onClose} />
                 </div>
               ) : null}
@@ -837,19 +844,19 @@ export function Survey({
         setHasInteracted={setHasInteracted}>
         <div
           className={cn(
-            "fb-no-scrollbar fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
-            offset === 0 || cardArrangement === "simple" ? "fb-opacity-100" : "fb-opacity-0"
+            "no-scrollbar bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
+            offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <div className={cn("fb-relative")}>
-            <div className="fb-flex fb-flex-col fb-w-full fb-items-end">
+          <div className={cn("relative")}>
+            <div className="flex w-full flex-col items-end">
               {showProgressBar ? <ProgressBar survey={localSurvey} blockId={blockId} /> : null}
 
               <div
                 className={cn(
-                  "fb-relative fb-w-full",
-                  isCloseButtonVisible || isLanguageSwitchVisible ? "fb-h-8" : "fb-h-5"
+                  "relative w-full",
+                  isCloseButtonVisible || isLanguageSwitchVisible ? "h-8" : "h-5"
                 )}>
-                <div className={cn("fb-flex fb-items-center fb-justify-end fb-w-full")}>
+                <div className={cn("flex w-full items-center justify-end")}>
                   {isLanguageSwitchVisible && (
                     <LanguageSwitch
                       survey={localSurvey}
@@ -862,7 +869,7 @@ export function Survey({
                     />
                   )}
                   {isLanguageSwitchVisible && isCloseButtonVisible && (
-                    <div aria-hidden="true" className="fb-h-5 fb-w-px fb-bg-slate-200 fb-z-[1001]" />
+                    <div aria-hidden="true" className="z-1001 h-5 w-px bg-slate-200" />
                   )}
 
                   {isCloseButtonVisible && (
@@ -878,16 +885,16 @@ export function Survey({
             <div
               ref={contentRef}
               className={cn(
-                loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
-                fullSizeCards ? "" : "fb-my-auto"
+                loadingElement ? "animate-pulse opacity-60" : "",
+                fullSizeCards ? "" : "my-auto"
               )}>
               {content()}
             </div>
 
             <div
               className={cn(
-                "fb-flex fb-flex-col fb-justify-center fb-gap-2",
-                isCloseButtonVisible || isLanguageSwitchVisible ? "fb-p-2" : "fb-p-3"
+                "flex flex-col justify-center gap-2",
+                isCloseButtonVisible || isLanguageSwitchVisible ? "p-2" : "p-3"
               )}>
               {isBrandingEnabled ? <FormbricksBranding /> : null}
               {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
