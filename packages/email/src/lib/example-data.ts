@@ -37,13 +37,11 @@ export const exampleData = {
     surveyName: "Customer Satisfaction Survey",
     surveyLink:
       "https://app.formbricks.com/s/example-survey-id?verify=example-token&suId=example-single-use-id",
-    logoUrl: "https://app.formbricks.com/logo.png",
   },
 
   embedSurveyPreviewEmail: {
     html: '<div style="padding: 20px; background-color: #f3f4f6; border-radius: 8px;"><h3 style="margin-top: 0;">Example Survey Embed</h3><p>This is a preview of how your survey will look when embedded in an email.</p></div>',
     environmentId: "clxyz123456789",
-    logoUrl: "https://app.formbricks.com/logo.png",
   },
 
   responseFinishedEmail: {
@@ -168,12 +166,10 @@ export const exampleData = {
         value: "user-abc-123",
       },
     ],
-    logoUrl: "https://app.formbricks.com/logo-transparent.png",
   },
 
   emailCustomizationPreviewEmail: {
     userName: "Alex Johnson",
-    logoUrl: "https://app.formbricks.com/logo.png",
   },
 };
 
