@@ -22,6 +22,9 @@
     },
     "./zod/*": {
       "import": "./zod/*.ts"
+    },
+    "./seed/constants": {
+      "import": "./src/seed/constants.ts"
     }
   },
   "scripts": {
@@ -33,7 +36,9 @@
     "db:create-saml-database:deploy": "env SAML_DATABASE_URL=\"${SAML_DATABASE_URL}\" node ./dist/scripts/create-saml-database.js",
     "db:create-saml-database:dev": "dotenv -e ../../.env -- node ./dist/scripts/create-saml-database.js",
     "db:push": "prisma db push --accept-data-loss",
-    "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev",
+    "db:seed": "dotenv -e ../../.env -- tsx src/seed.ts",
+    "db:seed:clear": "dotenv -e ../../.env -- tsx src/seed.ts --clear",
+    "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev && pnpm db:seed",
     "db:start": "pnpm db:setup",
     "format": "prisma format",
     "generate": "prisma generate",
