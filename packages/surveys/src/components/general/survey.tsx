@@ -743,7 +743,7 @@ export function Survey({
           return (
             <>
               {localSurvey.type !== "link" ? (
-                <div className="flex h-6 justify-end bg-white pt-2 pr-2">
+                <div className="flex h-6 justify-end bg-survey-bg pt-2 pr-2">
                   <SurveyCloseButton onClose={onClose} />
                 </div>
               ) : null}
