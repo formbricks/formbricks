@@ -105,7 +105,7 @@ function DateElement({
     try {
       const [year, month, day] = minDate.split("-").map(Number);
       return new Date(year, month - 1, day);
-    } catch (e) {
+    } catch {
       return undefined;
     }
   }, [minDate]);
@@ -115,7 +115,7 @@ function DateElement({
     try {
       const [year, month, day] = maxDate.split("-").map(Number);
       return new Date(year, month - 1, day);
-    } catch (e) {
+    } catch {
       return undefined;
     }
   }, [maxDate]);
