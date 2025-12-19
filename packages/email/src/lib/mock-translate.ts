@@ -29,7 +29,6 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.forgot_password_email_text":
     "You have requested a link to change your password. You can do this by clicking the link below:",
   "emails.hidden_field": "Hidden field",
-  "emails.imprint": "Imprint",
   "emails.invite_accepted_email_heading": "Hey",
   "emails.invite_accepted_email_subject": "You've got a new organization member!",
   "emails.invite_accepted_email_text_par1": "Just letting you know that",
@@ -45,7 +44,6 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.password_changed_email_heading": "Password changed",
   "emails.password_changed_email_text": "Your password has been changed successfully.",
   "emails.password_reset_notify_email_subject": "Your Formbricks password has been changed",
-  "emails.privacy_policy": "Privacy Policy",
   "emails.reject": "Reject",
   "emails.render_email_response_value_file_upload_response_link_not_included":
     "Link to uploaded file is not included for data privacy reasons",

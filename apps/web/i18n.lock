@@ -445,7 +445,6 @@ checksums:
     emails/forgot_password_email_subject: bd7a2b22e7b480c29f512532fd2b7e2b
     emails/forgot_password_email_text: 5100fa2fe2180ded9cb2d89b4f77d2e0
     emails/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
-    emails/imprint: c4e5f2a1994d3cc5896b200709cc499c
     emails/invite_accepted_email_heading: 6ff6dff269b0f1ac1b73912c9e344343
     emails/invite_accepted_email_subject: 4f5f2a68c98dd1dd01143fcae3be5562
     emails/invite_accepted_email_text_par1: b27eadc4779c9fa477103d136a6acab9
@@ -460,7 +459,6 @@ checksums:
     emails/password_changed_email_heading: 601f68fc8bef9c5ecf79f4ec4de5ad06
     emails/password_changed_email_text: f9ed4db250ec1b2adf4cb4527ec72d78
     emails/password_reset_notify_email_subject: 0a6805fc27c5bb7999f0d311ef5981e1
-    emails/privacy_policy: 7459744a63ef8af4e517a09024bd7c08
     emails/reject: 417c19f66db70a0548bdeb398cdc46e0
     emails/render_email_response_value_file_upload_response_link_not_included: 56f400d68c00b06a2bd976389778df9f
     emails/response_data: 26363c0d3a839c3b33c9e8c6dd3deca9
