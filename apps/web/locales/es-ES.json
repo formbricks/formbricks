@@ -2046,9 +2046,9 @@
     "intro": {
       "get_started": "Comenzar",
       "made_with_love_in_kiel": "Hecho con 🤍 en Alemania",
-      "paragraph_1": "Formbricks es una Suite de Gestión de Experiencia construida sobre la <b>plataforma de encuestas de código abierto de más rápido crecimiento</b> en todo el mundo.",
+      "paragraph_1": "Formbricks es una suite de gestión de experiencias construida sobre la <b>plataforma de encuestas de código abierto de más rápido crecimiento</b> a nivel mundial.",
       "paragraph_2": "Realiza encuestas dirigidas en sitios web, en aplicaciones o en cualquier lugar online. Recopila información valiosa para <b>crear experiencias irresistibles</b> para clientes, usuarios y empleados.",
-      "paragraph_3": "Estamos comprometidos con el más alto grado de privacidad de datos. Alójalo tú mismo para mantener <b>control total sobre tus datos</b>.",
+      "paragraph_3": "Estamos comprometidos con el más alto grado de privacidad de datos. Aloja en tu propio servidor para mantener el <b>control total sobre tus datos</b>.",
       "welcome_to_formbricks": "¡Bienvenido a Formbricks!"
     },
     "invite": {

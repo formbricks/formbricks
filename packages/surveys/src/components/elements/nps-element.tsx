@@ -58,6 +58,8 @@ export function NPSElement({
         colorCoding={element.isColorCodingEnabled}
         required={element.required}
         dir={dir}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

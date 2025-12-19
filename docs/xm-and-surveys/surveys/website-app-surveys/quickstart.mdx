@@ -63,14 +63,14 @@ sidebarTitle: "Quickstart"
   Publish the survey to make it available for the SDK to pull into the website or app where you want to show it.
   </Step>
 
-  <Step title="Enable debug mode in website / app">
-    For better scalability, we cache the request the SDK makes to the server. This allows you to use Formbricks on websites with millions of visitors without high hosting cost. On the downside, there can be **up to a 5 minute delay** until the SDK pulls the newest surveys from the server.
+  <Step title="Understand caching behavior">
+    For better scalability, we cache the request the SDK makes to the server. This allows you to use Formbricks on websites with millions of visitors without high hosting cost.
   
     <Note>
-      **Important**: Any changes to surveys, action classes, project settings, or environment configuration will take up to 5 minutes to reflect in debug mode in your app/website due to server-side caching. This includes survey modifications, new triggers, styling changes, and other updates.
+      **Important**: Any changes to surveys, action classes, project settings, or environment configuration will take **up to 1 minute** to reflect in your app/website due to server-side caching. This includes survey modifications, new triggers, styling changes, and other updates.
     </Note>
   
-    To avoid the delay during development and testing, please switch on the [Debug Mode.](/xm-and-surveys/surveys/website-app-surveys/framework-guides#activate-debug-mode)
+    For troubleshooting, you can enable [Debug Mode](/xm-and-surveys/surveys/website-app-surveys/framework-guides#activate-debug-mode) to see detailed logs in your browser console.
   </Step>
 </Steps>
 
