@@ -21,9 +21,12 @@ export function ErrorComponent({ errorType }: ErrorComponentProps) {
   const error = errorData[errorType];
 
   return (
-    <div className="flex flex-col items-center bg-survey-bg p-8 text-center" role="alert" aria-live="assertive">
-      <span className="mb-1.5 text-base leading-6 font-bold text-slate-900">{error.title}</span>
-      <p className="max-w-lg text-sm leading-6 font-normal text-slate-600">{error.message}</p>
+    <div
+      className="bg-survey-bg text-heading flex flex-col items-center p-8 text-center"
+      role="alert"
+      aria-live="assertive">
+      <span className="mb-1.5 text-base leading-6 font-bold">{error.title}</span>
+      <p className="max-w-lg text-sm leading-6 font-normal">{error.message}</p>
     </div>
   );
 }

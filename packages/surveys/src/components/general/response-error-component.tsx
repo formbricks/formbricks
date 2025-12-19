@@ -19,11 +19,9 @@ export function ResponseErrorComponent({
 }: ResponseErrorComponentProps) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col bg-survey-bg p-4">
-      <span className="mb-1.5 text-base leading-6 font-bold text-slate-900">
-        {t("common.your_feedback_is_stuck")}
-      </span>
-      <p className="max-w-md text-sm leading-6 font-normal text-slate-600">
+    <div className="bg-survey-bg text-heading flex flex-col p-4">
+      <span className="mb-1.5 text-base leading-6 font-bold">{t("common.your_feedback_is_stuck")}</span>
+      <p className="max-w-md text-sm leading-6 font-normal">
         {t("common.the_servers_cannot_be_reached_at_the_moment")}
         <br />
         {t("common.please_retry_now_or_try_again_later")}
