@@ -114,6 +114,7 @@ function Matrix({
                     onValueChange={(newColumnId) => {
                       handleRowChange(row.id, newColumnId);
                     }}
+                    name={rowGroupId}
                     disabled={disabled}
                     required={required}
                     aria-invalid={Boolean(errorMessage)}>
@@ -142,6 +143,7 @@ function Matrix({
                             <Label htmlFor={cellId} className="flex cursor-pointer justify-center">
                               <RadioGroupItem
                                 value={column.id}
+                                required={required}
                                 id={cellId}
                                 disabled={disabled}
                                 aria-label={`${row.label}-${column.label}`}
