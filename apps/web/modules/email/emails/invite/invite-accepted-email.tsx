@@ -18,11 +18,10 @@ export async function InviteAcceptedEmail({
     <EmailTemplate t={t}>
       <Container>
         <Heading>
-          {t("emails.invite_accepted_email_heading", { inviterName })} {inviterName}
+          {t("emails.invite_accepted_email_heading", { inviterName })}
         </Heading>
         <Text className="text-sm">
-          {t("emails.invite_accepted_email_text_par1", { inviteeName })} {inviteeName}{" "}
-          {t("emails.invite_accepted_email_text_par2")}
+          {t("emails.invite_accepted_email_text", { inviteeName })}
         </Text>
         <EmailFooter t={t} />
       </Container>

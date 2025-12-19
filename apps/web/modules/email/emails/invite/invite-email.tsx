@@ -21,11 +21,10 @@ export async function InviteEmail({
     <EmailTemplate t={t}>
       <Container>
         <Heading>
-          {t("emails.invite_email_heading", { inviteeName })} {inviteeName}
+          {t("emails.invite_email_heading", { inviteeName })}
         </Heading>
         <Text className="text-sm">
-          {t("emails.invite_email_text_par1", { inviterName })} {inviterName}{" "}
-          {t("emails.invite_email_text_par2")}
+          {t("emails.invite_email_text", { inviterName })}
         </Text>
         <EmailButton href={verifyLink} label={t("emails.invite_email_button_label")} />
         <EmailFooter t={t} />
