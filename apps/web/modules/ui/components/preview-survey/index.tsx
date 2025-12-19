@@ -25,6 +25,7 @@ interface PreviewSurveyProps {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   languageCode: string;
   isSpamProtectionAllowed: boolean;
+  publicDomain: string;
 }
 
 let surveyNameTemp: string;
@@ -38,6 +39,7 @@ export const PreviewSurvey = ({
   environment,
   languageCode,
   isSpamProtectionAllowed,
+  publicDomain,
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -244,6 +246,7 @@ export const PreviewSurvey = ({
                   borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
+                    appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={survey}
                     isBrandingEnabled={project.inAppSurveyBranding}
@@ -273,6 +276,7 @@ export const PreviewSurvey = ({
                   </div>
                   <div className="z-10 w-full rounded-lg border border-transparent">
                     <SurveyInline
+                      appUrl={publicDomain}
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
                       isBrandingEnabled={project.linkSurveyBranding}
@@ -345,6 +349,7 @@ export const PreviewSurvey = ({
                 borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
+                  appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={survey}
                   isBrandingEnabled={project.inAppSurveyBranding}
@@ -378,6 +383,7 @@ export const PreviewSurvey = ({
                 </div>
                 <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
                   <SurveyInline
+                    appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}
                     isBrandingEnabled={project.linkSurveyBranding}

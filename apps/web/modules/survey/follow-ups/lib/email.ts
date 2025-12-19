@@ -1,4 +1,4 @@
-import dompurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import {
   ProcessedHiddenField,
@@ -43,11 +43,16 @@ export const sendFollowUpEmail = async ({
   const t = await getTranslate();
 
   // Process body: parse recall tags and sanitize HTML
-  const processedBody = dompurify.sanitize(parseRecallInfo(body, response.data, response.variables), {
-    ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br"],
-    ALLOWED_ATTR: ["href", "rel", "dir", "class"],
-    ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs
-    ADD_ATTR: ["target"], // Allow 'target' attribute for links
+  const processedBody = sanitizeHtml(parseRecallInfo(body, response.data, response.variables), {
+    allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br"],
+    allowedAttributes: {
+      a: ["href", "rel", "target"],
+      "*": ["dir", "class"],
+    },
+    allowedSchemes: ["http", "https"],
+    allowedSchemesByTag: {
+      a: ["http", "https"],
+    },
   });
 
   // Process response data

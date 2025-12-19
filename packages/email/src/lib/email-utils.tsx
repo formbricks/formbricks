@@ -27,7 +27,7 @@ export const renderEmailResponseValue = (
       return (
         <Container>
           {overrideFileUploadResponse ? (
-            <Text className="mt-0 whitespace-pre-wrap break-words text-sm italic">
+            <Text className="mt-0 text-sm break-words whitespace-pre-wrap italic">
               {t("emails.render_email_response_value_file_upload_response_link_not_included")}
             </Text>
           ) : (

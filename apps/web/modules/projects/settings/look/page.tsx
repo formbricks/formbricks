@@ -1,6 +1,7 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { IS_STORAGE_CONFIGURED, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getTranslate } from "@/lingodotdev/server";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
@@ -27,6 +28,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   }
 
   const canRemoveBranding = await getRemoveBrandingPermission(organization.billing.plan);
+  const publicDomain = getPublicDomain();
 
   return (
     <PageContentWrapper>
@@ -49,6 +51,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
           isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
           isReadOnly={isReadOnly}
           isStorageConfigured={IS_STORAGE_CONFIGURED}
+          publicDomain={publicDomain}
         />
       </SettingsCard>
       <SettingsCard

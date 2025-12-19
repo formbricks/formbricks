@@ -400,7 +400,7 @@ export const SurveyMenuBar = ({
         />
       </div>
 
-      <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+      <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
         {!isStorageConfigured && (
           <div>
             <Alert variant="warning" size="small">
