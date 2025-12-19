@@ -119,6 +119,8 @@ export function AddressElement({
         onChange={handleChange}
         required={element.required}
         dir={dir}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );
