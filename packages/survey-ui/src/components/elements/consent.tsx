@@ -74,7 +74,7 @@ function Consent({
             onCheckedChange={handleCheckboxChange}
             disabled={disabled}
             aria-invalid={Boolean(errorMessage)}
-            aria-required={required}
+            required={required}
           />
           {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
           <span

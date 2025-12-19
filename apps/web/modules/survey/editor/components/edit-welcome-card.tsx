@@ -22,6 +22,7 @@ interface EditWelcomeCardProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const EditWelcomeCard = ({
@@ -34,6 +35,7 @@ export const EditWelcomeCard = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: EditWelcomeCardProps) => {
   const { t } = useTranslation();
 
@@ -65,7 +67,7 @@ export const EditWelcomeCard = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
+          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <Hand className="h-4 w-4" />
@@ -135,6 +137,7 @@ export const EditWelcomeCard = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
             <div className="mt-3">
@@ -150,6 +153,7 @@ export const EditWelcomeCard = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
 
@@ -170,6 +174,7 @@ export const EditWelcomeCard = ({
                     label={t("environments.surveys.edit.next_button_label")}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
+                    isExternalUrlsAllowed={isExternalUrlsAllowed}
                   />
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
@@ -27,7 +28,14 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
     return redirect(`/environments/${environment.id}/surveys`);
   }
 
+  const publicDomain = getPublicDomain();
+
   return (
-    <TemplateContainerWithPreview userId={session.user.id} environment={environment} project={project} />
+    <TemplateContainerWithPreview
+      userId={session.user.id}
+      environment={environment}
+      project={project}
+      publicDomain={publicDomain}
+    />
   );
 };
