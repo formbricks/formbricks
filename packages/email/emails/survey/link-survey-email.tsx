@@ -1,15 +1,15 @@
 import { Container, Heading, Text } from "@react-email/components";
-import { TFunction } from "@/src/types/translations";
 import { EmailButton } from "../../src/components/email-button";
 import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { TFunction } from "../../src/types/translations";
 
 interface LinkSurveyEmailProps {
   readonly surveyName: string;
   readonly surveyLink: string;
-  readonly logoUrl: string;
+  readonly logoUrl?: string;
   readonly t?: TFunction;
 }
 

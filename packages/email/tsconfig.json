@@ -2,9 +2,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "dist",
-    "paths": {
-      "@/*": ["./*"]
-    },
     "rootDir": "."
   },
   "exclude": ["node_modules", "dist"],

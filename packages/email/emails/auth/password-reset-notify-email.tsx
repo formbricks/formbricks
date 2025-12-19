@@ -1,9 +1,9 @@
 import { Container, Heading, Text } from "@react-email/components";
-import { TFunction } from "@/src/types/translations";
 import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { TFunction } from "../../src/types/translations";
 
 interface PasswordResetNotifyEmailProps {
   readonly t?: TFunction;

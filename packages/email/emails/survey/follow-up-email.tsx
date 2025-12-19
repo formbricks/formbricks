@@ -1,10 +1,10 @@
 import { Column, Hr, Row, Text } from "@react-email/components";
-import { TFunction } from "@/src/types/translations";
 import { EmailTemplate } from "../../src/components/email-template";
 import { renderEmailResponseValue } from "../../src/lib/email-utils";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
 import { ProcessedHiddenField, ProcessedResponseElement, ProcessedVariable } from "../../src/types/follow-up";
+import { TFunction } from "../../src/types/translations";
 
 export interface FollowUpEmailProps {
   readonly body: string; // Already processed HTML with recall tags replaced
