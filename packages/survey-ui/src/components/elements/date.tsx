@@ -164,6 +164,7 @@ function DateElement({
           <Calendar
             mode="single"
             selected={date}
+            defaultMonth={date}
             captionLayout="dropdown"
             startMonth={startMonth}
             endMonth={endMonth}
