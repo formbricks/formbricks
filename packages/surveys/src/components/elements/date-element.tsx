@@ -56,13 +56,12 @@ export function DateElement({
     setTtc(updatedTtcObj);
   };
 
-  // Use default date range (100 years ago to year 3000)
   const getMinDate = (): string | undefined => {
     return new Date(new Date().getFullYear() - 100, 0, 1).toISOString().split("T")[0];
   };
 
   const getMaxDate = (): string | undefined => {
-    return "3000-12-31";
+    return new Date(new Date().getFullYear() + 100, 0, 1).toISOString().split("T")[0];
   };
 
   return (
