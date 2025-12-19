@@ -78,7 +78,14 @@ function getBottomButtonRadiusClass(isLast: boolean, dir?: TextDirection): strin
   return "rounded-br-md";
 }
 
-function RankingItem({ item, rankedIds, onItemClick, onMove, disabled, dir }: Readonly<RankingItemProps>) {
+function RankingItem({
+  item,
+  rankedIds,
+  onItemClick,
+  onMove,
+  disabled,
+  dir,
+}: Readonly<RankingItemProps>): React.ReactNode {
   const isRanked = rankedIds.includes(item.id);
   const rankIndex = rankedIds.indexOf(item.id);
   const isFirst = isRanked && rankIndex === 0;

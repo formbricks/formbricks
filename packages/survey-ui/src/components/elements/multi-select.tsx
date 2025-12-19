@@ -141,7 +141,7 @@ function DropdownVariant({
 
   const isRequired = getIsRequired();
 
-  const handleOptionToggle = (optionId: string) => {
+  const handleOptionToggle = (optionId: string): void => {
     if (selectedValues.includes(optionId)) {
       handleOptionRemove(optionId);
     } else {
