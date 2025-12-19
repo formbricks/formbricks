@@ -43,6 +43,10 @@ interface FormFieldProps {
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the controls are disabled */
   disabled?: boolean;
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 function FormField({
@@ -56,6 +60,8 @@ function FormField({
   errorMessage,
   dir = "auto",
   disabled = false,
+  imageUrl,
+  videoUrl,
 }: Readonly<FormFieldProps>): React.JSX.Element {
   // Ensure value is always an object
   const currentValues = React.useMemo(() => {
@@ -93,7 +99,13 @@ function FormField({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* Form Fields */}
       <div className="relative space-y-3">
