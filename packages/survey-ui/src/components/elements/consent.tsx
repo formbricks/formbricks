@@ -30,6 +30,10 @@ export interface ConsentProps {
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the checkbox is disabled */
   disabled?: boolean;
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 function Consent({
@@ -44,6 +48,8 @@ function Consent({
   errorMessage,
   dir = "auto",
   disabled = false,
+  imageUrl,
+  videoUrl,
 }: Readonly<ConsentProps>): React.JSX.Element {
   const handleCheckboxChange = (checked: boolean): void => {
     if (disabled) return;
@@ -53,7 +59,14 @@ function Consent({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* Consent Checkbox */}
       <div className="relative space-y-2">

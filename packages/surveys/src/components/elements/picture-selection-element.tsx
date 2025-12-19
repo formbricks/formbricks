@@ -98,6 +98,8 @@ export function PictureSelectionElement({
         required={element.required}
         dir={dir}
         errorMessage={errorMessage}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

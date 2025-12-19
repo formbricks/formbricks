@@ -60,6 +60,8 @@ function Calendar({
   formatters,
   components,
   locale,
+  startMonth,
+  endMonth,
   ...props
 }: Readonly<
   React.ComponentProps<typeof DayPicker> & {
@@ -78,6 +80,22 @@ function Calendar({
     return locale;
   }, [locale]);
 
+  const resolvedStartMonth = React.useMemo(() => {
+    if (startMonth) return startMonth;
+    if (captionLayout === "dropdown") {
+      return new Date(new Date().getFullYear() - 100, 0);
+    }
+    return undefined;
+  }, [startMonth, captionLayout]);
+
+  const resolvedEndMonth = React.useMemo(() => {
+    if (endMonth) return endMonth;
+    if (captionLayout === "dropdown") {
+      return new Date(new Date().getFullYear() + 100, 11);
+    }
+    return undefined;
+  }, [endMonth, captionLayout]);
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -89,6 +107,8 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       locale={resolvedLocale}
+      startMonth={resolvedStartMonth}
+      endMonth={resolvedEndMonth}
       formatters={{
         formatMonthDropdown: (date) => {
           if (resolvedLocale) {
@@ -156,7 +176,7 @@ function Calendar({
         range_middle: cn("rounded-none", defaultClassNames.range_middle),
         range_end: cn("rounded-r-md bg-accent", defaultClassNames.range_end),
         today: cn(
-          "bg-accent text-accent-foreground rounded-md data-[selected=true]:rounded-none bg-brand opacity-50",
+          "bg-accent text-brand-foreground rounded-md data-[selected=true]:rounded-none bg-brand opacity-50",
           defaultClassNames.today
         ),
         outside: cn(
