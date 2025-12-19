@@ -1,0 +1,134 @@
+---
+title: "Link Surveys vs In-app Surveys"
+description: "This guide explains the differences between Link Surveys and In-app Surveys to help you choose the right option."
+icon: "road-circle-check"
+---
+
+## Quick comparison
+
+
+
+| Feature | Link Surveys | Website & App Surveys |
+|---------|--------------|----------------------|
+| **SDK required** | No | Yes |
+| **Delivery** | Email, SMS, push, or webview | Triggered in-app by SDK |
+| **Segmentation** | You control externally | Built-in via Formbricks |
+| **Survey fatigue prevention** | You control externally | Automatic |
+| **User identification** | [Personal Links](/xm-and-surveys/surveys/link-surveys/personal-links) | [SDK user attributes](/xm-and-surveys/surveys/website-app-surveys/user-identification) |
+| **Best for** | Known touchpoints | Behavior-based intercepts |
+
+## Link Surveys
+
+Also known as **invitation-based surveys**. No SDK needed. You control when and who receives the survey, often through CRMs, marketing tools, or similar platforms.
+
+![Link survey example](/images/xm-and-surveys/xm/best-practices/link-surveys-vs-in-app-surveys/link-surveys-example.webp)
+
+### Delivery channels
+
+- Email
+- SMS
+- Push notification
+- In-app webview
+
+
+### URL features
+
+- **[Hidden Fields](/xm-and-surveys/surveys/general-features/hidden-fields)**: Pass user ID, order ID, or any identifier
+- **[Data prefilling](/xm-and-surveys/surveys/link-surveys/data-prefilling)**: Pre-populate answers and optionally skip prefilled questions
+- **[Personal Links](/xm-and-surveys/surveys/link-surveys/personal-links)**: Generate unique survey links for individual contacts
+
+### Webview with Embed mode
+
+For mobile apps, you can display Link Surveys in a webview with full control over when the survey appears. Your app decides the timing—open the webview when the moment is right.
+
+**Enable Embed mode** by appending `?embed=true` to the survey URL:
+
+```
+https://app.formbricks.com/s/<surveyId>?embed=true&userId=123
+```
+
+**Listen for events** to close the webview automatically:
+
+```javascript
+window.addEventListener("message", (event) => {
+  if (event.data === "formbricksSurveyCompleted") {
+    closeWebView();
+  }
+});
+```
+
+This approach gives you full control:
+- **When**: Your app opens the webview at the right moment (after purchase, case closed, etc.)
+- **Who**: Personal links allow you to have unique links for identified contacts.
+- **Display**: Survey renders inside your app
+- **Dismissal**: Close the webview on completion or user exit
+
+Learn more in the [Embed Surveys guide](/xm-and-surveys/surveys/link-surveys/embed-surveys).
+
+### When to use
+
+- You already decide externally who should receive which survey
+- Survey timing is tied to a known event
+- You want fastest approach to production
+- Your platform doesn't have a supported SDK
+
+
+## Website & App Surveys (SDK)
+
+Also known as **intercept surveys**. Requires SDK integration. Formbricks handles targeting and survey fatigue.
+
+![In-app survey example](/images/xm-and-surveys/xm/best-practices/link-surveys-vs-in-app-surveys/in-app-surveys.webp)
+
+### In-app features
+
+**[Action tracking](/xm-and-surveys/surveys/website-app-surveys/actions)**
+
+Track in-app events and trigger surveys based on them:
+
+```javascript
+formbricks.track("action_name");
+```
+
+**Built-in survey cooldown**
+
+- Global waiting time (e.g., one survey every 7 days per user)
+- Per-survey overrides for high-priority surveys
+
+**[Segment-based targeting](/xm-and-surveys/surveys/website-app-surveys/advanced-targeting)**
+
+Target surveys based on user attributes (plan type, language, feature flags).
+
+**In-app display**
+
+Surveys appear inside your app as modals or slide-ins.
+
+### When to use
+
+- You want Formbricks to handle who sees which survey
+- Surveys should trigger based on user behavior (page views, clicks, custom events)
+- You want automatic survey fatigue prevention
+- You need percentage-based sampling (e.g., show to 10% of users)
+
+## Decision guide
+
+<AccordionGroup>
+  <Accordion title="Do you control survey timing externally?">
+    Use **Link Surveys**. Send the URL when the moment is right. Pass context via Hidden Fields.
+  </Accordion>
+
+  <Accordion title="Should surveys trigger based on in-app behavior?">
+    Use **Website & App Surveys**. The SDK tracks actions and triggers surveys automatically.
+  </Accordion>
+
+  <Accordion title="Do you want automatic survey fatigue prevention?">
+    Use **Website & App Surveys**. Built-in cooldown prevents over-surveying.
+  </Accordion>
+
+  <Accordion title="Need the fastest path to production?">
+    Start with **Link Surveys**. No SDK integration needed. Add SDK later if you need behavior-based triggers.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+**Need help?** [Join us in GitHub Discussions](https://github.com/formbricks/formbricks/discussions)
