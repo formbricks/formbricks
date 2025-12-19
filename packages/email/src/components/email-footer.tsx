@@ -1,6 +1,5 @@
 import { Text } from "@react-email/components";
-
-type TFunction = (key: string, replacements?: Record<string, string>) => string;
+import { TFunction } from "../types/translations";
 
 export function EmailFooter({ t }: { t: TFunction }): React.JSX.Element {
   return (

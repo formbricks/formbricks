@@ -1,6 +1,5 @@
 import { Body, Container, Html, Img, Link, Section, Tailwind } from "@react-email/components";
-
-type TFunction = (key: string, replacements?: Record<string, string>) => string;
+import { TFunction } from "../types/translations";
 
 const fbLogoUrl = "https://app.formbricks.com/logo-transparent.png";
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";

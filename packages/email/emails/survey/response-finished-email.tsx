@@ -4,14 +4,13 @@ import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { TFunction } from "@/src/types/translations";
 import { EmailButton } from "../../src/components/email-button";
 import { EmailTemplate } from "../../src/components/email-template";
 import { renderEmailResponseValue } from "../../src/lib/email-utils";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
 import { ProcessedResponseElement } from "../../src/types/follow-up";
-
-type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
 export interface ResponseFinishedEmailProps {
   readonly survey: TSurvey;

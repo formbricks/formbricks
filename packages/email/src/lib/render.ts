@@ -13,8 +13,7 @@ import {
   ResponseFinishedEmail,
   ResponseFinishedEmailProps,
 } from "../../emails/survey/response-finished-email";
-
-type TFunction = (key: string, replacements?: Record<string, string>) => string;
+import { TFunction } from "../types/translations";
 
 export async function renderVerificationEmail(props: {
   verifyLink: string;

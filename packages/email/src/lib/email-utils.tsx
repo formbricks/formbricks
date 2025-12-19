@@ -1,8 +1,7 @@
 import { Column, Container, Img, Link, Row, Text } from "@react-email/components";
 import { FileIcon } from "lucide-react";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-
-type TFunction = (key: string, replacements?: Record<string, string>) => string;
+import { TFunction } from "../types/translations";
 
 // Simplified version - just get the filename from URL
 const getOriginalFileNameFromUrl = (url: string): string => {
@@ -77,6 +76,6 @@ export const renderEmailResponseValue = (
       );
 
     default:
-      return <Text className="mt-0 whitespace-pre-wrap break-words text-sm">{response as string}</Text>;
+      return <Text className="mt-0 text-sm break-words whitespace-pre-wrap">{response as string}</Text>;
   }
 };

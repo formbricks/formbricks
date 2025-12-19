@@ -1,11 +1,10 @@
 import { Container, Heading, Link, Text } from "@react-email/components";
+import { TFunction } from "@/src/types/translations";
 import { EmailButton } from "../../src/components/email-button";
 import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
-
-type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
 interface VerificationEmailProps {
   readonly verifyLink: string;
@@ -25,7 +24,7 @@ export function VerificationEmail({
         <Text className="text-sm">{t("emails.verification_email_text")}</Text>
         <EmailButton href={verifyLink} label={t("emails.verification_email_verify_email")} />
         <Text className="text-sm">{t("emails.verification_email_click_on_this_link")}</Text>
-        <Link className="break-all text-sm text-black" href={verifyLink}>
+        <Link className="text-sm break-all text-black" href={verifyLink}>
           {verifyLink}
         </Link>
         <Text className="text-sm font-bold">{t("emails.verification_email_link_valid_for_24_hours")}</Text>

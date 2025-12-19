@@ -1,11 +1,10 @@
 import { Column, Hr, Row, Text } from "@react-email/components";
+import { TFunction } from "@/src/types/translations";
 import { EmailTemplate } from "../../src/components/email-template";
 import { renderEmailResponseValue } from "../../src/lib/email-utils";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
 import { ProcessedHiddenField, ProcessedResponseElement, ProcessedVariable } from "../../src/types/follow-up";
-
-type TFunction = (key: string, replacements?: Record<string, string>) => string;
 
 export interface FollowUpEmailProps {
   readonly body: string; // Already processed HTML with recall tags replaced
@@ -56,7 +55,7 @@ export function FollowUpEmail({
                   ? `${t("emails.number_variable")}: ${variable.name}`
                   : `${t("emails.text_variable")}: ${variable.name}`}
               </Text>
-              <Text className="mt-0 whitespace-pre-wrap break-words text-sm text-slate-700">
+              <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700">
                 {variable.value}
               </Text>
             </Column>
@@ -69,7 +68,7 @@ export function FollowUpEmail({
               <Text className="mb-2 text-sm font-semibold text-slate-900">
                 {t("emails.hidden_field")}: {hiddenField.id}
               </Text>
-              <Text className="mt-0 whitespace-pre-wrap break-words text-sm text-slate-700">
+              <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700">
                 {hiddenField.value}
               </Text>
             </Column>
