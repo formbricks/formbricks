@@ -27,7 +27,7 @@ export const checkForVimeoUrl = (url: string): boolean => {
 
     if (vimeoUrl.protocol !== "https:") return false;
 
-    const vimeoDomains = ["www.vimeo.com", "vimeo.com"];
+    const vimeoDomains = ["www.vimeo.com", "vimeo.com", "player.vimeo.com"];
     const hostname = vimeoUrl.hostname;
 
     return vimeoDomains.includes(hostname);
@@ -77,7 +77,7 @@ const extractYoutubeId = (url: string): string | null => {
 };
 
 const extractVimeoId = (url: string): string | null => {
-  const regExp = /vimeo\.com\/(?<videoId>\d+)/;
+  const regExp = /vimeo\.com\/(?:video\/)?(?<videoId>\d+)/;
   const match = regExp.exec(url);
 
   return match?.groups?.videoId ?? null;
