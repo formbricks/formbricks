@@ -138,5 +138,15 @@ describe("File Input Utils", () => {
     test("returns false for non-YouTube URLs", () => {
       expect(checkForYoutubePrivacyMode("https://www.example.com")).toBe(false);
     });
+
+    test("should return false for empty or whitespace-only string", () => {
+      expect(checkForYoutubePrivacyMode("")).toBe(false);
+      expect(checkForYoutubePrivacyMode("   ")).toBe(false);
+    });
+
+    test("should return false for non-string types", () => {
+      expect(checkForYoutubePrivacyMode(null as any)).toBe(false);
+      expect(checkForYoutubePrivacyMode(123 as any)).toBe(false);
+    });
   });
 });
