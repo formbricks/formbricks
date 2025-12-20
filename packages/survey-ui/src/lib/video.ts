@@ -77,30 +77,16 @@ const extractYoutubeId = (url: string): string | null => {
 };
 
 const extractVimeoId = (url: string): string | null => {
-  // Try to extract from regular Vimeo URL (vimeo.com/123456)
-  let regExp = /vimeo\.com\/(?<videoId>\d+)/;
-  let match = regExp.exec(url);
-  if (match?.groups?.videoId) {
-    return match.groups.videoId;
-  }
+  const regExp = /vimeo\.com\/(?<videoId>\d+)/;
+  const match = regExp.exec(url);
 
-  // Try to extract from embed URL (player.vimeo.com/video/123456)
-  regExp = /player\.vimeo\.com\/video\/(?<videoId>\d+)/;
-  match = regExp.exec(url);
   return match?.groups?.videoId ?? null;
 };
 
 const extractLoomId = (url: string): string | null => {
-  // Try to extract from share URL (loom.com/share/123456)
-  let regExp = /loom\.com\/share\/(?<videoId>[a-zA-Z0-9]+)/;
-  let match = regExp.exec(url);
-  if (match?.groups?.videoId) {
-    return match.groups.videoId;
-  }
+  const regExp = /loom\.com\/share\/(?<videoId>[a-zA-Z0-9]+)/;
+  const match = regExp.exec(url);
 
-  // Try to extract from embed URL (loom.com/embed/123456)
-  regExp = /loom\.com\/embed\/(?<videoId>[a-zA-Z0-9]+)/;
-  match = regExp.exec(url);
   return match?.groups?.videoId ?? null;
 };
 
@@ -114,21 +100,19 @@ export const convertToEmbedUrl = (url: string): string | undefined => {
     }
   }
 
-  // Vimeo - check if it's a regular Vimeo URL or already an embed URL
-  const vimeoVideoId = extractVimeoId(url);
-  if (vimeoVideoId) {
-    // If it's already an embed URL or a regular Vimeo URL, return embed format
-    if (url.includes("player.vimeo.com/video/") || checkForVimeoUrl(url)) {
-      return `https://player.vimeo.com/video/${vimeoVideoId}`;
+  // Vimeo
+  if (checkForVimeoUrl(url)) {
+    const videoId = extractVimeoId(url);
+    if (videoId) {
+      return `https://player.vimeo.com/video/${videoId}`;
     }
   }
 
-  // Loom - check if it's a regular Loom URL or already an embed URL
-  const loomVideoId = extractLoomId(url);
-  if (loomVideoId) {
-    // If it's already an embed URL or a regular Loom URL, return embed format
-    if (url.includes("loom.com/embed/") || checkForLoomUrl(url)) {
-      return `https://www.loom.com/embed/${loomVideoId}`;
+  // Loom
+  if (checkForLoomUrl(url)) {
+    const videoId = extractLoomId(url);
+    if (videoId) {
+      return `https://www.loom.com/embed/${videoId}`;
     }
   }
 
