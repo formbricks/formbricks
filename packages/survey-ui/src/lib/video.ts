@@ -84,7 +84,7 @@ const extractVimeoId = (url: string): string | null => {
 };
 
 const extractLoomId = (url: string): string | null => {
-  const regExp = /loom\.com\/share\/(?<videoId>[a-zA-Z0-9]+)/;
+  const regExp = /loom\.com\/(?:share|embed)\/(?<videoId>[a-zA-Z0-9]+)/;
   const match = regExp.exec(url);
 
   return match?.groups?.videoId ?? null;
