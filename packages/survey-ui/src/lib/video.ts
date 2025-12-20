@@ -91,9 +91,16 @@ const extractVimeoId = (url: string): string | null => {
 };
 
 const extractLoomId = (url: string): string | null => {
-  const regExp = /loom\.com\/share\/(?<videoId>[a-zA-Z0-9]+)/;
-  const match = regExp.exec(url);
+  // Try to extract from share URL (loom.com/share/123456)
+  let regExp = /loom\.com\/share\/(?<videoId>[a-zA-Z0-9]+)/;
+  let match = regExp.exec(url);
+  if (match?.groups?.videoId) {
+    return match.groups.videoId;
+  }
 
+  // Try to extract from embed URL (loom.com/embed/123456)
+  regExp = /loom\.com\/embed\/(?<videoId>[a-zA-Z0-9]+)/;
+  match = regExp.exec(url);
   return match?.groups?.videoId ?? null;
 };
 
@@ -116,11 +123,12 @@ export const convertToEmbedUrl = (url: string): string | undefined => {
     }
   }
 
-  // Loom
-  if (checkForLoomUrl(url)) {
-    const videoId = extractLoomId(url);
-    if (videoId) {
-      return `https://www.loom.com/embed/${videoId}`;
+  // Loom - check if it's a regular Loom URL or already an embed URL
+  const loomVideoId = extractLoomId(url);
+  if (loomVideoId) {
+    // If it's already an embed URL or a regular Loom URL, return embed format
+    if (url.includes("loom.com/embed/") || checkForLoomUrl(url)) {
+      return `https://www.loom.com/embed/${loomVideoId}`;
     }
   }
 
