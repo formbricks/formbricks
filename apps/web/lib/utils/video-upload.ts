@@ -26,7 +26,7 @@ export const checkForVimeoUrl = (url: string): boolean => {
 
     if (vimeoUrl.protocol !== "https:") return false;
 
-    const vimeoDomains = ["www.vimeo.com", "vimeo.com"];
+    const vimeoDomains = ["www.vimeo.com", "vimeo.com", "player.vimeo.com"];
     const hostname = vimeoUrl.hostname;
 
     return vimeoDomains.includes(hostname);
