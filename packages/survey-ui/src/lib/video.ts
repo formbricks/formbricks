@@ -77,9 +77,16 @@ const extractYoutubeId = (url: string): string | null => {
 };
 
 const extractVimeoId = (url: string): string | null => {
-  const regExp = /vimeo\.com\/(?<videoId>\d+)/;
-  const match = regExp.exec(url);
+  // Try to extract from regular Vimeo URL (vimeo.com/123456)
+  let regExp = /vimeo\.com\/(?<videoId>\d+)/;
+  let match = regExp.exec(url);
+  if (match?.groups?.videoId) {
+    return match.groups.videoId;
+  }
 
+  // Try to extract from embed URL (player.vimeo.com/video/123456)
+  regExp = /player\.vimeo\.com\/video\/(?<videoId>\d+)/;
+  match = regExp.exec(url);
   return match?.groups?.videoId ?? null;
 };
 
@@ -100,11 +107,12 @@ export const convertToEmbedUrl = (url: string): string | undefined => {
     }
   }
 
-  // Vimeo
-  if (checkForVimeoUrl(url)) {
-    const videoId = extractVimeoId(url);
-    if (videoId) {
-      return `https://player.vimeo.com/video/${videoId}`;
+  // Vimeo - check if it's a regular Vimeo URL or already an embed URL
+  const vimeoVideoId = extractVimeoId(url);
+  if (vimeoVideoId) {
+    // If it's already an embed URL or a regular Vimeo URL, return embed format
+    if (url.includes("player.vimeo.com/video/") || checkForVimeoUrl(url)) {
+      return `https://player.vimeo.com/video/${vimeoVideoId}`;
     }
   }
 
