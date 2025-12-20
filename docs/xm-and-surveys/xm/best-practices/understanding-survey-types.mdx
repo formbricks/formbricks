@@ -1,6 +1,7 @@
 ---
-title: "Link Surveys vs In-app Surveys"
-description: "This guide explains the differences between Link Surveys and In-app Surveys to help you choose the right option."
+title: "Understanding Formbricks Survey Types"
+sidebarTitle: "Understanding Survey Types"
+description: "This guide explains the differences between Formbricks Link Surveys and Website & App Surveys to help you choose the right option."
 icon: "road-circle-check"
 ---
 
@@ -10,12 +11,12 @@ icon: "road-circle-check"
 
 | Feature | Link Surveys | Website & App Surveys |
 |---------|--------------|----------------------|
+| **Best for** | Known touchpoints | Behavior-based intercepts |
 | **SDK required** | No | Yes |
 | **Delivery** | Email, SMS, push, or webview | Triggered in-app by SDK |
 | **Segmentation** | You control externally | Built-in via Formbricks |
 | **Survey fatigue prevention** | You control externally | Automatic |
 | **User identification** | [Personal Links](/xm-and-surveys/surveys/link-surveys/personal-links) | [SDK user attributes](/xm-and-surveys/surveys/website-app-surveys/user-identification) |
-| **Best for** | Known touchpoints | Behavior-based intercepts |
 
 ## Link Surveys
 
@@ -68,14 +69,15 @@ Learn more in the [Embed Surveys guide](/xm-and-surveys/surveys/link-surveys/emb
 ### When to use
 
 - You already decide externally who should receive which survey
-- Survey timing is tied to a known event
+- Survey timing is tied to a known event such as a click on a link or button and in **each case**, you want to show the survey
 - You want fastest approach to production
 - Your platform doesn't have a supported SDK
+- You don't need Formbricks attribute-based targeting & survey fatigue controls
 
 
 ## Website & App Surveys (SDK)
 
-Also known as **intercept surveys**. Requires SDK integration. Formbricks handles targeting and survey fatigue.
+Also known as **intercept surveys**. Requires SDK integration. Formbricks handles targeting, triggering, and survey fatigue.
 
 ![In-app survey example](/images/xm-and-surveys/xm/best-practices/link-surveys-vs-in-app-surveys/in-app-surveys.webp)
 
@@ -91,7 +93,7 @@ formbricks.track("action_name");
 
 **Built-in survey cooldown**
 
-- Global waiting time (e.g., one survey every 7 days per user)
+- Global waiting time (e.g., show max 1 survey every 7 days per user)
 - Per-survey overrides for high-priority surveys
 
 **[Segment-based targeting](/xm-and-surveys/surveys/website-app-surveys/advanced-targeting)**
@@ -112,8 +114,8 @@ Surveys appear inside your app as modals or slide-ins.
 ## Decision guide
 
 <AccordionGroup>
-  <Accordion title="Do you control survey timing externally?">
-    Use **Link Surveys**. Send the URL when the moment is right. Pass context via Hidden Fields.
+  <Accordion title="Do you control survey triggering externally?">
+    Use **Link-based Surveys**. Send the URL when the moment is right, even for in-app surveys.Pass context via Hidden Fields.
   </Accordion>
 
   <Accordion title="Should surveys trigger based on in-app behavior?">
