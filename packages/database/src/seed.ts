@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { type Prisma, PrismaClient } from "@prisma/client";
+import * as bcrypt from "bcryptjs";
 import { SEED_CREDENTIALS, SEED_IDS } from "./seed/constants";
 
 const prisma = new PrismaClient();
@@ -14,9 +14,61 @@ if (isProduction && !allowSeed) {
 
 const clearData = process.argv.includes("--clear");
 
-async function deleteData() {
+// Define local types to avoid resolution issues in seed script
+type SurveyElementType =
+  | "openText"
+  | "multipleChoiceSingle"
+  | "multipleChoiceMulti"
+  | "nps"
+  | "cta"
+  | "rating"
+  | "consent"
+  | "date"
+  | "matrix"
+  | "address"
+  | "ranking"
+  | "contactInfo";
+
+interface SurveyQuestion {
+  id: string;
+  type: SurveyElementType;
+  headline: { default: string; [key: string]: string };
+  subheader?: { default: string; [key: string]: string };
+  required?: boolean;
+  placeholder?: { default: string; [key: string]: string };
+  longAnswer?: boolean;
+  choices?: { id: string; label: { default: string }; imageUrl?: string }[];
+  lowerLabel?: { default: string };
+  upperLabel?: { default: string };
+  buttonLabel?: { default: string };
+  buttonUrl?: string;
+  buttonExternal?: boolean;
+  dismissButtonLabel?: { default: string };
+  scale?: string;
+  range?: number;
+  label?: { default: string };
+  allowMulti?: boolean;
+  format?: string;
+  rows?: { id: string; label: { default: string } }[];
+  columns?: { id: string; label: { default: string } }[];
+  addressLine1?: { show: boolean; required: boolean; placeholder: { default: string } };
+  addressLine2?: { show: boolean; required: boolean; placeholder: { default: string } };
+  city?: { show: boolean; required: boolean; placeholder: { default: string } };
+  state?: { show: boolean; required: boolean; placeholder: { default: string } };
+  zip?: { show: boolean; required: boolean; placeholder: { default: string } };
+  country?: { show: boolean; required: boolean; placeholder: { default: string } };
+  firstName?: { show: boolean; required: boolean; placeholder: { default: string } };
+  lastName?: { show: boolean; required: boolean; placeholder: { default: string } };
+  email?: { show: boolean; required: boolean; placeholder: { default: string } };
+  phone?: { show: boolean; required: boolean; placeholder: { default: string } };
+  company?: { show: boolean; required: boolean; placeholder: { default: string } };
+  allowMultipleFiles?: boolean;
+  maxSizeInMB?: number;
+}
+
+async function deleteData(): Promise<void> {
   console.log("Clearing existing data...");
-  const deleteOrder = [
+  const deleteOrder: Prisma.ModelName[] = [
     "ResponseQuotaLink",
     "SurveyQuota",
     "TagsOnResponses",
@@ -50,16 +102,20 @@ async function deleteData() {
 
   for (const model of deleteOrder) {
     try {
-      // @ts-ignore
-      await prisma[model.charAt(0).toLowerCase() + model.slice(1)].deleteMany();
-    } catch (e) {
-      console.warn(`Could not delete data from ${model}: ${e.message}`);
+      // @ts-expect-error - dynamic model access
+      const modelClient = prisma[model.charAt(0).toLowerCase() + model.slice(1)] as {
+        deleteMany: () => Promise<unknown>;
+      };
+      await modelClient.deleteMany();
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      console.warn(`Could not delete data from ${String(model)}: ${errorMessage}`);
     }
   }
   console.log("Data cleared.");
 }
 
-const KITCHEN_SINK_QUESTIONS = [
+const KITCHEN_SINK_QUESTIONS: SurveyQuestion[] = [
   {
     id: "q_open_text",
     type: "openText",
@@ -129,17 +185,6 @@ const KITCHEN_SINK_QUESTIONS = [
     label: { default: "I agree to the terms and conditions" },
   },
   {
-    id: "q_picture_selection",
-    type: "pictureSelection",
-    headline: { default: "Which logo do you prefer?" },
-    required: true,
-    allowMulti: false,
-    choices: [
-      { id: "pic_1", imageUrl: "https://formbricks.com/logo-dark.png" },
-      { id: "pic_2", imageUrl: "https://formbricks.com/logo-light.png" },
-    ],
-  },
-  {
     id: "q_date",
     type: "date",
     headline: { default: "When did you start using Formbricks?" },
@@ -196,44 +241,42 @@ const KITCHEN_SINK_QUESTIONS = [
     phone: { show: true, required: false, placeholder: { default: "Phone" } },
     company: { show: true, required: false, placeholder: { default: "Company" } },
   },
-  {
-    id: "q_file_upload",
-    type: "fileUpload",
-    headline: { default: "Upload your logo" },
-    required: false,
-    allowMultipleFiles: true,
-    maxSizeInMB: 5,
-  },
 ];
 
-async function generateResponses(surveyId: string, count: number) {
-  console.log(`Generating ${count} responses for survey ${surveyId}...`);
+async function generateResponses(surveyId: string, count: number): Promise<void> {
+  console.log(`Generating ${String(count)} responses for survey ${surveyId}...`);
   const survey = await prisma.survey.findUnique({
     where: { id: surveyId },
   });
 
   if (!survey) return;
 
-  const questions = survey.questions as any[];
+  const questions = survey.questions as unknown as SurveyQuestion[];
 
   for (let i = 0; i < count; i++) {
-    const data: Record<string, any> = {};
-    questions.forEach((q) => {
+    const data: Record<string, string | number | string[] | Record<string, string>> = {};
+    for (const q of questions) {
       switch (q.type) {
         case "openText":
-          data[q.id] = `Sample response ${i}`;
+          data[q.id] = `Sample response ${String(i)}`;
           break;
         case "multipleChoiceSingle":
-          data[q.id] = q.choices[Math.floor(Math.random() * q.choices.length)].label.default;
+          if (q.choices) {
+            data[q.id] = q.choices[Math.floor(Math.random() * q.choices.length)].label.default;
+          }
           break;
         case "multipleChoiceMulti":
-          data[q.id] = [q.choices[0].label.default, q.choices[1].label.default];
+          if (q.choices) {
+            data[q.id] = [q.choices[0].label.default, q.choices[1].label.default];
+          }
           break;
         case "nps":
           data[q.id] = Math.floor(Math.random() * 11);
           break;
         case "rating":
-          data[q.id] = Math.floor(Math.random() * q.range) + 1;
+          if (q.range) {
+            data[q.id] = Math.floor(Math.random() * q.range) + 1;
+          }
           break;
         case "cta":
           data[q.id] = "clicked";
@@ -244,16 +287,23 @@ async function generateResponses(surveyId: string, count: number) {
         case "date":
           data[q.id] = new Date().toISOString().split("T")[0];
           break;
-        case "matrix":
+        case "matrix": {
           const matrixData: Record<string, string> = {};
-          q.rows.forEach((row: any) => {
-            matrixData[row.label.default] =
-              q.columns[Math.floor(Math.random() * q.columns.length)].label.default;
-          });
+          if (q.rows) {
+            for (const row of q.rows) {
+              if (q.columns) {
+                matrixData[row.label.default] =
+                  q.columns[Math.floor(Math.random() * q.columns.length)].label.default;
+              }
+            }
+          }
           data[q.id] = matrixData;
           break;
+        }
         case "ranking":
-          data[q.id] = q.choices.map((c: any) => c.label.default).sort(() => Math.random() - 0.5);
+          if (q.choices) {
+            data[q.id] = q.choices.map((c) => c.label.default).sort(() => Math.random() - 0.5);
+          }
           break;
         case "address":
           data[q.id] = {
@@ -268,25 +318,45 @@ async function generateResponses(surveyId: string, count: number) {
           data[q.id] = {
             firstName: "John",
             lastName: "Doe",
-            email: `john.doe.${i}@example.com`,
+            email: `john.doe.${String(i)}@example.com`,
           };
           break;
         default:
           data[q.id] = "Sample data";
       }
-    });
+    }
 
-    await prisma.response.create({
+    await prisma.$transaction(async (tx) => {
+      const display = await tx.display.create({
+        data: {
+          surveyId,
+        },
+      });
+
+      await tx.response.create({
+        data: {
+          surveyId,
+          finished: true,
+          data: data as unknown as Prisma.InputJsonValue,
+          displayId: display.id,
+        },
+      });
+    });
+  }
+
+  // Generate some displays without responses (e.g., 30% more)
+  const extraDisplays = Math.floor(count * 0.3);
+  console.log(`Generating ${String(extraDisplays)} extra displays for survey ${surveyId}...`);
+  for (let i = 0; i < extraDisplays; i++) {
+    await prisma.display.create({
       data: {
         surveyId,
-        finished: true,
-        data,
       },
     });
   }
 }
 
-async function main() {
+async function main(): Promise<void> {
   if (clearData) {
     await deleteData();
   }
@@ -313,7 +383,7 @@ async function main() {
   // Users
   const passwordHash = await bcrypt.hash(SEED_CREDENTIALS.ADMIN.password, 10);
 
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { id: SEED_IDS.USER_ADMIN },
     update: {},
     create: {
@@ -332,7 +402,7 @@ async function main() {
     },
   });
 
-  const manager = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { id: SEED_IDS.USER_MANAGER },
     update: {},
     create: {
@@ -363,13 +433,14 @@ async function main() {
   });
 
   // Environments
-  const devEnv = await prisma.environment.upsert({
+  await prisma.environment.upsert({
     where: { id: SEED_IDS.ENV_DEV },
-    update: {},
+    update: { appSetupCompleted: false },
     create: {
       id: SEED_IDS.ENV_DEV,
       type: "development",
       projectId: project.id,
+      appSetupCompleted: false,
       attributeKeys: {
         create: [
           { name: "Email", key: "email", isUnique: true, type: "default" },
@@ -383,11 +454,12 @@ async function main() {
 
   const prodEnv = await prisma.environment.upsert({
     where: { id: SEED_IDS.ENV_PROD },
-    update: {},
+    update: { appSetupCompleted: false },
     create: {
       id: SEED_IDS.ENV_PROD,
       type: "production",
       projectId: project.id,
+      appSetupCompleted: false,
       attributeKeys: {
         create: [
           { name: "Email", key: "email", isUnique: true, type: "default" },
@@ -401,96 +473,93 @@ async function main() {
 
   console.log("Seeding surveys...");
 
+  const createSurveyWithBlocks = async (
+    id: string,
+    name: string,
+    environmentId: string,
+    status: "inProgress" | "draft" | "completed",
+    questions: SurveyQuestion[]
+  ): Promise<void> => {
+    const blocks = [
+      {
+        id: `block_${id}`,
+        name: "Main Block",
+        elements: questions,
+      },
+    ];
+
+    await prisma.survey.upsert({
+      where: { id },
+      update: {
+        environmentId,
+        type: "link",
+        questions: questions as unknown as Prisma.InputJsonValue,
+        blocks: blocks as unknown as Prisma.InputJsonValue[],
+      },
+      create: {
+        id,
+        name,
+        environmentId,
+        status,
+        type: "link",
+        questions: questions as unknown as Prisma.InputJsonValue,
+        blocks: blocks as unknown as Prisma.InputJsonValue[],
+      },
+    });
+  };
+
   // Kitchen Sink Survey
-  await prisma.survey.upsert({
-    where: { id: SEED_IDS.SURVEY_KITCHEN_SINK },
-    update: {},
-    create: {
-      id: SEED_IDS.SURVEY_KITCHEN_SINK,
-      name: "Kitchen Sink Survey",
-      environmentId: devEnv.id,
-      status: "inProgress",
-      type: "app",
-      questions: KITCHEN_SINK_QUESTIONS,
-    },
-  });
+  await createSurveyWithBlocks(
+    SEED_IDS.SURVEY_KITCHEN_SINK,
+    "Kitchen Sink Survey",
+    prodEnv.id,
+    "inProgress",
+    KITCHEN_SINK_QUESTIONS
+  );
 
   // CSAT Survey
-  await prisma.survey.upsert({
-    where: { id: SEED_IDS.SURVEY_CSAT },
-    update: {},
-    create: {
-      id: SEED_IDS.SURVEY_CSAT,
-      name: "CSAT Survey",
-      environmentId: devEnv.id,
-      status: "inProgress",
-      type: "app",
-      questions: [
-        {
-          id: "csat_rating",
-          type: "rating",
-          headline: { default: "How satisfied are you with our product?" },
-          required: true,
-          scale: "smiley",
-          range: 5,
-        },
-      ],
+  await createSurveyWithBlocks(SEED_IDS.SURVEY_CSAT, "CSAT Survey", prodEnv.id, "inProgress", [
+    {
+      id: "csat_rating",
+      type: "rating",
+      headline: { default: "How satisfied are you with our product?" },
+      required: true,
+      scale: "smiley",
+      range: 5,
     },
-  });
+  ]);
 
   // Draft Survey
-  await prisma.survey.upsert({
-    where: { id: SEED_IDS.SURVEY_DRAFT },
-    update: {},
-    create: {
-      id: SEED_IDS.SURVEY_DRAFT,
-      name: "Draft Survey",
-      environmentId: devEnv.id,
-      status: "draft",
-      type: "app",
-      questions: [
-        {
-          id: "draft_q1",
-          type: "openText",
-          headline: { default: "Coming soon..." },
-          required: false,
-        },
-      ],
+  await createSurveyWithBlocks(SEED_IDS.SURVEY_DRAFT, "Draft Survey", prodEnv.id, "draft", [
+    {
+      id: "draft_q1",
+      type: "openText",
+      headline: { default: "Coming soon..." },
+      required: false,
     },
-  });
+  ]);
 
   // Completed Survey
-  await prisma.survey.upsert({
-    where: { id: SEED_IDS.SURVEY_COMPLETED },
-    update: {},
-    create: {
-      id: SEED_IDS.SURVEY_COMPLETED,
-      name: "Exit Survey",
-      environmentId: devEnv.id,
-      status: "completed",
-      type: "app",
-      questions: [
-        {
-          id: "exit_q1",
-          type: "multipleChoiceSingle",
-          headline: { default: "Why are you leaving?" },
-          required: true,
-          choices: [
-            { id: "c1", label: { default: "Too expensive" } },
-            { id: "c2", label: { default: "Found a better alternative" } },
-            { id: "c3", label: { default: "Missing features" } },
-          ],
-        },
+  await createSurveyWithBlocks(SEED_IDS.SURVEY_COMPLETED, "Exit Survey", prodEnv.id, "completed", [
+    {
+      id: "exit_q1",
+      type: "multipleChoiceSingle",
+      headline: { default: "Why are you leaving?" },
+      required: true,
+      choices: [
+        { id: "c1", label: { default: "Too expensive" } },
+        { id: "c2", label: { default: "Found a better alternative" } },
+        { id: "c3", label: { default: "Missing features" } },
       ],
     },
-  });
+  ]);
 
   console.log("Generating responses...");
   await generateResponses(SEED_IDS.SURVEY_KITCHEN_SINK, 50);
   await generateResponses(SEED_IDS.SURVEY_CSAT, 50);
   await generateResponses(SEED_IDS.SURVEY_COMPLETED, 50);
 
-  console.log("\n" + "=".repeat(50));
+  console.log(`\n${"=".repeat(50)}`);
   console.log("🚀 SEEDING COMPLETED SUCCESSFULLY");
   console.log("=".repeat(50));
   console.log("\nLog in with the following credentials:");
@@ -503,14 +572,16 @@ async function main() {
   console.log(`\n  Member:`);
   console.log(`    Email:    ${SEED_CREDENTIALS.MEMBER.email}`);
   console.log(`    Password: ${SEED_CREDENTIALS.MEMBER.password}`);
-  console.log("\n" + "=".repeat(50) + "\n");
+  console.log(`\n${"=".repeat(50)}\n`);
 }
 
 main()
-  .catch((e) => {
+  .catch((e: unknown) => {
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
+  .finally(() => {
+    prisma.$disconnect().catch((e: unknown) => {
+      console.error("Error disconnecting prisma:", e);
+    });
   });
