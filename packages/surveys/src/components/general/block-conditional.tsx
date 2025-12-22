@@ -295,7 +295,7 @@ export function BlockConditional({
           <div
             className={cn(
               "flex w-full flex-row-reverse justify-between",
-              fullSizeCards ? "sticky bottom-0 bg-survey-bg" : ""
+              fullSizeCards ? "bg-survey-bg sticky bottom-0" : ""
             )}>
             <div>
               <SubmitButton
