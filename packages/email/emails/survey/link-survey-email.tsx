@@ -4,9 +4,10 @@ import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { TFunction } from "../../src/types/translations";
 
-interface LinkSurveyEmailProps {
+interface LinkSurveyEmailProps extends TEmailTemplateLegalProps {
   readonly surveyName: string;
   readonly surveyLink: string;
   readonly logoUrl?: string;
@@ -18,9 +19,10 @@ export function LinkSurveyEmail({
   surveyLink,
   logoUrl,
   t = mockT,
+  ...legalProps
 }: LinkSurveyEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate logoUrl={logoUrl} t={t}>
+    <EmailTemplate logoUrl={logoUrl} t={t} {...legalProps}>
       <Container>
         <Heading>{t("emails.verification_email_hey")}</Heading>
         <Text className="text-sm">{t("emails.verification_email_thanks")}</Text>

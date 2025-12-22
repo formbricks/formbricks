@@ -9,10 +9,11 @@ import { EmailTemplate } from "../../src/components/email-template";
 import { renderEmailResponseValue } from "../../src/lib/email-utils";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { ProcessedResponseElement } from "../../src/types/follow-up";
 import { TFunction } from "../../src/types/translations";
 
-export interface ResponseFinishedEmailProps {
+export interface ResponseFinishedEmailProps extends TEmailTemplateLegalProps {
   readonly survey: TSurvey;
   readonly responseCount: number;
   readonly response: TResponse;
@@ -43,9 +44,10 @@ export function ResponseFinishedEmail({
   organization,
   elements,
   t = mockT,
+  ...legalProps
 }: ResponseFinishedEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate t={t}>
+    <EmailTemplate t={t} {...legalProps}>
       <Container>
         <Row>
           <Column>

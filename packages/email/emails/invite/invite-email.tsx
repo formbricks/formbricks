@@ -4,9 +4,10 @@ import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { TFunction } from "../../src/types/translations";
 
-interface InviteEmailProps {
+interface InviteEmailProps extends TEmailTemplateLegalProps {
   readonly inviteeName: string;
   readonly inviterName: string;
   readonly verifyLink: string;
@@ -18,9 +19,10 @@ export function InviteEmail({
   inviterName,
   verifyLink,
   t = mockT,
+  ...legalProps
 }: InviteEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate t={t}>
+    <EmailTemplate t={t} {...legalProps}>
       <Container>
         <Heading>
           {t("emails.invite_email_heading", { inviteeName })} {inviteeName}

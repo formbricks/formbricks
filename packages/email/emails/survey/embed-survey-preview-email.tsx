@@ -2,9 +2,10 @@ import { Container, Heading, Text } from "@react-email/components";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { TFunction } from "../../src/types/translations";
 
-interface EmbedSurveyPreviewEmailProps {
+interface EmbedSurveyPreviewEmailProps extends TEmailTemplateLegalProps {
   readonly html: string;
   readonly environmentId: string;
   readonly logoUrl?: string;
@@ -16,9 +17,10 @@ export function EmbedSurveyPreviewEmail({
   environmentId,
   logoUrl,
   t = mockT,
+  ...legalProps
 }: EmbedSurveyPreviewEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate logoUrl={logoUrl} t={t}>
+    <EmailTemplate logoUrl={logoUrl} t={t} {...legalProps}>
       <Container>
         <Heading>{t("emails.embed_survey_preview_email_heading")}</Heading>
         <Text className="text-sm">{t("emails.embed_survey_preview_email_text")}</Text>

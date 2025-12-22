@@ -12,6 +12,7 @@ import {
   renderResponseFinishedEmail,
   renderVerificationEmail,
 } from "@formbricks/email";
+import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
 import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -20,8 +21,11 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserEmail, TUserLocale } from "@formbricks/types/user";
 import {
   DEBUG,
+  IMPRINT_ADDRESS,
+  IMPRINT_URL,
   MAIL_FROM,
   MAIL_FROM_NAME,
+  PRIVACY_URL,
   SMTP_AUTHENTICATED,
   SMTP_HOST,
   SMTP_PASSWORD,
@@ -29,6 +33,7 @@ import {
   SMTP_REJECT_UNAUTHORIZED_TLS,
   SMTP_SECURE_ENABLED,
   SMTP_USER,
+  TERMS_URL,
   WEBAPP_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
@@ -38,6 +43,13 @@ import { getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
+
+const legalProps: TEmailTemplateLegalProps = {
+  privacyUrl: PRIVACY_URL || undefined,
+  termsUrl: TERMS_URL || undefined,
+  imprintUrl: IMPRINT_URL || undefined,
+  imprintAddress: IMPRINT_ADDRESS || undefined,
+};
 
 interface SendEmailDataProps {
   to: string;
@@ -91,7 +103,7 @@ export const sendVerificationNewEmail = async (id: string, email: string): Promi
     const token = createEmailChangeToken(id, email);
     const verifyLink = `${WEBAPP_URL}/verify-email-change?token=${encodeURIComponent(token)}`;
 
-    const html = await renderNewEmailVerification({ verifyLink, t });
+    const html = await renderNewEmailVerification({ verifyLink, t, ...legalProps });
 
     return await sendEmail({
       to: email,
@@ -119,7 +131,12 @@ export const sendVerificationEmail = async ({
     const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
     const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?token=${encodeURIComponent(token)}`;
 
-    const html = await renderVerificationEmail({ verificationRequestLink, verifyLink, t });
+    const html = await renderVerificationEmail({
+      verificationRequestLink,
+      verifyLink,
+      t,
+      ...legalProps,
+    });
 
     return await sendEmail({
       to: email,
@@ -142,7 +159,7 @@ export const sendForgotPasswordEmail = async (user: {
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
-  const html = await renderForgotPasswordEmail({ verifyLink, t });
+  const html = await renderForgotPasswordEmail({ verifyLink, t, ...legalProps });
   return await sendEmail({
     to: user.email,
     subject: t("emails.forgot_password_email_subject"),
@@ -152,7 +169,7 @@ export const sendForgotPasswordEmail = async (user: {
 
 export const sendPasswordResetNotifyEmail = async (user: { email: string }): Promise<boolean> => {
   const t = await getTranslate();
-  const html = await renderPasswordResetNotifyEmail({ t });
+  const html = await renderPasswordResetNotifyEmail({ t, ...legalProps });
   return await sendEmail({
     to: user.email,
     subject: t("emails.password_reset_notify_email_subject"),
@@ -173,7 +190,7 @@ export const sendInviteMemberEmail = async (
 
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
-  const html = await renderInviteEmail({ inviteeName, inviterName, verifyLink, t });
+  const html = await renderInviteEmail({ inviteeName, inviterName, verifyLink, t, ...legalProps });
   return await sendEmail({
     to: email,
     subject: t("emails.invite_member_email_subject"),
@@ -187,7 +204,7 @@ export const sendInviteAcceptedEmail = async (
   email: string
 ): Promise<void> => {
   const t = await getTranslate();
-  const html = await renderInviteAcceptedEmail({ inviteeName, inviterName, t });
+  const html = await renderInviteAcceptedEmail({ inviteeName, inviterName, t, ...legalProps });
   await sendEmail({
     to: email,
     subject: t("emails.invite_accepted_email_subject"),
@@ -222,6 +239,7 @@ export const sendResponseFinishedEmail = async (
     organization,
     elements,
     t,
+    ...legalProps,
   });
 
   await sendEmail({
@@ -246,7 +264,13 @@ export const sendEmbedSurveyPreviewEmail = async (
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate();
-  const html = await renderEmbedSurveyPreviewEmail({ html: innerHtml, environmentId, logoUrl, t });
+  const html = await renderEmbedSurveyPreviewEmail({
+    html: innerHtml,
+    environmentId,
+    logoUrl,
+    t,
+    ...legalProps,
+  });
   return await sendEmail({
     to,
     subject: t("emails.embed_survey_preview_email_subject"),
@@ -260,7 +284,12 @@ export const sendEmailCustomizationPreviewEmail = async (
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate();
-  const emailHtmlBody = await renderEmailCustomizationPreviewEmail({ userName, logoUrl, t });
+  const emailHtmlBody = await renderEmailCustomizationPreviewEmail({
+    userName,
+    logoUrl,
+    t,
+    ...legalProps,
+  });
 
   return await sendEmail({
     to,
@@ -285,7 +314,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   };
   const surveyLink = getSurveyLink();
 
-  const html = await renderLinkSurveyEmail({ surveyName, surveyLink, logoUrl, t });
+  const html = await renderLinkSurveyEmail({ surveyName, surveyLink, logoUrl, t, ...legalProps });
   return await sendEmail({
     to: data.email,
     subject: t("emails.verified_link_survey_email_subject"),

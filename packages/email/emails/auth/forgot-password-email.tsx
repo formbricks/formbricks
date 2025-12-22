@@ -4,16 +4,21 @@ import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { TFunction } from "../../src/types/translations";
 
-interface ForgotPasswordEmailProps {
+interface ForgotPasswordEmailProps extends TEmailTemplateLegalProps {
   readonly verifyLink: string;
   readonly t?: TFunction;
 }
 
-export function ForgotPasswordEmail({ verifyLink, t = mockT }: ForgotPasswordEmailProps): React.JSX.Element {
+export function ForgotPasswordEmail({
+  verifyLink,
+  t = mockT,
+  ...legalProps
+}: ForgotPasswordEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate t={t}>
+    <EmailTemplate t={t} {...legalProps}>
       <Container>
         <Heading>{t("emails.forgot_password_email_heading")}</Heading>
         <Text className="text-sm">{t("emails.forgot_password_email_text")}</Text>

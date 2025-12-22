@@ -8,6 +8,7 @@ import {
 } from "@formbricks/email";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL, TERMS_URL } from "@/lib/constants";
 import { getElementResponseMapping } from "@/lib/responses";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { getTranslate } from "@/lingodotdev/server";
@@ -104,6 +105,10 @@ export const sendFollowUpEmail = async ({
     hiddenFields,
     logoUrl,
     t,
+    privacyUrl: PRIVACY_URL || undefined,
+    termsUrl: TERMS_URL || undefined,
+    imprintUrl: IMPRINT_URL || undefined,
+    imprintAddress: IMPRINT_ADDRESS || undefined,
   });
 
   await sendEmail({

@@ -3,10 +3,11 @@ import { EmailTemplate } from "../../src/components/email-template";
 import { renderEmailResponseValue } from "../../src/lib/email-utils";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { ProcessedHiddenField, ProcessedResponseElement, ProcessedVariable } from "../../src/types/follow-up";
 import { TFunction } from "../../src/types/translations";
 
-export interface FollowUpEmailProps {
+export interface FollowUpEmailProps extends TEmailTemplateLegalProps {
   readonly body: string; // Already processed HTML with recall tags replaced
   readonly responseData?: ProcessedResponseElement[]; // Already mapped elements
   readonly variables?: ProcessedVariable[]; // Already filtered variables
@@ -22,9 +23,10 @@ export function FollowUpEmail({
   hiddenFields = [],
   logoUrl,
   t = mockT,
+  ...legalProps
 }: FollowUpEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate logoUrl={logoUrl} t={t}>
+    <EmailTemplate logoUrl={logoUrl} t={t} {...legalProps}>
       <>
         <div dangerouslySetInnerHTML={{ __html: body }} />
 

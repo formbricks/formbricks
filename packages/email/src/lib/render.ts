@@ -13,81 +13,104 @@ import {
   ResponseFinishedEmail,
   ResponseFinishedEmailProps,
 } from "../../emails/survey/response-finished-email";
+import { TEmailTemplateLegalProps } from "../types/email";
 import { TFunction } from "../types/translations";
 
-export async function renderVerificationEmail(props: {
-  verifyLink: string;
-  verificationRequestLink: string;
-  t: TFunction;
-}): Promise<string> {
+export async function renderVerificationEmail(
+  props: {
+    verifyLink: string;
+    verificationRequestLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(VerificationEmail(props));
 }
 
-export async function renderForgotPasswordEmail(props: {
-  verifyLink: string;
-  t: TFunction;
-}): Promise<string> {
+export async function renderForgotPasswordEmail(
+  props: {
+    verifyLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(ForgotPasswordEmail(props));
 }
 
-export async function renderNewEmailVerification(props: {
-  verifyLink: string;
-  t: TFunction;
-}): Promise<string> {
+export async function renderNewEmailVerification(
+  props: {
+    verifyLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(NewEmailVerification(props));
 }
 
-export async function renderPasswordResetNotifyEmail(props: { t: TFunction }): Promise<string> {
+export async function renderPasswordResetNotifyEmail(
+  props: { t: TFunction } & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(PasswordResetNotifyEmail(props));
 }
 
-export async function renderInviteEmail(props: {
-  inviteeName: string;
-  inviterName: string;
-  verifyLink: string;
-  t: TFunction;
-}): Promise<string> {
+export async function renderInviteEmail(
+  props: {
+    inviteeName: string;
+    inviterName: string;
+    verifyLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(InviteEmail(props));
 }
 
-export async function renderInviteAcceptedEmail(props: {
-  inviterName: string;
-  inviteeName: string;
-  t: TFunction;
-}): Promise<string> {
+export async function renderInviteAcceptedEmail(
+  props: {
+    inviterName: string;
+    inviteeName: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(InviteAcceptedEmail(props));
 }
 
-export async function renderLinkSurveyEmail(props: {
-  surveyName: string;
-  surveyLink: string;
-  logoUrl: string;
-  t: TFunction;
-}): Promise<string> {
+export async function renderLinkSurveyEmail(
+  props: {
+    surveyName: string;
+    surveyLink: string;
+    logoUrl: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(LinkSurveyEmail(props));
 }
 
-export async function renderEmbedSurveyPreviewEmail(props: {
-  html: string;
-  environmentId: string;
-  logoUrl?: string;
-  t: TFunction;
-}): Promise<string> {
+export async function renderEmbedSurveyPreviewEmail(
+  props: {
+    html: string;
+    environmentId: string;
+    logoUrl?: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(EmbedSurveyPreviewEmail(props));
 }
 
-export async function renderResponseFinishedEmail(props: ResponseFinishedEmailProps): Promise<string> {
+export async function renderResponseFinishedEmail(
+  props: ResponseFinishedEmailProps & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(ResponseFinishedEmail(props));
 }
 
-export async function renderEmailCustomizationPreviewEmail(props: {
-  userName: string;
-  logoUrl?: string;
-  t: TFunction;
-}): Promise<string> {
+export async function renderEmailCustomizationPreviewEmail(
+  props: {
+    userName: string;
+    logoUrl?: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(EmailCustomizationPreviewEmail(props));
 }
 
-export async function renderFollowUpEmail(props: FollowUpEmailProps): Promise<string> {
+export async function renderFollowUpEmail(
+  props: FollowUpEmailProps & TEmailTemplateLegalProps
+): Promise<string> {
   return await render(FollowUpEmail(props));
 }

@@ -4,9 +4,10 @@ import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { TFunction } from "../../src/types/translations";
 
-interface NewEmailVerificationProps {
+interface NewEmailVerificationProps extends TEmailTemplateLegalProps {
   readonly verifyLink: string;
   readonly t?: TFunction;
 }
@@ -14,9 +15,10 @@ interface NewEmailVerificationProps {
 export function NewEmailVerification({
   verifyLink,
   t = mockT,
+  ...legalProps
 }: NewEmailVerificationProps): React.JSX.Element {
   return (
-    <EmailTemplate t={t}>
+    <EmailTemplate t={t} {...legalProps}>
       <Container>
         <Heading>{t("emails.verification_email_heading")}</Heading>
         <Text className="text-sm">{t("emails.new_email_verification_text")}</Text>

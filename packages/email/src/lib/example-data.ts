@@ -171,6 +171,13 @@ export const exampleData = {
   emailCustomizationPreviewEmail: {
     userName: "Alex Johnson",
   },
+
+  legalProps: {
+    privacyUrl: "https://formbricks.com/privacy",
+    termsUrl: "https://formbricks.com/terms",
+    imprintUrl: "https://formbricks.com/imprint",
+    imprintAddress: "Formbricks GmbH, Example Street 123, 12345 Berlin, Germany",
+  },
 };
 
 export type ExampleDataKeys = keyof typeof exampleData;
