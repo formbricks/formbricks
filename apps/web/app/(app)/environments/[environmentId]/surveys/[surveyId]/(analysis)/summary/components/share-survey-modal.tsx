@@ -81,8 +81,8 @@ export const ShareSurveyModal = ({
     componentType: React.ComponentType<unknown>;
     componentProps: unknown;
     disabled?: boolean;
-  }[] = useMemo(
-    () => [
+  }[] = useMemo(() => {
+    const tabs = [
       {
         id: ShareViaType.ANON_LINKS,
         type: LinkTabsType.SHARE_VIA,
@@ -191,22 +191,23 @@ export const ShareSurveyModal = ({
         componentType: PrettyUrlTab,
         componentProps: { survey, publicDomain, isReadOnly },
       },
-    ],
-    [
-      t,
-      survey,
-      publicDomain,
-      user.locale,
-      surveyUrl,
-      isReadOnly,
-      environmentId,
-      segments,
-      isContactsEnabled,
-      isFormbricksCloud,
-      email,
-      isStorageConfigured,
-    ]
-  );
+    ];
+
+    return isFormbricksCloud ? tabs.filter((tab) => tab.id !== ShareSettingsType.PRETTY_URL) : tabs;
+  }, [
+    t,
+    survey,
+    publicDomain,
+    user.locale,
+    surveyUrl,
+    isReadOnly,
+    environmentId,
+    segments,
+    isContactsEnabled,
+    isFormbricksCloud,
+    email,
+    isStorageConfigured,
+  ]);
 
   const getDefaultActiveId = useCallback(() => {
     if (survey.type !== "link") {

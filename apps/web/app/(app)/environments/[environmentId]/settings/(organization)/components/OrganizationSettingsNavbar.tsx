@@ -52,6 +52,7 @@ export const OrganizationSettingsNavbar = ({
       label: t("common.domain"),
       href: `/environments/${environmentId}/settings/domain`,
       current: pathname?.includes("/domain"),
+      hidden: isFormbricksCloud,
     },
     {
       id: "billing",

@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -11,6 +12,10 @@ import { PrettyUrlsTable } from "./components/pretty-urls-table";
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
+
+  if (IS_FORMBRICKS_CLOUD) {
+    return notFound();
+  }
 
   const { session, currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
 
