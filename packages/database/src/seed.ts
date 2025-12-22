@@ -492,7 +492,20 @@ async function main() {
   await generateResponses(SEED_IDS.SURVEY_CSAT, 50);
   await generateResponses(SEED_IDS.SURVEY_COMPLETED, 50);
 
-  console.log("Seeding completed successfully.");
+  console.log("\n" + "=".repeat(50));
+  console.log("🚀 SEEDING COMPLETED SUCCESSFULLY");
+  console.log("=".repeat(50));
+  console.log("\nLog in with the following credentials:");
+  console.log(`\n  Admin (Owner):`);
+  console.log(`    Email:    ${SEED_CREDENTIALS.ADMIN.email}`);
+  console.log(`    Password: ${SEED_CREDENTIALS.ADMIN.password}`);
+  console.log(`\n  Manager:`);
+  console.log(`    Email:    ${SEED_CREDENTIALS.MANAGER.email}`);
+  console.log(`    Password: ${SEED_CREDENTIALS.MANAGER.password}`);
+  console.log(`\n  Member:`);
+  console.log(`    Email:    ${SEED_CREDENTIALS.MEMBER.email}`);
+  console.log(`    Password: ${SEED_CREDENTIALS.MEMBER.password}`);
+  console.log("\n" + "=".repeat(50) + "\n");
 }
 
 main()
