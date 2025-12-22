@@ -173,7 +173,8 @@ export function BlockConditional({
     }
 
     // For other element types, check if required fields are empty
-    if (element.required && isEmptyResponse(response)) {
+    // CTA elements should not block navigation even if marked required (as they are informational)
+    if (element.type !== TSurveyElementTypeEnum.CTA && element.required && isEmptyResponse(response)) {
       form.requestSubmit();
       return false;
     }
