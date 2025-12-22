@@ -1,28 +1,32 @@
 import { Container, Heading, Link, Text } from "@react-email/components";
-import React from "react";
-import { getTranslate } from "@/lingodotdev/server";
-import { EmailButton } from "../../components/email-button";
-import { EmailFooter } from "../../components/email-footer";
-import { EmailTemplate } from "../../components/email-template";
+import { EmailButton } from "../../src/components/email-button";
+import { EmailFooter } from "../../src/components/email-footer";
+import { EmailTemplate } from "../../src/components/email-template";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
+import { TFunction } from "../../src/types/translations";
 
-interface VerificationEmailProps {
-  verifyLink: string;
-  verificationRequestLink: string;
+interface VerificationEmailProps extends TEmailTemplateLegalProps {
+  readonly verifyLink: string;
+  readonly verificationRequestLink: string;
+  readonly t?: TFunction;
 }
 
-export async function VerificationEmail({
+export function VerificationEmail({
   verifyLink,
   verificationRequestLink,
-}: VerificationEmailProps): Promise<React.JSX.Element> {
-  const t = await getTranslate();
+  t = mockT,
+  ...legalProps
+}: VerificationEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate t={t}>
+    <EmailTemplate t={t} {...legalProps}>
       <Container>
         <Heading>{t("emails.verification_email_heading")}</Heading>
         <Text className="text-sm">{t("emails.verification_email_text")}</Text>
         <EmailButton href={verifyLink} label={t("emails.verification_email_verify_email")} />
         <Text className="text-sm">{t("emails.verification_email_click_on_this_link")}</Text>
-        <Link className="break-all text-sm text-black" href={verifyLink}>
+        <Link className="text-sm break-all text-black" href={verifyLink}>
           {verifyLink}
         </Link>
         <Text className="text-sm font-bold">{t("emails.verification_email_link_valid_for_24_hours")}</Text>
@@ -38,4 +42,6 @@ export async function VerificationEmail({
   );
 }
 
-export default VerificationEmail;
+export default function VerificationEmailPreview(): React.JSX.Element {
+  return <VerificationEmail {...exampleData.verificationEmail} />;
+}

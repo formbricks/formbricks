@@ -1,10 +1,10 @@
 import { Container } from "@react-email/components";
-import { cn } from "@/lib/cn";
+import { cn } from "../../src/lib/cn";
 
 interface ElementHeaderProps {
-  headline: string;
-  subheader?: string;
-  className?: string;
+  readonly headline: string;
+  readonly subheader?: string;
+  readonly className?: string;
 }
 
 export function ElementHeader({ headline, subheader, className }: ElementHeaderProps): React.JSX.Element {
@@ -21,3 +21,5 @@ export function ElementHeader({ headline, subheader, className }: ElementHeaderP
     </>
   );
 }
+
+export default ElementHeader;

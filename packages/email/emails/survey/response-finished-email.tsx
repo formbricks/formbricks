@@ -2,35 +2,52 @@ import { Column, Container, Heading, Hr, Link, Row, Section, Text } from "@react
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
-import { type TSurvey } from "@formbricks/types/surveys/types";
-import { getElementResponseMapping } from "@/lib/responses";
-import { getTranslate } from "@/lingodotdev/server";
-import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
-import { EmailButton } from "../../components/email-button";
-import { EmailTemplate } from "../../components/email-template";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import type { TSurvey } from "@formbricks/types/surveys/types";
+import { EmailButton } from "../../src/components/email-button";
+import { EmailTemplate } from "../../src/components/email-template";
+import { renderEmailResponseValue } from "../../src/lib/email-utils";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
+import { ProcessedResponseElement } from "../../src/types/follow-up";
+import { TFunction } from "../../src/types/translations";
 
-interface ResponseFinishedEmailProps {
-  survey: TSurvey;
-  responseCount: number;
-  response: TResponse;
-  WEBAPP_URL: string;
-  environmentId: string;
-  organization: TOrganization;
+export interface ResponseFinishedEmailProps extends TEmailTemplateLegalProps {
+  readonly survey: TSurvey;
+  readonly responseCount: number;
+  readonly response: TResponse;
+  readonly WEBAPP_URL: string;
+  readonly environmentId: string;
+  readonly organization: TOrganization;
+  readonly elements: ProcessedResponseElement[]; // Pre-processed data, not a function
+  readonly t?: TFunction;
 }
 
-export async function ResponseFinishedEmail({
+const mockGetElementResponseMapping = (survey: TSurvey, response: TResponse) => {
+  // For preview, just return the response data as elements
+  return Object.entries(response.data)
+    .filter(([key]) => !survey.hiddenFields.fieldIds?.includes(key))
+    .map(([key, value]) => ({
+      element: key,
+      response: value as string | string[],
+      type: TSurveyElementTypeEnum.OpenText, // Default type for preview
+    }));
+};
+
+export function ResponseFinishedEmail({
   survey,
   responseCount,
   response,
   WEBAPP_URL,
   environmentId,
   organization,
-}: ResponseFinishedEmailProps): Promise<React.JSX.Element> {
-  const elements = getElementResponseMapping(survey, response);
-  const t = await getTranslate();
-
+  elements,
+  t = mockT,
+  ...legalProps
+}: ResponseFinishedEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate t={t}>
+    <EmailTemplate t={t} {...legalProps}>
       <Container>
         <Row>
           <Column>
@@ -42,7 +59,7 @@ export async function ResponseFinishedEmail({
             </Text>
             <Hr />
             {elements.map((e) => {
-              if (!e.response) return;
+              if (!e.response) return null;
               return (
                 <Row key={e.element}>
                   <Column className="w-full font-medium">
@@ -58,7 +75,6 @@ export async function ResponseFinishedEmail({
                 if (typeof variableResponse !== "string" && typeof variableResponse !== "number") {
                   return false;
                 }
-
                 return variableResponse !== undefined;
               })
               .map((variable) => {
@@ -157,4 +173,12 @@ function EyeOffIcon(): React.JSX.Element {
       <line x1="2" x2="22" y1="2" y2="22" />
     </svg>
   );
+}
+
+// Default export for preview server
+export default function ResponseFinishedEmailPreview(): React.JSX.Element {
+  const { survey, response, ...rest } = exampleData.responseFinishedEmail;
+  const elements = mockGetElementResponseMapping(survey, response);
+
+  return <ResponseFinishedEmail {...rest} survey={survey} response={response} elements={elements} />;
 }

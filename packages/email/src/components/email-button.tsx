@@ -1,9 +1,8 @@
 import { Button } from "@react-email/components";
-import React from "react";
 
 interface EmailButtonProps {
-  label: string;
-  href: string;
+  readonly label: string;
+  readonly href: string;
 }
 
 export function EmailButton({ label, href }: EmailButtonProps): React.JSX.Element {
