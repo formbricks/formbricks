@@ -79,7 +79,7 @@ export const sendFollowUpEmail = async ({
             id: variable.id,
             name: variable.name,
             type: variable.type,
-            value: response.variables[variable.id] as string | number,
+            value: response.variables[variable.id],
           }))
       : [];
 
