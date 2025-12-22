@@ -15,7 +15,12 @@ interface ClientLogoProps {
   previewSurvey?: boolean;
 }
 
-export const ClientLogo = ({ environmentId, projectLogo, surveyLogo, previewSurvey = false }: ClientLogoProps) => {
+export const ClientLogo = ({
+  environmentId,
+  projectLogo,
+  surveyLogo,
+  previewSurvey = false,
+}: ClientLogoProps) => {
   const { t } = useTranslation();
   const logoToUse = surveyLogo?.url ? surveyLogo : projectLogo;
 

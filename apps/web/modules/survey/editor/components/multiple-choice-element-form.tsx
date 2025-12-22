@@ -8,12 +8,14 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum, TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
 import { TShuffleOption, TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { BulkEditOptionsModal } from "@/modules/survey/editor/components/bulk-edit-options-modal";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -49,6 +51,7 @@ export const MultipleChoiceElementForm = ({
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
 
   const elementRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -90,11 +93,31 @@ export const MultipleChoiceElementForm = ({
     [element.choices]
   );
 
+  // Get the display name for the selected language (for multi-language surveys)
+  const bulkEditButtonLabel = useMemo(() => {
+    if (localSurvey.languages.length <= 1) {
+      return t("environments.surveys.edit.bulk_edit");
+    }
+
+    const languageCode =
+      selectedLanguageCode === "default"
+        ? localSurvey.languages.find((lang) => lang.default)?.language.code
+        : selectedLanguageCode;
+
+    const languageName = languageCode ? getLanguageLabel(languageCode, locale) : "";
+    return `${t("environments.surveys.edit.bulk_edit")} (${languageName})`;
+  }, [localSurvey.languages, selectedLanguageCode, locale, t]);
+
   const ensureSpecialChoicesOrder = (choices: TSurveyMultipleChoiceElement["choices"]) => {
+    const regularChoicesFromInput = choices.filter((c) => c.id !== "other" && c.id !== "none");
     const otherChoice = choices.find((c) => c.id === "other");
     const noneChoice = choices.find((c) => c.id === "none");
     // [regularChoices, otherChoice, noneChoice]
-    return [...regularChoices, ...(otherChoice ? [otherChoice] : []), ...(noneChoice ? [noneChoice] : [])];
+    return [
+      ...regularChoicesFromInput,
+      ...(otherChoice ? [otherChoice] : []),
+      ...(noneChoice ? [noneChoice] : []),
+    ];
   };
 
   const addChoice = (choiceIdx?: number) => {
@@ -283,7 +306,7 @@ export const MultipleChoiceElementForm = ({
               updateElement(elementIdx, { choices: newChoices });
             }}>
             <SortableContext items={element.choices} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-2" ref={parent}>
+              <div className="flex max-h-[25dvh] flex-col gap-2 overflow-y-auto py-1 pr-1" ref={parent}>
                 {element.choices?.map((choice, choiceIdx) => (
                   <ElementOptionChoice
                     key={choice.id}
@@ -308,6 +331,9 @@ export const MultipleChoiceElementForm = ({
               </div>
             </SortableContext>
           </DndContext>
+        </div>
+
+        <div className="mt-2">
           <div className="mt-2 flex items-center justify-between space-x-2">
             <div className="flex gap-2">
               {specialChoices.map((specialChoice) => {
@@ -323,6 +349,9 @@ export const MultipleChoiceElementForm = ({
                   </Button>
                 );
               })}
+              <Button size="sm" variant="secondary" type="button" onClick={() => setIsBulkEditOpen(true)}>
+                {bulkEditButtonLabel}
+              </Button>
             </div>
             <Button
               size="sm"
@@ -352,6 +381,23 @@ export const MultipleChoiceElementForm = ({
           </div>
         </div>
       </div>
+      <BulkEditOptionsModal
+        isOpen={isBulkEditOpen}
+        onClose={() => setIsBulkEditOpen(false)}
+        regularChoices={regularChoices}
+        onSave={(updatedChoices) => {
+          const newChoices = ensureSpecialChoicesOrder([
+            ...updatedChoices,
+            ...element.choices.filter((c) => c.id === "other" || c.id === "none"),
+          ]);
+          updateElement(elementIdx, { choices: newChoices });
+        }}
+        element={element}
+        localSurvey={localSurvey}
+        selectedLanguageCode={selectedLanguageCode}
+        surveyLanguageCodes={surveyLanguageCodes}
+        locale={locale}
+      />
     </form>
   );
 };

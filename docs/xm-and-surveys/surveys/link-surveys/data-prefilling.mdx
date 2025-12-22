@@ -91,18 +91,6 @@ Adds 'I love Formbricks' as the answer to the open text question:
 https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20love%20Formbricks
 ```
 
-### CTA Question
-
-Accepts only 'dismissed' as answer option. Due to the risk of domain abuse, this value cannot be set to 'clicked' via prefilling:
-
-```txt CTA Question
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?cta_question_id=dismissed
-```
-
-<Note>
-  Due to the risk of domain abuse, this value cannot be set to 'clicked' via prefilling.
-</Note>
-
 ### Consent Question
 
 Adds 'accepted' as the answer to the Consent question. Alternatively, you can set it to 'dismissed' to skip the question.
@@ -115,11 +103,53 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?consent_question_id=accep
 
 Adds index of the selected image(s) as the answer to the Picture Selection question. The index starts from 1
 
-```txt Picture Selection Question.
+```txt Picture Selection Question
 https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?pictureSelection_question_id=1%2C2%2C3
 ```
 
-<Note>All other question types, you currently cannot prefill via the URL.</Note>
+
+## Using Option IDs for Choice-Based Questions
+
+All choice-based question types (Single Select, Multi Select, Picture Selection) now support prefilling with **option IDs** in addition to option labels. This is the recommended approach as it's more reliable and doesn't break when you update option text.
+
+### Benefits of Using Option IDs
+
+- **Stable:** Option IDs don't change when you edit the option label text
+- **Language-independent:** Works across all survey languages without modification
+- **Reliable:** No issues with special characters or URL encoding of complex text
+
+### How to Find Option IDs
+
+1. Open your survey in the Survey Editor
+2. Click on the question you want to prefill
+3. Open the **Advanced Settings** at the bottom of the question card
+4. Each option shows its unique ID that you can copy
+
+### Examples with Option IDs
+
+**Single Select:**
+
+```sh Single Select with Option ID
+https://app.formbricks.com/s/surveyId?questionId=option-abc123
+```
+
+**Multi Select:**
+
+```sh Multi Select with Option IDs
+https://app.formbricks.com/s/surveyId?questionId=option-1,option-2,option-3
+```
+
+**Mixed IDs and Labels:**
+
+You can even mix option IDs and labels in the same URL (though using IDs consistently is recommended):
+
+```sh Mixed Approach
+https://app.formbricks.com/s/surveyId?questionId=option-abc,Some%20Label,option-xyz
+```
+
+### Backward Compatibility
+
+All existing URLs using option labels continue to work. The system tries to match by option ID first, then falls back to matching by label text if no ID match is found.
 
 ## Validation
 
@@ -127,13 +157,12 @@ Make sure that the answer in the URL matches the expected type for the questions
 
 The URL validation works as follows:
 
-- For Rating or NPS questions, the response is parsed as a number and verified if it's accepted by the schema.
-- For CTA type questions, the valid values are "clicked" (main CTA) and "dismissed" (skip CTA).
-- For Consent type questions, the valid values are "accepted" (consent given) and "dismissed" (consent not given).
-- For Picture Selection type questions, the response is parsed as an array of numbers and verified if it's accepted by the schema.
-- All other question types are strings.
+- **Rating or NPS questions:** The response is parsed as a number and verified to be within the valid range.
+- **Consent type questions:** Valid values are "accepted" (consent given) and "dismissed" (consent not given).
+- **Picture Selection questions:** The response is parsed as comma-separated numbers (1-based indices) and verified against available choices.
+- **Single/Multi Select questions:** Values can be either option IDs or exact label text. The system tries to match by option ID first, then falls back to label matching.
+- **Open Text questions:** Any string value is accepted.
 
 <Note>
-  If an answer is invalid, the prefilling will be ignored and the question is
-  presented as if not prefilled.
+  If an answer is invalid or doesn't match any option, the prefilling will be ignored and the question is presented as if not prefilled.
 </Note>

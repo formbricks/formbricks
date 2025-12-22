@@ -50,6 +50,7 @@ interface SurveyEditorProps {
   isStorageConfigured: boolean;
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
+  publicDomain: string;
 }
 
 export const SurveyEditor = ({
@@ -79,6 +80,7 @@ export const SurveyEditor = ({
   isStorageConfigured,
   quotas,
   isExternalUrlsAllowed,
+  publicDomain,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
@@ -272,6 +274,7 @@ export const SurveyEditor = ({
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
             isSpamProtectionAllowed={isSpamProtectionAllowed}
+            publicDomain={publicDomain}
           />
         </aside>
       </div>

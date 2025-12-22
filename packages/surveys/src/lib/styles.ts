@@ -1,12 +1,11 @@
-import calendarCss from "react-calendar/dist/Calendar.css?inline";
-import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
+// Add this import for survey-ui CSS variables
+import surveyUiCss from "@formbricks/survey-ui/styles?inline";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { isLight, mixColor } from "@/lib/color";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
-import datePickerCustomCss from "../styles/date-picker.css?inline";
 
 // Store the nonce globally for style elements
 let styleNonce: string | undefined;
@@ -44,8 +43,8 @@ export const addStylesToDom = () => {
       styleElement.setAttribute("nonce", styleNonce);
     }
 
-    styleElement.innerHTML =
-      preflight + global + editorCss + datePickerCss + calendarCss + datePickerCustomCss;
+    // Include survey-ui CSS variables before other styles
+    styleElement.innerHTML = preflight + global + editorCss + surveyUiCss;
     document.head.appendChild(styleElement);
   } else {
     // If style element already exists, update its nonce if needed
@@ -88,12 +87,12 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
       cssVariables += `--fb-${variableName}: ${value};\n`;
     }
   };
-
   // if roundness is defined, even if it's 0, set the border-radius
   const roundness = styling.roundness ?? 8;
 
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
+  appendCssVariable("survey-brand-color", styling.brandColor?.light);
   appendCssVariable("focus-color", styling.brandColor?.light);
   if (styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
@@ -103,7 +102,13 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("brand-text-color", "#ffffff");
   }
 
+  // Backwards-compat: legacy variables still used by some consumers/tests
   appendCssVariable("heading-color", styling.questionColor?.light);
+  appendCssVariable("element-headline-color", styling.questionColor?.light);
+  appendCssVariable("element-description-color", styling.questionColor?.light);
+  appendCssVariable("input-color", styling.questionColor?.light);
+  appendCssVariable("label-color", styling.questionColor?.light);
+  // Backwards-compat: legacy variables still used by some consumers/tests
   appendCssVariable("subheading-color", styling.questionColor?.light);
 
   if (styling.questionColor?.light) {
@@ -114,12 +119,19 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   if (styling.inputBorderColor?.light) {
     appendCssVariable("border-color-highlight", mixColor(styling.inputBorderColor.light, "#000000", 0.1));
+    appendCssVariable("input-border-color", styling.inputBorderColor?.light);
   }
 
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
   appendCssVariable("border-radius", `${Number(roundness).toString()}px`);
+  appendCssVariable("input-border-radius", `${Number(roundness).toString()}px`);
+  appendCssVariable("option-border-radius", `${Number(roundness).toString()}px`);
+  appendCssVariable("button-border-radius", `${Number(roundness).toString()}px`);
   appendCssVariable("input-background-color", styling.inputColor?.light);
+  appendCssVariable("input-bg-color", styling.inputColor?.light);
+  appendCssVariable("option-bg-color", styling.inputColor?.light);
+  appendCssVariable("input-color", styling.questionColor?.light);
 
   if (styling.questionColor?.light) {
     const isLightQuestionColor = isLight(styling.questionColor.light);
