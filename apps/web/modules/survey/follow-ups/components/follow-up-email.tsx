@@ -89,7 +89,7 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
                         ? `${t("emails.number_variable")}: ${variable.name}`
                         : `${t("emails.text_variable")}: ${variable.name}`}
                     </Text>
-                    <Text className="mt-0 whitespace-pre-wrap break-words text-sm text-slate-700">
+                    <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700">
                       {variableResponse}
                     </Text>
                   </Column>
@@ -112,7 +112,7 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
                     <Text className="mb-2 text-sm font-semibold text-slate-900">
                       {t("emails.hidden_field")}: {hiddenFieldId}
                     </Text>
-                    <Text className="mt-0 whitespace-pre-wrap break-words text-sm text-slate-700">
+                    <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700">
                       {hiddenFieldResponse}
                     </Text>
                   </Column>
