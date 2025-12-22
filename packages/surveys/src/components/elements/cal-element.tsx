@@ -56,7 +56,7 @@ export function CalElement({
 
         onChange({ [element.id]: value });
       }}
-      className="fb-w-full">
+      className="w-full">
       <div>
         {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
         <Headline
@@ -69,7 +69,7 @@ export function CalElement({
           elementId={element.id}
         />
         <CalEmbed key={element.id} element={element} onSuccessfulBooking={onSuccessfulBooking} />
-        {errorMessage ? <span className="fb-text-red-500">{errorMessage}</span> : null}
+        {errorMessage ? <span className="text-red-500">{errorMessage}</span> : null}
       </div>
     </form>
   );

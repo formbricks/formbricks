@@ -808,6 +808,7 @@ export const ElementsView = ({
             selectedLanguageCode={selectedLanguageCode}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
+            isExternalUrlsAllowed={isExternalUrlsAllowed}
           />
         </div>
       )}

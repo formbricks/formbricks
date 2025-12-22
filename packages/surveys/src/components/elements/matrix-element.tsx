@@ -1,10 +1,7 @@
-import { type JSX } from "preact";
-import { useCallback, useMemo, useState } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
+import { Matrix, type MatrixOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMatrixElement, TSurveyMatrixElementChoice } from "@formbricks/types/surveys/elements";
-import { ElementMedia } from "@/components/general/element-media";
-import { Headline } from "@/components/general/headline";
-import { Subheader } from "@/components/general/subheader";
+import type { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
@@ -29,8 +26,10 @@ export function MatrixElement({
   currentElementId,
 }: Readonly<MatrixElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = element.imageUrl || element.videoUrl;
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
+  const isCurrent = element.id === currentElementId;
+
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+
   const rowShuffleIdx = useMemo(() => {
     if (element.shuffleOption !== "none") {
       return getShuffledRowIndices(element.rows.length, element.shuffleOption);
@@ -52,127 +51,92 @@ export function MatrixElement({
     });
   }, [element.shuffleOption, element.rows, rowShuffleIdx]);
 
-  const handleSelect = useCallback(
-    (column: string, row: string) => {
-      let responseValue =
-        Object.entries(value).length !== 0
-          ? { ...value }
-          : element.rows.reduce((obj: Record<string, string>, row: TSurveyMatrixElementChoice) => {
-              obj[getLocalizedValue(row.label, languageCode)] = ""; // Initialize each row key with an empty string
-              return obj;
-            }, {});
+  // Convert rows to MatrixOption format
+  const rows: MatrixOption[] = useMemo(() => {
+    return elementRows.map((row, index) => ({
+      id: `row-${index}`,
+      label: getLocalizedValue(row.label, languageCode),
+    }));
+  }, [elementRows, languageCode]);
 
-      responseValue[row] = responseValue[row] === column ? "" : column;
+  // Convert columns to MatrixOption format
+  const columns: MatrixOption[] = useMemo(() => {
+    return element.columns.map((column, index) => ({
+      id: `col-${index}`,
+      label: getLocalizedValue(column.label, languageCode),
+    }));
+  }, [element.columns, languageCode]);
 
-      // Check if all values in responseValue are empty and if so, make it an empty object
-      if (Object.values(responseValue).every((val) => val === "")) {
-        responseValue = {};
+  // Convert value from row label -> column label mapping to row id -> column id mapping
+  const convertValueToIds = (valueObj: Record<string, string>): Record<string, string> => {
+    const result: Record<string, string> = {};
+
+    Object.entries(valueObj).forEach(([rowLabel, columnLabel]) => {
+      if (columnLabel) {
+        // Find the row ID that corresponds to this row label
+        const rowId = rows.find((row) => row.label === rowLabel)?.id;
+        // Find the column ID that corresponds to this column label
+        const columnId = columns.find((col) => col.label === columnLabel)?.id;
+
+        if (rowId && columnId) {
+          result[rowId] = columnId;
+        }
       }
+    });
 
-      onChange({ [element.id]: responseValue });
-    },
-    [value, element.rows, element.id, onChange, languageCode]
-  );
+    return result;
+  };
 
-  const handleSubmit = useCallback(
-    (e: JSX.TargetedEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      const updatedTtc = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
-      setTtc(updatedTtc);
-    },
-    [ttc, element.id, startTime, setTtc]
-  );
+  // Convert value from row id -> column id mapping to row label -> column label mapping
+  const convertValueFromIds = (valueObj: Record<string, string>): Record<string, string> => {
+    const result: Record<string, string> = {};
 
-  const columnsHeaders = useMemo(
-    () =>
-      element.columns.map((column, index) => (
-        <th
-          key={index}
-          scope="col"
-          className="fb-text-heading fb-max-w-40 fb-break-words fb-px-4 fb-py-2 fb-font-normal"
-          dir="auto">
-          {getLocalizedValue(column.label, languageCode)}
-        </th>
-      )),
-    [element.columns, languageCode]
-  );
+    Object.entries(valueObj).forEach(([rowId, columnId]) => {
+      // Find the row label that corresponds to this row ID
+      const rowLabel = rows.find((row) => row.id === rowId)?.label;
+      // Find the column label that corresponds to this column ID
+      const columnLabel = columns.find((col) => col.id === columnId)?.label;
+
+      if (rowLabel && columnLabel) {
+        result[rowLabel] = columnLabel;
+      }
+    });
+
+    return result;
+  };
+
+  const handleChange = (newValue: Record<string, string>) => {
+    const labelValue = convertValueFromIds(newValue);
+
+    // Check if all values are empty and if so, make it an empty object
+    if (Object.values(labelValue).every((val) => val === "")) {
+      onChange({ [element.id]: {} });
+    } else {
+      onChange({ [element.id]: labelValue });
+    }
+  };
+
+  const handleSubmit = (e: Event) => {
+    e.preventDefault();
+    const updatedTtc = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+    setTtc(updatedTtc);
+  };
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="fb-w-full">
-      {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
-      <Headline
-        headline={getLocalizedValue(element.headline, languageCode)}
+    <form key={element.id} onSubmit={handleSubmit} className="w-full">
+      <Matrix
         elementId={element.id}
+        inputId={element.id}
+        headline={getLocalizedValue(element.headline, languageCode)}
+        description={getLocalizedValue(element.subheader, languageCode)}
+        rows={rows}
+        columns={columns}
+        value={convertValueToIds(value)}
+        onChange={handleChange}
         required={element.required}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
-      <Subheader subheader={getLocalizedValue(element.subheader, languageCode)} elementId={element.id} />
-      <div className="fb-overflow-x-auto fb-py-4">
-        <table className="fb-no-scrollbar fb-min-w-full fb-table-auto fb-border-collapse fb-text-sm">
-          <thead>
-            <tr>
-              <th className="fb-px-4 fb-py-2" />
-              {columnsHeaders}
-            </tr>
-          </thead>
-          <tbody>
-            {elementRows.map((row, rowIndex) => (
-              <tr key={`row-${rowIndex.toString()}`} className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
-                <th
-                  scope="row"
-                  className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
-                  dir="auto">
-                  {getLocalizedValue(row.label, languageCode)}
-                </th>
-                {element.columns.map((column, columnIndex) => (
-                  <td
-                    key={`column-${columnIndex.toString()}`}
-                    tabIndex={0}
-                    className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === element.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
-                    onClick={() => {
-                      handleSelect(
-                        getLocalizedValue(column.label, languageCode),
-                        getLocalizedValue(row.label, languageCode)
-                      );
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        handleSelect(
-                          getLocalizedValue(column.label, languageCode),
-                          getLocalizedValue(row.label, languageCode)
-                        );
-                      }
-                    }}
-                    dir="auto">
-                    <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
-                      <input
-                        dir="auto"
-                        type="radio"
-                        tabIndex={-1}
-                        required={element.required}
-                        id={`row${rowIndex.toString()}-column${columnIndex.toString()}`}
-                        name={getLocalizedValue(row.label, languageCode)}
-                        value={getLocalizedValue(column.label, languageCode)}
-                        checked={
-                          typeof value === "object" && !Array.isArray(value)
-                            ? value[getLocalizedValue(row.label, languageCode)] ===
-                              getLocalizedValue(column.label, languageCode)
-                            : false
-                        }
-                        aria-label={`${getLocalizedValue(row.label, languageCode)} – ${getLocalizedValue(
-                          column.label,
-                          languageCode
-                        )}`}
-                        className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
-                      />
-                    </div>
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </form>
   );
 }

@@ -44,6 +44,7 @@ interface ProjectSettingsProps {
   organizationTeams: TOrganizationTeam[];
   isAccessControlAllowed: boolean;
   userProjectsCount: number;
+  publicDomain: string;
 }
 
 export const ProjectSettings = ({
@@ -55,6 +56,7 @@ export const ProjectSettings = ({
   organizationTeams,
   isAccessControlAllowed = false,
   userProjectsCount,
+  publicDomain,
 }: ProjectSettingsProps) => {
   const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
@@ -225,12 +227,13 @@ export const ProjectSettings = ({
             alt="Logo"
             width={256}
             height={56}
-            className="absolute left-2 top-2 -mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
+            className="absolute top-2 left-2 -mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
           />
         )}
         <p className="text-sm text-slate-400">{t("common.preview")}</p>
         <div className="z-0 h-3/4 w-3/4">
           <SurveyInline
+            appUrl={publicDomain}
             isPreviewMode={true}
             survey={previewSurvey(projectName || "my Product", t)}
             styling={{ brandColor: { light: brandColor } }}
