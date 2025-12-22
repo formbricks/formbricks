@@ -1038,7 +1038,7 @@
         "pretty_url": "カスタムURL",
         "project": "プロジェクト",
         "survey_name": "フォーム名",
-        "title": "ドメイン"
+        "title": "カスタムURL"
       },
       "enterprise": {
         "audit_logs": "監査ログ",

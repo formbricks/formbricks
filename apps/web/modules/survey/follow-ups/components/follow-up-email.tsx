@@ -1,6 +1,6 @@
 import { Column, Hr, Row, Text } from "@react-email/components";
-import dompurify from "isomorphic-dompurify";
 import React from "react";
+import sanitizeHtml from "sanitize-html";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -35,11 +35,16 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
       <>
         <div
           dangerouslySetInnerHTML={{
-            __html: dompurify.sanitize(body, {
-              ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br"],
-              ALLOWED_ATTR: ["href", "rel", "dir", "class"],
-              ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https
-              ADD_ATTR: ["target"], // Optional: Allow 'target' attribute for links (e.g., _blank)
+            __html: sanitizeHtml(body, {
+              allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br"],
+              allowedAttributes: {
+                a: ["href", "rel", "target"],
+                "*": ["dir", "class"],
+              },
+              allowedSchemes: ["http", "https"],
+              allowedSchemesByTag: {
+                a: ["http", "https"],
+              },
             }),
           }}
         />

@@ -3,30 +3,18 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video";
 
-// Function to add extra params to videoUrls in order to reduce video controls
-const getVideoUrlWithParams = (videoUrl: string): string | undefined => {
-  // First convert to embed URL
-  const embedUrl = convertToEmbedUrl(videoUrl);
-  if (!embedUrl) return undefined;
-
+//Function to add extra params to videoUrls in order to reduce video controls
+const getVideoUrlWithParams = (videoUrl: string): string => {
   const isYoutubeVideo = checkForYoutubeUrl(videoUrl);
   const isVimeoUrl = checkForVimeoUrl(videoUrl);
   const isLoomUrl = checkForLoomUrl(videoUrl);
-
-  if (isYoutubeVideo) {
-    // For YouTube, add parameters to embed URL
-    const separator = embedUrl.includes("?") ? "&" : "?";
-    return `${embedUrl}${separator}controls=0`;
-  } else if (isVimeoUrl) {
-    // For Vimeo, add parameters to embed URL
-    const separator = embedUrl.includes("?") ? "&" : "?";
-    return `${embedUrl}${separator}title=false&transcript=false&speed=false&quality_selector=false&progress_bar=false&pip=false&fullscreen=false&cc=false&chromecast=false`;
-  } else if (isLoomUrl) {
-    // For Loom, add parameters to embed URL
-    const separator = embedUrl.includes("?") ? "&" : "?";
-    return `${embedUrl}${separator}hide_share=true&hideEmbedTopBar=true&hide_title=true`;
-  }
-  return embedUrl;
+  if (isYoutubeVideo) return videoUrl.concat("?controls=0");
+  else if (isVimeoUrl)
+    return videoUrl.concat(
+      "?title=false&transcript=false&speed=false&quality_selector=false&progress_bar=false&pip=false&fullscreen=false&cc=false&chromecast=false"
+    );
+  else if (isLoomUrl) return videoUrl.concat("?hide_share=true&hideEmbedTopBar=true&hide_title=true");
+  return videoUrl;
 };
 
 interface ElementMediaProps {
@@ -35,16 +23,12 @@ interface ElementMediaProps {
   altText?: string;
 }
 
-function ElementMedia({
-  imgUrl,
-  videoUrl,
-  altText = "Image",
-}: Readonly<ElementMediaProps>): React.JSX.Element {
+function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementMediaProps>): React.ReactNode {
   const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
   const [isLoading, setIsLoading] = React.useState(true);
 
   if (!imgUrl && !videoUrl) {
-    return <></>;
+    return null;
   }
 
   return (

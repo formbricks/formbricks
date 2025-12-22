@@ -1038,7 +1038,7 @@
         "pretty_url": "Pretty URL",
         "project": "Projekt",
         "survey_name": "Enkätnamn",
-        "title": "Domän"
+        "title": "Pretty URL:er"
       },
       "enterprise": {
         "audit_logs": "Granskningsloggar",

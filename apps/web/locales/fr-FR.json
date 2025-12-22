@@ -1038,7 +1038,7 @@
         "pretty_url": "URL personnalisée",
         "project": "Projet",
         "survey_name": "Nom de l'enquête",
-        "title": "Domaine"
+        "title": "URL personnalisées"
       },
       "enterprise": {
         "audit_logs": "Journaux d'audit",

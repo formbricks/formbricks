@@ -43,6 +43,10 @@ interface PictureSelectProps {
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the options are disabled */
   disabled?: boolean;
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 function PictureSelect({
@@ -58,6 +62,8 @@ function PictureSelect({
   errorMessage,
   dir = "auto",
   disabled = false,
+  imageUrl,
+  videoUrl,
 }: Readonly<PictureSelectProps>): React.JSX.Element {
   // Ensure value is always the correct type
   let selectedValues: string[] | string | undefined;
@@ -86,7 +92,14 @@ function PictureSelect({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* Picture Grid - 2 columns */}
       <div className="relative">
