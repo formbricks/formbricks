@@ -86,6 +86,10 @@ export const getAllowedFiles = async (
 };
 
 export const checkForYoutubePrivacyMode = (url: string): boolean => {
+  if (!url || typeof url !== "string" || url.trim() === "") {
+    return false;
+  }
+
   try {
     const parsedUrl = new URL(url);
     return parsedUrl.host === "www.youtube-nocookie.com";
