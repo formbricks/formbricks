@@ -46,8 +46,6 @@ async function deleteData() {
     "Account",
     "User",
     "Organization",
-    "DataMigration",
-    "Language",
   ];
 
   for (const model of deleteOrder) {
