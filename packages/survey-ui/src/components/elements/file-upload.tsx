@@ -73,7 +73,7 @@ function UploadedFileItem({
       className={cn(
         "border-input-border bg-accent-selected text-input-text rounded-input relative m-1 rounded-md border"
       )}>
-      <div className="absolute right-0 top-0 m-2">
+      <div className="absolute top-0 right-0 m-2">
         <button
           type="button"
           onClick={(e) => {
@@ -93,7 +93,7 @@ function UploadedFileItem({
         <UploadIcon />
         <p
           style={{ fontSize: "var(--fb-input-font-size)" }}
-          className="mt-1 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-center text-[var(--foreground)]"
+          className="mt-1 w-full overflow-hidden px-2 text-center overflow-ellipsis whitespace-nowrap text-[var(--foreground)]"
           title={file.name}>
           {file.name}
         </p>

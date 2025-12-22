@@ -25,8 +25,8 @@ export function ErrorComponent({ errorType }: ErrorComponentProps) {
       className="bg-survey-bg text-heading flex flex-col items-center p-8 text-center"
       role="alert"
       aria-live="assertive">
-      <span className="mb-1.5 text-base font-bold leading-6">{error.title}</span>
-      <p className="max-w-lg text-sm font-normal leading-6">{error.message}</p>
+      <span className="mb-1.5 text-base leading-6 font-bold">{error.title}</span>
+      <p className="max-w-lg text-sm leading-6 font-normal">{error.message}</p>
     </div>
   );
 }

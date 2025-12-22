@@ -329,7 +329,7 @@ function ListVariant({
                     aria-invalid={Boolean(errorMessage)}
                   />
                   <span
-                    className={cn("ml-3 mr-3", optionLabelClassName)}
+                    className={cn("mr-3 ml-3", optionLabelClassName)}
                     style={{ fontSize: "var(--fb-option-font-size)" }}>
                     {option.label}
                   </span>
@@ -361,7 +361,7 @@ function ListVariant({
                   aria-invalid={Boolean(errorMessage)}
                 />
                 <span
-                  className={cn("ml-3 mr-3 grow", optionLabelClassName)}
+                  className={cn("mr-3 ml-3 grow", optionLabelClassName)}
                   style={{ fontSize: "var(--fb-option-font-size)" }}>
                   {otherOptionLabel}
                 </span>
@@ -411,7 +411,7 @@ function ListVariant({
                     aria-invalid={Boolean(errorMessage)}
                   />
                   <span
-                    className={cn("ml-3 mr-3", optionLabelClassName)}
+                    className={cn("mr-3 ml-3", optionLabelClassName)}
                     style={{ fontSize: "var(--fb-option-font-size)" }}>
                     {option.label}
                   </span>

@@ -80,7 +80,7 @@ export function LanguageSwitch({
         title={t("common.language_switch")}
         type="button"
         className={cn(
-          "text-heading focus:outline-hidden relative flex h-8 w-8 items-center justify-center rounded-md focus:ring-2 focus:ring-offset-2"
+          "text-heading relative flex h-8 w-8 items-center justify-center rounded-md focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
         )}
         style={{
           backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",

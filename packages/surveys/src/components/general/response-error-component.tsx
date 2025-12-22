@@ -20,8 +20,8 @@ export function ResponseErrorComponent({
   const { t } = useTranslation();
   return (
     <div className="bg-survey-bg text-heading flex flex-col p-4">
-      <span className="mb-1.5 text-base font-bold leading-6">{t("common.your_feedback_is_stuck")}</span>
-      <p className="max-w-md text-sm font-normal leading-6">
+      <span className="mb-1.5 text-base leading-6 font-bold">{t("common.your_feedback_is_stuck")}</span>
+      <p className="max-w-md text-sm leading-6 font-normal">
         {t("common.the_servers_cannot_be_reached_at_the_moment")}
         <br />
         {t("common.please_retry_now_or_try_again_later")}
@@ -34,7 +34,7 @@ export function ResponseErrorComponent({
             return (
               <div className="flex flex-col" key={`response-${index.toString()}`}>
                 <span className="text-sm leading-5 text-slate-900">{`${t("common.question")} ${(index + 1).toString()}`}</span>
-                <span className="text-sm font-semibold leading-5 text-slate-900">
+                <span className="text-sm leading-5 font-semibold text-slate-900">
                   {processResponseData(response)}
                 </span>
               </div>

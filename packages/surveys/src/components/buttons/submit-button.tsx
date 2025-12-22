@@ -72,7 +72,7 @@ export function SubmitButton({
       type={type}
       tabIndex={tabIndex}
       autoFocus={focus}
-      className="bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom shadow-xs focus:outline-hidden mb-1 flex items-center border px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:ring-2 focus:ring-offset-2"
+      className="bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom mb-1 flex items-center border px-3 py-3 text-base leading-4 font-medium shadow-xs hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
       onClick={onClick}
       disabled={disabled}>
       {buttonLabel || (isLastQuestion ? t("common.finish") : t("common.next"))}

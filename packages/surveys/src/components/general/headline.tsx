@@ -27,7 +27,7 @@ export function Headline({ headline, elementId, required = true, alignTextCenter
     <label htmlFor={elementId} className="text-heading mb-[3px] flex flex-col">
       {required && isQuestionCard && (
         <span
-          className="mb-[3px] text-xs font-normal leading-6 opacity-60"
+          className="mb-[3px] text-xs leading-6 font-normal opacity-60"
           tabIndex={-1}
           data-testid="fb__surveys__headline-optional-text-test">
           {t("common.required")}

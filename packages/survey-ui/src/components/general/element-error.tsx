@@ -19,7 +19,7 @@ function ElementError({ errorMessage, dir = "auto" }: Readonly<ElementErrorProps
       {/* Error indicator bar */}
       <div
         className={cn(
-          "bg-destructive absolute bottom-0 top-0 w-[4px]",
+          "bg-destructive absolute top-0 bottom-0 w-[4px]",
           dir === "rtl" ? "right-[-10px]" : "left-[-10px]"
         )}
       />

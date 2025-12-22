@@ -28,7 +28,7 @@ export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonl
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
-          "text-heading focus:outline-hidden relative flex h-8 w-8 items-center justify-center p-2 focus:ring-2 focus:ring-offset-2"
+          "text-heading relative flex h-8 w-8 items-center justify-center p-2 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
         )}
         aria-label={t("common.close_survey")}>
         <CloseIcon />

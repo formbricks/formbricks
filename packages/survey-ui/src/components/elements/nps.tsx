@@ -142,7 +142,7 @@ function NPS({
           setHoveredValue(null);
         }}>
         {colorCoding ? (
-          <div className={cn("absolute left-0 top-0 h-[6px] w-full", getNPSOptionColor(number))} />
+          <div className={cn("absolute top-0 left-0 h-[6px] w-full", getNPSOptionColor(number))} />
         ) : null}
         <input
           type="radio"

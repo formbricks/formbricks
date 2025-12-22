@@ -27,7 +27,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
         aria-invalid={hasError || undefined}
         className={cn(
           // Layout and behavior
-          "flex min-w-0 border outline-none transition-[color,box-shadow]",
+          "flex min-w-0 border transition-[color,box-shadow] outline-none",
           // Customizable styles via CSS variables (using Tailwind theme extensions)
           "w-input h-input",
           "bg-input-bg border-input-border rounded-input",
