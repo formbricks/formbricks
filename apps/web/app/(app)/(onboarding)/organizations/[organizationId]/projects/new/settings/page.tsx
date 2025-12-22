@@ -5,6 +5,7 @@ import { TProjectConfigChannel, TProjectConfigIndustry, TProjectMode } from "@fo
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/projects/new/settings/components/ProjectSettings";
 import { DEFAULT_BRAND_COLOR } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserProjects } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
@@ -47,6 +48,8 @@ const Page = async (props: ProjectSettingsPageProps) => {
     throw new Error(t("common.organization_teams_not_found"));
   }
 
+  const publicDomain = getPublicDomain();
+
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <Header
@@ -62,10 +65,11 @@ const Page = async (props: ProjectSettingsPageProps) => {
         organizationTeams={organizationTeams}
         isAccessControlAllowed={isAccessControlAllowed}
         userProjectsCount={projects.length}
+        publicDomain={publicDomain}
       />
       {projects.length >= 1 && (
         <Button
-          className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
+          className="absolute top-5 right-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="ghost"
           asChild>
           <Link href={"/"}>

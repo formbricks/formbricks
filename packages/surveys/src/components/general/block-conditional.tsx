@@ -73,7 +73,8 @@ export function BlockConditional({
     if (elementId !== currentElementId) {
       setCurrentElementId(elementId);
     }
-    onChange(responseData);
+    // Merge with existing block data to preserve other element values
+    onChange({ ...value, ...responseData });
   };
 
   // Handler to collect TTC values synchronously (called from element form submissions)
@@ -81,32 +82,43 @@ export function BlockConditional({
     ttcCollectorRef.current[elementId] = elementTtc;
   };
 
-  // Handle skipPrefilled at block level
+  // Handle prefilling at block level (both skipPrefilled and regular prefilling)
   useEffect(() => {
-    if (skipPrefilled && prefilledResponseData) {
-      // Check if ALL elements in this block have prefilled values
-      const allElementsPrefilled = block.elements.every(
-        (element) => prefilledResponseData[element.id] !== undefined
-      );
+    if (prefilledResponseData) {
+      // Collect all prefilled values for elements in this block
+      const prefilledData: TResponseData = {};
+      let hasAnyPrefilled = false;
 
-      if (allElementsPrefilled) {
-        // Auto-populate all prefilled values
-        const prefilledData: TResponseData = {};
-        const prefilledTtc: TResponseTtc = {};
-
-        block.elements.forEach((element) => {
+      block.elements.forEach((element) => {
+        if (prefilledResponseData[element.id] !== undefined) {
           prefilledData[element.id] = prefilledResponseData[element.id];
-          prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
-        });
+          hasAnyPrefilled = true;
+        }
+      });
 
-        // Update state with prefilled data
+      if (hasAnyPrefilled) {
+        // Apply all prefilled values in one atomic operation
         onChange(prefilledData);
-        setTtc({ ...ttc, ...prefilledTtc });
 
-        // Auto-submit the entire block (skip to next)
-        setTimeout(() => {
-          onSubmit(prefilledData, prefilledTtc);
-        }, 0);
+        // If skipPrefilled and ALL elements are prefilled, auto-submit
+        if (skipPrefilled) {
+          const allElementsPrefilled = block.elements.every(
+            (element) => prefilledResponseData[element.id] !== undefined
+          );
+
+          if (allElementsPrefilled) {
+            const prefilledTtc: TResponseTtc = {};
+            block.elements.forEach((element) => {
+              prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
+            });
+            setTtc({ ...ttc, ...prefilledTtc });
+
+            // Auto-submit the entire block (skip to next)
+            setTimeout(() => {
+              onSubmit(prefilledData, prefilledTtc);
+            }, 0);
+          }
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run once when block mounts
@@ -243,11 +255,11 @@ export function BlockConditional({
   };
 
   return (
-    <div className={cn("fb-space-y-6", fullSizeCards ? "fb-h-full" : "")}>
+    <div className={cn("space-y-6", fullSizeCards ? "h-full" : "")}>
       {/* Scrollable container for the entire block */}
       <ScrollableContainer fullSizeCards={fullSizeCards}>
-        <div className="fb-space-y-6">
-          <div className="fb-space-y-6">
+        <div className="space-y-6">
+          <div className="space-y-6">
             {block.elements.map((element, index) => {
               const isFirstElement = index === 0;
 
@@ -257,17 +269,13 @@ export function BlockConditional({
                     element={element}
                     value={value[element.id]}
                     onChange={(responseData) => handleElementChange(element.id, responseData)}
-                    onBack={() => {}}
                     onFileUpload={onFileUpload}
                     languageCode={languageCode}
-                    prefilledElementValue={prefilledResponseData?.[element.id]}
-                    skipPrefilled={skipPrefilled}
                     ttc={ttc}
                     setTtc={setTtc}
                     surveyId={surveyId}
                     autoFocusEnabled={autoFocusEnabled && isFirstElement}
                     currentElementId={currentElementId}
-                    isBackButtonHidden={true}
                     onOpenExternalURL={onOpenExternalURL}
                     dir={dir}
                     formRef={(ref) => {
@@ -286,8 +294,8 @@ export function BlockConditional({
 
           <div
             className={cn(
-              "fb-flex fb-w-full fb-flex-row-reverse fb-justify-between",
-              fullSizeCards ? "fb-sticky fb-bottom-0 fb-bg-white" : ""
+              "flex w-full flex-row-reverse justify-between",
+              fullSizeCards ? "bg-survey-bg sticky bottom-0" : ""
             )}>
             <div>
               <SubmitButton

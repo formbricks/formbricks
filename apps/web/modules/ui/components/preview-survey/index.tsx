@@ -25,6 +25,7 @@ interface PreviewSurveyProps {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   languageCode: string;
   isSpamProtectionAllowed: boolean;
+  publicDomain: string;
 }
 
 let surveyNameTemp: string;
@@ -38,6 +39,7 @@ export const PreviewSurvey = ({
   environment,
   languageCode,
   isSpamProtectionAllowed,
+  publicDomain,
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -223,10 +225,10 @@ export const PreviewSurvey = ({
         )}>
         {previewMode === "mobile" && (
           <>
-            <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
+            <p className="absolute top-0 left-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
               Preview
             </p>
-            <div className="absolute right-0 top-0 m-2">
+            <div className="absolute top-0 right-0 m-2">
               <ResetProgressButton onClick={resetProgress} />
             </div>
             <MediaBackground
@@ -244,6 +246,7 @@ export const PreviewSurvey = ({
                   borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
+                    appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={survey}
                     isBrandingEnabled={project.inAppSurveyBranding}
@@ -261,7 +264,7 @@ export const PreviewSurvey = ({
                 </Modal>
               ) : (
                 <div className="flex h-full w-full flex-col justify-center px-1">
-                  <div className="absolute left-5 top-5">
+                  <div className="absolute top-5 left-5">
                     {!styling.isLogoHidden && (
                       <ClientLogo
                         environmentId={environment.id}
@@ -273,6 +276,7 @@ export const PreviewSurvey = ({
                   </div>
                   <div className="z-10 w-full rounded-lg border border-transparent">
                     <SurveyInline
+                      appUrl={publicDomain}
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
                       isBrandingEnabled={project.linkSurveyBranding}
@@ -345,6 +349,7 @@ export const PreviewSurvey = ({
                 borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
+                  appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={survey}
                   isBrandingEnabled={project.inAppSurveyBranding}
@@ -366,7 +371,7 @@ export const PreviewSurvey = ({
                 styling={styling}
                 ContentRef={ContentRef as React.RefObject<HTMLDivElement>}
                 isEditorView>
-                <div className="absolute left-5 top-5">
+                <div className="absolute top-5 left-5">
                   {!styling.isLogoHidden && (
                     <ClientLogo
                       environmentId={environment.id}
@@ -378,6 +383,7 @@ export const PreviewSurvey = ({
                 </div>
                 <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
                   <SurveyInline
+                    appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}
                     isBrandingEnabled={project.linkSurveyBranding}

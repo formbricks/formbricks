@@ -1,0 +1,232 @@
+/* =============================================================================
+   Survey UI - Global Styles
+   
+   This file contains:
+   1. Tailwind CSS setup and configuration
+   2. Base design tokens (colors, radius)
+   3. Survey-specific theming tokens (--fb-* variables)
+   
+   All tokens are designed to be overridden by consumers for custom theming.
+   Components use Tailwind utilities backed by these CSS variables.
+   ============================================================================= */
+
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) important;
+
+/* NOSONAR: Tailwind CSS v4 directives - @config and @source are valid at-rules */
+@config "../../tailwind.config.ts";
+/* NOSONAR */
+@source "../../src/**/*.{ts,tsx,js,jsx}";
+/* NOSONAR */
+
+/* =============================================================================
+   Design Tokens
+   ============================================================================= */
+
+:root {
+  /* ---------------------------------------------------------------------------
+     Base Primitives
+     These are the foundation tokens used throughout the design system.
+     --------------------------------------------------------------------------- */
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-muted: oklch(0.97 0.02 27.325);
+  --border: oklch(0.922 0 0);
+  --input: black;
+  --slate-50: rgb(248, 250, 252);
+  --slate-100: rgb(241 245 249);
+  --slate-200: rgb(226 232 240);
+
+  /* ---------------------------------------------------------------------------
+     Survey general Colors
+     The primary accent color used throughout the survey. Override this to 
+     customize the brand appearance.
+     --------------------------------------------------------------------------- */
+  --fb-survey-brand-color: #64748b;
+
+  --fb-accent-background-color: var(--slate-200);
+  --fb-accent-background-color-selected: var(--slate-100);
+
+
+  /* ---------------------------------------------------------------------------
+     Element Headline Tokens
+     Used for question headlines and main element titles.
+     --------------------------------------------------------------------------- */
+  --fb-element-headline-font-family: inherit;
+  --fb-element-headline-font-weight: 400;
+  --fb-element-headline-font-size: 1rem;
+  --fb-element-headline-color: (--input);
+  --fb-element-headline-opacity: 1;
+
+  /* ---------------------------------------------------------------------------
+     Element Description Tokens
+     Used for descriptive text below headlines.
+     --------------------------------------------------------------------------- */
+  --fb-element-description-font-family: inherit;
+  --fb-element-description-font-weight: 400;
+  --fb-element-description-font-size: 0.875rem;
+  --fb-element-description-color: var(--input);
+  --fb-element-description-opacity: 1;
+
+  /* ---------------------------------------------------------------------------
+     Label Tokens
+     Used for form labels and secondary text.
+     --------------------------------------------------------------------------- */
+  --fb-label-font-family: inherit;
+  --fb-label-font-weight: 400;
+  --fb-label-font-size: 0.875rem;
+  --fb-label-color: var(--foreground);
+  --fb-label-opacity: 1;
+
+  /* ---------------------------------------------------------------------------
+     Button Tokens
+     Used for the custom button variant. Standard variants use Tailwind defaults.
+     --------------------------------------------------------------------------- */
+  --fb-button-height: 2.25rem;
+  --fb-button-width: auto;
+  --fb-button-font-size: 0.875rem;
+  --fb-button-font-family: inherit;
+  --fb-button-font-weight: 500;
+  --fb-button-border-radius: var(--radius);
+  --fb-button-bg-color: hsl(222.2 47.4% 11.2%);
+  --fb-button-text-color: hsl(210 40% 98%);
+  --fb-button-padding-x: 1rem;
+  --fb-button-padding-y: 0.5rem;
+
+  /* ---------------------------------------------------------------------------
+     Input Tokens
+     Used for text inputs, textareas, and other form controls.
+     --------------------------------------------------------------------------- */
+  --fb-input-bg-color: var(--slate-50);
+  --fb-input-border-color: var(--fb-survey-brand-color);
+  --fb-input-border-radius: var(--radius);
+  --fb-input-font-family: inherit;
+  --fb-input-font-size: 0.875rem !important;
+  --fb-input-font-weight: 400;
+  --fb-input-color: var(--foreground);
+  --fb-input-placeholder-color: var(--fb-input-color);
+  --fb-input-placeholder-opacity: 0.5;
+  --fb-input-width: 100%;
+  --fb-input-height: 40px;
+  --fb-input-padding-x: 16px;
+  --fb-input-padding-y: 16px;
+  --fb-input-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
+  /* ---------------------------------------------------------------------------
+     Progress Tokens
+     Used for the Progress component track and indicator.
+     --------------------------------------------------------------------------- */
+  --fb-progress-track-height: 0.5rem;
+  --fb-progress-track-bg-color: hsl(222.2 47.4% 11.2% / 0.2);
+  --fb-progress-track-border-radius: var(--radius);
+  --fb-progress-indicator-bg-color: hsl(222.2 47.4% 11.2%);
+  --fb-progress-indicator-border-radius: var(--radius);
+
+  /* ---------------------------------------------------------------------------
+     Option Tokens
+     Used for selectable options (radio, checkbox, multi-select).
+     These inherit from input tokens by default for consistency.
+     --------------------------------------------------------------------------- */
+  --fb-option-bg-color: var(--fb-input-bg-color);
+  --fb-option-label-color: var(--fb-input-color);
+  --fb-option-border-radius: var(--fb-input-border-radius);
+  --fb-option-padding-x: var(--fb-input-padding-x);
+  --fb-option-padding-y: var(--fb-input-padding-y);
+  --fb-option-font-family: var(--fb-input-font-family);
+  --fb-option-font-size: var(--fb-input-font-size);
+  --fb-option-font-weight: var(--fb-input-font-weight);
+}
+
+.button-custom {
+  width: var(--fb-button-width);
+  height: var(--fb-button-height);
+  background-color: var(--fb-button-bg-color);
+  border-radius: var(--fb-button-border-radius);
+  font-family: var(--fb-button-font-family);
+  font-weight: var(--fb-button-font-weight);
+  padding-left: var(--fb-button-padding-x);
+  padding-right: var(--fb-button-padding-x);
+  padding-top: var(--fb-button-padding-y);
+  padding-bottom: var(--fb-button-padding-y);
+  color: var(--fb-button-text-color);
+  font-size: var(--fb-button-font-size);
+}
+
+.label-headline {
+  font-family: var(--fb-element-headline-font-family);
+  font-weight: var(--fb-element-headline-font-weight);
+  font-size: var(--fb-element-headline-font-size) !important;
+  color: var(--fb-element-headline-color);
+  opacity: var(--fb-element-headline-opacity);
+}
+
+.label-description {
+  font-family: var(--fb-element-description-font-family);
+  font-weight: var(--fb-element-description-font-weight);
+  font-size: var(--fb-element-description-font-size) !important;
+  color: var(--fb-element-description-color);
+  opacity: var(--fb-element-description-opacity);
+}
+
+.label-default {
+  font-family: var(--fb-label-font-family);
+  font-weight: var(--fb-label-font-weight);
+  font-size: var(--fb-label-font-size) !important;
+  color: var(--fb-label-color);
+  opacity: var(--fb-label-opacity);
+}
+
+.progress-track {
+  height: var(--fb-progress-track-height);
+  background-color: var(--fb-progress-track-bg-color);
+  border-radius: var(--fb-progress-track-border-radius);
+}
+
+.progress-indicator {
+  background-color: var(--fb-progress-indicator-bg-color);
+  border-radius: var(--fb-progress-indicator-border-radius);
+}
+
+/* ---------------------------------------------------------------------------
+   Textarea Scrollbar Styling
+   Smaller, more subtle scrollbars for textarea elements.
+   --------------------------------------------------------------------------- */
+textarea {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: hsl(215.4 16.3% 46.9% / 0.3) transparent;
+}
+
+/* Chrome, Edge, and Safari */
+textarea::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background-color: hsl(215.4 16.3% 46.9% / 0.3);
+  border-radius: 2px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(215.4 16.3% 46.9% / 0.5);
+}
