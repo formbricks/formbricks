@@ -134,6 +134,8 @@ export function MatrixElement({
         value={convertValueToIds(value)}
         onChange={handleChange}
         required={element.required}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

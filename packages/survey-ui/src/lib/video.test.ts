@@ -117,6 +117,16 @@ describe("convertToEmbedUrl", () => {
       expect(result).toBe("https://player.vimeo.com/video/987654321");
     });
 
+    test("handles already-embedded Vimeo URLs", () => {
+      const result = convertToEmbedUrl("https://player.vimeo.com/video/123456789");
+      expect(result).toBe("https://player.vimeo.com/video/123456789");
+    });
+
+    test("handles Vimeo URLs with query parameters", () => {
+      const result = convertToEmbedUrl("https://vimeo.com/123456789?some=param");
+      expect(result).toBe("https://player.vimeo.com/video/123456789");
+    });
+
     test("returns undefined for invalid Vimeo URLs", () => {
       const result = convertToEmbedUrl("https://www.vimeo.com/invalid");
       expect(result).toBeUndefined();
@@ -132,6 +142,16 @@ describe("convertToEmbedUrl", () => {
     test("converts www.loom.com/share URLs to embed format", () => {
       const result = convertToEmbedUrl("https://loom.com/share/xyz789");
       expect(result).toBe("https://www.loom.com/embed/xyz789");
+    });
+
+    test("handles already-embedded Loom URLs", () => {
+      const result = convertToEmbedUrl("https://www.loom.com/embed/abc123def456");
+      expect(result).toBe("https://www.loom.com/embed/abc123def456");
+    });
+
+    test("handles Loom URLs with query parameters", () => {
+      const result = convertToEmbedUrl("https://www.loom.com/share/abc123def456?some=param");
+      expect(result).toBe("https://www.loom.com/embed/abc123def456");
     });
 
     test("returns undefined for invalid Loom URLs", () => {
