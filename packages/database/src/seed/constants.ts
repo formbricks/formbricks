@@ -13,7 +13,7 @@ export const SEED_IDS = {
 } as const;
 
 export const SEED_CREDENTIALS = {
-  ADMIN: { email: "admin@formbricks.com", password: "password123" },
-  MANAGER: { email: "manager@formbricks.com", password: "password123" },
-  MEMBER: { email: "member@formbricks.com", password: "password123" },
+  ADMIN: { email: "admin@formbricks.com", password: "Password#123" },
+  MANAGER: { email: "manager@formbricks.com", password: "Password#123" },
+  MEMBER: { email: "member@formbricks.com", password: "Password#123" },
 } as const;
