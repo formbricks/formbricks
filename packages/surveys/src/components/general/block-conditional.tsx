@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import { type TResponseData, TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurveyElement,
   TSurveyElementTypeEnum,
+  TSurveyMatrixElement,
   TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
@@ -157,12 +158,29 @@ export function BlockConditional({
     );
   };
 
+  const hasUnansweredRows = (responseData: TResponseDataValue, element: TSurveyMatrixElement): boolean => {
+    return element.rows.some((row) => {
+      const rowLabel = getLocalizedValue(row.label, languageCode);
+      return !responseData?.[rowLabel as keyof typeof responseData];
+    });
+  };
+
   // Validate a single element's form
   const validateElementForm = (element: TSurveyElement, form: HTMLFormElement): boolean => {
     const response = value[element.id];
 
     // Custom validation for ranking questions
     if (element.type === TSurveyElementTypeEnum.Ranking && !validateRankingElement(element, response, form)) {
+      return false;
+    }
+
+    if (
+      element.type === TSurveyElementTypeEnum.Matrix &&
+      element.required &&
+      response &&
+      hasUnansweredRows(response, element)
+    ) {
+      form.requestSubmit();
       return false;
     }
 

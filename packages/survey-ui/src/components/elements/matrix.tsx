@@ -66,10 +66,6 @@ function Matrix({
   // Ensure value is always an object (value already has default of {})
   const selectedValues = value;
 
-  // Check which rows have errors (no selection when required)
-  const hasError = Boolean(errorMessage);
-  const rowsWithErrors = hasError && required ? rows.filter((row) => !selectedValues[row.id]) : [];
-
   const handleRowChange = (rowId: string, columnId: string): void => {
     // Toggle: if same column is selected, deselect it
     if (selectedValues[rowId] === columnId) {
@@ -116,7 +112,6 @@ function Matrix({
               {rows.map((row, index) => {
                 const rowGroupId = `${inputId}-row-${row.id}`;
                 const selectedColumnId = selectedValues[row.id];
-                const rowHasError = rowsWithErrors.includes(row);
                 const baseBgColor = index % 2 === 0 ? "bg-input-bg" : "bg-transparent";
 
                 return (
@@ -131,14 +126,11 @@ function Matrix({
                     disabled={disabled}
                     aria-required={required}
                     aria-invalid={Boolean(errorMessage)}>
-                    <tr className={cn("relative", baseBgColor, rowHasError ? "bg-destructive-muted" : "")}>
+                    <tr className={cn("relative", baseBgColor)}>
                       {/* Row label */}
-                      <th scope="row" className={cn("p-2 align-middle", !rowHasError && "rounded-l-input")}>
+                      <th scope="row" className={cn("rounded-l-input p-2 align-middle")}>
                         <div className="flex flex-col gap-0 leading-none">
                           <Label>{row.label}</Label>
-                          {rowHasError ? (
-                            <span className="text-destructive text-xs font-normal">Select one option</span>
-                          ) : null}
                         </div>
                       </th>
                       {/* Column options for this row */}
@@ -149,14 +141,10 @@ function Matrix({
                         return (
                           <td
                             key={column.id}
-                            className={cn(
-                              "p-2 text-center align-middle",
-                              isLastColumn && !rowHasError && "rounded-r-input"
-                            )}>
+                            className={cn("p-2 text-center align-middle", isLastColumn && "rounded-r-input")}>
                             <Label htmlFor={cellId} className="flex cursor-pointer justify-center">
                               <RadioGroupItem
                                 value={column.id}
-                                required={required}
                                 id={cellId}
                                 disabled={disabled}
                                 aria-label={`${row.label}-${column.label}`}
