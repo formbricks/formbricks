@@ -480,7 +480,7 @@
     "invite_accepted_email_text": "Сообщаем, что {inviteeName} принял(а) ваше приглашение. Приятной совместной работы!",
     "invite_email_button_label": "Присоединиться к организации",
     "invite_email_heading": "Привет",
-    "invite_email_text": "Ваш коллега {inviterName} пригласил(а) вас присоединиться к нему в Formbricks. Чтобы принять приглашение, пожалуйста, перейдите по ссылке ниже:",
+    "invite_email_text": "Ваш коллега {inviterName} пригласил(а) вас присоединиться к нему(ней) в Formbricks. Чтобы принять приглашение, пожалуйста, перейдите по ссылке ниже:",
     "invite_member_email_subject": "Вас пригласили к сотрудничеству в Formbricks!",
     "new_email_verification_text": "Чтобы подтвердить новый адрес электронной почты, нажмите кнопку ниже:",
     "number_variable": "Числовая переменная",
