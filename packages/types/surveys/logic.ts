@@ -1,5 +1,8 @@
 import { z } from "zod";
+import { extendZodWithOpenApi } from "zod-openapi";
 import { ZId } from "../common";
+
+extendZodWithOpenApi(z);
 
 // Logic operators
 export const ZSurveyLogicConditionsOperator = z.enum([
@@ -211,13 +214,15 @@ export const ZSingleConditionDeprecated = z
 
 export type TSingleConditionDeprecated = z.infer<typeof ZSingleConditionDeprecated>;
 
-export const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
-  z.object({
-    id: ZId,
-    connector: ZConnector,
-    conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
-  })
-);
+export const ZConditionGroup: z.ZodType<TConditionGroup> = z
+  .lazy(() =>
+    z.object({
+      id: ZId,
+      connector: ZConnector,
+      conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
+    })
+  )
+  .openapi({ ref: "conditionGroup" });
 
 export interface TConditionGroup {
   id: string;

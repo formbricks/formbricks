@@ -1,6 +1,5 @@
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZResponse } from "@formbricks/database/zod/responses";
-import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import {
   deleteResponseEndpoint,
   getResponseEndpoint,
@@ -57,13 +56,11 @@ export const createResponseEndpoint: ZodOpenApiOperationObject = {
 };
 
 export const responsePaths: ZodOpenApiPathsObject = {
-  "/responses": {
-    servers: managementServer,
+  "/management/responses": {
     get: getResponsesEndpoint,
     post: createResponseEndpoint,
   },
-  "/responses/{id}": {
-    servers: managementServer,
+  "/management/responses/{id}": {
     get: getResponseEndpoint,
     put: updateResponseEndpoint,
     delete: deleteResponseEndpoint,
