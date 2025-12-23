@@ -137,6 +137,8 @@ export function RankingElement({
         onChange={handleChange}
         required={element.required}
         errorMessage={errorMessage}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

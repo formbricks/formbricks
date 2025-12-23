@@ -65,6 +65,8 @@ export function CTAElement({
         onClick={handleClick}
         // CTA cannot be required
         required={false}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

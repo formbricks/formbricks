@@ -31,6 +31,10 @@ interface DateElementProps {
   disabled?: boolean;
   /** Locale code for date formatting (e.g., "en-US", "de-DE", "fr-FR"). Defaults to browser locale or "en-US" */
   locale?: string;
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 function DateElement({
@@ -47,6 +51,8 @@ function DateElement({
   disabled = false,
   locale = "en-US",
   errorMessage,
+  imageUrl,
+  videoUrl,
 }: Readonly<DateElementProps>): React.JSX.Element {
   // Initialize date from value string, parsing as local time to avoid timezone issues
   const [date, setDate] = React.useState<Date | undefined>(() => {
@@ -89,46 +95,67 @@ function DateElement({
     }
   };
 
-  // Convert minDate/maxDate strings to Date objects
-  const minDateObj = minDate ? new Date(minDate) : undefined;
-  const maxDateObj = maxDate ? new Date(maxDate) : undefined;
-
-  // Create disabled function for date restrictions
-  const isDateDisabled = React.useCallback(
-    (dateToCheck: Date): boolean => {
-      if (disabled) return true;
-      if (minDateObj) {
-        const minAtMidnight = new Date(minDateObj.getFullYear(), minDateObj.getMonth(), minDateObj.getDate());
-        const checkAtMidnight = new Date(
-          dateToCheck.getFullYear(),
-          dateToCheck.getMonth(),
-          dateToCheck.getDate()
-        );
-        if (checkAtMidnight < minAtMidnight) return true;
-      }
-      if (maxDateObj) {
-        const maxAtMidnight = new Date(maxDateObj.getFullYear(), maxDateObj.getMonth(), maxDateObj.getDate());
-        const checkAtMidnight = new Date(
-          dateToCheck.getFullYear(),
-          dateToCheck.getMonth(),
-          dateToCheck.getDate()
-        );
-        if (checkAtMidnight > maxAtMidnight) return true;
-      }
-      return false;
-    },
-    [disabled, minDateObj, maxDateObj]
-  );
-
   // Get locale for date formatting
   const dateLocale = React.useMemo(() => {
     return locale ? getDateFnsLocale(locale) : undefined;
   }, [locale]);
 
+  const startMonth = React.useMemo(() => {
+    if (!minDate) return undefined;
+    try {
+      const [year, month, day] = minDate.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    } catch {
+      return undefined;
+    }
+  }, [minDate]);
+
+  const endMonth = React.useMemo(() => {
+    if (!maxDate) return undefined;
+    try {
+      const [year, month, day] = maxDate.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    } catch {
+      return undefined;
+    }
+  }, [maxDate]);
+
+  // Create disabled function for date restrictions
+  const isDateDisabled = React.useCallback(
+    (dateToCheck: Date): boolean => {
+      if (disabled) return true;
+
+      const checkAtMidnight = new Date(
+        dateToCheck.getFullYear(),
+        dateToCheck.getMonth(),
+        dateToCheck.getDate()
+      );
+
+      if (startMonth) {
+        const minAtMidnight = new Date(startMonth.getFullYear(), startMonth.getMonth(), startMonth.getDate());
+        if (checkAtMidnight < minAtMidnight) return true;
+      }
+
+      if (endMonth) {
+        const maxAtMidnight = new Date(endMonth.getFullYear(), endMonth.getMonth(), endMonth.getDate());
+        if (checkAtMidnight > maxAtMidnight) return true;
+      }
+      return false;
+    },
+    [disabled, endMonth, startMonth]
+  );
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
@@ -137,7 +164,10 @@ function DateElement({
           <Calendar
             mode="single"
             selected={date}
+            defaultMonth={date}
             captionLayout="dropdown"
+            startMonth={startMonth}
+            endMonth={endMonth}
             disabled={isDateDisabled}
             onSelect={handleDateSelect}
             locale={dateLocale}

@@ -236,7 +236,6 @@ export const MultipleElements: Story = {
         description="You can upload multiple images"
         allowMultiple
         allowedFileExtensions={[".jpg", ".png", ".gif"]}
-        maxSizeInMB={5}
         onChange={() => {}}
       />
     </div>
