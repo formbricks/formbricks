@@ -1,22 +1,24 @@
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
-import { TFunction } from "i18next";
-import React from "react";
-import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@/lib/constants";
+import { TEmailTemplateLegalProps } from "../types/email";
+import { TFunction } from "../types/translations";
 
-const fbLogoUrl = FB_LOGO_URL;
+const fbLogoUrl = "https://app.formbricks.com/logo-transparent.png";
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
 
-interface EmailTemplateProps {
+interface EmailTemplateProps extends TEmailTemplateLegalProps {
   readonly children: React.ReactNode;
   readonly logoUrl?: string;
   readonly t: TFunction;
 }
 
-export async function EmailTemplate({
+export function EmailTemplate({
   children,
   logoUrl,
   t,
-}: EmailTemplateProps): Promise<React.JSX.Element> {
+  privacyUrl,
+  imprintUrl,
+  imprintAddress,
+}: EmailTemplateProps): React.JSX.Element {
   const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
 
   return (
@@ -53,23 +55,23 @@ export async function EmailTemplate({
               rel="noopener noreferrer">
               {t("emails.email_template_text_1")}
             </Link>
-            {IMPRINT_ADDRESS && (
-              <Text className="m-0 text-sm font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
+            {imprintAddress && (
+              <Text className="m-0 text-sm font-normal text-slate-500 opacity-50">{imprintAddress}</Text>
             )}
             <Text className="m-0 text-sm font-normal text-slate-500 opacity-50">
-              {IMPRINT_URL && (
+              {imprintUrl && (
                 <Link
-                  href={IMPRINT_URL}
+                  href={imprintUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-slate-500">
                   {t("emails.imprint")}
                 </Link>
               )}
-              {IMPRINT_URL && PRIVACY_URL && " • "}
-              {PRIVACY_URL && (
+              {imprintUrl && privacyUrl && " • "}
+              {privacyUrl && (
                 <Link
-                  href={PRIVACY_URL}
+                  href={privacyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-slate-500">
@@ -83,3 +85,5 @@ export async function EmailTemplate({
     </Html>
   );
 }
+
+export default EmailTemplate;

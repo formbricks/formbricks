@@ -1,6 +1,5 @@
 import { Text } from "@react-email/components";
-import { TFunction } from "i18next";
-import React from "react";
+import { TFunction } from "../types/translations";
 
 export function EmailFooter({ t }: { t: TFunction }): React.JSX.Element {
   return (

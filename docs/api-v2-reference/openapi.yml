@@ -97,44 +97,10 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                surveyId:
-                  type: string
-                  description: The ID of the survey this response belongs to
-                responses:
-                  type: object
-                  additionalProperties: true
-                  description: Answers keyed by questionId; value shape depends on question type
-                finished:
-                  type: boolean
-                  description: Whether the response is marked as finished
-                language:
-                  type: string
-                  enum:
-                    [
-                      "en-US",
-                      "de-DE",
-                      "pt-BR",
-                      "fr-FR",
-                      "zh-Hant-TW",
-                      "pt-PT",
-                      "ro-RO",
-                      "ja-JP",
-                      "zh-Hans-CN",
-                    ]
-                  description: Locale of the response
-                meta:
-                  type: object
-                  properties:
-                    action: { type: string }
-                    source: { type: string }
-                    url: { type: string }
-                  description: Optional metadata about the response
-              required: ["surveyId"]
               example:
                 surveyId: survey123
                 responses: {}
+              type: object
       responses:
         "201":
           content:
@@ -170,15 +136,9 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                attributes:
-                  type: object
-                  additionalProperties: true
-                  description: Key-value pairs of contact attributes
-              required: ["attributes"]
               example:
                 attributes: {}
+              type: object
       responses:
         "200":
           content:
@@ -551,10 +511,7 @@ paths:
                         - permission
                         - projectId
                         - projectName
-  /responses:
-    servers: &a6
-      - url: https://app.formbricks.com/api/v2/management
-        description: Formbricks Management API
+  /management/responses:
     get:
       operationId: getResponses
       summary: Get responses
@@ -584,7 +541,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: &a7
+            enum: &a6
               - createdAt
               - updatedAt
             default: createdAt
@@ -594,7 +551,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: &a8
+            enum: &a7
               - asc
               - desc
             default: desc
@@ -616,10 +573,9 @@ paths:
           description: Date field to filter by
           schema:
             type: string
-            enum:
+            enum: &a8
               - createdAt
               - updatedAt
-            default: createdAt
             description: Date field to filter by
         - in: query
           name: surveyId
@@ -781,7 +737,9 @@ paths:
     post:
       operationId: createResponse
       summary: Create a response
-      description: Creates a response in the database.
+      description: Creates a response in the database. This will trigger the response
+        pipeline, including webhooks, integrations, follow-up emails, and other
+        configured actions.
       tags:
         - Management API - Responses
       requestBody:
@@ -882,6 +840,8 @@ paths:
                       type: string
                   description: The meta data of the response
                   example: *a4
+                userId:
+                  type: string
               required:
                 - surveyId
                 - finished
@@ -1000,8 +960,7 @@ paths:
                       - string
                       - "null"
                     description: The display ID of the response
-  /responses/{id}:
-    servers: *a6
+  /management/responses/{id}:
     get:
       operationId: getResponse
       summary: Get a response
@@ -1132,7 +1091,9 @@ paths:
     put:
       operationId: updateResponse
       summary: Update a response
-      description: Updates a response in the database.
+      description: Updates a response in the database. This will trigger the response
+        pipeline, including webhooks, integrations, follow-up emails (if the
+        response is marked as finished), and other configured actions.
       tags:
         - Management API - Responses
       parameters:
@@ -1144,40 +1105,18 @@ paths:
           required: true
       requestBody:
         required: true
-        description: The response to update
+        description: The response fields to update
         content:
           application/json:
             schema:
               type: object
               properties:
-                createdAt:
-                  type: string
-                updatedAt:
-                  type: string
-                environmentId:
-                  type: string
-                surveyId:
-                  type: string
-                userId:
-                  type:
-                    - string
-                    - "null"
-                displayId:
-                  type:
-                    - string
-                    - "null"
-                singleUseId:
-                  type:
-                    - string
-                    - "null"
                 finished:
                   type: boolean
                 endingId:
                   type:
                     - string
                     - "null"
-                language:
-                  type: string
                 data:
                   type: object
                   additionalProperties:
@@ -1200,31 +1139,8 @@ paths:
                   type: object
                   additionalProperties:
                     type: number
-                meta:
-                  type: object
-                  properties:
-                    source:
-                      type: string
-                    url:
-                      type: string
-                    userAgent:
-                      type: object
-                      properties:
-                        browser:
-                          type: string
-                        device:
-                          type: string
-                        os:
-                          type: string
-                    country:
-                      type: string
-                    action:
-                      type: string
-              required:
-                - environmentId
-                - surveyId
-                - finished
-                - data
+                language:
+                  type: string
       responses:
         "200":
           description: Response updated successfully.
@@ -1466,8 +1382,7 @@ paths:
                       - string
                       - "null"
                     description: The display ID of the response
-  /contacts/bulk:
-    servers: *a6
+  /management/contacts/bulk:
     put:
       operationId: uploadBulkContacts
       summary: Upload Bulk Contacts
@@ -1601,8 +1516,7 @@ paths:
                       - skippedContacts
                 required:
                   - data
-  /contacts:
-    servers: *a6
+  /management/contacts:
     post:
       operationId: createContact
       summary: Create a contact
@@ -1664,8 +1578,7 @@ paths:
                   firstName: John
                   lastName: Doe
                   userId: h2xce9q8p3w4x5y6z7a8b9c1
-  /contact-attribute-keys:
-    servers: *a6
+  /management/contact-attribute-keys:
     get:
       operationId: getContactAttributeKeys
       summary: Get contact attribute keys
@@ -1695,7 +1608,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a7
+            enum: *a6
             default: createdAt
             description: Sort by field
         - in: query
@@ -1703,7 +1616,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a8
+            enum: *a7
             default: desc
             description: Sort order
         - in: query
@@ -1723,10 +1636,7 @@ paths:
           description: Date field to filter by
           schema:
             type: string
-            enum:
-              - createdAt
-              - updatedAt
-            default: createdAt
+            enum: *a8
             description: Date field to filter by
         - in: query
           name: environmentId
@@ -1859,8 +1769,7 @@ paths:
                   environmentId:
                     type: string
                     description: The ID of the environment this attribute belongs to
-  /contact-attribute-keys/{id}:
-    servers: *a6
+  /management/contact-attribute-keys/{id}:
     get:
       operationId: getContactAttributeKey
       summary: Get a contact attribute key
@@ -2054,8 +1963,7 @@ paths:
                   environmentId:
                     type: string
                     description: The ID of the environment this attribute belongs to
-  /surveys/{surveyId}/contact-links/contacts/{contactId}/:
-    servers: *a6
+  /management/surveys/{surveyId}/contact-links/contacts/{contactId}/:
     get:
       operationId: getPersonalizedSurveyLink
       summary: Get personalized survey link for a contact
@@ -2082,10 +1990,9 @@ paths:
           description: Number of days until the generated JWT expires. If not provided,
             there is no expiration.
           schema:
-            type:
-              - number
-              - undefined
+            type: integer
             minimum: 1
+            maximum: 365
             description: Number of days until the generated JWT expires. If not provided,
               there is no expiration.
       responses:
@@ -2103,14 +2010,14 @@ paths:
                         type: string
                         format: uri
                       expiresAt:
-                        type: string
-                        format: date-time
-                        nullable: true
+                        type:
+                          - string
+                          - "null"
                         description: The date and time the link expires, null if no expiration
                     required:
                       - surveyUrl
-  /surveys/{surveyId}/contact-links/segments/{segmentId}:
-    servers: *a6
+                      - expiresAt
+  /management/surveys/{surveyId}/contact-links/segments/{segmentId}:
     get:
       operationId: getContactLinksBySegment
       summary: Get survey links for contacts in a segment
@@ -2208,8 +2115,7 @@ paths:
                         type: number
                       offset:
                         type: number
-  /webhooks:
-    servers: *a6
+  /management/webhooks:
     get:
       operationId: getWebhooks
       summary: Get webhooks
@@ -2239,7 +2145,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a7
+            enum: *a6
             default: createdAt
             description: Sort by field
         - in: query
@@ -2247,7 +2153,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a8
+            enum: *a7
             default: desc
             description: Sort order
         - in: query
@@ -2267,10 +2173,7 @@ paths:
           description: Date field to filter by
           schema:
             type: string
-            enum:
-              - createdAt
-              - updatedAt
-            default: createdAt
+            enum: *a8
             description: Date field to filter by
         - in: query
           name: surveyIds
@@ -2442,8 +2345,7 @@ paths:
                     items:
                       type: string
                     description: "The IDs of the surveys "
-  /webhooks/{id}:
-    servers: *a6
+  /management/webhooks/{id}:
     get:
       operationId: getWebhook
       summary: Get a webhook
@@ -2667,10 +2569,7 @@ paths:
                     items:
                       type: string
                     description: "The IDs of the surveys "
-  /{organizationId}/teams:
-    servers: &a11
-      - url: https://app.formbricks.com/api/v2/organizations
-        description: Formbricks Organizations API
+  /organizations/{organizationId}/teams:
     get:
       operationId: getTeams
       summary: Get teams
@@ -2706,7 +2605,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a7
+            enum: *a6
             default: createdAt
             description: Sort by field
         - in: query
@@ -2714,7 +2613,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a8
+            enum: *a7
             default: desc
             description: Sort order
         - in: query
@@ -2734,10 +2633,7 @@ paths:
           description: Date field to filter by
           schema:
             type: string
-            enum:
-              - createdAt
-              - updatedAt
-            default: createdAt
+            enum: *a8
             description: Date field to filter by
       responses:
         "200":
@@ -2832,8 +2728,7 @@ paths:
                   organizationId:
                     type: string
                     description: The ID of the organization
-  /{organizationId}/teams/{id}:
-    servers: *a11
+  /organizations/{organizationId}/teams/{id}:
     get:
       operationId: getTeam
       summary: Get a team
@@ -2983,8 +2878,7 @@ paths:
                   organizationId:
                     type: string
                     description: The ID of the organization
-  /{organizationId}/project-teams:
-    servers: *a11
+  /organizations/{organizationId}/project-teams:
     get:
       operationId: getProjectTeams
       summary: Get project teams
@@ -3020,7 +2914,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a7
+            enum: *a6
             default: createdAt
             description: Sort by field
         - in: query
@@ -3028,7 +2922,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a8
+            enum: *a7
             default: desc
             description: Sort order
         - in: query
@@ -3048,10 +2942,7 @@ paths:
           description: Date field to filter by
           schema:
             type: string
-            enum:
-              - createdAt
-              - updatedAt
-            default: createdAt
+            enum: *a8
             description: Date field to filter by
         - in: query
           name: teamId
@@ -3290,8 +3181,7 @@ paths:
                       - readWrite
                       - manage
                     description: Level of access granted to the project
-  /{organizationId}/users:
-    servers: *a11
+  /organizations/{organizationId}/users:
     get:
       operationId: getUsers
       summary: Get users
@@ -3328,7 +3218,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a7
+            enum: *a6
             default: createdAt
             description: Sort by field
         - in: query
@@ -3336,7 +3226,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a8
+            enum: *a7
             default: desc
             description: Sort order
         - in: query
@@ -3356,10 +3246,7 @@ paths:
           description: Date field to filter by
           schema:
             type: string
-            enum:
-              - createdAt
-              - updatedAt
-            default: createdAt
+            enum: *a8
             description: Date field to filter by
         - in: query
           name: id
@@ -3415,7 +3302,7 @@ paths:
                           example: example@example.com
                         role:
                           type: string
-                          enum: &a12
+                          enum: &a11
                             - owner
                             - manager
                             - member
@@ -3426,7 +3313,7 @@ paths:
                           items:
                             type: string
                           description: The list of teams the user is a member of
-                          example: &a13
+                          example: &a12
                             - team1
                             - team2
                   meta:
@@ -3478,7 +3365,7 @@ paths:
                   example: example@example.com
                 role:
                   type: string
-                  enum: *a12
+                  enum: *a11
                   description: The role of the user in the organization
                   example: member
                 teams:
@@ -3486,7 +3373,7 @@ paths:
                   items:
                     type: string
                   description: The list of teams the user is a member of
-                  example: *a13
+                  example: *a12
               required:
                 - name
                 - email
@@ -3532,7 +3419,7 @@ paths:
                     example: example@example.com
                   role:
                     type: string
-                    enum: *a12
+                    enum: *a11
                     description: The role of the user in the organization
                     example: member
                   teams:
@@ -3540,7 +3427,7 @@ paths:
                     items:
                       type: string
                     description: The list of teams the user is a member of
-                    example: *a13
+                    example: *a12
     patch:
       operationId: updateUser
       summary: Update a user
@@ -3579,7 +3466,7 @@ paths:
                   example: example@example.com
                 role:
                   type: string
-                  enum: *a12
+                  enum: *a11
                   description: The role of the user in the organization
                   example: member
                 teams:
@@ -3587,7 +3474,7 @@ paths:
                   items:
                     type: string
                   description: The list of teams the user is a member of
-                  example: *a13
+                  example: *a12
               required:
                 - email
       responses:
@@ -3631,7 +3518,7 @@ paths:
                     example: example@example.com
                   role:
                     type: string
-                    enum: *a12
+                    enum: *a11
                     description: The role of the user in the organization
                     example: member
                   teams:
@@ -3639,7 +3526,7 @@ paths:
                     items:
                       type: string
                     description: The list of teams the user is a member of
-                    example: *a13
+                    example: *a12
 components:
   securitySchemes:
     apiKeyAuth:
@@ -4039,7 +3926,7 @@ components:
               type: object
               additionalProperties:
                 type: string
-            html:
+            subheader:
               type: object
               additionalProperties:
                 type: string
@@ -4074,6 +3961,1271 @@ components:
         environmentId:
           type: string
           description: The environment ID of the survey
+        blocks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+                minLength: 1
+              elements:
+                type: array
+                items:
+                  anyOf:
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: openText
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: &a13
+                            - number
+                            - smiley
+                            - star
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        placeholder:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        longAnswer:
+                          type: boolean
+                        inputType:
+                          type: string
+                          enum:
+                            - text
+                            - email
+                            - url
+                            - number
+                            - phone
+                          default: text
+                        insightsEnabled:
+                          type: boolean
+                          default: false
+                        charLimit:
+                          type: object
+                          properties:
+                            enabled:
+                              type: boolean
+                              default: false
+                            min:
+                              type: number
+                            max:
+                              type: number
+                          default:
+                            enabled: false
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - inputType
+                        - charLimit
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: consent
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        label:
+                          type: object
+                          additionalProperties:
+                            type: string
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - label
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          anyOf:
+                            - type: string
+                              const: multipleChoiceSingle
+                            - type: string
+                              const: multipleChoiceMulti
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        choices:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              label:
+                                type: object
+                                additionalProperties:
+                                  type: string
+                            required:
+                              - id
+                              - label
+                          minItems: 2
+                        shuffleOption:
+                          type: string
+                          enum: &a14
+                            - none
+                            - all
+                            - exceptLast
+                        otherOptionPlaceholder:
+                          type: object
+                          additionalProperties:
+                            type: string
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - choices
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: nps
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        lowerLabel:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        upperLabel:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        isColorCodingEnabled:
+                          type: boolean
+                          default: false
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - isColorCodingEnabled
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: cta
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        buttonExternal:
+                          type: boolean
+                          default: false
+                        buttonUrl:
+                          type: string
+                        ctaButtonLabel:
+                          type: object
+                          additionalProperties:
+                            type: string
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - buttonExternal
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: rating
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum:
+                            - number
+                            - smiley
+                            - star
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 6
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        lowerLabel:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        upperLabel:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        isColorCodingEnabled:
+                          type: boolean
+                          default: false
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - scale
+                        - range
+                        - isColorCodingEnabled
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: pictureSelection
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        allowMulti:
+                          type: boolean
+                          default: false
+                        choices:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              imageUrl:
+                                type: string
+                            required:
+                              - id
+                              - imageUrl
+                          minItems: 2
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - allowMulti
+                        - choices
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: date
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        html:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        format:
+                          type: string
+                          enum:
+                            - M-d-y
+                            - d-M-y
+                            - y-M-d
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - format
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: fileUpload
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        allowMultipleFiles:
+                          type: boolean
+                        maxSizeInMB:
+                          type: number
+                        allowedFileExtensions:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - heic
+                              - png
+                              - jpeg
+                              - jpg
+                              - webp
+                              - pdf
+                              - eml
+                              - doc
+                              - docx
+                              - xls
+                              - xlsx
+                              - ppt
+                              - pptx
+                              - txt
+                              - csv
+                              - mp4
+                              - mov
+                              - avi
+                              - mkv
+                              - webm
+                              - zip
+                              - rar
+                              - 7z
+                              - tar
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - allowMultipleFiles
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: cal
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        calUserName:
+                          type: string
+                          minLength: 1
+                        calHost:
+                          type: string
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - calUserName
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: matrix
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        rows:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              label:
+                                type: object
+                                additionalProperties:
+                                  type: string
+                            required:
+                              - id
+                              - label
+                        columns:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              label:
+                                type: object
+                                additionalProperties:
+                                  type: string
+                            required:
+                              - id
+                              - label
+                        shuffleOption:
+                          type: string
+                          enum: *a14
+                          default: none
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - rows
+                        - columns
+                        - shuffleOption
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: address
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        addressLine1:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                        addressLine2:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                        city:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                        state:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                        zip:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                        country:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - addressLine1
+                        - addressLine2
+                        - city
+                        - state
+                        - zip
+                        - country
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: ranking
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        choices:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              label:
+                                type: object
+                                additionalProperties:
+                                  type: string
+                            required:
+                              - id
+                              - label
+                          minItems: 2
+                          maxItems: 25
+                        otherOptionPlaceholder:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        shuffleOption:
+                          type: string
+                          enum: *a14
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - choices
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          const: contactInfo
+                        headline:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        subheader:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        imageUrl:
+                          type: string
+                          format: uri
+                        videoUrl:
+                          type: string
+                          format: uri
+                        required:
+                          type: boolean
+                        scale:
+                          type: string
+                          enum: *a13
+                        range:
+                          anyOf:
+                            - type: number
+                              const: 5
+                            - type: number
+                              const: 3
+                            - type: number
+                              const: 4
+                            - type: number
+                              const: 7
+                            - type: number
+                              const: 10
+                        isDraft:
+                          type: boolean
+                        firstName:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                        lastName:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                        email:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                        phone:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                        company:
+                          type: object
+                          properties:
+                            show:
+                              type: boolean
+                            required:
+                              type: boolean
+                            placeholder:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          required:
+                            - show
+                            - required
+                            - placeholder
+                      required:
+                        - id
+                        - type
+                        - headline
+                        - required
+                        - firstName
+                        - lastName
+                        - email
+                        - phone
+                        - company
+                minItems: 1
+              logic:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    conditions:
+                      $ref: "#/components/schemas/conditionGroup"
+                    actions:
+                      type: array
+                      items:
+                        anyOf:
+                          - anyOf:
+                              - type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  objective:
+                                    type: string
+                                    const: calculate
+                                  variableId:
+                                    type: string
+                                  operator:
+                                    type: string
+                                    enum:
+                                      - assign
+                                      - concat
+                                  value:
+                                    anyOf:
+                                      - type: object
+                                        properties:
+                                          type:
+                                            type: string
+                                            const: static
+                                          value:
+                                            type: string
+                                            minLength: 1
+                                        required:
+                                          - type
+                                          - value
+                                      - anyOf:
+                                          - type: object
+                                            properties:
+                                              type:
+                                                type: string
+                                                const: element
+                                              value:
+                                                type: string
+                                                minLength: 1
+                                              meta:
+                                                type: object
+                                                additionalProperties:
+                                                  type: string
+                                            required:
+                                              - type
+                                              - value
+                                          - type: object
+                                            properties:
+                                              type:
+                                                type: string
+                                                const: variable
+                                              value:
+                                                type: string
+                                                minLength: 1
+                                            required:
+                                              - type
+                                              - value
+                                          - type: object
+                                            properties:
+                                              type:
+                                                type: string
+                                                const: hiddenField
+                                              value:
+                                                type: string
+                                                minLength: 1
+                                            required:
+                                              - type
+                                              - value
+                                required:
+                                  - id
+                                  - objective
+                                  - variableId
+                                  - operator
+                                  - value
+                              - type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  objective:
+                                    type: string
+                                    const: calculate
+                                  variableId:
+                                    type: string
+                                  operator:
+                                    type: string
+                                    enum:
+                                      - add
+                                      - subtract
+                                      - multiply
+                                      - divide
+                                      - assign
+                                  value:
+                                    anyOf:
+                                      - type: object
+                                        properties:
+                                          type:
+                                            type: string
+                                            const: static
+                                          value:
+                                            type: number
+                                        required:
+                                          - type
+                                          - value
+                                      - anyOf:
+                                          - type: object
+                                            properties:
+                                              type:
+                                                type: string
+                                                const: element
+                                              value:
+                                                type: string
+                                                minLength: 1
+                                              meta:
+                                                type: object
+                                                additionalProperties:
+                                                  type: string
+                                            required:
+                                              - type
+                                              - value
+                                          - type: object
+                                            properties:
+                                              type:
+                                                type: string
+                                                const: variable
+                                              value:
+                                                type: string
+                                                minLength: 1
+                                            required:
+                                              - type
+                                              - value
+                                          - type: object
+                                            properties:
+                                              type:
+                                                type: string
+                                                const: hiddenField
+                                              value:
+                                                type: string
+                                                minLength: 1
+                                            required:
+                                              - type
+                                              - value
+                                required:
+                                  - id
+                                  - objective
+                                  - variableId
+                                  - operator
+                                  - value
+                          - type: object
+                            properties:
+                              id:
+                                type: string
+                              objective:
+                                type: string
+                                const: requireAnswer
+                              target:
+                                type: string
+                                minLength: 1
+                            required:
+                              - id
+                              - objective
+                              - target
+                          - type: object
+                            properties:
+                              id:
+                                type: string
+                              objective:
+                                type: string
+                                const: jumpToBlock
+                              target:
+                                type: string
+                                minLength: 1
+                            required:
+                              - id
+                              - objective
+                              - target
+                  required:
+                    - id
+                    - conditions
+                    - actions
+              logicFallback:
+                type: string
+              buttonLabel:
+                type: object
+                additionalProperties:
+                  type: string
+              backButtonLabel:
+                type: object
+                additionalProperties:
+                  type: string
+            required:
+              - id
+              - name
+              - elements
+          default: []
+          description: The blocks of the survey
         endings:
           type: array
           items:
@@ -4099,10 +5251,13 @@ components:
                       type: string
                   buttonLink:
                     type: string
+                    format: uri
                   imageUrl:
                     type: string
+                    format: uri
                   videoUrl:
                     type: string
+                    format: uri
                 required:
                   - id
                   - type
@@ -4115,6 +5270,7 @@ components:
                     const: redirectToUrl
                   url:
                     type: string
+                    format: uri
                   label:
                     type: string
                 required:
@@ -4385,13 +5541,13 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: &a14
+                  enum: &a15
                     - casual
                     - straight
                     - simple
                 appSurveys:
                   type: string
-                  enum: *a14
+                  enum: *a15
               required:
                 - linkSurveys
                 - appSurveys
@@ -4426,6 +5582,15 @@ components:
               type:
                 - boolean
                 - "null"
+            logo:
+              type:
+                - object
+                - "null"
+              properties:
+                url:
+                  type: string
+                bgColor:
+                  type: string
           description: Survey styling configuration
         singleUse:
           type: object
@@ -4509,6 +5674,7 @@ components:
         - pin
         - createdBy
         - environmentId
+        - blocks
         - endings
         - hiddenFields
         - variables
@@ -4676,7 +5842,7 @@ components:
           example: example@example.com
         role:
           type: string
-          enum: *a12
+          enum: *a11
           description: The role of the user in the organization
           example: member
         teams:
@@ -4684,7 +5850,7 @@ components:
           items:
             type: string
           description: The list of teams the user is a member of
-          example: *a13
+          example: *a12
       required:
         - id
         - createdAt
@@ -4761,3 +5927,162 @@ components:
     teamId:
       type: string
       description: The ID of the team
+    conditionGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        connector:
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            anyOf:
+              - allOf:
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+                      leftOperand:
+                        anyOf:
+                          - type: object
+                            properties:
+                              type:
+                                type: string
+                                const: element
+                              value:
+                                type: string
+                                minLength: 1
+                              meta:
+                                type: object
+                                additionalProperties:
+                                  type: string
+                            required:
+                              - type
+                              - value
+                          - type: object
+                            properties:
+                              type:
+                                type: string
+                                const: variable
+                              value:
+                                type: string
+                                minLength: 1
+                            required:
+                              - type
+                              - value
+                          - type: object
+                            properties:
+                              type:
+                                type: string
+                                const: hiddenField
+                              value:
+                                type: string
+                                minLength: 1
+                            required:
+                              - type
+                              - value
+                      operator:
+                        type: string
+                        enum:
+                          - equals
+                          - doesNotEqual
+                          - contains
+                          - doesNotContain
+                          - startsWith
+                          - doesNotStartWith
+                          - endsWith
+                          - doesNotEndWith
+                          - isSubmitted
+                          - isSkipped
+                          - isGreaterThan
+                          - isLessThan
+                          - isGreaterThanOrEqual
+                          - isLessThanOrEqual
+                          - equalsOneOf
+                          - includesAllOf
+                          - includesOneOf
+                          - doesNotIncludeOneOf
+                          - doesNotIncludeAllOf
+                          - isClicked
+                          - isNotClicked
+                          - isAccepted
+                          - isBefore
+                          - isAfter
+                          - isBooked
+                          - isPartiallySubmitted
+                          - isCompletelySubmitted
+                          - isSet
+                          - isNotSet
+                          - isEmpty
+                          - isNotEmpty
+                          - isAnyOf
+                      rightOperand:
+                        anyOf:
+                          - type: object
+                            properties:
+                              type:
+                                type: string
+                                const: static
+                              value:
+                                anyOf:
+                                  - type: string
+                                  - type: number
+                                  - type: array
+                                    items:
+                                      type: string
+                            required:
+                              - type
+                              - value
+                          - anyOf:
+                              - type: object
+                                properties:
+                                  type:
+                                    type: string
+                                    const: element
+                                  value:
+                                    type: string
+                                    minLength: 1
+                                  meta:
+                                    type: object
+                                    additionalProperties:
+                                      type: string
+                                required:
+                                  - type
+                                  - value
+                              - type: object
+                                properties:
+                                  type:
+                                    type: string
+                                    const: variable
+                                  value:
+                                    type: string
+                                    minLength: 1
+                                required:
+                                  - type
+                                  - value
+                              - type: object
+                                properties:
+                                  type:
+                                    type: string
+                                    const: hiddenField
+                                  value:
+                                    type: string
+                                    minLength: 1
+                                required:
+                                  - type
+                                  - value
+                    required:
+                      - id
+                      - leftOperand
+                      - operator
+                  - type: object
+                    properties: {}
+              - $ref: "#/components/schemas/conditionGroup"
+      required:
+        - id
+        - connector
+        - conditions

@@ -1,15 +1,26 @@
 import { Column, Container, Img, Link, Row, Text } from "@react-email/components";
-import { TFunction } from "i18next";
 import { FileIcon } from "lucide-react";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
+import { TFunction } from "../types/translations";
 
-export const renderEmailResponseValue = async (
+// Simplified version - just get the filename from URL
+const getOriginalFileNameFromUrl = (url: string): string => {
+  try {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    const filename = pathname.split("/").pop() || "file";
+    return decodeURIComponent(filename);
+  } catch {
+    return url.split("/").pop() || "file";
+  }
+};
+
+export const renderEmailResponseValue = (
   response: string | string[],
   questionType: TSurveyElementTypeEnum,
   t: TFunction,
   overrideFileUploadResponse = false
-): Promise<React.JSX.Element> => {
+): React.JSX.Element => {
   switch (questionType) {
     case TSurveyElementTypeEnum.FileUpload:
       return (
@@ -65,6 +76,6 @@ export const renderEmailResponseValue = async (
       );
 
     default:
-      return <Text className="mt-0 text-sm break-words whitespace-pre-wrap">{response}</Text>;
+      return <Text className="mt-0 text-sm break-words whitespace-pre-wrap">{response as string}</Text>;
   }
 };
