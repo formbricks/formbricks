@@ -27,11 +27,6 @@
   }
 }
 
-/* @import "./survey.css"; */
-
-#fbjs {
-  font-size: 16px;
-}
 
 /* Chrome, Edge, and Safari */
 #fbjs *::-webkit-scrollbar {
@@ -69,6 +64,7 @@
 
 /* theming */
 #fbjs {
+  font-size: 16px;
   --brand-default: #64748b;
   --slate-50: rgb(248, 250, 252);
   --slate-100: rgb(241 245 249);
