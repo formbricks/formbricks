@@ -141,6 +141,7 @@ export const appLanguages = [
       "nl-NL": "Engels (VS)",
       "es-ES": "Inglés (EE.UU.)",
       "sv-SE": "Engelska (USA)",
+      "ru-RU": "Английский (США)",
     },
   },
   {
@@ -158,6 +159,7 @@ export const appLanguages = [
       "nl-NL": "Duits",
       "es-ES": "Alemán",
       "sv-SE": "Tyska",
+      "ru-RU": "Немецкий",
     },
   },
   {
@@ -175,6 +177,7 @@ export const appLanguages = [
       "nl-NL": "Portugees (Brazilië)",
       "es-ES": "Portugués (Brasil)",
       "sv-SE": "Portugisiska (Brasilien)",
+      "ru-RU": "Португальский (Бразилия)",
     },
   },
   {
@@ -192,6 +195,7 @@ export const appLanguages = [
       "nl-NL": "Frans",
       "es-ES": "Francés",
       "sv-SE": "Franska",
+      "ru-RU": "Французский",
     },
   },
   {
@@ -209,6 +213,7 @@ export const appLanguages = [
       "nl-NL": "Chinees (Traditioneel)",
       "es-ES": "Chino (Tradicional)",
       "sv-SE": "Kinesiska (traditionell)",
+      "ru-RU": "Китайский (традиционный)",
     },
   },
   {
@@ -226,6 +231,7 @@ export const appLanguages = [
       "nl-NL": "Portugees (Portugal)",
       "es-ES": "Portugués (Portugal)",
       "sv-SE": "Portugisiska (Portugal)",
+      "ru-RU": "Португальский (Португалия)",
     },
   },
   {
@@ -243,6 +249,7 @@ export const appLanguages = [
       "nl-NL": "Roemeens",
       "es-ES": "Rumano",
       "sv-SE": "Rumänska",
+      "ru-RU": "Румынский",
     },
   },
   {
@@ -260,6 +267,7 @@ export const appLanguages = [
       "nl-NL": "Japans",
       "es-ES": "Japonés",
       "sv-SE": "Japanska",
+      "ru-RU": "Японский",
     },
   },
   {
@@ -277,6 +285,7 @@ export const appLanguages = [
       "nl-NL": "Chinees (Vereenvoudigd)",
       "es-ES": "Chino (Simplificado)",
       "sv-SE": "Kinesiska (förenklad)",
+      "ru-RU": "Китайский (упрощенный)",
     },
   },
   {
@@ -294,6 +303,7 @@ export const appLanguages = [
       "nl-NL": "Nederlands",
       "es-ES": "Neerlandés",
       "sv-SE": "Nederländska",
+      "ru-RU": "Голландский",
     },
   },
   {
@@ -311,6 +321,7 @@ export const appLanguages = [
       "nl-NL": "Spaans",
       "es-ES": "Español",
       "sv-SE": "Spanska",
+      "ru-RU": "Испанский",
     },
   },
   {
@@ -328,6 +339,7 @@ export const appLanguages = [
       "nl-NL": "Zweeds",
       "es-ES": "Sueco",
       "sv-SE": "Svenska",
+      "ru-RU": "Шведский",
     },
   },
 ];
