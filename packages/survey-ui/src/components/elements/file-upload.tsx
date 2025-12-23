@@ -145,6 +145,7 @@ interface UploadAreaProps {
   onDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
   onDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
   showUploader: boolean;
+  uploadedFiles: UploadedFile[];
 }
 
 function UploadArea({
@@ -160,6 +161,7 @@ function UploadArea({
   onDragOver,
   onDrop,
   showUploader,
+  uploadedFiles,
 }: Readonly<UploadAreaProps>): React.JSX.Element | null {
   if (!showUploader) {
     return null;
@@ -201,7 +203,7 @@ function UploadArea({
           accept={acceptAttribute}
           onChange={onFileChange}
           disabled={disabled}
-          required={required}
+          required={uploadedFiles.length > 0 ? false : required}
           dir={dir}
           aria-label="File upload"
           aria-describedby={`${inputId}-label`}
@@ -323,6 +325,7 @@ function FileUpload({
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               showUploader={showUploader}
+              uploadedFiles={uploadedFiles}
             />
           </div>
         </div>
