@@ -7,7 +7,6 @@ import {
   ZUserInput,
   ZUserInputPatch,
 } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
-import { organizationServer } from "@/modules/api/v2/organizations/lib/openapi";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
 
 export const getUsersEndpoint: ZodOpenApiOperationObject = {
@@ -96,8 +95,7 @@ export const updateUserEndpoint: ZodOpenApiOperationObject = {
 };
 
 export const userPaths: ZodOpenApiPathsObject = {
-  "/{organizationId}/users": {
-    servers: organizationServer,
+  "/organizations/{organizationId}/users": {
     get: getUsersEndpoint,
     post: createUserEndpoint,
     patch: updateUserEndpoint,

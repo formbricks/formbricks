@@ -21,13 +21,8 @@ export function InviteAcceptedEmail({
   return (
     <EmailTemplate t={t} {...legalProps}>
       <Container>
-        <Heading>
-          {t("emails.invite_accepted_email_heading", { inviterName })} {inviterName}
-        </Heading>
-        <Text className="text-sm">
-          {t("emails.invite_accepted_email_text_par1", { inviteeName })} {inviteeName}{" "}
-          {t("emails.invite_accepted_email_text_par2")}
-        </Text>
+        <Heading>{t("emails.invite_accepted_email_heading", { inviterName })}</Heading>
+        <Text className="text-sm">{t("emails.invite_accepted_email_text", { inviteeName })}</Text>
         <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
