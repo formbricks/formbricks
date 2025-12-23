@@ -61,6 +61,10 @@ interface SingleSelectProps {
   otherValue?: string;
   /** Callback when the 'other' input value changes */
   onOtherValueChange?: (value: string) => void;
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 function SingleSelect({
@@ -82,6 +86,8 @@ function SingleSelect({
   otherOptionPlaceholder = "Please specify",
   otherValue = "",
   onOtherValueChange,
+  imageUrl,
+  videoUrl,
 }: Readonly<SingleSelectProps>): React.JSX.Element {
   // Ensure value is always a string or undefined
   const selectedValue = value ?? undefined;
@@ -131,7 +137,14 @@ function SingleSelect({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* Options */}
       <div className="space-y-3">

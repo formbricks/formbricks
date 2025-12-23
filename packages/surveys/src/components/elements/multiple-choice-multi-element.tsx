@@ -275,6 +275,8 @@ export function MultipleChoiceMultiElement({
         otherValue={otherValue}
         onOtherValueChange={handleOtherValueChange}
         exclusiveOptionIds={noneOption ? [noneOption.id] : []}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

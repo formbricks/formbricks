@@ -23,6 +23,8 @@ interface OpenTextProps {
   dir?: "ltr" | "rtl" | "auto";
   rows?: number;
   disabled?: boolean;
+  imageUrl?: string;
+  videoUrl?: string;
 }
 
 function OpenText({
@@ -41,6 +43,8 @@ function OpenText({
   dir = "auto",
   rows = 3,
   disabled = false,
+  imageUrl,
+  videoUrl,
 }: Readonly<OpenTextProps>): React.JSX.Element {
   const [currentLength, setCurrentLength] = useState(value.length);
 
@@ -63,7 +67,14 @@ function OpenText({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* Input or Textarea */}
       <div className="space-y-1">

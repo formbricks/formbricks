@@ -34,6 +34,10 @@ export interface CTAProps {
   disabled?: boolean;
   /** Variant for the button */
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "custom";
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 function CTA({
@@ -50,6 +54,8 @@ function CTA({
   dir = "auto",
   disabled = false,
   buttonVariant = "default",
+  imageUrl,
+  videoUrl,
 }: Readonly<CTAProps>): React.JSX.Element {
   const handleButtonClick = (): void => {
     if (disabled) return;
@@ -63,24 +69,33 @@ function CTA({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* CTA Button */}
       <div className="relative space-y-2">
         <ElementError errorMessage={errorMessage} dir={dir} />
 
-        <div className="flex w-full justify-start">
-          <Button
-            id={inputId}
-            type="button"
-            onClick={handleButtonClick}
-            disabled={disabled}
-            className="flex items-center gap-2"
-            variant={buttonVariant}>
-            {buttonLabel}
-            {buttonExternal ? <SquareArrowOutUpRightIcon className="size-4" /> : null}
-          </Button>
-        </div>
+        {buttonExternal && (
+          <div className="flex w-full justify-start">
+            <Button
+              id={inputId}
+              type="button"
+              onClick={handleButtonClick}
+              disabled={disabled}
+              className="flex items-center gap-2"
+              variant={buttonVariant}>
+              {buttonLabel}
+              <SquareArrowOutUpRightIcon className="size-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

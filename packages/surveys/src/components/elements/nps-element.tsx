@@ -73,6 +73,8 @@ export function NPSElement({
         required={element.required}
         errorMessage={errorMessage}
         dir={dir}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

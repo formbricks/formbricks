@@ -41,6 +41,10 @@ interface MatrixProps {
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the options are disabled */
   disabled?: boolean;
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 function Matrix({
@@ -56,6 +60,8 @@ function Matrix({
   errorMessage,
   dir = "auto",
   disabled = false,
+  imageUrl,
+  videoUrl,
 }: Readonly<MatrixProps>): React.JSX.Element {
   // Ensure value is always an object (value already has default of {})
   const selectedValues = value;
@@ -78,7 +84,14 @@ function Matrix({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* Matrix Table */}
       <div className="relative">
@@ -143,7 +156,7 @@ function Matrix({
                             <Label htmlFor={cellId} className="flex cursor-pointer justify-center">
                               <RadioGroupItem
                                 value={column.id}
-                                aria-required={required}
+                                required={required}
                                 id={cellId}
                                 disabled={disabled}
                                 aria-label={`${row.label}-${column.label}`}

@@ -129,6 +129,8 @@ export function OpenTextElement({
         errorMessage={errorMessage}
         dir={dir}
         rows={3}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
     </form>
   );

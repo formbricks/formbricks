@@ -67,6 +67,10 @@ interface MultiSelectProps {
   onOtherValueChange?: (value: string) => void;
   /** IDs of options that should be exclusive (selecting them deselects all others) */
   exclusiveOptionIds?: string[];
+  /** Image URL to display above the headline */
+  imageUrl?: string;
+  /** Video URL to display above the headline */
+  videoUrl?: string;
 }
 
 // Shared className for option labels
@@ -412,6 +416,8 @@ function MultiSelect({
   otherValue = "",
   onOtherValueChange,
   exclusiveOptionIds = [],
+  imageUrl,
+  videoUrl,
 }: Readonly<MultiSelectProps>): React.JSX.Element {
   // Ensure value is always an array
   const selectedValues = Array.isArray(value) ? value : [];
@@ -463,7 +469,14 @@ function MultiSelect({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
-      <ElementHeader headline={headline} description={description} required={required} htmlFor={inputId} />
+      <ElementHeader
+        headline={headline}
+        description={description}
+        required={required}
+        htmlFor={inputId}
+        imageUrl={imageUrl}
+        videoUrl={videoUrl}
+      />
 
       {/* Options */}
       <div className="relative">

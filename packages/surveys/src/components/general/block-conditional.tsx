@@ -167,8 +167,8 @@ export function BlockConditional({
     }
 
     // For other element types, check if required fields are empty
-    // Wrapper components handle their own validation and error display
-    if (element.required && isEmptyResponse(response)) {
+    // CTA elements should not block navigation even if marked required (as they are informational)
+    if (element.type !== TSurveyElementTypeEnum.CTA && element.required && isEmptyResponse(response)) {
       form.requestSubmit();
       return false;
     }
@@ -290,7 +290,7 @@ export function BlockConditional({
           <div
             className={cn(
               "flex w-full flex-row-reverse justify-between",
-              fullSizeCards ? "sticky bottom-0 bg-white" : ""
+              fullSizeCards ? "bg-survey-bg sticky bottom-0" : ""
             )}>
             <div>
               <SubmitButton
