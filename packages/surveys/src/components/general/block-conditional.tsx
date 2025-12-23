@@ -169,6 +169,17 @@ export function BlockConditional({
   const validateElementForm = (element: TSurveyElement, form: HTMLFormElement): boolean => {
     const response = value[element.id];
 
+    if (
+      element.type === TSurveyElementTypeEnum.Address ||
+      element.type === TSurveyElementTypeEnum.ContactInfo
+    ) {
+      if (!form.checkValidity()) {
+        form.requestSubmit();
+        return false;
+      }
+      return true;
+    }
+
     // Custom validation for ranking questions
     if (element.type === TSurveyElementTypeEnum.Ranking && !validateRankingElement(element, response, form)) {
       return false;
