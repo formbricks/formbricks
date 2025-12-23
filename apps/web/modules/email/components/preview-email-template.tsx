@@ -1,6 +1,10 @@
+import { TFunction } from "i18next";
+import { CalendarDaysIcon, ExternalLinkIcon, UploadIcon } from "lucide-react";
+import React from "react";
 import {
   Column,
   Container,
+  ElementHeader,
   Button as EmailButton,
   Img,
   Link,
@@ -8,11 +12,8 @@ import {
   Section,
   Tailwind,
   Text,
-} from "@react-email/components";
-import { render } from "@react-email/render";
-import { TFunction } from "i18next";
-import { CalendarDaysIcon, ExternalLinkIcon, UploadIcon } from "lucide-react";
-import React from "react";
+  render,
+} from "@formbricks/email";
 import { TSurveyCTAElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -24,7 +25,6 @@ import { isLight, mixColor } from "@/lib/utils/colors";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
-import { ElementHeader } from "./email-element-header";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
