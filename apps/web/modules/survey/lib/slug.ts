@@ -87,10 +87,10 @@ export const updateSurveySlug = async (
 };
 
 // Get all surveys with slugs for an organization (for Domain settings page)
-export const getSurveysWithSlugsByOrganization = reactCache(
+export const getSurveysWithSlugsByOrganizationId = reactCache(
   async (organizationId: string): Promise<Result<TSurveyWithSlug[], DatabaseError>> => {
     try {
-      const surveys = (await prisma.survey.findMany({
+      const surveys = await prisma.survey.findMany({
         where: {
           slug: { not: null },
           environment: {
@@ -113,7 +113,7 @@ export const getSurveysWithSlugsByOrganization = reactCache(
             },
           },
         },
-      })) as TSurveyWithSlug[];
+      });
       return ok(surveys);
     } catch (error) {
       return err(new DatabaseError(error.message));

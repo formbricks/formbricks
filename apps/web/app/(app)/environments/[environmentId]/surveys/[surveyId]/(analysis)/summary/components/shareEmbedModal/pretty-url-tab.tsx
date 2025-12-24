@@ -19,7 +19,7 @@ import {
   FormLabel,
   FormProvider,
 } from "@/modules/ui/components/form";
-import { PrettyUrlInput } from "./components/pretty-url-input";
+import { PrettyUrlInput } from "./pretty-url-input";
 
 interface PrettyUrlTabProps {
   publicDomain: string;
@@ -64,29 +64,24 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
     }
 
     setIsSubmitting(true);
-    try {
-      const result = await updateSurveySlugAction({
-        surveyId: survey.id,
-        slug: data.slug,
-      });
+    const result = await updateSurveySlugAction({
+      surveyId: survey.id,
+      slug: data.slug,
+    });
 
-      if (result?.data) {
-        if (result.data.ok) {
-          toast.success(t("environments.surveys.share.pretty_url.save_success"));
-          router.refresh();
-          setIsEditing(false);
-        } else {
-          toast.error(result.data.error.message);
-        }
+    if (result?.data) {
+      if (result.data.ok) {
+        toast.success(t("environments.surveys.share.pretty_url.save_success"));
+        router.refresh();
+        setIsEditing(false);
       } else {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage || "Failed to update slug");
+        toast.error(result.data.error.message);
       }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update slug");
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(result);
+      toast.error(errorMessage || "Failed to update slug");
     }
+    setIsSubmitting(false);
   };
 
   const handleEdit = () => {
@@ -100,28 +95,24 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
 
   const handleRemove = async () => {
     setIsSubmitting(true);
-    try {
-      const result = await removeSurveySlugAction({ surveyId: survey.id });
 
-      if (result?.data) {
-        if (result.data.ok) {
-          setShowRemoveDialog(false);
-          reset({ slug: "" });
-          router.refresh();
-          setIsEditing(true);
-          toast.success(t("environments.surveys.share.pretty_url.remove_success"));
-        } else {
-          toast.error(result.data.error.message);
-        }
+    const result = await removeSurveySlugAction({ surveyId: survey.id });
+
+    if (result?.data) {
+      if (result.data.ok) {
+        setShowRemoveDialog(false);
+        reset({ slug: "" });
+        router.refresh();
+        setIsEditing(true);
+        toast.success(t("environments.surveys.share.pretty_url.remove_success"));
       } else {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage || "Failed to remove slug");
+        toast.error(result.data.error.message);
       }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to remove slug");
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(result);
+      toast.error(errorMessage || "Failed to remove slug");
     }
+    setIsSubmitting(false);
   };
 
   const handleCopyUrl = () => {
