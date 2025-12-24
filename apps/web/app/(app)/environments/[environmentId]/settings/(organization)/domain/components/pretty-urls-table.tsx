@@ -23,31 +23,45 @@ interface SurveyWithSlug {
 }
 
 interface PrettyUrlsTableProps {
-  surveys?: SurveyWithSlug[];
+  surveys: SurveyWithSlug[];
 }
 
-export const PrettyUrlsTable = ({ surveys = [] }: PrettyUrlsTableProps) => {
+export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
   const { t } = useTranslation();
 
   const getEnvironmentBadgeColor = (type: string) => {
     return type === "production" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800";
   };
 
+  const tableHeaders = [
+    {
+      label: t("environments.settings.domain.survey_name"),
+      key: "name",
+    },
+    {
+      label: t("environments.settings.domain.project"),
+      key: "project",
+    },
+    {
+      label: t("environments.settings.domain.pretty_url"),
+      key: "slug",
+    },
+    {
+      label: t("common.environment"),
+      key: "environment",
+    },
+  ];
+
   return (
     <div className="overflow-hidden rounded-lg">
       <Table>
         <TableHeader>
           <TableRow className="bg-slate-100">
-            <TableHead className="font-medium text-slate-500">
-              {t("environments.settings.domain.survey_name")}
-            </TableHead>
-            <TableHead className="font-medium text-slate-500">
-              {t("environments.settings.domain.project")}
-            </TableHead>
-            <TableHead className="font-medium text-slate-500">
-              {t("environments.settings.domain.pretty_url")}
-            </TableHead>
-            <TableHead className="font-medium text-slate-500">{t("common.environment")}</TableHead>
+            {tableHeaders.map((header) => (
+              <TableHead key={header.key} className="font-medium text-slate-500">
+                {header.label}
+              </TableHead>
+            ))}
           </TableRow>
         </TableHeader>
         <TableBody className="[&_tr:last-child]:border-b">
