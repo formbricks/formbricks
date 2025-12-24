@@ -450,14 +450,12 @@ checksums:
     emails/forgot_password_email_text: 5100fa2fe2180ded9cb2d89b4f77d2e0
     emails/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
     emails/imprint: c4e5f2a1994d3cc5896b200709cc499c
-    emails/invite_accepted_email_heading: 6ff6dff269b0f1ac1b73912c9e344343
+    emails/invite_accepted_email_heading: 80763c6e4585cd57fa58e4d2d82e6500
     emails/invite_accepted_email_subject: 4f5f2a68c98dd1dd01143fcae3be5562
-    emails/invite_accepted_email_text_par1: b27eadc4779c9fa477103d136a6acab9
-    emails/invite_accepted_email_text_par2: c77209b510baf0415264fdb5ab8076a8
+    emails/invite_accepted_email_text: 48d792826ab9a97eed27599c17ec70d5
     emails/invite_email_button_label: 02099d40cd11e717c0431fa43e68272c
-    emails/invite_email_heading: 6ff6dff269b0f1ac1b73912c9e344343
-    emails/invite_email_text_par1: 70b976a3d4a5509f6d905f9f3f962ada
-    emails/invite_email_text_par2: 14da6da9fdbc21a1cb38988abac7932d
+    emails/invite_email_heading: d9f9b18e4de575980de3cde3e4ed08bf
+    emails/invite_email_text: 1499fa615105121a133440929b039a64
     emails/invite_member_email_subject: 295e329b1642339dc7cc2b49a687e1f8
     emails/new_email_verification_text: b7f00f47d04afa9e872176d9933f2d93
     emails/number_variable: d4f2bbb1965c791cf9921a5112914f3f

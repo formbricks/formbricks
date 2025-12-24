@@ -78,8 +78,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     document.head.appendChild(styleElement);
   }
 
-  // Start the innerHTML string with :root
-  let cssVariables = ":root {\n";
+  // Start the innerHTML string with #fbjs
+  let cssVariables = "#fbjs {\n";
 
   // Helper function to append the variable if it's not undefined
   const appendCssVariable = (variableName: string, value?: string) => {
@@ -179,7 +179,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     }
   }
 
-  // Close the :root block
+  // Close the #fbjs block
   cssVariables += "}";
 
   // Set the innerHTML of the style element

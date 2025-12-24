@@ -1,6 +1,5 @@
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZWebhook } from "@formbricks/database/zod/webhooks";
-import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import {
   deleteWebhookEndpoint,
   getWebhookEndpoint,
@@ -56,13 +55,11 @@ export const createWebhookEndpoint: ZodOpenApiOperationObject = {
 };
 
 export const webhookPaths: ZodOpenApiPathsObject = {
-  "/webhooks": {
-    servers: managementServer,
+  "/management/webhooks": {
     get: getWebhooksEndpoint,
     post: createWebhookEndpoint,
   },
-  "/webhooks/{id}": {
-    servers: managementServer,
+  "/management/webhooks/{id}": {
     get: getWebhookEndpoint,
     put: updateWebhookEndpoint,
     delete: deleteWebhookEndpoint,

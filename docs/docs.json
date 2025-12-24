@@ -186,26 +186,21 @@
             ]
           },
           {
-            "group": "XM",
+            "group": "Best Practices",
             "pages": [
-              {
-                "group": "Best Practices",
-                "icon": "lightbulb",
-                "pages": [
-                  "xm-and-surveys/xm/best-practices/contact-form",
-                  "xm-and-surveys/xm/best-practices/headless-surveys",
-                  "xm-and-surveys/xm/best-practices/docs-feedback",
-                  "xm-and-surveys/xm/best-practices/feature-chaser",
-                  "xm-and-surveys/xm/best-practices/feedback-box",
-                  "xm-and-surveys/xm/best-practices/improve-email-content",
-                  "xm-and-surveys/xm/best-practices/interview-prompt",
-                  "xm-and-surveys/xm/best-practices/cancel-subscription",
-                  "xm-and-surveys/xm/best-practices/pmf-survey",
-                  "xm-and-surveys/xm/best-practices/quiz-time",
-                  "xm-and-surveys/xm/best-practices/improve-trial-cr",
-                  "xm-and-surveys/xm/best-practices/research-panel"
-                ]
-              }
+              "xm-and-surveys/xm/best-practices/understanding-survey-types",
+              "xm-and-surveys/xm/best-practices/contact-form",
+              "xm-and-surveys/xm/best-practices/headless-surveys",
+              "xm-and-surveys/xm/best-practices/docs-feedback",
+              "xm-and-surveys/xm/best-practices/feature-chaser",
+              "xm-and-surveys/xm/best-practices/feedback-box",
+              "xm-and-surveys/xm/best-practices/improve-email-content",
+              "xm-and-surveys/xm/best-practices/interview-prompt",
+              "xm-and-surveys/xm/best-practices/cancel-subscription",
+              "xm-and-surveys/xm/best-practices/pmf-survey",
+              "xm-and-surveys/xm/best-practices/quiz-time",
+              "xm-and-surveys/xm/best-practices/improve-trial-cr",
+              "xm-and-surveys/xm/best-practices/research-panel"
             ]
           }
         ],

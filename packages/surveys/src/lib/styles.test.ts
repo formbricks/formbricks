@@ -225,7 +225,7 @@ describe("addCustomThemeToDom", () => {
   const getCssVariables = (styleElement: HTMLStyleElement | null): Record<string, string> => {
     if (!styleElement || !styleElement.innerHTML) return {};
     const cssText = styleElement.innerHTML;
-    const rootMatch = cssText.match(/:root\s*{\s*([^}]*?)\s*}/);
+    const rootMatch = cssText.match(/#fbjs\s*{\s*([^}]*?)\s*}/);
     if (!rootMatch || !rootMatch[1]) return {};
 
     const variables: Record<string, string> = {};

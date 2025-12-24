@@ -24,7 +24,7 @@
    Design Tokens
    ============================================================================= */
 
-:root {
+#fbjs {
   /* ---------------------------------------------------------------------------
      Base Primitives
      These are the foundation tokens used throughout the design system.
@@ -206,27 +206,27 @@
    Textarea Scrollbar Styling
    Smaller, more subtle scrollbars for textarea elements.
    --------------------------------------------------------------------------- */
-textarea {
+#fbjs textarea {
   /* Firefox */
   scrollbar-width: thin;
   scrollbar-color: hsl(215.4 16.3% 46.9% / 0.3) transparent;
 }
 
 /* Chrome, Edge, and Safari */
-textarea::-webkit-scrollbar {
+#fbjs textarea::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
 
-textarea::-webkit-scrollbar-track {
+#fbjs textarea::-webkit-scrollbar-track {
   background: transparent;
 }
 
-textarea::-webkit-scrollbar-thumb {
+#fbjs textarea::-webkit-scrollbar-thumb {
   background-color: hsl(215.4 16.3% 46.9% / 0.3);
   border-radius: 2px;
 }
 
-textarea::-webkit-scrollbar-thumb:hover {
+#fbjs textarea::-webkit-scrollbar-thumb:hover {
   background-color: hsl(215.4 16.3% 46.9% / 0.5);
 }
