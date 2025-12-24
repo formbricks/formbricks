@@ -1,6 +1,6 @@
-import { FingerprintIcon, TagIcon } from "lucide-react";
+import { Calendar1Icon, FingerprintIcon, HashIcon, TagIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter } from "@formbricks/types/segment";
 import FilterButton from "./filter-button";
 
@@ -13,6 +13,7 @@ interface AttributeTabContentProps {
     onAddFilter: (filter: TBaseFilter) => void;
     setOpen: (open: boolean) => void;
     contactAttributeKey?: string;
+    attributeDataType?: TContactAttributeDataType;
   }) => void;
 }
 
@@ -26,6 +27,7 @@ function FilterButtonWithHandler({
   setOpen,
   handleAddFilter,
   contactAttributeKey,
+  attributeDataType,
 }: {
   dataTestId: string;
   icon: React.ReactNode;
@@ -38,8 +40,10 @@ function FilterButtonWithHandler({
     onAddFilter: (filter: TBaseFilter) => void;
     setOpen: (open: boolean) => void;
     contactAttributeKey?: string;
+    attributeDataType?: TContactAttributeDataType;
   }) => void;
   contactAttributeKey?: string;
+  attributeDataType?: TContactAttributeDataType;
 }) {
   return (
     <FilterButton
@@ -51,7 +55,7 @@ function FilterButtonWithHandler({
           type,
           onAddFilter,
           setOpen,
-          ...(type === "attribute" ? { contactAttributeKey } : {}),
+          ...(type === "attribute" ? { contactAttributeKey, attributeDataType } : {}),
         });
       }}
       onKeyDown={(e) => {
@@ -61,7 +65,7 @@ function FilterButtonWithHandler({
             type,
             onAddFilter,
             setOpen,
-            ...(type === "attribute" ? { contactAttributeKey } : {}),
+            ...(type === "attribute" ? { contactAttributeKey, attributeDataType } : {}),
           });
         }
       }}
@@ -104,19 +108,31 @@ function AttributeTabContent({
           <p>{t("environments.segments.no_attributes_yet")}</p>
         </div>
       )}
-      {contactAttributeKeys.map((attributeKey) => (
-        <FilterButtonWithHandler
-          key={attributeKey.id}
-          dataTestId={`filter-btn-attribute-${attributeKey.key}`}
-          icon={<TagIcon className="h-4 w-4" />}
-          label={attributeKey.name ?? attributeKey.key}
-          type="attribute"
-          onAddFilter={onAddFilter}
-          setOpen={setOpen}
-          handleAddFilter={handleAddFilter}
-          contactAttributeKey={attributeKey.key}
-        />
-      ))}
+      {contactAttributeKeys.map((attributeKey) => {
+        const icon =
+          attributeKey.dataType === "date" ? (
+            <Calendar1Icon className="h-4 w-4" />
+          ) : attributeKey.dataType === "number" ? (
+            <HashIcon className="h-4 w-4" />
+          ) : (
+            <TagIcon className="h-4 w-4" />
+          );
+
+        return (
+          <FilterButtonWithHandler
+            key={attributeKey.id}
+            dataTestId={`filter-btn-attribute-${attributeKey.key}`}
+            icon={icon}
+            label={attributeKey.name ?? attributeKey.key}
+            type="attribute"
+            onAddFilter={onAddFilter}
+            setOpen={setOpen}
+            handleAddFilter={handleAddFilter}
+            contactAttributeKey={attributeKey.key}
+            attributeDataType={attributeKey.dataType}
+          />
+        );
+      })}
     </div>
   );
 }

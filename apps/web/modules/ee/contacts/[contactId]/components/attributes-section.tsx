@@ -1,12 +1,20 @@
 import { getResponsesByContactId } from "@/lib/response/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
+import {
+  getContactAttributes,
+  getContactAttributesWithMetadata,
+} from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
+import { Badge } from "@/modules/ui/components/badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
   const t = await getTranslate();
-  const [contact, attributes] = await Promise.all([getContact(contactId), getContactAttributes(contactId)]);
+  const [contact, attributes, attributesWithMetadata] = await Promise.all([
+    getContact(contactId),
+    getContactAttributes(contactId),
+    getContactAttributesWithMetadata(contactId),
+  ]);
 
   if (!contact) {
     throw new Error(t("environments.contacts.contact_not_found"));
@@ -53,13 +61,16 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">{contact.id}</dd>
       </div>
 
-      {Object.entries(attributes)
-        .filter(([key, _]) => key !== "email" && key !== "userId" && key !== "language")
-        .map(([key, attributeData]) => {
+      {attributesWithMetadata
+        .filter((attr) => attr.key !== "email" && attr.key !== "userId" && attr.key !== "language")
+        .map((attr) => {
           return (
-            <div key={key}>
-              <dt className="text-sm font-medium text-slate-500">{key}</dt>
-              <dd className="mt-1 text-sm text-slate-900">{attributeData}</dd>
+            <div key={attr.key}>
+              <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
+                <span>{attr.name || attr.key}</span>
+                <Badge text={attr.dataType} type="gray" size="tiny" />
+              </dt>
+              <dd className="mt-1 text-sm text-slate-900">{attr.value}</dd>
             </div>
           );
         })}

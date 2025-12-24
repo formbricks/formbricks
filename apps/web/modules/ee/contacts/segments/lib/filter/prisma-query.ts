@@ -3,7 +3,9 @@ import { cache as reactCache } from "react";
 import { logger } from "@formbricks/logger";
 import { err, ok } from "@formbricks/types/error-handlers";
 import {
+  DATE_OPERATORS,
   TBaseFilters,
+  TDateOperator,
   TSegmentAttributeFilter,
   TSegmentDeviceFilter,
   TSegmentFilter,
@@ -11,11 +13,76 @@ import {
   TSegmentSegmentFilter,
 } from "@formbricks/types/segment";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
+import { endOfDay, startOfDay, subtractTimeUnit } from "../date-utils";
 import { getSegment } from "../segments";
 
 // Type for the result of the segment filter to prisma query generation
 export type SegmentFilterQueryResult = {
   whereClause: Prisma.ContactWhereInput;
+};
+
+/**
+ * Builds a Prisma where clause for date attribute filters
+ * Since dates are stored as ISO 8601 strings, lexicographic comparison works correctly
+ */
+const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prisma.ContactWhereInput => {
+  const { root, qualifier, value } = filter;
+  const { contactAttributeKey } = root;
+  const { operator } = qualifier as { operator: TDateOperator };
+  const now = new Date();
+
+  let dateCondition: Prisma.StringFilter = {};
+
+  switch (operator) {
+    case "isOlderThan": {
+      // value should be { amount, unit }
+      if (typeof value === "object" && "amount" in value && "unit" in value) {
+        const threshold = subtractTimeUnit(now, value.amount, value.unit);
+        dateCondition = { lt: threshold.toISOString() };
+      }
+      break;
+    }
+    case "isNewerThan": {
+      // value should be { amount, unit }
+      if (typeof value === "object" && "amount" in value && "unit" in value) {
+        const threshold = subtractTimeUnit(now, value.amount, value.unit);
+        dateCondition = { gte: threshold.toISOString() };
+      }
+      break;
+    }
+    case "isBefore":
+      if (typeof value === "string") {
+        dateCondition = { lt: value };
+      }
+      break;
+    case "isAfter":
+      if (typeof value === "string") {
+        dateCondition = { gt: value };
+      }
+      break;
+    case "isBetween":
+      if (Array.isArray(value) && value.length === 2) {
+        dateCondition = { gte: value[0], lte: value[1] };
+      }
+      break;
+    case "isSameDay": {
+      if (typeof value === "string") {
+        const dayStart = startOfDay(new Date(value)).toISOString();
+        const dayEnd = endOfDay(new Date(value)).toISOString();
+        dateCondition = { gte: dayStart, lte: dayEnd };
+      }
+      break;
+    }
+  }
+
+  return {
+    attributes: {
+      some: {
+        attributeKey: { key: contactAttributeKey },
+        value: dateCondition,
+      },
+    },
+  };
 };
 
 /**
@@ -59,6 +126,11 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
       },
     },
   } satisfies Prisma.ContactWhereInput;
+
+  // Handle date operators
+  if (DATE_OPERATORS.includes(operator as TDateOperator)) {
+    return buildDateAttributeFilterWhereClause(filter);
+  }
 
   // Apply the appropriate operator to the attribute value
   switch (operator) {

@@ -221,27 +221,29 @@ export const ContactsTable = ({
 
   return (
     <div className="w-full">
-      <SearchBar
-        value={searchValue}
-        onChange={setSearchValue}
-        placeholder={t("environments.contacts.search_contact")}
-      />
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}
         onDragEnd={handleDragEnd}
         sensors={sensors}>
-        <DataTableToolbar
-          setIsExpanded={setIsExpanded}
-          setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-          isExpanded={isExpanded ?? false}
-          table={table}
-          updateRowList={updateContactList}
-          type="contact"
-          deleteAction={deleteContact}
-          isQuotasAllowed={isQuotasAllowed}
-        />
-        <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
+        <div className="flex items-center justify-between gap-4 pb-6">
+          <SearchBar
+            value={searchValue}
+            onChange={setSearchValue}
+            placeholder={t("environments.contacts.search_contact")}
+          />
+          <DataTableToolbar
+            setIsExpanded={setIsExpanded}
+            setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+            isExpanded={isExpanded ?? false}
+            table={table}
+            updateRowList={updateContactList}
+            type="contact"
+            deleteAction={deleteContact}
+            isQuotasAllowed={isQuotasAllowed}
+          />
+        </div>
+        <div className="w-full overflow-x-auto rounded-lg border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
             <TableHeader className="pointer-events-auto">
               {table.getHeaderGroups().map((headerGroup) => (
@@ -260,39 +262,55 @@ export const ContactsTable = ({
             </TableHeader>
 
             <TableBody ref={parent}>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={"group cursor-pointer"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      onClick={() => {
-                        if (cell.column.id === "select") return;
-                        router.push(`/environments/${environmentId}/contacts/${row.id}`);
-                      }}
-                      style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
-                      className={cn(
-                        "border-slate-200 bg-white px-4 py-2 shadow-none group-hover:bg-slate-100",
-                        row.getIsSelected() && "bg-slate-100",
-                        {
-                          "border-r": !cell.column.getIsLastColumn(),
-                          "border-l": !cell.column.getIsFirstColumn(),
-                        }
-                      )}>
-                      <div
-                        className={cn("flex flex-1 items-center truncate", isExpanded ? "h-10" : "h-full")}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </div>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+              {table.getRowModel().rows.map((row, rowIndex) => {
+                const isLastRow = rowIndex === table.getRowModel().rows.length - 1;
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={`group cursor-pointer hover:bg-slate-50 ${isLastRow ? "rounded-b-lg" : ""}`}>
+                    {row.getVisibleCells().map((cell, cellIndex) => {
+                      const isFirstCell = cellIndex === 0;
+                      const isLastCell = cellIndex === row.getVisibleCells().length - 1;
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          onClick={() => {
+                            if (cell.column.id === "select") return;
+                            router.push(`/environments/${environmentId}/contacts/${row.id}`);
+                          }}
+                          style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
+                          className={cn(
+                            "border-slate-200 bg-white px-4 py-2 shadow-none group-hover:bg-slate-50",
+                            row.getIsSelected() && "bg-slate-100",
+                            {
+                              "sticky left-0 z-10": cell.column.id === "select",
+                            },
+                            isLastRow
+                              ? isFirstCell
+                                ? "rounded-bl-lg"
+                                : isLastCell
+                                  ? "rounded-br-lg"
+                                  : ""
+                              : ""
+                          )}>
+                          <div
+                            className={cn(
+                              "flex flex-1 items-center truncate",
+                              isExpanded ? "h-10" : "h-full"
+                            )}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </div>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                );
+              })}
               {table.getRowModel().rows.length === 0 && (
-                <TableRow>
+                <TableRow className="hover:bg-white">
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    {t("common.no_results")}
+                    <p className="text-slate-400">{t("common.no_results")}</p>
                   </TableCell>
                 </TableRow>
               )}

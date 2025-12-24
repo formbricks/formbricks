@@ -4,7 +4,7 @@ import { UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TSegment } from "@formbricks/types/segment";
 import { SegmentSettings } from "@/modules/ee/contacts/segments/components/segment-settings";
 import {
   Dialog,
@@ -20,7 +20,7 @@ interface EditSegmentModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  currentSegment: TSegmentWithSurveyNames;
+  currentSegment: TSegment;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isContactsEnabled: boolean;

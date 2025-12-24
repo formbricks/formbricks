@@ -27,7 +27,7 @@ export const generateContactTableColumns = (
     header: "User ID",
     cell: ({ row }) => {
       const userId = row.original.userId;
-      return <IdBadge id={userId} showCopyIconOnHover={true} />;
+      return <IdBadge id={userId} />;
     },
   };
 

@@ -10,8 +10,10 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import {
+  DATE_OPERATORS,
   TAllOperators,
   TBaseFilters,
+  TDateOperator,
   TEvaluateSegmentUserAttributeData,
   TEvaluateSegmentUserData,
   TSegment,
@@ -19,6 +21,7 @@ import {
   TSegmentConnector,
   TSegmentCreateInput,
   TSegmentDeviceFilter,
+  TSegmentFilterValue,
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
   TSegmentUpdateInput,
@@ -29,6 +32,7 @@ import {
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
 import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
+import { isSameDay, subtractTimeUnit } from "./date-utils";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {
@@ -387,6 +391,12 @@ const evaluateAttributeFilter = (
     return false;
   }
 
+  // Check if this is a date operator
+  if (isDateOperator(qualifier.operator)) {
+    return evaluateDateFilter(String(attributeValue), value, qualifier.operator);
+  }
+
+  // Use standard comparison for non-date operators
   const attResult = compareValues(attributeValue, value, qualifier.operator);
   return attResult;
 };
@@ -438,6 +448,86 @@ const evaluateSegmentFilter = async (
 const evaluateDeviceFilter = (device: "phone" | "desktop", filter: TSegmentDeviceFilter): boolean => {
   const { value, qualifier } = filter;
   return compareValues(device, value, qualifier.operator);
+};
+
+/**
+ * Checks if an operator is a date-specific operator
+ */
+const isDateOperator = (operator: TAllOperators): operator is TDateOperator => {
+  return DATE_OPERATORS.includes(operator as TDateOperator);
+};
+
+/**
+ * Evaluates a date filter against an attribute value
+ */
+const evaluateDateFilter = (
+  attributeValue: string,
+  filterValue: TSegmentFilterValue,
+  operator: TDateOperator
+): boolean => {
+  // Parse the attribute value as a date
+  const attrDate = new Date(attributeValue);
+
+  // Validate the attribute value is a valid date
+  if (isNaN(attrDate.getTime())) {
+    return false;
+  }
+
+  const now = new Date();
+
+  switch (operator) {
+    case "isOlderThan": {
+      // filterValue should be { amount, unit }
+      if (typeof filterValue === "object" && "amount" in filterValue && "unit" in filterValue) {
+        const threshold = subtractTimeUnit(now, filterValue.amount, filterValue.unit);
+        return attrDate < threshold;
+      }
+      return false;
+    }
+    case "isNewerThan": {
+      // filterValue should be { amount, unit }
+      if (typeof filterValue === "object" && "amount" in filterValue && "unit" in filterValue) {
+        const threshold = subtractTimeUnit(now, filterValue.amount, filterValue.unit);
+        return attrDate >= threshold;
+      }
+      return false;
+    }
+    case "isBefore": {
+      // filterValue should be an ISO date string
+      if (typeof filterValue === "string") {
+        const compareDate = new Date(filterValue);
+        return attrDate < compareDate;
+      }
+      return false;
+    }
+    case "isAfter": {
+      // filterValue should be an ISO date string
+      if (typeof filterValue === "string") {
+        const compareDate = new Date(filterValue);
+        return attrDate > compareDate;
+      }
+      return false;
+    }
+    case "isBetween": {
+      // filterValue should be a tuple [startDate, endDate]
+      if (Array.isArray(filterValue) && filterValue.length === 2) {
+        const startDate = new Date(filterValue[0]);
+        const endDate = new Date(filterValue[1]);
+        return attrDate >= startDate && attrDate <= endDate;
+      }
+      return false;
+    }
+    case "isSameDay": {
+      // filterValue should be an ISO date string
+      if (typeof filterValue === "string") {
+        const compareDate = new Date(filterValue);
+        return isSameDay(attrDate, compareDate);
+      }
+      return false;
+    }
+    default:
+      return false;
+  }
 };
 
 export const compareValues = (

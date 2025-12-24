@@ -3,7 +3,9 @@
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  Calendar1Icon,
   FingerprintIcon,
+  HashIcon,
   MonitorSmartphoneIcon,
   MoreVertical,
   TagIcon,
@@ -31,9 +33,10 @@ import type {
 } from "@formbricks/types/segment";
 import {
   ARITHMETIC_OPERATORS,
-  ATTRIBUTE_OPERATORS,
+  DATE_OPERATORS,
   DEVICE_OPERATORS,
   PERSON_OPERATORS,
+  TEXT_ATTRIBUTE_OPERATORS,
 } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -64,6 +67,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { AddFilterModal } from "./add-filter-modal";
+import { DateFilterValue } from "./date-filter-value";
 
 interface TSegmentFilterProps {
   connector: TSegmentConnector;
@@ -239,16 +243,20 @@ function AttributeSegmentFilter({
     }
   }, [resource.qualifier, resource.value, t]);
 
-  const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
+  const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
+  const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
+  // Default to 'text' if dataType is undefined (for backwards compatibility)
+  const attributeDataType = attributeKey?.dataType ?? "text";
+  const isDateAttribute = attributeDataType === "date";
+
+  // Show date operators for date attributes, otherwise show standard text/number operators
+  const availableOperators = isDateAttribute ? DATE_OPERATORS : TEXT_ATTRIBUTE_OPERATORS;
+  const operatorArr = availableOperators.map((operator) => {
     return {
       id: operator,
       name: convertOperatorToText(operator),
     };
   });
-
-  const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
-
-  const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
     const updatedSegment = structuredClone(segment);
@@ -263,6 +271,15 @@ function AttributeSegmentFilter({
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {
       updateContactAttributeKeyInFilter(updatedSegment.filters, filterId, newAttributeClassName);
+
+      // When changing attribute, reset operator to appropriate default for the new attribute type
+      const newAttributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === newAttributeClassName);
+      const newAttributeDataType = newAttributeKey?.dataType ?? "text";
+      const defaultOperator = newAttributeDataType === "date" ? "isOlderThan" : "equals";
+      const defaultValue = newAttributeDataType === "date" ? { amount: 1, unit: "days" as const } : "";
+
+      updateOperatorInFilter(updatedSegment.filters, filterId, defaultOperator as any);
+      updateFilterValue(updatedSegment.filters, filterId, defaultValue as any);
     }
 
     setSegment(updatedSegment);
@@ -319,7 +336,13 @@ function AttributeSegmentFilter({
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-2">
-              <TagIcon className="h-4 w-4 text-sm" />
+              {isDateAttribute ? (
+                <Calendar1Icon className="h-4 w-4 text-sm" />
+              ) : attributeDataType === "number" ? (
+                <HashIcon className="h-4 w-4 text-sm" />
+              ) : (
+                <TagIcon className="h-4 w-4 text-sm" />
+              )}
               <p>{attrKeyValue}</p>
             </div>
           </SelectValue>
@@ -328,7 +351,16 @@ function AttributeSegmentFilter({
         <SelectContent>
           {contactAttributeKeys.map((attrClass) => (
             <SelectItem key={attrClass.id} value={attrClass.key}>
-              {attrClass.name ?? attrClass.key}
+              <div className="flex items-center gap-2">
+                {attrClass.dataType === "date" ? (
+                  <Calendar1Icon className="h-4 w-4" />
+                ) : attrClass.dataType === "number" ? (
+                  <HashIcon className="h-4 w-4" />
+                ) : (
+                  <TagIcon className="h-4 w-4" />
+                )}
+                <span>{attrClass.name ?? attrClass.key}</span>
+              </div>
             </SelectItem>
           ))}
         </SelectContent>
@@ -356,23 +388,39 @@ function AttributeSegmentFilter({
       </Select>
 
       {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
-        <div className="relative flex flex-col gap-1">
-          <Input
-            className={cn("h-9 w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
-            disabled={viewOnly}
-            onChange={(e) => {
-              if (viewOnly) return;
-              checkValueAndUpdate(e);
-            }}
-            value={resource.value}
-          />
+        <>
+          {isDateAttribute && DATE_OPERATORS.includes(resource.qualifier.operator as any) ? (
+            <DateFilterValue
+              operator={resource.qualifier.operator as any}
+              value={resource.value}
+              onChange={(newValue) => {
+                updateValueInLocalSurvey(resource.id, newValue);
+              }}
+              viewOnly={viewOnly}
+            />
+          ) : (
+            <div className="relative flex flex-col gap-1">
+              <Input
+                className={cn(
+                  "h-9 w-auto bg-white",
+                  valueError && "border border-red-500 focus:border-red-500"
+                )}
+                disabled={viewOnly}
+                onChange={(e) => {
+                  if (viewOnly) return;
+                  checkValueAndUpdate(e);
+                }}
+                value={resource.value}
+              />
 
-          {valueError ? (
-            <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">
-              {valueError}
-            </p>
-          ) : null}
-        </div>
+              {valueError ? (
+                <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">
+                  {valueError}
+                </p>
+              ) : null}
+            </div>
+          )}
+        </>
       )}
 
       <SegmentFilterItemContextMenu

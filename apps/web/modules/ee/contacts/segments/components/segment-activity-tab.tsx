@@ -8,16 +8,14 @@ import { Label } from "@/modules/ui/components/label";
 
 interface SegmentActivityTabProps {
   environmentId: string;
-  currentSegment: TSegment & {
-    activeSurveys: string[];
-    inactiveSurveys: string[];
-  };
+  currentSegment: TSegment;
 }
 
 export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) => {
   const { t } = useTranslation();
-  const activeSurveys = currentSegment?.activeSurveys;
-  const inactiveSurveys = currentSegment?.inactiveSurveys;
+
+  const activeSurveys: string[] = [];
+  const inactiveSurveys: string[] = [];
 
   return (
     <div className="grid grid-cols-3 pb-2">

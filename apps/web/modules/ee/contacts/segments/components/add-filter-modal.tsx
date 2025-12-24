@@ -1,10 +1,17 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
+import {
+  Calendar1Icon,
+  FingerprintIcon,
+  HashIcon,
+  MonitorSmartphoneIcon,
+  TagIcon,
+  Users2Icon,
+} from "lucide-react";
 import React, { type JSX, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,
   TSegment,
@@ -33,6 +40,7 @@ export const handleAddFilter = ({
   onAddFilter,
   setOpen,
   contactAttributeKey,
+  attributeDataType,
   deviceType,
   segmentId,
 }: {
@@ -40,11 +48,21 @@ export const handleAddFilter = ({
   onAddFilter: (filter: TBaseFilter) => void;
   setOpen: (open: boolean) => void;
   contactAttributeKey?: string;
+  attributeDataType?: TContactAttributeDataType;
   segmentId?: string;
   deviceType?: string;
 }): void => {
   if (type === "attribute") {
     if (!contactAttributeKey) return;
+
+    // Set default operator and value based on attribute data type
+    let defaultOperator: "equals" | "isOlderThan" = "equals";
+    let defaultValue: string | { amount: number; unit: "days" } = "";
+
+    if (attributeDataType === "date") {
+      defaultOperator = "isOlderThan";
+      defaultValue = { amount: 1, unit: "days" };
+    }
 
     const newFilterResource: TSegmentAttributeFilter = {
       id: createId(),
@@ -53,9 +71,9 @@ export const handleAddFilter = ({
         contactAttributeKey,
       },
       qualifier: {
-        operator: "equals",
+        operator: defaultOperator,
       },
-      value: "",
+      value: defaultValue,
     };
     const newFilter: TBaseFilter = {
       id: createId(),
@@ -235,33 +253,46 @@ export function AddFilterModal({
 
         {allFiltersFiltered.map((filters, index) => (
           <div key={index}>
-            {filters.attributes.map((attributeKey) => (
-              <FilterButton
-                key={attributeKey.id}
-                data-testid={`filter-btn-attribute-${attributeKey.key}`}
-                icon={<TagIcon className="h-4 w-4" />}
-                label={attributeKey.name ?? attributeKey.key}
-                onClick={() => {
-                  handleAddFilter({
-                    type: "attribute",
-                    onAddFilter,
-                    setOpen,
-                    contactAttributeKey: attributeKey.key,
-                  });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
+            {filters.attributes.map((attributeKey) => {
+              const icon =
+                attributeKey.dataType === "date" ? (
+                  <Calendar1Icon className="h-4 w-4" />
+                ) : attributeKey.dataType === "number" ? (
+                  <HashIcon className="h-4 w-4" />
+                ) : (
+                  <TagIcon className="h-4 w-4" />
+                );
+
+              return (
+                <FilterButton
+                  key={attributeKey.id}
+                  data-testid={`filter-btn-attribute-${attributeKey.key}`}
+                  icon={icon}
+                  label={attributeKey.name ?? attributeKey.key}
+                  onClick={() => {
                     handleAddFilter({
                       type: "attribute",
                       onAddFilter,
                       setOpen,
                       contactAttributeKey: attributeKey.key,
+                      attributeDataType: attributeKey.dataType,
                     });
-                  }
-                }}
-              />
-            ))}
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleAddFilter({
+                        type: "attribute",
+                        onAddFilter,
+                        setOpen,
+                        contactAttributeKey: attributeKey.key,
+                        attributeDataType: attributeKey.dataType,
+                      });
+                    }
+                  }}
+                />
+              );
+            })}
 
             {filters.contactAttributeFiltered.map((personAttribute) => (
               <FilterButton

@@ -136,17 +136,19 @@ export const ContactDataView = ({
   }, [contacts, environmentAttributes]);
 
   return (
-    <ContactsTableDynamic
-      data={contactsTableData}
-      fetchNextPage={fetchNextPage}
-      hasMore={hasMore}
-      isDataLoaded={isFirstRender.current ? true : isDataLoaded}
-      updateContactList={updateContactList}
-      environmentId={environment.id}
-      searchValue={searchValue}
-      setSearchValue={setSearchValue}
-      isReadOnly={isReadOnly}
-      isQuotasAllowed={isQuotasAllowed}
-    />
+    <div className="space-y-6">
+      <ContactsTableDynamic
+        data={contactsTableData}
+        fetchNextPage={fetchNextPage}
+        hasMore={hasMore}
+        isDataLoaded={isFirstRender.current ? true : isDataLoaded}
+        updateContactList={updateContactList}
+        environmentId={environment.id}
+        searchValue={searchValue}
+        setSearchValue={setSearchValue}
+        isReadOnly={isReadOnly}
+        isQuotasAllowed={isQuotasAllowed}
+      />
+    </div>
   );
 };
