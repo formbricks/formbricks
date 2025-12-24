@@ -187,6 +187,7 @@
     "delete": "刪除",
     "description": "描述",
     "dev_env": "開發環境",
+    "development": "開發",
     "development_environment_banner": "您正在開發環境中。設定它以測試問卷、操作和屬性。",
     "disable": "停用",
     "disallow": "不允許",
@@ -194,6 +195,7 @@
     "dismissed": "已關閉",
     "docs": "文件",
     "documentation": "文件",
+    "domain": "網域",
     "download": "下載",
     "draft": "草稿",
     "duplicate": "複製",
@@ -203,6 +205,7 @@
     "ending_card": "結尾卡片",
     "enter_url": "輸入 URL",
     "enterprise_license": "企業授權",
+    "environment": "環境",
     "environment_not_found": "找不到環境",
     "environment_notice": "您目前在 '{'environment'}' 環境中。",
     "error": "錯誤",
@@ -321,6 +324,7 @@
     "preview_survey": "預覽問卷",
     "privacy": "隱私權政策",
     "product_manager": "產品經理",
+    "production": "正式環境",
     "profile": "個人資料",
     "profile_id": "個人資料 ID",
     "progress": "進度",
@@ -1025,6 +1029,14 @@
         "upgrade": "升級",
         "uptime_sla_99": "正常運作時間 SLA (99%)",
         "website_surveys": "網站問卷"
+      },
+      "domain": {
+        "description": "檢視貴組織內所有使用 Pretty URL 的問卷",
+        "no_pretty_urls": "尚未設定任何使用 Pretty URL 的問卷。",
+        "pretty_url": "Pretty URL",
+        "project": "專案",
+        "survey_name": "問卷名稱",
+        "title": "美化網址"
       },
       "enterprise": {
         "audit_logs": "稽核記錄",
@@ -1824,6 +1836,17 @@
           "upgrade_prompt_description": "為一個群組生成個人連結，並將調查回應連結到每個聯絡人。",
           "upgrade_prompt_title": "使用 個人 連結 與 更高 的 計劃",
           "work_with_segments": "個人 連結 可 與 分段 一起 使用"
+        },
+        "pretty_url": {
+          "description": "為您的問卷建立自訂且易記的網址",
+          "remove_description": "您的問卷仍可透過原始網址存取。",
+          "remove_success": "Pretty URL 已成功移除",
+          "save_success": "Pretty URL 已成功儲存",
+          "slug_help": "僅可使用小寫字母、數字和連字號。",
+          "slug_label": "自訂網址代稱",
+          "slug_placeholder": "customer-feedback",
+          "slug_required": "請輸入有效的代稱",
+          "title": "Pretty URL"
         },
         "send_email": {
           "copy_embed_code": "複製嵌入程式碼",

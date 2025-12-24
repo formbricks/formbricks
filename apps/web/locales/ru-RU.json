@@ -187,6 +187,7 @@
     "delete": "Удалить",
     "description": "Описание",
     "dev_env": "Dev Environment",
+    "development": "Разработка",
     "development_environment_banner": "Вы находитесь в среде разработки. Настройте её для тестирования опросов, действий и атрибутов.",
     "disable": "Отключить",
     "disallow": "Не разрешать",
@@ -194,6 +195,7 @@
     "dismissed": "Отклонено",
     "docs": "Документация",
     "documentation": "Документация",
+    "domain": "Домен",
     "download": "Скачать",
     "draft": "Черновик",
     "duplicate": "Дублировать",
@@ -203,6 +205,7 @@
     "ending_card": "Завершающая карточка",
     "enter_url": "Введите URL",
     "enterprise_license": "Корпоративная лицензия",
+    "environment": "Окружение",
     "environment_not_found": "Среда не найдена",
     "environment_notice": "В данный момент вы находитесь в среде {environment}.",
     "error": "Ошибка",
@@ -321,6 +324,7 @@
     "preview_survey": "Предпросмотр опроса",
     "privacy": "Политика конфиденциальности",
     "product_manager": "Менеджер продукта",
+    "production": "Продакшн",
     "profile": "Профиль",
     "profile_id": "ID профиля",
     "progress": "Прогресс",
@@ -1025,6 +1029,14 @@
         "upgrade": "Обновить",
         "uptime_sla_99": "SLA по времени безотказной работы (99%)",
         "website_surveys": "Опросы на сайте"
+      },
+      "domain": {
+        "description": "Обзор всех опросов с Pretty URL в вашей организации",
+        "no_pretty_urls": "Пока не настроено ни одного опроса с Pretty URL.",
+        "pretty_url": "Pretty URL",
+        "project": "Проект",
+        "survey_name": "Название опроса",
+        "title": "Pretty URL"
       },
       "enterprise": {
         "audit_logs": "Журналы аудита",
@@ -1824,6 +1836,17 @@
           "upgrade_prompt_description": "Генерируйте персональные ссылки для сегмента и связывайте ответы на опрос с каждым контактом.",
           "upgrade_prompt_title": "Используйте персональные ссылки на более высоком тарифе",
           "work_with_segments": "Персональные ссылки работают с сегментами."
+        },
+        "pretty_url": {
+          "description": "Создайте индивидуальный, запоминающийся URL для вашего опроса",
+          "remove_description": "Ваш опрос по-прежнему будет доступен по исходному URL.",
+          "remove_success": "Pretty URL успешно удалён",
+          "save_success": "Pretty URL успешно сохранён",
+          "slug_help": "Используйте только строчные буквы, цифры и дефисы.",
+          "slug_label": "Пользовательский слаг",
+          "slug_placeholder": "customer-feedback",
+          "slug_required": "Пожалуйста, введите корректный слаг",
+          "title": "Pretty URL"
         },
         "send_email": {
           "copy_embed_code": "Скопировать код для вставки",

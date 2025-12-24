@@ -267,6 +267,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
   variables: [],
   showLanguageSwitch: null,
   metadata: {},
+  slug: null,
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -290,6 +291,7 @@ export const mockSurveyOutput: SurveyMock = {
   variables: [],
   showLanguageSwitch: null,
   ...baseSurveyProperties,
+  slug: null,
 };
 
 export const createSurveyInput: TSurveyCreateInput = {
@@ -319,6 +321,7 @@ export const updateSurveyInput: TSurvey = {
   followUps: [],
   ...baseSurveyProperties,
   ...commonMockProperties,
+  slug: null,
 };
 
 export const mockTransformedSurveyOutput = {

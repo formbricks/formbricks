@@ -187,6 +187,7 @@
     "delete": "Verwijderen",
     "description": "Beschrijving",
     "dev_env": "Ontwikkelomgeving",
+    "development": "Ontwikkeling",
     "development_environment_banner": "Je bevindt je in een ontwikkelomgeving. Stel het in om enquêtes, acties en attributen te testen.",
     "disable": "Uitzetten",
     "disallow": "Niet toestaan",
@@ -194,6 +195,7 @@
     "dismissed": "Afgewezen",
     "docs": "Documentatie",
     "documentation": "Documentatie",
+    "domain": "Domein",
     "download": "Downloaden",
     "draft": "Voorlopige versie",
     "duplicate": "Duplicaat",
@@ -203,6 +205,7 @@
     "ending_card": "Einde kaart",
     "enter_url": "URL invoeren",
     "enterprise_license": "Enterprise-licentie",
+    "environment": "Omgeving",
     "environment_not_found": "Omgeving niet gevonden",
     "environment_notice": "U bevindt zich momenteel in de {environment}-omgeving.",
     "error": "Fout",
@@ -321,6 +324,7 @@
     "preview_survey": "Voorbeeld van enquête",
     "privacy": "Privacybeleid",
     "product_manager": "Productmanager",
+    "production": "Productie",
     "profile": "Profiel",
     "profile_id": "Profiel-ID",
     "progress": "Voortgang",
@@ -1025,6 +1029,14 @@
         "upgrade": "Upgraden",
         "uptime_sla_99": "Uptime-SLA (99%)",
         "website_surveys": "Website-enquêtes"
+      },
+      "domain": {
+        "description": "Overzicht van alle enquêtes die Pretty URL's gebruiken binnen je organisatie",
+        "no_pretty_urls": "Nog geen enquêtes met Pretty URL's geconfigureerd.",
+        "pretty_url": "Pretty URL",
+        "project": "Project",
+        "survey_name": "Enquêtenaam",
+        "title": "Pretty URL's"
       },
       "enterprise": {
         "audit_logs": "Auditlogboeken",
@@ -1824,6 +1836,17 @@
           "upgrade_prompt_description": "Genereer persoonlijke links voor een segment en koppel enquêtereacties aan elk contact.",
           "upgrade_prompt_title": "Gebruik persoonlijke links met een hoger plan",
           "work_with_segments": "Persoonlijke links werken met segmenten."
+        },
+        "pretty_url": {
+          "description": "Maak een aangepaste, memorabele URL voor je enquête",
+          "remove_description": "Je enquête blijft toegankelijk via de oorspronkelijke URL.",
+          "remove_success": "Pretty URL succesvol verwijderd",
+          "save_success": "Pretty URL succesvol opgeslagen",
+          "slug_help": "Gebruik alleen kleine letters, cijfers en koppeltekens.",
+          "slug_label": "Aangepaste slug",
+          "slug_placeholder": "klantfeedback",
+          "slug_required": "Voer een geldige slug in",
+          "title": "Pretty URL"
         },
         "send_email": {
           "copy_embed_code": "Kopieer de insluitcode",

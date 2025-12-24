@@ -187,6 +187,7 @@
     "delete": "删除",
     "description": "描述",
     "dev_env": "开发 环境",
+    "development": "开发环境",
     "development_environment_banner": "您 在 开发 环境 中。 设置 以 测试 调查 ， 操作 和 属性。",
     "disable": "禁用",
     "disallow": "不允许",
@@ -194,6 +195,7 @@
     "dismissed": "忽略",
     "docs": "文档",
     "documentation": "文档",
+    "domain": "域名",
     "download": "下载",
     "draft": "草稿",
     "duplicate": "复制",
@@ -203,6 +205,7 @@
     "ending_card": "结尾卡片",
     "enter_url": "输入 URL",
     "enterprise_license": "企业 许可证",
+    "environment": "环境",
     "environment_not_found": "环境 未找到",
     "environment_notice": "你 目前 位于 {environment} 环境。",
     "error": "错误",
@@ -321,6 +324,7 @@
     "preview_survey": "预览 Survey",
     "privacy": "隐私政策",
     "product_manager": "产品经理",
+    "production": "生产环境",
     "profile": "资料",
     "profile_id": "资料 ID",
     "progress": "进度",
@@ -1025,6 +1029,14 @@
         "upgrade": "升级",
         "uptime_sla_99": "正常运行时间 SLA (99%)",
         "website_surveys": "网站 调查"
+      },
+      "domain": {
+        "description": "概览组织内所有使用美化 URL 的调查问卷",
+        "no_pretty_urls": "尚未配置任何美化 URL 的调查问卷。",
+        "pretty_url": "美化 URL",
+        "project": "项目",
+        "survey_name": "调查名称",
+        "title": "美化 URL"
       },
       "enterprise": {
         "audit_logs": "审计日志",
@@ -1824,6 +1836,17 @@
           "upgrade_prompt_description": "为 一个 细分 生成 个人 链接 ，并 将 调查 响应 链接 到 每个 联系人。",
           "upgrade_prompt_title": "在更高的计划中使用 个人 链接",
           "work_with_segments": "个人链接与片段一起工作。"
+        },
+        "pretty_url": {
+          "description": "为您的调查创建一个自定义且易记的 URL",
+          "remove_description": "您的调查仍可通过原始 URL 访问。",
+          "remove_success": "美化 URL 移除成功",
+          "save_success": "美化 URL 保存成功",
+          "slug_help": "仅可使用小写字母、数字和连字符。",
+          "slug_label": "自定义短链",
+          "slug_placeholder": "customer-feedback",
+          "slug_required": "请输入有效的短链",
+          "title": "美化 URL"
         },
         "send_email": {
           "copy_embed_code": "复制 嵌入代码",

@@ -145,6 +145,12 @@ export const OrganizationBreadcrumb = ({
       hidden: !isOwnerOrManager,
     },
     {
+      id: "domain",
+      label: t("common.domain"),
+      href: `/environments/${currentEnvironmentId}/settings/domain`,
+      hidden: isFormbricksCloud,
+    },
+    {
       id: "billing",
       label: t("common.billing"),
       href: `/environments/${currentEnvironmentId}/settings/billing`,

@@ -187,6 +187,7 @@
     "delete": "Apagar",
     "description": "Descrição",
     "dev_env": "Ambiente de Desenvolvimento",
+    "development": "Desenvolvimento",
     "development_environment_banner": "Você está em um ambiente de desenvolvimento. Configure-o para testar pesquisas, ações e atributos.",
     "disable": "desativar",
     "disallow": "Não permita",
@@ -194,6 +195,7 @@
     "dismissed": "Dispensado",
     "docs": "Documentação",
     "documentation": "Documentação",
+    "domain": "Domínio",
     "download": "baixar",
     "draft": "Rascunho",
     "duplicate": "Duplicar",
@@ -203,6 +205,7 @@
     "ending_card": "Cartão de encerramento",
     "enter_url": "Inserir URL",
     "enterprise_license": "Licença Empresarial",
+    "environment": "Ambiente",
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Você está atualmente no ambiente {environment}.",
     "error": "Erro",
@@ -321,6 +324,7 @@
     "preview_survey": "Prévia da Pesquisa",
     "privacy": "Política de Privacidade",
     "product_manager": "Gerente de Produto",
+    "production": "Produção",
     "profile": "Perfil",
     "profile_id": "ID de Perfil",
     "progress": "Progresso",
@@ -1025,6 +1029,14 @@
         "upgrade": "Atualizar",
         "uptime_sla_99": "Tempo de atividade SLA (99%)",
         "website_surveys": "Pesquisas de Site"
+      },
+      "domain": {
+        "description": "Visão geral de todas as pesquisas usando URLs amigáveis em sua organização",
+        "no_pretty_urls": "Nenhuma pesquisa com URLs amigáveis configuradas ainda.",
+        "pretty_url": "URL amigável",
+        "project": "Projeto",
+        "survey_name": "Nome da Pesquisa",
+        "title": "URLs amigáveis"
       },
       "enterprise": {
         "audit_logs": "Registros de Auditoria",
@@ -1824,6 +1836,17 @@
           "upgrade_prompt_description": "Gerar links pessoais para um segmento e vincular respostas de pesquisa a cada contato.",
           "upgrade_prompt_title": "Use links pessoais com um plano superior",
           "work_with_segments": "Links pessoais funcionam com segmentos."
+        },
+        "pretty_url": {
+          "description": "Crie uma URL personalizada e memorável para sua pesquisa",
+          "remove_description": "Sua pesquisa ainda estará acessível através da URL original.",
+          "remove_success": "URL amigável removida com sucesso",
+          "save_success": "URL amigável salva com sucesso",
+          "slug_help": "Use apenas letras minúsculas, números e hífens.",
+          "slug_label": "Slug personalizado",
+          "slug_placeholder": "feedback-do-cliente",
+          "slug_required": "Por favor, insira um slug válido",
+          "title": "URL amigável"
         },
         "send_email": {
           "copy_embed_code": "Copiar código incorporado",
