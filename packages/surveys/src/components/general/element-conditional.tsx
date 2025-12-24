@@ -196,7 +196,6 @@ export function ElementConditional({
             languageCode={languageCode}
             ttc={ttc}
             setTtc={wrappedSetTtc}
-            autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
           />

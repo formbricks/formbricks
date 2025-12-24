@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { Matrix, type MatrixOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
@@ -26,9 +27,11 @@ export function MatrixElement({
   currentElementId,
 }: Readonly<MatrixElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
 
   const rowShuffleIdx = useMemo(() => {
     if (element.shuffleOption !== "none") {
@@ -106,6 +109,7 @@ export function MatrixElement({
   };
 
   const handleChange = (newValue: Record<string, string>) => {
+    setErrorMessage(undefined);
     const labelValue = convertValueFromIds(newValue);
 
     // Check if all values are empty and if so, make it an empty object
@@ -116,8 +120,21 @@ export function MatrixElement({
     }
   };
 
+  const validateRequired = (): boolean => {
+    if (element.required) {
+      const hasUnansweredRows = rows.some((row) => !value[row.label]);
+      if (hasUnansweredRows) {
+        setErrorMessage(t("errors.please_select_an_option"));
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleSubmit = (e: Event) => {
     e.preventDefault();
+    setErrorMessage(undefined);
+    if (!validateRequired()) return;
     const updatedTtc = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtc);
   };
@@ -134,6 +151,7 @@ export function MatrixElement({
         value={convertValueToIds(value)}
         onChange={handleChange}
         required={element.required}
+        errorMessage={errorMessage}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
       />

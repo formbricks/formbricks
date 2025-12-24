@@ -69,7 +69,7 @@ function Consent({
       />
 
       {/* Consent Checkbox */}
-      <div className="relative space-y-2">
+      <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
 
         <label
@@ -87,7 +87,6 @@ function Consent({
             onCheckedChange={handleCheckboxChange}
             disabled={disabled}
             aria-invalid={Boolean(errorMessage)}
-            required={required}
           />
           {/* need to use style here because tailwind is not able to use css variables for font size and weight */}
           <span

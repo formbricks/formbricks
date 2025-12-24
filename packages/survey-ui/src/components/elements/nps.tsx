@@ -153,7 +153,6 @@ function NPS({
             handleSelect(number);
           }}
           disabled={disabled}
-          required={required}
           className="sr-only"
           aria-label={`Rate ${String(number)} out of 10`}
         />
@@ -178,7 +177,7 @@ function NPS({
       />
 
       {/* NPS Options */}
-      <div className="relative space-y-2">
+      <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full px-[2px]">
           <legend className="sr-only">NPS rating options</legend>

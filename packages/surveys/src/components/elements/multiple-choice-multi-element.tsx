@@ -31,6 +31,7 @@ export function MultipleChoiceMultiElement({
 }: Readonly<MultipleChoiceMultiElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherValue, setOtherValue] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
   const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
@@ -172,8 +173,22 @@ export function MultipleChoiceMultiElement({
     onChange({ [element.id]: nextValue });
   };
 
+  const validateRequired = (): boolean => {
+    if (element.required && (!Array.isArray(value) || value.length === 0)) {
+      setErrorMessage(t("errors.please_select_an_option"));
+      return false;
+    }
+    if (element.required && isOtherSelected && !otherValue.trim()) {
+      setErrorMessage(t("errors.please_fill_out_this_field"));
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = (e: Event) => {
     e.preventDefault();
+    setErrorMessage(undefined);
+    if (!validateRequired()) return;
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -213,6 +228,7 @@ export function MultipleChoiceMultiElement({
 
   // Handle selection changes - store labels directly instead of IDs
   const handleMultiSelectChange = (selectedIds: string[]) => {
+    setErrorMessage(undefined);
     const nextLabels: string[] = [];
     const isOtherNowSelected = Boolean(otherOption) && selectedIds.includes(otherOption!.id);
 
@@ -247,6 +263,7 @@ export function MultipleChoiceMultiElement({
         value={selectedValues}
         onChange={handleMultiSelectChange}
         required={element.required}
+        errorMessage={errorMessage}
         dir={dir}
         otherOptionId={otherOption?.id}
         otherOptionLabel={otherOption ? getLocalizedValue(otherOption.label, languageCode) : undefined}

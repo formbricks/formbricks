@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { Rating } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
@@ -12,7 +13,6 @@ interface RatingElementProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
 }
@@ -29,16 +29,28 @@ export function RatingElement({
 }: RatingElementProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
 
   const handleChange = (ratingValue: number) => {
+    setErrorMessage(undefined);
     onChange({ [element.id]: ratingValue });
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
 
+  const validateRequired = (): boolean => {
+    if (element.required && !value) {
+      setErrorMessage(t("errors.please_select_an_option"));
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = (e: Event) => {
     e.preventDefault();
+    if (!validateRequired()) return;
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -61,6 +73,7 @@ export function RatingElement({
         dir={dir}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
+        errorMessage={errorMessage}
       />
     </form>
   );

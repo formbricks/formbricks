@@ -1,5 +1,4 @@
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
 import { cn } from "@/lib/utils";
 
 interface InputProps extends React.ComponentProps<"input"> {
@@ -10,21 +9,17 @@ interface InputProps extends React.ComponentProps<"input"> {
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
-  { className, type, errorMessage, dir, ...props },
+  { className, type, dir, ...props },
   ref
 ): React.JSX.Element {
-  const hasError = Boolean(errorMessage);
-
   return (
-    <div className="space-y-1">
-      <ElementError errorMessage={errorMessage} dir={dir} />
+    <div className="relative space-y-1">
       <input
         ref={ref}
         type={type}
         dir={dir}
         data-slot="input"
         style={{ fontSize: "var(--fb-input-font-size)" }}
-        aria-invalid={hasError || undefined}
         className={cn(
           // Layout and behavior
           "flex min-w-0 border transition-[color,box-shadow] outline-none",
