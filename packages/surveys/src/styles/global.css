@@ -18,20 +18,15 @@
 */
 @layer base {
 
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
+  #fbjs *,
+  #fbjs ::after,
+  #fbjs ::before,
+  #fbjs ::backdrop,
+  #fbjs ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
 }
 
-/* @import "./survey.css"; */
-
-#fbjs {
-  font-size: 16px;
-}
 
 /* Chrome, Edge, and Safari */
 #fbjs *::-webkit-scrollbar {
@@ -56,19 +51,20 @@
 }
 
 /* this is for styling the HtmlBody component */
-.htmlbody {
+#fbjs .htmlbody {
   @apply block text-sm font-normal leading-6;
   /* need to use !important because in packages/survey-ui/components/editor/styles-editor-frontend.css the color is defined for some classes */
   color: var(--fb-subheading-color) !important;
 }
 
 /* without this, it wont override the color */
-p.editor-paragraph {
+#fbjs p.editor-paragraph {
   overflow-wrap: break-word;
 }
 
 /* theming */
-:root {
+#fbjs {
+  font-size: 16px;
   --brand-default: #64748b;
   --slate-50: rgb(248, 250, 252);
   --slate-100: rgb(241 245 249);
@@ -126,7 +122,7 @@ p.editor-paragraph {
   }
 }
 
-.no-scrollbar {
+#fbjs .no-scrollbar {
   -ms-overflow-style: none !important;
   /* Internet Explorer 10+ */
   scrollbar-width: thin !important;
@@ -145,6 +141,6 @@ p.editor-paragraph {
   }
 }
 
-.grecaptcha-badge {
+#fbjs .grecaptcha-badge {
   visibility: hidden;
 }
