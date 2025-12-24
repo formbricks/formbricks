@@ -148,6 +148,7 @@ export const OrganizationBreadcrumb = ({
       id: "domain",
       label: t("common.domain"),
       href: `/environments/${currentEnvironmentId}/settings/domain`,
+      hidden: isFormbricksCloud,
     },
     {
       id: "billing",
