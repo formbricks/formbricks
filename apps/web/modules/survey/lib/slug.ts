@@ -43,22 +43,6 @@ export const getSurveyBySlug = reactCache(
   }
 );
 
-// Check if a slug is available (for validation)
-export const isSlugAvailable = async (
-  slug: string,
-  excludeSurveyId?: string
-): Promise<Result<boolean, DatabaseError>> => {
-  try {
-    const existing = await prisma.survey.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
-    return ok(!existing || existing.id === excludeSurveyId);
-  } catch (error) {
-    return err(new DatabaseError(error.message));
-  }
-};
-
 // Update a survey's slug
 export const updateSurveySlug = async (
   surveyId: string,

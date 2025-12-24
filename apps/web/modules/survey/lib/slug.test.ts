@@ -2,12 +2,7 @@ import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
-import {
-  getSurveyBySlug,
-  getSurveysWithSlugsByOrganization,
-  isSlugAvailable,
-  updateSurveySlug,
-} from "./slug";
+import { getSurveyBySlug, getSurveysWithSlugsByOrganizationId, updateSurveySlug } from "./slug";
 
 // Mock prisma
 vi.mock("@formbricks/database", () => ({
@@ -59,48 +54,6 @@ describe("Slug Library Tests", () => {
       if (!result.ok) {
         expect(result.error).toBeInstanceOf(DatabaseError);
         expect(result.error.message).toBe("DB error");
-      }
-    });
-  });
-
-  describe("isSlugAvailable", () => {
-    test("should return true when slug is not taken", async () => {
-      vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(null);
-
-      const result = await isSlugAvailable("available-slug");
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBe(true);
-      }
-    });
-
-    test("should return false when slug is taken by another survey", async () => {
-      vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce({ id: "other_id" } as any);
-
-      const result = await isSlugAvailable("taken-slug", "current_id");
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBe(false);
-      }
-    });
-
-    test("should return true when slug is taken by the same survey", async () => {
-      vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce({ id: "current_id" } as any);
-
-      const result = await isSlugAvailable("my-slug", "current_id");
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBe(true);
-      }
-    });
-
-    test("should return DatabaseError when prisma fails", async () => {
-      vi.mocked(prisma.survey.findUnique).mockRejectedValueOnce(new Error("DB error"));
-
-      const result = await isSlugAvailable("error-slug");
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toBeInstanceOf(DatabaseError);
       }
     });
   });
@@ -161,7 +114,7 @@ describe("Slug Library Tests", () => {
     });
   });
 
-  describe("getSurveysWithSlugsByOrganization", () => {
+  describe("getSurveysWithSlugsByOrganizationId", () => {
     test("should return surveys with slugs", async () => {
       const mockSurveys = [
         {
@@ -179,7 +132,7 @@ describe("Slug Library Tests", () => {
       ];
       vi.mocked(prisma.survey.findMany).mockResolvedValueOnce(mockSurveys as any);
 
-      const result = await getSurveysWithSlugsByOrganization("org_123");
+      const result = await getSurveysWithSlugsByOrganizationId("org_123");
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual(mockSurveys);
@@ -197,7 +150,7 @@ describe("Slug Library Tests", () => {
     test("should return DatabaseError when prisma fails", async () => {
       vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(new Error("DB error"));
 
-      const result = await getSurveysWithSlugsByOrganization("org_123");
+      const result = await getSurveysWithSlugsByOrganizationId("org_123");
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toBeInstanceOf(DatabaseError);
