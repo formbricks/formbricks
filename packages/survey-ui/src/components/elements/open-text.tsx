@@ -76,10 +76,9 @@ function OpenText({
         imageUrl={imageUrl}
         videoUrl={videoUrl}
       />
-
-      {/* Input or Textarea */}
-      <div className="relative space-y-2">
-        <ElementError errorMessage={errorMessage} dir={dir} />
+      <div className="relative">
+        <ElementError errorMessage={errorMessage} />
+        {/* Input or Textarea */}
         <div className="space-y-1">
           {longAnswer ? (
             <Textarea
@@ -87,11 +86,11 @@ function OpenText({
               placeholder={placeholder}
               value={value}
               onChange={handleChange}
-              required={required}
+              aria-required={required}
               dir={dir}
               rows={rows}
               disabled={disabled}
-              aria-invalid={Boolean(errorMessage) || undefined}
+              errorMessage={errorMessage}
               minLength={charLimit?.min}
               maxLength={charLimit?.max}
             />
@@ -102,10 +101,10 @@ function OpenText({
               placeholder={placeholder}
               value={value}
               onChange={handleChange}
-              required={required}
+              aria-required={required}
               dir={dir}
               disabled={disabled}
-              aria-invalid={Boolean(errorMessage) || undefined}
+              errorMessage={errorMessage}
               minLength={charLimit?.min}
               maxLength={charLimit?.max}
             />

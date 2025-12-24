@@ -187,6 +187,7 @@
     "delete": "Delete",
     "description": "Description",
     "dev_env": "Dev Environment",
+    "development": "Development",
     "development_environment_banner": "You're in a development environment. Set it up to test surveys, actions and attributes.",
     "disable": "Disable",
     "disallow": "Don't allow",
@@ -194,6 +195,7 @@
     "dismissed": "Dismissed",
     "docs": "Documentation",
     "documentation": "Documentation",
+    "domain": "Domain",
     "download": "Download",
     "draft": "Draft",
     "duplicate": "Duplicate",
@@ -203,6 +205,7 @@
     "ending_card": "Ending card",
     "enter_url": "Enter URL",
     "enterprise_license": "Enterprise License",
+    "environment": "Environment",
     "environment_not_found": "Environment not found",
     "environment_notice": "You're currently in the {environment} environment.",
     "error": "Error",
@@ -321,6 +324,7 @@
     "preview_survey": "Preview Survey",
     "privacy": "Privacy Policy",
     "product_manager": "Product Manager",
+    "production": "Production",
     "profile": "Profile",
     "profile_id": "Profile ID",
     "progress": "Progress",
@@ -1025,6 +1029,14 @@
         "upgrade": "Upgrade",
         "uptime_sla_99": "Uptime SLA (99%)",
         "website_surveys": "Website Surveys"
+      },
+      "domain": {
+        "description": "Overview of all surveys using Pretty URLs across your organization",
+        "no_pretty_urls": "No surveys with Pretty URLs configured yet.",
+        "pretty_url": "Pretty URL",
+        "project": "Project",
+        "survey_name": "Survey Name",
+        "title": "Pretty URLs"
       },
       "enterprise": {
         "audit_logs": "Audit Logs",
@@ -1824,6 +1836,17 @@
           "upgrade_prompt_description": "Generate personal links for a segment and link survey responses to each contact.",
           "upgrade_prompt_title": "Use personal links with a higher plan",
           "work_with_segments": "Personal links work with segments."
+        },
+        "pretty_url": {
+          "description": "Create a custom, memorable URL for your survey",
+          "remove_description": "Your survey will still be accessible via its original URL.",
+          "remove_success": "Pretty URL removed successfully",
+          "save_success": "Pretty URL saved successfully",
+          "slug_help": "Use lowercase letters, numbers, and hyphens only.",
+          "slug_label": "Custom Slug",
+          "slug_placeholder": "customer-feedback",
+          "slug_required": "Please enter a valid slug",
+          "title": "Pretty URL"
         },
         "send_email": {
           "copy_embed_code": "Copy embed code",

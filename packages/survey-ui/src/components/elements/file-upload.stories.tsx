@@ -41,11 +41,6 @@ const meta: Meta<StoryProps> = {
       description: "Whether multiple files are allowed",
       table: { category: "Behavior" },
     },
-    maxSizeInMB: {
-      control: "number",
-      description: "Maximum file size in MB",
-      table: { category: "Validation" },
-    },
     allowedFileExtensions: {
       control: "object",
       description: "Allowed file extensions (e.g., ['.pdf', '.jpg'])",
@@ -129,7 +124,6 @@ export const WithSizeLimit: Story = {
   args: {
     headline: "Upload a document",
     description: "Maximum file size: 5MB",
-    maxSizeInMB: 5,
   },
 };
 
@@ -138,7 +132,6 @@ export const WithRestrictions: Story = {
     headline: "Upload a PDF document",
     description: "PDF files only, maximum 10MB",
     allowedFileExtensions: [".pdf"],
-    maxSizeInMB: 10,
   },
 };
 

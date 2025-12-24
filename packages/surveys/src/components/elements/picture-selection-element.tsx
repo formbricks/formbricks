@@ -68,7 +68,6 @@ export function PictureSelectionElement({
     e.preventDefault();
     if (element.required) {
       if (element.allowMulti) {
-        console.log("currentValue", currentValue);
         if (!currentValue || !Array.isArray(currentValue) || currentValue.length === 0) {
           setErrorMessage(t("errors.please_select_an_option"));
           return;

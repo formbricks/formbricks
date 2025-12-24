@@ -187,6 +187,7 @@
     "delete": "削除",
     "description": "説明",
     "dev_env": "開発環境",
+    "development": "開発",
     "development_environment_banner": "あなたは開発環境にいます。フォーム、アクション、属性をテストするように設定してください。",
     "disable": "無効にする",
     "disallow": "許可しない",
@@ -194,6 +195,7 @@
     "dismissed": "非表示",
     "docs": "ドキュメント",
     "documentation": "ドキュメント",
+    "domain": "ドメイン",
     "download": "ダウンロード",
     "draft": "下書き",
     "duplicate": "複製",
@@ -203,6 +205,7 @@
     "ending_card": "終了カード",
     "enter_url": "URLを入力",
     "enterprise_license": "エンタープライズライセンス",
+    "environment": "環境",
     "environment_not_found": "環境が見つかりません",
     "environment_notice": "現在、{environment} 環境にいます。",
     "error": "エラー",
@@ -321,6 +324,7 @@
     "preview_survey": "フォームをプレビュー",
     "privacy": "プライバシーポリシー",
     "product_manager": "プロダクトマネージャー",
+    "production": "本番",
     "profile": "プロフィール",
     "profile_id": "プロフィールID",
     "progress": "進捗",
@@ -1025,6 +1029,14 @@
         "upgrade": "アップグレード",
         "uptime_sla_99": "稼働率SLA (99%)",
         "website_surveys": "ウェブサイトフォーム"
+      },
+      "domain": {
+        "description": "組織全体でカスタムURLを使用しているすべてのフォームの概要",
+        "no_pretty_urls": "カスタムURLが設定されたフォームはまだありません。",
+        "pretty_url": "カスタムURL",
+        "project": "プロジェクト",
+        "survey_name": "フォーム名",
+        "title": "カスタムURL"
       },
       "enterprise": {
         "audit_logs": "監査ログ",
@@ -1824,6 +1836,17 @@
           "upgrade_prompt_description": "セグメントの個人リンクを生成し、フォームの回答を各連絡先とリンクします。",
           "upgrade_prompt_title": "上位プランで個人リンクを使用",
           "work_with_segments": "個人リンクはセグメントで機能します。"
+        },
+        "pretty_url": {
+          "description": "フォーム用のカスタムで覚えやすいURLを作成",
+          "remove_description": "フォームは元のURLから引き続きアクセス可能です。",
+          "remove_success": "カスタムURLを削除しました",
+          "save_success": "カスタムURLを保存しました",
+          "slug_help": "小文字のアルファベット、数字、ハイフンのみ使用できます。",
+          "slug_label": "カスタムスラッグ",
+          "slug_placeholder": "customer-feedback",
+          "slug_required": "有効なスラッグを入力してください",
+          "title": "カスタムURL"
         },
         "send_email": {
           "copy_embed_code": "埋め込みコードをコピー",

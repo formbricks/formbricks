@@ -130,18 +130,7 @@ function DropdownVariant({
   otherInputRef,
   required,
 }: Readonly<DropdownVariantProps>): React.JSX.Element {
-  const getIsRequired = (): boolean => {
-    const responseValues = [...selectedValues];
-    if (isOtherSelected && otherValue) {
-      responseValues.push(otherValue);
-    }
-    const hasResponse = Array.isArray(responseValues) && responseValues.length > 0;
-    return required && hasResponse ? false : required;
-  };
-
-  const isRequired = getIsRequired();
-
-  const handleOptionToggle = (optionId: string): void => {
+  const handleOptionToggle = (optionId: string) => {
     if (selectedValues.includes(optionId)) {
       handleOptionRemove(optionId);
     } else {
@@ -228,7 +217,6 @@ function DropdownVariant({
           onChange={handleOtherInputChange}
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
-          required={isRequired}
           aria-required={required}
           dir={dir}
           className="w-full"
@@ -283,30 +271,16 @@ function ListVariant({
 }: Readonly<ListVariantProps>): React.JSX.Element {
   const isNoneSelected = value.includes("none");
 
-  const getIsRequired = (): boolean => {
-    const responseValues = [...value];
-    if (isOtherSelected && otherValue) {
-      responseValues.push(otherValue);
-    }
-    const hasResponse = Array.isArray(responseValues) && responseValues.length > 0;
-    return required && hasResponse ? false : required;
-  };
-
-  const isRequired = getIsRequired();
-
   return (
     <>
       <ElementError errorMessage={errorMessage} dir={dir} />
       <fieldset className="space-y-2" aria-label={headline}>
         {options
           .filter((option) => option.id !== "none")
-          .map((option, index) => {
+          .map((option) => {
             const isChecked = selectedValues.includes(option.id);
             const optionId = `${inputId}-${option.id}`;
             const isDisabled = disabled || (isNoneSelected && option.id !== "none");
-            // Only mark the first checkbox as required for HTML5 validation
-            // This ensures at least one selection is required, not all
-            const isFirstOption = index === 0;
             return (
               <label
                 key={option.id}
@@ -325,7 +299,6 @@ function ListVariant({
                       }
                     }}
                     disabled={isDisabled}
-                    required={isRequired ? isFirstOption : false}
                     aria-invalid={Boolean(errorMessage)}
                   />
                   <span
@@ -373,7 +346,6 @@ function ListVariant({
                   onChange={handleOtherInputChange}
                   placeholder={otherOptionPlaceholder}
                   disabled={disabled}
-                  required
                   aria-required={required}
                   dir={dir}
                   className="mt-2 w-full"

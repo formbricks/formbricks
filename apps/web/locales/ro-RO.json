@@ -187,6 +187,7 @@
     "delete": "Șterge",
     "description": "Descriere",
     "dev_env": "Mediu de dezvoltare",
+    "development": "Dezvoltare",
     "development_environment_banner": "Ești într-un mediu de dezvoltare. Configurează-l pentru a testa sondaje, acțiuni și atribute.",
     "disable": "Dezactivează",
     "disallow": "Nu permite",
@@ -194,6 +195,7 @@
     "dismissed": "Respins",
     "docs": "Documentație",
     "documentation": "Documentație",
+    "domain": "Domeniu",
     "download": "Descărcare",
     "draft": "Schiță",
     "duplicate": "Duplicități",
@@ -203,6 +205,7 @@
     "ending_card": "Cardul de finalizare",
     "enter_url": "Introduceți URL-ul",
     "enterprise_license": "Licență Întreprindere",
+    "environment": "Mediu",
     "environment_not_found": "Mediul nu a fost găsit",
     "environment_notice": "Te afli în prezent în mediul {environment}",
     "error": "Eroare",
@@ -321,6 +324,7 @@
     "preview_survey": "Previzualizare Chestionar",
     "privacy": "Politica de Confidențialitate",
     "product_manager": "Manager de Produs",
+    "production": "Producție",
     "profile": "Profil",
     "profile_id": "ID Profil",
     "progress": "Progres",
@@ -1025,6 +1029,14 @@
         "upgrade": "Actualizare",
         "uptime_sla_99": "Disponibilitate SLA (99%)",
         "website_surveys": "Sondaje ale site-ului"
+      },
+      "domain": {
+        "description": "Prezentare generală a tuturor chestionarelor care folosesc Pretty URLs în organizația dvs.",
+        "no_pretty_urls": "Nu există încă chestionare cu Pretty URLs configurate.",
+        "pretty_url": "Pretty URL",
+        "project": "Proiect",
+        "survey_name": "Nume chestionar",
+        "title": "URL-uri frumoase"
       },
       "enterprise": {
         "audit_logs": "Jurnale de audit",
@@ -1824,6 +1836,17 @@
           "upgrade_prompt_description": "Generează linkuri personale pentru un segment și leagă răspunsurile la sondaj de fiecare contact.",
           "upgrade_prompt_title": "Folosește linkuri personale cu un plan superior",
           "work_with_segments": "Linkuri personale funcționează cu segmente."
+        },
+        "pretty_url": {
+          "description": "Creează o adresă URL personalizată și ușor de reținut pentru chestionarul tău",
+          "remove_description": "Chestionarul va fi în continuare accesibil prin URL-ul original.",
+          "remove_success": "Pretty URL a fost eliminat cu succes",
+          "save_success": "Pretty URL a fost salvat cu succes",
+          "slug_help": "Folosiți doar litere mici, cifre și cratime.",
+          "slug_label": "Slug personalizat",
+          "slug_placeholder": "customer-feedback",
+          "slug_required": "Vă rugăm să introduceți un slug valid",
+          "title": "Pretty URL"
         },
         "send_email": {
           "copy_embed_code": "Copiază codul de inserare",

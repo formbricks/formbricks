@@ -138,14 +138,12 @@ interface UploadAreaProps {
   placeholderText: string;
   allowMultiple: boolean;
   acceptAttribute?: string;
-  required: boolean;
   disabled: boolean;
   dir: "ltr" | "rtl" | "auto";
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
   onDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
   showUploader: boolean;
-  uploadedFiles: UploadedFile[];
 }
 
 function UploadArea({
@@ -154,14 +152,12 @@ function UploadArea({
   placeholderText,
   allowMultiple,
   acceptAttribute,
-  required,
   disabled,
   dir,
   onFileChange,
   onDragOver,
   onDrop,
   showUploader,
-  uploadedFiles,
 }: Readonly<UploadAreaProps>): React.JSX.Element | null {
   if (!showUploader) {
     return null;
@@ -203,7 +199,6 @@ function UploadArea({
           accept={acceptAttribute}
           onChange={onFileChange}
           disabled={disabled}
-          required={uploadedFiles.length > 0 ? false : required}
           dir={dir}
           aria-label="File upload"
           aria-describedby={`${inputId}-label`}
@@ -295,8 +290,8 @@ function FileUpload({
 
         <div
           className={cn(
-            "w-input px-input-x py-input-y rounded-input relative flex flex-col items-center justify-center border-2 border-dashed transition-colors",
-            errorMessage ? "border-destructive" : "border-input-border bg-accent",
+            "w-input px-input-x py-input-y rounded-input bg-accent relative flex flex-col items-center justify-center border-2 border-dashed transition-colors",
+            errorMessage ? "border-destructive" : "border-input-border",
             disabled && "cursor-not-allowed opacity-50"
           )}>
           <UploadedFilesList files={uploadedFiles} disabled={disabled} onDelete={handleDeleteFile} />
@@ -318,14 +313,12 @@ function FileUpload({
               placeholderText={placeholderText}
               allowMultiple={allowMultiple}
               acceptAttribute={acceptAttribute}
-              required={required}
               disabled={disabled}
               dir={dir}
               onFileChange={handleFileChange}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               showUploader={showUploader}
-              uploadedFiles={uploadedFiles}
             />
           </div>
         </div>

@@ -187,6 +187,7 @@
     "delete": "Eliminar",
     "description": "Descrição",
     "dev_env": "Ambiente de Desenvolvimento",
+    "development": "Desenvolvimento",
     "development_environment_banner": "Está num ambiente de desenvolvimento. Configure-o para testar inquéritos, ações e atributos.",
     "disable": "Desativar",
     "disallow": "Não permitir",
@@ -194,6 +195,7 @@
     "dismissed": "Dispensado",
     "docs": "Documentação",
     "documentation": "Documentação",
+    "domain": "Domínio",
     "download": "Transferir",
     "draft": "Rascunho",
     "duplicate": "Duplicar",
@@ -203,6 +205,7 @@
     "ending_card": "Cartão de encerramento",
     "enter_url": "Introduzir URL",
     "enterprise_license": "Licença Enterprise",
+    "environment": "Ambiente",
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Está atualmente no ambiente {environment}.",
     "error": "Erro",
@@ -321,6 +324,7 @@
     "preview_survey": "Pré-visualização do inquérito",
     "privacy": "Política de Privacidade",
     "product_manager": "Gestor de Produto",
+    "production": "Produção",
     "profile": "Perfil",
     "profile_id": "ID do Perfil",
     "progress": "Progresso",
@@ -1025,6 +1029,14 @@
         "upgrade": "Atualizar",
         "uptime_sla_99": "SLA de Tempo de Atividade (99%)",
         "website_surveys": "Inquéritos (site)"
+      },
+      "domain": {
+        "description": "Visão geral de todos os inquéritos que utilizam URLs amigáveis na sua organização",
+        "no_pretty_urls": "Ainda não existem inquéritos com URLs amigáveis configurados.",
+        "pretty_url": "URL amigável",
+        "project": "Projeto",
+        "survey_name": "Nome do inquérito",
+        "title": "URLs amigáveis"
       },
       "enterprise": {
         "audit_logs": "Registos de Auditoria",
@@ -1824,6 +1836,17 @@
           "upgrade_prompt_description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto.",
           "upgrade_prompt_title": "Utilize links pessoais com um plano superior",
           "work_with_segments": "Os links pessoais funcionam com segmentos."
+        },
+        "pretty_url": {
+          "description": "Crie um URL personalizado e memorável para o seu inquérito",
+          "remove_description": "O seu inquérito continuará acessível através do URL original.",
+          "remove_success": "URL amigável removido com sucesso",
+          "save_success": "URL amigável guardado com sucesso",
+          "slug_help": "Use apenas letras minúsculas, números e hífenes.",
+          "slug_label": "Slug personalizado",
+          "slug_placeholder": "feedback-cliente",
+          "slug_required": "Por favor, introduza um slug válido",
+          "title": "URL amigável"
         },
         "send_email": {
           "copy_embed_code": "Copiar código de incorporação",

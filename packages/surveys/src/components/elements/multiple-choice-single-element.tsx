@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { SingleSelect, type SingleSelectOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
@@ -30,8 +31,10 @@ export function MultipleChoiceSingleElement({
 }: Readonly<MultipleChoiceSingleElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherValue, setOtherValue] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
 
   const shuffledChoicesIds = useMemo(() => {
     if (element.shuffleOption) {
@@ -87,6 +90,7 @@ export function MultipleChoiceSingleElement({
   }, [isOtherSelected, value]);
 
   const handleChange = (selectedValue: string) => {
+    setErrorMessage(undefined);
     if (selectedValue === otherOption?.id) {
       setOtherValue("");
       onChange({ [element.id]: "" });
@@ -101,12 +105,6 @@ export function MultipleChoiceSingleElement({
   const handleOtherValueChange = (newOtherValue: string) => {
     setOtherValue(newOtherValue);
     onChange({ [element.id]: newOtherValue });
-  };
-
-  const handleSubmit = (e: Event) => {
-    e.preventDefault();
-    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
-    setTtc(updatedTtcObj);
   };
 
   // Convert element choices to SingleSelect options
@@ -154,6 +152,28 @@ export function MultipleChoiceSingleElement({
     return undefined;
   }, [value, otherOption, allOptions, isOtherSelected]);
 
+  const validateRequired = (): boolean => {
+    // Check if nothing is selected
+    if (element.required && selectedValue === undefined) {
+      setErrorMessage(t("errors.please_select_an_option"));
+      return false;
+    }
+    // Check if "other" is selected but not filled
+    if (element.required && isOtherSelected && !otherValue.trim()) {
+      setErrorMessage(t("errors.please_fill_out_this_field"));
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = (e: Event) => {
+    e.preventDefault();
+    setErrorMessage(undefined);
+    if (!validateRequired()) return;
+    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+  };
+
   return (
     <form key={element.id} onSubmit={handleSubmit} className="w-full">
       <SingleSelect
@@ -165,6 +185,7 @@ export function MultipleChoiceSingleElement({
         value={selectedValue}
         onChange={handleChange}
         required={element.required}
+        errorMessage={errorMessage}
         dir={dir}
         otherOptionId={otherOption?.id}
         otherOptionLabel={otherOption ? getLocalizedValue(otherOption.label, languageCode) : undefined}

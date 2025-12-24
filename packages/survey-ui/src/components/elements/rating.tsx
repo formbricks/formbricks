@@ -278,7 +278,6 @@ function Rating({
             handleSelect(number);
           }}
           disabled={disabled}
-          required={required}
           className="sr-only"
           aria-label={`Rate ${String(number)} out of ${String(range)}`}
         />
@@ -329,7 +328,6 @@ function Rating({
             handleSelect(number);
           }}
           disabled={disabled}
-          required={required}
           className="sr-only"
           aria-label={`Rate ${String(number)} out of ${String(range)} stars`}
         />
@@ -388,7 +386,6 @@ function Rating({
             handleSelect(number);
           }}
           disabled={disabled}
-          required={required}
           className="sr-only"
           aria-label={`Rate ${String(number)} out of ${String(range)}`}
         />
@@ -415,7 +412,7 @@ function Rating({
       />
 
       {/* Rating Options */}
-      <div className="relative space-y-2">
+      <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full">
           <legend className="sr-only">Rating options</legend>
