@@ -2,6 +2,7 @@ import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
+import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 
 extendZodWithOpenApi(z);
 
@@ -28,9 +29,21 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   name: true,
   description: true,
   environmentId: true,
-}).openapi({
-  ref: "contactAttributeKeyInput",
-  description: "Input data for creating or updating a contact attribute",
-});
+})
+  .superRefine((data, ctx) => {
+    // Enforce safe identifier format for key
+    if (!isSafeIdentifier(data.key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
+        path: ["key"],
+      });
+    }
+  })
+  .openapi({
+    ref: "contactAttributeKeyInput",
+    description: "Input data for creating or updating a contact attribute",
+  });
 
 export type TContactAttributeKeyInput = z.infer<typeof ZContactAttributeKeyInput>;

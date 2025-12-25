@@ -144,6 +144,7 @@ checksums:
     common/copy: 627c00d2c850b9b45f7341a6ac01b6bb
     common/copy_code: 704c13d9bc01caad29a1cf3179baa111
     common/copy_link: 57a37acfe6d7ed71d00fbbc8079fbb35
+    common/count_attributes: 042fba9baffef5afe2c24f13d4f50697
     common/count_contacts: b1c413a4b06961b71b6aeee95d6775d7
     common/count_responses: 690118a456c01c5b4d437ae82b50b131
     common/create_new_organization: 51dae7b33143686ee218abf5bea764a5
@@ -271,6 +272,7 @@ checksums:
     common/only_owners_managers_and_manage_access_members_can_perform_this_action: 3c16fc506e871935f6183793e73b6709
     common/option_id: ed21d97b8ab035ba89fb3f5f073229bd
     common/option_ids: e68c25215ce81ea7ad82ff7be0a0bf2d
+    common/optional: 396fb9a0472daf401c392bdc3e248943
     common/or: 7b133c38bec0d5ee23cc6bcf9a8de50b
     common/organization: 3dc8489af7e74121f65ce6d9677bc94d
     common/organization_id: ef09b71c84a25b5da02a23c77e68a335
@@ -567,12 +569,32 @@ checksums:
     environments/connect/insert_this_code_into_the_head_tag_of_your_website: c4bec1089168efe0fa565397bd7cb115
     environments/connect/subtitle: d913df50a1c6b7acc283484195f3732a
     environments/connect/waiting_for_your_signal: 9b0a62d5b61c04674596643d2f9f5c09
+    environments/contacts/attribute_created_successfully: e9f90d366d817f2f1c81fb819c0e2f05
+    environments/contacts/attribute_description: e17686a22ffad04cc7bb70524ed4478b
+    environments/contacts/attribute_description_placeholder: 05af83e4cfc6328476ef9719581e47af
+    environments/contacts/attribute_key: 3d1065ab98a1c2f1210507fd5c7bf515
+    environments/contacts/attribute_key_already_exists: c1ac75f3324781bdc165cf4567ff6497
+    environments/contacts/attribute_key_cannot_be_changed: 0ced703e77a8e620276c1fa21fcc8900
+    environments/contacts/attribute_key_hint: 1a68c6f91e1a5cf9eff811e2e54e92b8
+    environments/contacts/attribute_key_placeholder: 31702e553b3f138a623dbaa42b6f878f
+    environments/contacts/attribute_key_required: 75f22558e9bafe7da2a549e75fab5f75
+    environments/contacts/attribute_key_safe_identifier_required: aece7d4708065ec5f110b82fc061621d
+    environments/contacts/attribute_label: a5c71bf158481233f8215dbd38cc196b
+    environments/contacts/attribute_label_placeholder: bf5106cb14d2ec0c21e7d8b4ab1f3a93
+    environments/contacts/attribute_updated_successfully: 0e64422156c29940cd4dab2f9d1f40b2
     environments/contacts/contact_deleted_successfully: c5b64a42a50e055f9e27ec49e20e03fa
     environments/contacts/contact_not_found: 045396f0b13fafd43612a286263737c0
     environments/contacts/contacts_table_refresh: 6a959475991dd4ab28ad881bae569a09
     environments/contacts/contacts_table_refresh_success: 40951396e88e5c8fdafa0b3bb4fadca8
+    environments/contacts/create_attribute: 87320615901f95b4f35ee83c290a3a6c
+    environments/contacts/create_key: 0d385c354af8963acbe35cd646710f86
+    environments/contacts/create_new_attribute: c17d407dacd0b90f360f9f5e899d662f
+    environments/contacts/create_new_attribute_description: cc19d76bb6940537bbe3461191f25d26
+    environments/contacts/delete_attribute_confirmation: 01d99b89eb3d27ff468d0db1b4aeb394
     environments/contacts/delete_contact_confirmation: 4304d36277daa205b4aa09f5e0d494ab
     environments/contacts/delete_contact_confirmation_with_quotas: 7c0e2e223ca55101270ac2988c53e616
+    environments/contacts/edit_attribute: a53676332a19e6470239bf5bdff19851
+    environments/contacts/edit_attribute_description: 073a3084bb2f3b34ed1320ed1cd6db3c
     environments/contacts/generate_personal_link: 9ac0865f6876d40fe858f94eae781eb8
     environments/contacts/generate_personal_link_description: b9dbaf9e2d8362505b7e3cfa40f415a6
     environments/contacts/no_published_link_surveys_available: 9c1abc5b21aba827443cdf87dd6c8bfe
@@ -583,6 +605,7 @@ checksums:
     environments/contacts/personal_link_generated_but_clipboard_failed: 4eb1e208e729bd5ac00c33f72fc38d53
     environments/contacts/personal_survey_link: 5b3f1afc53733718c4ed5b1443b6a604
     environments/contacts/please_select_a_survey: 465aa7048773079c8ffdde8b333b78eb
+    environments/contacts/search_attribute_keys: 2811dd44b98a6a74e55246bfff6100d4
     environments/contacts/search_contact: 020205a93846ab3e12c203ac4fa97c12
     environments/contacts/select_a_survey: 1f49086dfb874307aae1136e88c3d514
     environments/contacts/select_attribute: d93fb60eb4fbb42bf13a22f6216fbd79

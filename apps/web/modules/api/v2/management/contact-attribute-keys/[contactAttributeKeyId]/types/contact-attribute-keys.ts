@@ -19,10 +19,9 @@ export const ZContactAttributeKeyIdSchema = z
 export const ZContactAttributeKeyUpdateSchema = ZContactAttributeKey.pick({
   name: true,
   description: true,
-  key: true,
 }).openapi({
   ref: "contactAttributeKeyUpdate",
-  description: "A contact attribute key to update.",
+  description: "A contact attribute key to update. Key cannot be changed.",
 });
 
 export type TContactAttributeKeyUpdateSchema = z.infer<typeof ZContactAttributeKeyUpdateSchema>;
