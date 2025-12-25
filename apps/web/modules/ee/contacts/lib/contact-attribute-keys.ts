@@ -2,7 +2,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const getContactAttributeKeys = reactCache(
   async (environmentId: string): Promise<TContactAttributeKey[]> => {
@@ -44,7 +44,7 @@ export const createContactAttributeKey = async (data: {
   } catch (error) {
     if (error instanceof Error && "code" in error) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new DatabaseError("Attribute key already exists");
+        throw new InvalidInputError("Attribute key already exists");
       }
     }
     throw error;
@@ -63,6 +63,7 @@ export const updateContactAttributeKey = async (
   });
 
   if (!existingKey) {
+    console.log("throwing resource not found error");
     throw new ResourceNotFoundError("contactAttributeKey", id);
   }
 

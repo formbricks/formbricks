@@ -16,7 +16,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TUserLocale } from "@formbricks/types/user";
@@ -220,7 +219,7 @@ export const AttributesTable = ({
     const deleteContactAttributeKeyResponse = await deleteContactAttributeKeyAction({ id: attributeId });
     if (!deleteContactAttributeKeyResponse?.data) {
       const errorMessage = getFormattedErrorMessage(deleteContactAttributeKeyResponse);
-      toast.error(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 

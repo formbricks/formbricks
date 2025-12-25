@@ -85,24 +85,30 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
     }
 
     setIsCreating(true);
-    const createContactAttributeKeyResponse = await createContactAttributeKeyAction({
-      environmentId,
-      key: formData.key,
-      name: formData.name || formData.key,
-      description: formData.description || undefined,
-    });
 
-    if (!createContactAttributeKeyResponse?.data) {
-      const errorMessage = getFormattedErrorMessage(createContactAttributeKeyResponse);
+    try {
+      const createContactAttributeKeyResponse = await createContactAttributeKeyAction({
+        environmentId,
+        key: formData.key,
+        name: formData.name || formData.key,
+        description: formData.description || undefined,
+      });
+
+      if (!createContactAttributeKeyResponse?.data) {
+        const errorMessage = getFormattedErrorMessage(createContactAttributeKeyResponse);
+        toast.error(errorMessage);
+        return;
+      }
+
+      toast.success(t("environments.contacts.attribute_created_successfully"));
+      handleResetState();
+      router.refresh();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
       toast.error(errorMessage);
+    } finally {
       setIsCreating(false);
-      return;
     }
-
-    toast.success(t("environments.contacts.attribute_created_successfully"));
-    handleResetState();
-    router.refresh();
-    setIsCreating(false);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

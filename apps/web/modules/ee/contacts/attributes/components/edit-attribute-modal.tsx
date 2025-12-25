@@ -36,23 +36,29 @@ export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAt
 
   const handleUpdate = async () => {
     setIsUpdating(true);
-    const updateContactAttributeKeyResponse = await updateContactAttributeKeyAction({
-      id: attribute.id,
-      name: formData.name || undefined,
-      description: formData.description || undefined,
-    });
 
-    if (!updateContactAttributeKeyResponse?.data) {
-      const errorMessage = getFormattedErrorMessage(updateContactAttributeKeyResponse);
+    try {
+      const updateContactAttributeKeyResponse = await updateContactAttributeKeyAction({
+        id: attribute.id,
+        name: formData.name || undefined,
+        description: formData.description || undefined,
+      });
+
+      if (!updateContactAttributeKeyResponse?.data) {
+        const errorMessage = getFormattedErrorMessage(updateContactAttributeKeyResponse);
+        toast.error(errorMessage);
+        return;
+      }
+
+      toast.success(t("environments.contacts.attribute_updated_successfully"));
+      setOpen(false);
+      router.refresh();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
       toast.error(errorMessage);
+    } finally {
       setIsUpdating(false);
-      return;
     }
-
-    toast.success(t("environments.contacts.attribute_updated_successfully"));
-    setOpen(false);
-    router.refresh();
-    setIsUpdating(false);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
