@@ -609,7 +609,6 @@
       "attribute_description": "Descriere",
       "attribute_description_placeholder": "Descriere scurtă",
       "attribute_key": "Cheie",
-      "attribute_key_already_exists": "Cheia atributului există deja",
       "attribute_key_cannot_be_changed": "Cheia nu poate fi modificată după creare",
       "attribute_key_hint": "Doar litere mici, cifre și caractere de subliniere. Trebuie să înceapă cu o literă.",
       "attribute_key_placeholder": "ex: date_of_birth",

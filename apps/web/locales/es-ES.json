@@ -609,7 +609,6 @@
       "attribute_description": "Descripción",
       "attribute_description_placeholder": "Descripción breve",
       "attribute_key": "Clave",
-      "attribute_key_already_exists": "La clave del atributo ya existe",
       "attribute_key_cannot_be_changed": "La clave no se puede cambiar después de la creación",
       "attribute_key_hint": "Solo letras minúsculas, números y guiones bajos. Debe empezar con una letra.",
       "attribute_key_placeholder": "p. ej. fecha_de_nacimiento",

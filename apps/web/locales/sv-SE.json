@@ -609,7 +609,6 @@
       "attribute_description": "Beskrivning",
       "attribute_description_placeholder": "Kort beskrivning",
       "attribute_key": "Nyckel",
-      "attribute_key_already_exists": "Attributnyckeln finns redan",
       "attribute_key_cannot_be_changed": "Nyckeln kan inte ändras efter skapande",
       "attribute_key_hint": "Endast små bokstäver, siffror och understreck. Måste börja med en bokstav.",
       "attribute_key_placeholder": "t.ex. date_of_birth",

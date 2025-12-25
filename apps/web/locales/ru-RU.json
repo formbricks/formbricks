@@ -609,7 +609,6 @@
       "attribute_description": "Описание",
       "attribute_description_placeholder": "Краткое описание",
       "attribute_key": "Ключ",
-      "attribute_key_already_exists": "Ключ атрибута уже существует",
       "attribute_key_cannot_be_changed": "Ключ нельзя изменить после создания",
       "attribute_key_hint": "Только строчные буквы, цифры и символы подчёркивания. Должен начинаться с буквы.",
       "attribute_key_placeholder": "например, date_of_birth",

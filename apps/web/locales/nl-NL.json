@@ -609,7 +609,6 @@
       "attribute_description": "Beschrijving",
       "attribute_description_placeholder": "Korte beschrijving",
       "attribute_key": "Sleutel",
-      "attribute_key_already_exists": "Attribuutsleutel bestaat al",
       "attribute_key_cannot_be_changed": "Sleutel kan niet worden gewijzigd na aanmaak",
       "attribute_key_hint": "Alleen kleine letters, cijfers en onderstrepingstekens. Moet beginnen met een letter.",
       "attribute_key_placeholder": "bijv. geboortedatum",
