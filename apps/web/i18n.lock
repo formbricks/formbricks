@@ -567,12 +567,20 @@ checksums:
     environments/connect/insert_this_code_into_the_head_tag_of_your_website: c4bec1089168efe0fa565397bd7cb115
     environments/connect/subtitle: d913df50a1c6b7acc283484195f3732a
     environments/connect/waiting_for_your_signal: 9b0a62d5b61c04674596643d2f9f5c09
+    environments/contacts/add_attribute: 70f153afc5c400527ffccfb2eec58ae9
+    environments/contacts/attribute_key: 3d1065ab98a1c2f1210507fd5c7bf515
+    environments/contacts/attribute_key_placeholder: 0ca5ed42ebde9b2b47cb4cfc499c97ed
+    environments/contacts/attribute_value: 34b0eaa85808b15cbc4be94c64d0146b
+    environments/contacts/attribute_value_placeholder: 90fb17015de807031304d7a650a6cb8c
     environments/contacts/contact_deleted_successfully: c5b64a42a50e055f9e27ec49e20e03fa
     environments/contacts/contact_not_found: 045396f0b13fafd43612a286263737c0
     environments/contacts/contacts_table_refresh: 6a959475991dd4ab28ad881bae569a09
     environments/contacts/contacts_table_refresh_success: 40951396e88e5c8fdafa0b3bb4fadca8
     environments/contacts/delete_contact_confirmation: 4304d36277daa205b4aa09f5e0d494ab
     environments/contacts/delete_contact_confirmation_with_quotas: 7c0e2e223ca55101270ac2988c53e616
+    environments/contacts/edit_attribute_values: 44e4e7a661cc1b59200bb07c710072a7
+    environments/contacts/edit_attribute_values_description: 21593dfaf4cad965ffc17685bc005509
+    environments/contacts/edit_attributes_success: 39f93b1a6f1605bc5951f4da5847bb22
     environments/contacts/generate_personal_link: 9ac0865f6876d40fe858f94eae781eb8
     environments/contacts/generate_personal_link_description: b9dbaf9e2d8362505b7e3cfa40f415a6
     environments/contacts/no_published_link_surveys_available: 9c1abc5b21aba827443cdf87dd6c8bfe

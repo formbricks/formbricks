@@ -21,13 +21,32 @@ export const updateAttributes = async (
 
   let ignoreEmailAttribute = false;
 
-  // Fetch contact attribute keys and email check in parallel
-  const [contactAttributeKeys, existingEmailAttribute] = await Promise.all([
+  // Default/system attributes that should not be deleted even if missing from payload
+  const DEFAULT_ATTRIBUTES = new Set(["email", "userId", "firstName", "lastName"]);
+
+  // Fetch current attributes, contact attribute keys, and email check in parallel
+  const [currentAttributesData, contactAttributeKeys, existingEmailAttribute] = await Promise.all([
+    prisma.contactAttribute.findMany({
+      where: { contactId },
+      select: {
+        attributeKey: {
+          select: {
+            key: true,
+          },
+        },
+      },
+    }),
     getContactAttributeKeys(environmentId),
     contactAttributesParam.email
       ? hasEmailAttribute(contactAttributesParam.email, environmentId, contactId)
       : Promise.resolve(null),
   ]);
+
+  // Convert current attributes to a Set of keys for comparison
+  const currentAttributes = currentAttributesData.reduce((acc, attr) => {
+    acc[attr.attributeKey.key] = "";
+    return acc;
+  }, {} as TContactAttributes);
 
   // Process email existence early
   const { email, ...remainingAttributes } = contactAttributesParam;
@@ -36,6 +55,19 @@ export const updateAttributes = async (
 
   // Create lookup map for attribute keys
   const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
+
+  // Determine which attributes should be deleted (exist in DB but not in payload, and not default attributes)
+  // Compare against all submitted attributes (contactAttributesParam), not the filtered set
+  const submittedKeys = new Set(Object.keys(contactAttributesParam));
+  const currentKeys = new Set(Object.keys(currentAttributes));
+  const keysToDelete = Array.from(currentKeys).filter(
+    (key) => !submittedKeys.has(key) && !DEFAULT_ATTRIBUTES.has(key)
+  );
+
+  // Get attribute key IDs for deletion
+  const attributeKeyIdsToDelete = keysToDelete
+    .map((key) => contactAttributeKeyMap.get(key)?.id)
+    .filter((id): id is string => !!id);
 
   // Separate existing and new attributes in a single pass
   const { existingAttributes, newAttributes } = Object.entries(contactAttributes).reduce(
@@ -62,7 +94,19 @@ export const updateAttributes = async (
     ignoreEmailAttribute = true;
   }
 
-  // First, update all existing attributes
+  // First, delete attributes that were removed from the form (but not default attributes)
+  if (attributeKeyIdsToDelete.length > 0) {
+    await prisma.contactAttribute.deleteMany({
+      where: {
+        contactId,
+        attributeKeyId: {
+          in: attributeKeyIdsToDelete,
+        },
+      },
+    });
+  }
+
+  // Then, update all existing attributes
   if (existingAttributes.length > 0) {
     await prisma.$transaction(
       existingAttributes.map(({ attributeKeyId, value }) =>

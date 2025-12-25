@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { ZContactAttributes } from "@formbricks/types/contact-attribute";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -12,7 +14,8 @@ import {
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { createContactsFromCSV, deleteContact, getContacts } from "./lib/contacts";
+import { createContactsFromCSV, deleteContact, getContact, getContacts } from "./lib/contacts";
+import { updateContactAttributes } from "./lib/update-contact-attributes";
 import {
   ZContactCSVAttributeMap,
   ZContactCSVDuplicateAction,
@@ -129,3 +132,64 @@ export const createContactsFromCSVAction = authenticatedActionClient.schema(ZCre
     }
   )
 );
+
+const ZUpdateContactAttributesAction = z.object({
+  contactId: ZId,
+  attributes: ZContactAttributes,
+});
+
+export const updateContactAttributesAction = authenticatedActionClient
+  .schema(ZUpdateContactAttributesAction)
+  .action(
+    withAuditLogging(
+      "updated",
+      "contact",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
+        const projectId = await getProjectIdFromContactId(parsedInput.contactId);
+
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId,
+          access: [
+            {
+              type: "organization",
+              roles: ["owner", "manager"],
+            },
+            {
+              type: "projectTeam",
+              minPermission: "readWrite",
+              projectId,
+            },
+          ],
+        });
+
+        ctx.auditLoggingCtx.organizationId = organizationId;
+        ctx.auditLoggingCtx.contactId = parsedInput.contactId;
+
+        // Get contact to access environmentId for revalidation
+        const contact = await getContact(parsedInput.contactId);
+        if (!contact) {
+          throw new Error("Contact not found");
+        }
+
+        const result = await updateContactAttributes(parsedInput.contactId, parsedInput.attributes);
+
+        ctx.auditLoggingCtx.newObject = {
+          contactId: parsedInput.contactId,
+          attributes: result.updatedAttributes,
+        };
+
+        // Revalidate the contacts page to keep SSR data consistent
+        revalidatePath(`/environments/${contact.environmentId}/contacts`);
+
+        return result;
+      }
+    )
+  );
