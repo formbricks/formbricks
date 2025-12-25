@@ -31,7 +31,8 @@ export const toSafeIdentifier = (value: string): string => {
     .replaceAll(/[\u0300-\u036f]/g, "") // Remove accents
     .replaceAll(/[^a-z\d_]/g, "_") // Replace invalid chars with underscore
     .replaceAll(/_+/g, "_") // Collapse multiple underscores
-    .replaceAll(/(^_+|_+$)/g, ""); // Remove leading/trailing underscores
+    .replace(/^_+/, "") // Remove leading underscores
+    .replace(/_+$/, ""); // Remove trailing underscores
 
   // If it starts with a number, prepend 'attr_'
   if (/^\d/.test(safe)) {
@@ -45,4 +46,3 @@ export const toSafeIdentifier = (value: string): string => {
 
   return safe;
 };
-
