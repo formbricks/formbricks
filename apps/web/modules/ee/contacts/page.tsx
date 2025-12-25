@@ -1,15 +1,12 @@
-import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
+import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContacts } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import { PageHeader } from "@/modules/ui/components/page-header";
-import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { ContactDataView } from "./components/contact-data-view";
-import { ContactsSecondaryNavigation } from "./components/contacts-secondary-navigation";
 
 export const ContactsPage = async ({
   params: paramsProps,
@@ -34,46 +31,23 @@ export const ContactsPage = async ({
   );
 
   return (
-    <PageContentWrapper>
-      <PageHeader
-        pageTitle={t("common.contacts")}
-        cta={isContactsEnabled && !isReadOnly ? AddContactsButton : undefined}>
-        <ContactsSecondaryNavigation activeId="contacts" environmentId={params.environmentId} />
-      </PageHeader>
-
-      {isContactsEnabled ? (
-        <ContactDataView
-          key={initialContacts.length + contactAttributeKeys.length}
-          environment={environment}
-          itemsPerPage={ITEMS_PER_PAGE}
-          contactAttributeKeys={contactAttributeKeys}
-          isReadOnly={isReadOnly}
-          initialContacts={initialContacts}
-          hasMore={initialContacts.length >= ITEMS_PER_PAGE}
-          isQuotasAllowed={isQuotasAllowed}
-        />
-      ) : (
-        <div className="flex items-center justify-center">
-          <UpgradePrompt
-            title={t("environments.contacts.unlock_contacts_title")}
-            description={t("environments.contacts.unlock_contacts_description")}
-            buttons={[
-              {
-                text: IS_FORMBRICKS_CLOUD ? t("common.start_free_trial") : t("common.request_trial_license"),
-                href: IS_FORMBRICKS_CLOUD
-                  ? `/environments/${params.environmentId}/settings/billing`
-                  : "https://formbricks.com/upgrade-self-hosting-license",
-              },
-              {
-                text: t("common.learn_more"),
-                href: IS_FORMBRICKS_CLOUD
-                  ? `/environments/${params.environmentId}/settings/billing`
-                  : "https://formbricks.com/learn-more-self-hosting-license",
-              },
-            ]}
-          />
-        </div>
-      )}
-    </PageContentWrapper>
+    <ContactsPageLayout
+      pageTitle={t("common.contacts")}
+      activeId="contacts"
+      environmentId={params.environmentId}
+      isContactsEnabled={isContactsEnabled}
+      isReadOnly={isReadOnly}
+      cta={AddContactsButton}>
+      <ContactDataView
+        key={initialContacts.length + contactAttributeKeys.length}
+        environment={environment}
+        itemsPerPage={ITEMS_PER_PAGE}
+        contactAttributeKeys={contactAttributeKeys}
+        isReadOnly={isReadOnly}
+        initialContacts={initialContacts}
+        hasMore={initialContacts.length >= ITEMS_PER_PAGE}
+        isQuotasAllowed={isQuotasAllowed}
+      />
+    </ContactsPageLayout>
   );
 };

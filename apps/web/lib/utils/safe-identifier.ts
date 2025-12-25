@@ -2,8 +2,6 @@
  * Validates that a string is a safe identifier.
  * Safe identifiers can only contain lowercase letters, numbers, and underscores.
  * They cannot start with a number.
- *
- * This matches the validation used for survey variable names (see formbricks#5342).
  */
 export const isSafeIdentifier = (value: string): boolean => {
   // Must start with a lowercase letter
