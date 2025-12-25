@@ -71,6 +71,11 @@ export const AttributesTable = ({
     );
   }, [contactAttributeKeys, searchValue]);
 
+  // Check if all filtered attributes are system attributes
+  const allSystemAttributes = useMemo(() => {
+    return filteredAttributes.length > 0 && filteredAttributes.every((attr) => attr.type === "default");
+  }, [filteredAttributes]);
+
   // Generate columns
   const columns = useMemo(() => {
     return generateAttributeTableColumns(searchValue, isReadOnly, isExpanded ?? false, t, locale);
@@ -136,6 +141,21 @@ export const AttributesTable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [environmentId]);
 
+  // Hide select column when all attributes are system attributes
+  useEffect(() => {
+    if (!isReadOnly && allSystemAttributes) {
+      setColumnVisibility((prev) => ({
+        ...prev,
+        select: false,
+      }));
+    } else if (!isReadOnly && !allSystemAttributes) {
+      setColumnVisibility((prev) => ({
+        ...prev,
+        select: true,
+      }));
+    }
+  }, [allSystemAttributes, isReadOnly]);
+
   // Save settings to localStorage when they change
   useEffect(() => {
     if (columnOrder.length > 0) {
@@ -179,7 +199,7 @@ export const AttributesTable = ({
       columnVisibility,
       rowSelection,
       columnPinning: {
-        left: ["select", "createdAt"],
+        left: allSystemAttributes ? ["createdAt"] : ["select", "createdAt"],
       },
     },
   });

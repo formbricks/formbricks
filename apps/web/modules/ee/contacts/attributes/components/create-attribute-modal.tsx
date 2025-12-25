@@ -6,7 +6,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { isSafeIdentifier, toSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -47,17 +47,9 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
   };
 
   const handleNameChange = (value: string) => {
-    setFormData((prev) => {
-      const newName = value;
-      // Auto-suggest key from name if key is empty or matches previous name suggestion
-      let newKey = prev.key;
-      if (!prev.key || prev.key === toSafeIdentifier(prev.name)) {
-        newKey = toSafeIdentifier(newName);
-      }
-      return { ...prev, name: newName, key: newKey };
-    });
-    if (keyError) {
-      validateKey(formData.key || toSafeIdentifier(value));
+    setFormData((prev) => ({ ...prev, name: value }));
+    if (keyError && formData.key) {
+      validateKey(formData.key);
     }
   };
 
@@ -113,6 +105,11 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
     setIsCreating(false);
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await handleCreate();
+  };
+
   return (
     <>
       <Button onClick={() => setOpen(true)} size="sm">
@@ -127,7 +124,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
             handleResetState();
           }
         }}>
-        <DialogContent className="sm:max-w-lg" disableCloseOnOutsideClick>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("environments.contacts.create_new_attribute")}</DialogTitle>
             <DialogDescription>
@@ -135,63 +132,64 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
             </DialogDescription>
           </DialogHeader>
 
-          <DialogBody>
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">
-                  {t("environments.contacts.attribute_key")}
-                </label>
-                <Input
-                  value={formData.key}
-                  onChange={(e) => handleKeyChange(e.target.value)}
-                  placeholder={t("environments.contacts.attribute_key_placeholder")}
-                  className={keyError ? "border-red-500" : ""}
-                />
-                {keyError && <p className="text-sm text-red-500">{keyError}</p>}
-                <p className="text-xs text-slate-500">{t("environments.contacts.attribute_key_hint")}</p>
-              </div>
+          <form onSubmit={handleSubmit}>
+            <DialogBody>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-slate-900">
+                    {t("environments.contacts.attribute_key")}
+                  </label>
+                  <Input
+                    value={formData.key}
+                    onChange={(e) => handleKeyChange(e.target.value)}
+                    placeholder={t("environments.contacts.attribute_key_placeholder")}
+                    className={keyError ? "border-red-500" : ""}
+                  />
+                  {keyError && <p className="text-sm text-red-500">{keyError}</p>}
+                  <p className="text-xs text-slate-500">{t("environments.contacts.attribute_key_hint")}</p>
+                </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">
-                  {t("environments.contacts.attribute_label")}
-                </label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder={t("environments.contacts.attribute_label_placeholder")}
-                />
-              </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-slate-900">
+                    {t("environments.contacts.attribute_label")}
+                  </label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    placeholder={t("environments.contacts.attribute_label_placeholder")}
+                  />
+                </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">
-                  {t("environments.contacts.attribute_description")} ({t("common.optional")})
-                </label>
-                <Input
-                  value={formData.description}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder={t("environments.contacts.attribute_description_placeholder")}
-                />
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-slate-900">
+                    {t("environments.contacts.attribute_description")} ({t("common.optional")})
+                  </label>
+                  <Input
+                    value={formData.description}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder={t("environments.contacts.attribute_description_placeholder")}
+                  />
+                </div>
               </div>
-            </div>
-          </DialogBody>
+            </DialogBody>
 
-          <DialogFooter>
-            <Button
-              onClick={() => {
-                handleResetState();
-              }}
-              type="button"
-              variant="secondary">
-              {t("common.cancel")}
-            </Button>
-            <Button
-              disabled={!formData.key || !!keyError}
-              loading={isCreating}
-              onClick={handleCreate}
-              type="submit">
-              {t("environments.contacts.create_key")}
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="mt-4">
+              <Button
+                onClick={() => {
+                  handleResetState();
+                }}
+                type="button"
+                variant="secondary">
+                {t("common.cancel")}
+              </Button>
+              <Button
+                disabled={!formData.key || !formData.name || !!keyError}
+                loading={isCreating}
+                type="submit">
+                {t("environments.contacts.create_key")}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>

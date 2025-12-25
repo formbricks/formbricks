@@ -55,58 +55,64 @@ export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAt
     setIsUpdating(false);
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await handleUpdate();
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-lg" disableCloseOnOutsideClick>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("environments.contacts.edit_attribute")}</DialogTitle>
           <DialogDescription>{t("environments.contacts.edit_attribute_description")}</DialogDescription>
         </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <DialogBody>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-900">
+                  {t("environments.contacts.attribute_key")}
+                </label>
+                <Input value={attribute.key} disabled className="bg-slate-50" />
+                <p className="text-xs text-slate-500">
+                  {t("environments.contacts.attribute_key_cannot_be_changed")}
+                </p>
+              </div>
 
-        <DialogBody>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-900">
-                {t("environments.contacts.attribute_key")}
-              </label>
-              <Input value={attribute.key} disabled className="bg-slate-50" />
-              <p className="text-xs text-slate-500">
-                {t("environments.contacts.attribute_key_cannot_be_changed")}
-              </p>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-900">
+                  {t("environments.contacts.attribute_label")}
+                </label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder={t("environments.contacts.attribute_label_placeholder")}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-900">
+                  {t("environments.contacts.attribute_description")} ({t("common.optional")})
+                </label>
+                <Input
+                  value={formData.description}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder={t("environments.contacts.attribute_description_placeholder")}
+                />
+              </div>
             </div>
+          </DialogBody>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-900">
-                {t("environments.contacts.attribute_label")}
-              </label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder={t("environments.contacts.attribute_label_placeholder")}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-900">
-                {t("environments.contacts.attribute_description")} ({t("common.optional")})
-              </label>
-              <Input
-                value={formData.description}
-                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder={t("environments.contacts.attribute_description_placeholder")}
-              />
-            </div>
-          </div>
-        </DialogBody>
-
-        <DialogFooter>
-          <Button onClick={() => setOpen(false)} type="button" variant="secondary">
-            {t("common.cancel")}
-          </Button>
-          <Button disabled={!formData.name} loading={isUpdating} onClick={handleUpdate} type="submit">
-            {t("common.save")}
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="mt-4">
+            <Button onClick={() => setOpen(false)} type="button" variant="secondary">
+              {t("common.cancel")}
+            </Button>
+            <Button disabled={!formData.name} loading={isUpdating} type="submit">
+              {t("common.save")}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
