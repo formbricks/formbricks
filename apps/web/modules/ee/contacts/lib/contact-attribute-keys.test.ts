@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   createContactAttributeKey,
   deleteContactAttributeKey,
@@ -133,15 +133,14 @@ describe("createContactAttributeKey", () => {
     );
   });
 
-  test("throws DatabaseError on unique constraint violation", async () => {
+  test("throws InvalidInputError on unique constraint violation", async () => {
     const err = Object.assign(new Error("Unique constraint failed"), {
       code: PrismaErrorType.UniqueConstraintViolation,
     });
     vi.mocked(prisma.contactAttributeKey.create).mockRejectedValue(err);
 
-    await expect(createContactAttributeKey({ environmentId, key: "email" })).rejects.toThrow(DatabaseError);
     await expect(createContactAttributeKey({ environmentId, key: "email" })).rejects.toThrow(
-      "Attribute key already exists"
+      InvalidInputError
     );
   });
 
