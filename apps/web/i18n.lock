@@ -1099,6 +1099,13 @@ checksums:
     environments/settings/teams/please_fill_all_project_fields: 6712059df63c432ecd31f3c52b8e4d87
     environments/settings/teams/read: 2494ca23d10e5b6381eb271aceeb5270
     environments/settings/teams/read_write: 278a90dade128198d4c93ac00c345320
+    environments/settings/teams/security_updates_description: 17c49b565a7dde28b810f67af2e8db07
+    environments/settings/teams/security_updates_enroll: edcc8815899ece9209ce981c26c44df3
+    environments/settings/teams/security_updates_enrolled: 98863ec2d846b7a13ff1ed38ce1038fe
+    environments/settings/teams/security_updates_enrolled_description: d9c7605767af8f4d7265cba7dfba5f11
+    environments/settings/teams/security_updates_enrolled_successfully: 3bbb41fac1c04effec3af8ffbd8b72c5
+    environments/settings/teams/security_updates_enrolling: 15ca7daa32fb57e18a0a6357de26eb4b
+    environments/settings/teams/security_updates_title: 2f5f5f55bb9a325b5c8228bcad4f2784
     environments/settings/teams/select_member: 7f4a38312aabbbe3fe92756b57bd5d75
     environments/settings/teams/select_project: 6e4f4a24178660851d9ae0874706be9f
     environments/settings/teams/team_admin: 5df68214685738029af678ae1d5912bb

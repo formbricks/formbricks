@@ -24,6 +24,7 @@ import {
   getOrganizationOwnerCount,
 } from "@/modules/organization/settings/teams/lib/membership";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "./lib/invite";
+import { enrollInSecurityUpdates } from "./lib/security-updates";
 
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
@@ -387,3 +388,39 @@ export const leaveOrganizationAction = authenticatedActionClient.schema(ZLeaveOr
     }
   )
 );
+
+const ZEnrollSecurityUpdatesAction = z.object({
+  organizationId: ZId,
+});
+
+export const enrollSecurityUpdatesAction = authenticatedActionClient
+  .schema(ZEnrollSecurityUpdatesAction)
+  .action(async ({ ctx, parsedInput }) => {
+    // Ensure this is only called for self-hosted instances
+    if (IS_FORMBRICKS_CLOUD) {
+      throw new OperationNotAllowedError(
+        "Security updates enrollment is only available for self-hosted instances"
+      );
+    }
+
+    // Only owners can enroll in security updates
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner"],
+        },
+      ],
+    });
+
+    // Enroll with the current user's email
+    const result = await enrollInSecurityUpdates(ctx.user.email);
+
+    if (!result.success) {
+      throw new Error("Failed to enroll in security updates");
+    }
+
+    return { success: true };
+  });
