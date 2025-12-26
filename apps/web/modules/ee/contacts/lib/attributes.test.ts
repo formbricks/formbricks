@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
+import { getContactAttributes, hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
 import { updateAttributes } from "./attributes";
 
 vi.mock("@/lib/constants", () => ({
@@ -14,9 +14,14 @@ vi.mock("@/lib/utils/validate", () => ({
 vi.mock("@/modules/ee/contacts/lib/contact-attribute-keys", () => ({
   getContactAttributeKeys: vi.fn(),
 }));
-vi.mock("@/modules/ee/contacts/lib/contact-attributes", () => ({
-  hasEmailAttribute: vi.fn(),
-}));
+vi.mock("@/modules/ee/contacts/lib/contact-attributes", async () => {
+  const actual = await vi.importActual("@/modules/ee/contacts/lib/contact-attributes");
+  return {
+    ...actual,
+    getContactAttributes: vi.fn(),
+    hasEmailAttribute: vi.fn(),
+  };
+});
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn(),
@@ -69,18 +74,15 @@ describe("updateAttributes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Set default mock return values - these will be overridden in individual tests
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+    vi.mocked(getContactAttributes).mockResolvedValue({});
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
   });
 
   test("updates existing attributes", async () => {
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([
-      { attributeKey: { key: "name" } },
-      { attributeKey: { key: "email" } },
-    ] as any);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "john@example.com" };
@@ -92,11 +94,8 @@ describe("updateAttributes", () => {
 
   test("skips updating email if it already exists", async () => {
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(true);
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([
-      { attributeKey: { key: "name" } },
-      { attributeKey: { key: "email" } },
-    ] as any);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "john@example.com" };
@@ -109,8 +108,8 @@ describe("updateAttributes", () => {
 
   test("creates new attributes if under limit", async () => {
     vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[0]]);
+    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([{ attributeKey: { key: "name" } }] as any);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", newAttr: "val" };
@@ -123,11 +122,8 @@ describe("updateAttributes", () => {
 
   test("does not create new attributes if over the limit", async () => {
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([
-      { attributeKey: { key: "name" } },
-      { attributeKey: { key: "email" } },
-    ] as any);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", newAttr: "val" };
@@ -138,8 +134,8 @@ describe("updateAttributes", () => {
 
   test("returns success with no attributes to update or create", async () => {
     vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
+    vi.mocked(getContactAttributes).mockResolvedValue({});
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = {};
@@ -153,12 +149,12 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.contactAttribute.deleteMany).mockClear();
 
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributes).mockResolvedValue({
+      name: "Jane",
+      email: "jane@example.com",
+      customAttr: "oldValue",
+    });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([
-      { attributeKey: { key: "name" } },
-      { attributeKey: { key: "email" } },
-      { attributeKey: { key: "customAttr" } },
-    ] as any);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 1 });
     const attributes = { name: "John", email: "john@example.com" };
@@ -229,12 +225,12 @@ describe("updateAttributes", () => {
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithDefaults);
+    vi.mocked(getContactAttributes).mockResolvedValue({
+      email: "test@example.com",
+      userId: "user-123",
+      firstName: "John",
+    });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([
-      { attributeKey: { key: "email" } },
-      { attributeKey: { key: "userId" } },
-      { attributeKey: { key: "firstName" } },
-    ] as any);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { customAttr: "value" };

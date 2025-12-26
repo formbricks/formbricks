@@ -15,10 +15,11 @@ interface DataTableToolbarProps<T> {
   isExpanded: boolean;
   table: Table<T>;
   updateRowList: (rowIds: string[]) => void;
-  type: "response" | "contact";
+  type: "response" | "contact" | "attribute";
   deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
   isQuotasAllowed: boolean;
+  leftContent?: React.ReactNode;
 }
 
 export const DataTableToolbar = <T,>({
@@ -31,6 +32,7 @@ export const DataTableToolbar = <T,>({
   deleteAction,
   downloadRowsAction,
   isQuotasAllowed,
+  leftContent,
 }: DataTableToolbarProps<T>) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -47,7 +49,7 @@ export const DataTableToolbar = <T,>({
           isQuotasAllowed={isQuotasAllowed}
         />
       ) : (
-        <div></div>
+        <div>{leftContent}</div>
       )}
       <div className="flex space-x-2">
         {type === "contact" ? (

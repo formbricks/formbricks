@@ -132,9 +132,7 @@ describe("updateContactAttributeKey", () => {
     if (!result.ok) {
       expect(result.error).toStrictEqual({
         type: "conflict",
-        details: [
-          { field: "contactAttributeKey", issue: 'Contact attribute key with "email" already exists' },
-        ],
+        details: [{ field: "contactAttributeKey", issue: "Contact attribute key update conflict" }],
       });
     }
   });
