@@ -126,30 +126,35 @@ export const EditContactAttributesModal = ({
   }));
 
   const onSubmit = async (data: TEditContactAttributesForm) => {
-    const attributes: TContactAttributes = {};
-    data.attributes.forEach(({ key, value }) => {
-      attributes[key] = value;
-    });
+    try {
+      const attributes: TContactAttributes = {};
+      data.attributes.forEach(({ key, value }) => {
+        attributes[key] = value;
+      });
 
-    const result = await updateContactAttributesAction({
-      contactId,
-      attributes,
-    });
+      const result = await updateContactAttributesAction({
+        contactId,
+        attributes,
+      });
 
-    if (result?.data) {
-      toast.success(t("environments.contacts.edit_attributes_success"));
+      if (result?.data) {
+        toast.success(t("environments.contacts.edit_attributes_success"));
 
-      if (result.data.messages && result.data.messages.length > 0) {
-        result.data.messages.forEach((message) => {
-          toast.error(message, { duration: 5000 });
-        });
+        if (result.data.messages && result.data.messages.length > 0) {
+          result.data.messages.forEach((message) => {
+            toast.error(message, { duration: 5000 });
+          });
+        }
+        router.refresh();
+
+        setOpen(false);
+      } else {
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage);
       }
-      router.refresh();
-
-      setOpen(false);
-    } else {
-      const errorMessage = getFormattedErrorMessage(result);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error("common.something_went_wrong");
+      console.error(error);
     }
   };
 
