@@ -26,22 +26,22 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation environmentId={params.environmentId} activeId="general" />
       </PageHeader>
       <SettingsCard
-        title={t("common.project_name")}
-        description={t("environments.project.general.project_name_settings_description")}>
+        title={t("common.workspace_name")}
+        description={t("environments.workspace.general.workspace_name_settings_description")}>
         <EditProjectNameForm project={project} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
-        title={t("environments.project.general.recontact_waiting_time")}
-        description={t("environments.project.general.recontact_waiting_time_settings_description")}>
+        title={t("environments.workspace.general.recontact_waiting_time")}
+        description={t("environments.workspace.general.recontact_waiting_time_settings_description")}>
         <EditWaitingTimeForm project={project} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
-        title={t("environments.project.general.delete_project")}
-        description={t("environments.project.general.delete_project_settings_description")}>
+        title={t("environments.workspace.general.delete_workspace")}
+        description={t("environments.workspace.general.delete_workspace_settings_description")}>
         <DeleteProject
           environmentId={params.environmentId}
           currentProject={project}
@@ -50,7 +50,7 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
         />
       </SettingsCard>
       <div className="space-y-2">
-        <IdBadge id={project.id} label={t("common.project_id")} variant="column" />
+        <IdBadge id={project.id} label={t("common.workspace_id")} variant="column" />
         {!IS_FORMBRICKS_CLOUD && !IS_DEVELOPMENT && (
           <IdBadge id={packageJson.version} label={t("common.formbricks_version")} variant="column" />
         )}

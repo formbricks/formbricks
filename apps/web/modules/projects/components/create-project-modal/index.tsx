@@ -123,8 +123,8 @@ export const CreateProjectModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent unconstrained={true}>
         <DialogHeader>
-          <DialogTitle>{t("common.create_project")}</DialogTitle>
-          <DialogDescription>{t("common.project_creation_description")}</DialogDescription>
+          <DialogTitle>{t("common.create_workspace")}</DialogTitle>
+          <DialogDescription>{t("common.workspace_creation_description")}</DialogDescription>
         </DialogHeader>
 
         <FormProvider {...form}>
@@ -135,9 +135,9 @@ export const CreateProjectModal = ({
                 name="name"
                 render={({ field, fieldState: { error } }) => (
                   <FormItem>
-                    <FormLabel>{t("common.project_name")}</FormLabel>
+                    <FormLabel>{t("common.workspace_name")}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder={t("common.project_name_placeholder")} autoFocus />
+                      <Input {...field} placeholder={t("common.workspace_name_placeholder")} autoFocus />
                     </FormControl>
                     {error?.message && <FormError className="text-left">{error.message}</FormError>}
                   </FormItem>
@@ -171,7 +171,7 @@ export const CreateProjectModal = ({
                 {t("common.cancel")}
               </Button>
               <Button type="submit" loading={isSubmitting}>
-                {t("common.create_project")}
+                {t("common.create_workspace")}
               </Button>
             </DialogFooter>
           </form>

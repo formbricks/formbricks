@@ -94,7 +94,7 @@ export const ViewPermissionModal = ({
           <form onSubmit={handleSubmit(updateApiKey)}>
             <div className="w-full space-y-6">
               <div className="space-y-2">
-                <Label>{t("environments.project.api_keys.api_key_label")}</Label>
+                <Label>{t("environments.workspace.api_keys.api_key_label")}</Label>
                 <Input
                   placeholder="e.g. GitHub, PostHog, Slack"
                   data-testid="api-key-label"
@@ -102,10 +102,10 @@ export const ViewPermissionModal = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label>{t("environments.project.api_keys.permissions")}</Label>
+                <Label>{t("environments.workspace.api_keys.permissions")}</Label>
                 {apiKey.apiKeyEnvironments?.length === 0 && (
                   <div className="text-center text-sm">
-                    {t("environments.project.api_keys.no_env_permissions_found")}
+                    {t("environments.workspace.api_keys.no_env_permissions_found")}
                   </div>
                 )}
                 <div className="space-y-2">
@@ -168,7 +168,7 @@ export const ViewPermissionModal = ({
                 </div>
               </div>
               <div className="space-y-4">
-                <Label>{t("environments.project.api_keys.organization_access")}</Label>
+                <Label>{t("environments.workspace.api_keys.organization_access")}</Label>
                 {Object.keys(organizationAccess).map((key) => (
                   <div key={key} className="mb-2 flex items-center gap-6">
                     <div className="flex items-center gap-2">

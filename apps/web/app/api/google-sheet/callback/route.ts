@@ -64,7 +64,7 @@ export const GET = async (req: Request) => {
   const result = await createOrUpdateIntegration(environmentId, googleSheetIntegration);
   if (result) {
     return Response.redirect(
-      `${WEBAPP_URL}/environments/${environmentId}/project/integrations/google-sheets`
+      `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/google-sheets`
     );
   }
 

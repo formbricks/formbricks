@@ -83,14 +83,14 @@ export const MultiLangWrapper = ({
         <>
           {usedLanguageCode !== "default" && value && typeof value["default"] !== "undefined" && (
             <div className="mt-1 text-xs text-slate-500">
-              <strong>{t("environments.project.languages.translate")}:</strong>{" "}
+              <strong>{t("environments.workspace.languages.translate")}:</strong>{" "}
               {getTextContent(recallToHeadline(value, localSurvey, false, "default")["default"] ?? "")}
             </div>
           )}
 
           {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (
             <div className="mt-1 text-xs text-red-400">
-              {t("environments.project.languages.incomplete_translations")}
+              {t("environments.workspace.languages.incomplete_translations")}
             </div>
           )}
         </>

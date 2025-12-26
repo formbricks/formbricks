@@ -87,14 +87,14 @@ export const GET = withV1ApiWrapper({
       if (result) {
         return {
           response: Response.redirect(
-            `${WEBAPP_URL}/environments/${environmentId}/project/integrations/notion`
+            `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/notion`
           ),
         };
       }
     } else if (error) {
       return {
         response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/project/integrations/notion?error=${error}`
+          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/notion?error=${error}`
         ),
       };
     }

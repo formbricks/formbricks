@@ -20,7 +20,7 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation environmentId={params.environmentId} activeId="teams" />
       </PageHeader>
       <AccessView environmentId={params.environmentId} teams={teams} />

@@ -49,7 +49,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
     const deleteTagResponse = await deleteTagAction({ tagId });
     if (deleteTagResponse?.data) {
       if (deleteTagResponse.data.ok) {
-        toast.success(t("environments.project.tags.tag_deleted"));
+        toast.success(t("environments.workspace.tags.tag_deleted"));
         updateTagsCount();
         router.refresh();
       } else {
@@ -67,9 +67,9 @@ export const SingleTag: React.FC<SingleTagProps> = ({
     if (result?.data) {
       if (result.data.ok) {
         setUpdateTagError(false);
-        toast.success(t("environments.project.tags.tag_updated"));
+        toast.success(t("environments.workspace.tags.tag_updated"));
       } else if (result.data?.error?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
-        toast.error(t("environments.project.tags.tag_already_exists"), {
+        toast.error(t("environments.workspace.tags.tag_already_exists"), {
           duration: 2000,
           icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
         });
@@ -92,7 +92,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
 
     if (mergeTagsResponse?.data) {
       if (mergeTagsResponse.data.ok) {
-        toast.success(t("environments.project.tags.tags_merged"));
+        toast.success(t("environments.workspace.tags.tags_merged"));
         updateTagsCount();
         router.refresh();
       } else {
@@ -125,12 +125,12 @@ export const SingleTag: React.FC<SingleTagProps> = ({
           </div>
         </div>
 
-        <div className="col-span-1 my-auto whitespace-nowrap text-center text-sm text-slate-500">
+        <div className="col-span-1 my-auto text-center text-sm whitespace-nowrap text-slate-500">
           <div className="text-slate-900">{tagCountLoading ? <LoadingSpinner /> : <p>{tagCount}</p>}</div>
         </div>
 
         {!isReadOnly && (
-          <div className="col-span-1 my-auto flex items-center justify-center gap-2 whitespace-nowrap text-center text-sm text-slate-500">
+          <div className="col-span-1 my-auto flex items-center justify-center gap-2 text-center text-sm whitespace-nowrap text-slate-500">
             <div>
               {isMergingTags ? (
                 <div className="w-24">
@@ -152,7 +152,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
               <Button
                 variant="destructive"
                 size="sm"
-                className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
+                className="font-medium text-slate-50 focus:border-transparent focus:ring-0 focus:shadow-transparent focus:ring-transparent focus:outline-transparent"
                 onClick={() => setOpenDeleteTagDialog(true)}>
                 {t("common.delete")}
               </Button>
@@ -160,7 +160,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                 open={openDeleteTagDialog}
                 setOpen={setOpenDeleteTagDialog}
                 deleteWhat={tagName}
-                text={t("environments.project.tags.delete_tag_confirmation")}
+                text={t("environments.workspace.tags.delete_tag_confirmation")}
                 onDelete={confirmDeleteTag}
               />
             </div>

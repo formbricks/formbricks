@@ -35,30 +35,30 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation environmentId={environmentId} activeId="app-connection" />
       </PageHeader>
       <div className="space-y-4">
-        <EnvironmentNotice environmentId={environmentId} subPageUrl="/project/app-connection" />
+        <EnvironmentNotice environmentId={environmentId} subPageUrl="/workspace/app-connection" />
         <SettingsCard
-          title={t("environments.project.app-connection.sdk_connection_details")}
-          description={t("environments.project.app-connection.sdk_connection_details_description")}>
+          title={t("environments.workspace.app-connection.sdk_connection_details")}
+          description={t("environments.workspace.app-connection.sdk_connection_details_description")}>
           <div className="space-y-3">
-            <IdBadge id={environmentId} label={t("environments.project.app-connection.environment_id")} />
-            <IdBadge id={WEBAPP_URL} label={t("environments.project.app-connection.webapp_url")} />
+            <IdBadge id={environmentId} label={t("environments.workspace.app-connection.environment_id")} />
+            <IdBadge id={WEBAPP_URL} label={t("environments.workspace.app-connection.webapp_url")} />
           </div>
         </SettingsCard>
         <SettingsCard
-          title={t("environments.project.app-connection.app_connection")}
-          description={t("environments.project.app-connection.app_connection_description")}>
+          title={t("environments.workspace.app-connection.app_connection")}
+          description={t("environments.workspace.app-connection.app_connection_description")}>
           {environment && (
             <div className="space-y-4">
               <WidgetStatusIndicator environment={environment} />
               {!environment.appSetupCompleted ? (
                 <Alert variant="info">
-                  <AlertTitle>{t("environments.project.app-connection.setup_alert_title")}</AlertTitle>
+                  <AlertTitle>{t("environments.workspace.app-connection.setup_alert_title")}</AlertTitle>
                   <AlertDescription>
-                    {t("environments.project.app-connection.setup_alert_description")}
+                    {t("environments.workspace.app-connection.setup_alert_description")}
                   </AlertDescription>
                   <AlertButton asChild>
                     <Link
@@ -71,9 +71,11 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
                 </Alert>
               ) : (
                 <Alert variant="warning">
-                  <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
+                  <AlertTitle>
+                    {t("environments.workspace.app-connection.cache_update_delay_title")}
+                  </AlertTitle>
                   <AlertDescription>
-                    {t("environments.project.app-connection.cache_update_delay_description")}
+                    {t("environments.workspace.app-connection.cache_update_delay_description")}
                   </AlertDescription>
                 </Alert>
               )}

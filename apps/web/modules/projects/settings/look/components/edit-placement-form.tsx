@@ -66,7 +66,7 @@ export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) =
       },
     });
     if (updatedProjectResponse?.data) {
-      toast.success(t("environments.project.look.placement_updated_successfully"));
+      toast.success(t("environments.workspace.look.placement_updated_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
       toast.error(errorMessage);
@@ -134,7 +134,7 @@ export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) =
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-semibold">
-                        {t("environments.project.look.centered_modal_overlay_color")}
+                        {t("environments.workspace.look.centered_modal_overlay_color")}
                       </FormLabel>
                       <FormControl>
                         <RadioGroup

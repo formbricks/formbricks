@@ -24,13 +24,13 @@ export const ProjectLookSettingsLoading = () => {
   ];
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation activeId="look" loading />
       </PageHeader>
       <SettingsCard
-        title={t("environments.project.look.theme")}
+        title={t("environments.workspace.look.theme")}
         className="max-w-7xl"
-        description={t("environments.project.look.theme_settings_description")}>
+        description={t("environments.workspace.look.theme_settings_description")}>
         <div className="flex animate-pulse">
           <div className="w-1/2">
             <div className="flex flex-col gap-4 pr-6">
@@ -39,10 +39,10 @@ export const ProjectLookSettingsLoading = () => {
                   <Switch />
                   <div className="flex flex-col">
                     <h3 className="text-sm font-semibold text-slate-700">
-                      {t("environments.project.look.enable_custom_styling")}
+                      {t("environments.workspace.look.enable_custom_styling")}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      {t("environments.project.look.enable_custom_styling_description")}
+                      {t("environments.workspace.look.enable_custom_styling_description")}
                     </p>
                   </div>
                 </div>
@@ -149,7 +149,7 @@ export const ProjectLookSettingsLoading = () => {
               <div className={cn("absolute bottom-3 h-16 w-16 rounded bg-slate-700 sm:right-3")}></div>
             </div>
           </div>
-          <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
+          <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed bg-slate-200 select-none">
             {t("common.loading")}
           </Button>
         </div>
@@ -159,9 +159,9 @@ export const ProjectLookSettingsLoading = () => {
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">
         <div className="w-full items-center">
-          <div className="pointer-events-none flex cursor-not-allowed select-none items-center space-x-2">
+          <div className="pointer-events-none flex cursor-not-allowed items-center space-x-2 select-none">
             <Switch id="signature" checked={false} />
-            <Label htmlFor="signature">{t("environments.project.look.show_powered_by_formbricks")}</Label>
+            <Label htmlFor="signature">{t("environments.workspace.look.show_powered_by_formbricks")}</Label>
           </div>
         </div>
       </SettingsCard>

@@ -58,7 +58,7 @@ export const SurveyEditorPage = async (props) => {
     ]);
 
   if (!projectWithTeamIds) {
-    throw new Error(t("common.project_not_found"));
+    throw new Error(t("common.workspace_not_found"));
   }
 
   const organizationBilling = await getOrganizationBilling(projectWithTeamIds.organizationId);

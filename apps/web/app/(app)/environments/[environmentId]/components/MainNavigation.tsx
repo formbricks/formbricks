@@ -113,7 +113,7 @@ export const MainNavigation = ({
       },
       {
         name: t("common.configuration"),
-        href: `/environments/${environment.id}/project/general`,
+        href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
         isActive: pathname?.includes("/project"),
       },
@@ -164,7 +164,7 @@ export const MainNavigation = ({
         <aside
           className={cn(
             "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
-            !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
+            isCollapsed ? "w-sidebar-expanded" : "w-sidebar-collapsed"
           )}>
           <div>
             {/* Logo and Toggle */}

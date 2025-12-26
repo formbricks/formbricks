@@ -50,7 +50,7 @@ export const DeleteDialog = ({
             <div>
               <DialogTitle>{`${t("common.delete")} ${deleteWhat}`}</DialogTitle>
               <DialogDescription>
-                {t("environments.project.general.this_action_cannot_be_undone")}
+                {t("environments.workspace.general.this_action_cannot_be_undone")}
               </DialogDescription>
             </div>
           </div>

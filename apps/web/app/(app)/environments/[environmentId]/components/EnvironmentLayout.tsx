@@ -43,7 +43,7 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
 
   // Validate that project permission exists for members
   if (isMember && !projectPermission) {
-    throw new Error(t("common.project_permission_not_found"));
+    throw new Error(t("common.workspace_permission_not_found"));
   }
 
   return (

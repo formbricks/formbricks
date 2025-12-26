@@ -91,6 +91,22 @@ const nextConfig = {
         destination: "/api/v1/management/me",
         permanent: true,
       },
+      // Redirect old project URLs to new workspace URLs
+      {
+        source: "/environments/:environmentId/project/:path*",
+        destination: "/environments/:environmentId/workspace/:path*",
+        permanent: true,
+      },
+      {
+        source: "/organizations/:organizationId/projects/new/:path*",
+        destination: "/organizations/:organizationId/workspaces/new/:path*",
+        permanent: true,
+      },
+      {
+        source: "/projects/:projectId",
+        destination: "/workspaces/:projectId",
+        permanent: true,
+      },
     ];
   },
   webpack: (config) => {

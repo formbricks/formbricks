@@ -138,7 +138,7 @@ export const PricingTable = ({
       <div className="flex flex-col gap-8">
         <div className="flex flex-col">
           <div className="flex w-full">
-            <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
+            <h2 className="mr-2 mb-3 inline-flex w-full text-2xl font-bold text-slate-700">
               {t("environments.settings.billing.current_plan")}:{" "}
               <span className="capitalize">{organization.billing.plan}</span>
               {cancellingOn && (
@@ -203,7 +203,7 @@ export const PricingTable = ({
             <div
               className={cn(
                 "relative mx-8 mb-8 flex flex-col gap-4",
-                peopleUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
+                peopleUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">
                 {t("environments.settings.billing.monthly_identified_users")}
@@ -226,16 +226,16 @@ export const PricingTable = ({
             <div
               className={cn(
                 "relative mx-8 flex flex-col gap-4 pb-6",
-                projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
+                projectsUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
               )}>
-              <p className="text-md font-semibold text-slate-700">{t("common.projects")}</p>
+              <p className="text-md font-semibold text-slate-700">{t("common.workspaces")}</p>
               {organization.billing.limits.projects && (
                 <BillingSlider
                   className="slider-class mb-8"
                   value={projectCount}
                   max={organization.billing.limits.projects * 1.5}
                   freeTierLimit={organization.billing.limits.projects}
-                  metric={t("common.projects")}
+                  metric={t("common.workspaces")}
                 />
               )}
 
@@ -243,7 +243,7 @@ export const PricingTable = ({
                 <Badge
                   type="success"
                   size="normal"
-                  text={t("environments.settings.billing.unlimited_projects")}
+                  text={t("environments.settings.billing.unlimited_workspaces")}
                 />
               )}
             </div>
@@ -264,7 +264,7 @@ export const PricingTable = ({
                 </button>
                 <button
                   aria-pressed={planPeriod === "yearly"}
-                  className={`flex-1 items-center whitespace-nowrap rounded-md py-0.5 pl-4 pr-2 text-center ${
+                  className={`flex-1 items-center rounded-md py-0.5 pr-2 pl-4 text-center whitespace-nowrap ${
                     planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
                   onClick={() => handleMonthlyToggle("yearly")}>
@@ -276,7 +276,7 @@ export const PricingTable = ({
               </div>
               <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-3">
                 <div
-                  className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
+                  className="hidden lg:absolute lg:inset-x-px lg:top-4 lg:bottom-0 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
                   aria-hidden="true"
                 />
                 {getCloudPricingData(t).plans.map((plan) => (

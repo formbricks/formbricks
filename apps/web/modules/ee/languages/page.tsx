@@ -25,12 +25,12 @@ export const LanguagesPage = async (props: { params: Promise<{ environmentId: st
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation environmentId={params.environmentId} activeId="languages" />
       </PageHeader>
       <SettingsCard
-        title={t("environments.project.languages.multi_language_surveys")}
-        description={t("environments.project.languages.multi_language_surveys_description")}>
+        title={t("environments.workspace.languages.multi_language_surveys")}
+        description={t("environments.workspace.languages.multi_language_surveys_description")}>
         <EditLanguage
           project={project}
           locale={user.locale}
