@@ -300,3 +300,55 @@ export const ZContactResponse = z.object({
 });
 
 export type TContactResponse = z.infer<typeof ZContactResponse>;
+
+// Schema for editing contact attributes in a form
+export const ZAttributeRow = z.object({
+  key: z.string().min(1, "Key is required"),
+  value: z.string(),
+});
+
+export const ZEditContactAttributesForm = z.object({
+  attributes: z
+    .array(ZAttributeRow)
+    .min(1, "At least one attribute is required")
+    .superRefine((attributes, ctx) => {
+      // Check for duplicate keys and mark each duplicate row
+      const keyOccurrences = new Map<string, number[]>();
+      attributes.forEach((attr, index) => {
+        if (attr.key) {
+          const indices = keyOccurrences.get(attr.key) || [];
+          indices.push(index);
+          keyOccurrences.set(attr.key, indices);
+        }
+      });
+
+      // Mark all duplicate rows with errors
+      keyOccurrences.forEach((indices, key) => {
+        if (indices.length > 1) {
+          indices.forEach((index) => {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Duplicate key: ${key}`,
+              path: [index, "key"],
+            });
+          });
+        }
+      });
+
+      // Validate email format if key is "email"
+      attributes.forEach((attr, index) => {
+        if (attr.key === "email" && attr.value && attr.value.trim() !== "") {
+          const emailResult = z.string().email().safeParse(attr.value);
+          if (!emailResult.success) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Invalid email format",
+              path: [index, "value"],
+            });
+          }
+        }
+      });
+    }),
+});
+
+export type TEditContactAttributesForm = z.infer<typeof ZEditContactAttributesForm>;

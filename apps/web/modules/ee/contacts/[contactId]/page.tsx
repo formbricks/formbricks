@@ -2,6 +2,7 @@ import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { ContactControlBar } from "@/modules/ee/contacts/[contactId]/components/contact-control-bar";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { getPublishedLinkSurveys } from "@/modules/ee/contacts/lib/surveys";
@@ -21,12 +22,14 @@ export const SingleContactPage = async (props: {
 
   const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
 
-  const [environmentTags, contact, contactAttributes, publishedLinkSurveys] = await Promise.all([
-    getTagsByEnvironmentId(params.environmentId),
-    getContact(params.contactId),
-    getContactAttributes(params.contactId),
-    getPublishedLinkSurveys(params.environmentId),
-  ]);
+  const [environmentTags, contact, contactAttributes, publishedLinkSurveys, contactAttributeKeys] =
+    await Promise.all([
+      getTagsByEnvironmentId(params.environmentId),
+      getContact(params.contactId),
+      getContactAttributes(params.contactId),
+      getPublishedLinkSurveys(params.environmentId),
+      getContactAttributeKeys(params.environmentId),
+    ]);
 
   if (!contact) {
     throw new Error(t("environments.contacts.contact_not_found"));
@@ -42,6 +45,8 @@ export const SingleContactPage = async (props: {
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
         publishedLinkSurveys={publishedLinkSurveys}
+        currentAttributes={contactAttributes}
+        attributeKeys={contactAttributeKeys}
       />
     );
   };
@@ -50,7 +55,7 @@ export const SingleContactPage = async (props: {
     <PageContentWrapper>
       <GoBackButton url={`/environments/${params.environmentId}/contacts`} />
       <PageHeader pageTitle={getContactIdentifier(contactAttributes)} cta={getContactControlBar()} />
-      <section className="pb-24 pt-6">
+      <section className="pt-6 pb-24">
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
           <ResponseSection
