@@ -10,16 +10,16 @@ export const TagsLoading = () => {
   const { t } = useTranslation();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation activeId="tags" />
       </PageHeader>
       <SettingsCard
-        title={t("environments.project.tags.manage_tags")}
-        description={t("environments.project.tags.manage_tags_description")}>
+        title={t("environments.workspace.tags.manage_tags")}
+        description={t("environments.workspace.tags.manage_tags_description")}>
         <div className="w-full">
           <div className="grid grid-cols-4 content-center rounded-lg bg-white text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-2">{t("environments.project.tags.tag")}</div>
-            <div className="col-span-1 text-center">{t("environments.project.tags.count")}</div>
+            <div className="col-span-2">{t("environments.workspace.tags.tag")}</div>
+            <div className="col-span-1 text-center">{t("environments.workspace.tags.count")}</div>
             <div className="col-span-1 flex justify-center text-center">{t("common.actions")}</div>
           </div>
           <div className="w-full">

@@ -10,7 +10,7 @@ const LoadingCard = () => {
   return (
     <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 shadow-sm">
       <div className="grid content-center border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
-        <h3 className="h-6 w-full max-w-56 animate-pulse rounded-lg bg-slate-100 text-lg font-medium leading-6">
+        <h3 className="h-6 w-full max-w-56 animate-pulse rounded-lg bg-slate-100 text-lg leading-6 font-medium">
           <span className="sr-only">{t("common.loading")}</span>
         </h3>
         <p className="mt-3 h-4 w-full max-w-80 animate-pulse rounded-lg bg-slate-100 text-sm text-slate-500">
@@ -23,7 +23,7 @@ const LoadingCard = () => {
             <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
               <div className="col-span-4 hidden sm:col-span-5 sm:block">
-                {t("environments.project.api_keys.api_key")}
+                {t("environments.workspace.api_keys.api_key")}
               </div>
               <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
             </div>

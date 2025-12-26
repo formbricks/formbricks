@@ -91,7 +91,7 @@ export const GET = withV1ApiWrapper({
       await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
       return {
         response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/project/integrations/airtable`
+          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/airtable`
         ),
       };
     } catch (error) {

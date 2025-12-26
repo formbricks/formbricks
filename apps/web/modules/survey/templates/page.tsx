@@ -21,7 +21,7 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   const project = await getProjectWithTeamIdsByEnvironmentId(environmentId);
 
   if (!project) {
-    throw new Error(t("common.project_not_found"));
+    throw new Error(t("common.workspace_not_found"));
   }
 
   if (isReadOnly) {

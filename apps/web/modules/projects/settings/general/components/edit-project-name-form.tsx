@@ -62,7 +62,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
       });
 
       if (updatedProjectResponse?.data) {
-        toast.success(t("environments.project.general.project_name_updated_successfully"));
+        toast.success(t("environments.workspace.general.workspace_name_updated_successfully"));
         form.resetField("name", { defaultValue: updatedProjectResponse.data.name });
         router.refresh();
       } else {
@@ -71,7 +71,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
       }
     } catch (err) {
       console.error(err);
-      toast.error(t("environments.project.general.error_saving_project_information"));
+      toast.error(t("environments.workspace.general.error_saving_workspace_information"));
     }
   };
 
@@ -85,14 +85,14 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
             render={({ field }) => (
               <FormItem>
                 <FormLabel htmlFor="name">
-                  {t("environments.project.general.whats_your_project_called")}
+                  {t("environments.workspace.general.whats_your_workspace_called")}
                 </FormLabel>
                 <FormControl>
                   <Input
                     type="text"
                     id="name"
                     {...field}
-                    placeholder={t("common.project_name")}
+                    placeholder={t("common.workspace_name")}
                     autoComplete="off"
                     required
                     isInvalid={!!nameError}

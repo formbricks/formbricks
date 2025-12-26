@@ -26,16 +26,16 @@ export const ClientLogo = ({
 
   return (
     <div
-      className={cn(previewSurvey ? "" : "left-3 top-3 md:left-7 md:top-7", "group absolute z-0 rounded-lg")}
+      className={cn(previewSurvey ? "" : "top-3 left-3 md:top-7 md:left-7", "group absolute z-0 rounded-lg")}
       style={{ backgroundColor: logoToUse?.bgColor }}>
       {previewSurvey && environmentId && (
         <Link
-          href={`/environments/${environmentId}/project/look`}
+          href={`/environments/${environmentId}/workspace/look`}
           className="group/link absolute h-full w-full hover:cursor-pointer"
           target="_blank">
           <ArrowUpRight
             size={24}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-md bg-white/80 p-0.5 text-slate-700 opacity-0 transition-all duration-200 ease-in-out group-hover/link:opacity-100"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-md bg-white/80 p-0.5 text-slate-700 opacity-0 transition-all duration-200 ease-in-out group-hover/link:opacity-100"
           />
         </Link>
       )}
@@ -52,13 +52,13 @@ export const ClientLogo = ({
         />
       ) : (
         <Link
-          href={`/environments/${environmentId}/project/look`}
+          href={`/environments/${environmentId}/workspace/look`}
           onClick={(e) => {
             if (!environmentId) {
               e.preventDefault();
             }
           }}
-          className="whitespace-nowrap rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs text-slate-900 opacity-50 backdrop-blur-sm hover:cursor-pointer hover:border-slate-600"
+          className="rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs whitespace-nowrap text-slate-900 opacity-50 backdrop-blur-sm hover:cursor-pointer hover:border-slate-600"
           target="_blank">
           {t("common.add_logo")}
         </Link>
