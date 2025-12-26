@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributes } from "@formbricks/types/contact-attribute";
@@ -185,9 +184,6 @@ export const updateContactAttributesAction = authenticatedActionClient
           contactId: parsedInput.contactId,
           attributes: result.updatedAttributes,
         };
-
-        // Revalidate the contacts page to keep SSR data consistent
-        revalidatePath(`/environments/${contact.environmentId}/contacts`);
 
         return result;
       }

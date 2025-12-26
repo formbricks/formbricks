@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon, TrashIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -88,7 +89,7 @@ export const EditContactAttributesModal = ({
   attributeKeys,
 }: EditContactAttributesModalProps) => {
   const { t } = useTranslation();
-
+  const router = useRouter();
   // Convert current attributes to form format
   const defaultValues: TEditContactAttributesForm = {
     attributes: Object.entries(currentAttributes).map(([key, value]) => ({
@@ -129,7 +130,6 @@ export const EditContactAttributesModal = ({
     data.attributes.forEach(({ key, value }) => {
       attributes[key] = value;
     });
-    console.log({ data });
 
     const result = await updateContactAttributesAction({
       contactId,
@@ -144,6 +144,7 @@ export const EditContactAttributesModal = ({
           toast.error(message, { duration: 5000 });
         });
       }
+      router.refresh();
 
       setOpen(false);
     } else {
