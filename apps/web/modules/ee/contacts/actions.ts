@@ -137,6 +137,7 @@ const ZUpdateContactAttributesAction = z.object({
   attributes: ZContactAttributes,
 });
 
+export type TUpdateContactAttributesAction = z.infer<typeof ZUpdateContactAttributesAction>;
 export const updateContactAttributesAction = authenticatedActionClient
   .schema(ZUpdateContactAttributesAction)
   .action(
@@ -148,7 +149,7 @@ export const updateContactAttributesAction = authenticatedActionClient
         parsedInput,
       }: {
         ctx: AuthenticatedActionClientCtx;
-        parsedInput: Record<string, any>;
+        parsedInput: TUpdateContactAttributesAction;
       }) => {
         const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
         const projectId = await getProjectIdFromContactId(parsedInput.contactId);

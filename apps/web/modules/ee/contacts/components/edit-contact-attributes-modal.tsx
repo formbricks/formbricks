@@ -3,11 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -32,46 +31,7 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { updateContactAttributesAction } from "../actions";
-
-const ZAttributeRow = z.object({
-  key: z.string().min(1, "Key is required"),
-  value: z.string(),
-});
-
-const ZEditContactAttributesForm = z.object({
-  attributes: z
-    .array(ZAttributeRow)
-    .min(1, "At least one attribute is required")
-    .superRefine((attributes, ctx) => {
-      // Check for duplicate keys
-      const keys = attributes.map((attr) => attr.key);
-      const duplicateKeys = keys.filter((key, index) => keys.indexOf(key) !== index);
-      if (duplicateKeys.length > 0) {
-        const uniqueDuplicates = Array.from(new Set(duplicateKeys));
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Duplicate keys found: ${uniqueDuplicates.join(", ")}`,
-          path: [],
-        });
-      }
-
-      // Validate email format if key is "email"
-      attributes.forEach((attr, index) => {
-        if (attr.key === "email" && attr.value && attr.value.trim() !== "") {
-          const emailResult = z.string().email().safeParse(attr.value);
-          if (!emailResult.success) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Invalid email format",
-              path: [index, "value"],
-            });
-          }
-        }
-      });
-    }),
-});
-
-type TEditContactAttributesForm = z.infer<typeof ZEditContactAttributesForm>;
+import { TEditContactAttributesForm, ZEditContactAttributesForm } from "../types/contact";
 
 interface EditContactAttributesModalProps {
   open: boolean;
@@ -91,28 +51,20 @@ export const EditContactAttributesModal = ({
   const { t } = useTranslation();
   const router = useRouter();
   // Convert current attributes to form format
-  const defaultValues: TEditContactAttributesForm = {
-    attributes: Object.entries(currentAttributes).map(([key, value]) => ({
-      key,
-      value: value ?? "",
-    })),
-  };
+  const defaultValues: TEditContactAttributesForm = useMemo(
+    () => ({
+      attributes: Object.entries(currentAttributes).map(([key, value]) => ({
+        key,
+        value: value ?? "",
+      })),
+    }),
+    [currentAttributes]
+  );
 
   const form = useForm<TEditContactAttributesForm>({
     resolver: zodResolver(ZEditContactAttributesForm),
     defaultValues,
   });
-
-  // Reset form when contactId or currentAttributes change
-  useEffect(() => {
-    const newDefaultValues: TEditContactAttributesForm = {
-      attributes: Object.entries(currentAttributes).map(([key, value]) => ({
-        key,
-        value: value ?? "",
-      })),
-    };
-    form.reset(newDefaultValues);
-  }, [contactId, currentAttributes, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -125,12 +77,44 @@ export const EditContactAttributesModal = ({
     value: attrKey.key,
   }));
 
+  // Scroll to first error on validation failure
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const errors = form.formState.errors;
+    if (
+      errors.attributes &&
+      Array.isArray(errors.attributes) &&
+      form.formState.isSubmitted &&
+      formRef.current
+    ) {
+      // Find the first error field
+      const firstErrorIndex = errors.attributes.findIndex((error) => error?.key || error?.value);
+
+      if (firstErrorIndex !== -1) {
+        const errorFieldId = `attribute-key-${firstErrorIndex}`;
+        const errorElement = document.getElementById(errorFieldId);
+        if (errorElement) {
+          setTimeout(() => {
+            errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Try to focus the input inside the combobox if it exists
+            const inputElement = errorElement.querySelector("input") as HTMLInputElement;
+            if (inputElement) {
+              inputElement.focus();
+            } else {
+              errorElement.focus();
+            }
+          }, 100);
+        }
+      }
+    }
+  }, [form.formState.errors, form.formState.isSubmitted]);
+
   const onSubmit = async (data: TEditContactAttributesForm) => {
     try {
-      const attributes: TContactAttributes = {};
-      data.attributes.forEach(({ key, value }) => {
-        attributes[key] = value;
-      });
+      const attributes = data.attributes.reduce((acc, { key, value }) => {
+        acc[key] = value;
+        return acc;
+      }, {});
 
       const result = await updateContactAttributesAction({
         contactId,
@@ -182,7 +166,7 @@ export const EditContactAttributesModal = ({
 
         <DialogBody>
           <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-4">
                 {fields.map((field, index) => (
                   <div key={field.id} className="flex gap-2">

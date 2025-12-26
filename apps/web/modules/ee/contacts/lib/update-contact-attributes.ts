@@ -1,9 +1,7 @@
 import "server-only";
-import { ZId } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { validateInputs } from "@/lib/utils/validate";
 import { updateAttributes } from "./attributes";
 import { getContactAttributeKeys } from "./contact-attribute-keys";
 import { getContactAttributes } from "./contact-attributes";
@@ -24,8 +22,6 @@ export const updateContactAttributes = async (
   contactId: string,
   attributes: TContactAttributes
 ): Promise<UpdateContactAttributesResult> => {
-  validateInputs([contactId, ZId]);
-
   // Load contact to get environmentId and current attributes
   const contact = await getContact(contactId);
   if (!contact) {
