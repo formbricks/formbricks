@@ -21,6 +21,7 @@ describe("updateContactAttributes", () => {
     const environmentId = "env123";
     const userId = "user123";
     const attributes = {
+      userId,
       firstName: "John",
       lastName: "Doe",
       email: "john@example.com",
@@ -37,9 +38,39 @@ describe("updateContactAttributes", () => {
     };
 
     const mockCurrentKeys = [
-      { id: "key1", key: "firstName", name: "First Name", environmentId },
-      { id: "key2", key: "lastName", name: "Last Name", environmentId },
-      { id: "key3", key: "email", name: "Email", environmentId },
+      {
+        id: "key1",
+        key: "firstName",
+        name: "First Name",
+        environmentId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "default" as const,
+        isUnique: false,
+        description: null,
+      },
+      {
+        id: "key2",
+        key: "lastName",
+        name: "Last Name",
+        environmentId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "default" as const,
+        isUnique: false,
+        description: null,
+      },
+      {
+        id: "key3",
+        key: "email",
+        name: "Email",
+        environmentId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "default" as const,
+        isUnique: false,
+        description: null,
+      },
     ];
 
     const mockUpdatedAttributes = {
@@ -84,10 +115,42 @@ describe("updateContactAttributes", () => {
       },
     };
 
-    const mockCurrentKeys = [{ id: "key1", key: "firstName", name: "First Name", environmentId }];
+    const mockCurrentKeys = [
+      {
+        id: "key1",
+        key: "firstName",
+        name: "First Name",
+        environmentId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "default" as const,
+        isUnique: false,
+        description: null,
+      },
+    ];
     const mockUpdatedKeys = [
-      { id: "key1", key: "firstName", name: "First Name", environmentId },
-      { id: "key2", key: "newCustomField", name: "newCustomField", environmentId },
+      {
+        id: "key1",
+        key: "firstName",
+        name: "First Name",
+        environmentId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "default" as const,
+        isUnique: false,
+        description: null,
+      },
+      {
+        id: "key2",
+        key: "newCustomField",
+        name: "newCustomField",
+        environmentId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "custom" as const,
+        isUnique: false,
+        description: null,
+      },
     ];
 
     const mockUpdatedAttributes = {
@@ -107,7 +170,17 @@ describe("updateContactAttributes", () => {
 
     expect(result.updatedAttributes).toEqual(mockUpdatedAttributes);
     expect(result.updatedAttributeKeys).toEqual([
-      { id: "key2", key: "newCustomField", name: "newCustomField", environmentId },
+      {
+        id: "key2",
+        key: "newCustomField",
+        name: "newCustomField",
+        environmentId,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: "custom",
+        isUnique: false,
+        description: null,
+      },
     ]);
   });
 
@@ -126,7 +199,19 @@ describe("updateContactAttributes", () => {
       },
     };
 
-    const mockCurrentKeys = [{ id: "key1", key: "firstName", name: "First Name", environmentId }];
+    const mockCurrentKeys = [
+      {
+        id: "key1",
+        key: "firstName",
+        name: "First Name",
+        environmentId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "default" as const,
+        isUnique: false,
+        description: null,
+      },
+    ];
     const mockUpdatedAttributes = {
       firstName: "John",
     };
@@ -163,7 +248,19 @@ describe("updateContactAttributes", () => {
       },
     };
 
-    const mockCurrentKeys = [{ id: "key1", key: "email", name: "Email", environmentId }];
+    const mockCurrentKeys = [
+      {
+        id: "key1",
+        key: "email",
+        name: "Email",
+        environmentId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: "default" as const,
+        isUnique: false,
+        description: null,
+      },
+    ];
     const mockUpdatedAttributes = {
       email: "existing@example.com",
     };
@@ -190,6 +287,8 @@ describe("updateContactAttributes", () => {
 
     vi.mocked(getContact).mockResolvedValue(null);
 
-    await expect(updateContactAttributes(contactId, attributes)).rejects.toThrow("Contact not found");
+    await expect(updateContactAttributes(contactId, attributes)).rejects.toThrow(
+      "contact with ID contact123 not found"
+    );
   });
 });
