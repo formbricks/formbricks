@@ -20,7 +20,7 @@ import { cn } from "@/modules/ui/lib/utils";
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   updateRowList: (rowId: string[]) => void;
-  type: "response" | "contact";
+  type: "response" | "contact" | "attribute";
   deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
   isQuotasAllowed: boolean;
@@ -108,18 +108,42 @@ export const SelectedRowSettings = <T,>({
 
   const quotasDialogText = isQuotasAllowed
     ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
-        value: selectedRowCount,
-      })
+      value: selectedRowCount,
+    })
     : t("environments.contacts.delete_contact_confirmation");
 
-  const deleteDialogText =
-    type === "response" ? t("environments.surveys.responses.delete_response_confirmation") : quotasDialogText;
+  let deleteDialogText: string;
+  if (type === "response") {
+    deleteDialogText = t("environments.surveys.responses.delete_response_confirmation");
+  } else if (type === "attribute") {
+    deleteDialogText = t("environments.contacts.delete_attribute_confirmation", { value: selectedRowCount });
+  } else {
+    deleteDialogText = quotasDialogText;
+  }
+
+  let selectedTypeLabel: string;
+  if (type === "response") {
+    selectedTypeLabel = t("common.responses");
+  } else if (type === "contact") {
+    selectedTypeLabel = t("common.contacts");
+  } else {
+    selectedTypeLabel = t("common.attributes");
+  }
+
+  let deleteWhatText: string;
+  if (type === "response") {
+    deleteWhatText = t("common.count_responses", { value: selectedRowCount });
+  } else if (type === "contact") {
+    deleteWhatText = t("common.count_contacts", { value: selectedRowCount });
+  } else {
+    deleteWhatText = t("common.count_attributes", { value: selectedRowCount });
+  }
 
   return (
     <>
       <div className="bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
         <div className="lowercase">
-          {`${selectedRowCount} ${type === "response" ? t("common.responses") : t("common.contacts")} ${t("common.selected")}`}
+          {`${selectedRowCount} ${selectedTypeLabel} ${t("common.selected")}`}
         </div>
         <Separator />
         <Button
@@ -176,11 +200,7 @@ export const SelectedRowSettings = <T,>({
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
-        deleteWhat={
-          type === "response"
-            ? t("common.count_responses", { value: selectedRowCount })
-            : t("common.count_contacts", { value: selectedRowCount })
-        }
+        deleteWhat={deleteWhatText}
         onDelete={handleDelete}
         isDeleting={isDeleting}
         text={deleteDialogText}>

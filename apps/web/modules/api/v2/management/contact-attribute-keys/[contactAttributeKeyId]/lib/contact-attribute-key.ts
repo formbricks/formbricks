@@ -35,11 +35,17 @@ export const updateContactAttributeKey = async (
   contactAttributeKeyInput: TContactAttributeKeyUpdateSchema
 ): Promise<Result<ContactAttributeKey, ApiErrorResponseV2>> => {
   try {
+    // Only allow updating name and description, not key
+    const updateData: Prisma.ContactAttributeKeyUpdateInput = {
+      name: contactAttributeKeyInput.name,
+      description: contactAttributeKeyInput.description,
+    };
+
     const updatedKey = await prisma.contactAttributeKey.update({
       where: {
         id: contactAttributeKeyId,
       },
-      data: contactAttributeKeyInput,
+      data: updateData,
     });
 
     await prisma.contactAttribute.findMany({
@@ -70,7 +76,7 @@ export const updateContactAttributeKey = async (
           details: [
             {
               field: "contactAttributeKey",
-              issue: `Contact attribute key with "${contactAttributeKeyInput.key}" already exists`,
+              issue: "Contact attribute key update conflict",
             },
           ],
         });
