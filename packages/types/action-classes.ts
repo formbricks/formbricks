@@ -87,8 +87,8 @@ export const ZActionClass = z.object({
   key: z.string().trim().min(1).nullable(),
   noCodeConfig: ZActionClassNoCodeConfig.nullable(),
   environmentId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export type TActionClass = z.infer<typeof ZActionClass>;
