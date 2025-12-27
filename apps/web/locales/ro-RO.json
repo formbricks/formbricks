@@ -452,7 +452,7 @@
     "welcome_card": "Card de bun venit",
     "you": "Tu",
     "you_are_downgraded_to_the_community_edition": "Ai fost retrogradat la ediția Community.",
-    "you_are_not_authorised_to_perform_this_action": "Nu sunteți autorizat să efectuați această acțiune.",
+    "you_are_not_authorized_to_perform_this_action": "Nu sunteți autorizat să efectuați această acțiune.",
     "you_have_reached_your_limit_of_project_limit": "Ați atins limita de {projectLimit} proiecte.",
     "you_have_reached_your_monthly_miu_limit_of": "Ați atins limita lunară MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Ați atins limita lunară de răspunsuri de",
@@ -1407,7 +1407,7 @@
         "enter_fallback_value": "Introduceți valoarea implicită",
         "equals": "Egal",
         "equals_one_of": "Egal unu dintre",
-        "error_publishing_survey": "A apărut o eroare în timpul publicării sondajului.",
+        "error_publishing_survey": "A apărut o eroare la publicarea sondajului.",
         "error_saving_changes": "Eroare la salvarea modificărilor",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Permite răspunsuri multiple; continuă afișarea chiar și după un răspuns (de exemplu, Caseta de Feedback).",
         "everyone": "Toată lumea",
@@ -1544,7 +1544,7 @@
         "no_images_found_for": "Nicio imagine găsită pentru ''{query}\"",
         "no_languages_found_add_first_one_to_get_started": "Nu s-au găsit limbi. Adaugă prima pentru a începe.",
         "no_option_found": "Nicio opțiune găsită",
-        "no_recall_items_found": "Nu s-au găsit elemente de reamintire",
+        "no_recall_items_found": "Nu au fost găsite elemente de reamintire",
         "no_variables_yet_add_first_one_below": "Nu există variabile încă. Adăugați prima mai jos.",
         "number": "Număr",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Odată setată, limba implicită pentru acest sondaj poate fi schimbată doar dezactivând opțiunea multi-limbă și ștergând toate traducerile.",
@@ -1683,7 +1683,7 @@
         "survey_display_settings": "Setări de afișare a sondajului",
         "survey_placement": "Amplasarea sondajului",
         "survey_trigger": "Declanșator sondaj",
-        "switch_multi_lanugage_on_to_get_started": "Comutați pe modul multilingv pentru a începe 👉",
+        "switch_multi_language_on_to_get_started": "Activați opțiunea multi-limbă pentru a începe 👉",
         "target_block_not_found": "Blocul țintă nu a fost găsit",
         "targeted": "Ţintite",
         "ten_points": "10 puncte",
@@ -1737,7 +1737,7 @@
         "your_web_app": "Aplicația dumneavoastră web",
         "zip": "Cod Poștal"
       },
-      "error_deleting_survey": "A apărut o eroare în timpul ștergerii sondajului",
+      "error_deleting_survey": "A apărut o eroare la ștergerea sondajului",
       "filter": {
         "complete_and_partial_responses": "Răspunsuri complete și parțiale",
         "complete_responses": "Răspunsuri complete",
@@ -1788,7 +1788,7 @@
       "search_by_survey_name": "Căutare după nume chestionar",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Dacă nu criptați ID-urile de unică folosință, orice valoare pentru „suid=...” funcționează pentru un răspuns.",
+          "custom_single_use_id_description": "Dacă nu criptați ID-ul de unică folosință, orice valoare pentru “suid=...” funcționează pentru un singur răspuns.",
           "custom_single_use_id_title": "Puteți seta orice valoare ca ID unic în URL",
           "custom_start_point": "Punct de start personalizat",
           "data_prefilling": "Precompletare date",

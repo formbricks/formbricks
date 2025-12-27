@@ -37,8 +37,8 @@ const mockT = vi.fn((key: string, params?: any) => {
   if (key === "environments.actions.invalid_regex") {
     return "Invalid regex pattern";
   }
-  if (key === "common.you_are_not_authorised_to_perform_this_action") {
-    return "You are not authorised to perform this action";
+  if (key === "common.you_are_not_authorized_to_perform_this_action") {
+    return "You are not authorized to perform this action";
   }
   return key;
 }) as any;
@@ -396,7 +396,7 @@ describe("action-utils", () => {
 
   describe("validatePermissions", () => {
     test("should throw error when user is read-only", () => {
-      expect(() => validatePermissions(true, mockT)).toThrow("You are not authorised to perform this action");
+      expect(() => validatePermissions(true, mockT)).toThrow("You are not authorized to perform this action");
     });
 
     test("should not throw error when user has write permissions", () => {

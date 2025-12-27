@@ -452,7 +452,7 @@
     "welcome_card": "Cartão de boas-vindas",
     "you": "Você",
     "you_are_downgraded_to_the_community_edition": "Você foi rebaixado para a Edição Comunitária.",
-    "you_are_not_authorised_to_perform_this_action": "Você não tem autorização para fazer isso.",
+    "you_are_not_authorized_to_perform_this_action": "Você não está autorizado a realizar essa ação.",
     "you_have_reached_your_limit_of_project_limit": "Você atingiu o seu limite de {projectLimit} projetos.",
     "you_have_reached_your_monthly_miu_limit_of": "Você atingiu o seu limite mensal de MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Você atingiu o limite mensal de respostas de",
@@ -1544,7 +1544,7 @@
         "no_images_found_for": "Nenhuma imagem encontrada para ''{query}\"",
         "no_languages_found_add_first_one_to_get_started": "Nenhum idioma encontrado. Adicione o primeiro para começar.",
         "no_option_found": "Nenhuma opção encontrada",
-        "no_recall_items_found": "Nenhum item de recordação encontrado",
+        "no_recall_items_found": "Nenhum item de recuperação encontrado",
         "no_variables_yet_add_first_one_below": "Ainda não há variáveis. Adicione a primeira abaixo.",
         "number": "Número",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Depois de definido, o idioma padrão desta pesquisa só pode ser alterado desativando a opção de vários idiomas e excluindo todas as traduções.",
@@ -1683,7 +1683,7 @@
         "survey_display_settings": "Configurações de Exibição da Pesquisa",
         "survey_placement": "Posicionamento da Pesquisa",
         "survey_trigger": "Gatilho de Pesquisa",
-        "switch_multi_lanugage_on_to_get_started": "Ative o modo multilíngue para começar 👉",
+        "switch_multi_language_on_to_get_started": "Ative o modo multilíngue para começar 👉",
         "target_block_not_found": "Bloco de destino não encontrado",
         "targeted": "direcionado",
         "ten_points": "10 pontos",
@@ -1737,7 +1737,7 @@
         "your_web_app": "Sua aplicação web",
         "zip": "Fecho éclair"
       },
-      "error_deleting_survey": "Ocorreu um erro ao deletar a pesquisa",
+      "error_deleting_survey": "Ocorreu um erro ao excluir a pesquisa",
       "filter": {
         "complete_and_partial_responses": "Respostas completas e parciais",
         "complete_responses": "Respostas completas",
@@ -1767,7 +1767,7 @@
         "device": "dispositivo",
         "device_info": "Informações do dispositivo",
         "email": "Email",
-        "error_downloading_responses": "Ocorreu um erro ao baixar respostas",
+        "error_downloading_responses": "Ocorreu um erro ao baixar as respostas",
         "first_name": "Primeiro Nome",
         "how_to_identify_users": "Como identificar usuários",
         "last_name": "Sobrenome",
@@ -1788,7 +1788,7 @@
       "search_by_survey_name": "Buscar pelo nome da pesquisa",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Se você não criptografar ID’s de uso único, qualquer valor para “suid=...” funciona para uma resposta",
+          "custom_single_use_id_description": "Se você não criptografar o ID de uso único, qualquer valor para “suid=...” funciona para uma resposta.",
           "custom_single_use_id_title": "Você pode definir qualquer valor como ID de uso único na URL.",
           "custom_start_point": "Ponto de início personalizado",
           "data_prefilling": "preenchimento automático de dados",

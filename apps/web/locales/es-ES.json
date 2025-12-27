@@ -452,7 +452,7 @@
     "welcome_card": "Tarjeta de bienvenida",
     "you": "Tú",
     "you_are_downgraded_to_the_community_edition": "Has sido degradado a la edición Community.",
-    "you_are_not_authorised_to_perform_this_action": "No estás autorizado para realizar esta acción.",
+    "you_are_not_authorized_to_perform_this_action": "No tienes autorización para realizar esta acción.",
     "you_have_reached_your_limit_of_project_limit": "Has alcanzado tu límite de {projectLimit} proyectos.",
     "you_have_reached_your_monthly_miu_limit_of": "Has alcanzado tu límite mensual de MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Has alcanzado tu límite mensual de respuestas de",
@@ -1544,7 +1544,7 @@
         "no_images_found_for": "No se encontraron imágenes para ''{query}\"",
         "no_languages_found_add_first_one_to_get_started": "No se encontraron idiomas. Añade el primero para comenzar.",
         "no_option_found": "No se encontró ninguna opción",
-        "no_recall_items_found": "No se encontraron elementos de recuperación ",
+        "no_recall_items_found": "No se encontraron elementos de recuperación",
         "no_variables_yet_add_first_one_below": "No hay variables todavía. Añade la primera a continuación.",
         "number": "Número",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Una vez establecido, el idioma predeterminado para esta encuesta solo se puede cambiar desactivando la opción multilingüe y eliminando todas las traducciones.",
@@ -1683,7 +1683,7 @@
         "survey_display_settings": "Ajustes de visualización de la encuesta",
         "survey_placement": "Ubicación de la encuesta",
         "survey_trigger": "Activador de la encuesta",
-        "switch_multi_lanugage_on_to_get_started": "Activa el multiidioma para empezar 👉",
+        "switch_multi_language_on_to_get_started": "Activa el modo multiidioma para comenzar 👉",
         "target_block_not_found": "Bloque objetivo no encontrado",
         "targeted": "Dirigido",
         "ten_points": "10 puntos",
@@ -1737,7 +1737,7 @@
         "your_web_app": "Tu aplicación web",
         "zip": "Código postal"
       },
-      "error_deleting_survey": "Ocurrió un error al eliminar la encuesta",
+      "error_deleting_survey": "Se produjo un error al eliminar la encuesta",
       "filter": {
         "complete_and_partial_responses": "Respuestas completas y parciales",
         "complete_responses": "Respuestas completas",
@@ -1767,7 +1767,7 @@
         "device": "Dispositivo",
         "device_info": "Información del dispositivo",
         "email": "Correo electrónico",
-        "error_downloading_responses": "Se ha producido un error al descargar las respuestas",
+        "error_downloading_responses": "Se produjo un error al descargar las respuestas",
         "first_name": "Nombre",
         "how_to_identify_users": "Cómo identificar a los usuarios",
         "last_name": "Apellido",
@@ -1788,7 +1788,7 @@
       "search_by_survey_name": "Buscar por nombre de encuesta",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Si no cifras los ID de uso único, cualquier valor para “suid=...” funciona para una respuesta.",
+          "custom_single_use_id_description": "Si no cifras el ID de un solo uso, cualquier valor para “suid=...” funciona para una respuesta.",
           "custom_single_use_id_title": "Puedes establecer cualquier valor como ID de uso único en la URL.",
           "custom_start_point": "Punto de inicio personalizado",
           "data_prefilling": "Prellenado de datos",

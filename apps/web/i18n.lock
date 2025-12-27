@@ -425,7 +425,7 @@ checksums:
     common/welcome_card: 76081ebd5b2e35da9b0f080323704ae7
     common/you: db2a4a796b70cc1430d1b21f6ffb6dcb
     common/you_are_downgraded_to_the_community_edition: e3ae56502ff787109cae0997519f628e
-    common/you_are_not_authorised_to_perform_this_action: 49595693c5c119aa213bb7854ddac780
+    common/you_are_not_authorized_to_perform_this_action: 1b3255ab740582ddff016a399f8bf302
     common/you_have_reached_your_limit_of_project_limit: f0ee61ef349d94eeca4f1dd04d1db88d
     common/you_have_reached_your_monthly_miu_limit_of: ded62fc6842c707f62622386ca34f71a
     common/you_have_reached_your_monthly_response_limit_of: 3824db23ecc3dcd2b1787b98ccfdd5f9
@@ -1320,7 +1320,7 @@ checksums:
     environments/surveys/edit/enter_fallback_value: 810911dc4a25ca47fc48eed1fde41cb5
     environments/surveys/edit/equals: 73439e2839b8049e68079b1b6f2e3c41
     environments/surveys/edit/equals_one_of: 369a451add4b79bc003f952f0e1bfcc9
-    environments/surveys/edit/error_publishing_survey: bf9fab1d8ea7132a2e9b4b7b09f18b1f
+    environments/surveys/edit/error_publishing_survey: f190a58d4f77e889236d3c4881fc3295
     environments/surveys/edit/error_saving_changes: b75aa9e4e42e1d43c8f9c33c2b7dc9a7
     environments/surveys/edit/even_after_they_submitted_a_response_e_g_feedback_box: 7b99f30397dcde76f65e1ab64bdbd113
     environments/surveys/edit/everyone: 2112aa71b568773e8e8a792c63f4d413
@@ -1457,7 +1457,7 @@ checksums:
     environments/surveys/edit/no_images_found_for: 90f10f4611ed7b115a49595409b66ebe
     environments/surveys/edit/no_languages_found_add_first_one_to_get_started: 22d7782c8504daf693cab3cf7135d6e3
     environments/surveys/edit/no_option_found: a1a3aa7e6c13b6bb8df20a1a104c7c04
-    environments/surveys/edit/no_recall_items_found: 282da57f9bd2a29936ffa89959e346c6
+    environments/surveys/edit/no_recall_items_found: 729e2b02e412cdc79f5ad94b1918620c
     environments/surveys/edit/no_variables_yet_add_first_one_below: c8704b9ebc9c26c0e9dd50c099ba88cd
     environments/surveys/edit/number: 2789f8391f63e7200a5521078aab017d
     environments/surveys/edit/once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations: 0b1cef6c1d6e9b3d1571126b2062853c
@@ -1534,7 +1534,7 @@ checksums:
     environments/surveys/edit/recontact_options_section: 57a23e1bcab6baa484b27b615e6c906a
     environments/surveys/edit/recontact_options_section_description: 1e04011440c339a3b5cfff12d55b7f12
     environments/surveys/edit/redirect_thank_you_card: 09f721c4b62e2584e40a53507092ea83
-    environments/surveys/edit/redirect_to_url: f17d726bbc3391561447b3f4010635cf
+    environments/surveys/edit/redirect_to_url: e30ef505a921b5495ed70eb772e6ee0d
     environments/surveys/edit/remove_description: b52de820b4bbcb354eb62246c4112a9a
     environments/surveys/edit/remove_translations: 72db24f9aece8bd524a9f35fdeb56382
     environments/surveys/edit/require_answer: dff5f91b13d638eed2bd58d1284f6670
@@ -1594,7 +1594,7 @@ checksums:
     environments/surveys/edit/survey_display_settings: 8ed19e6a8e1376f7a1ba037d82c4ae11
     environments/surveys/edit/survey_placement: 083c10f257337f9648bf9d435b18ec2c
     environments/surveys/edit/survey_trigger: f0c7014a684ca566698b87074fad5579
-    environments/surveys/edit/switch_multi_lanugage_on_to_get_started: d2ca06684af26bd6b5121a4656bb6458
+    environments/surveys/edit/switch_multi_language_on_to_get_started: cca0ef91ee49095da30cd1e3f26c406f
     environments/surveys/edit/target_block_not_found: 0a0c401017ab32364fec2fcbf815d832
     environments/surveys/edit/targeted: ca615f1fc3b490d5a2187b27fb4a2073
     environments/surveys/edit/ten_points: a1317b82003859f77fb3138c55450d63
@@ -1647,7 +1647,7 @@ checksums:
     environments/surveys/edit/your_question_here_recall_information_with: 6395bd54f5167830c9d662ba403da167
     environments/surveys/edit/your_web_app: 07234bed03a33330dc50ae9fcf0174f3
     environments/surveys/edit/zip: 228fedb7d75304d2a3fcd9f1d1aaccee
-    environments/surveys/error_deleting_survey: 966f7a04456669e9a8ba23867cef1106
+    environments/surveys/error_deleting_survey: 5a113f1cc0a430b54b21dd1fd4e65e00
     environments/surveys/filter/complete_and_partial_responses: 3c272e4b148421da0027c35562b969db
     environments/surveys/filter/complete_responses: cd495765bf63f5bfdb341eadc4f60ac7
     environments/surveys/filter/partial_responses: cc88893d0defaf64f46f17a1cb8c886d
@@ -1674,7 +1674,7 @@ checksums:
     environments/surveys/responses/device: c009f849d689c745de9e38ad17644c7a
     environments/surveys/responses/device_info: b621ff59202f171e232c1910f9236573
     environments/surveys/responses/email: e7f34943a0c2fb849db1839ff6ef5cb5
-    environments/surveys/responses/error_downloading_responses: 75dcc9fab127fbf61d0c5ee4889cd688
+    environments/surveys/responses/error_downloading_responses: 97a79108cfc854834d09cf14c300a291
     environments/surveys/responses/first_name: cf040a5d6a9fd696be400380cc99f54b
     environments/surveys/responses/how_to_identify_users: c886035d9d9a0cfc3fa9703972001044
     environments/surveys/responses/last_name: 2c9a7de7738ca007ba9023c385149c26
@@ -1692,7 +1692,7 @@ checksums:
     environments/surveys/responses/this_response_is_in_progress: 7d785fcb597ea30466467084fd474904
     environments/surveys/responses/zip_post_code: ab7dc45bd5f9e37930586e2db17e4304
     environments/surveys/search_by_survey_name: 44cf2e6f8ba43d233fb33939431eba99
-    environments/surveys/share/anonymous_links/custom_single_use_id_description: 24be2cb1ca87357ebe8e81c96116f618
+    environments/surveys/share/anonymous_links/custom_single_use_id_description: 07f0a6bcb5476715ed3de6873bb280f3
     environments/surveys/share/anonymous_links/custom_single_use_id_title: 9d708fe4ced64ddedd307fb61827cd03
     environments/surveys/share/anonymous_links/custom_start_point: 4ea6552b37339d17e02f3bce8c7e4125
     environments/surveys/share/anonymous_links/data_prefilling: 82f0e31e90f1f2ca31361df9893e117c

@@ -452,7 +452,7 @@
     "welcome_card": "ウェルカムカード",
     "you": "あなた",
     "you_are_downgraded_to_the_community_edition": "コミュニティ版にダウングレードされました。",
-    "you_are_not_authorised_to_perform_this_action": "このアクションを実行する権限がありません。",
+    "you_are_not_authorized_to_perform_this_action": "このアクションを実行する権限がありません。",
     "you_have_reached_your_limit_of_project_limit": "プロジェクトの上限数 ({projectLimit}) に達しました。",
     "you_have_reached_your_monthly_miu_limit_of": "月間MIU（月間アクティブユーザー）の上限に達しました",
     "you_have_reached_your_monthly_response_limit_of": "月間回答数の上限に達しました",
@@ -1407,7 +1407,7 @@
         "enter_fallback_value": "フォールバック値を入力",
         "equals": "と等しい",
         "equals_one_of": "のいずれかと等しい",
-        "error_publishing_survey": "フォームの公開中にエラーが発生しました。",
+        "error_publishing_survey": "アンケートの公開中にエラーが発生しました。",
         "error_saving_changes": "変更の保存中にエラーが発生しました",
         "even_after_they_submitted_a_response_e_g_feedback_box": "複数の回答を許可；回答後も表示を継続（例：フィードボックス）。",
         "everyone": "全員",
@@ -1544,7 +1544,7 @@
         "no_images_found_for": "''{query}'' の画像が見つかりません",
         "no_languages_found_add_first_one_to_get_started": "言語が見つかりません。始めるには、最初のものを追加してください。",
         "no_option_found": "オプションが見つかりません",
-        "no_recall_items_found": "リコールアイテムが見つかりません ",
+        "no_recall_items_found": "リコール項目が見つかりません",
         "no_variables_yet_add_first_one_below": "まだ変数がありません。以下で最初のものを追加してください。",
         "number": "数値",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "一度設定すると、このフォームのデフォルト言語は、多言語オプションを無効にしてすべての翻訳を削除することによってのみ変更できます。",
@@ -1683,7 +1683,7 @@
         "survey_display_settings": "フォーム表示設定",
         "survey_placement": "フォームの配置",
         "survey_trigger": "フォームのトリガー",
-        "switch_multi_lanugage_on_to_get_started": "始めるには多言語をオンにしてください 👉",
+        "switch_multi_language_on_to_get_started": "多言語機能をオンにして開始 👉",
         "target_block_not_found": "対象ブロックが見つかりません",
         "targeted": "ターゲット",
         "ten_points": "10点",
@@ -1737,7 +1737,7 @@
         "your_web_app": "あなたのウェブアプリ",
         "zip": "郵便番号"
       },
-      "error_deleting_survey": "フォームの削除中にエラーが発生しました",
+      "error_deleting_survey": "アンケートの削除中にエラーが発生しました",
       "filter": {
         "complete_and_partial_responses": "完了および部分的な回答",
         "complete_responses": "完了した回答",
@@ -1788,7 +1788,7 @@
       "search_by_survey_name": "フォーム名で検索",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "単一使用IDを暗号化しない場合、「suid=...」の値は1つの回答に対して機能します。",
+          "custom_single_use_id_description": "シングルユースIDを暗号化しない場合、「suid=...」の任意の値で1回の回答が可能になります。",
           "custom_single_use_id_title": "URLで任意の値を単一使用IDとして設定できます。",
           "custom_start_point": "カスタム開始点",
           "data_prefilling": "データの事前入力",
