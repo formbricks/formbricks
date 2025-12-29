@@ -1059,7 +1059,6 @@
         "description": "Обзор всех опросов с Pretty URL в вашей организации",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "Настройте favicon, который отображается на вкладках браузера для ваших опросов по ссылке. Это не повлияет на административное приложение.",
-        "favicon_for_link_surveys": "Favicon для опросов по ссылке",
         "favicon_removed_successfully": "Favicon успешно удалён",
         "favicon_saved_successfully": "Favicon успешно сохранён",
         "favicon_size_hint": "Максимум 100 КБ, лучше всего подходят квадратные изображения",

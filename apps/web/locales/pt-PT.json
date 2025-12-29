@@ -1059,7 +1059,6 @@
         "description": "Visão geral de todos os inquéritos que utilizam URLs amigáveis na sua organização",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "Personalize o favicon apresentado nos separadores do navegador para os seus inquéritos por link. Isto não afetará a aplicação de administração.",
-        "favicon_for_link_surveys": "Favicon para inquéritos por link",
         "favicon_removed_successfully": "Favicon removido com sucesso",
         "favicon_saved_successfully": "Favicon guardado com sucesso",
         "favicon_size_hint": "Máx. 100KB, imagens quadradas funcionam melhor",

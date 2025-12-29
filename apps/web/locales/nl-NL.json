@@ -1059,7 +1059,6 @@
         "description": "Overzicht van alle enquêtes die Pretty URL's gebruiken binnen je organisatie",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "Pas de favicon aan die wordt weergegeven in browsertabbladen voor je linkenquêtes. Dit heeft geen invloed op de beheer-app.",
-        "favicon_for_link_surveys": "Favicon voor linkenquêtes",
         "favicon_removed_successfully": "Favicon succesvol verwijderd",
         "favicon_saved_successfully": "Favicon succesvol opgeslagen",
         "favicon_size_hint": "Max. 100 KB, vierkante afbeeldingen werken het beste",

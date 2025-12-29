@@ -1059,7 +1059,6 @@
         "description": "Aperçu de toutes les enquêtes utilisant des URL personnalisées dans votre organisation",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "Personnalisez le favicon affiché dans les onglets du navigateur pour vos enquêtes par lien. Cela n'affectera pas l'application d'administration.",
-        "favicon_for_link_surveys": "Favicon pour les enquêtes par lien",
         "favicon_removed_successfully": "Favicon supprimé avec succès",
         "favicon_saved_successfully": "Favicon enregistré avec succès",
         "favicon_size_hint": "Max 100 Ko, les images carrées fonctionnent mieux",

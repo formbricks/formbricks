@@ -1059,7 +1059,6 @@
         "description": "Visão geral de todas as pesquisas usando URLs amigáveis em sua organização",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "Personalize o favicon exibido nas abas do navegador para suas pesquisas por link. Isso não afetará o aplicativo administrativo.",
-        "favicon_for_link_surveys": "Favicon para pesquisas por link",
         "favicon_removed_successfully": "Favicon removido com sucesso",
         "favicon_saved_successfully": "Favicon salvo com sucesso",
         "favicon_size_hint": "Máximo de 100KB, imagens quadradas funcionam melhor",

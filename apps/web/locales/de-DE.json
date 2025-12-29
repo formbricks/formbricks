@@ -1059,7 +1059,6 @@
         "description": "Übersicht aller Umfragen mit Pretty URLs in Ihrer Organisation",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "Passe das Favicon an, das in Browser-Tabs für deine Link-Umfragen angezeigt wird. Dies wirkt sich nicht auf die Admin-App aus.",
-        "favicon_for_link_surveys": "Favicon für Link-Umfragen",
         "favicon_removed_successfully": "Favicon erfolgreich entfernt",
         "favicon_saved_successfully": "Favicon erfolgreich gespeichert",
         "favicon_size_hint": "Max. 100 KB, quadratische Bilder funktionieren am besten",

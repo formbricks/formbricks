@@ -986,7 +986,6 @@ checksums:
     environments/settings/domain/description: f0b4d8c96da816f793cf1f4fdfaade34
     environments/settings/domain/favicon_customization: 5c975be07a2a8e319c2c58c7d8c0c78f
     environments/settings/domain/favicon_customization_description: 26c3310c2d85a3daefa3c19c01353efa
-    environments/settings/domain/favicon_for_link_surveys: b3bb8254f5ab2778db9091ddc3fffa8f
     environments/settings/domain/favicon_removed_successfully: cebbf050b77dd7218b622d3a4cc4aa18
     environments/settings/domain/favicon_saved_successfully: a6fbbe2f87b241bc5f661896299fc2b6
     environments/settings/domain/favicon_size_hint: b3a35625898353380152de0be17dd5f7

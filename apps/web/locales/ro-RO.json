@@ -1059,7 +1059,6 @@
         "description": "Prezentare generală a tuturor chestionarelor care folosesc Pretty URLs în organizația dvs.",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "Personalizați faviconul afișat în filele browserului pentru sondajele de linkuri. Acest lucru nu va afecta aplicația de administrare.",
-        "favicon_for_link_surveys": "Favicon pentru sondaje de linkuri",
         "favicon_removed_successfully": "Faviconul a fost eliminat cu succes",
         "favicon_saved_successfully": "Faviconul a fost salvat cu succes",
         "favicon_size_hint": "Maxim 100KB, imaginile pătrate se afișează cel mai bine",

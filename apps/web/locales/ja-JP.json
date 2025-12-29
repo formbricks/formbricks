@@ -1059,7 +1059,6 @@
         "description": "組織全体でカスタムURLを使用しているすべてのフォームの概要",
         "favicon_customization": "ファビコン",
         "favicon_customization_description": "リンク調査のブラウザタブに表示されるファビコンをカスタマイズします。管理アプリには影響しません。",
-        "favicon_for_link_surveys": "リンク調査用ファビコン",
         "favicon_removed_successfully": "ファビコンを削除しました",
         "favicon_saved_successfully": "ファビコンを保存しました",
         "favicon_size_hint": "最大100KB、正方形の画像が最適です",

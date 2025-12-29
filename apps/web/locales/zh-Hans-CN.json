@@ -1059,7 +1059,6 @@
         "description": "概览组织内所有使用美化 URL 的调查问卷",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "自定义在浏览器标签页中显示的链接问卷 Favicon。此操作不会影响管理端应用。",
-        "favicon_for_link_surveys": "链接问卷 Favicon",
         "favicon_removed_successfully": "Favicon 移除成功",
         "favicon_saved_successfully": "Favicon 保存成功",
         "favicon_size_hint": "最大 100KB，建议使用方形图片",

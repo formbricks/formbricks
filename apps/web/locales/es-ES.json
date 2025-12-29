@@ -1059,7 +1059,6 @@
         "description": "Resumen de todas las encuestas que utilizan URL bonitas en tu organización",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "Personaliza el favicon que se muestra en las pestañas del navegador para tus encuestas por enlace. Esto no afectará a la aplicación de administración.",
-        "favicon_for_link_surveys": "Favicon para encuestas por enlace",
         "favicon_removed_successfully": "Favicon eliminado correctamente",
         "favicon_saved_successfully": "Favicon guardado correctamente",
         "favicon_size_hint": "Máximo 100 KB, las imágenes cuadradas funcionan mejor",

@@ -1059,7 +1059,6 @@
         "description": "檢視貴組織內所有使用 Pretty URL 的問卷",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "自訂顯示於瀏覽器分頁上的連結問卷 Favicon。這不會影響管理後台應用程式。",
-        "favicon_for_link_surveys": "連結問卷 Favicon",
         "favicon_removed_successfully": "Favicon 已成功移除",
         "favicon_saved_successfully": "Favicon 已成功儲存",
         "favicon_size_hint": "最大 100KB，建議使用正方形圖片",

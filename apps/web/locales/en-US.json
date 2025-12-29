@@ -1059,7 +1059,6 @@
         "description": "Overview of all surveys using Pretty URLs across your organization",
         "favicon_customization": "Favicon",
         "favicon_customization_description": "Customize the favicon displayed in browser tabs for your link surveys. This won't affect the admin app.",
-        "favicon_for_link_surveys": "Favicon for Link Surveys",
         "favicon_removed_successfully": "Favicon removed successfully",
         "favicon_saved_successfully": "Favicon saved successfully",
         "favicon_size_hint": "Max 100KB, square images work best",
