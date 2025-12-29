@@ -322,6 +322,7 @@ checksums:
     common/remove: dba2fe5fe9f83f8078c687f28cba4b52
     common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
     common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
+    common/replace: 98b2268975b1a737b2e4ad837df96703
     common/report_survey: 147dd05db52e35f5d1f837460fb720f5
     common/request_pricing: 58eb24af4f098632709cb7482b70a1cb
     common/request_trial_license: 560df1240ef621f7c60d3f7d65422ccd
@@ -980,7 +981,16 @@ checksums:
     environments/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
     environments/settings/billing/uptime_sla_99: 25ca4060e575e1a7eee47fceb5576d7c
     environments/settings/billing/website_surveys: f4d176cc66ffcc2abf44c0d5da1642e3
+    environments/settings/domain/customize_favicon_description: d3ac29934a66fd56294c0d8069fbc11e
+    environments/settings/domain/customize_favicon_with_higher_plan: 43a6b834a8fd013c52923863d62248f3
     environments/settings/domain/description: f0b4d8c96da816f793cf1f4fdfaade34
+    environments/settings/domain/favicon_customization: 5c975be07a2a8e319c2c58c7d8c0c78f
+    environments/settings/domain/favicon_customization_description: 26c3310c2d85a3daefa3c19c01353efa
+    environments/settings/domain/favicon_for_link_surveys: b3bb8254f5ab2778db9091ddc3fffa8f
+    environments/settings/domain/favicon_removed_successfully: cebbf050b77dd7218b622d3a4cc4aa18
+    environments/settings/domain/favicon_saved_successfully: a6fbbe2f87b241bc5f661896299fc2b6
+    environments/settings/domain/favicon_size_hint: b3a35625898353380152de0be17dd5f7
+    environments/settings/domain/favicon_too_large: 82a014c0eba8ea8029fd76f61b795984
     environments/settings/domain/no_pretty_urls: 2a83d8e399d325fcd4e2db14e45b1a86
     environments/settings/domain/pretty_url: 10a4b387b6df844245fc842be29527e3
     environments/settings/domain/project: e13002ec4570f3fcc2f050f5ce974294
