@@ -24,7 +24,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   const project = await getProjectByEnvironmentId(params.environmentId);
 
   if (!project) {
-    throw new Error("Project not found");
+    throw new Error("Workspace not found");
   }
 
   const canRemoveBranding = await getRemoveBrandingPermission(organization.billing.plan);

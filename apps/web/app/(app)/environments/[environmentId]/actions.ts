@@ -57,7 +57,7 @@ export const createProjectAction = authenticatedActionClient.schema(ZCreateProje
       const organizationProjectsCount = await getOrganizationProjectsCount(organization.id);
 
       if (organizationProjectsCount >= organizationProjectsLimit) {
-        throw new OperationNotAllowedError("Organization project limit reached");
+        throw new OperationNotAllowedError("Organization workspace limit reached");
       }
 
       if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {

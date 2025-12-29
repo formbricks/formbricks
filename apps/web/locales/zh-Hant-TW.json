@@ -441,6 +441,7 @@
     "website_survey": "網站問卷",
     "welcome_card": "歡迎卡片",
     "workspace_configuration": "工作區設定",
+    "workspace_created_successfully": "工作區已成功建立",
     "workspace_creation_description": "將問卷組織在工作區中，以便更好地控管存取權限。",
     "workspace_id": "工作區 ID",
     "workspace_name": "工作區名稱",

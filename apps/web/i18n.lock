@@ -414,6 +414,7 @@ checksums:
     common/website_survey: 17513d25a07b6361768a15ec622b021b
     common/welcome_card: 76081ebd5b2e35da9b0f080323704ae7
     common/workspace_configuration: d0a5812d6a97d7724d565b1017c34387
+    common/workspace_created_successfully: bf401ae83da954f1db48724e2a8e40f1
     common/workspace_creation_description: aea2f480ba0c54c5cabac72c9c900ddf
     common/workspace_id: bafef925e1b57b52a69844fdf47aac3c
     common/workspace_name: 14c04a902a874ab5ddbe9cf369ef0414

@@ -102,7 +102,7 @@ export const CreateProjectModal = ({
       );
 
       if (productionEnvironment) {
-        toast.success("Project created successfully");
+        toast.success(t("common.workspace_created_successfully"));
         setOpen(false);
         form.reset();
         // Redirect to the new project's surveys page

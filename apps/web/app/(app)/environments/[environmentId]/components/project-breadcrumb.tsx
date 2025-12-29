@@ -136,7 +136,7 @@ export const ProjectBreadcrumb = ({
   ];
 
   if (!currentProject) {
-    const errorMessage = `Project not found for project id: ${currentProjectId}`;
+    const errorMessage = `Workspace not found for workspace id: ${currentProjectId}`;
     logger.error(errorMessage);
     Sentry.captureException(new Error(errorMessage));
     return;
@@ -145,7 +145,7 @@ export const ProjectBreadcrumb = ({
   const handleProjectChange = (projectId: string) => {
     if (projectId === currentProjectId) return;
     startTransition(() => {
-      router.push(`/projects/${projectId}/`);
+      router.push(`/workspaces/${projectId}/`);
     });
   };
 

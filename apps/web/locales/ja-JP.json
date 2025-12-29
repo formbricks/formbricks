@@ -441,6 +441,7 @@
     "website_survey": "ウェブサイトフォーム",
     "welcome_card": "ウェルカムカード",
     "workspace_configuration": "ワークスペース設定",
+    "workspace_created_successfully": "ワークスペースが正常に作成されました",
     "workspace_creation_description": "アクセス制御を改善するために、フォームをワークスペースで整理します。",
     "workspace_id": "ワークスペースID",
     "workspace_name": "ワークスペース名",

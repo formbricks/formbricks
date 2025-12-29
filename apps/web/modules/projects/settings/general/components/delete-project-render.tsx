@@ -89,7 +89,7 @@ export const DeleteProjectRender = ({
       )}
 
       <DeleteDialog
-        deleteWhat="Project"
+        deleteWhat="Workspace"
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteProject}

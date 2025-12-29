@@ -441,6 +441,7 @@
     "website_survey": "Website Survey",
     "welcome_card": "Welcome card",
     "workspace_configuration": "Workspace Configuration",
+    "workspace_created_successfully": "Workspace created successfully",
     "workspace_creation_description": "Organize surveys in workspaces for better access control.",
     "workspace_id": "Workspace ID",
     "workspace_name": "Workspace Name",

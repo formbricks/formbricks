@@ -441,6 +441,7 @@
     "website_survey": "Encuesta de sitio web",
     "welcome_card": "Tarjeta de bienvenida",
     "workspace_configuration": "Configuración del proyecto",
+    "workspace_created_successfully": "Proyecto creado correctamente",
     "workspace_creation_description": "Organiza las encuestas en proyectos para un mejor control de acceso.",
     "workspace_id": "ID del proyecto",
     "workspace_name": "Nombre del proyecto",

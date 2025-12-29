@@ -6,7 +6,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { TProject, ZProject } from "@formbricks/types/project";
+import { TProject, ZProjectUpdateInput } from "@formbricks/types/project";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -26,7 +26,7 @@ interface EditProjectNameProps {
   isReadOnly: boolean;
 }
 
-const ZProjectNameInput = ZProject.pick({ name: true });
+const ZProjectNameInput = ZProjectUpdateInput.pick({ name: true }).required({ name: true });
 
 type TEditProjectName = z.infer<typeof ZProjectNameInput>;
 

@@ -107,7 +107,6 @@ export const ProjectSettings = ({
       styling: { allowStyleOverwrite: true, brandColor: { light: defaultBrandColor } },
       teamIds: [],
     },
-
     resolver: zodResolver(ZProjectUpdateInput),
   });
   const projectName = form.watch("name");
