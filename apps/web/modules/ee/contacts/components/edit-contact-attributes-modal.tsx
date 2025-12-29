@@ -71,11 +71,25 @@ export const EditContactAttributesModal = ({
     name: "attributes",
   });
 
+  // Watch form values to get currently selected keys
+  const watchedAttributes = form.watch("attributes");
+
   // Prepare combobox options from attribute keys
-  const keyOptions: TComboboxOption[] = attributeKeys.map((attrKey) => ({
+  const allKeyOptions: TComboboxOption[] = attributeKeys.map((attrKey) => ({
     label: attrKey.name ?? attrKey.key,
     value: attrKey.key,
   }));
+
+  // Get available options for a specific field index (exclude already selected keys from other fields)
+  const getAvailableOptions = (currentIndex: number): TComboboxOption[] => {
+    const selectedKeys = new Set(
+      watchedAttributes
+        .map((attr, index) => (index !== currentIndex && attr.key ? String(attr.key) : null))
+        .filter((key): key is string => key !== null && key !== "")
+    );
+
+    return allKeyOptions.filter((option) => !selectedKeys.has(String(option.value)));
+  };
 
   // Scroll to first error on validation failure
   const formRef = useRef<HTMLFormElement>(null);
@@ -179,7 +193,7 @@ export const EditContactAttributesModal = ({
                           <FormControl>
                             <InputCombobox
                               id={`attribute-key-${index}`}
-                              options={keyOptions}
+                              options={getAvailableOptions(index)}
                               value={keyField.value || null}
                               onChangeValue={(value) => {
                                 keyField.onChange(typeof value === "string" ? value : String(value || ""));
