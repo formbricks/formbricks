@@ -202,7 +202,7 @@ export const EditContactAttributesModal = ({
                               showSearch={true}
                               inputProps={{
                                 placeholder: t("environments.contacts.attribute_key_placeholder"),
-                                className: "w-full",
+                                className: "w-full border-0",
                               }}
                             />
                           </FormControl>
