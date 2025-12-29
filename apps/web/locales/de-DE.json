@@ -606,6 +606,7 @@
       "waiting_for_your_signal": "Warte auf ein Signal von dir..."
     },
     "contacts": {
+      "add_attribute": "Attribut hinzufügen",
       "attribute_created_successfully": "Attribut erfolgreich erstellt",
       "attribute_description": "Beschreibung",
       "attribute_description_placeholder": "Kurze Beschreibung",
@@ -618,6 +619,8 @@
       "attribute_label": "Bezeichnung",
       "attribute_label_placeholder": "z. B. Geburtsdatum",
       "attribute_updated_successfully": "Attribut erfolgreich aktualisiert",
+      "attribute_value": "Wert",
+      "attribute_value_placeholder": "Attributwert",
       "contact_deleted_successfully": "Kontakt erfolgreich gelöscht",
       "contact_not_found": "Kein solcher Kontakt gefunden",
       "contacts_table_refresh": "Kontakte aktualisieren",
@@ -631,6 +634,9 @@
       "delete_contact_confirmation_with_quotas": "{value, plural, one {Dies wird alle Umfrageantworten und Kontaktattribute löschen, die mit diesem Kontakt verbunden sind. Jegliche zielgerichtete Kommunikation und Personalisierung basierend auf den Daten dieses Kontakts gehen verloren. Wenn dieser Kontakt Antworten hat, die zu den Umfragequoten zählen, werden die Quotenstände reduziert, aber die Quotenlimits bleiben unverändert.} other {Dies wird alle Umfrageantworten und Kontaktattribute löschen, die mit diesen Kontakten verbunden sind. Jegliche zielgerichtete Kommunikation und Personalisierung basierend auf den Daten dieses Kontakts gehen verloren. Wenn diesen Kontakten Antworten haben, die zu den Umfragequoten zählen, werden die Quotenstände reduziert, aber die Quotenlimits bleiben unverändert.}}",
       "edit_attribute": "Attribut bearbeiten",
       "edit_attribute_description": "Aktualisieren Sie die Bezeichnung und Beschreibung für dieses Attribut.",
+      "edit_attribute_values": "Attribute bearbeiten",
+      "edit_attribute_values_description": "Ändern Sie die Werte für bestimmte Attribute dieses Kontakts.",
+      "edit_attributes_success": "Kontaktattribute erfolgreich aktualisiert",
       "generate_personal_link": "Persönlichen Link generieren",
       "generate_personal_link_description": "Wähle eine veröffentlichte Umfrage aus, um einen personalisierten Link für diesen Kontakt zu generieren.",
       "no_published_link_surveys_available": "Keine veröffentlichten Link-Umfragen verfügbar. Bitte veröffentliche zuerst eine Link-Umfrage.",

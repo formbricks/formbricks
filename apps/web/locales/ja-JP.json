@@ -606,6 +606,7 @@
       "waiting_for_your_signal": "あなたの信号を待っています..."
     },
     "contacts": {
+      "add_attribute": "属性を追加",
       "attribute_created_successfully": "属性を作成しました",
       "attribute_description": "説明",
       "attribute_description_placeholder": "簡単な説明",
@@ -618,6 +619,8 @@
       "attribute_label": "ラベル",
       "attribute_label_placeholder": "例: 生年月日",
       "attribute_updated_successfully": "属性を更新しました",
+      "attribute_value": "値",
+      "attribute_value_placeholder": "属性値",
       "contact_deleted_successfully": "連絡先を正常に削除しました",
       "contact_not_found": "そのような連絡先は見つかりません",
       "contacts_table_refresh": "連絡先を更新",
@@ -631,6 +634,9 @@
       "delete_contact_confirmation_with_quotas": "{value, plural, one {これにより この連絡先に関連するすべてのアンケート応答と連絡先属性が削除されます。この連絡先のデータに基づくターゲティングとパーソナライゼーションが失われます。この連絡先がアンケートの割当量を考慮した回答を持っている場合、割当量カウントは減少しますが、割当量の制限は変更されません。} other {これにより これらの連絡先に関連するすべてのアンケート応答と連絡先属性が削除されます。これらの連絡先のデータに基づくターゲティングとパーソナライゼーションが失われます。これらの連絡先がアンケートの割当量を考慮した回答を持っている場合、割当量カウントは減少しますが、割当量の制限は変更されません。}}",
       "edit_attribute": "属性を編集",
       "edit_attribute_description": "この属性のラベルと説明を更新します。",
+      "edit_attribute_values": "属性を編集",
+      "edit_attribute_values_description": "この連絡先の特定の属性の値を変更します。",
+      "edit_attributes_success": "連絡先属性が正常に更新されました",
       "generate_personal_link": "個人リンクを生成",
       "generate_personal_link_description": "公開されたフォームを選択して、この連絡先用のパーソナライズされたリンクを生成します。",
       "no_published_link_surveys_available": "公開されたリンクフォームはありません。まずリンクフォームを公開してください。",

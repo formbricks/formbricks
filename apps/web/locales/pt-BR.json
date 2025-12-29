@@ -606,6 +606,7 @@
       "waiting_for_your_signal": "Esperando seu sinal..."
     },
     "contacts": {
+      "add_attribute": "Adicionar atributo",
       "attribute_created_successfully": "Atributo criado com sucesso",
       "attribute_description": "Descrição",
       "attribute_description_placeholder": "Descrição curta",
@@ -618,6 +619,8 @@
       "attribute_label": "Etiqueta",
       "attribute_label_placeholder": "ex: Data de nascimento",
       "attribute_updated_successfully": "Atributo atualizado com sucesso",
+      "attribute_value": "Valor",
+      "attribute_value_placeholder": "Valor do atributo",
       "contact_deleted_successfully": "Contato excluído com sucesso",
       "contact_not_found": "Nenhum contato encontrado",
       "contacts_table_refresh": "Atualizar contatos",
@@ -631,6 +634,9 @@
       "delete_contact_confirmation_with_quotas": "{value, plural, other {Isso irá apagar todas as respostas da pesquisa e atributos de contato associados a este contato. Qualquer direcionamento e personalização baseados nos dados deste contato serão perdidos. Se este contato tiver respostas que contam para cotas da pesquisa, as contagens das cotas serão reduzidas, mas os limites das cotas permanecerão inalterados.}}",
       "edit_attribute": "Editar atributo",
       "edit_attribute_description": "Atualize a etiqueta e a descrição deste atributo.",
+      "edit_attribute_values": "Editar atributos",
+      "edit_attribute_values_description": "Altere os valores de atributos específicos para este contato.",
+      "edit_attributes_success": "Atributos do contato atualizados com sucesso",
       "generate_personal_link": "Gerar link pessoal",
       "generate_personal_link_description": "Selecione uma pesquisa publicada para gerar um link personalizado para este contato.",
       "no_published_link_surveys_available": "Não há pesquisas de link publicadas disponíveis. Por favor, publique uma pesquisa de link primeiro.",

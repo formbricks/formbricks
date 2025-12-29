@@ -606,6 +606,7 @@
       "waiting_for_your_signal": "Esperando tu señal..."
     },
     "contacts": {
+      "add_attribute": "Añadir atributo",
       "attribute_created_successfully": "Atributo creado con éxito",
       "attribute_description": "Descripción",
       "attribute_description_placeholder": "Descripción breve",
@@ -618,6 +619,8 @@
       "attribute_label": "Etiqueta",
       "attribute_label_placeholder": "p. ej. fecha de nacimiento",
       "attribute_updated_successfully": "Atributo actualizado con éxito",
+      "attribute_value": "Valor",
+      "attribute_value_placeholder": "Valor del atributo",
       "contact_deleted_successfully": "Contacto eliminado correctamente",
       "contact_not_found": "No se ha encontrado dicho contacto",
       "contacts_table_refresh": "Actualizar contactos",
@@ -631,6 +634,9 @@
       "delete_contact_confirmation_with_quotas": "{value, plural, one {Esto eliminará todas las respuestas de encuestas y atributos de contacto asociados con este contacto. Cualquier segmentación y personalización basada en los datos de este contacto se perderá. Si este contacto tiene respuestas que cuentan para las cuotas de encuesta, los recuentos de cuota se reducirán pero los límites de cuota permanecerán sin cambios.} other {Esto eliminará todas las respuestas de encuestas y atributos de contacto asociados con estos contactos. Cualquier segmentación y personalización basada en los datos de estos contactos se perderá. Si estos contactos tienen respuestas que cuentan para las cuotas de encuesta, los recuentos de cuota se reducirán pero los límites de cuota permanecerán sin cambios.}}",
       "edit_attribute": "Editar atributo",
       "edit_attribute_description": "Actualiza la etiqueta y la descripción de este atributo.",
+      "edit_attribute_values": "Editar atributos",
+      "edit_attribute_values_description": "Cambia los valores de atributos específicos para este contacto.",
+      "edit_attributes_success": "Atributos del contacto actualizados correctamente",
       "generate_personal_link": "Generar enlace personal",
       "generate_personal_link_description": "Selecciona una encuesta publicada para generar un enlace personalizado para este contacto.",
       "no_published_link_surveys_available": "No hay encuestas de enlace publicadas disponibles. Por favor, publica primero una encuesta de enlace.",
