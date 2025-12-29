@@ -349,6 +349,7 @@
     "remove": "Remove",
     "remove_from_team": "Remove from team",
     "reorder_and_hide_columns": "Reorder and hide columns",
+    "replace": "Replace",
     "report_survey": "Report Survey",
     "request_pricing": "Request Pricing",
     "request_trial_license": "Request trial license",
@@ -1053,7 +1054,15 @@
         "website_surveys": "Website Surveys"
       },
       "domain": {
+        "customize_favicon_description": "Upload a custom favicon to personalize your link survey experience and strengthen your brand presence.",
+        "customize_favicon_with_higher_plan": "Customize favicon with a higher plan",
         "description": "Overview of all surveys using Pretty URLs across your organization",
+        "favicon_customization": "Favicon",
+        "favicon_customization_description": "Customize the favicon displayed in browser tabs for your link surveys. This won't affect the admin app.",
+        "favicon_removed_successfully": "Favicon removed successfully",
+        "favicon_saved_successfully": "Favicon saved successfully",
+        "favicon_size_hint": "Max 100KB, square images work best",
+        "favicon_too_large": "Favicon must be under 100KB",
         "no_pretty_urls": "No surveys with Pretty URLs configured yet.",
         "pretty_url": "Pretty URL",
         "project": "Project",

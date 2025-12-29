@@ -349,6 +349,7 @@
     "remove": "移除",
     "remove_from_team": "從團隊中移除",
     "reorder_and_hide_columns": "重新排序和隱藏欄位",
+    "replace": "取代",
     "report_survey": "報告問卷",
     "request_pricing": "請求定價",
     "request_trial_license": "請求試用授權",
@@ -1053,7 +1054,15 @@
         "website_surveys": "網站問卷"
       },
       "domain": {
+        "customize_favicon_description": "上傳自訂 Favicon，讓您的連結問卷體驗更具個人化，並強化品牌形象。",
+        "customize_favicon_with_higher_plan": "升級方案以自訂 Favicon",
         "description": "檢視貴組織內所有使用 Pretty URL 的問卷",
+        "favicon_customization": "Favicon",
+        "favicon_customization_description": "自訂顯示於瀏覽器分頁上的連結問卷 Favicon。這不會影響管理後台應用程式。",
+        "favicon_removed_successfully": "Favicon 已成功移除",
+        "favicon_saved_successfully": "Favicon 已成功儲存",
+        "favicon_size_hint": "最大 100KB，建議使用正方形圖片",
+        "favicon_too_large": "Favicon 必須小於 100KB",
         "no_pretty_urls": "尚未設定任何使用 Pretty URL 的問卷。",
         "pretty_url": "Pretty URL",
         "project": "專案",

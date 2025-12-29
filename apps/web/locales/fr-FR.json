@@ -349,6 +349,7 @@
     "remove": "Retirer",
     "remove_from_team": "Retirer de l'équipe",
     "reorder_and_hide_columns": "Réorganiser et masquer des colonnes",
+    "replace": "Remplacer",
     "report_survey": "Rapport d'enquête",
     "request_pricing": "Connaître le tarif",
     "request_trial_license": "Demander une licence d'essai",
@@ -1053,7 +1054,15 @@
         "website_surveys": "Sondages de site web"
       },
       "domain": {
+        "customize_favicon_description": "Chargez un favicon personnalisé pour personnaliser l'expérience de vos enquêtes par lien et renforcer la présence de votre marque.",
+        "customize_favicon_with_higher_plan": "Personnaliser le favicon avec un forfait supérieur",
         "description": "Aperçu de toutes les enquêtes utilisant des URL personnalisées dans votre organisation",
+        "favicon_customization": "Favicon",
+        "favicon_customization_description": "Personnalisez le favicon affiché dans les onglets du navigateur pour vos enquêtes par lien. Cela n'affectera pas l'application d'administration.",
+        "favicon_removed_successfully": "Favicon supprimé avec succès",
+        "favicon_saved_successfully": "Favicon enregistré avec succès",
+        "favicon_size_hint": "Max 100 Ko, les images carrées fonctionnent mieux",
+        "favicon_too_large": "Le favicon doit faire moins de 100 Ko",
         "no_pretty_urls": "Aucune enquête avec URL personnalisée configurée pour le moment.",
         "pretty_url": "URL personnalisée",
         "project": "Projet",

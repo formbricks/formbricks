@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
+import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
+import { FaviconCustomizationSettings } from "@/modules/ee/whitelabel/favicon-customization/components/favicon-customization-settings";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getSurveysWithSlugsByOrganizationId } from "@/modules/survey/lib/slug";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsCard } from "../../components/SettingsCard";
@@ -17,11 +20,16 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     return notFound();
   }
 
-  const { session, currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
+  const { session, currentUserMembership, organization, isOwner, isManager } = await getEnvironmentAuth(
+    params.environmentId
+  );
 
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }
+
+  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.billing.plan);
+  const isOwnerOrManager = isManager || isOwner;
 
   const result = await getSurveysWithSlugsByOrganizationId(organization.id);
   if (!result.ok) {
@@ -40,6 +48,22 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           activeId="domain"
         />
       </PageHeader>
+
+      {!IS_STORAGE_CONFIGURED && (
+        <div className="max-w-4xl">
+          <Alert variant="warning">
+            <AlertDescription>{t("common.storage_not_configured")}</AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      <FaviconCustomizationSettings
+        organization={organization}
+        hasWhiteLabelPermission={hasWhiteLabelPermission}
+        environmentId={params.environmentId}
+        isReadOnly={!isOwnerOrManager}
+        isStorageConfigured={IS_STORAGE_CONFIGURED}
+      />
 
       <SettingsCard
         title={t("environments.settings.domain.title")}

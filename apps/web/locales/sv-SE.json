@@ -349,6 +349,7 @@
     "remove": "Ta bort",
     "remove_from_team": "Ta bort från teamet",
     "reorder_and_hide_columns": "Ordna om och dölj kolumner",
+    "replace": "Ersätt",
     "report_survey": "Rapportera enkät",
     "request_pricing": "Begär prissättning",
     "request_trial_license": "Begär provlicens",
@@ -1053,7 +1054,15 @@
         "website_surveys": "Webbplatsenkäter"
       },
       "domain": {
+        "customize_favicon_description": "Ladda upp en egen favicon för att anpassa din länkenkät och stärka ditt varumärke.",
+        "customize_favicon_with_higher_plan": "Anpassa favicon med ett högre abonnemang",
         "description": "Översikt över alla enkäter som använder Pretty URLs i din organisation",
+        "favicon_customization": "Favicon",
+        "favicon_customization_description": "Anpassa faviconen som visas i webbläsarflikar för dina länkenkäter. Detta påverkar inte admin-appen.",
+        "favicon_removed_successfully": "Favicon har tagits bort",
+        "favicon_saved_successfully": "Favicon har sparats",
+        "favicon_size_hint": "Max 100 KB, fyrkantiga bilder fungerar bäst",
+        "favicon_too_large": "Favicon får inte vara större än 100 KB",
         "no_pretty_urls": "Inga enkäter med Pretty URLs har konfigurerats ännu.",
         "pretty_url": "Pretty URL",
         "project": "Projekt",

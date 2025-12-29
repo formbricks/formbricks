@@ -349,6 +349,7 @@
     "remove": "Șterge",
     "remove_from_team": "Elimină din echipă",
     "reorder_and_hide_columns": "Reordonați și ascundeți coloanele",
+    "replace": "Înlocuiește",
     "report_survey": "Raportează chestionarul",
     "request_pricing": "Solicită Prețuri",
     "request_trial_license": "Solicitați o licență de încercare",
@@ -1053,7 +1054,15 @@
         "website_surveys": "Sondaje ale site-ului"
       },
       "domain": {
+        "customize_favicon_description": "Încărcați un favicon personalizat pentru a oferi o experiență unică sondajului de linkuri și pentru a consolida prezența brandului.",
+        "customize_favicon_with_higher_plan": "Personalizați faviconul cu un plan superior",
         "description": "Prezentare generală a tuturor chestionarelor care folosesc Pretty URLs în organizația dvs.",
+        "favicon_customization": "Favicon",
+        "favicon_customization_description": "Personalizați faviconul afișat în filele browserului pentru sondajele de linkuri. Acest lucru nu va afecta aplicația de administrare.",
+        "favicon_removed_successfully": "Faviconul a fost eliminat cu succes",
+        "favicon_saved_successfully": "Faviconul a fost salvat cu succes",
+        "favicon_size_hint": "Maxim 100KB, imaginile pătrate se afișează cel mai bine",
+        "favicon_too_large": "Faviconul trebuie să aibă sub 100KB",
         "no_pretty_urls": "Nu există încă chestionare cu Pretty URLs configurate.",
         "pretty_url": "Pretty URL",
         "project": "Proiect",

@@ -349,6 +349,7 @@
     "remove": "remover",
     "remove_from_team": "Remover da equipe",
     "reorder_and_hide_columns": "Reordenar e ocultar colunas",
+    "replace": "Substituir",
     "report_survey": "Relatório de Pesquisa",
     "request_pricing": "Solicitar Preços",
     "request_trial_license": "Pedir licença de teste",
@@ -1053,7 +1054,15 @@
         "website_surveys": "Pesquisas de Site"
       },
       "domain": {
+        "customize_favicon_description": "Faça o upload de um favicon personalizado para personalizar a experiência da sua pesquisa por link e fortalecer a presença da sua marca.",
+        "customize_favicon_with_higher_plan": "Personalize o favicon com um plano superior",
         "description": "Visão geral de todas as pesquisas usando URLs amigáveis em sua organização",
+        "favicon_customization": "Favicon",
+        "favicon_customization_description": "Personalize o favicon exibido nas abas do navegador para suas pesquisas por link. Isso não afetará o aplicativo administrativo.",
+        "favicon_removed_successfully": "Favicon removido com sucesso",
+        "favicon_saved_successfully": "Favicon salvo com sucesso",
+        "favicon_size_hint": "Máximo de 100KB, imagens quadradas funcionam melhor",
+        "favicon_too_large": "O favicon deve ter menos de 100KB",
         "no_pretty_urls": "Nenhuma pesquisa com URLs amigáveis configuradas ainda.",
         "pretty_url": "URL amigável",
         "project": "Projeto",
