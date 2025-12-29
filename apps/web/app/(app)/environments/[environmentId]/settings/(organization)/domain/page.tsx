@@ -62,7 +62,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         hasWhiteLabelPermission={hasWhiteLabelPermission}
         environmentId={params.environmentId}
         isReadOnly={!isOwnerOrManager}
-        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         isStorageConfigured={IS_STORAGE_CONFIGURED}
       />
 

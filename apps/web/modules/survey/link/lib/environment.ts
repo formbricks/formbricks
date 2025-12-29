@@ -93,9 +93,8 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
           linkSurveyBranding: environment.project.linkSurveyBranding,
         },
         organizationId: environment.project.organizationId,
-        organizationBilling: environment.project.organization.billing as TOrganizationBilling,
-        organizationWhitelabel:
-          (environment.project.organization.whitelabel as TOrganizationWhitelabel) ?? null,
+        organizationBilling: environment.project.organization.billing,
+        organizationWhitelabel: environment.project.organization.whitelabel ?? null,
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {

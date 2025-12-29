@@ -7,10 +7,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkWhiteLabelPermission } from "@/modules/ee/whitelabel/email-customization/actions";
-import {
-  removeOrganizationFaviconUrl,
-  updateOrganizationFaviconUrl,
-} from "@/modules/ee/whitelabel/favicon-customization/lib/organization";
+import { updateOrganizationFaviconUrl } from "@/modules/ee/whitelabel/favicon-customization/lib/organization";
 
 const ZUpdateOrganizationFaviconUrlAction = z.object({
   organizationId: ZId,
@@ -83,7 +80,7 @@ export const removeOrganizationFaviconUrlAction = authenticatedActionClient
         ctx.auditLoggingCtx.organizationId = organizationId;
         ctx.auditLoggingCtx.oldObject = { faviconUrl: "" };
 
-        return await removeOrganizationFaviconUrl(organizationId);
+        return await updateOrganizationFaviconUrl(organizationId, null);
       }
     )
   );

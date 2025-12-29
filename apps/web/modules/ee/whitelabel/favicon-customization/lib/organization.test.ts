@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { removeOrganizationFaviconUrl, updateOrganizationFaviconUrl } from "./organization";
+import { updateOrganizationFaviconUrl } from "./organization";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -23,15 +23,18 @@ describe("favicon organization", () => {
       const mockOrganization = {
         id: "clg123456789012345678901234",
         whitelabel: {
-          logoUrl: "logo.png",
-          faviconUrl: "old-favicon.png",
+          logoUrl: "https://example.com/logo.png",
+          faviconUrl: "https://example.com/old-favicon.png",
         },
       };
 
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
       vi.mocked(prisma.organization.update).mockResolvedValue({} as never);
 
-      const result = await updateOrganizationFaviconUrl("clg123456789012345678901234", "new-favicon.png");
+      const result = await updateOrganizationFaviconUrl(
+        "clg123456789012345678901234",
+        "https://example.com/new-favicon.png"
+      );
 
       expect(result).toBe(true);
       expect(prisma.organization.findUnique).toHaveBeenCalledWith({
@@ -43,7 +46,33 @@ describe("favicon organization", () => {
         data: {
           whitelabel: {
             ...mockOrganization.whitelabel,
-            faviconUrl: "new-favicon.png",
+            faviconUrl: "https://example.com/new-favicon.png",
+          },
+        },
+      });
+    });
+
+    test("should remove organization favicon URL when passing null", async () => {
+      const mockOrganization = {
+        id: "clg123456789012345678901234",
+        whitelabel: {
+          logoUrl: "https://example.com/logo.png",
+          faviconUrl: "https://example.com/old-favicon.png",
+        },
+      };
+
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
+      vi.mocked(prisma.organization.update).mockResolvedValue({} as never);
+
+      const result = await updateOrganizationFaviconUrl("clg123456789012345678901234", null);
+
+      expect(result).toBe(true);
+      expect(prisma.organization.update).toHaveBeenCalledWith({
+        where: { id: "clg123456789012345678901234" },
+        data: {
+          whitelabel: {
+            ...mockOrganization.whitelabel,
+            faviconUrl: null,
           },
         },
       });
@@ -53,7 +82,7 @@ describe("favicon organization", () => {
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
 
       await expect(
-        updateOrganizationFaviconUrl("clg123456789012345678901234", "new-favicon.png")
+        updateOrganizationFaviconUrl("clg123456789012345678901234", "https://example.com/new-favicon.png")
       ).rejects.toThrow(ResourceNotFoundError);
 
       expect(prisma.organization.findUnique).toHaveBeenCalledWith({
@@ -72,82 +101,17 @@ describe("favicon organization", () => {
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
       vi.mocked(prisma.organization.update).mockResolvedValue({} as never);
 
-      const result = await updateOrganizationFaviconUrl("clg123456789012345678901234", "new-favicon.png");
-
-      expect(result).toBe(true);
-      expect(prisma.organization.update).toHaveBeenCalledWith({
-        where: { id: "clg123456789012345678901234" },
-        data: {
-          whitelabel: {
-            faviconUrl: "new-favicon.png",
-          },
-        },
-      });
-    });
-  });
-
-  describe("removeOrganizationFaviconUrl", () => {
-    test("should remove organization favicon URL", async () => {
-      const mockOrganization = {
-        id: "clg123456789012345678901234",
-        whitelabel: {
-          logoUrl: "logo.png",
-          faviconUrl: "old-favicon.png",
-        },
-      };
-
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
-      vi.mocked(prisma.organization.update).mockResolvedValue({} as never);
-
-      const result = await removeOrganizationFaviconUrl("clg123456789012345678901234");
-
-      expect(result).toBe(true);
-      expect(prisma.organization.findUnique).toHaveBeenCalledWith({
-        where: { id: "clg123456789012345678901234" },
-        select: { whitelabel: true },
-      });
-      expect(prisma.organization.update).toHaveBeenCalledWith({
-        where: { id: "clg123456789012345678901234" },
-        data: {
-          whitelabel: {
-            ...mockOrganization.whitelabel,
-            faviconUrl: null,
-          },
-        },
-      });
-    });
-
-    test("should throw ResourceNotFoundError when organization is not found", async () => {
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
-
-      await expect(removeOrganizationFaviconUrl("clg123456789012345678901234")).rejects.toThrow(
-        ResourceNotFoundError
+      const result = await updateOrganizationFaviconUrl(
+        "clg123456789012345678901234",
+        "https://example.com/new-favicon.png"
       );
 
-      expect(prisma.organization.findUnique).toHaveBeenCalledWith({
-        where: { id: "clg123456789012345678901234" },
-        select: { whitelabel: true },
-      });
-      expect(prisma.organization.update).not.toHaveBeenCalled();
-    });
-
-    test("should handle organization with no existing whitelabel", async () => {
-      const mockOrganization = {
-        id: "clg123456789012345678901234",
-        whitelabel: null,
-      };
-
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
-      vi.mocked(prisma.organization.update).mockResolvedValue({} as never);
-
-      const result = await removeOrganizationFaviconUrl("clg123456789012345678901234");
-
       expect(result).toBe(true);
       expect(prisma.organization.update).toHaveBeenCalledWith({
         where: { id: "clg123456789012345678901234" },
         data: {
           whitelabel: {
-            faviconUrl: null,
+            faviconUrl: "https://example.com/new-favicon.png",
           },
         },
       });
@@ -157,7 +121,7 @@ describe("favicon organization", () => {
       const mockOrganization = {
         id: "clg123456789012345678901234",
         whitelabel: {
-          faviconUrl: "old-favicon.png",
+          faviconUrl: "https://example.com/old-favicon.png",
         },
       };
 
@@ -169,9 +133,9 @@ describe("favicon organization", () => {
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
       vi.mocked(prisma.organization.update).mockRejectedValue(mockError);
 
-      await expect(removeOrganizationFaviconUrl("clg123456789012345678901234")).rejects.toThrow(
-        ResourceNotFoundError
-      );
+      await expect(
+        updateOrganizationFaviconUrl("clg123456789012345678901234", "https://example.com/new-favicon.png")
+      ).rejects.toThrow(ResourceNotFoundError);
     });
   });
 });
