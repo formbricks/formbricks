@@ -124,6 +124,6 @@ export const createActionClassZodResolver = (
  */
 export const validatePermissions = (isReadOnly: boolean, t: TFunction) => {
   if (isReadOnly) {
-    throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
+    throw new Error(t("common.you_are_not_authorized_to_perform_this_action"));
   }
 };

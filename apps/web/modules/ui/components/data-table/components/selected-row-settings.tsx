@@ -108,8 +108,8 @@ export const SelectedRowSettings = <T,>({
 
   const quotasDialogText = isQuotasAllowed
     ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
-      value: selectedRowCount,
-    })
+        value: selectedRowCount,
+      })
     : t("environments.contacts.delete_contact_confirmation");
 
   let deleteDialogText: string;
@@ -142,9 +142,7 @@ export const SelectedRowSettings = <T,>({
   return (
     <>
       <div className="bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
-        <div className="lowercase">
-          {`${selectedRowCount} ${selectedTypeLabel} ${t("common.selected")}`}
-        </div>
+        <div className="lowercase">{`${selectedRowCount} ${selectedTypeLabel} ${t("common.selected")}`}</div>
         <Separator />
         <Button
           variant="outline"

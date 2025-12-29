@@ -453,7 +453,7 @@
     "welcome_card": "Carte de bienvenue",
     "you": "Vous",
     "you_are_downgraded_to_the_community_edition": "Vous êtes rétrogradé à l'édition communautaire.",
-    "you_are_not_authorised_to_perform_this_action": "Vous n'êtes pas autorisé à effectuer cette action.",
+    "you_are_not_authorized_to_perform_this_action": "Vous n'êtes pas autorisé à effectuer cette action.",
     "you_have_reached_your_limit_of_project_limit": "Vous avez atteint votre limite de {projectLimit} projets.",
     "you_have_reached_your_monthly_miu_limit_of": "Vous avez atteint votre limite mensuelle de MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Vous avez atteint votre limite de réponses mensuelle de",
@@ -606,6 +606,7 @@
       "waiting_for_your_signal": "En attente de votre signal..."
     },
     "contacts": {
+      "add_attribute": "Ajouter un attribut",
       "attribute_created_successfully": "Attribut créé avec succès",
       "attribute_description": "Description",
       "attribute_description_placeholder": "Brève description",
@@ -618,6 +619,8 @@
       "attribute_label": "Étiquette",
       "attribute_label_placeholder": "ex. Date de naissance",
       "attribute_updated_successfully": "Attribut mis à jour avec succès",
+      "attribute_value": "Valeur",
+      "attribute_value_placeholder": "Valeur d'attribut",
       "contact_deleted_successfully": "Contact supprimé avec succès",
       "contact_not_found": "Aucun contact trouvé",
       "contacts_table_refresh": "Actualiser les contacts",
@@ -631,6 +634,9 @@
       "delete_contact_confirmation_with_quotas": "{value, plural, other {Cela supprimera toutes les réponses aux enquêtes et les attributs de contact associés à ce contact. Toute la personnalisation et le ciblage basés sur les données de ce contact seront perdus. Si ce contact a des réponses qui comptent dans les quotas de l'enquête, les comptes de quotas seront réduits mais les limites de quota resteront inchangées.}}",
       "edit_attribute": "Modifier l'attribut",
       "edit_attribute_description": "Mettez à jour l'étiquette et la description de cet attribut.",
+      "edit_attribute_values": "Modifier les attributs",
+      "edit_attribute_values_description": "Modifiez les valeurs d'attributs spécifiques pour ce contact.",
+      "edit_attributes_success": "Attributs du contact mis à jour avec succès",
       "generate_personal_link": "Générer un lien personnel",
       "generate_personal_link_description": "Sélectionnez une enquête publiée pour générer un lien personnalisé pour ce contact.",
       "no_published_link_surveys_available": "Aucune enquête par lien publiée n'est disponible. Veuillez d'abord publier une enquête par lien.",
@@ -1416,7 +1422,7 @@
         "enter_fallback_value": "Saisir une valeur de secours",
         "equals": "Égal",
         "equals_one_of": "Égal à l'un de",
-        "error_publishing_survey": "Une erreur est survenue lors de la publication de l'enquête.",
+        "error_publishing_survey": "Une erreur s'est produite lors de la publication du sondage.",
         "error_saving_changes": "Erreur lors de l'enregistrement des modifications",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Autoriser plusieurs réponses ; continuer à afficher même après une réponse (par exemple, boîte de commentaires).",
         "everyone": "Tout le monde",
@@ -1692,7 +1698,7 @@
         "survey_display_settings": "Paramètres d'affichage de l'enquête",
         "survey_placement": "Placement de l'enquête",
         "survey_trigger": "Déclencheur d'enquête",
-        "switch_multi_lanugage_on_to_get_started": "Activez le multilingue pour commencer 👉",
+        "switch_multi_language_on_to_get_started": "Activez le mode multilingue pour commencer 👉",
         "target_block_not_found": "Bloc cible non trouvé",
         "targeted": "Ciblé",
         "ten_points": "10 points",
@@ -1746,7 +1752,7 @@
         "your_web_app": "Votre application web",
         "zip": "Zip"
       },
-      "error_deleting_survey": "Une erreur est survenue lors de la suppression de l'enquête.",
+      "error_deleting_survey": "Une erreur s'est produite lors de la suppression du sondage",
       "filter": {
         "complete_and_partial_responses": "Réponses complètes et partielles",
         "complete_responses": "Réponses complètes",
@@ -1797,7 +1803,7 @@
       "search_by_survey_name": "Recherche par nom d'enquête",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Si vous n’encryptez pas les identifiants à usage unique, toute valeur pour « suid=... » fonctionne pour une seule réponse",
+          "custom_single_use_id_description": "Si vous ne chiffrez pas l'ID à usage unique, n'importe quelle valeur pour “suid=...” fonctionne pour une réponse.",
           "custom_single_use_id_title": "Vous pouvez définir n'importe quelle valeur comme identifiant à usage unique dans l'URL.",
           "custom_start_point": "Point de départ personnalisé",
           "data_prefilling": "Préremplissage des données",
