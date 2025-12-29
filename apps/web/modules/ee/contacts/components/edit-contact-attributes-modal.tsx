@@ -218,28 +218,29 @@ export const EditContactAttributesModal = ({
                         <FormItem className="flex-1">
                           <FormLabel>{t("environments.contacts.attribute_value")}</FormLabel>
                           <FormControl>
-                            <Input
-                              {...valueField}
-                              placeholder={t("environments.contacts.attribute_value_placeholder")}
-                              className="w-full"
-                            />
+                            <div className="flex space-x-2">
+                              <Input
+                                {...valueField}
+                                placeholder={t("environments.contacts.attribute_value_placeholder")}
+                                className="w-full"
+                              />
+                              <div className="flex items-end pb-0.5">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  disabled={["email", "userId", "firstName", "lastName"].includes(field.key)}
+                                  size="sm"
+                                  onClick={() => handleRemoveAttribute(index)}
+                                  className="h-10 w-10 p-0">
+                                  <TrashIcon className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
                           </FormControl>
                           <FormError />
                         </FormItem>
                       )}
                     />
-
-                    <div className="flex items-end pb-0.5">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={["email", "userId", "firstName", "lastName"].includes(field.key)}
-                        size="sm"
-                        onClick={() => handleRemoveAttribute(index)}
-                        className="h-10 w-10 p-0">
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </div>
                 ))}
               </div>
