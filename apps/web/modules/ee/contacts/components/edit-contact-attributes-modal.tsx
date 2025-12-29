@@ -229,10 +229,10 @@ export const EditContactAttributesModal = ({
                       )}
                     />
 
-                    <div className="flex items-end pb-2">
+                    <div className="flex items-end pb-0.5">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         disabled={["email", "userId", "firstName", "lastName"].includes(field.key)}
                         size="sm"
                         onClick={() => handleRemoveAttribute(index)}
@@ -244,7 +244,7 @@ export const EditContactAttributesModal = ({
                 ))}
               </div>
 
-              <Button type="button" variant="outline" onClick={handleAddAttribute} className="w-fit">
+              <Button type="button" variant="secondary" onClick={handleAddAttribute} className="w-fit">
                 <PlusIcon className="mr-2 h-4 w-4" />
                 {t("environments.contacts.add_attribute")}
               </Button>
