@@ -1,5 +1,6 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -164,7 +165,7 @@ export const AddIntegrationModal = ({
           return survey.id === selectedIntegration.surveyId;
         })!
       );
-      setMapping(selectedIntegration.mapping.map((m) => ({ ...m, id: crypto.randomUUID() })));
+      setMapping(selectedIntegration.mapping.map((m) => ({ ...m, id: createId() })));
       return;
     }
     resetForm();

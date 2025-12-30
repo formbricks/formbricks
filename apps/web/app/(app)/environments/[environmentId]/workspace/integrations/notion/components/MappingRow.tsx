@@ -1,5 +1,6 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,7 +26,7 @@ export type TMapping = {
 };
 
 export const createEmptyMapping = (): TMapping => ({
-  id: crypto.randomUUID(),
+  id: createId(),
   column: { id: "", name: "", type: "" },
   element: { id: "", name: "", type: "" },
 });
