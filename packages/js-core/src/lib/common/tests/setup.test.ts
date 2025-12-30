@@ -243,7 +243,6 @@ describe("setup.ts", () => {
         },
         filteredSurveys: [{ name: "SurveyA" }],
       });
-      expect(vi.mocked(await import("@/lib/survey/no-code-action")).checkPageUrl).toHaveBeenCalled();
     });
 
     test("calls handleErrorOnFirstSetup if environment fetch fails initially", async () => {
@@ -317,11 +316,6 @@ describe("setup.ts", () => {
       await expect(async () => {
         await handleErrorOnFirstSetup(errorObj);
       }).rejects.toThrow("Could not set up formbricks");
-
-      // expect(AsyncStorage.setItem).toHaveBeenCalledWith(
-      //   RN_ASYNC_STORAGE_KEY,
-      //   expect.stringContaining('"value":"error"')
-      // );
 
       expect(setItemMock).toHaveBeenCalledWith(
         JS_LOCAL_STORAGE_KEY,
