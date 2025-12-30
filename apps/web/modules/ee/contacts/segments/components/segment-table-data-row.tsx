@@ -29,7 +29,7 @@ export const SegmentTableDataRow = ({
     <>
       <button
         key={id}
-        className="grid h-12 w-full cursor-pointer grid-cols-7 content-center rounded-lg p-2 text-left transition-colors ease-in-out hover:bg-slate-100"
+        className="grid h-12 w-full cursor-pointer grid-cols-7 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-100"
         onClick={() => setIsEditSegmentModalOpen(true)}>
         <div className="col-span-4 flex items-center pl-6 text-sm">
           <div className="flex items-center gap-4">
@@ -42,7 +42,7 @@ export const SegmentTableDataRow = ({
             </div>
           </div>
         </div>
-        <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+        <div className="col-span-1 my-auto hidden text-center text-sm whitespace-nowrap text-slate-500 sm:block">
           <div className="ph-no-capture text-slate-900">{surveys?.length}</div>
         </div>
         <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
@@ -52,7 +52,7 @@ export const SegmentTableDataRow = ({
             }).replace("about", "")}
           </div>
         </div>
-        <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
+        <div className="col-span-1 my-auto hidden text-center text-sm whitespace-normal text-slate-500 sm:block">
           <div className="ph-no-capture text-slate-900">{format(createdAt, "do 'of' MMMM, yyyy")}</div>
         </div>
       </button>

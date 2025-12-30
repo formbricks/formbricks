@@ -53,6 +53,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
               },
             },
           },
+          whitelabel: null,
         },
       },
     };
@@ -71,6 +72,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
       },
       organizationId: "clh1a2b3c4d5e6f7g8h9k",
       organizationBilling: mockData.project.organization.billing,
+      organizationWhitelabel: null,
     });
 
     expect(prisma.environment.findUnique).toHaveBeenCalledWith({
@@ -88,6 +90,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
               select: {
                 id: true,
                 billing: true,
+                whitelabel: true,
               },
             },
           },
@@ -198,6 +201,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
               },
             },
           },
+          whitelabel: null,
         },
       },
     };
@@ -216,6 +220,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
       },
       organizationId: "clh1a2b3c4d5e6f7g8h9u",
       organizationBilling: mockData.project.organization.billing,
+      organizationWhitelabel: null,
     });
   });
 });

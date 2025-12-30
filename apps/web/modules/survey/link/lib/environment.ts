@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TOrganizationBilling } from "@formbricks/types/organizations";
+import { TOrganizationBilling, TOrganizationWhitelabel } from "@formbricks/types/organizations";
 import { validateInputs } from "@/lib/utils/validate";
 
 /**
@@ -22,6 +22,7 @@ export interface TEnvironmentContextForLinkSurvey {
   project: TProjectForLinkSurvey;
   organizationId: string;
   organizationBilling: TOrganizationBilling;
+  organizationWhitelabel: TOrganizationWhitelabel | null;
 }
 
 /**
@@ -65,6 +66,7 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
                 select: {
                   id: true,
                   billing: true,
+                  whitelabel: true,
                 },
               },
             },
@@ -91,7 +93,8 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
           linkSurveyBranding: environment.project.linkSurveyBranding,
         },
         organizationId: environment.project.organizationId,
-        organizationBilling: environment.project.organization.billing as TOrganizationBilling,
+        organizationBilling: environment.project.organization.billing,
+        organizationWhitelabel: environment.project.organization.whitelabel ?? null,
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
