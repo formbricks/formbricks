@@ -263,7 +263,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   <div className="space-y-6">
                     {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
                       <div className="text-sm text-slate-500 italic">
-                        {t("environments.surveys.edit.switch_multi_lanugage_on_to_get_started")}
+                        {t("environments.surveys.edit.switch_multi_language_on_to_get_started")}
                       </div>
                     ) : null}
 

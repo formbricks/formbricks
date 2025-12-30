@@ -427,7 +427,7 @@ checksums:
     common/workspaces: 8ba082a84aa35cf851af1cf874b853e2
     common/you: db2a4a796b70cc1430d1b21f6ffb6dcb
     common/you_are_downgraded_to_the_community_edition: e3ae56502ff787109cae0997519f628e
-    common/you_are_not_authorised_to_perform_this_action: 49595693c5c119aa213bb7854ddac780
+    common/you_are_not_authorized_to_perform_this_action: 1b3255ab740582ddff016a399f8bf302
     common/you_have_reached_your_limit_of_workspace_limit: 54d754c3267036742f23fb05fd3fcc45
     common/you_have_reached_your_monthly_miu_limit_of: ded62fc6842c707f62622386ca34f71a
     common/you_have_reached_your_monthly_response_limit_of: 3824db23ecc3dcd2b1787b98ccfdd5f9
@@ -1182,7 +1182,7 @@ checksums:
     environments/surveys/edit/customize_survey_logo: 7f7e26026c88a727228f2d7a00d914e2
     environments/surveys/edit/darken_or_lighten_background_of_your_choice: 304a64a8050ebf501d195e948cd25b6f
     environments/surveys/edit/date_format: e95dfc41ac944874868487457ddc057a
-    environments/surveys/edit/days_before_showing_this_survey_again: 354fb28c5ff076f022d82a20c749ee46
+    environments/surveys/edit/days_before_showing_this_survey_again: 9ee757e5c3a07844b12ceb406dc65b04
     environments/surveys/edit/delete_block: c00617cb0724557e486304276063807a
     environments/surveys/edit/delete_choice: fd750208d414b9ad8c980c161a0199e1
     environments/surveys/edit/disable_the_visibility_of_survey_progress: 2af631010114307ac2a91612559c9618
@@ -1289,7 +1289,7 @@ checksums:
     environments/surveys/edit/how_funky_do_you_want_your_cards_in_survey_type_derived_surveys: 3cb16b37510c01af20a80f51b598346e
     environments/surveys/edit/if_you_need_more_please: a7d208c283caf6b93800b809fca80768
     environments/surveys/edit/if_you_really_want_that_answer_ask_until_you_get_it: 31c18a8c7c578db2ba49eed663d1739f
-    environments/surveys/edit/ignore_global_waiting_time: ea58ae981c2d3345b5a4e49e64be19ed
+    environments/surveys/edit/ignore_global_waiting_time: e08db543ace4935625e0961cc6e60489
     environments/surveys/edit/ignore_global_waiting_time_description: 37d173a4d537622de40677389238d859
     environments/surveys/edit/image: 048ba7a239de0fbd883ade8558415830
     environments/surveys/edit/includes_all_of: ec72f90c0839d4c3bb518deb03894031
@@ -1362,7 +1362,7 @@ checksums:
     environments/surveys/edit/options: 59156082418d80acb211f973b1218f11
     environments/surveys/edit/options_used_in_logic_bulk_error: 1720e7a01a0bcb67c152cfe6a68c5355
     environments/surveys/edit/override_theme_with_individual_styles_for_this_survey: edffc97f5d3372419fe0444de0a5aa3f
-    environments/surveys/edit/overwrite_global_waiting_time: 7bc23bd502b6bd048356b67acd956d9d
+    environments/surveys/edit/overwrite_global_waiting_time: bf39ba91e35742e1ff3a281a18e9159c
     environments/surveys/edit/overwrite_global_waiting_time_description: c5ffe497e889e955f983bc82dbe2da3f
     environments/surveys/edit/overwrite_placement: d7278be243e52c5091974e0fc4a7c342
     environments/surveys/edit/overwrite_survey_logo: a89cb566dfcc1559446abd8b830c84ed
@@ -1424,7 +1424,7 @@ checksums:
     environments/surveys/edit/recall_data: 39beabd626c0af15316885cff5d5d9b8
     environments/surveys/edit/recall_information_from: 884cfd143456fab1a91f0744cc92f0c8
     environments/surveys/edit/recontact_options_section: 57a23e1bcab6baa484b27b615e6c906a
-    environments/surveys/edit/recontact_options_section_description: 1e04011440c339a3b5cfff12d55b7f12
+    environments/surveys/edit/recontact_options_section_description: 58cfdc80c9c4ec69214299d3cd5ee1e9
     environments/surveys/edit/redirect_thank_you_card: 09f721c4b62e2584e40a53507092ea83
     environments/surveys/edit/redirect_to_url: e30ef505a921b5495ed70eb772e6ee0d
     environments/surveys/edit/remove_description: b52de820b4bbcb354eb62246c4112a9a
@@ -1433,8 +1433,8 @@ checksums:
     environments/surveys/edit/required: 04d7fb6f37ffe0a6ca97d49e2a8b6eb5
     environments/surveys/edit/reset_to_theme_styles: f9edc3970ec23d6c4d2d7accc292ef3a
     environments/surveys/edit/reset_to_theme_styles_main_text: d86fb2213d3b2efbd0361526dc6cb27b
-    environments/surveys/edit/respect_global_waiting_time: e5d80593318c28a25147c2d52ac8e46d
-    environments/surveys/edit/respect_global_waiting_time_description: 6fb317d929507487e76d9b536245c4e8
+    environments/surveys/edit/respect_global_waiting_time: 971a6f60986862995f7cc1a5611ed892
+    environments/surveys/edit/respect_global_waiting_time_description: bf96a546839d4da7d79442f2be3a1f42
     environments/surveys/edit/response_limit_can_t_be_set_to_0: 278664873ee3b1046dbcb58848efc12a
     environments/surveys/edit/response_limit_needs_to_exceed_number_of_received_responses: 9a9c223c0918ded716ddfaa84fbaa8d9
     environments/surveys/edit/response_limits_redirections_and_more: e4f1cf94e56ad0e1b08701158d688802
@@ -1529,8 +1529,8 @@ checksums:
     environments/surveys/edit/visibility_and_recontact_description: 2969ab679e1f6111dd96e95cee26e219
     environments/surveys/edit/wait: 014d18ade977bf08d75b995076596708
     environments/surveys/edit/wait_a_few_seconds_after_the_trigger_before_showing_the_survey: 13d5521cf73be5afeba71f5db5847919
-    environments/surveys/edit/waiting_time_across_surveys: 7ddc00d5a500a646bf5a8adb462248bc
-    environments/surveys/edit/waiting_time_across_surveys_description: 0082297c799b909564cecab095dd14e2
+    environments/surveys/edit/waiting_time_across_surveys: 6873c18d51830e2cadef67cce6a2c95c
+    environments/surveys/edit/waiting_time_across_surveys_description: 6edafaeb3ccd8cadde81175776636c8e
     environments/surveys/edit/welcome_message: 986a434e3895c8ee0b267df95cc40051
     environments/surveys/edit/without_a_filter_all_of_your_users_can_be_surveyed: 451990569c61f25d01044cc45b1ce122
     environments/surveys/edit/you_have_not_created_a_segment_yet: c6658bd1cee9c5c957c675db044708dd
@@ -1826,8 +1826,8 @@ checksums:
     environments/workspace/general/delete_workspace_settings_description: 411ef100f167fc8fca64e833b6c0d030
     environments/workspace/general/error_saving_workspace_information: e7b8022785619ef34de1fb1630b3c476
     environments/workspace/general/only_owners_or_managers_can_delete_workspaces: 58da180cd2610210302d85a9896d80bd
-    environments/workspace/general/recontact_waiting_time: eb6b91b5cc4eeb7213d991492372ee13
-    environments/workspace/general/recontact_waiting_time_settings_description: 8922cde1f95777f9a2747fb4bed57ab5
+    environments/workspace/general/recontact_waiting_time: 8977b5160fbf88c456608982b33e246f
+    environments/workspace/general/recontact_waiting_time_settings_description: ebd64fddbea9387b12c027a18358db7e
     environments/workspace/general/this_action_cannot_be_undone: 3d8b13374ffd3cefc0f3f7ce077bd9c9
     environments/workspace/general/wait_x_days_before_showing_next_survey: d96228788d32ec23dc0d8c8ba77150a6
     environments/workspace/general/waiting_period_updated_successfully: fe21f3034e63ed079dc0f9b9b1dfdbdf
