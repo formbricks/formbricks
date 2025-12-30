@@ -1,10 +1,10 @@
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 
 export const TYPE_MAPPING = {
-  [TSurveyQuestionTypeEnum.CTA]: ["checkbox"],
-  [TSurveyQuestionTypeEnum.MultipleChoiceMulti]: ["multi_select"],
-  [TSurveyQuestionTypeEnum.MultipleChoiceSingle]: ["select", "status"],
-  [TSurveyQuestionTypeEnum.OpenText]: [
+  [TSurveyElementTypeEnum.CTA]: ["checkbox"],
+  [TSurveyElementTypeEnum.MultipleChoiceMulti]: ["multi_select"],
+  [TSurveyElementTypeEnum.MultipleChoiceSingle]: ["select", "status"],
+  [TSurveyElementTypeEnum.OpenText]: [
     "created_by",
     "created_time",
     "email",
@@ -16,17 +16,17 @@ export const TYPE_MAPPING = {
     "title",
     "url",
   ],
-  [TSurveyQuestionTypeEnum.NPS]: ["number"],
-  [TSurveyQuestionTypeEnum.Consent]: ["checkbox"],
-  [TSurveyQuestionTypeEnum.Rating]: ["number"],
-  [TSurveyQuestionTypeEnum.PictureSelection]: ["url"],
-  [TSurveyQuestionTypeEnum.FileUpload]: ["url"],
-  [TSurveyQuestionTypeEnum.Date]: ["date"],
-  [TSurveyQuestionTypeEnum.Address]: ["rich_text"],
-  [TSurveyQuestionTypeEnum.Matrix]: ["rich_text"],
-  [TSurveyQuestionTypeEnum.Cal]: ["checkbox"],
-  [TSurveyQuestionTypeEnum.ContactInfo]: ["rich_text"],
-  [TSurveyQuestionTypeEnum.Ranking]: ["rich_text"],
+  [TSurveyElementTypeEnum.NPS]: ["number"],
+  [TSurveyElementTypeEnum.Consent]: ["checkbox"],
+  [TSurveyElementTypeEnum.Rating]: ["number"],
+  [TSurveyElementTypeEnum.PictureSelection]: ["url"],
+  [TSurveyElementTypeEnum.FileUpload]: ["url"],
+  [TSurveyElementTypeEnum.Date]: ["date"],
+  [TSurveyElementTypeEnum.Address]: ["rich_text"],
+  [TSurveyElementTypeEnum.Matrix]: ["rich_text"],
+  [TSurveyElementTypeEnum.Cal]: ["checkbox"],
+  [TSurveyElementTypeEnum.ContactInfo]: ["rich_text"],
+  [TSurveyElementTypeEnum.Ranking]: ["rich_text"],
 };
 
 export const UNSUPPORTED_TYPES_BY_NOTION = [
