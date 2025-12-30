@@ -15,7 +15,7 @@ const OnboardingLayout = async (props) => {
   const t = await getTranslate();
 
   const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+  if (!session?.user) {
     return redirect(`/auth/login`);
   }
 

@@ -58,12 +58,12 @@ const ElementCheckbox = ({
     onChange: (value: string[]) => void;
   };
 }) => {
-  const handleCheckedChange = (checked: boolean) => {
-    if (checked) {
-      field.onChange([...(field.value || []), element.id]);
-    } else {
-      field.onChange(field.value?.filter((value) => value !== element.id) || []);
-    }
+  const addElement = () => {
+    field.onChange([...(field.value || []), element.id]);
+  };
+
+  const removeElement = () => {
+    field.onChange(field.value?.filter((value) => value !== element.id) || []);
   };
 
   return (
@@ -75,7 +75,7 @@ const ElementCheckbox = ({
           value={element.id}
           className="bg-white"
           checked={field.value?.includes(element.id)}
-          onCheckedChange={handleCheckedChange}
+          onCheckedChange={(checked) => (checked ? addElement() : removeElement())}
         />
         <span className="ml-2">
           {getTextContent(recallToHeadline(element.headline, selectedSurvey, false, "default")["default"])}
