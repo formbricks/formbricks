@@ -221,11 +221,6 @@ export const ContactsTable = ({
 
   return (
     <div className="w-full">
-      <SearchBar
-        value={searchValue}
-        onChange={setSearchValue}
-        placeholder={t("environments.contacts.search_contact")}
-      />
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}
@@ -240,6 +235,15 @@ export const ContactsTable = ({
           type="contact"
           deleteAction={deleteContact}
           isQuotasAllowed={isQuotasAllowed}
+          leftContent={
+            <div className="w-64">
+              <SearchBar
+                value={searchValue}
+                onChange={setSearchValue}
+                placeholder={t("environments.contacts.search_contact")}
+              />
+            </div>
+          }
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
@@ -252,6 +256,7 @@ export const ContactsTable = ({
                         key={header.id}
                         header={header}
                         setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+                        showColumnDividers={false}
                       />
                     ))}
                   </SortableContext>
@@ -275,11 +280,7 @@ export const ContactsTable = ({
                       style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
                       className={cn(
                         "border-slate-200 bg-white px-4 py-2 shadow-none group-hover:bg-slate-100",
-                        row.getIsSelected() && "bg-slate-100",
-                        {
-                          "border-r": !cell.column.getIsLastColumn(),
-                          "border-l": !cell.column.getIsFirstColumn(),
-                        }
+                        row.getIsSelected() && "bg-slate-100"
                       )}>
                       <div
                         className={cn("flex flex-1 items-center truncate", isExpanded ? "h-10" : "h-full")}>

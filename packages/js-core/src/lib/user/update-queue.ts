@@ -118,6 +118,10 @@ export class UpdateQueue {
 
             // Only send updates if we have a userId (either from updates or local storage)
             if (effectiveUserId) {
+              const previousUserId = config.get().user.data.userId;
+              const isNewUser = currentUpdates.userId && currentUpdates.userId !== previousUserId;
+              const hasAttributes = Object.keys(currentUpdates.attributes ?? {}).length > 0;
+
               const result = await sendUpdates({
                 updates: {
                   userId: effectiveUserId,
@@ -126,7 +130,13 @@ export class UpdateQueue {
               });
 
               if (result.ok) {
-                logger.debug("Updates sent successfully");
+                if (isNewUser) {
+                  logger.debug(`User successfully identified: ${effectiveUserId}`);
+                }
+                if (hasAttributes) {
+                  const attributeKeys = Object.keys(currentUpdates.attributes ?? {}).join(", ");
+                  logger.debug(`Attributes successfully set: ${attributeKeys}`);
+                }
               } else {
                 logger.error(
                   `Failed to send updates: ${result.error.responseMessage ?? result.error.message}`
