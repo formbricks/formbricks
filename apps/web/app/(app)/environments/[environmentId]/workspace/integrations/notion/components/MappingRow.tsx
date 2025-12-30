@@ -213,11 +213,11 @@ export const MappingRow = ({
         </div>
         <div className="flex space-x-2">
           {mapping.length > 1 && (
-            <Button variant="secondary" size="icon" className="size-10" onClick={deleteRow}>
+            <Button variant="secondary" size="icon" className="size-10" onClick={deleteRow} type="button">
               <TrashIcon />
             </Button>
           )}
-          <Button variant="secondary" size="icon" className="size-10" onClick={addRow}>
+          <Button variant="secondary" size="icon" className="size-10" onClick={addRow} type="button">
             <PlusIcon />
           </Button>
         </div>
