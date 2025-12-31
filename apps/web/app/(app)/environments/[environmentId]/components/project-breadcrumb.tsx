@@ -1,7 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, CogIcon, HotelIcon, Loader2, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
@@ -36,12 +36,12 @@ interface ProjectBreadcrumbProps {
 }
 
 const isActiveProjectSetting = (pathname: string, settingId: string): boolean => {
-  // Match /project/{settingId} or /project/{settingId}/... but exclude settings paths
+  // Match /workspace/{settingId} or /workspace/{settingId}/... but exclude settings paths
   if (pathname.includes("/settings/")) {
     return false;
   }
-  // Check if path matches /project/{settingId} (with optional trailing path)
-  const pattern = new RegExp(`/project/${settingId}(?:/|$)`);
+  // Check if path matches /workspace/{settingId} (with optional trailing path)
+  const pattern = new RegExp(`/workspace/${settingId}(?:/|$)`);
   return pattern.test(pathname);
 };
 
@@ -90,7 +90,7 @@ export const ProjectBreadcrumb = ({
           const error = new Error(errorMessage);
           logger.error(error, "Failed to load projects");
           Sentry.captureException(error);
-          setLoadError(errorMessage || t("common.failed_to_load_projects"));
+          setLoadError(errorMessage || t("common.failed_to_load_workspaces"));
         }
         setIsLoadingProjects(false);
       });
@@ -101,42 +101,42 @@ export const ProjectBreadcrumb = ({
     {
       id: "general",
       label: t("common.general"),
-      href: `/environments/${currentEnvironmentId}/project/general`,
+      href: `/environments/${currentEnvironmentId}/workspace/general`,
     },
     {
       id: "look",
       label: t("common.look_and_feel"),
-      href: `/environments/${currentEnvironmentId}/project/look`,
+      href: `/environments/${currentEnvironmentId}/workspace/look`,
     },
     {
       id: "app-connection",
       label: t("common.website_and_app_connection"),
-      href: `/environments/${currentEnvironmentId}/project/app-connection`,
+      href: `/environments/${currentEnvironmentId}/workspace/app-connection`,
     },
     {
       id: "integrations",
       label: t("common.integrations"),
-      href: `/environments/${currentEnvironmentId}/project/integrations`,
+      href: `/environments/${currentEnvironmentId}/workspace/integrations`,
     },
     {
       id: "teams",
       label: t("common.team_access"),
-      href: `/environments/${currentEnvironmentId}/project/teams`,
+      href: `/environments/${currentEnvironmentId}/workspace/teams`,
     },
     {
       id: "languages",
       label: t("common.survey_languages"),
-      href: `/environments/${currentEnvironmentId}/project/languages`,
+      href: `/environments/${currentEnvironmentId}/workspace/languages`,
     },
     {
       id: "tags",
       label: t("common.tags"),
-      href: `/environments/${currentEnvironmentId}/project/tags`,
+      href: `/environments/${currentEnvironmentId}/workspace/tags`,
     },
   ];
 
   if (!currentProject) {
-    const errorMessage = `Project not found for project id: ${currentProjectId}`;
+    const errorMessage = `Workspace not found for workspace id: ${currentProjectId}`;
     logger.error(errorMessage);
     Sentry.captureException(new Error(errorMessage));
     return;
@@ -145,7 +145,7 @@ export const ProjectBreadcrumb = ({
   const handleProjectChange = (projectId: string) => {
     if (projectId === currentProjectId) return;
     startTransition(() => {
-      router.push(`/projects/${projectId}/`);
+      router.push(`/workspaces/${projectId}/`);
     });
   };
 
@@ -159,7 +159,7 @@ export const ProjectBreadcrumb = ({
 
   const handleProjectSettingsNavigation = (settingId: string) => {
     startTransition(() => {
-      router.push(`/environments/${currentEnvironmentId}/project/${settingId}`);
+      router.push(`/environments/${currentEnvironmentId}/workspace/${settingId}`);
     });
   };
 
@@ -198,21 +198,21 @@ export const ProjectBreadcrumb = ({
           id="projectDropdownTrigger"
           asChild>
           <div className="flex items-center gap-1">
-            <FolderOpenIcon className="h-3 w-3" strokeWidth={1.5} />
+            <HotelIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{projectName}</span>
             {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
-            {isProjectDropdownOpen ? (
-              <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
+            {isEnvironmentBreadcrumbVisible && !isProjectDropdownOpen ? (
+              <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
-              isEnvironmentBreadcrumbVisible && <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
+              <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             )}
           </div>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start" className="mt-2">
           <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-            <FolderOpenIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-            {t("common.choose_project")}
+            <HotelIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+            {t("common.choose_workspace")}
           </div>
           {isLoadingProjects && (
             <div className="flex items-center justify-center py-2">
@@ -251,7 +251,7 @@ export const ProjectBreadcrumb = ({
                 <DropdownMenuCheckboxItem
                   onClick={handleAddProject}
                   className="w-full cursor-pointer justify-between">
-                  <span>{t("common.add_new_project")}</span>
+                  <span>{t("common.add_new_workspace")}</span>
                   <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
                 </DropdownMenuCheckboxItem>
               )}
@@ -261,7 +261,7 @@ export const ProjectBreadcrumb = ({
             <DropdownMenuSeparator />
             <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
               <CogIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-              {t("common.project_configuration")}
+              {t("common.workspace_configuration")}
             </div>
             {projectSettings.map((setting) => (
               <DropdownMenuCheckboxItem

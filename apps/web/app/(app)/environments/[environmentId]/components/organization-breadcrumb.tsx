@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import {
-  BuildingIcon,
+  Building2Icon,
   ChevronDownIcon,
   ChevronRightIcon,
   Loader2,
@@ -172,7 +172,7 @@ export const OrganizationBreadcrumb = ({
           id="organizationDropdownTrigger"
           asChild>
           <div className="flex items-center gap-1">
-            <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
+            <Building2Icon className="h-3 w-3" strokeWidth={1.5} />
             <span>{organizationName}</span>
             {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isOrganizationDropdownOpen ? (
@@ -186,7 +186,7 @@ export const OrganizationBreadcrumb = ({
           {showOrganizationDropdown && (
             <>
               <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                <BuildingIcon className="mr-2 inline h-4 w-4" />
+                <Building2Icon className="mr-2 inline h-4 w-4" />
                 {t("common.choose_organization")}
               </div>
               {isLoadingOrganizations && (

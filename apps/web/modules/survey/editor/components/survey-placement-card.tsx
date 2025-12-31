@@ -91,7 +91,7 @@ export const SurveyPlacementCard = ({
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -144,7 +144,7 @@ export const SurveyPlacementCard = ({
             <div>
               <p className="text-xs text-slate-500">
                 {t("environments.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
-                <Link href={`/environments/${environmentId}/project/look`} target="_blank">
+                <Link href={`/environments/${environmentId}/workspace/look`} target="_blank">
                   <span className="underline">
                     {t("environments.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
                   </span>

@@ -46,7 +46,7 @@ export const DeleteProjectRender = ({
           localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, productionEnvironment.id);
         }
       }
-      toast.success(t("environments.project.general.project_deleted_successfully"));
+      toast.success(t("environments.workspace.general.workspace_deleted_successfully"));
       router.push("/");
     } else {
       const errorMessage = getFormattedErrorMessage(deleteProjectResponse);
@@ -62,12 +62,12 @@ export const DeleteProjectRender = ({
         <div className="space-y-2">
           <p className="text-sm text-slate-900">
             {t(
-              "environments.project.general.delete_project_name_includes_surveys_responses_people_and_more",
+              "environments.workspace.general.delete_workspace_name_includes_surveys_responses_people_and_more",
               {
                 projectName: truncate(currentProject.name, 30),
               }
             )}{" "}
-            <strong>{t("environments.project.general.this_action_cannot_be_undone")}</strong>
+            <strong>{t("environments.workspace.general.this_action_cannot_be_undone")}</strong>
           </p>
           <Button
             disabled={isDeleteDisabled}
@@ -82,18 +82,18 @@ export const DeleteProjectRender = ({
         <Alert variant="warning">
           <AlertDescription>
             {!isOwnerOrManager
-              ? t("environments.project.general.only_owners_or_managers_can_delete_projects")
-              : t("environments.project.general.cannot_delete_only_project")}
+              ? t("environments.workspace.general.only_owners_or_managers_can_delete_workspaces")
+              : t("environments.workspace.general.cannot_delete_only_workspace")}
           </AlertDescription>
         </Alert>
       )}
 
       <DeleteDialog
-        deleteWhat="Project"
+        deleteWhat="Workspace"
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteProject}
-        text={t("environments.project.general.delete_project_confirmation", {
+        text={t("environments.workspace.general.delete_workspace_confirmation", {
           projectName: truncate(currentProject.name, 30),
         })}
         isDeleting={isDeleting}

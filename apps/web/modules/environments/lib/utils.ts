@@ -44,7 +44,7 @@ export const getEnvironmentAuth = reactCache(async (environmentId: string): Prom
   ]);
 
   if (!project) {
-    throw new Error(t("common.project_not_found"));
+    throw new Error(t("common.workspace_not_found"));
   }
 
   if (!environment) {

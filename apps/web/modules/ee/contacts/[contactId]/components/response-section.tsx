@@ -42,7 +42,7 @@ export const ResponseSection = async ({ environment, contactId, environmentTags 
   const project = await getProjectByEnvironmentId(environment.id);
 
   if (!project) {
-    throw new Error(t("common.project_not_found"));
+    throw new Error(t("common.workspace_not_found"));
   }
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);

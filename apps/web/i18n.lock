@@ -94,9 +94,9 @@ checksums:
     common/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
     common/add_logo: c8665aa9afd0d5a13528bdc96daefa53
     common/add_member: 11979625770516ca287e929381778e02
-    common/add_new_project: 80e83b2059d1f727d68919a93b55a397
-    common/add_project: b9188094aece9060064ce9b03b393f74
+    common/add_new_workspace: 6571cc8952d3c9a017c51cb842965d57
     common/add_to_team: 81ea05d21e72679f58a5bc77f6077ba1
+    common/add_workspace: 17b0856283b433b848ce9bf4c03c6ae5
     common/all: 5e2e93f8e2a5f315b6fecdd0a0e6f55f
     common/all_questions: e13634cf510cc6e89b65a6394ea96a21
     common/allow: 3e39cc5940255e6bff0fea95c817dd43
@@ -121,7 +121,7 @@ checksums:
     common/choices: 8a7a77a71ec6eebc363c5dc0f8490a4d
     common/choose_environment: 5762cd499529815fc3e6a7feea39f90b
     common/choose_organization: a8f5db68012323bfbb1a0ad0fb194603
-    common/choose_project: e9db88b0ae67498478a1ecb523e50e71
+    common/choose_workspace: f9ed22d76c69cc75aa56cf3da3fa6320
     common/clear_all: 854be0c051e4a3491a2cdd9dd8c1b4d5
     common/clear_filters: 8f40ab5af527e4b190da94e7b6221379
     common/clear_selection: af5d720527735d4253e289400d29ec9e
@@ -148,9 +148,9 @@ checksums:
     common/count_contacts: b1c413a4b06961b71b6aeee95d6775d7
     common/count_responses: 690118a456c01c5b4d437ae82b50b131
     common/create_new_organization: 51dae7b33143686ee218abf5bea764a5
-    common/create_project: 606c39c41c8b42373ba02ddf2a928b6c
     common/create_segment: 9d8291cd4d778b53b73bbc84fd91c181
     common/create_survey: 1cfbba08d34876566d84b2960054a987
+    common/create_workspace: 2e6718e79964ea5ce22d76c2189c77ca
     common/created: 6045b4ff97fb7dca19ebadfa2e34a700
     common/created_at: f98a3c3bc73494df9bbc14e4e47a018c
     common/created_by: 6775c2fa7d495fea48f1ad816daea93b
@@ -190,7 +190,7 @@ checksums:
     common/expand_rows: b6e06327cb8718dfd6651720843e4dad
     common/failed_to_copy_to_clipboard: de836a7d628d36c832809252f188f784
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
-    common/failed_to_load_projects: 0bba9f9b2b38c189706a486a1bb134c3
+    common/failed_to_load_workspaces: 6ee3448097394517dc605074cd4e6ea4
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/follow_these: 3a730b242bb17a3f95e01bf0dae86885
     common/formbricks_version: d9967c797f3e49ca0cae78bc0ebd19cb
@@ -303,14 +303,6 @@ checksums:
     common/profile: d7878693f91303a438852d617f6d35df
     common/profile_id: 0ef1286cce9d47b148e9a09deccb6655
     common/progress: dd0200d5849ebb7d64c15098ae91d229
-    common/project_configuration: 252b62ea7dbccf752837dcea3cc306c6
-    common/project_creation_description: 2c488ade53bcd4f2bb68f4fd2479e135
-    common/project_id: a61075236b7d84c0fd9ec257e93d193d
-    common/project_name: dd546200ce6ed6eab0675a2324498b34
-    common/project_name_placeholder: 8a9e30ab01666af13c44a73b82c37ec1
-    common/project_not_found: be3b516c02b05553acb4ae338511f645
-    common/project_permission_not_found: ace6b03f06bd14e884e4295c5022d61b
-    common/projects: fe8af5cfb3c95cb35534872a325b225e
     common/question: 2a47e06b62410b16003c4979dee0099f
     common/question_id: d0c3672976c281411bdccf749faf5ffd
     common/questions: 38d08215fd7a8026077c7b64eea6bb59
@@ -400,7 +392,7 @@ checksums:
     common/top_right: 241f95c923846911aaf13af6109333e5
     common/try_again: 33dd8820e743e35a66e6977f69e9d3b5
     common/type: f04471a7ddac844b9ad145eb9911ef75
-    common/unlock_more_projects_with_a_higher_plan: 97975218b01024f3023f3f791fd11887
+    common/unlock_more_workspaces_with_a_higher_plan: fe1590075b855bb4306c9388b65143b0
     common/update: 079fc039262fd31b10532929685c2d1b
     common/updated: 8aa8ff2dc2977ca4b269e80a513100b4
     common/updated_at: 8fdb85248e591254973403755dcc3724
@@ -424,10 +416,19 @@ checksums:
     common/website_app_survey: 258579927ed3955dcc8e1cbd7f0df17f
     common/website_survey: 17513d25a07b6361768a15ec622b021b
     common/welcome_card: 76081ebd5b2e35da9b0f080323704ae7
+    common/workspace_configuration: d0a5812d6a97d7724d565b1017c34387
+    common/workspace_created_successfully: bf401ae83da954f1db48724e2a8e40f1
+    common/workspace_creation_description: aea2f480ba0c54c5cabac72c9c900ddf
+    common/workspace_id: bafef925e1b57b52a69844fdf47aac3c
+    common/workspace_name: 14c04a902a874ab5ddbe9cf369ef0414
+    common/workspace_name_placeholder: 8a9e30ab01666af13c44a73b82c37ec1
+    common/workspace_not_found: 038fb0aaf3570610f4377b9eaed13752
+    common/workspace_permission_not_found: e94bdff8af51175c5767714f82bb4833
+    common/workspaces: 8ba082a84aa35cf851af1cf874b853e2
     common/you: db2a4a796b70cc1430d1b21f6ffb6dcb
     common/you_are_downgraded_to_the_community_edition: e3ae56502ff787109cae0997519f628e
     common/you_are_not_authorized_to_perform_this_action: 1b3255ab740582ddff016a399f8bf302
-    common/you_have_reached_your_limit_of_project_limit: f0ee61ef349d94eeca4f1dd04d1db88d
+    common/you_have_reached_your_limit_of_workspace_limit: 54d754c3267036742f23fb05fd3fcc45
     common/you_have_reached_your_monthly_miu_limit_of: ded62fc6842c707f62622386ca34f71a
     common/you_have_reached_your_monthly_response_limit_of: 3824db23ecc3dcd2b1787b98ccfdd5f9
     common/you_will_be_downgraded_to_the_community_edition_on_date: bff35b54c13e2c205dc4c19056261cc0
@@ -757,130 +758,6 @@ checksums:
     environments/integrations/webhooks/webhook_url_placeholder: 5f2f7c074f6797e1506e21ce865219c1
     environments/integrations/website_or_app_integration_description: d49af190ebc89de0d281bd1434bd4008
     environments/integrations/zapier_integration_description: b8304da62a2490eced5ae50038d34e39
-    environments/project/api_keys/add_api_key: 3c7633bae18a6e19af7a5af12f9bc3da
-    environments/project/api_keys/api_key: ce825fec5b3e1f8e27c45b1a63619985
-    environments/project/api_keys/api_key_copied_to_clipboard: daeeac786ba09ffa650e206609b88f9c
-    environments/project/api_keys/api_key_created: 8dbb2b60a719b0d120e774d6666c8c45
-    environments/project/api_keys/api_key_deleted: 6b63d1a15bea4b41acdd8432e680751a
-    environments/project/api_keys/api_key_label: 66e9effa26d3dccd76383eb858e18dd4
-    environments/project/api_keys/api_key_security_warning: 8959f73972a79c27e4886c7a40e7842e
-    environments/project/api_keys/api_key_updated: 0e03754eb33742b4ee8d5fdad64c9b3f
-    environments/project/api_keys/delete_api_key_confirmation: b2f0342d4e55f0cb244fe121eeeb10a3
-    environments/project/api_keys/duplicate_access: ca60857bc80758977bd9bb30e520f15c
-    environments/project/api_keys/no_api_keys_yet: 829cc32ad4fb0bcafd67f07d50c5fba6
-    environments/project/api_keys/no_env_permissions_found: 97ef49946f3ce15c2ad44dcfd2bce507
-    environments/project/api_keys/organization_access: 96a92fa907b15e0c0e47e33cac15be88
-    environments/project/api_keys/organization_access_description: 773dfeaf6ffbf34dd9a0a3d656a6d83c
-    environments/project/api_keys/permissions: 2160be68b1d6b6577e64634e9feba2ed
-    environments/project/api_keys/project_access: 2c9f8da3ee1ebc2a5fe45786097438ca
-    environments/project/api_keys/secret: f041e5eb96121c8b4f2b8af7e0f83a9b
-    environments/project/api_keys/unable_to_delete_api_key: 1fd76d9a22c5f5f8c241c4891fca8295
-    environments/project/app-connection/app_connection: 778d2305e1a9c8efe91c2c7b4af37ae4
-    environments/project/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd
-    environments/project/app-connection/cache_update_delay_description: 3368e4a8090b7684117a16c94f0c409c
-    environments/project/app-connection/cache_update_delay_title: 60e4a0fcfbd8850bddf29b5c3f59550c
-    environments/project/app-connection/environment_id: 3dba898b081c18cd4cae131765ef411f
-    environments/project/app-connection/environment_id_description: 8b4a763d069b000cfa1a2025a13df80c
-    environments/project/app-connection/formbricks_sdk_connected: 29e8a40ad6a7fdb5af5ee9451a70a9aa
-    environments/project/app-connection/formbricks_sdk_not_connected: 557c534e665750978ba6edb0eacb428e
-    environments/project/app-connection/formbricks_sdk_not_connected_description: 4ddbacae084238bd0cefeded0fe9dbb9
-    environments/project/app-connection/how_to_setup: 3bad40037f280b47fe6418fcbeb4c717
-    environments/project/app-connection/how_to_setup_description: 2ae5cd9456a8acd3986e3d3678e70ed2
-    environments/project/app-connection/receiving_data: 9f2a48c0b0278861add70b526061264c
-    environments/project/app-connection/recheck: f95f2bbe6990a123d60255c87bdd59f7
-    environments/project/app-connection/sdk_connection_details: 89f2c169fd1604c1df5a834517f1eae1
-    environments/project/app-connection/sdk_connection_details_description: d9b5d06776a139aef6fc8ed53d71bf0a
-    environments/project/app-connection/setup_alert_description: 6d676044d01dc2147731ffab7df6c259
-    environments/project/app-connection/setup_alert_title: 9561cca2b391e0df81e8a982921ff2bb
-    environments/project/app-connection/webapp_url: d64d8cc3c4c4ecce780d94755f7e4de9
-    environments/project/general/cannot_delete_only_project: 24751701a42d8b4d2ba6112a5f642bad
-    environments/project/general/delete_project: e4a2a227105c4ec71e561ab1f140eb26
-    environments/project/general/delete_project_confirmation: 54a4ee78867537e0244c7170453cdb3f
-    environments/project/general/delete_project_name_includes_surveys_responses_people_and_more: 11e9ac5a799fbec22495f92f42c40d98
-    environments/project/general/delete_project_settings_description: 74609281410279b8e0515c5649a3f616
-    environments/project/general/error_saving_project_information: 0354e1db63bc495a3b03d1480618044c
-    environments/project/general/only_owners_or_managers_can_delete_projects: fe5cc6941c53180b2938eaf2b1748e89
-    environments/project/general/project_deleted_successfully: dbedf0f0739b822f3951de4aeb2fc26f
-    environments/project/general/project_name_settings_description: 079c6380ad539543a9aa8772bc1b0fa2
-    environments/project/general/project_name_updated_successfully: f95f70f4a49d451dc0441a51d05a3aa3
-    environments/project/general/recontact_waiting_time: 0566dc710b4b9644e276e311b419c4c0
-    environments/project/general/recontact_waiting_time_settings_description: 8922cde1f95777f9a2747fb4bed57ab5
-    environments/project/general/this_action_cannot_be_undone: 3d8b13374ffd3cefc0f3f7ce077bd9c9
-    environments/project/general/wait_x_days_before_showing_next_survey: d96228788d32ec23dc0d8c8ba77150a6
-    environments/project/general/waiting_period_updated_successfully: fe21f3034e63ed079dc0f9b9b1dfdbdf
-    environments/project/general/whats_your_project_called: 599816573dcb6e5042b69fb276ca942c
-    environments/project/languages/add_language: bf0407850be7b8a56901533bceb4bc64
-    environments/project/languages/alias: 87e592cc48d819d7fdcf4597c1c63e7a
-    environments/project/languages/alias_tooltip: 0f681269a71d46a2d988eedaff31515a
-    environments/project/languages/cannot_remove_language_warning: a21bb501338eacefb5cf013aa107f452
-    environments/project/languages/conflict_between_identifier_and_alias: e1ebeb085c7f336bb17717765392cd9f
-    environments/project/languages/conflict_between_selected_alias_and_another_language: 86aadd7491a620c979819be809a21fea
-    environments/project/languages/delete_language_confirmation: 4f83321fed95d689f7ff3aa47a82ce68
-    environments/project/languages/duplicate_language_or_language_id: 0e17e3794b24e2428ca6ffadae0d08f3
-    environments/project/languages/edit_languages: c9d36f6b28557cc7d54e87c37dc18fdd
-    environments/project/languages/identifier: 7d8ade6b85e96216bcd73adeeeeecd8c
-    environments/project/languages/incomplete_translations: d82908b5725f18f5849c7876ad497ebc
-    environments/project/languages/language: 277fd1a41cc237a437cd1d5e4a80463b
-    environments/project/languages/language_deleted_successfully: 4a805d030491f3fe608d2371b0cfcd83
-    environments/project/languages/languages_updated_successfully: 60de474c99c5059c0458cddd0b016c15
-    environments/project/languages/multi_language_surveys: f4f98855fca2b6e9b72959247adb1bec
-    environments/project/languages/multi_language_surveys_description: 58da8b76c9d0f4d39a315667113a40b9
-    environments/project/languages/no_language_found: 8e3b7f1898d35075ba26f54c4cf9e7b8
-    environments/project/languages/please_select_a_language: d1ed573816cea84641c55ef0d33652ff
-    environments/project/languages/remove_language: 1a64563b0f37109f97b78eddd493e381
-    environments/project/languages/remove_language_from_surveys_to_remove_it_from_project: 24770f0a77fdca2a2a79b3d1c7b36508
-    environments/project/languages/search_items: b54b751c8b075200be579d6c8e58096b
-    environments/project/languages/translate: 59f9803b27e2030ba7323ed239116cf7
-    environments/project/look/add_background_color: 9be512ee1246e32d3958c56097d202d9
-    environments/project/look/add_background_color_description: adb6fcb392862b3d0e9420d9b5405ddb
-    environments/project/look/app_survey_placement: f09cddac6bbb77d4694df223c6edf6b6
-    environments/project/look/app_survey_placement_settings_description: d81bcff7a866a2f83ff76936dbad4770
-    environments/project/look/centered_modal_overlay_color: 1124ba61ee2ecb18a7175ff780dc3b60
-    environments/project/look/email_customization: ae399f381183a4fe0ffd41ab496b5d8f
-    environments/project/look/email_customization_description: 5ccaf1769b2c39d7e87f3a08d056a374
-    environments/project/look/enable_custom_styling: 4774d8fb009c27044aa0191ebcccdcc2
-    environments/project/look/enable_custom_styling_description: c640ce557046d87b2944118dbc7aaffe
-    environments/project/look/failed_to_remove_logo: c3b5aa87d945f7ea83e029d1ee90d310
-    environments/project/look/failed_to_update_logo: f8c9f8fe947f559dc698a3439d73f0c5
-    environments/project/look/formbricks_branding: 98dad6e31b03d235725c4d95065e36ff
-    environments/project/look/formbricks_branding_hidden: fda9ba81f8d7fdaacf8dc1642034e145
-    environments/project/look/formbricks_branding_settings_description: 5bb39206c6412c703895593f465a01f9
-    environments/project/look/formbricks_branding_shown: 6c9861cf8f95e8a68c5c64b2630d96cd
-    environments/project/look/logo_removed_successfully: f3a7f9d226affa91121e90ff360553aa
-    environments/project/look/logo_settings_description: da155953f55cb44d0e563d9e740241aa
-    environments/project/look/logo_updated_successfully: 170250f18062b79be6ac0481ec9d4368
-    environments/project/look/logo_upload_failed: 342624c84a04b891846a5d37e00d2c9f
-    environments/project/look/placement_updated_successfully: 65bdf0cfbf4f7e2430b4e7f5d4d377b5
-    environments/project/look/remove_branding_with_a_higher_plan: ee049340ea6fdc454edfdb0c29eb554b
-    environments/project/look/remove_logo: 7f0eb5e99706a338f3040cae5d724346
-    environments/project/look/remove_logo_confirmation: 386603e03a70672ae515fa6c9b8d6ab4
-    environments/project/look/replace_logo: b69a290f789ae2dfeb067c463482c824
-    environments/project/look/reset_styling: f25db45ece8637d660bd9d455c9b0265
-    environments/project/look/reset_styling_confirmation: 9ebc0403ebb8a51ed93ec2711db85796
-    environments/project/look/show_formbricks_branding_in: 80fabfec9b34a13c0445d02b923216ed
-    environments/project/look/show_powered_by_formbricks: 02b84acc3156de24e1aff8321d77603f
-    environments/project/look/styling_updated_successfully: b8b74b50dde95abcd498633e9d0c891f
-    environments/project/look/theme: 21fe00b7a518089576fb83c08631107a
-    environments/project/look/theme_settings_description: 9fc45322818c3774ab4a44ea14d7836e
-    environments/project/tags/add: 87c4a663507f2bcbbf79934af8164e13
-    environments/project/tags/add_tag: 2cfa04ceea966149f2b5d40d9c131141
-    environments/project/tags/count: 9c5848662eb8024ddf360f7e4001a968
-    environments/project/tags/delete_tag_confirmation: a9fb98064cd156242899643f3d2ef032
-    environments/project/tags/manage_tags: 2761d558b82b6104befbc240ae2379c6
-    environments/project/tags/manage_tags_description: ce7cc42da3646fba960502d7e4e49cd2
-    environments/project/tags/merge: 95051c859b8778be51226b43be6f1075
-    environments/project/tags/no_tag_found: 119c59a4367dfbd7f24a2f967d7f0f35
-    environments/project/tags/search_tags: 35066dce3d12ce93705cb2f5c2ea317d
-    environments/project/tags/tag: 924d12caa9981ef5859395382497d101
-    environments/project/tags/tag_already_exists: 1337fd5cdd04311bfdca4e7538f0a4f3
-    environments/project/tags/tag_deleted: 54fc251117cddad3ca42d10811ce0dde
-    environments/project/tags/tag_updated: 6685fd5cc501b8fb2fb284aa22c2823e
-    environments/project/tags/tags_merged: 544471de666f93fbb0ab600321d1e553
-    environments/project/teams/manage_teams: d7b5f26335cea450c333832adbe0b6ad
-    environments/project/teams/no_teams_found: fb6680d4b5b73731697b100713afb50d
-    environments/project/teams/permission: cc2ed7274bd8267f9e0a10b079584d8b
-    environments/project/teams/team_name: d1a5f99dbf503ca53f06b3a98b511d02
-    environments/project/teams/team_settings_description: da32d77993f5c5c7547cdf3e1d3fc7d5
     environments/segments/add_filter_below: be9b9c51d4d61903e782fb37931d8905
     environments/segments/add_your_first_filter_to_get_started: 365f9fc1600e2e44e2502e9ad9fde46a
     environments/segments/cannot_delete_segment_used_in_surveys: 134200217852566d6743245006737093
@@ -937,9 +814,9 @@ checksums:
     environments/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     environments/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
     environments/settings/billing/1000_monthly_responses: e8625042bed54209770add138c27b3a5
-    environments/settings/billing/1_project: 233cd44f2fe8aa28ef764b174494937e
+    environments/settings/billing/1_workspace: 4528d3e5277b172ef7a42fee7e881781
     environments/settings/billing/2000_contacts: af340a4c9297a61b255af65c2a4ee688
-    environments/settings/billing/3_projects: 45fc2a4b20b8b35db1bca34653553413
+    environments/settings/billing/3_workspaces: 3f76b2f62e426297db3c2942a10c22f8
     environments/settings/billing/5000_monthly_responses: c2f4bf25658af916bbd8331d4bb045b3
     environments/settings/billing/7500_contacts: eb1344ca1ba3338101087deda33e3383
     environments/settings/billing/all_integrations: a607324ae2bd67640bf579f9e4092610
@@ -952,8 +829,8 @@ checksums:
     environments/settings/billing/current_tier_limit: a6875905f376953b12fdf5ae8fc7e051
     environments/settings/billing/custom: fee41bfbe59e71721d8648e7a95ec9c5
     environments/settings/billing/custom_contacts_limit: 380f13656e3b9e1a6cb3fffd1a1cc263
-    environments/settings/billing/custom_project_limit: 9b9cc824609c476947dfe5b2c39f99ca
     environments/settings/billing/custom_response_limit: 96ef34d587001a7b479f3f6f7c9e66dc
+    environments/settings/billing/custom_workspace_limit: 3f6f7f901dfc245028ce938e3d9aa2c6
     environments/settings/billing/email_embedded_surveys: bb1f558f9061287666041c08384ad1d4
     environments/settings/billing/email_follow_ups: 0cc02dc14aa28ce94ca6153c306924e5
     environments/settings/billing/enterprise_description: 56832155245afde5f8366fbc97beefaa
@@ -980,10 +857,10 @@ checksums:
     environments/settings/billing/team_access_roles: 1cc4af14e589f6c09ab92a4f21958049
     environments/settings/billing/unable_to_upgrade_plan: 50fc725609411d139e534c85eeb2879e
     environments/settings/billing/unlimited_miu: 29c3f5bd01c2a09fdf1d3601665ce90f
-    environments/settings/billing/unlimited_projects: 830c43605aa450f5a412a8248830d95b
     environments/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     environments/settings/billing/unlimited_surveys: 7d5766ee0b7ef632a8b36c90b121c0bd
     environments/settings/billing/unlimited_team_members: b73b1b6ec747f4c2f9cfcca9e883527d
+    environments/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
     environments/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
     environments/settings/billing/uptime_sla_99: 25ca4060e575e1a7eee47fceb5576d7c
     environments/settings/billing/website_surveys: f4d176cc66ffcc2abf44c0d5da1642e3
@@ -998,9 +875,9 @@ checksums:
     environments/settings/domain/favicon_too_large: 82a014c0eba8ea8029fd76f61b795984
     environments/settings/domain/no_pretty_urls: 2a83d8e399d325fcd4e2db14e45b1a86
     environments/settings/domain/pretty_url: 10a4b387b6df844245fc842be29527e3
-    environments/settings/domain/project: e13002ec4570f3fcc2f050f5ce974294
     environments/settings/domain/survey_name: 169f24df0e2f42254c5458f32eb7bf00
     environments/settings/domain/title: 2c3a2951a31218e8e73f07cda69ed5ff
+    environments/settings/domain/workspace: b63ef0e99ee6f7fef6cbe4971ca6cf0f
     environments/settings/enterprise/audit_logs: c7efb33d09676938d07651774b067bf6
     environments/settings/enterprise/coming_soon: ee2b0671e00972773210c5be5a9ccb89
     environments/settings/enterprise/contacts_and_segments: 5795d9e89c0c10e1ddbbc6fc65b8d90f
@@ -1025,13 +902,13 @@ checksums:
     environments/settings/general/cannot_leave_only_organization: dd8463262e4299fef7ad73512225c55b
     environments/settings/general/copy_invite_link_to_clipboard: 7af7ad935428a3f9da6b96e2cd211af9
     environments/settings/general/create_new_organization: 51dae7b33143686ee218abf5bea764a5
-    environments/settings/general/create_new_organization_description: 6d84bf3eb69d09266e314caf75cb6e6c
+    environments/settings/general/create_new_organization_description: 25d47fa089ae4ef3a963b46e903938c1
     environments/settings/general/customize_email_with_a_higher_plan: 4a58f87cf38c821de2af140a6ad45e35
-    environments/settings/general/delete_member_confirmation: d497f42203c1a77e99ccf805554e3ed7
+    environments/settings/general/delete_member_confirmation: a8ea6d216063fbbc8367ff428a5f2439
     environments/settings/general/delete_organization: 9f4061cc92673693bb43bbae062051c9
-    environments/settings/general/delete_organization_description: 8e4c8f44b192fd8cb370aadcad0f9c70
+    environments/settings/general/delete_organization_description: 578e51577840707a7845c9967d5d4010
     environments/settings/general/delete_organization_warning: fcc75b900080d9700ad72ed985072711
-    environments/settings/general/delete_organization_warning_1: e439bd92dcf74ea2c18f2bd9c599b3f4
+    environments/settings/general/delete_organization_warning_1: ffa4e85d53abffc214c1dff559c0f605
     environments/settings/general/delete_organization_warning_2: 4983371688c70c711b9b04d1e92b9ea8
     environments/settings/general/delete_organization_warning_3: 2ddf440095276a33077c0dad5e0d8382
     environments/settings/general/eliminate_branding_with_whitelabel: 2c7c61df65af823fee73f7ae79817b0c
@@ -1117,10 +994,10 @@ checksums:
     environments/settings/profile/warning_cannot_delete_account: 07c25c3829149cd7171e7ad88229deac
     environments/settings/profile/warning_cannot_undo: dd1b2a59ff244b362d1d0d4eb1dbf7c6
     environments/settings/teams/add_members_description: 96e1e7125a0dfeaecc2c238eda3a216f
-    environments/settings/teams/add_projects_description: 4cc88a869322af51c11deb3ef638cce1
+    environments/settings/teams/add_workspaces_description: f0f0cdd4d1032fbcb83d34a780bdfa52
     environments/settings/teams/all_members_added: 0541be1777b5c838f2e039035488506c
-    environments/settings/teams/all_projects_added: dc0701f74b51236b3ffbbfbb614581d7
-    environments/settings/teams/are_you_sure_you_want_to_delete_this_team: 35c990fa4aecc1851ae7bb333f54529f
+    environments/settings/teams/all_workspaces_added: 50855f316bd80223b638b3cdc0685822
+    environments/settings/teams/are_you_sure_you_want_to_delete_this_team: 9cf027aeee8059e692948f2da4302163
     environments/settings/teams/billing_role_description: dfcfc3730c3dff59b983c5d9c3d6df12
     environments/settings/teams/bulk_invite: 9c237edb8782df589c25ae1723942bf7
     environments/settings/teams/contributor: 84febfd6836ddde20b1bd7b0661cc848
@@ -1136,18 +1013,18 @@ checksums:
     environments/settings/teams/manage: a3d40c0267b81ae53c9598eaeb05087d
     environments/settings/teams/manage_team: 4c52e636cfd1451a08179fb7a68042ab
     environments/settings/teams/manage_team_disabled: 2aaa0557b403a5bc657ec9e8b19ac5ac
-    environments/settings/teams/manager_role_description: 39846863fa85ff8b1c6e4f354eb5018f
+    environments/settings/teams/manager_role_description: 020b8674cc330536239dafe5db087de6
     environments/settings/teams/member: 1606dc30b369856b9dba1fe9aec425d2
-    environments/settings/teams/member_role_description: 1c5deaece65798b74cc0d34525506c18
-    environments/settings/teams/member_role_info_message: 0a276eef3c3b907d6f396ebfdc693b12
+    environments/settings/teams/member_role_description: 8c2447cb929850b41619988be0b9b1ac
+    environments/settings/teams/member_role_info_message: 511f3b954486f9c8a3b043e498f21c69
     environments/settings/teams/organization_role: 979b75fcc3696952e5922d659c839c10
     environments/settings/teams/owner_role_description: 8f577e6f9d1368fed4eba5a91ffc8cbf
     environments/settings/teams/please_fill_all_member_fields: 60e38d9906ec9a02a44d16c736bd9fe9
-    environments/settings/teams/please_fill_all_project_fields: 6712059df63c432ecd31f3c52b8e4d87
+    environments/settings/teams/please_fill_all_workspace_fields: 190fc5d3c63cc5ec49d77f587e619ed8
     environments/settings/teams/read: 2494ca23d10e5b6381eb271aceeb5270
     environments/settings/teams/read_write: 278a90dade128198d4c93ac00c345320
     environments/settings/teams/select_member: 7f4a38312aabbbe3fe92756b57bd5d75
-    environments/settings/teams/select_project: 6e4f4a24178660851d9ae0874706be9f
+    environments/settings/teams/select_workspace: 0ad989c23616c6a04faf23d9e63ed3f3
     environments/settings/teams/team_admin: 5df68214685738029af678ae1d5912bb
     environments/settings/teams/team_created_successfully: 45f83048fcabf466551144858a761eca
     environments/settings/teams/team_deleted_successfully: 972c86b0abe87f229f7bf1a691c0a253
@@ -1158,8 +1035,8 @@ checksums:
     environments/settings/teams/team_settings_description: 686f772f08d864d28cde23b900c9facf
     environments/settings/teams/team_updated_successfully: 5f769a5073aa0fcaad76f8ba73e17e97
     environments/settings/teams/teams: b63448c05270497973ac4407047dae02
-    environments/settings/teams/teams_description: 2ffe6c26ab1d55bb738d89d719e32ed2
-    environments/settings/teams/unlock_teams_description: d57c682c7735dc8a12bb72b2255d4c7a
+    environments/settings/teams/teams_description: b6f5bf0a6ff49f78bad84ad3f8a5a871
+    environments/settings/teams/unlock_teams_description: 0e5de01e914c0919aff3df797f9f7437
     environments/settings/teams/unlock_teams_title: 45b2a27d29d706418fd62540d34a19f3
     environments/settings/teams/upgrade_plan_notice_message: 305d6f94381482a8df6e72b74b097e99
     environments/settings/teams/you_are_a_member: 0d13738accc3f85fa99add823a24c102
@@ -1305,7 +1182,7 @@ checksums:
     environments/surveys/edit/customize_survey_logo: 7f7e26026c88a727228f2d7a00d914e2
     environments/surveys/edit/darken_or_lighten_background_of_your_choice: 304a64a8050ebf501d195e948cd25b6f
     environments/surveys/edit/date_format: e95dfc41ac944874868487457ddc057a
-    environments/surveys/edit/days_before_showing_this_survey_again: 354fb28c5ff076f022d82a20c749ee46
+    environments/surveys/edit/days_before_showing_this_survey_again: 9ee757e5c3a07844b12ceb406dc65b04
     environments/surveys/edit/delete_block: c00617cb0724557e486304276063807a
     environments/surveys/edit/delete_choice: fd750208d414b9ad8c980c161a0199e1
     environments/surveys/edit/disable_the_visibility_of_survey_progress: 2af631010114307ac2a91612559c9618
@@ -1412,7 +1289,7 @@ checksums:
     environments/surveys/edit/how_funky_do_you_want_your_cards_in_survey_type_derived_surveys: 3cb16b37510c01af20a80f51b598346e
     environments/surveys/edit/if_you_need_more_please: a7d208c283caf6b93800b809fca80768
     environments/surveys/edit/if_you_really_want_that_answer_ask_until_you_get_it: 31c18a8c7c578db2ba49eed663d1739f
-    environments/surveys/edit/ignore_global_waiting_time: 1e7f1465aeb6d26c325ad7f135b207a8
+    environments/surveys/edit/ignore_global_waiting_time: e08db543ace4935625e0961cc6e60489
     environments/surveys/edit/ignore_global_waiting_time_description: 37d173a4d537622de40677389238d859
     environments/surveys/edit/image: 048ba7a239de0fbd883ade8558415830
     environments/surveys/edit/includes_all_of: ec72f90c0839d4c3bb518deb03894031
@@ -1485,8 +1362,8 @@ checksums:
     environments/surveys/edit/options: 59156082418d80acb211f973b1218f11
     environments/surveys/edit/options_used_in_logic_bulk_error: 1720e7a01a0bcb67c152cfe6a68c5355
     environments/surveys/edit/override_theme_with_individual_styles_for_this_survey: edffc97f5d3372419fe0444de0a5aa3f
-    environments/surveys/edit/overwrite_global_waiting_time: 7bc23bd502b6bd048356b67acd956d9d
-    environments/surveys/edit/overwrite_global_waiting_time_description: 795cf6e93d4c01d2e43aa0ebab601c6e
+    environments/surveys/edit/overwrite_global_waiting_time: bf39ba91e35742e1ff3a281a18e9159c
+    environments/surveys/edit/overwrite_global_waiting_time_description: c5ffe497e889e955f983bc82dbe2da3f
     environments/surveys/edit/overwrite_placement: d7278be243e52c5091974e0fc4a7c342
     environments/surveys/edit/overwrite_survey_logo: a89cb566dfcc1559446abd8b830c84ed
     environments/surveys/edit/overwrite_the_global_placement_of_the_survey: 874075712254b1ce92e099d89f675a48
@@ -1547,7 +1424,7 @@ checksums:
     environments/surveys/edit/recall_data: 39beabd626c0af15316885cff5d5d9b8
     environments/surveys/edit/recall_information_from: 884cfd143456fab1a91f0744cc92f0c8
     environments/surveys/edit/recontact_options_section: 57a23e1bcab6baa484b27b615e6c906a
-    environments/surveys/edit/recontact_options_section_description: 1e04011440c339a3b5cfff12d55b7f12
+    environments/surveys/edit/recontact_options_section_description: 58cfdc80c9c4ec69214299d3cd5ee1e9
     environments/surveys/edit/redirect_thank_you_card: 09f721c4b62e2584e40a53507092ea83
     environments/surveys/edit/redirect_to_url: e30ef505a921b5495ed70eb772e6ee0d
     environments/surveys/edit/remove_description: b52de820b4bbcb354eb62246c4112a9a
@@ -1556,8 +1433,8 @@ checksums:
     environments/surveys/edit/required: 04d7fb6f37ffe0a6ca97d49e2a8b6eb5
     environments/surveys/edit/reset_to_theme_styles: f9edc3970ec23d6c4d2d7accc292ef3a
     environments/surveys/edit/reset_to_theme_styles_main_text: d86fb2213d3b2efbd0361526dc6cb27b
-    environments/surveys/edit/respect_global_waiting_time: 850e7e64ec890c591b2d07741ef26e11
-    environments/surveys/edit/respect_global_waiting_time_description: 5235fee102d619cb391c5aa2c75b61be
+    environments/surveys/edit/respect_global_waiting_time: 971a6f60986862995f7cc1a5611ed892
+    environments/surveys/edit/respect_global_waiting_time_description: bf96a546839d4da7d79442f2be3a1f42
     environments/surveys/edit/response_limit_can_t_be_set_to_0: 278664873ee3b1046dbcb58848efc12a
     environments/surveys/edit/response_limit_needs_to_exceed_number_of_received_responses: 9a9c223c0918ded716ddfaa84fbaa8d9
     environments/surveys/edit/response_limits_redirections_and_more: e4f1cf94e56ad0e1b08701158d688802
@@ -1652,12 +1529,12 @@ checksums:
     environments/surveys/edit/visibility_and_recontact_description: 2969ab679e1f6111dd96e95cee26e219
     environments/surveys/edit/wait: 014d18ade977bf08d75b995076596708
     environments/surveys/edit/wait_a_few_seconds_after_the_trigger_before_showing_the_survey: 13d5521cf73be5afeba71f5db5847919
-    environments/surveys/edit/waiting_time_across_surveys: 5c5a7653d797c86c4008f13a40434ad8
-    environments/surveys/edit/waiting_time_across_surveys_description: 1bbee2fee49f842056547c336f8fd788
+    environments/surveys/edit/waiting_time_across_surveys: 6873c18d51830e2cadef67cce6a2c95c
+    environments/surveys/edit/waiting_time_across_surveys_description: 6edafaeb3ccd8cadde81175776636c8e
     environments/surveys/edit/welcome_message: 986a434e3895c8ee0b267df95cc40051
     environments/surveys/edit/without_a_filter_all_of_your_users_can_be_surveyed: 451990569c61f25d01044cc45b1ce122
     environments/surveys/edit/you_have_not_created_a_segment_yet: c6658bd1cee9c5c957c675db044708dd
-    environments/surveys/edit/you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations: b12b28699e02ff9ba69bcbae838ba5da
+    environments/surveys/edit/you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations: 04241177ba989ef4c1d8c01e1a7b8541
     environments/surveys/edit/your_description_here_recall_information_with: 60f73a3cc9bdb9afea2166a7db8fd618
     environments/surveys/edit/your_question_here_recall_information_with: 6395bd54f5167830c9d662ba403da167
     environments/surveys/edit/your_web_app: 07234bed03a33330dc50ae9fcf0174f3
@@ -1906,6 +1783,130 @@ checksums:
     environments/surveys/templates/multiple_industries: 7dcb6f6d87feb08f8004dfb5a91e711f
     environments/surveys/templates/use_this_template: 69020c8b5a521b8f027616bb5c4b64dd
     environments/surveys/templates/uses_branching_logic: 7ac087d7067d342c17809d4ce497dfe0
+    environments/workspace/api_keys/add_api_key: 3c7633bae18a6e19af7a5af12f9bc3da
+    environments/workspace/api_keys/api_key: ce825fec5b3e1f8e27c45b1a63619985
+    environments/workspace/api_keys/api_key_copied_to_clipboard: daeeac786ba09ffa650e206609b88f9c
+    environments/workspace/api_keys/api_key_created: 8dbb2b60a719b0d120e774d6666c8c45
+    environments/workspace/api_keys/api_key_deleted: 6b63d1a15bea4b41acdd8432e680751a
+    environments/workspace/api_keys/api_key_label: 66e9effa26d3dccd76383eb858e18dd4
+    environments/workspace/api_keys/api_key_security_warning: 8959f73972a79c27e4886c7a40e7842e
+    environments/workspace/api_keys/api_key_updated: 0e03754eb33742b4ee8d5fdad64c9b3f
+    environments/workspace/api_keys/delete_api_key_confirmation: b2f0342d4e55f0cb244fe121eeeb10a3
+    environments/workspace/api_keys/duplicate_access: 7ac7ac5ba755ce94e6fc81afa5a21997
+    environments/workspace/api_keys/no_api_keys_yet: 829cc32ad4fb0bcafd67f07d50c5fba6
+    environments/workspace/api_keys/no_env_permissions_found: 97ef49946f3ce15c2ad44dcfd2bce507
+    environments/workspace/api_keys/organization_access: 96a92fa907b15e0c0e47e33cac15be88
+    environments/workspace/api_keys/organization_access_description: 773dfeaf6ffbf34dd9a0a3d656a6d83c
+    environments/workspace/api_keys/permissions: 2160be68b1d6b6577e64634e9feba2ed
+    environments/workspace/api_keys/secret: f041e5eb96121c8b4f2b8af7e0f83a9b
+    environments/workspace/api_keys/unable_to_delete_api_key: 1fd76d9a22c5f5f8c241c4891fca8295
+    environments/workspace/api_keys/workspace_access: b38cb73197ef5f5fa6653b88c68aa0bd
+    environments/workspace/app-connection/app_connection: 778d2305e1a9c8efe91c2c7b4af37ae4
+    environments/workspace/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd
+    environments/workspace/app-connection/cache_update_delay_description: 3368e4a8090b7684117a16c94f0c409c
+    environments/workspace/app-connection/cache_update_delay_title: 60e4a0fcfbd8850bddf29b5c3f59550c
+    environments/workspace/app-connection/environment_id: 3dba898b081c18cd4cae131765ef411f
+    environments/workspace/app-connection/environment_id_description: 8b4a763d069b000cfa1a2025a13df80c
+    environments/workspace/app-connection/formbricks_sdk_connected: 29e8a40ad6a7fdb5af5ee9451a70a9aa
+    environments/workspace/app-connection/formbricks_sdk_not_connected: 557c534e665750978ba6edb0eacb428e
+    environments/workspace/app-connection/formbricks_sdk_not_connected_description: 4ddbacae084238bd0cefeded0fe9dbb9
+    environments/workspace/app-connection/how_to_setup: 3bad40037f280b47fe6418fcbeb4c717
+    environments/workspace/app-connection/how_to_setup_description: 2ae5cd9456a8acd3986e3d3678e70ed2
+    environments/workspace/app-connection/receiving_data: 9f2a48c0b0278861add70b526061264c
+    environments/workspace/app-connection/recheck: f95f2bbe6990a123d60255c87bdd59f7
+    environments/workspace/app-connection/sdk_connection_details: 89f2c169fd1604c1df5a834517f1eae1
+    environments/workspace/app-connection/sdk_connection_details_description: d9b5d06776a139aef6fc8ed53d71bf0a
+    environments/workspace/app-connection/setup_alert_description: 6d676044d01dc2147731ffab7df6c259
+    environments/workspace/app-connection/setup_alert_title: 9561cca2b391e0df81e8a982921ff2bb
+    environments/workspace/app-connection/webapp_url: d64d8cc3c4c4ecce780d94755f7e4de9
+    environments/workspace/general/cannot_delete_only_workspace: 853f32a75d92b06eaccc0d43d767c183
+    environments/workspace/general/delete_workspace: 3badbc0f4b49644986fc19d8b2d8f317
+    environments/workspace/general/delete_workspace_confirmation: 54a4ee78867537e0244c7170453cdb3f
+    environments/workspace/general/delete_workspace_name_includes_surveys_responses_people_and_more: 11e9ac5a799fbec22495f92f42c40d98
+    environments/workspace/general/delete_workspace_settings_description: 411ef100f167fc8fca64e833b6c0d030
+    environments/workspace/general/error_saving_workspace_information: e7b8022785619ef34de1fb1630b3c476
+    environments/workspace/general/only_owners_or_managers_can_delete_workspaces: 58da180cd2610210302d85a9896d80bd
+    environments/workspace/general/recontact_waiting_time: 8977b5160fbf88c456608982b33e246f
+    environments/workspace/general/recontact_waiting_time_settings_description: ebd64fddbea9387b12c027a18358db7e
+    environments/workspace/general/this_action_cannot_be_undone: 3d8b13374ffd3cefc0f3f7ce077bd9c9
+    environments/workspace/general/wait_x_days_before_showing_next_survey: d96228788d32ec23dc0d8c8ba77150a6
+    environments/workspace/general/waiting_period_updated_successfully: fe21f3034e63ed079dc0f9b9b1dfdbdf
+    environments/workspace/general/whats_your_workspace_called: bcc29ba97a90f656cf8f516d725ddc95
+    environments/workspace/general/workspace_deleted_successfully: 5eb380fdb741034a479644b5e7547099
+    environments/workspace/general/workspace_name_settings_description: d7fe4ab1709df12d540d7e57710fb4f0
+    environments/workspace/general/workspace_name_updated_successfully: ea244cd17b6644e05dbc89374ad0687a
+    environments/workspace/languages/add_language: bf0407850be7b8a56901533bceb4bc64
+    environments/workspace/languages/alias: 87e592cc48d819d7fdcf4597c1c63e7a
+    environments/workspace/languages/alias_tooltip: 0f681269a71d46a2d988eedaff31515a
+    environments/workspace/languages/cannot_remove_language_warning: a21bb501338eacefb5cf013aa107f452
+    environments/workspace/languages/conflict_between_identifier_and_alias: e1ebeb085c7f336bb17717765392cd9f
+    environments/workspace/languages/conflict_between_selected_alias_and_another_language: 3df7377a54909e439e38ec76514e5439
+    environments/workspace/languages/delete_language_confirmation: 4f83321fed95d689f7ff3aa47a82ce68
+    environments/workspace/languages/duplicate_language_or_language_id: 0e17e3794b24e2428ca6ffadae0d08f3
+    environments/workspace/languages/edit_languages: c9d36f6b28557cc7d54e87c37dc18fdd
+    environments/workspace/languages/identifier: 7d8ade6b85e96216bcd73adeeeeecd8c
+    environments/workspace/languages/incomplete_translations: d82908b5725f18f5849c7876ad497ebc
+    environments/workspace/languages/language: 277fd1a41cc237a437cd1d5e4a80463b
+    environments/workspace/languages/language_deleted_successfully: 4a805d030491f3fe608d2371b0cfcd83
+    environments/workspace/languages/languages_updated_successfully: 60de474c99c5059c0458cddd0b016c15
+    environments/workspace/languages/multi_language_surveys: f4f98855fca2b6e9b72959247adb1bec
+    environments/workspace/languages/multi_language_surveys_description: 58da8b76c9d0f4d39a315667113a40b9
+    environments/workspace/languages/no_language_found: 8e3b7f1898d35075ba26f54c4cf9e7b8
+    environments/workspace/languages/please_select_a_language: d1ed573816cea84641c55ef0d33652ff
+    environments/workspace/languages/remove_language: 1a64563b0f37109f97b78eddd493e381
+    environments/workspace/languages/remove_language_from_surveys_to_remove_it_from_workspace: 61bc96f9db31a29a649cc9ecd684bc39
+    environments/workspace/languages/search_items: b54b751c8b075200be579d6c8e58096b
+    environments/workspace/languages/translate: 59f9803b27e2030ba7323ed239116cf7
+    environments/workspace/look/add_background_color: 9be512ee1246e32d3958c56097d202d9
+    environments/workspace/look/add_background_color_description: adb6fcb392862b3d0e9420d9b5405ddb
+    environments/workspace/look/app_survey_placement: f09cddac6bbb77d4694df223c6edf6b6
+    environments/workspace/look/app_survey_placement_settings_description: d81bcff7a866a2f83ff76936dbad4770
+    environments/workspace/look/centered_modal_overlay_color: 1124ba61ee2ecb18a7175ff780dc3b60
+    environments/workspace/look/email_customization: ae399f381183a4fe0ffd41ab496b5d8f
+    environments/workspace/look/email_customization_description: 5ccaf1769b2c39d7e87f3a08d056a374
+    environments/workspace/look/enable_custom_styling: 4774d8fb009c27044aa0191ebcccdcc2
+    environments/workspace/look/enable_custom_styling_description: c640ce557046d87b2944118dbc7aaffe
+    environments/workspace/look/failed_to_remove_logo: c3b5aa87d945f7ea83e029d1ee90d310
+    environments/workspace/look/failed_to_update_logo: f8c9f8fe947f559dc698a3439d73f0c5
+    environments/workspace/look/formbricks_branding: 98dad6e31b03d235725c4d95065e36ff
+    environments/workspace/look/formbricks_branding_hidden: fda9ba81f8d7fdaacf8dc1642034e145
+    environments/workspace/look/formbricks_branding_settings_description: 5bb39206c6412c703895593f465a01f9
+    environments/workspace/look/formbricks_branding_shown: 6c9861cf8f95e8a68c5c64b2630d96cd
+    environments/workspace/look/logo_removed_successfully: f3a7f9d226affa91121e90ff360553aa
+    environments/workspace/look/logo_settings_description: da155953f55cb44d0e563d9e740241aa
+    environments/workspace/look/logo_updated_successfully: 170250f18062b79be6ac0481ec9d4368
+    environments/workspace/look/logo_upload_failed: 342624c84a04b891846a5d37e00d2c9f
+    environments/workspace/look/placement_updated_successfully: 65bdf0cfbf4f7e2430b4e7f5d4d377b5
+    environments/workspace/look/remove_branding_with_a_higher_plan: ee049340ea6fdc454edfdb0c29eb554b
+    environments/workspace/look/remove_logo: 7f0eb5e99706a338f3040cae5d724346
+    environments/workspace/look/remove_logo_confirmation: 386603e03a70672ae515fa6c9b8d6ab4
+    environments/workspace/look/replace_logo: b69a290f789ae2dfeb067c463482c824
+    environments/workspace/look/reset_styling: f25db45ece8637d660bd9d455c9b0265
+    environments/workspace/look/reset_styling_confirmation: 9ebc0403ebb8a51ed93ec2711db85796
+    environments/workspace/look/show_formbricks_branding_in: 80fabfec9b34a13c0445d02b923216ed
+    environments/workspace/look/show_powered_by_formbricks: 02b84acc3156de24e1aff8321d77603f
+    environments/workspace/look/styling_updated_successfully: b8b74b50dde95abcd498633e9d0c891f
+    environments/workspace/look/theme: 21fe00b7a518089576fb83c08631107a
+    environments/workspace/look/theme_settings_description: 9fc45322818c3774ab4a44ea14d7836e
+    environments/workspace/tags/add: 87c4a663507f2bcbbf79934af8164e13
+    environments/workspace/tags/add_tag: 2cfa04ceea966149f2b5d40d9c131141
+    environments/workspace/tags/count: 9c5848662eb8024ddf360f7e4001a968
+    environments/workspace/tags/delete_tag_confirmation: a9fb98064cd156242899643f3d2ef032
+    environments/workspace/tags/manage_tags: 2761d558b82b6104befbc240ae2379c6
+    environments/workspace/tags/manage_tags_description: ce7cc42da3646fba960502d7e4e49cd2
+    environments/workspace/tags/merge: 95051c859b8778be51226b43be6f1075
+    environments/workspace/tags/no_tag_found: 119c59a4367dfbd7f24a2f967d7f0f35
+    environments/workspace/tags/search_tags: 35066dce3d12ce93705cb2f5c2ea317d
+    environments/workspace/tags/tag: 924d12caa9981ef5859395382497d101
+    environments/workspace/tags/tag_already_exists: 1337fd5cdd04311bfdca4e7538f0a4f3
+    environments/workspace/tags/tag_deleted: 54fc251117cddad3ca42d10811ce0dde
+    environments/workspace/tags/tag_updated: 6685fd5cc501b8fb2fb284aa22c2823e
+    environments/workspace/tags/tags_merged: 544471de666f93fbb0ab600321d1e553
+    environments/workspace/teams/manage_teams: d7b5f26335cea450c333832adbe0b6ad
+    environments/workspace/teams/no_teams_found: fb6680d4b5b73731697b100713afb50d
+    environments/workspace/teams/permission: cc2ed7274bd8267f9e0a10b079584d8b
+    environments/workspace/teams/team_name: d1a5f99dbf503ca53f06b3a98b511d02
+    environments/workspace/teams/team_settings_description: 52f91883b9ceb6de83efbf8efd4f11c0
     environments/xm-templates/ces: e2ea309b2f7f13257967b966c2fda1e9
     environments/xm-templates/ces_description: c8d9794dd17d5ab85a979f1b3e1bc935
     environments/xm-templates/csat: fdfc1dc6214cce661dcdc32a71d80337
@@ -1919,28 +1920,28 @@ checksums:
     environments/xm-templates/nps_description: d116fc0e1e9f92f3d66cd83138254a84
     environments/xm-templates/smileys: 592b612bd314663f6f6f205886796706
     environments/xm-templates/smileys_description: 6670d8cd0d160c3456d2c27bcc3bf787
-    organizations/landing/no_projects_warning_subtitle: cbfaf5c03dc2f66735379f1f3b72c313
-    organizations/landing/no_projects_warning_title: 3e1a0b8b78dc4bc6ebbb3a2a94ffa4aa
-    organizations/projects/new/channel/channel_select_subtitle: debeb0acf03f9f7b8a6efee291a89dc6
-    organizations/projects/new/channel/channel_select_title: a7f7e7f36b5fc36883111f5ad78417c4
-    organizations/projects/new/channel/in_product_surveys: 4b9fc41da77c5e36437a0e30fa525de5
-    organizations/projects/new/channel/in_product_surveys_description: 4e129633485ec5e07be88a897e7cab87
-    organizations/projects/new/channel/link_and_email_surveys: a1136de7ba6ad6dd2d3c1cc4155332fe
-    organizations/projects/new/channel/link_and_email_surveys_description: cac2165c355ae7cd69426f629cdbd75e
-    organizations/projects/new/mode/formbricks_cx: 470561141475b57d371007842cc91d71
-    organizations/projects/new/mode/formbricks_cx_description: 27fa1137df3551e5c054477db7263f54
-    organizations/projects/new/mode/formbricks_surveys: eba2fce04ee68f02626e5509adf7d66a
-    organizations/projects/new/mode/formbricks_surveys_description: 5d42ed40e5da85598a5ed80a724e2720
-    organizations/projects/new/mode/what_are_you_here_for: 54f3c08ad6c63023288ee5d19cd8da3e
-    organizations/projects/new/settings/brand_color: 84ddb5736deb9f5c081ffe4962a6c63e
-    organizations/projects/new/settings/brand_color_description: 458aced4c827cacbb5c3d3fb091083ad
-    organizations/projects/new/settings/create_new_team: 3f4d388a473f979d4bd366c3ef08e425
-    organizations/projects/new/settings/project_creation_failed: 493492e108675913b88c90b882b7401a
-    organizations/projects/new/settings/project_name: 7002a32bc4ce3343ede2076b30649ff7
-    organizations/projects/new/settings/project_name_description: 0885c4cd8cc8836e74b6ccdb5d25b43d
-    organizations/projects/new/settings/project_settings_subtitle: 83a72b3e9c08f2936524fcd11b29421b
-    organizations/projects/new/settings/project_settings_title: 00e42231ca647111d3288f57ad3ce53a
-    organizations/projects/new/settings/team_description: 3e1ceed1fe4418f20c6090f2d610c8ee
+    organizations/landing/no_workspaces_warning_subtitle: 305578d27209f1c4f706fccd53559f52
+    organizations/landing/no_workspaces_warning_title: c674555c5f11c93570b5d7f95a13b667
+    organizations/workspaces/new/channel/channel_select_subtitle: debeb0acf03f9f7b8a6efee291a89dc6
+    organizations/workspaces/new/channel/channel_select_title: a7f7e7f36b5fc36883111f5ad78417c4
+    organizations/workspaces/new/channel/in_product_surveys: 4b9fc41da77c5e36437a0e30fa525de5
+    organizations/workspaces/new/channel/in_product_surveys_description: 4e129633485ec5e07be88a897e7cab87
+    organizations/workspaces/new/channel/link_and_email_surveys: a1136de7ba6ad6dd2d3c1cc4155332fe
+    organizations/workspaces/new/channel/link_and_email_surveys_description: cac2165c355ae7cd69426f629cdbd75e
+    organizations/workspaces/new/mode/formbricks_cx: 470561141475b57d371007842cc91d71
+    organizations/workspaces/new/mode/formbricks_cx_description: 27fa1137df3551e5c054477db7263f54
+    organizations/workspaces/new/mode/formbricks_surveys: eba2fce04ee68f02626e5509adf7d66a
+    organizations/workspaces/new/mode/formbricks_surveys_description: 5d42ed40e5da85598a5ed80a724e2720
+    organizations/workspaces/new/mode/what_are_you_here_for: 54f3c08ad6c63023288ee5d19cd8da3e
+    organizations/workspaces/new/settings/brand_color: 84ddb5736deb9f5c081ffe4962a6c63e
+    organizations/workspaces/new/settings/brand_color_description: 458aced4c827cacbb5c3d3fb091083ad
+    organizations/workspaces/new/settings/create_new_team: 3f4d388a473f979d4bd366c3ef08e425
+    organizations/workspaces/new/settings/team_description: 534ba98e256646074a03949daf85665d
+    organizations/workspaces/new/settings/workspace_creation_failed: 5c6a0e087d481255a1b201c0287d0221
+    organizations/workspaces/new/settings/workspace_name: 7002a32bc4ce3343ede2076b30649ff7
+    organizations/workspaces/new/settings/workspace_name_description: 0885c4cd8cc8836e74b6ccdb5d25b43d
+    organizations/workspaces/new/settings/workspace_settings_subtitle: 83a72b3e9c08f2936524fcd11b29421b
+    organizations/workspaces/new/settings/workspace_settings_title: 00e42231ca647111d3288f57ad3ce53a
     s/check_inbox_or_spam: dfaf193f2106045c1bd3f463984317a2
     s/completed: 98a9cd97b409933edf1991e7d022bea9
     s/create_your_own: 27976ec69029d6dd52d146a9b5765bc6
