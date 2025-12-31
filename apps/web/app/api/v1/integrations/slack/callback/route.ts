@@ -94,14 +94,14 @@ export const GET = withV1ApiWrapper({
       if (result) {
         return {
           response: Response.redirect(
-            `${WEBAPP_URL}/environments/${environmentId}/project/integrations/slack`
+            `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/slack`
           ),
         };
       }
     } else if (error) {
       return {
         response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/project/integrations/slack?error=${error}`
+          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/slack?error=${error}`
         ),
       };
     }

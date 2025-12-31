@@ -124,7 +124,7 @@ export const LogoSettingsCard = ({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex w-full px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -209,7 +209,7 @@ export const LogoSettingsCard = ({
                       variant="secondary"
                       size="sm"
                       disabled={disabled || isLoading}>
-                      {t("environments.project.look.replace_logo")}
+                      {t("environments.workspace.look.replace_logo")}
                     </Button>
                     <Button
                       type="button"
@@ -217,7 +217,7 @@ export const LogoSettingsCard = ({
                       size="sm"
                       onClick={handleRemoveLogo}
                       disabled={disabled}>
-                      {t("environments.project.look.remove_logo")}
+                      {t("environments.workspace.look.remove_logo")}
                     </Button>
                   </div>
 
@@ -225,8 +225,8 @@ export const LogoSettingsCard = ({
                     isChecked={isBgColorEnabled}
                     onToggle={toggleBackgroundColor}
                     htmlId="surveyLogoBgColor"
-                    title={t("environments.project.look.add_background_color")}
-                    description={t("environments.project.look.add_background_color_description")}
+                    title={t("environments.workspace.look.add_background_color")}
+                    description={t("environments.workspace.look.add_background_color_description")}
                     childBorder
                     customContainerClass="p-0"
                     childrenContainerClass="overflow-visible"

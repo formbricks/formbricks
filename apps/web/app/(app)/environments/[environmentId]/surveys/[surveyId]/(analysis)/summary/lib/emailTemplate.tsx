@@ -13,7 +13,7 @@ export const getEmailTemplateHtml = async (surveyId: string, locale: string) => 
   }
   const project = await getProjectByEnvironmentId(survey.environmentId);
   if (!project) {
-    throw new Error("Project not found");
+    throw new Error("Workspace not found");
   }
 
   const styling = getStyling(project, survey);

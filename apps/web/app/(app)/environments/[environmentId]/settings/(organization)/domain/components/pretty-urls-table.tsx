@@ -39,7 +39,7 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
       key: "name",
     },
     {
-      label: t("environments.settings.domain.project"),
+      label: t("environments.settings.domain.workspace"),
       key: "project",
     },
     {

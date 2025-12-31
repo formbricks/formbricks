@@ -21,12 +21,12 @@ export const TagsPage = async (props) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation environmentId={params.environmentId} activeId="tags" />
       </PageHeader>
       <SettingsCard
-        title={t("environments.project.tags.manage_tags")}
-        description={t("environments.project.tags.manage_tags_description")}>
+        title={t("environments.workspace.tags.manage_tags")}
+        description={t("environments.workspace.tags.manage_tags_description")}>
         <EditTagsWrapper
           environmentTags={tags}
           environmentTagsCount={environmentTagsCount}

@@ -64,24 +64,26 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
     }
 
     setIsSubmitting(true);
-    const result = await updateSurveySlugAction({
-      surveyId: survey.id,
-      slug: data.slug,
-    });
+    try {
+      const result = await updateSurveySlugAction({
+        surveyId: survey.id,
+        slug: data.slug,
+      });
 
-    if (result?.data) {
-      if (result.data.ok) {
+      const errorMessage = getFormattedErrorMessage(result);
+      if (errorMessage) {
+        toast.error(errorMessage);
+      } else {
         toast.success(t("environments.surveys.share.pretty_url.save_success"));
         router.refresh();
         setIsEditing(false);
-      } else {
-        toast.error(result.data.error.message);
       }
-    } else {
-      const errorMessage = getFormattedErrorMessage(result);
-      toast.error(errorMessage || "Failed to update slug");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("common.something_went_wrong_please_try_again");
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const handleEdit = () => {
@@ -95,24 +97,25 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
 
   const handleRemove = async () => {
     setIsSubmitting(true);
+    try {
+      const result = await removeSurveySlugAction({ surveyId: survey.id });
 
-    const result = await removeSurveySlugAction({ surveyId: survey.id });
-
-    if (result?.data) {
-      if (result.data.ok) {
+      const errorMessage = getFormattedErrorMessage(result);
+      if (errorMessage) {
+        toast.error(errorMessage);
+      } else {
         setShowRemoveDialog(false);
         reset({ slug: "" });
         router.refresh();
         setIsEditing(true);
         toast.success(t("environments.surveys.share.pretty_url.remove_success"));
-      } else {
-        toast.error(result.data.error.message);
       }
-    } else {
-      const errorMessage = getFormattedErrorMessage(result);
-      toast.error(errorMessage || "Failed to remove slug");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("common.something_went_wrong_please_try_again");
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const handleCopyUrl = () => {

@@ -38,7 +38,7 @@ const Page = async (props: XMTemplatePageProps) => {
 
   const project = await getProjectByEnvironmentId(environment.id);
   if (!project) {
-    throw new Error(t("common.project_not_found"));
+    throw new Error(t("common.workspace_not_found"));
   }
 
   const projects = await getUserProjects(session.user.id, organizationId);
@@ -49,7 +49,7 @@ const Page = async (props: XMTemplatePageProps) => {
       <XMTemplateList project={project} user={user} environmentId={environment.id} />
       {projects.length >= 2 && (
         <Button
-          className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
+          className="absolute top-5 right-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="ghost"
           asChild>
           <Link href={`/environments/${environment.id}/surveys`}>
