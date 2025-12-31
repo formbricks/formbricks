@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { InvalidInputError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getSurveyBySlug, getSurveysWithSlugsByOrganizationId, updateSurveySlug } from "./slug";
 
 // Mock prisma
@@ -40,10 +40,14 @@ describe("Slug Library Tests", () => {
       expect(result).toBeNull();
     });
 
-    test("should throw UnknownError when prisma fails", async () => {
-      vi.mocked(prisma.survey.findUnique).mockRejectedValueOnce(new Error("DB error"));
+    test("should throw DatabaseError when prisma fails", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
+        code: "P1001",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.survey.findUnique).mockRejectedValueOnce(prismaError);
 
-      await expect(getSurveyBySlug("error-slug")).rejects.toThrow(UnknownError);
+      await expect(getSurveyBySlug("error-slug")).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -66,7 +70,7 @@ describe("Slug Library Tests", () => {
         code: "P2002",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.survey.update).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.survey.update).mockRejectedValue(prismaError);
 
       await expect(updateSurveySlug("survey_123", "taken-slug")).rejects.toThrow(InvalidInputError);
       await expect(updateSurveySlug("survey_123", "taken-slug")).rejects.toThrow(
@@ -84,10 +88,14 @@ describe("Slug Library Tests", () => {
       await expect(updateSurveySlug("nonexistent", "new-slug")).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("should throw UnknownError on other errors", async () => {
-      vi.mocked(prisma.survey.update).mockRejectedValueOnce(new Error("Unexpected error"));
+    test("should throw DatabaseError on other prisma errors", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Unexpected error", {
+        code: "P1001",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.survey.update).mockRejectedValueOnce(prismaError);
 
-      await expect(updateSurveySlug("survey_123", "new-slug")).rejects.toThrow(UnknownError);
+      await expect(updateSurveySlug("survey_123", "new-slug")).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -121,10 +129,14 @@ describe("Slug Library Tests", () => {
       );
     });
 
-    test("should throw UnknownError when prisma fails", async () => {
-      vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(new Error("DB error"));
+    test("should throw DatabaseError when prisma fails", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
+        code: "P1001",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(prismaError);
 
-      await expect(getSurveysWithSlugsByOrganizationId("org_123")).rejects.toThrow(UnknownError);
+      await expect(getSurveysWithSlugsByOrganizationId("org_123")).rejects.toThrow(DatabaseError);
     });
   });
 });

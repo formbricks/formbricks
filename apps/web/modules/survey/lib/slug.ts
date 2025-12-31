@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { InvalidInputError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyStatus } from "@formbricks/types/surveys/types";
 
 export interface TSurveyBySlug {
@@ -36,7 +36,10 @@ export const getSurveyBySlug = reactCache(async (slug: string): Promise<TSurveyB
     });
     return survey;
   } catch (error) {
-    throw new UnknownError(error instanceof Error ? error.message : "Failed to fetch survey by slug");
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 });
 
@@ -61,7 +64,11 @@ export const updateSurveySlug = async (
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    throw new UnknownError(error instanceof Error ? error.message : "An unknown error occurred");
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
   }
 };
 
@@ -95,7 +102,10 @@ export const getSurveysWithSlugsByOrganizationId = reactCache(
       });
       return surveys;
     } catch (error) {
-      throw new UnknownError(error instanceof Error ? error.message : "Failed to fetch surveys with slugs");
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
   }
 );
