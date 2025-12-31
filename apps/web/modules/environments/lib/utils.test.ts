@@ -159,7 +159,7 @@ describe("utils.ts", () => {
 
     test("throws error if project not found", async () => {
       vi.mocked(getProjectByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.project_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.workspace_not_found");
     });
 
     test("throws error if environment not found", async () => {

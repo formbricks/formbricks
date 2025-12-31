@@ -1,12 +1,16 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
@@ -38,6 +42,8 @@ export const CTAElementForm = ({
   isExternalUrlsAllowed,
 }: CTAElementFormProps): JSX.Element => {
   const { t } = useTranslation();
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
+  const [parent] = useAutoAnimate();
 
   return (
     <form>
@@ -57,21 +63,43 @@ export const CTAElementForm = ({
         isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
-      <div className="mt-3">
-        <ElementFormInput
-          id="subheader"
-          value={element.subheader}
-          label={t("common.description")}
-          localSurvey={localSurvey}
-          elementIdx={elementIdx}
-          isInvalid={isInvalid}
-          updateElement={updateElement}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-          locale={locale}
-          isStorageConfigured={isStorageConfigured}
-          isExternalUrlsAllowed={isExternalUrlsAllowed}
-        />
+      <div ref={parent}>
+        {element.subheader !== undefined && (
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
+              <ElementFormInput
+                id="subheader"
+                value={element.subheader}
+                label={t("common.description")}
+                localSurvey={localSurvey}
+                elementIdx={elementIdx}
+                isInvalid={isInvalid}
+                updateElement={updateElement}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
+              />
+            </div>
+          </div>
+        )}
+        {element.subheader === undefined && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-3"
+            type="button"
+            onClick={() => {
+              updateElement(elementIdx, {
+                subheader: createI18nString("", surveyLanguageCodes),
+              });
+            }}>
+            <PlusIcon className="mr-1 h-4 w-4" />
+            {t("environments.surveys.edit.add_description")}
+          </Button>
+        )}
       </div>
 
       <div className="mt-3 flex-1">

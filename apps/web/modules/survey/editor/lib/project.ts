@@ -36,7 +36,7 @@ export const getProjectLanguages = reactCache(async (projectId: string): Promise
     },
   });
   if (!project) {
-    throw new ResourceNotFoundError("Project not found", projectId);
+    throw new ResourceNotFoundError("Workspace not found", projectId);
   }
   return project.languages;
 });

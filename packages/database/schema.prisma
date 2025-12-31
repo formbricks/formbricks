@@ -388,6 +388,8 @@ model Survey {
   /// [SurveyLinkMetadata]
   metadata                        Json             @default("{}")
 
+  slug String? @unique
+
   @@index([environmentId, updatedAt])
   @@index([segmentId])
 }

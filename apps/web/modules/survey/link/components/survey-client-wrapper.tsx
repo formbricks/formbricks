@@ -8,7 +8,7 @@ import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
-import { getPrefillValue } from "@/modules/survey/link/lib/utils";
+import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {

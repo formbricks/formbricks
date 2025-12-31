@@ -1,6 +1,7 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { IS_STORAGE_CONFIGURED, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getTranslate } from "@/lingodotdev/server";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
@@ -23,14 +24,15 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   const project = await getProjectByEnvironmentId(params.environmentId);
 
   if (!project) {
-    throw new Error("Project not found");
+    throw new Error("Workspace not found");
   }
 
   const canRemoveBranding = await getRemoveBrandingPermission(organization.billing.plan);
+  const publicDomain = getPublicDomain();
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation environmentId={params.environmentId} activeId="look" />
       </PageHeader>
       {!IS_STORAGE_CONFIGURED && (
@@ -39,9 +41,9 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
         </Alert>
       )}
       <SettingsCard
-        title={t("environments.project.look.theme")}
+        title={t("environments.workspace.look.theme")}
         className={cn(!isReadOnly && "max-w-7xl")}
-        description={t("environments.project.look.theme_settings_description")}>
+        description={t("environments.workspace.look.theme_settings_description")}>
         <ThemeStyling
           environmentId={params.environmentId}
           project={project}
@@ -49,11 +51,12 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
           isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
           isReadOnly={isReadOnly}
           isStorageConfigured={IS_STORAGE_CONFIGURED}
+          publicDomain={publicDomain}
         />
       </SettingsCard>
       <SettingsCard
         title={t("common.logo")}
-        description={t("environments.project.look.logo_settings_description")}>
+        description={t("environments.workspace.look.logo_settings_description")}>
         <EditLogo
           project={project}
           environmentId={params.environmentId}
@@ -62,8 +65,8 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
         />
       </SettingsCard>
       <SettingsCard
-        title={t("environments.project.look.app_survey_placement")}
-        description={t("environments.project.look.app_survey_placement_settings_description")}>
+        title={t("environments.workspace.look.app_survey_placement")}
+        description={t("environments.workspace.look.app_survey_placement_settings_description")}>
         <EditPlacementForm project={project} environmentId={params.environmentId} isReadOnly={isReadOnly} />
       </SettingsCard>
 

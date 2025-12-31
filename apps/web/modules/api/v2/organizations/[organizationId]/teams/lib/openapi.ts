@@ -11,7 +11,6 @@ import {
   ZTeamInput,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
-import { organizationServer } from "@/modules/api/v2/organizations/lib/openapi";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
 
 export const getTeamsEndpoint: ZodOpenApiOperationObject = {
@@ -69,13 +68,11 @@ export const createTeamEndpoint: ZodOpenApiOperationObject = {
 };
 
 export const teamPaths: ZodOpenApiPathsObject = {
-  "/{organizationId}/teams": {
-    servers: organizationServer,
+  "/organizations/{organizationId}/teams": {
     get: getTeamsEndpoint,
     post: createTeamEndpoint,
   },
-  "/{organizationId}/teams/{id}": {
-    servers: organizationServer,
+  "/organizations/{organizationId}/teams/{id}": {
     get: getTeamEndpoint,
     put: updateTeamEndpoint,
     delete: deleteTeamEndpoint,

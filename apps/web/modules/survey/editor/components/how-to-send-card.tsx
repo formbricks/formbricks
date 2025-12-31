@@ -106,7 +106,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         className="h-full w-full cursor-pointer"
         id="howToSendCardTrigger">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -193,7 +193,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                           <AlertButton
                             onClick={() =>
                               window.open(
-                                `/environments/${environment.id}/project/${option.id}-connection`,
+                                `/environments/${environment.id}/workspace/${option.id}-connection`,
                                 "_blank"
                               )
                             }>

@@ -11,7 +11,7 @@ import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
 import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
-import { getBasicSurveyMetadata } from "@/modules/survey/link/lib/metadata-utils";
+import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "@/modules/survey/link/lib/metadata-utils";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 
 interface ContactSurveyPageProps {
@@ -39,8 +39,38 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
       };
     }
     const { surveyId } = result.data;
-    return getBasicSurveyMetadata(surveyId);
-  } catch (error) {
+    const { title, description, survey, ogImage } = await getBasicSurveyMetadata(surveyId);
+
+    if (!survey) {
+      return { title, description };
+    }
+
+    // Fetch organization whitelabel data for custom favicon
+    const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
+    const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
+
+    // Get OpenGraph metadata
+    const surveyBrandColor = survey.styling?.brandColor?.light;
+    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, surveyBrandColor);
+
+    // Override with the custom image URL
+    if (baseMetadata.openGraph) {
+      baseMetadata.openGraph.images = ogImage ?? baseMetadata.openGraph.images;
+      baseMetadata.openGraph.description = description;
+    }
+
+    if (baseMetadata.twitter) {
+      baseMetadata.twitter.images = ogImage ?? baseMetadata.twitter.images;
+      baseMetadata.twitter.description = description;
+    }
+
+    return {
+      title,
+      description,
+      ...baseMetadata,
+      ...(customFaviconUrl && { icons: customFaviconUrl }),
+    };
+  } catch {
     // If the token is invalid, we'll return generic metadata
     return {
       title: "Survey",

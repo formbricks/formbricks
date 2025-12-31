@@ -19,11 +19,12 @@ import {
 } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { updateSurveyAction } from "../actions";
+import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 
 interface SurveyMenuBarProps {
@@ -227,6 +228,38 @@ export const SurveyMenuBar = ({
     return true;
   };
 
+  // Add new handler after handleSurveySave
+  const handleSurveySaveDraft = async (): Promise<boolean> => {
+    setIsSurveySaving(true);
+
+    try {
+      const segment = await handleSegmentUpdate();
+      clearSurveyLocalStorage();
+      const updatedSurveyResponse = await updateSurveyDraftAction({
+        ...localSurvey,
+        segment,
+      } as unknown as TSurveyDraft);
+
+      setIsSurveySaving(false);
+      if (updatedSurveyResponse?.data) {
+        setLocalSurvey(updatedSurveyResponse.data);
+        toast.success(t("environments.surveys.edit.changes_saved"));
+        isSuccessfullySavedRef.current = true;
+        router.refresh();
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
+        toast.error(errorMessage);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      setIsSurveySaving(false);
+      toast.error(t("environments.surveys.edit.error_saving_changes"));
+      return false;
+    }
+  };
+
   const handleSurveySave = async (): Promise<boolean> => {
     setIsSurveySaving(true);
 
@@ -367,7 +400,7 @@ export const SurveyMenuBar = ({
         />
       </div>
 
-      <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+      <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
         {!isStorageConfigured && (
           <div>
             <Alert variant="warning" size="small">
@@ -398,12 +431,11 @@ export const SurveyMenuBar = ({
             variant="secondary"
             size="sm"
             loading={isSurveySaving}
-            onClick={() => handleSurveySave()}
+            onClick={() => (localSurvey.status === "draft" ? handleSurveySaveDraft() : handleSurveySave())}
             type="submit">
-            {t("common.save")}
+            {localSurvey.status === "draft" ? t("common.save_as_draft") : t("common.save")}
           </Button>
         )}
-
         {localSurvey.status !== "draft" && (
           <Button
             disabled={disableSave}

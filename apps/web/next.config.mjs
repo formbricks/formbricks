@@ -16,6 +16,7 @@ const getHostname = (url) => {
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
+  basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: true,
@@ -61,10 +62,6 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
-      {
-        protocol: "https",
-        hostname: "api-iam.eu.intercom.io",
-      },
     ],
   },
   async redirects() {
@@ -92,6 +89,22 @@ const nextConfig = {
       {
         source: "/api/v1/me",
         destination: "/api/v1/management/me",
+        permanent: true,
+      },
+      // Redirect old project URLs to new workspace URLs
+      {
+        source: "/environments/:environmentId/project/:path*",
+        destination: "/environments/:environmentId/workspace/:path*",
+        permanent: true,
+      },
+      {
+        source: "/organizations/:organizationId/projects/new/:path*",
+        destination: "/organizations/:organizationId/workspaces/new/:path*",
+        permanent: true,
+      },
+      {
+        source: "/projects/:projectId",
+        destination: "/workspaces/:projectId",
         permanent: true,
       },
     ];
@@ -168,7 +181,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https://*.intercom.io https://*.intercomcdn.com https:; style-src 'self' 'unsafe-inline' https://*.intercomcdn.com https:; img-src 'self' blob: data: http://localhost:9000 https://*.intercom.io https://*.intercomcdn.com https:; font-src 'self' data: https://*.intercomcdn.com https:; connect-src 'self' http://localhost:9000 https://*.intercom.io wss://*.intercom.io https://*.intercomcdn.com https:; frame-src 'self' https://*.intercom.io https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`,
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data: http://localhost:9000 https:; font-src 'self' data: https:; connect-src 'self' http://localhost:9000 https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`,
           },
           {
             key: "Strict-Transport-Security",
@@ -407,7 +420,7 @@ const nextConfig = {
     ];
   },
   env: {
-    NEXTAUTH_URL: process.env.WEBAPP_URL,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path
   },
 };
 
@@ -444,5 +457,8 @@ const sentryOptions = {
 // Always enable Sentry plugin to inject Debug IDs
 // Runtime Sentry reporting still depends on DSN being set via environment variables
 const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
+
+console.log("BASE PATH", nextConfig.basePath);
+
 
 export default exportConfig;

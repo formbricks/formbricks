@@ -31,6 +31,7 @@ import {
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getElementIconMap } from "@/modules/survey/lib/elements";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -78,7 +79,7 @@ interface AddFollowUpModalProps {
 }
 
 type EmailSendToOption = {
-  type: "openTextElement" | "contactInfoElement" | "hiddenField" | "user";
+  type: "openTextElement" | "contactInfoElement" | "hiddenField" | "user" | "verifiedEmail";
   label: string;
   id: string;
 };
@@ -140,7 +141,18 @@ export const FollowUpModal = ({
       ? updatedTeamMemberDetails
       : [...updatedTeamMemberDetails, { email: userEmail, name: "Yourself" }];
 
+    const verifiedEmailOption = localSurvey.isVerifyEmailEnabled
+      ? [
+          {
+            label: t("common.verified_email"),
+            id: "verifiedEmail",
+            type: "verifiedEmail" as EmailSendToOption["type"],
+          },
+        ]
+      : [];
+
     return [
+      ...verifiedEmailOption,
       ...openTextAndContactElements.map((element) => ({
         label: getTextContent(
           recallToHeadline(element.headline, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]
@@ -164,7 +176,7 @@ export const FollowUpModal = ({
         type: "user" as EmailSendToOption["type"],
       })),
     ] satisfies EmailSendToOption[];
-  }, [localSurvey, selectedLanguageCode, teamMemberDetails, userEmail]);
+  }, [localSurvey, selectedLanguageCode, teamMemberDetails, userEmail, t]);
 
   const form = useForm<TCreateSurveyFollowUpForm>({
     defaultValues: {
@@ -259,6 +271,8 @@ export const FollowUpModal = ({
             subject: data.subject,
             body: sanitizedBody,
             attachResponseData: data.attachResponseData,
+            includeVariables: data.includeVariables,
+            includeHiddenFields: data.includeHiddenFields,
           },
         },
       };
@@ -306,6 +320,8 @@ export const FollowUpModal = ({
           subject: data.subject,
           body: sanitizedBody,
           attachResponseData: data.attachResponseData,
+          includeVariables: data.includeVariables,
+          includeHiddenFields: data.includeHiddenFields,
         },
       },
     };
@@ -361,6 +377,8 @@ export const FollowUpModal = ({
         subject: defaultValues?.subject ?? "Thanks for your answers!",
         body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
         attachResponseData: defaultValues?.attachResponseData ?? false,
+        includeVariables: defaultValues?.includeVariables ?? false,
+        includeHiddenFields: defaultValues?.includeHiddenFields ?? false,
       });
     }
   }, [open, defaultValues, emailSendToOptions, form, userEmail, locale, t]);
@@ -372,33 +390,50 @@ export const FollowUpModal = ({
     setOpen(open);
   };
 
+  const emailSendToVerifiedEmailOptions = emailSendToOptions.filter(
+    (option) => option.type === "verifiedEmail"
+  );
   const emailSendToElementOptions = emailSendToOptions.filter(
     (option) => option.type === "openTextElement" || option.type === "contactInfoElement"
   );
   const emailSendToHiddenFieldOptions = emailSendToOptions.filter((option) => option.type === "hiddenField");
   const userSendToEmailOptions = emailSendToOptions.filter((option) => option.type === "user");
 
+  const getSelectItemIcon = (
+    type: EmailSendToOption["type"]
+  ): { icon: React.ReactNode; textClass?: string } => {
+    switch (type) {
+      case "verifiedEmail":
+        return { icon: <MailIcon className="h-4 w-4" /> };
+      case "hiddenField":
+        return { icon: <EyeOffIcon className="h-4 w-4" /> };
+      case "user":
+        return {
+          icon: <UserIcon className="h-4 w-4" />,
+          textClass: "overflow-hidden text-ellipsis whitespace-nowrap",
+        };
+      case "openTextElement":
+      case "contactInfoElement":
+        return {
+          icon: (
+            <div className="h-4 w-4">
+              {ELEMENTS_ICON_MAP[type === "openTextElement" ? "openText" : "contactInfo"]}
+            </div>
+          ),
+          textClass: "overflow-hidden text-ellipsis whitespace-nowrap",
+        };
+    }
+  };
+
   const renderSelectItem = (option: EmailSendToOption) => {
+    const { icon, textClass } = getSelectItemIcon(option.type);
+
     return (
       <SelectItem key={option.id} value={option.id}>
-        {option.type === "hiddenField" ? (
-          <div className="flex items-center space-x-2">
-            <EyeOffIcon className="h-4 w-4" />
-            <span>{option.label}</span>
-          </div>
-        ) : option.type === "user" ? (
-          <div className="flex items-center space-x-2">
-            <UserIcon className="h-4 w-4" />
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
-          </div>
-        ) : (
-          <div className="flex items-center space-x-2">
-            <div className="h-4 w-4">
-              {ELEMENTS_ICON_MAP[option.type === "openTextElement" ? "openText" : "contactInfo"]}
-            </div>
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
-          </div>
-        )}
+        <div className="flex items-center space-x-2">
+          {icon}
+          <span className={textClass}>{option.label}</span>
+        </div>
       </SelectItem>
     );
   };
@@ -648,13 +683,18 @@ export const FollowUpModal = ({
                                       </SelectTrigger>
 
                                       <SelectContent>
-                                        {emailSendToElementOptions.length > 0 ? (
+                                        {emailSendToVerifiedEmailOptions.length > 0 ||
+                                        emailSendToElementOptions.length > 0 ? (
                                           <div className="flex flex-col">
                                             <div className="flex items-center space-x-2 p-2">
                                               <p className="text-sm text-slate-500">
                                                 {t("common.questions")}
                                               </p>
                                             </div>
+
+                                            {emailSendToVerifiedEmailOptions.map((option) =>
+                                              renderSelectItem(option)
+                                            )}
 
                                             {emailSendToElementOptions.map((option) =>
                                               renderSelectItem(option)
@@ -832,27 +872,60 @@ export const FollowUpModal = ({
                       render={({ field }) => {
                         return (
                           <FormItem>
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                  id="attachResponseData"
-                                  checked={field.value}
-                                  defaultChecked={defaultValues?.attachResponseData ?? false}
-                                  onCheckedChange={(checked) => field.onChange(checked)}
-                                />
-                                <FormLabel htmlFor="attachResponseData" className="font-medium">
-                                  {t(
-                                    "environments.surveys.edit.follow_ups_modal_action_attach_response_data_label"
+                            <AdvancedOptionToggle
+                              htmlId="attachResponseData"
+                              isChecked={field.value}
+                              onToggle={(checked) => field.onChange(checked)}
+                              title={t(
+                                "environments.surveys.edit.follow_ups_modal_action_attach_response_data_label"
+                              )}
+                              description={t(
+                                "environments.surveys.edit.follow_ups_modal_action_attach_response_data_description"
+                              )}
+                              customContainerClass="p-0"
+                              childBorder>
+                              <div className="flex w-full flex-col gap-4 p-4">
+                                <FormField
+                                  control={form.control}
+                                  name="includeVariables"
+                                  render={({ field: variablesField }) => (
+                                    <FormItem>
+                                      <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id="includeVariables"
+                                          checked={variablesField.value}
+                                          onCheckedChange={(checked) => variablesField.onChange(checked)}
+                                          disabled={!field.value}
+                                        />
+                                        <FormLabel htmlFor="includeVariables" className="font-medium">
+                                          {t("environments.surveys.edit.follow_ups_include_variables")}
+                                        </FormLabel>
+                                      </div>
+                                    </FormItem>
                                   )}
-                                </FormLabel>
-                              </div>
+                                />
 
-                              <FormDescription className="text-sm text-slate-500">
-                                {t(
-                                  "environments.surveys.edit.follow_ups_modal_action_attach_response_data_description"
-                                )}
-                              </FormDescription>
-                            </div>
+                                <FormField
+                                  control={form.control}
+                                  name="includeHiddenFields"
+                                  render={({ field: hiddenFieldsField }) => (
+                                    <FormItem>
+                                      <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id="includeHiddenFields"
+                                          checked={hiddenFieldsField.value}
+                                          onCheckedChange={(checked) => hiddenFieldsField.onChange(checked)}
+                                          disabled={!field.value}
+                                        />
+                                        <FormLabel htmlFor="includeHiddenFields" className="font-medium">
+                                          {t("environments.surveys.edit.follow_ups_include_hidden_fields")}
+                                        </FormLabel>
+                                      </div>
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            </AdvancedOptionToggle>
                           </FormItem>
                         );
                       }}

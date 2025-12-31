@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import { type TResponseData, TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurveyElement,
   TSurveyElementTypeEnum,
+  TSurveyMatrixElement,
   TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
@@ -73,7 +74,8 @@ export function BlockConditional({
     if (elementId !== currentElementId) {
       setCurrentElementId(elementId);
     }
-    onChange(responseData);
+    // Merge with existing block data to preserve other element values
+    onChange({ ...value, ...responseData });
   };
 
   // Handler to collect TTC values synchronously (called from element form submissions)
@@ -81,32 +83,43 @@ export function BlockConditional({
     ttcCollectorRef.current[elementId] = elementTtc;
   };
 
-  // Handle skipPrefilled at block level
+  // Handle prefilling at block level (both skipPrefilled and regular prefilling)
   useEffect(() => {
-    if (skipPrefilled && prefilledResponseData) {
-      // Check if ALL elements in this block have prefilled values
-      const allElementsPrefilled = block.elements.every(
-        (element) => prefilledResponseData[element.id] !== undefined
-      );
+    if (prefilledResponseData) {
+      // Collect all prefilled values for elements in this block
+      const prefilledData: TResponseData = {};
+      let hasAnyPrefilled = false;
 
-      if (allElementsPrefilled) {
-        // Auto-populate all prefilled values
-        const prefilledData: TResponseData = {};
-        const prefilledTtc: TResponseTtc = {};
-
-        block.elements.forEach((element) => {
+      block.elements.forEach((element) => {
+        if (prefilledResponseData[element.id] !== undefined) {
           prefilledData[element.id] = prefilledResponseData[element.id];
-          prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
-        });
+          hasAnyPrefilled = true;
+        }
+      });
 
-        // Update state with prefilled data
+      if (hasAnyPrefilled) {
+        // Apply all prefilled values in one atomic operation
         onChange(prefilledData);
-        setTtc({ ...ttc, ...prefilledTtc });
 
-        // Auto-submit the entire block (skip to next)
-        setTimeout(() => {
-          onSubmit(prefilledData, prefilledTtc);
-        }, 0);
+        // If skipPrefilled and ALL elements are prefilled, auto-submit
+        if (skipPrefilled) {
+          const allElementsPrefilled = block.elements.every(
+            (element) => prefilledResponseData[element.id] !== undefined
+          );
+
+          if (allElementsPrefilled) {
+            const prefilledTtc: TResponseTtc = {};
+            block.elements.forEach((element) => {
+              prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
+            });
+            setTtc({ ...ttc, ...prefilledTtc });
+
+            // Auto-submit the entire block (skip to next)
+            setTimeout(() => {
+              onSubmit(prefilledData, prefilledTtc);
+            }, 0);
+          }
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run once when block mounts
@@ -145,23 +158,46 @@ export function BlockConditional({
     );
   };
 
+  const hasUnansweredRows = (responseData: TResponseDataValue, element: TSurveyMatrixElement): boolean => {
+    return element.rows.some((row) => {
+      const rowLabel = getLocalizedValue(row.label, languageCode);
+      return !responseData?.[rowLabel as keyof typeof responseData];
+    });
+  };
+
   // Validate a single element's form
   const validateElementForm = (element: TSurveyElement, form: HTMLFormElement): boolean => {
-    // Check HTML5 validity first
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return false;
-    }
-
     const response = value[element.id];
+
+    if (
+      element.type === TSurveyElementTypeEnum.Address ||
+      element.type === TSurveyElementTypeEnum.ContactInfo
+    ) {
+      if (!form.checkValidity()) {
+        form.requestSubmit();
+        return false;
+      }
+      return true;
+    }
 
     // Custom validation for ranking questions
     if (element.type === TSurveyElementTypeEnum.Ranking && !validateRankingElement(element, response, form)) {
       return false;
     }
 
+    if (
+      element.type === TSurveyElementTypeEnum.Matrix &&
+      element.required &&
+      response &&
+      hasUnansweredRows(response, element)
+    ) {
+      form.requestSubmit();
+      return false;
+    }
+
     // For other element types, check if required fields are empty
-    if (element.required && isEmptyResponse(response)) {
+    // CTA elements should not block navigation even if marked required (as they are informational)
+    if (element.type !== TSurveyElementTypeEnum.CTA && element.required && isEmptyResponse(response)) {
       form.requestSubmit();
       return false;
     }
@@ -243,11 +279,11 @@ export function BlockConditional({
   };
 
   return (
-    <div className={cn("fb-space-y-6", fullSizeCards ? "fb-h-full" : "")}>
+    <div className={cn("space-y-6", fullSizeCards ? "h-full" : "")}>
       {/* Scrollable container for the entire block */}
       <ScrollableContainer fullSizeCards={fullSizeCards}>
-        <div className="fb-space-y-6">
-          <div className="fb-space-y-6">
+        <div className="space-y-6">
+          <div className="space-y-6">
             {block.elements.map((element, index) => {
               const isFirstElement = index === 0;
 
@@ -257,17 +293,13 @@ export function BlockConditional({
                     element={element}
                     value={value[element.id]}
                     onChange={(responseData) => handleElementChange(element.id, responseData)}
-                    onBack={() => {}}
                     onFileUpload={onFileUpload}
                     languageCode={languageCode}
-                    prefilledElementValue={prefilledResponseData?.[element.id]}
-                    skipPrefilled={skipPrefilled}
                     ttc={ttc}
                     setTtc={setTtc}
                     surveyId={surveyId}
                     autoFocusEnabled={autoFocusEnabled && isFirstElement}
                     currentElementId={currentElementId}
-                    isBackButtonHidden={true}
                     onOpenExternalURL={onOpenExternalURL}
                     dir={dir}
                     formRef={(ref) => {
@@ -286,8 +318,8 @@ export function BlockConditional({
 
           <div
             className={cn(
-              "fb-flex fb-w-full fb-flex-row-reverse fb-justify-between",
-              fullSizeCards ? "fb-sticky fb-bottom-0 fb-bg-white" : ""
+              "flex w-full flex-row-reverse justify-between",
+              fullSizeCards ? "bg-survey-bg sticky bottom-0" : ""
             )}>
             <div>
               <SubmitButton

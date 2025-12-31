@@ -16,6 +16,7 @@ interface ThemeStylingPreviewSurveyProps {
   project: Project;
   previewType: TSurveyType;
   setPreviewType: (type: TSurveyType) => void;
+  publicDomain: string;
 }
 
 const previewParentContainerVariant: Variants = {
@@ -50,6 +51,7 @@ export const ThemeStylingPreviewSurvey = ({
   project,
   previewType,
   setPreviewType,
+  publicDomain,
 }: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
@@ -166,6 +168,7 @@ export const ThemeStylingPreviewSurvey = ({
               borderRadius={project.styling.roundness ?? 8}>
               <Fragment key={surveyKey}>
                 <SurveyInline
+                  appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={{ ...survey, type: "app" }}
                   isBrandingEnabled={project.inAppSurveyBranding}
@@ -184,7 +187,7 @@ export const ThemeStylingPreviewSurvey = ({
               ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
               isEditorView>
               {!project.styling?.isLogoHidden && (
-                <button className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
+                <button className="absolute top-5 left-5" onClick={scrollToEditLogoSection}>
                   <ClientLogo projectLogo={project.logo} previewSurvey />
                 </button>
               )}
@@ -192,6 +195,7 @@ export const ThemeStylingPreviewSurvey = ({
                 key={surveyKey}
                 className={`${project.logo?.url && !project.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
+                  appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={{ ...survey, type: "link" }}
                   isBrandingEnabled={project.linkSurveyBranding}

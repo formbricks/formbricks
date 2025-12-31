@@ -253,7 +253,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           data-testid="dropdown-menu-content">
           <Command className="h-full max-h-[400px] overflow-y-auto">
             {showSearch ? (
-              <div className="border-b border-slate-100 px-3">
+              <div className="border-b border-slate-100">
                 <CommandInput
                   placeholder={resolvedSearchPlaceholder}
                   className="h-8 border-none placeholder-slate-300 outline-none"

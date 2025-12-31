@@ -20,7 +20,7 @@ export const ContactsSecondaryNavigation = async ({
     project = await getProjectByEnvironmentId(environmentId);
 
     if (!project) {
-      throw new Error(t("common.project_not_found"));
+      throw new Error(t("common.workspace_not_found"));
     }
   }
 
@@ -34,6 +34,11 @@ export const ContactsSecondaryNavigation = async ({
       id: "segments",
       label: t("common.segments"),
       href: `/environments/${environmentId}/segments`,
+    },
+    {
+      id: "attributes",
+      label: t("common.attributes"),
+      href: `/environments/${environmentId}/attributes`,
     },
   ];
 

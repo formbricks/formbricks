@@ -197,8 +197,8 @@ export const EmailCustomizationSettings = ({
   return (
     <SettingsCard
       className="overflow-hidden pb-0"
-      title={t("environments.project.look.email_customization")}
-      description={t("environments.project.look.email_customization_description")}
+      title={t("environments.workspace.look.email_customization")}
+      description={t("environments.workspace.look.email_customization_description")}
       noPadding>
       <div className="px-6 pt-6">
         {hasWhiteLabelPermission ? (
@@ -206,7 +206,7 @@ export const EmailCustomizationSettings = ({
             <div className="mb-10">
               <Small>{t("environments.settings.general.logo_in_email_header")}</Small>
 
-              <div className="mb-6 mt-2 flex items-center gap-4">
+              <div className="mt-2 mb-6 flex items-center gap-4">
                 {logoUrl && (
                   <div className="flex flex-col gap-2">
                     <div className="flex w-max items-center justify-center rounded-lg border border-slate-200 px-4 py-2">
@@ -276,7 +276,7 @@ export const EmailCustomizationSettings = ({
                 </Button>
               </div>
             </div>
-            <div className="shadow-card-xl min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pb-4 pt-10">
+            <div className="shadow-card-xl min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pt-10 pb-4">
               <Image
                 data-testid="email-customization-preview-image"
                 src={logoUrl || fbLogoUrl}
@@ -304,7 +304,7 @@ export const EmailCustomizationSettings = ({
         )}
 
         {hasWhiteLabelPermission && isReadOnly && (
-          <Alert variant="warning" className="mb-6 mt-4">
+          <Alert variant="warning" className="mt-4 mb-6">
             <AlertDescription>
               {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
             </AlertDescription>

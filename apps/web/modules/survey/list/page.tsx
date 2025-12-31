@@ -33,7 +33,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const project = await getProjectWithTeamIdsByEnvironmentId(params.environmentId);
 
   if (!project) {
-    throw new Error(t("common.project_not_found"));
+    throw new Error(t("common.workspace_not_found"));
   }
 
   const { session, isBilling, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
@@ -70,6 +70,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
         environment={environment}
         project={projectWithRequiredProps}
         isTemplatePage={false}
+        publicDomain={publicDomain}
       />
     );
 

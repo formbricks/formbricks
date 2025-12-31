@@ -400,9 +400,9 @@ export const TeamSettingsModal = ({
               {/* Projects Section */}
               <div className="space-y-2">
                 <div className="flex flex-col space-y-1">
-                  <FormLabel>{t("common.projects")}</FormLabel>
+                  <FormLabel>{t("common.workspaces")}</FormLabel>
                   <Muted className="block text-slate-500">
-                    {t("environments.settings.teams.add_projects_description")}
+                    {t("environments.settings.teams.add_workspaces_description")}
                   </Muted>
                 </div>
                 <FormField
@@ -432,7 +432,7 @@ export const TeamSettingsModal = ({
                                         disabled={isSelectDisabled}>
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={t("environments.settings.teams.select_project")}
+                                            placeholder={t("environments.settings.teams.select_workspace")}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -508,8 +508,8 @@ export const TeamSettingsModal = ({
                   triggerClass="inline-block"
                   tooltipContent={
                     hasEmptyProject
-                      ? t("environments.settings.teams.please_fill_all_project_fields")
-                      : t("environments.settings.teams.all_projects_added")
+                      ? t("environments.settings.teams.please_fill_all_workspace_fields")
+                      : t("environments.settings.teams.all_workspaces_added")
                   }>
                   <Button
                     size="sm"
@@ -520,7 +520,7 @@ export const TeamSettingsModal = ({
                       !isOwnerOrManager || selectedProjectIds.length === orgProjects.length || hasEmptyProject
                     }>
                     <PlusIcon className="h-4 w-4" />
-                    {t("common.add_project")}
+                    {t("common.add_workspace")}
                   </Button>
                 </TooltipRenderer>
               </div>

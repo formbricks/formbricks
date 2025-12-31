@@ -35,6 +35,7 @@ export type TOrganizationBilling = z.infer<typeof ZOrganizationBilling>;
 
 export const ZOrganizationWhitelabel = z.object({
   logoUrl: z.string().nullable(),
+  faviconUrl: z.string().url().nullish(),
 });
 
 export type TOrganizationWhitelabel = z.infer<typeof ZOrganizationWhitelabel>;

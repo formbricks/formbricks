@@ -46,6 +46,11 @@ export const FollowUpItem = ({
 
     if (!to) return true;
 
+    // Verified email is always valid as an option (handled at execution time)
+    if (to === "verifiedEmail") {
+      return false;
+    }
+
     // Derive questions from blocks
     const questions = getElementsFromBlocks(localSurvey.blocks);
 
@@ -150,7 +155,7 @@ export const FollowUpItem = ({
           </div>
         </button>
 
-        <div className="absolute right-4 top-4 flex items-center">
+        <div className="absolute top-4 right-4 flex items-center">
           <TooltipRenderer tooltipContent={t("common.delete")}>
             <Button
               variant="ghost"
@@ -196,6 +201,8 @@ export const FollowUpItem = ({
           emailTo: followUp.action.properties.to,
           replyTo: followUp.action.properties.replyTo,
           attachResponseData: followUp.action.properties.attachResponseData,
+          includeVariables: followUp.action.properties.includeVariables ?? false,
+          includeHiddenFields: followUp.action.properties.includeHiddenFields ?? false,
         }}
         mode="edit"
         teamMemberDetails={teamMemberDetails}

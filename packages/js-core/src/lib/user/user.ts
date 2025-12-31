@@ -2,7 +2,7 @@ import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { tearDown } from "@/lib/common/setup";
 import { UpdateQueue } from "@/lib/user/update-queue";
-import { type ApiErrorResponse, type Result, err, okVoid } from "@/types/error";
+import { type ApiErrorResponse, type Result, okVoid } from "@/types/error";
 
 // eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
 export const setUserId = async (userId: string): Promise<Result<void, ApiErrorResponse>> => {
@@ -14,16 +14,16 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
     data: { userId: currentUserId },
   } = appConfig.get().user;
 
+  // If the same userId is already set, no-op
+  if (currentUserId === userId) {
+    logger.debug("UserId is already set to the same value, skipping");
+    return okVoid();
+  }
+
+  // If a different userId is set, clean up the previous user state first
   if (currentUserId) {
-    logger.error(
-      "A userId is already set in formbricks, please first call the logout function and then set a new userId"
-    );
-    return err({
-      code: "forbidden",
-      message: "User already set",
-      responseMessage: "User already set",
-      status: 403,
-    });
+    logger.debug("Different userId is being set, cleaning up previous user state");
+    tearDown();
   }
 
   updateQueue.updateUserId(userId);
@@ -34,15 +34,8 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
 export const logout = (): Result<void> => {
   try {
     const logger = Logger.getInstance();
-    const appConfig = Config.getInstance();
 
-    const { userId } = appConfig.get().user.data;
-
-    if (!userId) {
-      logger.error("No userId is set, please use the setUserId function to set a userId first");
-      return okVoid();
-    }
-
+    logger.debug("Logging out and cleaning user state");
     tearDown();
 
     return okVoid();

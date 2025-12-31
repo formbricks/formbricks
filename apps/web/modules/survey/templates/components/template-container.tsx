@@ -16,6 +16,7 @@ type TemplateContainerWithPreviewProps = {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   userId: string;
   isTemplatePage?: boolean;
+  publicDomain: string;
 };
 
 export const TemplateContainerWithPreview = ({
@@ -23,6 +24,7 @@ export const TemplateContainerWithPreview = ({
   environment,
   userId,
   isTemplatePage = true,
+  publicDomain,
 }: TemplateContainerWithPreviewProps) => {
   const { t } = useTranslation();
   const initialTemplate = customSurveyTemplate(t);
@@ -37,7 +39,7 @@ export const TemplateContainerWithPreview = ({
       {isTemplatePage && <MenuBar />}
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <div className="flex-1 flex-col overflow-auto bg-slate-50">
-          <div className="mb-3 ml-6 mt-6 flex flex-col items-center justify-between md:flex-row md:items-end">
+          <div className="mt-6 mb-3 ml-6 flex flex-col items-center justify-between md:flex-row md:items-end">
             <h1 className="text-2xl font-bold text-slate-800">
               {isTemplatePage
                 ? t("environments.surveys.templates.create_a_new_survey")
@@ -72,6 +74,7 @@ export const TemplateContainerWithPreview = ({
               environment={environment}
               languageCode={"default"}
               isSpamProtectionAllowed={false} // setting it to false as this is a template
+              publicDomain={publicDomain}
             />
           )}
         </aside>

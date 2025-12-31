@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
@@ -20,14 +21,21 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   const project = await getProjectWithTeamIdsByEnvironmentId(environmentId);
 
   if (!project) {
-    throw new Error(t("common.project_not_found"));
+    throw new Error(t("common.workspace_not_found"));
   }
 
   if (isReadOnly) {
     return redirect(`/environments/${environment.id}/surveys`);
   }
 
+  const publicDomain = getPublicDomain();
+
   return (
-    <TemplateContainerWithPreview userId={session.user.id} environment={environment} project={project} />
+    <TemplateContainerWithPreview
+      userId={session.user.id}
+      environment={environment}
+      project={project}
+      publicDomain={publicDomain}
+    />
   );
 };
