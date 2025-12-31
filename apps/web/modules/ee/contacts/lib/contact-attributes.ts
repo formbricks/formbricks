@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/common";
+import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
@@ -54,6 +54,34 @@ export const hasEmailAttribute = reactCache(
               environmentId,
             },
             value: email,
+          },
+          {
+            NOT: {
+              contactId,
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+
+    return !!contactAttribute;
+  }
+);
+
+export const hasUserIdAttribute = reactCache(
+  async (userId: string, environmentId: string, contactId: string): Promise<boolean> => {
+    validateInputs([userId, ZString], [environmentId, ZId], [contactId, ZId]);
+
+    const contactAttribute = await prisma.contactAttribute.findFirst({
+      where: {
+        AND: [
+          {
+            attributeKey: {
+              key: "userId",
+              environmentId,
+            },
+            value: userId,
           },
           {
             NOT: {
