@@ -47,11 +47,22 @@ const deleteAttributes = async (
   };
 };
 
+/**
+ * Updates or creates contact attributes.
+ *
+ * @param contactId - The ID of the contact to update
+ * @param userId - The user ID of the contact
+ * @param environmentId - The environment ID
+ * @param contactAttributesParam - The attributes to update/create
+ * @param deleteRemovedAttributes - When true, deletes attributes that exist in DB but are not in the payload.
+ * Use this for UI forms where all attributes are submitted. Default is false (merge behavior) for API calls.
+ */
 export const updateAttributes = async (
   contactId: string,
   userId: string,
   environmentId: string,
-  contactAttributesParam: TContactAttributes
+  contactAttributesParam: TContactAttributes,
+  deleteRemovedAttributes: boolean = false
 ): Promise<{ success: boolean; messages?: string[]; ignoreEmailAttribute?: boolean }> => {
   validateInputs(
     [contactId, ZId],
@@ -76,8 +87,12 @@ export const updateAttributes = async (
   const contactAttributes = existingEmailAttribute ? remainingAttributes : contactAttributesParam;
   const emailExists = !!existingEmailAttribute;
 
-  // Delete attributes that were removed (using the deleteAttributes service)
-  await deleteAttributes(contactId, currentAttributes, contactAttributesParam, contactAttributeKeys);
+  // Delete attributes that were removed (only when explicitly requested)
+  // This is used by UI forms where all attributes are submitted
+  // For API calls, we want merge behavior by default (only update passed attributes)
+  if (deleteRemovedAttributes) {
+    await deleteAttributes(contactId, currentAttributes, contactAttributesParam, contactAttributeKeys);
+  }
 
   // Create lookup map for attribute keys
   const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
