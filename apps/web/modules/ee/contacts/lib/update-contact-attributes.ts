@@ -13,11 +13,6 @@ export interface UpdateContactAttributesResult {
   updatedAttributeKeys?: TContactAttributeKey[];
 }
 
-/**
- * Updates contact attributes for a single contact.
- * Handles loading contact data, extracting userId, calling updateAttributes,
- * and detecting if new attribute keys were created.
- */
 export const updateContactAttributes = async (
   contactId: string,
   attributes: TContactAttributes
@@ -43,8 +38,9 @@ export const updateContactAttributes = async (
   const currentAttributeKeys = await getContactAttributeKeys(environmentId);
   const currentKeysSet = new Set(currentAttributeKeys.map((key) => key.key));
 
-  // Call the existing updateAttributes function
-  const updateResult = await updateAttributes(contactId, userId, environmentId, attributes);
+  // Call updateAttributes with deleteRemovedAttributes: true
+  // UI forms submit all attributes, so any missing attribute should be deleted
+  const updateResult = await updateAttributes(contactId, userId, environmentId, attributes, true);
 
   // Merge any messages from updateAttributes
   if (updateResult.messages) {
