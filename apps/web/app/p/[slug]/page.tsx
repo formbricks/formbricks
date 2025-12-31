@@ -15,12 +15,10 @@ export default async function PrettyUrlPage(props: PrettyUrlPageProps) {
     return notFound();
   }
 
-  const result = await getSurveyBySlug(slug);
-  if (!result.ok || !result.data) {
+  const survey = await getSurveyBySlug(slug);
+  if (!survey) {
     return notFound();
   }
-
-  const survey = result.data;
 
   // Preserve query params (suId, lang, etc.)
   const queryString = new URLSearchParams(
