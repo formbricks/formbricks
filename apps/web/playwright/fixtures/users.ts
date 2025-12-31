@@ -89,7 +89,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                   ...(!params?.withoutProject && {
                     projects: {
                       create: {
-                        name: params?.projectName ?? "My Project",
+                        name: params?.projectName ?? "My Workspace",
                         environments: {
                           create: [
                             {

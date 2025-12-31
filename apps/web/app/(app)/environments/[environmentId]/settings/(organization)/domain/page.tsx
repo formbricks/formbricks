@@ -31,12 +31,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.billing.plan);
   const isOwnerOrManager = isManager || isOwner;
 
-  const result = await getSurveysWithSlugsByOrganizationId(organization.id);
-  if (!result.ok) {
-    throw new Error(t("common.something_went_wrong"));
-  }
-
-  const surveys = result.data;
+  const surveys = await getSurveysWithSlugsByOrganizationId(organization.id);
 
   return (
     <PageContentWrapper>

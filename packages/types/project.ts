@@ -74,7 +74,7 @@ export const ZProject = z.object({
 export type TProject = z.infer<typeof ZProject>;
 
 export const ZProjectUpdateInput = z.object({
-  name: z.string().trim().min(1, { message: "Project name cannot be empty" }).optional(),
+  name: z.string().trim().min(1, { message: "Workspace name cannot be empty" }).optional(),
   organizationId: z.string().optional(),
   highlightBorderColor: ZColor.nullish(),
   recontactDays: z.number().int().optional(),
