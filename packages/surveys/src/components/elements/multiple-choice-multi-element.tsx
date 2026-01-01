@@ -277,6 +277,7 @@ export function MultipleChoiceMultiElement({
         exclusiveOptionIds={noneOption ? [noneOption.id] : []}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
+        variant={element.displayType || "list"}
       />
     </form>
   );

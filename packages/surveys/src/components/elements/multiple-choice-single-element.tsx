@@ -198,6 +198,7 @@ export function MultipleChoiceSingleElement({
         onOtherValueChange={handleOtherValueChange}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
+        variant={element.displayType || "list"}
       />
     </form>
   );

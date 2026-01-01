@@ -141,6 +141,7 @@ export const ZSurveyMultipleChoiceElement = ZSurveyElementBase.extend({
     .min(2, { message: "Multiple Choice Element must have at least two choices" }),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
+  displayType: z.enum(["list", "dropdown"]).optional(),
 });
 
 export type TSurveyMultipleChoiceElement = z.infer<typeof ZSurveyMultipleChoiceElement>;
