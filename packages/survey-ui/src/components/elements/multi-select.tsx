@@ -153,7 +153,9 @@ function DropdownVariant({
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-white border-slate-200 shadow-lg w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+        <DropdownMenuContent
+          className="z-[1100] w-[var(--radix-dropdown-menu-trigger-width)] border-slate-200 bg-white shadow-lg"
+          align="start">
           {options
             .filter((option) => option.id !== "none")
             .map((option) => {
