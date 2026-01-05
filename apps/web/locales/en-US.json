@@ -1935,7 +1935,7 @@
         "delete_workspace_settings_description": "Delete workspace with all surveys, responses, people, actions and attributes. This cannot be undone.",
         "error_saving_workspace_information": "Error saving workspace information",
         "only_owners_or_managers_can_delete_workspaces": "Only owners or managers can delete workspaces",
-        "recontact_waiting_time": "Cooldown Period (scross surveys)",
+        "recontact_waiting_time": "Cooldown Period (across surveys)",
         "recontact_waiting_time_settings_description": "Control how frequently users can be surveyed across all Website & App Surveys in this workspace.",
         "this_action_cannot_be_undone": "This action cannot be undone.",
         "wait_x_days_before_showing_next_survey": "Wait X days before showing next survey:",
