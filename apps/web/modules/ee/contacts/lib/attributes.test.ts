@@ -221,7 +221,7 @@ describe("updateAttributes", () => {
     expect(result.messages).toBeUndefined();
   });
 
-  test("deletes non-default attributes that are removed from payload", async () => {
+  test("deletes non-default attributes when deleteRemovedAttributes is true", async () => {
     // Reset mocks explicitly for this test
     vi.mocked(prisma.contactAttribute.deleteMany).mockClear();
 
@@ -236,7 +236,8 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 1 });
     const attributes = { name: "John", email: "john@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    // Pass deleteRemovedAttributes: true to enable deletion behavior
+    const result = await updateAttributes(contactId, userId, environmentId, attributes, true);
     // Only customAttr (key-3) should be deleted, not name (key-1) or email (key-2)
     expect(prisma.contactAttribute.deleteMany).toHaveBeenCalledWith({
       where: {
@@ -250,11 +251,31 @@ describe("updateAttributes", () => {
     expect(result.messages).toBeUndefined();
   });
 
-  test("does not delete default attributes even if removed from payload", async () => {
+  test("does not delete attributes when deleteRemovedAttributes is false (default behavior)", async () => {
     // Reset mocks explicitly for this test
     vi.mocked(prisma.contactAttribute.deleteMany).mockClear();
 
-    // Need to include userId and firstName in attributeKeys for this test
+    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributes).mockResolvedValue({
+      name: "Jane",
+      email: "jane@example.com",
+      customAttr: "oldValue",
+    });
+    vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+    vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
+    const attributes = { name: "John", email: "john@example.com" };
+    // Default behavior (deleteRemovedAttributes: false) should NOT delete existing attributes
+    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    // deleteMany should NOT be called since we're merging, not replacing
+    expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
+    expect(result.success).toBe(true);
+    expect(result.messages).toEqual([]);
+  });
+
+  test("does not delete default attributes even when deleteRemovedAttributes is true", async () => {
+    // Reset mocks explicitly for this test
+    vi.mocked(prisma.contactAttribute.deleteMany).mockClear();
+
     // Note: DEFAULT_ATTRIBUTES includes: email, userId, firstName, lastName (not "name")
     const attributeKeysWithDefaults: TContactAttributeKey[] = [
       {
@@ -313,7 +334,8 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { customAttr: "value" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    // Pass deleteRemovedAttributes: true to test that default attributes are still preserved
+    const result = await updateAttributes(contactId, userId, environmentId, attributes, true);
     // Should not delete default attributes (email, userId, firstName) - deleteMany should not be called
     // since all current attributes are default attributes
     expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
