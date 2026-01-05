@@ -2,7 +2,7 @@
 
 import { CirclePlayIcon, CopyIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -34,7 +34,6 @@ export const AnonymousLinksTab = ({
   locale,
   isReadOnly,
 }: AnonymousLinksTabProps) => {
-  const surveyUrlWithCustomSuid = `${surveyUrl}?suId=CUSTOM-ID`;
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -48,6 +47,12 @@ export const AnonymousLinksTab = ({
     type: "multi-use" | "single-use";
     pendingAction: () => Promise<void> | void;
   } | null>(null);
+
+  const surveyUrlWithCustomSuid = useMemo(() => {
+    const url = new URL(surveyUrl);
+    url.searchParams.set("suId", "CUSTOM-ID");
+    return url.toString();
+  }, [surveyUrl]);
 
   const resetState = () => {
     const { singleUse } = survey;
@@ -177,7 +182,11 @@ export const AnonymousLinksTab = ({
 
       if (!!response?.data?.length) {
         const singleUseIds = response.data;
-        const surveyLinks = singleUseIds.map((singleUseId) => `${surveyUrl}?suId=${singleUseId}`);
+        const surveyLinks = singleUseIds.map((singleUseId) => {
+          const url = new URL(surveyUrl);
+          url.searchParams.set("suId", singleUseId);
+          return url.toString();
+        });
 
         // Create content with just the links
         const csvContent = surveyLinks.join("\n");
