@@ -91,6 +91,13 @@ export const EditContactAttributesModal = ({
     return allKeyOptions.filter((option) => !selectedKeys.has(String(option.value)));
   };
 
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!open) {
+      form.reset(defaultValues);
+    }
+  }, [open, defaultValues, form]);
+
   // Scroll to first error on validation failure
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
