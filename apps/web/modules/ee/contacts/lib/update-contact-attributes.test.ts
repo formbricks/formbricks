@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { updateAttributes } from "./attributes";
 import { getContactAttributeKeys } from "./contact-attribute-keys";
 import { getContactAttributes } from "./contact-attributes";
@@ -16,7 +16,7 @@ describe("updateContactAttributes", () => {
     vi.clearAllMocks();
   });
 
-  it("should update contact attributes successfully", async () => {
+  test("should update contact attributes with deleteRemovedAttributes: true", async () => {
     const contactId = "contact123";
     const environmentId = "env123";
     const userId = "user123";
@@ -91,13 +91,14 @@ describe("updateContactAttributes", () => {
 
     expect(getContact).toHaveBeenCalledWith(contactId);
     expect(getContactAttributeKeys).toHaveBeenCalledWith(environmentId);
-    expect(updateAttributes).toHaveBeenCalledWith(contactId, userId, environmentId, attributes);
+    // Should call updateAttributes with deleteRemovedAttributes: true for UI form updates
+    expect(updateAttributes).toHaveBeenCalledWith(contactId, userId, environmentId, attributes, true);
     expect(getContactAttributes).toHaveBeenCalledWith(contactId);
     expect(result.updatedAttributes).toEqual(mockUpdatedAttributes);
     expect(result.updatedAttributeKeys).toBeUndefined();
   });
 
-  it("should detect new attribute keys when created", async () => {
+  test("should detect new attribute keys when created", async () => {
     const contactId = "contact123";
     const environmentId = "env123";
     const userId = "user123";
@@ -184,7 +185,7 @@ describe("updateContactAttributes", () => {
     ]);
   });
 
-  it("should handle missing userId with warning message", async () => {
+  test("should handle missing userId with warning message", async () => {
     const contactId = "contact123";
     const environmentId = "env123";
     const attributes = {
@@ -226,13 +227,13 @@ describe("updateContactAttributes", () => {
 
     const result = await updateContactAttributes(contactId, attributes);
 
-    expect(updateAttributes).toHaveBeenCalledWith(contactId, "", environmentId, attributes);
+    expect(updateAttributes).toHaveBeenCalledWith(contactId, "", environmentId, attributes, true);
     expect(result.messages).toContain(
       "Warning: userId attribute is missing. Some operations may not work correctly."
     );
   });
 
-  it("should merge messages from updateAttributes", async () => {
+  test("should merge messages from updateAttributes", async () => {
     const contactId = "contact123";
     const environmentId = "env123";
     const userId = "user123";
@@ -279,7 +280,7 @@ describe("updateContactAttributes", () => {
     expect(result.messages).toContain("The email already exists for this environment and was not updated.");
   });
 
-  it("should throw error if contact not found", async () => {
+  test("should throw error if contact not found", async () => {
     const contactId = "contact123";
     const attributes = {
       firstName: "John",
