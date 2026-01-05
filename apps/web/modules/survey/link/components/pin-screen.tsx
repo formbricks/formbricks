@@ -13,7 +13,7 @@ import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
   surveyId: string;
-  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding">;
+  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   publicDomain: string;
