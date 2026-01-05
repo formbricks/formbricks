@@ -30,10 +30,6 @@ export const updateContactAttributes = async (
   const userId = attributes.userId ?? "";
   const messages: string[] = [];
 
-  if (!attributes.userId) {
-    messages.push("Warning: userId attribute is missing. Some operations may not work correctly.");
-  }
-
   // Get current attribute keys before update to detect new ones
   const currentAttributeKeys = await getContactAttributeKeys(environmentId);
   const currentKeysSet = new Set(currentAttributeKeys.map((key) => key.key));

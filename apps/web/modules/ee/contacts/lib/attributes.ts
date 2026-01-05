@@ -82,6 +82,7 @@ export const updateAttributes = async (
 
   let ignoreEmailAttribute = false;
   let ignoreUserIdAttribute = false;
+  const messages: string[] = [];
 
   // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
   const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
@@ -102,6 +103,48 @@ export const updateAttributes = async (
 
   // Remove email and/or userId from attributes if they already exist on another contact
   let contactAttributes = { ...contactAttributesParam };
+
+  // Determine what the final email and userId values will be after this update
+  // Only consider a value as "submitted" if it was explicitly included in the attributes
+  const emailWasSubmitted = "email" in contactAttributesParam;
+  const userIdWasSubmitted = "userId" in contactAttributesParam;
+
+  const submittedEmail = emailWasSubmitted ? contactAttributes.email?.trim() || "" : null;
+  const submittedUserId = userIdWasSubmitted ? contactAttributes.userId?.trim() || "" : null;
+
+  const currentEmail = currentAttributes.email || "";
+  const currentUserId = currentAttributes.userId || "";
+
+  // Calculate final values:
+  // - If not submitted, keep current value
+  // - If submitted but duplicate exists, keep current value
+  // - If submitted and no duplicate, use submitted value
+  const getFinalEmail = (): string => {
+    if (submittedEmail === null) return currentEmail;
+    if (emailExists) return currentEmail;
+    return submittedEmail;
+  };
+
+  const getFinalUserId = (): string => {
+    if (submittedUserId === null) return currentUserId;
+    if (userIdExists) return currentUserId;
+    return submittedUserId;
+  };
+
+  const finalEmail = getFinalEmail();
+  const finalUserId = getFinalUserId();
+
+  // Ensure at least one of email or userId will have a value after update
+  if (!finalEmail && !finalUserId) {
+    // If both would be empty, preserve the current values
+    if (currentEmail) {
+      contactAttributes.email = currentEmail;
+    }
+    if (currentUserId) {
+      contactAttributes.userId = currentUserId;
+    }
+    messages.push("Either email or userId is required. The existing values were preserved.");
+  }
 
   if (emailExists) {
     const { email: _email, ...rest } = contactAttributes;
@@ -141,8 +184,6 @@ export const updateAttributes = async (
       newAttributes: { key: string; value: string }[];
     }
   );
-
-  const messages: string[] = [];
 
   if (emailExists) {
     messages.push("The email already exists for this environment and was not updated.");
