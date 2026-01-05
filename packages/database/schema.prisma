@@ -390,6 +390,9 @@ model Survey {
 
   slug String? @unique
 
+  customHeadScripts     String? // Survey-specific custom HTML scripts (self-hosted only)
+  customHeadScriptsMode String? // "add" (merge with project) or "replace" (override project)
+
   @@index([environmentId, updatedAt])
   @@index([segmentId])
 }
@@ -620,6 +623,7 @@ model Project {
   /// [Logo]
   logo                Json?
   projectTeams        ProjectTeam[]
+  customHeadScripts   String? // Custom HTML scripts for link surveys (self-hosted only)
 
   @@unique([organizationId, name])
   @@index([organizationId])

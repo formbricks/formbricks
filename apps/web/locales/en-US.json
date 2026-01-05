@@ -1690,6 +1690,22 @@
           "url_encryption_description": "Only disable if you need to set a custom single-use ID.",
           "url_encryption_label": "URL encryption of single-use ID"
         },
+        "custom_html": {
+          "add_mode_description": "Survey scripts will run in addition to workspace-level scripts.",
+          "add_to_workspace": "Add to Workspace scripts",
+          "description": "Add tracking scripts and pixels to this survey",
+          "nav_title": "Custom HTML",
+          "no_workspace_scripts": "No workspace-level scripts configured. You can add them in Workspace Settings → General.",
+          "placeholder": "<!-- Paste your tracking scripts here -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+          "replace_mode_description": "Only survey scripts will run. Workspace scripts will be ignored. Keep empty to not load any scripts.",
+          "replace_workspace": "Replace Workspace scripts",
+          "saved_successfully": "Custom scripts saved successfully",
+          "script_mode": "Script Mode",
+          "security_warning": "Scripts execute with full browser access. Only add scripts from trusted sources.",
+          "survey_scripts_description": "Add custom HTML to inject into the <head> of this survey page.",
+          "survey_scripts_label": "Survey-specific scripts",
+          "workspace_scripts_label": "Workspace scripts (inherited)"
+        },
         "dynamic_popup": {
           "alert_button": "Edit survey",
           "alert_description": "This survey is currently configured as a link survey, which does not support dynamic pop-ups. You can change this in the settings tab of the survey editor.",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "This is your only workspace, it cannot be deleted. Create a new workspace first.",
+        "custom_scripts": "Custom Scripts",
+        "custom_scripts_card_description": "Add tracking scripts and pixels to all link surveys in this workspace.",
+        "custom_scripts_description": "Scripts will be injected into the <head> of all link survey pages.",
+        "custom_scripts_label": "HTML Scripts",
+        "custom_scripts_placeholder": "<!-- Paste your tracking scripts here -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+        "custom_scripts_updated_successfully": "Custom scripts updated successfully",
+        "custom_scripts_warning": "Scripts execute with full browser access. Only add scripts from trusted sources.",
         "delete_workspace": "Delete Workspace",
         "delete_workspace_confirmation": "Are you sure you want to delete {projectName}? This action cannot be undone.",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Delete {projectName} incl. all surveys, responses, people, actions and attributes.",

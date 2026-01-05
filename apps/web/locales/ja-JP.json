@@ -1690,6 +1690,22 @@
           "url_encryption_description": "カスタムの単一使用IDを設定する必要がある場合にのみ無効にしてください。",
           "url_encryption_label": "単一使用IDのURL暗号化"
         },
+        "custom_html": {
+          "add_mode_description": "アンケートスクリプトは、ワークスペースレベルのスクリプトに加えて実行されます。",
+          "add_to_workspace": "ワークスペーススクリプトに追加",
+          "description": "このアンケートにトラッキングスクリプトとピクセルを追加",
+          "nav_title": "カスタムHTML",
+          "no_workspace_scripts": "ワークスペースレベルのスクリプトが設定されていません。ワークスペース設定→一般から追加できます。",
+          "placeholder": "<!-- トラッキングスクリプトをここに貼り付けてください -->\n<script>\n  // Google Tag Manager、Analyticsなど\n</script>",
+          "replace_mode_description": "アンケートスクリプトのみが実行されます。ワークスペーススクリプトは無視されます。スクリプトを読み込まない場合は空のままにしてください。",
+          "replace_workspace": "ワークスペーススクリプトを置き換え",
+          "saved_successfully": "カスタムスクリプトを正常に保存しました",
+          "script_mode": "スクリプトモード",
+          "security_warning": "スクリプトはブラウザへの完全なアクセス権で実行されます。信頼できるソースからのスクリプトのみを追加してください。",
+          "survey_scripts_description": "このアンケートページの<head>に挿入するカスタムHTMLを追加します。",
+          "survey_scripts_label": "アンケート固有のスクリプト",
+          "workspace_scripts_label": "ワークスペーススクリプト(継承)"
+        },
         "dynamic_popup": {
           "alert_button": "フォームを編集",
           "alert_description": "このフォームは現在、動的なポップアップをサポートしていないリンクフォームとして設定されています。フォームエディターの設定タブでこれを変更できます。",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "これは唯一のワークスペースのため、削除できません。まず新しいワークスペースを作成してください。",
+        "custom_scripts": "カスタムスクリプト",
+        "custom_scripts_card_description": "このワークスペース内のすべてのリンクアンケートにトラッキングスクリプトとピクセルを追加します。",
+        "custom_scripts_description": "すべてのリンクアンケートページの<head>にスクリプトが挿入されます。",
+        "custom_scripts_label": "HTMLスクリプト",
+        "custom_scripts_placeholder": "<!-- トラッキングスクリプトをここに貼り付けてください -->\n<script>\n  // Google Tag Manager、Analyticsなど\n</script>",
+        "custom_scripts_updated_successfully": "カスタムスクリプトを正常に更新しました",
+        "custom_scripts_warning": "スクリプトはブラウザへの完全なアクセス権で実行されます。信頼できるソースからのスクリプトのみを追加してください。",
         "delete_workspace": "ワークスペースを削除",
         "delete_workspace_confirmation": "{projectName}を削除してもよろしいですか？このアクションは元に戻せません。",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "{projectName}をすべてのフォーム、回答、人物、アクション、属性を含めて削除します。",

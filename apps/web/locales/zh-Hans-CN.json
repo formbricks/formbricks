@@ -1690,6 +1690,22 @@
           "url_encryption_description": "仅在 需要 设置 自定义 单次使用 ID 时 才 禁用。",
           "url_encryption_label": "单次 使用 ID 的 URL 加密"
         },
+        "custom_html": {
+          "add_mode_description": "调查脚本将在工作区级脚本的基础上运行。",
+          "add_to_workspace": "添加到工作区脚本",
+          "description": "为此调查添加跟踪脚本和像素代码",
+          "nav_title": "自定义 HTML",
+          "no_workspace_scripts": "尚未配置工作区级脚本。你可以在工作区设置 → 常规中添加。",
+          "placeholder": "<!-- 在此粘贴你的跟踪脚本 -->\n<script>\n  // Google Tag Manager、Analytics 等\n</script>",
+          "replace_mode_description": "仅运行调查脚本，工作区脚本将被忽略。保持为空则不加载任何脚本。",
+          "replace_workspace": "替换工作区脚本",
+          "saved_successfully": "自定义脚本保存成功",
+          "script_mode": "脚本模式",
+          "security_warning": "脚本将以完整浏览器权限执行。请仅添加来自可信来源的脚本。",
+          "survey_scripts_description": "添加自定义 HTML 注入到此调查页面的<head>中。",
+          "survey_scripts_label": "调查专用脚本",
+          "workspace_scripts_label": "工作区脚本（继承）"
+        },
         "dynamic_popup": {
           "alert_button": "编辑 survey",
           "alert_description": "此 问卷 当前 配置 为 链接 问卷， 不 支持 动态 弹出 窗。 您 可以 在 问卷 编辑器 的 设置 选项 中 进行 修改。",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "这是您唯一的工作区，无法删除。请先创建一个新工作区。",
+        "custom_scripts": "自定义脚本",
+        "custom_scripts_card_description": "为此工作区内所有链接调查添加跟踪脚本和像素代码。",
+        "custom_scripts_description": "脚本将被注入到所有链接调查页面的<head>中。",
+        "custom_scripts_label": "HTML 脚本",
+        "custom_scripts_placeholder": "<!-- 在此粘贴你的跟踪脚本 -->\n<script>\n  // Google Tag Manager、Analytics 等\n</script>",
+        "custom_scripts_updated_successfully": "自定义脚本更新成功",
+        "custom_scripts_warning": "脚本将以完整浏览器权限执行。请仅添加来自可信来源的脚本。",
         "delete_workspace": "删除工作区",
         "delete_workspace_confirmation": "您确定要删除 {projectName} 吗？此操作无法撤销。",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "删除 {projectName}，包括所有调查、回应、人员、动作和属性。",
