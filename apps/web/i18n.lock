@@ -1826,7 +1826,7 @@ checksums:
     environments/workspace/general/delete_workspace_settings_description: 411ef100f167fc8fca64e833b6c0d030
     environments/workspace/general/error_saving_workspace_information: e7b8022785619ef34de1fb1630b3c476
     environments/workspace/general/only_owners_or_managers_can_delete_workspaces: 58da180cd2610210302d85a9896d80bd
-    environments/workspace/general/recontact_waiting_time: 8977b5160fbf88c456608982b33e246f
+    environments/workspace/general/recontact_waiting_time: 6873c18d51830e2cadef67cce6a2c95c
     environments/workspace/general/recontact_waiting_time_settings_description: ebd64fddbea9387b12c027a18358db7e
     environments/workspace/general/this_action_cannot_be_undone: 3d8b13374ffd3cefc0f3f7ce077bd9c9
     environments/workspace/general/wait_x_days_before_showing_next_survey: d96228788d32ec23dc0d8c8ba77150a6
