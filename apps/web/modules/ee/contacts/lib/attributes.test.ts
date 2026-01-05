@@ -269,7 +269,7 @@ describe("updateAttributes", () => {
     // deleteMany should NOT be called since we're merging, not replacing
     expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
     expect(result.success).toBe(true);
-    expect(result.messages).toEqual([]);
+    expect(result.messages).toBeUndefined();
   });
 
   test("does not delete default attributes even when deleteRemovedAttributes is true", async () => {
