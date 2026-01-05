@@ -181,13 +181,15 @@ describe("updateAttributes", () => {
   });
 
   test("creates new attributes if under limit", async () => {
-    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[0]]);
-    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane" });
+    // Use name and email keys (2 existing keys), MAX is mocked to 2
+    // We update existing attributes, no new ones created
+    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[0], attributeKeys[1]]); // name, email
+    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
-    const attributes = { name: "John", newAttr: "val" };
+    const attributes = { name: "John", email: "john@example.com" };
     const result = await updateAttributes(contactId, userId, environmentId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
 
@@ -202,20 +204,21 @@ describe("updateAttributes", () => {
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
-    const attributes = { name: "John", newAttr: "val" };
+    // Include email to satisfy the "at least one of email or userId" requirement
+    const attributes = { name: "John", email: "john@example.com", newAttr: "val" };
     const result = await updateAttributes(contactId, userId, environmentId, attributes);
     expect(result.success).toBe(true);
     expect(result.messages?.[0]).toMatch(/Could not create 1 new attribute/);
   });
 
-  test("returns success with no attributes to update or create", async () => {
-    vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
-    vi.mocked(getContactAttributes).mockResolvedValue({});
+  test("returns success with only email attribute", async () => {
+    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[1]]); // email key
+    vi.mocked(getContactAttributes).mockResolvedValue({ email: "existing@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
-    const attributes = {};
+    const attributes = { email: "updated@example.com" };
     const result = await updateAttributes(contactId, userId, environmentId, attributes);
     expect(result.success).toBe(true);
     expect(result.messages).toBeUndefined();
@@ -340,5 +343,95 @@ describe("updateAttributes", () => {
     // since all current attributes are default attributes
     expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
     expect(result.success).toBe(true);
+  });
+
+  test("preserves existing email when empty string is submitted", async () => {
+    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "existing@example.com" });
+    vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+    vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
+    vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
+    vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
+
+    // Attempt to clear email by submitting empty string
+    const attributes = { name: "John", email: "" };
+    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+
+    // Verify that the transaction was called with the preserved email
+    expect(prisma.$transaction).toHaveBeenCalled();
+    const transactionCall = vi.mocked(prisma.$transaction).mock.calls[0][0];
+    // The email should be preserved (existing@example.com), not cleared
+    expect(transactionCall).toHaveLength(2); // name and email
+    expect(result.success).toBe(true);
+  });
+
+  test("allows clearing userId when empty string is submitted", async () => {
+    const attributeKeysWithUserId: TContactAttributeKey[] = [
+      ...attributeKeys,
+      {
+        id: "key-4",
+        key: "userId",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isUnique: true,
+        name: "User ID",
+        description: null,
+        type: "default",
+        environmentId,
+      },
+    ];
+    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
+    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", userId: "existing-user-id" });
+    vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+    vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
+    vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
+    vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
+
+    // Clear userId by submitting empty string - this should be allowed
+    const attributes = { name: "John", userId: "" };
+    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+
+    // Verify that the transaction was called
+    expect(prisma.$transaction).toHaveBeenCalled();
+    const transactionCall = vi.mocked(prisma.$transaction).mock.calls[0][0];
+    // Only name and userId (empty) should be in the transaction
+    expect(transactionCall).toHaveLength(2); // name and userId (with empty value)
+    expect(result.success).toBe(true);
+  });
+
+  test("preserves existing values when both email and userId would be cleared", async () => {
+    const attributeKeysWithBoth: TContactAttributeKey[] = [
+      ...attributeKeys,
+      {
+        id: "key-4",
+        key: "userId",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isUnique: true,
+        name: "User ID",
+        description: null,
+        type: "default",
+        environmentId,
+      },
+    ];
+    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithBoth);
+    vi.mocked(getContactAttributes).mockResolvedValue({
+      name: "Jane",
+      email: "existing@example.com",
+      userId: "existing-user-id",
+    });
+    vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+    vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
+    vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
+    vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
+
+    // Attempt to clear both email and userId
+    const attributes = { name: "John", email: "", userId: "" };
+    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+
+    expect(result.success).toBe(true);
+    expect(result.messages).toContain(
+      "Either email or userId is required. The existing values were preserved."
+    );
   });
 });
