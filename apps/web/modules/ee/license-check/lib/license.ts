@@ -26,7 +26,10 @@ const CONFIG = {
     RETRY_DELAY_MS: 1000,
   },
   API: {
-    ENDPOINT: "https://ee.formbricks.com/api/licenses/check",
+    ENDPOINT:
+      env.ENVIRONMENT === "staging"
+        ? "https://staging.ee.formbricks.com/api/licenses/check"
+        : "https://ee.formbricks.com/api/licenses/check",
     TIMEOUT_MS: 5000,
   },
 } as const;
