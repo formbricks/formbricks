@@ -181,9 +181,7 @@ export function WelcomeCard({
             data-testid="fb__surveys__welcome-card__time-display">
             <TimerIcon />
             <p className="pt-1 text-xs">
-              <span>
-                {calculateTimeToComplete()}{" "}
-              </span>
+              <span>{calculateTimeToComplete()} </span>
             </p>
           </div>
         ) : null}
@@ -201,9 +199,7 @@ export function WelcomeCard({
           <div className="text-subheading my-4 flex items-center">
             <TimerIcon />
             <p className="pt-1 text-xs" data-testid="fb__surveys__welcome-card__info-text-test">
-              <span>
-                {calculateTimeToComplete()}{" "}
-              </span>
+              <span>{calculateTimeToComplete()} </span>
               <span data-testid="fb__surveys__welcome-card__response-count">
                 {responseCount && responseCount > 3
                   ? `⋅ ${t("common.people_responded", { count: responseCount })}`
