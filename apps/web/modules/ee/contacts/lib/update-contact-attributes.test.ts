@@ -185,7 +185,7 @@ describe("updateContactAttributes", () => {
     ]);
   });
 
-  test("should handle missing userId with warning message", async () => {
+  test("should handle missing userId gracefully", async () => {
     const contactId = "contact123";
     const environmentId = "env123";
     const attributes = {
@@ -227,10 +227,10 @@ describe("updateContactAttributes", () => {
 
     const result = await updateContactAttributes(contactId, attributes);
 
+    // When userId is not in attributes, pass empty string to updateAttributes
     expect(updateAttributes).toHaveBeenCalledWith(contactId, "", environmentId, attributes, true);
-    expect(result.messages).toContain(
-      "Warning: userId attribute is missing. Some operations may not work correctly."
-    );
+    // No warning message - the backend now gracefully handles missing userId by keeping current value
+    expect(result.messages).toBeUndefined();
   });
 
   test("should merge messages from updateAttributes", async () => {

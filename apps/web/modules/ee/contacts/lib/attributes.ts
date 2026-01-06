@@ -5,7 +5,11 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getContactAttributes, hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
+import {
+  getContactAttributes,
+  hasEmailAttribute,
+  hasUserIdAttribute,
+} from "@/modules/ee/contacts/lib/contact-attributes";
 
 // Default/system attributes that should not be deleted even if missing from payload
 const DEFAULT_ATTRIBUTES = new Set(["email", "userId", "firstName", "lastName"]);
@@ -63,7 +67,12 @@ export const updateAttributes = async (
   environmentId: string,
   contactAttributesParam: TContactAttributes,
   deleteRemovedAttributes: boolean = false
-): Promise<{ success: boolean; messages?: string[]; ignoreEmailAttribute?: boolean }> => {
+): Promise<{
+  success: boolean;
+  messages?: string[];
+  ignoreEmailAttribute?: boolean;
+  ignoreUserIdAttribute?: boolean;
+}> => {
   validateInputs(
     [contactId, ZId],
     [userId, ZString],
@@ -72,20 +81,82 @@ export const updateAttributes = async (
   );
 
   let ignoreEmailAttribute = false;
+  let ignoreUserIdAttribute = false;
+  const messages: string[] = [];
 
-  // Fetch current attributes, contact attribute keys, and email check in parallel
-  const [currentAttributes, contactAttributeKeys, existingEmailAttribute] = await Promise.all([
-    getContactAttributes(contactId),
-    getContactAttributeKeys(environmentId),
-    contactAttributesParam.email
-      ? hasEmailAttribute(contactAttributesParam.email, environmentId, contactId)
-      : Promise.resolve(null),
-  ]);
+  // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
+  const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
+    await Promise.all([
+      getContactAttributes(contactId),
+      getContactAttributeKeys(environmentId),
+      contactAttributesParam.email
+        ? hasEmailAttribute(contactAttributesParam.email, environmentId, contactId)
+        : Promise.resolve(null),
+      contactAttributesParam.userId
+        ? hasUserIdAttribute(contactAttributesParam.userId, environmentId, contactId)
+        : Promise.resolve(null),
+    ]);
 
-  // Process email existence early
-  const { email, ...remainingAttributes } = contactAttributesParam;
-  const contactAttributes = existingEmailAttribute ? remainingAttributes : contactAttributesParam;
+  // Process email and userId existence early
   const emailExists = !!existingEmailAttribute;
+  const userIdExists = !!existingUserIdAttribute;
+
+  // Remove email and/or userId from attributes if they already exist on another contact
+  let contactAttributes = { ...contactAttributesParam };
+
+  // Determine what the final email and userId values will be after this update
+  // Only consider a value as "submitted" if it was explicitly included in the attributes
+  const emailWasSubmitted = "email" in contactAttributesParam;
+  const userIdWasSubmitted = "userId" in contactAttributesParam;
+
+  const submittedEmail = emailWasSubmitted ? contactAttributes.email?.trim() || "" : null;
+  const submittedUserId = userIdWasSubmitted ? contactAttributes.userId?.trim() || "" : null;
+
+  const currentEmail = currentAttributes.email || "";
+  const currentUserId = currentAttributes.userId || "";
+
+  // Calculate final values:
+  // - If not submitted, keep current value
+  // - If submitted but duplicate exists, keep current value
+  // - If submitted and no duplicate, use submitted value
+  const getFinalEmail = (): string => {
+    if (submittedEmail === null) return currentEmail;
+    if (emailExists) return currentEmail;
+    return submittedEmail;
+  };
+
+  const getFinalUserId = (): string => {
+    if (submittedUserId === null) return currentUserId;
+    if (userIdExists) return currentUserId;
+    return submittedUserId;
+  };
+
+  const finalEmail = getFinalEmail();
+  const finalUserId = getFinalUserId();
+
+  // Ensure at least one of email or userId will have a value after update
+  if (!finalEmail && !finalUserId) {
+    // If both would be empty, preserve the current values
+    if (currentEmail) {
+      contactAttributes.email = currentEmail;
+    }
+    if (currentUserId) {
+      contactAttributes.userId = currentUserId;
+    }
+    messages.push("Either email or userId is required. The existing values were preserved.");
+  }
+
+  if (emailExists) {
+    const { email: _email, ...rest } = contactAttributes;
+    contactAttributes = rest;
+    ignoreEmailAttribute = true;
+  }
+
+  if (userIdExists) {
+    const { userId: _userId, ...rest } = contactAttributes;
+    contactAttributes = rest;
+    ignoreUserIdAttribute = true;
+  }
 
   // Delete attributes that were removed (only when explicitly requested)
   // This is used by UI forms where all attributes are submitted
@@ -114,12 +185,12 @@ export const updateAttributes = async (
     }
   );
 
-  let messages: string[] = emailExists
-    ? ["The email already exists for this environment and was not updated."]
-    : [];
-
   if (emailExists) {
-    ignoreEmailAttribute = true;
+    messages.push("The email already exists for this environment and was not updated.");
+  }
+
+  if (userIdExists) {
+    messages.push("The userId already exists for this environment and was not updated.");
   }
 
   // Update all existing attributes
@@ -174,7 +245,8 @@ export const updateAttributes = async (
 
   return {
     success: true,
-    messages,
+    messages: messages.length > 0 ? messages : undefined,
     ignoreEmailAttribute,
+    ignoreUserIdAttribute,
   };
 };
