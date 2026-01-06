@@ -8,19 +8,19 @@
 */
 
 -- Update any scheduled surveys to paused
-UPDATE "public"."Survey" SET "status" = 'paused' WHERE "status" = 'scheduled';
+UPDATE "Survey" SET "status" = 'paused' WHERE "status" = 'scheduled';
 
 -- AlterEnum
 BEGIN;
-CREATE TYPE "public"."SurveyStatus_new" AS ENUM ('draft', 'inProgress', 'paused', 'completed');
-ALTER TABLE "public"."Survey" ALTER COLUMN "status" DROP DEFAULT;
-ALTER TABLE "public"."Survey" ALTER COLUMN "status" TYPE "public"."SurveyStatus_new" USING ("status"::text::"public"."SurveyStatus_new");
-ALTER TYPE "public"."SurveyStatus" RENAME TO "SurveyStatus_old";
-ALTER TYPE "public"."SurveyStatus_new" RENAME TO "SurveyStatus";
-DROP TYPE "public"."SurveyStatus_old";
-ALTER TABLE "public"."Survey" ALTER COLUMN "status" SET DEFAULT 'draft';
+CREATE TYPE "SurveyStatus_new" AS ENUM ('draft', 'inProgress', 'paused', 'completed');
+ALTER TABLE "Survey" ALTER COLUMN "status" DROP DEFAULT;
+ALTER TABLE "Survey" ALTER COLUMN "status" TYPE "SurveyStatus_new" USING ("status"::text::"SurveyStatus_new");
+ALTER TYPE "SurveyStatus" RENAME TO "SurveyStatus_old";
+ALTER TYPE "SurveyStatus_new" RENAME TO "SurveyStatus";
+DROP TYPE "SurveyStatus_old";
+ALTER TABLE "Survey" ALTER COLUMN "status" SET DEFAULT 'draft';
 COMMIT;
 
 -- AlterTable
-ALTER TABLE "public"."Survey" DROP COLUMN "closeOnDate",
+ALTER TABLE "Survey" DROP COLUMN "closeOnDate",
 DROP COLUMN "runOnDate";

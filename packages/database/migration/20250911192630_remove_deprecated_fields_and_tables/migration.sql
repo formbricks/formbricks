@@ -20,88 +20,88 @@
 */
 -- AlterEnum
 BEGIN;
-CREATE TYPE "public"."SurveyType_new" AS ENUM ('link', 'app');
-ALTER TABLE "public"."Survey" ALTER COLUMN "type" DROP DEFAULT;
-ALTER TABLE "public"."Survey" ALTER COLUMN "type" TYPE "public"."SurveyType_new" USING ("type"::text::"public"."SurveyType_new");
-ALTER TYPE "public"."SurveyType" RENAME TO "SurveyType_old";
-ALTER TYPE "public"."SurveyType_new" RENAME TO "SurveyType";
-DROP TYPE "public"."SurveyType_old";
-ALTER TABLE "public"."Survey" ALTER COLUMN "type" SET DEFAULT 'app';
+CREATE TYPE "SurveyType_new" AS ENUM ('link', 'app');
+ALTER TABLE "Survey" ALTER COLUMN "type" DROP DEFAULT;
+ALTER TABLE "Survey" ALTER COLUMN "type" TYPE "SurveyType_new" USING ("type"::text::"SurveyType_new");
+ALTER TYPE "SurveyType" RENAME TO "SurveyType_old";
+ALTER TYPE "SurveyType_new" RENAME TO "SurveyType";
+DROP TYPE "SurveyType_old";
+ALTER TABLE "Survey" ALTER COLUMN "type" SET DEFAULT 'app';
 COMMIT;
 
 -- DropForeignKey
-ALTER TABLE "public"."Document" DROP CONSTRAINT "Document_environmentId_fkey";
+ALTER TABLE IF EXISTS "Document" DROP CONSTRAINT IF EXISTS "Document_environmentId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "public"."Document" DROP CONSTRAINT "Document_responseId_fkey";
+ALTER TABLE IF EXISTS "Document" DROP CONSTRAINT IF EXISTS "Document_responseId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "public"."Document" DROP CONSTRAINT "Document_surveyId_fkey";
+ALTER TABLE IF EXISTS "Document" DROP CONSTRAINT IF EXISTS "Document_surveyId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "public"."DocumentInsight" DROP CONSTRAINT "DocumentInsight_documentId_fkey";
+ALTER TABLE IF EXISTS "DocumentInsight" DROP CONSTRAINT IF EXISTS "DocumentInsight_documentId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "public"."DocumentInsight" DROP CONSTRAINT "DocumentInsight_insightId_fkey";
+ALTER TABLE IF EXISTS "DocumentInsight" DROP CONSTRAINT IF EXISTS "DocumentInsight_insightId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "public"."Insight" DROP CONSTRAINT "Insight_environmentId_fkey";
+ALTER TABLE IF EXISTS "Insight" DROP CONSTRAINT IF EXISTS "Insight_environmentId_fkey";
 
 -- DropIndex
-DROP INDEX "public"."Display_responseId_key";
+DROP INDEX IF EXISTS "Display_responseId_key";
 
 -- AlterTable
-ALTER TABLE "public"."Display" DROP COLUMN "responseId",
-DROP COLUMN "status";
+ALTER TABLE "Display" DROP COLUMN IF EXISTS "responseId",
+DROP COLUMN IF EXISTS "status";
 
 -- AlterTable
-ALTER TABLE "public"."Environment" DROP COLUMN "widgetSetupCompleted";
+ALTER TABLE "Environment" DROP COLUMN IF EXISTS "widgetSetupCompleted";
 
 -- AlterTable
-ALTER TABLE "public"."Invite" DROP COLUMN "deprecatedRole";
+ALTER TABLE "Invite" DROP COLUMN IF EXISTS "deprecatedRole";
 
 -- AlterTable
-ALTER TABLE "public"."Membership" DROP COLUMN "deprecatedRole";
+ALTER TABLE "Membership" DROP COLUMN IF EXISTS "deprecatedRole";
 
 -- AlterTable
-ALTER TABLE "public"."Project" DROP COLUMN "brandColor",
-DROP COLUMN "highlightBorderColor";
+ALTER TABLE "Project" DROP COLUMN IF EXISTS "brandColor",
+DROP COLUMN IF EXISTS "highlightBorderColor";
 
 -- AlterTable
-ALTER TABLE "public"."Survey" DROP COLUMN "thankYouCard",
-DROP COLUMN "verifyEmail",
+ALTER TABLE "Survey" DROP COLUMN IF EXISTS "thankYouCard",
+DROP COLUMN IF EXISTS "verifyEmail",
 ALTER COLUMN "type" SET DEFAULT 'app';
 
 -- AlterTable
-ALTER TABLE "public"."User" DROP COLUMN "objective",
-DROP COLUMN "role";
+ALTER TABLE "User" DROP COLUMN IF EXISTS "objective",
+DROP COLUMN IF EXISTS "role";
 
 -- DropTable
-DROP TABLE "public"."Document";
+DROP TABLE IF EXISTS "Document";
 
 -- DropTable
-DROP TABLE "public"."DocumentInsight";
+DROP TABLE IF EXISTS "DocumentInsight";
 
 -- DropTable
-DROP TABLE "public"."Insight";
+DROP TABLE IF EXISTS "Insight";
 
 -- DropEnum
-DROP TYPE "public"."DisplayStatus";
+DROP TYPE IF EXISTS "DisplayStatus";
 
 -- DropEnum
-DROP TYPE "public"."InsightCategory";
+DROP TYPE IF EXISTS "InsightCategory";
 
 -- DropEnum
-DROP TYPE "public"."Intention";
+DROP TYPE IF EXISTS "Intention";
 
 -- DropEnum
-DROP TYPE "public"."MembershipRole";
+DROP TYPE IF EXISTS "MembershipRole";
 
 -- DropEnum
-DROP TYPE "public"."Objective";
+DROP TYPE IF EXISTS "Objective";
 
 -- DropEnum
-DROP TYPE "public"."Role";
+DROP TYPE IF EXISTS "Role";
 
 -- DropEnum
-DROP TYPE "public"."Sentiment";
+DROP TYPE IF EXISTS "Sentiment";
