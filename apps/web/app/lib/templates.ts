@@ -4835,7 +4835,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
     segment: null,
     blocks: [
       {
-        id: createId(),
+        id: "cltxxaa6x0000g8hacxdxeje1",
         name: "Block 1",
         elements: [
           {
@@ -4857,7 +4857,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
         backButtonLabel: createI18nString(t("templates.preview_survey_question_2_back_button_label"), []),
       },
       {
-        id: createId(),
+        id: "cltxxaa6x0000g8hacxdxeje2",
         name: "Block 2",
         elements: [
           {
