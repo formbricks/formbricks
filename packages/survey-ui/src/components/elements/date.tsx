@@ -172,7 +172,7 @@ function DateElement({
             onSelect={handleDateSelect}
             locale={dateLocale}
             required={required}
-            className="rounded-input border-input-border bg-input-bg text-input-text shadow-input mx-auto w-full max-w-[25rem] border"
+            className="rounded-input border-input-border bg-input-bg text-input-text shadow-input mx-auto h-[stretch] w-full max-w-[25rem] border"
           />
         </div>
       </div>

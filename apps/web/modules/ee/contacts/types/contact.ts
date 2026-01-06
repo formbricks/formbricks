@@ -335,7 +335,34 @@ export const ZEditContactAttributesForm = z.object({
         }
       });
 
-      // Validate email format if key is "email"
+      // Check that at least one of email or userId has a value
+      const emailAttr = attributes.find((attr) => attr.key === "email");
+      const userIdAttr = attributes.find((attr) => attr.key === "userId");
+      const hasEmail = emailAttr?.value && emailAttr.value.trim() !== "";
+      const hasUserId = userIdAttr?.value && userIdAttr.value.trim() !== "";
+
+      if (!hasEmail && !hasUserId) {
+        // Find the indices to show errors on the relevant fields
+        const emailIndex = attributes.findIndex((attr) => attr.key === "email");
+        const userIdIndex = attributes.findIndex((attr) => attr.key === "userId");
+
+        // When both are empty, show "Either email or userId is required" on both fields
+        if (emailIndex !== -1 && userIdIndex !== -1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Either email or userId is required",
+            path: [emailIndex, "value"],
+          });
+
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Either email or userId is required",
+            path: [userIdIndex, "value"],
+          });
+        }
+      }
+
+      // Validate email format if key is "email" and has a value
       attributes.forEach((attr, index) => {
         if (attr.key === "email" && attr.value && attr.value.trim() !== "") {
           const emailResult = z.string().email().safeParse(attr.value);
