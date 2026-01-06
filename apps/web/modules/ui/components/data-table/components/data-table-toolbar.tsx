@@ -2,7 +2,6 @@
 
 import { Table } from "@tanstack/react-table";
 import { MoveVerticalIcon, RefreshCcwIcon, SettingsIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -20,6 +19,7 @@ interface DataTableToolbarProps<T> {
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
   isQuotasAllowed: boolean;
   leftContent?: React.ReactNode;
+  onRefresh?: () => Promise<void>;
 }
 
 export const DataTableToolbar = <T,>({
@@ -33,9 +33,9 @@ export const DataTableToolbar = <T,>({
   downloadRowsAction,
   isQuotasAllowed,
   leftContent,
+  onRefresh,
 }: DataTableToolbarProps<T>) => {
   const { t } = useTranslation();
-  const router = useRouter();
 
   return (
     <div className="sticky top-0 z-30 flex w-full items-center justify-between bg-slate-50 py-2">
@@ -52,13 +52,13 @@ export const DataTableToolbar = <T,>({
         <div>{leftContent}</div>
       )}
       <div className="flex space-x-2">
-        {type === "contact" ? (
+        {type === "contact" && onRefresh ? (
           <TooltipRenderer
             tooltipContent={t("environments.contacts.contacts_table_refresh")}
             shouldRender={true}>
             <button
               onClick={async () => {
-                router.refresh();
+                await onRefresh();
                 toast.success(t("environments.contacts.contacts_table_refresh_success"));
               }}
               className="cursor-pointer rounded-md border bg-white hover:border-slate-400">

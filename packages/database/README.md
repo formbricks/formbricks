@@ -82,6 +82,12 @@ Run these commands from the root directory of the Formbricks monorepo:
   - Generates new `migration.sql` in the custom directory
   - Copies migration to Prisma's internal directory
   - Applies all pending migrations to the database
+- **`pnpm db:seed`**: Seed the database with sample data
+  - Upserts base infrastructure (Organization, Project, Environments)
+  - Creates multi-role users (Admin, Manager)
+  - Generates complex surveys and sample responses
+- **`pnpm db:seed:clear`**: Clear all seeded data and re-seed
+  - **WARNING**: This will delete existing data in the database.
 
 ### Package Level Commands
 
@@ -92,6 +98,8 @@ Run these commands from the `packages/database` directory:
   - Creates new subdirectory with appropriate timestamp
   - Generates `migration.ts` file with pre-configured ID and name
   - **Note**: Only use Prisma raw queries in data migrations for better performance and to avoid type errors
+- **`pnpm db:seed`**: Run the seeding script
+- **`pnpm db:seed:clear`**: Clear data and run the seeding script
 
 ### Available Scripts
 
@@ -102,12 +110,40 @@ Run these commands from the `packages/database` directory:
   "db:migrate:deploy": "Apply migrations in production",
   "db:migrate:dev": "Apply migrations in development",
   "db:push": "prisma db push --accept-data-loss",
-  "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev",
+  "db:seed": "Seed the database with sample data",
+  "db:seed:clear": "Clear all data and re-seed",
+  "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev && pnpm db:seed",
   "dev": "vite build --watch",
   "generate": "prisma generate",
   "generate-data-migration": "Create new data migration"
 }
 ```
+
+## Database Seeding
+
+The seeding system provides a quick way to set up a functional environment for development, QA, and testing.
+
+### Safety Guard
+
+To prevent accidental data loss in production, seeding is blocked if `NODE_ENV=production`. If you explicitly need to seed a production-like environment (e.g., staging), you must set:
+
+```bash
+ALLOW_SEED=true
+```
+
+### Seeding Logic
+
+The `pnpm db:seed` script:
+1. **Infrastructure**: Upserts a default organization, project, and environments.
+2. **Users**: Creates default users with the following credentials (passwords are hashed):
+   - **Admin**: `admin@formbricks.com` / `password123`
+   - **Manager**: `manager@formbricks.com` / `password123`
+3. **Surveys**: Creates complex sample surveys (Kitchen Sink, CSAT, Draft, etc.) in the **Production** environment.
+4. **Responses**: Generates ~50 realistic responses and displays for each survey.
+
+### Idempotency
+
+By default, the seed script uses `upsert` to ensure it can be run multiple times without creating duplicate infrastructure. To perform a clean reset, use `pnpm db:seed:clear`.
 
 ## Migration Workflow
 

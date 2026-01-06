@@ -274,6 +274,7 @@
       "outputs": []
     },
     "db:seed": {
+      "env": ["ALLOW_SEED"],
       "outputs": []
     },
     "db:setup": {

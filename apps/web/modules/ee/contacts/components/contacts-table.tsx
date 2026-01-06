@@ -43,6 +43,7 @@ interface ContactsTableProps {
   setSearchValue: (value: string) => void;
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
+  refreshContacts: () => Promise<void>;
 }
 
 export const ContactsTable = ({
@@ -56,6 +57,7 @@ export const ContactsTable = ({
   setSearchValue,
   isReadOnly,
   isQuotasAllowed,
+  refreshContacts,
 }: ContactsTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -235,6 +237,7 @@ export const ContactsTable = ({
           type="contact"
           deleteAction={deleteContact}
           isQuotasAllowed={isQuotasAllowed}
+          onRefresh={refreshContacts}
           leftContent={
             <div className="w-64">
               <SearchBar
