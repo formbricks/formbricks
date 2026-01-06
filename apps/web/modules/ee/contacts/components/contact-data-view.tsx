@@ -119,6 +119,30 @@ export const ContactDataView = ({
     setContacts((prevContacts) => prevContacts.filter((contact) => !contactIds.includes(contact.id)));
   };
 
+  // Refresh contacts from server
+  const refreshContacts = async () => {
+    setIsDataLoaded(false);
+    try {
+      setHasMore(true);
+      const contactsResponse = await getContactsAction({
+        environmentId: environment.id,
+        offset: 0,
+        searchValue,
+      });
+      if (contactsResponse?.data) {
+        setContacts(contactsResponse.data);
+      }
+      if (contactsResponse?.data && contactsResponse.data.length < itemsPerPage) {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Error refreshing contacts:", error);
+      toast.error("Error refreshing contacts. Please try again.");
+    } finally {
+      setIsDataLoaded(true);
+    }
+  };
+
   // Prepare data for the ContactTable component
   const contactsTableData: TContactTableData[] = useMemo(() => {
     return contacts.map((contact) => ({
@@ -147,6 +171,7 @@ export const ContactDataView = ({
       setSearchValue={setSearchValue}
       isReadOnly={isReadOnly}
       isQuotasAllowed={isQuotasAllowed}
+      refreshContacts={refreshContacts}
     />
   );
 };
