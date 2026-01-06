@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
+import { env } from "./env";
 
 export type TInstanceInfo = {
   instanceId: string;
@@ -20,8 +21,15 @@ export type TInstanceInfo = {
  */
 export const getInstanceInfo = reactCache(async (): Promise<TInstanceInfo | null> => {
   try {
+    if (env.FORMBRICKS_INSTANCE_ID) {
+      return {
+        instanceId: env.FORMBRICKS_INSTANCE_ID,
+        createdAt: new Date(0), // Use Unix epoch as a stable default for manual overrides
+      };
+    }
+
     const oldestOrg = await prisma.organization.findFirst({
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: { id: true, createdAt: true },
     });
 
