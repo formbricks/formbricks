@@ -9,7 +9,6 @@ checksums:
     common/company_logo: 82d5c0d5994508210ee02d684819f4b8
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/language_switch: fd72a9ada13f672f4fd5da863b22cc46
-    common/less_than_x_minutes: 8a8528651d0b60dc93be451abf6a139b
     common/next: 89ddbcf710eba274963494f312bdc8a9
     common/open_in_new_tab: 6844e4922a7a40a7ee25c10ea109cdeb
     common/people_responded: b685fb877090d8658db724ad07a0dbd8
@@ -25,12 +24,12 @@ checksums:
     common/retry: 6e44d18639560596569a1278f9c83676
     common/retrying: 0cb623dbdcbf16d3680f0180ceac734c
     common/sending_responses: 184772f70cca69424eaf34f73520789f
-    common/takes: 01f96e2e84741ea8392d97ff4bd2aa52
+    common/takes_less_than_x_minutes: 1208ce0d4c0a679c11c7bd209b6ccc47
+    common/takes_x_minutes: 001d12366d07b406f50669e761d63e69
+    common/takes_x_plus_minutes: 145b8f287de140e98f492c8db2f9fa0b
     common/terms_of_service: 5add91f519e39025708e54a7eb7a9fc5
     common/the_servers_cannot_be_reached_at_the_moment: f8adbeccac69f9230a55b5b3af52b081
     common/they_will_be_redirected_immediately: 936bc99cb575cba95ea8f04d82bb353b
-    common/x_minutes: bf6ec8800c29b1447226447a991b9510
-    common/x_plus_minutes: 2ef597aa029e3c71d442455fbb751991
     common/your_feedback_is_stuck: db2b6aba26723b01aee0fc918d3ca052
     errors/file_input/duplicate_files: 198dd29e67beb6abc5b2534ede7d7f68
     errors/file_input/file_size_exceeded: 072045b042a39fa1df76200f8fa36dd4

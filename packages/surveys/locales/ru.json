@@ -8,7 +8,6 @@
     "company_logo": "Логотип компании",
     "finish": "Завершить",
     "language_switch": "Переключение языка",
-    "less_than_x_minutes": "{count, plural, one {менее 1 минуты} other {менее {count} минут}}",
     "next": "Далее",
     "open_in_new_tab": "Открыть в новой вкладке",
     "people_responded": "{count, plural, one {1 человек ответил} other {{count} человека ответили}}",
@@ -24,12 +23,12 @@
     "retry": "Повторить",
     "retrying": "Повторная попытка...",
     "sending_responses": "Отправка ответов...",
-    "takes": "Занимает",
+    "takes_less_than_x_minutes": "{count, plural, one {Займёт меньше 1 минуты} few {Займёт меньше {count} минут} many {Займёт меньше {count} минут} other {Займёт меньше {count} минуты}}",
+    "takes_x_minutes": "{count, plural, one {Займёт 1 минуту} few {Займёт {count} минуты} many {Займёт {count} минут} other {Займёт {count} минуты}}",
+    "takes_x_plus_minutes": "Займёт {count}+ минут",
     "terms_of_service": "Условия использования",
     "the_servers_cannot_be_reached_at_the_moment": "Сервера в данный момент недоступны.",
     "they_will_be_redirected_immediately": "Они будут немедленно перенаправлены",
-    "x_minutes": "{count, plural, one {1 минута} few {{count} минуты} many {{count} минут}}",
-    "x_plus_minutes": "{count}+ минут",
     "your_feedback_is_stuck": "Ваш отзыв застрял :("
   },
   "errors": {
