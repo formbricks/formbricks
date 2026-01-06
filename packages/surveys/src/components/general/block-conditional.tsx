@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -9,12 +10,14 @@ import {
   TSurveyMatrixElement,
   TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
+import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ElementConditional } from "@/components/general/element-conditional";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { validateBlockResponses, getFirstErrorMessage } from "@/lib/validation";
 
 interface BlockConditionalProps {
   block: TSurveyBlock;
@@ -59,8 +62,13 @@ export function BlockConditional({
   dir,
   fullSizeCards,
 }: BlockConditionalProps) {
+  const { t } = useTranslation();
+
   // Track the current element being filled (for TTC tracking)
   const [currentElementId, setCurrentElementId] = useState(block.elements[0]?.id);
+
+  // State to store validation errors from centralized validation
+  const [elementErrors, setElementErrors] = useState<TValidationErrorMap>({});
 
   // Refs to store form elements for each element so we can trigger their validation
   const elementFormRefs = useRef<Map<string, HTMLFormElement>>(new Map());
@@ -73,6 +81,14 @@ export function BlockConditional({
     // If user moved to a different element, we should track it
     if (elementId !== currentElementId) {
       setCurrentElementId(elementId);
+    }
+    // Clear error for this element when user makes a change
+    if (elementErrors[elementId]) {
+      setElementErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[elementId];
+        return updated;
+      });
     }
     // Merge with existing block data to preserve other element values
     onChange({ ...value, ...responseData });
@@ -263,14 +279,33 @@ export function BlockConditional({
       e.preventDefault();
     }
 
-    // Validate all forms and check for custom validation rules
-    const firstInvalidForm = findFirstInvalidForm();
+    // Run centralized validation for elements that support it (OpenText, MultiSelect)
+    const errorMap = validateBlockResponses(block.elements, value, languageCode, t);
 
-    // If any form is invalid, scroll to it and stop
+    // Check if there are any validation errors from centralized validation
+    const hasValidationErrors = Object.keys(errorMap).length > 0;
+
+    if (hasValidationErrors) {
+      setElementErrors(errorMap);
+
+      // Find the first element with an error and scroll to it
+      const firstErrorElementId = Object.keys(errorMap)[0];
+      const form = elementFormRefs.current.get(firstErrorElementId);
+      if (form) {
+        form.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
+    // Also run legacy validation for elements not yet migrated to centralized validation
+    const firstInvalidForm = findFirstInvalidForm();
     if (firstInvalidForm) {
       firstInvalidForm.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+
+    // Clear any previous errors
+    setElementErrors({});
 
     // Collect TTC and responses, then submit
     const blockTtc = collectTtcValues();
@@ -310,6 +345,7 @@ export function BlockConditional({
                       }
                     }}
                     onTtcCollect={handleTtcCollect}
+                    errorMessage={getFirstErrorMessage(elementErrors, element.id)}
                   />
                 </div>
               );

@@ -1588,6 +1588,8 @@
         "upload_at_least_2_images": "Upload at least 2 images",
         "upper_label": "Upper Label",
         "url_filters": "URL Filters",
+        "validation_rules": "Validation rules",
+        "validation_rules_description": "Only accept responses that meet the following criteria",
         "url_not_supported": "URL not supported",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} is used in logic of question {questionIndex}. Please remove it from logic first.",
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variable \"{variableName}\" is being used in \"{quotaName}\" quota",

@@ -3,6 +3,7 @@ import { ZUrl } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZAllowedFileExtension } from "../storage";
 import { FORBIDDEN_IDS } from "./validation";
+import { ZValidationRules } from "./validation-rules";
 
 // Element Type Enum (same as question types)
 export enum TSurveyElementTypeEnum {
@@ -61,6 +62,7 @@ export const ZSurveyElementBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   isDraft: z.boolean().optional(),
+  validationRules: ZValidationRules.optional(),
 });
 
 // OpenText Element

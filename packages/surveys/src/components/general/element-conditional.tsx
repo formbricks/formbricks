@@ -39,6 +39,7 @@ interface ElementConditionalProps {
   dir?: "ltr" | "rtl" | "auto";
   formRef?: (ref: HTMLFormElement | null) => void; // Callback to expose the form element
   onTtcCollect?: (elementId: string, ttc: number) => void; // Callback to collect TTC synchronously
+  errorMessage?: string; // Validation error message from centralized validation
 }
 
 export function ElementConditional({
@@ -56,6 +57,7 @@ export function ElementConditional({
   dir,
   formRef,
   onTtcCollect,
+  errorMessage,
 }: ElementConditionalProps) {
   // Ref to the container div, used to find and expose the form element inside
   const containerRef = useRef<HTMLDivElement>(null);
@@ -124,6 +126,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.MultipleChoiceSingle:
@@ -154,6 +157,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.NPS:

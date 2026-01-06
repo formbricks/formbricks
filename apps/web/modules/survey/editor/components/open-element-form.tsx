@@ -4,11 +4,17 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { JSX, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyOpenTextElement, TSurveyOpenTextElementInputType } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyElementTypeEnum,
+  TSurveyOpenTextElement,
+  TSurveyOpenTextElementInputType,
+} from "@formbricks/types/surveys/elements";
+import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -245,6 +251,17 @@ export const OpenElementForm = ({
             customContainerClass="p-0"
           />
         </div>
+
+        {/* Validation Rules Editor */}
+        <ValidationRulesEditor
+          elementType={TSurveyElementTypeEnum.OpenText}
+          validationRules={element.validationRules ?? []}
+          onUpdateRules={(rules: TValidationRule[]) => {
+            updateElement(elementIdx, {
+              validationRules: rules,
+            });
+          }}
+        />
       </div>
     </form>
   );
