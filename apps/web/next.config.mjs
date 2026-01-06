@@ -133,14 +133,31 @@ const nextConfig = {
     const isProduction = process.env.NODE_ENV === "production";
     const scriptSrcUnsafeEval = isProduction ? "" : " 'unsafe-eval'";
 
+    const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data: http://localhost:9000 https:; font-src 'self' data: https:; connect-src 'self' http://localhost:9000 https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
+
     return [
       {
-        // Apply X-Frame-Options to all routes except those starting with /s/ or /c/
+        // Apply X-Frame-Options and restricted frame-ancestors to all routes except those starting with /s/ or /c/
         source: "/((?!s/|c/).*)",
         headers: [
           {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: `${cspBase}; frame-ancestors 'self'`,
+          },
+        ],
+      },
+      {
+        // Allow surveys (/s/*) and contact survey links (/c/*) to be embedded in iframes on any domain
+        // Note: These routes need frame-ancestors * to support embedding surveys in customer websites
+        source: "/(s|c)/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: `${cspBase}; frame-ancestors *`,
           },
         ],
       },
@@ -178,10 +195,6 @@ const nextConfig = {
           {
             key: "X-Content-Type-Options",
             value: "nosniff",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data: http://localhost:9000 https:; font-src 'self' data: https:; connect-src 'self' http://localhost:9000 https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`,
           },
           {
             key: "Strict-Transport-Security",
@@ -457,8 +470,6 @@ const sentryOptions = {
 // Always enable Sentry plugin to inject Debug IDs
 // Runtime Sentry reporting still depends on DSN being set via environment variables
 const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
-
-console.log("BASE PATH", nextConfig.basePath);
 
 
 export default exportConfig;

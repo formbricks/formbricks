@@ -162,7 +162,7 @@ export const ZSurveyCTAElement = ZSurveyElementBase.extend({
   buttonUrl: z.string().optional(),
   ctaButtonLabel: ZI18nString.optional(),
 }).superRefine((data, ctx) => {
-  // When buttonExternal is true, buttonUrl is required and must be valid
+  // When buttonExternal is true, buttonUrl and ctaButtonLabel are required
   if (data.buttonExternal) {
     if (!data.buttonUrl || data.buttonUrl.trim() === "") {
       ctx.addIssue({
@@ -180,6 +180,14 @@ export const ZSurveyCTAElement = ZSurveyElementBase.extend({
           path: ["buttonUrl"],
         });
       }
+    }
+
+    if (!data.ctaButtonLabel?.default || data.ctaButtonLabel.default.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Button label is required when external button is enabled",
+        path: ["ctaButtonLabel"],
+      });
     }
   }
 });
