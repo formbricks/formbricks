@@ -1,4 +1,5 @@
 import { ZodRawShape, z } from "zod";
+import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TApiAuditLog } from "@/app/lib/api/with-api-logging";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
@@ -71,6 +72,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     try {
       bodyData = await request.json();
     } catch (error) {
+      logger.error({ error, url: request.url }, "Error parsing JSON input");
       return handleApiError(request, {
         type: "bad_request",
         details: [
