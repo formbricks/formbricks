@@ -4,18 +4,11 @@ description: "Add tracking pixels, analytics, or custom code to your link survey
 icon: "code"
 ---
 
-Custom Head Scripts allow you to inject custom HTML code into the `<head>` section of your **link surveys**. This is useful for adding tracking pixels, analytics scripts, chatbots, or any other third-party code.
+Custom Head Scripts allow you to inject custom HTML code into the `<head>` section of your **Link Surveys**. This is useful for adding tracking pixels, analytics scripts, chatbots, or any other third-party code.
 
 <Note>
-  Custom Head Scripts is only available for **link surveys on self-hosted instances**. This feature is not available for Website & App Surveys or on Formbricks Cloud.
+  Custom Head Scripts is only available for **Link Surveys on self-hosted instances**. This feature is not available for Website & App Surveys or on Formbricks Cloud.
 </Note>
-
-## Two Levels of Configuration
-
-Custom Head Scripts can be configured at **two levels**:
-
-1. **Workspace Level** - Scripts apply to all link surveys in your workspace
-2. **Survey Level** - Scripts specific to individual surveys, with the ability to add to or replace workspace scripts
 
 ## When to Use Custom Head Scripts
 
@@ -119,69 +112,20 @@ Override or extend workspace scripts for **specific surveys**.
   </Step>
 </Steps>
 
-## Script Execution Modes
 
-When configuring survey-level scripts, you have two options:
-
-### Add Mode (Default)
-
-Scripts from **both** workspace and survey levels are injected:
-
-```
-Workspace Scripts + Survey Scripts
-```
-
-**Use case:** Add survey-specific tracking while keeping general workspace analytics.
-
-**Example:**
-- Workspace: Google Analytics for all surveys
-- Survey: Facebook Pixel for a specific marketing campaign
-- Result: Both GA and FB Pixel run on this survey
-
-### Replace Mode
-
-**Only** survey-level scripts are injected (workspace scripts are ignored):
-
-```
-Survey Scripts only
-```
-
-**Use case:** Completely override workspace scripts for special surveys.
-
-**Example:**
-- Workspace: Standard analytics
-- Survey: Different analytics for external client survey
-- Result: Only the survey-specific scripts run
-
-## Important Notes
-
-### Security Warning
+## To keep in mind
 
 <Warning>
   Custom scripts execute in the context of your survey pages. Only add scripts from trusted sources. Malicious scripts could compromise your survey data or user privacy.
 </Warning>
 
-### Scripts Don't Load in Preview Mode
+- **Scripts Don't Load in Preview Mode** — Custom Head Scripts are not loaded in preview mode (editor preview or `?preview=true`). This prevents analytics tracking and pixel triggers during testing. To test your scripts, publish your survey and view it through the actual link survey URL without the preview parameter.
 
-Custom Head Scripts are **not loaded** when viewing surveys in preview mode (both in the editor preview and when viewing the survey with `?preview=true`). This is intentional to:
+- **Link Surveys Only** — Custom Head Scripts only work with link surveys. They are not available for app/website surveys, as those are embedded in your application and should use your application's existing script management.
 
-- Prevent analytics tracking during testing
-- Avoid triggering pixels or conversions during development
-- Ensure a clean testing environment
+- **Self-Hosted Only** — This feature is only available on self-hosted instances. Formbricks Cloud does not support Custom Head Scripts for security and performance reasons.
 
-To test your scripts, publish your survey and view it through the actual link survey URL without the preview parameter.
-
-### Link Surveys Only
-
-Custom Head Scripts **only work with link surveys**. They are not available for app/website surveys, as those surveys are embedded in your application and should use your application's existing script management.
-
-### Cloud vs Self-Hosted
-
-This feature is **only available on self-hosted instances**. Formbricks Cloud does not support Custom Head Scripts for security and performance reasons.
-
-### Permissions
-
-Only **Owners**, **Managers**, and members with **Manage** access can configure Custom Head Scripts.
+- **Permissions** — Only Owners, Managers, and members with Manage access can configure Custom Head Scripts.
 
 ## Common Use Cases
 
@@ -199,7 +143,7 @@ Set up Google Analytics for all surveys in your workspace:
 </script>
 ```
 
-### Campaign-Specific Tracking (Survey Level - Add Mode)
+### Campaign-Specific Tracking (Survey Level with Add Mode)
 
 Add Facebook Pixel tracking for a specific marketing campaign:
 
@@ -223,19 +167,6 @@ Add Facebook Pixel tracking for a specific marketing campaign:
 
 **Result:** Both Google Analytics and Facebook Pixel run on this survey.
 
-### Client-Specific Analytics (Survey Level - Replace Mode)
-
-For an external client survey with their own analytics:
-
-**Mode:** Replace
-
-**Survey Scripts:**
-```html
-<!-- Client's Plausible Analytics -->
-<script defer data-domain="client.example.com" src="https://plausible.io/js/script.js"></script>
-```
-
-**Result:** Only Plausible runs, workspace scripts are ignored.
 
 ### Custom Fonts (Workspace Level)
 
@@ -254,37 +185,9 @@ Load custom fonts for all your surveys:
 
 ## Troubleshooting
 
-### Scripts Not Loading
-
 If your scripts aren't loading, check:
 
 1. **Is it a self-hosted instance?** Custom scripts only work on self-hosted Formbricks.
 2. **Are you in preview mode?** Scripts don't load in preview—test with the actual survey link.
 3. **Check the browser console** for JavaScript errors that might prevent script execution.
 4. **Verify your HTML syntax** is correct (properly closed tags, valid attributes).
-
-### Script Conflicts
-
-If multiple scripts conflict:
-
-- Ensure scripts are compatible with each other
-- Check for namespace collisions in global variables
-- Load scripts in the correct order (dependencies first)
-
-## Best Practices
-
-1. **Use workspace scripts for global needs** - Analytics, fonts, and tools needed across all surveys
-2. **Use survey scripts for specific campaigns** - Campaign tracking, A/B test scripts, client-specific code
-3. **Choose the right mode:**
-   - **Add mode** for most cases - Keeps workspace analytics while adding survey-specific tracking
-   - **Replace mode** for complete overrides - External client surveys, special environments
-4. **Keep scripts minimal** to maintain fast survey loading times
-5. **Use async/defer attributes** for external script tags when possible
-6. **Test thoroughly** after adding scripts to ensure survey functionality isn't affected
-7. **Document your scripts** with HTML comments for future reference
-8. **Validate HTML** to prevent rendering issues
-
-<Info>
-  **Pro Tip:** Start with workspace-level scripts for your core analytics, then use survey-level scripts in "Add" mode for campaign-specific tracking. Reserve "Replace" mode for special cases where you need complete control.
-</Info>
-
