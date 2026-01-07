@@ -8,7 +8,6 @@
     "company_logo": "شعار الشركة",
     "finish": "إنهاء",
     "language_switch": "تبديل اللغة",
-    "less_than_x_minutes": "{count, plural, one {أقل من دقيقة واحدة} two {أقل من دقيقتين} few {أقل من {count} دقائق} many {أقل من {count} دقيقة} other {أقل من {count} دقيقة}}",
     "next": "التالي",
     "open_in_new_tab": "فتح في علامة تبويب جديدة",
     "people_responded": "{count, plural, one {شخص واحد استجاب} two {شخصان استجابا} few {{count} أشخاص استجابوا} many {{count} شخصًا استجابوا} other {{count} شخص استجابوا}}",
@@ -24,12 +23,12 @@
     "retry": "إعادة المحاولة",
     "retrying": "إعادة المحاولة...",
     "sending_responses": "جارٍ إرسال الردود...",
-    "takes": "يأخذ",
+    "takes_less_than_x_minutes": "{count, plural, zero {يستغرق أقل من دقيقة} one {يستغرق أقل من دقيقة واحدة} two {يستغرق أقل من دقيقتين} few {يستغرق أقل من {count} دقائق} many {يستغرق أقل من {count} دقيقة} other {يستغرق أقل من {count} دقيقة}}",
+    "takes_x_minutes": "{count, plural, zero {يستغرق صفر دقائق} one {يستغرق دقيقة واحدة} two {يستغرق دقيقتين} few {يستغرق {count} دقائق} many {يستغرق {count} دقيقة} other {يستغرق {count} دقيقة}}",
+    "takes_x_plus_minutes": "يستغرق {count}+ دقيقة",
     "terms_of_service": "شروط الخدمة",
     "the_servers_cannot_be_reached_at_the_moment": "لا يمكن الوصول إلى الخوادم في الوقت الحالي.",
     "they_will_be_redirected_immediately": "سيتم إعادة توجيههم فورًا",
-    "x_minutes": "{count, plural, one {دقيقة واحدة} two {دقيقتان} few {{count} دقائق} many {{count} دقيقة} other {{count} دقيقة}}",
-    "x_plus_minutes": "{count}+ دقيقة",
     "your_feedback_is_stuck": "تعليقك عالق :("
   },
   "errors": {

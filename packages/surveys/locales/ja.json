@@ -8,7 +8,6 @@
     "company_logo": "会社ロゴ",
     "finish": "完了",
     "language_switch": "言語切替",
-    "less_than_x_minutes": "{count, plural, other {{count}分未満}}",
     "next": "次へ",
     "open_in_new_tab": "新しいタブで開く",
     "people_responded": "{count, plural, other {{count}人が回答しました}}",
@@ -24,12 +23,12 @@
     "retry": "再試行",
     "retrying": "再試行中...",
     "sending_responses": "回答を送信中...",
-    "takes": "所要時間",
+    "takes_less_than_x_minutes": "{count, plural, one {1分未満} other {{count}分未満}}",
+    "takes_x_minutes": "{count, plural, one {1分} other {{count}分}}",
+    "takes_x_plus_minutes": "{count}分以上",
     "terms_of_service": "利用規約",
     "the_servers_cannot_be_reached_at_the_moment": "現在サーバーに接続できません。",
     "they_will_be_redirected_immediately": "すぐにリダイレクトされます",
-    "x_minutes": "{count, plural, one {1分} other {{count}分}}",
-    "x_plus_minutes": "{count}分以上",
     "your_feedback_is_stuck": "フィードバックが送信できません :("
   },
   "errors": {
