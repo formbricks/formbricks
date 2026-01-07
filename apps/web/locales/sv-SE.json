@@ -1690,6 +1690,22 @@
           "url_encryption_description": "Inaktivera endast om du behöver ange ett anpassat engångs-ID.",
           "url_encryption_label": "URL-kryptering av engångs-ID"
         },
+        "custom_html": {
+          "add_mode_description": "Undersökningsskript kommer att köras utöver arbetsytans skript.",
+          "add_to_workspace": "Lägg till i arbetsytans skript",
+          "description": "Lägg till spårningsskript och pixlar i denna undersökning",
+          "nav_title": "Anpassad HTML",
+          "no_workspace_scripts": "Inga arbetsytans skript har konfigurerats. Du kan lägga till dem i Arbetsytans inställningar → Allmänt.",
+          "placeholder": "<!-- Klistra in dina spårningsskript här -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+          "replace_mode_description": "Endast undersökningsskript kommer att köras. Arbetsytans skript ignoreras. Lämna tomt för att inte ladda några skript.",
+          "replace_workspace": "Ersätt arbetsytans skript",
+          "saved_successfully": "Anpassade skript har sparats",
+          "script_mode": "Skriptläge",
+          "security_warning": "Skript körs med full åtkomst till webbläsaren. Lägg endast till skript från betrodda källor.",
+          "survey_scripts_description": "Lägg till anpassad HTML för att injicera i <head> på denna undersökningssida.",
+          "survey_scripts_label": "Undersökningsspecifika skript",
+          "workspace_scripts_label": "Arbetsytans skript (ärvda)"
+        },
         "dynamic_popup": {
           "alert_button": "Redigera enkät",
           "alert_description": "Denna enkät är för närvarande konfigurerad som en länkenkät, vilket inte stöder dynamiska popup-fönster. Du kan ändra detta i inställningsfliken i enkätredigeraren.",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "Detta är din enda arbetsyta, den kan inte tas bort. Skapa först en ny arbetsyta.",
+        "custom_scripts": "Anpassade skript",
+        "custom_scripts_card_description": "Lägg till spårningsskript och pixlar i alla länkundersökningar i denna arbetsyta.",
+        "custom_scripts_description": "Skript kommer att injiceras i <head> på alla länkundersökningssidor.",
+        "custom_scripts_label": "HTML-skript",
+        "custom_scripts_placeholder": "<!-- Klistra in dina spårningsskript här -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+        "custom_scripts_updated_successfully": "Anpassade skript har uppdaterats",
+        "custom_scripts_warning": "Skript körs med full åtkomst till webbläsaren. Lägg endast till skript från betrodda källor.",
         "delete_workspace": "Ta bort arbetsyta",
         "delete_workspace_confirmation": "Är du säker på att du vill ta bort {projectName}? Denna åtgärd kan inte ångras.",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Ta bort {projectName} inkl. alla enkäter, svar, personer, åtgärder och attribut.",

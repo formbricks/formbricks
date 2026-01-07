@@ -1690,6 +1690,22 @@
           "url_encryption_description": "Nur deaktivieren, wenn Sie eine benutzerdefinierte Einmal-ID setzen müssen.",
           "url_encryption_label": "Verschlüsselung der URL für einmalige Nutzung ID"
         },
+        "custom_html": {
+          "add_mode_description": "Umfrage-Skripte werden zusätzlich zu den Workspace-Skripten ausgeführt.",
+          "add_to_workspace": "Zu Workspace-Skripten hinzufügen",
+          "description": "Tracking-Skripte und Pixel zu dieser Umfrage hinzufügen",
+          "nav_title": "Benutzerdefiniertes HTML",
+          "no_workspace_scripts": "Keine Workspace-Skripte konfiguriert. Sie können diese in Workspace-Einstellungen → Allgemein hinzufügen.",
+          "placeholder": "<!-- Fügen Sie hier Ihre Tracking-Skripte ein -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+          "replace_mode_description": "Nur Umfrage-Skripte werden ausgeführt. Workspace-Skripte werden ignoriert. Leer lassen, um keine Skripte zu laden.",
+          "replace_workspace": "Workspace-Skripte ersetzen",
+          "saved_successfully": "Benutzerdefinierte Skripte erfolgreich gespeichert",
+          "script_mode": "Skript-Modus",
+          "security_warning": "Skripte werden mit vollem Browser-Zugriff ausgeführt. Fügen Sie nur Skripte aus vertrauenswürdigen Quellen hinzu.",
+          "survey_scripts_description": "Benutzerdefiniertes HTML hinzufügen, das in den <head> dieser Umfrageseite eingefügt wird.",
+          "survey_scripts_label": "Umfragespezifische Skripte",
+          "workspace_scripts_label": "Workspace-Skripte (vererbt)"
+        },
         "dynamic_popup": {
           "alert_button": "Umfrage bearbeiten",
           "alert_description": "Diese Umfrage ist derzeit als Link-Umfrage konfiguriert, die dynamische Pop-ups nicht unterstützt. Sie können dies im Tab ‚Einstellungen‘ im Umfrage-Editor ändern.",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "Dies ist Ihr einziges Projekt, es kann nicht gelöscht werden. Erstellen Sie zuerst ein neues Projekt.",
+        "custom_scripts": "Benutzerdefinierte Skripte",
+        "custom_scripts_card_description": "Tracking-Skripte und Pixel zu allen Link-Umfragen in diesem Workspace hinzufügen.",
+        "custom_scripts_description": "Skripte werden in den <head> aller Link-Umfrageseiten eingefügt.",
+        "custom_scripts_label": "HTML-Skripte",
+        "custom_scripts_placeholder": "<!-- Fügen Sie hier Ihre Tracking-Skripte ein -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+        "custom_scripts_updated_successfully": "Benutzerdefinierte Skripte erfolgreich aktualisiert",
+        "custom_scripts_warning": "Skripte werden mit vollem Browser-Zugriff ausgeführt. Fügen Sie nur Skripte aus vertrauenswürdigen Quellen hinzu.",
         "delete_workspace": "Projekt löschen",
         "delete_workspace_confirmation": "Sind Sie sicher, dass Sie {projectName} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "{projectName} inkl. aller Umfragen, Antworten, Personen, Aktionen und Attribute löschen.",

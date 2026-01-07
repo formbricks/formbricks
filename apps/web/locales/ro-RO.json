@@ -1690,6 +1690,22 @@
           "url_encryption_description": "Dezactivați doar dacă trebuie să setați un ID unic personalizat.",
           "url_encryption_label": "Criptarea URL pentru ID unic de utilizare"
         },
+        "custom_html": {
+          "add_mode_description": "Scripturile sondajului vor rula în plus față de scripturile la nivel de spațiu de lucru.",
+          "add_to_workspace": "Adaugă la scripturile spațiului de lucru",
+          "description": "Adaugă scripturi de tracking și pixeli acestui sondaj",
+          "nav_title": "HTML personalizat",
+          "no_workspace_scripts": "Nu există scripturi la nivel de spațiu de lucru configurate. Le poți adăuga în Setări spațiu de lucru → General.",
+          "placeholder": "<!-- Lipește aici scripturile tale de tracking -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+          "replace_mode_description": "Vor rula doar scripturile sondajului. Scripturile spațiului de lucru vor fi ignorate. Lasă gol pentru a nu încărca niciun script.",
+          "replace_workspace": "Înlocuiește scripturile spațiului de lucru",
+          "saved_successfully": "Scripturile personalizate au fost salvate cu succes",
+          "script_mode": "Modul script",
+          "security_warning": "Scripturile se execută cu acces complet la browser. Adaugă doar scripturi din surse de încredere.",
+          "survey_scripts_description": "Adaugă HTML personalizat pentru a fi injectat în <head> pe această pagină de sondaj.",
+          "survey_scripts_label": "Scripturi specifice sondajului",
+          "workspace_scripts_label": "Scripturi spațiu de lucru (moștenite)"
+        },
         "dynamic_popup": {
           "alert_button": "Editează chestionar",
           "alert_description": "Acest sondaj este configurat în prezent ca un sondaj cu link, care nu suportă pop-up-uri dinamice. Puteți schimba acest lucru în fila de setări a editorului de sondaje.",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "Acesta este singurul tău proiect, nu poate fi șters. Creează mai întâi un proiect nou.",
+        "custom_scripts": "Scripturi personalizate",
+        "custom_scripts_card_description": "Adaugă scripturi de tracking și pixeli tuturor sondajelor cu link din acest spațiu de lucru.",
+        "custom_scripts_description": "Scripturile vor fi injectate în <head> pe toate paginile sondajelor cu link.",
+        "custom_scripts_label": "Scripturi HTML",
+        "custom_scripts_placeholder": "<!-- Lipește aici scripturile tale de tracking -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+        "custom_scripts_updated_successfully": "Scripturile personalizate au fost actualizate cu succes",
+        "custom_scripts_warning": "Scripturile se execută cu acces complet la browser. Adaugă doar scripturi din surse de încredere.",
         "delete_workspace": "Șterge proiectul",
         "delete_workspace_confirmation": "Sigur vrei să ștergi {projectName}? Această acțiune nu poate fi anulată.",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Șterge {projectName} incl. toate sondajele, răspunsurile, persoanele, acțiunile și atributele.",

@@ -900,6 +900,8 @@ export const ZSurvey = z
     languages: z.array(ZSurveyLanguage),
     metadata: ZSurveyMetadata,
     slug: ZSurveySlug.nullable(),
+    customHeadScripts: z.string().nullish(),
+    customHeadScriptsMode: z.enum(["add", "replace"]).nullish(),
   })
   .superRefine((survey, ctx) => {
     const { questions, blocks, languages, welcomeCard, endings, isBackButtonHidden } = survey;
