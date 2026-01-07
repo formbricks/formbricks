@@ -8,7 +8,6 @@
     "company_logo": "Bedrijfslogo",
     "finish": "Voltooien",
     "language_switch": "Taalschakelaar",
-    "less_than_x_minutes": "{count, plural, one {minder dan 1 minuut} other {minder dan {count} minuten}}",
     "next": "Volgende",
     "open_in_new_tab": "Openen in nieuw tabblad",
     "people_responded": "{count, plural, one {1 persoon heeft gereageerd} other {{count} mensen hebben gereageerd}}",
@@ -24,12 +23,12 @@
     "retry": "Opnieuw proberen",
     "retrying": "Opnieuw proberen...",
     "sending_responses": "Reacties verzenden...",
-    "takes": "Neemt",
+    "takes_less_than_x_minutes": "{count, plural, one {Duurt minder dan 1 minuut} other {Duurt minder dan {count} minuten}}",
+    "takes_x_minutes": "{count, plural, one {Duurt 1 minuut} other {Duurt {count} minuten}}",
+    "takes_x_plus_minutes": "Duurt {count}+ minuten",
     "terms_of_service": "Servicevoorwaarden",
     "the_servers_cannot_be_reached_at_the_moment": "De servers zijn momenteel niet bereikbaar.",
     "they_will_be_redirected_immediately": "Ze worden onmiddellijk doorgestuurd",
-    "x_minutes": "{count, plural, one {1 minuut} other {{count} minuten}}",
-    "x_plus_minutes": "{count}+ minuten",
     "your_feedback_is_stuck": "Je feedback blijft hangen :("
   },
   "errors": {

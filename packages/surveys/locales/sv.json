@@ -8,7 +8,6 @@
     "company_logo": "Företagslogotyp",
     "finish": "Slutför",
     "language_switch": "Språkväxlare",
-    "less_than_x_minutes": "{count, plural, one {mindre än 1 minut} other {mindre än {count} minuter}}",
     "next": "Nästa",
     "open_in_new_tab": "Öppna i ny flik",
     "people_responded": "{count, plural, one {1 person har svarat} other {{count} personer har svarat}}",
@@ -24,12 +23,12 @@
     "retry": "Försök igen",
     "retrying": "Försöker igen...",
     "sending_responses": "Skickar svar...",
-    "takes": "Tar",
+    "takes_less_than_x_minutes": "{count, plural, one {Tar mindre än 1 minut} other {Tar mindre än {count} minuter}}",
+    "takes_x_minutes": "{count, plural, one {Tar 1 minut} other {Tar {count} minuter}}",
+    "takes_x_plus_minutes": "Tar {count}+ minuter",
     "terms_of_service": "Användarvillkor",
     "the_servers_cannot_be_reached_at_the_moment": "Servrarna kan inte nås för tillfället.",
     "they_will_be_redirected_immediately": "De kommer att omdirigeras omedelbart",
-    "x_minutes": "{count, plural, one {1 minut} other {{count} minuter}}",
-    "x_plus_minutes": "{count}+ minuter",
     "your_feedback_is_stuck": "Din feedback fastnade :("
   },
   "errors": {
