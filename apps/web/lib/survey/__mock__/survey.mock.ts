@@ -269,7 +269,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
   metadata: {},
   slug: null,
   customHeadScripts: null,
-  customHeadScriptsMode: null as "add" | "replace" | null,
+  customHeadScriptsMode: null,
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -295,7 +295,7 @@ export const mockSurveyOutput: SurveyMock = {
   ...baseSurveyProperties,
   slug: null,
   customHeadScripts: null,
-  customHeadScriptsMode: null as "add" | "replace" | null,
+  customHeadScriptsMode: null,
 };
 
 export const createSurveyInput: TSurveyCreateInput = {
@@ -327,7 +327,7 @@ export const updateSurveyInput: TSurvey = {
   ...commonMockProperties,
   slug: null,
   customHeadScripts: null,
-  customHeadScriptsMode: null as "add" | "replace" | null,
+  customHeadScriptsMode: null,
 };
 
 export const mockTransformedSurveyOutput = {
@@ -581,5 +581,5 @@ export const mockSurveyWithLogic: TSurvey = {
     { id: "km1srr55owtn2r7lkoh5ny1u", type: "number", name: "var2", value: 32 },
   ],
   customHeadScripts: null,
-  customHeadScriptsMode: null as "add" | "replace" | null,
+  customHeadScriptsMode: null,
 };
