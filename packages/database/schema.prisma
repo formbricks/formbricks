@@ -312,6 +312,11 @@ enum displayOptions {
   respondMultiple
 }
 
+enum SurveyScriptMode {
+  add
+  replace
+}
+
 /// Represents a complete survey configuration including questions, styling, and display rules.
 /// Core model for the survey functionality in Formbricks.
 ///
@@ -324,6 +329,8 @@ enum displayOptions {
 /// @property displayOption - Rules for how often the survey can be shown
 /// @property triggers - Actions that can trigger this survey
 /// @property attributeFilters - Rules for targeting specific contacts
+/// @property customHeadScripts - Survey-specific custom HTML scripts (self-hosted only)
+/// @property customHeadScriptsMode - "add" (merge with project) or "replace" (override project)
 model Survey {
   id                  String                  @id @default(cuid())
   createdAt           DateTime                @default(now()) @map(name: "created_at")
@@ -390,8 +397,8 @@ model Survey {
 
   slug String? @unique
 
-  customHeadScripts     String? // Survey-specific custom HTML scripts (self-hosted only)
-  customHeadScriptsMode String? // "add" (merge with project) or "replace" (override project)
+  customHeadScripts     String?
+  customHeadScriptsMode SurveyScriptMode? @default(add)
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
