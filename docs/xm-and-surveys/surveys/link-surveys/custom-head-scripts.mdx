@@ -1,0 +1,186 @@
+---
+title: "Custom Head Scripts"
+description: "Add tracking pixels, analytics, or custom code to your link surveys for self-hosted instances."
+icon: "code"
+---
+
+Custom Head Scripts allow you to inject custom HTML code into the `<head>` section of your **link surveys**. This is useful for adding tracking pixels, analytics scripts, chatbots, or any other third-party code.
+
+<Note>
+  Custom Head Scripts is only available for **link surveys on self-hosted instances**. This feature is not available for app/website surveys or on Formbricks Cloud.
+</Note>
+
+## When to Use Custom Head Scripts
+
+Use Custom Head Scripts when you need to:
+
+- Add analytics tools (Google Analytics, Plausible, Mixpanel, etc.)
+- Integrate tracking pixels (Facebook Pixel, LinkedIn Insight Tag, etc.)
+- Include custom JavaScript for advanced survey behavior
+- Add third-party widgets or chatbots
+- Inject custom meta tags or stylesheets
+
+## How to Configure
+
+<Steps>
+  <Step title="Navigate to Workspace Settings">
+    Go to your Workspace Settings from the main navigation menu.
+  </Step>
+
+  <Step title="Locate Custom Scripts Section">
+    Scroll down to the **Custom Scripts** card in the General settings.
+  </Step>
+
+  <Step title="Add Your Scripts">
+    Paste your HTML code into the text area. You can include:
+    
+    - `<script>` tags (inline or with `src` attribute)
+    - `<meta>` tags
+    - `<link>` tags for stylesheets
+    - `<style>` tags
+    - `<noscript>` tags
+    
+    **Example:**
+    
+    ```html
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+    
+    <!-- Facebook Pixel -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', 'YOUR_PIXEL_ID');
+      fbq('track', 'PageView');
+    </script>
+    ```
+  </Step>
+
+  <Step title="Save Your Changes">
+    Click the **Save** button to apply your custom scripts.
+  </Step>
+</Steps>
+
+## Important Notes
+
+### Security Warning
+
+<Warning>
+  Custom scripts execute in the context of your survey pages. Only add scripts from trusted sources. Malicious scripts could compromise your survey data or user privacy.
+</Warning>
+
+### Scripts Don't Load in Preview Mode
+
+Custom Head Scripts are **not loaded** when previewing surveys in the editor. This is intentional to:
+
+- Prevent analytics tracking during testing
+- Avoid triggering pixels or conversions during development
+- Ensure a clean testing environment
+
+To test your scripts, publish your survey and view it through the actual link survey URL.
+
+### Link Surveys Only
+
+Custom Head Scripts **only work with link surveys**. They are not available for app/website surveys, as those surveys are embedded in your application and should use your application's existing script management.
+
+### Cloud vs Self-Hosted
+
+This feature is **only available on self-hosted instances**. Formbricks Cloud does not support Custom Head Scripts for security and performance reasons.
+
+### Permissions
+
+Only **Owners**, **Managers**, and members with **Manage** access can configure Custom Head Scripts.
+
+## Common Use Cases
+
+### Google Analytics
+
+Track survey views and completions with Google Analytics:
+
+```html
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'GA_MEASUREMENT_ID');
+</script>
+```
+
+### Facebook Pixel
+
+Track survey traffic for ad targeting:
+
+```html
+<script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', 'YOUR_PIXEL_ID');
+  fbq('track', 'PageView');
+</script>
+```
+
+### Custom Fonts
+
+Load custom fonts for your surveys:
+
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+</style>
+```
+
+## Troubleshooting
+
+### Scripts Not Loading
+
+If your scripts aren't loading, check:
+
+1. **Is it a self-hosted instance?** Custom scripts only work on self-hosted Formbricks.
+2. **Are you in preview mode?** Scripts don't load in preview—test with the actual survey link.
+3. **Check the browser console** for JavaScript errors that might prevent script execution.
+4. **Verify your HTML syntax** is correct (properly closed tags, valid attributes).
+
+### Script Conflicts
+
+If multiple scripts conflict:
+
+- Ensure scripts are compatible with each other
+- Check for namespace collisions in global variables
+- Load scripts in the correct order (dependencies first)
+
+## Best Practices
+
+1. **Keep scripts minimal** to maintain fast survey loading times
+2. **Use async/defer attributes** for external script tags when possible
+3. **Test thoroughly** after adding scripts to ensure survey functionality isn't affected
+4. **Document your scripts** with HTML comments for future reference
+5. **Validate HTML** to prevent rendering issues
+
+<Info>
+  Remember: Custom Head Scripts apply to **all link surveys** in your workspace. If you need survey-specific scripts, consider using conditional logic in your JavaScript based on survey IDs or URLs.
+</Info>
+
