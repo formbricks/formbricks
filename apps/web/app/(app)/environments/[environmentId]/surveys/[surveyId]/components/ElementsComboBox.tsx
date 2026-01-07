@@ -21,6 +21,7 @@ import {
   ListOrderedIcon,
   MessageSquareTextIcon,
   MousePointerClickIcon,
+  NetworkIcon,
   PieChartIcon,
   Rows3Icon,
   SmartphoneIcon,
@@ -99,6 +100,7 @@ const elementIcons = {
   action: MousePointerClickIcon,
   country: FlagIcon,
   url: LinkIcon,
+  ipAddress: NetworkIcon,
 
   // others
   Language: LanguagesIcon,
@@ -190,7 +192,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
             value={inputValue}
             onValueChange={setInputValue}
             placeholder={open ? `${t("common.search")}...` : t("common.select_filter")}
-            className="max-w-full grow border-none p-0 pl-2 text-sm shadow-none outline-none ring-offset-transparent focus:border-none focus:shadow-none focus:outline-none focus:ring-offset-0"
+            className="max-w-full grow border-none p-0 pl-2 text-sm shadow-none ring-offset-transparent outline-none focus:border-none focus:shadow-none focus:ring-offset-0 focus:outline-none"
           />
         )}
         <Button

@@ -33,9 +33,10 @@ export const ResponseOptionsCard = ({
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
   const [recaptchaToggle, setRecaptchaToggle] = useState(localSurvey.recaptcha?.enabled ?? false);
-  const [isSingleResponsePerEmailEnabledToggle, setIsSingleResponsePerEmailToggle] = useState(
+  const [isSingleResponsePerEmailEnabledToggle, setIsSingleResponsePerEmailEnabledToggle] = useState(
     localSurvey.isSingleResponsePerEmailEnabled
   );
+  const [isCaptureIpEnabledToggle, setIsCaptureIpEnabledToggle] = useState(localSurvey.isCaptureIpEnabled);
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
     heading: t("environments.surveys.edit.survey_completed_heading"),
@@ -90,7 +91,7 @@ export const ResponseOptionsCard = ({
   };
 
   const handleSingleResponsePerEmailToggle = () => {
-    setIsSingleResponsePerEmailToggle(!isSingleResponsePerEmailEnabledToggle);
+    setIsSingleResponsePerEmailEnabledToggle(!isSingleResponsePerEmailEnabledToggle);
     setLocalSurvey({
       ...localSurvey,
       isSingleResponsePerEmailEnabled: !localSurvey.isSingleResponsePerEmailEnabled,
@@ -115,6 +116,11 @@ export const ResponseOptionsCard = ({
 
   const handleHideBackButtonToggle = () => {
     setLocalSurvey({ ...localSurvey, isBackButtonHidden: !localSurvey.isBackButtonHidden });
+  };
+
+  const handleCaptureIpToggle = () => {
+    setIsCaptureIpEnabledToggle(!isCaptureIpEnabledToggle);
+    setLocalSurvey({ ...localSurvey, isCaptureIpEnabled: !localSurvey.isCaptureIpEnabled });
   };
 
   useEffect(() => {
@@ -199,7 +205,7 @@ export const ResponseOptionsCard = ({
       )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -237,7 +243,7 @@ export const ResponseOptionsCard = ({
                   value={localSurvey.autoComplete?.toString()}
                   onChange={handleInputResponse}
                   onBlur={handleInputResponseBlur}
-                  className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                  className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
                 />
                 {t("environments.surveys.edit.completed_responses")}
               </p>
@@ -304,7 +310,7 @@ export const ResponseOptionsCard = ({
                     <Input
                       autoFocus
                       id="heading"
-                      className="mb-4 mt-2 bg-white"
+                      className="mt-2 mb-4 bg-white"
                       name="heading"
                       defaultValue={surveyClosedMessage.heading}
                       onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}
@@ -379,6 +385,13 @@ export const ResponseOptionsCard = ({
             onToggle={handleHideBackButtonToggle}
             title={t("environments.surveys.edit.hide_back_button")}
             description={t("environments.surveys.edit.hide_back_button_description")}
+          />
+          <AdvancedOptionToggle
+            htmlId="captureIp"
+            isChecked={isCaptureIpEnabledToggle}
+            onToggle={handleCaptureIpToggle}
+            title={t("environments.surveys.edit.capture_ip_address")}
+            description={t("environments.surveys.edit.capture_ip_address_description")}
           />
         </div>
       </Collapsible.CollapsibleContent>

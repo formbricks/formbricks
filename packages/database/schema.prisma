@@ -385,6 +385,7 @@ model Survey {
   isVerifyEmailEnabled            Boolean          @default(false)
   isSingleResponsePerEmailEnabled Boolean          @default(false)
   isBackButtonHidden              Boolean          @default(false)
+  isCaptureIpEnabled              Boolean          @default(false)
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
