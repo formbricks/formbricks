@@ -59,8 +59,8 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ project, i
         const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
         toast.error(errorMessage);
       }
-    } catch (err) {
-      toast.error(`Error: ${err.message}`);
+    } catch {
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
 

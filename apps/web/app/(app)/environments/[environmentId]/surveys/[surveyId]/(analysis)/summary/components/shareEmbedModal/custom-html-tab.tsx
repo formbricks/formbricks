@@ -28,7 +28,7 @@ interface CustomHtmlTabProps {
 
 interface CustomHtmlFormData {
   customHeadScripts: string;
-  customHeadScriptsMode: "add" | "replace";
+  customHeadScriptsMode: TSurvey["customHeadScriptsMode"];
 }
 
 export const CustomHtmlTab = ({ projectCustomScripts, isReadOnly }: CustomHtmlTabProps) => {
@@ -89,7 +89,7 @@ export const CustomHtmlTab = ({ projectCustomScripts, isReadOnly }: CustomHtmlTa
                 { value: "add", label: t("environments.surveys.share.custom_html.add_to_workspace") },
                 { value: "replace", label: t("environments.surveys.share.custom_html.replace_workspace") },
               ]}
-              defaultSelected={scriptsMode}
+              defaultSelected={scriptsMode ?? "add"}
               onChange={(value) => setValue("customHeadScriptsMode", value, { shouldDirty: true })}
               disabled={isReadOnly}
             />

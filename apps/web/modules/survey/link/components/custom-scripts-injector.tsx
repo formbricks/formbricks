@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface CustomScriptsInjectorProps {
   projectScripts?: string | null;
   surveyScripts?: string | null;
-  scriptsMode?: "add" | "replace" | null;
+  scriptsMode?: TSurvey["customHeadScriptsMode"];
 }
 
 /**
