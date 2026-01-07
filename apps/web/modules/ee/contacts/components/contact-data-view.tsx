@@ -2,7 +2,7 @@
 
 import { debounce } from "lodash";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -48,40 +48,40 @@ export const ContactDataView = ({
     );
   }, [contactAttributeKeys]);
 
+  // Fetch contacts from offset 0 with current search value
+  const fetchContactsFromStart = useCallback(async () => {
+    setIsDataLoaded(false);
+    try {
+      setHasMore(true);
+      const contactsResponse = await getContactsAction({
+        environmentId: environment.id,
+        offset: 0,
+        searchValue,
+      });
+      if (contactsResponse?.data) {
+        setContacts(contactsResponse.data);
+      }
+      if (contactsResponse?.data && contactsResponse.data.length < itemsPerPage) {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      toast.error("Error fetching contacts. Please try again.");
+    } finally {
+      setIsDataLoaded(true);
+    }
+  }, [environment.id, itemsPerPage, searchValue]);
+
   useEffect(() => {
     if (!isFirstRender.current) {
-      const fetchData = async () => {
-        setIsDataLoaded(false);
-        try {
-          setHasMore(true);
-          const getPersonActionData = await getContactsAction({
-            environmentId: environment.id,
-            offset: 0,
-            searchValue,
-          });
-          const personData = getPersonActionData?.data;
-          if (getPersonActionData?.data) {
-            setContacts(getPersonActionData.data);
-          }
-          if (personData && personData.length < itemsPerPage) {
-            setHasMore(false);
-          }
-        } catch (error) {
-          console.error("Error fetching people data:", error);
-          toast.error("Error fetching people data. Please try again.");
-        } finally {
-          setIsDataLoaded(true);
-        }
-      };
-
-      const debouncedFetchData = debounce(fetchData, 300);
+      const debouncedFetchData = debounce(fetchContactsFromStart, 300);
       debouncedFetchData();
 
       return () => {
         debouncedFetchData.cancel();
       };
     }
-  }, [environment.id, itemsPerPage, searchValue]);
+  }, [fetchContactsFromStart]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -147,6 +147,7 @@ export const ContactDataView = ({
       setSearchValue={setSearchValue}
       isReadOnly={isReadOnly}
       isQuotasAllowed={isQuotasAllowed}
+      refreshContacts={fetchContactsFromStart}
     />
   );
 };
