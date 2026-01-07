@@ -112,7 +112,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
                         <div className="relative">
                           <Input
                             {...field}
-                            placeholder={`Full Name`}
+                            placeholder={t("common.full_name")}
                             className="w-80"
                             isInvalid={Boolean(error?.message)}
                           />
