@@ -8,7 +8,6 @@
     "company_logo": "公司标志",
     "finish": "完成",
     "language_switch": "语言切换",
-    "less_than_x_minutes": "{count, plural, one {少于 1 分钟} other {少于 {count} 分钟}}",
     "next": "下一步",
     "open_in_new_tab": "在新标签页中打开",
     "people_responded": "{count, plural, one {1 人已回应} other {{count} 人已回应}}",
@@ -24,12 +23,12 @@
     "retry": "重试",
     "retrying": "重试中...",
     "sending_responses": "正在发送响应...",
-    "takes": "需要",
+    "takes_less_than_x_minutes": "{count, plural, one {少于 1 分钟} other {少于 {count} 分钟}}",
+    "takes_x_minutes": "{count, plural, one {1 分钟} other {{count} 分钟}}",
+    "takes_x_plus_minutes": "{count}+ 分钟",
     "terms_of_service": "服务条款",
     "the_servers_cannot_be_reached_at_the_moment": "目前无法连接到服务器。",
     "they_will_be_redirected_immediately": "他们将立即被重定向",
-    "x_minutes": "{count, plural, one {1 分钟} other {{count} 分钟}}",
-    "x_plus_minutes": "{count}+ 分钟",
     "your_feedback_is_stuck": "您的反馈卡住了 :("
   },
   "errors": {

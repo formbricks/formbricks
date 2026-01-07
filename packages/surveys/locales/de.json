@@ -8,7 +8,6 @@
     "company_logo": "Firmenlogo",
     "finish": "Fertig",
     "language_switch": "Sprachwechsel",
-    "less_than_x_minutes": "{count, plural, one {weniger als 1 Minute} other {weniger als {count} Minuten}}",
     "next": "Weiter",
     "open_in_new_tab": "In neuem Tab öffnen",
     "people_responded": "{count, plural, one {1 Person hat geantwortet} other {{count} Personen haben geantwortet}}",
@@ -24,12 +23,12 @@
     "retry": "Wiederholen",
     "retrying": "Erneuter Versuch...",
     "sending_responses": "Antworten werden gesendet...",
-    "takes": "Dauert",
+    "takes_less_than_x_minutes": "{count, plural, one {Dauert weniger als 1 Minute} other {Dauert weniger als {count} Minuten}}",
+    "takes_x_minutes": "{count, plural, one {Dauert 1 Minute} other {Dauert {count} Minuten}}",
+    "takes_x_plus_minutes": "Dauert {count}+ Minuten",
     "terms_of_service": "Nutzungsbedingungen",
     "the_servers_cannot_be_reached_at_the_moment": "Die Server sind momentan nicht erreichbar.",
     "they_will_be_redirected_immediately": "Sie werden sofort weitergeleitet",
-    "x_minutes": "{count, plural, one {1 Minute} other {{count} Minuten}}",
-    "x_plus_minutes": "{count}+ Minuten",
     "your_feedback_is_stuck": "Ihr Feedback steckt fest :("
   },
   "errors": {

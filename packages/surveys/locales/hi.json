@@ -8,7 +8,6 @@
     "company_logo": "कंपनी लोगो",
     "finish": "समाप्त करें",
     "language_switch": "भाषा बदलें",
-    "less_than_x_minutes": "{count, plural, one {1 मिनट से कम} other {{count} मिनट से कम}}",
     "next": "अगला",
     "open_in_new_tab": "नए टैब में खोलें",
     "people_responded": "{count, plural, one {1 व्यक्ति ने जवाब दिया} other {{count} लोगों ने जवाब दिया}}",
@@ -24,12 +23,12 @@
     "retry": "पुनः प्रयास करें",
     "retrying": "पुनः प्रयास कर रहे हैं...",
     "sending_responses": "प्रतिक्रियाएँ भेज रहे हैं...",
-    "takes": "लेता है",
+    "takes_less_than_x_minutes": "{count, plural, one {1 मिनट से कम लगता है} other {{count} मिनट से कम लगता है}}",
+    "takes_x_minutes": "{count, plural, one {1 मिनट लगता है} other {{count} मिनट लगते हैं}}",
+    "takes_x_plus_minutes": "{count}+ मिनट लगते हैं",
     "terms_of_service": "सेवा की शर्तें",
     "the_servers_cannot_be_reached_at_the_moment": "इस समय सर्वर तक पहुंचा नहीं जा सकता है।",
     "they_will_be_redirected_immediately": "उन्हें तुरंत रीडायरेक्ट किया जाएगा",
-    "x_minutes": "{count, plural, one {1 मिनट} other {{count} मिनट}}",
-    "x_plus_minutes": "{count}+ मिनट",
     "your_feedback_is_stuck": "आपकी प्रतिक्रिया अटक गई है :("
   },
   "errors": {
