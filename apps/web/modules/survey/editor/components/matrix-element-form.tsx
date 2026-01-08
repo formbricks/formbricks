@@ -9,12 +9,14 @@ import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum, TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -347,6 +349,16 @@ export const MatrixElementForm = ({
           </div>
         </div>
       </div>
+
+      <ValidationRulesEditor
+        elementType={TSurveyElementTypeEnum.Matrix}
+        validationRules={element.validationRules ?? []}
+        onUpdateRules={(rules: TValidationRule[]) => {
+          updateElement(elementIdx, {
+            validationRules: rules,
+          });
+        }}
+      />
     </form>
   );
 };

@@ -30,6 +30,7 @@ export function RatingElement({
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
 
@@ -41,7 +42,7 @@ export function RatingElement({
   };
 
   const validateRequired = (): boolean => {
-    if (element.required && !value) {
+    if (isRequired && !value) {
       setErrorMessage(t("errors.please_select_an_option"));
       return false;
     }
@@ -69,7 +70,7 @@ export function RatingElement({
         lowerLabel={getLocalizedValue(element.lowerLabel, languageCode)}
         upperLabel={getLocalizedValue(element.upperLabel, languageCode)}
         colorCoding={element.isColorCodingEnabled}
-        required={element.required}
+        required={isRequired}
         dir={dir}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}

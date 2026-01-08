@@ -31,6 +31,7 @@ export function ConsentElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
 
@@ -40,7 +41,7 @@ export function ConsentElement({
   };
 
   const validateRequired = (): boolean => {
-    if (element.required && value !== "accepted") {
+    if (isRequired && value !== "accepted") {
       setErrorMessage(t("errors.please_fill_out_this_field"));
       return false;
     }
@@ -65,7 +66,7 @@ export function ConsentElement({
         checkboxLabel={getLocalizedValue(element.label, languageCode)}
         value={value === "accepted"}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}

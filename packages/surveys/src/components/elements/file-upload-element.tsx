@@ -37,6 +37,7 @@ export function FileUploadElement({
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
@@ -326,7 +327,7 @@ export function FileUploadElement({
   );
 
   const validateRequired = (): boolean => {
-    if (element.required && (!value || value.length === 0)) {
+    if (isRequired && (!value || value.length === 0)) {
       setErrorMessage(t("errors.please_upload_a_file"));
       return false;
     }
@@ -353,7 +354,7 @@ export function FileUploadElement({
         onFileSelect={handleFileSelect}
         allowMultiple={element.allowMultipleFiles}
         allowedFileExtensions={element.allowedFileExtensions}
-        required={element.required}
+        required={isRequired}
         errorMessage={errorMessage}
         isUploading={isUploading}
         imageUrl={element.imageUrl}

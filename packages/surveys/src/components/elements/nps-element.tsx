@@ -32,6 +32,7 @@ export function NPSElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
 
@@ -43,7 +44,7 @@ export function NPSElement({
   };
 
   const validateRequired = (): boolean => {
-    if (element.required && value === undefined) {
+    if (isRequired && value === undefined) {
       setErrorMessage(t("errors.please_select_an_option"));
       return false;
     }
@@ -70,7 +71,7 @@ export function NPSElement({
         lowerLabel={getLocalizedValue(element.lowerLabel, languageCode)}
         upperLabel={getLocalizedValue(element.upperLabel, languageCode)}
         colorCoding={element.isColorCodingEnabled}
-        required={element.required}
+        required={isRequired}
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}

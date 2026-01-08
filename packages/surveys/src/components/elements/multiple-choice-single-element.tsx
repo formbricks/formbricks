@@ -33,6 +33,7 @@ export function MultipleChoiceSingleElement({
   const [otherValue, setOtherValue] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
 
@@ -154,12 +155,12 @@ export function MultipleChoiceSingleElement({
 
   const validateRequired = (): boolean => {
     // Check if nothing is selected
-    if (element.required && selectedValue === undefined) {
+    if (isRequired && selectedValue === undefined) {
       setErrorMessage(t("errors.please_select_an_option"));
       return false;
     }
     // Check if "other" is selected but not filled
-    if (element.required && isOtherSelected && !otherValue.trim()) {
+    if (isRequired && isOtherSelected && !otherValue.trim()) {
       setErrorMessage(t("errors.please_fill_out_this_field"));
       return false;
     }
@@ -184,7 +185,7 @@ export function MultipleChoiceSingleElement({
         options={allOptions}
         value={selectedValue}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         errorMessage={errorMessage}
         dir={dir}
         otherOptionId={otherOption?.id}

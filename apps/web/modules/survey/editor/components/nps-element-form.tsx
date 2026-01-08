@@ -4,11 +4,13 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyNPSElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum, TSurveyNPSElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 
@@ -139,6 +141,16 @@ export const NPSElementForm = ({
         description={t("environments.surveys.edit.add_color_coding_description")}
         childBorder
         customContainerClass="p-0 mt-4"
+      />
+
+      <ValidationRulesEditor
+        elementType={TSurveyElementTypeEnum.NPS}
+        validationRules={element.validationRules ?? []}
+        onUpdateRules={(rules: TValidationRule[]) => {
+          updateElement(elementIdx, {
+            validationRules: rules,
+          });
+        }}
       />
     </form>
   );

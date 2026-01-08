@@ -8,12 +8,14 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyRankingElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum, TSurveyRankingElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
@@ -246,6 +248,16 @@ export const RankingElementForm = ({
           </div>
         </div>
       </div>
+
+      <ValidationRulesEditor
+        elementType={TSurveyElementTypeEnum.Ranking}
+        validationRules={element.validationRules ?? []}
+        onUpdateRules={(rules: TValidationRule[]) => {
+          updateElement(elementIdx, {
+            validationRules: rules,
+          });
+        }}
+      />
     </form>
   );
 };

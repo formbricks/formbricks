@@ -33,6 +33,7 @@ export function MultipleChoiceMultiElement({
   const [otherValue, setOtherValue] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -174,11 +175,11 @@ export function MultipleChoiceMultiElement({
   };
 
   const validateRequired = (): boolean => {
-    if (element.required && (!Array.isArray(value) || value.length === 0)) {
+    if (isRequired && (!Array.isArray(value) || value.length === 0)) {
       setErrorMessage(t("errors.please_select_an_option"));
       return false;
     }
-    if (element.required && isOtherSelected && !otherValue.trim()) {
+    if (isRequired && isOtherSelected && !otherValue.trim()) {
       setErrorMessage(t("errors.please_fill_out_this_field"));
       return false;
     }
@@ -262,7 +263,7 @@ export function MultipleChoiceMultiElement({
         options={allOptions}
         value={selectedValues}
         onChange={handleMultiSelectChange}
-        required={element.required}
+        required={isRequired}
         errorMessage={errorMessage}
         dir={dir}
         otherOptionId={otherOption?.id}

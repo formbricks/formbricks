@@ -30,6 +30,7 @@ export function ContactInfoElement({
 }: Readonly<ContactInfoElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -113,7 +114,7 @@ export function ContactInfoElement({
         fields={formFields}
         value={convertToValueObject(value)}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         dir={dir}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}

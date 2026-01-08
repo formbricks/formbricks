@@ -33,6 +33,7 @@ export function OpenTextElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
 
@@ -43,7 +44,7 @@ export function OpenTextElement({
   };
 
   const validateRequired = (): boolean => {
-    if (element.required && (!value || value.trim() === "")) {
+    if (isRequired && (!value || value.trim() === "")) {
       setErrorMessage(t("errors.please_fill_out_this_field"));
       return false;
     }
@@ -122,7 +123,7 @@ export function OpenTextElement({
         placeholder={getLocalizedValue(element.placeholder, languageCode)}
         value={value}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         longAnswer={element.longAnswer !== false}
         inputType={getInputType()}
         charLimit={element.inputType === "text" ? element.charLimit : undefined}

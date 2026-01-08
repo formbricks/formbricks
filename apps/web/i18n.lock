@@ -211,7 +211,6 @@ checksums:
     common/imprint: c4e5f2a1994d3cc5896b200709cc499c
     common/in_progress: 3de9afebcb9d4ce8ac42e14995f79ffd
     common/inactive_surveys: 324b8e1844739cdc2a3bc71aef143a76
-    common/input_type: df4865b5d0a598a8d7f563dcec104df5
     common/integration: 40d02f65c4356003e0e90ffb944907d2
     common/integrations: 0ccce343287704cd90150c32e2fcad36
     common/invalid_date: 4c18c82f7317d4a02f8d5fef611e82b7
@@ -235,13 +234,11 @@ checksums:
     common/look_and_feel: 9125503712626d495cedec7a79f1418c
     common/manage: a3d40c0267b81ae53c9598eaeb05087d
     common/marketing: fcf0f06f8b64b458c7ca6d95541a3cc8
-    common/maximum: 4c07541dd1f093775bdc61b559cca6c8
     common/member: 1606dc30b369856b9dba1fe9aec425d2
     common/members: 0932e80cba1e3e0a7f52bb67ff31da32
     common/members_and_teams: bf5c3fadcb9fc23533ec1532b805ac08
     common/membership_not_found: 7ac63584af23396aace9992ad919ffd4
     common/metadata: 695d4f7da261ba76e3be4de495491028
-    common/minimum: d9759235086d0169928b3c1401115e22
     common/mobile_overlay_app_works_best_on_desktop: 4509f7bfbb4edbd42e534042d6cb7e72
     common/mobile_overlay_surveys_look_good: 6d73b635018b4a5a89cce58e1d2497f5
     common/mobile_overlay_title: 42f52259b7527989fb3a3240f5352a8b
@@ -1149,8 +1146,6 @@ checksums:
     environments/surveys/edit/change_the_question_color_of_the_survey: ab6942138a8c5fc6c8c3b9f8dd95e980
     environments/surveys/edit/changes_saved: 90aab363c9e96eaa1295a997c48f97f6
     environments/surveys/edit/changing_survey_type_will_remove_existing_distribution_channels: 9ce817be04f13f2f0db981145ec48df4
-    environments/surveys/edit/character_limit_toggle_description: d15a6895eaaf4d4c7212d9240c6bf45d
-    environments/surveys/edit/character_limit_toggle_title: fdc45bcc6335e5116aec895fecda0d87
     environments/surveys/edit/checkbox_label: 12a07d6bdf38e283a2e95892ec49b7f8
     environments/surveys/edit/choose_the_actions_which_trigger_the_survey: 773b311a148a112243f3b139506b9987
     environments/surveys/edit/choose_the_first_question_on_your_block: bdece06ca04f89d0c445ba1554dd5b80
@@ -1516,6 +1511,21 @@ checksums:
     environments/surveys/edit/upper_label: 1fa48bce3fade6ffc1a52d9fdddf9e17
     environments/surveys/edit/url_filters: e524879d2eb74463d7fd06a7e0f53421
     environments/surveys/edit/url_not_supported: af8a753467c617b596aadef1aaaed664
+    environments/surveys/edit/validation/characters: f62970e214bd04fd1959e2759ee1ec48
+    environments/surveys/edit/validation/email: a481cd9fba3e145252458ee1eaa9bd3b
+    environments/surveys/edit/validation/max_length: dad68e07f6ee06ed11ec6bda2e896c68
+    environments/surveys/edit/validation/max_selections: 6edf9e1149c3893da102d9464138da22
+    environments/surveys/edit/validation/max_value: 6109d595ba21497c59b1c91d7fd09a13
+    environments/surveys/edit/validation/min_length: ad5c57a937565826794fb865522962e8
+    environments/surveys/edit/validation/min_selections: 204dbf1f1b3aa34c8b981642b1694262
+    environments/surveys/edit/validation/min_value: b9542ab0e0ea0ee18e82931b160b1385
+    environments/surveys/edit/validation/options_selected: 088309b017c07c01494447dba82b2621
+    environments/surveys/edit/validation/pattern: c6f01d7bc9baa21a40ea38fa986bd5a0
+    environments/surveys/edit/validation/phone: bcd7bd37a475ab1f80ea4c5b4d4d0bb5
+    environments/surveys/edit/validation/required: b6c231d5d1a8dfe37615d1efd38ed8e0
+    environments/surveys/edit/validation/url: 4006a4d8dfac013758f0053f6aa67cdd
+    environments/surveys/edit/validation_rules: 0cd99f02684d633196c8b249e857d207
+    environments/surveys/edit/validation_rules_description: a0a7cee05e18efd462148698e3a93399
     environments/surveys/edit/variable_is_used_in_logic_of_question_please_remove_it_from_logic_first: bd9d9c7cf0be671c4e8cf67e2ae6659e
     environments/surveys/edit/variable_is_used_in_quota_please_remove_it_from_quota_first: 0d36e5b2713f5450fe346e0af0aaa29c
     environments/surveys/edit/variable_name_is_already_taken_please_choose_another: 6da42fe8733c6379158bce9a176f76d7
