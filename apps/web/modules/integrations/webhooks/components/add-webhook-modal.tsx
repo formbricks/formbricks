@@ -1,8 +1,8 @@
 "use client";
 
-import { PipelineTriggers } from "@prisma/client";
+import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
-import { Webhook } from "lucide-react";
+import { CheckIcon, CopyIcon, Webhook as WebhookIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -51,6 +51,14 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
+  const [createdWebhook, setCreatedWebhook] = useState<Webhook | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
@@ -142,7 +150,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         });
         if (createWebhookActionResult?.data) {
           router.refresh();
-          setOpenWithStates(false);
+          setCreatedWebhook(createWebhookActionResult.data);
           toast.success(t("environments.integrations.webhooks.webhook_added_successfully"));
         } else {
           const errorMessage = getFormattedErrorMessage(createWebhookActionResult);
@@ -164,13 +172,74 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
     setSelectedSurveys([]);
     setSelectedTriggers([]);
     setSelectedAllSurveys(false);
+    setCreatedWebhook(null);
+    setCopied(false);
   };
+
+  // Show success dialog with secret after webhook creation
+  if (createdWebhook) {
+    return (
+      <Dialog open={open} onOpenChange={setOpenWithStates}>
+        <DialogContent>
+          <DialogHeader>
+            <CheckIcon className="h-6 w-6 text-green-500" />
+            <DialogTitle>{t("environments.integrations.webhooks.webhook_created")}</DialogTitle>
+            <DialogDescription>{t("environments.integrations.webhooks.copy_secret_now")}</DialogDescription>
+          </DialogHeader>
+
+          <DialogBody className="space-y-4 pb-4">
+            <div className="col-span-1">
+              <Label>{t("environments.integrations.webhooks.signing_secret")}</Label>
+              <div className="mt-1 flex">
+                <Input
+                  type="text"
+                  readOnly
+                  value={createdWebhook.secret ?? ""}
+                  className="font-mono text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="ml-2 whitespace-nowrap"
+                  onClick={() => copyToClipboard(createdWebhook.secret ?? "")}>
+                  {copied ? (
+                    <>
+                      <CheckIcon className="h-4 w-4" />
+                      {t("common.copied")}
+                    </>
+                  ) : (
+                    <>
+                      <CopyIcon className="h-4 w-4" />
+                      {t("common.copy")}
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="mt-2 text-xs text-slate-500">
+                {t("environments.integrations.webhooks.secret_copy_warning")}
+              </p>
+            </div>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={() => {
+                setOpenWithStates(false);
+              }}>
+              {t("common.done")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpenWithStates}>
       <DialogContent>
         <DialogHeader>
-          <Webhook />
+          <WebhookIcon />
           <DialogTitle>{t("environments.integrations.webhooks.add_webhook")}</DialogTitle>
           <DialogDescription>
             {t("environments.integrations.webhooks.add_webhook_description")}

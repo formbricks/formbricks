@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -8,6 +9,7 @@ import {
   ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
+import { generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { TWebhookInput } from "../types/webhooks";
@@ -59,15 +61,20 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
   }
 };
 
-export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<boolean> => {
+export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<Webhook> => {
   try {
     if (isDiscordWebhook(webhookInput.url)) {
       throw new UnknownError("Discord webhooks are currently not supported.");
     }
-    await prisma.webhook.create({
+
+    // Auto-generate a Standard Webhooks compliant secret
+    const secret = generateWebhookSecret();
+
+    const webhook = await prisma.webhook.create({
       data: {
         ...webhookInput,
         surveyIds: webhookInput.surveyIds || [],
+        secret,
         environment: {
           connect: {
             id: environmentId,
@@ -76,7 +83,7 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
       },
     });
 
-    return true;
+    return webhook;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -121,6 +128,10 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
       throw new UnknownError("Discord webhooks are currently not supported.");
     }
 
+    // Generate Standard Webhooks headers for test endpoint
+    const webhookMessageId = createId();
+    const webhookTimestamp = Math.floor(Date.now() / 1000);
+
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify({
@@ -128,6 +139,8 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
       }),
       headers: {
         "Content-Type": "application/json",
+        "webhook-id": webhookMessageId,
+        "webhook-timestamp": webhookTimestamp.toString(),
       },
       signal: controller.signal,
     });

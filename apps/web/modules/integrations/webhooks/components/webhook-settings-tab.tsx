@@ -2,7 +2,7 @@
 
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
-import { TrashIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, EyeIcon, EyeOff, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -48,6 +48,14 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
   const [endpointAccessible, setEndpointAccessible] = useState<boolean>();
   const [hittingEndpoint, setHittingEndpoint] = useState<boolean>(false);
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(webhook.surveyIds.length === 0);
+  const [showSecret, setShowSecret] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
@@ -113,6 +121,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
       toast.error(t("common.please_select_at_least_one_survey"));
       return;
     }
+
     const endpointHitSuccessfully = await handleTestEndpoint(false);
     if (!endpointHitSuccessfully) {
       return;
@@ -195,6 +204,53 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
             </Button>
           </div>
         </div>
+
+        {webhook.secret && (
+          <div className="col-span-1">
+            <Label htmlFor="secret">{t("environments.integrations.webhooks.signing_secret")}</Label>
+            <div className="mt-1 flex">
+              <div className="relative flex-1">
+                <Input
+                  type={showSecret ? "text" : "password"}
+                  id="secret"
+                  readOnly
+                  value={webhook.secret}
+                  className="pr-10 font-mono text-sm"
+                />
+                <button
+                  type="button"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 transform"
+                  onClick={() => setShowSecret(!showSecret)}>
+                  {showSecret ? (
+                    <EyeOff className="h-5 w-5 text-slate-400" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-slate-400" />
+                  )}
+                </button>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="ml-2 whitespace-nowrap"
+                onClick={() => copyToClipboard(webhook.secret ?? "")}>
+                {copied ? (
+                  <>
+                    <CheckIcon className="h-4 w-4" />
+                    {t("common.copied")}
+                  </>
+                ) : (
+                  <>
+                    <CopyIcon className="h-4 w-4" />
+                    {t("common.copy")}
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              {t("environments.integrations.webhooks.secret_description")}
+            </p>
+          </div>
+        )}
 
         <div>
           <Label htmlFor="Triggers">{t("environments.integrations.webhooks.triggers")}</Label>
