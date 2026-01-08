@@ -16,6 +16,7 @@ interface RankingElementProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentElementId: string;
+  errorMessage?: string;
 }
 
 export function RankingElement({
@@ -26,14 +27,18 @@ export function RankingElement({
   ttc,
   setTtc,
   currentElementId,
+  errorMessage: centralizedErrorMessage,
 }: Readonly<RankingElementProps>) {
-  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [rankingErrorMessage, setRankingErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
   const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
+
+  // Combine centralized error message with ranking-specific error
+  const errorMessage = centralizedErrorMessage || rankingErrorMessage;
 
   const shuffledChoicesIds = useMemo(() => {
     if (element.shuffleOption) {
@@ -91,8 +96,8 @@ export function RankingElement({
 
   // Handle selection changes - store labels directly instead of IDs
   const handleChange = (selectedIds: string[]) => {
-    // Clear error when user changes ranking
-    setErrorMessage(undefined);
+    // Clear ranking-specific error when user changes ranking
+    setRankingErrorMessage(undefined);
 
     const nextLabels: string[] = [];
     selectedIds.forEach((id) => {
@@ -106,12 +111,13 @@ export function RankingElement({
     setTtc(updatedTtcObj);
   };
 
-  const validateRequired = (): boolean => {
+  const validateAllItemsRanked = (): boolean => {
     const isValueArray = Array.isArray(value);
     const allItemsRanked = isValueArray && value.length === element.choices.length;
 
-    if ((isRequired && !allItemsRanked) || (!isRequired && value.length > 0 && !allItemsRanked)) {
-      setErrorMessage(t("errors.please_rank_all_items_before_submitting"));
+    // If any items are ranked, all must be ranked
+    if (value.length > 0 && !allItemsRanked) {
+      setRankingErrorMessage(t("errors.please_rank_all_items_before_submitting"));
       return false;
     }
 
@@ -120,8 +126,13 @@ export function RankingElement({
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (!validateRequired()) return;
 
+    // Validate that all items are ranked if any are ranked
+    if (!validateAllItemsRanked()) {
+      return;
+    }
+
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };

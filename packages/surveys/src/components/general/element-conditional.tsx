@@ -174,6 +174,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.CTA:
@@ -203,6 +204,7 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Consent:
@@ -218,6 +220,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Date:
@@ -232,6 +235,7 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.PictureSelection:
@@ -264,6 +268,7 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Cal:
@@ -277,6 +282,7 @@ export function ElementConditional({
             ttc={ttc}
             setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Matrix:
@@ -289,6 +295,7 @@ export function ElementConditional({
             ttc={ttc}
             setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Address:
@@ -316,6 +323,7 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.ContactInfo:

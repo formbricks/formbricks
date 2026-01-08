@@ -1,5 +1,4 @@
 import { useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { Rating } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
@@ -15,6 +14,7 @@ interface RatingElementProps {
   setTtc: (ttc: TResponseTtc) => void;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function RatingElement({
@@ -26,32 +26,22 @@ export function RatingElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: RatingElementProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
-  const { t } = useTranslation();
 
   const handleChange = (ratingValue: number) => {
-    setErrorMessage(undefined);
     onChange({ [element.id]: ratingValue });
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
 
-  const validateRequired = (): boolean => {
-    if (isRequired && !value) {
-      setErrorMessage(t("errors.please_select_an_option"));
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (!validateRequired()) return;
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };

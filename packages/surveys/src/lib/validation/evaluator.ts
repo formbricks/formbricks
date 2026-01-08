@@ -1,26 +1,13 @@
 import type { TFunction } from "i18next";
 import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
-import type {
-  TSurveyElement,
-  TSurveyElementTypeEnum,
-  TSurveyOpenTextElement,
-} from "@formbricks/types/surveys/elements";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type {
   TValidationError,
   TValidationErrorMap,
   TValidationResult,
   TValidationRule,
-  TValidationRuleParams,
-  TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
 import { validators } from "./validators";
-
-/**
- * Check if an element is an OpenText element with inputType
- */
-const isOpenTextElement = (element: TSurveyElement): element is TSurveyOpenTextElement => {
-  return element.type === ("openText" as TSurveyElementTypeEnum);
-};
 
 /**
  * Single entrypoint for validating an element's response value.
@@ -43,40 +30,8 @@ export const validateElementResponse = (
     ...((element as TSurveyElement & { validationRules?: TValidationRule[] }).validationRules ?? []),
   ];
 
-  // Handle legacy `required` field for backwards compatibility
-  // If element.required is true and no explicit "required" rule exists, add one
-  if (element.required && !rules.some((r) => r.type === "required")) {
-    const legacyRequiredRule: TValidationRule = {
-      id: "__legacy_required__",
-      type: "required",
-      params: {},
-    };
-    rules.unshift(legacyRequiredRule);
-  }
-
-  // Handle legacy `inputType` field for OpenText elements
-  // If inputType is email/url/phone and no explicit rule exists, add one
-  if (isOpenTextElement(element) && element.inputType) {
-    const inputTypeToRuleType: Record<string, TValidationRuleType> = {
-      email: "email",
-      url: "url",
-      phone: "phone",
-    };
-
-    const ruleType = inputTypeToRuleType[element.inputType];
-    if (ruleType && !rules.some((r) => r.type === ruleType)) {
-      // Create a properly typed rule based on the rule type
-      const legacyInputTypeRule = {
-        id: `__legacy_${element.inputType}__`,
-        type: ruleType,
-        params: {} as TValidationRuleParams,
-      } as TValidationRule;
-      rules.push(legacyInputTypeRule);
-    }
-  }
-
   for (const rule of rules) {
-    const ruleType = rule.type as TValidationRuleType;
+    const ruleType = rule.type;
     const validator = validators[ruleType];
 
     if (!validator) {
@@ -91,7 +46,7 @@ export const validateElementResponse = (
       const message =
         rule.customErrorMessage?.[languageCode] ??
         rule.customErrorMessage?.default ??
-        validator.getDefaultMessage(rule.params, t);
+        validator.getDefaultMessage(rule.params, element, t);
 
       errors.push({
         ruleId: rule.id,

@@ -16,7 +16,7 @@ interface MultipleChoiceMultiElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
-  errorMessage?: string; // Validation error from centralized validation
+  errorMessage?: string;
 }
 
 export function MultipleChoiceMultiElement({

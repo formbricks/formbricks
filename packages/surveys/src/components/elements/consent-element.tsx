@@ -1,5 +1,4 @@
 import { useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { Consent } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentElement } from "@formbricks/types/surveys/elements";
@@ -16,6 +15,7 @@ interface ConsentElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function ConsentElement({
@@ -27,31 +27,20 @@ export function ConsentElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<ConsentElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
   const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
-  const { t } = useTranslation();
 
   const handleChange = (checked: boolean) => {
-    setErrorMessage(undefined);
     onChange({ [element.id]: checked ? "accepted" : "" });
-  };
-
-  const validateRequired = (): boolean => {
-    if (isRequired && value !== "accepted") {
-      setErrorMessage(t("errors.please_fill_out_this_field"));
-      return false;
-    }
-    return true;
   };
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    setErrorMessage(undefined);
-    if (!validateRequired()) return;
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };

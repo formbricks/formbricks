@@ -18,6 +18,7 @@ interface FileUploadElementProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentElementId: string;
+  errorMessage?: string;
 }
 
 const FILE_LIMIT = 25;
@@ -32,9 +33,10 @@ export function FileUploadElement({
   ttc,
   setTtc,
   currentElementId,
+  errorMessage: centralizedErrorMessage,
 }: Readonly<FileUploadElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [fileErrorMessage, setFileErrorMessage] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;
   const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
@@ -42,6 +44,9 @@ export function FileUploadElement({
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
   const [fileNames, setFileNames] = useState<Record<string, string>>({});
+
+  // Use centralized error message for required validation, file-specific errors for upload issues
+  const errorMessage = centralizedErrorMessage || fileErrorMessage;
 
   // Convert string[] to UploadedFile[] for survey-ui component
   const convertToUploadedFiles = (urls: string[]): UploadedFile[] => {
@@ -86,8 +91,8 @@ export function FileUploadElement({
   };
 
   const handleChange = (files: UploadedFile[]) => {
-    // Clear error when user uploads files
-    setErrorMessage(undefined);
+    // Clear file-specific errors when user uploads files (centralized errors are cleared by block-conditional)
+    setFileErrorMessage(undefined);
 
     // Store names locally
     const newFileNames: Record<string, string> = {};
@@ -129,7 +134,7 @@ export function FileUploadElement({
 
       if (duplicateFiles.length > 0) {
         const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
-        setErrorMessage(t("errors.file_input.duplicate_files", { duplicateNames }));
+        setFileErrorMessage(t("errors.file_input.duplicate_files", { duplicateNames }));
       }
 
       return { filteredFiles, duplicateFiles };
@@ -167,7 +172,7 @@ export function FileUploadElement({
 
       const fileSizeInMB = file.size / (1024 * 1024);
       if (fileSizeInMB > element.maxSizeInMB) {
-        setErrorMessage(
+        setFileErrorMessage(
           t("errors.file_input.file_size_exceeded_alert", { maxSizeInMB: element.maxSizeInMB })
         );
         return false;
@@ -184,12 +189,12 @@ export function FileUploadElement({
   const validateFileLimits = useCallback(
     (fileArray: File[]): boolean => {
       if (!element.allowMultipleFiles && fileArray.length > 1) {
-        setErrorMessage(t("errors.file_input.only_one_file_can_be_uploaded_at_a_time"));
+        setFileErrorMessage(t("errors.file_input.only_one_file_can_be_uploaded_at_a_time"));
         return false;
       }
 
       if (element.allowMultipleFiles && (value?.length || 0) + fileArray.length > FILE_LIMIT) {
-        setErrorMessage(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
+        setFileErrorMessage(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
         return false;
       }
 
@@ -205,7 +210,7 @@ export function FileUploadElement({
     async (files: File[]): Promise<{ filesToUpload: File[]; sizeRejectedFiles: string[] }> => {
       const validFiles = files.filter((file) => validateFileExtension(file));
       if (validFiles.length === 0) {
-        setErrorMessage(t("errors.file_input.no_valid_file_types_selected"));
+        setFileErrorMessage(t("errors.file_input.no_valid_file_types_selected"));
         return { filesToUpload: [], sizeRejectedFiles: [] };
       }
 
@@ -223,7 +228,7 @@ export function FileUploadElement({
 
       if (sizeRejectedFiles.length > 0 && element.maxSizeInMB) {
         const fileNames = sizeRejectedFiles.join(", ");
-        setErrorMessage(
+        setFileErrorMessage(
           t("errors.file_input.file_size_exceeded", { fileNames, maxSizeInMB: element.maxSizeInMB })
         );
       }
@@ -276,15 +281,15 @@ export function FileUploadElement({
         }
 
         // Clear error on success
-        setErrorMessage(undefined);
+        setFileErrorMessage(undefined);
       } catch (err: any) {
         // Handle upload errors
         if (err?.name === "FileTooLargeError") {
-          setErrorMessage(err.message);
+          setFileErrorMessage(err.message);
         } else if (err?.name === "InvalidFileNameError") {
-          setErrorMessage(t("errors.file_input.upload_failed"));
+          setFileErrorMessage(t("errors.file_input.upload_failed"));
         } else {
-          setErrorMessage(t("errors.file_input.upload_failed"));
+          setFileErrorMessage(t("errors.file_input.upload_failed"));
         }
       } finally {
         setIsUploading(false);
@@ -299,7 +304,7 @@ export function FileUploadElement({
   const handleFileSelect = useCallback(
     async (files: FileList): Promise<void> => {
       // Clear previous errors
-      setErrorMessage(undefined);
+      setFileErrorMessage(undefined);
 
       const fileArray = Array.from(files);
 
@@ -326,17 +331,9 @@ export function FileUploadElement({
     [validateFileLimits, filterDuplicateFiles, validateAndFilterFiles, uploadFiles]
   );
 
-  const validateRequired = (): boolean => {
-    if (isRequired && (!value || value.length === 0)) {
-      setErrorMessage(t("errors.please_upload_a_file"));
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (!validateRequired()) return;
+    // Validation is handled by centralized system, just update TTC
 
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);

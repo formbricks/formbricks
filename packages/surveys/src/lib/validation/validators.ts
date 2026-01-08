@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import { ZEmail, ZUrl } from "@formbricks/types/common";
 import type { TResponseDataValue } from "@formbricks/types/responses";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type {
   TValidationRuleParams,
   TValidationRuleParamsEmail,
@@ -36,7 +37,7 @@ export interface TValidator {
     params: TValidationRuleParams,
     element: TSurveyElement
   ) => TValidatorCheckResult;
-  getDefaultMessage: (params: TValidationRuleParams, t: TFunction) => string;
+  getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction) => string;
 }
 
 // Phone regex: must start with digit or +, end with digit
@@ -76,8 +77,29 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     check: (value: TResponseDataValue): TValidatorCheckResult => {
       return { valid: !isEmpty(value) };
     },
-    getDefaultMessage: (_params: TValidationRuleParamsRequired, t: TFunction): string => {
-      return t("errors.please_fill_out_this_field");
+    getDefaultMessage: (
+      _params: TValidationRuleParamsRequired,
+      element: TSurveyElement,
+      t: TFunction
+    ): string => {
+      // Provide element-specific error messages for better UX
+      switch (element.type) {
+        case TSurveyElementTypeEnum.Date:
+          return t("errors.please_select_a_date");
+        case TSurveyElementTypeEnum.Cal:
+          return t("errors.please_book_an_appointment");
+        case TSurveyElementTypeEnum.FileUpload:
+          return t("errors.please_upload_a_file");
+        case TSurveyElementTypeEnum.MultipleChoiceSingle:
+        case TSurveyElementTypeEnum.MultipleChoiceMulti:
+        case TSurveyElementTypeEnum.NPS:
+        case TSurveyElementTypeEnum.Rating:
+        case TSurveyElementTypeEnum.PictureSelection:
+        case TSurveyElementTypeEnum.Matrix:
+          return t("errors.please_select_an_option");
+        default:
+          return t("errors.please_fill_out_this_field");
+      }
     },
   },
 
@@ -90,7 +112,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
       return { valid: value.length >= typedParams.min };
     },
-    getDefaultMessage: (params: TValidationRuleParams, t: TFunction): string => {
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMinLength;
       return t("errors.min_length", { min: typedParams.min });
     },
@@ -105,7 +127,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
       return { valid: value.length <= typedParams.max };
     },
-    getDefaultMessage: (params: TValidationRuleParams, t: TFunction): string => {
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMaxLength;
       return t("errors.max_length", { max: typedParams.max });
     },
@@ -128,7 +150,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
         return { valid: true };
       }
     },
-    getDefaultMessage: (_params: TValidationRuleParams, t: TFunction): string => {
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       return t("errors.invalid_format");
     },
   },
@@ -141,7 +163,11 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
       return { valid: ZEmail.safeParse(value).success };
     },
-    getDefaultMessage: (_params: TValidationRuleParamsEmail, t: TFunction): string => {
+    getDefaultMessage: (
+      _params: TValidationRuleParamsEmail,
+      _element: TSurveyElement,
+      t: TFunction
+    ): string => {
       return t("errors.please_enter_a_valid_email_address");
     },
   },
@@ -154,7 +180,11 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
       return { valid: ZUrl.safeParse(value).success };
     },
-    getDefaultMessage: (_params: TValidationRuleParamsUrl, t: TFunction): string => {
+    getDefaultMessage: (
+      _params: TValidationRuleParamsUrl,
+      _element: TSurveyElement,
+      t: TFunction
+    ): string => {
       return t("errors.please_enter_a_valid_url");
     },
   },
@@ -167,7 +197,11 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
       return { valid: PHONE_REGEX.test(value) };
     },
-    getDefaultMessage: (_params: TValidationRuleParamsPhone, t: TFunction): string => {
+    getDefaultMessage: (
+      _params: TValidationRuleParamsPhone,
+      _element: TSurveyElement,
+      t: TFunction
+    ): string => {
       return t("errors.please_enter_a_valid_phone_number");
     },
   },
@@ -187,7 +221,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
 
       return { valid: numValue >= typedParams.min };
     },
-    getDefaultMessage: (params: TValidationRuleParams, t: TFunction): string => {
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMinValue;
       return t("errors.min_value", { min: typedParams.min });
     },
@@ -208,7 +242,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
 
       return { valid: numValue <= typedParams.max };
     },
-    getDefaultMessage: (params: TValidationRuleParams, t: TFunction): string => {
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMaxValue;
       return t("errors.max_value", { max: typedParams.max });
     },
@@ -225,7 +259,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       const selectionCount = countSelections(value);
       return { valid: selectionCount >= typedParams.min };
     },
-    getDefaultMessage: (params: TValidationRuleParams, t: TFunction): string => {
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMinSelections;
       return t("errors.min_selections", { min: typedParams.min });
     },
@@ -242,7 +276,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       const selectionCount = countSelections(value);
       return { valid: selectionCount <= typedParams.max };
     },
-    getDefaultMessage: (params: TValidationRuleParams, t: TFunction): string => {
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMaxSelections;
       return t("errors.max_selections", { max: typedParams.max });
     },

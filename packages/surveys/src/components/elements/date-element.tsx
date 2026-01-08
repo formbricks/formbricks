@@ -1,5 +1,4 @@
 import { useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { DateElement as SurveyUIDateElement } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
@@ -16,6 +15,7 @@ interface DateElementProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentElementId: string;
+  errorMessage?: string;
 }
 
 export function DateElement({
@@ -26,33 +26,21 @@ export function DateElement({
   ttc,
   setTtc,
   currentElementId,
+  errorMessage,
 }: Readonly<DateElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
   const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
-  const { t } = useTranslation();
 
   const handleChange = (dateValue: string) => {
-    // Clear error when user selects a date
-    setErrorMessage(undefined);
     onChange({ [element.id]: dateValue });
-  };
-
-  const validateRequired = (): boolean => {
-    if (isRequired && (!value || value.trim() === "")) {
-      setErrorMessage(t("errors.please_select_a_date"));
-      return false;
-    }
-    return true;
   };
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (!validateRequired()) return;
-
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };

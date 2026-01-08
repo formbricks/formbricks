@@ -1,5 +1,4 @@
 import { useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { NPS as Nps } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyNPSElement } from "@formbricks/types/surveys/elements";
@@ -17,6 +16,7 @@ interface NPSElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function NPSElement({
@@ -28,33 +28,22 @@ export function NPSElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<NPSElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
   const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
-  const { t } = useTranslation();
 
   const handleChange = (npsValue: number) => {
-    setErrorMessage(undefined);
     onChange({ [element.id]: npsValue });
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
 
-  const validateRequired = (): boolean => {
-    if (isRequired && value === undefined) {
-      setErrorMessage(t("errors.please_select_an_option"));
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    setErrorMessage(undefined);
-    if (!validateRequired()) return;
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
