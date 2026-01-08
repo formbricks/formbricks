@@ -142,6 +142,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.MultipleChoiceMulti:
