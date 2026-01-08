@@ -67,7 +67,6 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
       throw new UnknownError("Discord webhooks are currently not supported.");
     }
 
-    // Auto-generate a Standard Webhooks compliant secret
     const secret = generateWebhookSecret();
 
     const webhook = await prisma.webhook.create({
@@ -128,7 +127,6 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
       throw new UnknownError("Discord webhooks are currently not supported.");
     }
 
-    // Generate Standard Webhooks headers for test endpoint
     const webhookMessageId = createId();
     const webhookTimestamp = Math.floor(Date.now() / 1000);
 

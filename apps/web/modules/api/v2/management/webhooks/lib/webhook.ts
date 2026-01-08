@@ -50,7 +50,6 @@ export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webh
   const { environmentId, name, url, source, triggers, surveyIds } = webhook;
 
   try {
-    // Auto-generate a Standard Webhooks compliant secret
     const secret = generateWebhookSecret();
 
     const prismaData: Prisma.WebhookCreateInput = {
