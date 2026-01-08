@@ -4,13 +4,11 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyCTAElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRulesForCTA } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -144,16 +142,6 @@ export const CTAElementForm = ({
           </div>
         </AdvancedOptionToggle>
       </div>
-
-      <ValidationRulesEditor
-        elementType={TSurveyElementTypeEnum.CTA}
-        validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRulesForCTA) => {
-          updateElement(elementIdx, {
-            validationRules: rules,
-          });
-        }}
-      />
     </form>
   );
 };
