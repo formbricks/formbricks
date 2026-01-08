@@ -59,6 +59,7 @@
     "please_rank_all_items_before_submitting": "请在提交之前对所有项目进行排名",
     "please_select_a_date": "请选择一个日期",
     "please_select_an_option": "请选择一个选项",
+    "please_submit_all_rows_before_submitting": "请在提交前回答所有行",
     "please_upload_a_file": "请上传一个文件",
     "recaptcha_error": {
       "message": "您的响应未能提交，因为它被标记为自动活动。如果您是人类，请重试。",

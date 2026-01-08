@@ -147,19 +147,22 @@ export function BlockConditional({
     response: unknown,
     form: HTMLFormElement
   ): boolean => {
-    const rankingElement = element;
-    const hasIncompleteRanking =
-      (rankingElement.required &&
-        (!Array.isArray(response) || response.length !== rankingElement.choices.length)) ||
-      (!rankingElement.required &&
-        Array.isArray(response) &&
-        response.length > 0 &&
-        response.length < rankingElement.choices.length);
+    const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
+    const isValueArray = Array.isArray(response);
+    const allItemsRanked = isValueArray && response.length === element.choices.length;
 
-    if (hasIncompleteRanking) {
+    // If required and not all items are ranked, trigger form submission to show error
+    if (isRequired && (!isValueArray || !allItemsRanked)) {
       form.requestSubmit();
       return false;
     }
+
+    // If not required but some items are ranked, all must be ranked
+    if (!isRequired && isValueArray && response.length > 0 && !allItemsRanked) {
+      form.requestSubmit();
+      return false;
+    }
+
     return true;
   };
 
@@ -201,21 +204,23 @@ export function BlockConditional({
       return false;
     }
 
-    if (
-      element.type === TSurveyElementTypeEnum.Matrix &&
-      element.required &&
-      response &&
-      hasUnansweredRows(response, element)
-    ) {
-      form.requestSubmit();
-      return false;
+    // Custom validation for matrix questions
+    if (element.type === TSurveyElementTypeEnum.Matrix) {
+      const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
+      if (isRequired && (!response || hasUnansweredRows(response, element))) {
+        form.requestSubmit();
+        return false;
+      }
     }
 
     // For other element types, check if required fields are empty
     // CTA elements should not block navigation even if marked required (as they are informational)
-    if (element.type !== TSurveyElementTypeEnum.CTA && element.required && isEmptyResponse(response)) {
-      form.requestSubmit();
-      return false;
+    if (element.type !== TSurveyElementTypeEnum.CTA) {
+      const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
+      if (isRequired && isEmptyResponse(response)) {
+        form.requestSubmit();
+        return false;
+      }
     }
 
     return true;

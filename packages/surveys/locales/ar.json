@@ -59,6 +59,7 @@
     "please_rank_all_items_before_submitting": "يرجى ترتيب جميع العناصر قبل الإرسال",
     "please_select_a_date": "يرجى اختيار تاريخ",
     "please_select_an_option": "يرجى اختيار خيار",
+    "please_submit_all_rows_before_submitting": "يرجى الإجابة على جميع الصفوف قبل الإرسال",
     "please_upload_a_file": "يرجى تحميل ملف",
     "recaptcha_error": {
       "message": "تعذر إرسال ردك لأنه تم تصنيفه كنشاط آلي. إذا كنت تتنفس، يرجى المحاولة مرة أخرى.",

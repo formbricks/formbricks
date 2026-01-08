@@ -63,8 +63,8 @@ const isEmpty = (value: TResponseDataValue): boolean => {
 const parseNumericValue = (value: TResponseDataValue): number | null => {
   if (typeof value === "number") return value;
   if (typeof value === "string") {
-    const parsed = parseFloat(value);
-    return isNaN(parsed) ? null : parsed;
+    const parsed = Number.parseFloat(value);
+    return Number.isNaN(parsed) ? null : parsed;
   }
   return null;
 };
@@ -74,7 +74,50 @@ const parseNumericValue = (value: TResponseDataValue): number | null => {
  */
 export const validators: Record<TValidationRuleType, TValidator> = {
   required: {
-    check: (value: TResponseDataValue): TValidatorCheckResult => {
+    check: (
+      value: TResponseDataValue,
+      _params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      // Special handling for ranking elements
+      if (element.type === TSurveyElementTypeEnum.Ranking) {
+        const rankingElement = element;
+        const isValueArray = Array.isArray(value);
+        const allItemsRanked = isValueArray && value.length === rankingElement.choices.length;
+
+        // If any items are ranked, all must be ranked
+        if (isValueArray && value.length > 0 && !allItemsRanked) {
+          return { valid: false };
+        }
+
+        // Otherwise, check if empty (standard required check)
+        return { valid: !isEmpty(value) };
+      }
+
+      // Special handling for matrix elements
+      if (element.type === TSurveyElementTypeEnum.Matrix) {
+        const matrixElement = element;
+
+        // If value is empty, invalid
+        if (isEmpty(value)) {
+          return { valid: false };
+        }
+
+        // Check if all rows are answered
+        // Note: We can't use languageCode here, so we check if the number of answered rows
+        // matches the number of rows in the element
+        if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+          const answeredRows = Object.values(value).filter(
+            (v) => v !== "" && v !== null && v !== undefined
+          ).length;
+          const allRowsAnswered = answeredRows === matrixElement.rows.length;
+          return { valid: allRowsAnswered };
+        }
+
+        return { valid: false };
+      }
+
+      // Standard required check for other element types
       return { valid: !isEmpty(value) };
     },
     getDefaultMessage: (
@@ -90,6 +133,8 @@ export const validators: Record<TValidationRuleType, TValidator> = {
           return t("errors.please_book_an_appointment");
         case TSurveyElementTypeEnum.FileUpload:
           return t("errors.please_upload_a_file");
+        case TSurveyElementTypeEnum.Ranking:
+          return t("errors.please_select_an_option");
         case TSurveyElementTypeEnum.MultipleChoiceSingle:
         case TSurveyElementTypeEnum.MultipleChoiceMulti:
         case TSurveyElementTypeEnum.NPS:

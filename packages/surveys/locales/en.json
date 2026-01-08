@@ -59,6 +59,7 @@
     "please_rank_all_items_before_submitting": "Please rank all items before submitting",
     "please_select_a_date": "Please select a date",
     "please_select_an_option": "Please select an option",
+    "please_submit_all_rows_before_submitting": "Please answer all rows before submitting",
     "please_upload_a_file": "Please upload a file",
     "recaptcha_error": {
       "message": "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",

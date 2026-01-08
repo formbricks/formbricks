@@ -59,6 +59,7 @@
     "please_rank_all_items_before_submitting": "Bitte ordnen Sie alle Elemente vor dem Absenden",
     "please_select_a_date": "Bitte wählen Sie ein Datum aus",
     "please_select_an_option": "Bitte wählen Sie eine Option",
+    "please_submit_all_rows_before_submitting": "Bitte beantworten Sie alle Zeilen, bevor Sie absenden",
     "please_upload_a_file": "Bitte laden Sie eine Datei hoch",
     "recaptcha_error": {
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",

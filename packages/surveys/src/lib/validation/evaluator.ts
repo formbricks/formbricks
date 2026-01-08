@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type {
   TValidationError,
   TValidationErrorMap,
@@ -8,6 +9,64 @@ import type {
   TValidationRule,
 } from "@formbricks/types/surveys/validation-rules";
 import { validators } from "./validators";
+
+/**
+ * Get error message for incomplete ranking
+ */
+const getRankingErrorMessage = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  t: TFunction
+): string | null => {
+  if (
+    element.type === TSurveyElementTypeEnum.Ranking &&
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.length < element.choices.length
+  ) {
+    return t("errors.please_rank_all_items_before_submitting");
+  }
+  return null;
+};
+
+/**
+ * Get error message for incomplete matrix
+ */
+const getMatrixErrorMessage = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  t: TFunction
+): string | null => {
+  if (
+    element.type === TSurveyElementTypeEnum.Matrix &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    value !== null
+  ) {
+    const answeredRows = Object.values(value).filter((v) => v !== "" && v !== null && v !== undefined).length;
+    if (answeredRows > 0 && answeredRows < element.rows.length) {
+      return t("errors.please_submit_all_rows_before_submitting");
+    }
+  }
+  return null;
+};
+
+/**
+ * Get default error message from rule or validator
+ */
+const getDefaultErrorMessage = (
+  rule: TValidationRule,
+  element: TSurveyElement,
+  languageCode: string,
+  t: TFunction
+): string => {
+  const validator = validators[rule.type];
+  return (
+    rule.customErrorMessage?.[languageCode] ??
+    rule.customErrorMessage?.default ??
+    validator.getDefaultMessage(rule.params, element, t)
+  );
+};
 
 /**
  * Single entrypoint for validating an element's response value.
@@ -42,11 +101,12 @@ export const validateElementResponse = (
     const checkResult = validator.check(value, rule.params, element);
 
     if (!checkResult.valid) {
-      // Use custom error message if provided, otherwise use default
+      // Try to get element-specific error messages first
+      const rankingMessage = ruleType === "required" ? getRankingErrorMessage(element, value, t) : null;
+      const matrixMessage = ruleType === "required" ? getMatrixErrorMessage(element, value, t) : null;
+
       const message =
-        rule.customErrorMessage?.[languageCode] ??
-        rule.customErrorMessage?.default ??
-        validator.getDefaultMessage(rule.params, element, t);
+        rankingMessage ?? matrixMessage ?? getDefaultErrorMessage(rule, element, languageCode, t);
 
       errors.push({
         ruleId: rule.id,
