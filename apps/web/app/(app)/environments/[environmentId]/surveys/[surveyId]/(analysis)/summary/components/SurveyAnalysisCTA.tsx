@@ -213,6 +213,7 @@ export const SurveyAnalysisCTA = ({
           isFormbricksCloud={isFormbricksCloud}
           isReadOnly={isReadOnly}
           isStorageConfigured={isStorageConfigured}
+          projectCustomScripts={project.customHeadScripts}
         />
       )}
       <SuccessMessage environment={environment} survey={survey} />

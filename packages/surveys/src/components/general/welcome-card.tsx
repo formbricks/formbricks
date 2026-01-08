@@ -94,7 +94,7 @@ export function WelcomeCard({
     const timeInSeconds = (questions.length / idx) * 15; //15 seconds per question.
     if (timeInSeconds > 360) {
       // If it's more than 6 minutes
-      return t("common.x_plus_minutes", { count: 6 });
+      return t("common.takes_x_plus_minutes", { count: 6 });
     }
     // Calculate minutes, if there are any seconds left, add a minute
     const minutes = Math.floor(timeInSeconds / 60);
@@ -104,13 +104,13 @@ export function WelcomeCard({
       // If there are any seconds left, we'll need to round up to the next minute
       if (minutes === 0) {
         // If less than 1 minute, return 'less than 1 minute'
-        return t("common.less_than_x_minutes", { count: 1 });
+        return t("common.takes_less_than_x_minutes", { count: 1 });
       }
       // If more than 1 minute, return 'less than X minutes', where X is minutes + 1
-      return t("common.less_than_x_minutes", { count: minutes + 1 });
+      return t("common.takes_less_than_x_minutes", { count: minutes + 1 });
     }
     // If there are no remaining seconds, just return the number of minutes
-    return t("common.x_minutes", { count: minutes });
+    return t("common.takes_x_minutes", { count: minutes });
   };
 
   const timeToFinish = survey.welcomeCard.timeToFinish;
@@ -182,7 +182,7 @@ export function WelcomeCard({
             <TimerIcon />
             <p className="pt-1 text-xs">
               <span>
-                {t("common.takes")} {calculateTimeToComplete()}{" "}
+                {calculateTimeToComplete()}{" "}
               </span>
             </p>
           </div>
@@ -202,7 +202,7 @@ export function WelcomeCard({
             <TimerIcon />
             <p className="pt-1 text-xs" data-testid="fb__surveys__welcome-card__info-text-test">
               <span>
-                {t("common.takes")} {calculateTimeToComplete()}{" "}
+                {calculateTimeToComplete()}{" "}
               </span>
               <span data-testid="fb__surveys__welcome-card__response-count">
                 {responseCount && responseCount > 3

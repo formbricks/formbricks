@@ -1609,6 +1609,20 @@ checksums:
     environments/surveys/share/anonymous_links/source_tracking: dcf85834f1ba490347a301ab55d32402
     environments/surveys/share/anonymous_links/url_encryption_description: 1509056fdae7b42fc85f1ee3c49de4c3
     environments/surveys/share/anonymous_links/url_encryption_label: 9c70fd3f64cf8cc5039b198d3af79d14
+    environments/surveys/share/custom_html/add_mode_description: f48dcf53bce27cc40c3546547e8395cb
+    environments/surveys/share/custom_html/add_to_workspace: af9cd24872f25cfc4231b926acc76d7c
+    environments/surveys/share/custom_html/description: 0634048655de8b4b17b41d496e1ea457
+    environments/surveys/share/custom_html/nav_title: 01f993f027ab277058eacb8a48ea7c01
+    environments/surveys/share/custom_html/no_workspace_scripts: 7fc57f576c98e96ee73e7b489345d51a
+    environments/surveys/share/custom_html/placeholder: 229eb1676a69311ff1dcc19c1a52c080
+    environments/surveys/share/custom_html/replace_mode_description: 6eaf17275c02b0d5ac21255747f36271
+    environments/surveys/share/custom_html/replace_workspace: b80e698cc8790246fea42453bfa4b09d
+    environments/surveys/share/custom_html/saved_successfully: 14e7d2d646803ac1dd24cfa45c22606c
+    environments/surveys/share/custom_html/script_mode: 60ed1102dd42ad14e272df5f6921b423
+    environments/surveys/share/custom_html/security_warning: 5faa0f284d48110918a5e8a467e2bcb8
+    environments/surveys/share/custom_html/survey_scripts_description: 948746d51db23b348164105c175391b3
+    environments/surveys/share/custom_html/survey_scripts_label: 095d9fe768abe2bb32428184ee1c9b5a
+    environments/surveys/share/custom_html/workspace_scripts_label: 3d9b6c09eae10a2bacb3ac96b4db4a19
     environments/surveys/share/dynamic_popup/alert_button: 8932096e3eee837beeb21dd4afd8b662
     environments/surveys/share/dynamic_popup/alert_description: 53d2ba39984a059a5eca4cb6cf9ba00d
     environments/surveys/share/dynamic_popup/alert_title: 813a9160940894da26ec2a09bbb1a7bf
@@ -1820,6 +1834,13 @@ checksums:
     environments/workspace/app-connection/setup_alert_title: 9561cca2b391e0df81e8a982921ff2bb
     environments/workspace/app-connection/webapp_url: d64d8cc3c4c4ecce780d94755f7e4de9
     environments/workspace/general/cannot_delete_only_workspace: 853f32a75d92b06eaccc0d43d767c183
+    environments/workspace/general/custom_scripts: a6a06a2e20764d76d3e22e5e17d98dbb
+    environments/workspace/general/custom_scripts_card_description: 1585c47126e4b68f9f79f232631c67a1
+    environments/workspace/general/custom_scripts_description: 1c477e711fc08850b2ab70d98ffe18d6
+    environments/workspace/general/custom_scripts_label: 3b189dd62ae0cc35d616e04af90f0b38
+    environments/workspace/general/custom_scripts_placeholder: 229eb1676a69311ff1dcc19c1a52c080
+    environments/workspace/general/custom_scripts_updated_successfully: eabe8e6ededa86342d59093fe308c681
+    environments/workspace/general/custom_scripts_warning: 5faa0f284d48110918a5e8a467e2bcb8
     environments/workspace/general/delete_workspace: 3badbc0f4b49644986fc19d8b2d8f317
     environments/workspace/general/delete_workspace_confirmation: 54a4ee78867537e0244c7170453cdb3f
     environments/workspace/general/delete_workspace_name_includes_surveys_responses_people_and_more: 11e9ac5a799fbec22495f92f42c40d98

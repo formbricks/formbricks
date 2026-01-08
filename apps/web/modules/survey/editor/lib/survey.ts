@@ -271,6 +271,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       ...prismaSurvey, // Properties from prismaSurvey
       displayPercentage: Number(prismaSurvey.displayPercentage) || null,
       segment: surveySegment,
+      customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
     };
 
     return modifiedSurvey;

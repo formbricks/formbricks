@@ -1690,6 +1690,22 @@
           "url_encryption_description": "僅在需要設定自訂一次性 ID 時停用",
           "url_encryption_label": "單次使用 ID 的 URL 加密"
         },
+        "custom_html": {
+          "add_mode_description": "調查問卷腳本將會與工作區層級的腳本一同執行。",
+          "add_to_workspace": "加入至工作區腳本",
+          "description": "將追蹤腳本與像素碼加入此調查問卷",
+          "nav_title": "自訂 HTML",
+          "no_workspace_scripts": "尚未設定工作區層級腳本。您可以在「工作區設定」→「一般」中新增。",
+          "placeholder": "<!-- 請在此貼上您的追蹤腳本 -->\n<script>\n  // Google Tag Manager、Analytics 等\n</script>",
+          "replace_mode_description": "僅執行調查問卷腳本，將忽略工作區腳本。若不需載入任何腳本，請保持空白。",
+          "replace_workspace": "取代工作區腳本",
+          "saved_successfully": "自訂腳本已成功儲存",
+          "script_mode": "腳本模式",
+          "security_warning": "腳本將以完整瀏覽器權限執行。請僅加入來自可信來源的腳本。",
+          "survey_scripts_description": "新增自訂 HTML 以注入至此調查問卷頁面的 <head>。",
+          "survey_scripts_label": "調查問卷專屬腳本",
+          "workspace_scripts_label": "工作區腳本（繼承）"
+        },
         "dynamic_popup": {
           "alert_button": "編輯 問卷",
           "alert_description": "此 問卷 目前 被 設定 為 連結 問卷，不 支援 動態 彈出窗口。您 可 在 問卷 編輯器 的 設定 標籤 中 進行 更改。",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "這是您唯一的工作區，無法刪除。請先建立新的工作區。",
+        "custom_scripts": "自訂腳本",
+        "custom_scripts_card_description": "將追蹤腳本與像素碼加入此工作區內所有連結調查問卷。",
+        "custom_scripts_description": "腳本將注入至所有連結調查問卷頁面的 <head>。",
+        "custom_scripts_label": "HTML 腳本",
+        "custom_scripts_placeholder": "<!-- 請在此貼上您的追蹤腳本 -->\n<script>\n  // Google Tag Manager、Analytics 等\n</script>",
+        "custom_scripts_updated_successfully": "自訂腳本已成功更新",
+        "custom_scripts_warning": "腳本將以完整瀏覽器權限執行。請僅加入來自可信來源的腳本。",
         "delete_workspace": "刪除工作區",
         "delete_workspace_confirmation": "您確定要刪除 {projectName} 嗎？此操作無法復原。",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "刪除 {projectName}（包含所有問卷、回應、人員、操作和屬性）。",

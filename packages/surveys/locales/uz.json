@@ -8,7 +8,6 @@
     "company_logo": "Kompaniya logotipi",
     "finish": "Tugatish",
     "language_switch": "Tilni almashtirish",
-    "less_than_x_minutes": "{count, plural, one {1 daqiqadan kam} other {{count} daqiqadan kam}}",
     "next": "Keyingisi",
     "open_in_new_tab": "Yangi oynada ochish",
     "people_responded": "{count, plural, one {1 kishi javob berdi} other {{count} kishi javob berdi}}",
@@ -24,12 +23,12 @@
     "retry": "Qayta urinib ko'ring",
     "retrying": "Qayta urinilmoqda...",
     "sending_responses": "Javoblar yuborilmoqda...",
-    "takes": "Davomiyligi",
+    "takes_less_than_x_minutes": "{count, plural, one {1 daqiqadan kam vaqt oladi} other {{count} daqiqadan kam vaqt oladi}}",
+    "takes_x_minutes": "{count, plural, one {1 daqiqa vaqt oladi} other {{count} daqiqa vaqt oladi}}",
+    "takes_x_plus_minutes": "{count}+ daqiqa vaqt oladi",
     "terms_of_service": "Xizmat ko'rsatish shartlari",
     "the_servers_cannot_be_reached_at_the_moment": "Hozirda serverlarga ulanish imkoni yo'q.",
     "they_will_be_redirected_immediately": "Ular darhol yo'naltiriladi",
-    "x_minutes": "{count, plural, one {1 daqiqa} other {{count} daqiqa}}",
-    "x_plus_minutes": "{count}+ daqiqa",
     "your_feedback_is_stuck": "Sizning fikr-mulohazangiz qotib qoldi :("
   },
   "errors": {

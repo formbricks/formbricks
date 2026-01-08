@@ -1690,6 +1690,22 @@
           "url_encryption_description": "Desactiva solo si necesitas establecer un ID de uso único personalizado.",
           "url_encryption_label": "Cifrado URL del ID de uso único"
         },
+        "custom_html": {
+          "add_mode_description": "Los scripts de la encuesta se ejecutarán además de los scripts a nivel de espacio de trabajo.",
+          "add_to_workspace": "Añadir a los scripts del espacio de trabajo",
+          "description": "Añade scripts de seguimiento y píxeles a esta encuesta",
+          "nav_title": "HTML personalizado",
+          "no_workspace_scripts": "No hay scripts configurados a nivel de espacio de trabajo. Puedes añadirlos en Configuración del espacio de trabajo → General.",
+          "placeholder": "<!-- Pega tus scripts de seguimiento aquí -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+          "replace_mode_description": "Solo se ejecutarán los scripts de la encuesta. Los scripts del espacio de trabajo serán ignorados. Déjalo vacío para no cargar ningún script.",
+          "replace_workspace": "Reemplazar scripts del espacio de trabajo",
+          "saved_successfully": "Scripts personalizados guardados correctamente",
+          "script_mode": "Modo de script",
+          "security_warning": "Los scripts se ejecutan con acceso completo al navegador. Solo añade scripts de fuentes confiables.",
+          "survey_scripts_description": "Añade HTML personalizado para inyectar en el <head> de esta página de encuesta.",
+          "survey_scripts_label": "Scripts específicos de la encuesta",
+          "workspace_scripts_label": "Scripts del espacio de trabajo (heredados)"
+        },
         "dynamic_popup": {
           "alert_button": "Editar encuesta",
           "alert_description": "Esta encuesta está actualmente configurada como una encuesta de enlace, que no admite ventanas emergentes dinámicas. Puedes cambiar esto en la pestaña de ajustes del editor de encuestas.",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "Este es tu único proyecto, no se puede eliminar. Crea primero un proyecto nuevo.",
+        "custom_scripts": "Scripts personalizados",
+        "custom_scripts_card_description": "Añade scripts de seguimiento y píxeles a todas las encuestas con enlace en este espacio de trabajo.",
+        "custom_scripts_description": "Los scripts se inyectarán en el <head> de todas las páginas de encuestas con enlace.",
+        "custom_scripts_label": "Scripts HTML",
+        "custom_scripts_placeholder": "<!-- Pega tus scripts de seguimiento aquí -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+        "custom_scripts_updated_successfully": "Scripts personalizados actualizados correctamente",
+        "custom_scripts_warning": "Los scripts se ejecutan con acceso completo al navegador. Solo añade scripts de fuentes confiables.",
         "delete_workspace": "Eliminar proyecto",
         "delete_workspace_confirmation": "¿Estás seguro de que quieres eliminar {projectName}? Esta acción no se puede deshacer.",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Eliminar {projectName} incluyendo todas las encuestas, respuestas, personas, acciones y atributos.",

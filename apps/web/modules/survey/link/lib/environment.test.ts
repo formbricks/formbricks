@@ -85,6 +85,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
             styling: true,
             logo: true,
             linkSurveyBranding: true,
+            customHeadScripts: true,
             organizationId: true,
             organization: {
               select: {

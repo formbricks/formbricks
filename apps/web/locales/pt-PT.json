@@ -1690,6 +1690,22 @@
           "url_encryption_description": "Desative apenas se precisar definir um ID de uso único personalizado.",
           "url_encryption_label": "Encriptação do URL de ID de uso único"
         },
+        "custom_html": {
+          "add_mode_description": "Os scripts do inquérito serão executados para além dos scripts ao nível da área de trabalho.",
+          "add_to_workspace": "Adicionar aos scripts da área de trabalho",
+          "description": "Adicionar scripts de rastreamento e pixels a este inquérito",
+          "nav_title": "HTML personalizado",
+          "no_workspace_scripts": "Nenhum script ao nível da área de trabalho configurado. Pode adicioná-los em Definições da Área de Trabalho → Geral.",
+          "placeholder": "<!-- Cole os seus scripts de rastreamento aqui -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+          "replace_mode_description": "Apenas os scripts do inquérito serão executados. Os scripts da área de trabalho serão ignorados. Deixe vazio para não carregar nenhum script.",
+          "replace_workspace": "Substituir scripts da área de trabalho",
+          "saved_successfully": "Scripts personalizados guardados com sucesso",
+          "script_mode": "Modo de script",
+          "security_warning": "Os scripts são executados com acesso total ao navegador. Adicione apenas scripts de fontes fidedignas.",
+          "survey_scripts_description": "Adicionar HTML personalizado para injetar no <head> desta página de inquérito.",
+          "survey_scripts_label": "Scripts específicos do inquérito",
+          "workspace_scripts_label": "Scripts da área de trabalho (herdados)"
+        },
         "dynamic_popup": {
           "alert_button": "Editar inquérito",
           "alert_description": "Este questionário está atualmente configurado como um questionário de link, que não suporta pop-ups dinâmicos. Você pode alterar isso na aba de configurações do editor de questionários.",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "Este é o seu único projeto, não pode ser eliminado. Crie primeiro um novo projeto.",
+        "custom_scripts": "Scripts personalizados",
+        "custom_scripts_card_description": "Adicionar scripts de rastreamento e pixels a todos os inquéritos de link nesta área de trabalho.",
+        "custom_scripts_description": "Os scripts serão injetados no <head> de todas as páginas de inquéritos de link.",
+        "custom_scripts_label": "Scripts HTML",
+        "custom_scripts_placeholder": "<!-- Cole os seus scripts de rastreamento aqui -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+        "custom_scripts_updated_successfully": "Scripts personalizados atualizados com sucesso",
+        "custom_scripts_warning": "Os scripts são executados com acesso total ao navegador. Adicione apenas scripts de fontes fidedignas.",
         "delete_workspace": "Eliminar projeto",
         "delete_workspace_confirmation": "Tem a certeza de que pretende eliminar {projectName}? Esta ação não pode ser desfeita.",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Eliminar {projectName} incluindo todos os inquéritos, respostas, pessoas, ações e atributos.",

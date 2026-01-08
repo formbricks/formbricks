@@ -8,7 +8,6 @@
     "company_logo": "Sigla companiei",
     "finish": "Finalizează",
     "language_switch": "Schimbare limbă",
-    "less_than_x_minutes": "{count, plural, one {mai puțin de 1 minut} other {mai puțin de {count} minute}}",
     "next": "Următorul",
     "open_in_new_tab": "Deschide într-o filă nouă",
     "people_responded": "{count, plural, one {1 persoană a răspuns} other {{count} persoane au răspuns}}",
@@ -24,12 +23,12 @@
     "retry": "Reîncearcă",
     "retrying": "Se reîncearcă...",
     "sending_responses": "Trimiterea răspunsurilor...",
-    "takes": "Durează",
+    "takes_less_than_x_minutes": "{count, plural, one {Durează mai puțin de 1 minut} few {Durează mai puțin de {count} minute} other {Durează mai puțin de {count} de minute}}",
+    "takes_x_minutes": "{count, plural, one {Durează 1 minut} few {Durează {count} minute} other {Durează {count} de minute}}",
+    "takes_x_plus_minutes": "Durează peste {count} minute",
     "terms_of_service": "Termeni și condiții",
     "the_servers_cannot_be_reached_at_the_moment": "Serverele nu pot fi accesate momentan.",
     "they_will_be_redirected_immediately": "Vor fi redirecționați imediat",
-    "x_minutes": "{count, plural, one {1 minut} other {{count} minute}}",
-    "x_plus_minutes": "{count}+ minute",
     "your_feedback_is_stuck": "Feedback-ul tău este blocat :("
   },
   "errors": {
