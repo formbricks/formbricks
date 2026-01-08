@@ -790,6 +790,7 @@
         "empty_webhook_message": "Deine Webhooks werden hier angezeigt, sobald Du sie hinzufügst ⏲️",
         "endpoint_pinged": "Juhu! Wir können den Webhook anpingen!",
         "endpoint_pinged_error": "Kann den Webhook nicht anpingen!",
+        "learn_to_verify": "Erfahren Sie, wie Sie Webhook-Signaturen verifizieren",
         "please_check_console": "Bitte überprüfe die Konsole für weitere Details",
         "please_enter_a_url": "Bitte gib eine URL ein",
         "response_created": "Antwort erstellt",

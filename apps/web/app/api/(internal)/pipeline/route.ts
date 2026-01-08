@@ -1,6 +1,6 @@
-import { createId } from "@paralleldrive/cuid2";
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
+import { v7 as uuidv7 } from "uuid";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -109,7 +109,7 @@ export const POST = async (request: Request) => {
     });
 
     // Generate Standard Webhooks headers
-    const webhookMessageId = createId();
+    const webhookMessageId = uuidv7();
     const webhookTimestamp = Math.floor(Date.now() / 1000);
 
     const requestHeaders: Record<string, string> = {

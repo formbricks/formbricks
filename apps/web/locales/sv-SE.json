@@ -790,6 +790,7 @@
         "empty_webhook_message": "Dina webhooks visas här så snart du lägger till dem. ⏲️",
         "endpoint_pinged": "Ja! Vi kan nå webhooken!",
         "endpoint_pinged_error": "Kunde inte nå webhooken!",
+        "learn_to_verify": "Lär dig hur du verifierar webhook-signaturer",
         "please_check_console": "Vänligen kontrollera konsolen för mer information",
         "please_enter_a_url": "Vänligen ange en URL",
         "response_created": "Svar skapat",

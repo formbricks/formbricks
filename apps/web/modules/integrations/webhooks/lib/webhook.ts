@@ -1,5 +1,5 @@
-import { createId } from "@paralleldrive/cuid2";
 import { Prisma, Webhook } from "@prisma/client";
+import { v7 as uuidv7 } from "uuid";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
@@ -127,7 +127,7 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
       throw new UnknownError("Discord webhooks are currently not supported.");
     }
 
-    const webhookMessageId = createId();
+    const webhookMessageId = uuidv7();
     const webhookTimestamp = Math.floor(Date.now() / 1000);
 
     const response = await fetch(url, {

@@ -790,6 +790,7 @@
         "empty_webhook_message": "您的 Webhook 將在您新增後立即顯示在此處。⏲️",
         "endpoint_pinged": "耶！我們能夠 ping Webhook！",
         "endpoint_pinged_error": "無法 ping Webhook！",
+        "learn_to_verify": "了解如何驗證 webhook 簽章",
         "please_check_console": "請檢查主控台以取得更多詳細資料",
         "please_enter_a_url": "請輸入網址",
         "response_created": "已建立回應",

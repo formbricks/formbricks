@@ -790,6 +790,7 @@
         "empty_webhook_message": "Ваши webhooks появятся здесь, как только вы их добавите. ⏲️",
         "endpoint_pinged": "Ура! Нам удалось отправить ping на webhook!",
         "endpoint_pinged_error": "Не удалось отправить ping на webhook!",
+        "learn_to_verify": "Узнайте, как проверить подписи вебхуков",
         "please_check_console": "Пожалуйста, проверьте консоль для получения подробностей",
         "please_enter_a_url": "Пожалуйста, введите URL",
         "response_created": "Ответ создан",

@@ -790,6 +790,7 @@
         "empty_webhook_message": "Uw webhooks verschijnen hier zodra u ze toevoegt. ⏲️",
         "endpoint_pinged": "Jawel! We kunnen de webhook pingen!",
         "endpoint_pinged_error": "Kan de webhook niet pingen!",
+        "learn_to_verify": "Leer hoe je webhook-handtekeningen kunt verifiëren",
         "please_check_console": "Controleer de console voor meer details",
         "please_enter_a_url": "Voer een URL in",
         "response_created": "Reactie gemaakt",

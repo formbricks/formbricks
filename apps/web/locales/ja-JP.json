@@ -790,6 +790,7 @@
         "empty_webhook_message": "Webhook は追加するとここに表示されます。⏲️",
         "endpoint_pinged": "成功！Webhook に ping できました。",
         "endpoint_pinged_error": "Webhook への ping に失敗しました。",
+        "learn_to_verify": "Webhook署名の検証方法を学ぶ",
         "please_check_console": "詳細はコンソールを確認してください",
         "please_enter_a_url": "URL を入力してください",
         "response_created": "回答作成",

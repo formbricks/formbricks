@@ -2,7 +2,7 @@
 
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
-import { CheckIcon, CopyIcon, EyeIcon, EyeOff, TrashIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, ExternalLinkIcon, EyeIcon, EyeOff, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -249,6 +249,13 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
             <p className="mt-1 text-xs text-slate-500">
               {t("environments.integrations.webhooks.secret_description")}
             </p>
+            <Link
+              href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks#webhook-security-with-standard-webhooks"
+              target="_blank"
+              className="mt-1 inline-flex items-center gap-1 text-xs text-slate-600 underline hover:text-slate-800">
+              {t("environments.integrations.webhooks.learn_to_verify")}
+              <ExternalLinkIcon className="h-3 w-3" />
+            </Link>
           </div>
         )}
 

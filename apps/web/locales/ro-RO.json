@@ -790,6 +790,7 @@
         "empty_webhook_message": "Webhook-urile tale vor apărea aici de îndată ce le vei adăuga. ⏲️",
         "endpoint_pinged": "Grozav! Am reușit să ping-ui webhooks-ul!",
         "endpoint_pinged_error": "Nu pot să ping-ui webhooks-ul!",
+        "learn_to_verify": "Află cum să verifici semnăturile webhook",
         "please_check_console": "Vă rugăm să verificați consola pentru mai multe detalii",
         "please_enter_a_url": "Vă rugăm să introduceți un URL",
         "response_created": "Răspuns creat",

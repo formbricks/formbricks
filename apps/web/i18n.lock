@@ -743,6 +743,7 @@ checksums:
     environments/integrations/webhooks/empty_webhook_message: 4c4d8709576a38cb8eb59866331d2405
     environments/integrations/webhooks/endpoint_pinged: 3b1fce00e61d4b9d2bdca390649c58b6
     environments/integrations/webhooks/endpoint_pinged_error: 96c312fe8214757c4a934cdfbe177027
+    environments/integrations/webhooks/learn_to_verify: 25b2a035e2109170b28f4e16db76ad39
     environments/integrations/webhooks/please_check_console: 7b1787e82a0d762df02c011ebb1650ea
     environments/integrations/webhooks/please_enter_a_url: c24c74d0ce7ed3a6b858aadbc82108fe
     environments/integrations/webhooks/response_created: 8c43b1b6d748f6096f6f8d9232a3c469
