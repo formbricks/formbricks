@@ -223,9 +223,8 @@ export type TValidationRuleForElementType<T extends TValidationRuleType> = Extra
 >;
 
 // Type helper to get validation rules array for specific element type
-export type TValidationRulesForElementType<T extends readonly TValidationRuleType[]> = Array<
-  TValidationRuleForElementType<T[number]>
->;
+export type TValidationRulesForElementType<T extends readonly TValidationRuleType[]> =
+  TValidationRuleForElementType<T[number]>[];
 
 // Specific validation rule types for each element type
 export type TValidationRulesForOpenText = TValidationRulesForElementType<typeof OPEN_TEXT_RULES>;
