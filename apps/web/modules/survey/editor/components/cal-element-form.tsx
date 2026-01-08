@@ -3,9 +3,9 @@
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyElementTypeEnum, TSurveyCalElement } from "@formbricks/types/surveys/elements";
+import { TSurveyCalElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
+import { TValidationRulesForCal } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -149,7 +149,7 @@ export const CalElementForm = ({
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.Cal}
         validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRule[]) => {
+        onUpdateRules={(rules: TValidationRulesForCal) => {
           updateElement(elementIdx, {
             validationRules: rules,
           });

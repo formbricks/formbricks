@@ -4,9 +4,9 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyElementTypeEnum, TSurveyContactInfoElement } from "@formbricks/types/surveys/elements";
+import { TSurveyContactInfoElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
+import { TValidationRulesForContactInfo } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -162,7 +162,7 @@ export const ContactInfoElementForm = ({
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.ContactInfo}
         validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRule[]) => {
+        onUpdateRules={(rules: TValidationRulesForContactInfo) => {
           updateElement(elementIdx, {
             validationRules: rules,
           });

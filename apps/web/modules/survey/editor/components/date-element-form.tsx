@@ -4,9 +4,9 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyElementTypeEnum, TSurveyDateElement } from "@formbricks/types/surveys/elements";
+import { TSurveyDateElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
+import { TValidationRulesForDate } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -132,7 +132,7 @@ export const DateElementForm = ({
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.Date}
         validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRule[]) => {
+        onUpdateRules={(rules: TValidationRulesForDate) => {
           updateElement(elementIdx, {
             validationRules: rules,
           });

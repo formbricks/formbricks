@@ -7,7 +7,7 @@ import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyElementTypeEnum, TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
+import { TValidationRulesForPictureSelection } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -176,7 +176,7 @@ export const PictureSelectionForm = ({
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.PictureSelection}
         validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRule[]) => {
+        onUpdateRules={(rules: TValidationRulesForPictureSelection) => {
           updateElement(elementIdx, {
             validationRules: rules,
           });

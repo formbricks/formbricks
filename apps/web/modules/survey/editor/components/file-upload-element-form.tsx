@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
+import { TValidationRulesForFileUpload } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -231,7 +231,7 @@ export const FileUploadElementForm = ({
 
                   updateElement(elementIdx, { maxSizeInMB: parseInt(e.target.value, 10) });
                 }}
-                className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
               />
               MB
             </p>
@@ -296,7 +296,7 @@ export const FileUploadElementForm = ({
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.FileUpload}
         validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRule[]) => {
+        onUpdateRules={(rules: TValidationRulesForFileUpload) => {
           updateElement(elementIdx, {
             validationRules: rules,
           });

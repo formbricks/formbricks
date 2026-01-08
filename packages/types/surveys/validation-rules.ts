@@ -248,3 +248,213 @@ export type TValidationRulesForAddress = TValidationRulesForElementType<typeof A
 export type TValidationRulesForContactInfo = TValidationRulesForElementType<typeof CONTACT_INFO_RULES>;
 export type TValidationRulesForCal = TValidationRulesForElementType<typeof CAL_RULES>;
 export type TValidationRulesForCTA = TValidationRulesForElementType<typeof CTA_RULES>;
+
+// Element-specific validation rules schemas (manually created for type safety)
+// These are narrowed versions of ZValidationRule that only include applicable rule types
+export const ZValidationRulesForOpenText: z.ZodType<TValidationRulesForOpenText> = z.array(
+  z.discriminatedUnion("type", [
+    z.object({
+      id: z.string(),
+      type: z.literal("required"),
+      params: ZValidationRuleParamsRequired,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("minLength"),
+      params: ZValidationRuleParamsMinLength,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("maxLength"),
+      params: ZValidationRuleParamsMaxLength,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("pattern"),
+      params: ZValidationRuleParamsPattern,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("email"),
+      params: ZValidationRuleParamsEmail,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("url"),
+      params: ZValidationRuleParamsUrl,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("phone"),
+      params: ZValidationRuleParamsPhone,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("minValue"),
+      params: ZValidationRuleParamsMinValue,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("maxValue"),
+      params: ZValidationRuleParamsMaxValue,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+  ])
+);
+
+export const ZValidationRulesForMultipleChoiceSingle: z.ZodType<TValidationRulesForMultipleChoiceSingle> =
+  z.array(
+    z.object({
+      id: z.string(),
+      type: z.literal("required"),
+      params: ZValidationRuleParamsRequired,
+      customErrorMessage: ZI18nString.optional(),
+    })
+  );
+
+export const ZValidationRulesForMultipleChoiceMulti: z.ZodType<TValidationRulesForMultipleChoiceMulti> =
+  z.array(
+    z.discriminatedUnion("type", [
+      z.object({
+        id: z.string(),
+        type: z.literal("required"),
+        params: ZValidationRuleParamsRequired,
+        customErrorMessage: ZI18nString.optional(),
+      }),
+      z.object({
+        id: z.string(),
+        type: z.literal("minSelections"),
+        params: ZValidationRuleParamsMinSelections,
+        customErrorMessage: ZI18nString.optional(),
+      }),
+      z.object({
+        id: z.string(),
+        type: z.literal("maxSelections"),
+        params: ZValidationRuleParamsMaxSelections,
+        customErrorMessage: ZI18nString.optional(),
+      }),
+    ])
+  );
+
+export const ZValidationRulesForRating: z.ZodType<TValidationRulesForRating> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForNPS: z.ZodType<TValidationRulesForNPS> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForDate: z.ZodType<TValidationRulesForDate> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForConsent: z.ZodType<TValidationRulesForConsent> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForMatrix: z.ZodType<TValidationRulesForMatrix> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForRanking: z.ZodType<TValidationRulesForRanking> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForFileUpload: z.ZodType<TValidationRulesForFileUpload> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForPictureSelection: z.ZodType<TValidationRulesForPictureSelection> = z.array(
+  z.discriminatedUnion("type", [
+    z.object({
+      id: z.string(),
+      type: z.literal("required"),
+      params: ZValidationRuleParamsRequired,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("minSelections"),
+      params: ZValidationRuleParamsMinSelections,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("maxSelections"),
+      params: ZValidationRuleParamsMaxSelections,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+  ])
+);
+
+export const ZValidationRulesForAddress: z.ZodType<TValidationRulesForAddress> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForContactInfo: z.ZodType<TValidationRulesForContactInfo> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForCal: z.ZodType<TValidationRulesForCal> = z.array(
+  z.object({
+    id: z.string(),
+    type: z.literal("required"),
+    params: ZValidationRuleParamsRequired,
+    customErrorMessage: ZI18nString.optional(),
+  })
+);
+
+export const ZValidationRulesForCTA: z.ZodType<TValidationRulesForCTA> = z.array(z.never());

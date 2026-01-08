@@ -5,7 +5,7 @@ import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TSurveyElementTypeEnum, TSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
+import { TValidationRulesForRating } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -195,7 +195,7 @@ export const RatingElementForm = ({
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.Rating}
         validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRule[]) => {
+        onUpdateRules={(rules: TValidationRulesForRating) => {
           updateElement(elementIdx, {
             validationRules: rules,
           });
