@@ -1,8 +1,11 @@
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 // Import after unmocking
 import {
+  generateStandardWebhookSignature,
+  generateWebhookSecret,
+  getWebhookSecretBytes,
   hashSecret,
   hashSha256,
   parseApiKeyV2,
@@ -280,6 +283,133 @@ describe("Crypto Utils", () => {
 
       expect(decrypted).toBe(plaintext);
       expect(decrypted).toBe("");
+    });
+  });
+
+  describe("Webhook Signature Functions", () => {
+    describe("generateWebhookSecret", () => {
+      test("should generate a secret with whsec_ prefix", () => {
+        const secret = generateWebhookSecret();
+        expect(secret.startsWith("whsec_")).toBe(true);
+      });
+
+      test("should generate base64-encoded content after prefix", () => {
+        const secret = generateWebhookSecret();
+        const base64Part = secret.slice(6); // Remove "whsec_"
+
+        // Should be valid base64
+        expect(() => Buffer.from(base64Part, "base64")).not.toThrow();
+
+        // Should decode to 32 bytes (256 bits)
+        const decoded = Buffer.from(base64Part, "base64");
+        expect(decoded.length).toBe(32);
+      });
+
+      test("should generate unique secrets each time", () => {
+        const secret1 = generateWebhookSecret();
+        const secret2 = generateWebhookSecret();
+        expect(secret1).not.toBe(secret2);
+      });
+    });
+
+    describe("getWebhookSecretBytes", () => {
+      test("should decode whsec_ prefixed secret to bytes", () => {
+        const secret = generateWebhookSecret();
+        const bytes = getWebhookSecretBytes(secret);
+
+        expect(Buffer.isBuffer(bytes)).toBe(true);
+        expect(bytes.length).toBe(32);
+      });
+
+      test("should handle secret without whsec_ prefix", () => {
+        const base64Secret = Buffer.from("test-secret-bytes-32-characters!").toString("base64");
+        const bytes = getWebhookSecretBytes(base64Secret);
+
+        expect(Buffer.isBuffer(bytes)).toBe(true);
+        expect(bytes.toString()).toBe("test-secret-bytes-32-characters!");
+      });
+
+      test("should correctly decode a known secret", () => {
+        // Create a known secret
+        const knownBytes = Buffer.from("known-test-secret-for-testing!!");
+        const secret = `whsec_${knownBytes.toString("base64")}`;
+
+        const decoded = getWebhookSecretBytes(secret);
+        expect(decoded.toString()).toBe("known-test-secret-for-testing!!");
+      });
+    });
+
+    describe("generateStandardWebhookSignature", () => {
+      test("should generate signature in v1,{base64} format", () => {
+        const secret = generateWebhookSecret();
+        const signature = generateStandardWebhookSignature("msg_123", 1704547200, '{"test":"data"}', secret);
+
+        expect(signature.startsWith("v1,")).toBe(true);
+        const base64Part = signature.slice(3);
+        expect(() => Buffer.from(base64Part, "base64")).not.toThrow();
+      });
+
+      test("should generate deterministic signatures for same inputs", () => {
+        const secret = "whsec_" + Buffer.from("test-secret-32-bytes-exactly!!!").toString("base64");
+        const webhookId = "msg_test123";
+        const timestamp = 1704547200;
+        const payload = '{"event":"test"}';
+
+        const sig1 = generateStandardWebhookSignature(webhookId, timestamp, payload, secret);
+        const sig2 = generateStandardWebhookSignature(webhookId, timestamp, payload, secret);
+
+        expect(sig1).toBe(sig2);
+      });
+
+      test("should generate different signatures for different payloads", () => {
+        const secret = "whsec_" + Buffer.from("test-secret-32-bytes-exactly!!!").toString("base64");
+        const webhookId = "msg_test123";
+        const timestamp = 1704547200;
+
+        const sig1 = generateStandardWebhookSignature(webhookId, timestamp, '{"event":"a"}', secret);
+        const sig2 = generateStandardWebhookSignature(webhookId, timestamp, '{"event":"b"}', secret);
+
+        expect(sig1).not.toBe(sig2);
+      });
+
+      test("should generate different signatures for different timestamps", () => {
+        const secret = "whsec_" + Buffer.from("test-secret-32-bytes-exactly!!!").toString("base64");
+        const webhookId = "msg_test123";
+        const payload = '{"event":"test"}';
+
+        const sig1 = generateStandardWebhookSignature(webhookId, 1704547200, payload, secret);
+        const sig2 = generateStandardWebhookSignature(webhookId, 1704547201, payload, secret);
+
+        expect(sig1).not.toBe(sig2);
+      });
+
+      test("should generate different signatures for different webhook IDs", () => {
+        const secret = "whsec_" + Buffer.from("test-secret-32-bytes-exactly!!!").toString("base64");
+        const timestamp = 1704547200;
+        const payload = '{"event":"test"}';
+
+        const sig1 = generateStandardWebhookSignature("msg_1", timestamp, payload, secret);
+        const sig2 = generateStandardWebhookSignature("msg_2", timestamp, payload, secret);
+
+        expect(sig1).not.toBe(sig2);
+      });
+
+      test("should produce verifiable signatures", () => {
+        // This test verifies the signature can be verified using the same algorithm
+        const secretBytes = Buffer.from("test-secret-32-bytes-exactly!!!");
+        const secret = `whsec_${secretBytes.toString("base64")}`;
+        const webhookId = "msg_verify";
+        const timestamp = 1704547200;
+        const payload = '{"event":"verify"}';
+
+        const signature = generateStandardWebhookSignature(webhookId, timestamp, payload, secret);
+
+        // Manually compute the expected signature
+        const signedContent = `${webhookId}.${timestamp}.${payload}`;
+        const expectedSig = crypto.createHmac("sha256", secretBytes).update(signedContent).digest("base64");
+
+        expect(signature).toBe(`v1,${expectedSig}`);
+      });
     });
   });
 
