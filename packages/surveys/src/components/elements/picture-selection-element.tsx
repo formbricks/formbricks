@@ -1,5 +1,4 @@
 import { useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { PictureSelect, type PictureSelectOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
@@ -17,6 +16,7 @@ interface PictureSelectionProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string; // Validation error from centralized validation
 }
 
 export function PictureSelectionElement({
@@ -28,13 +28,12 @@ export function PictureSelectionElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<PictureSelectionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
-  const { t } = useTranslation();
   // Convert choices to PictureSelectOption format
   const options: PictureSelectOption[] = element.choices.map((choice) => ({
     id: choice.id,
@@ -53,7 +52,6 @@ export function PictureSelectionElement({
   }
 
   const handleChange = (newValue: string | string[]) => {
-    setErrorMessage(undefined);
     let stringArray: string[];
     if (Array.isArray(newValue)) {
       stringArray = newValue;
@@ -67,21 +65,9 @@ export function PictureSelectionElement({
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (isRequired) {
-      if (element.allowMulti) {
-        if (!currentValue || !Array.isArray(currentValue) || currentValue.length === 0) {
-          setErrorMessage(t("errors.please_select_an_option"));
-          return;
-        }
-      } else {
-        if (!currentValue) {
-          setErrorMessage(t("errors.please_select_an_option"));
-          return;
-        }
-        const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
-        setTtc(updatedTtcObj);
-      }
-    }
+    // Update TTC when form is submitted (for TTC collection)
+    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
   };
 
   return (
