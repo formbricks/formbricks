@@ -2,9 +2,9 @@
 
 import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { v4 as uuidv7 } from "uuid";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { v4 as uuidv7 } from "uuid";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -83,14 +83,6 @@ export const ValidationRulesEditor = ({
     onUpdateRules([]);
   };
 
-  const handleToggle = (checked: boolean) => {
-    if (checked) {
-      handleEnable();
-    } else {
-      handleDisable();
-    }
-  };
-
   const handleAddRule = (insertAfterIndex: number) => {
     const availableRules = getAvailableRuleTypes(elementType, validationRules);
     if (availableRules.length === 0) return;
@@ -166,7 +158,7 @@ export const ValidationRulesEditor = ({
   return (
     <AdvancedOptionToggle
       isChecked={isEnabled}
-      onToggle={handleToggle}
+      onToggle={(checked) => (checked ? handleEnable() : handleDisable())}
       htmlId="validation-rules-toggle"
       title={t("environments.surveys.edit.validation_rules")}
       description={t("environments.surveys.edit.validation_rules_description")}
@@ -213,14 +205,16 @@ export const ValidationRulesEditor = ({
                         value={currentValue ?? ""}
                         onChange={(e) => handleRuleValueChange(rule.id, e.target.value)}
                         placeholder={config.valuePlaceholder}
-                        className="min-w-[80px] h-9 bg-white"
+                        className="h-9 min-w-[80px] bg-white"
                         min={config.valueType === "number" ? 0 : ""}
                       />
 
                       {/* Unit selector (if applicable) */}
                       {config.unitOptions && config.unitOptions.length > 0 && (
                         <Select value={config.unitOptions[0].value}>
-                          <SelectTrigger className="flex-1 bg-white" disabled={config.unitOptions.length === 1}>
+                          <SelectTrigger
+                            className="flex-1 bg-white"
+                            disabled={config.unitOptions.length === 1}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>

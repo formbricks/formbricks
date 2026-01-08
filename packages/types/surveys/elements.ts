@@ -109,7 +109,7 @@ export const ZSurveyOpenTextElement = ZSurveyElementBase.extend({
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Minimum character limit should be less than or equal to maximum character limit",
+      message: "Minimum value cannot be greater than the maximum value",
     });
   }
 });
@@ -132,26 +132,22 @@ export const ZSurveyElementChoice = z.object({
 
 export type TSurveyElementChoice = z.infer<typeof ZSurveyElementChoice>;
 
+export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
+export type TShuffleOption = z.infer<typeof ZShuffleOption>;
+
 export const ZSurveyMultipleChoiceElement = ZSurveyElementBase.extend({
   type: z.union([
     z.literal(TSurveyElementTypeEnum.MultipleChoiceSingle),
     z.literal(TSurveyElementTypeEnum.MultipleChoiceMulti),
   ]),
-  choices: z.array(ZSurveyElementChoice),
-  shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
+  choices: z
+    .array(ZSurveyElementChoice)
+    .min(2, { message: "Multiple Choice Element must have at least two choices" }),
+  shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
-  isAllOptionsSelected: z.boolean().optional(), // For MultipleChoiceMulti
 });
 
-export type TSurveyMultipleChoiceElement = Omit<z.infer<typeof ZSurveyMultipleChoiceElement>, "type"> &
-  (
-    | (Omit<z.infer<typeof ZSurveyMultipleChoiceElement>, "type"> & {
-      type: TSurveyElementTypeEnum.MultipleChoiceSingle;
-    })
-    | (Omit<z.infer<typeof ZSurveyMultipleChoiceElement>, "type"> & {
-      type: TSurveyElementTypeEnum.MultipleChoiceMulti;
-    })
-  );
+export type TSurveyMultipleChoiceElement = z.infer<typeof ZSurveyMultipleChoiceElement>;
 
 // NPS Element
 export const ZSurveyNPSElement = ZSurveyElementBase.extend({
@@ -268,9 +264,6 @@ export const ZSurveyMatrixElementChoice = z.object({
 
 export type TSurveyMatrixElementChoice = z.infer<typeof ZSurveyMatrixElementChoice>;
 
-export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
-export type TShuffleOption = z.infer<typeof ZShuffleOption>;
-
 export const ZSurveyMatrixElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Matrix),
   rows: z.array(ZSurveyMatrixElementChoice),
@@ -347,60 +340,4 @@ export const ZSurveyElement = z.union([
 export type TSurveyElement = z.infer<typeof ZSurveyElement>;
 
 export const ZSurveyElements = z.array(ZSurveyElement);
-
-export const ZSurveyElementSummaryHiddenFields = z.object({
-  elementId: z.string().cuid2(),
-  elementType: z.literal("hiddenField"),
-  id: z.string(),
-  impresions: z.number(),
-});
-
-export const ZSurveyElementSummary = z.object({
-  elementId: z.string().cuid2(),
-  elementType: z.nativeEnum(TSurveyElementTypeEnum),
-  headline: z.string(),
-  ttc: z.number(),
-  impressions: z.number(),
-  dropOffCount: z.number(),
-  dropOffPercentage: z.number(),
-});
-
-export type TSurveyElementSummary = z.infer<typeof ZSurveyElementSummary>;
-
-export const ZSurveySummary = z.object({
-  meta: z.object({
-    displayCount: z.number(),
-    totalResponses: z.number(),
-    startsPercentage: z.number(),
-    completedResponses: z.number(),
-    completedPercentage: z.number(),
-    dropOffCount: z.number(),
-    dropOffPercentage: z.number(),
-    ttcAverage: z.number(),
-    quotasCompleted: z.number(),
-    quotasCompletedPercentage: z.number(),
-  }),
-  dropOff: z.array(
-    z.object({
-      elementId: z.string().cuid2(),
-      elementType: z.nativeEnum(TSurveyElementTypeEnum),
-      headline: z.string(),
-      ttc: z.number(),
-      impressions: z.number(),
-      dropOffCount: z.number(),
-      dropOffPercentage: z.number(),
-    })
-  ),
-  quotas: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      limit: z.number(),
-      count: z.number(),
-      percentage: z.number(),
-    })
-  ),
-  summary: z.array(z.union([ZSurveyElementSummary, ZSurveyElementSummaryHiddenFields])),
-});
-
-export type TSurveySummary = z.infer<typeof ZSurveySummary>;
+export type TSurveyElements = z.infer<typeof ZSurveyElements>;
