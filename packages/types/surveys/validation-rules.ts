@@ -249,6 +249,22 @@ export type TValidationRulesForContactInfo = TValidationRulesForElementType<type
 export type TValidationRulesForCal = TValidationRulesForElementType<typeof CAL_RULES>;
 export type TValidationRulesForCTA = TValidationRulesForElementType<typeof CTA_RULES>;
 
+// Validation error returned by evaluator
+export interface TValidationError {
+  ruleId: string;
+  ruleType: TValidationRuleType;
+  message: string;
+}
+
+// Validation result for a single element
+export interface TValidationResult {
+  valid: boolean;
+  errors: TValidationError[];
+}
+
+// Error map for block-level validation (keyed by elementId)
+export type TValidationErrorMap = Record<string, TValidationError[]>;
+
 // Element-specific validation rules schemas (manually created for type safety)
 // These are narrowed versions of ZValidationRule that only include applicable rule types
 export const ZValidationRulesForOpenText: z.ZodType<TValidationRulesForOpenText> = z.array(

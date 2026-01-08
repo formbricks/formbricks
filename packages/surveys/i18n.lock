@@ -13,7 +13,6 @@ checksums:
     common/open_in_new_tab: 6844e4922a7a40a7ee25c10ea109cdeb
     common/people_responded: b685fb877090d8658db724ad07a0dbd8
     common/please_retry_now_or_try_again_later: 949a3841e2eb01fa249790a42bf23aa5
-    common/please_specify: e1faa6cd085144f7339c7e74dc6fb366
     common/powered_by: 6b6f88e2fa5a1ecec6cebf813abaeebb
     common/privacy_policy: 7459744a63ef8af4e517a09024bd7c08
     common/protected_by_reCAPTCHA_and_the_Google: 32de026bff5d52e9edf5410d7d7b835f
@@ -40,6 +39,13 @@ checksums:
     errors/file_input/you_can_only_upload_a_maximum_of_files: 72fe144f81075e5b06bae53b3a84d4db
     errors/invalid_device_error/message: 8813dcd0e3e41934af18d7a15f8c83f4
     errors/invalid_device_error/title: 20d261b478aaba161b0853a588926e23
+    errors/invalid_format: 66df570c79b420d66f3badaf5867e4ad
+    errors/max_length: cbaef9675c55b3229e6306eb2d78dbfd
+    errors/max_selections: b2682a6ce820681074d4a319b96f8dbd
+    errors/max_value: edfe2d387a283c2b2a48da251fcf6ade
+    errors/min_length: d08ea43d2cc9d6b2aee87ddba60dd2b3
+    errors/min_selections: 23a75f21b4cb0530e5cfd02650d3e3d7
+    errors/min_value: f52e2d54c7fc0e96d5e3f5d32b2618c7
     errors/please_book_an_appointment: 9e8acea3721f660b6a988f79c4105ab8
     errors/please_enter_a_valid_email_address: 8de4bc8832b11b380bc4cbcedc16e48b
     errors/please_enter_a_valid_phone_number: 1530eb9ab7d6d190bddb37667c711631

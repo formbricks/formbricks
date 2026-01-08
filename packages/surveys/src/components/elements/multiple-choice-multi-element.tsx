@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { MultiSelect, type MultiSelectOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
@@ -17,6 +16,7 @@ interface MultipleChoiceMultiElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string; // Validation error from centralized validation
 }
 
 export function MultipleChoiceMultiElement({
@@ -28,13 +28,12 @@ export function MultipleChoiceMultiElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<MultipleChoiceMultiElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherValue, setOtherValue] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
   const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
-  const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const shuffledChoicesIds = useMemo(() => {
@@ -174,22 +173,9 @@ export function MultipleChoiceMultiElement({
     onChange({ [element.id]: nextValue });
   };
 
-  const validateRequired = (): boolean => {
-    if (isRequired && (!Array.isArray(value) || value.length === 0)) {
-      setErrorMessage(t("errors.please_select_an_option"));
-      return false;
-    }
-    if (isRequired && isOtherSelected && !otherValue.trim()) {
-      setErrorMessage(t("errors.please_fill_out_this_field"));
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    setErrorMessage(undefined);
-    if (!validateRequired()) return;
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -229,7 +215,6 @@ export function MultipleChoiceMultiElement({
 
   // Handle selection changes - store labels directly instead of IDs
   const handleMultiSelectChange = (selectedIds: string[]) => {
-    setErrorMessage(undefined);
     const nextLabels: string[] = [];
     const isOtherNowSelected = Boolean(otherOption) && selectedIds.includes(otherOption!.id);
 
@@ -271,7 +256,7 @@ export function MultipleChoiceMultiElement({
         otherOptionPlaceholder={
           element.otherOptionPlaceholder && getLocalizedValue(element.otherOptionPlaceholder, languageCode)
             ? getLocalizedValue(element.otherOptionPlaceholder, languageCode)
-            : t("common.please_specify")
+            : undefined
         }
         otherValue={otherValue}
         onOtherValueChange={handleOtherValueChange}
