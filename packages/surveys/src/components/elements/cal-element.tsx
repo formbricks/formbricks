@@ -32,6 +32,7 @@ export function CalElement({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   const [errorMessage, setErrorMessage] = useState("");
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
   const onSuccessfulBooking = useCallback(() => {
@@ -46,7 +47,7 @@ export function CalElement({
       key={element.id}
       onSubmit={(e) => {
         e.preventDefault();
-        if (element.required && !value) {
+        if (isRequired && !value) {
           setErrorMessage(t("errors.please_book_an_appointment"));
           return;
         }
@@ -62,7 +63,7 @@ export function CalElement({
         <Headline
           headline={getLocalizedValue(element.headline, languageCode)}
           elementId={element.id}
-          required={element.required}
+          validationRules={element.validationRules}
         />
         <Subheader
           subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}

@@ -8,11 +8,13 @@ import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
-import { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TValidationRulesForFileUpload } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -229,7 +231,7 @@ export const FileUploadElementForm = ({
 
                   updateElement(elementIdx, { maxSizeInMB: parseInt(e.target.value, 10) });
                 }}
-                className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
               />
               MB
             </p>
@@ -290,6 +292,16 @@ export const FileUploadElementForm = ({
           </div>
         </AdvancedOptionToggle>
       </div>
+
+      <ValidationRulesEditor
+        elementType={TSurveyElementTypeEnum.FileUpload}
+        validationRules={element.validationRules ?? []}
+        onUpdateRules={(rules: TValidationRulesForFileUpload) => {
+          updateElement(elementIdx, {
+            validationRules: rules,
+          });
+        }}
+      />
     </form>
   );
 };

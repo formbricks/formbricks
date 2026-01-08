@@ -30,6 +30,7 @@ export function DateElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
@@ -41,7 +42,7 @@ export function DateElement({
   };
 
   const validateRequired = (): boolean => {
-    if (element.required && (!value || value.trim() === "")) {
+    if (isRequired && (!value || value.trim() === "")) {
       setErrorMessage(t("errors.please_select_a_date"));
       return false;
     }
@@ -75,7 +76,7 @@ export function DateElement({
         onChange={handleChange}
         minDate={getMinDate()}
         maxDate={getMaxDate()}
-        required={element.required}
+        required={isRequired}
         errorMessage={errorMessage}
         locale={languageCode}
         imageUrl={element.imageUrl}

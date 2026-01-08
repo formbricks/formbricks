@@ -29,6 +29,7 @@ export function MatrixElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
@@ -121,7 +122,7 @@ export function MatrixElement({
   };
 
   const validateRequired = (): boolean => {
-    if (element.required) {
+    if (isRequired) {
       const hasUnansweredRows = rows.some((row) => !value[row.label]);
       if (hasUnansweredRows) {
         setErrorMessage(t("errors.please_select_an_option"));
@@ -150,7 +151,7 @@ export function MatrixElement({
         columns={columns}
         value={convertValueToIds(value)}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}

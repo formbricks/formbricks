@@ -1,15 +1,22 @@
 import DOMPurify from "isomorphic-dompurify";
 import { useTranslation } from "react-i18next";
+import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { isValidHTML, stripInlineStyles } from "@/lib/html-utils";
 
 interface HeadlineProps {
   headline: string;
   elementId: string;
-  required?: boolean;
+  validationRules?: TValidationRule[];
   alignTextCenter?: boolean;
 }
 
-export function Headline({ headline, elementId, required = true, alignTextCenter = false }: HeadlineProps) {
+export function Headline({
+  headline,
+  elementId,
+  validationRules,
+  alignTextCenter = false,
+}: Readonly<HeadlineProps>) {
+  const hasRequiredRule = validationRules?.some((rule) => rule.type === "required") ?? false;
   const { t } = useTranslation();
   const isQuestionCard = elementId !== "EndingCard" && elementId !== "welcomeCard";
   // Strip inline styles BEFORE parsing to avoid CSP violations
@@ -18,14 +25,14 @@ export function Headline({ headline, elementId, required = true, alignTextCenter
   const safeHtml =
     isHeadlineHtml && strippedHeadline
       ? DOMPurify.sanitize(strippedHeadline, {
-          ADD_ATTR: ["target"],
-          FORBID_ATTR: ["style"], // Additional safeguard to remove any remaining inline styles
-        })
+        ADD_ATTR: ["target"],
+        FORBID_ATTR: ["style"], // Additional safeguard to remove any remaining inline styles
+      })
       : "";
 
   return (
     <label htmlFor={elementId} className="text-heading mb-[3px] flex flex-col">
-      {required && isQuestionCard && (
+      {hasRequiredRule && isQuestionCard && (
         <span
           className="mb-[3px] text-xs leading-6 font-normal opacity-60"
           tabIndex={-1}

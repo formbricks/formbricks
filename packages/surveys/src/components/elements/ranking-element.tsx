@@ -31,6 +31,7 @@ export function RankingElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -109,7 +110,7 @@ export function RankingElement({
     const isValueArray = Array.isArray(value);
     const allItemsRanked = isValueArray && value.length === element.choices.length;
 
-    if ((element.required && !allItemsRanked) || (!element.required && value.length > 0 && !allItemsRanked)) {
+    if ((isRequired && !allItemsRanked) || (!isRequired && value.length > 0 && !allItemsRanked)) {
       setErrorMessage(t("errors.please_rank_all_items_before_submitting"));
       return false;
     }
@@ -135,7 +136,7 @@ export function RankingElement({
         options={options}
         value={selectedValues}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}

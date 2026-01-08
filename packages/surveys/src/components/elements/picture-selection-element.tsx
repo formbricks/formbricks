@@ -32,6 +32,7 @@ export function PictureSelectionElement({
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
   // Convert choices to PictureSelectOption format
@@ -66,7 +67,7 @@ export function PictureSelectionElement({
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (element.required) {
+    if (isRequired) {
       if (element.allowMulti) {
         if (!currentValue || !Array.isArray(currentValue) || currentValue.length === 0) {
           setErrorMessage(t("errors.please_select_an_option"));
@@ -94,7 +95,7 @@ export function PictureSelectionElement({
         value={currentValue}
         onChange={handleChange}
         allowMulti={element.allowMulti}
-        required={element.required}
+        required={isRequired}
         dir={dir}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}
