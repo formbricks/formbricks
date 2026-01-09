@@ -1,5 +1,5 @@
 export interface TIso639Language {
-  alpha2: string;
+  code: string;
   label: {
     "en-US": string;
     "de-DE": string;
@@ -19,7 +19,7 @@ export interface TIso639Language {
 
 export const iso639Languages: TIso639Language[] = [
   {
-    alpha2: "aa",
+    code: "aa",
     label: {
       "en-US": "Afar",
       "de-DE": "Afar",
@@ -37,7 +37,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ab",
+    code: "ab",
     label: {
       "en-US": "Abkhazian",
       "de-DE": "Abchasisch",
@@ -55,7 +55,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ae",
+    code: "ae",
     label: {
       "en-US": "Avestan",
       "de-DE": "Avestisch",
@@ -73,7 +73,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "af",
+    code: "af",
     label: {
       "en-US": "Afrikaans",
       "de-DE": "Afrikaans",
@@ -91,7 +91,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ak",
+    code: "ak",
     label: {
       "en-US": "Akan",
       "de-DE": "Akan",
@@ -109,7 +109,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "am",
+    code: "am",
     label: {
       "en-US": "Amharic",
       "de-DE": "Amharisch",
@@ -127,7 +127,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "an",
+    code: "an",
     label: {
       "en-US": "Aragonese",
       "de-DE": "Aragonesisch",
@@ -145,7 +145,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ar",
+    code: "ar",
     label: {
       "en-US": "Arabic",
       "de-DE": "Arabisch",
@@ -163,7 +163,79 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "as",
+    code: "ar-SA",
+    label: {
+      "en-US": "Arabic (Saudi Arabia)",
+      "de-DE": "Arabisch (Saudi-Arabien)",
+      "pt-BR": "Árabe (Arábia Saudita)",
+      "fr-FR": "Arabe (Arabie saoudite)",
+      "zh-Hant-TW": "阿拉伯語（沙烏地阿拉伯）",
+      "pt-PT": "Árabe (Arábia Saudita)",
+      "ro-RO": "Arabă (Arabia Saudită)",
+      "ja-JP": "アラビア語（サウジアラビア）",
+      "zh-Hans-CN": "阿拉伯语（沙特阿拉伯）",
+      "nl-NL": "Arabisch (Saoedi-Arabië)",
+      "es-ES": "Árabe (Arabia Saudita)",
+      "sv-SE": "Arabiska (Saudiarabien)",
+      "ru-RU": "Арабский (Саудовская Аравия)",
+    },
+  },
+  {
+    code: "ar-EG",
+    label: {
+      "en-US": "Arabic (Egypt)",
+      "de-DE": "Arabisch (Ägypten)",
+      "pt-BR": "Árabe (Egito)",
+      "fr-FR": "Arabe (Égypte)",
+      "zh-Hant-TW": "阿拉伯語（埃及）",
+      "pt-PT": "Árabe (Egito)",
+      "ro-RO": "Arabă (Egipt)",
+      "ja-JP": "アラビア語（エジプト）",
+      "zh-Hans-CN": "阿拉伯语（埃及）",
+      "nl-NL": "Arabisch (Egypte)",
+      "es-ES": "Árabe (Egipto)",
+      "sv-SE": "Arabiska (Egypten)",
+      "ru-RU": "Арабский (Египет)",
+    },
+  },
+  {
+    code: "ar-AE",
+    label: {
+      "en-US": "Arabic (United Arab Emirates)",
+      "de-DE": "Arabisch (Vereinigte Arabische Emirate)",
+      "pt-BR": "Árabe (Emirados Árabes Unidos)",
+      "fr-FR": "Arabe (Émirats arabes unis)",
+      "zh-Hant-TW": "阿拉伯語（阿拉伯聯合大公國）",
+      "pt-PT": "Árabe (Emirados Árabes Unidos)",
+      "ro-RO": "Arabă (Emiratele Arabe Unite)",
+      "ja-JP": "アラビア語（アラブ首長国連邦）",
+      "zh-Hans-CN": "阿拉伯语（阿拉伯联合酋长国）",
+      "nl-NL": "Arabisch (Verenigde Arabische Emiraten)",
+      "es-ES": "Árabe (Emiratos Árabes Unidos)",
+      "sv-SE": "Arabiska (Förenade Arabemiraten)",
+      "ru-RU": "Арабский (ОАЭ)",
+    },
+  },
+  {
+    code: "ar-MA",
+    label: {
+      "en-US": "Arabic (Morocco)",
+      "de-DE": "Arabisch (Marokko)",
+      "pt-BR": "Árabe (Marrocos)",
+      "fr-FR": "Arabe (Maroc)",
+      "zh-Hant-TW": "阿拉伯語（摩洛哥）",
+      "pt-PT": "Árabe (Marrocos)",
+      "ro-RO": "Arabă (Maroc)",
+      "ja-JP": "アラビア語（モロッコ）",
+      "zh-Hans-CN": "阿拉伯语（摩洛哥）",
+      "nl-NL": "Arabisch (Marokko)",
+      "es-ES": "Árabe (Marruecos)",
+      "sv-SE": "Arabiska (Marocko)",
+      "ru-RU": "Арабский (Марокко)",
+    },
+  },
+  {
+    code: "as",
     label: {
       "en-US": "Assamese",
       "de-DE": "Assamesisch",
@@ -181,7 +253,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "av",
+    code: "av",
     label: {
       "en-US": "Avaric",
       "de-DE": "Avarisch",
@@ -199,7 +271,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ay",
+    code: "ay",
     label: {
       "en-US": "Aymara",
       "de-DE": "Aymara",
@@ -217,7 +289,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "az",
+    code: "az",
     label: {
       "en-US": "Azerbaijani",
       "de-DE": "Aserbaidschanisch",
@@ -235,7 +307,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ba",
+    code: "ba",
     label: {
       "en-US": "Bashkir",
       "de-DE": "Baschkirisch",
@@ -253,7 +325,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "be",
+    code: "be",
     label: {
       "en-US": "Belarusian",
       "de-DE": "Weißrussisch",
@@ -271,7 +343,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "bg",
+    code: "bg",
     label: {
       "en-US": "Bulgarian",
       "de-DE": "Bulgarisch",
@@ -289,7 +361,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "bh",
+    code: "bh",
     label: {
       "en-US": "Bihari languages",
       "de-DE": "Biharische Sprachen",
@@ -307,7 +379,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "bi",
+    code: "bi",
     label: {
       "en-US": "Bislama",
       "de-DE": "Bislama",
@@ -325,7 +397,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "bm",
+    code: "bm",
     label: {
       "en-US": "Bambara",
       "de-DE": "Bambara",
@@ -343,7 +415,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "bn",
+    code: "bn",
     label: {
       "en-US": "Bengali",
       "de-DE": "Bengali",
@@ -361,7 +433,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "bo",
+    code: "bo",
     label: {
       "en-US": "Tibetan",
       "de-DE": "Tibetisch",
@@ -379,7 +451,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "br",
+    code: "br",
     label: {
       "en-US": "Breton",
       "de-DE": "Bretonisch",
@@ -397,7 +469,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "bs",
+    code: "bs",
     label: {
       "en-US": "Bosnian",
       "de-DE": "Bosnisch",
@@ -415,7 +487,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ca",
+    code: "ca",
     label: {
       "en-US": "Catalan; Valencian",
       "de-DE": "Katalanisch; Valencisch",
@@ -433,7 +505,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ce",
+    code: "ce",
     label: {
       "en-US": "Chechen",
       "de-DE": "Tschetschenisch",
@@ -451,7 +523,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ch",
+    code: "ch",
     label: {
       "en-US": "Chamorro",
       "de-DE": "Chamorro",
@@ -469,7 +541,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "co",
+    code: "co",
     label: {
       "en-US": "Corsican",
       "de-DE": "Korsisch",
@@ -487,7 +559,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "cr",
+    code: "cr",
     label: {
       "en-US": "Cree",
       "de-DE": "Cree",
@@ -505,7 +577,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "cs",
+    code: "cs",
     label: {
       "en-US": "Czech",
       "de-DE": "Tschechisch",
@@ -523,7 +595,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "cu",
+    code: "cu",
     label: {
       "en-US": "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic",
       "de-DE": "Kirchenslawisch; Altbulgarisch; Kirchenslawisch; Altbulgarisch; Altkirchliches Slawisch",
@@ -547,7 +619,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "cv",
+    code: "cv",
     label: {
       "en-US": "Chuvash",
       "de-DE": "Tschuwaschisch",
@@ -565,7 +637,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "cy",
+    code: "cy",
     label: {
       "en-US": "Welsh",
       "de-DE": "Walisisch",
@@ -583,7 +655,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "da",
+    code: "da",
     label: {
       "en-US": "Danish",
       "de-DE": "Dänisch",
@@ -601,7 +673,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "de",
+    code: "de",
     label: {
       "en-US": "German",
       "de-DE": "Deutsch",
@@ -619,7 +691,61 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "dv",
+    code: "de-DE",
+    label: {
+      "en-US": "German (Germany)",
+      "de-DE": "Deutsch (Deutschland)",
+      "pt-BR": "Alemão (Alemanha)",
+      "fr-FR": "Allemand (Allemagne)",
+      "zh-Hant-TW": "德語（德國）",
+      "pt-PT": "Alemão (Alemanha)",
+      "ro-RO": "Germană (Germania)",
+      "ja-JP": "ドイツ語（ドイツ）",
+      "zh-Hans-CN": "德语（德国）",
+      "nl-NL": "Duits (Duitsland)",
+      "es-ES": "Alemán (Alemania)",
+      "sv-SE": "Tyska (Tyskland)",
+      "ru-RU": "Немецкий (Германия)",
+    },
+  },
+  {
+    code: "de-AT",
+    label: {
+      "en-US": "German (Austria)",
+      "de-DE": "Deutsch (Österreich)",
+      "pt-BR": "Alemão (Áustria)",
+      "fr-FR": "Allemand (Autriche)",
+      "zh-Hant-TW": "德語（奧地利）",
+      "pt-PT": "Alemão (Áustria)",
+      "ro-RO": "Germană (Austria)",
+      "ja-JP": "ドイツ語（オーストリア）",
+      "zh-Hans-CN": "德语（奥地利）",
+      "nl-NL": "Duits (Oostenrijk)",
+      "es-ES": "Alemán (Austria)",
+      "sv-SE": "Tyska (Österrike)",
+      "ru-RU": "Немецкий (Австрия)",
+    },
+  },
+  {
+    code: "de-CH",
+    label: {
+      "en-US": "German (Switzerland)",
+      "de-DE": "Deutsch (Schweiz)",
+      "pt-BR": "Alemão (Suíça)",
+      "fr-FR": "Allemand (Suisse)",
+      "zh-Hant-TW": "德語（瑞士）",
+      "pt-PT": "Alemão (Suíça)",
+      "ro-RO": "Germană (Elveția)",
+      "ja-JP": "ドイツ語（スイス）",
+      "zh-Hans-CN": "德语（瑞士）",
+      "nl-NL": "Duits (Zwitserland)",
+      "es-ES": "Alemán (Suiza)",
+      "sv-SE": "Tyska (Schweiz)",
+      "ru-RU": "Немецкий (Швейцария)",
+    },
+  },
+  {
+    code: "dv",
     label: {
       "en-US": "Divehi; Dhivehi; Maldivian",
       "de-DE": "Divehi; Dhivehi; Maldivisch",
@@ -637,7 +763,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "dz",
+    code: "dz",
     label: {
       "en-US": "Dzongkha",
       "de-DE": "Dzongkha",
@@ -655,7 +781,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ee",
+    code: "ee",
     label: {
       "en-US": "Ewe",
       "de-DE": "Ewe",
@@ -673,7 +799,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "el",
+    code: "el",
     label: {
       "en-US": "Greek, Modern (1453-)",
       "de-DE": "Griechisch, Modern (ab 1453)",
@@ -691,7 +817,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "en",
+    code: "en",
     label: {
       "en-US": "English",
       "de-DE": "Englisch",
@@ -709,7 +835,97 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "eo",
+    code: "en-US",
+    label: {
+      "en-US": "English (United States)",
+      "de-DE": "Englisch (Vereinigte Staaten)",
+      "pt-BR": "Inglês (Estados Unidos)",
+      "fr-FR": "Anglais (États-Unis)",
+      "zh-Hant-TW": "英文（美國）",
+      "pt-PT": "Inglês (Estados Unidos)",
+      "ro-RO": "Engleză (Statele Unite)",
+      "ja-JP": "英語（アメリカ）",
+      "zh-Hans-CN": "英语（美国）",
+      "nl-NL": "Engels (Verenigde Staten)",
+      "es-ES": "Inglés (Estados Unidos)",
+      "sv-SE": "Engelska (USA)",
+      "ru-RU": "Английский (США)",
+    },
+  },
+  {
+    code: "en-GB",
+    label: {
+      "en-US": "English (United Kingdom)",
+      "de-DE": "Englisch (Vereinigtes Königreich)",
+      "pt-BR": "Inglês (Reino Unido)",
+      "fr-FR": "Anglais (Royaume-Uni)",
+      "zh-Hant-TW": "英文（英國）",
+      "pt-PT": "Inglês (Reino Unido)",
+      "ro-RO": "Engleză (Regatul Unit)",
+      "ja-JP": "英語（イギリス）",
+      "zh-Hans-CN": "英语（英国）",
+      "nl-NL": "Engels (Verenigd Koninkrijk)",
+      "es-ES": "Inglés (Reino Unido)",
+      "sv-SE": "Engelska (Storbritannien)",
+      "ru-RU": "Английский (Великобритания)",
+    },
+  },
+  {
+    code: "en-AU",
+    label: {
+      "en-US": "English (Australia)",
+      "de-DE": "Englisch (Australien)",
+      "pt-BR": "Inglês (Austrália)",
+      "fr-FR": "Anglais (Australie)",
+      "zh-Hant-TW": "英文（澳洲）",
+      "pt-PT": "Inglês (Austrália)",
+      "ro-RO": "Engleză (Australia)",
+      "ja-JP": "英語（オーストラリア）",
+      "zh-Hans-CN": "英语（澳大利亚）",
+      "nl-NL": "Engels (Australië)",
+      "es-ES": "Inglés (Australia)",
+      "sv-SE": "Engelska (Australien)",
+      "ru-RU": "Английский (Австралия)",
+    },
+  },
+  {
+    code: "en-CA",
+    label: {
+      "en-US": "English (Canada)",
+      "de-DE": "Englisch (Kanada)",
+      "pt-BR": "Inglês (Canadá)",
+      "fr-FR": "Anglais (Canada)",
+      "zh-Hant-TW": "英文（加拿大）",
+      "pt-PT": "Inglês (Canadá)",
+      "ro-RO": "Engleză (Canada)",
+      "ja-JP": "英語（カナダ）",
+      "zh-Hans-CN": "英语（加拿大）",
+      "nl-NL": "Engels (Canada)",
+      "es-ES": "Inglés (Canadá)",
+      "sv-SE": "Engelska (Kanada)",
+      "ru-RU": "Английский (Канада)",
+    },
+  },
+  {
+    code: "en-IE",
+    label: {
+      "en-US": "English (Ireland)",
+      "de-DE": "Englisch (Irland)",
+      "pt-BR": "Inglês (Irlanda)",
+      "fr-FR": "Anglais (Irlande)",
+      "zh-Hant-TW": "英文（愛爾蘭）",
+      "pt-PT": "Inglês (Irlanda)",
+      "ro-RO": "Engleză (Irlanda)",
+      "ja-JP": "英語（アイルランド）",
+      "zh-Hans-CN": "英语（爱尔兰）",
+      "nl-NL": "Engels (Ierland)",
+      "es-ES": "Inglés (Irlanda)",
+      "sv-SE": "Engelska (Irland)",
+      "ru-RU": "Английский (Ирландия)",
+    },
+  },
+  {
+    code: "eo",
     label: {
       "en-US": "Esperanto",
       "de-DE": "Esperanto",
@@ -727,7 +943,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "es",
+    code: "es",
     label: {
       "en-US": "Spanish; Castilian",
       "de-DE": "Spanisch; Kastilisch",
@@ -745,7 +961,133 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "et",
+    code: "es-ES",
+    label: {
+      "en-US": "Spanish (Spain)",
+      "de-DE": "Spanisch (Spanien)",
+      "pt-BR": "Espanhol (Espanha)",
+      "fr-FR": "Espagnol (Espagne)",
+      "zh-Hant-TW": "西班牙語（西班牙）",
+      "pt-PT": "Espanhol (Espanha)",
+      "ro-RO": "Spaniolă (Spania)",
+      "ja-JP": "スペイン語（スペイン）",
+      "zh-Hans-CN": "西班牙语（西班牙）",
+      "nl-NL": "Spaans (Spanje)",
+      "es-ES": "Español (España)",
+      "sv-SE": "Spanska (Spanien)",
+      "ru-RU": "Испанский (Испания)",
+    },
+  },
+  {
+    code: "es-MX",
+    label: {
+      "en-US": "Spanish (Mexico)",
+      "de-DE": "Spanisch (Mexiko)",
+      "pt-BR": "Espanhol (México)",
+      "fr-FR": "Espagnol (Mexique)",
+      "zh-Hant-TW": "西班牙語（墨西哥）",
+      "pt-PT": "Espanhol (México)",
+      "ro-RO": "Spaniolă (Mexic)",
+      "ja-JP": "スペイン語（メキシコ）",
+      "zh-Hans-CN": "西班牙语（墨西哥）",
+      "nl-NL": "Spaans (Mexico)",
+      "es-ES": "Español (México)",
+      "sv-SE": "Spanska (Mexiko)",
+      "ru-RU": "Испанский (Мексика)",
+    },
+  },
+  {
+    code: "es-AR",
+    label: {
+      "en-US": "Spanish (Argentina)",
+      "de-DE": "Spanisch (Argentinien)",
+      "pt-BR": "Espanhol (Argentina)",
+      "fr-FR": "Espagnol (Argentine)",
+      "zh-Hant-TW": "西班牙語（阿根廷）",
+      "pt-PT": "Espanhol (Argentina)",
+      "ro-RO": "Spaniolă (Argentina)",
+      "ja-JP": "スペイン語（アルゼンチン）",
+      "zh-Hans-CN": "西班牙语（阿根廷）",
+      "nl-NL": "Spaans (Argentinië)",
+      "es-ES": "Español (Argentina)",
+      "sv-SE": "Spanska (Argentina)",
+      "ru-RU": "Испанский (Аргентина)",
+    },
+  },
+  {
+    code: "es-CO",
+    label: {
+      "en-US": "Spanish (Colombia)",
+      "de-DE": "Spanisch (Kolumbien)",
+      "pt-BR": "Espanhol (Colômbia)",
+      "fr-FR": "Espagnol (Colombie)",
+      "zh-Hant-TW": "西班牙語（哥倫比亞）",
+      "pt-PT": "Espanhol (Colômbia)",
+      "ro-RO": "Spaniolă (Columbia)",
+      "ja-JP": "スペイン語（コロンビア）",
+      "zh-Hans-CN": "西班牙语（哥伦比亚）",
+      "nl-NL": "Spaans (Colombia)",
+      "es-ES": "Español (Colombia)",
+      "sv-SE": "Spanska (Colombia)",
+      "ru-RU": "Испанский (Колумбия)",
+    },
+  },
+  {
+    code: "es-CL",
+    label: {
+      "en-US": "Spanish (Chile)",
+      "de-DE": "Spanisch (Chile)",
+      "pt-BR": "Espanhol (Chile)",
+      "fr-FR": "Espagnol (Chili)",
+      "zh-Hant-TW": "西班牙語（智利）",
+      "pt-PT": "Espanhol (Chile)",
+      "ro-RO": "Spaniolă (Chile)",
+      "ja-JP": "スペイン語（チリ）",
+      "zh-Hans-CN": "西班牙语（智利）",
+      "nl-NL": "Spaans (Chili)",
+      "es-ES": "Español (Chile)",
+      "sv-SE": "Spanska (Chile)",
+      "ru-RU": "Испанский (Чили)",
+    },
+  },
+  {
+    code: "es-PE",
+    label: {
+      "en-US": "Spanish (Peru)",
+      "de-DE": "Spanisch (Peru)",
+      "pt-BR": "Espanhol (Peru)",
+      "fr-FR": "Espagnol (Pérou)",
+      "zh-Hant-TW": "西班牙語（秘魯）",
+      "pt-PT": "Espanhol (Peru)",
+      "ro-RO": "Spaniolă (Peru)",
+      "ja-JP": "スペイン語（ペルー）",
+      "zh-Hans-CN": "西班牙语（秘鲁）",
+      "nl-NL": "Spaans (Peru)",
+      "es-ES": "Español (Perú)",
+      "sv-SE": "Spanska (Peru)",
+      "ru-RU": "Испанский (Перу)",
+    },
+  },
+  {
+    code: "es-VE",
+    label: {
+      "en-US": "Spanish (Venezuela)",
+      "de-DE": "Spanisch (Venezuela)",
+      "pt-BR": "Espanhol (Venezuela)",
+      "fr-FR": "Espagnol (Venezuela)",
+      "zh-Hant-TW": "西班牙語（委內瑞拉）",
+      "pt-PT": "Espanhol (Venezuela)",
+      "ro-RO": "Spaniolă (Venezuela)",
+      "ja-JP": "スペイン語（ベネズエラ）",
+      "zh-Hans-CN": "西班牙语（委内瑞拉）",
+      "nl-NL": "Spaans (Venezuela)",
+      "es-ES": "Español (Venezuela)",
+      "sv-SE": "Spanska (Venezuela)",
+      "ru-RU": "Испанский (Венесуэла)",
+    },
+  },
+  {
+    code: "et",
     label: {
       "en-US": "Estonian",
       "de-DE": "Estnisch",
@@ -763,7 +1105,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "eu",
+    code: "eu",
     label: {
       "en-US": "Basque",
       "de-DE": "Baskisch",
@@ -781,7 +1123,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "fa",
+    code: "fa",
     label: {
       "en-US": "Persian",
       "de-DE": "Persisch",
@@ -799,7 +1141,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ff",
+    code: "ff",
     label: {
       "en-US": "Fulah",
       "de-DE": "Fulah",
@@ -817,7 +1159,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "fi",
+    code: "fi",
     label: {
       "en-US": "Finnish",
       "de-DE": "Finnisch",
@@ -835,7 +1177,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "fj",
+    code: "fj",
     label: {
       "en-US": "Fijian",
       "de-DE": "Fidschianisch",
@@ -853,7 +1195,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "fo",
+    code: "fo",
     label: {
       "en-US": "Faroese",
       "de-DE": "Färöisch",
@@ -871,7 +1213,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "fr",
+    code: "fr",
     label: {
       "en-US": "French",
       "de-DE": "Französisch",
@@ -889,7 +1231,79 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "fy",
+    code: "fr-FR",
+    label: {
+      "en-US": "French (France)",
+      "de-DE": "Französisch (Frankreich)",
+      "pt-BR": "Francês (França)",
+      "fr-FR": "Français (France)",
+      "zh-Hant-TW": "法語（法國）",
+      "pt-PT": "Francês (França)",
+      "ro-RO": "Franceză (Franța)",
+      "ja-JP": "フランス語（フランス）",
+      "zh-Hans-CN": "法语（法国）",
+      "nl-NL": "Frans (Frankrijk)",
+      "es-ES": "Francés (Francia)",
+      "sv-SE": "Franska (Frankrike)",
+      "ru-RU": "Французский (Франция)",
+    },
+  },
+  {
+    code: "fr-CA",
+    label: {
+      "en-US": "French (Canada)",
+      "de-DE": "Französisch (Kanada)",
+      "pt-BR": "Francês (Canadá)",
+      "fr-FR": "Français (Canada)",
+      "zh-Hant-TW": "法語（加拿大）",
+      "pt-PT": "Francês (Canadá)",
+      "ro-RO": "Franceză (Canada)",
+      "ja-JP": "フランス語（カナダ）",
+      "zh-Hans-CN": "法语（加拿大）",
+      "nl-NL": "Frans (Canada)",
+      "es-ES": "Francés (Canadá)",
+      "sv-SE": "Franska (Kanada)",
+      "ru-RU": "Французский (Канада)",
+    },
+  },
+  {
+    code: "fr-BE",
+    label: {
+      "en-US": "French (Belgium)",
+      "de-DE": "Französisch (Belgien)",
+      "pt-BR": "Francês (Bélgica)",
+      "fr-FR": "Français (Belgique)",
+      "zh-Hant-TW": "法語（比利時）",
+      "pt-PT": "Francês (Bélgica)",
+      "ro-RO": "Franceză (Belgia)",
+      "ja-JP": "フランス語（ベルギー）",
+      "zh-Hans-CN": "法语（比利时）",
+      "nl-NL": "Frans (België)",
+      "es-ES": "Francés (Bélgica)",
+      "sv-SE": "Franska (Belgien)",
+      "ru-RU": "Французский (Бельгия)",
+    },
+  },
+  {
+    code: "fr-CH",
+    label: {
+      "en-US": "French (Switzerland)",
+      "de-DE": "Französisch (Schweiz)",
+      "pt-BR": "Francês (Suíça)",
+      "fr-FR": "Français (Suisse)",
+      "zh-Hant-TW": "法語（瑞士）",
+      "pt-PT": "Francês (Suíça)",
+      "ro-RO": "Franceză (Elveția)",
+      "ja-JP": "フランス語（スイス）",
+      "zh-Hans-CN": "法语（瑞士）",
+      "nl-NL": "Frans (Zwitserland)",
+      "es-ES": "Francés (Suiza)",
+      "sv-SE": "Franska (Schweiz)",
+      "ru-RU": "Французский (Швейцария)",
+    },
+  },
+  {
+    code: "fy",
     label: {
       "en-US": "Western Frisian",
       "de-DE": "Westfriesisch",
@@ -907,7 +1321,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ga",
+    code: "ga",
     label: {
       "en-US": "Irish",
       "de-DE": "Irischer",
@@ -925,7 +1339,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "gd",
+    code: "gd",
     label: {
       "en-US": "Gaelic; Scottish Gaelic",
       "de-DE": "Gälisch; Schottisch Gälisch",
@@ -943,7 +1357,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "gl",
+    code: "gl",
     label: {
       "en-US": "Galician",
       "de-DE": "Galicisch",
@@ -961,7 +1375,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "gn",
+    code: "gn",
     label: {
       "en-US": "Guarani",
       "de-DE": "Guarani",
@@ -979,7 +1393,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "gu",
+    code: "gu",
     label: {
       "en-US": "Gujarati",
       "de-DE": "Gujarati",
@@ -997,7 +1411,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "gv",
+    code: "gv",
     label: {
       "en-US": "Manx",
       "de-DE": "Manx",
@@ -1015,7 +1429,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ha",
+    code: "ha",
     label: {
       "en-US": "Hausa",
       "de-DE": "Hausa",
@@ -1033,7 +1447,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "he",
+    code: "he",
     label: {
       "en-US": "Hebrew",
       "de-DE": "Hebräisch",
@@ -1051,7 +1465,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "hi",
+    code: "hi",
     label: {
       "en-US": "Hindi",
       "de-DE": "Hindi",
@@ -1069,7 +1483,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ho",
+    code: "ho",
     label: {
       "en-US": "Hiri Motu",
       "de-DE": "Hiri Motu",
@@ -1087,7 +1501,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "hr",
+    code: "hr",
     label: {
       "en-US": "Croatian",
       "de-DE": "Kroatisch",
@@ -1105,7 +1519,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ht",
+    code: "ht",
     label: {
       "en-US": "Haitian; Haitian Creole",
       "de-DE": "Haitian; Haitian Creole",
@@ -1123,7 +1537,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "hu",
+    code: "hu",
     label: {
       "en-US": "Hungarian",
       "de-DE": "Ungarisch",
@@ -1141,7 +1555,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "hy",
+    code: "hy",
     label: {
       "en-US": "Armenian",
       "de-DE": "Armenisch",
@@ -1159,7 +1573,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "hz",
+    code: "hz",
     label: {
       "en-US": "Herero",
       "de-DE": "Herero",
@@ -1177,7 +1591,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ia",
+    code: "ia",
     label: {
       "en-US": "Interlingua (International Auxiliary Language Association)",
       "de-DE": "Interlingua (Internationaler Hilfssprachverband)",
@@ -1195,7 +1609,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "id",
+    code: "id",
     label: {
       "en-US": "Indonesian",
       "de-DE": "Indonesisch",
@@ -1213,7 +1627,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ie",
+    code: "ie",
     label: {
       "en-US": "Interlingue; Occidental",
       "de-DE": "Interlingue; Occidental",
@@ -1231,7 +1645,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ig",
+    code: "ig",
     label: {
       "en-US": "Igbo",
       "de-DE": "Igbo",
@@ -1249,7 +1663,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ii",
+    code: "ii",
     label: {
       "en-US": "Sichuan Yi; Nuosu",
       "de-DE": "Sichuan Yi; Nuosu",
@@ -1267,7 +1681,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ik",
+    code: "ik",
     label: {
       "en-US": "Inupiaq",
       "de-DE": "Inupiaq",
@@ -1285,7 +1699,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "io",
+    code: "io",
     label: {
       "en-US": "Ido",
       "de-DE": "Ido",
@@ -1303,7 +1717,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "is",
+    code: "is",
     label: {
       "en-US": "Icelandic",
       "de-DE": "Isländisch",
@@ -1321,7 +1735,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "it",
+    code: "it",
     label: {
       "en-US": "Italian",
       "de-DE": "Italienisch",
@@ -1339,7 +1753,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "iu",
+    code: "iu",
     label: {
       "en-US": "Inuktitut",
       "de-DE": "Inuktitut",
@@ -1357,7 +1771,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ja",
+    code: "ja",
     label: {
       "en-US": "Japanese",
       "de-DE": "Japanisch",
@@ -1375,7 +1789,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "jv",
+    code: "jv",
     label: {
       "en-US": "Javanese",
       "de-DE": "Javanisch",
@@ -1393,7 +1807,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ka",
+    code: "ka",
     label: {
       "en-US": "Georgian",
       "de-DE": "Georgisch",
@@ -1411,7 +1825,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "kg",
+    code: "kg",
     label: {
       "en-US": "Kongo",
       "de-DE": "Kongo",
@@ -1429,7 +1843,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ki",
+    code: "ki",
     label: {
       "en-US": "Kikuyu; Gikuyu",
       "de-DE": "Kikuyu; Gikuyu",
@@ -1447,7 +1861,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "kj",
+    code: "kj",
     label: {
       "en-US": "Kuanyama; Kwanyama",
       "de-DE": "Kuanyama; Kwanyama",
@@ -1465,7 +1879,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "kk",
+    code: "kk",
     label: {
       "en-US": "Kazakh",
       "de-DE": "Kasachisch",
@@ -1483,7 +1897,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "kl",
+    code: "kl",
     label: {
       "en-US": "Kalaallisut; Greenlandic",
       "de-DE": "Kalaallisut; Grönländisch",
@@ -1501,7 +1915,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "km",
+    code: "km",
     label: {
       "en-US": "Central Khmer",
       "de-DE": "Zentral-Khmer",
@@ -1519,7 +1933,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "kn",
+    code: "kn",
     label: {
       "en-US": "Kannada",
       "de-DE": "Kannada",
@@ -1537,7 +1951,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ko",
+    code: "ko",
     label: {
       "en-US": "Korean",
       "de-DE": "Koreanisch",
@@ -1555,7 +1969,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "kr",
+    code: "kr",
     label: {
       "en-US": "Kanuri",
       "de-DE": "Kanuri",
@@ -1573,7 +1987,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ks",
+    code: "ks",
     label: {
       "en-US": "Kashmiri",
       "de-DE": "Kashmiri",
@@ -1591,7 +2005,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ku",
+    code: "ku",
     label: {
       "en-US": "Kurdish",
       "de-DE": "Kurdisch",
@@ -1609,7 +2023,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "kv",
+    code: "kv",
     label: {
       "en-US": "Komi",
       "de-DE": "Komi",
@@ -1627,7 +2041,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "kw",
+    code: "kw",
     label: {
       "en-US": "Cornish",
       "de-DE": "Kornisch",
@@ -1645,7 +2059,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ky",
+    code: "ky",
     label: {
       "en-US": "Kirghiz; Kyrgyz",
       "de-DE": "Kirgisisch; Kirgisischer",
@@ -1663,7 +2077,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "la",
+    code: "la",
     label: {
       "en-US": "Latin",
       "de-DE": "Lateinisch",
@@ -1681,7 +2095,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "lb",
+    code: "lb",
     label: {
       "en-US": "Luxembourgish; Letzeburgesch",
       "de-DE": "Luxemburgisch; Letzeburgesch",
@@ -1699,7 +2113,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "lg",
+    code: "lg",
     label: {
       "en-US": "Ganda",
       "de-DE": "Ganda",
@@ -1717,7 +2131,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "li",
+    code: "li",
     label: {
       "en-US": "Limburgan; Limburger; Limburgish",
       "de-DE": "Limburgisch; Limburger; Limburgish",
@@ -1735,7 +2149,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ln",
+    code: "ln",
     label: {
       "en-US": "Lingala",
       "de-DE": "Lingala",
@@ -1753,7 +2167,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "lo",
+    code: "lo",
     label: {
       "en-US": "Lao",
       "de-DE": "Lao",
@@ -1771,7 +2185,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "lt",
+    code: "lt",
     label: {
       "en-US": "Lithuanian",
       "de-DE": "Litauisch",
@@ -1789,7 +2203,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "lu",
+    code: "lu",
     label: {
       "en-US": "Luba-Katanga",
       "de-DE": "Luba-Katanga",
@@ -1807,7 +2221,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "lv",
+    code: "lv",
     label: {
       "en-US": "Latvian",
       "de-DE": "Lettisch",
@@ -1825,7 +2239,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "mg",
+    code: "mg",
     label: {
       "en-US": "Malagasy",
       "de-DE": "Malagasy",
@@ -1843,7 +2257,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "mh",
+    code: "mh",
     label: {
       "en-US": "Marshallese",
       "de-DE": "Marshallese",
@@ -1861,7 +2275,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "mi",
+    code: "mi",
     label: {
       "en-US": "Maori",
       "de-DE": "Maori",
@@ -1879,7 +2293,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "mk",
+    code: "mk",
     label: {
       "en-US": "Macedonian",
       "de-DE": "Mazedonisch",
@@ -1897,7 +2311,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ml",
+    code: "ml",
     label: {
       "en-US": "Malayalam",
       "de-DE": "Malayalam",
@@ -1915,7 +2329,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "mn",
+    code: "mn",
     label: {
       "en-US": "Mongolian",
       "de-DE": "Mongolisch",
@@ -1933,7 +2347,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "mr",
+    code: "mr",
     label: {
       "en-US": "Marathi",
       "de-DE": "Marathi",
@@ -1951,7 +2365,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ms",
+    code: "ms",
     label: {
       "en-US": "Malay",
       "de-DE": "Malay",
@@ -1969,7 +2383,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "mt",
+    code: "mt",
     label: {
       "en-US": "Maltese",
       "de-DE": "Maltesisch",
@@ -1987,7 +2401,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "my",
+    code: "my",
     label: {
       "en-US": "Burmese",
       "de-DE": "Birmanisch",
@@ -2005,7 +2419,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "na",
+    code: "na",
     label: {
       "en-US": "Nauru",
       "de-DE": "Nauru",
@@ -2023,7 +2437,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "nb",
+    code: "nb",
     label: {
       "en-US": "Bokmål, Norwegian; Norwegian Bokmål",
       "de-DE": "Bokmål, Norwegisch; Norwegische Bokmål",
@@ -2041,7 +2455,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "nd",
+    code: "nd",
     label: {
       "en-US": "Ndebele, North; North Ndebele",
       "de-DE": "Ndebele, Nord; Nord Ndebele",
@@ -2059,7 +2473,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ne",
+    code: "ne",
     label: {
       "en-US": "Nepali",
       "de-DE": "Nepali",
@@ -2077,7 +2491,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ng",
+    code: "ng",
     label: {
       "en-US": "Ndonga",
       "de-DE": "Ndonga",
@@ -2095,7 +2509,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "nl",
+    code: "nl",
     label: {
       "en-US": "Dutch; Flemish",
       "de-DE": "Holländisch; Flämisch",
@@ -2113,7 +2527,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "nn",
+    code: "nn",
     label: {
       "en-US": "Norwegian Nynorsk; Nynorsk, Norwegian",
       "de-DE": "Norwegische Nynorsk; Nynorsk, Norwegisch",
@@ -2131,7 +2545,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "no",
+    code: "no",
     label: {
       "en-US": "Norwegian",
       "de-DE": "Norwegisch",
@@ -2149,7 +2563,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "nr",
+    code: "nr",
     label: {
       "en-US": "Ndebele, South; South Ndebele",
       "de-DE": "Ndebele, Süd; Süd Ndebele",
@@ -2167,7 +2581,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "nv",
+    code: "nv",
     label: {
       "en-US": "Navajo; Navaho",
       "de-DE": "Navajo; Navaho",
@@ -2185,7 +2599,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ny",
+    code: "ny",
     label: {
       "en-US": "Chichewa; Chewa; Nyanja",
       "de-DE": "Chichewa; Chewa; Nyanja",
@@ -2203,7 +2617,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "oc",
+    code: "oc",
     label: {
       "en-US": "Occitan (post 1500)",
       "de-DE": "Occitan (post 1500)",
@@ -2221,7 +2635,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "oj",
+    code: "oj",
     label: {
       "en-US": "Ojibwa",
       "de-DE": "Ojibwa",
@@ -2239,7 +2653,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "om",
+    code: "om",
     label: {
       "en-US": "Oromo",
       "de-DE": "Oromo",
@@ -2257,7 +2671,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "or",
+    code: "or",
     label: {
       "en-US": "Oriya",
       "de-DE": "Oriya",
@@ -2275,7 +2689,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "os",
+    code: "os",
     label: {
       "en-US": "Ossetian; Ossetic",
       "de-DE": "Ossetian; Ossetic",
@@ -2293,7 +2707,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "pa",
+    code: "pa",
     label: {
       "en-US": "Panjabi; Punjabi",
       "de-DE": "Panjabi; Punjabi",
@@ -2311,7 +2725,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "pi",
+    code: "pi",
     label: {
       "en-US": "Pali",
       "de-DE": "Pali",
@@ -2329,7 +2743,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "pl",
+    code: "pl",
     label: {
       "en-US": "Polish",
       "de-DE": "Polnisch",
@@ -2347,7 +2761,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ps",
+    code: "ps",
     label: {
       "en-US": "Pushto; Pashto",
       "de-DE": "Pushto; Pashto",
@@ -2365,7 +2779,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "pt",
+    code: "pt",
     label: {
       "en-US": "Portuguese",
       "de-DE": "Portugiesisch",
@@ -2383,7 +2797,43 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "qu",
+    code: "pt-BR",
+    label: {
+      "en-US": "Portuguese (Brazil)",
+      "de-DE": "Portugiesisch (Brasilien)",
+      "pt-BR": "Português (Brasil)",
+      "fr-FR": "Portugais (Brésil)",
+      "zh-Hant-TW": "葡萄牙語（巴西）",
+      "pt-PT": "Português (Brasil)",
+      "ro-RO": "Portugheză (Brazilia)",
+      "ja-JP": "ポルトガル語（ブラジル）",
+      "zh-Hans-CN": "葡萄牙语（巴西）",
+      "nl-NL": "Portugees (Brazilië)",
+      "es-ES": "Portugués (Brasil)",
+      "sv-SE": "Portugisiska (Brasilien)",
+      "ru-RU": "Португальский (Бразилия)",
+    },
+  },
+  {
+    code: "pt-PT",
+    label: {
+      "en-US": "Portuguese (Portugal)",
+      "de-DE": "Portugiesisch (Portugal)",
+      "pt-BR": "Português (Portugal)",
+      "fr-FR": "Portugais (Portugal)",
+      "zh-Hant-TW": "葡萄牙語（葡萄牙）",
+      "pt-PT": "Português (Portugal)",
+      "ro-RO": "Portugheză (Portugalia)",
+      "ja-JP": "ポルトガル語（ポルトガル）",
+      "zh-Hans-CN": "葡萄牙语（葡萄牙）",
+      "nl-NL": "Portugees (Portugal)",
+      "es-ES": "Portugués (Portugal)",
+      "sv-SE": "Portugisiska (Portugal)",
+      "ru-RU": "Португальский (Португалия)",
+    },
+  },
+  {
+    code: "qu",
     label: {
       "en-US": "Quechua",
       "de-DE": "Quechua",
@@ -2401,7 +2851,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "rm",
+    code: "rm",
     label: {
       "en-US": "Romansh",
       "de-DE": "Rämisch",
@@ -2419,7 +2869,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "rn",
+    code: "rn",
     label: {
       "en-US": "Rundi",
       "de-DE": "Rundi",
@@ -2437,7 +2887,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ro",
+    code: "ro",
     label: {
       "en-US": "Romanian; Moldavian; Moldovan",
       "de-DE": "Rumänisch; Moldauisch; Moldauisch",
@@ -2455,7 +2905,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ru",
+    code: "ru",
     label: {
       "en-US": "Russian",
       "de-DE": "Russisch",
@@ -2473,7 +2923,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "rw",
+    code: "rw",
     label: {
       "en-US": "Kinyarwanda",
       "de-DE": "Kinyarwanda",
@@ -2491,7 +2941,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sa",
+    code: "sa",
     label: {
       "en-US": "Sanskrit",
       "de-DE": "Sanskrit",
@@ -2509,7 +2959,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sc",
+    code: "sc",
     label: {
       "en-US": "Sardinian",
       "de-DE": "Sardisch",
@@ -2527,7 +2977,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sd",
+    code: "sd",
     label: {
       "en-US": "Sindhi",
       "de-DE": "Sindhi",
@@ -2545,7 +2995,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "se",
+    code: "se",
     label: {
       "en-US": "Northern Sami",
       "de-DE": "Nordischer Sami",
@@ -2563,7 +3013,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sg",
+    code: "sg",
     label: {
       "en-US": "Sango",
       "de-DE": "Sango",
@@ -2581,7 +3031,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "si",
+    code: "si",
     label: {
       "en-US": "Sinhala; Sinhalese",
       "de-DE": "Sinhala; Sinhalese",
@@ -2599,7 +3049,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sk",
+    code: "sk",
     label: {
       "en-US": "Slovak",
       "de-DE": "Slowakisch",
@@ -2617,7 +3067,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sl",
+    code: "sl",
     label: {
       "en-US": "Slovenian",
       "de-DE": "Slowenisch",
@@ -2635,7 +3085,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sm",
+    code: "sm",
     label: {
       "en-US": "Samoan",
       "de-DE": "Samoan",
@@ -2653,7 +3103,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sn",
+    code: "sn",
     label: {
       "en-US": "Shona",
       "de-DE": "Shona",
@@ -2671,7 +3121,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "so",
+    code: "so",
     label: {
       "en-US": "Somali",
       "de-DE": "Somali",
@@ -2689,7 +3139,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sq",
+    code: "sq",
     label: {
       "en-US": "Albanian",
       "de-DE": "Albanisch",
@@ -2707,7 +3157,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sr",
+    code: "sr",
     label: {
       "en-US": "Serbian",
       "de-DE": "Serbisch",
@@ -2725,7 +3175,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ss",
+    code: "ss",
     label: {
       "en-US": "Swati",
       "de-DE": "Swati",
@@ -2743,7 +3193,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "st",
+    code: "st",
     label: {
       "en-US": "Sotho, Southern",
       "de-DE": "Sotho, Süd",
@@ -2761,7 +3211,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "su",
+    code: "su",
     label: {
       "en-US": "Sundanese",
       "de-DE": "Sundanesisch",
@@ -2779,7 +3229,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sv",
+    code: "sv",
     label: {
       "en-US": "Swedish",
       "de-DE": "Schwedisch",
@@ -2797,7 +3247,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "sw",
+    code: "sw",
     label: {
       "en-US": "Swahili",
       "de-DE": "Swahili",
@@ -2815,7 +3265,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ta",
+    code: "ta",
     label: {
       "en-US": "Tamil",
       "de-DE": "Tamil",
@@ -2833,7 +3283,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "te",
+    code: "te",
     label: {
       "en-US": "Telugu",
       "de-DE": "Telugu",
@@ -2851,7 +3301,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "tg",
+    code: "tg",
     label: {
       "en-US": "Tajik",
       "de-DE": "Tadschikisch",
@@ -2869,7 +3319,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "th",
+    code: "th",
     label: {
       "en-US": "Thai",
       "de-DE": "Thai",
@@ -2887,7 +3337,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ti",
+    code: "ti",
     label: {
       "en-US": "Tigrinya",
       "de-DE": "Tigrinya",
@@ -2905,7 +3355,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "tk",
+    code: "tk",
     label: {
       "en-US": "Turkmen",
       "de-DE": "Turkmenisch",
@@ -2923,7 +3373,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "tl",
+    code: "tl",
     label: {
       "en-US": "Tagalog",
       "de-DE": "Tagalog",
@@ -2941,7 +3391,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "tn",
+    code: "tn",
     label: {
       "en-US": "Tswana",
       "de-DE": "Tswana",
@@ -2959,7 +3409,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "to",
+    code: "to",
     label: {
       "en-US": "Tonga (Tonga Islands)",
       "de-DE": "Tonga (Tonga-Inseln)",
@@ -2977,7 +3427,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "tr",
+    code: "tr",
     label: {
       "en-US": "Turkish",
       "de-DE": "Türkisch",
@@ -2995,7 +3445,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ts",
+    code: "ts",
     label: {
       "en-US": "Tsonga",
       "de-DE": "Tsonga",
@@ -3013,7 +3463,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "tt",
+    code: "tt",
     label: {
       "en-US": "Tatar",
       "de-DE": "Tatarisch",
@@ -3031,7 +3481,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "tw",
+    code: "tw",
     label: {
       "en-US": "Twi",
       "de-DE": "Twi",
@@ -3049,7 +3499,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ty",
+    code: "ty",
     label: {
       "en-US": "Tahitian",
       "de-DE": "Tahitisch",
@@ -3067,7 +3517,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ug",
+    code: "ug",
     label: {
       "en-US": "Uighur; Uyghur",
       "de-DE": "Uighur; Uyghur",
@@ -3085,7 +3535,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "uk",
+    code: "uk",
     label: {
       "en-US": "Ukrainian",
       "de-DE": "Ukrainisch",
@@ -3103,7 +3553,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ur",
+    code: "ur",
     label: {
       "en-US": "Urdu",
       "de-DE": "Urdu",
@@ -3121,7 +3571,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "uz",
+    code: "uz",
     label: {
       "en-US": "Uzbek",
       "de-DE": "Usbekisch",
@@ -3139,7 +3589,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "ve",
+    code: "ve",
     label: {
       "en-US": "Venda",
       "de-DE": "Venda",
@@ -3157,7 +3607,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "vi",
+    code: "vi",
     label: {
       "en-US": "Vietnamese",
       "de-DE": "Vietnamesisch",
@@ -3175,7 +3625,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "vo",
+    code: "vo",
     label: {
       "en-US": "Volapük",
       "de-DE": "Volapük",
@@ -3193,7 +3643,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "wa",
+    code: "wa",
     label: {
       "en-US": "Walloon",
       "de-DE": "Wallonisch",
@@ -3211,7 +3661,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "wo",
+    code: "wo",
     label: {
       "en-US": "Wolof",
       "de-DE": "Wolof",
@@ -3229,7 +3679,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "xh",
+    code: "xh",
     label: {
       "en-US": "Xhosa",
       "de-DE": "Xhosa",
@@ -3247,7 +3697,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "yi",
+    code: "yi",
     label: {
       "en-US": "Yiddish",
       "de-DE": "Jiddisch",
@@ -3265,7 +3715,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "yo",
+    code: "yo",
     label: {
       "en-US": "Yoruba",
       "de-DE": "Yoruba",
@@ -3283,7 +3733,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "za",
+    code: "za",
     label: {
       "en-US": "Zhuang; Chuang",
       "de-DE": "Zhuang; Chuang",
@@ -3301,7 +3751,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "zh-Hans",
+    code: "zh-Hans",
     label: {
       "en-US": "Chinese (Simplified)",
       "de-DE": "Chinesisch (Vereinfacht)",
@@ -3319,7 +3769,7 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "zh-Hant",
+    code: "zh-Hant",
     label: {
       "en-US": "Chinese (Traditional)",
       "de-DE": "Chinesisch (Traditionell)",
@@ -3337,7 +3787,61 @@ export const iso639Languages: TIso639Language[] = [
     },
   },
   {
-    alpha2: "zu",
+    code: "zh-CN",
+    label: {
+      "en-US": "Chinese (China)",
+      "de-DE": "Chinesisch (China)",
+      "pt-BR": "Chinês (China)",
+      "fr-FR": "Chinois (Chine)",
+      "zh-Hant-TW": "中文（中國）",
+      "pt-PT": "Chinês (China)",
+      "ro-RO": "Chineză (China)",
+      "ja-JP": "中国語（中国）",
+      "zh-Hans-CN": "中文（中国）",
+      "nl-NL": "Chinees (China)",
+      "es-ES": "Chino (China)",
+      "sv-SE": "Kinesiska (Kina)",
+      "ru-RU": "Китайский (Китай)",
+    },
+  },
+  {
+    code: "zh-TW",
+    label: {
+      "en-US": "Chinese (Taiwan)",
+      "de-DE": "Chinesisch (Taiwan)",
+      "pt-BR": "Chinês (Taiwan)",
+      "fr-FR": "Chinois (Taïwan)",
+      "zh-Hant-TW": "中文（台灣）",
+      "pt-PT": "Chinês (Taiwan)",
+      "ro-RO": "Chineză (Taiwan)",
+      "ja-JP": "中国語（台湾）",
+      "zh-Hans-CN": "中文（台湾）",
+      "nl-NL": "Chinees (Taiwan)",
+      "es-ES": "Chino (Taiwán)",
+      "sv-SE": "Kinesiska (Taiwan)",
+      "ru-RU": "Китайский (Тайвань)",
+    },
+  },
+  {
+    code: "zh-HK",
+    label: {
+      "en-US": "Chinese (Hong Kong)",
+      "de-DE": "Chinesisch (Hongkong)",
+      "pt-BR": "Chinês (Hong Kong)",
+      "fr-FR": "Chinois (Hong Kong)",
+      "zh-Hant-TW": "中文（香港）",
+      "pt-PT": "Chinês (Hong Kong)",
+      "ro-RO": "Chineză (Hong Kong)",
+      "ja-JP": "中国語（香港）",
+      "zh-Hans-CN": "中文（香港）",
+      "nl-NL": "Chinees (Hongkong)",
+      "es-ES": "Chino (Hong Kong)",
+      "sv-SE": "Kinesiska (Hongkong)",
+      "ru-RU": "Китайский (Гонконг)",
+    },
+  },
+  {
+    code: "zu",
     label: {
       "en-US": "Zulu",
       "de-DE": "Zulu",
@@ -3357,7 +3861,7 @@ export const iso639Languages: TIso639Language[] = [
 ];
 
 export const getLanguageLabel = (languageCode: string, locale: string): string | undefined => {
-  const language = iso639Languages.find((lang) => lang.alpha2 === languageCode);
+  const language = iso639Languages.find((lang) => lang.code === languageCode);
   // Type assertion to tell TypeScript that we know the structure of label
   return language?.label[locale as keyof typeof language.label];
 };

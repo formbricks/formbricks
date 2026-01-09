@@ -67,7 +67,7 @@ const validateLanguages = (languages: Language[], t: TFunction) => {
   // (e.g. alias "nl" pointing to a non-Dutch language) which later breaks the
   // dropdowns that rely on ISO identifiers.
   for (const alias of languageAliases) {
-    if (iso639Languages.some((language) => language.alpha2 === alias && !languageCodes.includes(alias))) {
+    if (iso639Languages.some((language) => language.code === alias && !languageCodes.includes(alias))) {
       toast.error(
         t("environments.workspace.languages.conflict_between_selected_alias_and_another_language"),
         {
