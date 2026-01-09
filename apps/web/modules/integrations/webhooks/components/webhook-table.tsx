@@ -35,6 +35,7 @@ export const WebhookTable = ({
     surveyIds: [],
     createdAt: new Date(),
     updatedAt: new Date(),
+    secret: null,
   });
 
   const handleOpenWebhookDetailModalClick = (e, webhook: Webhook) => {
