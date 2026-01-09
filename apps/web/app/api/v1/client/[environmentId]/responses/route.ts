@@ -147,7 +147,7 @@ export const POST = withV1ApiWrapper({
       response = await createResponseWithQuotaEvaluation({
         ...responseInputData,
         meta,
-      } as any);
+      });
     } catch (error) {
       if (error instanceof InvalidInputError) {
         return {
