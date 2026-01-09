@@ -9,7 +9,7 @@ import {
   ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
-import { generateWebhookSecret } from "@/lib/crypto";
+import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { TWebhookInput } from "../types/webhooks";
@@ -129,16 +129,20 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
 
     const webhookMessageId = uuidv7();
     const webhookTimestamp = Math.floor(Date.now() / 1000);
+    const body = JSON.stringify({ event: "testEndpoint" });
+
+    // Generate a temporary test secret and signature for consistency with actual webhooks
+    const testSecret = generateWebhookSecret();
+    const signature = generateStandardWebhookSignature(webhookMessageId, webhookTimestamp, body, testSecret);
 
     const response = await fetch(url, {
       method: "POST",
-      body: JSON.stringify({
-        event: "testEndpoint",
-      }),
+      body,
       headers: {
         "Content-Type": "application/json",
         "webhook-id": webhookMessageId,
         "webhook-timestamp": webhookTimestamp.toString(),
+        "webhook-signature": signature,
       },
       signal: controller.signal,
     });

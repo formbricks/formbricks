@@ -2,8 +2,7 @@
 
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
-import { CheckIcon, CopyIcon, ExternalLinkIcon, Webhook as WebhookIcon } from "lucide-react";
-import Link from "next/link";
+import { Webhook as WebhookIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -13,6 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
+import { WebhookCreatedModal } from "@/modules/integrations/webhooks/components/webhook-created-modal";
 import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -53,13 +53,6 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
   const [createdWebhook, setCreatedWebhook] = useState<Webhook | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
@@ -165,8 +158,8 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
     }
   };
 
-  const setOpenWithStates = (isOpen: boolean) => {
-    setOpen(isOpen);
+  const resetAndClose = () => {
+    setOpen(false);
     reset();
     setTestEndpointInput("");
     setEndpointAccessible(undefined);
@@ -174,77 +167,15 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
     setSelectedTriggers([]);
     setSelectedAllSurveys(false);
     setCreatedWebhook(null);
-    setCopied(false);
   };
 
   // Show success dialog with secret after webhook creation
   if (createdWebhook) {
-    return (
-      <Dialog open={open} onOpenChange={setOpenWithStates}>
-        <DialogContent>
-          <DialogHeader>
-            <CheckIcon className="h-6 w-6 text-green-500" />
-            <DialogTitle>{t("environments.integrations.webhooks.webhook_created")}</DialogTitle>
-            <DialogDescription>{t("environments.integrations.webhooks.copy_secret_now")}</DialogDescription>
-          </DialogHeader>
-
-          <DialogBody className="space-y-4 pb-4">
-            <div className="col-span-1">
-              <Label>{t("environments.integrations.webhooks.signing_secret")}</Label>
-              <div className="mt-1 flex">
-                <Input
-                  type="text"
-                  readOnly
-                  value={createdWebhook.secret ?? ""}
-                  className="font-mono text-sm"
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="ml-2 whitespace-nowrap"
-                  onClick={() => copyToClipboard(createdWebhook.secret ?? "")}>
-                  {copied ? (
-                    <>
-                      <CheckIcon className="h-4 w-4" />
-                      {t("common.copied")}
-                    </>
-                  ) : (
-                    <>
-                      <CopyIcon className="h-4 w-4" />
-                      {t("common.copy")}
-                    </>
-                  )}
-                </Button>
-              </div>
-              <p className="mt-2 text-xs text-slate-500">
-                {t("environments.integrations.webhooks.secret_copy_warning")}
-              </p>
-              <Link
-                href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks#webhook-security-with-standard-webhooks"
-                target="_blank"
-                className="mt-2 inline-flex items-center gap-1 text-xs text-slate-600 underline hover:text-slate-800">
-                {t("environments.integrations.webhooks.learn_to_verify")}
-                <ExternalLinkIcon className="h-3 w-3" />
-              </Link>
-            </div>
-          </DialogBody>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              onClick={() => {
-                setOpenWithStates(false);
-              }}>
-              {t("common.done")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
+    return <WebhookCreatedModal open={open} webhook={createdWebhook} onClose={resetAndClose} />;
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpenWithStates}>
+    <Dialog open={open} onOpenChange={resetAndClose}>
       <DialogContent>
         <DialogHeader>
           <WebhookIcon />
@@ -326,12 +257,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           </DialogBody>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setOpenWithStates(false);
-              }}>
+            <Button type="button" variant="secondary" onClick={resetAndClose}>
               {t("common.cancel")}
             </Button>
             <Button type="submit" loading={creatingWebhook}>

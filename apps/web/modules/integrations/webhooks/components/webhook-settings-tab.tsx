@@ -54,6 +54,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
   const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
+    toast.success(t("common.copied_to_clipboard"));
     setTimeout(() => setCopied(false), 2000);
   };
 

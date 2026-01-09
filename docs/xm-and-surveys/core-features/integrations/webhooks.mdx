@@ -56,11 +56,11 @@ Formbricks implements the [Standard Webhooks](https://github.com/standard-webhoo
 
 Every webhook request includes the following headers:
 
-| Header              | Description                                          | Example               |
-| ------------------- | ---------------------------------------------------- | --------------------- |
-| `webhook-id`        | Unique message identifier                            | `clxyz123abc456def`   |
-| `webhook-timestamp` | Unix timestamp (seconds) when the webhook was sent   | `1704547200`          |
-| `webhook-signature` | HMAC-SHA256 signature (only if secret is configured) | `v1,K3Q2bXlzZWNyZXQ=` |
+| Header              | Description                                          | Example                                |
+| ------------------- | ---------------------------------------------------- | -------------------------------------- |
+| `webhook-id`        | Unique message identifier                            | `019ba292-c1f6-7618-aaf2-ecf8e39d1cc7` |
+| `webhook-timestamp` | Unix timestamp (seconds) when the webhook was sent   | `1704547200`                           |
+| `webhook-signature` | HMAC-SHA256 signature (only if secret is configured) | `v1,K3Q2bXlzZWNyZXQ=`                  |
 
 ### Signing Secret
 
