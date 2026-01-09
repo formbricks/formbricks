@@ -161,7 +161,18 @@ function verifyWebhook(body, headers, secret) {
   // Extract signature from header (format: "v1,{signature}")
   const receivedSignature = webhookSignature.split(",")[1];
 
-  if (!receivedSignature || receivedSignature !== expectedSignature) {
+  if (!receivedSignature) {
+    throw new Error("Invalid signature format");
+  }
+
+  // Use constant-time comparison to prevent timing attacks
+  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
+  const receivedBuffer = Buffer.from(receivedSignature, "utf8");
+
+  if (
+    expectedBuffer.length !== receivedBuffer.length ||
+    !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  ) {
     throw new Error("Invalid signature");
   }
 
