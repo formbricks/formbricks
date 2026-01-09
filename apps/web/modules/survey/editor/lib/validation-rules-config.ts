@@ -6,7 +6,7 @@ export const RULE_TYPE_CONFIG: Record<
   {
     labelKey: string;
     needsValue: boolean;
-    valueType?: "number" | "text" | "option";
+    valueType?: "number" | "text" | "option" | "ranking";
     valuePlaceholder?: string;
     unitOptions?: { value: string; labelKey: string }[];
   }
@@ -164,5 +164,20 @@ export const RULE_TYPE_CONFIG: Record<
     labelKey: "is_not_selected",
     needsValue: true,
     valueType: "option",
+  },
+  positionIs: {
+    labelKey: "position_is",
+    needsValue: true,
+    valueType: "ranking",
+  },
+  positionIsHigherThan: {
+    labelKey: "position_is_higher_than",
+    needsValue: true,
+    valueType: "ranking",
+  },
+  positionIsLowerThan: {
+    labelKey: "position_is_lower_than",
+    needsValue: true,
+    valueType: "ranking",
   },
 };

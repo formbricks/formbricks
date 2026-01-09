@@ -257,6 +257,13 @@ export const RankingElementForm = ({
             validationRules: rules,
           });
         }}
+        element={element}
+        validationLogic={element.validationLogic}
+        onUpdateValidationLogic={(logic) => {
+          updateElement(elementIdx, {
+            validationLogic: logic,
+          });
+        }}
       />
     </form>
   );

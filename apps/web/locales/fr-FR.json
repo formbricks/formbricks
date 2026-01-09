@@ -1612,6 +1612,9 @@
           "options_selected": "options sélectionnées",
           "pattern": "Correspond au modèle d'expression régulière",
           "phone": "Est un numéro de téléphone valide",
+          "position_is": "La position est",
+          "position_is_higher_than": "La position est supérieure à",
+          "position_is_lower_than": "La position est inférieure à",
           "url": "Est une URL valide"
         },
         "validation_logic_and": "ET (tous doivent réussir)",

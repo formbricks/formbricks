@@ -73,6 +73,9 @@
     "please_select_an_option": "Please select an option",
     "please_submit_all_rows_before_submitting": "Please answer all rows before submitting",
     "please_upload_a_file": "Please upload a file",
+    "position_must_be": "{option} must be at position {position}",
+    "position_must_be_higher_than": "{option} must be ranked higher than position {position}",
+    "position_must_be_lower_than": "{option} must be ranked lower than position {position}",
     "recaptcha_error": {
       "message": "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",
       "title": "We couldn't verify that you're human."

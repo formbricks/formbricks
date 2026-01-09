@@ -73,6 +73,9 @@
     "please_select_an_option": "Пожалуйста, выберите вариант",
     "please_submit_all_rows_before_submitting": "Пожалуйста, ответьте на все строки перед отправкой",
     "please_upload_a_file": "Пожалуйста, загрузите файл",
+    "position_must_be": "{option} должен находиться на позиции {position}",
+    "position_must_be_higher_than": "{option} должен быть выше позиции {position}",
+    "position_must_be_lower_than": "{option} должен быть ниже позиции {position}",
     "recaptcha_error": {
       "message": "Ваш ответ не может быть отправлен, так как он был помечен как автоматическая активность. Если вы дышите, попробуйте ещё раз.",
       "title": "Мы не смогли подтвердить, что вы человек."

@@ -1612,6 +1612,9 @@
           "options_selected": "opções selecionadas",
           "pattern": "Corresponde ao padrão regex",
           "phone": "É um telefone válido",
+          "position_is": "A posição é",
+          "position_is_higher_than": "A posição é maior que",
+          "position_is_lower_than": "A posição é menor que",
           "url": "É uma URL válida"
         },
         "validation_logic_and": "E (todas devem passar)",

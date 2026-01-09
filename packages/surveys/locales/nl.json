@@ -73,6 +73,9 @@
     "please_select_an_option": "Selecteer een optie",
     "please_submit_all_rows_before_submitting": "Beantwoord alle rijen voordat je indient",
     "please_upload_a_file": "Upload een bestand",
+    "position_must_be": "{option} moet op positie {position} staan",
+    "position_must_be_higher_than": "{option} moet hoger gerangschikt zijn dan positie {position}",
+    "position_must_be_lower_than": "{option} moet lager gerangschikt zijn dan positie {position}",
     "recaptcha_error": {
       "message": "Uw reactie kan niet worden verzonden omdat deze is gemarkeerd als geautomatiseerde activiteit. Als u ademhaalt, probeer het dan opnieuw.",
       "title": "We konden niet verifiëren dat je een mens bent."

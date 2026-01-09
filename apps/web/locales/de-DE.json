@@ -1612,6 +1612,9 @@
           "options_selected": "Optionen ausgewählt",
           "pattern": "Entspricht Regex-Muster",
           "phone": "Ist gültige Telefonnummer",
+          "position_is": "Position ist",
+          "position_is_higher_than": "Position ist höher als",
+          "position_is_lower_than": "Position ist niedriger als",
           "url": "Ist gültige URL"
         },
         "validation_logic_and": "UND (alle müssen erfüllt sein)",

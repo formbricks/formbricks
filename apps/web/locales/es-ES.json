@@ -1612,6 +1612,9 @@
           "options_selected": "opciones seleccionadas",
           "pattern": "Coincide con el patrón regex",
           "phone": "Es un teléfono válido",
+          "position_is": "La posición es",
+          "position_is_higher_than": "La posición es mayor que",
+          "position_is_lower_than": "La posición es menor que",
           "url": "Es una URL válida"
         },
         "validation_logic_and": "Y (todas deben cumplirse)",

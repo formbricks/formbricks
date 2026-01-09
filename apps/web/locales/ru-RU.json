@@ -1612,6 +1612,9 @@
           "options_selected": "выбрано вариантов",
           "pattern": "Соответствует шаблону regex",
           "phone": "Корректный телефон",
+          "position_is": "Позиция равна",
+          "position_is_higher_than": "Позиция выше чем",
+          "position_is_lower_than": "Позиция ниже чем",
           "url": "Корректный URL"
         },
         "validation_logic_and": "И (все условия должны быть выполнены)",

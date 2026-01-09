@@ -73,6 +73,9 @@
     "please_select_an_option": "कृपया एक विकल्प चुनें",
     "please_submit_all_rows_before_submitting": "कृपया सबमिट करने से पहले सभी पंक्तियों का उत्तर दें",
     "please_upload_a_file": "कृपया एक फाइल अपलोड करें",
+    "position_must_be": "{option} स्थिति {position} पर होना चाहिए",
+    "position_must_be_higher_than": "{option} को स्थिति {position} से ऊपर रैंक किया जाना चाहिए",
+    "position_must_be_lower_than": "{option} को स्थिति {position} से नीचे रैंक किया जाना चाहिए",
     "recaptcha_error": {
       "message": "आपका प्रतिसाद जमा नहीं किया जा सका क्योंकि इसे स्वचालित गतिविधि के रूप में चिह्नित किया गया था। यदि आप सांस लेते हैं, तो कृपया पुनः प्रयास करें।",
       "title": "हम यह सत्यापित नहीं कर सके कि आप मानव हैं।"

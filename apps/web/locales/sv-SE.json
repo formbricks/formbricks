@@ -1612,6 +1612,9 @@
           "options_selected": "valda alternativ",
           "pattern": "Matchar regexmönster",
           "phone": "Är ett giltigt telefonnummer",
+          "position_is": "Positionen är",
+          "position_is_higher_than": "Positionen är högre än",
+          "position_is_lower_than": "Positionen är lägre än",
           "url": "Är en giltig URL"
         },
         "validation_logic_and": "OCH (alla måste uppfyllas)",

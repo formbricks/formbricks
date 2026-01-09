@@ -73,6 +73,9 @@
     "please_select_an_option": "Bitte wählen Sie eine Option",
     "please_submit_all_rows_before_submitting": "Bitte beantworten Sie alle Zeilen, bevor Sie absenden",
     "please_upload_a_file": "Bitte laden Sie eine Datei hoch",
+    "position_must_be": "{option} muss an Position {position} stehen",
+    "position_must_be_higher_than": "{option} muss höher als Position {position} eingestuft werden",
+    "position_must_be_lower_than": "{option} muss niedriger als Position {position} eingestuft werden",
     "recaptcha_error": {
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
       "title": "Wir konnten nicht verifizieren, dass Sie ein Mensch sind."

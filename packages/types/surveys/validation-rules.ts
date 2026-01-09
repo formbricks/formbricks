@@ -31,6 +31,11 @@ export const ZValidationRuleType = z.enum([
   "isSelected",
   "isNotSelected",
 
+  // Ranking rules
+  "positionIs",
+  "positionIsHigherThan",
+  "positionIsLowerThan",
+
   // Date rules
   "isOnOrLaterThan",
   "isLaterThan",
@@ -144,6 +149,21 @@ export const ZValidationRuleParamsIsNotSelected = z.object({
   optionId: z.string().min(1),
 });
 
+export const ZValidationRuleParamsPositionIs = z.object({
+  optionId: z.string().min(1),
+  position: z.number().min(1),
+});
+
+export const ZValidationRuleParamsPositionIsHigherThan = z.object({
+  optionId: z.string().min(1),
+  position: z.number().min(1),
+});
+
+export const ZValidationRuleParamsPositionIsLowerThan = z.object({
+  optionId: z.string().min(1),
+  position: z.number().min(1),
+});
+
 // Union of all params types
 export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsMinLength,
@@ -172,6 +192,9 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsIsNotBetween,
   ZValidationRuleParamsIsSelected,
   ZValidationRuleParamsIsNotSelected,
+  ZValidationRuleParamsPositionIs,
+  ZValidationRuleParamsPositionIsHigherThan,
+  ZValidationRuleParamsPositionIsLowerThan,
 ]);
 
 export type TValidationRuleParams = z.infer<typeof ZValidationRuleParams>;
@@ -203,6 +226,13 @@ export type TValidationRuleParamsIsBetween = z.infer<typeof ZValidationRuleParam
 export type TValidationRuleParamsIsNotBetween = z.infer<typeof ZValidationRuleParamsIsNotBetween>;
 export type TValidationRuleParamsIsSelected = z.infer<typeof ZValidationRuleParamsIsSelected>;
 export type TValidationRuleParamsIsNotSelected = z.infer<typeof ZValidationRuleParamsIsNotSelected>;
+export type TValidationRuleParamsPositionIs = z.infer<typeof ZValidationRuleParamsPositionIs>;
+export type TValidationRuleParamsPositionIsHigherThan = z.infer<
+  typeof ZValidationRuleParamsPositionIsHigherThan
+>;
+export type TValidationRuleParamsPositionIsLowerThan = z.infer<
+  typeof ZValidationRuleParamsPositionIsLowerThan
+>;
 
 // Validation rule stored on element - discriminated union with type at top level
 export const ZValidationRule = z.discriminatedUnion("type", [
@@ -362,6 +392,24 @@ export const ZValidationRule = z.discriminatedUnion("type", [
     params: ZValidationRuleParamsIsNotSelected,
     customErrorMessage: ZI18nString.optional(),
   }),
+  z.object({
+    id: z.string(),
+    type: z.literal("positionIs"),
+    params: ZValidationRuleParamsPositionIs,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("positionIsHigherThan"),
+    params: ZValidationRuleParamsPositionIsHigherThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("positionIsLowerThan"),
+    params: ZValidationRuleParamsPositionIsLowerThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
 ]);
 
 export type TValidationRule = z.infer<typeof ZValidationRule>;
@@ -409,7 +457,7 @@ const DATE_RULES = [
 ] as const;
 const CONSENT_RULES = [] as const;
 const MATRIX_RULES = [] as const;
-const RANKING_RULES = [] as const;
+const RANKING_RULES = ["positionIs", "positionIsHigherThan", "positionIsLowerThan"] as const;
 const FILE_UPLOAD_RULES = [] as const;
 const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
 const ADDRESS_RULES = [] as const;
@@ -685,7 +733,28 @@ export const ZValidationRulesForConsent: z.ZodType<TValidationRulesForConsent> =
 
 export const ZValidationRulesForMatrix: z.ZodType<TValidationRulesForMatrix> = z.array(z.never());
 
-export const ZValidationRulesForRanking: z.ZodType<TValidationRulesForRanking> = z.array(z.never());
+export const ZValidationRulesForRanking: z.ZodType<TValidationRulesForRanking> = z.array(
+  z.discriminatedUnion("type", [
+    z.object({
+      id: z.string(),
+      type: z.literal("positionIs"),
+      params: ZValidationRuleParamsPositionIs,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("positionIsHigherThan"),
+      params: ZValidationRuleParamsPositionIsHigherThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("positionIsLowerThan"),
+      params: ZValidationRuleParamsPositionIsLowerThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+  ])
+);
 
 export const ZValidationRulesForFileUpload: z.ZodType<TValidationRulesForFileUpload> = z.array(z.never());
 

@@ -1612,6 +1612,9 @@
           "options_selected": "项已选择",
           "pattern": "匹配正则表达式模式",
           "phone": "是有效的手机号",
+          "position_is": "位置为",
+          "position_is_higher_than": "位置高于",
+          "position_is_lower_than": "位置低于",
           "url": "是有效的URL"
         },
         "validation_logic_and": "且（全部需通过）",

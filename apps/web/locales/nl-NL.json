@@ -1612,6 +1612,9 @@
           "options_selected": "opties geselecteerd",
           "pattern": "Komt overeen met regex-patroon",
           "phone": "Is geldig telefoonnummer",
+          "position_is": "Positie is",
+          "position_is_higher_than": "Positie is hoger dan",
+          "position_is_lower_than": "Positie is lager dan",
           "url": "Is geldige URL"
         },
         "validation_logic_and": "EN (alle moeten slagen)",

@@ -1612,6 +1612,9 @@
           "options_selected": "options selected",
           "pattern": "Matches regex pattern",
           "phone": "Is valid phone",
+          "position_is": "Position is",
+          "position_is_higher_than": "Position is higher than",
+          "position_is_lower_than": "Position is lower than",
           "url": "Is valid URL"
         },
         "validation_logic_and": "AND (all must pass)",

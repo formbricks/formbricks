@@ -29,6 +29,9 @@ import type {
   TValidationRuleParamsMinValue,
   TValidationRuleParamsPattern,
   TValidationRuleParamsPhone,
+  TValidationRuleParamsPositionIs,
+  TValidationRuleParamsPositionIsHigherThan,
+  TValidationRuleParamsPositionIsLowerThan,
   TValidationRuleParamsUrl,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
@@ -589,6 +592,136 @@ export const validators: Record<TValidationRuleType, TValidator> = {
         ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
         : typedParams.optionId;
       return t("errors.option_must_not_be_selected", { option: choiceLabel });
+    },
+  },
+  positionIs: {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsPositionIs;
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return { valid: true };
+      }
+      if (element.type !== "ranking" || !("choices" in element)) {
+        return { valid: true };
+      }
+      // Find the position of the option in the ranking (1-indexed)
+      const position = value.findIndex((item) => {
+        // Response can be choice IDs or choice labels
+        if (item === typedParams.optionId) {
+          return true;
+        }
+        // Check if it's a label that matches the choice
+        const choice = element.choices.find((c) => c.id === typedParams.optionId);
+        if (choice) {
+          const choiceLabels = Object.values(choice.label);
+          return choiceLabels.includes(item);
+        }
+        return false;
+      });
+      // Position is 1-indexed, so add 1 to array index
+      const actualPosition = position === -1 ? 0 : position + 1;
+      return { valid: actualPosition === typedParams.position };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsPositionIs;
+      if (element.type !== "ranking" || !("choices" in element)) {
+        return t("errors.invalid_format");
+      }
+      const choice = element.choices.find((c) => c.id === typedParams.optionId);
+      const choiceLabel = choice
+        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
+        : typedParams.optionId;
+      return t("errors.position_must_be", { option: choiceLabel, position: typedParams.position });
+    },
+  },
+  positionIsHigherThan: {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsPositionIsHigherThan;
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return { valid: true };
+      }
+      if (element.type !== "ranking" || !("choices" in element)) {
+        return { valid: true };
+      }
+      // Find the position of the option in the ranking (1-indexed)
+      const position = value.findIndex((item) => {
+        if (item === typedParams.optionId) {
+          return true;
+        }
+        const choice = element.choices.find((c) => c.id === typedParams.optionId);
+        if (choice) {
+          const choiceLabels = Object.values(choice.label);
+          return choiceLabels.includes(item);
+        }
+        return false;
+      });
+      // Position is 1-indexed, so add 1 to array index
+      // Higher position means lower position number (better rank)
+      const actualPosition = position === -1 ? 0 : position + 1;
+      return { valid: actualPosition > 0 && actualPosition < typedParams.position };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsPositionIsHigherThan;
+      if (element.type !== "ranking" || !("choices" in element)) {
+        return t("errors.invalid_format");
+      }
+      const choice = element.choices.find((c) => c.id === typedParams.optionId);
+      const choiceLabel = choice
+        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
+        : typedParams.optionId;
+      return t("errors.position_must_be_higher_than", {
+        option: choiceLabel,
+        position: typedParams.position,
+      });
+    },
+  },
+  positionIsLowerThan: {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsPositionIsLowerThan;
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return { valid: true };
+      }
+      if (element.type !== "ranking" || !("choices" in element)) {
+        return { valid: true };
+      }
+      // Find the position of the option in the ranking (1-indexed)
+      const position = value.findIndex((item) => {
+        if (item === typedParams.optionId) {
+          return true;
+        }
+        const choice = element.choices.find((c) => c.id === typedParams.optionId);
+        if (choice) {
+          const choiceLabels = Object.values(choice.label);
+          return choiceLabels.includes(item);
+        }
+        return false;
+      });
+      // Position is 1-indexed, so add 1 to array index
+      // Lower position means higher position number (worse rank)
+      const actualPosition = position === -1 ? 0 : position + 1;
+      return { valid: actualPosition > typedParams.position };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsPositionIsLowerThan;
+      if (element.type !== "ranking" || !("choices" in element)) {
+        return t("errors.invalid_format");
+      }
+      const choice = element.choices.find((c) => c.id === typedParams.optionId);
+      const choiceLabel = choice
+        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
+        : typedParams.optionId;
+      return t("errors.position_must_be_lower_than", { option: choiceLabel, position: typedParams.position });
     },
   },
 };

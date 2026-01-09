@@ -73,6 +73,9 @@
     "please_select_an_option": "Por favor selecciona una opción",
     "please_submit_all_rows_before_submitting": "Por favor, responde todas las filas antes de enviar",
     "please_upload_a_file": "Por favor, suba un archivo",
+    "position_must_be": "{option} debe estar en la posición {position}",
+    "position_must_be_higher_than": "{option} debe estar clasificado en una posición superior a {position}",
+    "position_must_be_lower_than": "{option} debe estar clasificado en una posición inferior a {position}",
     "recaptcha_error": {
       "message": "Su respuesta no pudo ser enviada porque fue marcada como actividad automatizada. Si respira, por favor inténtelo de nuevo.",
       "title": "No pudimos verificar que usted es humano."

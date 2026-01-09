@@ -1538,6 +1538,9 @@ checksums:
     environments/surveys/edit/validation/options_selected: 088309b017c07c01494447dba82b2621
     environments/surveys/edit/validation/pattern: c6f01d7bc9baa21a40ea38fa986bd5a0
     environments/surveys/edit/validation/phone: bcd7bd37a475ab1f80ea4c5b4d4d0bb5
+    environments/surveys/edit/validation/position_is: fb9dca7d2c7f94c89c1d04c0a2de0588
+    environments/surveys/edit/validation/position_is_higher_than: 715d51a735b9a11e7f5bc9124e27cbb2
+    environments/surveys/edit/validation/position_is_lower_than: c845f762613d5ed9cb2af4cc9ff1d6b1
     environments/surveys/edit/validation/url: 4006a4d8dfac013758f0053f6aa67cdd
     environments/surveys/edit/validation_logic_and: 3d40ea5f8b18bc7e5129b20c7195f3e0
     environments/surveys/edit/validation_logic_or: a2209364b5c65b4817add1b06ce11b02

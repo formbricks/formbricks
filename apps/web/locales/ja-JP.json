@@ -1612,6 +1612,9 @@
           "options_selected": "個のオプションが選択されている",
           "pattern": "正規表現パターンに一致する",
           "phone": "有効な電話番号である",
+          "position_is": "ポジションは",
+          "position_is_higher_than": "ポジションが次より高い",
+          "position_is_lower_than": "ポジションが次より低い",
           "url": "有効なURLである"
         },
         "validation_logic_and": "AND（すべて満たす必要があります）",

@@ -1612,6 +1612,9 @@
           "options_selected": "opțiuni selectate",
           "pattern": "Se potrivește cu un șablon regex",
           "phone": "Este un număr de telefon valid",
+          "position_is": "Poziția este",
+          "position_is_higher_than": "Poziția este mai mare decât",
+          "position_is_lower_than": "Poziția este mai mică decât",
           "url": "Este un URL valid"
         },
         "validation_logic_and": "ȘI (toate trebuie să fie îndeplinite)",

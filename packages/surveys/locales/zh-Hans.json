@@ -73,6 +73,9 @@
     "please_select_an_option": "请选择一个选项",
     "please_submit_all_rows_before_submitting": "请在提交前回答所有行",
     "please_upload_a_file": "请上传一个文件",
+    "position_must_be": "{option} 必须位于第 {position} 位",
+    "position_must_be_higher_than": "{option} 的排名必须高于第 {position} 位",
+    "position_must_be_lower_than": "{option} 的排名必须低于第 {position} 位",
     "recaptcha_error": {
       "message": "您的响应未能提交，因为它被标记为自动活动。如果您是人类，请重试。",
       "title": "我们无法验证您是人类。"

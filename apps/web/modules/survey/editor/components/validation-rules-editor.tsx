@@ -70,6 +70,9 @@ export const ValidationRulesEditor = ({
     is_not_between: t("environments.surveys.edit.validation.is_not_between"),
     is_selected: t("environments.surveys.edit.validation.is_selected"),
     is_not_selected: t("environments.surveys.edit.validation.is_not_selected"),
+    position_is: t("environments.surveys.edit.validation.position_is"),
+    position_is_higher_than: t("environments.surveys.edit.validation.position_is_higher_than"),
+    position_is_lower_than: t("environments.surveys.edit.validation.position_is_lower_than"),
   };
 
   const sensors = useSensors(
@@ -90,6 +93,22 @@ export const ValidationRulesEditor = ({
       let defaultValue: number | string | undefined = undefined;
       if (config.needsValue && config.valueType === "text") {
         defaultValue = "";
+      } else if (config.needsValue && config.valueType === "option") {
+        // For option type, get first available choice ID
+        if (element && "choices" in element) {
+          const firstChoice = element.choices.find((c) => c.id !== "other" && c.id !== "none");
+          defaultValue = firstChoice?.id ?? "";
+        } else {
+          defaultValue = "";
+        }
+      } else if (config.needsValue && config.valueType === "ranking") {
+        // For ranking type, get first available choice ID and default position 1
+        if (element && "choices" in element) {
+          const firstChoice = element.choices.find((c) => c.id !== "other" && c.id !== "none");
+          defaultValue = firstChoice ? `${firstChoice.id},1` : ",1";
+        } else {
+          defaultValue = ",1";
+        }
       }
       const newRule: TValidationRule = {
         id: uuidv7(),
@@ -120,6 +139,14 @@ export const ValidationRulesEditor = ({
         defaultValue = firstChoice?.id ?? "";
       } else {
         defaultValue = "";
+      }
+    } else if (config.needsValue && config.valueType === "ranking") {
+      // For ranking type, get first available choice ID and default position 1
+      if (element && "choices" in element) {
+        const firstChoice = element.choices.find((c) => c.id !== "other" && c.id !== "none");
+        defaultValue = firstChoice ? `${firstChoice.id},1` : ",1";
+      } else {
+        defaultValue = ",1";
       }
     }
     const newRule: TValidationRule = {
@@ -216,6 +243,16 @@ export const ValidationRulesEditor = ({
               const ruleType = rule.type;
               const config = RULE_TYPE_CONFIG[ruleType];
               const currentValue = getRuleValue(rule);
+
+              // For ranking rules, extract optionId and position from params
+              const rankingParams =
+                ruleType === "positionIs" ||
+                ruleType === "positionIsHigherThan" ||
+                ruleType === "positionIsLowerThan"
+                  ? rule.params
+                  : null;
+              const rankingOptionId = rankingParams?.optionId ?? "";
+              const rankingPosition = rankingParams?.position ?? 1;
 
               // Get available types for this rule (current type + unused types, no duplicates)
               const otherAvailableTypes = getAvailableRuleTypes(
@@ -316,6 +353,56 @@ export const ValidationRulesEditor = ({
                                       })}
                                 </SelectContent>
                               </Select>
+                            );
+                          }
+                          if (config.valueType === "ranking") {
+                            // Ranking rules: option selector + position input
+                            return (
+                              <div className="flex w-full items-center gap-2">
+                                <Select
+                                  value={rankingOptionId}
+                                  onValueChange={(optionId) => {
+                                    handleRuleValueChange(rule.id, `${optionId},${rankingPosition}`);
+                                  }}>
+                                  <SelectTrigger className="h-9 min-w-[200px] bg-white">
+                                    <SelectValue placeholder="Select option" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {element &&
+                                      "choices" in element &&
+                                      element.choices
+                                        .filter(
+                                          (choice) =>
+                                            choice.id !== "other" && choice.id !== "none" && "label" in choice
+                                        )
+                                        .map((choice) => {
+                                          const choiceLabel =
+                                            "label" in choice
+                                              ? choice.label.default ||
+                                                Object.values(choice.label)[0] ||
+                                                choice.id
+                                              : choice.id;
+                                          return (
+                                            <SelectItem key={choice.id} value={choice.id}>
+                                              {choiceLabel}
+                                            </SelectItem>
+                                          );
+                                        })}
+                                  </SelectContent>
+                                </Select>
+                                <span className="text-sm text-slate-500">position</span>
+                                <Input
+                                  type="number"
+                                  value={rankingPosition}
+                                  onChange={(e) => {
+                                    const newPosition = Number(e.target.value) || 1;
+                                    handleRuleValueChange(rule.id, `${rankingOptionId},${newPosition}`);
+                                  }}
+                                  placeholder="1"
+                                  className="h-9 w-20 bg-white"
+                                  min={1}
+                                />
+                              </div>
                             );
                           }
                           return (
