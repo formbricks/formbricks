@@ -220,7 +220,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await fillRichTextEditor(page, "Description", params.singleSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
-  await page.getByRole("button", { name: 'Add "Other"', exact: true }).click();
+  await page.getByRole("button", { name: 'Add “Other”', exact: true }).click();
 
   // Multi Select Question
   await page
@@ -440,7 +440,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await fillRichTextEditor(page, "Description", params.singleSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
-  await page.getByRole("button", { name: 'Add "Other"', exact: true }).click();
+  await page.getByRole("button", { name: 'Add “Other”', exact: true }).click();
 
   // Multi Select Question
   await page
