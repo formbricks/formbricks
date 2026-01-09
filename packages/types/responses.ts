@@ -309,6 +309,7 @@ export const ZResponseMeta = z.object({
     .optional(),
   country: z.string().optional(),
   action: z.string().optional(),
+  ipAddress: z.string().optional(),
 });
 
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
@@ -361,6 +362,7 @@ export const ZResponseInput = z.object({
         .optional(),
       country: z.string().optional(),
       action: z.string().optional(),
+      ipAddress: z.string().optional(),
     })
     .optional(),
 });

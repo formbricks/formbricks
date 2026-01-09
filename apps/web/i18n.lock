@@ -1119,6 +1119,8 @@ checksums:
     environments/surveys/edit/cal_username: a4a9c739af909d975beb1bc4998feae9
     environments/surveys/edit/calculate: c5fcf8d3a38706ae2071b6f78339ec68
     environments/surveys/edit/capture_a_new_action_to_trigger_a_survey_on: 73410e9665a37bc4a9747db5d683d36c
+    environments/surveys/edit/capture_ip_address: e950f924f1c0b52f8c5b06ca118e049f
+    environments/surveys/edit/capture_ip_address_description: 932d1b4ad68594d06d4eaf0212f9570c
     environments/surveys/edit/capture_new_action: 0aa2a3c399b62b1a52307deedf4922e8
     environments/surveys/edit/card_arrangement_for_survey_type_derived: c06b9aaebcc11bc16e57a445b62361fc
     environments/surveys/edit/card_background_color: acd5d023e1d1a4471b053dce504c7a83
@@ -1569,6 +1571,7 @@ checksums:
     environments/surveys/responses/error_downloading_responses: 97a79108cfc854834d09cf14c300a291
     environments/surveys/responses/first_name: cf040a5d6a9fd696be400380cc99f54b
     environments/surveys/responses/how_to_identify_users: c886035d9d9a0cfc3fa9703972001044
+    environments/surveys/responses/ip_address: 8f2b4d42a165a4c165eca4d7639ce57e
     environments/surveys/responses/last_name: 2c9a7de7738ca007ba9023c385149c26
     environments/surveys/responses/not_completed: df34eab65a6291f2c5e15a0e349c4eba
     environments/surveys/responses/os: a4c753bb2c004a58d02faeed6b4da476
