@@ -1596,7 +1596,6 @@
           "options_selected": "個選項已選",
           "pattern": "符合正則表達式樣式",
           "phone": "是有效的電話號碼",
-          "required": "為必填",
           "url": "是有效的 URL"
         },
         "validation_rules": "驗證規則",

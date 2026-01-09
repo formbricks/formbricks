@@ -11,6 +11,19 @@ import type {
 import { validators } from "./validators";
 
 /**
+ * Check if a value is empty
+ */
+const isEmpty = (value: TResponseDataValue): boolean => {
+  return (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    (Array.isArray(value) && value.length === 0) ||
+    (typeof value === "object" && !Array.isArray(value) && Object.keys(value as object).length === 0)
+  );
+};
+
+/**
  * Get error message for incomplete ranking
  */
 const getRankingErrorMessage = (
@@ -52,6 +65,46 @@ const getMatrixErrorMessage = (
 };
 
 /**
+ * Get required error message based on element type
+ */
+const getRequiredErrorMessage = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  t: TFunction
+): string => {
+  // Special handling for ranking elements
+  if (element.type === TSurveyElementTypeEnum.Ranking) {
+    const rankingMessage = getRankingErrorMessage(element, value, t);
+    if (rankingMessage) return rankingMessage;
+  }
+
+  // Special handling for matrix elements
+  if (element.type === TSurveyElementTypeEnum.Matrix) {
+    const matrixMessage = getMatrixErrorMessage(element, value, t);
+    if (matrixMessage) return matrixMessage;
+  }
+
+  // Provide element-specific error messages for better UX
+  switch (element.type) {
+    case TSurveyElementTypeEnum.Date:
+      return t("errors.please_select_a_date");
+    case TSurveyElementTypeEnum.Cal:
+      return t("errors.please_book_an_appointment");
+    case TSurveyElementTypeEnum.FileUpload:
+      return t("errors.please_upload_a_file");
+    case TSurveyElementTypeEnum.MultipleChoiceSingle:
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+    case TSurveyElementTypeEnum.NPS:
+    case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.PictureSelection:
+    case TSurveyElementTypeEnum.Matrix:
+      return t("errors.please_select_an_option");
+    default:
+      return t("errors.please_fill_out_this_field");
+  }
+};
+
+/**
  * Get default error message from rule or validator
  */
 const getDefaultErrorMessage = (
@@ -61,6 +114,9 @@ const getDefaultErrorMessage = (
   t: TFunction
 ): string => {
   const validator = validators[rule.type];
+  if (!validator) {
+    return t("errors.invalid_format");
+  }
   return (
     rule.customErrorMessage?.[languageCode] ??
     rule.customErrorMessage?.default ??
@@ -85,6 +141,67 @@ export const validateElementResponse = (
   t: TFunction
 ): TValidationResult => {
   const errors: TValidationError[] = [];
+
+  // First check if element is required (using boolean field, not validation rules)
+  if (element.required) {
+    // Special handling for ranking elements
+    if (element.type === TSurveyElementTypeEnum.Ranking) {
+      const isValueArray = Array.isArray(value);
+      const allItemsRanked = isValueArray && value.length === element.choices.length;
+
+      // If any items are ranked, all must be ranked
+      if (isValueArray && value.length > 0 && !allItemsRanked) {
+        errors.push({
+          ruleId: "required",
+          ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
+          message: getRequiredErrorMessage(element, value, t),
+        } as TValidationError);
+        // Continue to check validation rules even if required fails
+      } else if (isEmpty(value)) {
+        errors.push({
+          ruleId: "required",
+          ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
+          message: getRequiredErrorMessage(element, value, t),
+        } as TValidationError);
+        // Continue to check validation rules even if required fails
+      }
+    }
+    // Special handling for matrix elements
+    else if (element.type === TSurveyElementTypeEnum.Matrix) {
+      if (isEmpty(value)) {
+        errors.push({
+          ruleId: "required",
+          ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
+          message: getRequiredErrorMessage(element, value, t),
+        } as TValidationError);
+        // Continue to check validation rules even if required fails
+      } else if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+        const answeredRows = Object.values(value).filter(
+          (v) => v !== "" && v !== null && v !== undefined
+        ).length;
+        const allRowsAnswered = answeredRows === element.rows.length;
+        if (!allRowsAnswered) {
+          errors.push({
+            ruleId: "required",
+            ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
+            message: getRequiredErrorMessage(element, value, t),
+          } as TValidationError);
+          // Continue to check validation rules even if required fails
+        }
+      }
+    }
+    // Standard required check for other element types
+    else if (isEmpty(value)) {
+      errors.push({
+        ruleId: "required",
+        ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
+        message: getRequiredErrorMessage(element, value, t),
+      } as TValidationError);
+      // Continue to check validation rules even if required fails
+    }
+  }
+
+  // Then check validation rules
   const rules: TValidationRule[] = [
     ...((element as TSurveyElement & { validationRules?: TValidationRule[] }).validationRules ?? []),
   ];
@@ -101,12 +218,7 @@ export const validateElementResponse = (
     const checkResult = validator.check(value, rule.params, element);
 
     if (!checkResult.valid) {
-      // Try to get element-specific error messages first
-      const rankingMessage = ruleType === "required" ? getRankingErrorMessage(element, value, t) : null;
-      const matrixMessage = ruleType === "required" ? getMatrixErrorMessage(element, value, t) : null;
-
-      const message =
-        rankingMessage ?? matrixMessage ?? getDefaultErrorMessage(rule, element, languageCode, t);
+      const message = getDefaultErrorMessage(rule, element, languageCode, t);
 
       errors.push({
         ruleId: rule.id,

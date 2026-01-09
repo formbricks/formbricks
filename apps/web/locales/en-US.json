@@ -1596,7 +1596,6 @@
           "options_selected": "options selected",
           "pattern": "Matches regex pattern",
           "phone": "Is valid phone",
-          "required": "Is required",
           "url": "Is valid URL"
         },
         "validation_rules": "Validation rules",

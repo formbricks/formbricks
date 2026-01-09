@@ -32,7 +32,7 @@ export function OpenTextElement({
 }: Readonly<OpenTextElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
-  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
+  const isRequired = element.required;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const handleChange = (inputValue: string) => {

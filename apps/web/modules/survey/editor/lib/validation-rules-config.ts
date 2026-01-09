@@ -11,10 +11,6 @@ export const RULE_TYPE_CONFIG: Record<
     unitOptions?: { value: string; labelKey: string }[];
   }
 > = {
-  required: {
-    labelKey: "required",
-    needsValue: false,
-  },
   minLength: {
     labelKey: "min_length",
     needsValue: true,

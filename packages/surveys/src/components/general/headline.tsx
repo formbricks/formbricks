@@ -1,22 +1,21 @@
 import DOMPurify from "isomorphic-dompurify";
 import { useTranslation } from "react-i18next";
-import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { isValidHTML, stripInlineStyles } from "@/lib/html-utils";
 
 interface HeadlineProps {
   headline: string;
   elementId: string;
-  validationRules?: TValidationRule[];
+  required?: boolean;
   alignTextCenter?: boolean;
 }
 
 export function Headline({
   headline,
   elementId,
-  validationRules,
+  required = false,
   alignTextCenter = false,
 }: Readonly<HeadlineProps>) {
-  const hasRequiredRule = validationRules?.some((rule) => rule.type === "required") ?? false;
+  const hasRequiredRule = required;
   const { t } = useTranslation();
   const isQuestionCard = elementId !== "EndingCard" && elementId !== "welcomeCard";
   // Strip inline styles BEFORE parsing to avoid CSP violations
@@ -25,9 +24,9 @@ export function Headline({
   const safeHtml =
     isHeadlineHtml && strippedHeadline
       ? DOMPurify.sanitize(strippedHeadline, {
-        ADD_ATTR: ["target"],
-        FORBID_ATTR: ["style"], // Additional safeguard to remove any remaining inline styles
-      })
+          ADD_ATTR: ["target"],
+          FORBID_ATTR: ["style"], // Additional safeguard to remove any remaining inline styles
+        })
       : "";
 
   return (

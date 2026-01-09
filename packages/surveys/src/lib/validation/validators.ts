@@ -14,7 +14,6 @@ import type {
   TValidationRuleParamsMinValue,
   TValidationRuleParamsPattern,
   TValidationRuleParamsPhone,
-  TValidationRuleParamsRequired,
   TValidationRuleParamsUrl,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
@@ -73,85 +72,10 @@ const parseNumericValue = (value: TResponseDataValue): number | null => {
  * Registry of all validators, keyed by rule type
  */
 export const validators: Record<TValidationRuleType, TValidator> = {
-  required: {
-    check: (
-      value: TResponseDataValue,
-      _params: TValidationRuleParams,
-      element: TSurveyElement
-    ): TValidatorCheckResult => {
-      // Special handling for ranking elements
-      if (element.type === TSurveyElementTypeEnum.Ranking) {
-        const rankingElement = element;
-        const isValueArray = Array.isArray(value);
-        const allItemsRanked = isValueArray && value.length === rankingElement.choices.length;
-
-        // If any items are ranked, all must be ranked
-        if (isValueArray && value.length > 0 && !allItemsRanked) {
-          return { valid: false };
-        }
-
-        // Otherwise, check if empty (standard required check)
-        return { valid: !isEmpty(value) };
-      }
-
-      // Special handling for matrix elements
-      if (element.type === TSurveyElementTypeEnum.Matrix) {
-        const matrixElement = element;
-
-        // If value is empty, invalid
-        if (isEmpty(value)) {
-          return { valid: false };
-        }
-
-        // Check if all rows are answered
-        // Note: We can't use languageCode here, so we check if the number of answered rows
-        // matches the number of rows in the element
-        if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-          const answeredRows = Object.values(value).filter(
-            (v) => v !== "" && v !== null && v !== undefined
-          ).length;
-          const allRowsAnswered = answeredRows === matrixElement.rows.length;
-          return { valid: allRowsAnswered };
-        }
-
-        return { valid: false };
-      }
-
-      // Standard required check for other element types
-      return { valid: !isEmpty(value) };
-    },
-    getDefaultMessage: (
-      _params: TValidationRuleParamsRequired,
-      element: TSurveyElement,
-      t: TFunction
-    ): string => {
-      // Provide element-specific error messages for better UX
-      switch (element.type) {
-        case TSurveyElementTypeEnum.Date:
-          return t("errors.please_select_a_date");
-        case TSurveyElementTypeEnum.Cal:
-          return t("errors.please_book_an_appointment");
-        case TSurveyElementTypeEnum.FileUpload:
-          return t("errors.please_upload_a_file");
-        case TSurveyElementTypeEnum.Ranking:
-          return t("errors.please_select_an_option");
-        case TSurveyElementTypeEnum.MultipleChoiceSingle:
-        case TSurveyElementTypeEnum.MultipleChoiceMulti:
-        case TSurveyElementTypeEnum.NPS:
-        case TSurveyElementTypeEnum.Rating:
-        case TSurveyElementTypeEnum.PictureSelection:
-        case TSurveyElementTypeEnum.Matrix:
-          return t("errors.please_select_an_option");
-        default:
-          return t("errors.please_fill_out_this_field");
-      }
-    },
-  },
-
   minLength: {
     check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
       const typedParams = params as TValidationRuleParamsMinLength;
-      // Skip validation if value is not a string or is empty (let required handle empty)
+      // Skip validation if value is not a string or is empty
       if (typeof value !== "string" || value === "") {
         return { valid: true };
       }
@@ -181,7 +105,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
   pattern: {
     check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
       const typedParams = params as TValidationRuleParamsPattern;
-      // Skip validation if value is empty (let required handle empty)
+      // Skip validation if value is empty
       if (!value || typeof value !== "string" || value === "") {
         return { valid: true };
       }
@@ -202,7 +126,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
 
   email: {
     check: (value: TResponseDataValue): TValidatorCheckResult => {
-      // Skip validation if value is empty (let required handle empty)
+      // Skip validation if value is empty
       if (!value || typeof value !== "string" || value === "") {
         return { valid: true };
       }
@@ -219,7 +143,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
 
   url: {
     check: (value: TResponseDataValue): TValidatorCheckResult => {
-      // Skip validation if value is empty (let required handle empty)
+      // Skip validation if value is empty
       if (!value || typeof value !== "string" || value === "") {
         return { valid: true };
       }
@@ -236,7 +160,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
 
   phone: {
     check: (value: TResponseDataValue): TValidatorCheckResult => {
-      // Skip validation if value is empty (let required handle empty)
+      // Skip validation if value is empty
       if (!value || typeof value !== "string" || value === "") {
         return { valid: true };
       }

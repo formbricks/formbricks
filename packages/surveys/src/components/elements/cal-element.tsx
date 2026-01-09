@@ -56,7 +56,7 @@ export function CalElement({
         <Headline
           headline={getLocalizedValue(element.headline, languageCode)}
           elementId={element.id}
-          validationRules={element.validationRules}
+          required={element.required}
         />
         <Subheader
           subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}

@@ -1596,7 +1596,6 @@
           "options_selected": "项已选择",
           "pattern": "匹配正则表达式模式",
           "phone": "是有效的手机号",
-          "required": "为必填项",
           "url": "是有效的URL"
         },
         "validation_rules": "校验规则",

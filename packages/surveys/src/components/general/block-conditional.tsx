@@ -147,7 +147,7 @@ export function BlockConditional({
     response: unknown,
     form: HTMLFormElement
   ): boolean => {
-    const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
+    const isRequired = element.required;
     const isValueArray = Array.isArray(response);
     const allItemsRanked = isValueArray && response.length === element.choices.length;
 
@@ -206,8 +206,7 @@ export function BlockConditional({
 
     // Custom validation for matrix questions
     if (element.type === TSurveyElementTypeEnum.Matrix) {
-      const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
-      if (isRequired && (!response || hasUnansweredRows(response, element))) {
+      if (element.required && (!response || hasUnansweredRows(response, element))) {
         form.requestSubmit();
         return false;
       }
@@ -216,8 +215,7 @@ export function BlockConditional({
     // For other element types, check if required fields are empty
     // CTA elements should not block navigation even if marked required (as they are informational)
     if (element.type !== TSurveyElementTypeEnum.CTA) {
-      const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
-      if (isRequired && isEmptyResponse(response)) {
+      if (element.required && isEmptyResponse(response)) {
         form.requestSubmit();
         return false;
       }

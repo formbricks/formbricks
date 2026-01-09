@@ -1596,7 +1596,6 @@
           "options_selected": "opțiuni selectate",
           "pattern": "Se potrivește cu un șablon regex",
           "phone": "Este un număr de telefon valid",
-          "required": "Este obligatoriu",
           "url": "Este un URL valid"
         },
         "validation_rules": "Reguli de validare",

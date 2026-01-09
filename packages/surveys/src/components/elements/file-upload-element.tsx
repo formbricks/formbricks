@@ -39,7 +39,7 @@ export function FileUploadElement({
   const [fileErrorMessage, setFileErrorMessage] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;
-  const isRequired = element.validationRules?.some((rule) => rule.type === "required") ?? false;
+  const isRequired = element.required;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();

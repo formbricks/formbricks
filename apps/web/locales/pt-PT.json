@@ -1596,7 +1596,6 @@
           "options_selected": "opções selecionadas",
           "pattern": "Coincide com o padrão regex",
           "phone": "É um telefone válido",
-          "required": "É obrigatório",
           "url": "É um URL válido"
         },
         "validation_rules": "Regras de validação",

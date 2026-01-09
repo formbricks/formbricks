@@ -36,7 +36,6 @@ export const ValidationRulesEditor = ({
   const { t } = useTranslation();
 
   const ruleLabels: Record<string, string> = {
-    required: t("environments.surveys.edit.validation.required"),
     min_length: t("environments.surveys.edit.validation.min_length"),
     max_length: t("environments.surveys.edit.validation.max_length"),
     pattern: t("environments.surveys.edit.validation.pattern"),

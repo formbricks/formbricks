@@ -3,9 +3,6 @@ import { ZI18nString } from "../i18n";
 
 // Validation rule type enum - extensible for future rule types
 export const ZValidationRuleType = z.enum([
-  // Universal rules
-  "required",
-
   // Text/OpenText rules
   "minLength",
   "maxLength",
@@ -26,8 +23,6 @@ export const ZValidationRuleType = z.enum([
 export type TValidationRuleType = z.infer<typeof ZValidationRuleType>;
 
 // Rule params - union for type-safe params per rule type (type is now at rule level)
-export const ZValidationRuleParamsRequired = z.object({});
-
 export const ZValidationRuleParamsMinLength = z.object({
   min: z.number().min(0),
 });
@@ -65,7 +60,6 @@ export const ZValidationRuleParamsMaxSelections = z.object({
 
 // Union of all params types
 export const ZValidationRuleParams = z.union([
-  ZValidationRuleParamsRequired,
   ZValidationRuleParamsMinLength,
   ZValidationRuleParamsMaxLength,
   ZValidationRuleParamsPattern,
@@ -81,7 +75,6 @@ export const ZValidationRuleParams = z.union([
 export type TValidationRuleParams = z.infer<typeof ZValidationRuleParams>;
 
 // Extract specific param types for validators
-export type TValidationRuleParamsRequired = z.infer<typeof ZValidationRuleParamsRequired>;
 export type TValidationRuleParamsMinLength = z.infer<typeof ZValidationRuleParamsMinLength>;
 export type TValidationRuleParamsMaxLength = z.infer<typeof ZValidationRuleParamsMaxLength>;
 export type TValidationRuleParamsPattern = z.infer<typeof ZValidationRuleParamsPattern>;
@@ -95,12 +88,6 @@ export type TValidationRuleParamsMaxSelections = z.infer<typeof ZValidationRuleP
 
 // Validation rule stored on element - discriminated union with type at top level
 export const ZValidationRule = z.discriminatedUnion("type", [
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  }),
   z.object({
     id: z.string(),
     type: z.literal("minLength"),
@@ -171,7 +158,6 @@ export type TValidationRules = z.infer<typeof ZValidationRules>;
 
 // Applicable rules per element type - const arrays for type inference (must be defined before types)
 const OPEN_TEXT_RULES = [
-  "required",
   "minLength",
   "maxLength",
   "pattern",
@@ -182,19 +168,19 @@ const OPEN_TEXT_RULES = [
   "maxValue",
 ] as const;
 
-const MULTIPLE_CHOICE_SINGLE_RULES = ["required"] as const;
-const MULTIPLE_CHOICE_MULTI_RULES = ["required", "minSelections", "maxSelections"] as const;
-const RATING_RULES = ["required"] as const;
-const NPS_RULES = ["required"] as const;
-const DATE_RULES = ["required"] as const;
-const CONSENT_RULES = ["required"] as const;
-const MATRIX_RULES = ["required"] as const;
-const RANKING_RULES = ["required"] as const;
-const FILE_UPLOAD_RULES = ["required"] as const;
-const PICTURE_SELECTION_RULES = ["required", "minSelections", "maxSelections"] as const;
-const ADDRESS_RULES = ["required"] as const;
-const CONTACT_INFO_RULES = ["required"] as const;
-const CAL_RULES = ["required"] as const;
+const MULTIPLE_CHOICE_SINGLE_RULES = [] as const;
+const MULTIPLE_CHOICE_MULTI_RULES = ["minSelections", "maxSelections"] as const;
+const RATING_RULES = [] as const;
+const NPS_RULES = [] as const;
+const DATE_RULES = [] as const;
+const CONSENT_RULES = [] as const;
+const MATRIX_RULES = [] as const;
+const RANKING_RULES = [] as const;
+const FILE_UPLOAD_RULES = [] as const;
+const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
+const ADDRESS_RULES = [] as const;
+const CONTACT_INFO_RULES = [] as const;
+const CAL_RULES = [] as const;
 const CTA_RULES = [] as const;
 
 // Applicable rules per element type
@@ -271,12 +257,6 @@ export const ZValidationRulesForOpenText: z.ZodType<TValidationRulesForOpenText>
   z.discriminatedUnion("type", [
     z.object({
       id: z.string(),
-      type: z.literal("required"),
-      params: ZValidationRuleParamsRequired,
-      customErrorMessage: ZI18nString.optional(),
-    }),
-    z.object({
-      id: z.string(),
       type: z.literal("minLength"),
       params: ZValidationRuleParamsMinLength,
       customErrorMessage: ZI18nString.optional(),
@@ -327,24 +307,11 @@ export const ZValidationRulesForOpenText: z.ZodType<TValidationRulesForOpenText>
 );
 
 export const ZValidationRulesForMultipleChoiceSingle: z.ZodType<TValidationRulesForMultipleChoiceSingle> =
-  z.array(
-    z.object({
-      id: z.string(),
-      type: z.literal("required"),
-      params: ZValidationRuleParamsRequired,
-      customErrorMessage: ZI18nString.optional(),
-    })
-  );
+  z.array(z.never());
 
 export const ZValidationRulesForMultipleChoiceMulti: z.ZodType<TValidationRulesForMultipleChoiceMulti> =
   z.array(
     z.discriminatedUnion("type", [
-      z.object({
-        id: z.string(),
-        type: z.literal("required"),
-        params: ZValidationRuleParamsRequired,
-        customErrorMessage: ZI18nString.optional(),
-      }),
       z.object({
         id: z.string(),
         type: z.literal("minSelections"),
@@ -360,77 +327,22 @@ export const ZValidationRulesForMultipleChoiceMulti: z.ZodType<TValidationRulesF
     ])
   );
 
-export const ZValidationRulesForRating: z.ZodType<TValidationRulesForRating> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForRating: z.ZodType<TValidationRulesForRating> = z.array(z.never());
 
-export const ZValidationRulesForNPS: z.ZodType<TValidationRulesForNPS> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForNPS: z.ZodType<TValidationRulesForNPS> = z.array(z.never());
 
-export const ZValidationRulesForDate: z.ZodType<TValidationRulesForDate> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForDate: z.ZodType<TValidationRulesForDate> = z.array(z.never());
 
-export const ZValidationRulesForConsent: z.ZodType<TValidationRulesForConsent> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForConsent: z.ZodType<TValidationRulesForConsent> = z.array(z.never());
 
-export const ZValidationRulesForMatrix: z.ZodType<TValidationRulesForMatrix> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForMatrix: z.ZodType<TValidationRulesForMatrix> = z.array(z.never());
 
-export const ZValidationRulesForRanking: z.ZodType<TValidationRulesForRanking> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForRanking: z.ZodType<TValidationRulesForRanking> = z.array(z.never());
 
-export const ZValidationRulesForFileUpload: z.ZodType<TValidationRulesForFileUpload> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForFileUpload: z.ZodType<TValidationRulesForFileUpload> = z.array(z.never());
 
 export const ZValidationRulesForPictureSelection: z.ZodType<TValidationRulesForPictureSelection> = z.array(
   z.discriminatedUnion("type", [
-    z.object({
-      id: z.string(),
-      type: z.literal("required"),
-      params: ZValidationRuleParamsRequired,
-      customErrorMessage: ZI18nString.optional(),
-    }),
     z.object({
       id: z.string(),
       type: z.literal("minSelections"),
@@ -446,31 +358,10 @@ export const ZValidationRulesForPictureSelection: z.ZodType<TValidationRulesForP
   ])
 );
 
-export const ZValidationRulesForAddress: z.ZodType<TValidationRulesForAddress> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForAddress: z.ZodType<TValidationRulesForAddress> = z.array(z.never());
 
-export const ZValidationRulesForContactInfo: z.ZodType<TValidationRulesForContactInfo> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForContactInfo: z.ZodType<TValidationRulesForContactInfo> = z.array(z.never());
 
-export const ZValidationRulesForCal: z.ZodType<TValidationRulesForCal> = z.array(
-  z.object({
-    id: z.string(),
-    type: z.literal("required"),
-    params: ZValidationRuleParamsRequired,
-    customErrorMessage: ZI18nString.optional(),
-  })
-);
+export const ZValidationRulesForCal: z.ZodType<TValidationRulesForCal> = z.array(z.never());
 
 export const ZValidationRulesForCTA: z.ZodType<TValidationRulesForCTA> = z.array(z.never());

@@ -1596,7 +1596,6 @@
           "options_selected": "個のオプションが選択されている",
           "pattern": "正規表現パターンに一致する",
           "phone": "有効な電話番号である",
-          "required": "必須である",
           "url": "有効なURLである"
         },
         "validation_rules": "検証ルール",

@@ -1596,7 +1596,6 @@
           "options_selected": "opties geselecteerd",
           "pattern": "Komt overeen met regex-patroon",
           "phone": "Is geldig telefoonnummer",
-          "required": "Is verplicht",
           "url": "Is geldige URL"
         },
         "validation_rules": "Validatieregels",

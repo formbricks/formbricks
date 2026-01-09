@@ -1596,7 +1596,6 @@
           "options_selected": "valda alternativ",
           "pattern": "Matchar regexmönster",
           "phone": "Är ett giltigt telefonnummer",
-          "required": "Är obligatorisk",
           "url": "Är en giltig URL"
         },
         "validation_rules": "Valideringsregler",

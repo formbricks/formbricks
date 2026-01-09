@@ -1596,7 +1596,6 @@
           "options_selected": "options sélectionnées",
           "pattern": "Correspond au modèle d'expression régulière",
           "phone": "Est un numéro de téléphone valide",
-          "required": "Est requis",
           "url": "Est une URL valide"
         },
         "validation_rules": "Règles de validation",

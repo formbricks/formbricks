@@ -46,8 +46,6 @@ export const createRuleParams = (
   value?: number | string
 ): TValidationRule["params"] => {
   switch (ruleType) {
-    case "required":
-      return {};
     case "minLength":
       return { min: Number(value) || 0 };
     case "maxLength":
