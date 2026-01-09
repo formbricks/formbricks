@@ -6,7 +6,6 @@ import { validateInputs } from "@/lib/utils/validate";
 
 export type TMailingListId = "security" | "product-updates";
 
-// Hardcoded endpoint URLs to prevent SSRF - only these specific URLs are allowed
 const MAILING_LIST_ENDPOINTS: Record<TMailingListId, string> = {
   // TODO: Update endpoint URLs for production
   security: "http://localhost:8080/api/v1/public/mailing/security/subscriptions",
