@@ -45,6 +45,16 @@
       "title": "هذا الجهاز لا يدعم حماية البريد المزعج."
     },
     "invalid_format": "يرجى إدخال تنسيق صالح",
+    "is_between": "يرجى اختيار تاريخ بين {startDate} و {endDate}",
+    "is_earlier_than": "يرجى اختيار تاريخ أقدم من {date}",
+    "is_greater_than": "يرجى إدخال قيمة أكبر من {min}",
+    "is_later_than": "يرجى اختيار تاريخ أحدث من {date}",
+    "is_less_than": "يرجى إدخال قيمة أقل من {max}",
+    "is_longer_than": "يرجى إدخال أكثر من {min} حرفًا",
+    "is_not_between": "يرجى اختيار تاريخ ليس بين {startDate} و {endDate}",
+    "is_on_or_earlier_than": "يرجى اختيار تاريخ في {date} أو قبله",
+    "is_on_or_later_than": "يرجى اختيار تاريخ في {date} أو بعده",
+    "is_shorter_than": "يرجى إدخال أقل من {max} حرفًا",
     "max_length": "يرجى إدخال {max} حرفًا كحد أقصى",
     "max_selections": "يرجى اختيار {max} خيارات كحد أقصى",
     "max_value": "يرجى إدخال قيمة لا تزيد عن {max}",
@@ -64,6 +74,10 @@
     "recaptcha_error": {
       "message": "تعذر إرسال ردك لأنه تم تصنيفه كنشاط آلي. إذا كنت تتنفس، يرجى المحاولة مرة أخرى.",
       "title": "لم نتمكن من التحقق من أنك إنسان."
-    }
+    },
+    "value_must_contain": "يجب أن تحتوي القيمة على {value}",
+    "value_must_equal": "يجب أن تساوي القيمة {value}",
+    "value_must_not_contain": "يجب ألا تحتوي القيمة على {value}",
+    "value_must_not_equal": "يجب ألا تساوي القيمة {value}"
   }
 }

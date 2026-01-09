@@ -10,14 +10,30 @@ export const ZValidationRuleType = z.enum([
   "email",
   "url",
   "phone",
+  "equals",
+  "doesNotEqual",
+  "contains",
+  "doesNotContain",
+  "isLongerThan",
+  "isShorterThan",
 
   // Numeric rules (for OpenText inputType=number)
   "minValue",
   "maxValue",
+  "isGreaterThan",
+  "isLessThan",
 
   // Selection rules (MultiSelect, PictureSelection)
   "minSelections",
   "maxSelections",
+
+  // Date rules
+  "isOnOrLaterThan",
+  "isLaterThan",
+  "isOnOrEarlierThan",
+  "isEarlierThan",
+  "isBetween",
+  "isNotBetween",
 ]);
 
 export type TValidationRuleType = z.infer<typeof ZValidationRuleType>;
@@ -58,6 +74,64 @@ export const ZValidationRuleParamsMaxSelections = z.object({
   max: z.number().min(1),
 });
 
+export const ZValidationRuleParamsEquals = z.object({
+  value: z.string(),
+});
+
+export const ZValidationRuleParamsDoesNotEqual = z.object({
+  value: z.string(),
+});
+
+export const ZValidationRuleParamsContains = z.object({
+  value: z.string(),
+});
+
+export const ZValidationRuleParamsDoesNotContain = z.object({
+  value: z.string(),
+});
+
+export const ZValidationRuleParamsIsLongerThan = z.object({
+  min: z.number().min(0),
+});
+
+export const ZValidationRuleParamsIsShorterThan = z.object({
+  max: z.number().min(1),
+});
+
+export const ZValidationRuleParamsIsGreaterThan = z.object({
+  min: z.number(),
+});
+
+export const ZValidationRuleParamsIsLessThan = z.object({
+  max: z.number(),
+});
+
+export const ZValidationRuleParamsIsOnOrLaterThan = z.object({
+  date: z.string(), // YYYY-MM-DD format
+});
+
+export const ZValidationRuleParamsIsLaterThan = z.object({
+  date: z.string(), // YYYY-MM-DD format
+});
+
+export const ZValidationRuleParamsIsOnOrEarlierThan = z.object({
+  date: z.string(), // YYYY-MM-DD format
+});
+
+export const ZValidationRuleParamsIsEarlierThan = z.object({
+  date: z.string(), // YYYY-MM-DD format
+});
+
+export const ZValidationRuleParamsIsBetween = z.object({
+  startDate: z.string(), // YYYY-MM-DD format
+  endDate: z.string(), // YYYY-MM-DD format
+});
+
+export const ZValidationRuleParamsIsNotBetween = z.object({
+  startDate: z.string(), // YYYY-MM-DD format
+  endDate: z.string(), // YYYY-MM-DD format
+});
+
 // Union of all params types
 export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsMinLength,
@@ -66,10 +140,24 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsEmail,
   ZValidationRuleParamsUrl,
   ZValidationRuleParamsPhone,
+  ZValidationRuleParamsEquals,
+  ZValidationRuleParamsDoesNotEqual,
+  ZValidationRuleParamsContains,
+  ZValidationRuleParamsDoesNotContain,
+  ZValidationRuleParamsIsLongerThan,
+  ZValidationRuleParamsIsShorterThan,
   ZValidationRuleParamsMinValue,
   ZValidationRuleParamsMaxValue,
+  ZValidationRuleParamsIsGreaterThan,
+  ZValidationRuleParamsIsLessThan,
   ZValidationRuleParamsMinSelections,
   ZValidationRuleParamsMaxSelections,
+  ZValidationRuleParamsIsOnOrLaterThan,
+  ZValidationRuleParamsIsLaterThan,
+  ZValidationRuleParamsIsOnOrEarlierThan,
+  ZValidationRuleParamsIsEarlierThan,
+  ZValidationRuleParamsIsBetween,
+  ZValidationRuleParamsIsNotBetween,
 ]);
 
 export type TValidationRuleParams = z.infer<typeof ZValidationRuleParams>;
@@ -85,6 +173,20 @@ export type TValidationRuleParamsMinValue = z.infer<typeof ZValidationRuleParams
 export type TValidationRuleParamsMaxValue = z.infer<typeof ZValidationRuleParamsMaxValue>;
 export type TValidationRuleParamsMinSelections = z.infer<typeof ZValidationRuleParamsMinSelections>;
 export type TValidationRuleParamsMaxSelections = z.infer<typeof ZValidationRuleParamsMaxSelections>;
+export type TValidationRuleParamsEquals = z.infer<typeof ZValidationRuleParamsEquals>;
+export type TValidationRuleParamsDoesNotEqual = z.infer<typeof ZValidationRuleParamsDoesNotEqual>;
+export type TValidationRuleParamsContains = z.infer<typeof ZValidationRuleParamsContains>;
+export type TValidationRuleParamsDoesNotContain = z.infer<typeof ZValidationRuleParamsDoesNotContain>;
+export type TValidationRuleParamsIsLongerThan = z.infer<typeof ZValidationRuleParamsIsLongerThan>;
+export type TValidationRuleParamsIsShorterThan = z.infer<typeof ZValidationRuleParamsIsShorterThan>;
+export type TValidationRuleParamsIsGreaterThan = z.infer<typeof ZValidationRuleParamsIsGreaterThan>;
+export type TValidationRuleParamsIsLessThan = z.infer<typeof ZValidationRuleParamsIsLessThan>;
+export type TValidationRuleParamsIsOnOrLaterThan = z.infer<typeof ZValidationRuleParamsIsOnOrLaterThan>;
+export type TValidationRuleParamsIsLaterThan = z.infer<typeof ZValidationRuleParamsIsLaterThan>;
+export type TValidationRuleParamsIsOnOrEarlierThan = z.infer<typeof ZValidationRuleParamsIsOnOrEarlierThan>;
+export type TValidationRuleParamsIsEarlierThan = z.infer<typeof ZValidationRuleParamsIsEarlierThan>;
+export type TValidationRuleParamsIsBetween = z.infer<typeof ZValidationRuleParamsIsBetween>;
+export type TValidationRuleParamsIsNotBetween = z.infer<typeof ZValidationRuleParamsIsNotBetween>;
 
 // Validation rule stored on element - discriminated union with type at top level
 export const ZValidationRule = z.discriminatedUnion("type", [
@@ -148,6 +250,90 @@ export const ZValidationRule = z.discriminatedUnion("type", [
     params: ZValidationRuleParamsMaxSelections,
     customErrorMessage: ZI18nString.optional(),
   }),
+  z.object({
+    id: z.string(),
+    type: z.literal("equals"),
+    params: ZValidationRuleParamsEquals,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("doesNotEqual"),
+    params: ZValidationRuleParamsDoesNotEqual,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("contains"),
+    params: ZValidationRuleParamsContains,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("doesNotContain"),
+    params: ZValidationRuleParamsDoesNotContain,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isLongerThan"),
+    params: ZValidationRuleParamsIsLongerThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isShorterThan"),
+    params: ZValidationRuleParamsIsShorterThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isGreaterThan"),
+    params: ZValidationRuleParamsIsGreaterThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isLessThan"),
+    params: ZValidationRuleParamsIsLessThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isOnOrLaterThan"),
+    params: ZValidationRuleParamsIsOnOrLaterThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isLaterThan"),
+    params: ZValidationRuleParamsIsLaterThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isOnOrEarlierThan"),
+    params: ZValidationRuleParamsIsOnOrEarlierThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isEarlierThan"),
+    params: ZValidationRuleParamsIsEarlierThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isBetween"),
+    params: ZValidationRuleParamsIsBetween,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isNotBetween"),
+    params: ZValidationRuleParamsIsNotBetween,
+    customErrorMessage: ZI18nString.optional(),
+  }),
 ]);
 
 export type TValidationRule = z.infer<typeof ZValidationRule>;
@@ -164,15 +350,30 @@ const OPEN_TEXT_RULES = [
   "email",
   "url",
   "phone",
+  "equals",
+  "doesNotEqual",
+  "contains",
+  "doesNotContain",
+  "isLongerThan",
+  "isShorterThan",
   "minValue",
   "maxValue",
+  "isGreaterThan",
+  "isLessThan",
 ] as const;
 
 const MULTIPLE_CHOICE_SINGLE_RULES = [] as const;
 const MULTIPLE_CHOICE_MULTI_RULES = ["minSelections", "maxSelections"] as const;
 const RATING_RULES = [] as const;
 const NPS_RULES = [] as const;
-const DATE_RULES = [] as const;
+const DATE_RULES = [
+  "isOnOrLaterThan",
+  "isLaterThan",
+  "isOnOrEarlierThan",
+  "isEarlierThan",
+  "isBetween",
+  "isNotBetween",
+] as const;
 const CONSENT_RULES = [] as const;
 const MATRIX_RULES = [] as const;
 const RANKING_RULES = [] as const;
@@ -303,6 +504,54 @@ export const ZValidationRulesForOpenText: z.ZodType<TValidationRulesForOpenText>
       params: ZValidationRuleParamsMaxValue,
       customErrorMessage: ZI18nString.optional(),
     }),
+    z.object({
+      id: z.string(),
+      type: z.literal("equals"),
+      params: ZValidationRuleParamsEquals,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("doesNotEqual"),
+      params: ZValidationRuleParamsDoesNotEqual,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("contains"),
+      params: ZValidationRuleParamsContains,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("doesNotContain"),
+      params: ZValidationRuleParamsDoesNotContain,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("isLongerThan"),
+      params: ZValidationRuleParamsIsLongerThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("isShorterThan"),
+      params: ZValidationRuleParamsIsShorterThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("isGreaterThan"),
+      params: ZValidationRuleParamsIsGreaterThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("isLessThan"),
+      params: ZValidationRuleParamsIsLessThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
   ])
 );
 
@@ -331,7 +580,46 @@ export const ZValidationRulesForRating: z.ZodType<TValidationRulesForRating> = z
 
 export const ZValidationRulesForNPS: z.ZodType<TValidationRulesForNPS> = z.array(z.never());
 
-export const ZValidationRulesForDate: z.ZodType<TValidationRulesForDate> = z.array(z.never());
+export const ZValidationRulesForDate: z.ZodType<TValidationRulesForDate> = z.array(
+  z.discriminatedUnion("type", [
+    z.object({
+      id: z.string(),
+      type: z.literal("isOnOrLaterThan"),
+      params: ZValidationRuleParamsIsOnOrLaterThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("isLaterThan"),
+      params: ZValidationRuleParamsIsLaterThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("isOnOrEarlierThan"),
+      params: ZValidationRuleParamsIsOnOrEarlierThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("isEarlierThan"),
+      params: ZValidationRuleParamsIsEarlierThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("isBetween"),
+      params: ZValidationRuleParamsIsBetween,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("isNotBetween"),
+      params: ZValidationRuleParamsIsNotBetween,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+  ])
+);
 
 export const ZValidationRulesForConsent: z.ZodType<TValidationRulesForConsent> = z.array(z.never());
 

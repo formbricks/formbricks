@@ -2,10 +2,23 @@ import type { TFunction } from "i18next";
 import { ZEmail, ZUrl } from "@formbricks/types/common";
 import type { TResponseDataValue } from "@formbricks/types/responses";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type {
   TValidationRuleParams,
+  TValidationRuleParamsContains,
+  TValidationRuleParamsDoesNotContain,
+  TValidationRuleParamsDoesNotEqual,
   TValidationRuleParamsEmail,
+  TValidationRuleParamsEquals,
+  TValidationRuleParamsIsBetween,
+  TValidationRuleParamsIsEarlierThan,
+  TValidationRuleParamsIsGreaterThan,
+  TValidationRuleParamsIsLaterThan,
+  TValidationRuleParamsIsLessThan,
+  TValidationRuleParamsIsLongerThan,
+  TValidationRuleParamsIsNotBetween,
+  TValidationRuleParamsIsOnOrEarlierThan,
+  TValidationRuleParamsIsOnOrLaterThan,
+  TValidationRuleParamsIsShorterThan,
   TValidationRuleParamsMaxLength,
   TValidationRuleParamsMaxSelections,
   TValidationRuleParamsMaxValue,
@@ -248,6 +261,220 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMaxSelections;
       return t("errors.max_selections", { max: typedParams.max });
+    },
+  },
+  equals: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsEquals;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      return { valid: value === typedParams.value };
+    },
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      return t("errors.value_must_equal", { value: (_params as TValidationRuleParamsEquals).value });
+    },
+  },
+  doesNotEqual: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsDoesNotEqual;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      return { valid: value !== typedParams.value };
+    },
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      return t("errors.value_must_not_equal", {
+        value: (_params as TValidationRuleParamsDoesNotEqual).value,
+      });
+    },
+  },
+  contains: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsContains;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      return { valid: value.includes(typedParams.value) };
+    },
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      return t("errors.value_must_contain", { value: (_params as TValidationRuleParamsContains).value });
+    },
+  },
+  doesNotContain: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsDoesNotContain;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      return { valid: !value.includes(typedParams.value) };
+    },
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      return t("errors.value_must_not_contain", {
+        value: (_params as TValidationRuleParamsDoesNotContain).value,
+      });
+    },
+  },
+  isLongerThan: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsLongerThan;
+      // Skip validation if value is not a string or is empty
+      if (typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      return { valid: value.length > typedParams.min };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsLongerThan;
+      return t("errors.is_longer_than", { min: typedParams.min });
+    },
+  },
+  isShorterThan: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsShorterThan;
+      // Skip validation if value is not a string
+      if (typeof value !== "string") {
+        return { valid: true };
+      }
+      return { valid: value.length < typedParams.max };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsShorterThan;
+      return t("errors.is_shorter_than", { max: typedParams.max });
+    },
+  },
+  isGreaterThan: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsGreaterThan;
+      // Skip validation if value is empty (let required handle empty)
+      if (isEmpty(value)) {
+        return { valid: true };
+      }
+
+      const numValue = parseNumericValue(value);
+      if (numValue === null) {
+        return { valid: true }; // Let pattern/type validation handle non-numeric
+      }
+
+      return { valid: numValue > typedParams.min };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsGreaterThan;
+      return t("errors.is_greater_than", { min: typedParams.min });
+    },
+  },
+  isLessThan: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsLessThan;
+      // Skip validation if value is empty (let required handle empty)
+      if (isEmpty(value)) {
+        return { valid: true };
+      }
+
+      const numValue = parseNumericValue(value);
+      if (numValue === null) {
+        return { valid: true }; // Let pattern/type validation handle non-numeric
+      }
+
+      return { valid: numValue < typedParams.max };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsLessThan;
+      return t("errors.is_less_than", { max: typedParams.max });
+    },
+  },
+  isOnOrLaterThan: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsOnOrLaterThan;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      // Compare dates as strings (YYYY-MM-DD format)
+      return { valid: value >= typedParams.date };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsOnOrLaterThan;
+      return t("errors.is_on_or_later_than", { date: typedParams.date });
+    },
+  },
+  isLaterThan: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsLaterThan;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      // Compare dates as strings (YYYY-MM-DD format)
+      return { valid: value > typedParams.date };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsLaterThan;
+      return t("errors.is_later_than", { date: typedParams.date });
+    },
+  },
+  isOnOrEarlierThan: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsOnOrEarlierThan;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      // Compare dates as strings (YYYY-MM-DD format)
+      return { valid: value <= typedParams.date };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsOnOrEarlierThan;
+      return t("errors.is_on_or_earlier_than", { date: typedParams.date });
+    },
+  },
+  isEarlierThan: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsEarlierThan;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      // Compare dates as strings (YYYY-MM-DD format)
+      return { valid: value < typedParams.date };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsEarlierThan;
+      return t("errors.is_earlier_than", { date: typedParams.date });
+    },
+  },
+  isBetween: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsBetween;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      // Compare dates as strings (YYYY-MM-DD format)
+      return { valid: value > typedParams.startDate && value < typedParams.endDate };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsBetween;
+      return t("errors.is_between", { startDate: typedParams.startDate, endDate: typedParams.endDate });
+    },
+  },
+  isNotBetween: {
+    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsNotBetween;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "string" || value === "") {
+        return { valid: true };
+      }
+      // Compare dates as strings (YYYY-MM-DD format)
+      return { valid: value < typedParams.startDate || value > typedParams.endDate };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsNotBetween;
+      return t("errors.is_not_between", { startDate: typedParams.startDate, endDate: typedParams.endDate });
     },
   },
 };

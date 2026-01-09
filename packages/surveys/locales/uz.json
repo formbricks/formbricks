@@ -45,6 +45,16 @@
       "title": "Ushbu qurilma spam himoyasini qo'llab-quvvatlamaydi."
     },
     "invalid_format": "Iltimos, to‘g‘ri formatda kiriting",
+    "is_between": "Iltimos, {startDate} va {endDate} oralig‘idagi sanani tanlang",
+    "is_earlier_than": "Iltimos, {date} dan oldingi sanani tanlang",
+    "is_greater_than": "Iltimos, {min} dan katta qiymat kiriting",
+    "is_later_than": "Iltimos, {date} dan keyingi sanani tanlang",
+    "is_less_than": "Iltimos, {max} dan kichik qiymat kiriting",
+    "is_longer_than": "Iltimos, {min} tadan ko‘p belgi kiriting",
+    "is_not_between": "Iltimos, {startDate} va {endDate} oralig‘idan tashqaridagi sanani tanlang",
+    "is_on_or_earlier_than": "Iltimos, {date} yoki undan oldingi sanani tanlang",
+    "is_on_or_later_than": "Iltimos, {date} yoki undan keyingi sanani tanlang",
+    "is_shorter_than": "Iltimos, {max} tadan kam belgi kiriting",
     "max_length": "Iltimos, {max} ta belgidan ko‘p bo‘lmagan matn kiriting",
     "max_selections": "Iltimos, {max} tadan ortiq variant tanlamang",
     "max_value": "Iltimos, {max} dan katta bo‘lmagan qiymat kiriting",
@@ -64,6 +74,10 @@
     "recaptcha_error": {
       "message": "Sizning javobingiz avtomatlashtirilgan faoliyat sifatida belgilanganligi sababli yuborilmadi. Agar siz nafas olayotgan bo'lsangiz, qayta urinib ko'ring.",
       "title": "Biz sizning inson ekanligingizni tasdiqlay olmadik."
-    }
+    },
+    "value_must_contain": "Qiymatda {value} bo‘lishi kerak",
+    "value_must_equal": "Qiymat {value} ga teng bo‘lishi kerak",
+    "value_must_not_contain": "Qiymatda {value} bo‘lmasligi kerak",
+    "value_must_not_equal": "Qiymat {value} ga teng bo‘lmasligi kerak"
   }
 }

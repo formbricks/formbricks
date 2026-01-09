@@ -45,6 +45,16 @@
       "title": "Acest dispozitiv nu acceptă protecția împotriva spamului."
     },
     "invalid_format": "Vă rugăm să introduceți un format valid",
+    "is_between": "Vă rugăm să selectați o dată între {startDate} și {endDate}",
+    "is_earlier_than": "Vă rugăm să selectați o dată anterioară datei {date}",
+    "is_greater_than": "Vă rugăm să introduceți o valoare mai mare decât {min}",
+    "is_later_than": "Vă rugăm să selectați o dată ulterioară datei {date}",
+    "is_less_than": "Vă rugăm să introduceți o valoare mai mică decât {max}",
+    "is_longer_than": "Vă rugăm să introduceți mai mult de {min} caractere",
+    "is_not_between": "Vă rugăm să selectați o dată care nu este între {startDate} și {endDate}",
+    "is_on_or_earlier_than": "Vă rugăm să selectați o dată egală sau anterioară datei {date}",
+    "is_on_or_later_than": "Vă rugăm să selectați o dată egală sau ulterioară datei {date}",
+    "is_shorter_than": "Vă rugăm să introduceți mai puțin de {max} caractere",
     "max_length": "Vă rugăm să nu introduceți mai mult de {max} caractere",
     "max_selections": "Vă rugăm să selectați cel mult {max} opțiuni",
     "max_value": "Vă rugăm să introduceți o valoare care să nu depășească {max}",
@@ -64,6 +74,10 @@
     "recaptcha_error": {
       "message": "Răspunsul dumneavoastră nu a putut fi trimis deoarece a fost marcat ca activitate automată. Dacă respirați, încercați din nou.",
       "title": "Nu am putut verifica dacă sunteți uman."
-    }
+    },
+    "value_must_contain": "Valoarea trebuie să conțină {value}",
+    "value_must_equal": "Valoarea trebuie să fie egală cu {value}",
+    "value_must_not_contain": "Valoarea nu trebuie să conțină {value}",
+    "value_must_not_equal": "Valoarea nu trebuie să fie egală cu {value}"
   }
 }

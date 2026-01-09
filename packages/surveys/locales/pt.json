@@ -45,6 +45,16 @@
       "title": "Este dispositivo não suporta proteção contra spam."
     },
     "invalid_format": "Por favor, insira um formato válido",
+    "is_between": "Por favor, selecione uma data entre {startDate} e {endDate}",
+    "is_earlier_than": "Por favor, selecione uma data anterior a {date}",
+    "is_greater_than": "Por favor, insira um valor superior a {min}",
+    "is_later_than": "Por favor, selecione uma data posterior a {date}",
+    "is_less_than": "Por favor, insira um valor inferior a {max}",
+    "is_longer_than": "Por favor, insira mais de {min} caracteres",
+    "is_not_between": "Por favor, selecione uma data que não esteja entre {startDate} e {endDate}",
+    "is_on_or_earlier_than": "Por favor, selecione uma data em ou anterior a {date}",
+    "is_on_or_later_than": "Por favor, selecione uma data em ou posterior a {date}",
+    "is_shorter_than": "Por favor, insira menos de {max} caracteres",
     "max_length": "Por favor, insira no máximo {max} caracteres",
     "max_selections": "Por favor, selecione no máximo {max} opções",
     "max_value": "Por favor, insira um valor não superior a {max}",
@@ -64,6 +74,10 @@
     "recaptcha_error": {
       "message": "Sua resposta não pôde ser enviada porque foi sinalizada como atividade automatizada. Se você respira, por favor tente novamente.",
       "title": "Não conseguimos verificar que você é humano."
-    }
+    },
+    "value_must_contain": "O valor deve conter {value}",
+    "value_must_equal": "O valor deve ser igual a {value}",
+    "value_must_not_contain": "O valor não deve conter {value}",
+    "value_must_not_equal": "O valor não deve ser igual a {value}"
   }
 }

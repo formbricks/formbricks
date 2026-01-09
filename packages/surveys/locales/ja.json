@@ -45,6 +45,16 @@
       "title": "このデバイスはスパム保護に対応していません。"
     },
     "invalid_format": "有効な形式を入力してください",
+    "is_between": "{startDate}から{endDate}の間の日付を選択してください",
+    "is_earlier_than": "{date}より前の日付を選択してください",
+    "is_greater_than": "{min}より大きい値を入力してください",
+    "is_later_than": "{date}より後の日付を選択してください",
+    "is_less_than": "{max}より小さい値を入力してください",
+    "is_longer_than": "{min}文字より多く入力してください",
+    "is_not_between": "{startDate}から{endDate}の間以外の日付を選択してください",
+    "is_on_or_earlier_than": "{date}以前の日付を選択してください",
+    "is_on_or_later_than": "{date}以降の日付を選択してください",
+    "is_shorter_than": "{max}文字未満で入力してください",
     "max_length": "{max}文字以内で入力してください",
     "max_selections": "{max}個以内のオプションを選択してください",
     "max_value": "{max}以下の値を入力してください",
@@ -64,6 +74,10 @@
     "recaptcha_error": {
       "message": "自動化された活動としてフラグが立てられたため、回答を送信できませんでした。人間の方は、もう一度お試しください。",
       "title": "あなたが人間であることを確認できませんでした。"
-    }
+    },
+    "value_must_contain": "値に{value}を含める必要があります",
+    "value_must_equal": "値は{value}と等しい必要があります",
+    "value_must_not_contain": "値に{value}を含めることはできません",
+    "value_must_not_equal": "値は{value}と等しくない必要があります"
   }
 }

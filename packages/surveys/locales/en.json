@@ -45,6 +45,16 @@
       "title": "This device doesn’t support spam protection."
     },
     "invalid_format": "Please enter a valid format",
+    "is_between": "Please select a date between {startDate} and {endDate}",
+    "is_earlier_than": "Please select a date earlier than {date}",
+    "is_greater_than": "Please enter a value greater than {min}",
+    "is_later_than": "Please select a date later than {date}",
+    "is_less_than": "Please enter a value less than {max}",
+    "is_longer_than": "Please enter more than {min} characters",
+    "is_not_between": "Please select a date not between {startDate} and {endDate}",
+    "is_on_or_earlier_than": "Please select a date on or earlier than {date}",
+    "is_on_or_later_than": "Please select a date on or later than {date}",
+    "is_shorter_than": "Please enter less than {max} characters",
     "max_length": "Please enter no more than {max} characters",
     "max_selections": "Please select no more than {max} options",
     "max_value": "Please enter a value no greater than {max}",
@@ -64,6 +74,10 @@
     "recaptcha_error": {
       "message": "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",
       "title": "We couldn't verify that you're human."
-    }
+    },
+    "value_must_contain": "Value must contain {value}",
+    "value_must_equal": "Value must equal {value}",
+    "value_must_not_contain": "Value must not contain {value}",
+    "value_must_not_equal": "Value must not equal {value}"
   }
 }

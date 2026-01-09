@@ -45,6 +45,16 @@
       "title": "Dit apparaat ondersteunt geen spambeveiliging."
     },
     "invalid_format": "Voer een geldig formaat in",
+    "is_between": "Selecteer een datum tussen {startDate} en {endDate}",
+    "is_earlier_than": "Selecteer een datum vóór {date}",
+    "is_greater_than": "Voer een waarde in die groter is dan {min}",
+    "is_later_than": "Selecteer een datum na {date}",
+    "is_less_than": "Voer een waarde in die kleiner is dan {max}",
+    "is_longer_than": "Voer meer dan {min} tekens in",
+    "is_not_between": "Selecteer een datum die niet tussen {startDate} en {endDate} ligt",
+    "is_on_or_earlier_than": "Selecteer een datum op of vóór {date}",
+    "is_on_or_later_than": "Selecteer een datum op of na {date}",
+    "is_shorter_than": "Voer minder dan {max} tekens in",
     "max_length": "Voer niet meer dan {max} tekens in",
     "max_selections": "Selecteer niet meer dan {max} opties",
     "max_value": "Voer een waarde in die niet groter is dan {max}",
@@ -64,6 +74,10 @@
     "recaptcha_error": {
       "message": "Uw reactie kan niet worden verzonden omdat deze is gemarkeerd als geautomatiseerde activiteit. Als u ademhaalt, probeer het dan opnieuw.",
       "title": "We konden niet verifiëren dat je een mens bent."
-    }
+    },
+    "value_must_contain": "Waarde moet {value} bevatten",
+    "value_must_equal": "Waarde moet gelijk zijn aan {value}",
+    "value_must_not_contain": "Waarde mag {value} niet bevatten",
+    "value_must_not_equal": "Waarde mag niet gelijk zijn aan {value}"
   }
 }

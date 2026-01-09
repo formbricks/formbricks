@@ -35,6 +35,15 @@ export const getRuleValue = (rule: TValidationRule): number | string | undefined
     const pattern = params.pattern as string;
     return pattern ?? "";
   }
+  if ("value" in params) {
+    return params.value as string;
+  }
+  if ("date" in params) {
+    return params.date as string;
+  }
+  if ("startDate" in params && "endDate" in params) {
+    return `${params.startDate as string},${params.endDate as string}`;
+  }
   return undefined;
 };
 
@@ -58,10 +67,45 @@ export const createRuleParams = (
       return {};
     case "phone":
       return {};
+    case "equals":
+      return { value: value === undefined || value === null ? "" : String(value) };
+    case "doesNotEqual":
+      return { value: value === undefined || value === null ? "" : String(value) };
+    case "contains":
+      return { value: value === undefined || value === null ? "" : String(value) };
+    case "doesNotContain":
+      return { value: value === undefined || value === null ? "" : String(value) };
+    case "isLongerThan":
+      return { min: Number(value) || 0 };
+    case "isShorterThan":
+      return { max: Number(value) || 100 };
     case "minValue":
       return { min: Number(value) || 0 };
     case "maxValue":
       return { max: Number(value) || 100 };
+    case "isGreaterThan":
+      return { min: Number(value) || 0 };
+    case "isLessThan":
+      return { max: Number(value) || 100 };
+    case "isOnOrLaterThan":
+      return { date: value === undefined || value === null ? "" : String(value) };
+    case "isLaterThan":
+      return { date: value === undefined || value === null ? "" : String(value) };
+    case "isOnOrEarlierThan":
+      return { date: value === undefined || value === null ? "" : String(value) };
+    case "isEarlierThan":
+      return { date: value === undefined || value === null ? "" : String(value) };
+    case "isBetween":
+    case "isNotBetween": {
+      if (typeof value === "string" && value.includes(",")) {
+        const [startDate, endDate] = value.split(",");
+        return {
+          startDate: startDate?.trim() || "",
+          endDate: endDate?.trim() || "",
+        };
+      }
+      return { startDate: "", endDate: "" };
+    }
     case "minSelections":
       return { min: Number(value) || 1 };
     case "maxSelections":

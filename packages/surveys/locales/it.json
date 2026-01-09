@@ -45,6 +45,16 @@
       "title": "Questo dispositivo non supporta la protezione anti-spam."
     },
     "invalid_format": "Inserisci un formato valido",
+    "is_between": "Seleziona una data compresa tra {startDate} e {endDate}",
+    "is_earlier_than": "Seleziona una data precedente a {date}",
+    "is_greater_than": "Inserisci un valore maggiore di {min}",
+    "is_later_than": "Seleziona una data successiva a {date}",
+    "is_less_than": "Inserisci un valore minore di {max}",
+    "is_longer_than": "Inserisci più di {min} caratteri",
+    "is_not_between": "Seleziona una data non compresa tra {startDate} e {endDate}",
+    "is_on_or_earlier_than": "Seleziona una data uguale o precedente a {date}",
+    "is_on_or_later_than": "Seleziona una data uguale o successiva a {date}",
+    "is_shorter_than": "Inserisci meno di {max} caratteri",
     "max_length": "Inserisci non più di {max} caratteri",
     "max_selections": "Seleziona non più di {max} opzioni",
     "max_value": "Inserisci un valore non superiore a {max}",
@@ -64,6 +74,10 @@
     "recaptcha_error": {
       "message": "La tua risposta non può essere inviata perché è stata segnalata come attività automatizzata. Se respiri, riprova.",
       "title": "Non siamo riusciti a verificare che sei umano."
-    }
+    },
+    "value_must_contain": "Il valore deve contenere {value}",
+    "value_must_equal": "Il valore deve essere uguale a {value}",
+    "value_must_not_contain": "Il valore non deve contenere {value}",
+    "value_must_not_equal": "Il valore non deve essere uguale a {value}"
   }
 }

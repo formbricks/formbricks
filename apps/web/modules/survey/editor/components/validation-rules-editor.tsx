@@ -48,6 +48,20 @@ export const ValidationRulesEditor = ({
     max_selections: t("environments.surveys.edit.validation.max_selections"),
     characters: t("environments.surveys.edit.validation.characters"),
     options_selected: t("environments.surveys.edit.validation.options_selected"),
+    is: t("environments.surveys.edit.validation.is"),
+    is_not: t("environments.surveys.edit.validation.is_not"),
+    contains: t("environments.surveys.edit.validation.contains"),
+    does_not_contain: t("environments.surveys.edit.validation.does_not_contain"),
+    is_longer_than: t("environments.surveys.edit.validation.is_longer_than"),
+    is_shorter_than: t("environments.surveys.edit.validation.is_shorter_than"),
+    is_greater_than: t("environments.surveys.edit.validation.is_greater_than"),
+    is_less_than: t("environments.surveys.edit.validation.is_less_than"),
+    is_on_or_later_than: t("environments.surveys.edit.validation.is_on_or_later_than"),
+    is_later_than: t("environments.surveys.edit.validation.is_later_than"),
+    is_on_or_earlier_than: t("environments.surveys.edit.validation.is_on_or_earlier_than"),
+    is_earlier_than: t("environments.surveys.edit.validation.is_earlier_than"),
+    is_between: t("environments.surveys.edit.validation.is_between"),
+    is_not_between: t("environments.surveys.edit.validation.is_not_between"),
   };
 
   const sensors = useSensors(
@@ -178,6 +192,17 @@ export const ValidationRulesEditor = ({
               ).filter((t) => t !== ruleType);
               const availableTypesForSelect = [ruleType, ...otherAvailableTypes];
 
+              // Determine input type for non-range date rules
+              let inputType: "number" | "date" | "text" = "text";
+              if (config.valueType === "number") {
+                inputType = "number";
+              } else if (
+                ruleType.startsWith("is") &&
+                (ruleType.includes("Later") || ruleType.includes("Earlier") || ruleType.includes("On"))
+              ) {
+                inputType = "date";
+              }
+
               return (
                 <ValidationRuleItem key={rule.id} id={rule.id}>
                   {/* Rule Type Selector */}
@@ -199,14 +224,41 @@ export const ValidationRulesEditor = ({
                   {/* Value Input (if needed) */}
                   {config.needsValue && (
                     <div className="flex w-full items-center gap-2">
-                      <Input
-                        type={config.valueType === "number" ? "number" : "text"}
-                        value={currentValue ?? ""}
-                        onChange={(e) => handleRuleValueChange(rule.id, e.target.value)}
-                        placeholder={config.valuePlaceholder}
-                        className="h-9 min-w-[80px] bg-white"
-                        min={config.valueType === "number" ? 0 : ""}
-                      />
+                      {ruleType === "isBetween" || ruleType === "isNotBetween" ? (
+                        // Special handling for date range inputs
+                        <div className="flex w-full items-center gap-2">
+                          <Input
+                            type="date"
+                            value={(currentValue as string)?.split(",")?.[0] ?? ""}
+                            onChange={(e) => {
+                              const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
+                              handleRuleValueChange(rule.id, `${e.target.value},${currentEndDate}`);
+                            }}
+                            placeholder="Start date"
+                            className="h-9 flex-1 bg-white"
+                          />
+                          <span className="text-sm text-slate-500">and</span>
+                          <Input
+                            type="date"
+                            value={(currentValue as string)?.split(",")?.[1] ?? ""}
+                            onChange={(e) => {
+                              const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
+                              handleRuleValueChange(rule.id, `${currentStartDate},${e.target.value}`);
+                            }}
+                            placeholder="End date"
+                            className="h-9 flex-1 bg-white"
+                          />
+                        </div>
+                      ) : (
+                        <Input
+                          type={inputType}
+                          value={currentValue ?? ""}
+                          onChange={(e) => handleRuleValueChange(rule.id, e.target.value)}
+                          placeholder={config.valuePlaceholder}
+                          className="h-9 min-w-[80px] bg-white"
+                          min={config.valueType === "number" ? 0 : ""}
+                        />
+                      )}
 
                       {/* Unit selector (if applicable) */}
                       {config.unitOptions && config.unitOptions.length > 0 && (

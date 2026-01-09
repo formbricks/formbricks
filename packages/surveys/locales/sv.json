@@ -45,6 +45,16 @@
       "title": "Denna enhet stöder inte skräppostskydd."
     },
     "invalid_format": "Ange ett giltigt format",
+    "is_between": "Välj ett datum mellan {startDate} och {endDate}",
+    "is_earlier_than": "Välj ett datum före {date}",
+    "is_greater_than": "Ange ett värde som är större än {min}",
+    "is_later_than": "Välj ett datum efter {date}",
+    "is_less_than": "Ange ett värde som är mindre än {max}",
+    "is_longer_than": "Ange fler än {min} tecken",
+    "is_not_between": "Välj ett datum som inte är mellan {startDate} och {endDate}",
+    "is_on_or_earlier_than": "Välj ett datum som är samma som eller före {date}",
+    "is_on_or_later_than": "Välj ett datum som är samma som eller efter {date}",
+    "is_shorter_than": "Ange färre än {max} tecken",
     "max_length": "Ange högst {max} tecken",
     "max_selections": "Välj högst {max} alternativ",
     "max_value": "Ange ett värde som är högst {max}",
@@ -64,6 +74,10 @@
     "recaptcha_error": {
       "message": "Ditt svar kunde inte skickas eftersom det flaggades som automatiserad aktivitet. Om du andas, försök igen.",
       "title": "Vi kunde inte verifiera att du är människa."
-    }
+    },
+    "value_must_contain": "Värdet måste innehålla {value}",
+    "value_must_equal": "Värdet måste vara {value}",
+    "value_must_not_contain": "Värdet får inte innehålla {value}",
+    "value_must_not_equal": "Värdet får inte vara {value}"
   }
 }
