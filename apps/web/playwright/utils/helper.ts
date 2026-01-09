@@ -121,7 +121,7 @@ export const finishOnboarding = async (
   await page.locator("#form-next-button").click();
 
   if (projectChannel !== "link") {
-    await page.getByRole("button", { name: "I'll do it later" }).click();
+    await page.getByRole("button", { name: "I will do it later" }).click();
   }
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
