@@ -38,7 +38,7 @@
     "db:push": "prisma db push --accept-data-loss",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed.ts",
     "db:seed:clear": "dotenv -e ../../.env -- tsx src/seed.ts --clear",
-    "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev && pnpm db:seed",
+    "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev",
     "db:start": "pnpm db:setup",
     "format": "prisma format",
     "generate": "prisma generate",
