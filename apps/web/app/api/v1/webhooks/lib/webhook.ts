@@ -11,7 +11,6 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
   validateInputs([webhookInput, ZWebhookInput]);
 
   try {
-    // Auto-generate secret if not provided
     const secret = generateWebhookSecret();
 
     const createdWebhook = await prisma.webhook.create({
