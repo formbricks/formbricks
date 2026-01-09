@@ -6,7 +6,8 @@ import { validateInputs } from "@/lib/utils/validate";
 
 const EE_SERVER_CONFIG = {
   // TODO: Update endpoint URL for production
-  BASE_URL: process.env.NODE_ENV === "development" ? "http://localhost:8080" : "https://ee.formbricks.com",
+  getEndpoint: (listId: TMailingListId) =>
+    `http://localhost:8080/api/v1/public/mailing/${listId}/subscriptions`,
   TIMEOUT_MS: 5000,
 } as const;
 
@@ -32,17 +33,14 @@ export const subscribeToMailingList = async ({
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), EE_SERVER_CONFIG.TIMEOUT_MS);
 
-    const response = await fetch(
-      `${EE_SERVER_CONFIG.BASE_URL}/api/v1/public/mailing/${listId}/subscriptions`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-        signal: controller.signal,
-      }
-    );
+    const response = await fetch(EE_SERVER_CONFIG.getEndpoint(listId), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+      signal: controller.signal,
+    });
 
     clearTimeout(timeoutId);
 

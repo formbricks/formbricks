@@ -248,33 +248,48 @@ export const SignupForm = ({
             )}
 
             {showLogin && (
-              <div className="my-4 flex items-center space-x-2">
+              <div className="my-4 flex space-x-2">
                 {isFormbricksCloud ? (
-                  <>
-                    <Checkbox
-                      id="product-updates"
-                      checked={subscribeToProductUpdates}
-                      onCheckedChange={(checked) => setSubscribeToProductUpdates(checked === true)}
-                    />
-                    <label
-                      htmlFor="product-updates"
-                      className="cursor-pointer text-left text-sm text-slate-600">
-                      {t("auth.signup.subscribe_to_product_updates")}
-                    </label>
-                  </>
+                  <div className="text-left">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="product-updates"
+                        checked={subscribeToProductUpdates}
+                        onCheckedChange={(checked) => setSubscribeToProductUpdates(checked === true)}
+                        className="h-4 w-4"
+                      />
+                      <label
+                        htmlFor="product-updates"
+                        className="cursor-pointer text-sm font-medium text-slate-700">
+                        {t("auth.signup.product_updates_title")}
+                      </label>
+                    </div>
+                    <div className="ml-6">
+                      <p className="text-xs text-slate-500">{t("auth.signup.product_updates_description")}</p>
+                    </div>
+                  </div>
                 ) : (
-                  <>
-                    <Checkbox
-                      id="security-updates"
-                      checked={subscribeToSecurityUpdates}
-                      onCheckedChange={(checked) => setSubscribeToSecurityUpdates(checked === true)}
-                    />
-                    <label
-                      htmlFor="security-updates"
-                      className="cursor-pointer text-left text-sm text-slate-600">
-                      {t("auth.signup.subscribe_to_security_updates")}
-                    </label>
-                  </>
+                  <div className="text-left">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="security-updates"
+                        checked={subscribeToSecurityUpdates}
+                        onCheckedChange={(checked) => setSubscribeToSecurityUpdates(checked === true)}
+                        className="h-4 w-4"
+                      />
+                      <label
+                        htmlFor="security-updates"
+                        className="cursor-pointer text-sm font-medium text-slate-700">
+                        {t("auth.signup.security_updates_title")}
+                      </label>
+                    </div>
+
+                    <div className="ml-6">
+                      <p className="text-xs text-slate-500">
+                        {t("auth.signup.security_updates_description")}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
