@@ -137,6 +137,12 @@ export const DateElementForm = ({
             validationRules: rules,
           });
         }}
+        validationLogic={element.validationLogic}
+        onUpdateValidationLogic={(logic) => {
+          updateElement(elementIdx, {
+            validationLogic: logic,
+          });
+        }}
       />
     </form>
   );

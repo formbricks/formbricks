@@ -1614,6 +1614,8 @@
           "phone": "Este un număr de telefon valid",
           "url": "Este un URL valid"
         },
+        "validation_logic_and": "ȘI (toate trebuie să fie îndeplinite)",
+        "validation_logic_or": "SAU (cel puțin una trebuie să fie îndeplinită)",
         "validation_rules": "Reguli de validare",
         "validation_rules_description": "Acceptă doar răspunsurile care îndeplinesc următoarele criterii",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} este folosit în logica întrebării {questionIndex}. Vă rugăm să-l eliminați din logică mai întâi.",

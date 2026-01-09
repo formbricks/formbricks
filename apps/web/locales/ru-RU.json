@@ -1614,6 +1614,8 @@
           "phone": "Корректный телефон",
           "url": "Корректный URL"
         },
+        "validation_logic_and": "И (все условия должны быть выполнены)",
+        "validation_logic_or": "ИЛИ (должно быть выполнено хотя бы одно условие)",
         "validation_rules": "Правила валидации",
         "validation_rules_description": "Принимать только ответы, соответствующие следующим критериям",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} используется в логике вопроса {questionIndex}. Пожалуйста, сначала удалите его из логики.",

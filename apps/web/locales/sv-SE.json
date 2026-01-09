@@ -1614,6 +1614,8 @@
           "phone": "Är ett giltigt telefonnummer",
           "url": "Är en giltig URL"
         },
+        "validation_logic_and": "OCH (alla måste uppfyllas)",
+        "validation_logic_or": "ELLER (minst en måste uppfyllas)",
         "validation_rules": "Valideringsregler",
         "validation_rules_description": "Acceptera endast svar som uppfyller följande kriterier",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} används i logiken för fråga {questionIndex}. Vänligen ta bort den från logiken först.",

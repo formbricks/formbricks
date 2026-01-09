@@ -1614,6 +1614,8 @@
           "phone": "Is geldig telefoonnummer",
           "url": "Is geldige URL"
         },
+        "validation_logic_and": "EN (alle moeten slagen)",
+        "validation_logic_or": "OF (minimaal één moet slagen)",
         "validation_rules": "Validatieregels",
         "validation_rules_description": "Accepteer alleen antwoorden die voldoen aan de volgende criteria",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} wordt gebruikt in de logica van vraag {questionIndex}. Verwijder het eerst uit de logica.",

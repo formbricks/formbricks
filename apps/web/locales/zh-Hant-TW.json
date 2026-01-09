@@ -1614,6 +1614,8 @@
           "phone": "是有效的電話號碼",
           "url": "是有效的 URL"
         },
+        "validation_logic_and": "AND（全部必須通過）",
+        "validation_logic_or": "OR（至少一項必須通過）",
         "validation_rules": "驗證規則",
         "validation_rules_description": "僅接受符合下列條件的回應",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "'{'variable'}' 用於問題 '{'questionIndex'}' 的邏輯中。請先從邏輯中移除。",

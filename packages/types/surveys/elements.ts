@@ -65,6 +65,10 @@ export const ZSurveyElementId = z.string().superRefine((id, ctx) => {
 
 export type TSurveyElementId = z.infer<typeof ZSurveyElementId>;
 
+// Validation logic operator - determines how multiple validation rules are combined
+export const ZValidationLogic = z.enum(["and", "or"]);
+export type TValidationLogic = z.infer<typeof ZValidationLogic>;
+
 // Base element (like ZSurveyQuestionBase but WITHOUT logic, buttonLabel, backButtonLabel)
 // Note: validationRules is not included in base - each element type will add its own narrowed schema
 export const ZSurveyElementBase = z.object({
@@ -78,6 +82,7 @@ export const ZSurveyElementBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   isDraft: z.boolean().optional(),
+  validationLogic: ZValidationLogic.optional(), // "and" = all rules must pass, "or" = at least one must pass
 });
 
 // OpenText Element

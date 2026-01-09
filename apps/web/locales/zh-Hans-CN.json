@@ -1614,6 +1614,8 @@
           "phone": "是有效的手机号",
           "url": "是有效的URL"
         },
+        "validation_logic_and": "且（全部需通过）",
+        "validation_logic_or": "或（至少通过一项）",
         "validation_rules": "校验规则",
         "validation_rules_description": "仅接受符合以下条件的回复",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "\"{variable} 在 问题 {questionIndex} 的 逻辑 中 使用。请 先 从 逻辑 中 删除 它。\"",

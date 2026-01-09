@@ -151,6 +151,12 @@ export const OpenElementForm = ({
               validationRules: rules,
             });
           }}
+          validationLogic={element.validationLogic}
+          onUpdateValidationLogic={(logic) => {
+            updateElement(elementIdx, {
+              validationLogic: logic,
+            });
+          }}
         />
       </div>
     </form>

@@ -5,7 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { v4 as uuidv7 } from "uuid";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyElement, TSurveyElementTypeEnum, TValidationLogic } from "@formbricks/types/surveys/elements";
 import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
@@ -27,6 +27,8 @@ interface ValidationRulesEditorProps {
   validationRules: TValidationRule[];
   onUpdateRules: (rules: TValidationRule[]) => void;
   element?: TSurveyElement; // Optional, needed for single select option selection
+  validationLogic?: TValidationLogic;
+  onUpdateValidationLogic?: (logic: TValidationLogic) => void;
 }
 
 export const ValidationRulesEditor = ({
@@ -34,6 +36,8 @@ export const ValidationRulesEditor = ({
   validationRules,
   onUpdateRules,
   element,
+  validationLogic = "and",
+  onUpdateValidationLogic,
 }: ValidationRulesEditorProps) => {
   const { t } = useTranslation();
 
@@ -189,6 +193,22 @@ export const ValidationRulesEditor = ({
       description={t("environments.surveys.edit.validation_rules_description")}
       customContainerClass="p-0 mt-4"
       childrenContainerClass="flex-col p-3 gap-2">
+      {/* Validation Logic Selector - only show when there are 2+ rules */}
+      {validationRules.length >= 2 && onUpdateValidationLogic && (
+        <div className="flex w-full items-center gap-2">
+          <Select
+            value={validationLogic}
+            onValueChange={(value) => onUpdateValidationLogic(value as TValidationLogic)}>
+            <SelectTrigger className="h-8 w-fit bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="and">{t("environments.surveys.edit.validation_logic_and")}</SelectItem>
+              <SelectItem value="or">{t("environments.surveys.edit.validation_logic_or")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={validationRules.map((r) => r.id)} strategy={verticalListSortingStrategy}>
           <div className="flex w-full flex-col gap-2">

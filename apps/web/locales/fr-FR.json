@@ -1614,6 +1614,8 @@
           "phone": "Est un numéro de téléphone valide",
           "url": "Est une URL valide"
         },
+        "validation_logic_and": "ET (tous doivent réussir)",
+        "validation_logic_or": "OU (au moins un doit réussir)",
         "validation_rules": "Règles de validation",
         "validation_rules_description": "Accepter uniquement les réponses qui répondent aux critères suivants",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} est utilisé dans la logique de la question {questionIndex}. Veuillez d'abord le supprimer de la logique.",

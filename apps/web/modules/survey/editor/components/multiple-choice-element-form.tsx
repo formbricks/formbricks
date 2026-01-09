@@ -414,6 +414,12 @@ export const MultipleChoiceElementForm = ({
             });
           }}
           element={element}
+          validationLogic={element.validationLogic}
+          onUpdateValidationLogic={(logic) => {
+            updateElement(elementIdx, {
+              validationLogic: logic,
+            });
+          }}
         />
       ) : (
         <ValidationRulesEditor
@@ -425,6 +431,12 @@ export const MultipleChoiceElementForm = ({
             });
           }}
           element={element}
+          validationLogic={element.validationLogic}
+          onUpdateValidationLogic={(logic) => {
+            updateElement(elementIdx, {
+              validationLogic: logic,
+            });
+          }}
         />
       )}
     </form>

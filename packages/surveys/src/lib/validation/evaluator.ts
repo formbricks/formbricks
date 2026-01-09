@@ -203,28 +203,78 @@ export const validateElementResponse = (
 
   // Then check validation rules
   const rules: TValidationRule[] = [
-    ...((element as TSurveyElement & { validationRules?: TValidationRule[] }).validationRules ?? []),
+    ...((element as TSurveyElement & { validationRules?: TValidationRule[]; validationLogic?: "and" | "or" })
+      .validationRules ?? []),
   ];
 
-  for (const rule of rules) {
-    const ruleType = rule.type;
-    const validator = validators[ruleType];
+  if (rules.length === 0) {
+    return { valid: errors.length === 0, errors };
+  }
 
-    if (!validator) {
-      console.warn(`Unknown validation rule type: ${ruleType}`);
-      continue;
+  // Get validation logic (default to "and" if not specified)
+  const validationLogic =
+    (element as TSurveyElement & { validationLogic?: "and" | "or" }).validationLogic ?? "and";
+
+  if (validationLogic === "or") {
+    // OR logic: at least one rule must pass
+    const ruleResults: { valid: boolean; error?: TValidationError }[] = [];
+
+    for (const rule of rules) {
+      const ruleType = rule.type;
+      const validator = validators[ruleType];
+
+      if (!validator) {
+        console.warn(`Unknown validation rule type: ${ruleType}`);
+        continue;
+      }
+
+      const checkResult = validator.check(value, rule.params, element);
+
+      if (checkResult.valid) {
+        // At least one rule passed, validation succeeds
+        return { valid: errors.length === 0, errors };
+      } else {
+        // Rule failed, store the error
+        const message = getDefaultErrorMessage(rule, element, languageCode, t);
+        ruleResults.push({
+          valid: false,
+          error: {
+            ruleId: rule.id,
+            ruleType,
+            message,
+          },
+        });
+      }
     }
 
-    const checkResult = validator.check(value, rule.params, element);
+    // All rules failed, add all errors
+    for (const result of ruleResults) {
+      if (result.error) {
+        errors.push(result.error);
+      }
+    }
+  } else {
+    // AND logic (default): all rules must pass
+    for (const rule of rules) {
+      const ruleType = rule.type;
+      const validator = validators[ruleType];
 
-    if (!checkResult.valid) {
-      const message = getDefaultErrorMessage(rule, element, languageCode, t);
+      if (!validator) {
+        console.warn(`Unknown validation rule type: ${ruleType}`);
+        continue;
+      }
 
-      errors.push({
-        ruleId: rule.id,
-        ruleType,
-        message,
-      });
+      const checkResult = validator.check(value, rule.params, element);
+
+      if (!checkResult.valid) {
+        const message = getDefaultErrorMessage(rule, element, languageCode, t);
+
+        errors.push({
+          ruleId: rule.id,
+          ruleType,
+          message,
+        });
+      }
     }
   }
 

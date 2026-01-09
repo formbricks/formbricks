@@ -1614,6 +1614,8 @@
           "phone": "有効な電話番号である",
           "url": "有効なURLである"
         },
+        "validation_logic_and": "AND（すべて満たす必要があります）",
+        "validation_logic_or": "OR（少なくとも1つ満たす必要があります）",
         "validation_rules": "検証ルール",
         "validation_rules_description": "次の条件を満たす回答のみを受け付ける",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} は質問 {questionIndex} のロジックで使用されています。まず、ロジックから削除してください。",
