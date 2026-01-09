@@ -248,7 +248,7 @@ export const SignupForm = ({
             )}
 
             {showLogin && (
-              <div className="my-4 flex space-x-2">
+              <div className="my-4 flex space-x-2 rounded-md border border-slate-200 bg-slate-100 p-2">
                 {isFormbricksCloud ? (
                   <div className="text-left">
                     <div className="flex items-center space-x-2">
