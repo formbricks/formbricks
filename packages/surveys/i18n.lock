@@ -56,6 +56,8 @@ checksums:
     errors/min_length: d08ea43d2cc9d6b2aee87ddba60dd2b3
     errors/min_selections: 23a75f21b4cb0530e5cfd02650d3e3d7
     errors/min_value: f52e2d54c7fc0e96d5e3f5d32b2618c7
+    errors/option_must_be_selected: 62869b36128b330f57f0e2a0fd30f118
+    errors/option_must_not_be_selected: 653acec8f21f49f57d81041820b61683
     errors/please_book_an_appointment: 9e8acea3721f660b6a988f79c4105ab8
     errors/please_enter_a_valid_email_address: 8de4bc8832b11b380bc4cbcedc16e48b
     errors/please_enter_a_valid_phone_number: 1530eb9ab7d6d190bddb37667c711631

@@ -61,6 +61,8 @@
     "min_length": "يرجى إدخال {min} أحرف على الأقل",
     "min_selections": "يرجى اختيار {min} خيارات على الأقل",
     "min_value": "يرجى إدخال قيمة لا تقل عن {min}",
+    "option_must_be_selected": "يرجى اختيار {option}",
+    "option_must_not_be_selected": "يرجى عدم اختيار {option}",
     "please_book_an_appointment": "يرجى حجز موعد",
     "please_enter_a_valid_email_address": "الرجاء إدخال عنوان بريد إلكتروني صالح",
     "please_enter_a_valid_phone_number": "يرجى إدخال رقم هاتف صحيح",

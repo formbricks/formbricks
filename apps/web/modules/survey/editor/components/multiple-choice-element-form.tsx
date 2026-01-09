@@ -413,6 +413,7 @@ export const MultipleChoiceElementForm = ({
               validationRules: rules,
             });
           }}
+          element={element}
         />
       ) : (
         <ValidationRulesEditor
@@ -423,6 +424,7 @@ export const MultipleChoiceElementForm = ({
               validationRules: rules,
             });
           }}
+          element={element}
         />
       )}
     </form>

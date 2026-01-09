@@ -28,21 +28,24 @@ export const getAvailableRuleTypes = (
  * Get the value from rule params based on rule type
  */
 export const getRuleValue = (rule: TValidationRule): number | string | undefined => {
-  const params = rule.params as Record<string, unknown>;
-  if ("min" in params) return params.min as number;
-  if ("max" in params) return params.max as number;
+  const params = rule.params;
+  if ("min" in params) return params.min;
+  if ("max" in params) return params.max;
   if ("pattern" in params) {
-    const pattern = params.pattern as string;
+    const pattern = params.pattern;
     return pattern ?? "";
   }
   if ("value" in params) {
-    return params.value as string;
+    return params.value;
   }
   if ("date" in params) {
-    return params.date as string;
+    return params.date;
   }
   if ("startDate" in params && "endDate" in params) {
-    return `${params.startDate as string},${params.endDate as string}`;
+    return `${params.startDate},${params.endDate}`;
+  }
+  if ("optionId" in params) {
+    return params.optionId;
   }
   return undefined;
 };
@@ -110,6 +113,9 @@ export const createRuleParams = (
       return { min: Number(value) || 1 };
     case "maxSelections":
       return { max: Number(value) || 3 };
+    case "isSelected":
+    case "isNotSelected":
+      return { optionId: value === undefined || value === null ? "" : String(value) };
     default:
       return {};
   }

@@ -61,6 +61,8 @@
     "min_length": "Пожалуйста, введите не менее {min} символов",
     "min_selections": "Пожалуйста, выберите не менее {min} вариантов",
     "min_value": "Пожалуйста, введите значение не меньше {min}",
+    "option_must_be_selected": "Пожалуйста, выберите {option}",
+    "option_must_not_be_selected": "Пожалуйста, не выбирайте {option}",
     "please_book_an_appointment": "Пожалуйста, запишитесь на приём",
     "please_enter_a_valid_email_address": "Пожалуйста, введите действительный адрес электронной почты",
     "please_enter_a_valid_phone_number": "Пожалуйста, введите действительный номер телефона",

@@ -61,6 +61,8 @@
     "min_length": "请输入至少{min}个字符",
     "min_selections": "请选择至少{min}个选项",
     "min_value": "请输入不少于{min}的值",
+    "option_must_be_selected": "请选择{option}",
+    "option_must_not_be_selected": "请不要选择{option}",
     "please_book_an_appointment": "请预约",
     "please_enter_a_valid_email_address": "请输入有效的电子邮件地址",
     "please_enter_a_valid_phone_number": "请输入有效的电话号码",

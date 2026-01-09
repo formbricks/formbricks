@@ -61,6 +61,8 @@
     "min_length": "Veuillez saisir au moins {min} caractères",
     "min_selections": "Veuillez sélectionner au moins {min} options",
     "min_value": "Veuillez saisir une valeur d'au moins {min}",
+    "option_must_be_selected": "Veuillez sélectionner {option}",
+    "option_must_not_be_selected": "Veuillez ne pas sélectionner {option}",
     "please_book_an_appointment": "Veuillez prendre rendez-vous",
     "please_enter_a_valid_email_address": "Veuillez saisir une adresse e-mail valide",
     "please_enter_a_valid_phone_number": "Veuillez saisir un numéro de téléphone valide",

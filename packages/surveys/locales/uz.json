@@ -61,6 +61,8 @@
     "min_length": "Iltimos, kamida {min} ta belgi kiriting",
     "min_selections": "Iltimos, kamida {min} ta variant tanlang",
     "min_value": "Iltimos, kamida {min} qiymat kiriting",
+    "option_must_be_selected": "Iltimos, {option} ni tanlang",
+    "option_must_not_be_selected": "Iltimos, {option} ni tanlamang",
     "please_book_an_appointment": "Iltimos, uchrashuvni bron qiling",
     "please_enter_a_valid_email_address": "Iltimos, toʻgʻri elektron pochta manzilini kiriting",
     "please_enter_a_valid_phone_number": "Iltimos, to'g'ri telefon raqamini kiriting",

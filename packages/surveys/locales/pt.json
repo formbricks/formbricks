@@ -61,6 +61,8 @@
     "min_length": "Por favor, insira pelo menos {min} caracteres",
     "min_selections": "Por favor, selecione pelo menos {min} opções",
     "min_value": "Por favor, insira um valor de pelo menos {min}",
+    "option_must_be_selected": "Por favor, selecione {option}",
+    "option_must_not_be_selected": "Por favor, não selecione {option}",
     "please_book_an_appointment": "Por favor, marque uma consulta",
     "please_enter_a_valid_email_address": "Por favor, insira um endereço de email válido",
     "please_enter_a_valid_phone_number": "Por favor, insira um número de telefone válido",

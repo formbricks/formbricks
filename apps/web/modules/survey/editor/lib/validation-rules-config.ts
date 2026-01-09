@@ -6,7 +6,7 @@ export const RULE_TYPE_CONFIG: Record<
   {
     labelKey: string;
     needsValue: boolean;
-    valueType?: "number" | "text";
+    valueType?: "number" | "text" | "option";
     valuePlaceholder?: string;
     unitOptions?: { value: string; labelKey: string }[];
   }
@@ -154,5 +154,15 @@ export const RULE_TYPE_CONFIG: Record<
     needsValue: true,
     valueType: "text",
     valuePlaceholder: "YYYY-MM-DD,YYYY-MM-DD",
+  },
+  isSelected: {
+    labelKey: "is_selected",
+    needsValue: true,
+    valueType: "option",
+  },
+  isNotSelected: {
+    labelKey: "is_not_selected",
+    needsValue: true,
+    valueType: "option",
   },
 };

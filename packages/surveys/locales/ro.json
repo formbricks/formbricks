@@ -61,6 +61,8 @@
     "min_length": "Vă rugăm să introduceți cel puțin {min} caractere",
     "min_selections": "Vă rugăm să selectați cel puțin {min} opțiuni",
     "min_value": "Vă rugăm să introduceți o valoare de cel puțin {min}",
+    "option_must_be_selected": "Vă rugăm să selectați {option}",
+    "option_must_not_be_selected": "Vă rugăm să nu selectați {option}",
     "please_book_an_appointment": "Vă rugăm să faceți o programare",
     "please_enter_a_valid_email_address": "Vă rugăm să introduceți o adresă de email validă",
     "please_enter_a_valid_phone_number": "Vă rugăm să introduceți un număr de telefon valid",

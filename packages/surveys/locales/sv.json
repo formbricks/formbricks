@@ -61,6 +61,8 @@
     "min_length": "Ange minst {min} tecken",
     "min_selections": "Välj minst {min} alternativ",
     "min_value": "Ange ett värde som är minst {min}",
+    "option_must_be_selected": "Vänligen välj {option}",
+    "option_must_not_be_selected": "Vänligen välj inte {option}",
     "please_book_an_appointment": "Vänligen boka ett möte",
     "please_enter_a_valid_email_address": "Vänligen ange en giltig e-postadress",
     "please_enter_a_valid_phone_number": "Vänligen ange ett giltigt telefonnummer",

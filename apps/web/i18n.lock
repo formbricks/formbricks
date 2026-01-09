@@ -1524,8 +1524,10 @@ checksums:
     environments/surveys/edit/validation/is_longer_than: f518283972279ec471786a78e2fd7057
     environments/surveys/edit/validation/is_not: a59746bb7a7590c4dc5e57092a5fc138
     environments/surveys/edit/validation/is_not_between: c7e302092b76484d3fa1ca8c6b1ac609
+    environments/surveys/edit/validation/is_not_selected: e9232d50282eb4597e3db6601c0ffe79
     environments/surveys/edit/validation/is_on_or_earlier_than: 0576612f40b8796c7530e3a7c42015aa
     environments/surveys/edit/validation/is_on_or_later_than: da682c41dc28c1025ee89350d759f46d
+    environments/surveys/edit/validation/is_selected: 9e37eae929bd16b0c4e4262e4792cfe9
     environments/surveys/edit/validation/is_shorter_than: 49de66264187513ceb221a6dc2b2eb6f
     environments/surveys/edit/validation/max_length: bc718e146021df863fb6736ce23e779c
     environments/surveys/edit/validation/max_selections: 6edf9e1149c3893da102d9464138da22

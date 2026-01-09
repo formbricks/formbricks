@@ -27,6 +27,10 @@ export const ZValidationRuleType = z.enum([
   "minSelections",
   "maxSelections",
 
+  // Single select rules
+  "isSelected",
+  "isNotSelected",
+
   // Date rules
   "isOnOrLaterThan",
   "isLaterThan",
@@ -132,6 +136,14 @@ export const ZValidationRuleParamsIsNotBetween = z.object({
   endDate: z.string(), // YYYY-MM-DD format
 });
 
+export const ZValidationRuleParamsIsSelected = z.object({
+  optionId: z.string().min(1),
+});
+
+export const ZValidationRuleParamsIsNotSelected = z.object({
+  optionId: z.string().min(1),
+});
+
 // Union of all params types
 export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsMinLength,
@@ -158,6 +170,8 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsIsEarlierThan,
   ZValidationRuleParamsIsBetween,
   ZValidationRuleParamsIsNotBetween,
+  ZValidationRuleParamsIsSelected,
+  ZValidationRuleParamsIsNotSelected,
 ]);
 
 export type TValidationRuleParams = z.infer<typeof ZValidationRuleParams>;
@@ -187,6 +201,8 @@ export type TValidationRuleParamsIsOnOrEarlierThan = z.infer<typeof ZValidationR
 export type TValidationRuleParamsIsEarlierThan = z.infer<typeof ZValidationRuleParamsIsEarlierThan>;
 export type TValidationRuleParamsIsBetween = z.infer<typeof ZValidationRuleParamsIsBetween>;
 export type TValidationRuleParamsIsNotBetween = z.infer<typeof ZValidationRuleParamsIsNotBetween>;
+export type TValidationRuleParamsIsSelected = z.infer<typeof ZValidationRuleParamsIsSelected>;
+export type TValidationRuleParamsIsNotSelected = z.infer<typeof ZValidationRuleParamsIsNotSelected>;
 
 // Validation rule stored on element - discriminated union with type at top level
 export const ZValidationRule = z.discriminatedUnion("type", [
@@ -334,6 +350,18 @@ export const ZValidationRule = z.discriminatedUnion("type", [
     params: ZValidationRuleParamsIsNotBetween,
     customErrorMessage: ZI18nString.optional(),
   }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isSelected"),
+    params: ZValidationRuleParamsIsSelected,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("isNotSelected"),
+    params: ZValidationRuleParamsIsNotSelected,
+    customErrorMessage: ZI18nString.optional(),
+  }),
 ]);
 
 export type TValidationRule = z.infer<typeof ZValidationRule>;
@@ -362,8 +390,13 @@ const OPEN_TEXT_RULES = [
   "isLessThan",
 ] as const;
 
-const MULTIPLE_CHOICE_SINGLE_RULES = [] as const;
-const MULTIPLE_CHOICE_MULTI_RULES = ["minSelections", "maxSelections"] as const;
+const MULTIPLE_CHOICE_SINGLE_RULES = ["isSelected", "isNotSelected"] as const;
+const MULTIPLE_CHOICE_MULTI_RULES = [
+  "minSelections",
+  "maxSelections",
+  "isSelected",
+  "isNotSelected",
+] as const;
 const RATING_RULES = [] as const;
 const NPS_RULES = [] as const;
 const DATE_RULES = [
@@ -556,7 +589,22 @@ export const ZValidationRulesForOpenText: z.ZodType<TValidationRulesForOpenText>
 );
 
 export const ZValidationRulesForMultipleChoiceSingle: z.ZodType<TValidationRulesForMultipleChoiceSingle> =
-  z.array(z.never());
+  z.array(
+    z.discriminatedUnion("type", [
+      z.object({
+        id: z.string(),
+        type: z.literal("isSelected"),
+        params: ZValidationRuleParamsIsSelected,
+        customErrorMessage: ZI18nString.optional(),
+      }),
+      z.object({
+        id: z.string(),
+        type: z.literal("isNotSelected"),
+        params: ZValidationRuleParamsIsNotSelected,
+        customErrorMessage: ZI18nString.optional(),
+      }),
+    ])
+  );
 
 export const ZValidationRulesForMultipleChoiceMulti: z.ZodType<TValidationRulesForMultipleChoiceMulti> =
   z.array(
@@ -571,6 +619,18 @@ export const ZValidationRulesForMultipleChoiceMulti: z.ZodType<TValidationRulesF
         id: z.string(),
         type: z.literal("maxSelections"),
         params: ZValidationRuleParamsMaxSelections,
+        customErrorMessage: ZI18nString.optional(),
+      }),
+      z.object({
+        id: z.string(),
+        type: z.literal("isSelected"),
+        params: ZValidationRuleParamsIsSelected,
+        customErrorMessage: ZI18nString.optional(),
+      }),
+      z.object({
+        id: z.string(),
+        type: z.literal("isNotSelected"),
+        params: ZValidationRuleParamsIsNotSelected,
         customErrorMessage: ZI18nString.optional(),
       }),
     ])

@@ -16,8 +16,10 @@ import type {
   TValidationRuleParamsIsLessThan,
   TValidationRuleParamsIsLongerThan,
   TValidationRuleParamsIsNotBetween,
+  TValidationRuleParamsIsNotSelected,
   TValidationRuleParamsIsOnOrEarlierThan,
   TValidationRuleParamsIsOnOrLaterThan,
+  TValidationRuleParamsIsSelected,
   TValidationRuleParamsIsShorterThan,
   TValidationRuleParamsMaxLength,
   TValidationRuleParamsMaxSelections,
@@ -475,6 +477,118 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsNotBetween;
       return t("errors.is_not_between", { startDate: typedParams.startDate, endDate: typedParams.endDate });
+    },
+  },
+  isSelected: {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsSelected;
+      if (!value) {
+        return { valid: true };
+      }
+      // Find the choice with the specified optionId
+      if (
+        (element.type !== "multipleChoiceSingle" && element.type !== "multipleChoiceMulti") ||
+        !("choices" in element)
+      ) {
+        return { valid: true };
+      }
+      const choice = element.choices.find((c) => c.id === typedParams.optionId);
+      if (!choice) {
+        return { valid: true };
+      }
+      // Get all language variants of the choice label
+      const choiceLabels = Object.values(choice.label);
+
+      // Handle single select (string) and multi select (array) responses
+      if (element.type === "multipleChoiceSingle") {
+        // Single select: response is a string (choice label)
+        if (typeof value !== "string" || value === "") {
+          return { valid: true };
+        }
+        return { valid: choiceLabels.includes(value) };
+      } else {
+        // Multi select: response is an array of choice labels
+        if (!Array.isArray(value) || value.length === 0) {
+          return { valid: true };
+        }
+        // Check if any of the selected labels match the choice labels
+        const isSelected = value.some((selectedLabel) => choiceLabels.includes(selectedLabel));
+        return { valid: isSelected };
+      }
+    },
+    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsSelected;
+      if (
+        (element.type !== "multipleChoiceSingle" && element.type !== "multipleChoiceMulti") ||
+        !("choices" in element)
+      ) {
+        return t("errors.invalid_format");
+      }
+      const choice = element.choices.find((c) => c.id === typedParams.optionId);
+      const choiceLabel = choice
+        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
+        : typedParams.optionId;
+      return t("errors.option_must_be_selected", { option: choiceLabel });
+    },
+  },
+  isNotSelected: {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsIsNotSelected;
+      if (!value) {
+        return { valid: true };
+      }
+      // Find the choice with the specified optionId
+      if (
+        (element.type !== "multipleChoiceSingle" && element.type !== "multipleChoiceMulti") ||
+        !("choices" in element)
+      ) {
+        return { valid: true };
+      }
+      const choice = element.choices.find((c) => c.id === typedParams.optionId);
+      if (!choice) {
+        return { valid: true };
+      }
+      // Get all language variants of the choice label
+      const choiceLabels = Object.values(choice.label);
+
+      // Handle single select (string) and multi select (array) responses
+      if (element.type === "multipleChoiceSingle") {
+        // Single select: response is a string (choice label)
+        if (typeof value !== "string" || value === "") {
+          return { valid: true };
+        }
+        return { valid: !choiceLabels.includes(value) };
+      } else {
+        // Multi select: response is an array of choice labels
+        if (!Array.isArray(value) || value.length === 0) {
+          return { valid: true };
+        }
+        // Check if any of the selected labels match the choice labels
+        const isSelected = value.some((selectedLabel) => choiceLabels.includes(selectedLabel));
+        return { valid: !isSelected };
+      }
+    },
+    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsIsNotSelected;
+      if (
+        (element.type !== "multipleChoiceSingle" && element.type !== "multipleChoiceMulti") ||
+        !("choices" in element)
+      ) {
+        return t("errors.invalid_format");
+      }
+      const choice = element.choices.find((c) => c.id === typedParams.optionId);
+      const choiceLabel = choice
+        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
+        : typedParams.optionId;
+      return t("errors.option_must_not_be_selected", { option: choiceLabel });
     },
   },
 };

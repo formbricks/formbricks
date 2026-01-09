@@ -61,6 +61,8 @@
     "min_length": "कृपया कम से कम {min} वर्ण दर्ज करें",
     "min_selections": "कृपया कम से कम {min} विकल्पों का चयन करें",
     "min_value": "कृपया कम से कम {min} का मान दर्ज करें",
+    "option_must_be_selected": "कृपया {option} चुनें",
+    "option_must_not_be_selected": "कृपया {option} न चुनें",
     "please_book_an_appointment": "कृपया एक अपॉइंटमेंट बुक करें",
     "please_enter_a_valid_email_address": "कृपया एक वैध ईमेल पता दर्ज करें",
     "please_enter_a_valid_phone_number": "कृपया एक वैध फोन नंबर दर्ज करें",

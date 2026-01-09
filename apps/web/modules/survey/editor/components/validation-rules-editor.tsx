@@ -5,7 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { v4 as uuidv7 } from "uuid";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
@@ -26,12 +26,14 @@ interface ValidationRulesEditorProps {
   elementType: TSurveyElementTypeEnum;
   validationRules: TValidationRule[];
   onUpdateRules: (rules: TValidationRule[]) => void;
+  element?: TSurveyElement; // Optional, needed for single select option selection
 }
 
 export const ValidationRulesEditor = ({
   elementType,
   validationRules,
   onUpdateRules,
+  element,
 }: ValidationRulesEditorProps) => {
   const { t } = useTranslation();
 
@@ -62,6 +64,8 @@ export const ValidationRulesEditor = ({
     is_earlier_than: t("environments.surveys.edit.validation.is_earlier_than"),
     is_between: t("environments.surveys.edit.validation.is_between"),
     is_not_between: t("environments.surveys.edit.validation.is_not_between"),
+    is_selected: t("environments.surveys.edit.validation.is_selected"),
+    is_not_selected: t("environments.surveys.edit.validation.is_not_selected"),
   };
 
   const sensors = useSensors(
@@ -105,6 +109,14 @@ export const ValidationRulesEditor = ({
     let defaultValue: number | string | undefined = undefined;
     if (config.needsValue && config.valueType === "text") {
       defaultValue = "";
+    } else if (config.needsValue && config.valueType === "option") {
+      // For option type, get first available choice ID
+      if (element && "choices" in element) {
+        const firstChoice = element.choices.find((c) => c.id !== "other" && c.id !== "none");
+        defaultValue = firstChoice?.id ?? "";
+      } else {
+        defaultValue = "";
+      }
     }
     const newRule: TValidationRule = {
       id: uuidv7(),
@@ -250,14 +262,53 @@ export const ValidationRulesEditor = ({
                           />
                         </div>
                       ) : (
-                        <Input
-                          type={inputType}
-                          value={currentValue ?? ""}
-                          onChange={(e) => handleRuleValueChange(rule.id, e.target.value)}
-                          placeholder={config.valuePlaceholder}
-                          className="h-9 min-w-[80px] bg-white"
-                          min={config.valueType === "number" ? 0 : ""}
-                        />
+                        (() => {
+                          if (config.valueType === "option") {
+                            // Option selector for single select validation rules
+                            const optionValue = typeof currentValue === "string" ? currentValue : "";
+                            return (
+                              <Select
+                                value={optionValue}
+                                onValueChange={(value) => handleRuleValueChange(rule.id, value)}>
+                                <SelectTrigger className="h-9 min-w-[200px] bg-white">
+                                  <SelectValue placeholder="Select option" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {element &&
+                                    "choices" in element &&
+                                    element.choices
+                                      .filter(
+                                        (choice) =>
+                                          choice.id !== "other" && choice.id !== "none" && "label" in choice
+                                      )
+                                      .map((choice) => {
+                                        const choiceLabel =
+                                          "label" in choice
+                                            ? choice.label.default ||
+                                              Object.values(choice.label)[0] ||
+                                              choice.id
+                                            : choice.id;
+                                        return (
+                                          <SelectItem key={choice.id} value={choice.id}>
+                                            {choiceLabel}
+                                          </SelectItem>
+                                        );
+                                      })}
+                                </SelectContent>
+                              </Select>
+                            );
+                          }
+                          return (
+                            <Input
+                              type={inputType}
+                              value={currentValue ?? ""}
+                              onChange={(e) => handleRuleValueChange(rule.id, e.target.value)}
+                              placeholder={config.valuePlaceholder}
+                              className="h-9 min-w-[80px] bg-white"
+                              min={config.valueType === "number" ? 0 : ""}
+                            />
+                          );
+                        })()
                       )}
 
                       {/* Unit selector (if applicable) */}

@@ -61,6 +61,8 @@
     "min_length": "{min}文字以上入力してください",
     "min_selections": "{min}個以上のオプションを選択してください",
     "min_value": "{min}以上の値を入力してください",
+    "option_must_be_selected": "{option}を選択してください",
+    "option_must_not_be_selected": "{option}を選択しないでください",
     "please_book_an_appointment": "予約をお取りください",
     "please_enter_a_valid_email_address": "有効なメールアドレスを入力してください",
     "please_enter_a_valid_phone_number": "有効な電話番号を入力してください",

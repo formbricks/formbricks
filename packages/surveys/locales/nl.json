@@ -61,6 +61,8 @@
     "min_length": "Voer minimaal {min} tekens in",
     "min_selections": "Selecteer minimaal {min} opties",
     "min_value": "Voer een waarde in van minimaal {min}",
+    "option_must_be_selected": "Selecteer {option}",
+    "option_must_not_be_selected": "Selecteer {option} niet",
     "please_book_an_appointment": "Maak een afspraak",
     "please_enter_a_valid_email_address": "Voer een geldig e-mailadres in",
     "please_enter_a_valid_phone_number": "Voer een geldig telefoonnummer in",
