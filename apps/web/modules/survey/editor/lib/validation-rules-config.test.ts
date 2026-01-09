@@ -26,17 +26,6 @@ describe("RULE_TYPE_CONFIG", () => {
     });
   });
 
-  describe("required rule", () => {
-    test("should have correct config", () => {
-      const config = RULE_TYPE_CONFIG.required;
-      expect(config.labelKey).toBe("required");
-      expect(config.needsValue).toBe(false);
-      expect(config.valueType).toBeUndefined();
-      expect(config.valuePlaceholder).toBeUndefined();
-      expect(config.unitOptions).toBeUndefined();
-    });
-  });
-
   describe("minLength rule", () => {
     test("should have correct config", () => {
       const config = RULE_TYPE_CONFIG.minLength;

@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "Feedback-ul tău este blocat :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "Vă rugăm să furnizați mai mult de {min} răspunsuri",
+    "answers_provided_must_be_smaller_than": "Vă rugăm să furnizați mai puțin de {max} răspunsuri",
     "file_input": {
       "duplicate_files": "Următoarele fișiere sunt deja încărcate: {duplicateNames}. Fișierele duplicate nu sunt permise.",
       "file_size_exceeded": "Următoarele fișiere depășesc dimensiunea maximă de {maxSizeInMB} MB și au fost eliminate: {fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "Vă rugăm să introduceți o valoare de cel puțin {min}",
     "option_must_be_selected": "Vă rugăm să selectați {option}",
     "option_must_not_be_selected": "Vă rugăm să nu selectați {option}",
-    "please_book_an_appointment": "Vă rugăm să faceți o programare",
     "please_enter_a_valid_email_address": "Vă rugăm să introduceți o adresă de email validă",
     "please_enter_a_valid_phone_number": "Vă rugăm să introduceți un număr de telefon valid",
     "please_enter_a_valid_url": "Vă rugăm să introduceți un URL valid",
     "please_fill_out_this_field": "Vă rugăm să completați acest câmp",
-    "please_rank_all_items_before_submitting": "Vă rugăm să clasificați toate elementele înainte de a trimite",
-    "please_select_a_date": "Vă rugăm să selectați o dată",
-    "please_select_an_option": "Vă rugăm să selectați o opțiune",
-    "please_submit_all_rows_before_submitting": "Vă rugăm să răspundeți la toate rândurile înainte de a trimite",
-    "please_upload_a_file": "Vă rugăm să încărcați un fișier",
     "position_must_be": "{option} trebuie să fie la poziția {position}",
     "position_must_be_higher_than": "{option} trebuie să fie clasat mai sus decât poziția {position}",
     "position_must_be_lower_than": "{option} trebuie să fie clasat mai jos decât poziția {position}",

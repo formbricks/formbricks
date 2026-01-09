@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "Il tuo feedback è bloccato :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "Fornisci più di {min} risposte",
+    "answers_provided_must_be_smaller_than": "Fornisci meno di {max} risposte",
     "file_input": {
       "duplicate_files": "I seguenti file sono già caricati: {duplicateNames}. I file duplicati non sono consentiti.",
       "file_size_exceeded": "I seguenti file superano la dimensione massima di {maxSizeInMB} MB e sono stati rimossi: {fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "Inserisci un valore di almeno {min}",
     "option_must_be_selected": "Seleziona {option}",
     "option_must_not_be_selected": "Non selezionare {option}",
-    "please_book_an_appointment": "Prenota un appuntamento",
     "please_enter_a_valid_email_address": "Inserisci un indirizzo email valido",
     "please_enter_a_valid_phone_number": "Inserisci un numero di telefono valido",
     "please_enter_a_valid_url": "Inserisci un URL valido",
     "please_fill_out_this_field": "Compila questo campo",
-    "please_rank_all_items_before_submitting": "Classifica tutti gli elementi prima di inviare",
-    "please_select_a_date": "Seleziona una data",
-    "please_select_an_option": "Seleziona un'opzione",
-    "please_submit_all_rows_before_submitting": "Rispondi a tutte le righe prima di inviare",
-    "please_upload_a_file": "Carica un file",
     "position_must_be": "{option} deve essere alla posizione {position}",
     "position_must_be_higher_than": "{option} deve essere classificato più in alto della posizione {position}",
     "position_must_be_lower_than": "{option} deve essere classificato più in basso della posizione {position}",

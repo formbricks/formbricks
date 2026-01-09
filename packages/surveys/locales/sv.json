@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "Din feedback fastnade :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "Ange fler än {min} svar",
+    "answers_provided_must_be_smaller_than": "Ange färre än {max} svar",
     "file_input": {
       "duplicate_files": "Följande filer är redan uppladdade: {duplicateNames}. Dubbletter av filer är inte tillåtna.",
       "file_size_exceeded": "Följande filer överstiger maxstorleken på {maxSizeInMB} MB och togs bort: {fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "Ange ett värde som är minst {min}",
     "option_must_be_selected": "Vänligen välj {option}",
     "option_must_not_be_selected": "Vänligen välj inte {option}",
-    "please_book_an_appointment": "Vänligen boka ett möte",
     "please_enter_a_valid_email_address": "Vänligen ange en giltig e-postadress",
     "please_enter_a_valid_phone_number": "Vänligen ange ett giltigt telefonnummer",
     "please_enter_a_valid_url": "Vänligen ange en giltig URL",
     "please_fill_out_this_field": "Vänligen fyll i detta fält",
-    "please_rank_all_items_before_submitting": "Vänligen rangordna alla objekt innan du skickar",
-    "please_select_a_date": "Vänligen välj ett datum",
-    "please_select_an_option": "Vänligen välj ett alternativ",
-    "please_submit_all_rows_before_submitting": "Vänligen besvara alla rader innan du skickar in",
-    "please_upload_a_file": "Vänligen ladda upp en fil",
     "position_must_be": "{option} måste vara på position {position}",
     "position_must_be_higher_than": "{option} måste vara rankad högre än position {position}",
     "position_must_be_lower_than": "{option} måste vara rankad lägre än position {position}",

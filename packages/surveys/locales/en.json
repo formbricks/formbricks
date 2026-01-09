@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "Your feedback is stuck :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "Please provide more than {min} answers",
+    "answers_provided_must_be_smaller_than": "Please provide fewer than {max} answers",
     "file_input": {
       "duplicate_files": "The following files are already uploaded: {duplicateNames}. Duplicate files are not allowed.",
       "file_size_exceeded": "The following file(s) exceed the maximum size of {maxSizeInMB} MB and were removed: {fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "Please enter a value of at least {min}",
     "option_must_be_selected": "Please select {option}",
     "option_must_not_be_selected": "Please do not select {option}",
-    "please_book_an_appointment": "Please book an appointment",
     "please_enter_a_valid_email_address": "Please enter a valid email address",
     "please_enter_a_valid_phone_number": "Please enter a valid phone number",
     "please_enter_a_valid_url": "Please enter a valid URL",
     "please_fill_out_this_field": "Please fill out this field",
-    "please_rank_all_items_before_submitting": "Please rank all items before submitting",
-    "please_select_a_date": "Please select a date",
-    "please_select_an_option": "Please select an option",
-    "please_submit_all_rows_before_submitting": "Please answer all rows before submitting",
-    "please_upload_a_file": "Please upload a file",
     "position_must_be": "{option} must be at position {position}",
     "position_must_be_higher_than": "{option} must be ranked higher than position {position}",
     "position_must_be_lower_than": "{option} must be ranked lower than position {position}",

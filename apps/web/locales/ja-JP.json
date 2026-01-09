@@ -1585,6 +1585,8 @@
         "url_filters": "URLフィルター",
         "url_not_supported": "URLはサポートされていません",
         "validation": {
+          "answers_provided_greater_than": "提供された回答数が次より大きい",
+          "answers_provided_smaller_than": "提供された回答数が次より小さい",
           "characters": "文字",
           "contains": "を含む",
           "does_not_contain": "を含まない",

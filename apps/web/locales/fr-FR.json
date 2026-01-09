@@ -1585,6 +1585,8 @@
         "url_filters": "Filtres d'URL",
         "url_not_supported": "URL non supportée",
         "validation": {
+          "answers_provided_greater_than": "Le nombre de réponses fournies est supérieur à",
+          "answers_provided_smaller_than": "Le nombre de réponses fournies est inférieur à",
           "characters": "caractères",
           "contains": "contient",
           "does_not_contain": "ne contient pas",

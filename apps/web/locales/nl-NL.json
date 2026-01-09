@@ -1585,6 +1585,8 @@
         "url_filters": "URL-filters",
         "url_not_supported": "URL niet ondersteund",
         "validation": {
+          "answers_provided_greater_than": "Aantal gegeven antwoorden is groter dan",
+          "answers_provided_smaller_than": "Aantal gegeven antwoorden is kleiner dan",
           "characters": "tekens",
           "contains": "bevat",
           "does_not_contain": "bevat niet",

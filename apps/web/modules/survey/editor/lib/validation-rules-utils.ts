@@ -148,6 +148,10 @@ export const createRuleParams = (
         optionId: "",
         position: Number(value) || 1,
       };
+    case "answersProvidedGreaterThan":
+      return { min: Number(value) || 1 };
+    case "answersProvidedSmallerThan":
+      return { max: Number(value) || 5 };
     default:
       return {};
   }

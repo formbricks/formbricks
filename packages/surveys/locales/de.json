@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "Ihr Feedback steckt fest :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "Bitte geben Sie mehr als {min} Antworten an",
+    "answers_provided_must_be_smaller_than": "Bitte geben Sie weniger als {max} Antworten an",
     "file_input": {
       "duplicate_files": "Die folgenden Dateien sind bereits hochgeladen: {duplicateNames}. Doppelte Dateien sind nicht erlaubt.",
       "file_size_exceeded": "Die folgenden Dateien überschreiten die maximale Größe von {maxSizeInMB} MB und wurden entfernt: {fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "Bitte geben Sie einen Wert von mindestens {min} ein",
     "option_must_be_selected": "Bitte wählen Sie {option}",
     "option_must_not_be_selected": "Bitte wählen Sie {option} nicht aus",
-    "please_book_an_appointment": "Bitte vereinbaren Sie einen Termin",
     "please_enter_a_valid_email_address": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "please_enter_a_valid_phone_number": "Bitte geben Sie eine gültige Telefonnummer ein",
     "please_enter_a_valid_url": "Bitte geben Sie eine gültige URL ein",
     "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
-    "please_rank_all_items_before_submitting": "Bitte ordnen Sie alle Elemente vor dem Absenden",
-    "please_select_a_date": "Bitte wählen Sie ein Datum aus",
-    "please_select_an_option": "Bitte wählen Sie eine Option",
-    "please_submit_all_rows_before_submitting": "Bitte beantworten Sie alle Zeilen, bevor Sie absenden",
-    "please_upload_a_file": "Bitte laden Sie eine Datei hoch",
     "position_must_be": "{option} muss an Position {position} stehen",
     "position_must_be_higher_than": "{option} muss höher als Position {position} eingestuft werden",
     "position_must_be_lower_than": "{option} muss niedriger als Position {position} eingestuft werden",

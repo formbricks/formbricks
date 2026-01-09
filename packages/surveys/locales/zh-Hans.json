@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "您的反馈卡住了 :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "请提供多于{min}个答案",
+    "answers_provided_must_be_smaller_than": "请提供少于{max}个答案",
     "file_input": {
       "duplicate_files": "以下文件已上传：{duplicateNames}。不允许重复文件。",
       "file_size_exceeded": "以下文件超过了最大大小 {maxSizeInMB} MB，已被移除：{fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "请输入不少于{min}的值",
     "option_must_be_selected": "请选择{option}",
     "option_must_not_be_selected": "请不要选择{option}",
-    "please_book_an_appointment": "请预约",
     "please_enter_a_valid_email_address": "请输入有效的电子邮件地址",
     "please_enter_a_valid_phone_number": "请输入有效的电话号码",
     "please_enter_a_valid_url": "请输入有效的URL",
     "please_fill_out_this_field": "请填写此字段",
-    "please_rank_all_items_before_submitting": "请在提交之前对所有项目进行排名",
-    "please_select_a_date": "请选择一个日期",
-    "please_select_an_option": "请选择一个选项",
-    "please_submit_all_rows_before_submitting": "请在提交前回答所有行",
-    "please_upload_a_file": "请上传一个文件",
     "position_must_be": "{option} 必须位于第 {position} 位",
     "position_must_be_higher_than": "{option} 的排名必须高于第 {position} 位",
     "position_must_be_lower_than": "{option} 的排名必须低于第 {position} 位",

@@ -44,22 +44,27 @@ describe("getAvailableRuleTypes", () => {
     expect(available).toContain("pattern");
   });
 
-  test("should return only required rule for multipleChoiceSingle element", () => {
+  test("should return isSelected and isNotSelected for multipleChoiceSingle element", () => {
     const elementType = TSurveyElementTypeEnum.MultipleChoiceSingle;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toEqual(["isSelected", "isNotSelected"]);
   });
 
-  test("should return empty array for multipleChoiceSingle when required is already added", () => {
+  test("should return empty array for multipleChoiceSingle when all rules are already added", () => {
     const elementType = TSurveyElementTypeEnum.MultipleChoiceSingle;
     const existingRules: TValidationRule[] = [
       {
         id: "rule1",
-        type: "required",
-        params: {},
+        type: "isSelected",
+        params: { optionId: "option1" },
+      },
+      {
+        id: "rule2",
+        type: "isNotSelected",
+        params: { optionId: "option2" },
       },
     ];
 
@@ -68,118 +73,128 @@ describe("getAvailableRuleTypes", () => {
     expect(available).toEqual([]);
   });
 
-  test("should return required, minSelections, maxSelections for multipleChoiceMulti element", () => {
+  test("should return minSelections, maxSelections, isSelected, isNotSelected for multipleChoiceMulti element", () => {
     const elementType = TSurveyElementTypeEnum.MultipleChoiceMulti;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toContain("required");
     expect(available).toContain("minSelections");
     expect(available).toContain("maxSelections");
-    expect(available.length).toBe(3);
+    expect(available).toContain("isSelected");
+    expect(available).toContain("isNotSelected");
+    expect(available.length).toBe(4);
   });
 
-  test("should return only required rule for rating element", () => {
+  test("should return empty array for rating element (no validation rules)", () => {
     const elementType = TSurveyElementTypeEnum.Rating;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toEqual([]);
   });
 
-  test("should return only required rule for nps element", () => {
+  test("should return empty array for nps element (no validation rules)", () => {
     const elementType = TSurveyElementTypeEnum.NPS;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toEqual([]);
   });
 
-  test("should return only required rule for date element", () => {
+  test("should return date validation rules for date element", () => {
     const elementType = TSurveyElementTypeEnum.Date;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toContain("isOnOrLaterThan");
+    expect(available).toContain("isLaterThan");
+    expect(available).toContain("isOnOrEarlierThan");
+    expect(available).toContain("isEarlierThan");
+    expect(available).toContain("isBetween");
+    expect(available).toContain("isNotBetween");
   });
 
-  test("should return only required rule for consent element", () => {
+  test("should return empty array for consent element (no validation rules)", () => {
     const elementType = TSurveyElementTypeEnum.Consent;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toEqual([]);
   });
 
-  test("should return only required rule for matrix element", () => {
+  test("should return matrix validation rules for matrix element", () => {
     const elementType = TSurveyElementTypeEnum.Matrix;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toContain("answersProvidedGreaterThan");
+    expect(available).toContain("answersProvidedSmallerThan");
+    expect(available.length).toBe(2);
   });
 
-  test("should return only required rule for ranking element", () => {
+  test("should return ranking validation rules for ranking element", () => {
     const elementType = TSurveyElementTypeEnum.Ranking;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toContain("positionIs");
+    expect(available).toContain("positionIsHigherThan");
+    expect(available).toContain("positionIsLowerThan");
+    expect(available.length).toBe(3);
   });
 
-  test("should return only required rule for fileUpload element", () => {
+  test("should return empty array for fileUpload element (no validation rules)", () => {
     const elementType = TSurveyElementTypeEnum.FileUpload;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toEqual([]);
   });
 
-  test("should return required, minSelections, maxSelections for pictureSelection element", () => {
+  test("should return minSelections and maxSelections for pictureSelection element", () => {
     const elementType = TSurveyElementTypeEnum.PictureSelection;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toContain("required");
     expect(available).toContain("minSelections");
     expect(available).toContain("maxSelections");
-    expect(available.length).toBe(3);
+    expect(available.length).toBe(2);
   });
 
-  test("should return only required rule for address element", () => {
+  test("should return empty array for address element (no validation rules)", () => {
     const elementType = TSurveyElementTypeEnum.Address;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toEqual([]);
   });
 
-  test("should return only required rule for contactInfo element", () => {
+  test("should return empty array for contactInfo element (no validation rules)", () => {
     const elementType = TSurveyElementTypeEnum.ContactInfo;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toEqual([]);
   });
 
-  test("should return only required rule for cal element", () => {
+  test("should return empty array for cal element (no validation rules)", () => {
     const elementType = TSurveyElementTypeEnum.Cal;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual(["required"]);
+    expect(available).toEqual([]);
   });
 
   test("should return empty array for cta element", () => {
@@ -282,16 +297,6 @@ describe("getRuleValue", () => {
     expect(getRuleValue(rule)).toBe(5);
   });
 
-  test("should return undefined for required rule", () => {
-    const rule: TValidationRule = {
-      id: "rule8",
-      type: "required",
-      params: {},
-    };
-
-    expect(getRuleValue(rule)).toBeUndefined();
-  });
-
   test("should return undefined for email rule", () => {
     const rule: TValidationRule = {
       id: "rule9",
@@ -334,11 +339,6 @@ describe("getRuleValue", () => {
 });
 
 describe("createRuleParams", () => {
-  test("should create empty params for required rule", () => {
-    const params = createRuleParams("required");
-    expect(params).toEqual({});
-  });
-
   test("should create params for minLength rule with value", () => {
     const params = createRuleParams("minLength", 10);
     expect(params).toEqual({ min: 10 });

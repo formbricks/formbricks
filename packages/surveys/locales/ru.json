@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "Ваш отзыв застрял :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "Пожалуйста, укажите больше {min} ответов",
+    "answers_provided_must_be_smaller_than": "Пожалуйста, укажите меньше {max} ответов",
     "file_input": {
       "duplicate_files": "Следующие файлы уже загружены: {duplicateNames}. Дублирующие файлы не допускаются.",
       "file_size_exceeded": "Следующие файлы превышают максимальный размер {maxSizeInMB} МБ и были удалены: {fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "Пожалуйста, введите значение не меньше {min}",
     "option_must_be_selected": "Пожалуйста, выберите {option}",
     "option_must_not_be_selected": "Пожалуйста, не выбирайте {option}",
-    "please_book_an_appointment": "Пожалуйста, запишитесь на приём",
     "please_enter_a_valid_email_address": "Пожалуйста, введите действительный адрес электронной почты",
     "please_enter_a_valid_phone_number": "Пожалуйста, введите действительный номер телефона",
     "please_enter_a_valid_url": "Пожалуйста, введите действительный URL-адрес",
     "please_fill_out_this_field": "Пожалуйста, заполните это поле",
-    "please_rank_all_items_before_submitting": "Пожалуйста, оцените все элементы перед отправкой",
-    "please_select_a_date": "Пожалуйста, выберите дату",
-    "please_select_an_option": "Пожалуйста, выберите вариант",
-    "please_submit_all_rows_before_submitting": "Пожалуйста, ответьте на все строки перед отправкой",
-    "please_upload_a_file": "Пожалуйста, загрузите файл",
     "position_must_be": "{option} должен находиться на позиции {position}",
     "position_must_be_higher_than": "{option} должен быть выше позиции {position}",
     "position_must_be_lower_than": "{option} должен быть ниже позиции {position}",

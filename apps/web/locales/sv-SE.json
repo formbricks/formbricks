@@ -1585,6 +1585,8 @@
         "url_filters": "URL-filter",
         "url_not_supported": "URL stöds inte",
         "validation": {
+          "answers_provided_greater_than": "Antalet svar som lämnats är större än",
+          "answers_provided_smaller_than": "Antalet svar som lämnats är mindre än",
           "characters": "tecken",
           "contains": "innehåller",
           "does_not_contain": "innehåller inte",

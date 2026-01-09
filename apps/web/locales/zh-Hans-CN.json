@@ -1585,6 +1585,8 @@
         "url_filters": "URL 过滤器",
         "url_not_supported": "URL 不支持",
         "validation": {
+          "answers_provided_greater_than": "提供的答案数量大于",
+          "answers_provided_smaller_than": "提供的答案数量小于",
           "characters": "个字符",
           "contains": "包含",
           "does_not_contain": "不包含",

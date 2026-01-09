@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "フィードバックが送信できません :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "{min}個以上の回答を入力してください",
+    "answers_provided_must_be_smaller_than": "{max}個未満の回答を入力してください",
     "file_input": {
       "duplicate_files": "以下のファイルはすでにアップロードされています：{duplicateNames}。重複ファイルは許可されていません。",
       "file_size_exceeded": "以下のファイルは最大サイズ{maxSizeInMB}MBを超えているため削除されました：{fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "{min}以上の値を入力してください",
     "option_must_be_selected": "{option}を選択してください",
     "option_must_not_be_selected": "{option}を選択しないでください",
-    "please_book_an_appointment": "予約をお取りください",
     "please_enter_a_valid_email_address": "有効なメールアドレスを入力してください",
     "please_enter_a_valid_phone_number": "有効な電話番号を入力してください",
     "please_enter_a_valid_url": "有効なURLを入力してください",
     "please_fill_out_this_field": "このフィールドに入力してください",
-    "please_rank_all_items_before_submitting": "送信する前にすべての項目をランク付けしてください",
-    "please_select_a_date": "日付を選択してください",
-    "please_select_an_option": "オプションを選択してください",
-    "please_submit_all_rows_before_submitting": "送信する前にすべての行に回答してください",
-    "please_upload_a_file": "ファイルをアップロードしてください",
     "position_must_be": "{option}は位置{position}である必要があります",
     "position_must_be_higher_than": "{option}は位置{position}より上位にランク付けされている必要があります",
     "position_must_be_lower_than": "{option}は位置{position}より下位にランク付けされている必要があります",

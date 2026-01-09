@@ -73,6 +73,8 @@ export const ValidationRulesEditor = ({
     position_is: t("environments.surveys.edit.validation.position_is"),
     position_is_higher_than: t("environments.surveys.edit.validation.position_is_higher_than"),
     position_is_lower_than: t("environments.surveys.edit.validation.position_is_lower_than"),
+    answers_provided_greater_than: t("environments.surveys.edit.validation.answers_provided_greater_than"),
+    answers_provided_smaller_than: t("environments.surveys.edit.validation.answers_provided_smaller_than"),
   };
 
   const sensors = useSensors(
@@ -84,6 +86,10 @@ export const ValidationRulesEditor = ({
   );
 
   const isEnabled = validationRules.length > 0;
+
+  // For matrix elements, only show validation rules when element is not required
+  const shouldShowValidationRules =
+    elementType !== TSurveyElementTypeEnum.Matrix || (element && !element.required);
 
   const handleEnable = () => {
     const availableRules = getAvailableRuleTypes(elementType, []);
@@ -211,6 +217,11 @@ export const ValidationRulesEditor = ({
   const availableRulesForAdd = getAvailableRuleTypes(elementType, validationRules);
   const canAddMore = availableRulesForAdd.length > 0;
 
+  // Don't show validation rules for required matrix elements
+  if (!shouldShowValidationRules) {
+    return null;
+  }
+
   return (
     <AdvancedOptionToggle
       isChecked={isEnabled}
@@ -278,7 +289,7 @@ export const ValidationRulesEditor = ({
                   <Select
                     value={ruleType}
                     onValueChange={(value) => handleRuleTypeChange(rule.id, value as TValidationRuleType)}>
-                    <SelectTrigger className={cn("bg-white", config.needsValue ? "w-[200px]" : "flex-1")}>
+                    <SelectTrigger className={cn("bg-white", config.needsValue ? "min-w-[200px]" : "flex-1")}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

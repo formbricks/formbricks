@@ -4,6 +4,8 @@ import type { TResponseDataValue } from "@formbricks/types/responses";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type {
   TValidationRuleParams,
+  TValidationRuleParamsAnswersProvidedGreaterThan,
+  TValidationRuleParamsAnswersProvidedSmallerThan,
   TValidationRuleParamsContains,
   TValidationRuleParamsDoesNotContain,
   TValidationRuleParamsDoesNotEqual,
@@ -722,6 +724,56 @@ export const validators: Record<TValidationRuleType, TValidator> = {
         ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
         : typedParams.optionId;
       return t("errors.position_must_be_lower_than", { option: choiceLabel, position: typedParams.position });
+    },
+  },
+  answersProvidedGreaterThan: {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsAnswersProvidedGreaterThan;
+      if (element.type !== "matrix") {
+        return { valid: true };
+      }
+      // Matrix responses are Record<string, string> where keys are row labels and values are column labels
+      if (!value || typeof value !== "object" || Array.isArray(value) || value === null) {
+        return { valid: true };
+      }
+      // Count non-empty answers (rows that have been answered)
+      const answeredCount = Object.values(value).filter(
+        (v) => v !== "" && v !== null && v !== undefined
+      ).length;
+      return { valid: answeredCount > typedParams.min };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsAnswersProvidedGreaterThan;
+      return t("errors.answers_provided_must_be_greater_than", { min: typedParams.min });
+    },
+  },
+  answersProvidedSmallerThan: {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsAnswersProvidedSmallerThan;
+      if (element.type !== "matrix") {
+        return { valid: true };
+      }
+      // Matrix responses are Record<string, string> where keys are row labels and values are column labels
+      if (!value || typeof value !== "object" || Array.isArray(value) || value === null) {
+        return { valid: true };
+      }
+      // Count non-empty answers (rows that have been answered)
+      const answeredCount = Object.values(value).filter(
+        (v) => v !== "" && v !== null && v !== undefined
+      ).length;
+      return { valid: answeredCount < typedParams.max };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsAnswersProvidedSmallerThan;
+      return t("errors.answers_provided_must_be_smaller_than", { max: typedParams.max });
     },
   },
 };

@@ -180,4 +180,16 @@ export const RULE_TYPE_CONFIG: Record<
     needsValue: true,
     valueType: "ranking",
   },
+  answersProvidedGreaterThan: {
+    labelKey: "answers_provided_greater_than",
+    needsValue: true,
+    valueType: "number",
+    valuePlaceholder: "1",
+  },
+  answersProvidedSmallerThan: {
+    labelKey: "answers_provided_smaller_than",
+    needsValue: true,
+    valueType: "number",
+    valuePlaceholder: "5",
+  },
 };

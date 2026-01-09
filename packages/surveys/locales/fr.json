@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "Votre feedback est bloqué :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "Veuillez fournir plus de {min} réponses",
+    "answers_provided_must_be_smaller_than": "Veuillez fournir moins de {max} réponses",
     "file_input": {
       "duplicate_files": "Les fichiers suivants sont déjà téléchargés : {duplicateNames}. Les fichiers en double ne sont pas autorisés.",
       "file_size_exceeded": "Les fichiers suivants dépassent la taille maximale de {maxSizeInMB} Mo et ont été supprimés : {fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "Veuillez saisir une valeur d'au moins {min}",
     "option_must_be_selected": "Veuillez sélectionner {option}",
     "option_must_not_be_selected": "Veuillez ne pas sélectionner {option}",
-    "please_book_an_appointment": "Veuillez prendre rendez-vous",
     "please_enter_a_valid_email_address": "Veuillez saisir une adresse e-mail valide",
     "please_enter_a_valid_phone_number": "Veuillez saisir un numéro de téléphone valide",
     "please_enter_a_valid_url": "Veuillez saisir une URL valide",
     "please_fill_out_this_field": "Veuillez remplir ce champ",
-    "please_rank_all_items_before_submitting": "Veuillez classer tous les éléments avant de soumettre",
-    "please_select_a_date": "Veuillez sélectionner une date",
-    "please_select_an_option": "Veuillez sélectionner une option",
-    "please_submit_all_rows_before_submitting": "Veuillez répondre à toutes les lignes avant de soumettre",
-    "please_upload_a_file": "Veuillez télécharger un fichier",
     "position_must_be": "{option} doit être à la position {position}",
     "position_must_be_higher_than": "{option} doit être classé plus haut que la position {position}",
     "position_must_be_lower_than": "{option} doit être classé plus bas que la position {position}",

@@ -1585,6 +1585,8 @@
         "url_filters": "網址篩選器",
         "url_not_supported": "不支援網址",
         "validation": {
+          "answers_provided_greater_than": "提供的答案數量大於",
+          "answers_provided_smaller_than": "提供的答案數量小於",
           "characters": "個字元",
           "contains": "包含",
           "does_not_contain": "不包含",

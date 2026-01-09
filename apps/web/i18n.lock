@@ -1511,6 +1511,8 @@ checksums:
     environments/surveys/edit/upper_label: 1fa48bce3fade6ffc1a52d9fdddf9e17
     environments/surveys/edit/url_filters: e524879d2eb74463d7fd06a7e0f53421
     environments/surveys/edit/url_not_supported: af8a753467c617b596aadef1aaaed664
+    environments/surveys/edit/validation/answers_provided_greater_than: 7f0fdc85e516146c9ff69ba3eea00c3b
+    environments/surveys/edit/validation/answers_provided_smaller_than: 7c28199d52f91bf9e5077bf06f4238be
     environments/surveys/edit/validation/characters: f62970e214bd04fd1959e2759ee1ec48
     environments/surveys/edit/validation/contains: 06dd606c0a8f81f9a03b414e9ae89440
     environments/surveys/edit/validation/does_not_contain: 854da2bdf10613ce62fb454bab16c58b

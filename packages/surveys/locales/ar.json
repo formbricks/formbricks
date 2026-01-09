@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "تعليقك عالق :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "يرجى تقديم أكثر من {min} إجابة",
+    "answers_provided_must_be_smaller_than": "يرجى تقديم أقل من {max} إجابة",
     "file_input": {
       "duplicate_files": "الملفات التالية تم تحميلها بالفعل: {duplicateNames}. لا يُسمح بالملفات المكررة.",
       "file_size_exceeded": "الملف (الملفات) التالية تتجاوز الحجم الأقصى البالغ {maxSizeInMB} ميجابايت وتم إزالتها: {fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "يرجى إدخال قيمة لا تقل عن {min}",
     "option_must_be_selected": "يرجى اختيار {option}",
     "option_must_not_be_selected": "يرجى عدم اختيار {option}",
-    "please_book_an_appointment": "يرجى حجز موعد",
     "please_enter_a_valid_email_address": "الرجاء إدخال عنوان بريد إلكتروني صالح",
     "please_enter_a_valid_phone_number": "يرجى إدخال رقم هاتف صحيح",
     "please_enter_a_valid_url": "الرجاء إدخال عنوان URL صالح",
     "please_fill_out_this_field": "يرجى ملء هذا الحقل",
-    "please_rank_all_items_before_submitting": "يرجى ترتيب جميع العناصر قبل الإرسال",
-    "please_select_a_date": "يرجى اختيار تاريخ",
-    "please_select_an_option": "يرجى اختيار خيار",
-    "please_submit_all_rows_before_submitting": "يرجى الإجابة على جميع الصفوف قبل الإرسال",
-    "please_upload_a_file": "يرجى تحميل ملف",
     "position_must_be": "يجب أن يكون {option} في الموضع {position}",
     "position_must_be_higher_than": "يجب أن يكون ترتيب {option} أعلى من الموضع {position}",
     "position_must_be_lower_than": "يجب أن يكون ترتيب {option} أقل من الموضع {position}",

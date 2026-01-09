@@ -36,6 +36,10 @@ export const ZValidationRuleType = z.enum([
   "positionIsHigherThan",
   "positionIsLowerThan",
 
+  // Matrix rules
+  "answersProvidedGreaterThan",
+  "answersProvidedSmallerThan",
+
   // Date rules
   "isOnOrLaterThan",
   "isLaterThan",
@@ -164,6 +168,14 @@ export const ZValidationRuleParamsPositionIsLowerThan = z.object({
   position: z.number().min(1),
 });
 
+export const ZValidationRuleParamsAnswersProvidedGreaterThan = z.object({
+  min: z.number().min(0),
+});
+
+export const ZValidationRuleParamsAnswersProvidedSmallerThan = z.object({
+  max: z.number().min(0),
+});
+
 // Union of all params types
 export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsMinLength,
@@ -195,6 +207,8 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsPositionIs,
   ZValidationRuleParamsPositionIsHigherThan,
   ZValidationRuleParamsPositionIsLowerThan,
+  ZValidationRuleParamsAnswersProvidedGreaterThan,
+  ZValidationRuleParamsAnswersProvidedSmallerThan,
 ]);
 
 export type TValidationRuleParams = z.infer<typeof ZValidationRuleParams>;
@@ -232,6 +246,12 @@ export type TValidationRuleParamsPositionIsHigherThan = z.infer<
 >;
 export type TValidationRuleParamsPositionIsLowerThan = z.infer<
   typeof ZValidationRuleParamsPositionIsLowerThan
+>;
+export type TValidationRuleParamsAnswersProvidedGreaterThan = z.infer<
+  typeof ZValidationRuleParamsAnswersProvidedGreaterThan
+>;
+export type TValidationRuleParamsAnswersProvidedSmallerThan = z.infer<
+  typeof ZValidationRuleParamsAnswersProvidedSmallerThan
 >;
 
 // Validation rule stored on element - discriminated union with type at top level
@@ -410,6 +430,18 @@ export const ZValidationRule = z.discriminatedUnion("type", [
     params: ZValidationRuleParamsPositionIsLowerThan,
     customErrorMessage: ZI18nString.optional(),
   }),
+  z.object({
+    id: z.string(),
+    type: z.literal("answersProvidedGreaterThan"),
+    params: ZValidationRuleParamsAnswersProvidedGreaterThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("answersProvidedSmallerThan"),
+    params: ZValidationRuleParamsAnswersProvidedSmallerThan,
+    customErrorMessage: ZI18nString.optional(),
+  }),
 ]);
 
 export type TValidationRule = z.infer<typeof ZValidationRule>;
@@ -456,7 +488,7 @@ const DATE_RULES = [
   "isNotBetween",
 ] as const;
 const CONSENT_RULES = [] as const;
-const MATRIX_RULES = [] as const;
+const MATRIX_RULES = ["answersProvidedGreaterThan", "answersProvidedSmallerThan"] as const;
 const RANKING_RULES = ["positionIs", "positionIsHigherThan", "positionIsLowerThan"] as const;
 const FILE_UPLOAD_RULES = [] as const;
 const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
@@ -731,7 +763,22 @@ export const ZValidationRulesForDate: z.ZodType<TValidationRulesForDate> = z.arr
 
 export const ZValidationRulesForConsent: z.ZodType<TValidationRulesForConsent> = z.array(z.never());
 
-export const ZValidationRulesForMatrix: z.ZodType<TValidationRulesForMatrix> = z.array(z.never());
+export const ZValidationRulesForMatrix: z.ZodType<TValidationRulesForMatrix> = z.array(
+  z.discriminatedUnion("type", [
+    z.object({
+      id: z.string(),
+      type: z.literal("answersProvidedGreaterThan"),
+      params: ZValidationRuleParamsAnswersProvidedGreaterThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("answersProvidedSmallerThan"),
+      params: ZValidationRuleParamsAnswersProvidedSmallerThan,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+  ])
+);
 
 export const ZValidationRulesForRanking: z.ZodType<TValidationRulesForRanking> = z.array(
   z.discriminatedUnion("type", [

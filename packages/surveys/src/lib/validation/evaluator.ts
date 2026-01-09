@@ -24,84 +24,14 @@ const isEmpty = (value: TResponseDataValue): boolean => {
 };
 
 /**
- * Get error message for incomplete ranking
+ * Create a required field error
  */
-const getRankingErrorMessage = (
-  element: TSurveyElement,
-  value: TResponseDataValue,
-  t: TFunction
-): string | null => {
-  if (
-    element.type === TSurveyElementTypeEnum.Ranking &&
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.length < element.choices.length
-  ) {
-    return t("errors.please_rank_all_items_before_submitting");
-  }
-  return null;
-};
-
-/**
- * Get error message for incomplete matrix
- */
-const getMatrixErrorMessage = (
-  element: TSurveyElement,
-  value: TResponseDataValue,
-  t: TFunction
-): string | null => {
-  if (
-    element.type === TSurveyElementTypeEnum.Matrix &&
-    typeof value === "object" &&
-    !Array.isArray(value) &&
-    value !== null
-  ) {
-    const answeredRows = Object.values(value).filter((v) => v !== "" && v !== null && v !== undefined).length;
-    if (answeredRows > 0 && answeredRows < element.rows.length) {
-      return t("errors.please_submit_all_rows_before_submitting");
-    }
-  }
-  return null;
-};
-
-/**
- * Get required error message based on element type
- */
-const getRequiredErrorMessage = (
-  element: TSurveyElement,
-  value: TResponseDataValue,
-  t: TFunction
-): string => {
-  // Special handling for ranking elements
-  if (element.type === TSurveyElementTypeEnum.Ranking) {
-    const rankingMessage = getRankingErrorMessage(element, value, t);
-    if (rankingMessage) return rankingMessage;
-  }
-
-  // Special handling for matrix elements
-  if (element.type === TSurveyElementTypeEnum.Matrix) {
-    const matrixMessage = getMatrixErrorMessage(element, value, t);
-    if (matrixMessage) return matrixMessage;
-  }
-
-  // Provide element-specific error messages for better UX
-  switch (element.type) {
-    case TSurveyElementTypeEnum.Date:
-      return t("errors.please_select_a_date");
-    case TSurveyElementTypeEnum.Cal:
-      return t("errors.please_book_an_appointment");
-    case TSurveyElementTypeEnum.FileUpload:
-      return t("errors.please_upload_a_file");
-    case TSurveyElementTypeEnum.MultipleChoiceSingle:
-    case TSurveyElementTypeEnum.MultipleChoiceMulti:
-    case TSurveyElementTypeEnum.NPS:
-    case TSurveyElementTypeEnum.Rating:
-    case TSurveyElementTypeEnum.PictureSelection:
-    case TSurveyElementTypeEnum.Matrix:
-      return t("errors.please_select_an_option");
-    default:
-      return t("errors.please_fill_out_this_field");
-  }
+const createRequiredError = (t: TFunction): TValidationError => {
+  return {
+    ruleId: "required",
+    ruleType: "minLength", // Structural field only - required is not a validation rule
+    message: t("errors.please_fill_out_this_field"),
+  } as TValidationError;
 };
 
 /**
@@ -142,63 +72,43 @@ export const validateElementResponse = (
 ): TValidationResult => {
   const errors: TValidationError[] = [];
 
-  // First check if element is required (using boolean field, not validation rules)
+  // Check if element is required (separate from validation rules)
+  // Required is a boolean field on the element, not a validation rule
   if (element.required) {
     // Special handling for ranking elements
     if (element.type === TSurveyElementTypeEnum.Ranking) {
       const isValueArray = Array.isArray(value);
       const allItemsRanked = isValueArray && value.length === element.choices.length;
 
-      // If any items are ranked, all must be ranked
-      if (isValueArray && value.length > 0 && !allItemsRanked) {
-        errors.push({
-          ruleId: "required",
-          ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
-          message: getRequiredErrorMessage(element, value, t),
-        } as TValidationError);
-        // Continue to check validation rules even if required fails
-      } else if (isEmpty(value)) {
-        errors.push({
-          ruleId: "required",
-          ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
-          message: getRequiredErrorMessage(element, value, t),
-        } as TValidationError);
-        // Continue to check validation rules even if required fails
+      // If any items are ranked, all must be ranked, or if value is empty
+      if ((isValueArray && value.length > 0 && !allItemsRanked) || isEmpty(value)) {
+        errors.push(createRequiredError(t));
       }
     }
     // Special handling for matrix elements
     else if (element.type === TSurveyElementTypeEnum.Matrix) {
       if (isEmpty(value)) {
-        errors.push({
-          ruleId: "required",
-          ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
-          message: getRequiredErrorMessage(element, value, t),
-        } as TValidationError);
-        // Continue to check validation rules even if required fails
+        errors.push(createRequiredError(t));
       } else if (typeof value === "object" && !Array.isArray(value) && value !== null) {
         const answeredRows = Object.values(value).filter(
           (v) => v !== "" && v !== null && v !== undefined
         ).length;
         const allRowsAnswered = answeredRows === element.rows.length;
         if (!allRowsAnswered) {
-          errors.push({
-            ruleId: "required",
-            ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
-            message: getRequiredErrorMessage(element, value, t),
-          } as TValidationError);
-          // Continue to check validation rules even if required fails
+          errors.push(createRequiredError(t));
         }
       }
     }
     // Standard required check for other element types
     else if (isEmpty(value)) {
-      errors.push({
-        ruleId: "required",
-        ruleType: "minLength", // Placeholder - required is not a validation rule type anymore
-        message: getRequiredErrorMessage(element, value, t),
-      } as TValidationError);
-      // Continue to check validation rules even if required fails
+      errors.push(createRequiredError(t));
     }
+  }
+
+  // For matrix elements, skip validation rules if element is required
+  // Validation rules should not work when element is marked as required
+  if (element.type === TSurveyElementTypeEnum.Matrix && element.required) {
+    return { valid: errors.length === 0, errors };
   }
 
   // Then check validation rules

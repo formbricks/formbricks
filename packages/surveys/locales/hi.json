@@ -31,6 +31,8 @@
     "your_feedback_is_stuck": "आपकी प्रतिक्रिया अटक गई है :("
   },
   "errors": {
+    "answers_provided_must_be_greater_than": "कृपया {min} से अधिक उत्तर प्रदान करें",
+    "answers_provided_must_be_smaller_than": "कृपया {max} से कम उत्तर प्रदान करें",
     "file_input": {
       "duplicate_files": "निम्नलिखित फ़ाइलें पहले से ही अपलोड की गई हैं: {duplicateNames}। डुप्लिकेट फ़ाइलों की अनुमति नहीं है।",
       "file_size_exceeded": "निम्नलिखित फ़ाइल(ें) अधिकतम आकार {maxSizeInMB} MB से अधिक हैं और हटा दी गई हैं: {fileNames}",
@@ -63,16 +65,10 @@
     "min_value": "कृपया कम से कम {min} का मान दर्ज करें",
     "option_must_be_selected": "कृपया {option} चुनें",
     "option_must_not_be_selected": "कृपया {option} न चुनें",
-    "please_book_an_appointment": "कृपया एक अपॉइंटमेंट बुक करें",
     "please_enter_a_valid_email_address": "कृपया एक वैध ईमेल पता दर्ज करें",
     "please_enter_a_valid_phone_number": "कृपया एक वैध फोन नंबर दर्ज करें",
     "please_enter_a_valid_url": "कृपया एक वैध URL दर्ज करें",
     "please_fill_out_this_field": "कृपया इस फील्ड को भरें",
-    "please_rank_all_items_before_submitting": "जमा करने से पहले कृपया सभी आइटम्स को रैंक करें",
-    "please_select_a_date": "कृपया एक तारीख चुनें",
-    "please_select_an_option": "कृपया एक विकल्प चुनें",
-    "please_submit_all_rows_before_submitting": "कृपया सबमिट करने से पहले सभी पंक्तियों का उत्तर दें",
-    "please_upload_a_file": "कृपया एक फाइल अपलोड करें",
     "position_must_be": "{option} स्थिति {position} पर होना चाहिए",
     "position_must_be_higher_than": "{option} को स्थिति {position} से ऊपर रैंक किया जाना चाहिए",
     "position_must_be_lower_than": "{option} को स्थिति {position} से नीचे रैंक किया जाना चाहिए",
