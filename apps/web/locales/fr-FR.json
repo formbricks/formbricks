@@ -1690,6 +1690,22 @@
           "url_encryption_description": "Désactiver seulement si vous devez définir un identifiant unique personnalisé",
           "url_encryption_label": "Cryptage de l'identifiant à usage unique dans l'URL"
         },
+        "custom_html": {
+          "add_mode_description": "Les scripts de l'enquête s'exécuteront en plus des scripts au niveau de l'espace de travail.",
+          "add_to_workspace": "Ajouter aux scripts de l'espace de travail",
+          "description": "Ajouter des scripts de suivi et des pixels à cette enquête",
+          "nav_title": "HTML personnalisé",
+          "no_workspace_scripts": "Aucun script au niveau de l'espace de travail configuré. Vous pouvez les ajouter dans Paramètres de l'espace de travail → Général.",
+          "placeholder": "<!-- Collez vos scripts de suivi ici -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+          "replace_mode_description": "Seuls les scripts de l'enquête s'exécuteront. Les scripts de l'espace de travail seront ignorés. Laissez vide pour ne charger aucun script.",
+          "replace_workspace": "Remplacer les scripts de l'espace de travail",
+          "saved_successfully": "Scripts personnalisés enregistrés avec succès",
+          "script_mode": "Mode de script",
+          "security_warning": "Les scripts s'exécutent avec un accès complet au navigateur. Ajoutez uniquement des scripts provenant de sources fiables.",
+          "survey_scripts_description": "Ajouter du HTML personnalisé à injecter dans le <head> de cette page d'enquête.",
+          "survey_scripts_label": "Scripts spécifiques à l'enquête",
+          "workspace_scripts_label": "Scripts de l'espace de travail (hérités)"
+        },
         "dynamic_popup": {
           "alert_button": "Modifier enquête",
           "alert_description": "Ce sondage est actuellement configuré comme un sondage de lien, qui ne prend pas en charge les pop-ups dynamiques. Vous pouvez le modifier dans l'onglet des paramètres de l'éditeur de sondage.",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "Il s'agit de votre seul projet, il ne peut pas être supprimé. Créez d'abord un nouveau projet.",
+        "custom_scripts": "Scripts personnalisés",
+        "custom_scripts_card_description": "Ajouter des scripts de suivi et des pixels à toutes les enquêtes par lien dans cet espace de travail.",
+        "custom_scripts_description": "Les scripts seront injectés dans le <head> de toutes les pages d'enquête par lien.",
+        "custom_scripts_label": "Scripts HTML",
+        "custom_scripts_placeholder": "<!-- Collez vos scripts de suivi ici -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+        "custom_scripts_updated_successfully": "Scripts personnalisés mis à jour avec succès",
+        "custom_scripts_warning": "Les scripts s'exécutent avec un accès complet au navigateur. Ajoutez uniquement des scripts provenant de sources fiables.",
         "delete_workspace": "Supprimer le projet",
         "delete_workspace_confirmation": "Êtes-vous sûr de vouloir supprimer {projectName} ? Cette action ne peut pas être annulée.",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Supprimer {projectName} y compris toutes les enquêtes, réponses, personnes, actions et attributs.",

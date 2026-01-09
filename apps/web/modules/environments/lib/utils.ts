@@ -153,6 +153,7 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
             darkOverlay: true,
             styling: true,
             logo: true,
+            customHeadScripts: true,
             // All project environments
             environments: {
               select: {
@@ -222,6 +223,7 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
         darkOverlay: data.project.darkOverlay,
         styling: data.project.styling,
         logo: data.project.logo,
+        customHeadScripts: data.project.customHeadScripts,
         environments: data.project.environments,
       },
       organization: {

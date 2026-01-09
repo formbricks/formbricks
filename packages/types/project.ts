@@ -69,6 +69,7 @@ export const ZProject = z.object({
   environments: z.array(ZEnvironment),
   languages: z.array(ZLanguage),
   logo: ZLogo.nullish(),
+  customHeadScripts: z.string().nullish(),
 });
 
 export type TProject = z.infer<typeof ZProject>;
@@ -88,6 +89,7 @@ export const ZProjectUpdateInput = z.object({
   styling: ZProjectStyling.optional(),
   logo: ZLogo.optional(),
   teamIds: z.array(z.string()).optional(),
+  customHeadScripts: z.string().nullish(),
 });
 
 export type TProjectUpdateInput = z.infer<typeof ZProjectUpdateInput>;

@@ -60,6 +60,10 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         recaptcha: true,
         metadata: true,
 
+        // Custom scripts (self-hosted only)
+        customHeadScripts: true,
+        customHeadScriptsMode: true,
+
         // Related data
         languages: {
           select: {

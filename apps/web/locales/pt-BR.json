@@ -1690,6 +1690,22 @@
           "url_encryption_description": "Desative apenas se precisar definir um ID de uso único personalizado",
           "url_encryption_label": "Criptografia de URL de ID de uso único"
         },
+        "custom_html": {
+          "add_mode_description": "Os scripts da pesquisa serão executados além dos scripts do nível do workspace.",
+          "add_to_workspace": "Adicionar aos scripts do workspace",
+          "description": "Adicione scripts de rastreamento e pixels a esta pesquisa",
+          "nav_title": "HTML personalizado",
+          "no_workspace_scripts": "Nenhum script de nível de workspace configurado. Você pode adicioná-los em Configurações do Workspace → Geral.",
+          "placeholder": "<!-- Cole seus scripts de rastreamento aqui -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+          "replace_mode_description": "Apenas os scripts da pesquisa serão executados. Os scripts do workspace serão ignorados. Deixe vazio para não carregar nenhum script.",
+          "replace_workspace": "Substituir scripts do workspace",
+          "saved_successfully": "Scripts personalizados salvos com sucesso",
+          "script_mode": "Modo de script",
+          "security_warning": "Os scripts são executados com acesso total ao navegador. Adicione apenas scripts de fontes confiáveis.",
+          "survey_scripts_description": "Adicione HTML personalizado para injetar no <head> desta página de pesquisa.",
+          "survey_scripts_label": "Scripts específicos da pesquisa",
+          "workspace_scripts_label": "Scripts do workspace (herdados)"
+        },
         "dynamic_popup": {
           "alert_button": "Editar pesquisa",
           "alert_description": "Esta pesquisa está atualmente configurada como uma pesquisa de link, o que não suporta pop-ups dinâmicos. Você pode alterar isso na aba de configurações do editor de pesquisas.",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "Este é seu único projeto, ele não pode ser excluído. Crie um novo projeto primeiro.",
+        "custom_scripts": "Scripts personalizados",
+        "custom_scripts_card_description": "Adicione scripts de rastreamento e pixels a todas as pesquisas de link neste workspace.",
+        "custom_scripts_description": "Os scripts serão injetados no <head> de todas as páginas de pesquisa de link.",
+        "custom_scripts_label": "Scripts HTML",
+        "custom_scripts_placeholder": "<!-- Cole seus scripts de rastreamento aqui -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+        "custom_scripts_updated_successfully": "Scripts personalizados atualizados com sucesso",
+        "custom_scripts_warning": "Os scripts são executados com acesso total ao navegador. Adicione apenas scripts de fontes confiáveis.",
         "delete_workspace": "Excluir projeto",
         "delete_workspace_confirmation": "Tem certeza de que deseja excluir {projectName}? Essa ação não pode ser desfeita.",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Excluir {projectName} incluindo todas as pesquisas, respostas, pessoas, ações e atributos.",

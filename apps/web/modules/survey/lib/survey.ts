@@ -40,6 +40,8 @@ export const selectSurvey = {
   isBackButtonHidden: true,
   metadata: true,
   slug: true,
+  customHeadScripts: true,
+  customHeadScriptsMode: true,
   languages: {
     select: {
       default: true,

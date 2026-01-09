@@ -28,6 +28,7 @@ const selectProject = {
   environments: true,
   styling: true,
   logo: true,
+  customHeadScripts: true,
 };
 
 export const updateProject = async (

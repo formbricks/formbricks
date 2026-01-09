@@ -1690,6 +1690,22 @@
           "url_encryption_description": "Schakel dit alleen uit als u een aangepaste ID voor eenmalig gebruik moet instellen.",
           "url_encryption_label": "URL-codering van ID voor eenmalig gebruik"
         },
+        "custom_html": {
+          "add_mode_description": "Enquêtescripts worden uitgevoerd naast scripts op werkruimteniveau.",
+          "add_to_workspace": "Toevoegen aan werkruimtescripts",
+          "description": "Voeg trackingscripts en pixels toe aan deze enquête",
+          "nav_title": "Aangepaste HTML",
+          "no_workspace_scripts": "Geen scripts op werkruimteniveau geconfigureerd. Je kunt ze toevoegen in Werkruimte-instellingen → Algemeen.",
+          "placeholder": "<!-- Plak hier je trackingscripts -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+          "replace_mode_description": "Alleen enquêtescripts worden uitgevoerd. Werkruimtescripts worden genegeerd. Laat leeg om geen scripts te laden.",
+          "replace_workspace": "Werkruimtescripts vervangen",
+          "saved_successfully": "Aangepaste scripts succesvol opgeslagen",
+          "script_mode": "Scriptmodus",
+          "security_warning": "Scripts worden uitgevoerd met volledige browsertoegang. Voeg alleen scripts toe van vertrouwde bronnen.",
+          "survey_scripts_description": "Voeg aangepaste HTML toe om te injecteren in de <head> van deze enquêtepagina.",
+          "survey_scripts_label": "Enquêtespecifieke scripts",
+          "workspace_scripts_label": "Werkruimtescripts (overgenomen)"
+        },
         "dynamic_popup": {
           "alert_button": "Enquête bewerken",
           "alert_description": "Deze enquête is momenteel geconfigureerd als een linkenquête, die geen dynamische pop-ups ondersteunt. U kunt dit wijzigen op het tabblad Instellingen van de enquête-editor.",
@@ -1929,6 +1945,13 @@
       },
       "general": {
         "cannot_delete_only_workspace": "Dit is uw enige project, het kan niet worden verwijderd. Maak eerst een nieuw project aan.",
+        "custom_scripts": "Aangepaste scripts",
+        "custom_scripts_card_description": "Voeg trackingscripts en pixels toe aan alle linkenquêtes in deze werkruimte.",
+        "custom_scripts_description": "Scripts worden geïnjecteerd in de <head> van alle linkenquêtepagina's.",
+        "custom_scripts_label": "HTML-scripts",
+        "custom_scripts_placeholder": "<!-- Plak hier je trackingscripts -->\n<script>\n  // Google Tag Manager, Analytics, etc.\n</script>",
+        "custom_scripts_updated_successfully": "Aangepaste scripts succesvol bijgewerkt",
+        "custom_scripts_warning": "Scripts worden uitgevoerd met volledige browsertoegang. Voeg alleen scripts toe van vertrouwde bronnen.",
         "delete_workspace": "Project verwijderen",
         "delete_workspace_confirmation": "Weet u zeker dat u {projectName} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Verwijder {projectName} incl. alle enquêtes, reacties, mensen, acties en attributen.",
