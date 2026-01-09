@@ -30,6 +30,7 @@ const CONFIG = {
       env.ENVIRONMENT === "staging"
         ? "https://staging.ee.formbricks.com/api/licenses/check"
         : "https://ee.formbricks.com/api/licenses/check",
+    // ENDPOINT: "https://localhost:8080/api/licenses/check",
     TIMEOUT_MS: 5000,
   },
 } as const;
@@ -341,13 +342,14 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
     return null;
   }
 
-  return await cache.withCache(
-    async () => {
-      return await fetchLicenseFromServerInternal();
-    },
-    getCacheKeys().FETCH_LICENSE_CACHE_KEY,
-    CONFIG.CACHE.FETCH_LICENSE_TTL_MS
-  );
+  // return await cache.withCache(
+  //   async () => {
+  //     return await fetchLicenseFromServerInternal();
+  //   },
+  //   getCacheKeys().FETCH_LICENSE_CACHE_KEY,
+  //   CONFIG.CACHE.FETCH_LICENSE_TTL_MS
+  // );
+  return await fetchLicenseFromServerInternal();
 };
 
 export const getEnterpriseLicense = reactCache(

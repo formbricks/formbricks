@@ -75,6 +75,8 @@
       "password_validation_uppercase_and_lowercase": "Mix of uppercase and lowercase",
       "please_verify_captcha": "Please verify reCAPTCHA",
       "privacy_policy": "Privacy Policy",
+      "subscribe_to_product_updates": "Subscribe to monthly product updates",
+      "subscribe_to_security_updates": "Subscribe to security updates",
       "terms_of_service": "Terms of Service",
       "title": "Create your Formbricks account"
     },

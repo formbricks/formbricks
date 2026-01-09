@@ -15,6 +15,7 @@ import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
@@ -48,6 +49,7 @@ interface SignupFormProps {
   samlTenant: string;
   samlProduct: string;
   turnstileSiteKey?: string;
+  isFormbricksCloud: boolean;
 }
 
 export const SignupForm = ({
@@ -69,6 +71,7 @@ export const SignupForm = ({
   samlTenant,
   samlProduct,
   turnstileSiteKey,
+  isFormbricksCloud,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -76,6 +79,8 @@ export const SignupForm = ({
   const inviteToken = searchParams?.get("inviteToken");
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string>();
+  const [subscribeToSecurityUpdates, setSubscribeToSecurityUpdates] = useState(false);
+  const [subscribeToProductUpdates, setSubscribeToProductUpdates] = useState(false);
 
   const turnstile = useTurnstile();
 
@@ -110,6 +115,9 @@ export const SignupForm = ({
         inviteToken: inviteToken ?? "",
         emailVerificationDisabled,
         turnstileToken,
+        isFormbricksCloud,
+        subscribeToSecurityUpdates,
+        subscribeToProductUpdates,
       });
 
       const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
@@ -237,6 +245,38 @@ export const SignupForm = ({
                   toast.error(t("auth.signup.captcha_failed"));
                 }}
               />
+            )}
+
+            {showLogin && (
+              <div className="my-4 flex items-center space-x-2">
+                {isFormbricksCloud ? (
+                  <>
+                    <Checkbox
+                      id="product-updates"
+                      checked={subscribeToProductUpdates}
+                      onCheckedChange={(checked) => setSubscribeToProductUpdates(checked === true)}
+                    />
+                    <label
+                      htmlFor="product-updates"
+                      className="cursor-pointer text-left text-sm text-slate-600">
+                      {t("auth.signup.subscribe_to_product_updates")}
+                    </label>
+                  </>
+                ) : (
+                  <>
+                    <Checkbox
+                      id="security-updates"
+                      checked={subscribeToSecurityUpdates}
+                      onCheckedChange={(checked) => setSubscribeToSecurityUpdates(checked === true)}
+                    />
+                    <label
+                      htmlFor="security-updates"
+                      className="cursor-pointer text-left text-sm text-slate-600">
+                      {t("auth.signup.subscribe_to_security_updates")}
+                    </label>
+                  </>
+                )}
+              </div>
             )}
 
             {showLogin && (
