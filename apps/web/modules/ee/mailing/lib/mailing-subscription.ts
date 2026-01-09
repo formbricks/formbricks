@@ -4,14 +4,16 @@ import { logger } from "@formbricks/logger";
 import { TUserEmail, ZUserEmail } from "@formbricks/types/user";
 import { validateInputs } from "@/lib/utils/validate";
 
-const EE_SERVER_CONFIG = {
-  // TODO: Update endpoint URL for production
-  getEndpoint: (listId: TMailingListId) =>
-    `http://localhost:8080/api/v1/public/mailing/${listId}/subscriptions`,
-  TIMEOUT_MS: 5000,
+export type TMailingListId = "security" | "product-updates";
+
+// Hardcoded endpoint URLs to prevent SSRF - only these specific URLs are allowed
+const MAILING_LIST_ENDPOINTS: Record<TMailingListId, string> = {
+  // TODO: Update endpoint URLs for production
+  security: "http://localhost:8080/api/v1/public/mailing/security/subscriptions",
+  "product-updates": "http://localhost:8080/api/v1/public/mailing/product-updates/subscriptions",
 } as const;
 
-export type TMailingListId = "security" | "product-updates";
+const EE_SERVER_TIMEOUT_MS = 5000;
 
 interface TSubscribeToMailingListParams {
   email: TUserEmail;
@@ -29,11 +31,17 @@ export const subscribeToMailingList = async ({
 }: TSubscribeToMailingListParams): Promise<{ success: boolean; error?: string }> => {
   validateInputs([email, ZUserEmail]);
 
+  const endpoint = MAILING_LIST_ENDPOINTS[listId];
+  if (!endpoint) {
+    logger.error({ listId }, "Invalid mailing list ID");
+    return { success: false, error: "Invalid mailing list ID" };
+  }
+
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), EE_SERVER_CONFIG.TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), EE_SERVER_TIMEOUT_MS);
 
-    const response = await fetch(EE_SERVER_CONFIG.getEndpoint(listId), {
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
