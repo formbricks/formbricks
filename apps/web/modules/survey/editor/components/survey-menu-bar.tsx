@@ -26,6 +26,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
+import { AutoSaveIndicator } from "./auto-save-indicator";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
@@ -68,7 +69,14 @@ export const SurveyMenuBar = ({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
+  const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
   const isSuccessfullySavedRef = useRef(false);
+  const isAutoSavingRef = useRef(false);
+
+  // Refs for interval-based auto-save (to access current values without re-creating interval)
+  const localSurveyRef = useRef(localSurvey);
+  const surveyRef = useRef(survey);
+  const isSurveySavingRef = useRef(isSurveySaving);
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -79,6 +87,19 @@ export const SurveyMenuBar = ({
   useEffect(() => {
     setIsLinkSurvey(localSurvey.type === "link");
   }, [localSurvey.type]);
+
+  // Keep refs updated for interval-based auto-save
+  useEffect(() => {
+    localSurveyRef.current = localSurvey;
+  }, [localSurvey]);
+
+  useEffect(() => {
+    surveyRef.current = survey;
+  }, [survey]);
+
+  useEffect(() => {
+    isSurveySavingRef.current = isSurveySaving;
+  }, [isSurveySaving]);
 
   // Reset the successfully saved flag when survey prop updates (page refresh complete)
   useEffect(() => {
@@ -106,6 +127,29 @@ export const SurveyMenuBar = ({
       window.removeEventListener("beforeunload", handleWindowClose);
     };
   }, [localSurvey, survey, t]);
+
+  // Keyboard shortcut: Cmd+S (Mac) / Ctrl+S (Windows) to save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+
+        // Skip if already saving or in CX mode
+        if (isSurveySavingRef.current || isCxMode) return;
+
+        // Trigger click on the save button to reuse existing save logic
+        const saveButton = document.querySelector("[data-save-button]") as HTMLButtonElement | null;
+        if (saveButton && !saveButton.disabled) {
+          saveButton.click();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isCxMode]);
 
   const clearSurveyLocalStorage = () => {
     if (typeof localStorage !== "undefined") {
@@ -227,6 +271,49 @@ export const SurveyMenuBar = ({
 
     return true;
   };
+
+  // Interval-based auto-save for draft surveys (every 10 seconds)
+  useEffect(() => {
+    // Only set up interval for draft surveys
+    if (localSurvey.status !== "draft") return;
+
+    const intervalId = setInterval(async () => {
+      // Skip if tab is not visible (no computation, no API calls for background tabs)
+      if (document.hidden) return;
+
+      // Skip if already saving (manual or auto)
+      if (isAutoSavingRef.current || isSurveySavingRef.current) return;
+
+      // Check for changes using refs (avoids re-creating interval on every change)
+      const { updatedAt: localUpdatedAt, ...localSurveyRest } = localSurveyRef.current;
+      const { updatedAt: surveyUpdatedAt, ...surveyRest } = surveyRef.current;
+
+      // Skip if no changes
+      if (isEqual(localSurveyRest, surveyRest)) return;
+
+      isAutoSavingRef.current = true;
+
+      try {
+        const currentSurvey = localSurveyRef.current;
+        const updatedSurveyResponse = await updateSurveyDraftAction({
+          ...currentSurvey,
+          segment: currentSurvey.segment?.id === "temp" ? null : currentSurvey.segment,
+        } as unknown as TSurveyDraft);
+
+        if (updatedSurveyResponse?.data) {
+          setLocalSurvey(updatedSurveyResponse.data);
+          isSuccessfullySavedRef.current = true;
+          setLastAutoSaved(new Date());
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        isAutoSavingRef.current = false;
+      }
+    }, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [localSurvey.status, setLocalSurvey]);
 
   // Add new handler after handleSurveySave
   const handleSurveySaveDraft = async (): Promise<boolean> => {
@@ -401,6 +488,7 @@ export const SurveyMenuBar = ({
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
+        <AutoSaveIndicator isDraft={localSurvey.status === "draft"} lastSaved={lastAutoSaved} />
         {!isStorageConfigured && (
           <div>
             <Alert variant="warning" size="small">
@@ -427,6 +515,7 @@ export const SurveyMenuBar = ({
         )}
         {!isCxMode && (
           <Button
+            data-save-button
             disabled={disableSave}
             variant="secondary"
             size="sm"
