@@ -1,6 +1,7 @@
 import { signOut } from "next-auth/react";
 import { logger } from "@formbricks/logger";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
+import { invalidateCurrentSession } from "@/modules/auth/actions/invalidate-sessions";
 import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 
 interface UseSignOutOptions {
@@ -44,11 +45,19 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
       }
     }
 
+    // Invalidate session in database before clearing JWT
+    try {
+      await invalidateCurrentSession();
+    } catch (error) {
+      // Don't block signOut if session invalidation fails
+      logger.error("Failed to invalidate session:", error);
+    }
+
     if (options?.clearEnvironmentId) {
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
     }
 
-    // Call NextAuth signOut
+    // Call NextAuth signOut (clears JWT cookie)
     return await signOut({
       redirect: options?.redirect,
       callbackUrl: options?.callbackUrl,
