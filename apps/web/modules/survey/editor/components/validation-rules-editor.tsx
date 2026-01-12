@@ -1,10 +1,9 @@
 "use client";
 
-import { capitalize } from "lodash";
-import { PlusIcon, TrashIcon } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { v4 as uuidv7 } from "uuid";
+import { v7 as uuidv7 } from "uuid";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
 import {
   TSurveyElement,
   TSurveyElementTypeEnum,
@@ -17,38 +16,21 @@ import {
   TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
-import { TAllowedFileExtension, ALLOWED_FILE_EXTENSIONS } from "@formbricks/types/storage";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
-import { Button } from "@/modules/ui/components/button";
-import { Input } from "@/modules/ui/components/input";
-import { MultiSelect } from "@/modules/ui/components/multi-select";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
-import { cn } from "@/modules/ui/lib/utils";
 import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
 import {
-  createRuleParams,
-  getAvailableRuleTypes,
-  getRuleValue,
-  RULES_BY_INPUT_TYPE,
-} from "../lib/validation-rules-utils";
+  getAddressFields,
+  getContactInfoFields,
+  getDefaultRuleValue,
+  getRuleLabels,
+  parseRuleValue,
+} from "../lib/validation-rules-helpers";
+import { RULES_BY_INPUT_TYPE, createRuleParams, getAvailableRuleTypes } from "../lib/validation-rules-utils";
+import { ValidationLogicSelector } from "./validation-logic-selector";
+import { ValidationRuleRow } from "./validation-rule-row";
 
-// Reusable input type options for OpenText elements
-const INPUT_TYPE_OPTIONS = (
-  <>
-    <SelectItem value="text">{"Text"}</SelectItem>
-    <SelectItem value="email">{"Email"}</SelectItem>
-    <SelectItem value="url">{"Url"}</SelectItem>
-    <SelectItem value="phone">{"Phone"}</SelectItem>
-    <SelectItem value="number">{"Number"}</SelectItem>
-  </>
-);
+type TValidationField = TAddressField | TContactInfoField | undefined;
 
 interface ValidationRulesEditorProps {
   elementType: TSurveyElementTypeEnum;
@@ -81,28 +63,11 @@ export const ValidationRulesEditor = ({
   const isContactInfo = elementType === TSurveyElementTypeEnum.ContactInfo;
   const needsFieldSelector = isAddress || isContactInfo;
 
-  const addressFields: { value: TAddressField; label: string }[] = [
-    { value: "addressLine1", label: t("environments.surveys.edit.address_line_1") },
-    { value: "addressLine2", label: t("environments.surveys.edit.address_line_2") },
-    { value: "city", label: t("environments.surveys.edit.city") },
-    { value: "state", label: t("environments.surveys.edit.state") },
-    { value: "zip", label: t("environments.surveys.edit.zip") },
-    { value: "country", label: t("environments.surveys.edit.country") },
-  ];
-
-  const contactInfoFields: { value: TContactInfoField; label: string }[] = [
-    { value: "firstName", label: t("environments.surveys.edit.first_name") },
-    { value: "lastName", label: t("environments.surveys.edit.last_name") },
-    { value: "email", label: t("common.email") },
-    { value: "phone", label: t("common.phone") },
-    { value: "company", label: t("environments.surveys.edit.company") },
-  ];
-
   let fieldOptions: { value: TAddressField | TContactInfoField; label: string }[] = [];
   if (isAddress) {
-    fieldOptions = addressFields;
+    fieldOptions = getAddressFields(t);
   } else if (isContactInfo) {
-    fieldOptions = contactInfoFields;
+    fieldOptions = getContactInfoFields(t);
   }
   const {
     billingInfo,
@@ -124,42 +89,18 @@ export const ValidationRulesEditor = ({
   }, [billingInfo, billingInfoError, billingInfoLoading]);
 
   // For file upload elements, use billing-based limit; for self-hosted, use 1024 MB
-  const effectiveMaxSizeInMB = elementType === TSurveyElementTypeEnum.FileUpload
-    ? (isFormbricksCloud ? maxSizeInMBLimit : 1024)
-    : undefined;
+  let effectiveMaxSizeInMB: number | undefined;
+  if (elementType === TSurveyElementTypeEnum.FileUpload) {
+    if (isFormbricksCloud) {
+      effectiveMaxSizeInMB = maxSizeInMBLimit;
+    } else {
+      effectiveMaxSizeInMB = 1024;
+    }
+  } else {
+    effectiveMaxSizeInMB = undefined;
+  }
 
-  const ruleLabels: Record<string, string> = {
-    min_length: t("environments.surveys.edit.validation.min_length"),
-    max_length: t("environments.surveys.edit.validation.max_length"),
-    pattern: t("environments.surveys.edit.validation.pattern"),
-    email: t("environments.surveys.edit.validation.email"),
-    url: t("environments.surveys.edit.validation.url"),
-    phone: t("environments.surveys.edit.validation.phone"),
-    min_value: t("environments.surveys.edit.validation.min_value"),
-    max_value: t("environments.surveys.edit.validation.max_value"),
-    min_selections: t("environments.surveys.edit.validation.min_selections"),
-    max_selections: t("environments.surveys.edit.validation.max_selections"),
-    characters: t("environments.surveys.edit.validation.characters"),
-    options_selected: t("environments.surveys.edit.validation.options_selected"),
-    is: t("environments.surveys.edit.validation.is"),
-    is_not: t("environments.surveys.edit.validation.is_not"),
-    contains: t("environments.surveys.edit.validation.contains"),
-    does_not_contain: t("environments.surveys.edit.validation.does_not_contain"),
-    is_greater_than: t("environments.surveys.edit.validation.is_greater_than"),
-    is_less_than: t("environments.surveys.edit.validation.is_less_than"),
-    is_later_than: t("environments.surveys.edit.validation.is_later_than"),
-    is_earlier_than: t("environments.surveys.edit.validation.is_earlier_than"),
-    is_between: t("environments.surveys.edit.validation.is_between"),
-    is_not_between: t("environments.surveys.edit.validation.is_not_between"),
-    minimum_options_ranked: t("environments.surveys.edit.validation.minimum_options_ranked"),
-    minimum_rows_answered: t("environments.surveys.edit.validation.minimum_rows_answered"),
-    file_size_at_least: t("environments.surveys.edit.validation.file_size_at_least"),
-    file_size_at_most: t("environments.surveys.edit.validation.file_size_at_most"),
-    file_extension_is: t("environments.surveys.edit.validation.file_extension_is"),
-    file_extension_is_not: t("environments.surveys.edit.validation.file_extension_is_not"),
-    kb: t("environments.surveys.edit.validation.kb"),
-    mb: t("environments.surveys.edit.validation.mb"),
-  };
+  const ruleLabels = getRuleLabels(t);
 
   const isEnabled = validationRules.length > 0;
 
@@ -179,26 +120,7 @@ export const ValidationRulesEditor = ({
     if (availableRules.length > 0) {
       const defaultRuleType = availableRules[0];
       const config = RULE_TYPE_CONFIG[defaultRuleType];
-      let defaultValue: number | string | undefined = undefined;
-      if (config.needsValue && config.valueType === "text") {
-        defaultValue = "";
-      } else if (config.needsValue && config.valueType === "option") {
-        // For option type, get first available choice ID
-        if (element && "choices" in element) {
-          const firstChoice = element.choices.find((c) => c.id !== "other" && c.id !== "none");
-          defaultValue = firstChoice?.id ?? "";
-        } else {
-          defaultValue = "";
-        }
-      } else if (config.needsValue && config.valueType === "ranking") {
-        // For ranking type, get first available choice ID and default position 1
-        if (element && "choices" in element) {
-          const firstChoice = element.choices.find((c) => c.id !== "other" && c.id !== "none");
-          defaultValue = firstChoice ? `${firstChoice.id},1` : ",1";
-        } else {
-          defaultValue = ",1";
-        }
-      }
+      const defaultValue = getDefaultRuleValue(config, element);
       const newRule: TValidationRule = {
         id: uuidv7(),
         type: defaultRuleType,
@@ -217,7 +139,13 @@ export const ValidationRulesEditor = ({
   const handleAddRule = (insertAfterIndex: number) => {
     // For address/contact info, get rules for the field of the rule we're inserting after (or first field)
     const insertAfterRule = validationRules[insertAfterIndex];
-    const fieldForNewRule = insertAfterRule?.field ?? (needsFieldSelector && fieldOptions.length > 0 ? fieldOptions[0].value : undefined);
+    let fieldForNewRule: TValidationField;
+    if (insertAfterRule?.field) {
+      fieldForNewRule = insertAfterRule.field;
+    } else if (needsFieldSelector && fieldOptions.length > 0) {
+      fieldForNewRule = fieldOptions[0].value;
+    }
+
     const availableRules = getAvailableRuleTypes(
       elementType,
       validationRules,
@@ -228,32 +156,18 @@ export const ValidationRulesEditor = ({
 
     const newRuleType = availableRules[0];
     const config = RULE_TYPE_CONFIG[newRuleType];
-    let defaultValue: number | string | undefined = undefined;
-    if (config.needsValue && config.valueType === "text") {
-      defaultValue = "";
-    } else if (config.needsValue && config.valueType === "option") {
-      // For option type, get first available choice ID
-      if (element && "choices" in element) {
-        const firstChoice = element.choices.find((c) => c.id !== "other" && c.id !== "none");
-        defaultValue = firstChoice?.id ?? "";
-      } else {
-        defaultValue = "";
-      }
-    } else if (config.needsValue && config.valueType === "ranking") {
-      // For ranking type, get first available choice ID and default position 1
-      if (element && "choices" in element) {
-        const firstChoice = element.choices.find((c) => c.id !== "other" && c.id !== "none");
-        defaultValue = firstChoice ? `${firstChoice.id},1` : ",1";
-      } else {
-        defaultValue = ",1";
-      }
+    const defaultValue = getDefaultRuleValue(config, element);
+
+    let defaultField: TValidationField;
+    if (needsFieldSelector && fieldOptions.length > 0) {
+      defaultField = fieldOptions[0].value;
     }
+
     const newRule: TValidationRule = {
       id: uuidv7(),
       type: newRuleType,
       params: createRuleParams(newRuleType, defaultValue),
-      // For address/contact info, set field to first available field if not set
-      field: needsFieldSelector && fieldOptions.length > 0 ? fieldOptions[0].value : undefined,
+      field: defaultField,
     } as TValidationRule;
     const newRules = [...validationRules];
     newRules.splice(insertAfterIndex + 1, 0, newRule);
@@ -295,7 +209,7 @@ export const ValidationRulesEditor = ({
     onUpdateValidation({ rules: updated, logic: validationLogic });
   };
 
-  const handleFieldChange = (ruleId: string, field: TAddressField | TContactInfoField | undefined) => {
+  const handleFieldChange = (ruleId: string, field: TValidationField) => {
     const ruleToUpdate = validationRules.find((r) => r.id === ruleId);
     if (!ruleToUpdate) return;
 
@@ -333,31 +247,24 @@ export const ValidationRulesEditor = ({
       if (rule.id !== ruleId) return rule;
       const ruleType = rule.type;
       const config = RULE_TYPE_CONFIG[ruleType];
-      let parsedValue: string | number = value;
-
-      // Handle file extension formatting: auto-add dot if missing
-      if (ruleType === "fileExtensionIs" || ruleType === "fileExtensionIsNot") {
-        // Normalize extension: ensure it starts with a dot
-        parsedValue = value.startsWith(".") ? value : `.${value}`;
-      } else if (config.valueType === "number") {
-        parsedValue = Number(value) || 0;
-
-        // For fileSizeAtMost, ensure it doesn't exceed billing-based limit
-        if (ruleType === "fileSizeAtMost" && effectiveMaxSizeInMB !== undefined) {
-          const currentParams = rule.params as { size: number; unit: "KB" | "MB" };
-          const unit = currentParams?.unit || "MB";
-          const sizeInMB = unit === "KB" ? parsedValue / 1024 : parsedValue;
-
-          // Cap the value at effectiveMaxSizeInMB
-          if (sizeInMB > effectiveMaxSizeInMB) {
-            parsedValue = unit === "KB" ? effectiveMaxSizeInMB * 1024 : effectiveMaxSizeInMB;
-          }
-        }
-      }
+      const parsedValue = parseRuleValue(ruleType, value, config, rule.params, effectiveMaxSizeInMB);
 
       return {
         ...rule,
         params: createRuleParams(ruleType, parsedValue),
+      } as TValidationRule;
+    });
+    onUpdateValidation({ rules: updated, logic: validationLogic });
+  };
+
+  const handleFileExtensionChange = (ruleId: string, extensions: TAllowedFileExtension[]) => {
+    const updated = validationRules.map((r) => {
+      if (r.id !== ruleId) return r;
+      return {
+        ...r,
+        params: {
+          extensions,
+        },
       } as TValidationRule;
     });
     onUpdateValidation({ rules: updated, logic: validationLogic });
@@ -441,16 +348,21 @@ export const ValidationRulesEditor = ({
     }
   };
 
+  // For address/contact info, use first field if no rules exist, or use the field from last rule
+  let defaultField: TValidationField;
+  if (needsFieldSelector && validationRules.length > 0) {
+    defaultField = validationRules.at(-1)?.field;
+  } else if (needsFieldSelector && fieldOptions.length > 0) {
+    defaultField = fieldOptions[0].value;
+  } else {
+    defaultField = undefined;
+  }
+
   const availableRulesForAdd = getAvailableRuleTypes(
     elementType,
     validationRules,
     elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined,
-    // For address/contact info, use first field if no rules exist, or use the field from last rule
-    needsFieldSelector && validationRules.length > 0
-      ? validationRules[validationRules.length - 1]?.field
-      : needsFieldSelector && fieldOptions.length > 0
-        ? fieldOptions[0].value
-        : undefined
+    defaultField
   );
   const canAddMore = availableRulesForAdd.length > 0;
 
@@ -470,271 +382,36 @@ export const ValidationRulesEditor = ({
       childrenContainerClass="flex-col p-3 gap-2">
       {/* Validation Logic Selector - only show when there are 2+ rules */}
       {validationRules.length >= 2 && (
-        <div className="flex w-full items-center gap-2">
-          <Select
-            value={validationLogic}
-            onValueChange={(value) => onUpdateValidation({ rules: validationRules, logic: value as TValidationLogic })}>
-            <SelectTrigger className="h-8 w-fit bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="and">{t("environments.surveys.edit.validation_logic_and")}</SelectItem>
-              <SelectItem value="or">{t("environments.surveys.edit.validation_logic_or")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <ValidationLogicSelector
+          value={validationLogic}
+          onChange={(value) => onUpdateValidation({ rules: validationRules, logic: value })}
+        />
       )}
       <div className="flex w-full flex-col gap-2">
-        {validationRules.map((rule, index) => {
-          const ruleType = rule.type;
-          const config = RULE_TYPE_CONFIG[ruleType];
-          const currentValue = getRuleValue(rule);
-
-
-          // Get available types for this rule (current type + unused types, no duplicates)
-          // For address/contact info, filter by selected field
-          const ruleField = rule.field;
-          const otherAvailableTypes = getAvailableRuleTypes(
-            elementType,
-            validationRules.filter((r) => r.id !== rule.id),
-            elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined,
-            ruleField
-          ).filter((t) => t !== ruleType);
-          const availableTypesForSelect = [ruleType, ...otherAvailableTypes];
-
-          // Determine HTML input type for value inputs (not the validation input type)
-          let htmlInputType: "number" | "date" | "text" = "text";
-          if (config.valueType === "number") {
-            htmlInputType = "number";
-          } else if (
-            ruleType.startsWith("is") &&
-            (ruleType.includes("Later") || ruleType.includes("Earlier") || ruleType.includes("On"))
-          ) {
-            htmlInputType = "date";
-          }
-
-          // Check if this is OpenText and first rule - show input type selector
-          const isOpenText = elementType === TSurveyElementTypeEnum.OpenText;
-          const isFirstRule = index === 0;
-          const showInputTypeSelector = isOpenText && isFirstRule;
-
-          return (
-            <div key={rule.id} className="flex w-full items-center gap-2">
-              {/* Field Selector (for Address and Contact Info elements) */}
-              {needsFieldSelector && (
-                <Select
-                  value={rule.field ?? ""}
-                  onValueChange={(value) =>
-                    handleFieldChange(rule.id, value ? (value as TAddressField | TContactInfoField) : undefined)
-                  }>
-                  <SelectTrigger className="h-9 min-w-[140px] bg-white">
-                    <SelectValue placeholder={t("environments.surveys.edit.select_field")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fieldOptions.map((field) => (
-                      <SelectItem key={field.value} value={field.value}>
-                        {field.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {/* Input Type Selector (only for OpenText, first rule) */}
-              {showInputTypeSelector && inputType !== undefined && onUpdateInputType && (
-                <Select
-                  value={inputType}
-                  onValueChange={(value) =>
-                    handleInputTypeChange(value as TSurveyOpenTextElementInputType)
-                  }>
-                  <SelectTrigger className="h-9 min-w-[120px] bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>{INPUT_TYPE_OPTIONS}</SelectContent>
-                </Select>
-              )}
-              {/* Input Type Display (disabled, for subsequent rules) */}
-              {isOpenText && !isFirstRule && inputType !== undefined && (
-                <Select disabled value={inputType}>
-                  <SelectTrigger className="h-9 min-w-[120px] bg-slate-100 cursor-not-allowed">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>{INPUT_TYPE_OPTIONS}</SelectContent>
-                </Select>
-              )}
-              {/* Rule Type Selector */}
-              <Select
-                value={ruleType}
-                onValueChange={(value) => handleRuleTypeChange(rule.id, value as TValidationRuleType)}>
-                <SelectTrigger className={cn("bg-white", config.needsValue ? "min-w-[200px]" : "flex-1")}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTypesForSelect.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {capitalize(ruleLabels[RULE_TYPE_CONFIG[type].labelKey])}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Value Input (if needed) */}
-              {config.needsValue && (
-                <div className="flex w-full items-center gap-2">
-                  {ruleType === "isBetween" || ruleType === "isNotBetween" ? (
-                    // Special handling for date range inputs
-                    <div className="flex w-full items-center gap-2">
-                      <Input
-                        type="date"
-                        value={(currentValue as string)?.split(",")?.[0] ?? ""}
-                        onChange={(e) => {
-                          const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
-                          handleRuleValueChange(rule.id, `${e.target.value},${currentEndDate}`);
-                        }}
-                        placeholder="Start date"
-                        className="h-9 flex-1 bg-white"
-                      />
-                      <span className="text-sm text-slate-500">and</span>
-                      <Input
-                        type="date"
-                        value={(currentValue as string)?.split(",")?.[1] ?? ""}
-                        onChange={(e) => {
-                          const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
-                          handleRuleValueChange(rule.id, `${currentStartDate},${e.target.value}`);
-                        }}
-                        placeholder="End date"
-                        className="h-9 flex-1 bg-white"
-                      />
-                    </div>
-                  ) : (
-                    (() => {
-                      if (config.valueType === "option") {
-                        // Option selector for single select validation rules
-                        const optionValue = typeof currentValue === "string" ? currentValue : "";
-                        return (
-                          <Select
-                            value={optionValue}
-                            onValueChange={(value) => handleRuleValueChange(rule.id, value)}>
-                            <SelectTrigger className="h-9 min-w-[200px] bg-white">
-                              <SelectValue placeholder="Select option" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {element &&
-                                "choices" in element &&
-                                element.choices
-                                  .filter(
-                                    (choice) =>
-                                      choice.id !== "other" && choice.id !== "none" && "label" in choice
-                                  )
-                                  .map((choice) => {
-                                    const choiceLabel =
-                                      "label" in choice
-                                        ? choice.label.default || Object.values(choice.label)[0] || choice.id
-                                        : choice.id;
-                                    return (
-                                      <SelectItem key={choice.id} value={choice.id}>
-                                        {choiceLabel}
-                                      </SelectItem>
-                                    );
-                                  })}
-                            </SelectContent>
-                          </Select>
-                        );
-                      }
-                      // File extension MultiSelect
-                      if (ruleType === "fileExtensionIs" || ruleType === "fileExtensionIsNot") {
-
-                        const extensionOptions = ALLOWED_FILE_EXTENSIONS.map((ext) => ({
-                          value: ext,
-                          label: `.${ext}`,
-                        }));
-                        const selectedExtensions =
-                          (rule.params as { extensions: string[] })?.extensions || [];
-                        return (
-                          <MultiSelect
-                            options={extensionOptions}
-                            value={selectedExtensions as TAllowedFileExtension[]}
-                            onChange={(selected) => {
-                              const updated = validationRules.map((r) => {
-                                if (r.id !== rule.id) return r;
-                                return {
-                                  ...r,
-                                  params: {
-                                    extensions: selected,
-                                  },
-                                } as TValidationRule;
-                              });
-                              onUpdateValidation({ rules: updated, logic: validationLogic });
-                            }}
-                            placeholder={t("environments.surveys.edit.validation.select_file_extensions")}
-                            disabled={false}
-                          />
-                        );
-                      }
-                      return (
-                        <Input
-                          type={htmlInputType}
-                          value={currentValue ?? ""}
-                          onChange={(e) => handleRuleValueChange(rule.id, e.target.value)}
-                          placeholder={config.valuePlaceholder}
-                          className="h-9 min-w-[80px] bg-white"
-                          min={config.valueType === "number" ? 0 : ""}
-                        />
-                      );
-                    })()
-                  )}
-
-                  {/* Unit selector (if applicable) */}
-                  {config.unitOptions && config.unitOptions.length > 0 && (
-                    <Select
-                      value={
-                        ruleType === "fileSizeAtLeast" || ruleType === "fileSizeAtMost"
-                          ? (rule.params as { size: number; unit: "KB" | "MB" }).unit
-                          : config.unitOptions[0].value
-                      }
-                      onValueChange={
-                        ruleType === "fileSizeAtLeast" || ruleType === "fileSizeAtMost"
-                          ? (value) => handleFileSizeUnitChange(rule.id, value as "KB" | "MB")
-                          : undefined
-                      }>
-                      <SelectTrigger className="flex-1 bg-white" disabled={config.unitOptions.length === 1}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {config.unitOptions.map((unit) => (
-                          <SelectItem key={unit.value} value={unit.value}>
-                            {ruleLabels[unit.labelKey]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              )}
-
-              {/* Delete button */}
-              <Button
-                variant="outline"
-                size="icon"
-                type="button"
-                onClick={() => handleDeleteRule(rule.id)}
-                className="shrink-0 bg-white">
-                <TrashIcon className="h-4 w-4" />
-              </Button>
-
-              {/* Add button */}
-              {canAddMore && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  onClick={() => handleAddRule(index)}
-                  className="shrink-0 bg-white">
-                  <PlusIcon className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          );
-        })}
+        {validationRules.map((rule, index) => (
+          <ValidationRuleRow
+            key={rule.id}
+            rule={rule}
+            index={index}
+            elementType={elementType}
+            element={element}
+            inputType={inputType}
+            onInputTypeChange={handleInputTypeChange}
+            fieldOptions={fieldOptions}
+            needsFieldSelector={needsFieldSelector}
+            validationRules={validationRules}
+            effectiveMaxSizeInMB={effectiveMaxSizeInMB}
+            ruleLabels={ruleLabels}
+            onFieldChange={handleFieldChange}
+            onRuleTypeChange={handleRuleTypeChange}
+            onRuleValueChange={handleRuleValueChange}
+            onFileExtensionChange={handleFileExtensionChange}
+            onFileSizeUnitChange={handleFileSizeUnitChange}
+            onDelete={handleDeleteRule}
+            onAdd={handleAddRule}
+            canAddMore={canAddMore}
+          />
+        ))}
       </div>
     </AdvancedOptionToggle>
   );
