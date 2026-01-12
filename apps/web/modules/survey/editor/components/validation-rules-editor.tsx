@@ -2,13 +2,16 @@
 
 import { capitalize } from "lodash";
 import { PlusIcon, TrashIcon } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { v4 as uuidv7 } from "uuid";
 import { TSurveyElement, TSurveyElementTypeEnum, TValidationLogic } from "@formbricks/types/surveys/elements";
 import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
+import { TAllowedFileExtension, ALLOWED_FILE_EXTENSIONS } from "@formbricks/types/storage";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
 import {
   Select,
   SelectContent,
@@ -17,6 +20,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { cn } from "@/modules/ui/lib/utils";
+import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
 import { createRuleParams, getAvailableRuleTypes, getRuleValue } from "../lib/validation-rules-utils";
 
@@ -27,6 +31,8 @@ interface ValidationRulesEditorProps {
   element?: TSurveyElement; // Optional, needed for single select option selection
   validationLogic?: TValidationLogic;
   onUpdateValidationLogic?: (logic: TValidationLogic) => void;
+  projectOrganizationId?: string; // For billing info to determine file size limits
+  isFormbricksCloud?: boolean; // To determine if using Formbricks Cloud or self-hosted
 }
 
 export const ValidationRulesEditor = ({
@@ -36,8 +42,33 @@ export const ValidationRulesEditor = ({
   element,
   validationLogic = "and",
   onUpdateValidationLogic,
+  projectOrganizationId,
+  isFormbricksCloud = false,
 }: ValidationRulesEditorProps) => {
   const { t } = useTranslation();
+  const {
+    billingInfo,
+    error: billingInfoError,
+    isLoading: billingInfoLoading,
+  } = useGetBillingInfo(projectOrganizationId ?? "");
+
+  // Calculate max file size limit based on billing info (same logic as file-upload-element-form)
+  const maxSizeInMBLimit = React.useMemo(() => {
+    if (billingInfoError || billingInfoLoading || !billingInfo) {
+      return 10; // Default to 10 MB
+    }
+
+    if (billingInfo.plan !== "free") {
+      return 1024; // 1GB in MB for non-free plans
+    }
+
+    return 10; // 10 MB for free plan
+  }, [billingInfo, billingInfoError, billingInfoLoading]);
+
+  // For file upload elements, use billing-based limit; for self-hosted, use 1024 MB
+  const effectiveMaxSizeInMB = elementType === TSurveyElementTypeEnum.FileUpload
+    ? (isFormbricksCloud ? maxSizeInMBLimit : 1024)
+    : undefined;
 
   const ruleLabels: Record<string, string> = {
     min_length: t("environments.surveys.edit.validation.min_length"),
@@ -73,6 +104,12 @@ export const ValidationRulesEditor = ({
     position_is_lower_than: t("environments.surveys.edit.validation.position_is_lower_than"),
     answers_provided_greater_than: t("environments.surveys.edit.validation.answers_provided_greater_than"),
     answers_provided_smaller_than: t("environments.surveys.edit.validation.answers_provided_smaller_than"),
+    file_size_at_least: t("environments.surveys.edit.validation.file_size_at_least"),
+    file_size_at_most: t("environments.surveys.edit.validation.file_size_at_most"),
+    file_extension_is: t("environments.surveys.edit.validation.file_extension_is"),
+    file_extension_is_not: t("environments.surveys.edit.validation.file_extension_is_not"),
+    kb: t("environments.surveys.edit.validation.kb"),
+    mb: t("environments.surveys.edit.validation.mb"),
   };
 
   const isEnabled = validationRules.length > 0;
@@ -177,11 +214,61 @@ export const ValidationRulesEditor = ({
       if (rule.id !== ruleId) return rule;
       const ruleType = rule.type;
       const config = RULE_TYPE_CONFIG[ruleType];
-      const parsedValue = config.valueType === "number" ? Number(value) || 0 : value;
+      let parsedValue: string | number = value;
+
+      // Handle file extension formatting: auto-add dot if missing
+      if (ruleType === "fileExtensionIs" || ruleType === "fileExtensionIsNot") {
+        // Normalize extension: ensure it starts with a dot
+        parsedValue = value.startsWith(".") ? value : `.${value}`;
+      } else if (config.valueType === "number") {
+        parsedValue = Number(value) || 0;
+        
+        // For fileSizeAtMost, ensure it doesn't exceed billing-based limit
+        if (ruleType === "fileSizeAtMost" && effectiveMaxSizeInMB !== undefined) {
+          const currentParams = rule.params as { size: number; unit: "KB" | "MB" };
+          const unit = currentParams?.unit || "MB";
+          const sizeInMB = unit === "KB" ? parsedValue / 1024 : parsedValue;
+          
+          // Cap the value at effectiveMaxSizeInMB
+          if (sizeInMB > effectiveMaxSizeInMB) {
+            parsedValue = unit === "KB" ? effectiveMaxSizeInMB * 1024 : effectiveMaxSizeInMB;
+          }
+        }
+      }
+
       return {
         ...rule,
         params: createRuleParams(ruleType, parsedValue),
       } as TValidationRule;
+    });
+    onUpdateRules(updated);
+  };
+
+  const handleFileSizeUnitChange = (ruleId: string, unit: "KB" | "MB") => {
+    const updated = validationRules.map((rule) => {
+      if (rule.id !== ruleId) return rule;
+      const ruleType = rule.type;
+      if (ruleType === "fileSizeAtLeast" || ruleType === "fileSizeAtMost") {
+        const currentParams = rule.params as { size: number; unit: "KB" | "MB" };
+        let size = currentParams.size;
+        
+        // For fileSizeAtMost, ensure it doesn't exceed billing-based limit
+        if (ruleType === "fileSizeAtMost" && effectiveMaxSizeInMB !== undefined) {
+          const sizeInMB = unit === "KB" ? size / 1024 : size;
+          if (sizeInMB > effectiveMaxSizeInMB) {
+            size = unit === "KB" ? effectiveMaxSizeInMB * 1024 : effectiveMaxSizeInMB;
+          }
+        }
+        
+        return {
+          ...rule,
+          params: {
+            size,
+            unit,
+          },
+        } as TValidationRule;
+      }
+      return rule;
     });
     onUpdateRules(updated);
   };
@@ -228,8 +315,8 @@ export const ValidationRulesEditor = ({
           // For ranking rules, extract optionId and position from params
           const rankingParams =
             ruleType === "positionIs" ||
-            ruleType === "positionIsHigherThan" ||
-            ruleType === "positionIsLowerThan"
+              ruleType === "positionIsHigherThan" ||
+              ruleType === "positionIsLowerThan"
               ? rule.params
               : null;
           const rankingOptionId = rankingParams?.optionId ?? "";
@@ -358,8 +445,8 @@ export const ValidationRulesEditor = ({
                                       const choiceLabel =
                                         "label" in choice
                                           ? choice.label.default ||
-                                            Object.values(choice.label)[0] ||
-                                            choice.id
+                                          Object.values(choice.label)[0] ||
+                                          choice.id
                                           : choice.id;
                                       return (
                                         <SelectItem key={choice.id} value={choice.id}>
@@ -384,6 +471,36 @@ export const ValidationRulesEditor = ({
                           </div>
                         );
                       }
+                      // File extension MultiSelect
+                      if (ruleType === "fileExtensionIs" || ruleType === "fileExtensionIsNot") {
+
+                        const extensionOptions = ALLOWED_FILE_EXTENSIONS.map((ext) => ({
+                          value: ext,
+                          label: `.${ext}`,
+                        }));
+                        const selectedExtensions =
+                          (rule.params as { extensions: string[] })?.extensions || [];
+                        return (
+                          <MultiSelect
+                            options={extensionOptions}
+                            value={selectedExtensions as TAllowedFileExtension[]}
+                            onChange={(selected) => {
+                              const updated = validationRules.map((r) => {
+                                if (r.id !== rule.id) return r;
+                                return {
+                                  ...r,
+                                  params: {
+                                    extensions: selected,
+                                  },
+                                } as TValidationRule;
+                              });
+                              onUpdateRules(updated);
+                            }}
+                            placeholder={t("environments.surveys.edit.validation.select_file_extensions")}
+                            disabled={false}
+                          />
+                        );
+                      }
                       return (
                         <Input
                           type={inputType}
@@ -399,7 +516,17 @@ export const ValidationRulesEditor = ({
 
                   {/* Unit selector (if applicable) */}
                   {config.unitOptions && config.unitOptions.length > 0 && (
-                    <Select value={config.unitOptions[0].value}>
+                    <Select
+                      value={
+                        ruleType === "fileSizeAtLeast" || ruleType === "fileSizeAtMost"
+                          ? (rule.params as { size: number; unit: "KB" | "MB" }).unit
+                          : config.unitOptions[0].value
+                      }
+                      onValueChange={
+                        ruleType === "fileSizeAtLeast" || ruleType === "fileSizeAtMost"
+                          ? (value) => handleFileSizeUnitChange(rule.id, value as "KB" | "MB")
+                          : undefined
+                      }>
                       <SelectTrigger className="flex-1 bg-white" disabled={config.unitOptions.length === 1}>
                         <SelectValue />
                       </SelectTrigger>

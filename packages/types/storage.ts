@@ -1,5 +1,33 @@
 import { z } from "zod";
 
+export const ALLOWED_FILE_EXTENSIONS: TAllowedFileExtension[] = [
+  "heic",
+  "png",
+  "jpeg",
+  "jpg",
+  "webp",
+  "ico",
+  "pdf",
+  "eml",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "txt",
+  "csv",
+  "mp4",
+  "mov",
+  "avi",
+  "mkv",
+  "webm",
+  "zip",
+  "rar",
+  "7z",
+  "tar",
+]
+
 export const ZAllowedFileExtension = z.enum([
   "heic",
   "png",

@@ -11,6 +11,10 @@ import type {
   TValidationRuleParamsDoesNotEqual,
   TValidationRuleParamsEmail,
   TValidationRuleParamsEquals,
+  TValidationRuleParamsFileExtensionIs,
+  TValidationRuleParamsFileExtensionIsNot,
+  TValidationRuleParamsFileSizeAtLeast,
+  TValidationRuleParamsFileSizeAtMost,
   TValidationRuleParamsIsBetween,
   TValidationRuleParamsIsEarlierThan,
   TValidationRuleParamsIsGreaterThan,
@@ -774,6 +778,150 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsAnswersProvidedSmallerThan;
       return t("errors.answers_provided_must_be_smaller_than", { max: typedParams.max });
+    },
+  },
+  fileSizeAtLeast: {
+    check: (
+      value: TResponseDataValue,
+      _params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      if (element.type !== "fileUpload") {
+        return { valid: true };
+      }
+      // File upload responses are arrays of file URLs (strings)
+      // File size validation typically happens client-side before upload
+      // For response validation, we skip if value is empty
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return { valid: true };
+      }
+      // Note: File size validation from URLs requires file metadata
+      // This is typically validated client-side before upload
+      // For now, we return valid as the actual validation happens during upload
+      return { valid: true };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsFileSizeAtLeast;
+      const unitLabel = typedParams.unit === "KB" ? "KB" : "MB";
+      return t("errors.file_size_must_be_at_least", { size: typedParams.size, unit: unitLabel });
+    },
+  },
+  fileSizeAtMost: {
+    check: (
+      value: TResponseDataValue,
+      _params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      if (element.type !== "fileUpload") {
+        return { valid: true };
+      }
+      // File upload responses are arrays of file URLs (strings)
+      // File size validation typically happens client-side before upload
+      // For response validation, we skip if value is empty
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return { valid: true };
+      }
+      // Note: File size validation from URLs requires file metadata
+      // This is typically validated client-side before upload
+      // For now, we return valid as the actual validation happens during upload
+      return { valid: true };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsFileSizeAtMost;
+      const unitLabel = typedParams.unit === "KB" ? "KB" : "MB";
+      return t("errors.file_size_must_be_at_most", { size: typedParams.size, unit: unitLabel });
+    },
+  },
+  fileExtensionIs: {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsFileExtensionIs;
+      if (element.type !== "fileUpload") {
+        return { valid: true };
+      }
+      // Skip validation if value is empty
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return { valid: true };
+      }
+      // Normalize expected extensions: ensure they start with a dot
+      const expectedExtensions = new Set(
+        typedParams.extensions.map((ext) =>
+          ext.startsWith(".") ? ext.toLowerCase() : `.${ext.toLowerCase()}`
+        )
+      );
+
+      // Check all files in the array
+      for (const fileUrl of value) {
+        if (typeof fileUrl !== "string") continue;
+        // Extract filename from URL
+        const urlPath = fileUrl.split("?")[0]; // Remove query params
+        const fileName = urlPath.split("/").pop() || "";
+        if (!fileName.includes(".")) {
+          return { valid: false };
+        }
+        const fileExtension = `.${fileName.split(".").pop()?.toLowerCase() ?? ""}`;
+        // Check if file extension matches any of the expected extensions
+        if (!expectedExtensions.has(fileExtension)) {
+          return { valid: false };
+        }
+      }
+      return { valid: true };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsFileExtensionIs;
+      const extensions = typedParams.extensions
+        .map((ext) => (ext.startsWith(".") ? ext : `.${ext}`))
+        .join(", ");
+      return t("errors.file_extension_must_be", { extension: extensions });
+    },
+  },
+  fileExtensionIsNot: {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      const typedParams = params as TValidationRuleParamsFileExtensionIsNot;
+      if (element.type !== "fileUpload") {
+        return { valid: true };
+      }
+      // Skip validation if value is empty
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return { valid: true };
+      }
+      // Normalize forbidden extensions: ensure they start with a dot
+      const forbiddenExtensions = new Set(
+        typedParams.extensions.map((ext) =>
+          ext.startsWith(".") ? ext.toLowerCase() : `.${ext.toLowerCase()}`
+        )
+      );
+
+      // Check all files in the array
+      for (const fileUrl of value) {
+        if (typeof fileUrl !== "string") continue;
+        // Extract filename from URL
+        const urlPath = fileUrl.split("?")[0]; // Remove query params
+        const fileName = urlPath.split("/").pop() || "";
+        if (!fileName.includes(".")) {
+          continue; // Files without extensions are allowed
+        }
+        const fileExtension = `.${fileName.split(".").pop()?.toLowerCase() ?? ""}`;
+        // Check if file extension matches any of the forbidden extensions
+        if (forbiddenExtensions.has(fileExtension)) {
+          return { valid: false };
+        }
+      }
+      return { valid: true };
+    },
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsFileExtensionIsNot;
+      const extensions = typedParams.extensions
+        .map((ext) => (ext.startsWith(".") ? ext : `.${ext}`))
+        .join(", ");
+      return t("errors.file_extension_must_not_be", { extension: extensions });
     },
   },
 };

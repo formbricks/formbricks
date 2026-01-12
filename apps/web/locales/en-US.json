@@ -1617,7 +1617,15 @@
           "position_is": "Position is",
           "position_is_higher_than": "Position is higher than",
           "position_is_lower_than": "Position is lower than",
-          "url": "Is valid URL"
+          "url": "Is valid URL",
+          "file_size_at_least": "File size is at least",
+          "file_size_at_most": "File size is at most",
+          "file_extension_is": "File extension is",
+          "file_extension_is_not": "File extension is not",
+          "kb": "KB",
+          "mb": "MB",
+          "enter_valid_file_extension": "Enter a valid file extension starting with .",
+          "select_file_extensions": "Select file extensions..."
         },
         "validation_logic_and": "AND (all must pass)",
         "validation_logic_or": "OR (at least one must pass)",

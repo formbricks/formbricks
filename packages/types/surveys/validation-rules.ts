@@ -47,6 +47,12 @@ export const ZValidationRuleType = z.enum([
   "isEarlierThan",
   "isBetween",
   "isNotBetween",
+
+  // File upload rules
+  "fileSizeAtLeast",
+  "fileSizeAtMost",
+  "fileExtensionIs",
+  "fileExtensionIsNot",
 ]);
 
 export type TValidationRuleType = z.infer<typeof ZValidationRuleType>;
@@ -176,6 +182,25 @@ export const ZValidationRuleParamsAnswersProvidedSmallerThan = z.object({
   max: z.number().min(0),
 });
 
+// File upload rule params
+export const ZValidationRuleParamsFileSizeAtLeast = z.object({
+  size: z.number().min(0),
+  unit: z.enum(["KB", "MB"]),
+});
+
+export const ZValidationRuleParamsFileSizeAtMost = z.object({
+  size: z.number().min(0),
+  unit: z.enum(["KB", "MB"]),
+});
+
+export const ZValidationRuleParamsFileExtensionIs = z.object({
+  extensions: z.array(z.string()).min(1),
+});
+
+export const ZValidationRuleParamsFileExtensionIsNot = z.object({
+  extensions: z.array(z.string()).min(1),
+});
+
 // Union of all params types
 export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsMinLength,
@@ -209,6 +234,10 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsPositionIsLowerThan,
   ZValidationRuleParamsAnswersProvidedGreaterThan,
   ZValidationRuleParamsAnswersProvidedSmallerThan,
+  ZValidationRuleParamsFileSizeAtLeast,
+  ZValidationRuleParamsFileSizeAtMost,
+  ZValidationRuleParamsFileExtensionIs,
+  ZValidationRuleParamsFileExtensionIsNot,
 ]);
 
 export type TValidationRuleParams = z.infer<typeof ZValidationRuleParams>;
@@ -253,6 +282,10 @@ export type TValidationRuleParamsAnswersProvidedGreaterThan = z.infer<
 export type TValidationRuleParamsAnswersProvidedSmallerThan = z.infer<
   typeof ZValidationRuleParamsAnswersProvidedSmallerThan
 >;
+export type TValidationRuleParamsFileSizeAtLeast = z.infer<typeof ZValidationRuleParamsFileSizeAtLeast>;
+export type TValidationRuleParamsFileSizeAtMost = z.infer<typeof ZValidationRuleParamsFileSizeAtMost>;
+export type TValidationRuleParamsFileExtensionIs = z.infer<typeof ZValidationRuleParamsFileExtensionIs>;
+export type TValidationRuleParamsFileExtensionIsNot = z.infer<typeof ZValidationRuleParamsFileExtensionIsNot>;
 
 // Validation rule stored on element - discriminated union with type at top level
 export const ZValidationRule = z.discriminatedUnion("type", [
@@ -442,6 +475,30 @@ export const ZValidationRule = z.discriminatedUnion("type", [
     params: ZValidationRuleParamsAnswersProvidedSmallerThan,
     customErrorMessage: ZI18nString.optional(),
   }),
+  z.object({
+    id: z.string(),
+    type: z.literal("fileSizeAtLeast"),
+    params: ZValidationRuleParamsFileSizeAtLeast,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("fileSizeAtMost"),
+    params: ZValidationRuleParamsFileSizeAtMost,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("fileExtensionIs"),
+    params: ZValidationRuleParamsFileExtensionIs,
+    customErrorMessage: ZI18nString.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("fileExtensionIsNot"),
+    params: ZValidationRuleParamsFileExtensionIsNot,
+    customErrorMessage: ZI18nString.optional(),
+  }),
 ]);
 
 export type TValidationRule = z.infer<typeof ZValidationRule>;
@@ -490,7 +547,7 @@ const DATE_RULES = [
 const CONSENT_RULES = [] as const;
 const MATRIX_RULES = ["answersProvidedGreaterThan", "answersProvidedSmallerThan"] as const;
 const RANKING_RULES = ["positionIs", "positionIsHigherThan", "positionIsLowerThan"] as const;
-const FILE_UPLOAD_RULES = [] as const;
+const FILE_UPLOAD_RULES = ["fileSizeAtLeast", "fileSizeAtMost", "fileExtensionIs", "fileExtensionIsNot"] as const;
 const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
 const ADDRESS_RULES = [] as const;
 const CONTACT_INFO_RULES = [] as const;
@@ -803,7 +860,34 @@ export const ZValidationRulesForRanking: z.ZodType<TValidationRulesForRanking> =
   ])
 );
 
-export const ZValidationRulesForFileUpload: z.ZodType<TValidationRulesForFileUpload> = z.array(z.never());
+export const ZValidationRulesForFileUpload: z.ZodType<TValidationRulesForFileUpload> = z.array(
+  z.discriminatedUnion("type", [
+    z.object({
+      id: z.string(),
+      type: z.literal("fileSizeAtLeast"),
+      params: ZValidationRuleParamsFileSizeAtLeast,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("fileSizeAtMost"),
+      params: ZValidationRuleParamsFileSizeAtMost,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("fileExtensionIs"),
+      params: ZValidationRuleParamsFileExtensionIs,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+    z.object({
+      id: z.string(),
+      type: z.literal("fileExtensionIsNot"),
+      params: ZValidationRuleParamsFileExtensionIsNot,
+      customErrorMessage: ZI18nString.optional(),
+    }),
+  ])
+);
 
 export const ZValidationRulesForPictureSelection: z.ZodType<TValidationRulesForPictureSelection> = z.array(
   z.discriminatedUnion("type", [

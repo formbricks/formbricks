@@ -3,6 +3,7 @@
 import { Command as CommandPrimitive } from "cmdk";
 import { X } from "lucide-react";
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
 import { Badge } from "@/modules/ui/components/multi-select/badge";
 
@@ -35,6 +36,8 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
 
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
+  const [position, setPosition] = React.useState<{ top: number; left: number; width: number } | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (value) {
@@ -86,14 +89,28 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       });
   }, [options, selected, inputValue]);
 
+  // Calculate position for dropdown when opening
+  React.useEffect(() => {
+    if (open && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY + 6,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    } else {
+      setPosition(null);
+    }
+  }, [open]);
+
   return (
     <Command
       onKeyDown={handleKeyDown}
-      className={`overflow-visible bg-white ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
+      className={`relative overflow-visible bg-white ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
       <div
-        className={`border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2 ${
-          disabled ? "pointer-events-none" : "focus-within:ring-ring"
-        }`}>
+        ref={containerRef}
+        className={`border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2 ${disabled ? "pointer-events-none" : "focus-within:ring-ring"
+          }`}>
         <div className="flex flex-wrap gap-1">
           {selected.map((option) => (
             <Badge key={option.value} className="rounded-md">
@@ -126,34 +143,46 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
           />
         </div>
       </div>
-      {open && selectableOptions.length > 0 && !disabled && (
-        <div className="relative mt-2">
-          <CommandList className="border-0">
-            <div className="text-popover-foreground animate-in absolute top-0 z-10 max-h-32 w-full overflow-auto rounded-md bg-white shadow-md outline-none">
-              <CommandGroup className="h-full overflow-auto">
-                {selectableOptions.map((option) => (
-                  <CommandItem
-                    key={option.value}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onSelect={() => {
-                      if (disabled) return;
-                      const newSelected = [...selected, option];
-                      setSelected(newSelected);
-                      onChange?.(newSelected.map((o) => o.value) as K);
-                      setInputValue("");
-                    }}
-                    className="cursor-pointer">
-                    {option.label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </div>
-          </CommandList>
-        </div>
-      )}
+      {open &&
+        selectableOptions.length > 0 &&
+        !disabled &&
+        position &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed z-[100]"
+            style={{
+              top: `${position.top}px`,
+              left: `${position.left}px`,
+              width: `${position.width}px`,
+            }}>
+            <CommandList className="border-0">
+              <div className="text-popover-foreground animate-in max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-none">
+                <CommandGroup className="h-full overflow-auto">
+                  {selectableOptions.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onSelect={() => {
+                        if (disabled) return;
+                        const newSelected = [...selected, option];
+                        setSelected(newSelected);
+                        onChange?.(newSelected.map((o) => o.value) as K);
+                        setInputValue("");
+                      }}
+                      className="cursor-pointer">
+                      {option.label}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </div>
+            </CommandList>
+          </div>,
+          document.body
+        )}
     </Command>
   );
 }

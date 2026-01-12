@@ -63,6 +63,16 @@ export const getRuleValue = (rule: TValidationRule): number | string | undefined
     // For single/multi select rules, return optionId
     return params.optionId;
   }
+  // File upload rules
+  if ("size" in params && "unit" in params) {
+    // For file size rules, return size as number (unit is stored separately)
+    return params.size;
+  }
+  if ("extensions" in params) {
+    // For file extension rules, return extensions array as comma-separated string for display
+    const extensions = params.extensions;
+    return extensions.length > 0 ? extensions.join(", ") : "";
+  }
   return undefined;
 };
 
@@ -152,6 +162,26 @@ export const createRuleParams = (
       return { min: Number(value) || 1 };
     case "answersProvidedSmallerThan":
       return { max: Number(value) || 5 };
+    case "fileSizeAtLeast":
+      // Value should be number, unit is handled separately in the UI
+      return { size: Number(value) || 1, unit: "MB" as const };
+    case "fileSizeAtMost":
+      // Value should be number, unit is handled separately in the UI
+      return { size: Number(value) || 5, unit: "MB" as const };
+    case "fileExtensionIs":
+    case "fileExtensionIsNot": {
+      // Handle array of extensions (from MultiSelect) or comma-separated string
+      if (Array.isArray(value)) {
+        return { extensions: value };
+      }
+      if (typeof value === "string" && value.includes(",")) {
+        // Comma-separated string
+        return { extensions: value.split(",").map((ext) => ext.trim()) };
+      }
+      // Single value as string
+      const extensionValue = value === undefined || value === null ? "" : String(value);
+      return { extensions: extensionValue ? [extensionValue] : [] };
+    }
     default:
       return {};
   }
