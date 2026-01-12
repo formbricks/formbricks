@@ -1,7 +1,6 @@
 "use client";
 
-import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { capitalize } from "lodash";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { v4 as uuidv7 } from "uuid";
@@ -20,7 +19,6 @@ import {
 import { cn } from "@/modules/ui/lib/utils";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
 import { createRuleParams, getAvailableRuleTypes, getRuleValue } from "../lib/validation-rules-utils";
-import { ValidationRuleItem } from "./validation-rule-item";
 
 interface ValidationRulesEditorProps {
   elementType: TSurveyElementTypeEnum;
@@ -76,14 +74,6 @@ export const ValidationRulesEditor = ({
     answers_provided_greater_than: t("environments.surveys.edit.validation.answers_provided_greater_than"),
     answers_provided_smaller_than: t("environments.surveys.edit.validation.answers_provided_smaller_than"),
   };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
-  );
 
   const isEnabled = validationRules.length > 0;
 
@@ -196,24 +186,6 @@ export const ValidationRulesEditor = ({
     onUpdateRules(updated);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const oldIndex = validationRules.findIndex((rule) => rule.id === active.id);
-    const newIndex = validationRules.findIndex((rule) => rule.id === over.id);
-
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newRules = [...validationRules];
-      const [movedRule] = newRules.splice(oldIndex, 1);
-      newRules.splice(newIndex, 0, movedRule);
-      onUpdateRules(newRules);
-    }
-  };
-
   const availableRulesForAdd = getAvailableRuleTypes(elementType, validationRules);
   const canAddMore = availableRulesForAdd.length > 0;
 
@@ -247,235 +219,227 @@ export const ValidationRulesEditor = ({
           </Select>
         </div>
       )}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={validationRules.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-          <div className="flex w-full flex-col gap-2">
-            {validationRules.map((rule, index) => {
-              const ruleType = rule.type;
-              const config = RULE_TYPE_CONFIG[ruleType];
-              const currentValue = getRuleValue(rule);
+      <div className="flex w-full flex-col gap-2">
+        {validationRules.map((rule, index) => {
+          const ruleType = rule.type;
+          const config = RULE_TYPE_CONFIG[ruleType];
+          const currentValue = getRuleValue(rule);
 
-              // For ranking rules, extract optionId and position from params
-              const rankingParams =
-                ruleType === "positionIs" ||
-                ruleType === "positionIsHigherThan" ||
-                ruleType === "positionIsLowerThan"
-                  ? rule.params
-                  : null;
-              const rankingOptionId = rankingParams?.optionId ?? "";
-              const rankingPosition = rankingParams?.position ?? 1;
+          // For ranking rules, extract optionId and position from params
+          const rankingParams =
+            ruleType === "positionIs" ||
+            ruleType === "positionIsHigherThan" ||
+            ruleType === "positionIsLowerThan"
+              ? rule.params
+              : null;
+          const rankingOptionId = rankingParams?.optionId ?? "";
+          const rankingPosition = rankingParams?.position ?? 1;
 
-              // Get available types for this rule (current type + unused types, no duplicates)
-              const otherAvailableTypes = getAvailableRuleTypes(
-                elementType,
-                validationRules.filter((r) => r.id !== rule.id)
-              ).filter((t) => t !== ruleType);
-              const availableTypesForSelect = [ruleType, ...otherAvailableTypes];
+          // Get available types for this rule (current type + unused types, no duplicates)
+          const otherAvailableTypes = getAvailableRuleTypes(
+            elementType,
+            validationRules.filter((r) => r.id !== rule.id)
+          ).filter((t) => t !== ruleType);
+          const availableTypesForSelect = [ruleType, ...otherAvailableTypes];
 
-              // Determine input type for non-range date rules
-              let inputType: "number" | "date" | "text" = "text";
-              if (config.valueType === "number") {
-                inputType = "number";
-              } else if (
-                ruleType.startsWith("is") &&
-                (ruleType.includes("Later") || ruleType.includes("Earlier") || ruleType.includes("On"))
-              ) {
-                inputType = "date";
-              }
+          // Determine input type for non-range date rules
+          let inputType: "number" | "date" | "text" = "text";
+          if (config.valueType === "number") {
+            inputType = "number";
+          } else if (
+            ruleType.startsWith("is") &&
+            (ruleType.includes("Later") || ruleType.includes("Earlier") || ruleType.includes("On"))
+          ) {
+            inputType = "date";
+          }
 
-              return (
-                <ValidationRuleItem key={rule.id} id={rule.id}>
-                  {/* Rule Type Selector */}
-                  <Select
-                    value={ruleType}
-                    onValueChange={(value) => handleRuleTypeChange(rule.id, value as TValidationRuleType)}>
-                    <SelectTrigger className={cn("bg-white", config.needsValue ? "min-w-[200px]" : "flex-1")}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableTypesForSelect.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {ruleLabels[RULE_TYPE_CONFIG[type].labelKey]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          return (
+            <div key={rule.id} className="flex w-full items-center gap-2">
+              {/* Rule Type Selector */}
+              <Select
+                value={ruleType}
+                onValueChange={(value) => handleRuleTypeChange(rule.id, value as TValidationRuleType)}>
+                <SelectTrigger className={cn("bg-white", config.needsValue ? "min-w-[200px]" : "flex-1")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTypesForSelect.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {capitalize(ruleLabels[RULE_TYPE_CONFIG[type].labelKey])}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                  {/* Value Input (if needed) */}
-                  {config.needsValue && (
+              {/* Value Input (if needed) */}
+              {config.needsValue && (
+                <div className="flex w-full items-center gap-2">
+                  {ruleType === "isBetween" || ruleType === "isNotBetween" ? (
+                    // Special handling for date range inputs
                     <div className="flex w-full items-center gap-2">
-                      {ruleType === "isBetween" || ruleType === "isNotBetween" ? (
-                        // Special handling for date range inputs
-                        <div className="flex w-full items-center gap-2">
-                          <Input
-                            type="date"
-                            value={(currentValue as string)?.split(",")?.[0] ?? ""}
-                            onChange={(e) => {
-                              const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
-                              handleRuleValueChange(rule.id, `${e.target.value},${currentEndDate}`);
-                            }}
-                            placeholder="Start date"
-                            className="h-9 flex-1 bg-white"
-                          />
-                          <span className="text-sm text-slate-500">and</span>
-                          <Input
-                            type="date"
-                            value={(currentValue as string)?.split(",")?.[1] ?? ""}
-                            onChange={(e) => {
-                              const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
-                              handleRuleValueChange(rule.id, `${currentStartDate},${e.target.value}`);
-                            }}
-                            placeholder="End date"
-                            className="h-9 flex-1 bg-white"
-                          />
-                        </div>
-                      ) : (
-                        (() => {
-                          if (config.valueType === "option") {
-                            // Option selector for single select validation rules
-                            const optionValue = typeof currentValue === "string" ? currentValue : "";
-                            return (
-                              <Select
-                                value={optionValue}
-                                onValueChange={(value) => handleRuleValueChange(rule.id, value)}>
-                                <SelectTrigger className="h-9 min-w-[200px] bg-white">
-                                  <SelectValue placeholder="Select option" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {element &&
-                                    "choices" in element &&
-                                    element.choices
-                                      .filter(
-                                        (choice) =>
-                                          choice.id !== "other" && choice.id !== "none" && "label" in choice
-                                      )
-                                      .map((choice) => {
-                                        const choiceLabel =
-                                          "label" in choice
-                                            ? choice.label.default ||
-                                              Object.values(choice.label)[0] ||
-                                              choice.id
-                                            : choice.id;
-                                        return (
-                                          <SelectItem key={choice.id} value={choice.id}>
-                                            {choiceLabel}
-                                          </SelectItem>
-                                        );
-                                      })}
-                                </SelectContent>
-                              </Select>
-                            );
-                          }
-                          if (config.valueType === "ranking") {
-                            // Ranking rules: option selector + position input
-                            return (
-                              <div className="flex w-full items-center gap-2">
-                                <Select
-                                  value={rankingOptionId}
-                                  onValueChange={(optionId) => {
-                                    handleRuleValueChange(rule.id, `${optionId},${rankingPosition}`);
-                                  }}>
-                                  <SelectTrigger className="h-9 min-w-[200px] bg-white">
-                                    <SelectValue placeholder="Select option" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {element &&
-                                      "choices" in element &&
-                                      element.choices
-                                        .filter(
-                                          (choice) =>
-                                            choice.id !== "other" && choice.id !== "none" && "label" in choice
-                                        )
-                                        .map((choice) => {
-                                          const choiceLabel =
-                                            "label" in choice
-                                              ? choice.label.default ||
-                                                Object.values(choice.label)[0] ||
-                                                choice.id
-                                              : choice.id;
-                                          return (
-                                            <SelectItem key={choice.id} value={choice.id}>
-                                              {choiceLabel}
-                                            </SelectItem>
-                                          );
-                                        })}
-                                  </SelectContent>
-                                </Select>
-                                <span className="text-sm text-slate-500">position</span>
-                                <Input
-                                  type="number"
-                                  value={rankingPosition}
-                                  onChange={(e) => {
-                                    const newPosition = Number(e.target.value) || 1;
-                                    handleRuleValueChange(rule.id, `${rankingOptionId},${newPosition}`);
-                                  }}
-                                  placeholder="1"
-                                  className="h-9 w-20 bg-white"
-                                  min={1}
-                                />
-                              </div>
-                            );
-                          }
-                          return (
-                            <Input
-                              type={inputType}
-                              value={currentValue ?? ""}
-                              onChange={(e) => handleRuleValueChange(rule.id, e.target.value)}
-                              placeholder={config.valuePlaceholder}
-                              className="h-9 min-w-[80px] bg-white"
-                              min={config.valueType === "number" ? 0 : ""}
-                            />
-                          );
-                        })()
-                      )}
-
-                      {/* Unit selector (if applicable) */}
-                      {config.unitOptions && config.unitOptions.length > 0 && (
-                        <Select value={config.unitOptions[0].value}>
-                          <SelectTrigger
-                            className="flex-1 bg-white"
-                            disabled={config.unitOptions.length === 1}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {config.unitOptions.map((unit) => (
-                              <SelectItem key={unit.value} value={unit.value}>
-                                {ruleLabels[unit.labelKey]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
+                      <Input
+                        type="date"
+                        value={(currentValue as string)?.split(",")?.[0] ?? ""}
+                        onChange={(e) => {
+                          const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
+                          handleRuleValueChange(rule.id, `${e.target.value},${currentEndDate}`);
+                        }}
+                        placeholder="Start date"
+                        className="h-9 flex-1 bg-white"
+                      />
+                      <span className="text-sm text-slate-500">and</span>
+                      <Input
+                        type="date"
+                        value={(currentValue as string)?.split(",")?.[1] ?? ""}
+                        onChange={(e) => {
+                          const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
+                          handleRuleValueChange(rule.id, `${currentStartDate},${e.target.value}`);
+                        }}
+                        placeholder="End date"
+                        className="h-9 flex-1 bg-white"
+                      />
                     </div>
+                  ) : (
+                    (() => {
+                      if (config.valueType === "option") {
+                        // Option selector for single select validation rules
+                        const optionValue = typeof currentValue === "string" ? currentValue : "";
+                        return (
+                          <Select
+                            value={optionValue}
+                            onValueChange={(value) => handleRuleValueChange(rule.id, value)}>
+                            <SelectTrigger className="h-9 min-w-[200px] bg-white">
+                              <SelectValue placeholder="Select option" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {element &&
+                                "choices" in element &&
+                                element.choices
+                                  .filter(
+                                    (choice) =>
+                                      choice.id !== "other" && choice.id !== "none" && "label" in choice
+                                  )
+                                  .map((choice) => {
+                                    const choiceLabel =
+                                      "label" in choice
+                                        ? choice.label.default || Object.values(choice.label)[0] || choice.id
+                                        : choice.id;
+                                    return (
+                                      <SelectItem key={choice.id} value={choice.id}>
+                                        {choiceLabel}
+                                      </SelectItem>
+                                    );
+                                  })}
+                            </SelectContent>
+                          </Select>
+                        );
+                      }
+                      if (config.valueType === "ranking") {
+                        // Ranking rules: option selector + position input
+                        return (
+                          <div className="flex w-full items-center gap-2">
+                            <Select
+                              value={rankingOptionId}
+                              onValueChange={(optionId) => {
+                                handleRuleValueChange(rule.id, `${optionId},${rankingPosition}`);
+                              }}>
+                              <SelectTrigger className="h-9 min-w-[200px] bg-white">
+                                <SelectValue placeholder="Select option" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {element &&
+                                  "choices" in element &&
+                                  element.choices
+                                    .filter(
+                                      (choice) =>
+                                        choice.id !== "other" && choice.id !== "none" && "label" in choice
+                                    )
+                                    .map((choice) => {
+                                      const choiceLabel =
+                                        "label" in choice
+                                          ? choice.label.default ||
+                                            Object.values(choice.label)[0] ||
+                                            choice.id
+                                          : choice.id;
+                                      return (
+                                        <SelectItem key={choice.id} value={choice.id}>
+                                          {choiceLabel}
+                                        </SelectItem>
+                                      );
+                                    })}
+                              </SelectContent>
+                            </Select>
+                            <span className="text-sm text-slate-500">position</span>
+                            <Input
+                              type="number"
+                              value={rankingPosition}
+                              onChange={(e) => {
+                                const newPosition = Number(e.target.value) || 1;
+                                handleRuleValueChange(rule.id, `${rankingOptionId},${newPosition}`);
+                              }}
+                              placeholder="1"
+                              className="h-9 w-20 bg-white"
+                              min={1}
+                            />
+                          </div>
+                        );
+                      }
+                      return (
+                        <Input
+                          type={inputType}
+                          value={currentValue ?? ""}
+                          onChange={(e) => handleRuleValueChange(rule.id, e.target.value)}
+                          placeholder={config.valuePlaceholder}
+                          className="h-9 min-w-[80px] bg-white"
+                          min={config.valueType === "number" ? 0 : ""}
+                        />
+                      );
+                    })()
                   )}
 
-                  {/* Delete button */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    type="button"
-                    onClick={() => handleDeleteRule(rule.id)}
-                    className="shrink-0 bg-white">
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
-
-                  {/* Add button */}
-                  {canAddMore && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      type="button"
-                      onClick={() => handleAddRule(index)}
-                      className="shrink-0 bg-white">
-                      <PlusIcon className="h-4 w-4" />
-                    </Button>
+                  {/* Unit selector (if applicable) */}
+                  {config.unitOptions && config.unitOptions.length > 0 && (
+                    <Select value={config.unitOptions[0].value}>
+                      <SelectTrigger className="flex-1 bg-white" disabled={config.unitOptions.length === 1}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {config.unitOptions.map((unit) => (
+                          <SelectItem key={unit.value} value={unit.value}>
+                            {ruleLabels[unit.labelKey]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
-                </ValidationRuleItem>
-              );
-            })}
-          </div>
-        </SortableContext>
-      </DndContext>
+                </div>
+              )}
+
+              {/* Delete button */}
+              <Button
+                variant="outline"
+                size="icon"
+                type="button"
+                onClick={() => handleDeleteRule(rule.id)}
+                className="shrink-0 bg-white">
+                <TrashIcon className="h-4 w-4" />
+              </Button>
+
+              {/* Add button */}
+              {canAddMore && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  onClick={() => handleAddRule(index)}
+                  className="shrink-0 bg-white">
+                  <PlusIcon className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </AdvancedOptionToggle>
   );
 };
