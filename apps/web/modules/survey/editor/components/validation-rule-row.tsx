@@ -157,7 +157,8 @@ export const ValidationRuleRow = ({
         size="icon"
         type="button"
         onClick={() => onDelete(rule.id)}
-        className="shrink-0 bg-white">
+        className="shrink-0 bg-white"
+        aria-label="Delete validation rule">
         <TrashIcon className="h-4 w-4" />
       </Button>
 
@@ -168,7 +169,8 @@ export const ValidationRuleRow = ({
           size="icon"
           type="button"
           onClick={() => onAdd(index)}
-          className="shrink-0 bg-white">
+          className="shrink-0 bg-white"
+          aria-label="Add validation rule">
           <PlusIcon className="h-4 w-4" />
         </Button>
       )}

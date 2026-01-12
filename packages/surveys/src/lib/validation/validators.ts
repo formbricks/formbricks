@@ -54,9 +54,9 @@ export interface TValidator {
   getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction) => string;
 }
 
-// Phone regex: must start with digit or +, end with digit
-// Allows digits, +, -, and spaces in between
-const PHONE_REGEX = /^\d[\d+\- ]*\d$/;
+// Phone regex: may start with +, must end with digit
+// Allows digits, -, and spaces in between (plus is only allowed as the first char)
+const PHONE_REGEX = /^\+?\d[\d\- ]*\d$/;
 
 /**
  * Check if a value is empty
@@ -123,6 +123,20 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       // Skip validation if value is empty
       if (!value || typeof value !== "string" || value === "") {
         return { valid: true };
+      }
+
+      // ReDoS protection: cap pattern length to prevent catastrophic backtracking
+      // Patterns longer than 512 chars can cause exponential time complexity
+      if (typedParams.pattern.length > 512) {
+        console.warn(`Pattern too long (${typedParams.pattern.length} chars), rejecting to prevent ReDoS`);
+        return { valid: false };
+      }
+
+      // ReDoS protection: cap value length to prevent exponential backtracking
+      // Values longer than 4096 chars can cause main-thread lockup with malicious patterns
+      if (value.length > 4096) {
+        console.warn(`Value too long (${value.length} chars), rejecting to prevent ReDoS`);
+        return { valid: false };
       }
 
       try {

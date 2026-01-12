@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { TSurveyOpenTextElementInputType } from "@formbricks/types/surveys/elements";
 import {
   Select,
@@ -9,17 +10,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { cn } from "@/modules/ui/lib/utils";
-
-// Reusable input type options for OpenText elements
-const INPUT_TYPE_OPTIONS = (
-  <>
-    <SelectItem value="text">{"Text"}</SelectItem>
-    <SelectItem value="email">{"Email"}</SelectItem>
-    <SelectItem value="url">{"Url"}</SelectItem>
-    <SelectItem value="phone">{"Phone"}</SelectItem>
-    <SelectItem value="number">{"Number"}</SelectItem>
-  </>
-);
 
 interface ValidationRuleInputTypeSelectorProps {
   value: TSurveyOpenTextElementInputType;
@@ -32,6 +22,8 @@ export const ValidationRuleInputTypeSelector = ({
   onChange,
   disabled = false,
 }: ValidationRuleInputTypeSelectorProps) => {
+  const { t } = useTranslation();
+
   return (
     <Select
       value={value}
@@ -41,7 +33,13 @@ export const ValidationRuleInputTypeSelector = ({
         className={cn("h-9 min-w-[120px]", disabled ? "cursor-not-allowed bg-slate-100" : "bg-white")}>
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>{INPUT_TYPE_OPTIONS}</SelectContent>
+      <SelectContent>
+        <SelectItem value="text">{t("common.text")}</SelectItem>
+        <SelectItem value="email">{t("common.email")}</SelectItem>
+        <SelectItem value="url">{t("common.url")}</SelectItem>
+        <SelectItem value="phone">{t("common.phone")}</SelectItem>
+        <SelectItem value="number">{t("common.number")}</SelectItem>
+      </SelectContent>
     </Select>
   );
 };

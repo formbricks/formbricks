@@ -69,14 +69,23 @@ export const ValidationRulesEditor = ({
   } else if (isContactInfo) {
     fieldOptions = getContactInfoFields(t);
   }
+
+  // Only fetch billing info when needed: FileUpload element + Formbricks Cloud + valid organizationId
+  const needsBillingInfo =
+    elementType === TSurveyElementTypeEnum.FileUpload && isFormbricksCloud && projectOrganizationId;
   const {
     billingInfo,
     error: billingInfoError,
     isLoading: billingInfoLoading,
-  } = useGetBillingInfo(projectOrganizationId ?? "");
+  } = useGetBillingInfo(needsBillingInfo ? projectOrganizationId : undefined);
 
   // Calculate max file size limit based on billing info (same logic as file-upload-element-form)
   const maxSizeInMBLimit = React.useMemo(() => {
+    // If not fetching billing info (self-hosted or not FileUpload), return default
+    if (!needsBillingInfo) {
+      return 10; // Default to 10 MB
+    }
+
     if (billingInfoError || billingInfoLoading || !billingInfo) {
       return 10; // Default to 10 MB
     }
@@ -86,7 +95,7 @@ export const ValidationRulesEditor = ({
     }
 
     return 10; // 10 MB for free plan
-  }, [billingInfo, billingInfoError, billingInfoLoading]);
+  }, [billingInfo, billingInfoError, billingInfoLoading, needsBillingInfo]);
 
   // For file upload elements, use billing-based limit; for self-hosted, use 1024 MB
   let effectiveMaxSizeInMB: number | undefined;

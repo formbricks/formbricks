@@ -71,11 +71,13 @@ export const ZValidationRuleParamsPattern = z.object({
   flags: z.string().optional(),
 });
 
-export const ZValidationRuleParamsEmail = z.object({});
+// Use strict() to prevent these empty objects from matching any object in unions
+// Without strict(), z.object({}) is non-strict and accepts extra properties, defeating union discrimination
+export const ZValidationRuleParamsEmail = z.object({}).strict();
 
-export const ZValidationRuleParamsUrl = z.object({});
+export const ZValidationRuleParamsUrl = z.object({}).strict();
 
-export const ZValidationRuleParamsPhone = z.object({});
+export const ZValidationRuleParamsPhone = z.object({}).strict();
 
 export const ZValidationRuleParamsMinValue = z.object({
   min: z.number(),
