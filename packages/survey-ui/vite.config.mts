@@ -49,7 +49,7 @@ export default defineConfig({
     tsconfigPaths(),
     dts({
       include: ["src"],
-      exclude: ["**/*.stories.tsx", "**/*.test.ts", "**/story-helpers.ts", "**/story-helpers.tsx"],
+      exclude: ["**/*.stories.tsx", "**/*.test.ts", "**/story-helpers.tsx"],
     }),
     tailwindcss(),
   ],
