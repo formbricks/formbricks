@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum, TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRulesForMatrix } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -353,19 +352,13 @@ export const MatrixElementForm = ({
       {!element.required && (
         <ValidationRulesEditor
           elementType={TSurveyElementTypeEnum.Matrix}
-          validationRules={element.validationRules ?? []}
-          onUpdateRules={(rules: TValidationRulesForMatrix) => {
+          validation={element.validation}
+          onUpdateValidation={(validation) => {
             updateElement(elementIdx, {
-              validationRules: rules,
+              validation,
             });
           }}
           element={element}
-          validationLogic={element.validationLogic}
-          onUpdateValidationLogic={(logic) => {
-            updateElement(elementIdx, {
-              validationLogic: logic,
-            });
-          }}
         />
       )}
     </form>

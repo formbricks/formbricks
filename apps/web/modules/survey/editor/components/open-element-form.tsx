@@ -10,7 +10,6 @@ import {
   TSurveyOpenTextElementInputType,
 } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRulesForOpenText } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -145,16 +144,10 @@ export const OpenElementForm = ({
 
         <ValidationRulesEditor
           elementType={TSurveyElementTypeEnum.OpenText}
-          validationRules={element.validationRules ?? []}
-          onUpdateRules={(rules: TValidationRulesForOpenText) => {
+          validation={element.validation}
+          onUpdateValidation={(validation) => {
             updateElement(elementIdx, {
-              validationRules: rules,
-            });
-          }}
-          validationLogic={element.validationLogic}
-          onUpdateValidationLogic={(logic) => {
-            updateElement(elementIdx, {
-              validationLogic: logic,
+              validation,
             });
           }}
           inputType={element.inputType ?? "text"}

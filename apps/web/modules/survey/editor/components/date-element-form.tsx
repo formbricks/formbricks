@@ -131,18 +131,12 @@ export const DateElementForm = ({
 
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.Date}
-        validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRulesForDate) => {
-          updateElement(elementIdx, {
-            validationRules: rules,
-          });
-        }}
-        validationLogic={element.validationLogic}
-        onUpdateValidationLogic={(logic) => {
-          updateElement(elementIdx, {
-            validationLogic: logic,
-          });
-        }}
+        validation={element.validation}
+          onUpdateValidation={(validation) => {
+            updateElement(elementIdx, {
+              validation,
+            });
+          }}
       />
     </form>
   );

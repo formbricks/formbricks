@@ -161,12 +161,12 @@ export const ContactInfoElementForm = ({
 
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.ContactInfo}
-        validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRulesForContactInfo) => {
-          updateElement(elementIdx, {
-            validationRules: rules,
-          });
-        }}
+        validation={element.validation}
+          onUpdateValidation={(validation) => {
+            updateElement(elementIdx, {
+              validation,
+            });
+          }}
       />
     </form>
   );

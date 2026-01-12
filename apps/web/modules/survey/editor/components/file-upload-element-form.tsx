@@ -116,15 +116,15 @@ export const FileUploadElementForm = ({
 
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.FileUpload}
-        validationRules={element.validationRules ?? []}
+        validation={element.validation}
+          onUpdateValidation={(validation) => {
+            updateElement(elementIdx, {
+              validation,
+            });
+          }}
         element={element}
         projectOrganizationId={project?.organizationId}
         isFormbricksCloud={isFormbricksCloud}
-        onUpdateRules={(rules: TValidationRulesForFileUpload) => {
-          updateElement(elementIdx, {
-            validationRules: rules,
-          });
-        }}
       />
     </form>
   );

@@ -148,12 +148,12 @@ export const CalElementForm = ({
 
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.Cal}
-        validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRulesForCal) => {
-          updateElement(elementIdx, {
-            validationRules: rules,
-          });
-        }}
+        validation={element.validation}
+          onUpdateValidation={(validation) => {
+            updateElement(elementIdx, {
+              validation,
+            });
+          }}
       />
     </form>
   );

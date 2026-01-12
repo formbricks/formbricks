@@ -47,11 +47,9 @@ const INPUT_TYPE_OPTIONS = (
 
 interface ValidationRulesEditorProps {
   elementType: TSurveyElementTypeEnum;
-  validationRules: TValidationRule[];
-  onUpdateRules: (rules: TValidationRule[]) => void;
+  validation?: { rules: TValidationRule[]; logic?: TValidationLogic };
+  onUpdateValidation: (validation: { rules: TValidationRule[]; logic: TValidationLogic }) => void;
   element?: TSurveyElement; // Optional, needed for single select option selection
-  validationLogic?: TValidationLogic;
-  onUpdateValidationLogic?: (logic: TValidationLogic) => void;
   projectOrganizationId?: string; // For billing info to determine file size limits
   isFormbricksCloud?: boolean; // To determine if using Formbricks Cloud or self-hosted
   // For OpenText: input type and callback to update it
@@ -61,16 +59,16 @@ interface ValidationRulesEditorProps {
 
 export const ValidationRulesEditor = ({
   elementType,
-  validationRules,
-  onUpdateRules,
+  validation,
+  onUpdateValidation,
   element,
-  validationLogic = "and",
-  onUpdateValidationLogic,
   projectOrganizationId,
   isFormbricksCloud = false,
   inputType,
   onUpdateInputType,
 }: ValidationRulesEditorProps) => {
+  const validationRules = validation?.rules ?? [];
+  const validationLogic = validation?.logic ?? "and";
   const { t } = useTranslation();
   const {
     billingInfo,
@@ -169,12 +167,12 @@ export const ValidationRulesEditor = ({
         type: defaultRuleType,
         params: createRuleParams(defaultRuleType, defaultValue),
       } as TValidationRule;
-      onUpdateRules([newRule]);
+      onUpdateValidation({ rules: [newRule], logic: validationLogic });
     }
   };
 
   const handleDisable = () => {
-    onUpdateRules([]);
+    onUpdateValidation({ rules: [], logic: validationLogic });
   };
 
   const handleAddRule = (insertAfterIndex: number) => {
@@ -214,12 +212,12 @@ export const ValidationRulesEditor = ({
     } as TValidationRule;
     const newRules = [...validationRules];
     newRules.splice(insertAfterIndex + 1, 0, newRule);
-    onUpdateRules(newRules);
+    onUpdateValidation({ rules: newRules, logic: validationLogic });
   };
 
   const handleDeleteRule = (ruleId: string) => {
     const updated = validationRules.filter((r) => r.id !== ruleId);
-    onUpdateRules(updated);
+    onUpdateValidation({ rules: updated, logic: validationLogic });
   };
 
   const handleRuleTypeChange = (ruleId: string, newType: TValidationRuleType) => {
@@ -231,7 +229,7 @@ export const ValidationRulesEditor = ({
         params: createRuleParams(newType),
       } as TValidationRule;
     });
-    onUpdateRules(updated);
+    onUpdateValidation({ rules: updated, logic: validationLogic });
   };
 
   const handleRuleValueChange = (ruleId: string, value: string) => {
@@ -266,7 +264,7 @@ export const ValidationRulesEditor = ({
         params: createRuleParams(ruleType, parsedValue),
       } as TValidationRule;
     });
-    onUpdateRules(updated);
+    onUpdateValidation({ rules: updated, logic: validationLogic });
   };
 
   const handleFileSizeUnitChange = (ruleId: string, unit: "KB" | "MB") => {
@@ -295,7 +293,7 @@ export const ValidationRulesEditor = ({
       }
       return rule;
     });
-    onUpdateRules(updated);
+    onUpdateValidation({ rules: updated, logic: validationLogic });
   };
 
   // Handle input type change for OpenText
@@ -341,9 +339,9 @@ export const ValidationRulesEditor = ({
         type: defaultRuleType,
         params: createRuleParams(defaultRuleType, defaultValue),
       } as TValidationRule;
-      onUpdateRules([defaultRule]);
+      onUpdateValidation({ rules: [defaultRule], logic: validationLogic });
     } else if (filteredRules.length !== validationRules.length) {
-      onUpdateRules(filteredRules);
+      onUpdateValidation({ rules: filteredRules, logic: validationLogic });
     }
   };
 
@@ -369,11 +367,11 @@ export const ValidationRulesEditor = ({
       customContainerClass="p-0 mt-4"
       childrenContainerClass="flex-col p-3 gap-2">
       {/* Validation Logic Selector - only show when there are 2+ rules */}
-      {validationRules.length >= 2 && onUpdateValidationLogic && (
+      {validationRules.length >= 2 && (
         <div className="flex w-full items-center gap-2">
           <Select
             value={validationLogic}
-            onValueChange={(value) => onUpdateValidationLogic(value as TValidationLogic)}>
+            onValueChange={(value) => onUpdateValidation({ rules: validationRules, logic: value as TValidationLogic })}>
             <SelectTrigger className="h-8 w-fit bg-white">
               <SelectValue />
             </SelectTrigger>
@@ -541,7 +539,7 @@ export const ValidationRulesEditor = ({
                                   },
                                 } as TValidationRule;
                               });
-                              onUpdateRules(updated);
+                              onUpdateValidation({ rules: updated, logic: validationLogic });
                             }}
                             placeholder={t("environments.surveys.edit.validation.select_file_extensions")}
                             disabled={false}

@@ -114,10 +114,8 @@ export const validateElementResponse = (
   }
 
   // Then check validation rules
-  let rules: TValidationRule[] = [
-    ...((element as TSurveyElement & { validationRules?: TValidationRule[]; validationLogic?: "and" | "or" })
-      .validationRules ?? []),
-  ];
+  const validation = (element as TSurveyElement & { validation?: { rules?: TValidationRule[]; logic?: "and" | "or" } }).validation;
+  let rules: TValidationRule[] = [...(validation?.rules ?? [])];
 
   // For OpenText elements, automatically add email/url/phone validation based on inputType
   if (element.type === TSurveyElementTypeEnum.OpenText && "inputType" in element) {
@@ -149,8 +147,7 @@ export const validateElementResponse = (
   }
 
   // Get validation logic (default to "and" if not specified)
-  const validationLogic =
-    (element as TSurveyElement & { validationLogic?: "and" | "or" }).validationLogic ?? "and";
+  const validationLogic = validation?.logic ?? "and";
 
   if (validationLogic === "or") {
     // OR logic: at least one rule must pass

@@ -107,12 +107,12 @@ export const ConsentElementForm = ({
 
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.Consent}
-        validationRules={element.validationRules ?? []}
-        onUpdateRules={(rules: TValidationRulesForConsent) => {
-          updateElement(elementIdx, {
-            validationRules: rules,
-          });
-        }}
+        validation={element.validation}
+          onUpdateValidation={(validation) => {
+            updateElement(elementIdx, {
+              validation,
+            });
+          }}
       />
     </form>
   );
