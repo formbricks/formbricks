@@ -32,7 +32,6 @@ interface ValidationRuleRowProps {
   fieldOptions: { value: TAddressField | TContactInfoField; label: string }[];
   needsFieldSelector: boolean;
   validationRules: TValidationRule[];
-  effectiveMaxSizeInMB?: number;
   ruleLabels: Record<string, string>;
   onFieldChange: (ruleId: string, field: TAddressField | TContactInfoField | undefined) => void;
   onRuleTypeChange: (ruleId: string, newType: TValidationRuleType) => void;
@@ -54,7 +53,6 @@ export const ValidationRuleRow = ({
   fieldOptions,
   needsFieldSelector,
   validationRules,
-  effectiveMaxSizeInMB,
   ruleLabels,
   onFieldChange,
   onRuleTypeChange,
@@ -130,7 +128,6 @@ export const ValidationRuleRow = ({
             onChange={(value) => onRuleValueChange(rule.id, value)}
             onFileExtensionChange={handleFileExtensionChange}
             element={element}
-            effectiveMaxSizeInMB={effectiveMaxSizeInMB}
           />
 
           {/* Unit selector (if applicable) */}

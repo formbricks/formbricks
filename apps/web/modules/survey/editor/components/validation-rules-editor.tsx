@@ -400,7 +400,6 @@ export const ValidationRulesEditor = ({
             fieldOptions={fieldOptions}
             needsFieldSelector={needsFieldSelector}
             validationRules={validationRules}
-            effectiveMaxSizeInMB={effectiveMaxSizeInMB}
             ruleLabels={ruleLabels}
             onFieldChange={handleFieldChange}
             onRuleTypeChange={handleRuleTypeChange}

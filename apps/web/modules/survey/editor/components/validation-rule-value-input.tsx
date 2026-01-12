@@ -23,7 +23,6 @@ interface ValidationRuleValueInputProps {
   onChange: (value: string) => void;
   onFileExtensionChange: (extensions: TAllowedFileExtension[]) => void;
   element?: TSurveyElement;
-  effectiveMaxSizeInMB?: number;
 }
 
 export const ValidationRuleValueInput = ({
@@ -34,7 +33,6 @@ export const ValidationRuleValueInput = ({
   onChange,
   onFileExtensionChange,
   element,
-  effectiveMaxSizeInMB,
 }: ValidationRuleValueInputProps) => {
   const { t } = useTranslation();
 

@@ -5,7 +5,6 @@ import { RULE_TYPE_CONFIG } from "./validation-rules-config";
 describe("RULE_TYPE_CONFIG", () => {
   test("should have config for all validation rule types", () => {
     const allRuleTypes: TValidationRuleType[] = [
-      "required",
       "minLength",
       "maxLength",
       "pattern",
@@ -151,7 +150,6 @@ describe("RULE_TYPE_CONFIG", () => {
     });
 
     test("should not have valueType for rules that don't need values", () => {
-      expect(RULE_TYPE_CONFIG.required.valueType).toBeUndefined();
       expect(RULE_TYPE_CONFIG.email.valueType).toBeUndefined();
       expect(RULE_TYPE_CONFIG.url.valueType).toBeUndefined();
       expect(RULE_TYPE_CONFIG.phone.valueType).toBeUndefined();
@@ -167,7 +165,6 @@ describe("RULE_TYPE_CONFIG", () => {
     });
 
     test("should not have unitOptions for other rules", () => {
-      expect(RULE_TYPE_CONFIG.required.unitOptions).toBeUndefined();
       expect(RULE_TYPE_CONFIG.pattern.unitOptions).toBeUndefined();
       expect(RULE_TYPE_CONFIG.email.unitOptions).toBeUndefined();
       expect(RULE_TYPE_CONFIG.url.unitOptions).toBeUndefined();

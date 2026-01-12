@@ -82,7 +82,7 @@ function CTA({
       <div className="relative space-y-2">
         <ElementError errorMessage={errorMessage} dir={dir} />
 
-        {buttonExternal && (
+        {buttonExternal ? (
           <div className="flex w-full justify-start">
             <Button
               id={inputId}
@@ -95,7 +95,7 @@ function CTA({
               <SquareArrowOutUpRightIcon className="size-4" />
             </Button>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

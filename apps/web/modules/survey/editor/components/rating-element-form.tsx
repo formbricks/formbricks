@@ -3,13 +3,12 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TSurveyElementTypeEnum, TSurveyRatingElement } from "@formbricks/types/surveys/elements";
+import { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { Dropdown } from "@/modules/survey/editor/components/rating-type-dropdown";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -190,19 +189,6 @@ export const RatingElementForm = ({
           customContainerClass="p-0 mt-4"
         />
       )}
-
-      <ValidationRulesEditor
-        elementType={TSurveyElementTypeEnum.Rating}
-        validation={element.validation}
-        onUpdateValidation={(validation) => {
-          updateElement(elementIdx, {
-            validation: {
-              rules: validation.rules,
-              logic: validation.logic ?? "and",
-            },
-          });
-        }}
-      />
     </form>
   );
 };

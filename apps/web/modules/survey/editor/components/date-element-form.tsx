@@ -6,7 +6,6 @@ import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyDateElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TValidationRulesForDate } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -132,11 +131,11 @@ export const DateElementForm = ({
       <ValidationRulesEditor
         elementType={TSurveyElementTypeEnum.Date}
         validation={element.validation}
-          onUpdateValidation={(validation) => {
-            updateElement(elementIdx, {
-              validation,
-            });
-          }}
+        onUpdateValidation={(validation) => {
+          updateElement(elementIdx, {
+            validation,
+          });
+        }}
       />
     </form>
   );

@@ -1,7 +1,4 @@
-import {
-  TSurveyElementTypeEnum,
-  TSurveyOpenTextElementInputType,
-} from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum, TSurveyOpenTextElementInputType } from "@formbricks/types/surveys/elements";
 import {
   APPLICABLE_RULES,
   TAddressField,
@@ -10,7 +7,15 @@ import {
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
 
-const stringRules: TValidationRuleType[] = ["minLength", "maxLength", "pattern", "equals", "doesNotEqual", "contains", "doesNotContain"];
+const stringRules: TValidationRuleType[] = [
+  "minLength",
+  "maxLength",
+  "pattern",
+  "equals",
+  "doesNotEqual",
+  "contains",
+  "doesNotContain",
+];
 
 // Rules applicable per field for Address elements
 // General text fields don't support format-specific validators (email, url, phone)
@@ -40,9 +45,7 @@ export const RULES_BY_INPUT_TYPE: Record<TSurveyOpenTextElementInputType, TValid
     "minLength",
     "maxLength",
     "pattern",
-    "email",
-    "url",
-    "phone",
+    // "email", "url", "phone" excluded - redundant for text inputType
     "equals",
     "doesNotEqual",
     "contains",
@@ -78,14 +81,7 @@ export const RULES_BY_INPUT_TYPE: Record<TSurveyOpenTextElementInputType, TValid
     "contains",
     "doesNotContain",
   ],
-  number: [
-    "minValue",
-    "maxValue",
-    "isGreaterThan",
-    "isLessThan",
-    "equals",
-    "doesNotEqual",
-  ],
+  number: ["minValue", "maxValue", "isGreaterThan", "isLessThan", "equals", "doesNotEqual"],
 };
 
 /**
@@ -109,14 +105,22 @@ export const getAvailableRuleTypes = (
   }
 
   // For Address elements, use field-based filtering
-  if (elementType === TSurveyElementTypeEnum.Address && field) {
+  if (elementType === TSurveyElementTypeEnum.Address) {
+    if (!field) {
+      // Address elements require a field to be specified for validation rules
+      return [];
+    }
     const applicable = RULES_BY_ADDRESS_FIELD[field as TAddressField] ?? [];
     const existingTypes = new Set(existingRules.map((r) => r.type));
     return applicable.filter((ruleType) => !existingTypes.has(ruleType));
   }
 
   // For Contact Info elements, use field-based filtering
-  if (elementType === TSurveyElementTypeEnum.ContactInfo && field) {
+  if (elementType === TSurveyElementTypeEnum.ContactInfo) {
+    if (!field) {
+      // Contact Info elements require a field to be specified for validation rules
+      return [];
+    }
     const applicable = RULES_BY_CONTACT_INFO_FIELD[field as TContactInfoField] ?? [];
     const existingTypes = new Set(existingRules.map((r) => r.type));
     return applicable.filter((ruleType) => !existingTypes.has(ruleType));
