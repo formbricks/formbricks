@@ -1,15 +1,18 @@
 import type { TFunction } from "i18next";
 import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
 import type {
-  TSurveyElement
+  TSurveyElement,
 } from "@formbricks/types/surveys/elements";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type {
+  TAddressField,
+  TContactInfoField,
   TValidationError,
   TValidationErrorMap,
   TValidationResult,
   TValidationRule,
 } from "@formbricks/types/surveys/validation-rules";
+import { getLocalizedValue } from "@/lib/i18n";
 import { validators } from "./validators";
 
 /**
@@ -37,6 +40,33 @@ const createRequiredError = (t: TFunction): TValidationError => {
 };
 
 /**
+ * Get field label for address/contact info elements
+ */
+const getFieldLabel = (
+  element: TSurveyElement,
+  field: TAddressField | TContactInfoField | undefined,
+  languageCode: string
+): string | undefined => {
+  if (!field) return undefined;
+
+  if (element.type === TSurveyElementTypeEnum.Address && "addressLine1" in element) {
+    const fieldConfig = element[field as TAddressField];
+    if (fieldConfig && "placeholder" in fieldConfig) {
+      return getLocalizedValue(fieldConfig.placeholder, languageCode);
+    }
+  }
+
+  if (element.type === TSurveyElementTypeEnum.ContactInfo && "firstName" in element) {
+    const fieldConfig = element[field as TContactInfoField];
+    if (fieldConfig && "placeholder" in fieldConfig) {
+      return getLocalizedValue(fieldConfig.placeholder, languageCode);
+    }
+  }
+
+  return undefined;
+};
+
+/**
  * Get default error message from rule or validator
  */
 const getDefaultErrorMessage = (
@@ -49,11 +79,21 @@ const getDefaultErrorMessage = (
   if (!validator) {
     return t("errors.invalid_format");
   }
-  return (
+
+  const baseMessage =
     rule.customErrorMessage?.[languageCode] ??
     rule.customErrorMessage?.default ??
-    validator.getDefaultMessage(rule.params, element, t)
-  );
+    validator.getDefaultMessage(rule.params, element, t);
+
+  // For field-specific validation, prepend the field name
+  if (rule.field) {
+    const fieldLabel = getFieldLabel(element, rule.field, languageCode);
+    if (fieldLabel) {
+      return `${fieldLabel}: ${baseMessage}`;
+    }
+  }
+
+  return baseMessage;
 };
 
 /**
@@ -142,12 +182,63 @@ export const validateElementResponse = (
     }
   }
 
+  // For ContactInfo elements, automatically add email/phone validation for their respective fields
+  if (element.type === TSurveyElementTypeEnum.ContactInfo) {
+    const contactInfoElement = element;
+
+    // Automatically validate email field if it's shown
+    if (contactInfoElement.email?.show && !rules.some((r) => r.type === "email" && r.field === "email")) {
+      rules.push({
+        id: "__implicit_email_field__",
+        type: "email",
+        field: "email",
+        params: {},
+      } as TValidationRule);
+    }
+
+    // Automatically validate phone field if it's shown
+    if (contactInfoElement.phone?.show && !rules.some((r) => r.type === "phone" && r.field === "phone")) {
+      rules.push({
+        id: "__implicit_phone_field__",
+        type: "phone",
+        field: "phone",
+        params: {},
+      } as TValidationRule);
+    }
+  }
+
   if (rules.length === 0) {
     return { valid: errors.length === 0, errors };
   }
 
   // Get validation logic (default to "and" if not specified)
   const validationLogic = validation?.logic ?? "and";
+
+  // Helper function to get field value for address/contact info elements
+  const getFieldValue = (rule: TValidationRule, elementValue: TResponseDataValue): TResponseDataValue => {
+    // If rule doesn't have a field, validate the whole value
+    if (!rule.field) {
+      return elementValue;
+    }
+
+    // For address and contact info, value is an array
+    if (element.type === TSurveyElementTypeEnum.Address && Array.isArray(elementValue)) {
+      const addressFieldOrder: TAddressField[] = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
+      const fieldIndex = addressFieldOrder.indexOf(rule.field as TAddressField);
+      if (fieldIndex >= 0 && fieldIndex < elementValue.length) {
+        return elementValue[fieldIndex] ?? "";
+      }
+    } else if (element.type === TSurveyElementTypeEnum.ContactInfo && Array.isArray(elementValue)) {
+      const contactFieldOrder: TContactInfoField[] = ["firstName", "lastName", "email", "phone", "company"];
+      const fieldIndex = contactFieldOrder.indexOf(rule.field as TContactInfoField);
+      if (fieldIndex >= 0 && fieldIndex < elementValue.length) {
+        return elementValue[fieldIndex] ?? "";
+      }
+    }
+
+    // Fallback: return empty string if field not found
+    return "";
+  };
 
   if (validationLogic === "or") {
     // OR logic: at least one rule must pass
@@ -162,7 +253,9 @@ export const validateElementResponse = (
         continue;
       }
 
-      const checkResult = validator.check(value, rule.params, element);
+      // Get the value to validate (field-specific for address/contact info)
+      const valueToValidate = getFieldValue(rule, value);
+      const checkResult = validator.check(valueToValidate, rule.params, element);
 
       if (checkResult.valid) {
         // At least one rule passed, validation succeeds
@@ -198,7 +291,9 @@ export const validateElementResponse = (
         continue;
       }
 
-      const checkResult = validator.check(value, rule.params, element);
+      // Get the value to validate (field-specific for address/contact info)
+      const valueToValidate = getFieldValue(rule, value);
+      const checkResult = validator.check(valueToValidate, rule.params, element);
 
       if (!checkResult.valid) {
         const message = getDefaultErrorMessage(rule, element, languageCode, t);

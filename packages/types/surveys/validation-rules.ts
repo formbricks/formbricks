@@ -1,6 +1,17 @@
 import { z } from "zod";
 import { ZI18nString } from "../i18n";
 
+// Field types for field-specific validation (address and contact info elements)
+export const ZAddressField = z.enum(["addressLine1", "addressLine2", "city", "state", "zip", "country"]);
+export type TAddressField = z.infer<typeof ZAddressField>;
+
+export const ZContactInfoField = z.enum(["firstName", "lastName", "email", "phone", "company"]);
+export type TContactInfoField = z.infer<typeof ZContactInfoField>;
+
+// Union type for all possible field types
+export const ZValidationRuleField = z.union([ZAddressField, ZContactInfoField]);
+export type TValidationRuleField = z.infer<typeof ZValidationRuleField>;
+
 // Validation rule type enum - extensible for future rule types
 export const ZValidationRuleType = z.enum([
   // Text/OpenText rules
@@ -212,162 +223,189 @@ export type TValidationRuleParamsFileExtensionIs = z.infer<typeof ZValidationRul
 export type TValidationRuleParamsFileExtensionIsNot = z.infer<typeof ZValidationRuleParamsFileExtensionIsNot>;
 
 // Validation rule stored on element - discriminated union with type at top level
+// Field property is optional and used for address/contact info elements to target specific sub-fields
 export const ZValidationRule = z.discriminatedUnion("type", [
   z.object({
     id: z.string(),
     type: z.literal("minLength"),
     params: ZValidationRuleParamsMinLength,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("maxLength"),
     params: ZValidationRuleParamsMaxLength,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("pattern"),
     params: ZValidationRuleParamsPattern,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("email"),
     params: ZValidationRuleParamsEmail,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("url"),
     params: ZValidationRuleParamsUrl,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("phone"),
     params: ZValidationRuleParamsPhone,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("minValue"),
     params: ZValidationRuleParamsMinValue,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("maxValue"),
     params: ZValidationRuleParamsMaxValue,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("minSelections"),
     params: ZValidationRuleParamsMinSelections,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("maxSelections"),
     params: ZValidationRuleParamsMaxSelections,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("equals"),
     params: ZValidationRuleParamsEquals,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("doesNotEqual"),
     params: ZValidationRuleParamsDoesNotEqual,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("contains"),
     params: ZValidationRuleParamsContains,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("doesNotContain"),
     params: ZValidationRuleParamsDoesNotContain,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("isGreaterThan"),
     params: ZValidationRuleParamsIsGreaterThan,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("isLessThan"),
     params: ZValidationRuleParamsIsLessThan,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("isLaterThan"),
     params: ZValidationRuleParamsIsLaterThan,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("isEarlierThan"),
     params: ZValidationRuleParamsIsEarlierThan,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("isBetween"),
     params: ZValidationRuleParamsIsBetween,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("isNotBetween"),
     params: ZValidationRuleParamsIsNotBetween,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("minRanked"),
     params: ZValidationRuleParamsMinRanked,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("minRowsAnswered"),
     params: ZValidationRuleParamsMinRowsAnswered,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("fileSizeAtLeast"),
     params: ZValidationRuleParamsFileSizeAtLeast,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("fileSizeAtMost"),
     params: ZValidationRuleParamsFileSizeAtMost,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("fileExtensionIs"),
     params: ZValidationRuleParamsFileExtensionIs,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
   z.object({
     id: z.string(),
     type: z.literal("fileExtensionIsNot"),
     params: ZValidationRuleParamsFileExtensionIsNot,
     customErrorMessage: ZI18nString.optional(),
+    field: ZValidationRuleField.optional(),
   }),
 ]);
 
@@ -413,8 +451,31 @@ const MATRIX_RULES = ["minRowsAnswered"] as const;
 const RANKING_RULES = ["minRanked"] as const;
 const FILE_UPLOAD_RULES = ["fileSizeAtLeast", "fileSizeAtMost", "fileExtensionIs", "fileExtensionIsNot"] as const;
 const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
-const ADDRESS_RULES = [] as const;
-const CONTACT_INFO_RULES = [] as const;
+// Address and Contact Info can use text-based validation rules on specific fields
+const ADDRESS_RULES = [
+  "minLength",
+  "maxLength",
+  "pattern",
+  "email",
+  "url",
+  "phone",
+  "equals",
+  "doesNotEqual",
+  "contains",
+  "doesNotContain",
+] as const;
+const CONTACT_INFO_RULES = [
+  "minLength",
+  "maxLength",
+  "pattern",
+  "email",
+  "url",
+  "phone",
+  "equals",
+  "doesNotEqual",
+  "contains",
+  "doesNotContain",
+] as const;
 const CAL_RULES = [] as const;
 const CTA_RULES = [] as const;
 

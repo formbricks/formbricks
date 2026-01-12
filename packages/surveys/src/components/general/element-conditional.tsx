@@ -310,6 +310,7 @@ export function ElementConditional({
             currentElementId={currentElementId}
             autoFocusEnabled={autoFocusEnabled}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Ranking:
@@ -338,6 +339,7 @@ export function ElementConditional({
             currentElementId={currentElementId}
             autoFocusEnabled={autoFocusEnabled}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       default:

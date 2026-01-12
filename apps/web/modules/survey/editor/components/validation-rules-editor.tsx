@@ -11,7 +11,12 @@ import {
   TSurveyOpenTextElementInputType,
   TValidationLogic,
 } from "@formbricks/types/surveys/elements";
-import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
+import {
+  TAddressField,
+  TContactInfoField,
+  TValidationRule,
+  TValidationRuleType,
+} from "@formbricks/types/surveys/validation-rules";
 import { TAllowedFileExtension, ALLOWED_FILE_EXTENSIONS } from "@formbricks/types/storage";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
@@ -70,6 +75,35 @@ export const ValidationRulesEditor = ({
   const validationRules = validation?.rules ?? [];
   const validationLogic = validation?.logic ?? "and";
   const { t } = useTranslation();
+
+  // Field options for address and contact info elements
+  const isAddress = elementType === TSurveyElementTypeEnum.Address;
+  const isContactInfo = elementType === TSurveyElementTypeEnum.ContactInfo;
+  const needsFieldSelector = isAddress || isContactInfo;
+
+  const addressFields: { value: TAddressField; label: string }[] = [
+    { value: "addressLine1", label: t("environments.surveys.edit.address_line_1") },
+    { value: "addressLine2", label: t("environments.surveys.edit.address_line_2") },
+    { value: "city", label: t("environments.surveys.edit.city") },
+    { value: "state", label: t("environments.surveys.edit.state") },
+    { value: "zip", label: t("environments.surveys.edit.zip") },
+    { value: "country", label: t("environments.surveys.edit.country") },
+  ];
+
+  const contactInfoFields: { value: TContactInfoField; label: string }[] = [
+    { value: "firstName", label: t("environments.surveys.edit.first_name") },
+    { value: "lastName", label: t("environments.surveys.edit.last_name") },
+    { value: "email", label: t("common.email") },
+    { value: "phone", label: t("common.phone") },
+    { value: "company", label: t("environments.surveys.edit.company") },
+  ];
+
+  let fieldOptions: { value: TAddressField | TContactInfoField; label: string }[] = [];
+  if (isAddress) {
+    fieldOptions = addressFields;
+  } else if (isContactInfo) {
+    fieldOptions = contactInfoFields;
+  }
   const {
     billingInfo,
     error: billingInfoError,
@@ -134,10 +168,13 @@ export const ValidationRulesEditor = ({
     elementType !== TSurveyElementTypeEnum.Matrix || (element && !element.required);
 
   const handleEnable = () => {
+    // For address/contact info, get rules for first field
+    const defaultField = needsFieldSelector && fieldOptions.length > 0 ? fieldOptions[0].value : undefined;
     const availableRules = getAvailableRuleTypes(
       elementType,
       [],
-      elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined
+      elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined,
+      defaultField
     );
     if (availableRules.length > 0) {
       const defaultRuleType = availableRules[0];
@@ -166,6 +203,8 @@ export const ValidationRulesEditor = ({
         id: uuidv7(),
         type: defaultRuleType,
         params: createRuleParams(defaultRuleType, defaultValue),
+        // For address/contact info, set field to first available field if not set
+        field: needsFieldSelector && fieldOptions.length > 0 ? fieldOptions[0].value : undefined,
       } as TValidationRule;
       onUpdateValidation({ rules: [newRule], logic: validationLogic });
     }
@@ -176,10 +215,14 @@ export const ValidationRulesEditor = ({
   };
 
   const handleAddRule = (insertAfterIndex: number) => {
+    // For address/contact info, get rules for the field of the rule we're inserting after (or first field)
+    const insertAfterRule = validationRules[insertAfterIndex];
+    const fieldForNewRule = insertAfterRule?.field ?? (needsFieldSelector && fieldOptions.length > 0 ? fieldOptions[0].value : undefined);
     const availableRules = getAvailableRuleTypes(
       elementType,
       validationRules,
-      elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined
+      elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined,
+      fieldForNewRule
     );
     if (availableRules.length === 0) return;
 
@@ -209,6 +252,8 @@ export const ValidationRulesEditor = ({
       id: uuidv7(),
       type: newRuleType,
       params: createRuleParams(newRuleType, defaultValue),
+      // For address/contact info, set field to first available field if not set
+      field: needsFieldSelector && fieldOptions.length > 0 ? fieldOptions[0].value : undefined,
     } as TValidationRule;
     const newRules = [...validationRules];
     newRules.splice(insertAfterIndex + 1, 0, newRule);
@@ -221,6 +266,24 @@ export const ValidationRulesEditor = ({
   };
 
   const handleRuleTypeChange = (ruleId: string, newType: TValidationRuleType) => {
+    const ruleToUpdate = validationRules.find((r) => r.id === ruleId);
+    if (!ruleToUpdate) return;
+
+    // For address/contact info, verify the new rule type is valid for the selected field
+    if (needsFieldSelector && ruleToUpdate.field) {
+      const availableRulesForField = getAvailableRuleTypes(
+        elementType,
+        validationRules.filter((r) => r.id !== ruleId),
+        undefined,
+        ruleToUpdate.field
+      );
+
+      // If the new rule type is not available for this field, don't change it
+      if (!availableRulesForField.includes(newType)) {
+        return;
+      }
+    }
+
     const updated = validationRules.map((rule) => {
       if (rule.id !== ruleId) return rule;
       return {
@@ -228,6 +291,39 @@ export const ValidationRulesEditor = ({
         type: newType,
         params: createRuleParams(newType),
       } as TValidationRule;
+    });
+    onUpdateValidation({ rules: updated, logic: validationLogic });
+  };
+
+  const handleFieldChange = (ruleId: string, field: TAddressField | TContactInfoField | undefined) => {
+    const ruleToUpdate = validationRules.find((r) => r.id === ruleId);
+    if (!ruleToUpdate) return;
+
+    // If changing field, check if current rule type is still valid for the new field
+    // If not, change to first available rule type for that field
+    let updatedRule = { ...ruleToUpdate, field } as TValidationRule;
+
+    if (field) {
+      const availableRulesForField = getAvailableRuleTypes(
+        elementType,
+        validationRules.filter((r) => r.id !== ruleId),
+        undefined,
+        field
+      );
+
+      // If current rule type is not available for the new field, change it
+      if (!availableRulesForField.includes(ruleToUpdate.type) && availableRulesForField.length > 0) {
+        updatedRule = {
+          ...updatedRule,
+          type: availableRulesForField[0],
+          params: createRuleParams(availableRulesForField[0]),
+        } as TValidationRule;
+      }
+    }
+
+    const updated = validationRules.map((rule) => {
+      if (rule.id !== ruleId) return rule;
+      return updatedRule;
     });
     onUpdateValidation({ rules: updated, logic: validationLogic });
   };
@@ -348,7 +444,13 @@ export const ValidationRulesEditor = ({
   const availableRulesForAdd = getAvailableRuleTypes(
     elementType,
     validationRules,
-    elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined
+    elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined,
+    // For address/contact info, use first field if no rules exist, or use the field from last rule
+    needsFieldSelector && validationRules.length > 0
+      ? validationRules[validationRules.length - 1]?.field
+      : needsFieldSelector && fieldOptions.length > 0
+        ? fieldOptions[0].value
+        : undefined
   );
   const canAddMore = availableRulesForAdd.length > 0;
 
@@ -390,10 +492,13 @@ export const ValidationRulesEditor = ({
 
 
           // Get available types for this rule (current type + unused types, no duplicates)
+          // For address/contact info, filter by selected field
+          const ruleField = rule.field;
           const otherAvailableTypes = getAvailableRuleTypes(
             elementType,
             validationRules.filter((r) => r.id !== rule.id),
-            elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined
+            elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined,
+            ruleField
           ).filter((t) => t !== ruleType);
           const availableTypesForSelect = [ruleType, ...otherAvailableTypes];
 
@@ -415,6 +520,25 @@ export const ValidationRulesEditor = ({
 
           return (
             <div key={rule.id} className="flex w-full items-center gap-2">
+              {/* Field Selector (for Address and Contact Info elements) */}
+              {needsFieldSelector && (
+                <Select
+                  value={rule.field ?? ""}
+                  onValueChange={(value) =>
+                    handleFieldChange(rule.id, value ? (value as TAddressField | TContactInfoField) : undefined)
+                  }>
+                  <SelectTrigger className="h-9 min-w-[140px] bg-white">
+                    <SelectValue placeholder={t("environments.surveys.edit.select_field")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fieldOptions.map((field) => (
+                      <SelectItem key={field.value} value={field.value}>
+                        {field.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {/* Input Type Selector (only for OpenText, first rule) */}
               {showInputTypeSelector && inputType !== undefined && onUpdateInputType && (
                 <Select
