@@ -119,20 +119,8 @@ export const RULE_TYPE_CONFIG: Record<
     valueType: "number",
     valuePlaceholder: "100",
   },
-  isOnOrLaterThan: {
-    labelKey: "is_on_or_later_than",
-    needsValue: true,
-    valueType: "text",
-    valuePlaceholder: "YYYY-MM-DD",
-  },
   isLaterThan: {
     labelKey: "is_later_than",
-    needsValue: true,
-    valueType: "text",
-    valuePlaceholder: "YYYY-MM-DD",
-  },
-  isOnOrEarlierThan: {
-    labelKey: "is_on_or_earlier_than",
     needsValue: true,
     valueType: "text",
     valuePlaceholder: "YYYY-MM-DD",
@@ -155,42 +143,17 @@ export const RULE_TYPE_CONFIG: Record<
     valueType: "text",
     valuePlaceholder: "YYYY-MM-DD,YYYY-MM-DD",
   },
-  isSelected: {
-    labelKey: "is_selected",
-    needsValue: true,
-    valueType: "option",
-  },
-  isNotSelected: {
-    labelKey: "is_not_selected",
-    needsValue: true,
-    valueType: "option",
-  },
-  positionIs: {
-    labelKey: "position_is",
-    needsValue: true,
-    valueType: "ranking",
-  },
-  positionIsHigherThan: {
-    labelKey: "position_is_higher_than",
-    needsValue: true,
-    valueType: "ranking",
-  },
-  positionIsLowerThan: {
-    labelKey: "position_is_lower_than",
-    needsValue: true,
-    valueType: "ranking",
-  },
-  answersProvidedGreaterThan: {
-    labelKey: "answers_provided_greater_than",
+  minRanked: {
+    labelKey: "minimum_options_ranked",
     needsValue: true,
     valueType: "number",
     valuePlaceholder: "1",
   },
-  answersProvidedSmallerThan: {
-    labelKey: "answers_provided_smaller_than",
+  minRowsAnswered: {
+    labelKey: "minimum_rows_answered",
     needsValue: true,
     valueType: "number",
-    valuePlaceholder: "5",
+    valuePlaceholder: "1",
   },
   fileSizeAtLeast: {
     labelKey: "file_size_at_least",

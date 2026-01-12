@@ -44,36 +44,16 @@ describe("getAvailableRuleTypes", () => {
     expect(available).toContain("pattern");
   });
 
-  test("should return isSelected and isNotSelected for multipleChoiceSingle element", () => {
+  test("should return empty array for multipleChoiceSingle element (no validation rules)", () => {
     const elementType = TSurveyElementTypeEnum.MultipleChoiceSingle;
     const existingRules: TValidationRule[] = [];
-
-    const available = getAvailableRuleTypes(elementType, existingRules);
-
-    expect(available).toEqual(["isSelected", "isNotSelected"]);
-  });
-
-  test("should return empty array for multipleChoiceSingle when all rules are already added", () => {
-    const elementType = TSurveyElementTypeEnum.MultipleChoiceSingle;
-    const existingRules: TValidationRule[] = [
-      {
-        id: "rule1",
-        type: "isSelected",
-        params: { optionId: "option1" },
-      },
-      {
-        id: "rule2",
-        type: "isNotSelected",
-        params: { optionId: "option2" },
-      },
-    ];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
     expect(available).toEqual([]);
   });
 
-  test("should return minSelections, maxSelections, isSelected, isNotSelected for multipleChoiceMulti element", () => {
+  test("should return minSelections, maxSelections for multipleChoiceMulti element", () => {
     const elementType = TSurveyElementTypeEnum.MultipleChoiceMulti;
     const existingRules: TValidationRule[] = [];
 
@@ -81,9 +61,7 @@ describe("getAvailableRuleTypes", () => {
 
     expect(available).toContain("minSelections");
     expect(available).toContain("maxSelections");
-    expect(available).toContain("isSelected");
-    expect(available).toContain("isNotSelected");
-    expect(available.length).toBe(4);
+    expect(available.length).toBe(2);
   });
 
   test("should return empty array for rating element (no validation rules)", () => {
@@ -110,9 +88,7 @@ describe("getAvailableRuleTypes", () => {
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toContain("isOnOrLaterThan");
     expect(available).toContain("isLaterThan");
-    expect(available).toContain("isOnOrEarlierThan");
     expect(available).toContain("isEarlierThan");
     expect(available).toContain("isBetween");
     expect(available).toContain("isNotBetween");
@@ -133,9 +109,8 @@ describe("getAvailableRuleTypes", () => {
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toContain("answersProvidedGreaterThan");
-    expect(available).toContain("answersProvidedSmallerThan");
-    expect(available.length).toBe(2);
+    expect(available).toContain("minRowsAnswered");
+    expect(available.length).toBe(1);
   });
 
   test("should return ranking validation rules for ranking element", () => {
@@ -144,10 +119,8 @@ describe("getAvailableRuleTypes", () => {
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toContain("positionIs");
-    expect(available).toContain("positionIsHigherThan");
-    expect(available).toContain("positionIsLowerThan");
-    expect(available.length).toBe(3);
+    expect(available).toContain("minRanked");
+    expect(available.length).toBe(1);
   });
 
   test("should return empty array for fileUpload element (no validation rules)", () => {

@@ -27,23 +27,14 @@ export const ZValidationRuleType = z.enum([
   "minSelections",
   "maxSelections",
 
-  // Single select rules
-  "isSelected",
-  "isNotSelected",
-
   // Ranking rules
-  "positionIs",
-  "positionIsHigherThan",
-  "positionIsLowerThan",
+  "minRanked",
 
   // Matrix rules
-  "answersProvidedGreaterThan",
-  "answersProvidedSmallerThan",
+  "minRowsAnswered",
 
   // Date rules
-  "isOnOrLaterThan",
   "isLaterThan",
-  "isOnOrEarlierThan",
   "isEarlierThan",
   "isBetween",
   "isNotBetween",
@@ -125,15 +116,7 @@ export const ZValidationRuleParamsIsLessThan = z.object({
   max: z.number(),
 });
 
-export const ZValidationRuleParamsIsOnOrLaterThan = z.object({
-  date: z.string(), // YYYY-MM-DD format
-});
-
 export const ZValidationRuleParamsIsLaterThan = z.object({
-  date: z.string(), // YYYY-MM-DD format
-});
-
-export const ZValidationRuleParamsIsOnOrEarlierThan = z.object({
   date: z.string(), // YYYY-MM-DD format
 });
 
@@ -151,35 +134,12 @@ export const ZValidationRuleParamsIsNotBetween = z.object({
   endDate: z.string(), // YYYY-MM-DD format
 });
 
-export const ZValidationRuleParamsIsSelected = z.object({
-  optionId: z.string().min(1),
+export const ZValidationRuleParamsMinRanked = z.object({
+  min: z.number().min(1),
 });
 
-export const ZValidationRuleParamsIsNotSelected = z.object({
-  optionId: z.string().min(1),
-});
-
-export const ZValidationRuleParamsPositionIs = z.object({
-  optionId: z.string().min(1),
-  position: z.number().min(1),
-});
-
-export const ZValidationRuleParamsPositionIsHigherThan = z.object({
-  optionId: z.string().min(1),
-  position: z.number().min(1),
-});
-
-export const ZValidationRuleParamsPositionIsLowerThan = z.object({
-  optionId: z.string().min(1),
-  position: z.number().min(1),
-});
-
-export const ZValidationRuleParamsAnswersProvidedGreaterThan = z.object({
-  min: z.number().min(0),
-});
-
-export const ZValidationRuleParamsAnswersProvidedSmallerThan = z.object({
-  max: z.number().min(0),
+export const ZValidationRuleParamsMinRowsAnswered = z.object({
+  min: z.number().min(1),
 });
 
 // File upload rule params
@@ -221,19 +181,12 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsIsLessThan,
   ZValidationRuleParamsMinSelections,
   ZValidationRuleParamsMaxSelections,
-  ZValidationRuleParamsIsOnOrLaterThan,
   ZValidationRuleParamsIsLaterThan,
-  ZValidationRuleParamsIsOnOrEarlierThan,
   ZValidationRuleParamsIsEarlierThan,
   ZValidationRuleParamsIsBetween,
   ZValidationRuleParamsIsNotBetween,
-  ZValidationRuleParamsIsSelected,
-  ZValidationRuleParamsIsNotSelected,
-  ZValidationRuleParamsPositionIs,
-  ZValidationRuleParamsPositionIsHigherThan,
-  ZValidationRuleParamsPositionIsLowerThan,
-  ZValidationRuleParamsAnswersProvidedGreaterThan,
-  ZValidationRuleParamsAnswersProvidedSmallerThan,
+  ZValidationRuleParamsMinRanked,
+  ZValidationRuleParamsMinRowsAnswered,
   ZValidationRuleParamsFileSizeAtLeast,
   ZValidationRuleParamsFileSizeAtMost,
   ZValidationRuleParamsFileExtensionIs,
@@ -261,27 +214,12 @@ export type TValidationRuleParamsIsLongerThan = z.infer<typeof ZValidationRulePa
 export type TValidationRuleParamsIsShorterThan = z.infer<typeof ZValidationRuleParamsIsShorterThan>;
 export type TValidationRuleParamsIsGreaterThan = z.infer<typeof ZValidationRuleParamsIsGreaterThan>;
 export type TValidationRuleParamsIsLessThan = z.infer<typeof ZValidationRuleParamsIsLessThan>;
-export type TValidationRuleParamsIsOnOrLaterThan = z.infer<typeof ZValidationRuleParamsIsOnOrLaterThan>;
 export type TValidationRuleParamsIsLaterThan = z.infer<typeof ZValidationRuleParamsIsLaterThan>;
-export type TValidationRuleParamsIsOnOrEarlierThan = z.infer<typeof ZValidationRuleParamsIsOnOrEarlierThan>;
 export type TValidationRuleParamsIsEarlierThan = z.infer<typeof ZValidationRuleParamsIsEarlierThan>;
 export type TValidationRuleParamsIsBetween = z.infer<typeof ZValidationRuleParamsIsBetween>;
 export type TValidationRuleParamsIsNotBetween = z.infer<typeof ZValidationRuleParamsIsNotBetween>;
-export type TValidationRuleParamsIsSelected = z.infer<typeof ZValidationRuleParamsIsSelected>;
-export type TValidationRuleParamsIsNotSelected = z.infer<typeof ZValidationRuleParamsIsNotSelected>;
-export type TValidationRuleParamsPositionIs = z.infer<typeof ZValidationRuleParamsPositionIs>;
-export type TValidationRuleParamsPositionIsHigherThan = z.infer<
-  typeof ZValidationRuleParamsPositionIsHigherThan
->;
-export type TValidationRuleParamsPositionIsLowerThan = z.infer<
-  typeof ZValidationRuleParamsPositionIsLowerThan
->;
-export type TValidationRuleParamsAnswersProvidedGreaterThan = z.infer<
-  typeof ZValidationRuleParamsAnswersProvidedGreaterThan
->;
-export type TValidationRuleParamsAnswersProvidedSmallerThan = z.infer<
-  typeof ZValidationRuleParamsAnswersProvidedSmallerThan
->;
+export type TValidationRuleParamsMinRanked = z.infer<typeof ZValidationRuleParamsMinRanked>;
+export type TValidationRuleParamsMinRowsAnswered = z.infer<typeof ZValidationRuleParamsMinRowsAnswered>;
 export type TValidationRuleParamsFileSizeAtLeast = z.infer<typeof ZValidationRuleParamsFileSizeAtLeast>;
 export type TValidationRuleParamsFileSizeAtMost = z.infer<typeof ZValidationRuleParamsFileSizeAtMost>;
 export type TValidationRuleParamsFileExtensionIs = z.infer<typeof ZValidationRuleParamsFileExtensionIs>;
@@ -399,20 +337,8 @@ export const ZValidationRule = z.discriminatedUnion("type", [
   }),
   z.object({
     id: z.string(),
-    type: z.literal("isOnOrLaterThan"),
-    params: ZValidationRuleParamsIsOnOrLaterThan,
-    customErrorMessage: ZI18nString.optional(),
-  }),
-  z.object({
-    id: z.string(),
     type: z.literal("isLaterThan"),
     params: ZValidationRuleParamsIsLaterThan,
-    customErrorMessage: ZI18nString.optional(),
-  }),
-  z.object({
-    id: z.string(),
-    type: z.literal("isOnOrEarlierThan"),
-    params: ZValidationRuleParamsIsOnOrEarlierThan,
     customErrorMessage: ZI18nString.optional(),
   }),
   z.object({
@@ -435,44 +361,14 @@ export const ZValidationRule = z.discriminatedUnion("type", [
   }),
   z.object({
     id: z.string(),
-    type: z.literal("isSelected"),
-    params: ZValidationRuleParamsIsSelected,
+    type: z.literal("minRanked"),
+    params: ZValidationRuleParamsMinRanked,
     customErrorMessage: ZI18nString.optional(),
   }),
   z.object({
     id: z.string(),
-    type: z.literal("isNotSelected"),
-    params: ZValidationRuleParamsIsNotSelected,
-    customErrorMessage: ZI18nString.optional(),
-  }),
-  z.object({
-    id: z.string(),
-    type: z.literal("positionIs"),
-    params: ZValidationRuleParamsPositionIs,
-    customErrorMessage: ZI18nString.optional(),
-  }),
-  z.object({
-    id: z.string(),
-    type: z.literal("positionIsHigherThan"),
-    params: ZValidationRuleParamsPositionIsHigherThan,
-    customErrorMessage: ZI18nString.optional(),
-  }),
-  z.object({
-    id: z.string(),
-    type: z.literal("positionIsLowerThan"),
-    params: ZValidationRuleParamsPositionIsLowerThan,
-    customErrorMessage: ZI18nString.optional(),
-  }),
-  z.object({
-    id: z.string(),
-    type: z.literal("answersProvidedGreaterThan"),
-    params: ZValidationRuleParamsAnswersProvidedGreaterThan,
-    customErrorMessage: ZI18nString.optional(),
-  }),
-  z.object({
-    id: z.string(),
-    type: z.literal("answersProvidedSmallerThan"),
-    params: ZValidationRuleParamsAnswersProvidedSmallerThan,
+    type: z.literal("minRowsAnswered"),
+    params: ZValidationRuleParamsMinRowsAnswered,
     customErrorMessage: ZI18nString.optional(),
   }),
   z.object({
@@ -527,26 +423,22 @@ const OPEN_TEXT_RULES = [
   "isLessThan",
 ] as const;
 
-const MULTIPLE_CHOICE_SINGLE_RULES = ["isSelected", "isNotSelected"] as const;
+const MULTIPLE_CHOICE_SINGLE_RULES = [] as const;
 const MULTIPLE_CHOICE_MULTI_RULES = [
   "minSelections",
   "maxSelections",
-  "isSelected",
-  "isNotSelected",
 ] as const;
 const RATING_RULES = [] as const;
 const NPS_RULES = [] as const;
 const DATE_RULES = [
-  "isOnOrLaterThan",
   "isLaterThan",
-  "isOnOrEarlierThan",
   "isEarlierThan",
   "isBetween",
   "isNotBetween",
 ] as const;
 const CONSENT_RULES = [] as const;
-const MATRIX_RULES = ["answersProvidedGreaterThan", "answersProvidedSmallerThan"] as const;
-const RANKING_RULES = ["positionIs", "positionIsHigherThan", "positionIsLowerThan"] as const;
+const MATRIX_RULES = ["minRowsAnswered"] as const;
+const RANKING_RULES = ["minRanked"] as const;
 const FILE_UPLOAD_RULES = ["fileSizeAtLeast", "fileSizeAtMost", "fileExtensionIs", "fileExtensionIsNot"] as const;
 const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
 const ADDRESS_RULES = [] as const;
@@ -725,23 +617,6 @@ export const ZValidationRulesForOpenText: z.ZodType<TValidationRulesForOpenText>
   ])
 );
 
-export const ZValidationRulesForMultipleChoiceSingle: z.ZodType<TValidationRulesForMultipleChoiceSingle> =
-  z.array(
-    z.discriminatedUnion("type", [
-      z.object({
-        id: z.string(),
-        type: z.literal("isSelected"),
-        params: ZValidationRuleParamsIsSelected,
-        customErrorMessage: ZI18nString.optional(),
-      }),
-      z.object({
-        id: z.string(),
-        type: z.literal("isNotSelected"),
-        params: ZValidationRuleParamsIsNotSelected,
-        customErrorMessage: ZI18nString.optional(),
-      }),
-    ])
-  );
 
 export const ZValidationRulesForMultipleChoiceMulti: z.ZodType<TValidationRulesForMultipleChoiceMulti> =
   z.array(
@@ -758,18 +633,6 @@ export const ZValidationRulesForMultipleChoiceMulti: z.ZodType<TValidationRulesF
         params: ZValidationRuleParamsMaxSelections,
         customErrorMessage: ZI18nString.optional(),
       }),
-      z.object({
-        id: z.string(),
-        type: z.literal("isSelected"),
-        params: ZValidationRuleParamsIsSelected,
-        customErrorMessage: ZI18nString.optional(),
-      }),
-      z.object({
-        id: z.string(),
-        type: z.literal("isNotSelected"),
-        params: ZValidationRuleParamsIsNotSelected,
-        customErrorMessage: ZI18nString.optional(),
-      }),
     ])
   );
 
@@ -781,20 +644,8 @@ export const ZValidationRulesForDate: z.ZodType<TValidationRulesForDate> = z.arr
   z.discriminatedUnion("type", [
     z.object({
       id: z.string(),
-      type: z.literal("isOnOrLaterThan"),
-      params: ZValidationRuleParamsIsOnOrLaterThan,
-      customErrorMessage: ZI18nString.optional(),
-    }),
-    z.object({
-      id: z.string(),
       type: z.literal("isLaterThan"),
       params: ZValidationRuleParamsIsLaterThan,
-      customErrorMessage: ZI18nString.optional(),
-    }),
-    z.object({
-      id: z.string(),
-      type: z.literal("isOnOrEarlierThan"),
-      params: ZValidationRuleParamsIsOnOrEarlierThan,
       customErrorMessage: ZI18nString.optional(),
     }),
     z.object({
@@ -824,14 +675,8 @@ export const ZValidationRulesForMatrix: z.ZodType<TValidationRulesForMatrix> = z
   z.discriminatedUnion("type", [
     z.object({
       id: z.string(),
-      type: z.literal("answersProvidedGreaterThan"),
-      params: ZValidationRuleParamsAnswersProvidedGreaterThan,
-      customErrorMessage: ZI18nString.optional(),
-    }),
-    z.object({
-      id: z.string(),
-      type: z.literal("answersProvidedSmallerThan"),
-      params: ZValidationRuleParamsAnswersProvidedSmallerThan,
+      type: z.literal("minRowsAnswered"),
+      params: ZValidationRuleParamsMinRowsAnswered,
       customErrorMessage: ZI18nString.optional(),
     }),
   ])
@@ -841,20 +686,8 @@ export const ZValidationRulesForRanking: z.ZodType<TValidationRulesForRanking> =
   z.discriminatedUnion("type", [
     z.object({
       id: z.string(),
-      type: z.literal("positionIs"),
-      params: ZValidationRuleParamsPositionIs,
-      customErrorMessage: ZI18nString.optional(),
-    }),
-    z.object({
-      id: z.string(),
-      type: z.literal("positionIsHigherThan"),
-      params: ZValidationRuleParamsPositionIsHigherThan,
-      customErrorMessage: ZI18nString.optional(),
-    }),
-    z.object({
-      id: z.string(),
-      type: z.literal("positionIsLowerThan"),
-      params: ZValidationRuleParamsPositionIsLowerThan,
+      type: z.literal("minRanked"),
+      params: ZValidationRuleParamsMinRanked,
       customErrorMessage: ZI18nString.optional(),
     }),
   ])

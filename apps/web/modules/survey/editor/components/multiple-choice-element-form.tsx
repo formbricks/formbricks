@@ -12,10 +12,7 @@ import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum, TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
 import { TShuffleOption, TSurvey } from "@formbricks/types/surveys/types";
-import {
-  TValidationRulesForMultipleChoiceMulti,
-  TValidationRulesForMultipleChoiceSingle,
-} from "@formbricks/types/surveys/validation-rules";
+import { TValidationRulesForMultipleChoiceMulti } from "@formbricks/types/surveys/validation-rules";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -404,28 +401,11 @@ export const MultipleChoiceElementForm = ({
         locale={locale}
       />
 
-      {element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ? (
+      {element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && (
         <ValidationRulesEditor
           elementType={TSurveyElementTypeEnum.MultipleChoiceMulti}
           validationRules={element.validationRules ?? []}
           onUpdateRules={(rules: TValidationRulesForMultipleChoiceMulti) => {
-            updateElement(elementIdx, {
-              validationRules: rules,
-            });
-          }}
-          element={element}
-          validationLogic={element.validationLogic}
-          onUpdateValidationLogic={(logic) => {
-            updateElement(elementIdx, {
-              validationLogic: logic,
-            });
-          }}
-        />
-      ) : (
-        <ValidationRulesEditor
-          elementType={TSurveyElementTypeEnum.MultipleChoiceSingle}
-          validationRules={element.validationRules ?? []}
-          onUpdateRules={(rules: TValidationRulesForMultipleChoiceSingle) => {
             updateElement(elementIdx, {
               validationRules: rules,
             });

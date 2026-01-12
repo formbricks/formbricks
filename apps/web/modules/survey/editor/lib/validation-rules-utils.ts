@@ -44,25 +44,6 @@ export const getRuleValue = (rule: TValidationRule): number | string | undefined
   if ("startDate" in params && "endDate" in params) {
     return `${params.startDate},${params.endDate}`;
   }
-  // Check for ranking rules first (they have both optionId and position)
-  if (
-    rule.type === "positionIs" ||
-    rule.type === "positionIsHigherThan" ||
-    rule.type === "positionIsLowerThan"
-  ) {
-    // After checking rule.type, TypeScript narrows rule.params to ranking rule params
-    if ("position" in rule.params) {
-      const positionValue = rule.params.position;
-      if (typeof positionValue === "number") {
-        return positionValue;
-      }
-    }
-    return undefined;
-  }
-  if ("optionId" in params) {
-    // For single/multi select rules, return optionId
-    return params.optionId;
-  }
   // File upload rules
   if ("size" in params && "unit" in params) {
     // For file size rules, return size as number (unit is stored separately)
@@ -116,11 +97,7 @@ export const createRuleParams = (
       return { min: Number(value) || 0 };
     case "isLessThan":
       return { max: Number(value) || 100 };
-    case "isOnOrLaterThan":
-      return { date: value === undefined || value === null ? "" : String(value) };
     case "isLaterThan":
-      return { date: value === undefined || value === null ? "" : String(value) };
-    case "isOnOrEarlierThan":
       return { date: value === undefined || value === null ? "" : String(value) };
     case "isEarlierThan":
       return { date: value === undefined || value === null ? "" : String(value) };
@@ -139,29 +116,10 @@ export const createRuleParams = (
       return { min: Number(value) || 1 };
     case "maxSelections":
       return { max: Number(value) || 3 };
-    case "isSelected":
-    case "isNotSelected":
-      return { optionId: value === undefined || value === null ? "" : String(value) };
-    case "positionIs":
-    case "positionIsHigherThan":
-    case "positionIsLowerThan":
-      // For ranking rules, value is a comma-separated string: "optionId,position"
-      if (typeof value === "string" && value.includes(",")) {
-        const [optionId, position] = value.split(",");
-        return {
-          optionId: optionId?.trim() || "",
-          position: Number(position?.trim()) || 1,
-        };
-      }
-      // Fallback: assume value is just the position, optionId will be set separately
-      return {
-        optionId: "",
-        position: Number(value) || 1,
-      };
-    case "answersProvidedGreaterThan":
+    case "minRanked":
       return { min: Number(value) || 1 };
-    case "answersProvidedSmallerThan":
-      return { max: Number(value) || 5 };
+    case "minRowsAnswered":
+      return { min: Number(value) || 1 };
     case "fileSizeAtLeast":
       // Value should be number, unit is handled separately in the UI
       return { size: Number(value) || 1, unit: "MB" as const };

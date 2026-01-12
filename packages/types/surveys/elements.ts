@@ -12,7 +12,6 @@ import {
   ZValidationRulesForFileUpload,
   ZValidationRulesForMatrix,
   ZValidationRulesForMultipleChoiceMulti,
-  ZValidationRulesForMultipleChoiceSingle,
   ZValidationRulesForNPS,
   ZValidationRulesForOpenText,
   ZValidationRulesForPictureSelection,
@@ -163,7 +162,6 @@ export const ZSurveyMultipleChoiceSingleElement = ZSurveyElementBase.extend({
     .min(2, { message: "Multiple Choice Element must have at least two choices" }),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
-  validationRules: ZValidationRulesForMultipleChoiceSingle.optional(),
 });
 
 // Multiple Choice Multi Element

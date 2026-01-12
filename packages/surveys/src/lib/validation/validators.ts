@@ -4,8 +4,6 @@ import type { TResponseDataValue } from "@formbricks/types/responses";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type {
   TValidationRuleParams,
-  TValidationRuleParamsAnswersProvidedGreaterThan,
-  TValidationRuleParamsAnswersProvidedSmallerThan,
   TValidationRuleParamsContains,
   TValidationRuleParamsDoesNotContain,
   TValidationRuleParamsDoesNotEqual,
@@ -22,22 +20,17 @@ import type {
   TValidationRuleParamsIsLessThan,
   TValidationRuleParamsIsLongerThan,
   TValidationRuleParamsIsNotBetween,
-  TValidationRuleParamsIsNotSelected,
-  TValidationRuleParamsIsOnOrEarlierThan,
-  TValidationRuleParamsIsOnOrLaterThan,
-  TValidationRuleParamsIsSelected,
   TValidationRuleParamsIsShorterThan,
   TValidationRuleParamsMaxLength,
   TValidationRuleParamsMaxSelections,
   TValidationRuleParamsMaxValue,
   TValidationRuleParamsMinLength,
+  TValidationRuleParamsMinRanked,
+  TValidationRuleParamsMinRowsAnswered,
   TValidationRuleParamsMinSelections,
   TValidationRuleParamsMinValue,
   TValidationRuleParamsPattern,
   TValidationRuleParamsPhone,
-  TValidationRuleParamsPositionIs,
-  TValidationRuleParamsPositionIsHigherThan,
-  TValidationRuleParamsPositionIsLowerThan,
   TValidationRuleParamsUrl,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
@@ -398,21 +391,6 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return t("errors.is_less_than", { max: typedParams.max });
     },
   },
-  isOnOrLaterThan: {
-    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsIsOnOrLaterThan;
-      // Skip validation if value is empty
-      if (!value || typeof value !== "string" || value === "") {
-        return { valid: true };
-      }
-      // Compare dates as strings (YYYY-MM-DD format)
-      return { valid: value >= typedParams.date };
-    },
-    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsIsOnOrLaterThan;
-      return t("errors.is_on_or_later_than", { date: typedParams.date });
-    },
-  },
   isLaterThan: {
     check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
       const typedParams = params as TValidationRuleParamsIsLaterThan;
@@ -426,21 +404,6 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsLaterThan;
       return t("errors.is_later_than", { date: typedParams.date });
-    },
-  },
-  isOnOrEarlierThan: {
-    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsIsOnOrEarlierThan;
-      // Skip validation if value is empty
-      if (!value || typeof value !== "string" || value === "") {
-        return { valid: true };
-      }
-      // Compare dates as strings (YYYY-MM-DD format)
-      return { valid: value <= typedParams.date };
-    },
-    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsIsOnOrEarlierThan;
-      return t("errors.is_on_or_earlier_than", { date: typedParams.date });
     },
   },
   isEarlierThan: {
@@ -488,296 +451,53 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return t("errors.is_not_between", { startDate: typedParams.startDate, endDate: typedParams.endDate });
     },
   },
-  isSelected: {
+  minRanked: {
     check: (
       value: TResponseDataValue,
       params: TValidationRuleParams,
       element: TSurveyElement
     ): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsIsSelected;
-      if (!value) {
-        return { valid: true };
-      }
-      // Find the choice with the specified optionId
-      if (
-        (element.type !== "multipleChoiceSingle" && element.type !== "multipleChoiceMulti") ||
-        !("choices" in element)
-      ) {
-        return { valid: true };
-      }
-      const choice = element.choices.find((c) => c.id === typedParams.optionId);
-      if (!choice) {
-        return { valid: true };
-      }
-      // Get all language variants of the choice label
-      const choiceLabels = Object.values(choice.label);
-
-      // Handle single select (string) and multi select (array) responses
-      if (element.type === "multipleChoiceSingle") {
-        // Single select: response is a string (choice label)
-        if (typeof value !== "string" || value === "") {
-          return { valid: true };
-        }
-        return { valid: choiceLabels.includes(value) };
-      } else {
-        // Multi select: response is an array of choice labels
-        if (!Array.isArray(value) || value.length === 0) {
-          return { valid: true };
-        }
-        // Check if any of the selected labels match the choice labels
-        const isSelected = value.some((selectedLabel) => choiceLabels.includes(selectedLabel));
-        return { valid: isSelected };
-      }
-    },
-    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsIsSelected;
-      if (
-        (element.type !== "multipleChoiceSingle" && element.type !== "multipleChoiceMulti") ||
-        !("choices" in element)
-      ) {
-        return t("errors.invalid_format");
-      }
-      const choice = element.choices.find((c) => c.id === typedParams.optionId);
-      const choiceLabel = choice
-        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
-        : typedParams.optionId;
-      return t("errors.option_must_be_selected", { option: choiceLabel });
-    },
-  },
-  isNotSelected: {
-    check: (
-      value: TResponseDataValue,
-      params: TValidationRuleParams,
-      element: TSurveyElement
-    ): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsIsNotSelected;
-      if (!value) {
-        return { valid: true };
-      }
-      // Find the choice with the specified optionId
-      if (
-        (element.type !== "multipleChoiceSingle" && element.type !== "multipleChoiceMulti") ||
-        !("choices" in element)
-      ) {
-        return { valid: true };
-      }
-      const choice = element.choices.find((c) => c.id === typedParams.optionId);
-      if (!choice) {
-        return { valid: true };
-      }
-      // Get all language variants of the choice label
-      const choiceLabels = Object.values(choice.label);
-
-      // Handle single select (string) and multi select (array) responses
-      if (element.type === "multipleChoiceSingle") {
-        // Single select: response is a string (choice label)
-        if (typeof value !== "string" || value === "") {
-          return { valid: true };
-        }
-        return { valid: !choiceLabels.includes(value) };
-      } else {
-        // Multi select: response is an array of choice labels
-        if (!Array.isArray(value) || value.length === 0) {
-          return { valid: true };
-        }
-        // Check if any of the selected labels match the choice labels
-        const isSelected = value.some((selectedLabel) => choiceLabels.includes(selectedLabel));
-        return { valid: !isSelected };
-      }
-    },
-    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsIsNotSelected;
-      if (
-        (element.type !== "multipleChoiceSingle" && element.type !== "multipleChoiceMulti") ||
-        !("choices" in element)
-      ) {
-        return t("errors.invalid_format");
-      }
-      const choice = element.choices.find((c) => c.id === typedParams.optionId);
-      const choiceLabel = choice
-        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
-        : typedParams.optionId;
-      return t("errors.option_must_not_be_selected", { option: choiceLabel });
-    },
-  },
-  positionIs: {
-    check: (
-      value: TResponseDataValue,
-      params: TValidationRuleParams,
-      element: TSurveyElement
-    ): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsPositionIs;
+      const typedParams = params as TValidationRuleParamsMinRanked;
+      // Skip validation if value is empty
       if (!value || !Array.isArray(value) || value.length === 0) {
         return { valid: true };
       }
-      if (element.type !== "ranking" || !("choices" in element)) {
+      if (element.type !== "ranking") {
         return { valid: true };
       }
-      // Find the position of the option in the ranking (1-indexed)
-      const position = value.findIndex((item) => {
-        // Response can be choice IDs or choice labels
-        if (item === typedParams.optionId) {
-          return true;
-        }
-        // Check if it's a label that matches the choice
-        const choice = element.choices.find((c) => c.id === typedParams.optionId);
-        if (choice) {
-          const choiceLabels = Object.values(choice.label);
-          return choiceLabels.includes(item);
-        }
-        return false;
-      });
-      // Position is 1-indexed, so add 1 to array index
-      const actualPosition = position === -1 ? 0 : position + 1;
-      return { valid: actualPosition === typedParams.position };
+      // Count how many options have been ranked (array length)
+      const rankedCount = value.length;
+      return { valid: rankedCount >= typedParams.min };
     },
-    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsPositionIs;
-      if (element.type !== "ranking" || !("choices" in element)) {
-        return t("errors.invalid_format");
-      }
-      const choice = element.choices.find((c) => c.id === typedParams.optionId);
-      const choiceLabel = choice
-        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
-        : typedParams.optionId;
-      return t("errors.position_must_be", { option: choiceLabel, position: typedParams.position });
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      const typedParams = params as TValidationRuleParamsMinRanked;
+      return t("errors.minimum_options_ranked", { min: typedParams.min });
     },
   },
-  positionIsHigherThan: {
+  minRowsAnswered: {
     check: (
       value: TResponseDataValue,
       params: TValidationRuleParams,
       element: TSurveyElement
     ): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsPositionIsHigherThan;
-      if (!value || !Array.isArray(value) || value.length === 0) {
+      const typedParams = params as TValidationRuleParamsMinRowsAnswered;
+      // Skip validation if value is empty
+      if (!value || typeof value !== "object" || Array.isArray(value) || value === null) {
         return { valid: true };
       }
-      if (element.type !== "ranking" || !("choices" in element)) {
-        return { valid: true };
-      }
-      // Find the position of the option in the ranking (1-indexed)
-      const position = value.findIndex((item) => {
-        if (item === typedParams.optionId) {
-          return true;
-        }
-        const choice = element.choices.find((c) => c.id === typedParams.optionId);
-        if (choice) {
-          const choiceLabels = Object.values(choice.label);
-          return choiceLabels.includes(item);
-        }
-        return false;
-      });
-      // Position is 1-indexed, so add 1 to array index
-      // Higher position means lower position number (better rank)
-      const actualPosition = position === -1 ? 0 : position + 1;
-      return { valid: actualPosition > 0 && actualPosition < typedParams.position };
-    },
-    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsPositionIsHigherThan;
-      if (element.type !== "ranking" || !("choices" in element)) {
-        return t("errors.invalid_format");
-      }
-      const choice = element.choices.find((c) => c.id === typedParams.optionId);
-      const choiceLabel = choice
-        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
-        : typedParams.optionId;
-      return t("errors.position_must_be_higher_than", {
-        option: choiceLabel,
-        position: typedParams.position,
-      });
-    },
-  },
-  positionIsLowerThan: {
-    check: (
-      value: TResponseDataValue,
-      params: TValidationRuleParams,
-      element: TSurveyElement
-    ): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsPositionIsLowerThan;
-      if (!value || !Array.isArray(value) || value.length === 0) {
-        return { valid: true };
-      }
-      if (element.type !== "ranking" || !("choices" in element)) {
-        return { valid: true };
-      }
-      // Find the position of the option in the ranking (1-indexed)
-      const position = value.findIndex((item) => {
-        if (item === typedParams.optionId) {
-          return true;
-        }
-        const choice = element.choices.find((c) => c.id === typedParams.optionId);
-        if (choice) {
-          const choiceLabels = Object.values(choice.label);
-          return choiceLabels.includes(item);
-        }
-        return false;
-      });
-      // Position is 1-indexed, so add 1 to array index
-      // Lower position means higher position number (worse rank)
-      const actualPosition = position === -1 ? 0 : position + 1;
-      return { valid: actualPosition > typedParams.position };
-    },
-    getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsPositionIsLowerThan;
-      if (element.type !== "ranking" || !("choices" in element)) {
-        return t("errors.invalid_format");
-      }
-      const choice = element.choices.find((c) => c.id === typedParams.optionId);
-      const choiceLabel = choice
-        ? choice.label.default || Object.values(choice.label)[0] || typedParams.optionId
-        : typedParams.optionId;
-      return t("errors.position_must_be_lower_than", { option: choiceLabel, position: typedParams.position });
-    },
-  },
-  answersProvidedGreaterThan: {
-    check: (
-      value: TResponseDataValue,
-      params: TValidationRuleParams,
-      element: TSurveyElement
-    ): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsAnswersProvidedGreaterThan;
       if (element.type !== "matrix") {
         return { valid: true };
       }
       // Matrix responses are Record<string, string> where keys are row labels and values are column labels
-      if (!value || typeof value !== "object" || Array.isArray(value) || value === null) {
-        return { valid: true };
-      }
       // Count non-empty answers (rows that have been answered)
       const answeredCount = Object.values(value).filter(
         (v) => v !== "" && v !== null && v !== undefined
       ).length;
-      return { valid: answeredCount > typedParams.min };
+      return { valid: answeredCount >= typedParams.min };
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsAnswersProvidedGreaterThan;
-      return t("errors.answers_provided_must_be_greater_than", { min: typedParams.min });
-    },
-  },
-  answersProvidedSmallerThan: {
-    check: (
-      value: TResponseDataValue,
-      params: TValidationRuleParams,
-      element: TSurveyElement
-    ): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsAnswersProvidedSmallerThan;
-      if (element.type !== "matrix") {
-        return { valid: true };
-      }
-      // Matrix responses are Record<string, string> where keys are row labels and values are column labels
-      if (!value || typeof value !== "object" || Array.isArray(value) || value === null) {
-        return { valid: true };
-      }
-      // Count non-empty answers (rows that have been answered)
-      const answeredCount = Object.values(value).filter(
-        (v) => v !== "" && v !== null && v !== undefined
-      ).length;
-      return { valid: answeredCount < typedParams.max };
-    },
-    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsAnswersProvidedSmallerThan;
-      return t("errors.answers_provided_must_be_smaller_than", { max: typedParams.max });
+      const typedParams = params as TValidationRuleParamsMinRowsAnswered;
+      return t("errors.minimum_rows_answered", { min: typedParams.min });
     },
   },
   fileSizeAtLeast: {
