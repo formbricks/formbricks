@@ -30,8 +30,8 @@ checksums:
     common/the_servers_cannot_be_reached_at_the_moment: f8adbeccac69f9230a55b5b3af52b081
     common/they_will_be_redirected_immediately: 936bc99cb575cba95ea8f04d82bb353b
     common/your_feedback_is_stuck: db2b6aba26723b01aee0fc918d3ca052
-    errors/answers_provided_must_be_greater_than: 8a67744c08a0bb7cafde0f2537167f30
-    errors/answers_provided_must_be_smaller_than: c308fde8a21c2762ad1ef73e341a8191
+    errors/file_extension_must_be: 3102dc81a482f1b05ee490767b1c3c97
+    errors/file_extension_must_not_be: bd21065a4201d9a29b126586aecd8f29
     errors/file_input/duplicate_files: 198dd29e67beb6abc5b2534ede7d7f68
     errors/file_input/file_size_exceeded: 072045b042a39fa1df76200f8fa36dd4
     errors/file_input/file_size_exceeded_alert: d8e482a2ff05e78bbacaed9e9db9b5eb
@@ -39,6 +39,8 @@ checksums:
     errors/file_input/only_one_file_can_be_uploaded_at_a_time: 1eda42bd46887f9702049e23fa7cb127
     errors/file_input/upload_failed: 735fdfc1a37ab035121328237ddd6fd0
     errors/file_input/you_can_only_upload_a_maximum_of_files: 72fe144f81075e5b06bae53b3a84d4db
+    errors/file_size_must_be_at_least: 7cd3649b106f0d504e9a72fc8bb748eb
+    errors/file_size_must_be_at_most: 87df20b0be74365a22d4fc8376207f9e
     errors/invalid_device_error/message: 8813dcd0e3e41934af18d7a15f8c83f4
     errors/invalid_device_error/title: 20d261b478aaba161b0853a588926e23
     errors/invalid_format: 66df570c79b420d66f3badaf5867e4ad
@@ -47,26 +49,19 @@ checksums:
     errors/is_greater_than: ab6ff5c676478d66cd64930deb4f0fd1
     errors/is_later_than: dc64e8fe79ade4b53843270e00957163
     errors/is_less_than: e1d0b7e6292e8c775e9eee349fee6269
-    errors/is_longer_than: f8812e1790d05ddfca9fdfe4b0989447
     errors/is_not_between: 887b4ece0ad58c027fc35ef6b3f2d5e8
-    errors/is_on_or_earlier_than: 68c351f34aa6a5692389ed3d6e438a1c
-    errors/is_on_or_later_than: 7f17ad61d15504f76cfd7aa3f148393b
-    errors/is_shorter_than: a2049a3fc530daa8714c50e5d1ef8e77
     errors/max_length: cbaef9675c55b3229e6306eb2d78dbfd
     errors/max_selections: b2682a6ce820681074d4a319b96f8dbd
     errors/max_value: edfe2d387a283c2b2a48da251fcf6ade
     errors/min_length: d08ea43d2cc9d6b2aee87ddba60dd2b3
     errors/min_selections: 23a75f21b4cb0530e5cfd02650d3e3d7
     errors/min_value: f52e2d54c7fc0e96d5e3f5d32b2618c7
-    errors/option_must_be_selected: 62869b36128b330f57f0e2a0fd30f118
-    errors/option_must_not_be_selected: 653acec8f21f49f57d81041820b61683
+    errors/minimum_options_ranked: 7c06caceff53b590159d0e0a9a8bd812
+    errors/minimum_rows_answered: ca132ce930516cf5ce97c34c7a7ef3d3
     errors/please_enter_a_valid_email_address: 8de4bc8832b11b380bc4cbcedc16e48b
     errors/please_enter_a_valid_phone_number: 1530eb9ab7d6d190bddb37667c711631
     errors/please_enter_a_valid_url: e3bcfb605be4ee32aa19d9ac32bb11a4
     errors/please_fill_out_this_field: 88d4fd502ae8d423277aef723afcd1a7
-    errors/position_must_be: 304d421e50b2c3f248a92a400a554128
-    errors/position_must_be_higher_than: f4c979566de92643441e224c277d6658
-    errors/position_must_be_lower_than: abb91b5820bae7a3837b54b57e141ec6
     errors/recaptcha_error/message: b3f2c5950cbc0887f391f9e2bccb676e
     errors/recaptcha_error/title: 8e923ec38a92041569879a39c6467131
     errors/value_must_contain: cd555796372f06b42f42f6b304f98e92

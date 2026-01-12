@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "Je feedback blijft hangen :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "Geef meer dan {min} antwoorden",
-    "answers_provided_must_be_smaller_than": "Geef minder dan {max} antwoorden",
+    "file_extension_must_be": "Bestandsextensie moet {extension} zijn",
+    "file_extension_must_not_be": "Bestandsextensie mag niet {extension} zijn",
     "file_input": {
       "duplicate_files": "De volgende bestanden zijn al geüpload: {duplicateNames}. Dubbele bestanden zijn niet toegestaan.",
       "file_size_exceeded": "De volgende bestanden overschrijden de maximale grootte van {maxSizeInMB} MB en zijn verwijderd: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "Uploaden mislukt! Probeer het opnieuw.",
       "you_can_only_upload_a_maximum_of_files": "Je kunt maximaal {FILE_LIMIT} bestanden uploaden."
     },
+    "file_size_must_be_at_least": "Bestandsgrootte moet minimaal {size} {unit} zijn",
+    "file_size_must_be_at_most": "Bestandsgrootte mag maximaal {size} {unit} zijn",
     "invalid_device_error": {
       "message": "Schakel de spambeveiliging uit in de enquête-instellingen om dit apparaat te blijven gebruiken.",
       "title": "Dit apparaat ondersteunt geen spambeveiliging."
@@ -52,26 +54,19 @@
     "is_greater_than": "Voer een waarde in die groter is dan {min}",
     "is_later_than": "Selecteer een datum na {date}",
     "is_less_than": "Voer een waarde in die kleiner is dan {max}",
-    "is_longer_than": "Voer meer dan {min} tekens in",
     "is_not_between": "Selecteer een datum die niet tussen {startDate} en {endDate} ligt",
-    "is_on_or_earlier_than": "Selecteer een datum op of vóór {date}",
-    "is_on_or_later_than": "Selecteer een datum op of na {date}",
-    "is_shorter_than": "Voer minder dan {max} tekens in",
     "max_length": "Voer niet meer dan {max} tekens in",
     "max_selections": "Selecteer niet meer dan {max} opties",
     "max_value": "Voer een waarde in die niet groter is dan {max}",
     "min_length": "Voer minimaal {min} tekens in",
     "min_selections": "Selecteer minimaal {min} opties",
     "min_value": "Voer een waarde in van minimaal {min}",
-    "option_must_be_selected": "Selecteer {option}",
-    "option_must_not_be_selected": "Selecteer {option} niet",
+    "minimum_options_ranked": "Rangschik minimaal {min} opties",
+    "minimum_rows_answered": "Beantwoord minimaal {min} rijen",
     "please_enter_a_valid_email_address": "Voer een geldig e-mailadres in",
     "please_enter_a_valid_phone_number": "Voer een geldig telefoonnummer in",
     "please_enter_a_valid_url": "Voer een geldige URL in",
     "please_fill_out_this_field": "Vul dit veld in",
-    "position_must_be": "{option} moet op positie {position} staan",
-    "position_must_be_higher_than": "{option} moet hoger gerangschikt zijn dan positie {position}",
-    "position_must_be_lower_than": "{option} moet lager gerangschikt zijn dan positie {position}",
     "recaptcha_error": {
       "message": "Uw reactie kan niet worden verzonden omdat deze is gemarkeerd als geautomatiseerde activiteit. Als u ademhaalt, probeer het dan opnieuw.",
       "title": "We konden niet verifiëren dat je een mens bent."

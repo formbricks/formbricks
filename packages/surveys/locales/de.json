@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "Ihr Feedback steckt fest :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "Bitte geben Sie mehr als {min} Antworten an",
-    "answers_provided_must_be_smaller_than": "Bitte geben Sie weniger als {max} Antworten an",
+    "file_extension_must_be": "Die Dateierweiterung muss {extension} sein",
+    "file_extension_must_not_be": "Die Dateierweiterung darf nicht {extension} sein",
     "file_input": {
       "duplicate_files": "Die folgenden Dateien sind bereits hochgeladen: {duplicateNames}. Doppelte Dateien sind nicht erlaubt.",
       "file_size_exceeded": "Die folgenden Dateien überschreiten die maximale Größe von {maxSizeInMB} MB und wurden entfernt: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "Upload fehlgeschlagen! Bitte versuchen Sie es erneut.",
       "you_can_only_upload_a_maximum_of_files": "Sie können maximal {FILE_LIMIT} Dateien hochladen."
     },
+    "file_size_must_be_at_least": "Die Dateigröße muss mindestens {size} {unit} betragen",
+    "file_size_must_be_at_most": "Die Dateigröße darf höchstens {size} {unit} betragen",
     "invalid_device_error": {
       "message": "Bitte deaktivieren Sie den Spam-Schutz in den Umfrageeinstellungen, um dieses Gerät weiterhin zu verwenden.",
       "title": "Dieses Gerät unterstützt keinen Spam-Schutz."
@@ -52,26 +54,19 @@
     "is_greater_than": "Bitte geben Sie einen Wert größer als {min} ein",
     "is_later_than": "Bitte wählen Sie ein Datum nach dem {date}",
     "is_less_than": "Bitte geben Sie einen Wert kleiner als {max} ein",
-    "is_longer_than": "Bitte geben Sie mehr als {min} Zeichen ein",
     "is_not_between": "Bitte wählen Sie ein Datum, das nicht zwischen {startDate} und {endDate} liegt",
-    "is_on_or_earlier_than": "Bitte wählen Sie ein Datum am oder vor dem {date}",
-    "is_on_or_later_than": "Bitte wählen Sie ein Datum am oder nach dem {date}",
-    "is_shorter_than": "Bitte geben Sie weniger als {max} Zeichen ein",
     "max_length": "Bitte geben Sie nicht mehr als {max} Zeichen ein",
     "max_selections": "Bitte wählen Sie nicht mehr als {max} Optionen aus",
     "max_value": "Bitte geben Sie einen Wert ein, der nicht größer als {max} ist",
     "min_length": "Bitte geben Sie mindestens {min} Zeichen ein",
     "min_selections": "Bitte wählen Sie mindestens {min} Optionen aus",
     "min_value": "Bitte geben Sie einen Wert von mindestens {min} ein",
-    "option_must_be_selected": "Bitte wählen Sie {option}",
-    "option_must_not_be_selected": "Bitte wählen Sie {option} nicht aus",
+    "minimum_options_ranked": "Bitte ordnen Sie mindestens {min} Optionen",
+    "minimum_rows_answered": "Bitte beantworten Sie mindestens {min} Zeilen",
     "please_enter_a_valid_email_address": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "please_enter_a_valid_phone_number": "Bitte geben Sie eine gültige Telefonnummer ein",
     "please_enter_a_valid_url": "Bitte geben Sie eine gültige URL ein",
     "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
-    "position_must_be": "{option} muss an Position {position} stehen",
-    "position_must_be_higher_than": "{option} muss höher als Position {position} eingestuft werden",
-    "position_must_be_lower_than": "{option} muss niedriger als Position {position} eingestuft werden",
     "recaptcha_error": {
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
       "title": "Wir konnten nicht verifizieren, dass Sie ein Mensch sind."

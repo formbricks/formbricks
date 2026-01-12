@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "Ваш отзыв застрял :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "Пожалуйста, укажите больше {min} ответов",
-    "answers_provided_must_be_smaller_than": "Пожалуйста, укажите меньше {max} ответов",
+    "file_extension_must_be": "Расширение файла должно быть {extension}",
+    "file_extension_must_not_be": "Расширение файла не должно быть {extension}",
     "file_input": {
       "duplicate_files": "Следующие файлы уже загружены: {duplicateNames}. Дублирующие файлы не допускаются.",
       "file_size_exceeded": "Следующие файлы превышают максимальный размер {maxSizeInMB} МБ и были удалены: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "Ошибка загрузки! Пожалуйста, попробуйте снова.",
       "you_can_only_upload_a_maximum_of_files": "Вы можете загрузить максимум {FILE_LIMIT} файлов."
     },
+    "file_size_must_be_at_least": "Размер файла должен быть не менее {size} {unit}",
+    "file_size_must_be_at_most": "Размер файла должен быть не более {size} {unit}",
     "invalid_device_error": {
       "message": "Пожалуйста, отключите защиту от спама в настройках опроса, чтобы продолжить использование этого устройства.",
       "title": "Это устройство не поддерживает защиту от спама."
@@ -52,26 +54,19 @@
     "is_greater_than": "Пожалуйста, введите значение больше {min}",
     "is_later_than": "Пожалуйста, выберите дату позже {date}",
     "is_less_than": "Пожалуйста, введите значение меньше {max}",
-    "is_longer_than": "Пожалуйста, введите больше {min} символов",
     "is_not_between": "Пожалуйста, выберите дату вне диапазона от {startDate} до {endDate}",
-    "is_on_or_earlier_than": "Пожалуйста, выберите дату, которая совпадает с {date} или раньше",
-    "is_on_or_later_than": "Пожалуйста, выберите дату, которая совпадает с {date} или позже",
-    "is_shorter_than": "Пожалуйста, введите меньше {max} символов",
     "max_length": "Пожалуйста, введите не более {max} символов",
     "max_selections": "Пожалуйста, выберите не более {max} вариантов",
     "max_value": "Пожалуйста, введите значение не больше {max}",
     "min_length": "Пожалуйста, введите не менее {min} символов",
     "min_selections": "Пожалуйста, выберите не менее {min} вариантов",
     "min_value": "Пожалуйста, введите значение не меньше {min}",
-    "option_must_be_selected": "Пожалуйста, выберите {option}",
-    "option_must_not_be_selected": "Пожалуйста, не выбирайте {option}",
+    "minimum_options_ranked": "Пожалуйста, ранжируйте не менее {min} вариантов",
+    "minimum_rows_answered": "Пожалуйста, ответьте как минимум на {min} строк(и)",
     "please_enter_a_valid_email_address": "Пожалуйста, введите действительный адрес электронной почты",
     "please_enter_a_valid_phone_number": "Пожалуйста, введите действительный номер телефона",
     "please_enter_a_valid_url": "Пожалуйста, введите действительный URL-адрес",
     "please_fill_out_this_field": "Пожалуйста, заполните это поле",
-    "position_must_be": "{option} должен находиться на позиции {position}",
-    "position_must_be_higher_than": "{option} должен быть выше позиции {position}",
-    "position_must_be_lower_than": "{option} должен быть ниже позиции {position}",
     "recaptcha_error": {
       "message": "Ваш ответ не может быть отправлен, так как он был помечен как автоматическая активность. Если вы дышите, попробуйте ещё раз.",
       "title": "Мы не смогли подтвердить, что вы человек."

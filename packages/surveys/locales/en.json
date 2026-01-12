@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "Your feedback is stuck :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "Please provide more than {min} answers",
-    "answers_provided_must_be_smaller_than": "Please provide fewer than {max} answers",
+    "file_extension_must_be": "File extension must be {extension}",
+    "file_extension_must_not_be": "File extension must not be {extension}",
     "file_input": {
       "duplicate_files": "The following files are already uploaded: {duplicateNames}. Duplicate files are not allowed.",
       "file_size_exceeded": "The following file(s) exceed the maximum size of {maxSizeInMB} MB and were removed: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "Upload failed! Please try again.",
       "you_can_only_upload_a_maximum_of_files": "You can only upload a maximum of {FILE_LIMIT} files."
     },
+    "file_size_must_be_at_least": "File size must be at least {size} {unit}",
+    "file_size_must_be_at_most": "File size must be at most {size} {unit}",
     "invalid_device_error": {
       "message": "Please disable spam protection in the survey settings to continue using this device.",
       "title": "This device doesn’t support spam protection."
@@ -52,7 +54,6 @@
     "is_greater_than": "Please enter a value greater than {min}",
     "is_later_than": "Please select a date later than {date}",
     "is_less_than": "Please enter a value less than {max}",
-    "is_longer_than": "Please enter more than {min} characters",
     "is_not_between": "Please select a date not between {startDate} and {endDate}",
     "max_length": "Please enter no more than {max} characters",
     "max_selections": "Please select no more than {max} options",
@@ -60,14 +61,12 @@
     "min_length": "Please enter at least {min} characters",
     "min_selections": "Please select at least {min} options",
     "min_value": "Please enter a value of at least {min}",
+    "minimum_options_ranked": "Please rank at least {min} options",
     "minimum_rows_answered": "Please answer at least {min} rows",
-    "option_must_be_selected": "Please select {option}",
-    "option_must_not_be_selected": "Please do not select {option}",
     "please_enter_a_valid_email_address": "Please enter a valid email address",
     "please_enter_a_valid_phone_number": "Please enter a valid phone number",
     "please_enter_a_valid_url": "Please enter a valid URL",
     "please_fill_out_this_field": "Please fill out this field",
-    "minimum_options_ranked": "Please rank at least {min} options",
     "recaptcha_error": {
       "message": "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",
       "title": "We couldn't verify that you're human."
@@ -75,10 +74,6 @@
     "value_must_contain": "Value must contain {value}",
     "value_must_equal": "Value must equal {value}",
     "value_must_not_contain": "Value must not contain {value}",
-    "value_must_not_equal": "Value must not equal {value}",
-    "file_size_must_be_at_least": "File size must be at least {size} {unit}",
-    "file_size_must_be_at_most": "File size must be at most {size} {unit}",
-    "file_extension_must_be": "File extension must be {extension}",
-    "file_extension_must_not_be": "File extension must not be {extension}"
+    "value_must_not_equal": "Value must not equal {value}"
   }
 }

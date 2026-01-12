@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "Tu feedback está atascado :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "Por favor, proporciona más de {min} respuestas",
-    "answers_provided_must_be_smaller_than": "Por favor, proporciona menos de {max} respuestas",
+    "file_extension_must_be": "La extensión del archivo debe ser {extension}",
+    "file_extension_must_not_be": "La extensión del archivo no debe ser {extension}",
     "file_input": {
       "duplicate_files": "Los siguientes archivos ya están subidos: {duplicateNames}. No se permiten archivos duplicados.",
       "file_size_exceeded": "Los siguientes archivos exceden el tamaño máximo de {maxSizeInMB} MB y fueron eliminados: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "¡Subida fallida! Por favor, inténtalo de nuevo.",
       "you_can_only_upload_a_maximum_of_files": "Solo puedes subir un máximo de {FILE_LIMIT} archivos."
     },
+    "file_size_must_be_at_least": "El tamaño del archivo debe ser de al menos {size} {unit}",
+    "file_size_must_be_at_most": "El tamaño del archivo debe ser de como máximo {size} {unit}",
     "invalid_device_error": {
       "message": "Por favor, desactive la protección contra spam en la configuración de la encuesta para continuar usando este dispositivo.",
       "title": "Este dispositivo no es compatible con la protección contra spam."
@@ -52,26 +54,19 @@
     "is_greater_than": "Por favor, introduce un valor mayor que {min}",
     "is_later_than": "Por favor, selecciona una fecha posterior a {date}",
     "is_less_than": "Por favor, introduce un valor menor que {max}",
-    "is_longer_than": "Por favor, introduce más de {min} caracteres",
     "is_not_between": "Por favor, selecciona una fecha que no esté entre {startDate} y {endDate}",
-    "is_on_or_earlier_than": "Por favor, selecciona una fecha en o anterior a {date}",
-    "is_on_or_later_than": "Por favor, selecciona una fecha en o posterior a {date}",
-    "is_shorter_than": "Por favor, introduce menos de {max} caracteres",
     "max_length": "Por favor, introduce no más de {max} caracteres",
     "max_selections": "Por favor, selecciona no más de {max} opciones",
     "max_value": "Por favor, introduce un valor no mayor que {max}",
     "min_length": "Por favor, introduce al menos {min} caracteres",
     "min_selections": "Por favor, selecciona al menos {min} opciones",
     "min_value": "Por favor, introduce un valor de al menos {min}",
-    "option_must_be_selected": "Por favor selecciona {option}",
-    "option_must_not_be_selected": "Por favor no selecciones {option}",
+    "minimum_options_ranked": "Por favor, clasifica al menos {min} opciones",
+    "minimum_rows_answered": "Por favor, responde al menos {min} filas",
     "please_enter_a_valid_email_address": "Por favor, introduce una dirección de correo electrónico válida",
     "please_enter_a_valid_phone_number": "Por favor, introduzca un número de teléfono válido",
     "please_enter_a_valid_url": "Por favor, introduce una URL válida",
     "please_fill_out_this_field": "Por favor, complete este campo",
-    "position_must_be": "{option} debe estar en la posición {position}",
-    "position_must_be_higher_than": "{option} debe estar clasificado en una posición superior a {position}",
-    "position_must_be_lower_than": "{option} debe estar clasificado en una posición inferior a {position}",
     "recaptcha_error": {
       "message": "Su respuesta no pudo ser enviada porque fue marcada como actividad automatizada. Si respira, por favor inténtelo de nuevo.",
       "title": "No pudimos verificar que usted es humano."

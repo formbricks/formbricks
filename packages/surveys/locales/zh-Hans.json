@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "您的反馈卡住了 :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "请提供多于{min}个答案",
-    "answers_provided_must_be_smaller_than": "请提供少于{max}个答案",
+    "file_extension_must_be": "文件扩展名必须为{extension}",
+    "file_extension_must_not_be": "文件扩展名不能为{extension}",
     "file_input": {
       "duplicate_files": "以下文件已上传：{duplicateNames}。不允许重复文件。",
       "file_size_exceeded": "以下文件超过了最大大小 {maxSizeInMB} MB，已被移除：{fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "上传失败！请重试。",
       "you_can_only_upload_a_maximum_of_files": "您最多只能上传 {FILE_LIMIT} 个文件。"
     },
+    "file_size_must_be_at_least": "文件大小至少为{size}{unit}",
+    "file_size_must_be_at_most": "文件大小最多为{size}{unit}",
     "invalid_device_error": {
       "message": "请在调查设置中禁用垃圾邮件保护以继续使用此设备。",
       "title": "此设备不支持垃圾邮件保护。"
@@ -52,26 +54,19 @@
     "is_greater_than": "请输入大于{min}的值",
     "is_later_than": "请选择晚于{date}的日期",
     "is_less_than": "请输入小于{max}的值",
-    "is_longer_than": "请输入多于{min}个字符",
     "is_not_between": "请选择不在{startDate}到{endDate}之间的日期",
-    "is_on_or_earlier_than": "请选择{date}或更早的日期",
-    "is_on_or_later_than": "请选择{date}或更晚的日期",
-    "is_shorter_than": "请输入少于{max}个字符",
     "max_length": "请输入不超过{max}个字符",
     "max_selections": "请选择不超过{max}个选项",
     "max_value": "请输入不大于{max}的值",
     "min_length": "请输入至少{min}个字符",
     "min_selections": "请选择至少{min}个选项",
     "min_value": "请输入不少于{min}的值",
-    "option_must_be_selected": "请选择{option}",
-    "option_must_not_be_selected": "请不要选择{option}",
+    "minimum_options_ranked": "请至少排序{min}个选项",
+    "minimum_rows_answered": "请至少回答{min}行",
     "please_enter_a_valid_email_address": "请输入有效的电子邮件地址",
     "please_enter_a_valid_phone_number": "请输入有效的电话号码",
     "please_enter_a_valid_url": "请输入有效的URL",
     "please_fill_out_this_field": "请填写此字段",
-    "position_must_be": "{option} 必须位于第 {position} 位",
-    "position_must_be_higher_than": "{option} 的排名必须高于第 {position} 位",
-    "position_must_be_lower_than": "{option} 的排名必须低于第 {position} 位",
     "recaptcha_error": {
       "message": "您的响应未能提交，因为它被标记为自动活动。如果您是人类，请重试。",
       "title": "我们无法验证您是人类。"

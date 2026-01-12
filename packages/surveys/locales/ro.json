@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "Feedback-ul tău este blocat :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "Vă rugăm să furnizați mai mult de {min} răspunsuri",
-    "answers_provided_must_be_smaller_than": "Vă rugăm să furnizați mai puțin de {max} răspunsuri",
+    "file_extension_must_be": "Extensia fișierului trebuie să fie {extension}",
+    "file_extension_must_not_be": "Extensia fișierului nu trebuie să fie {extension}",
     "file_input": {
       "duplicate_files": "Următoarele fișiere sunt deja încărcate: {duplicateNames}. Fișierele duplicate nu sunt permise.",
       "file_size_exceeded": "Următoarele fișiere depășesc dimensiunea maximă de {maxSizeInMB} MB și au fost eliminate: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "Încărcarea a eșuat! Te rugăm să încerci din nou.",
       "you_can_only_upload_a_maximum_of_files": "Poți încărca un număr maxim de {FILE_LIMIT} fișiere."
     },
+    "file_size_must_be_at_least": "Dimensiunea fișierului trebuie să fie de cel puțin {size} {unit}",
+    "file_size_must_be_at_most": "Dimensiunea fișierului trebuie să fie de cel mult {size} {unit}",
     "invalid_device_error": {
       "message": "Dezactivați protecția împotriva spamului în setările sondajului pentru a continua să utilizați acest dispozitiv.",
       "title": "Acest dispozitiv nu acceptă protecția împotriva spamului."
@@ -52,26 +54,19 @@
     "is_greater_than": "Vă rugăm să introduceți o valoare mai mare decât {min}",
     "is_later_than": "Vă rugăm să selectați o dată ulterioară datei {date}",
     "is_less_than": "Vă rugăm să introduceți o valoare mai mică decât {max}",
-    "is_longer_than": "Vă rugăm să introduceți mai mult de {min} caractere",
     "is_not_between": "Vă rugăm să selectați o dată care nu este între {startDate} și {endDate}",
-    "is_on_or_earlier_than": "Vă rugăm să selectați o dată egală sau anterioară datei {date}",
-    "is_on_or_later_than": "Vă rugăm să selectați o dată egală sau ulterioară datei {date}",
-    "is_shorter_than": "Vă rugăm să introduceți mai puțin de {max} caractere",
     "max_length": "Vă rugăm să nu introduceți mai mult de {max} caractere",
     "max_selections": "Vă rugăm să selectați cel mult {max} opțiuni",
     "max_value": "Vă rugăm să introduceți o valoare care să nu depășească {max}",
     "min_length": "Vă rugăm să introduceți cel puțin {min} caractere",
     "min_selections": "Vă rugăm să selectați cel puțin {min} opțiuni",
     "min_value": "Vă rugăm să introduceți o valoare de cel puțin {min}",
-    "option_must_be_selected": "Vă rugăm să selectați {option}",
-    "option_must_not_be_selected": "Vă rugăm să nu selectați {option}",
+    "minimum_options_ranked": "Vă rugăm să ordonați cel puțin {min} opțiuni",
+    "minimum_rows_answered": "Vă rugăm să răspundeți la cel puțin {min} rânduri",
     "please_enter_a_valid_email_address": "Vă rugăm să introduceți o adresă de email validă",
     "please_enter_a_valid_phone_number": "Vă rugăm să introduceți un număr de telefon valid",
     "please_enter_a_valid_url": "Vă rugăm să introduceți un URL valid",
     "please_fill_out_this_field": "Vă rugăm să completați acest câmp",
-    "position_must_be": "{option} trebuie să fie la poziția {position}",
-    "position_must_be_higher_than": "{option} trebuie să fie clasat mai sus decât poziția {position}",
-    "position_must_be_lower_than": "{option} trebuie să fie clasat mai jos decât poziția {position}",
     "recaptcha_error": {
       "message": "Răspunsul dumneavoastră nu a putut fi trimis deoarece a fost marcat ca activitate automată. Dacă respirați, încercați din nou.",
       "title": "Nu am putut verifica dacă sunteți uman."

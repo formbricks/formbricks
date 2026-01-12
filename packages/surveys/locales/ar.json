@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "تعليقك عالق :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "يرجى تقديم أكثر من {min} إجابة",
-    "answers_provided_must_be_smaller_than": "يرجى تقديم أقل من {max} إجابة",
+    "file_extension_must_be": "يجب أن يكون امتداد الملف {extension}",
+    "file_extension_must_not_be": "يجب ألا يكون امتداد الملف {extension}",
     "file_input": {
       "duplicate_files": "الملفات التالية تم تحميلها بالفعل: {duplicateNames}. لا يُسمح بالملفات المكررة.",
       "file_size_exceeded": "الملف (الملفات) التالية تتجاوز الحجم الأقصى البالغ {maxSizeInMB} ميجابايت وتم إزالتها: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "فشل التحميل! يرجى المحاولة مرة أخرى.",
       "you_can_only_upload_a_maximum_of_files": "يمكنك تحميل {FILE_LIMIT} ملفات كحد أقصى."
     },
+    "file_size_must_be_at_least": "يجب أن يكون حجم الملف {size} {unit} على الأقل",
+    "file_size_must_be_at_most": "يجب ألا يتجاوز حجم الملف {size} {unit}",
     "invalid_device_error": {
       "message": "يرجى تعطيل حماية البريد المزعج في إعدادات الاستبيان للاستمرار في استخدام هذا الجهاز.",
       "title": "هذا الجهاز لا يدعم حماية البريد المزعج."
@@ -52,26 +54,19 @@
     "is_greater_than": "يرجى إدخال قيمة أكبر من {min}",
     "is_later_than": "يرجى اختيار تاريخ أحدث من {date}",
     "is_less_than": "يرجى إدخال قيمة أقل من {max}",
-    "is_longer_than": "يرجى إدخال أكثر من {min} حرفًا",
     "is_not_between": "يرجى اختيار تاريخ ليس بين {startDate} و {endDate}",
-    "is_on_or_earlier_than": "يرجى اختيار تاريخ في {date} أو قبله",
-    "is_on_or_later_than": "يرجى اختيار تاريخ في {date} أو بعده",
-    "is_shorter_than": "يرجى إدخال أقل من {max} حرفًا",
     "max_length": "يرجى إدخال {max} حرفًا كحد أقصى",
     "max_selections": "يرجى اختيار {max} خيارات كحد أقصى",
     "max_value": "يرجى إدخال قيمة لا تزيد عن {max}",
     "min_length": "يرجى إدخال {min} أحرف على الأقل",
     "min_selections": "يرجى اختيار {min} خيارات على الأقل",
     "min_value": "يرجى إدخال قيمة لا تقل عن {min}",
-    "option_must_be_selected": "يرجى اختيار {option}",
-    "option_must_not_be_selected": "يرجى عدم اختيار {option}",
+    "minimum_options_ranked": "يرجى ترتيب {min} خيارات على الأقل",
+    "minimum_rows_answered": "يرجى الإجابة على {min} صفوف على الأقل",
     "please_enter_a_valid_email_address": "الرجاء إدخال عنوان بريد إلكتروني صالح",
     "please_enter_a_valid_phone_number": "يرجى إدخال رقم هاتف صحيح",
     "please_enter_a_valid_url": "الرجاء إدخال عنوان URL صالح",
     "please_fill_out_this_field": "يرجى ملء هذا الحقل",
-    "position_must_be": "يجب أن يكون {option} في الموضع {position}",
-    "position_must_be_higher_than": "يجب أن يكون ترتيب {option} أعلى من الموضع {position}",
-    "position_must_be_lower_than": "يجب أن يكون ترتيب {option} أقل من الموضع {position}",
     "recaptcha_error": {
       "message": "تعذر إرسال ردك لأنه تم تصنيفه كنشاط آلي. إذا كنت تتنفس، يرجى المحاولة مرة أخرى.",
       "title": "لم نتمكن من التحقق من أنك إنسان."

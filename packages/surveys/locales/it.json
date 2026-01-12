@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "Il tuo feedback è bloccato :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "Fornisci più di {min} risposte",
-    "answers_provided_must_be_smaller_than": "Fornisci meno di {max} risposte",
+    "file_extension_must_be": "L'estensione del file deve essere {extension}",
+    "file_extension_must_not_be": "L'estensione del file non deve essere {extension}",
     "file_input": {
       "duplicate_files": "I seguenti file sono già caricati: {duplicateNames}. I file duplicati non sono consentiti.",
       "file_size_exceeded": "I seguenti file superano la dimensione massima di {maxSizeInMB} MB e sono stati rimossi: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "Caricamento fallito! Riprova.",
       "you_can_only_upload_a_maximum_of_files": "Puoi caricare un massimo di {FILE_LIMIT} file."
     },
+    "file_size_must_be_at_least": "La dimensione del file deve essere almeno {size} {unit}",
+    "file_size_must_be_at_most": "La dimensione del file deve essere al massimo {size} {unit}",
     "invalid_device_error": {
       "message": "Per continuare a utilizzare questo dispositivo, disabilita la protezione anti-spam nelle impostazioni del sondaggio.",
       "title": "Questo dispositivo non supporta la protezione anti-spam."
@@ -52,26 +54,19 @@
     "is_greater_than": "Inserisci un valore maggiore di {min}",
     "is_later_than": "Seleziona una data successiva a {date}",
     "is_less_than": "Inserisci un valore minore di {max}",
-    "is_longer_than": "Inserisci più di {min} caratteri",
     "is_not_between": "Seleziona una data non compresa tra {startDate} e {endDate}",
-    "is_on_or_earlier_than": "Seleziona una data uguale o precedente a {date}",
-    "is_on_or_later_than": "Seleziona una data uguale o successiva a {date}",
-    "is_shorter_than": "Inserisci meno di {max} caratteri",
     "max_length": "Inserisci non più di {max} caratteri",
     "max_selections": "Seleziona non più di {max} opzioni",
     "max_value": "Inserisci un valore non superiore a {max}",
     "min_length": "Inserisci almeno {min} caratteri",
     "min_selections": "Seleziona almeno {min} opzioni",
     "min_value": "Inserisci un valore di almeno {min}",
-    "option_must_be_selected": "Seleziona {option}",
-    "option_must_not_be_selected": "Non selezionare {option}",
+    "minimum_options_ranked": "Classifica almeno {min} opzioni",
+    "minimum_rows_answered": "Rispondi ad almeno {min} righe",
     "please_enter_a_valid_email_address": "Inserisci un indirizzo email valido",
     "please_enter_a_valid_phone_number": "Inserisci un numero di telefono valido",
     "please_enter_a_valid_url": "Inserisci un URL valido",
     "please_fill_out_this_field": "Compila questo campo",
-    "position_must_be": "{option} deve essere alla posizione {position}",
-    "position_must_be_higher_than": "{option} deve essere classificato più in alto della posizione {position}",
-    "position_must_be_lower_than": "{option} deve essere classificato più in basso della posizione {position}",
     "recaptcha_error": {
       "message": "La tua risposta non può essere inviata perché è stata segnalata come attività automatizzata. Se respiri, riprova.",
       "title": "Non siamo riusciti a verificare che sei umano."

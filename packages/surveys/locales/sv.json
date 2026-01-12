@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "Din feedback fastnade :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "Ange fler än {min} svar",
-    "answers_provided_must_be_smaller_than": "Ange färre än {max} svar",
+    "file_extension_must_be": "Filändelsen måste vara {extension}",
+    "file_extension_must_not_be": "Filändelsen får inte vara {extension}",
     "file_input": {
       "duplicate_files": "Följande filer är redan uppladdade: {duplicateNames}. Dubbletter av filer är inte tillåtna.",
       "file_size_exceeded": "Följande filer överstiger maxstorleken på {maxSizeInMB} MB och togs bort: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "Uppladdning misslyckades! Försök igen.",
       "you_can_only_upload_a_maximum_of_files": "Du kan ladda upp maximalt {FILE_LIMIT} filer."
     },
+    "file_size_must_be_at_least": "Filstorleken måste vara minst {size} {unit}",
+    "file_size_must_be_at_most": "Filstorleken får vara högst {size} {unit}",
     "invalid_device_error": {
       "message": "Vänligen inaktivera skräppostskyddet i enkätinställningarna för att fortsätta använda denna enhet.",
       "title": "Denna enhet stöder inte skräppostskydd."
@@ -52,26 +54,19 @@
     "is_greater_than": "Ange ett värde som är större än {min}",
     "is_later_than": "Välj ett datum efter {date}",
     "is_less_than": "Ange ett värde som är mindre än {max}",
-    "is_longer_than": "Ange fler än {min} tecken",
     "is_not_between": "Välj ett datum som inte är mellan {startDate} och {endDate}",
-    "is_on_or_earlier_than": "Välj ett datum som är samma som eller före {date}",
-    "is_on_or_later_than": "Välj ett datum som är samma som eller efter {date}",
-    "is_shorter_than": "Ange färre än {max} tecken",
     "max_length": "Ange högst {max} tecken",
     "max_selections": "Välj högst {max} alternativ",
     "max_value": "Ange ett värde som är högst {max}",
     "min_length": "Ange minst {min} tecken",
     "min_selections": "Välj minst {min} alternativ",
     "min_value": "Ange ett värde som är minst {min}",
-    "option_must_be_selected": "Vänligen välj {option}",
-    "option_must_not_be_selected": "Vänligen välj inte {option}",
+    "minimum_options_ranked": "Rangordna minst {min} alternativ",
+    "minimum_rows_answered": "Besvara minst {min} rader",
     "please_enter_a_valid_email_address": "Vänligen ange en giltig e-postadress",
     "please_enter_a_valid_phone_number": "Vänligen ange ett giltigt telefonnummer",
     "please_enter_a_valid_url": "Vänligen ange en giltig URL",
     "please_fill_out_this_field": "Vänligen fyll i detta fält",
-    "position_must_be": "{option} måste vara på position {position}",
-    "position_must_be_higher_than": "{option} måste vara rankad högre än position {position}",
-    "position_must_be_lower_than": "{option} måste vara rankad lägre än position {position}",
     "recaptcha_error": {
       "message": "Ditt svar kunde inte skickas eftersom det flaggades som automatiserad aktivitet. Om du andas, försök igen.",
       "title": "Vi kunde inte verifiera att du är människa."

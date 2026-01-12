@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "フィードバックが送信できません :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "{min}個以上の回答を入力してください",
-    "answers_provided_must_be_smaller_than": "{max}個未満の回答を入力してください",
+    "file_extension_must_be": "ファイル拡張子は{extension}である必要があります",
+    "file_extension_must_not_be": "ファイル拡張子は{extension}であってはなりません",
     "file_input": {
       "duplicate_files": "以下のファイルはすでにアップロードされています：{duplicateNames}。重複ファイルは許可されていません。",
       "file_size_exceeded": "以下のファイルは最大サイズ{maxSizeInMB}MBを超えているため削除されました：{fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "アップロードに失敗しました！もう一度お試しください。",
       "you_can_only_upload_a_maximum_of_files": "アップロードできるファイルは最大{FILE_LIMIT}個までです。"
     },
+    "file_size_must_be_at_least": "ファイルサイズは最低{size} {unit}である必要があります",
+    "file_size_must_be_at_most": "ファイルサイズは最大{size} {unit}である必要があります",
     "invalid_device_error": {
       "message": "このデバイスを引き続き使用するには、アンケート設定でスパム保護を無効にしてください。",
       "title": "このデバイスはスパム保護に対応していません。"
@@ -52,26 +54,19 @@
     "is_greater_than": "{min}より大きい値を入力してください",
     "is_later_than": "{date}より後の日付を選択してください",
     "is_less_than": "{max}より小さい値を入力してください",
-    "is_longer_than": "{min}文字より多く入力してください",
     "is_not_between": "{startDate}から{endDate}の間以外の日付を選択してください",
-    "is_on_or_earlier_than": "{date}以前の日付を選択してください",
-    "is_on_or_later_than": "{date}以降の日付を選択してください",
-    "is_shorter_than": "{max}文字未満で入力してください",
     "max_length": "{max}文字以内で入力してください",
     "max_selections": "{max}個以内のオプションを選択してください",
     "max_value": "{max}以下の値を入力してください",
     "min_length": "{min}文字以上入力してください",
     "min_selections": "{min}個以上のオプションを選択してください",
     "min_value": "{min}以上の値を入力してください",
-    "option_must_be_selected": "{option}を選択してください",
-    "option_must_not_be_selected": "{option}を選択しないでください",
+    "minimum_options_ranked": "最低{min}個のオプションをランク付けしてください",
+    "minimum_rows_answered": "最低{min}行に回答してください",
     "please_enter_a_valid_email_address": "有効なメールアドレスを入力してください",
     "please_enter_a_valid_phone_number": "有効な電話番号を入力してください",
     "please_enter_a_valid_url": "有効なURLを入力してください",
     "please_fill_out_this_field": "このフィールドに入力してください",
-    "position_must_be": "{option}は位置{position}である必要があります",
-    "position_must_be_higher_than": "{option}は位置{position}より上位にランク付けされている必要があります",
-    "position_must_be_lower_than": "{option}は位置{position}より下位にランク付けされている必要があります",
     "recaptcha_error": {
       "message": "自動化された活動としてフラグが立てられたため、回答を送信できませんでした。人間の方は、もう一度お試しください。",
       "title": "あなたが人間であることを確認できませんでした。"

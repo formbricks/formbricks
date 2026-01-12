@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "Sizning fikr-mulohazangiz qotib qoldi :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "Iltimos, {min} tadan ko‘proq javob kiriting",
-    "answers_provided_must_be_smaller_than": "Iltimos, {max} tadan kam javob kiriting",
+    "file_extension_must_be": "Fayl kengaytmasi {extension} bo‘lishi kerak",
+    "file_extension_must_not_be": "Fayl kengaytmasi {extension} bo‘lmasligi kerak",
     "file_input": {
       "duplicate_files": "Quyidagi fayllar allaqachon yuklangan: {duplicateNames}. Takroriy fayllarga ruxsat berilmaydi.",
       "file_size_exceeded": "Quyidagi fayl(lar) {maxSizeInMB} MB maksimal hajmdan oshib ketdi va olib tashlandi: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "Yuklash muvaffaqiyatsiz tugadi! Iltimos, qayta urinib ko'ring.",
       "you_can_only_upload_a_maximum_of_files": "Siz faqat {FILE_LIMIT} ta faylni maksimal yuklashingiz mumkin."
     },
+    "file_size_must_be_at_least": "Fayl hajmi kamida {size} {unit} bo‘lishi kerak",
+    "file_size_must_be_at_most": "Fayl hajmi eng ko‘pi {size} {unit} bo‘lishi kerak",
     "invalid_device_error": {
       "message": "Iltimos, ushbu qurilmadan foydalanishni davom ettirish uchun so'rov sozlamalarida spam himoyasini o'chiring.",
       "title": "Ushbu qurilma spam himoyasini qo'llab-quvvatlamaydi."
@@ -52,26 +54,19 @@
     "is_greater_than": "Iltimos, {min} dan katta qiymat kiriting",
     "is_later_than": "Iltimos, {date} dan keyingi sanani tanlang",
     "is_less_than": "Iltimos, {max} dan kichik qiymat kiriting",
-    "is_longer_than": "Iltimos, {min} tadan ko‘p belgi kiriting",
     "is_not_between": "Iltimos, {startDate} va {endDate} oralig‘idan tashqaridagi sanani tanlang",
-    "is_on_or_earlier_than": "Iltimos, {date} yoki undan oldingi sanani tanlang",
-    "is_on_or_later_than": "Iltimos, {date} yoki undan keyingi sanani tanlang",
-    "is_shorter_than": "Iltimos, {max} tadan kam belgi kiriting",
     "max_length": "Iltimos, {max} ta belgidan ko‘p bo‘lmagan matn kiriting",
     "max_selections": "Iltimos, {max} tadan ortiq variant tanlamang",
     "max_value": "Iltimos, {max} dan katta bo‘lmagan qiymat kiriting",
     "min_length": "Iltimos, kamida {min} ta belgi kiriting",
     "min_selections": "Iltimos, kamida {min} ta variant tanlang",
     "min_value": "Iltimos, kamida {min} qiymat kiriting",
-    "option_must_be_selected": "Iltimos, {option} ni tanlang",
-    "option_must_not_be_selected": "Iltimos, {option} ni tanlamang",
+    "minimum_options_ranked": "Iltimos, kamida {min} ta variantni tartiblang",
+    "minimum_rows_answered": "Iltimos, kamida {min} ta qatorga javob bering",
     "please_enter_a_valid_email_address": "Iltimos, toʻgʻri elektron pochta manzilini kiriting",
     "please_enter_a_valid_phone_number": "Iltimos, to'g'ri telefon raqamini kiriting",
     "please_enter_a_valid_url": "Iltimos, toʻgʻri URL manzilini kiriting",
     "please_fill_out_this_field": "Iltimos, ushbu maydonni to'ldiring",
-    "position_must_be": "{option} {position}-pozitsiyada bo‘lishi kerak",
-    "position_must_be_higher_than": "{option} {position}-pozitsiyadan yuqoriroq o‘rinda bo‘lishi kerak",
-    "position_must_be_lower_than": "{option} {position}-pozitsiyadan pastroqda bo‘lishi kerak",
     "recaptcha_error": {
       "message": "Sizning javobingiz avtomatlashtirilgan faoliyat sifatida belgilanganligi sababli yuborilmadi. Agar siz nafas olayotgan bo'lsangiz, qayta urinib ko'ring.",
       "title": "Biz sizning inson ekanligingizni tasdiqlay olmadik."

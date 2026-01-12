@@ -31,8 +31,8 @@
     "your_feedback_is_stuck": "आपकी प्रतिक्रिया अटक गई है :("
   },
   "errors": {
-    "answers_provided_must_be_greater_than": "कृपया {min} से अधिक उत्तर प्रदान करें",
-    "answers_provided_must_be_smaller_than": "कृपया {max} से कम उत्तर प्रदान करें",
+    "file_extension_must_be": "फ़ाइल एक्सटेंशन {extension} होना चाहिए",
+    "file_extension_must_not_be": "फ़ाइल एक्सटेंशन {extension} नहीं होना चाहिए",
     "file_input": {
       "duplicate_files": "निम्नलिखित फ़ाइलें पहले से ही अपलोड की गई हैं: {duplicateNames}। डुप्लिकेट फ़ाइलों की अनुमति नहीं है।",
       "file_size_exceeded": "निम्नलिखित फ़ाइल(ें) अधिकतम आकार {maxSizeInMB} MB से अधिक हैं और हटा दी गई हैं: {fileNames}",
@@ -42,6 +42,8 @@
       "upload_failed": "अपलोड विफल! कृपया पुनः प्रयास करें।",
       "you_can_only_upload_a_maximum_of_files": "आप अधिकतम {FILE_LIMIT} फ़ाइलें ही अपलोड कर सकते हैं।"
     },
+    "file_size_must_be_at_least": "फ़ाइल का आकार कम से कम {size} {unit} होना चाहिए",
+    "file_size_must_be_at_most": "फ़ाइल का आकार अधिकतम {size} {unit} होना चाहिए",
     "invalid_device_error": {
       "message": "इस डिवाइस का उपयोग जारी रखने के लिए कृपया सर्वेक्षण सेटिंग्स में स्पैम सुरक्षा को अक्षम करें।",
       "title": "यह डिवाइस स्पैम सुरक्षा का समर्थन नहीं करता है।"
@@ -52,26 +54,19 @@
     "is_greater_than": "कृपया {min} से अधिक मान दर्ज करें",
     "is_later_than": "कृपया {date} के बाद की तारीख चुनें",
     "is_less_than": "कृपया {max} से कम मान दर्ज करें",
-    "is_longer_than": "कृपया {min} वर्णों से अधिक दर्ज करें",
     "is_not_between": "कृपया {startDate} और {endDate} के बीच की तारीख न चुनें",
-    "is_on_or_earlier_than": "कृपया {date} या उससे पहले की तारीख चुनें",
-    "is_on_or_later_than": "कृपया {date} या उसके बाद की तारीख चुनें",
-    "is_shorter_than": "कृपया {max} वर्णों से कम दर्ज करें",
     "max_length": "कृपया {max} वर्णों से अधिक दर्ज न करें",
     "max_selections": "कृपया {max} विकल्पों से अधिक का चयन न करें",
     "max_value": "कृपया {max} से अधिक मान दर्ज न करें",
     "min_length": "कृपया कम से कम {min} वर्ण दर्ज करें",
     "min_selections": "कृपया कम से कम {min} विकल्पों का चयन करें",
     "min_value": "कृपया कम से कम {min} का मान दर्ज करें",
-    "option_must_be_selected": "कृपया {option} चुनें",
-    "option_must_not_be_selected": "कृपया {option} न चुनें",
+    "minimum_options_ranked": "कृपया कम से कम {min} विकल्पों को रैंक करें",
+    "minimum_rows_answered": "कृपया कम से कम {min} पंक्तियों का उत्तर दें",
     "please_enter_a_valid_email_address": "कृपया एक वैध ईमेल पता दर्ज करें",
     "please_enter_a_valid_phone_number": "कृपया एक वैध फोन नंबर दर्ज करें",
     "please_enter_a_valid_url": "कृपया एक वैध URL दर्ज करें",
     "please_fill_out_this_field": "कृपया इस फील्ड को भरें",
-    "position_must_be": "{option} स्थिति {position} पर होना चाहिए",
-    "position_must_be_higher_than": "{option} को स्थिति {position} से ऊपर रैंक किया जाना चाहिए",
-    "position_must_be_lower_than": "{option} को स्थिति {position} से नीचे रैंक किया जाना चाहिए",
     "recaptcha_error": {
       "message": "आपका प्रतिसाद जमा नहीं किया जा सका क्योंकि इसे स्वचालित गतिविधि के रूप में चिह्नित किया गया था। यदि आप सांस लेते हैं, तो कृपया पुनः प्रयास करें।",
       "title": "हम यह सत्यापित नहीं कर सके कि आप मानव हैं।"
