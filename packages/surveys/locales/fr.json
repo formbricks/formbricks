@@ -42,8 +42,6 @@
       "upload_failed": "Échec du téléchargement ! Veuillez réessayer.",
       "you_can_only_upload_a_maximum_of_files": "Vous ne pouvez télécharger qu'un maximum de {FILE_LIMIT} fichiers."
     },
-    "file_size_must_be_at_least": "La taille du fichier doit être d'au moins {size} {unit}",
-    "file_size_must_be_at_most": "La taille du fichier doit être d'au plus {size} {unit}",
     "invalid_device_error": {
       "message": "Veuillez désactiver la protection contre le spam dans les paramètres du sondage pour continuer à utiliser cet appareil.",
       "title": "Cet appareil ne prend pas en charge la protection contre le spam."

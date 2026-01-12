@@ -1,8 +1,6 @@
 import type { TFunction } from "i18next";
 import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
-import type {
-  TSurveyElement,
-} from "@formbricks/types/surveys/elements";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type {
   TAddressField,
@@ -122,8 +120,9 @@ export const validateElementResponse = (
       const isValueArray = Array.isArray(value);
       const allItemsRanked = isValueArray && value.length === element.choices.length;
 
-      // If any items are ranked, all must be ranked, or if value is empty
-      if ((isValueArray && value.length > 0 && !allItemsRanked) || isEmpty(value)) {
+      // If required: all items must be ranked (no partial ranking allowed)
+      // If not required: partial ranking is allowed (validation only checks if empty)
+      if (isEmpty(value) || (isValueArray && !allItemsRanked)) {
         errors.push(createRequiredError(t));
       }
     }
@@ -154,7 +153,9 @@ export const validateElementResponse = (
   }
 
   // Then check validation rules
-  const validation = (element as TSurveyElement & { validation?: { rules?: TValidationRule[]; logic?: "and" | "or" } }).validation;
+  const validation = (
+    element as TSurveyElement & { validation?: { rules?: TValidationRule[]; logic?: "and" | "or" } }
+  ).validation;
   let rules: TValidationRule[] = [...(validation?.rules ?? [])];
 
   // For OpenText elements, automatically add email/url/phone validation based on inputType
@@ -223,7 +224,14 @@ export const validateElementResponse = (
 
     // For address and contact info, value is an array
     if (element.type === TSurveyElementTypeEnum.Address && Array.isArray(elementValue)) {
-      const addressFieldOrder: TAddressField[] = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
+      const addressFieldOrder: TAddressField[] = [
+        "addressLine1",
+        "addressLine2",
+        "city",
+        "state",
+        "zip",
+        "country",
+      ];
       const fieldIndex = addressFieldOrder.indexOf(rule.field as TAddressField);
       if (fieldIndex >= 0 && fieldIndex < elementValue.length) {
         return elementValue[fieldIndex] ?? "";

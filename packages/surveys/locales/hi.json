@@ -42,8 +42,6 @@
       "upload_failed": "अपलोड विफल! कृपया पुनः प्रयास करें।",
       "you_can_only_upload_a_maximum_of_files": "आप अधिकतम {FILE_LIMIT} फ़ाइलें ही अपलोड कर सकते हैं।"
     },
-    "file_size_must_be_at_least": "फ़ाइल का आकार कम से कम {size} {unit} होना चाहिए",
-    "file_size_must_be_at_most": "फ़ाइल का आकार अधिकतम {size} {unit} होना चाहिए",
     "invalid_device_error": {
       "message": "इस डिवाइस का उपयोग जारी रखने के लिए कृपया सर्वेक्षण सेटिंग्स में स्पैम सुरक्षा को अक्षम करें।",
       "title": "यह डिवाइस स्पैम सुरक्षा का समर्थन नहीं करता है।"

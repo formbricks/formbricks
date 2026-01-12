@@ -37,7 +37,6 @@ interface ValidationRuleRowProps {
   onRuleTypeChange: (ruleId: string, newType: TValidationRuleType) => void;
   onRuleValueChange: (ruleId: string, value: string) => void;
   onFileExtensionChange: (ruleId: string, extensions: TAllowedFileExtension[]) => void;
-  onFileSizeUnitChange: (ruleId: string, unit: "KB" | "MB") => void;
   onDelete: (ruleId: string) => void;
   onAdd: (insertAfterIndex: number) => void;
   canAddMore: boolean;
@@ -58,7 +57,6 @@ export const ValidationRuleRow = ({
   onRuleTypeChange,
   onRuleValueChange,
   onFileExtensionChange,
-  onFileSizeUnitChange,
   onDelete,
   onAdd,
   canAddMore,
@@ -133,16 +131,8 @@ export const ValidationRuleRow = ({
           {/* Unit selector (if applicable) */}
           {config.unitOptions && config.unitOptions.length > 0 && (
             <ValidationRuleUnitSelector
-              value={
-                ruleType === "fileSizeAtLeast" || ruleType === "fileSizeAtMost"
-                  ? (rule.params as { size: number; unit: "KB" | "MB" }).unit
-                  : config.unitOptions[0].value
-              }
-              onChange={
-                ruleType === "fileSizeAtLeast" || ruleType === "fileSizeAtMost"
-                  ? (value) => onFileSizeUnitChange(rule.id, value as "KB" | "MB")
-                  : undefined
-              }
+              value={config.unitOptions[0].value}
+              onChange={undefined}
               unitOptions={config.unitOptions}
               ruleLabels={ruleLabels}
               disabled={config.unitOptions.length === 1}

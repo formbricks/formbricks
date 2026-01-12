@@ -42,8 +42,6 @@
       "upload_failed": "¡Subida fallida! Por favor, inténtalo de nuevo.",
       "you_can_only_upload_a_maximum_of_files": "Solo puedes subir un máximo de {FILE_LIMIT} archivos."
     },
-    "file_size_must_be_at_least": "El tamaño del archivo debe ser de al menos {size} {unit}",
-    "file_size_must_be_at_most": "El tamaño del archivo debe ser de como máximo {size} {unit}",
     "invalid_device_error": {
       "message": "Por favor, desactive la protección contra spam en la configuración de la encuesta para continuar usando este dispositivo.",
       "title": "Este dispositivo no es compatible con la protección contra spam."

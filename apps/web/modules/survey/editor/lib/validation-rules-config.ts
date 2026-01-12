@@ -141,26 +141,6 @@ export const RULE_TYPE_CONFIG: Record<
     valueType: "number",
     valuePlaceholder: "1",
   },
-  fileSizeAtLeast: {
-    labelKey: "file_size_at_least",
-    needsValue: true,
-    valueType: "number",
-    valuePlaceholder: "1",
-    unitOptions: [
-      { value: "KB", labelKey: "kb" },
-      { value: "MB", labelKey: "mb" },
-    ],
-  },
-  fileSizeAtMost: {
-    labelKey: "file_size_at_most",
-    needsValue: true,
-    valueType: "number",
-    valuePlaceholder: "5",
-    unitOptions: [
-      { value: "KB", labelKey: "kb" },
-      { value: "MB", labelKey: "mb" },
-    ],
-  },
   fileExtensionIs: {
     labelKey: "file_extension_is",
     needsValue: true,

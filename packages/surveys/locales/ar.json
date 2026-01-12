@@ -42,8 +42,6 @@
       "upload_failed": "فشل التحميل! يرجى المحاولة مرة أخرى.",
       "you_can_only_upload_a_maximum_of_files": "يمكنك تحميل {FILE_LIMIT} ملفات كحد أقصى."
     },
-    "file_size_must_be_at_least": "يجب أن يكون حجم الملف {size} {unit} على الأقل",
-    "file_size_must_be_at_most": "يجب ألا يتجاوز حجم الملف {size} {unit}",
     "invalid_device_error": {
       "message": "يرجى تعطيل حماية البريد المزعج في إعدادات الاستبيان للاستمرار في استخدام هذا الجهاز.",
       "title": "هذا الجهاز لا يدعم حماية البريد المزعج."

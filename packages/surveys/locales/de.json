@@ -42,8 +42,6 @@
       "upload_failed": "Upload fehlgeschlagen! Bitte versuchen Sie es erneut.",
       "you_can_only_upload_a_maximum_of_files": "Sie können maximal {FILE_LIMIT} Dateien hochladen."
     },
-    "file_size_must_be_at_least": "Die Dateigröße muss mindestens {size} {unit} betragen",
-    "file_size_must_be_at_most": "Die Dateigröße darf höchstens {size} {unit} betragen",
     "invalid_device_error": {
       "message": "Bitte deaktivieren Sie den Spam-Schutz in den Umfrageeinstellungen, um dieses Gerät weiterhin zu verwenden.",
       "title": "Dieses Gerät unterstützt keinen Spam-Schutz."

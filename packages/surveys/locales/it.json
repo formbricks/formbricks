@@ -42,8 +42,6 @@
       "upload_failed": "Caricamento fallito! Riprova.",
       "you_can_only_upload_a_maximum_of_files": "Puoi caricare un massimo di {FILE_LIMIT} file."
     },
-    "file_size_must_be_at_least": "La dimensione del file deve essere almeno {size} {unit}",
-    "file_size_must_be_at_most": "La dimensione del file deve essere al massimo {size} {unit}",
     "invalid_device_error": {
       "message": "Per continuare a utilizzare questo dispositivo, disabilita la protezione anti-spam nelle impostazioni del sondaggio.",
       "title": "Questo dispositivo non supporta la protezione anti-spam."

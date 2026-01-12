@@ -42,8 +42,6 @@
       "upload_failed": "Yuklash muvaffaqiyatsiz tugadi! Iltimos, qayta urinib ko'ring.",
       "you_can_only_upload_a_maximum_of_files": "Siz faqat {FILE_LIMIT} ta faylni maksimal yuklashingiz mumkin."
     },
-    "file_size_must_be_at_least": "Fayl hajmi kamida {size} {unit} bo‘lishi kerak",
-    "file_size_must_be_at_most": "Fayl hajmi eng ko‘pi {size} {unit} bo‘lishi kerak",
     "invalid_device_error": {
       "message": "Iltimos, ushbu qurilmadan foydalanishni davom ettirish uchun so'rov sozlamalarida spam himoyasini o'chiring.",
       "title": "Ushbu qurilma spam himoyasini qo'llab-quvvatlamaydi."

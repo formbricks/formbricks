@@ -42,8 +42,6 @@
       "upload_failed": "Uploaden mislukt! Probeer het opnieuw.",
       "you_can_only_upload_a_maximum_of_files": "Je kunt maximaal {FILE_LIMIT} bestanden uploaden."
     },
-    "file_size_must_be_at_least": "Bestandsgrootte moet minimaal {size} {unit} zijn",
-    "file_size_must_be_at_most": "Bestandsgrootte mag maximaal {size} {unit} zijn",
     "invalid_device_error": {
       "message": "Schakel de spambeveiliging uit in de enquête-instellingen om dit apparaat te blijven gebruiken.",
       "title": "Dit apparaat ondersteunt geen spambeveiliging."

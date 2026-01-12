@@ -42,8 +42,6 @@
       "upload_failed": "Upload failed! Please try again.",
       "you_can_only_upload_a_maximum_of_files": "You can only upload a maximum of {FILE_LIMIT} files."
     },
-    "file_size_must_be_at_least": "File size must be at least {size} {unit}",
-    "file_size_must_be_at_most": "File size must be at most {size} {unit}",
     "invalid_device_error": {
       "message": "Please disable spam protection in the survey settings to continue using this device.",
       "title": "This device doesn’t support spam protection."

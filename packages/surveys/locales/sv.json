@@ -42,8 +42,6 @@
       "upload_failed": "Uppladdning misslyckades! Försök igen.",
       "you_can_only_upload_a_maximum_of_files": "Du kan ladda upp maximalt {FILE_LIMIT} filer."
     },
-    "file_size_must_be_at_least": "Filstorleken måste vara minst {size} {unit}",
-    "file_size_must_be_at_most": "Filstorleken får vara högst {size} {unit}",
     "invalid_device_error": {
       "message": "Vänligen inaktivera skräppostskyddet i enkätinställningarna för att fortsätta använda denna enhet.",
       "title": "Denna enhet stöder inte skräppostskydd."

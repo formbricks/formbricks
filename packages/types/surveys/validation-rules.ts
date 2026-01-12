@@ -49,8 +49,6 @@ export const ZValidationRuleType = z.enum([
   "isNotBetween",
 
   // File upload rules
-  "fileSizeAtLeast",
-  "fileSizeAtMost",
   "fileExtensionIs",
   "fileExtensionIsNot",
 ]);
@@ -146,16 +144,6 @@ export const ZValidationRuleParamsMinRowsAnswered = z.object({
 });
 
 // File upload rule params
-export const ZValidationRuleParamsFileSizeAtLeast = z.object({
-  size: z.number().min(0),
-  unit: z.enum(["KB", "MB"]),
-});
-
-export const ZValidationRuleParamsFileSizeAtMost = z.object({
-  size: z.number().min(0),
-  unit: z.enum(["KB", "MB"]),
-});
-
 export const ZValidationRuleParamsFileExtensionIs = z.object({
   extensions: z.array(z.string()).min(1),
 });
@@ -188,8 +176,6 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsIsNotBetween,
   ZValidationRuleParamsMinRanked,
   ZValidationRuleParamsMinRowsAnswered,
-  ZValidationRuleParamsFileSizeAtLeast,
-  ZValidationRuleParamsFileSizeAtMost,
   ZValidationRuleParamsFileExtensionIs,
   ZValidationRuleParamsFileExtensionIsNot,
 ]);
@@ -219,8 +205,6 @@ export type TValidationRuleParamsIsBetween = z.infer<typeof ZValidationRuleParam
 export type TValidationRuleParamsIsNotBetween = z.infer<typeof ZValidationRuleParamsIsNotBetween>;
 export type TValidationRuleParamsMinRanked = z.infer<typeof ZValidationRuleParamsMinRanked>;
 export type TValidationRuleParamsMinRowsAnswered = z.infer<typeof ZValidationRuleParamsMinRowsAnswered>;
-export type TValidationRuleParamsFileSizeAtLeast = z.infer<typeof ZValidationRuleParamsFileSizeAtLeast>;
-export type TValidationRuleParamsFileSizeAtMost = z.infer<typeof ZValidationRuleParamsFileSizeAtMost>;
 export type TValidationRuleParamsFileExtensionIs = z.infer<typeof ZValidationRuleParamsFileExtensionIs>;
 export type TValidationRuleParamsFileExtensionIsNot = z.infer<typeof ZValidationRuleParamsFileExtensionIsNot>;
 
@@ -262,12 +246,10 @@ const MULTIPLE_CHOICE_MULTI_RULES = ["minSelections", "maxSelections"] as const;
 const DATE_RULES = ["isLaterThan", "isEarlierThan", "isBetween", "isNotBetween"] as const;
 const MATRIX_RULES = ["minRowsAnswered"] as const;
 const RANKING_RULES = ["minRanked"] as const;
-const FILE_UPLOAD_RULES = [
-  "fileSizeAtLeast",
-  "fileSizeAtMost",
-  "fileExtensionIs",
-  "fileExtensionIsNot",
-] as const;
+// Note: fileSizeAtLeast and fileSizeAtMost are not included because they cannot be validated
+// from response URLs alone (responses only contain file URLs, not file metadata).
+// File size validation happens client-side during upload via element.maxSizeInMB.
+const FILE_UPLOAD_RULES = ["fileExtensionIs", "fileExtensionIsNot"] as const;
 const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
 // Address and Contact Info can use text-based validation rules on specific fields
 const ADDRESS_RULES = [

@@ -17,7 +17,6 @@ import {
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
-import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
 import {
   getAddressFields,
@@ -68,45 +67,6 @@ export const ValidationRulesEditor = ({
     fieldOptions = getAddressFields(t);
   } else if (isContactInfo) {
     fieldOptions = getContactInfoFields(t);
-  }
-
-  // Only fetch billing info when needed: FileUpload element + Formbricks Cloud + valid organizationId
-  const needsBillingInfo =
-    elementType === TSurveyElementTypeEnum.FileUpload && isFormbricksCloud && projectOrganizationId;
-  const {
-    billingInfo,
-    error: billingInfoError,
-    isLoading: billingInfoLoading,
-  } = useGetBillingInfo(needsBillingInfo ? projectOrganizationId : undefined);
-
-  // Calculate max file size limit based on billing info (same logic as file-upload-element-form)
-  const maxSizeInMBLimit = React.useMemo(() => {
-    // If not fetching billing info (self-hosted or not FileUpload), return default
-    if (!needsBillingInfo) {
-      return 10; // Default to 10 MB
-    }
-
-    if (billingInfoError || billingInfoLoading || !billingInfo) {
-      return 10; // Default to 10 MB
-    }
-
-    if (billingInfo.plan !== "free") {
-      return 1024; // 1GB in MB for non-free plans
-    }
-
-    return 10; // 10 MB for free plan
-  }, [billingInfo, billingInfoError, billingInfoLoading, needsBillingInfo]);
-
-  // For file upload elements, use billing-based limit; for self-hosted, use 1024 MB
-  let effectiveMaxSizeInMB: number | undefined;
-  if (elementType === TSurveyElementTypeEnum.FileUpload) {
-    if (isFormbricksCloud) {
-      effectiveMaxSizeInMB = maxSizeInMBLimit;
-    } else {
-      effectiveMaxSizeInMB = 1024;
-    }
-  } else {
-    effectiveMaxSizeInMB = undefined;
   }
 
   const ruleLabels = getRuleLabels(t);
@@ -256,7 +216,7 @@ export const ValidationRulesEditor = ({
       if (rule.id !== ruleId) return rule;
       const ruleType = rule.type;
       const config = RULE_TYPE_CONFIG[ruleType];
-      const parsedValue = parseRuleValue(ruleType, value, config, rule.params, effectiveMaxSizeInMB);
+      const parsedValue = parseRuleValue(ruleType, value, config, rule.params);
 
       return {
         ...rule,
@@ -275,35 +235,6 @@ export const ValidationRulesEditor = ({
           extensions,
         },
       } as TValidationRule;
-    });
-    onUpdateValidation({ rules: updated, logic: validationLogic });
-  };
-
-  const handleFileSizeUnitChange = (ruleId: string, unit: "KB" | "MB") => {
-    const updated = validationRules.map((rule) => {
-      if (rule.id !== ruleId) return rule;
-      const ruleType = rule.type;
-      if (ruleType === "fileSizeAtLeast" || ruleType === "fileSizeAtMost") {
-        const currentParams = rule.params as { size: number; unit: "KB" | "MB" };
-        let size = currentParams.size;
-
-        // For fileSizeAtMost, ensure it doesn't exceed billing-based limit
-        if (ruleType === "fileSizeAtMost" && effectiveMaxSizeInMB !== undefined) {
-          const sizeInMB = unit === "KB" ? size / 1024 : size;
-          if (sizeInMB > effectiveMaxSizeInMB) {
-            size = unit === "KB" ? effectiveMaxSizeInMB * 1024 : effectiveMaxSizeInMB;
-          }
-        }
-
-        return {
-          ...rule,
-          params: {
-            size,
-            unit,
-          },
-        } as TValidationRule;
-      }
-      return rule;
     });
     onUpdateValidation({ rules: updated, logic: validationLogic });
   };
@@ -414,7 +345,6 @@ export const ValidationRulesEditor = ({
             onRuleTypeChange={handleRuleTypeChange}
             onRuleValueChange={handleRuleValueChange}
             onFileExtensionChange={handleFileExtensionChange}
-            onFileSizeUnitChange={handleFileSizeUnitChange}
             onDelete={handleDeleteRule}
             onAdd={handleAddRule}
             canAddMore={canAddMore}

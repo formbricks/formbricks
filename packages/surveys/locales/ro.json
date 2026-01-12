@@ -42,8 +42,6 @@
       "upload_failed": "Încărcarea a eșuat! Te rugăm să încerci din nou.",
       "you_can_only_upload_a_maximum_of_files": "Poți încărca un număr maxim de {FILE_LIMIT} fișiere."
     },
-    "file_size_must_be_at_least": "Dimensiunea fișierului trebuie să fie de cel puțin {size} {unit}",
-    "file_size_must_be_at_most": "Dimensiunea fișierului trebuie să fie de cel mult {size} {unit}",
     "invalid_device_error": {
       "message": "Dezactivați protecția împotriva spamului în setările sondajului pentru a continua să utilizați acest dispozitiv.",
       "title": "Acest dispozitiv nu acceptă protecția împotriva spamului."

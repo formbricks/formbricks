@@ -39,8 +39,6 @@ checksums:
     errors/file_input/only_one_file_can_be_uploaded_at_a_time: 1eda42bd46887f9702049e23fa7cb127
     errors/file_input/upload_failed: 735fdfc1a37ab035121328237ddd6fd0
     errors/file_input/you_can_only_upload_a_maximum_of_files: 72fe144f81075e5b06bae53b3a84d4db
-    errors/file_size_must_be_at_least: 7cd3649b106f0d504e9a72fc8bb748eb
-    errors/file_size_must_be_at_most: 87df20b0be74365a22d4fc8376207f9e
     errors/invalid_device_error/message: 8813dcd0e3e41934af18d7a15f8c83f4
     errors/invalid_device_error/title: 20d261b478aaba161b0853a588926e23
     errors/invalid_format: 66df570c79b420d66f3badaf5867e4ad

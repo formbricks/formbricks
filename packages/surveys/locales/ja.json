@@ -42,8 +42,6 @@
       "upload_failed": "アップロードに失敗しました！もう一度お試しください。",
       "you_can_only_upload_a_maximum_of_files": "アップロードできるファイルは最大{FILE_LIMIT}個までです。"
     },
-    "file_size_must_be_at_least": "ファイルサイズは最低{size} {unit}である必要があります",
-    "file_size_must_be_at_most": "ファイルサイズは最大{size} {unit}である必要があります",
     "invalid_device_error": {
       "message": "このデバイスを引き続き使用するには、アンケート設定でスパム保護を無効にしてください。",
       "title": "このデバイスはスパム保護に対応していません。"

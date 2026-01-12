@@ -151,17 +151,14 @@ export function BlockConditional({
     const isValueArray = Array.isArray(response);
     const allItemsRanked = isValueArray && response.length === element.choices.length;
 
-    // If required and not all items are ranked, trigger form submission to show error
+    // If required: all items must be ranked
     if (isRequired && (!isValueArray || !allItemsRanked)) {
       form.requestSubmit();
       return false;
     }
 
-    // If not required but some items are ranked, all must be ranked
-    if (!isRequired && isValueArray && response.length > 0 && !allItemsRanked) {
-      form.requestSubmit();
-      return false;
-    }
+    // If not required: allow partial ranking (some items ranked, some not)
+    // No validation needed - user can proceed with any number of ranked items (including 0)
 
     return true;
   };

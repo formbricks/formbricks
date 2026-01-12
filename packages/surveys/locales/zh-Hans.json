@@ -42,8 +42,6 @@
       "upload_failed": "上传失败！请重试。",
       "you_can_only_upload_a_maximum_of_files": "您最多只能上传 {FILE_LIMIT} 个文件。"
     },
-    "file_size_must_be_at_least": "文件大小至少为{size}{unit}",
-    "file_size_must_be_at_most": "文件大小最多为{size}{unit}",
     "invalid_device_error": {
       "message": "请在调查设置中禁用垃圾邮件保护以继续使用此设备。",
       "title": "此设备不支持垃圾邮件保护。"

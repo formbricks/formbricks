@@ -81,7 +81,7 @@ export const RULES_BY_INPUT_TYPE: Record<TSurveyOpenTextElementInputType, TValid
     "contains",
     "doesNotContain",
   ],
-  number: ["minValue", "maxValue", "isGreaterThan", "isLessThan", "equals", "doesNotEqual"],
+  number: ["minValue", "maxValue", "equals", "doesNotEqual"],
 };
 
 /**
@@ -156,11 +156,6 @@ export const getRuleValue = (rule: TValidationRule): number | string | undefined
   if ("startDate" in params && "endDate" in params) {
     return `${params.startDate},${params.endDate}`;
   }
-  // File upload rules
-  if ("size" in params && "unit" in params) {
-    // For file size rules, return size as number (unit is stored separately)
-    return params.size;
-  }
   if ("extensions" in params) {
     // For file extension rules, return extensions array as comma-separated string for display
     const extensions = params.extensions;
@@ -228,12 +223,6 @@ export const createRuleParams = (
       return { min: Number(value) || 1 };
     case "minRowsAnswered":
       return { min: Number(value) || 1 };
-    case "fileSizeAtLeast":
-      // Value should be number, unit is handled separately in the UI
-      return { size: Number(value) || 1, unit: "MB" as const };
-    case "fileSizeAtMost":
-      // Value should be number, unit is handled separately in the UI
-      return { size: Number(value) || 5, unit: "MB" as const };
     case "fileExtensionIs":
     case "fileExtensionIsNot": {
       // Handle array of extensions (from MultiSelect) or comma-separated string

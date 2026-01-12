@@ -39,8 +39,8 @@ describe("getAvailableRuleTypes", () => {
 
     expect(available).toContain("minValue");
     expect(available).toContain("maxValue");
-    expect(available).toContain("isGreaterThan");
-    expect(available).toContain("isLessThan");
+    expect(available).not.toContain("isGreaterThan"); // Removed - redundant with minValue
+    expect(available).not.toContain("isLessThan"); // Removed - redundant with maxValue
     expect(available).not.toContain("minLength"); // Only for text inputType
     expect(available).not.toContain("email"); // Excluded
   });
@@ -147,8 +147,6 @@ describe("getAvailableRuleTypes", () => {
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toContain("fileSizeAtLeast");
-    expect(available).toContain("fileSizeAtMost");
     expect(available).toContain("fileExtensionIs");
     expect(available).toContain("fileExtensionIsNot");
   });

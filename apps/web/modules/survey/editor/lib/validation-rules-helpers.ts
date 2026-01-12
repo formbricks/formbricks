@@ -54,8 +54,6 @@ export const getRuleLabels = (t: (key: string) => string): Record<string, string
   is_not_between: t("environments.surveys.edit.validation.is_not_between"),
   minimum_options_ranked: t("environments.surveys.edit.validation.minimum_options_ranked"),
   minimum_rows_answered: t("environments.surveys.edit.validation.minimum_rows_answered"),
-  file_size_at_least: t("environments.surveys.edit.validation.file_size_at_least"),
-  file_size_at_most: t("environments.surveys.edit.validation.file_size_at_most"),
   file_extension_is: t("environments.surveys.edit.validation.file_extension_is"),
   file_extension_is_not: t("environments.surveys.edit.validation.file_extension_is_not"),
   kb: t("environments.surveys.edit.validation.kb"),
@@ -99,47 +97,12 @@ export const normalizeFileExtension = (value: string): string => {
   return value.startsWith(".") ? value : `.${value}`;
 };
 
-// Helper function to validate and cap file size based on billing limits
-export const capFileSizeValue = (
-  parsedValue: number,
-  currentParams: TValidationRule["params"],
-  effectiveMaxSizeInMB: number
-): number => {
-  const unit = (currentParams as { size: number; unit: "KB" | "MB" })?.unit || "MB";
-  const sizeInMB = unit === "KB" ? parsedValue / 1024 : parsedValue;
-
-  // Cap the value at effectiveMaxSizeInMB
-  if (sizeInMB > effectiveMaxSizeInMB) {
-    return unit === "KB" ? effectiveMaxSizeInMB * 1024 : effectiveMaxSizeInMB;
-  }
-
-  return parsedValue;
-};
-
-// Helper function to parse number values with file size validation
-export const parseNumberValue = (
-  value: string,
-  ruleType: TValidationRuleType,
-  currentParams: TValidationRule["params"],
-  effectiveMaxSizeInMB?: number
-): number => {
-  const parsedValue = Number(value) || 0;
-
-  // For fileSizeAtMost, ensure it doesn't exceed billing-based limit
-  if (ruleType === "fileSizeAtMost" && effectiveMaxSizeInMB !== undefined) {
-    return capFileSizeValue(parsedValue, currentParams, effectiveMaxSizeInMB);
-  }
-
-  return parsedValue;
-};
-
 // Helper function to parse and validate rule value based on rule type
 export const parseRuleValue = (
   ruleType: TValidationRuleType,
   value: string,
   config: (typeof RULE_TYPE_CONFIG)[TValidationRuleType],
-  currentParams: TValidationRule["params"],
-  effectiveMaxSizeInMB?: number
+  currentParams: TValidationRule["params"]
 ): string | number => {
   // Handle file extension formatting: auto-add dot if missing
   if (ruleType === "fileExtensionIs" || ruleType === "fileExtensionIsNot") {
@@ -147,7 +110,7 @@ export const parseRuleValue = (
   }
 
   if (config.valueType === "number") {
-    return parseNumberValue(value, ruleType, currentParams, effectiveMaxSizeInMB);
+    return Number(value) || 0;
   }
 
   return value;
