@@ -151,6 +151,7 @@ export function MatrixElement({
         value={convertValueToIds(value)}
         onChange={handleChange}
         required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}

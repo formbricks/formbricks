@@ -45,6 +45,8 @@ interface MultiSelectProps {
   onChange: (value: string[]) => void;
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
+  /** Custom label for the required indicator */
+  requiredLabel?: string;
   /** Error message to display below the options */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
@@ -405,6 +407,7 @@ function MultiSelect({
   value = [],
   onChange,
   required = false,
+  requiredLabel,
   errorMessage,
   dir = "auto",
   disabled = false,
@@ -473,6 +476,7 @@ function MultiSelect({
         headline={headline}
         description={description}
         required={required}
+        requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}

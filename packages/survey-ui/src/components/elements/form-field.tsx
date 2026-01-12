@@ -37,6 +37,8 @@ interface FormFieldProps {
   onChange: (value: Record<string, string>) => void;
   /** Whether the entire form is required (shows asterisk indicator) */
   required?: boolean;
+  /** Custom label for the required indicator */
+  requiredLabel?: string;
   /** Error message to display */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
@@ -57,6 +59,7 @@ function FormField({
   value = {},
   onChange,
   required = false,
+  requiredLabel,
   errorMessage,
   dir = "auto",
   disabled = false,
@@ -103,6 +106,7 @@ function FormField({
         headline={headline}
         description={description}
         required={required}
+        requiredLabel={requiredLabel}
         imageUrl={imageUrl}
         videoUrl={videoUrl}
       />
