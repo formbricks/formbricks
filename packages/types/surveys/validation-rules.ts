@@ -14,8 +14,6 @@ export const ZValidationRuleType = z.enum([
   "doesNotEqual",
   "contains",
   "doesNotContain",
-  "isLongerThan",
-  "isShorterThan",
 
   // Numeric rules (for OpenText inputType=number)
   "minValue",
@@ -100,14 +98,6 @@ export const ZValidationRuleParamsDoesNotContain = z.object({
   value: z.string(),
 });
 
-export const ZValidationRuleParamsIsLongerThan = z.object({
-  min: z.number().min(0),
-});
-
-export const ZValidationRuleParamsIsShorterThan = z.object({
-  max: z.number().min(1),
-});
-
 export const ZValidationRuleParamsIsGreaterThan = z.object({
   min: z.number(),
 });
@@ -173,8 +163,6 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsDoesNotEqual,
   ZValidationRuleParamsContains,
   ZValidationRuleParamsDoesNotContain,
-  ZValidationRuleParamsIsLongerThan,
-  ZValidationRuleParamsIsShorterThan,
   ZValidationRuleParamsMinValue,
   ZValidationRuleParamsMaxValue,
   ZValidationRuleParamsIsGreaterThan,
@@ -210,8 +198,6 @@ export type TValidationRuleParamsEquals = z.infer<typeof ZValidationRuleParamsEq
 export type TValidationRuleParamsDoesNotEqual = z.infer<typeof ZValidationRuleParamsDoesNotEqual>;
 export type TValidationRuleParamsContains = z.infer<typeof ZValidationRuleParamsContains>;
 export type TValidationRuleParamsDoesNotContain = z.infer<typeof ZValidationRuleParamsDoesNotContain>;
-export type TValidationRuleParamsIsLongerThan = z.infer<typeof ZValidationRuleParamsIsLongerThan>;
-export type TValidationRuleParamsIsShorterThan = z.infer<typeof ZValidationRuleParamsIsShorterThan>;
 export type TValidationRuleParamsIsGreaterThan = z.infer<typeof ZValidationRuleParamsIsGreaterThan>;
 export type TValidationRuleParamsIsLessThan = z.infer<typeof ZValidationRuleParamsIsLessThan>;
 export type TValidationRuleParamsIsLaterThan = z.infer<typeof ZValidationRuleParamsIsLaterThan>;
@@ -313,18 +299,6 @@ export const ZValidationRule = z.discriminatedUnion("type", [
   }),
   z.object({
     id: z.string(),
-    type: z.literal("isLongerThan"),
-    params: ZValidationRuleParamsIsLongerThan,
-    customErrorMessage: ZI18nString.optional(),
-  }),
-  z.object({
-    id: z.string(),
-    type: z.literal("isShorterThan"),
-    params: ZValidationRuleParamsIsShorterThan,
-    customErrorMessage: ZI18nString.optional(),
-  }),
-  z.object({
-    id: z.string(),
     type: z.literal("isGreaterThan"),
     params: ZValidationRuleParamsIsGreaterThan,
     customErrorMessage: ZI18nString.optional(),
@@ -415,8 +389,6 @@ const OPEN_TEXT_RULES = [
   "doesNotEqual",
   "contains",
   "doesNotContain",
-  "isLongerThan",
-  "isShorterThan",
   "minValue",
   "maxValue",
   "isGreaterThan",
@@ -588,18 +560,6 @@ export const ZValidationRulesForOpenText: z.ZodType<TValidationRulesForOpenText>
       id: z.string(),
       type: z.literal("doesNotContain"),
       params: ZValidationRuleParamsDoesNotContain,
-      customErrorMessage: ZI18nString.optional(),
-    }),
-    z.object({
-      id: z.string(),
-      type: z.literal("isLongerThan"),
-      params: ZValidationRuleParamsIsLongerThan,
-      customErrorMessage: ZI18nString.optional(),
-    }),
-    z.object({
-      id: z.string(),
-      type: z.literal("isShorterThan"),
-      params: ZValidationRuleParamsIsShorterThan,
       customErrorMessage: ZI18nString.optional(),
     }),
     z.object({

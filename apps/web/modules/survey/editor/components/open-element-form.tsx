@@ -157,6 +157,17 @@ export const OpenElementForm = ({
               validationLogic: logic,
             });
           }}
+          inputType={element.inputType ?? "text"}
+          onUpdateInputType={(newInputType) => {
+            updateElement(elementIdx, {
+              inputType: newInputType,
+              // Update placeholder if not already set
+              placeholder:
+                element.placeholder ||
+                createI18nString(getPlaceholderByInputType(newInputType), surveyLanguageCodes),
+              longAnswer: newInputType === "text",
+            });
+          }}
         />
       </div>
     </form>

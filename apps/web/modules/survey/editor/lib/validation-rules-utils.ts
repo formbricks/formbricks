@@ -1,21 +1,87 @@
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyElementTypeEnum,
+  TSurveyOpenTextElementInputType,
+} from "@formbricks/types/surveys/elements";
 import {
   APPLICABLE_RULES,
   TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
 
+// Rules applicable per input type for OpenText
+export const RULES_BY_INPUT_TYPE: Record<TSurveyOpenTextElementInputType, TValidationRuleType[]> = {
+  text: [
+    "minLength",
+    "maxLength",
+    "pattern",
+    "email",
+    "url",
+    "phone",
+    "equals",
+    "doesNotEqual",
+    "contains",
+    "doesNotContain",
+  ],
+  email: [
+    "minLength",
+    "maxLength",
+    "pattern",
+    // "email" rule excluded - redundant when inputType=email (HTML5 already validates)
+    "equals",
+    "doesNotEqual",
+    "contains",
+    "doesNotContain",
+  ],
+  url: [
+    "minLength",
+    "maxLength",
+    "pattern",
+    // "url" rule excluded - redundant when inputType=url (HTML5 already validates)
+    "equals",
+    "doesNotEqual",
+    "contains",
+    "doesNotContain",
+  ],
+  phone: [
+    "minLength",
+    "maxLength",
+    "pattern",
+    // "phone" rule excluded - redundant when inputType=phone (HTML5 already validates)
+    "equals",
+    "doesNotEqual",
+    "contains",
+    "doesNotContain",
+  ],
+  number: [
+    "minValue",
+    "maxValue",
+    "isGreaterThan",
+    "isLessThan",
+    "equals",
+    "doesNotEqual",
+  ],
+};
+
 /**
  * Get available rule types for an element type, excluding already added rules
+ * For OpenText elements, filters rules based on inputType
  */
 export const getAvailableRuleTypes = (
   elementType: TSurveyElementTypeEnum,
-  existingRules: TValidationRule[]
+  existingRules: TValidationRule[],
+  inputType?: TSurveyOpenTextElementInputType
 ): TValidationRuleType[] => {
   const elementTypeKey = elementType.toString();
-  const applicable = APPLICABLE_RULES[elementTypeKey] ?? [];
 
-  // Filter out rules that are already added (for non-repeatable rules)
+  // For OpenText, use input-type-based filtering
+  if (elementType === TSurveyElementTypeEnum.OpenText && inputType) {
+    const applicable = RULES_BY_INPUT_TYPE[inputType] ?? [];
+    const existingTypes = new Set(existingRules.map((r) => r.type));
+    return applicable.filter((ruleType) => !existingTypes.has(ruleType));
+  }
+
+  // For other element types, use standard filtering
+  const applicable = APPLICABLE_RULES[elementTypeKey] ?? [];
   const existingTypes = new Set(existingRules.map((r) => r.type));
 
   return applicable.filter((ruleType) => {
@@ -85,10 +151,6 @@ export const createRuleParams = (
       return { value: value === undefined || value === null ? "" : String(value) };
     case "doesNotContain":
       return { value: value === undefined || value === null ? "" : String(value) };
-    case "isLongerThan":
-      return { min: Number(value) || 0 };
-    case "isShorterThan":
-      return { max: Number(value) || 100 };
     case "minValue":
       return { min: Number(value) || 0 };
     case "maxValue":

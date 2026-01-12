@@ -1,6 +1,8 @@
 import type { TFunction } from "i18next";
 import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
-import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import type {
+  TSurveyElement
+} from "@formbricks/types/surveys/elements";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type {
   TValidationError,
@@ -112,10 +114,35 @@ export const validateElementResponse = (
   }
 
   // Then check validation rules
-  const rules: TValidationRule[] = [
+  let rules: TValidationRule[] = [
     ...((element as TSurveyElement & { validationRules?: TValidationRule[]; validationLogic?: "and" | "or" })
       .validationRules ?? []),
   ];
+
+  // For OpenText elements, automatically add email/url/phone validation based on inputType
+  if (element.type === TSurveyElementTypeEnum.OpenText && "inputType" in element) {
+    const inputType = element.inputType;
+    // Add implicit validation rule if inputType matches and no explicit rule exists
+    if (inputType === "email" && !rules.some((r) => r.type === "email")) {
+      rules.push({
+        id: "__implicit_email__",
+        type: "email",
+        params: {},
+      } as TValidationRule);
+    } else if (inputType === "url" && !rules.some((r) => r.type === "url")) {
+      rules.push({
+        id: "__implicit_url__",
+        type: "url",
+        params: {},
+      } as TValidationRule);
+    } else if (inputType === "phone" && !rules.some((r) => r.type === "phone")) {
+      rules.push({
+        id: "__implicit_phone__",
+        type: "phone",
+        params: {},
+      } as TValidationRule);
+    }
+  }
 
   if (rules.length === 0) {
     return { valid: errors.length === 0, errors };

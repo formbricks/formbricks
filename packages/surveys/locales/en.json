@@ -54,7 +54,6 @@
     "is_less_than": "Please enter a value less than {max}",
     "is_longer_than": "Please enter more than {min} characters",
     "is_not_between": "Please select a date not between {startDate} and {endDate}",
-    "is_shorter_than": "Please enter less than {max} characters",
     "max_length": "Please enter no more than {max} characters",
     "max_selections": "Please select no more than {max} options",
     "max_value": "Please enter a value no greater than {max}",

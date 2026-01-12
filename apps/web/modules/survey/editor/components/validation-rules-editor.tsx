@@ -5,7 +5,12 @@ import { PlusIcon, TrashIcon } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { v4 as uuidv7 } from "uuid";
-import { TSurveyElement, TSurveyElementTypeEnum, TValidationLogic } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyElement,
+  TSurveyElementTypeEnum,
+  TSurveyOpenTextElementInputType,
+  TValidationLogic,
+} from "@formbricks/types/surveys/elements";
 import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
 import { TAllowedFileExtension, ALLOWED_FILE_EXTENSIONS } from "@formbricks/types/storage";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -22,7 +27,23 @@ import {
 import { cn } from "@/modules/ui/lib/utils";
 import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
-import { createRuleParams, getAvailableRuleTypes, getRuleValue } from "../lib/validation-rules-utils";
+import {
+  createRuleParams,
+  getAvailableRuleTypes,
+  getRuleValue,
+  RULES_BY_INPUT_TYPE,
+} from "../lib/validation-rules-utils";
+
+// Reusable input type options for OpenText elements
+const INPUT_TYPE_OPTIONS = (
+  <>
+    <SelectItem value="text">{"Text"}</SelectItem>
+    <SelectItem value="email">{"Email"}</SelectItem>
+    <SelectItem value="url">{"Url"}</SelectItem>
+    <SelectItem value="phone">{"Phone"}</SelectItem>
+    <SelectItem value="number">{"Number"}</SelectItem>
+  </>
+);
 
 interface ValidationRulesEditorProps {
   elementType: TSurveyElementTypeEnum;
@@ -33,6 +54,9 @@ interface ValidationRulesEditorProps {
   onUpdateValidationLogic?: (logic: TValidationLogic) => void;
   projectOrganizationId?: string; // For billing info to determine file size limits
   isFormbricksCloud?: boolean; // To determine if using Formbricks Cloud or self-hosted
+  // For OpenText: input type and callback to update it
+  inputType?: TSurveyOpenTextElementInputType;
+  onUpdateInputType?: (inputType: TSurveyOpenTextElementInputType) => void;
 }
 
 export const ValidationRulesEditor = ({
@@ -44,6 +68,8 @@ export const ValidationRulesEditor = ({
   onUpdateValidationLogic,
   projectOrganizationId,
   isFormbricksCloud = false,
+  inputType,
+  onUpdateInputType,
 }: ValidationRulesEditorProps) => {
   const { t } = useTranslation();
   const {
@@ -87,8 +113,6 @@ export const ValidationRulesEditor = ({
     is_not: t("environments.surveys.edit.validation.is_not"),
     contains: t("environments.surveys.edit.validation.contains"),
     does_not_contain: t("environments.surveys.edit.validation.does_not_contain"),
-    is_longer_than: t("environments.surveys.edit.validation.is_longer_than"),
-    is_shorter_than: t("environments.surveys.edit.validation.is_shorter_than"),
     is_greater_than: t("environments.surveys.edit.validation.is_greater_than"),
     is_less_than: t("environments.surveys.edit.validation.is_less_than"),
     is_later_than: t("environments.surveys.edit.validation.is_later_than"),
@@ -112,7 +136,11 @@ export const ValidationRulesEditor = ({
     elementType !== TSurveyElementTypeEnum.Matrix || (element && !element.required);
 
   const handleEnable = () => {
-    const availableRules = getAvailableRuleTypes(elementType, []);
+    const availableRules = getAvailableRuleTypes(
+      elementType,
+      [],
+      elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined
+    );
     if (availableRules.length > 0) {
       const defaultRuleType = availableRules[0];
       const config = RULE_TYPE_CONFIG[defaultRuleType];
@@ -150,7 +178,11 @@ export const ValidationRulesEditor = ({
   };
 
   const handleAddRule = (insertAfterIndex: number) => {
-    const availableRules = getAvailableRuleTypes(elementType, validationRules);
+    const availableRules = getAvailableRuleTypes(
+      elementType,
+      validationRules,
+      elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined
+    );
     if (availableRules.length === 0) return;
 
     const newRuleType = availableRules[0];
@@ -215,13 +247,13 @@ export const ValidationRulesEditor = ({
         parsedValue = value.startsWith(".") ? value : `.${value}`;
       } else if (config.valueType === "number") {
         parsedValue = Number(value) || 0;
-        
+
         // For fileSizeAtMost, ensure it doesn't exceed billing-based limit
         if (ruleType === "fileSizeAtMost" && effectiveMaxSizeInMB !== undefined) {
           const currentParams = rule.params as { size: number; unit: "KB" | "MB" };
           const unit = currentParams?.unit || "MB";
           const sizeInMB = unit === "KB" ? parsedValue / 1024 : parsedValue;
-          
+
           // Cap the value at effectiveMaxSizeInMB
           if (sizeInMB > effectiveMaxSizeInMB) {
             parsedValue = unit === "KB" ? effectiveMaxSizeInMB * 1024 : effectiveMaxSizeInMB;
@@ -244,7 +276,7 @@ export const ValidationRulesEditor = ({
       if (ruleType === "fileSizeAtLeast" || ruleType === "fileSizeAtMost") {
         const currentParams = rule.params as { size: number; unit: "KB" | "MB" };
         let size = currentParams.size;
-        
+
         // For fileSizeAtMost, ensure it doesn't exceed billing-based limit
         if (ruleType === "fileSizeAtMost" && effectiveMaxSizeInMB !== undefined) {
           const sizeInMB = unit === "KB" ? size / 1024 : size;
@@ -252,7 +284,7 @@ export const ValidationRulesEditor = ({
             size = unit === "KB" ? effectiveMaxSizeInMB * 1024 : effectiveMaxSizeInMB;
           }
         }
-        
+
         return {
           ...rule,
           params: {
@@ -266,7 +298,60 @@ export const ValidationRulesEditor = ({
     onUpdateRules(updated);
   };
 
-  const availableRulesForAdd = getAvailableRuleTypes(elementType, validationRules);
+  // Handle input type change for OpenText
+  const handleInputTypeChange = (newInputType: TSurveyOpenTextElementInputType) => {
+    if (!onUpdateInputType) return;
+
+    // Update element input type
+    onUpdateInputType(newInputType);
+
+    // Filter out incompatible rules based on new input type
+    // Also remove redundant "email"/"url"/"phone" rules when inputType matches
+    const compatibleRules = RULES_BY_INPUT_TYPE[newInputType] ?? [];
+    const filteredRules = validationRules.filter((rule) => {
+      // Remove rules that aren't compatible with the new input type
+      if (!compatibleRules.includes(rule.type)) {
+        return false;
+      }
+      // Remove redundant validation rules when inputType matches
+      if (newInputType === "email" && rule.type === "email") {
+        return false;
+      }
+      if (newInputType === "url" && rule.type === "url") {
+        return false;
+      }
+      if (newInputType === "phone" && rule.type === "phone") {
+        return false;
+      }
+      return true;
+    });
+
+    // If no compatible rules remain, add a default rule
+    if (filteredRules.length === 0 && compatibleRules.length > 0) {
+      const defaultRuleType = compatibleRules[0];
+      const config = RULE_TYPE_CONFIG[defaultRuleType];
+      let defaultValue: number | string | undefined = undefined;
+      if (config.needsValue && config.valueType === "number") {
+        defaultValue = 0;
+      } else if (config.needsValue && config.valueType === "text") {
+        defaultValue = "";
+      }
+      const defaultRule: TValidationRule = {
+        id: uuidv7(),
+        type: defaultRuleType,
+        params: createRuleParams(defaultRuleType, defaultValue),
+      } as TValidationRule;
+      onUpdateRules([defaultRule]);
+    } else if (filteredRules.length !== validationRules.length) {
+      onUpdateRules(filteredRules);
+    }
+  };
+
+  const availableRulesForAdd = getAvailableRuleTypes(
+    elementType,
+    validationRules,
+    elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined
+  );
   const canAddMore = availableRulesForAdd.length > 0;
 
   // Don't show validation rules for required matrix elements
@@ -309,23 +394,51 @@ export const ValidationRulesEditor = ({
           // Get available types for this rule (current type + unused types, no duplicates)
           const otherAvailableTypes = getAvailableRuleTypes(
             elementType,
-            validationRules.filter((r) => r.id !== rule.id)
+            validationRules.filter((r) => r.id !== rule.id),
+            elementType === TSurveyElementTypeEnum.OpenText ? inputType : undefined
           ).filter((t) => t !== ruleType);
           const availableTypesForSelect = [ruleType, ...otherAvailableTypes];
 
-          // Determine input type for non-range date rules
-          let inputType: "number" | "date" | "text" = "text";
+          // Determine HTML input type for value inputs (not the validation input type)
+          let htmlInputType: "number" | "date" | "text" = "text";
           if (config.valueType === "number") {
-            inputType = "number";
+            htmlInputType = "number";
           } else if (
             ruleType.startsWith("is") &&
             (ruleType.includes("Later") || ruleType.includes("Earlier") || ruleType.includes("On"))
           ) {
-            inputType = "date";
+            htmlInputType = "date";
           }
+
+          // Check if this is OpenText and first rule - show input type selector
+          const isOpenText = elementType === TSurveyElementTypeEnum.OpenText;
+          const isFirstRule = index === 0;
+          const showInputTypeSelector = isOpenText && isFirstRule;
 
           return (
             <div key={rule.id} className="flex w-full items-center gap-2">
+              {/* Input Type Selector (only for OpenText, first rule) */}
+              {showInputTypeSelector && inputType !== undefined && onUpdateInputType && (
+                <Select
+                  value={inputType}
+                  onValueChange={(value) =>
+                    handleInputTypeChange(value as TSurveyOpenTextElementInputType)
+                  }>
+                  <SelectTrigger className="h-9 min-w-[120px] bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>{INPUT_TYPE_OPTIONS}</SelectContent>
+                </Select>
+              )}
+              {/* Input Type Display (disabled, for subsequent rules) */}
+              {isOpenText && !isFirstRule && inputType !== undefined && (
+                <Select disabled value={inputType}>
+                  <SelectTrigger className="h-9 min-w-[120px] bg-slate-100 cursor-not-allowed">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>{INPUT_TYPE_OPTIONS}</SelectContent>
+                </Select>
+              )}
               {/* Rule Type Selector */}
               <Select
                 value={ruleType}
@@ -437,7 +550,7 @@ export const ValidationRulesEditor = ({
                       }
                       return (
                         <Input
-                          type={inputType}
+                          type={htmlInputType}
                           value={currentValue ?? ""}
                           onChange={(e) => handleRuleValueChange(rule.id, e.target.value)}
                           placeholder={config.valuePlaceholder}

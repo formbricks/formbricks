@@ -18,9 +18,7 @@ import type {
   TValidationRuleParamsIsGreaterThan,
   TValidationRuleParamsIsLaterThan,
   TValidationRuleParamsIsLessThan,
-  TValidationRuleParamsIsLongerThan,
   TValidationRuleParamsIsNotBetween,
-  TValidationRuleParamsIsShorterThan,
   TValidationRuleParamsMaxLength,
   TValidationRuleParamsMaxSelections,
   TValidationRuleParamsMaxValue,
@@ -321,34 +319,6 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return t("errors.value_must_not_contain", {
         value: (_params as TValidationRuleParamsDoesNotContain).value,
       });
-    },
-  },
-  isLongerThan: {
-    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsIsLongerThan;
-      // Skip validation if value is not a string or is empty
-      if (typeof value !== "string" || value === "") {
-        return { valid: true };
-      }
-      return { valid: value.length > typedParams.min };
-    },
-    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsIsLongerThan;
-      return t("errors.is_longer_than", { min: typedParams.min });
-    },
-  },
-  isShorterThan: {
-    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
-      const typedParams = params as TValidationRuleParamsIsShorterThan;
-      // Skip validation if value is not a string
-      if (typeof value !== "string") {
-        return { valid: true };
-      }
-      return { valid: value.length < typedParams.max };
-    },
-    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      const typedParams = params as TValidationRuleParamsIsShorterThan;
-      return t("errors.is_shorter_than", { max: typedParams.max });
     },
   },
   isGreaterThan: {

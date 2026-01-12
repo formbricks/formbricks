@@ -4,31 +4,50 @@ import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { createRuleParams, getAvailableRuleTypes, getRuleValue } from "./validation-rules-utils";
 
 describe("getAvailableRuleTypes", () => {
-  test("should return all applicable rules for openText element when no rules exist", () => {
+  test("should return text rules for openText element with text inputType when no rules exist", () => {
     const elementType = TSurveyElementTypeEnum.OpenText;
     const existingRules: TValidationRule[] = [];
 
-    const available = getAvailableRuleTypes(elementType, existingRules);
+    const available = getAvailableRuleTypes(elementType, existingRules, "text");
 
-    expect(available).toContain("required");
     expect(available).toContain("minLength");
     expect(available).toContain("maxLength");
     expect(available).toContain("pattern");
-    expect(available).toContain("email");
-    expect(available).toContain("url");
-    expect(available).toContain("phone");
+    expect(available).not.toContain("email"); // Excluded - redundant
+    expect(available).not.toContain("url"); // Excluded - redundant
+    expect(available).not.toContain("phone"); // Excluded - redundant
+    expect(available).not.toContain("minValue"); // Only for number inputType
+  });
+
+  test("should return text rules for openText element with email inputType", () => {
+    const elementType = TSurveyElementTypeEnum.OpenText;
+    const existingRules: TValidationRule[] = [];
+
+    const available = getAvailableRuleTypes(elementType, existingRules, "email");
+
+    expect(available).toContain("minLength");
+    expect(available).toContain("maxLength");
+    expect(available).not.toContain("email"); // Excluded - redundant when inputType=email
+    expect(available).not.toContain("minValue"); // Only for number inputType
+  });
+
+  test("should return numeric rules for openText element with number inputType", () => {
+    const elementType = TSurveyElementTypeEnum.OpenText;
+    const existingRules: TValidationRule[] = [];
+
+    const available = getAvailableRuleTypes(elementType, existingRules, "number");
+
     expect(available).toContain("minValue");
     expect(available).toContain("maxValue");
+    expect(available).toContain("isGreaterThan");
+    expect(available).toContain("isLessThan");
+    expect(available).not.toContain("minLength"); // Only for text inputType
+    expect(available).not.toContain("email"); // Excluded
   });
 
   test("should filter out already added rules", () => {
     const elementType = TSurveyElementTypeEnum.OpenText;
     const existingRules: TValidationRule[] = [
-      {
-        id: "rule1",
-        type: "required",
-        params: {},
-      },
       {
         id: "rule2",
         type: "minLength",
@@ -36,9 +55,8 @@ describe("getAvailableRuleTypes", () => {
       },
     ];
 
-    const available = getAvailableRuleTypes(elementType, existingRules);
+    const available = getAvailableRuleTypes(elementType, existingRules, "text");
 
-    expect(available).not.toContain("required");
     expect(available).not.toContain("minLength");
     expect(available).toContain("maxLength");
     expect(available).toContain("pattern");
@@ -123,13 +141,16 @@ describe("getAvailableRuleTypes", () => {
     expect(available.length).toBe(1);
   });
 
-  test("should return empty array for fileUpload element (no validation rules)", () => {
+  test("should return file validation rules for fileUpload element", () => {
     const elementType = TSurveyElementTypeEnum.FileUpload;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toEqual([]);
+    expect(available).toContain("fileSizeAtLeast");
+    expect(available).toContain("fileSizeAtMost");
+    expect(available).toContain("fileExtensionIs");
+    expect(available).toContain("fileExtensionIsNot");
   });
 
   test("should return minSelections and maxSelections for pictureSelection element", () => {

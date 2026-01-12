@@ -93,20 +93,6 @@ export const RULE_TYPE_CONFIG: Record<
     valueType: "text",
     valuePlaceholder: "text",
   },
-  isLongerThan: {
-    labelKey: "is_longer_than",
-    needsValue: true,
-    valueType: "number",
-    valuePlaceholder: "100",
-    unitOptions: [{ value: "characters", labelKey: "characters" }],
-  },
-  isShorterThan: {
-    labelKey: "is_shorter_than",
-    needsValue: true,
-    valueType: "number",
-    valuePlaceholder: "500",
-    unitOptions: [{ value: "characters", labelKey: "characters" }],
-  },
   isGreaterThan: {
     labelKey: "is_greater_than",
     needsValue: true,
