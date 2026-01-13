@@ -128,34 +128,6 @@ export const SurveyMenuBar = ({
     };
   }, [localSurvey, survey, t]);
 
-  // Keyboard shortcut: Cmd+S (Mac) / Ctrl+S (Windows) to save
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-        e.preventDefault();
-
-        // Skip if already saving or in CX mode
-        if (isSurveySavingRef.current || isCxMode) return;
-
-        // Skip if no changes (prevent unnecessary API calls from shortcut spamming)
-        const { updatedAt: localUpdatedAt, ...localSurveyRest } = localSurveyRef.current;
-        const { updatedAt: surveyUpdatedAt, ...surveyRest } = surveyRef.current;
-        if (isEqual(localSurveyRest, surveyRest)) return;
-
-        // Trigger click on the save button to reuse existing save logic
-        const saveButton = document.querySelector("[data-save-button]") as HTMLButtonElement | null; // NOSONAR - We need this assertion
-        if (saveButton && !saveButton.disabled) {
-          saveButton.click();
-        }
-      }
-    };
-
-    globalThis.window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      globalThis.window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isCxMode]);
-
   const clearSurveyLocalStorage = () => {
     if (typeof localStorage !== "undefined") {
       localStorage.removeItem(`${localSurvey.id}-columnOrder`);
