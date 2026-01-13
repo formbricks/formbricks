@@ -23,7 +23,6 @@ export interface ValidationRule {
     extensions?: string[];
     [key: string]: unknown;
   };
-  customErrorMessage?: Record<string, string>;
   field?: string;
 }
 
