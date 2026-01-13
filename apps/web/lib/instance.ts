@@ -21,7 +21,7 @@ export type TInstanceInfo = {
 export const getInstanceInfo = reactCache(async (): Promise<TInstanceInfo | null> => {
   try {
     const oldestOrg = await prisma.organization.findFirst({
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: { id: true, createdAt: true },
     });
 

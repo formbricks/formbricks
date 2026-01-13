@@ -70,6 +70,7 @@ export function RatingElement({
         upperLabel={getLocalizedValue(element.upperLabel, languageCode)}
         colorCoding={element.isColorCodingEnabled}
         required={element.required}
+        requiredLabel={t("common.required")}
         dir={dir}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}

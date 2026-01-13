@@ -1,8 +1,8 @@
 "use client";
 
-import { PipelineTriggers } from "@prisma/client";
+import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
-import { Webhook } from "lucide-react";
+import { Webhook as WebhookIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -12,6 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
+import { WebhookCreatedModal } from "@/modules/integrations/webhooks/components/webhook-created-modal";
 import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -51,6 +52,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
+  const [createdWebhook, setCreatedWebhook] = useState<Webhook | null>(null);
 
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
@@ -142,7 +144,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         });
         if (createWebhookActionResult?.data) {
           router.refresh();
-          setOpenWithStates(false);
+          setCreatedWebhook(createWebhookActionResult.data);
           toast.success(t("environments.integrations.webhooks.webhook_added_successfully"));
         } else {
           const errorMessage = getFormattedErrorMessage(createWebhookActionResult);
@@ -156,21 +158,27 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
     }
   };
 
-  const setOpenWithStates = (isOpen: boolean) => {
-    setOpen(isOpen);
+  const resetAndClose = () => {
+    setOpen(false);
     reset();
     setTestEndpointInput("");
     setEndpointAccessible(undefined);
     setSelectedSurveys([]);
     setSelectedTriggers([]);
     setSelectedAllSurveys(false);
+    setCreatedWebhook(null);
   };
 
+  // Show success dialog with secret after webhook creation
+  if (createdWebhook) {
+    return <WebhookCreatedModal open={open} webhook={createdWebhook} onClose={resetAndClose} />;
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpenWithStates}>
+    <Dialog open={open} onOpenChange={resetAndClose}>
       <DialogContent>
         <DialogHeader>
-          <Webhook />
+          <WebhookIcon />
           <DialogTitle>{t("environments.integrations.webhooks.add_webhook")}</DialogTitle>
           <DialogDescription>
             {t("environments.integrations.webhooks.add_webhook_description")}
@@ -249,12 +257,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           </DialogBody>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setOpenWithStates(false);
-              }}>
+            <Button type="button" variant="secondary" onClick={resetAndClose}>
               {t("common.cancel")}
             </Button>
             <Button type="submit" loading={creatingWebhook}>
