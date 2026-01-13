@@ -95,6 +95,248 @@ const getDefaultErrorMessage = (
 };
 
 /**
+ * Validate required field for ranking elements
+ */
+const validateRequiredRanking = (value: TResponseDataValue, t: TFunction): TValidationError | null => {
+  const isValueArray = Array.isArray(value);
+  const atLeastOneRanked = isValueArray && value.length >= 1;
+  if (isEmpty(value) || !atLeastOneRanked) {
+    return createRequiredError(t);
+  }
+  return null;
+};
+
+/**
+ * Validate required field for matrix elements
+ */
+const validateRequiredMatrix = (
+  value: TResponseDataValue,
+  element: TSurveyElement,
+  t: TFunction
+): TValidationError | null => {
+  if (isEmpty(value)) {
+    return createRequiredError(t);
+  }
+  if (typeof value === "object" && !Array.isArray(value) && value !== null && "rows" in element) {
+    const answeredRows = Object.values(value).filter((v) => v !== "" && v !== null && v !== undefined).length;
+    const allRowsAnswered = answeredRows === element.rows.length;
+    if (!allRowsAnswered) {
+      return createRequiredError(t);
+    }
+  }
+  return null;
+};
+
+/**
+ * Check required field validation
+ */
+const checkRequiredField = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  t: TFunction
+): TValidationError | null => {
+  if (!element.required) {
+    return null;
+  }
+
+  if (element.type === TSurveyElementTypeEnum.Ranking) {
+    return validateRequiredRanking(value, t);
+  }
+
+  if (element.type === TSurveyElementTypeEnum.Matrix) {
+    return validateRequiredMatrix(value, element, t);
+  }
+
+  if (isEmpty(value)) {
+    return createRequiredError(t);
+  }
+
+  return null;
+};
+
+/**
+ * Add implicit validation rules for OpenText elements based on inputType
+ */
+const addImplicitOpenTextRules = (element: TSurveyElement, rules: TValidationRule[]): TValidationRule[] => {
+  if (element.type !== TSurveyElementTypeEnum.OpenText || !("inputType" in element)) {
+    return rules;
+  }
+
+  const inputType = element.inputType;
+  const hasRule = (type: string) => rules.some((r) => r.type === type);
+
+  if (inputType === "email" && !hasRule("email")) {
+    rules.push({
+      id: "__implicit_email__",
+      type: "email",
+      params: {},
+    } as TValidationRule);
+  } else if (inputType === "url" && !hasRule("url")) {
+    rules.push({
+      id: "__implicit_url__",
+      type: "url",
+      params: {},
+    } as TValidationRule);
+  } else if (inputType === "phone" && !hasRule("phone")) {
+    rules.push({
+      id: "__implicit_phone__",
+      type: "phone",
+      params: {},
+    } as TValidationRule);
+  }
+
+  return rules;
+};
+
+/**
+ * Add implicit validation rules for ContactInfo elements
+ */
+const addImplicitContactInfoRules = (
+  element: TSurveyElement,
+  rules: TValidationRule[]
+): TValidationRule[] => {
+  if (element.type !== TSurveyElementTypeEnum.ContactInfo) {
+    return rules;
+  }
+
+  const contactInfoElement = element;
+  const hasFieldRule = (type: string, field: string) =>
+    rules.some((r) => r.type === type && r.field === field);
+
+  if (contactInfoElement.email?.show && !hasFieldRule("email", "email")) {
+    rules.push({
+      id: "__implicit_email_field__",
+      type: "email",
+      field: "email",
+      params: {},
+    } as TValidationRule);
+  }
+
+  if (contactInfoElement.phone?.show && !hasFieldRule("phone", "phone")) {
+    rules.push({
+      id: "__implicit_phone_field__",
+      type: "phone",
+      field: "phone",
+      params: {},
+    } as TValidationRule);
+  }
+
+  return rules;
+};
+
+/**
+ * Get field value for address/contact info elements
+ */
+const getFieldValue = (
+  rule: TValidationRule,
+  element: TSurveyElement,
+  elementValue: TResponseDataValue
+): TResponseDataValue => {
+  if (!rule.field) {
+    return elementValue;
+  }
+
+  if (element.type === TSurveyElementTypeEnum.Address && Array.isArray(elementValue)) {
+    const addressFieldOrder: TAddressField[] = [
+      "addressLine1",
+      "addressLine2",
+      "city",
+      "state",
+      "zip",
+      "country",
+    ];
+    const fieldIndex = addressFieldOrder.indexOf(rule.field as TAddressField);
+    if (fieldIndex >= 0 && fieldIndex < elementValue.length) {
+      return elementValue[fieldIndex] ?? "";
+    }
+  }
+
+  if (element.type === TSurveyElementTypeEnum.ContactInfo && Array.isArray(elementValue)) {
+    const contactFieldOrder: TContactInfoField[] = ["firstName", "lastName", "email", "phone", "company"];
+    const fieldIndex = contactFieldOrder.indexOf(rule.field as TContactInfoField);
+    if (fieldIndex >= 0 && fieldIndex < elementValue.length) {
+      return elementValue[fieldIndex] ?? "";
+    }
+  }
+
+  return "";
+};
+
+/**
+ * Execute validation rules with OR logic
+ */
+const executeOrLogic = (
+  rules: TValidationRule[],
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  languageCode: string,
+  t: TFunction,
+  initialErrors: TValidationError[]
+): TValidationResult => {
+  const ruleResults: TValidationError[] = [];
+
+  for (const rule of rules) {
+    const validator = validators[rule.type];
+    if (!validator) {
+      console.warn(`Unknown validation rule type: ${rule.type}`);
+      continue;
+    }
+
+    const valueToValidate = getFieldValue(rule, element, value);
+    const checkResult = validator.check(valueToValidate, rule.params, element);
+
+    if (checkResult.valid) {
+      return { valid: initialErrors.length === 0, errors: initialErrors };
+    }
+
+    const message = getDefaultErrorMessage(rule, element, languageCode, t);
+    ruleResults.push({
+      ruleId: rule.id,
+      ruleType: rule.type,
+      message,
+    });
+  }
+
+  return { valid: false, errors: [...initialErrors, ...ruleResults] };
+};
+
+/**
+ * Execute validation rules with AND logic
+ */
+const executeAndLogic = (
+  rules: TValidationRule[],
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  languageCode: string,
+  t: TFunction,
+  initialErrors: TValidationError[]
+): TValidationResult => {
+  const errors = [...initialErrors];
+
+  for (const rule of rules) {
+    const validator = validators[rule.type];
+    if (!validator) {
+      console.warn(`Unknown validation rule type: ${rule.type}`);
+      continue;
+    }
+
+    const valueToValidate = getFieldValue(rule, element, value);
+    const checkResult = validator.check(valueToValidate, rule.params, element);
+
+    if (!checkResult.valid) {
+      const message = getDefaultErrorMessage(rule, element, languageCode, t);
+      errors.push({
+        ruleId: rule.id,
+        ruleType: rule.type,
+        message,
+      });
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+};
+
+/**
  * Single entrypoint for validating an element's response value.
  * Called by block-conditional.tsx during form submission.
  *
@@ -113,209 +355,37 @@ export const validateElementResponse = (
   const errors: TValidationError[] = [];
 
   // Check if element is required (separate from validation rules)
-  // Required is a boolean field on the element, not a validation rule
-  if (element.required) {
-    // Special handling for ranking elements
-    if (element.type === TSurveyElementTypeEnum.Ranking) {
-      const isValueArray = Array.isArray(value);
-      const atLeastOneRanked = isValueArray && value.length >= 1;
-
-      // If required: at least 1 option must be ranked
-      // If not required: partial ranking is allowed (validation only checks if empty)
-      if (isEmpty(value) || !atLeastOneRanked) {
-        errors.push(createRequiredError(t));
-      }
-    }
-    // Special handling for matrix elements
-    else if (element.type === TSurveyElementTypeEnum.Matrix) {
-      if (isEmpty(value)) {
-        errors.push(createRequiredError(t));
-      } else if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-        const answeredRows = Object.values(value).filter(
-          (v) => v !== "" && v !== null && v !== undefined
-        ).length;
-        const allRowsAnswered = answeredRows === element.rows.length;
-        if (!allRowsAnswered) {
-          errors.push(createRequiredError(t));
-        }
-      }
-    }
-    // Standard required check for other element types
-    else if (isEmpty(value)) {
-      errors.push(createRequiredError(t));
-    }
+  const requiredError = checkRequiredField(element, value, t);
+  if (requiredError) {
+    errors.push(requiredError);
   }
 
   // For matrix elements, skip validation rules if element is required
-  // Validation rules should not work when element is marked as required
   if (element.type === TSurveyElementTypeEnum.Matrix && element.required) {
     return { valid: errors.length === 0, errors };
   }
 
-  // Then check validation rules
+  // Get validation rules
   const validation = (
     element as TSurveyElement & { validation?: { rules?: TValidationRule[]; logic?: "and" | "or" } }
   ).validation;
   let rules: TValidationRule[] = [...(validation?.rules ?? [])];
 
-  // For OpenText elements, automatically add email/url/phone validation based on inputType
-  if (element.type === TSurveyElementTypeEnum.OpenText && "inputType" in element) {
-    const inputType = element.inputType;
-    // Add implicit validation rule if inputType matches and no explicit rule exists
-    if (inputType === "email" && !rules.some((r) => r.type === "email")) {
-      rules.push({
-        id: "__implicit_email__",
-        type: "email",
-        params: {},
-      } as TValidationRule);
-    } else if (inputType === "url" && !rules.some((r) => r.type === "url")) {
-      rules.push({
-        id: "__implicit_url__",
-        type: "url",
-        params: {},
-      } as TValidationRule);
-    } else if (inputType === "phone" && !rules.some((r) => r.type === "phone")) {
-      rules.push({
-        id: "__implicit_phone__",
-        type: "phone",
-        params: {},
-      } as TValidationRule);
-    }
-  }
-
-  // For ContactInfo elements, automatically add email/phone validation for their respective fields
-  if (element.type === TSurveyElementTypeEnum.ContactInfo) {
-    const contactInfoElement = element;
-
-    // Automatically validate email field if it's shown
-    if (contactInfoElement.email?.show && !rules.some((r) => r.type === "email" && r.field === "email")) {
-      rules.push({
-        id: "__implicit_email_field__",
-        type: "email",
-        field: "email",
-        params: {},
-      } as TValidationRule);
-    }
-
-    // Automatically validate phone field if it's shown
-    if (contactInfoElement.phone?.show && !rules.some((r) => r.type === "phone" && r.field === "phone")) {
-      rules.push({
-        id: "__implicit_phone_field__",
-        type: "phone",
-        field: "phone",
-        params: {},
-      } as TValidationRule);
-    }
-  }
+  // Add implicit rules based on element type
+  rules = addImplicitOpenTextRules(element, rules);
+  rules = addImplicitContactInfoRules(element, rules);
 
   if (rules.length === 0) {
     return { valid: errors.length === 0, errors };
   }
 
-  // Get validation logic (default to "and" if not specified)
   const validationLogic = validation?.logic ?? "and";
 
-  // Helper function to get field value for address/contact info elements
-  const getFieldValue = (rule: TValidationRule, elementValue: TResponseDataValue): TResponseDataValue => {
-    // If rule doesn't have a field, validate the whole value
-    if (!rule.field) {
-      return elementValue;
-    }
-
-    // For address and contact info, value is an array
-    if (element.type === TSurveyElementTypeEnum.Address && Array.isArray(elementValue)) {
-      const addressFieldOrder: TAddressField[] = [
-        "addressLine1",
-        "addressLine2",
-        "city",
-        "state",
-        "zip",
-        "country",
-      ];
-      const fieldIndex = addressFieldOrder.indexOf(rule.field as TAddressField);
-      if (fieldIndex >= 0 && fieldIndex < elementValue.length) {
-        return elementValue[fieldIndex] ?? "";
-      }
-    } else if (element.type === TSurveyElementTypeEnum.ContactInfo && Array.isArray(elementValue)) {
-      const contactFieldOrder: TContactInfoField[] = ["firstName", "lastName", "email", "phone", "company"];
-      const fieldIndex = contactFieldOrder.indexOf(rule.field as TContactInfoField);
-      if (fieldIndex >= 0 && fieldIndex < elementValue.length) {
-        return elementValue[fieldIndex] ?? "";
-      }
-    }
-
-    // Fallback: return empty string if field not found
-    return "";
-  };
-
   if (validationLogic === "or") {
-    // OR logic: at least one rule must pass
-    const ruleResults: { valid: boolean; error?: TValidationError }[] = [];
-
-    for (const rule of rules) {
-      const ruleType = rule.type;
-      const validator = validators[ruleType];
-
-      if (!validator) {
-        console.warn(`Unknown validation rule type: ${ruleType}`);
-        continue;
-      }
-
-      // Get the value to validate (field-specific for address/contact info)
-      const valueToValidate = getFieldValue(rule, value);
-      const checkResult = validator.check(valueToValidate, rule.params, element);
-
-      if (checkResult.valid) {
-        // At least one rule passed, validation succeeds
-        return { valid: errors.length === 0, errors };
-      } else {
-        // Rule failed, store the error
-        const message = getDefaultErrorMessage(rule, element, languageCode, t);
-        ruleResults.push({
-          valid: false,
-          error: {
-            ruleId: rule.id,
-            ruleType,
-            message,
-          },
-        });
-      }
-    }
-
-    // All rules failed, add all errors
-    for (const result of ruleResults) {
-      if (result.error) {
-        errors.push(result.error);
-      }
-    }
-  } else {
-    // AND logic (default): all rules must pass
-    for (const rule of rules) {
-      const ruleType = rule.type;
-      const validator = validators[ruleType];
-
-      if (!validator) {
-        console.warn(`Unknown validation rule type: ${ruleType}`);
-        continue;
-      }
-
-      // Get the value to validate (field-specific for address/contact info)
-      const valueToValidate = getFieldValue(rule, value);
-      const checkResult = validator.check(valueToValidate, rule.params, element);
-
-      if (!checkResult.valid) {
-        const message = getDefaultErrorMessage(rule, element, languageCode, t);
-
-        errors.push({
-          ruleId: rule.id,
-          ruleType,
-          message,
-        });
-      }
-    }
+    return executeOrLogic(rules, element, value, languageCode, t, errors);
   }
 
-  return { valid: errors.length === 0, errors };
+  return executeAndLogic(rules, element, value, languageCode, t, errors);
 };
 
 /**

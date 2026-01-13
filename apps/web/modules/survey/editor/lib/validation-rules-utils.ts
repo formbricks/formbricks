@@ -165,81 +165,112 @@ export const getRuleValue = (rule: TValidationRule): number | string | undefined
 };
 
 /**
+ * Helper functions to create params for different rule types
+ */
+const createStringValueParams = (value?: number | string) => ({
+  value: value === undefined || value === null ? "" : String(value),
+});
+
+const createMinParams = (value?: number | string, defaultValue = 0) => ({
+  min: Number(value) || defaultValue,
+});
+
+const createMaxParams = (value?: number | string, defaultValue = 100) => ({
+  max: Number(value) || defaultValue,
+});
+
+const createDateParams = (value?: number | string) => ({
+  date: value === undefined || value === null ? "" : String(value),
+});
+
+const createDateRangeParams = (value?: number | string) => {
+  if (typeof value === "string" && value.includes(",")) {
+    const [startDate, endDate] = value.split(",");
+    return {
+      startDate: startDate?.trim() || "",
+      endDate: endDate?.trim() || "",
+    };
+  }
+  return { startDate: "", endDate: "" };
+};
+
+const createFileExtensionParams = (value?: number | string) => {
+  if (Array.isArray(value)) {
+    return { extensions: value };
+  }
+  if (typeof value === "string" && value.includes(",")) {
+    return { extensions: value.split(",").map((ext) => ext.trim()) };
+  }
+  const extensionValue = value === undefined || value === null ? "" : String(value);
+  return { extensions: extensionValue ? [extensionValue] : [] };
+};
+
+/**
  * Create params object from rule type and value (without type field)
  */
 export const createRuleParams = (
   ruleType: TValidationRuleType,
   value?: number | string
 ): TValidationRule["params"] => {
-  switch (ruleType) {
-    case "minLength":
-      return { min: Number(value) || 0 };
-    case "maxLength":
-      return { max: Number(value) || 100 };
-    case "pattern":
-      return { pattern: value === undefined || value === null ? "" : String(value) };
-    case "email":
-      return {};
-    case "url":
-      return {};
-    case "phone":
-      return {};
-    case "equals":
-      return { value: value === undefined || value === null ? "" : String(value) };
-    case "doesNotEqual":
-      return { value: value === undefined || value === null ? "" : String(value) };
-    case "contains":
-      return { value: value === undefined || value === null ? "" : String(value) };
-    case "doesNotContain":
-      return { value: value === undefined || value === null ? "" : String(value) };
-    case "minValue":
-      return { min: Number(value) || 0 };
-    case "maxValue":
-      return { max: Number(value) || 100 };
-    case "isGreaterThan":
-      return { min: Number(value) || 0 };
-    case "isLessThan":
-      return { max: Number(value) || 100 };
-    case "isLaterThan":
-      return { date: value === undefined || value === null ? "" : String(value) };
-    case "isEarlierThan":
-      return { date: value === undefined || value === null ? "" : String(value) };
-    case "isBetween":
-    case "isNotBetween": {
-      if (typeof value === "string" && value.includes(",")) {
-        const [startDate, endDate] = value.split(",");
-        return {
-          startDate: startDate?.trim() || "",
-          endDate: endDate?.trim() || "",
-        };
-      }
-      return { startDate: "", endDate: "" };
-    }
-    case "minSelections":
-      return { min: Number(value) || 1 };
-    case "maxSelections":
-      return { max: Number(value) || 3 };
-    case "minRanked":
-      return { min: Number(value) || 1 };
-    case "rankAll":
-      return {};
-    case "minRowsAnswered":
-      return { min: Number(value) || 1 };
-    case "fileExtensionIs":
-    case "fileExtensionIsNot": {
-      // Handle array of extensions (from MultiSelect) or comma-separated string
-      if (Array.isArray(value)) {
-        return { extensions: value };
-      }
-      if (typeof value === "string" && value.includes(",")) {
-        // Comma-separated string
-        return { extensions: value.split(",").map((ext) => ext.trim()) };
-      }
-      // Single value as string
-      const extensionValue = value === undefined || value === null ? "" : String(value);
-      return { extensions: extensionValue ? [extensionValue] : [] };
-    }
-    default:
-      return {};
+  // Rules that return empty params
+  if (ruleType === "email" || ruleType === "url" || ruleType === "phone" || ruleType === "rankAll") {
+    return {};
   }
+
+  // Rules that use string value params
+  if (
+    ruleType === "equals" ||
+    ruleType === "doesNotEqual" ||
+    ruleType === "contains" ||
+    ruleType === "doesNotContain"
+  ) {
+    return createStringValueParams(value);
+  }
+
+  // Rules that use min params
+  if (
+    ruleType === "minLength" ||
+    ruleType === "minValue" ||
+    ruleType === "isGreaterThan" ||
+    ruleType === "minSelections" ||
+    ruleType === "minRanked" ||
+    ruleType === "minRowsAnswered"
+  ) {
+    const defaultValue =
+      ruleType === "minSelections" || ruleType === "minRanked" || ruleType === "minRowsAnswered" ? 1 : 0;
+    return createMinParams(value, defaultValue);
+  }
+
+  // Rules that use max params
+  if (
+    ruleType === "maxLength" ||
+    ruleType === "maxValue" ||
+    ruleType === "isLessThan" ||
+    ruleType === "maxSelections"
+  ) {
+    const defaultValue = ruleType === "maxSelections" ? 3 : 100;
+    return createMaxParams(value, defaultValue);
+  }
+
+  // Rules that use date params
+  if (ruleType === "isLaterThan" || ruleType === "isEarlierThan") {
+    return createDateParams(value);
+  }
+
+  // Rules that use date range params
+  if (ruleType === "isBetween" || ruleType === "isNotBetween") {
+    return createDateRangeParams(value);
+  }
+
+  // Rules that use file extension params
+  if (ruleType === "fileExtensionIs" || ruleType === "fileExtensionIsNot") {
+    return createFileExtensionParams(value);
+  }
+
+  // Pattern rule
+  if (ruleType === "pattern") {
+    return { pattern: value === undefined || value === null ? "" : String(value) };
+  }
+
+  return {};
 };

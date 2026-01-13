@@ -34,9 +34,7 @@ interface ValidationRulesEditorProps {
   elementType: TSurveyElementTypeEnum;
   validation?: { rules: TValidationRule[]; logic?: TValidationLogic };
   onUpdateValidation: (validation: { rules: TValidationRule[]; logic: TValidationLogic }) => void;
-  element?: TSurveyElement; // Optional, needed for single select option selection
-  projectOrganizationId?: string; // For billing info to determine file size limits
-  isFormbricksCloud?: boolean; // To determine if using Formbricks Cloud or self-hosted
+  element?: TSurveyElement;
   // For OpenText: input type and callback to update it
   inputType?: TSurveyOpenTextElementInputType;
   onUpdateInputType?: (inputType: TSurveyOpenTextElementInputType) => void;

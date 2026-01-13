@@ -183,7 +183,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         selectableOptions.length > 0 &&
         !disabled &&
         position &&
-        typeof window !== "undefined" &&
+        globalThis.window !== undefined &&
         createPortal(
           <div
             className="fixed z-[100]"
