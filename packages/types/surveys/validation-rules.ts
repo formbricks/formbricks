@@ -246,6 +246,7 @@ const OPEN_TEXT_RULES = [
 ] as const;
 
 const MULTIPLE_CHOICE_MULTI_RULES = ["minSelections", "maxSelections"] as const;
+const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
 const DATE_RULES = ["isLaterThan", "isEarlierThan", "isBetween", "isNotBetween"] as const;
 const MATRIX_RULES = ["minRowsAnswered"] as const;
 const RANKING_RULES = ["minRanked", "rankAll"] as const;
@@ -280,6 +281,7 @@ const CONTACT_INFO_RULES = [
 ] as const;
 
 // Applicable rules per element type
+// Note: pictureSelection rules are handled dynamically in getAvailableRuleTypes based on allowMulti
 export const APPLICABLE_RULES: Record<string, TValidationRuleType[]> = {
   openText: [...OPEN_TEXT_RULES],
   multipleChoiceMulti: [...MULTIPLE_CHOICE_MULTI_RULES],
@@ -287,7 +289,7 @@ export const APPLICABLE_RULES: Record<string, TValidationRuleType[]> = {
   matrix: [...MATRIX_RULES],
   ranking: [...RANKING_RULES],
   fileUpload: [...FILE_UPLOAD_RULES],
-  pictureSelection: [],
+  pictureSelection: [...PICTURE_SELECTION_RULES],
   address: [...ADDRESS_RULES],
   contactInfo: [...CONTACT_INFO_RULES],
 };
