@@ -26,6 +26,7 @@ export const ZAllowedFileExtension = z.enum([
   "rar",
   "7z",
   "tar",
+  "mp3",
 ]);
 
 export const mimeTypes: Record<TAllowedFileExtension, string> = {
@@ -54,6 +55,7 @@ export const mimeTypes: Record<TAllowedFileExtension, string> = {
   rar: "application/vnd.rar",
   "7z": "application/x-7z-compressed",
   tar: "application/x-tar",
+  mp3: "audio/mpeg",
 };
 
 export type TAllowedFileExtension = z.infer<typeof ZAllowedFileExtension>;

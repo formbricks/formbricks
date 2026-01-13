@@ -208,6 +208,7 @@ const mimeTypes: Record<string, string> = {
   rar: "application/vnd.rar",
   "7z": "application/x-7z-compressed",
   tar: "application/x-tar",
+  mp3: "audio/mpeg",
 };
 
 export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];
