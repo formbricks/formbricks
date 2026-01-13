@@ -71,7 +71,7 @@ describe("Validation Logic Parity", () => {
     ];
 
     testCases.forEach(({ input, expected }) => {
-      it(`should validation phone "${input}" as ${expected}`, () => {
+      it(`should validate phone "${input}" as ${expected}`, () => {
         expect(validatePhone(input)).toBe(expected);
       });
     });
