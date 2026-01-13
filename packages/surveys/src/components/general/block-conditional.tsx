@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
-import { type TResponseData, TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurveyElement,
   TSurveyElementTypeEnum,
-  TSurveyMatrixElement,
   TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
 import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
@@ -172,13 +171,6 @@ export function BlockConditional({
       (Array.isArray(response) && response.length === 0) ||
       (typeof response === "object" && !Array.isArray(response) && Object.keys(response).length === 0)
     );
-  };
-
-  const hasUnansweredRows = (responseData: TResponseDataValue, element: TSurveyMatrixElement): boolean => {
-    return element.rows.some((row) => {
-      const rowLabel = getLocalizedValue(row.label, languageCode);
-      return !responseData?.[rowLabel as keyof typeof responseData];
-    });
   };
 
   // Validate a single element's form
