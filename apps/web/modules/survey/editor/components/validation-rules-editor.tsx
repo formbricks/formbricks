@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { v7 as uuidv7 } from "uuid";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
@@ -48,8 +47,6 @@ export const ValidationRulesEditor = ({
   validation,
   onUpdateValidation,
   element,
-  projectOrganizationId,
-  isFormbricksCloud = false,
   inputType,
   onUpdateInputType,
 }: ValidationRulesEditorProps) => {
@@ -216,7 +213,7 @@ export const ValidationRulesEditor = ({
       if (rule.id !== ruleId) return rule;
       const ruleType = rule.type;
       const config = RULE_TYPE_CONFIG[ruleType];
-      const parsedValue = parseRuleValue(ruleType, value, config, rule.params);
+      const parsedValue = parseRuleValue(ruleType, value, config);
 
       return {
         ...rule,

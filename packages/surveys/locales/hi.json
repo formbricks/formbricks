@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "आपकी प्रतिक्रिया अटक गई है :("
   },
   "errors": {
+    "all_options_must_be_ranked": "कृपया सभी विकल्पों को रैंक करें",
     "file_extension_must_be": "फ़ाइल एक्सटेंशन {extension} होना चाहिए",
     "file_extension_must_not_be": "फ़ाइल एक्सटेंशन {extension} नहीं होना चाहिए",
     "file_input": {

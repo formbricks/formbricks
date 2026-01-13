@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "Din feedback fastnade :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Vänligen rangordna alla alternativ",
     "file_extension_must_be": "Filändelsen måste vara {extension}",
     "file_extension_must_not_be": "Filändelsen får inte vara {extension}",
     "file_input": {

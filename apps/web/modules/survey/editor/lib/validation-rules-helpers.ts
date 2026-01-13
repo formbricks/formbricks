@@ -2,7 +2,6 @@ import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import {
   TAddressField,
   TContactInfoField,
-  TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
 import { RULE_TYPE_CONFIG } from "./validation-rules-config";
@@ -53,6 +52,7 @@ export const getRuleLabels = (t: (key: string) => string): Record<string, string
   is_between: t("environments.surveys.edit.validation.is_between"),
   is_not_between: t("environments.surveys.edit.validation.is_not_between"),
   minimum_options_ranked: t("environments.surveys.edit.validation.minimum_options_ranked"),
+  rank_all_options: t("environments.surveys.edit.validation.rank_all_options"),
   minimum_rows_answered: t("environments.surveys.edit.validation.minimum_rows_answered"),
   file_extension_is: t("environments.surveys.edit.validation.file_extension_is"),
   file_extension_is_not: t("environments.surveys.edit.validation.file_extension_is_not"),
@@ -101,8 +101,7 @@ export const normalizeFileExtension = (value: string): string => {
 export const parseRuleValue = (
   ruleType: TValidationRuleType,
   value: string,
-  config: (typeof RULE_TYPE_CONFIG)[TValidationRuleType],
-  currentParams: TValidationRule["params"]
+  config: (typeof RULE_TYPE_CONFIG)[TValidationRuleType]
 ): string | number => {
   // Handle file extension formatting: auto-add dot if missing
   if (ruleType === "fileExtensionIs" || ruleType === "fileExtensionIsNot") {

@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "Tu feedback está atascado :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Por favor, clasifica todas las opciones",
     "file_extension_must_be": "La extensión del archivo debe ser {extension}",
     "file_extension_must_not_be": "La extensión del archivo no debe ser {extension}",
     "file_input": {

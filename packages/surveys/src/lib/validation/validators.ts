@@ -456,6 +456,27 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return t("errors.minimum_options_ranked", { min: typedParams.min });
     },
   },
+  rankAll: {
+    check: (
+      value: TResponseDataValue,
+      _params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      if (element.type !== "ranking") {
+        return { valid: true };
+      }
+      // Skip validation if value is empty
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return { valid: true };
+      }
+      // All options must be ranked
+      const allItemsRanked = value.length === element.choices.length;
+      return { valid: allItemsRanked };
+    },
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      return t("errors.all_options_must_be_ranked");
+    },
+  },
   minRowsAnswered: {
     check: (
       value: TResponseDataValue,

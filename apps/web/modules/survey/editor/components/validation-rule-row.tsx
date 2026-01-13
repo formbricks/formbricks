@@ -132,7 +132,6 @@ export const ValidationRuleRow = ({
           {config.unitOptions && config.unitOptions.length > 0 && (
             <ValidationRuleUnitSelector
               value={config.unitOptions[0].value}
-              onChange={undefined}
               unitOptions={config.unitOptions}
               ruleLabels={ruleLabels}
               disabled={config.unitOptions.length === 1}

@@ -138,7 +138,8 @@ describe("getAvailableRuleTypes", () => {
     const available = getAvailableRuleTypes(elementType, existingRules);
 
     expect(available).toContain("minRanked");
-    expect(available.length).toBe(1);
+    expect(available).toContain("rankAll");
+    expect(available.length).toBe(2);
   });
 
   test("should return file validation rules for fileUpload element", () => {
@@ -151,15 +152,13 @@ describe("getAvailableRuleTypes", () => {
     expect(available).toContain("fileExtensionIsNot");
   });
 
-  test("should return minSelections and maxSelections for pictureSelection element", () => {
+  test("should return empty array for pictureSelection element (no validation rules)", () => {
     const elementType = TSurveyElementTypeEnum.PictureSelection;
     const existingRules: TValidationRule[] = [];
 
     const available = getAvailableRuleTypes(elementType, existingRules);
 
-    expect(available).toContain("minSelections");
-    expect(available).toContain("maxSelections");
-    expect(available.length).toBe(2);
+    expect(available).toEqual([]);
   });
 
   test("should return empty array for address element (no validation rules)", () => {

@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "Je feedback blijft hangen :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Rangschik alle opties",
     "file_extension_must_be": "Bestandsextensie moet {extension} zijn",
     "file_extension_must_not_be": "Bestandsextensie mag niet {extension} zijn",
     "file_input": {

@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "Ihr Feedback steckt fest :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Bitte ordnen Sie alle Optionen ein",
     "file_extension_must_be": "Die Dateierweiterung muss {extension} sein",
     "file_extension_must_not_be": "Die Dateierweiterung darf nicht {extension} sein",
     "file_input": {

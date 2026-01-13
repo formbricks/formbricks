@@ -118,11 +118,11 @@ export const validateElementResponse = (
     // Special handling for ranking elements
     if (element.type === TSurveyElementTypeEnum.Ranking) {
       const isValueArray = Array.isArray(value);
-      const allItemsRanked = isValueArray && value.length === element.choices.length;
+      const atLeastOneRanked = isValueArray && value.length >= 1;
 
-      // If required: all items must be ranked (no partial ranking allowed)
+      // If required: at least 1 option must be ranked
       // If not required: partial ranking is allowed (validation only checks if empty)
-      if (isEmpty(value) || (isValueArray && !allItemsRanked)) {
+      if (isEmpty(value) || !atLeastOneRanked) {
         errors.push(createRequiredError(t));
       }
     }

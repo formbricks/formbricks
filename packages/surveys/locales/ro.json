@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "Feedback-ul tău este blocat :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Vă rugăm să ordonați toate opțiunile",
     "file_extension_must_be": "Extensia fișierului trebuie să fie {extension}",
     "file_extension_must_not_be": "Extensia fișierului nu trebuie să fie {extension}",
     "file_input": {

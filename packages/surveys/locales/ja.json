@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "フィードバックが送信できません :("
   },
   "errors": {
+    "all_options_must_be_ranked": "すべてのオプションをランク付けしてください",
     "file_extension_must_be": "ファイル拡張子は{extension}である必要があります",
     "file_extension_must_not_be": "ファイル拡張子は{extension}であってはなりません",
     "file_input": {

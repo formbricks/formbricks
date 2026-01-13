@@ -73,25 +73,25 @@ export const RULE_TYPE_CONFIG: Record<
     labelKey: "is",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "value",
+    valuePlaceholder: "Value",
   },
   doesNotEqual: {
     labelKey: "is_not",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "value",
+    valuePlaceholder: "Value",
   },
   contains: {
     labelKey: "contains",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "text",
+    valuePlaceholder: "Text",
   },
   doesNotContain: {
     labelKey: "does_not_contain",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "text",
+    valuePlaceholder: "Text",
   },
   isGreaterThan: {
     labelKey: "is_greater_than",
@@ -134,6 +134,10 @@ export const RULE_TYPE_CONFIG: Record<
     needsValue: true,
     valueType: "number",
     valuePlaceholder: "1",
+  },
+  rankAll: {
+    labelKey: "rank_all_options",
+    needsValue: false,
   },
   minRowsAnswered: {
     labelKey: "minimum_rows_answered",

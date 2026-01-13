@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "تعليقك عالق :("
   },
   "errors": {
+    "all_options_must_be_ranked": "يرجى ترتيب جميع الخيارات",
     "file_extension_must_be": "يجب أن يكون امتداد الملف {extension}",
     "file_extension_must_not_be": "يجب ألا يكون امتداد الملف {extension}",
     "file_input": {

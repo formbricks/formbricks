@@ -221,6 +221,8 @@ export const createRuleParams = (
       return { max: Number(value) || 3 };
     case "minRanked":
       return { min: Number(value) || 1 };
+    case "rankAll":
+      return {};
     case "minRowsAnswered":
       return { min: Number(value) || 1 };
     case "fileExtensionIs":

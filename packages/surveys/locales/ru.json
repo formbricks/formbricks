@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "Ваш отзыв застрял :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Пожалуйста, расставьте все варианты по порядку",
     "file_extension_must_be": "Расширение файла должно быть {extension}",
     "file_extension_must_not_be": "Расширение файла не должно быть {extension}",
     "file_input": {

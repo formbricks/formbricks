@@ -149,10 +149,10 @@ export function BlockConditional({
   ): boolean => {
     const isRequired = element.required;
     const isValueArray = Array.isArray(response);
-    const allItemsRanked = isValueArray && response.length === element.choices.length;
+    const atLeastOneRanked = isValueArray && response.length >= 1;
 
-    // If required: all items must be ranked
-    if (isRequired && (!isValueArray || !allItemsRanked)) {
+    // If required: at least 1 option must be ranked
+    if (isRequired && (!isValueArray || !atLeastOneRanked)) {
       form.requestSubmit();
       return false;
     }

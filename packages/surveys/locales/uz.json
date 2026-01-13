@@ -31,6 +31,7 @@
     "your_feedback_is_stuck": "Sizning fikr-mulohazangiz qotib qoldi :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Iltimos, barcha variantlarni tartiblang",
     "file_extension_must_be": "Fayl kengaytmasi {extension} bo‘lishi kerak",
     "file_extension_must_not_be": "Fayl kengaytmasi {extension} bo‘lmasligi kerak",
     "file_input": {

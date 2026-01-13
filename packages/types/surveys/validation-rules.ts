@@ -32,12 +32,13 @@ export const ZValidationRuleType = z.enum([
   "isGreaterThan",
   "isLessThan",
 
-  // Selection rules (MultiSelect, PictureSelection)
+  // Selection rules (MultiSelect)
   "minSelections",
   "maxSelections",
 
   // Ranking rules
   "minRanked",
+  "rankAll",
 
   // Matrix rules
   "minRowsAnswered",
@@ -139,6 +140,8 @@ export const ZValidationRuleParamsMinRanked = z.object({
   min: z.number().min(1),
 });
 
+export const ZValidationRuleParamsRankAll = z.object({}).strict();
+
 export const ZValidationRuleParamsMinRowsAnswered = z.object({
   min: z.number().min(1),
 });
@@ -175,6 +178,7 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsIsBetween,
   ZValidationRuleParamsIsNotBetween,
   ZValidationRuleParamsMinRanked,
+  ZValidationRuleParamsRankAll,
   ZValidationRuleParamsMinRowsAnswered,
   ZValidationRuleParamsFileExtensionIs,
   ZValidationRuleParamsFileExtensionIsNot,
@@ -204,6 +208,7 @@ export type TValidationRuleParamsIsEarlierThan = z.infer<typeof ZValidationRuleP
 export type TValidationRuleParamsIsBetween = z.infer<typeof ZValidationRuleParamsIsBetween>;
 export type TValidationRuleParamsIsNotBetween = z.infer<typeof ZValidationRuleParamsIsNotBetween>;
 export type TValidationRuleParamsMinRanked = z.infer<typeof ZValidationRuleParamsMinRanked>;
+export type TValidationRuleParamsRankAll = z.infer<typeof ZValidationRuleParamsRankAll>;
 export type TValidationRuleParamsMinRowsAnswered = z.infer<typeof ZValidationRuleParamsMinRowsAnswered>;
 export type TValidationRuleParamsFileExtensionIs = z.infer<typeof ZValidationRuleParamsFileExtensionIs>;
 export type TValidationRuleParamsFileExtensionIsNot = z.infer<typeof ZValidationRuleParamsFileExtensionIsNot>;
@@ -245,12 +250,11 @@ const OPEN_TEXT_RULES = [
 const MULTIPLE_CHOICE_MULTI_RULES = ["minSelections", "maxSelections"] as const;
 const DATE_RULES = ["isLaterThan", "isEarlierThan", "isBetween", "isNotBetween"] as const;
 const MATRIX_RULES = ["minRowsAnswered"] as const;
-const RANKING_RULES = ["minRanked"] as const;
+const RANKING_RULES = ["minRanked", "rankAll"] as const;
 // Note: fileSizeAtLeast and fileSizeAtMost are not included because they cannot be validated
 // from response URLs alone (responses only contain file URLs, not file metadata).
 // File size validation happens client-side during upload via element.maxSizeInMB.
 const FILE_UPLOAD_RULES = ["fileExtensionIs", "fileExtensionIsNot"] as const;
-const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
 // Address and Contact Info can use text-based validation rules on specific fields
 const ADDRESS_RULES = [
   "minLength",
@@ -285,7 +289,7 @@ export const APPLICABLE_RULES: Record<string, TValidationRuleType[]> = {
   matrix: [...MATRIX_RULES],
   ranking: [...RANKING_RULES],
   fileUpload: [...FILE_UPLOAD_RULES],
-  pictureSelection: [...PICTURE_SELECTION_RULES],
+  pictureSelection: [],
   address: [...ADDRESS_RULES],
   contactInfo: [...CONTACT_INFO_RULES],
 };
@@ -309,9 +313,6 @@ export type TValidationRulesForDate = TValidationRulesForElementType<typeof DATE
 export type TValidationRulesForMatrix = TValidationRulesForElementType<typeof MATRIX_RULES>;
 export type TValidationRulesForRanking = TValidationRulesForElementType<typeof RANKING_RULES>;
 export type TValidationRulesForFileUpload = TValidationRulesForElementType<typeof FILE_UPLOAD_RULES>;
-export type TValidationRulesForPictureSelection = TValidationRulesForElementType<
-  typeof PICTURE_SELECTION_RULES
->;
 export type TValidationRulesForAddress = TValidationRulesForElementType<typeof ADDRESS_RULES>;
 export type TValidationRulesForContactInfo = TValidationRulesForElementType<typeof CONTACT_INFO_RULES>;
 

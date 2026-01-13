@@ -16,7 +16,6 @@ interface UnitOption {
 
 interface ValidationRuleUnitSelectorProps {
   value: string;
-  onChange?: (value: string) => void;
   unitOptions: UnitOption[];
   ruleLabels: Record<string, string>;
   disabled?: boolean;
@@ -24,19 +23,18 @@ interface ValidationRuleUnitSelectorProps {
 
 export const ValidationRuleUnitSelector = ({
   value,
-  onChange,
   unitOptions,
   ruleLabels,
   disabled = false,
 }: ValidationRuleUnitSelectorProps) => {
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled || unitOptions.length === 1}>
-      <SelectTrigger className={cn("flex-1 bg-white", disabled && "cursor-not-allowed")}>
+    <Select value={value} onValueChange={() => {}} disabled={disabled || unitOptions.length === 1}>
+      <SelectTrigger className={cn("h-9 min-w-[180px] flex-1 bg-white", disabled && "cursor-not-allowed")}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         {unitOptions.map((unit) => (
-          <SelectItem key={unit.value} value={unit.value}>
+          <SelectItem key={unit.value} value={unit.value} className="truncate">
             {ruleLabels[unit.labelKey]}
           </SelectItem>
         ))}
