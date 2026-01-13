@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -26,11 +26,17 @@ export const AutoSaveIndicator = ({ isDraft, lastSaved }: AutoSaveIndicatorProps
 
   const isSavedState = isDraft && showSaved;
 
-  const text = !isDraft
-    ? t("environments.surveys.edit.auto_save_disabled")
-    : showSaved
-      ? t("environments.surveys.edit.progress_saved")
-      : t("environments.surveys.edit.auto_save_on");
+  const text = useMemo(() => {
+    if (!isDraft) {
+      return t("environments.surveys.edit.auto_save_disabled");
+    }
+
+    if (showSaved) {
+      return t("environments.surveys.edit.progress_saved");
+    }
+
+    return t("environments.surveys.edit.auto_save_on");
+  }, [isDraft, showSaved, t]);
 
   const badge = (
     <span

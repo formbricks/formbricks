@@ -137,6 +137,11 @@ export const SurveyMenuBar = ({
         // Skip if already saving or in CX mode
         if (isSurveySavingRef.current || isCxMode) return;
 
+        // Skip if no changes (prevent unnecessary API calls from shortcut spamming)
+        const { updatedAt: localUpdatedAt, ...localSurveyRest } = localSurveyRef.current;
+        const { updatedAt: surveyUpdatedAt, ...surveyRest } = surveyRef.current;
+        if (isEqual(localSurveyRest, surveyRest)) return;
+
         // Trigger click on the save button to reuse existing save logic
         const saveButton = document.querySelector("[data-save-button]") as HTMLButtonElement | null;
         if (saveButton && !saveButton.disabled) {
