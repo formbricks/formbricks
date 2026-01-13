@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { Consent } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentElement } from "@formbricks/types/surveys/elements";
@@ -33,6 +34,7 @@ export function ConsentElement({
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
 
   const handleChange = (checked: boolean) => {
     onChange({ [element.id]: checked ? "accepted" : "" });
@@ -56,6 +58,7 @@ export function ConsentElement({
         value={value === "accepted"}
         onChange={handleChange}
         required={isRequired}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}

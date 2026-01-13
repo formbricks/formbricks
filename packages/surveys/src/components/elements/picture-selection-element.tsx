@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { PictureSelect, type PictureSelectOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
@@ -33,6 +34,7 @@ export function PictureSelectionElement({
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;
+  const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   // Convert choices to PictureSelectOption format
   const options: PictureSelectOption[] = element.choices.map((choice) => ({
@@ -82,6 +84,7 @@ export function PictureSelectionElement({
         onChange={handleChange}
         allowMulti={element.allowMulti}
         required={isRequired}
+        requiredLabel={t("common.required")}
         dir={dir}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}

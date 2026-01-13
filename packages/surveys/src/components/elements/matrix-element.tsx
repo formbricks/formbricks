@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { Matrix, type MatrixOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
@@ -30,7 +31,7 @@ export function MatrixElement({
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;
-
+  const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const rowShuffleIdx = useMemo(() => {
@@ -138,6 +139,7 @@ export function MatrixElement({
         value={convertValueToIds(value)}
         onChange={handleChange}
         required={isRequired}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}

@@ -352,6 +352,7 @@ export function FileUploadElement({
         allowMultiple={element.allowMultipleFiles}
         allowedFileExtensions={element.allowedFileExtensions}
         required={isRequired}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         isUploading={isUploading}
         imageUrl={element.imageUrl}

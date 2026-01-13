@@ -26,7 +26,7 @@ export const ALLOWED_FILE_EXTENSIONS: TAllowedFileExtension[] = [
   "rar",
   "7z",
   "tar",
-]
+];
 
 export const ZAllowedFileExtension = z.enum([
   "heic",
@@ -50,6 +50,7 @@ export const ZAllowedFileExtension = z.enum([
   "avi",
   "mkv",
   "webm",
+  "mp3",
   "zip",
   "rar",
   "7z",
@@ -78,6 +79,7 @@ export const mimeTypes: Record<TAllowedFileExtension, string> = {
   avi: "video/x-msvideo",
   mkv: "video/x-matroska",
   webm: "video/webm",
+  mp3: "audio/mpeg",
   zip: "application/zip",
   rar: "application/vnd.rar",
   "7z": "application/x-7z-compressed",
