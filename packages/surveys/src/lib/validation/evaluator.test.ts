@@ -538,58 +538,6 @@ describe("validateElementResponse", () => {
     });
   });
 
-  describe("custom error messages", () => {
-    test("should use custom error message when provided", () => {
-      const element: TSurveyElement = {
-        id: "text1",
-        type: TSurveyElementTypeEnum.OpenText,
-        headline: { default: "Question" },
-        required: false,
-        inputType: "text",
-        charLimit: 0,
-        validation: {
-          rules: [
-            {
-              id: "rule1",
-              type: "minLength",
-              params: { min: 10 },
-              customErrorMessage: { default: "Custom error message" },
-            },
-          ],
-        },
-      } as unknown as TSurveyOpenTextElement;
-
-      const result = validateElementResponse(element, "short", "en", mockT);
-      expect(result.valid).toBe(false);
-      expect(result.errors[0].message).toBe("Custom error message");
-    });
-
-    test("should use language-specific custom error message", () => {
-      const element: TSurveyElement = {
-        id: "text1",
-        type: TSurveyElementTypeEnum.OpenText,
-        headline: { default: "Question" },
-        required: false,
-        inputType: "text",
-        charLimit: 0,
-        validation: {
-          rules: [
-            {
-              id: "rule1",
-              type: "minLength",
-              params: { min: 10 },
-              customErrorMessage: { default: "Default message", en: "English message" },
-            },
-          ],
-        },
-      } as unknown as TSurveyOpenTextElement;
-
-      const result = validateElementResponse(element, "short", "en", mockT);
-      expect(result.valid).toBe(false);
-      expect(result.errors[0].message).toBe("English message");
-    });
-  });
-
   describe("unknown validation rule type", () => {
     test("should handle unknown rule type gracefully", () => {
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});

@@ -78,10 +78,7 @@ const getDefaultErrorMessage = (
     return t("errors.invalid_format");
   }
 
-  const baseMessage =
-    rule.customErrorMessage?.[languageCode] ??
-    rule.customErrorMessage?.default ??
-    validator.getDefaultMessage(rule.params, element, t);
+  const baseMessage = validator.getDefaultMessage(rule.params, element, t);
 
   // For field-specific validation, prepend the field name
   if (rule.field) {

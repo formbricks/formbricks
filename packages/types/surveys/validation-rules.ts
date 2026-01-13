@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZI18nString } from "../i18n";
 
 // Field types for field-specific validation (address and contact info elements)
 export const ZAddressField = z.enum(["addressLine1", "addressLine2", "city", "state", "zip", "country"]);
@@ -219,7 +218,6 @@ export const ZValidationRule = z.object({
   id: z.string(),
   type: ZValidationRuleType,
   params: ZValidationRuleParams,
-  customErrorMessage: ZI18nString.optional(),
   field: ZValidationRuleField.optional(),
 });
 
