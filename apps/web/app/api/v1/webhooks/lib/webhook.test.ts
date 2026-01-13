@@ -19,6 +19,10 @@ vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
+vi.mock("@/lib/crypto", () => ({
+  generateWebhookSecret: vi.fn(() => "whsec_test_secret_1234567890"),
+}));
+
 describe("createWebhook", () => {
   afterEach(() => {
     cleanup();
@@ -59,6 +63,7 @@ describe("createWebhook", () => {
         source: webhookInput.source,
         surveyIds: webhookInput.surveyIds,
         triggers: webhookInput.triggers,
+        secret: "whsec_test_secret_1234567890",
         environment: {
           connect: {
             id: webhookInput.environmentId,
@@ -144,6 +149,7 @@ describe("createWebhook", () => {
         source: webhookInput.source,
         surveyIds: webhookInput.surveyIds,
         triggers: webhookInput.triggers,
+        secret: "whsec_test_secret_1234567890",
         environment: {
           connect: {
             id: webhookInput.environmentId,

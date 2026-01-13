@@ -76,6 +76,7 @@ export function DateElement({
         minDate={getMinDate()}
         maxDate={getMaxDate()}
         required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         locale={languageCode}
         imageUrl={element.imageUrl}

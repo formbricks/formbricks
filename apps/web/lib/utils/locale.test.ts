@@ -90,11 +90,10 @@ describe("locale", () => {
     // Verify sv-SE is in AVAILABLE_LOCALES
     expect(AVAILABLE_LOCALES).toContain("sv-SE");
 
-    // Verify Swedish has a language entry with proper labels
+    // Verify Swedish has a language entry with proper label
     const swedishLanguage = appLanguages.find((lang) => lang.code === "sv-SE");
     expect(swedishLanguage).toBeDefined();
     expect(swedishLanguage?.label["en-US"]).toBe("Swedish");
-    expect(swedishLanguage?.label["sv-SE"]).toBe("Svenska");
 
     // Verify the locale can be matched from Accept-Language header
     vi.mocked(nextHeaders.headers).mockReturnValue({

@@ -185,6 +185,7 @@ export function MultipleChoiceSingleElement({
         value={selectedValue}
         onChange={handleChange}
         required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
         otherOptionId={otherOption?.id}
