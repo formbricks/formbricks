@@ -1,9 +1,13 @@
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/storage";
-import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { type TSurveyElement, TSurveyElementChoice } from "@formbricks/types/surveys/elements";
+import { type TAllowedFileExtension } from "@formbricks/types/storage";
+import {
+  type TSurveyBlock,
+  type TSurveyBlockLogic,
+  type TSurveyBlockLogicAction,
+} from "@formbricks/types/surveys/blocks";
+import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/types/surveys/elements";
 import { type TShuffleOption } from "@formbricks/types/surveys/types";
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
@@ -177,7 +181,35 @@ export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): strin
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
-// Function to convert file extension to its MIME type
+// Inlined from @formbricks/types/storage.ts to avoid Zod dependency
+const mimeTypes: Record<string, string> = {
+  heic: "image/heic",
+  png: "image/png",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  webp: "image/webp",
+  ico: "image/x-icon",
+  pdf: "application/pdf",
+  eml: "message/rfc822",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  txt: "text/plain",
+  csv: "text/csv",
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+  avi: "video/x-msvideo",
+  mkv: "video/x-matroska",
+  webm: "video/webm",
+  zip: "application/zip",
+  rar: "application/vnd.rar",
+  "7z": "application/x-7z-compressed",
+  tar: "application/x-tar",
+};
+
 export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];
 
 /**

@@ -1,11 +1,11 @@
 import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { OpenText } from "@formbricks/survey-ui";
-import { ZEmail, ZUrl } from "@formbricks/types/common";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { validateEmail, validatePhone, validateUrl } from "@/lib/validation";
 
 interface OpenTextElementProps {
   element: TSurveyOpenTextElement;
@@ -50,27 +50,24 @@ export function OpenTextElement({
     return true;
   };
 
-  const validateEmail = (): boolean => {
-    if (!ZEmail.safeParse(value).success) {
+  const checkEmail = (): boolean => {
+    if (!validateEmail(value)) {
       setErrorMessage(t("errors.please_enter_a_valid_email_address"));
       return false;
     }
     return true;
   };
 
-  const validateUrl = (): boolean => {
-    if (!ZUrl.safeParse(value).success) {
+  const checkUrl = (): boolean => {
+    if (!validateUrl(value)) {
       setErrorMessage(t("errors.please_enter_a_valid_url"));
       return false;
     }
     return true;
   };
 
-  const validatePhone = (): boolean => {
-    // Match the same pattern: must start with digit or +, end with digit
-    // Allows digits, +, -, and spaces in between
-    const phoneRegex = /^[0-9+][0-9+\- ]*[0-9]$/;
-    if (!phoneRegex.test(value)) {
+  const checkPhone = (): boolean => {
+    if (!validatePhone(value)) {
       setErrorMessage(t("errors.please_enter_a_valid_phone_number"));
       return false;
     }
@@ -81,13 +78,13 @@ export function OpenTextElement({
     if (!value || value.trim() === "") return true;
 
     if (element.inputType === "email") {
-      return validateEmail();
+      return checkEmail();
     }
     if (element.inputType === "url") {
-      return validateUrl();
+      return checkUrl();
     }
     if (element.inputType === "phone") {
-      return validatePhone();
+      return checkPhone();
     }
     return true;
   };

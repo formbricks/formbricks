@@ -1,0 +1,83 @@
+BUNDLE SIZE COMPARISON
+======================
+
+Date: 2026-01-13
+Package: @formbricks/surveys
+
+MEASUREMENT 1: BASELINE (With Zod)
+----------------------------------
+dist/index.js:       843.74 kB
+dist/index.umd.cjs:  844.08 kB
+Gzipped:             225.45 kB
+
+MEASUREMENT 2: FINAL (Optimized / No Zod)
+-----------------------------------------
+dist/index.js:       772.37 kB
+dist/index.umd.cjs:  772.72 kB
+Gzipped:             208.17 kB
+
+ANALYSIS
+--------
+- Difference: -71.36 kB
+- Percentage Change: -8.45% (Reduction)
+
+CONCLUSION
+----------
+- SUCCESS: Significant bundle size reduction achieved.
+- Refactoring `TSurveyElementTypeEnum` to use local constants and `import type` effectively decoupled the runtime code from Zod dependencies in `@formbricks/types`.
+
+DECISION RECORD: TAILWIND MERGE VS CLSX
+=======================================
+Issue: `tailwind-merge` adds significantly to the bundle size compared to `clsx`.
+Investigation:
+- `clsx` only concatenates strings; it does not handle CSS specificity conflicts (e.g., `p-4` vs `p-2`).
+- `tailwind-merge` ensures that utility class overrides (vital for a reusable UI library like `@formbricks/survey-ui`) actually take precedence.
+Decision:
+- KEEP `tailwind-merge`.
+- Rationale: Switching to `clsx` would trade bundle size for potential UI bugs and broken overrides. Correctness validation requires `tailwind-merge`'s complex logic.
+
+DEPENDENCY AUDIT
+================
+
+1. DOMPurify (isomorphic-dompurify)
+   - Usage: Used in `stripInlineStyles` (Headline, Subheader, Label).
+   - Necessity: Critical for security to prevent XSS in user-provided HTML content.
+   - Optimization: Cannot be easily removed without sacrificing security.
+
+2. i18next & Locales
+   - Usage: `packages/surveys/src/lib/i18n.config.ts` imports ALL `locales/*.json` files statically.
+   - Impact: This forces ALL languages to be bundled into the main JavaScript file, significantly inflating size.
+   - Recommendation: Refactor to load locales asynchronously or lazily. This is the single biggest optimization opportunity remaining.
+
+3. Lucide Usage
+   - Status: Verified imports are tree-shakeable (named imports).
+   - Findings: No `import *` patterns found.
+   - Size: `lucide-react` is efficient.
+
+4. Radix UI
+   - Status: Used in `survey-ui`.
+   - Impact: Radix primitives are modular. Usage is efficient, only pulling in what is used (Checkbox, RadioGroup, etc.).
+
+5. Intl MessageFormat / i18next-icu
+   - Usage: `locales/en.json` uses ICU syntax (e.g., `{count, plural, one {...}}`).
+   - Impact: Requires `intl-messageformat` library which is heavy.
+   - Optimization: Rewrite all locales to use standard i18next JSON format (v4) to drop this dependency. This is a high-effort, high-reward refactor.
+
+6. Auto-Animate
+   - Usage: `ranking.tsx` for drag-and-drop animations.
+   - Impact: ~23KB rendered.
+   - Recommendation: Evaluate if manual CSS transitions or a smaller library could suffice.
+
+7. Date-fns Locales
+   - Usage: `packages/survey-ui/src/lib/locale.ts` imports 15+ locales statically.
+   - Impact: Bundles ALL date locale data (months, days, formats) for every language.
+   - Optimization: Lazy load date locales similar to translation files.
+
+8. React/Preact Aliasing
+   - Usage: Mixed imports of `react` and `preact` observed.
+   - Impact: Risk of bundling two view libraries if aliases fail.
+   - Status: `vite.config.mts` aliases `react` to `preact/compat`, which is correct. The imports should be consistent to avoid confusion/risk.
+
+
+
+
