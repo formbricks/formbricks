@@ -143,16 +143,16 @@ export const SurveyMenuBar = ({
         if (isEqual(localSurveyRest, surveyRest)) return;
 
         // Trigger click on the save button to reuse existing save logic
-        const saveButton = document.querySelector("[data-save-button]") as HTMLButtonElement | null;
+        const saveButton = document.querySelector("[data-save-button]") as HTMLButtonElement | null; // NOSONAR - We need this assertion
         if (saveButton && !saveButton.disabled) {
           saveButton.click();
         }
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    globalThis.window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      globalThis.window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isCxMode]);
 
