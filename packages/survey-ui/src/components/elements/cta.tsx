@@ -26,6 +26,8 @@ export interface CTAProps {
   onClick: () => void;
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
+  /** Custom label for the required indicator */
+  requiredLabel?: string;
   /** Error message to display */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
@@ -50,6 +52,7 @@ function CTA({
   buttonExternal = false,
   onClick,
   required = false,
+  requiredLabel,
   errorMessage,
   dir = "auto",
   disabled = false,
@@ -73,6 +76,7 @@ function CTA({
         headline={headline}
         description={description}
         required={required}
+        requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}
@@ -82,8 +86,7 @@ function CTA({
       <div className="relative space-y-2">
         <ElementError errorMessage={errorMessage} dir={dir} />
 
-        {buttonExternal && (
-          <div className="flex w-full justify-start">
+        {buttonExternal ? <div className="flex w-full justify-start">
             <Button
               id={inputId}
               type="button"
@@ -94,8 +97,7 @@ function CTA({
               {buttonLabel}
               <SquareArrowOutUpRightIcon className="size-4" />
             </Button>
-          </div>
-        )}
+          </div> : null}
       </div>
     </div>
   );

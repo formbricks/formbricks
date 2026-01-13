@@ -66,6 +66,7 @@ export function ConsentElement({
         value={value === "accepted"}
         onChange={handleChange}
         required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}
