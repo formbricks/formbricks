@@ -201,8 +201,6 @@ export const FileUploadElementForm = ({
           });
         }}
         element={element}
-        projectOrganizationId={project?.organizationId}
-        isFormbricksCloud={isFormbricksCloud}
       />
     </form>
   );
