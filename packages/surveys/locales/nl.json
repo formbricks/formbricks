@@ -32,6 +32,7 @@
   },
   "errors": {
     "all_options_must_be_ranked": "Rangschik alle opties",
+    "all_rows_must_be_answered": "Beantwoord alle rijen",
     "file_extension_must_be": "Bestandsextensie moet {extension} zijn",
     "file_extension_must_not_be": "Bestandsextensie mag niet {extension} zijn",
     "file_input": {

@@ -1589,6 +1589,7 @@
         "url_filters": "Фильтры URL",
         "url_not_supported": "URL не поддерживается",
         "validation": {
+          "answer_all_rows": "Ответьте на все строки",
           "characters": "Символы",
           "contains": "Содержит",
           "does_not_contain": "Не содержит",

@@ -32,6 +32,7 @@
   },
   "errors": {
     "all_options_must_be_ranked": "Пожалуйста, расставьте все варианты по порядку",
+    "all_rows_must_be_answered": "Пожалуйста, ответьте на все строки",
     "file_extension_must_be": "Расширение файла должно быть {extension}",
     "file_extension_must_not_be": "Расширение файла не должно быть {extension}",
     "file_input": {

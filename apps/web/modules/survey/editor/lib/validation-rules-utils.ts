@@ -219,7 +219,13 @@ export const createRuleParams = (
   value?: number | string
 ): TValidationRule["params"] => {
   // Rules that return empty params
-  if (ruleType === "email" || ruleType === "url" || ruleType === "phone" || ruleType === "rankAll") {
+  if (
+    ruleType === "email" ||
+    ruleType === "url" ||
+    ruleType === "phone" ||
+    ruleType === "rankAll" ||
+    ruleType === "answerAllRows"
+  ) {
     return {};
   }
 

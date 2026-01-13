@@ -32,6 +32,7 @@
   },
   "errors": {
     "all_options_must_be_ranked": "Veuillez classer toutes les options",
+    "all_rows_must_be_answered": "Veuillez répondre à toutes les lignes",
     "file_extension_must_be": "L'extension du fichier doit être {extension}",
     "file_extension_must_not_be": "L'extension du fichier ne doit pas être {extension}",
     "file_input": {

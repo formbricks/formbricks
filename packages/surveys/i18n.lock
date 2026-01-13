@@ -31,6 +31,7 @@ checksums:
     common/they_will_be_redirected_immediately: 936bc99cb575cba95ea8f04d82bb353b
     common/your_feedback_is_stuck: db2b6aba26723b01aee0fc918d3ca052
     errors/all_options_must_be_ranked: 360a2edff623496f7047907bad115ea1
+    errors/all_rows_must_be_answered: 295f41a0ef04cbb3491c798053c61abd
     errors/file_extension_must_be: 3102dc81a482f1b05ee490767b1c3c97
     errors/file_extension_must_not_be: bd21065a4201d9a29b126586aecd8f29
     errors/file_input/duplicate_files: 198dd29e67beb6abc5b2534ede7d7f68

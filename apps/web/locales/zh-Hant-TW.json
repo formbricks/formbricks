@@ -1589,6 +1589,7 @@
         "url_filters": "網址篩選器",
         "url_not_supported": "不支援網址",
         "validation": {
+          "answer_all_rows": "請填答所有列",
           "characters": "字元",
           "contains": "包含",
           "does_not_contain": "不包含",

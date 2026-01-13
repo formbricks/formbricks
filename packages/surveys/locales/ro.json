@@ -32,6 +32,7 @@
   },
   "errors": {
     "all_options_must_be_ranked": "Vă rugăm să ordonați toate opțiunile",
+    "all_rows_must_be_answered": "Vă rugăm să răspundeți la toate rândurile",
     "file_extension_must_be": "Extensia fișierului trebuie să fie {extension}",
     "file_extension_must_not_be": "Extensia fișierului nu trebuie să fie {extension}",
     "file_input": {

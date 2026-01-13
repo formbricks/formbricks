@@ -105,6 +105,7 @@ const validateRequiredRanking = (value: TResponseDataValue, t: TFunction): TVali
 
 /**
  * Validate required field for matrix elements
+ * Required means: at least 1 row must be answered
  */
 const validateRequiredMatrix = (
   value: TResponseDataValue,
@@ -116,8 +117,8 @@ const validateRequiredMatrix = (
   }
   if (typeof value === "object" && !Array.isArray(value) && value !== null && "rows" in element) {
     const answeredRows = Object.values(value).filter((v) => v !== "" && v !== null && v !== undefined).length;
-    const allRowsAnswered = answeredRows === element.rows.length;
-    if (!allRowsAnswered) {
+    // Required means at least 1 row must be answered
+    if (answeredRows === 0) {
       return createRequiredError(t);
     }
   }
@@ -357,10 +358,7 @@ export const validateElementResponse = (
     errors.push(requiredError);
   }
 
-  // For matrix elements, skip validation rules if element is required
-  if (element.type === TSurveyElementTypeEnum.Matrix && element.required) {
-    return { valid: errors.length === 0, errors };
-  }
+  // Validation rules apply to matrix elements regardless of required status
 
   // Get validation rules
   const validation = (

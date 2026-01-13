@@ -54,6 +54,7 @@ export const getRuleLabels = (t: (key: string) => string): Record<string, string
   minimum_options_ranked: t("environments.surveys.edit.validation.minimum_options_ranked"),
   rank_all_options: t("environments.surveys.edit.validation.rank_all_options"),
   minimum_rows_answered: t("environments.surveys.edit.validation.minimum_rows_answered"),
+  answer_all_rows: t("environments.surveys.edit.validation.answer_all_rows"),
   file_extension_is: t("environments.surveys.edit.validation.file_extension_is"),
   file_extension_is_not: t("environments.surveys.edit.validation.file_extension_is_not"),
   kb: t("environments.surveys.edit.validation.kb"),

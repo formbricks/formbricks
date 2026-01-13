@@ -41,6 +41,7 @@ export const ZValidationRuleType = z.enum([
 
   // Matrix rules
   "minRowsAnswered",
+  "answerAllRows",
 
   // Date rules
   "isLaterThan",
@@ -140,6 +141,7 @@ export const ZValidationRuleParamsMinRanked = z.object({
 });
 
 export const ZValidationRuleParamsRankAll = z.object({}).strict();
+export const ZValidationRuleParamsAnswerAllRows = z.object({}).strict();
 
 export const ZValidationRuleParamsMinRowsAnswered = z.object({
   min: z.number().min(1),
@@ -179,6 +181,7 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsMinRanked,
   ZValidationRuleParamsRankAll,
   ZValidationRuleParamsMinRowsAnswered,
+  ZValidationRuleParamsAnswerAllRows,
   ZValidationRuleParamsFileExtensionIs,
   ZValidationRuleParamsFileExtensionIsNot,
 ]);
@@ -209,6 +212,7 @@ export type TValidationRuleParamsIsNotBetween = z.infer<typeof ZValidationRulePa
 export type TValidationRuleParamsMinRanked = z.infer<typeof ZValidationRuleParamsMinRanked>;
 export type TValidationRuleParamsRankAll = z.infer<typeof ZValidationRuleParamsRankAll>;
 export type TValidationRuleParamsMinRowsAnswered = z.infer<typeof ZValidationRuleParamsMinRowsAnswered>;
+export type TValidationRuleParamsAnswerAllRows = z.infer<typeof ZValidationRuleParamsAnswerAllRows>;
 export type TValidationRuleParamsFileExtensionIs = z.infer<typeof ZValidationRuleParamsFileExtensionIs>;
 export type TValidationRuleParamsFileExtensionIsNot = z.infer<typeof ZValidationRuleParamsFileExtensionIsNot>;
 
@@ -248,7 +252,7 @@ const OPEN_TEXT_RULES = [
 const MULTIPLE_CHOICE_MULTI_RULES = ["minSelections", "maxSelections"] as const;
 const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
 const DATE_RULES = ["isLaterThan", "isEarlierThan", "isBetween", "isNotBetween"] as const;
-const MATRIX_RULES = ["minRowsAnswered"] as const;
+const MATRIX_RULES = ["minRowsAnswered", "answerAllRows"] as const;
 const RANKING_RULES = ["minRanked", "rankAll"] as const;
 // Note: fileSizeAtLeast and fileSizeAtMost are not included because they cannot be validated
 // from response URLs alone (responses only contain file URLs, not file metadata).

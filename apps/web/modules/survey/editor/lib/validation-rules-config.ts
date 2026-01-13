@@ -145,6 +145,10 @@ export const RULE_TYPE_CONFIG: Record<
     valueType: "number",
     valuePlaceholder: "1",
   },
+  answerAllRows: {
+    labelKey: "answer_all_rows",
+    needsValue: false,
+  },
   fileExtensionIs: {
     labelKey: "file_extension_is",
     needsValue: true,

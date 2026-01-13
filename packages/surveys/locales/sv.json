@@ -32,6 +32,7 @@
   },
   "errors": {
     "all_options_must_be_ranked": "Vänligen rangordna alla alternativ",
+    "all_rows_must_be_answered": "Vänligen besvara alla rader",
     "file_extension_must_be": "Filändelsen måste vara {extension}",
     "file_extension_must_not_be": "Filändelsen får inte vara {extension}",
     "file_input": {

@@ -348,19 +348,16 @@ export const MatrixElementForm = ({
           </div>
         </div>
       </div>
-
-      {!element.required && (
-        <ValidationRulesEditor
-          elementType={TSurveyElementTypeEnum.Matrix}
-          validation={element.validation}
-          onUpdateValidation={(validation) => {
-            updateElement(elementIdx, {
-              validation,
-            });
-          }}
-          element={element}
-        />
-      )}
+      <ValidationRulesEditor
+        elementType={TSurveyElementTypeEnum.Matrix}
+        validation={element.validation}
+        onUpdateValidation={(validation) => {
+          updateElement(elementIdx, {
+            validation,
+          });
+        }}
+        element={element}
+      />
     </form>
   );
 };

@@ -1589,6 +1589,7 @@
         "url_filters": "Filtros de URL",
         "url_not_supported": "URL no compatible",
         "validation": {
+          "answer_all_rows": "Responde todas las filas",
           "characters": "Caracteres",
           "contains": "Contiene",
           "does_not_contain": "No contiene",

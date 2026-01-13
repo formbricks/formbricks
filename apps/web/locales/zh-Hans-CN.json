@@ -1589,6 +1589,7 @@
         "url_filters": "URL 过滤器",
         "url_not_supported": "URL 不支持",
         "validation": {
+          "answer_all_rows": "请填写所有行",
           "characters": "字符",
           "contains": "包含",
           "does_not_contain": "不包含",

@@ -203,7 +203,8 @@ export function BlockConditional({
 
     // Custom validation for matrix questions
     if (element.type === TSurveyElementTypeEnum.Matrix) {
-      if (element.required && (!response || hasUnansweredRows(response, element))) {
+      // Required means at least 1 row must be answered
+      if (element.required && (!response || Object.keys(response).length === 0)) {
         form.requestSubmit();
         return false;
       }

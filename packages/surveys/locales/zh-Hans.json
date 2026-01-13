@@ -32,6 +32,7 @@
   },
   "errors": {
     "all_options_must_be_ranked": "请对所有选项进行排序",
+    "all_rows_must_be_answered": "请回答所有行",
     "file_extension_must_be": "文件扩展名必须为{extension}",
     "file_extension_must_not_be": "文件扩展名不能为{extension}",
     "file_input": {

@@ -1589,6 +1589,7 @@
         "url_filters": "URL-filters",
         "url_not_supported": "URL niet ondersteund",
         "validation": {
+          "answer_all_rows": "Beantwoord alle rijen",
           "characters": "Tekens",
           "contains": "Bevat",
           "does_not_contain": "Bevat niet",

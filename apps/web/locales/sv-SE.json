@@ -1589,6 +1589,7 @@
         "url_filters": "URL-filter",
         "url_not_supported": "URL stöds inte",
         "validation": {
+          "answer_all_rows": "Svara på alla rader",
           "characters": "Tecken",
           "contains": "Innehåller",
           "does_not_contain": "Innehåller inte",

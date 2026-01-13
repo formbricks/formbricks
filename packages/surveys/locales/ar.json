@@ -32,6 +32,7 @@
   },
   "errors": {
     "all_options_must_be_ranked": "يرجى ترتيب جميع الخيارات",
+    "all_rows_must_be_answered": "يرجى الإجابة على جميع الصفوف",
     "file_extension_must_be": "يجب أن يكون امتداد الملف {extension}",
     "file_extension_must_not_be": "يجب ألا يكون امتداد الملف {extension}",
     "file_input": {

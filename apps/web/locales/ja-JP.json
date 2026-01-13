@@ -1589,6 +1589,7 @@
         "url_filters": "URLフィルター",
         "url_not_supported": "URLはサポートされていません",
         "validation": {
+          "answer_all_rows": "すべての行に回答してください",
           "characters": "文字数",
           "contains": "を含む",
           "does_not_contain": "を含まない",

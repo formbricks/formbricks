@@ -1589,6 +1589,7 @@
         "url_filters": "Filtre URL",
         "url_not_supported": "URL nesuportat",
         "validation": {
+          "answer_all_rows": "Răspunde la toate rândurile",
           "characters": "Caractere",
           "contains": "Conține",
           "does_not_contain": "Nu conține",

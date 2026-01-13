@@ -503,6 +503,32 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return t("errors.minimum_rows_answered", { min: typedParams.min });
     },
   },
+  answerAllRows: {
+    check: (
+      value: TResponseDataValue,
+      _params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
+      if (element.type !== "matrix") {
+        return { valid: true };
+      }
+      // Skip validation if value is empty (let required handle empty)
+      if (!value || typeof value !== "object" || Array.isArray(value) || value === null) {
+        return { valid: true };
+      }
+      // Matrix responses are Record<string, string> where keys are localized row labels
+      // Count non-empty answers (rows that have been answered)
+      const answeredCount = Object.values(value).filter(
+        (v) => v !== "" && v !== null && v !== undefined
+      ).length;
+      // All rows must be answered
+      const allRowsAnswered = answeredCount === element.rows.length;
+      return { valid: allRowsAnswered };
+    },
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+      return t("errors.all_rows_must_be_answered");
+    },
+  },
   fileExtensionIs: {
     check: (
       value: TResponseDataValue,
