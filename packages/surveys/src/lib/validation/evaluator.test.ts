@@ -148,7 +148,7 @@ describe("validateElementResponse", () => {
         ],
       } as unknown as TSurveyMatrixElement;
 
-      const result = validateElementResponse(element, { row1: "col1" }, "en", mockT);
+      const result = validateElementResponse(element, {}, "en", mockT);
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
     });

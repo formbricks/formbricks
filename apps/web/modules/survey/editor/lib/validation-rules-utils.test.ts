@@ -128,7 +128,8 @@ describe("getAvailableRuleTypes", () => {
     const available = getAvailableRuleTypes(elementType, existingRules);
 
     expect(available).toContain("minRowsAnswered");
-    expect(available.length).toBe(1);
+    expect(available).toContain("answerAllRows");
+    expect(available.length).toBe(2);
   });
 
   test("should return ranking validation rules for ranking element", () => {
