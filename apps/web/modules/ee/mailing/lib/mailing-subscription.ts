@@ -27,7 +27,7 @@ export const subscribeToMailingList = async ({
   email,
   listId,
 }: TSubscribeToMailingListParams): Promise<{ success: boolean; error?: string }> => {
-  validateInputs([email, ZUserEmail]);
+  validateInputs([email, ZUserEmail.toLowerCase()]);
 
   const endpoint = MAILING_LIST_ENDPOINTS[listId];
   if (!endpoint) {
@@ -59,11 +59,11 @@ export const subscribeToMailingList = async ({
       return { success: false, error: `Failed to subscribe: ${response.status}` };
     }
 
-    logger.info({ email, listId }, `Successfully subscribed to ${listId} mailing list`);
+    logger.info({ listId }, `Successfully subscribed to ${listId} mailing list`);
     return { success: true };
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      logger.error({ email, listId }, "Mailing subscription request timed out");
+      logger.error({ listId }, "Mailing subscription request timed out");
       return { success: false, error: "Request timed out" };
     }
 
