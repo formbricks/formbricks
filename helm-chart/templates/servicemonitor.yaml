@@ -12,7 +12,7 @@ metadata:
   {{- end }}
   {{- if .Values.serviceMonitor.annotations }}
   annotations:
-    {{- toYaml .Values.serviceMonitor.annotations | nindent 4 }}
+  {{- toYaml .Values.serviceMonitor.annotations | nindent 4 }}
   {{- end }}
 spec:
   selector:
