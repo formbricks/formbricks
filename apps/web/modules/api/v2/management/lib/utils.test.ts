@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { buildCommonFilterQuery } from "./utils";
 
 describe("buildCommonFilterQuery", () => {
