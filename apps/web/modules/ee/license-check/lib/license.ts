@@ -342,14 +342,13 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
     return null;
   }
 
-  // return await cache.withCache(
-  //   async () => {
-  //     return await fetchLicenseFromServerInternal();
-  //   },
-  //   getCacheKeys().FETCH_LICENSE_CACHE_KEY,
-  //   CONFIG.CACHE.FETCH_LICENSE_TTL_MS
-  // );
-  return await fetchLicenseFromServerInternal();
+  return await cache.withCache(
+    async () => {
+      return await fetchLicenseFromServerInternal();
+    },
+    getCacheKeys().FETCH_LICENSE_CACHE_KEY,
+    CONFIG.CACHE.FETCH_LICENSE_TTL_MS
+  );
 };
 
 export const getEnterpriseLicense = reactCache(
