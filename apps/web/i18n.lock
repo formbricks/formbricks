@@ -959,6 +959,7 @@ checksums:
     environments/settings/general/replace_logo: e3c8bec7574a670607e88771164e272f
     environments/settings/general/resend_invitation_email: 6305d1ffa015c377ef59fe9c2661cf02
     environments/settings/general/security_list_tip: 0bbed89fa5265da7e07767087f87c736
+    environments/settings/general/security_list_tip_link: ccdb1a21610ebf5a626d813b155be4ba
     environments/settings/general/share_invite_link: b40b7ffbcf02d7464be52fb562df5e3a
     environments/settings/general/share_this_link_to_let_your_organization_member_join_your_organization: 6eb43d5b1c855572b7ab35f527ba953c
     environments/settings/general/test_email_sent_successfully: aa68214f5e0707c9615e01343640ab32

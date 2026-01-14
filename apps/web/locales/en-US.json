@@ -1020,6 +1020,7 @@
         "replace_logo": "Replace logo",
         "resend_invitation_email": "Resend Invitation Email",
         "security_list_tip": "Are you signed up for our Security List? Stay informed to keep your instance secure!",
+        "security_list_tip_link": "Sign up here.",
         "share_invite_link": "Share Invite Link",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Share this link to let your organization member join your organization:",
         "test_email_sent_successfully": "Test email sent successfully",

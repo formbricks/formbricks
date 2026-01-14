@@ -1020,6 +1020,7 @@
         "replace_logo": "ロゴを交換",
         "resend_invitation_email": "招待メールを再送信",
         "security_list_tip": "セキュリティリストに登録していますか？インスタンスを安全に保つために最新情報を入手しましょう！",
+        "security_list_tip_link": "こちらからサインアップしてください。",
         "share_invite_link": "招待リンクを共有",
         "share_this_link_to_let_your_organization_member_join_your_organization": "このリンクを共有して、組織メンバーを招待できます:",
         "test_email_sent_successfully": "テストメールを正常に送信しました",

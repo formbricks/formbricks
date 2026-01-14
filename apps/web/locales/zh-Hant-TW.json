@@ -1020,6 +1020,7 @@
         "replace_logo": "取代標誌",
         "resend_invitation_email": "重新發送邀請電子郵件",
         "security_list_tip": "您已訂閱我們的安全名單了嗎？保持關注，確保您的實例安全！",
+        "security_list_tip_link": "請在此註冊。",
         "share_invite_link": "分享邀請連結",
         "share_this_link_to_let_your_organization_member_join_your_organization": "分享此連結以讓您的組織成員加入您的組織：",
         "test_email_sent_successfully": "測試電子郵件已成功發送",

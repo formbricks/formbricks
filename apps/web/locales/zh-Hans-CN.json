@@ -1020,6 +1020,7 @@
         "replace_logo": "替换 logo",
         "resend_invitation_email": "重新发送邀请邮件",
         "security_list_tip": "您已订阅我们的安全列表了吗？保持关注，保障您的实例安全！",
+        "security_list_tip_link": "点击此处注册。",
         "share_invite_link": "分享邀请链接",
         "share_this_link_to_let_your_organization_member_join_your_organization": "分享 这个 链接 以 让 你的 组织 成员 加入 你的 组织：",
         "test_email_sent_successfully": "测试 邮件 发送 成功",

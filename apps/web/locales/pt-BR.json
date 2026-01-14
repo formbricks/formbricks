@@ -1020,6 +1020,7 @@
         "replace_logo": "Substituir logo",
         "resend_invitation_email": "Reenviar E-mail de Convite",
         "security_list_tip": "Você está inscrito na nossa Lista de Segurança? Mantenha-se informado para manter sua instância segura!",
+        "security_list_tip_link": "Cadastre-se aqui.",
         "share_invite_link": "Compartilhar Link de Convite",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Compartilhe esse link para que o membro da sua organização possa entrar na sua organização:",
         "test_email_sent_successfully": "E-mail de teste enviado com sucesso",
