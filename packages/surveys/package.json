@@ -28,6 +28,7 @@
   "scripts": {
     "dev": "vite build --watch --mode dev",
     "build": "tsc && vite build",
+    "build:analyze": "tsc && ANALYZE=true vite build",
     "build:dev": "tsc && vite build --mode dev",
     "go": "vite build --watch --mode dev",
     "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
@@ -58,6 +59,7 @@
     "autoprefixer": "10.4.21",
     "concurrently": "9.1.2",
     "postcss": "8.5.3",
+    "rollup-plugin-visualizer": "6.0.5",
     "tailwindcss": "4.1.17",
     "terser": "5.39.1",
     "vite": "6.4.1",
