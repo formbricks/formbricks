@@ -51,7 +51,6 @@ interface SurveyEditorProps {
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
   publicDomain: string;
-  isE2ETesting?: boolean;
 }
 
 export const SurveyEditor = ({
@@ -82,7 +81,6 @@ export const SurveyEditor = ({
   quotas,
   isExternalUrlsAllowed,
   publicDomain,
-  isE2ETesting = false,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
@@ -180,7 +178,6 @@ export const SurveyEditor = ({
         locale={locale}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
         isStorageConfigured={isStorageConfigured}
-        isE2ETesting={isE2ETesting}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main

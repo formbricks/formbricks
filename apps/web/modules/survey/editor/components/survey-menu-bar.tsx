@@ -44,7 +44,6 @@ interface SurveyMenuBarProps {
   locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
   isStorageConfigured: boolean;
-  isE2ETesting?: boolean;
 }
 
 export const SurveyMenuBar = ({
@@ -62,7 +61,6 @@ export const SurveyMenuBar = ({
   locale,
   setIsCautionDialogOpen,
   isStorageConfigured = true,
-  isE2ETesting = false,
 }: SurveyMenuBarProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -253,9 +251,6 @@ export const SurveyMenuBar = ({
 
   // Interval-based auto-save for draft surveys (every 10 seconds)
   useEffect(() => {
-    // Skip auto-save during E2E tests to avoid race conditions
-    // if (isE2ETesting) return;
-
     // Only set up interval for draft surveys
     if (localSurvey.status !== "draft") return;
 
