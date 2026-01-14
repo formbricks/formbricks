@@ -254,7 +254,7 @@ export const SurveyMenuBar = ({
   // Interval-based auto-save for draft surveys (every 10 seconds)
   useEffect(() => {
     // Skip auto-save during E2E tests to avoid race conditions
-    if (isE2ETesting) return;
+    // if (isE2ETesting) return;
 
     // Only set up interval for draft surveys
     if (localSurvey.status !== "draft") return;
@@ -283,7 +283,10 @@ export const SurveyMenuBar = ({
         } as unknown as TSurveyDraft);
 
         if (updatedSurveyResponse?.data) {
-          setLocalSurvey(updatedSurveyResponse.data);
+          // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
+          // This keeps the UI stable while still tracking that changes have been saved.
+          // The comparison uses refs, so this prevents unnecessary re-saves.
+          surveyRef.current = { ...updatedSurveyResponse.data };
           isSuccessfullySavedRef.current = true;
           setLastAutoSaved(new Date());
         }
@@ -295,7 +298,7 @@ export const SurveyMenuBar = ({
     }, 10000);
 
     return () => clearInterval(intervalId);
-  }, [localSurvey.status, setLocalSurvey]);
+  }, [localSurvey.status]);
 
   // Add new handler after handleSurveySave
   const handleSurveySaveDraft = async (): Promise<boolean> => {
