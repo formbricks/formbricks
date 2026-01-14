@@ -75,6 +75,10 @@
       "password_validation_uppercase_and_lowercase": "混合使用大小寫字母",
       "please_verify_captcha": "請驗證 reCAPTCHA",
       "privacy_policy": "隱私權政策",
+      "product_updates_description": "每月產品新聞與功能更新，適用隱私權政策。",
+      "product_updates_title": "產品更新",
+      "security_updates_description": "僅限安全相關資訊，適用隱私權政策。",
+      "security_updates_title": "安全更新",
       "terms_of_service": "服務條款",
       "title": "建立您的 Formbricks 帳戶"
     },
@@ -1008,6 +1012,7 @@
         "remove_logo": "移除標誌",
         "replace_logo": "取代標誌",
         "resend_invitation_email": "重新發送邀請電子郵件",
+        "security_list_tip": "您已訂閱我們的安全名單了嗎？保持關注，確保您的實例安全！",
         "share_invite_link": "分享邀請連結",
         "share_this_link_to_let_your_organization_member_join_your_organization": "分享此連結以讓您的組織成員加入您的組織：",
         "test_email_sent_successfully": "測試電子郵件已成功發送",

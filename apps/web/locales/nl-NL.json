@@ -75,6 +75,10 @@
       "password_validation_uppercase_and_lowercase": "Mix van hoofdletters en kleine letters",
       "please_verify_captcha": "Controleer reCAPTCHA",
       "privacy_policy": "Privacybeleid",
+      "product_updates_description": "Maandelijks productnieuws en feature-updates, privacybeleid is van toepassing.",
+      "product_updates_title": "Product-updates",
+      "security_updates_description": "Alleen beveiligingsrelevante informatie, privacybeleid is van toepassing.",
+      "security_updates_title": "Beveiligingsupdates",
       "terms_of_service": "Servicevoorwaarden",
       "title": "Maak uw Formbricks-account aan"
     },
@@ -1008,6 +1012,7 @@
         "remove_logo": "Logo verwijderen",
         "replace_logo": "Logo vervangen",
         "resend_invitation_email": "Uitnodigings-e-mail opnieuw verzenden",
+        "security_list_tip": "Ben je aangemeld voor onze beveiligingslijst? Blijf op de hoogte om je instantie veilig te houden!",
         "share_invite_link": "Deel de uitnodigingslink",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Deel deze link om uw organisatielid lid te laten worden van uw organisatie:",
         "test_email_sent_successfully": "Test-e-mail succesvol verzonden",

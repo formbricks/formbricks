@@ -75,6 +75,10 @@
       "password_validation_uppercase_and_lowercase": "Blandning av stora och små bokstäver",
       "please_verify_captcha": "Vänligen verifiera reCAPTCHA",
       "privacy_policy": "Integritetspolicy",
+      "product_updates_description": "Månatliga produktnyheter och funktionsuppdateringar. Integritetspolicyn gäller.",
+      "product_updates_title": "Produktuppdateringar",
+      "security_updates_description": "Endast säkerhetsrelaterad information. Integritetspolicyn gäller.",
+      "security_updates_title": "Säkerhetsuppdateringar",
       "terms_of_service": "Användarvillkor",
       "title": "Skapa ditt Formbricks-konto"
     },
@@ -1008,6 +1012,7 @@
         "remove_logo": "Ta bort logotyp",
         "replace_logo": "Ersätt logotyp",
         "resend_invitation_email": "Skicka inbjudningsmejl igen",
+        "security_list_tip": "Är du med på vår säkerhetslista? Håll dig informerad för att skydda din instans!",
         "share_invite_link": "Dela inbjudningslänk",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Dela denna länk för att låta din organisationsmedlem gå med i din organisation:",
         "test_email_sent_successfully": "Test-e-post skickat",

@@ -75,6 +75,10 @@
       "password_validation_uppercase_and_lowercase": "Mezcla de mayúsculas y minúsculas",
       "please_verify_captcha": "Por favor, verifica el reCAPTCHA",
       "privacy_policy": "Política de privacidad",
+      "product_updates_description": "Noticias mensuales del producto y actualizaciones de funciones, se aplica la política de privacidad.",
+      "product_updates_title": "Actualizaciones del producto",
+      "security_updates_description": "Solo información relevante sobre seguridad, se aplica la política de privacidad.",
+      "security_updates_title": "Actualizaciones de seguridad",
       "terms_of_service": "Términos de servicio",
       "title": "Crea tu cuenta de Formbricks"
     },
@@ -1008,6 +1012,7 @@
         "remove_logo": "Eliminar logotipo",
         "replace_logo": "Reemplazar logotipo",
         "resend_invitation_email": "Reenviar correo electrónico de invitación",
+        "security_list_tip": "¿Estás suscrito a nuestra lista de seguridad? ¡Mantente informado para mantener tu instancia segura!",
         "share_invite_link": "Compartir enlace de invitación",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Comparte este enlace para permitir que los miembros de tu organización se unan a tu organización:",
         "test_email_sent_successfully": "Correo electrónico de prueba enviado correctamente",
