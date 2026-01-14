@@ -61,6 +61,10 @@ checksums:
     auth/signup/password_validation_uppercase_and_lowercase: ae98b485024dbff1022f6048e22443cd
     auth/signup/please_verify_captcha: 12938ca7ca13e3f933737dd5436fa1c0
     auth/signup/privacy_policy: 7459744a63ef8af4e517a09024bd7c08
+    auth/signup/product_updates_description: f20eedb2cf42d2235b1fe0294086695b
+    auth/signup/product_updates_title: 31e099ba18abb0a49f8a75fece1f1791
+    auth/signup/security_updates_description: 4643df07f13cec619e7fd91c8f14d93b
+    auth/signup/security_updates_title: de5127f5847cdd412906607e1402f48d
     auth/signup/terms_of_service: 5add91f519e39025708e54a7eb7a9fc5
     auth/signup/title: 96addc349f834eaa5d14c786d5478b1c
     auth/signup_without_verification_success/user_successfully_created: ff849ebedc5dacb36493d7894f16edc7
@@ -954,6 +958,8 @@ checksums:
     environments/settings/general/remove_logo: f60f1803e6fc8017b1eae7c30089107f
     environments/settings/general/replace_logo: e3c8bec7574a670607e88771164e272f
     environments/settings/general/resend_invitation_email: 6305d1ffa015c377ef59fe9c2661cf02
+    environments/settings/general/security_list_tip: 0bbed89fa5265da7e07767087f87c736
+    environments/settings/general/security_list_tip_link: ccdb1a21610ebf5a626d813b155be4ba
     environments/settings/general/share_invite_link: b40b7ffbcf02d7464be52fb562df5e3a
     environments/settings/general/share_this_link_to_let_your_organization_member_join_your_organization: 6eb43d5b1c855572b7ab35f527ba953c
     environments/settings/general/test_email_sent_successfully: aa68214f5e0707c9615e01343640ab32
