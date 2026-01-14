@@ -1,5 +1,6 @@
 import {
   DEFAULT_LOCALE,
+  E2E_TESTING,
   IS_FORMBRICKS_CLOUD,
   IS_STORAGE_CONFIGURED,
   MAIL_FROM,
@@ -137,6 +138,7 @@ export const SurveyEditorPage = async (props) => {
       quotas={quotas}
       isExternalUrlsAllowed={isExternalUrlsAllowed}
       publicDomain={publicDomain}
+      isE2ETesting={E2E_TESTING}
     />
   );
 };
