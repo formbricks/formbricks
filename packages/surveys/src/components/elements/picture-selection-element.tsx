@@ -95,6 +95,7 @@ export function PictureSelectionElement({
         onChange={handleChange}
         allowMulti={element.allowMulti}
         required={element.required}
+        requiredLabel={t("common.required")}
         dir={dir}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}

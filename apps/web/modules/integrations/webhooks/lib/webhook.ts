@@ -1,4 +1,5 @@
 import { Prisma, Webhook } from "@prisma/client";
+import { v7 as uuidv7 } from "uuid";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
@@ -8,6 +9,7 @@ import {
   ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
+import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { TWebhookInput } from "../types/webhooks";
@@ -59,15 +61,19 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
   }
 };
 
-export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<boolean> => {
+export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<Webhook> => {
   try {
     if (isDiscordWebhook(webhookInput.url)) {
       throw new UnknownError("Discord webhooks are currently not supported.");
     }
-    await prisma.webhook.create({
+
+    const secret = generateWebhookSecret();
+
+    const webhook = await prisma.webhook.create({
       data: {
         ...webhookInput,
         surveyIds: webhookInput.surveyIds || [],
+        secret,
         environment: {
           connect: {
             id: environmentId,
@@ -76,7 +82,7 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
       },
     });
 
-    return true;
+    return webhook;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -121,13 +127,22 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
       throw new UnknownError("Discord webhooks are currently not supported.");
     }
 
+    const webhookMessageId = uuidv7();
+    const webhookTimestamp = Math.floor(Date.now() / 1000);
+    const body = JSON.stringify({ event: "testEndpoint" });
+
+    // Generate a temporary test secret and signature for consistency with actual webhooks
+    const testSecret = generateWebhookSecret();
+    const signature = generateStandardWebhookSignature(webhookMessageId, webhookTimestamp, body, testSecret);
+
     const response = await fetch(url, {
       method: "POST",
-      body: JSON.stringify({
-        event: "testEndpoint",
-      }),
+      body,
       headers: {
         "Content-Type": "application/json",
+        "webhook-id": webhookMessageId,
+        "webhook-timestamp": webhookTimestamp.toString(),
+        "webhook-signature": signature,
       },
       signal: controller.signal,
     });

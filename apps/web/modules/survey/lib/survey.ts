@@ -29,6 +29,7 @@ export const selectSurvey = {
   autoComplete: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
+  isCaptureIpEnabled: true,
   redirectUrl: true,
   projectOverwrites: true,
   styling: true,

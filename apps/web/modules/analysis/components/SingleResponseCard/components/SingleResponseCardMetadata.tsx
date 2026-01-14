@@ -123,6 +123,11 @@ export const SingleResponseCardMetadata = ({ response, locale }: SingleResponseC
           {t("environments.surveys.responses.country")}: {response.meta.country}
         </p>
       )}
+      {response.meta.ipAddress && (
+        <p className="truncate" title={`IP Address: ${response.meta.ipAddress}`}>
+          {t("environments.surveys.responses.ip_address")}: {response.meta.ipAddress}
+        </p>
+      )}
     </div>
   ) : null;
 

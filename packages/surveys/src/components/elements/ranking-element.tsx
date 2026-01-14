@@ -136,6 +136,7 @@ export function RankingElement({
         value={selectedValues}
         onChange={handleChange}
         required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}

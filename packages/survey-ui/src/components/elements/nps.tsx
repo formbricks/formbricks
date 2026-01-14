@@ -25,6 +25,8 @@ interface NPSProps {
   colorCoding?: boolean;
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
+  /** Custom label for the required indicator */
+  requiredLabel?: string;
   /** Error message to display */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
@@ -48,6 +50,7 @@ function NPS({
   upperLabel,
   colorCoding = false,
   required = false,
+  requiredLabel,
   errorMessage,
   dir = "auto",
   disabled = false,
@@ -171,6 +174,7 @@ function NPS({
         headline={headline}
         description={description}
         required={required}
+        requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}

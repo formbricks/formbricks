@@ -71,6 +71,7 @@ export function NPSElement({
         upperLabel={getLocalizedValue(element.upperLabel, languageCode)}
         colorCoding={element.isColorCodingEnabled}
         required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}
