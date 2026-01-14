@@ -1,5 +1,5 @@
 import { compare, hash } from "bcryptjs";
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 
@@ -140,4 +140,55 @@ export const parseApiKeyV2 = (key: string): { secret: string } | null => {
   }
 
   return { secret };
+};
+
+// Standard Webhooks secret prefix
+const WEBHOOK_SECRET_PREFIX = "whsec_";
+
+/**
+ * Generate a Standard Webhooks compliant secret
+ * Following: https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md
+ *
+ * Format: whsec_ + base64(32 random bytes)
+ * @returns A webhook secret in format "whsec_{base64_encoded_random_bytes}"
+ */
+export const generateWebhookSecret = (): string => {
+  const secretBytes = randomBytes(32); // 256 bits of entropy
+  return `${WEBHOOK_SECRET_PREFIX}${secretBytes.toString("base64")}`;
+};
+
+/**
+ * Decode a Standard Webhooks secret to get the raw bytes
+ * Strips the whsec_ prefix and base64 decodes the rest
+ *
+ * @param secret The webhook secret (with or without whsec_ prefix)
+ * @returns Buffer containing the raw secret bytes
+ */
+export const getWebhookSecretBytes = (secret: string): Buffer => {
+  const base64Part = secret.startsWith(WEBHOOK_SECRET_PREFIX)
+    ? secret.slice(WEBHOOK_SECRET_PREFIX.length)
+    : secret;
+  return Buffer.from(base64Part, "base64");
+};
+
+/**
+ * Generate Standard Webhooks compliant signature
+ * Following: https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md
+ *
+ * @param webhookId Unique message identifier
+ * @param timestamp Unix timestamp in seconds
+ * @param payload The request body as a string
+ * @param secret The shared secret (whsec_ prefixed)
+ * @returns The signature in format "v1,{base64_signature}"
+ */
+export const generateStandardWebhookSignature = (
+  webhookId: string,
+  timestamp: number,
+  payload: string,
+  secret: string
+): string => {
+  const signedContent = `${webhookId}.${timestamp}.${payload}`;
+  const secretBytes = getWebhookSecretBytes(secret);
+  const signature = createHmac("sha256", secretBytes).update(signedContent).digest("base64");
+  return `v1,${signature}`;
 };

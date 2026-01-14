@@ -48,6 +48,169 @@ If you encounter any issues or need help setting up webhooks, feel free to reach
 
 ---
 
+## Webhook Security with Standard Webhooks
+
+Formbricks implements the [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks) specification to ensure webhook requests can be verified as genuinely originating from Formbricks.
+
+### Webhook Headers
+
+Every webhook request includes the following headers:
+
+| Header              | Description                                          | Example                                |
+| ------------------- | ---------------------------------------------------- | -------------------------------------- |
+| `webhook-id`        | Unique message identifier                            | `019ba292-c1f6-7618-aaf2-ecf8e39d1cc7` |
+| `webhook-timestamp` | Unix timestamp (seconds) when the webhook was sent   | `1704547200`                           |
+| `webhook-signature` | HMAC-SHA256 signature (only if secret is configured) | `v1,K3Q2bXlzZWNyZXQ=`                  |
+
+### Signing Secret
+
+When you create a webhook (via the UI or API), Formbricks automatically generates a unique signing secret for that webhook. The secret follows the Standard Webhooks format: `whsec_` followed by a base64-encoded random value.
+
+**Via UI:** After creating a webhook, the signing secret is displayed immediately. Copy and store it securely—you can also view it later in the webhook settings.
+
+**Via API:** The signing secret is returned in the webhook creation response.
+
+This secret is used to generate the HMAC signature included in each webhook request, allowing you to verify the authenticity of incoming webhooks.
+
+### Signature Verification
+
+The signature is computed as follows:
+
+```
+signed_content = "{webhook-id}.{webhook-timestamp}.{body}"
+signature = base64(HMAC-SHA256(secret, signed_content))
+header_value = "v1,{signature}"
+```
+
+### Validating Webhooks
+
+To validate incoming webhook requests:
+
+1. Extract the `webhook-id`, `webhook-timestamp`, and `webhook-signature` headers
+2. Verify the timestamp is within an acceptable tolerance (e.g., 5 minutes) to prevent replay attacks
+3. Decode the secret by stripping the `whsec_` prefix and base64 decoding the rest
+4. Compute the expected signature using HMAC-SHA256 with the decoded secret
+5. Compare your computed signature with the received signature (after stripping the `v1,` prefix)
+
+### Node.js Verification Functions
+
+```javascript
+const crypto = require("crypto");
+
+const WEBHOOK_TOLERANCE_IN_SECONDS = 300; // 5 minutes
+
+/**
+ * Decodes a Formbricks webhook secret (whsec_...) to raw bytes
+ */
+function decodeSecret(secret) {
+  const base64 = secret.startsWith("whsec_") ? secret.slice(6) : secret;
+  return Buffer.from(base64, "base64");
+}
+
+/**
+ * Verifies the webhook timestamp is within tolerance
+ * @throws {Error} if timestamp is too old or too new
+ */
+function verifyTimestamp(timestampHeader) {
+  const now = Math.floor(Date.now() / 1000);
+  const timestamp = parseInt(timestampHeader, 10);
+
+  if (isNaN(timestamp)) {
+    throw new Error("Invalid timestamp");
+  }
+
+  if (Math.abs(now - timestamp) > WEBHOOK_TOLERANCE_IN_SECONDS) {
+    throw new Error("Timestamp outside tolerance window");
+  }
+
+  return timestamp;
+}
+
+/**
+ * Computes the expected signature for a webhook payload
+ */
+function computeSignature(webhookId, timestamp, body, secret) {
+  const signedContent = `${webhookId}.${timestamp}.${body}`;
+  const secretBytes = decodeSecret(secret);
+  return crypto.createHmac("sha256", secretBytes).update(signedContent).digest("base64");
+}
+
+/**
+ * Verifies a Formbricks webhook request
+ * @param {string} body - Raw request body as string
+ * @param {object} headers - Object containing webhook-id, webhook-timestamp, webhook-signature
+ * @param {string} secret - Your webhook secret (whsec_...)
+ * @returns {boolean} true if valid
+ * @throws {Error} if verification fails
+ */
+function verifyWebhook(body, headers, secret) {
+  const webhookId = headers["webhook-id"];
+  const webhookTimestamp = headers["webhook-timestamp"];
+  const webhookSignature = headers["webhook-signature"];
+
+  if (!webhookId || !webhookTimestamp || !webhookSignature) {
+    throw new Error("Missing required webhook headers");
+  }
+
+  // Verify timestamp
+  const timestamp = verifyTimestamp(webhookTimestamp);
+
+  // Compute expected signature
+  const expectedSignature = computeSignature(webhookId, timestamp, body, secret);
+
+  // Extract signature from header (format: "v1,{signature}")
+  const receivedSignature = webhookSignature.split(",")[1];
+
+  if (!receivedSignature) {
+    throw new Error("Invalid signature format");
+  }
+
+  // Use constant-time comparison to prevent timing attacks
+  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
+  const receivedBuffer = Buffer.from(receivedSignature, "utf8");
+
+  if (
+    expectedBuffer.length !== receivedBuffer.length ||
+    !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  ) {
+    throw new Error("Invalid signature");
+  }
+
+  return true;
+}
+
+module.exports = { verifyWebhook, decodeSecret, computeSignature, verifyTimestamp };
+```
+
+**Usage:**
+
+```javascript
+// In your webhook handler, use the raw body (not parsed JSON)
+try {
+  verifyWebhook(rawBody, req.headers, process.env.FORMBRICKS_WEBHOOK_SECRET);
+  const payload = JSON.parse(rawBody);
+  // Process verified webhook...
+} catch (error) {
+  // Verification failed - reject the request
+  console.error("Webhook verification failed:", error.message);
+}
+```
+
+<Note>
+  Always use the **raw request body** (as a string) for signature verification, not the parsed JSON object.
+  Parsing and re-stringifying can change the formatting and break signature validation.
+</Note>
+
+### Using Standard Webhooks Libraries
+
+You can also use the official [Standard Webhooks libraries](https://github.com/standard-webhooks/standard-webhooks#libraries) available for various languages:
+
+- **Node.js**: `npm install standardwebhooks`
+- **Python**: `pip install standardwebhooks`
+- **Go, Ruby, Java, Kotlin, PHP, Rust**: See the [Standard Webhooks GitHub](https://github.com/standard-webhooks/standard-webhooks)
+
+---
+
 ## Example Webhook Payloads
 
 We provide the following webhook payloads, `responseCreated`, `responseUpdated`, and `responseFinished`.
@@ -82,10 +245,10 @@ Example of Response Created webhook payload:
       },
       "singleUseId": null,
       "survey": {
+        "createdAt": "2025-07-20T10:30:00.000Z",
+        "status": "inProgress",
         "title": "Customer Satisfaction Survey",
         "type": "link",
-        "status": "inProgress",
-        "createdAt": "2025-07-20T10:30:00.000Z",
         "updatedAt": "2025-07-24T07:45:00.000Z"
       },
       "surveyId": "surveyId",
@@ -133,10 +296,10 @@ Example of Response Updated webhook payload:
       },
       "singleUseId": null,
       "survey": {
+        "createdAt": "2025-07-20T10:30:00.000Z",
+        "status": "inProgress",
         "title": "Customer Satisfaction Survey",
         "type": "link",
-        "status": "inProgress",
-        "createdAt": "2025-07-20T10:30:00.000Z",
         "updatedAt": "2025-07-24T07:45:00.000Z"
       },
       "surveyId": "surveyId",
@@ -185,10 +348,10 @@ Example of Response Finished webhook payload:
       },
       "singleUseId": null,
       "survey": {
+        "createdAt": "2025-07-20T10:30:00.000Z",
+        "status": "inProgress",
         "title": "Customer Satisfaction Survey",
         "type": "link",
-        "status": "inProgress",
-        "createdAt": "2025-07-20T10:30:00.000Z",
         "updatedAt": "2025-07-24T07:45:00.000Z"
       },
       "surveyId": "surveyId",

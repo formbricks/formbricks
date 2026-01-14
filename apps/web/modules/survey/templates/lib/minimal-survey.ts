@@ -43,4 +43,5 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   isBackButtonHidden: false,
   metadata: {},
   slug: null,
+  isCaptureIpEnabled: false,
 });

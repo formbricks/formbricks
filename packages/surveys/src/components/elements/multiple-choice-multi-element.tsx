@@ -263,6 +263,7 @@ export function MultipleChoiceMultiElement({
         value={selectedValues}
         onChange={handleMultiSelectChange}
         required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
         otherOptionId={otherOption?.id}
