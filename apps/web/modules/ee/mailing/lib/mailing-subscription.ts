@@ -7,9 +7,8 @@ import { validateInputs } from "@/lib/utils/validate";
 export type TMailingListId = "security" | "product-updates";
 
 const MAILING_LIST_ENDPOINTS: Record<TMailingListId, string> = {
-  // TODO: Update endpoint URLs for production
-  security: "http://localhost:8080/api/v1/public/mailing/security/subscriptions",
-  "product-updates": "http://localhost:8080/api/v1/public/mailing/product-updates/subscriptions",
+  security: "https://ee.formbricks.com/api/v1/public/mailing/security/subscriptions",
+  "product-updates": "https://ee.formbricks.com/api/v1/public/mailing/product-updates/subscriptions",
 } as const;
 
 const EE_SERVER_TIMEOUT_MS = 5000;
