@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { z } from "zod";
 // Used for parity check in tests only
 import { validateEmail, validatePhone, validateUrl } from "./validation";
@@ -19,7 +19,7 @@ describe("Validation Logic Parity", () => {
     ];
 
     testCases.forEach((email) => {
-      it(`should match Zod behavior for email: "${email}"`, () => {
+      test(`should match Zod behavior for email: "${email}"`, () => {
         const zodResult = zodEmail.safeParse(email).success;
         const myResult = validateEmail(email);
 
@@ -43,7 +43,7 @@ describe("Validation Logic Parity", () => {
     ];
 
     testCases.forEach((url) => {
-      it(`should match Zod behavior for URL: "${url}"`, () => {
+      test(`should match Zod behavior for URL: "${url}"`, () => {
         const zodResult = zodUrl.safeParse(url).success;
         const myResult = validateUrl(url);
 
@@ -71,7 +71,7 @@ describe("Validation Logic Parity", () => {
     ];
 
     testCases.forEach(({ input, expected }) => {
-      it(`should validate phone "${input}" as ${expected}`, () => {
+      test(`should validate phone "${input}" as ${expected}`, () => {
         expect(validatePhone(input)).toBe(expected);
       });
     });
