@@ -10,7 +10,7 @@
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next build",
     "build:dev": "pnpm run build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . --fix --ext .ts,.js,.tsx,.jsx",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
     "generate-api-specs": "./scripts/openapi/generate.sh",
