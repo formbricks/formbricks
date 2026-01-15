@@ -11,8 +11,7 @@
     "clean": "rimraf .turbo node_modules dist storybook-static"
   },
   "dependencies": {
-    "@formbricks/survey-ui": "workspace:*",
-    "eslint-plugin-react-refresh": "0.4.26"
+    "@formbricks/survey-ui": "workspace:*"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.0",
@@ -25,6 +24,7 @@
     "@typescript-eslint/parser": "8.53.0",
     "@vitejs/plugin-react": "5.1.2",
     "esbuild": "0.27.2",
+    "eslint-plugin-react-refresh": "0.4.26",
     "eslint-plugin-storybook": "10.1.11",
     "prop-types": "15.8.1",
     "storybook": "10.1.11",

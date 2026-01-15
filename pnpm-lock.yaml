@@ -69,9 +69,6 @@ importers:
       '@formbricks/survey-ui':
         specifier: workspace:*
         version: link:../../packages/survey-ui
-      eslint-plugin-react-refresh:
-        specifier: 0.4.26
-        version: 0.4.26(eslint@8.57.0)
     devDependencies:
       '@chromatic-com/storybook':
         specifier: ^5.0.0
@@ -106,6 +103,9 @@ importers:
       esbuild:
         specifier: 0.27.2
         version: 0.27.2
+      eslint-plugin-react-refresh:
+        specifier: 0.4.26
+        version: 0.4.26(eslint@8.57.0)
       eslint-plugin-storybook:
         specifier: 10.1.11
         version: 10.1.11(eslint@8.57.0)(storybook@10.1.11(@testing-library/dom@8.20.1)(prettier@3.5.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.8.3)
