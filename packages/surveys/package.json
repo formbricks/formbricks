@@ -44,7 +44,7 @@
     "i18next": "25.5.2",
     "i18next-icu": "2.4.0",
     "isomorphic-dompurify": "2.33.0",
-    "preact": "10.26.6",
+    "preact": "10.26.10",
     "react-i18next": "15.7.3"
   },
   "devDependencies": {

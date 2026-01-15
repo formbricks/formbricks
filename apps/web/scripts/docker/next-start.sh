@@ -48,10 +48,10 @@ run_with_timeout() {
 
 
 echo "🗃️ Running database migrations..."
-run_with_timeout 300 "database migration" sh -c '(cd packages/database && npm run db:migrate:deploy)'
+run_with_timeout 300 "database migration" node packages/database/dist/scripts/apply-migrations.js
 
 echo "🗃️ Running SAML database setup..."
-run_with_timeout 60 "SAML database setup" sh -c '(cd packages/database && npm run db:create-saml-database:deploy)'
+run_with_timeout 60 "SAML database setup" node packages/database/dist/scripts/create-saml-database.js
 
 echo "✅ Database setup completed"
 echo "🚀 Starting Next.js server..."
