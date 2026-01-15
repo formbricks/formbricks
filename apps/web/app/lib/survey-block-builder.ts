@@ -302,7 +302,9 @@ export const buildBlock = ({
     elements,
     logic,
     logicFallback,
-    buttonLabel: getDefaultButtonLabel(buttonLabel, t),
-    backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
+    buttonLabel: buttonLabel ? getDefaultButtonLabel(buttonLabel, t) : createI18nString(t(""), []),
+    backButtonLabel: backButtonLabel
+      ? getDefaultBackButtonLabel(backButtonLabel, t)
+      : createI18nString(t(""), []),
   };
 };
