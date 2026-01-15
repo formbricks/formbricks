@@ -302,7 +302,7 @@ export const buildBlock = ({
     elements,
     logic,
     logicFallback,
-    buttonLabel: buttonLabel ? getDefaultButtonLabel(buttonLabel, t) : undefined,
-    backButtonLabel: backButtonLabel ? getDefaultBackButtonLabel(backButtonLabel, t) : undefined,
+    buttonLabel: getDefaultButtonLabel(buttonLabel, t),
+    backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
   };
 };
