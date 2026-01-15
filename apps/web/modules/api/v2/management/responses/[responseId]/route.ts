@@ -15,6 +15,7 @@ import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[respo
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
+import { formatValidationErrorsForApi, validateResponseData } from "../lib/validation";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
@@ -190,6 +191,25 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
             },
           ],
         });
+      }
+
+      // Validate response data against validation rules
+      const validationErrors = validateResponseData(
+        questionsResponse.data.blocks,
+        body.data,
+        body.language ?? "en",
+        questionsResponse.data.questions
+      );
+
+      if (validationErrors) {
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: formatValidationErrorsForApi(validationErrors),
+          },
+          auditLog
+        );
       }
 
       const response = await updateResponseWithQuotaEvaluation(params.responseId, body);

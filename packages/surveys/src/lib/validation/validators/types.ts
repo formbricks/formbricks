@@ -23,6 +23,7 @@ export interface TValidator<P extends TValidationRuleParams = TValidationRulePar
   /**
    * Get the default error message for this rule
    * Element is passed to allow element-specific error messages
+   * If t is not provided, returns a plain English string
    */
-  getDefaultMessage: (params: P, element: TSurveyElement, t: TFunction) => string;
+  getDefaultMessage: (params: P, element: TSurveyElement, t?: TFunction) => string;
 }

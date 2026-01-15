@@ -1,4 +1,3 @@
-import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
@@ -7,7 +6,7 @@ import { migrateSurveyBlocks } from "./utils";
 
 export const migrateLegacyValidationToRules: MigrationScript = {
   type: "data",
-  id: createId(),
+  id: "clx8k9m2n0001l508xyz12345",
   name: "20260113123112_migrate_legacy_validation_to_rules",
   run: async ({ tx }) => {
     // Initialize migration statistics
