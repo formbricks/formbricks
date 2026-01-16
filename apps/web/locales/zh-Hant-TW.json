@@ -1589,11 +1589,14 @@
         "url_filters": "網址篩選器",
         "url_not_supported": "不支援網址",
         "validation": {
+          "add_validation_rule": "新增驗證規則",
           "answer_all_rows": "請填答所有列",
           "characters": "字元",
           "contains": "包含",
+          "delete_validation_rule": "刪除驗證規則",
           "does_not_contain": "不包含",
           "email": "是有效的電子郵件",
+          "end_date": "結束日期",
           "file_extension_is": "檔案副檔名為",
           "file_extension_is_not": "檔案副檔名不是",
           "is": "等於",
@@ -1619,6 +1622,8 @@
           "phone": "是有效的電話號碼",
           "rank_all_options": "請為所有選項排序",
           "select_file_extensions": "請選擇檔案副檔名...",
+          "select_option": "選擇選項",
+          "start_date": "開始日期",
           "url": "是有效的 URL"
         },
         "validation_logic_and": "全部為真",

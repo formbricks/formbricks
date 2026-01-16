@@ -5,7 +5,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyElementTypeEnum, TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
@@ -185,7 +185,7 @@ export const PictureSelectionForm = ({
       </div>
       {element.allowMulti && (
         <ValidationRulesEditor
-          elementType={TSurveyElementTypeEnum.PictureSelection}
+          elementType={element.type}
           validation={element.validation}
           onUpdateValidation={(validation) => {
             updateElement(elementIdx, {

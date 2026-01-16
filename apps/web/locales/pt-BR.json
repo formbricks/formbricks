@@ -1589,11 +1589,14 @@
         "url_filters": "Filtros de URL",
         "url_not_supported": "URL não suportada",
         "validation": {
+          "add_validation_rule": "Adicionar regra de validação",
           "answer_all_rows": "Responda todas as linhas",
           "characters": "Caracteres",
           "contains": "Contém",
+          "delete_validation_rule": "Excluir regra de validação",
           "does_not_contain": "Não contém",
           "email": "É um e-mail válido",
+          "end_date": "Data final",
           "file_extension_is": "A extensão do arquivo é",
           "file_extension_is_not": "A extensão do arquivo não é",
           "is": "É",
@@ -1619,6 +1622,8 @@
           "phone": "É um telefone válido",
           "rank_all_options": "Classificar todas as opções",
           "select_file_extensions": "Selecionar extensões de arquivo...",
+          "select_option": "Selecionar opção",
+          "start_date": "Data inicial",
           "url": "É uma URL válida"
         },
         "validation_logic_and": "Todas são verdadeiras",

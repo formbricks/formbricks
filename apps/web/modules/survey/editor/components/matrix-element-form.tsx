@@ -9,7 +9,7 @@ import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyElementTypeEnum, TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -349,7 +349,7 @@ export const MatrixElementForm = ({
         </div>
       </div>
       <ValidationRulesEditor
-        elementType={TSurveyElementTypeEnum.Matrix}
+        elementType={element.type}
         validation={element.validation}
         onUpdateValidation={(validation) => {
           updateElement(elementIdx, {

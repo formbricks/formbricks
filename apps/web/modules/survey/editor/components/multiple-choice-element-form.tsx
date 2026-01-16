@@ -402,7 +402,7 @@ export const MultipleChoiceElementForm = ({
 
       {element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && (
         <ValidationRulesEditor
-          elementType={TSurveyElementTypeEnum.MultipleChoiceMulti}
+          elementType={element.type}
           validation={element.validation}
           onUpdateValidation={(validation) => {
             updateElement(elementIdx, {

@@ -4,8 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { JSX } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  TSurveyElementTypeEnum,
+import type {
   TSurveyOpenTextElement,
   TSurveyOpenTextElementInputType,
 } from "@formbricks/types/surveys/elements";
@@ -143,7 +142,7 @@ export const OpenElementForm = ({
         </div>
 
         <ValidationRulesEditor
-          elementType={TSurveyElementTypeEnum.OpenText}
+          elementType={element.type}
           validation={element.validation}
           onUpdateValidation={(validation) => {
             updateElement(elementIdx, {
@@ -154,10 +153,6 @@ export const OpenElementForm = ({
           onUpdateInputType={(newInputType) => {
             updateElement(elementIdx, {
               inputType: newInputType,
-              // Update placeholder if not already set
-              placeholder:
-                element.placeholder ||
-                createI18nString(getPlaceholderByInputType(newInputType), surveyLanguageCodes),
               longAnswer: newInputType === "text",
             });
           }}

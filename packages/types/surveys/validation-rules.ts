@@ -1,4 +1,7 @@
+import type { TFunction } from "i18next";
 import { z } from "zod";
+import type { TResponseDataValue } from "../responses";
+import type { TSurveyElement } from "./elements";
 
 // Field types for field-specific validation (address and contact info elements)
 export const ZAddressField = z.enum(["addressLine1", "addressLine2", "city", "state", "zip", "country"]);
@@ -335,3 +338,23 @@ export interface TValidationResult {
 
 // Error map for block-level validation (keyed by elementId)
 export type TValidationErrorMap = Record<string, TValidationError[]>;
+
+/**
+ * Result of a validator check
+ */
+export interface TValidatorCheckResult {
+  valid: boolean;
+}
+
+/**
+ * Generic validator interface
+ * Uses type assertions internally to handle the discriminated union params
+ */
+export interface TValidator {
+  check: (
+    value: TResponseDataValue,
+    params: TValidationRuleParams,
+    element: TSurveyElement
+  ) => TValidatorCheckResult;
+  getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction) => string;
+}

@@ -29,28 +29,10 @@ import type {
   TValidationRuleParamsPhone,
   TValidationRuleParamsUrl,
   TValidationRuleType,
+  TValidator,
+  TValidatorCheckResult,
 } from "@formbricks/types/surveys/validation-rules";
 import { countSelections } from "./validators/selection-utils";
-
-/**
- * Result of a validator check
- */
-export interface TValidatorCheckResult {
-  valid: boolean;
-}
-
-/**
- * Generic validator interface
- * Uses type assertions internally to handle the discriminated union params
- */
-export interface TValidator {
-  check: (
-    value: TResponseDataValue,
-    params: TValidationRuleParams,
-    element: TSurveyElement
-  ) => TValidatorCheckResult;
-  getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction) => string;
-}
 
 // Phone regex: may start with +, must end with digit
 // Allows digits, -, and spaces in between (plus is only allowed as the first char)

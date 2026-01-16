@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon, TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import {
   TSurveyElement,
@@ -61,6 +62,7 @@ export const ValidationRuleRow = ({
   onAdd,
   canAddMore,
 }: ValidationRuleRowProps) => {
+  const { t } = useTranslation();
   const ruleType = rule.type;
   const config = RULE_TYPE_CONFIG[ruleType];
   const currentValue = getRuleValue(rule);
@@ -147,7 +149,7 @@ export const ValidationRuleRow = ({
         type="button"
         onClick={() => onDelete(rule.id)}
         className="shrink-0 bg-white"
-        aria-label="Delete validation rule">
+        aria-label={t("environments.surveys.edit.validation.delete_validation_rule")}>
         <TrashIcon className="h-4 w-4" />
       </Button>
 
@@ -159,7 +161,7 @@ export const ValidationRuleRow = ({
           type="button"
           onClick={() => onAdd(index)}
           className="shrink-0 bg-white"
-          aria-label="Add validation rule">
+          aria-label={t("environments.surveys.edit.validation.add_validation_rule")}>
           <PlusIcon className="h-4 w-4" />
         </Button>
       )}

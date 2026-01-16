@@ -1589,11 +1589,14 @@
         "url_filters": "URL 过滤器",
         "url_not_supported": "URL 不支持",
         "validation": {
+          "add_validation_rule": "添加验证规则",
           "answer_all_rows": "请填写所有行",
           "characters": "字符",
           "contains": "包含",
+          "delete_validation_rule": "删除验证规则",
           "does_not_contain": "不包含",
           "email": "是有效的邮箱地址",
+          "end_date": "结束日期",
           "file_extension_is": "文件扩展名为",
           "file_extension_is_not": "文件扩展名不是",
           "is": "等于",
@@ -1619,6 +1622,8 @@
           "phone": "是有效的手机号",
           "rank_all_options": "对所有选项进行排序",
           "select_file_extensions": "选择文件扩展名...",
+          "select_option": "选择选项",
+          "start_date": "开始日期",
           "url": "是有效的URL"
         },
         "validation_logic_and": "全部为真",
