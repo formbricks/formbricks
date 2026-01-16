@@ -11,7 +11,7 @@ Rating questions allow respondents to rate questions on a scale. Displays a titl
   src="https://app.formbricks.com/s/cx7u4n6hwvc3nztuk4vdezl9"
   style={{
     position: "relative",
-    height: "90vh",
+    height: "600px",
     maxHeight: "100vh",
     width: "100%",
     border: 0,
@@ -43,3 +43,30 @@ Select the range of the rating scale. the options include: 3, 4, 5, 7 or 10. The
 ### Labels
 
 Add labels for the lower and upper bounds of the rating scale. The default is "Not good" and "Very good".
+
+## CSAT Summary
+
+After collecting responses, rating questions display a CSAT (Customer Satisfaction) score with a visual traffic light indicator to help you quickly assess satisfaction levels:
+
+- 🟢 **Green** (> 80%): High satisfaction - your users are very satisfied
+- 🟠 **Orange** (55-80%): Moderate satisfaction - there's room for improvement
+- 🔴 **Red** (< 55%): Low satisfaction - immediate attention needed
+
+<Note>The traffic light indicator appears automatically in the survey summary view, giving you instant feedback on user satisfaction without needing to dig into the data.</Note>
+
+### How CSAT is Calculated
+
+The CSAT percentage represents the proportion of respondents who gave a "satisfied" rating. What counts as "satisfied" depends on your selected range:
+
+| Range | Satisfied Ratings | Examples |
+|-------|------------------|----------|
+| 3 | Highest rating only | ⭐⭐⭐ |
+| 4 | Top 2 ratings | ⭐⭐⭐ or ⭐⭐⭐⭐ |
+| 5 | Top 2 ratings | ⭐⭐⭐⭐ or ⭐⭐⭐⭐⭐ |
+| 6 | Top 2 ratings | 5 or 6 |
+| 7 | Top 2 ratings | 6 or 7 |
+| 10 | Top 3 ratings | 8, 9, or 10 |
+
+<Note>
+**Pro Tip:** For most use cases, a 5-point scale with star or smiley icons provides the best balance between granularity and user experience. Users find it easy to understand and quick to complete.
+</Note>
