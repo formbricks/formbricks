@@ -262,7 +262,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("button", { name: "Select" }).click();
     await page.getByRole("textbox", { name: "Search items" }).click();
     await page.getByRole("textbox", { name: "Search items" }).fill("German");
-    await page.getByText("German").nth(1).click();
+    await page.getByText("German", { exact: true }).nth(1).click();
     await page.getByRole("button", { name: "Save changes" }).click();
     await page.waitForTimeout(2000);
     await page.getByRole("link", { name: "Surveys" }).click();
