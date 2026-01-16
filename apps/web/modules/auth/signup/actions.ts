@@ -127,7 +127,12 @@ async function handleInviteAcceptance(
     },
   });
 
-  await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
+  await sendInviteAcceptedEmail(
+    invite.creator.name ?? "",
+    user.name,
+    invite.creator.email,
+    invite.creator.locale
+  );
   await deleteInvite(invite.id);
 }
 
