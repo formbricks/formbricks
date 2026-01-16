@@ -64,11 +64,13 @@
 
 *::-webkit-scrollbar-track {
   background: #e2e8f0;
+  border-radius: 10px;
 }
 
 *::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border: 1px solid #cbd5e1;
+  border-radius: 10px;
 }
 
 .filter-scrollbar::-webkit-scrollbar {

@@ -15,6 +15,7 @@ import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
@@ -48,6 +49,7 @@ interface SignupFormProps {
   samlTenant: string;
   samlProduct: string;
   turnstileSiteKey?: string;
+  isFormbricksCloud: boolean;
 }
 
 export const SignupForm = ({
@@ -69,6 +71,7 @@ export const SignupForm = ({
   samlTenant,
   samlProduct,
   turnstileSiteKey,
+  isFormbricksCloud,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -76,6 +79,8 @@ export const SignupForm = ({
   const inviteToken = searchParams?.get("inviteToken");
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string>();
+  const [subscribeToSecurityUpdates, setSubscribeToSecurityUpdates] = useState(false);
+  const [subscribeToProductUpdates, setSubscribeToProductUpdates] = useState(false);
 
   const turnstile = useTurnstile();
 
@@ -110,6 +115,9 @@ export const SignupForm = ({
         inviteToken: inviteToken ?? "",
         emailVerificationDisabled,
         turnstileToken,
+        isFormbricksCloud,
+        subscribeToSecurityUpdates,
+        subscribeToProductUpdates,
       });
 
       const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
@@ -238,6 +246,43 @@ export const SignupForm = ({
                 }}
               />
             )}
+
+            {showLogin &&
+              (isFormbricksCloud ? (
+                <label
+                  htmlFor="product-updates"
+                  className="my-4 flex cursor-pointer space-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
+                  <Checkbox
+                    id="product-updates"
+                    checked={subscribeToProductUpdates}
+                    onCheckedChange={(checked) => setSubscribeToProductUpdates(checked === true)}
+                    className="mt-0.5 h-4 w-4"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-slate-700">
+                      {t("auth.signup.product_updates_title")}
+                    </span>
+                    <p className="text-xs text-slate-500">{t("auth.signup.product_updates_description")}</p>
+                  </div>
+                </label>
+              ) : (
+                <label
+                  htmlFor="security-updates"
+                  className="my-4 flex cursor-pointer space-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
+                  <Checkbox
+                    id="security-updates"
+                    checked={subscribeToSecurityUpdates}
+                    onCheckedChange={(checked) => setSubscribeToSecurityUpdates(checked === true)}
+                    className="mt-0.5 h-4 w-4"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-slate-700">
+                      {t("auth.signup.security_updates_title")}
+                    </span>
+                    <p className="text-xs text-slate-500">{t("auth.signup.security_updates_description")}</p>
+                  </div>
+                </label>
+              ))}
 
             {showLogin && (
               <Button
