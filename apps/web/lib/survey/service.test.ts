@@ -308,6 +308,10 @@ describe("Tests for updateSurvey", () => {
       const updatedSurvey = await updateSurvey(updateSurveyInput);
       expect(updatedSurvey).toEqual(mockTransformedSurveyOutput);
     });
+
+    // Note: Language handling tests (for languages.length > 0 fix) are covered in
+    // apps/web/modules/survey/editor/lib/survey.test.ts where we have better control
+    // over the test mocks. The key fix ensures languages.length > 0 (not > 1) is used.
   });
 
   describe("Sad Path", () => {

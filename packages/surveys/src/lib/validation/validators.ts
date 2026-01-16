@@ -1,5 +1,4 @@
 import type { TFunction } from "i18next";
-import { ZEmail, ZUrl } from "@formbricks/types/common";
 import type { TResponseDataValue } from "@formbricks/types/responses";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type {
@@ -33,10 +32,7 @@ import type {
   TValidatorCheckResult,
 } from "@formbricks/types/surveys/validation-rules";
 import { countSelections } from "./validators/selection-utils";
-
-// Phone regex: may start with +, must end with digit
-// Allows digits, -, and spaces in between (plus is only allowed as the first char)
-const PHONE_REGEX = /^\+?\d[\d\- ]*\d$/;
+import { validateEmail, validatePhone, validateUrl } from "./validators/validation-utils";
 
 /**
  * Check if a value is empty
@@ -139,7 +135,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       if (!value || typeof value !== "string" || value === "") {
         return { valid: true };
       }
-      return { valid: ZEmail.safeParse(value).success };
+      return { valid: validateEmail(value) };
     },
     getDefaultMessage: (
       _params: TValidationRuleParamsEmail,
@@ -156,7 +152,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       if (!value || typeof value !== "string" || value === "") {
         return { valid: true };
       }
-      return { valid: ZUrl.safeParse(value).success };
+      return { valid: validateUrl(value) };
     },
     getDefaultMessage: (
       _params: TValidationRuleParamsUrl,
@@ -173,7 +169,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       if (!value || typeof value !== "string" || value === "") {
         return { valid: true };
       }
-      return { valid: PHONE_REGEX.test(value) };
+      return { valid: validatePhone(value) };
     },
     getDefaultMessage: (
       _params: TValidationRuleParamsPhone,

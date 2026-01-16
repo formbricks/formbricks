@@ -3203,7 +3203,7 @@ const validateBlockConditions = (
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
-            const validElementTypes = [TSurveyElementTypeEnum.OpenText];
+            const validElementTypes: TSurveyElementTypeEnum[] = [TSurveyElementTypeEnum.OpenText];
 
             if (element.inputType === "number") {
               validElementTypes.push(...[TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS]);
@@ -3410,7 +3410,10 @@ const validateBlockConditions = (
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
-            const validElementTypes = [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date];
+            const validElementTypes: TSurveyElementTypeEnum[] = [
+              TSurveyElementTypeEnum.OpenText,
+              TSurveyElementTypeEnum.Date,
+            ];
             if (!validElementTypes.includes(elem.data.type)) {
               issues.push({
                 code: z.ZodIssueCode.custom,
@@ -3600,7 +3603,7 @@ const validateBlockActions = (
 
       if (variable.type === "text") {
         if (action.value.type === "element") {
-          const allowedElements = [
+          const allowedElements: TSurveyElementTypeEnum[] = [
             TSurveyElementTypeEnum.OpenText,
             TSurveyElementTypeEnum.MultipleChoiceSingle,
             TSurveyElementTypeEnum.Rating,
@@ -3623,7 +3626,10 @@ const validateBlockActions = (
       }
 
       if (action.value.type === "element") {
-        const allowedElements = [TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS];
+        const allowedElements: TSurveyElementTypeEnum[] = [
+          TSurveyElementTypeEnum.Rating,
+          TSurveyElementTypeEnum.NPS,
+        ];
 
         const selectedElement = allElements.get(action.value.value);
 
