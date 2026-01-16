@@ -71,12 +71,12 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
       secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
       ...(SMTP_AUTHENTICATED
         ? {
-            auth: {
-              type: "LOGIN",
-              user: SMTP_USER,
-              pass: SMTP_PASSWORD,
-            },
-          }
+          auth: {
+            type: "LOGIN",
+            user: SMTP_USER,
+            pass: SMTP_PASSWORD,
+          },
+        }
         : {}),
       tls: {
         rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS,
@@ -257,12 +257,12 @@ export const sendResponseFinishedEmail = async (
     to: email,
     subject: personEmail
       ? t("emails.response_finished_email_subject_with_email", {
-          personEmail,
-          surveyName: survey.name,
-        })
+        personEmail,
+        surveyName: survey.name,
+      })
       : t("emails.response_finished_email_subject", {
-          surveyName: survey.name,
-        }),
+        surveyName: survey.name,
+      }),
     replyTo: personEmail?.toString() ?? MAIL_FROM,
     html,
   });
