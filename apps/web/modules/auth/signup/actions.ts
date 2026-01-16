@@ -173,7 +173,7 @@ async function handlePostUserCreation(
   }
 
   if (!emailVerificationDisabled) {
-    await sendVerificationEmail(user);
+    await sendVerificationEmail({ id: user.id, email: user.email, locale: user.locale });
   }
 }
 
