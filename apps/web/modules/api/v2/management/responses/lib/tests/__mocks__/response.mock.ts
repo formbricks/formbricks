@@ -93,4 +93,5 @@ export const responseFilter: TGetResponsesFilter = {
   skip: 0,
   sortBy: "createdAt",
   order: "asc",
+  expand: [],
 };

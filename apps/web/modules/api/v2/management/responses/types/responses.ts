@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { ZResponse } from "@formbricks/database/zod/responses";
+import { ZExpandParam } from "@/modules/api/v2/management/responses/lib/expand";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export const ZGetResponsesFilter = ZGetFilter.extend({
   surveyId: z.string().cuid2().optional(),
   contactId: z.string().optional(),
+  expand: ZExpandParam,
 }).refine(
   (data) => {
     if (data.startDate && data.endDate && data.startDate > data.endDate) {
