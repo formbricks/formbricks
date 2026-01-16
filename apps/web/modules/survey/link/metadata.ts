@@ -47,10 +47,10 @@ export const getMetadataForLinkSurvey = async (
     },
     robots: {
       index: false,
-      follow: true,
+      follow: false,
       googleBot: {
         index: false,
-        follow: true,
+        follow: false,
         noimageindex: true,
       },
     },
