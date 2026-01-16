@@ -1107,6 +1107,9 @@ checksums:
     environments/surveys/edit/assign: e80715ab64bf7cf463abb3a9fd1ad516
     environments/surveys/edit/audience: a4d9fab4214a641e2d358fbb28f010e0
     environments/surveys/edit/auto_close_on_inactivity: 093db516799315ccd4242a3675693012
+    environments/surveys/edit/auto_save_disabled: f7411fb0dcfb8f7b19b85f0be54f2231
+    environments/surveys/edit/auto_save_disabled_tooltip: 77322e1e866b7d29f7641a88bbd3b681
+    environments/surveys/edit/auto_save_on: 1524d466830b00c5d727c701db404963
     environments/surveys/edit/automatically_close_survey_after: 3e1c400a4b226c875dc8337e3b204d85
     environments/surveys/edit/automatically_close_the_survey_after_a_certain_number_of_responses: 2beee129dca506f041e5d1e6a1688310
     environments/surveys/edit/automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds: 1be3819ffa1db67385357ae933d69a7b
@@ -1383,6 +1386,7 @@ checksums:
     environments/surveys/edit/please_specify: e1faa6cd085144f7339c7e74dc6fb366
     environments/surveys/edit/prevent_double_submission: afc502baa2da81d9c9618da1c3b5a57a
     environments/surveys/edit/prevent_double_submission_description: ef7d2aa22d43bdc6ccebb076c6aa9ce5
+    environments/surveys/edit/progress_saved: d7bfc189571f08bbb4d0240cb9363ffa
     environments/surveys/edit/protect_survey_with_pin: 16d1925b6a5770f7423772d6d9a8291a
     environments/surveys/edit/protect_survey_with_pin_description: 0e55d19b6f3578b1024e03606172a5d2
     environments/surveys/edit/publish: 4aa95ba4793bb293e771bd73b4f87c0f
