@@ -35,6 +35,6 @@ export const validateUrl = (url: string): boolean => {
 export const validatePhone = (phone: string): boolean => {
   // Match the same pattern: must start with digit or +, end with digit
   // ReDoS safe: Avoids nested repetition.
-  const phoneRegex = /^[0-9+][0-9+\- ]*[0-9]$/;
+  const phoneRegex = /^[\d+][\d+\- ]*\d$/;
   return phoneRegex.test(phone);
 };
