@@ -56,9 +56,25 @@ export const CustomScriptsInjector = ({
           newScript.setAttribute(attr.name, attr.value);
         });
 
-        // Copy inline script content
+        // Copy inline script content and wrap in try-catch to prevent user script errors
         if (script.textContent) {
-          newScript.textContent = script.textContent;
+          // Wrap user scripts in try-catch to isolate runtime errors
+          newScript.textContent = `
+(function() {
+  try {
+${script.textContent}
+  } catch (error) {
+    console.warn("[Formbricks] Custom script error:", error);
+  }
+})();
+          `.trim();
+        }
+
+        // Add error handler for external scripts
+        if (script.src) {
+          newScript.onerror = (error) => {
+            console.warn("[Formbricks] Failed to load external script:", script.src, error);
+          };
         }
 
         document.head.appendChild(newScript);
