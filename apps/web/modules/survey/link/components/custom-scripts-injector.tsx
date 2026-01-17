@@ -56,9 +56,16 @@ export const CustomScriptsInjector = ({
           newScript.setAttribute(attr.name, attr.value);
         });
 
-        // Copy inline script content
+        // Copy inline script content with error handling
         if (script.textContent) {
-          newScript.textContent = script.textContent;
+          // Wrap inline scripts in try-catch to prevent user script errors from breaking the survey
+          newScript.textContent = `
+try {
+${script.textContent}
+} catch (error) {
+  console.warn('[Formbricks] Error in custom script:', error);
+}
+          `.trim();
         }
 
         document.head.appendChild(newScript);
