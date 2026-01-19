@@ -22,7 +22,7 @@ vi.mock("@/lib/survey/utils", () => ({
   getElementsFromBlocks: (...args: unknown[]) => mockGetElementsFromBlocks(...args),
 }));
 
-vi.mock("../../../../../../../../packages/surveys/src/lib/validation/evaluator", () => ({
+vi.mock("@formbricks/surveys/validation", () => ({
   validateBlockResponses: (...args: unknown[]) => mockValidateBlockResponses(...args),
 }));
 

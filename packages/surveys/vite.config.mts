@@ -1,6 +1,6 @@
 import preact from "@preact/preset-vite";
-import { dirname, resolve } from "path";
-import { fileURLToPath } from "url";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadEnv } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -13,7 +13,8 @@ const __dirname = dirname(__filename);
 const config = ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
-  return defineConfig({
+  // Shared configuration
+  const sharedConfig = {
     resolve: {
       alias: {
         // Alias React to Preact for survey-ui components
@@ -22,6 +23,39 @@ const config = ({ mode }) => {
         "react/jsx-runtime": "preact/jsx-runtime",
       },
     },
+    define: {
+      "process.env.NODE_ENV": JSON.stringify(mode),
+    },
+    plugins: [preact(), tsconfigPaths()],
+  };
+
+  // Check if we're building the UMD bundle (separate build step)
+  const isUmdBuild = process.env.BUILD_UMD === "true";
+
+  if (isUmdBuild) {
+    // UMD build for browser script tag usage (main entry only)
+    return defineConfig({
+      ...sharedConfig,
+      build: {
+        emptyOutDir: false,
+        minify: "terser",
+        lib: {
+          entry: resolve(__dirname, "src/index.ts"),
+          name: "formbricksSurveys",
+          formats: ["umd"],
+          fileName: () => "index.umd.cjs",
+        },
+        rollupOptions: {
+          external: ["node-html-parser"],
+        },
+        outDir: "dist",
+      },
+    });
+  }
+
+  // Main ESM build with multiple entry points
+  return defineConfig({
+    ...sharedConfig,
     test: {
       name: "surveys",
       environment: "node",
@@ -41,38 +75,34 @@ const config = ({ mode }) => {
         exclude: ["**/*.tsx"],
       },
     },
-    define: {
-      "process.env.NODE_ENV": JSON.stringify(mode),
-    },
     build: {
       emptyOutDir: false,
       minify: "terser",
+      lib: {
+        entry: {
+          index: resolve(__dirname, "src/index.ts"),
+          validation: resolve(__dirname, "src/lib/validation/index.ts"),
+        },
+        formats: ["es"],
+      },
       rollupOptions: {
         // Externalize node-html-parser to keep bundle size small (~53KB)
         // It's pulled in via @formbricks/types but not used in browser runtime
         external: ["node-html-parser"],
-        input: resolve(__dirname, "src/index.ts"),
-        output: [
-          {
-            format: "es",
-            entryFileNames: "index.js",
-            chunkFileNames: "assets/[name]-[hash].js",
-            inlineDynamicImports: false,
-          },
-          {
-            format: "umd",
-            name: "formbricksSurveys",
-            entryFileNames: "index.umd.cjs",
-            inlineDynamicImports: true,
-          },
-        ],
+        output: {
+          entryFileNames: "[name].js",
+          chunkFileNames: "assets/[name]-[hash].js",
+        },
       },
-      outDir: "dist"
+      outDir: "dist",
     },
     plugins: [
-      preact(),
-      dts({ rollupTypes: true }),
-      tsconfigPaths(),
+      ...sharedConfig.plugins,
+      dts({
+        rollupTypes: true,
+        // Generate separate .d.ts files for each entry point
+        entryRoot: "src",
+      }),
       copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
     ],
   });
