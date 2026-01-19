@@ -87,7 +87,7 @@ export async function PreviewEmailTemplate({
   const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode));
   const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode));
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
-  console.log("firstQuestion", firstQuestion);
+
   switch (firstQuestion.type) {
     case TSurveyElementTypeEnum.OpenText:
       return (
@@ -250,6 +250,21 @@ export async function PreviewEmailTemplate({
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
+      return (
+        <EmailTemplateWrapper styling={styling} surveyUrl={url}>
+          <ElementHeader headline={headline} subheader={subheader} className="mr-8" />
+          <Container className="mx-0 max-w-none">
+            {firstQuestion.choices.map((choice) => (
+              <Section
+                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block w-full border border-solid p-4"
+                key={choice.id}>
+                {getLocalizedValue(choice.label, defaultLanguageCode)}
+              </Section>
+            ))}
+          </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
     case TSurveyElementTypeEnum.Ranking:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
