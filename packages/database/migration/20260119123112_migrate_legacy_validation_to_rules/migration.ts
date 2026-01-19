@@ -19,9 +19,9 @@ export const migrateLegacyValidationToRules: MigrationScript = {
       errors: 0,
     };
 
-    // Query to find surveys with elements that need migration
-    // Open Text: charLimit.enabled === true with min or max defined
-    // File Upload: allowedFileExtensions array with items
+    // Query to find surveys with elements that have legacy validation fields
+    // This includes ALL elements with charLimit or allowedFileExtensions keys,
+    // regardless of enabled status or array length, to ensure complete cleanup
     const surveysFindQuery = `
       SELECT s.id, s.blocks
       FROM "Survey" AS s 
@@ -30,18 +30,13 @@ export const migrateLegacyValidationToRules: MigrationScript = {
         FROM unnest(s.blocks) AS block 
         CROSS JOIN jsonb_array_elements(block->'elements') AS element 
         WHERE (
-          -- Open Text elements with charLimit.enabled = true
+          -- Open Text elements with any charLimit field (enabled, disabled, or any value)
           (element->>'type' = 'openText' 
-           AND element->'charLimit'->>'enabled' = 'true'
-           AND (
-             (element->'charLimit'->>'min') IS NOT NULL 
-             OR (element->'charLimit'->>'max') IS NOT NULL
-           ))
+           AND element ? 'charLimit')
           OR
-          -- File Upload elements with allowedFileExtensions array
+          -- File Upload elements with any allowedFileExtensions field (even empty array)
           (element->>'type' = 'fileUpload' 
-           AND element->'allowedFileExtensions' IS NOT NULL
-           AND jsonb_array_length(element->'allowedFileExtensions') > 0)
+           AND element ? 'allowedFileExtensions')
         )
       )
     `;
