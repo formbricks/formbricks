@@ -10,9 +10,6 @@ import { cache } from "@/lib/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 
-// Kept for reference - old JavaScript-based evaluation
-// import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
-
 export const getSegments = reactCache(
   async (environmentId: string) =>
     await cache.withCache(
@@ -112,23 +109,6 @@ export const getPersonSegmentIds = async (
       if (isIncluded) {
         personSegments.push(segment);
       }
-
-      // Old JavaScript-based evaluation (kept for reference):
-      // To use this, rename _attributes -> attributes, _deviceType -> deviceType
-      // and import evaluateSegment from "@/modules/ee/contacts/segments/lib/segments"
-      // const isIncluded = await evaluateSegment(
-      //   {
-      //     attributes,
-      //     deviceType,
-      //     environmentId,
-      //     contactId: contactId,
-      //     userId: contactUserId,
-      //   },
-      //   segment.filters
-      // );
-      // if (isIncluded) {
-      //   personSegments.push(segment);
-      // }
     }
 
     return personSegments.map((segment) => segment.id);
