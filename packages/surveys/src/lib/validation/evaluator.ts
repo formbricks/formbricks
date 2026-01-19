@@ -29,11 +29,11 @@ const isEmpty = (value: TResponseDataValue): boolean => {
 /**
  * Create a required field error
  */
-const createRequiredError = (t: TFunction): TValidationError => {
+const createRequiredError = (t?: TFunction): TValidationError => {
   return {
     ruleId: "required",
     ruleType: "minLength", // Structural field only - required is not a validation rule
-    message: t("errors.please_fill_out_this_field"),
+    message: t ? t("errors.please_fill_out_this_field") : "Please fill out this field",
   } as TValidationError;
 };
 
@@ -71,11 +71,11 @@ const getDefaultErrorMessage = (
   rule: TValidationRule,
   element: TSurveyElement,
   languageCode: string,
-  t: TFunction
+  t?: TFunction
 ): string => {
   const validator = validators[rule.type];
   if (!validator) {
-    return t("errors.invalid_format");
+    return t ? t("errors.invalid_format") : "Invalid format";
   }
 
   const baseMessage = validator.getDefaultMessage(rule.params, element, t);
@@ -94,7 +94,7 @@ const getDefaultErrorMessage = (
 /**
  * Validate required field for ranking elements
  */
-const validateRequiredRanking = (value: TResponseDataValue, t: TFunction): TValidationError | null => {
+const validateRequiredRanking = (value: TResponseDataValue, t?: TFunction): TValidationError | null => {
   const isValueArray = Array.isArray(value);
   const atLeastOneRanked = isValueArray && value.length >= 1;
   if (isEmpty(value) || !atLeastOneRanked) {
@@ -110,7 +110,7 @@ const validateRequiredRanking = (value: TResponseDataValue, t: TFunction): TVali
 const validateRequiredMatrix = (
   value: TResponseDataValue,
   element: TSurveyElement,
-  t: TFunction
+  t?: TFunction
 ): TValidationError | null => {
   if (isEmpty(value)) {
     return createRequiredError(t);
@@ -131,7 +131,7 @@ const validateRequiredMatrix = (
 const checkRequiredField = (
   element: TSurveyElement,
   value: TResponseDataValue,
-  t: TFunction
+  t?: TFunction
 ): TValidationError | null => {
   if (!element.required) {
     return null;
@@ -268,8 +268,8 @@ const executeOrLogic = (
   element: TSurveyElement,
   value: TResponseDataValue,
   languageCode: string,
-  t: TFunction,
-  initialErrors: TValidationError[]
+  initialErrors: TValidationError[],
+  t?: TFunction
 ): TValidationResult => {
   const ruleResults: TValidationError[] = [];
 
@@ -306,8 +306,8 @@ const executeAndLogic = (
   element: TSurveyElement,
   value: TResponseDataValue,
   languageCode: string,
-  t: TFunction,
-  initialErrors: TValidationError[]
+  initialErrors: TValidationError[],
+  t?: TFunction
 ): TValidationResult => {
   const errors = [...initialErrors];
 
@@ -348,7 +348,7 @@ export const validateElementResponse = (
   element: TSurveyElement,
   value: TResponseDataValue,
   languageCode: string,
-  t: TFunction
+  t?: TFunction
 ): TValidationResult => {
   const errors: TValidationError[] = [];
 
@@ -377,10 +377,10 @@ export const validateElementResponse = (
   const validationLogic = validation?.logic ?? "and";
 
   if (validationLogic === "or") {
-    return executeOrLogic(rules, element, value, languageCode, t, errors);
+    return executeOrLogic(rules, element, value, languageCode, errors, t);
   }
 
-  return executeAndLogic(rules, element, value, languageCode, t, errors);
+  return executeAndLogic(rules, element, value, languageCode, errors, t);
 };
 
 /**
@@ -396,7 +396,7 @@ export const validateBlockResponses = (
   elements: TSurveyElement[],
   responses: TResponseData,
   languageCode: string,
-  t: TFunction
+  t?: TFunction
 ): TValidationErrorMap => {
   const errorMap: TValidationErrorMap = {};
 
