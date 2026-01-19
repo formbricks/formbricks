@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
+import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -21,7 +21,7 @@ import { SegmentEditor } from "./segment-editor";
 interface TSegmentSettingsTabProps {
   environmentId: string;
   setOpen: (open: boolean) => void;
-  initialSegment: TSegment;
+  initialSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isReadOnly: boolean;
@@ -38,7 +38,7 @@ export function SegmentSettings({
   const router = useRouter();
   const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const [segment, setSegment] = useState<TSegment>(initialSegment);
+  const [segment, setSegment] = useState<TSegmentWithSurveyNames>(initialSegment);
 
   const [isUpdatingSegment, setIsUpdatingSegment] = useState(false);
   const [isDeletingSegment, setIsDeletingSegment] = useState(false);

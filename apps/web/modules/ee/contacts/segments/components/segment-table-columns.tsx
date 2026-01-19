@@ -3,10 +3,10 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
 import { UsersIcon } from "lucide-react";
-import { TSegment } from "@formbricks/types/segment";
+import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 
-export const generateSegmentTableColumns = (): ColumnDef<TSegment>[] => {
-  const titleColumn: ColumnDef<TSegment> = {
+export const generateSegmentTableColumns = (): ColumnDef<TSegmentWithSurveyNames>[] => {
+  const titleColumn: ColumnDef<TSegmentWithSurveyNames> = {
     id: "title",
     accessorKey: "title",
     header: "Title",
@@ -27,7 +27,7 @@ export const generateSegmentTableColumns = (): ColumnDef<TSegment>[] => {
     },
   };
 
-  const updatedAtColumn: ColumnDef<TSegment> = {
+  const updatedAtColumn: ColumnDef<TSegmentWithSurveyNames> = {
     id: "updatedAt",
     accessorKey: "updatedAt",
     header: "Updated",
@@ -40,7 +40,7 @@ export const generateSegmentTableColumns = (): ColumnDef<TSegment>[] => {
     },
   };
 
-  const createdAtColumn: ColumnDef<TSegment> = {
+  const createdAtColumn: ColumnDef<TSegmentWithSurveyNames> = {
     id: "createdAt",
     accessorKey: "createdAt",
     header: "Created",

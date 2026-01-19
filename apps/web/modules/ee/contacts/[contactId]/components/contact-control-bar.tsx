@@ -12,7 +12,6 @@ import { EditContactAttributesModal } from "@/modules/ee/contacts/components/edi
 import { PublishedLinkSurvey } from "@/modules/ee/contacts/lib/surveys";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
-import { EditAttributesModal } from "./edit-attributes-modal";
 import { GeneratePersonalLinkModal } from "./generate-personal-link-modal";
 
 interface AttributeWithMetadata {
@@ -30,7 +29,6 @@ interface ContactControlBarProps {
   publishedLinkSurveys: PublishedLinkSurvey[];
   allAttributeKeys: TContactAttributeKey[];
   currentAttributes: AttributeWithMetadata[];
-  attributeKeys: TContactAttributeKey[];
 }
 
 export const ContactControlBar = ({
@@ -41,7 +39,6 @@ export const ContactControlBar = ({
   publishedLinkSurveys,
   allAttributeKeys,
   currentAttributes,
-  attributeKeys,
 }: ContactControlBarProps) => {
   const router = useRouter();
   const { t } = useTranslation();
@@ -113,13 +110,6 @@ export const ContactControlBar = ({
             : t("environments.contacts.delete_contact_confirmation")
         }
       />
-      <EditAttributesModal
-        open={isEditAttributesModalOpen}
-        setOpen={setIsEditAttributesModalOpen}
-        contactId={contactId}
-        attributes={currentAttributes}
-        allAttributeKeys={allAttributeKeys}
-      />
       <GeneratePersonalLinkModal
         open={isGenerateLinkModalOpen}
         setOpen={setIsGenerateLinkModalOpen}
@@ -131,7 +121,7 @@ export const ContactControlBar = ({
         setOpen={setIsEditAttributesModalOpen}
         contactId={contactId}
         currentAttributes={currentAttributes}
-        attributeKeys={attributeKeys}
+        attributeKeys={allAttributeKeys}
       />
     </>
   );

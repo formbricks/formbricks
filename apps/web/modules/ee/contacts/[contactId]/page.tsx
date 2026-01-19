@@ -57,7 +57,6 @@ export const SingleContactPage = async (props: {
         publishedLinkSurveys={publishedLinkSurveys}
         currentAttributes={attributesWithMetadata}
         allAttributeKeys={allAttributeKeys}
-        attributeKeys={allAttributeKeys}
       />
     );
   };

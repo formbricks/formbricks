@@ -25,6 +25,7 @@ import {
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
   TSegmentUpdateInput,
+  TSegmentWithSurveyNames,
   ZSegmentCreateInput,
   ZSegmentFilters,
   ZSegmentUpdateInput,
@@ -39,6 +40,8 @@ export type PrismaSegment = Prisma.SegmentGetPayload<{
     surveys: {
       select: {
         id: true;
+        name: true;
+        status: true;
       };
     };
   };
@@ -62,14 +65,24 @@ export const selectSegment = {
   },
 } satisfies Prisma.SegmentSelect;
 
-export const transformPrismaSegment = (segment: PrismaSegment): TSegment => {
+export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurveyNames => {
+  const activeSurveys = segment.surveys
+    .filter((survey) => survey.status === "inProgress")
+    .map((survey) => survey.name);
+
+  const inactiveSurveys = segment.surveys
+    .filter((survey) => survey.status !== "inProgress")
+    .map((survey) => survey.name);
+
   return {
     ...segment,
     surveys: segment.surveys.map((survey) => survey.id),
+    activeSurveys,
+    inactiveSurveys,
   };
 };
 
-export const getSegment = reactCache(async (segmentId: string): Promise<TSegment> => {
+export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithSurveyNames> => {
   validateInputs([segmentId, ZId]);
   try {
     const segment = await prisma.segment.findUnique({
@@ -93,7 +106,7 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
   }
 });
 
-export const getSegments = reactCache(async (environmentId: string): Promise<TSegment[]> => {
+export const getSegments = reactCache(async (environmentId: string): Promise<TSegmentWithSurveyNames[]> => {
   validateInputs([environmentId, ZId]);
   try {
     const segments = await prisma.segment.findMany({
@@ -397,7 +410,8 @@ const evaluateAttributeFilter = (
   }
 
   // Use standard comparison for non-date operators
-  const attResult = compareValues(attributeValue, value, qualifier.operator);
+  // For non-date operators, value is always string | number
+  const attResult = compareValues(attributeValue, value as string | number, qualifier.operator);
   return attResult;
 };
 
@@ -406,7 +420,8 @@ const evaluatePersonFilter = (userId: string, filter: TSegmentPersonFilter): boo
   const { personIdentifier } = root;
 
   if (personIdentifier === "userId") {
-    const attResult = compareValues(userId, value, qualifier.operator);
+    // For userId comparison, value is always string | number
+    const attResult = compareValues(userId, value as string | number, qualifier.operator);
     return attResult;
   }
 
@@ -447,7 +462,8 @@ const evaluateSegmentFilter = async (
 
 const evaluateDeviceFilter = (device: "phone" | "desktop", filter: TSegmentDeviceFilter): boolean => {
   const { value, qualifier } = filter;
-  return compareValues(device, value, qualifier.operator);
+  // For device comparison, value is always string | number
+  return compareValues(device, value as string | number, qualifier.operator);
 };
 
 /**

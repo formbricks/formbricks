@@ -30,7 +30,7 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { updateContactAttributesAction } from "../actions";
-import { TEditContactAttributesForm, ZEditContactAttributesForm } from "../types/contact";
+import { TEditContactAttributesForm, createEditContactAttributesSchema } from "../types/contact";
 
 interface AttributeWithMetadata {
   key: string;
@@ -56,6 +56,12 @@ export const EditContactAttributesModal = ({
 }: EditContactAttributesModalProps) => {
   const { t } = useTranslation();
   const router = useRouter();
+
+  // Create dynamic schema with type validation using factory function
+  const dynamicSchema = useMemo(() => {
+    return createEditContactAttributesSchema(attributeKeys, t);
+  }, [attributeKeys, t]);
+
   // Convert current attributes to form format
   const defaultValues: TEditContactAttributesForm = useMemo(
     () => ({
@@ -68,7 +74,7 @@ export const EditContactAttributesModal = ({
   );
 
   const form = useForm<TEditContactAttributesForm>({
-    resolver: zodResolver(ZEditContactAttributesForm),
+    resolver: zodResolver(dynamicSchema),
     defaultValues,
   });
 
@@ -138,10 +144,13 @@ export const EditContactAttributesModal = ({
 
   const onSubmit = async (data: TEditContactAttributesForm) => {
     try {
-      const attributes = data.attributes.reduce((acc, { key, value }) => {
-        acc[key] = value;
-        return acc;
-      }, {});
+      const attributes = data.attributes.reduce(
+        (acc, { key, value }) => {
+          acc[key] = value;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
 
       const result = await updateContactAttributesAction({
         contactId,
@@ -227,32 +236,78 @@ export const EditContactAttributesModal = ({
                     <FormField
                       control={form.control}
                       name={`attributes.${index}.value`}
-                      render={({ field: valueField }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel>{t("environments.contacts.attribute_value")}</FormLabel>
-                          <FormControl>
-                            <div className="flex space-x-2">
+                      render={({ field: valueField }) => {
+                        // Get the data type for this attribute key
+                        const selectedKey = attributeKeys.find(
+                          (ak) => ak.key === watchedAttributes[index]?.key
+                        );
+                        const dataType = selectedKey?.dataType || "string";
+
+                        // Render input based on data type
+                        const renderValueInput = () => {
+                          if (dataType === "date") {
+                            return (
                               <Input
+                                type="date"
+                                value={valueField.value ? valueField.value.split("T")[0] : ""}
+                                onChange={(e) => {
+                                  const dateValue = e.target.value
+                                    ? new Date(e.target.value).toISOString()
+                                    : "";
+                                  valueField.onChange(dateValue);
+                                }}
+                                placeholder={t("environments.contacts.attribute_value_placeholder")}
+                                className="w-full"
+                              />
+                            );
+                          }
+
+                          if (dataType === "number") {
+                            return (
+                              <Input
+                                type="number"
                                 {...valueField}
                                 placeholder={t("environments.contacts.attribute_value_placeholder")}
                                 className="w-full"
                               />
-                              <div className="flex items-end pb-0.5">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  disabled={["email", "userId", "firstName", "lastName"].includes(field.key)}
-                                  size="sm"
-                                  onClick={() => handleRemoveAttribute(index)}
-                                  className="h-10 w-10 p-0">
-                                  <TrashIcon className="h-4 w-4" />
-                                </Button>
+                            );
+                          }
+
+                          return (
+                            <Input
+                              type="text"
+                              {...valueField}
+                              placeholder={t("environments.contacts.attribute_value_placeholder")}
+                              className="w-full"
+                            />
+                          );
+                        };
+
+                        return (
+                          <FormItem className="flex-1">
+                            <FormLabel>{t("environments.contacts.attribute_value")}</FormLabel>
+                            <FormControl>
+                              <div className="flex space-x-2">
+                                {renderValueInput()}
+                                <div className="flex items-end pb-0.5">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={["email", "userId", "firstName", "lastName"].includes(
+                                      field.key
+                                    )}
+                                    size="sm"
+                                    onClick={() => handleRemoveAttribute(index)}
+                                    className="h-10 w-10 p-0">
+                                    <TrashIcon className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                          </FormControl>
-                          <FormError />
-                        </FormItem>
-                      )}
+                            </FormControl>
+                            <FormError />
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
                 ))}

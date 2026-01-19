@@ -4,26 +4,26 @@ import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegment } from "@formbricks/types/segment";
+import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { EditSegmentModal } from "./edit-segment-modal";
 import { generateSegmentTableColumns } from "./segment-table-columns";
 
 interface SegmentTableUpdatedProps {
-  segments: TSegment[];
+  segments: TSegmentWithSurveyNames[];
   contactAttributeKeys: TContactAttributeKey[];
   isContactsEnabled: boolean;
   isReadOnly: boolean;
 }
 
-export function SegmentTableUpdated({
+export function SegmentTable({
   segments,
   contactAttributeKeys,
   isContactsEnabled,
   isReadOnly,
 }: SegmentTableUpdatedProps) {
   const { t } = useTranslation();
-  const [editingSegment, setEditingSegment] = useState<TSegment | null>(null);
+  const [editingSegment, setEditingSegment] = useState<TSegmentWithSurveyNames | null>(null);
 
   const columns = useMemo(() => {
     return generateSegmentTableColumns();
@@ -106,7 +106,6 @@ export function SegmentTableUpdated({
         </Table>
       </div>
 
-      {/* Edit Segment Modal */}
       {editingSegment && (
         <EditSegmentModal
           environmentId={editingSegment.environmentId}
