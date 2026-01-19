@@ -65,7 +65,6 @@ export const updateContactAttributeKey = async (
   });
 
   if (!existingKey) {
-    console.log("throwing resource not found error");
     throw new ResourceNotFoundError("contactAttributeKey", id);
   }
 

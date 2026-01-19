@@ -485,7 +485,7 @@ const evaluateDateFilter = (
   const attrDate = new Date(attributeValue);
 
   // Validate the attribute value is a valid date
-  if (isNaN(attrDate.getTime())) {
+  if (Number.isNaN(attrDate.getTime())) {
     return false;
   }
 

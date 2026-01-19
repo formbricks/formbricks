@@ -28,7 +28,6 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   key: true,
   name: true,
   description: true,
-  dataType: true,
   environmentId: true,
 })
   .extend({

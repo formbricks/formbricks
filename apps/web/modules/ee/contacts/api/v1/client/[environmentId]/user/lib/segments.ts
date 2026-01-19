@@ -5,10 +5,13 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TBaseFilter } from "@formbricks/types/segment";
+import { TBaseFilter, TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+
+// Kept for reference - old JavaScript-based evaluation
+// import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
 export const getSegments = reactCache(
   async (environmentId: string) =>
@@ -17,7 +20,6 @@ export const getSegments = reactCache(
         try {
           const segments = await prisma.segment.findMany({
             where: { environmentId },
-            // Include all necessary fields for evaluateSegment to work
             select: {
               id: true,
               filters: true,
@@ -38,12 +40,53 @@ export const getSegments = reactCache(
     )
 );
 
+/**
+ * Checks if a contact matches a segment using Prisma query
+ * This leverages native DB types (valueDate, valueNumber) for accurate comparisons
+ */
+const isContactInSegment = async (
+  contactId: string,
+  segmentId: string,
+  filters: TBaseFilters,
+  environmentId: string
+): Promise<boolean> => {
+  // If no filters, segment matches all contacts
+  if (!filters || filters.length === 0) {
+    return true;
+  }
+
+  const queryResult = await segmentFilterToPrismaQuery(segmentId, filters, environmentId);
+
+  if (!queryResult.ok) {
+    logger.warn(
+      { segmentId, environmentId, error: queryResult.error },
+      "Failed to build Prisma query for segment"
+    );
+    return false;
+  }
+
+  const { whereClause } = queryResult.data;
+
+  // Check if this specific contact matches the segment filters
+  const matchingContact = await prisma.contact.findFirst({
+    where: {
+      id: contactId,
+      ...whereClause,
+    },
+    select: { id: true },
+  });
+
+  return matchingContact !== null;
+};
+
 export const getPersonSegmentIds = async (
   environmentId: string,
   contactId: string,
   contactUserId: string,
-  attributes: Record<string, string>,
-  deviceType: "phone" | "desktop"
+  // These params are kept for backwards compatibility but unused with Prisma-based evaluation
+  // The Prisma query fetches attributes directly from the database
+  _attributes: Record<string, string>,
+  _deviceType: "phone" | "desktop"
 ): Promise<string[]> => {
   try {
     validateInputs([environmentId, ZId], [contactId, ZId], [contactUserId, ZString]);
@@ -57,21 +100,35 @@ export const getPersonSegmentIds = async (
 
     const personSegments: { id: string; filters: TBaseFilter[] }[] = [];
 
+    // Use Prisma-based segment evaluation for accurate typed attribute comparisons
     for (const segment of segments) {
-      const isIncluded = await evaluateSegment(
-        {
-          attributes,
-          deviceType,
-          environmentId,
-          contactId: contactId,
-          userId: contactUserId,
-        },
-        segment.filters
+      const isIncluded = await isContactInSegment(
+        contactId,
+        segment.id,
+        segment.filters as TBaseFilters,
+        environmentId
       );
 
       if (isIncluded) {
         personSegments.push(segment);
       }
+
+      // Old JavaScript-based evaluation (kept for reference):
+      // To use this, rename _attributes -> attributes, _deviceType -> deviceType
+      // and import evaluateSegment from "@/modules/ee/contacts/segments/lib/segments"
+      // const isIncluded = await evaluateSegment(
+      //   {
+      //     attributes,
+      //     deviceType,
+      //     environmentId,
+      //     contactId: contactId,
+      //     userId: contactUserId,
+      //   },
+      //   segment.filters
+      // );
+      // if (isIncluded) {
+      //   personSegments.push(segment);
+      // }
     }
 
     return personSegments.map((segment) => segment.id);

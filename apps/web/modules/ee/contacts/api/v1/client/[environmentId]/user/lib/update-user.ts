@@ -162,8 +162,6 @@ export const updateUser = async (
   // Single comprehensive query - gets contact + user state data
   let contactData = await getContactWithFullData(environmentId, userId);
 
-  console.log("contactData", contactData);
-
   // Create contact if doesn't exist
   if (!contactData) {
     contactData = await createContact(environmentId, userId);
