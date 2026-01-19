@@ -16,6 +16,7 @@ interface DateElementProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentElementId: string;
+  errorMessage?: string;
 }
 
 export function DateElement({
@@ -26,32 +27,21 @@ export function DateElement({
   ttc,
   setTtc,
   currentElementId,
+  errorMessage,
 }: Readonly<DateElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
-
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const isRequired = element.required;
   const { t } = useTranslation();
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const handleChange = (dateValue: string) => {
-    // Clear error when user selects a date
-    setErrorMessage(undefined);
     onChange({ [element.id]: dateValue });
-  };
-
-  const validateRequired = (): boolean => {
-    if (element.required && (!value || value.trim() === "")) {
-      setErrorMessage(t("errors.please_select_a_date"));
-      return false;
-    }
-    return true;
   };
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (!validateRequired()) return;
-
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -75,7 +65,7 @@ export function DateElement({
         onChange={handleChange}
         minDate={getMinDate()}
         maxDate={getMaxDate()}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         locale={languageCode}

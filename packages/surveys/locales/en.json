@@ -12,7 +12,6 @@
     "open_in_new_tab": "Open in new tab",
     "people_responded": "{count, plural, one {1 person responded} other {{count} people responded}}",
     "please_retry_now_or_try_again_later": "Please retry now or try again later.",
-    "please_specify": "Please specify",
     "powered_by": "Powered by",
     "privacy_policy": "Privacy Policy",
     "protected_by_reCAPTCHA_and_the_Google": "Protected by reCAPTCHA and the Google",
@@ -32,6 +31,10 @@
     "your_feedback_is_stuck": "Your feedback is stuck :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Please rank all options",
+    "all_rows_must_be_answered": "Please answer all rows",
+    "file_extension_must_be": "File extension must be {extension}",
+    "file_extension_must_not_be": "File extension must not be {extension}",
     "file_input": {
       "duplicate_files": "The following files are already uploaded: {duplicateNames}. Duplicate files are not allowed.",
       "file_size_exceeded": "The following file(s) exceed the maximum size of {maxSizeInMB} MB and were removed: {fileNames}",
@@ -45,18 +48,32 @@
       "message": "Please disable spam protection in the survey settings to continue using this device.",
       "title": "This device doesn’t support spam protection."
     },
-    "please_book_an_appointment": "Please book an appointment",
+    "invalid_format": "Please enter a valid format",
+    "is_between": "Please select a date between {startDate} and {endDate}",
+    "is_earlier_than": "Please select a date earlier than {date}",
+    "is_greater_than": "Please enter a value greater than {min}",
+    "is_later_than": "Please select a date later than {date}",
+    "is_less_than": "Please enter a value less than {max}",
+    "is_not_between": "Please select a date not between {startDate} and {endDate}",
+    "max_length": "Please enter no more than {max} characters",
+    "max_selections": "Please select no more than {max} options",
+    "max_value": "Please enter a value no greater than {max}",
+    "min_length": "Please enter at least {min} characters",
+    "min_selections": "Please select at least {min} options",
+    "min_value": "Please enter a value of at least {min}",
+    "minimum_options_ranked": "Please rank at least {min} options",
+    "minimum_rows_answered": "Please answer at least {min} rows",
     "please_enter_a_valid_email_address": "Please enter a valid email address",
     "please_enter_a_valid_phone_number": "Please enter a valid phone number",
     "please_enter_a_valid_url": "Please enter a valid URL",
     "please_fill_out_this_field": "Please fill out this field",
-    "please_rank_all_items_before_submitting": "Please rank all items before submitting",
-    "please_select_a_date": "Please select a date",
-    "please_select_an_option": "Please select an option",
-    "please_upload_a_file": "Please upload a file",
     "recaptcha_error": {
       "message": "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",
       "title": "We couldn't verify that you're human."
-    }
+    },
+    "value_must_contain": "Value must contain {value}",
+    "value_must_equal": "Value must equal {value}",
+    "value_must_not_contain": "Value must not contain {value}",
+    "value_must_not_equal": "Value must not equal {value}"
   }
 }
