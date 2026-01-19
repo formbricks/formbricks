@@ -35,7 +35,6 @@ export function ConsentElement({
   const isRequired = element.required;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const handleChange = (checked: boolean) => {
     onChange({ [element.id]: checked ? "accepted" : "" });

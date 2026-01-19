@@ -39,10 +39,10 @@ export function FileUploadElement({
   const [fileErrorMessage, setFileErrorMessage] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;
-  const { t } = useTranslation();
   const isRequired = element.required;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
   const [fileNames, setFileNames] = useState<Record<string, string>>({});
 
   // Use centralized error message for required validation, file-specific errors for upload issues

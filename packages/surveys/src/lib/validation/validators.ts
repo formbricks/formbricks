@@ -84,9 +84,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
       return { valid: value.length >= typedParams.min };
     },
-    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
+    getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t?: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMinLength;
-      return t("errors.min_length", { min: typedParams.min });
+      return t ? t("errors.min_length", { min: typedParams.min }) : `Minimum length is ${typedParams.min}`;
     },
   },
 
@@ -101,7 +101,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMaxLength;
-      return t("errors.max_length", { max: typedParams.max });
+      return t ? t("errors.max_length", { max: typedParams.max }) : `Maximum length is ${typedParams.max}`;
     },
   },
 
@@ -137,7 +137,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
     },
     getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      return t("errors.invalid_format");
+      return t ? t("errors.invalid_format") : "Invalid format";
     },
   },
 
@@ -154,7 +154,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       _element: TSurveyElement,
       t: TFunction
     ): string => {
-      return t("errors.please_enter_a_valid_email_address");
+      return t ? t("errors.please_enter_a_valid_email_address") : "Please enter a valid email address";
     },
   },
 
@@ -171,7 +171,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       _element: TSurveyElement,
       t: TFunction
     ): string => {
-      return t("errors.please_enter_a_valid_url");
+      return t ? t("errors.please_enter_a_valid_url") : "Please enter a valid URL";
     },
   },
 
@@ -188,7 +188,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       _element: TSurveyElement,
       t: TFunction
     ): string => {
-      return t("errors.please_enter_a_valid_phone_number");
+      return t ? t("errors.please_enter_a_valid_phone_number") : "Please enter a valid phone number";
     },
   },
 
@@ -209,7 +209,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMinValue;
-      return t("errors.min_value", { min: typedParams.min });
+      return t ? t("errors.min_value", { min: typedParams.min }) : `Minimum value is ${typedParams.min}`;
     },
   },
 
@@ -230,7 +230,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMaxValue;
-      return t("errors.max_value", { max: typedParams.max });
+      return t ? t("errors.max_value", { max: typedParams.max }) : `Maximum value is ${typedParams.max}`;
     },
   },
 
@@ -247,7 +247,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMinSelections;
-      return t("errors.min_selections", { min: typedParams.min });
+      return t
+        ? t("errors.min_selections", { min: typedParams.min })
+        : `Minimum selections is ${typedParams.min}`;
     },
   },
 
@@ -264,7 +266,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMaxSelections;
-      return t("errors.max_selections", { max: typedParams.max });
+      return t
+        ? t("errors.max_selections", { max: typedParams.max })
+        : `Maximum selections is ${typedParams.max}`;
     },
   },
   equals: {
@@ -277,7 +281,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return { valid: value === typedParams.value };
     },
     getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      return t("errors.value_must_equal", { value: (_params as TValidationRuleParamsEquals).value });
+      return t
+        ? t("errors.value_must_equal", { value: (_params as TValidationRuleParamsEquals).value })
+        : `Value must be equal to ${(_params as TValidationRuleParamsEquals).value}`;
     },
   },
   doesNotEqual: {
@@ -290,9 +296,11 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return { valid: value !== typedParams.value };
     },
     getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      return t("errors.value_must_not_equal", {
-        value: (_params as TValidationRuleParamsDoesNotEqual).value,
-      });
+      return t
+        ? t("errors.value_must_not_equal", {
+            value: (_params as TValidationRuleParamsDoesNotEqual).value,
+          })
+        : `Value must not be equal to ${(_params as TValidationRuleParamsDoesNotEqual).value}`;
     },
   },
   contains: {
@@ -305,7 +313,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return { valid: value.includes(typedParams.value) };
     },
     getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      return t("errors.value_must_contain", { value: (_params as TValidationRuleParamsContains).value });
+      return t
+        ? t("errors.value_must_contain", { value: (_params as TValidationRuleParamsContains).value })
+        : `Value must contain ${(_params as TValidationRuleParamsContains).value}`;
     },
   },
   doesNotContain: {
@@ -318,9 +328,11 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return { valid: !value.includes(typedParams.value) };
     },
     getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      return t("errors.value_must_not_contain", {
-        value: (_params as TValidationRuleParamsDoesNotContain).value,
-      });
+      return t
+        ? t("errors.value_must_not_contain", {
+            value: (_params as TValidationRuleParamsDoesNotContain).value,
+          })
+        : `Value must not contain ${(_params as TValidationRuleParamsDoesNotContain).value}`;
     },
   },
   isGreaterThan: {
@@ -340,7 +352,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsGreaterThan;
-      return t("errors.is_greater_than", { min: typedParams.min });
+      return t
+        ? t("errors.is_greater_than", { min: typedParams.min })
+        : `Value must be greater than ${typedParams.min}`;
     },
   },
   isLessThan: {
@@ -360,7 +374,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsLessThan;
-      return t("errors.is_less_than", { max: typedParams.max });
+      return t
+        ? t("errors.is_less_than", { max: typedParams.max })
+        : `Value must be less than ${typedParams.max}`;
     },
   },
   isLaterThan: {
@@ -375,7 +391,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsLaterThan;
-      return t("errors.is_later_than", { date: typedParams.date });
+      return t
+        ? t("errors.is_later_than", { date: typedParams.date })
+        : `Value must be later than ${typedParams.date}`;
     },
   },
   isEarlierThan: {
@@ -390,7 +408,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsEarlierThan;
-      return t("errors.is_earlier_than", { date: typedParams.date });
+      return t
+        ? t("errors.is_earlier_than", { date: typedParams.date })
+        : `Value must be earlier than ${typedParams.date}`;
     },
   },
   isBetween: {
@@ -405,7 +425,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsBetween;
-      return t("errors.is_between", { startDate: typedParams.startDate, endDate: typedParams.endDate });
+      return t
+        ? t("errors.is_between", { startDate: typedParams.startDate, endDate: typedParams.endDate })
+        : `Value must be between ${typedParams.startDate} and ${typedParams.endDate}`;
     },
   },
   isNotBetween: {
@@ -420,7 +442,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsNotBetween;
-      return t("errors.is_not_between", { startDate: typedParams.startDate, endDate: typedParams.endDate });
+      return t
+        ? t("errors.is_not_between", { startDate: typedParams.startDate, endDate: typedParams.endDate })
+        : `Value must not be between ${typedParams.startDate} and ${typedParams.endDate}`;
     },
   },
   minRanked: {
@@ -443,7 +467,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMinRanked;
-      return t("errors.minimum_options_ranked", { min: typedParams.min });
+      return t
+        ? t("errors.minimum_options_ranked", { min: typedParams.min })
+        : `Minimum options ranked is ${typedParams.min}`;
     },
   },
   rankAll: {
@@ -464,7 +490,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return { valid: allItemsRanked };
     },
     getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      return t("errors.all_options_must_be_ranked");
+      return t ? t("errors.all_options_must_be_ranked") : "All options must be ranked";
     },
   },
   minRowsAnswered: {
@@ -490,7 +516,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsMinRowsAnswered;
-      return t("errors.minimum_rows_answered", { min: typedParams.min });
+      return t
+        ? t("errors.minimum_rows_answered", { min: typedParams.min })
+        : `Minimum rows answered is ${typedParams.min}`;
     },
   },
   answerAllRows: {
@@ -516,7 +544,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       return { valid: allRowsAnswered };
     },
     getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
-      return t("errors.all_rows_must_be_answered");
+      return t ? t("errors.all_rows_must_be_answered") : "All rows must be answered";
     },
   },
   fileExtensionIs: {
@@ -562,7 +590,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       const extensions = typedParams.extensions
         .map((ext) => (ext.startsWith(".") ? ext : `.${ext}`))
         .join(", ");
-      return t("errors.file_extension_must_be", { extension: extensions });
+      return t
+        ? t("errors.file_extension_must_be", { extension: extensions })
+        : `File extension must be ${extensions}`;
     },
   },
   fileExtensionIsNot: {
@@ -608,7 +638,9 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       const extensions = typedParams.extensions
         .map((ext) => (ext.startsWith(".") ? ext : `.${ext}`))
         .join(", ");
-      return t("errors.file_extension_must_not_be", { extension: extensions });
+      return t
+        ? t("errors.file_extension_must_not_be", { extension: extensions })
+        : `File extension must not be ${extensions}`;
     },
   },
 };
