@@ -87,7 +87,7 @@ export async function PreviewEmailTemplate({
   const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode));
   const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode));
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
-
+  console.log("firstQuestion", firstQuestion);
   switch (firstQuestion.type) {
     case TSurveyElementTypeEnum.OpenText:
       return (
@@ -213,8 +213,8 @@ export async function PreviewEmailTemplate({
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === firstQuestion.range - 1 },
                           firstQuestion.isColorCodingEnabled &&
-                            firstQuestion.scale === "number" &&
-                            `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
+                          firstQuestion.scale === "number" &&
+                          `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
                           firstQuestion.scale === "star" && "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
@@ -250,21 +250,6 @@ export async function PreviewEmailTemplate({
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
-      return (
-        <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <ElementHeader headline={headline} subheader={subheader} className="mr-8" />
-          <Container className="mx-0 max-w-none">
-            {firstQuestion.choices.map((choice) => (
-              <Section
-                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block w-full border border-solid p-4"
-                key={choice.id}>
-                {getLocalizedValue(choice.label, defaultLanguageCode)}
-              </Section>
-            ))}
-          </Container>
-          <EmailFooter />
-        </EmailTemplateWrapper>
-      );
     case TSurveyElementTypeEnum.Ranking:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
@@ -288,7 +273,7 @@ export async function PreviewEmailTemplate({
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Link
-                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block border border-solid p-4 hover:bg-slate-100"
+                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block border border-solid p-4"
                 href={`${urlWithPrefilling}${firstQuestion.id}=${getLocalizedValue(choice.label, defaultLanguageCode)}`}
                 key={choice.id}>
                 {getLocalizedValue(choice.label, defaultLanguageCode)}
