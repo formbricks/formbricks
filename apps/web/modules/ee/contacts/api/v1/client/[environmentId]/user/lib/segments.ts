@@ -40,19 +40,21 @@ export const getSegments = reactCache(
 /**
  * Checks if a contact matches a segment using Prisma query
  * This leverages native DB types (valueDate, valueNumber) for accurate comparisons
+ * Device filters are evaluated at query build time using the provided deviceType
  */
 const isContactInSegment = async (
   contactId: string,
   segmentId: string,
   filters: TBaseFilters,
-  environmentId: string
+  environmentId: string,
+  deviceType: "phone" | "desktop"
 ): Promise<boolean> => {
   // If no filters, segment matches all contacts
   if (!filters || filters.length === 0) {
     return true;
   }
 
-  const queryResult = await segmentFilterToPrismaQuery(segmentId, filters, environmentId);
+  const queryResult = await segmentFilterToPrismaQuery(segmentId, filters, environmentId, deviceType);
 
   if (!queryResult.ok) {
     logger.warn(
@@ -80,10 +82,9 @@ export const getPersonSegmentIds = async (
   environmentId: string,
   contactId: string,
   contactUserId: string,
-  // These params are kept for backwards compatibility but unused with Prisma-based evaluation
-  // The Prisma query fetches attributes directly from the database
+  // Attributes param kept for backwards compatibility but unused - Prisma fetches from DB
   _attributes: Record<string, string>,
-  _deviceType: "phone" | "desktop"
+  deviceType: "phone" | "desktop"
 ): Promise<string[]> => {
   try {
     validateInputs([environmentId, ZId], [contactId, ZId], [contactUserId, ZString]);
@@ -97,14 +98,11 @@ export const getPersonSegmentIds = async (
 
     const personSegments: { id: string; filters: TBaseFilter[] }[] = [];
 
-    // Use Prisma-based segment evaluation for accurate typed attribute comparisons
+    // Use Prisma-based evaluation for all segments
+    // Device filters are evaluated at query build time using the provided deviceType
     for (const segment of segments) {
-      const isIncluded = await isContactInSegment(
-        contactId,
-        segment.id,
-        segment.filters as TBaseFilters,
-        environmentId
-      );
+      const filters = segment.filters as TBaseFilters;
+      const isIncluded = await isContactInSegment(contactId, segment.id, filters, environmentId, deviceType);
 
       if (isIncluded) {
         personSegments.push(segment);

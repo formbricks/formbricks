@@ -122,7 +122,7 @@ const buildUserStateFromContact = async (
     if (!Array.isArray(segments)) {
       segments = [];
     }
-  } catch (error) {
+  } catch {
     // If segments fetching fails, use empty array as fallback
     segments = [];
   }

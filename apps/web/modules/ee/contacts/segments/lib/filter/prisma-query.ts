@@ -224,30 +224,39 @@ const buildPersonFilterWhereClause = (filter: TSegmentPersonFilter): Prisma.Cont
 
 /**
  * Builds a Prisma where clause from a device filter
+ * Since device type is a runtime property (from User-Agent), we evaluate it immediately
+ * and return either no constraint (match) or an impossible condition (no match)
  */
-const buildDeviceFilterWhereClause = (filter: TSegmentDeviceFilter): Prisma.ContactWhereInput => {
-  const { root, qualifier, value } = filter;
-  const { type } = root;
-  const { operator } = qualifier;
-
-  const baseQuery = {
-    attributes: {
-      some: {
-        attributeKey: {
-          key: type,
-        },
-        value: {},
-      },
-    },
-  } satisfies Prisma.ContactWhereInput;
-
-  if (operator === "equals") {
-    baseQuery.attributes.some.value = { equals: String(value), mode: "insensitive" };
-  } else if (operator === "notEquals") {
-    baseQuery.attributes.some.value = { not: String(value), mode: "insensitive" };
+const buildDeviceFilterWhereClause = (
+  filter: TSegmentDeviceFilter,
+  deviceType?: "phone" | "desktop"
+): Prisma.ContactWhereInput => {
+  // If no device type provided, skip device filter (return no constraint)
+  if (!deviceType) {
+    return {};
   }
 
-  return baseQuery;
+  const { qualifier, value } = filter;
+  const { operator } = qualifier;
+
+  // Evaluate device filter immediately since it's a runtime property
+  let matches: boolean;
+  if (operator === "equals") {
+    matches = deviceType === value;
+  } else if (operator === "notEquals") {
+    matches = deviceType !== value;
+  } else {
+    matches = false;
+  }
+
+  if (matches) {
+    // Device matches - return empty constraint (effectively "true")
+    return {};
+  } else {
+    // Device doesn't match - return impossible condition (effectively "false")
+    // This ensures the query won't match any contacts
+    return { id: "__DEVICE_FILTER_NO_MATCH__" };
+  }
 };
 
 /**
@@ -255,7 +264,8 @@ const buildDeviceFilterWhereClause = (filter: TSegmentDeviceFilter): Prisma.Cont
  */
 const buildSegmentFilterWhereClause = async (
   filter: TSegmentSegmentFilter,
-  segmentPath: Set<string>
+  segmentPath: Set<string>,
+  deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
   const { segmentId } = root;
@@ -278,7 +288,7 @@ const buildSegmentFilterWhereClause = async (
   const newPath = new Set(segmentPath);
   newPath.add(segmentId);
 
-  return processFilters(segment.filters, newPath);
+  return processFilters(segment.filters, newPath, deviceType);
 };
 
 /**
@@ -286,7 +296,8 @@ const buildSegmentFilterWhereClause = async (
  */
 const processSingleFilter = async (
   filter: TSegmentFilter,
-  segmentPath: Set<string>
+  segmentPath: Set<string>,
+  deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
 
@@ -296,9 +307,9 @@ const processSingleFilter = async (
     case "person":
       return buildPersonFilterWhereClause(filter as TSegmentPersonFilter);
     case "device":
-      return buildDeviceFilterWhereClause(filter as TSegmentDeviceFilter);
+      return buildDeviceFilterWhereClause(filter as TSegmentDeviceFilter, deviceType);
     case "segment":
-      return await buildSegmentFilterWhereClause(filter as TSegmentSegmentFilter, segmentPath);
+      return await buildSegmentFilterWhereClause(filter as TSegmentSegmentFilter, segmentPath, deviceType);
     default:
       return {};
   }
@@ -309,7 +320,8 @@ const processSingleFilter = async (
  */
 const processFilters = async (
   filters: TBaseFilters,
-  segmentPath: Set<string>
+  segmentPath: Set<string>,
+  deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   if (filters.length === 0) return {};
 
@@ -325,10 +337,10 @@ const processFilters = async (
     // Process the resource based on its type
     if (isResourceFilter(resource)) {
       // If it's a single filter, process it directly
-      whereClause = await processSingleFilter(resource, segmentPath);
+      whereClause = await processSingleFilter(resource, segmentPath, deviceType);
     } else {
       // If it's a group of filters, process it recursively
-      whereClause = await processFilters(resource, segmentPath);
+      whereClause = await processFilters(resource, segmentPath, deviceType);
     }
 
     if (Object.keys(whereClause).length === 0) continue;
@@ -352,9 +364,18 @@ const processFilters = async (
 
 /**
  * Transforms a segment filter into a Prisma query for contacts
+ * @param segmentId - The segment ID being evaluated
+ * @param filters - The segment filters
+ * @param environmentId - The environment ID
+ * @param deviceType - Optional device type for runtime device filter evaluation
  */
 export const segmentFilterToPrismaQuery = reactCache(
-  async (segmentId: string, filters: TBaseFilters, environmentId: string) => {
+  async (
+    segmentId: string,
+    filters: TBaseFilters,
+    environmentId: string,
+    deviceType?: "phone" | "desktop"
+  ) => {
     try {
       const baseWhereClause = {
         environmentId,
@@ -362,7 +383,7 @@ export const segmentFilterToPrismaQuery = reactCache(
 
       // Initialize an empty stack for tracking the current evaluation path
       const segmentPath = new Set<string>([segmentId]);
-      const filtersWhereClause = await processFilters(filters, segmentPath);
+      const filtersWhereClause = await processFilters(filters, segmentPath, deviceType);
 
       const whereClause = {
         AND: [baseWhereClause, filtersWhereClause],
