@@ -30,6 +30,7 @@ const CONFIG = {
       env.ENVIRONMENT === "staging"
         ? "https://staging.ee.formbricks.com/api/licenses/check"
         : "https://ee.formbricks.com/api/licenses/check",
+    // ENDPOINT: "https://localhost:8080/api/licenses/check",
     TIMEOUT_MS: 5000,
   },
 } as const;

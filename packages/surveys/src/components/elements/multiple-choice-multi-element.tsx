@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { MultiSelect, type MultiSelectOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
@@ -33,7 +34,7 @@ export function MultipleChoiceMultiElement({
   const [startTime, setStartTime] = useState(performance.now());
   const [otherValue, setOtherValue] = useState("");
   const isCurrent = element.id === currentElementId;
-  const isRequired = element.required;
+  const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const shuffledChoicesIds = useMemo(() => {
@@ -248,7 +249,8 @@ export function MultipleChoiceMultiElement({
         options={allOptions}
         value={selectedValues}
         onChange={handleMultiSelectChange}
-        required={isRequired}
+        required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
         otherOptionId={otherOption?.id}

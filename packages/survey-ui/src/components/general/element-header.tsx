@@ -8,6 +8,8 @@ interface ElementHeaderProps extends React.ComponentProps<"div"> {
   headline: string;
   description?: string;
   required?: boolean;
+  /** Custom label for the required indicator. Defaults to "Required" */
+  requiredLabel?: string;
   htmlFor?: string;
   imageUrl?: string;
   videoUrl?: string;
@@ -43,6 +45,7 @@ function ElementHeader({
   headline,
   description,
   required = false,
+  requiredLabel = "Required",
   htmlFor,
   className,
   imageUrl,
@@ -73,7 +76,9 @@ function ElementHeader({
       {/* Headline */}
       <div>
         <div>
-          {required ? <span className="label-headline mb-[3px] text-xs opacity-60">Required</span> : null}
+          {required ? (
+            <span className="label-headline mb-[3px] text-xs opacity-60">{requiredLabel}</span>
+          ) : null}
         </div>
         <div className="flex">
           {isHeadlineHtml && safeHeadlineHtml ? (

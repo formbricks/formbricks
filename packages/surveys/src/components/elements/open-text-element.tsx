@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { OpenText } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
@@ -32,7 +33,7 @@ export function OpenTextElement({
 }: Readonly<OpenTextElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
-  const isRequired = element.required;
+  const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const handleChange = (inputValue: string) => {
@@ -65,7 +66,8 @@ export function OpenTextElement({
         placeholder={getLocalizedValue(element.placeholder, languageCode)}
         value={value}
         onChange={handleChange}
-        required={isRequired}
+        required={element.required}
+        requiredLabel={t("common.required")}
         longAnswer={element.longAnswer !== false}
         inputType={getInputType()}
         charLimit={element.inputType === "text" ? element.charLimit : undefined}

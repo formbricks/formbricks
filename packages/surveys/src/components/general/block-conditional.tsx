@@ -3,12 +3,12 @@ import { useTranslation } from "react-i18next";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import {
-  TSurveyElement,
-  TSurveyElementTypeEnum,
-  TSurveyMatrixElement,
-  TSurveyRankingElement,
+  type TSurveyElement,
+  type TSurveyMatrixElement,
+  type TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
 import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
 import { BackButton } from "@/components/buttons/back-button";

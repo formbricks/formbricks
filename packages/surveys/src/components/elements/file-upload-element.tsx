@@ -39,10 +39,9 @@ export function FileUploadElement({
   const [fileErrorMessage, setFileErrorMessage] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;
-  const isRequired = element.required;
+  const { t } = useTranslation();
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
-  const { t } = useTranslation();
   const [fileNames, setFileNames] = useState<Record<string, string>>({});
 
   // Use centralized error message for required validation, file-specific errors for upload issues
@@ -351,7 +350,8 @@ export function FileUploadElement({
         onFileSelect={handleFileSelect}
         allowMultiple={element.allowMultipleFiles}
         allowedFileExtensions={element.allowedFileExtensions}
-        required={isRequired}
+        required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         isUploading={isUploading}
         imageUrl={element.imageUrl}

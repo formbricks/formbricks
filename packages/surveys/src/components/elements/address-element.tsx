@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { FormField, type FormFieldConfig } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyAddressElement } from "@formbricks/types/surveys/elements";
@@ -31,7 +32,7 @@ export function AddressElement({
 }: Readonly<AddressElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
-  const isRequired = element.required;
+  const { t } = useTranslation();
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -120,7 +121,8 @@ export function AddressElement({
         fields={formFields}
         value={convertToValueObject(value)}
         onChange={handleChange}
-        required={isRequired}
+        required={element.required}
+        requiredLabel={t("common.required")}
         dir={dir}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}

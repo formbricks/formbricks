@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { DateElement as SurveyUIDateElement } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
@@ -30,7 +31,7 @@ export function DateElement({
 }: Readonly<DateElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
-  const isRequired = element.required;
+  const { t } = useTranslation();
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -64,7 +65,8 @@ export function DateElement({
         onChange={handleChange}
         minDate={getMinDate()}
         maxDate={getMaxDate()}
-        required={isRequired}
+        required={element.required}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         locale={languageCode}
         imageUrl={element.imageUrl}

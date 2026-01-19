@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { Rating } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
@@ -30,7 +31,7 @@ export function RatingElement({
 }: RatingElementProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
-  const isRequired = element.required;
+  const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const handleChange = (ratingValue: number) => {
@@ -60,7 +61,8 @@ export function RatingElement({
         lowerLabel={getLocalizedValue(element.lowerLabel, languageCode)}
         upperLabel={getLocalizedValue(element.upperLabel, languageCode)}
         colorCoding={element.isColorCodingEnabled}
-        required={isRequired}
+        required={element.required}
+        requiredLabel={t("common.required")}
         dir={dir}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
