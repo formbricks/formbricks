@@ -115,9 +115,6 @@ importers:
       storybook:
         specifier: 10.1.11
         version: 10.1.11(@testing-library/dom@8.20.1)(prettier@3.5.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      uuid:
-        specifier: 11.1.0
-        version: 11.1.0
       vite:
         specifier: 7.3.1
         version: 7.3.1(@types/node@22.15.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.2)
@@ -672,6 +669,9 @@ importers:
       bcryptjs:
         specifier: 2.4.3
         version: 2.4.3
+      uuid:
+        specifier: 11.1.0
+        version: 11.1.0
       zod:
         specifier: 3.24.4
         version: 3.24.4
