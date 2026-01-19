@@ -1,7 +1,7 @@
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { SegmentTableUpdated } from "@/modules/ee/contacts/segments/components/segment-table-updated";
+import { SegmentTableUpdated } from "@/modules/ee/contacts/segments/components/segment-table";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
