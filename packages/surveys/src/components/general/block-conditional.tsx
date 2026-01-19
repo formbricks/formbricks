@@ -17,7 +17,7 @@ import { ElementConditional } from "@/components/general/element-conditional";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation";
+import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/evaluator";
 
 interface BlockConditionalProps {
   block: TSurveyBlock;
