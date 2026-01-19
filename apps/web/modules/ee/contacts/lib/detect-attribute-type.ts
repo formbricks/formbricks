@@ -4,7 +4,7 @@ import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-k
  * Parses a date string in DD-MM-YYYY or MM-DD-YYYY format.
  * Uses heuristics to disambiguate between formats.
  */
-const parseDateFromParts = (part1: number, part2: number, part3: number): Date | null => {
+export const parseDateFromParts = (part1: number, part2: number, part3: number): Date | null => {
   // Heuristic: If first part > 12, it's likely DD-MM-YYYY
   if (part1 > 12) {
     return new Date(part3, part2 - 1, part1);
@@ -25,10 +25,7 @@ const parseDateFromParts = (part1: number, part2: number, part3: number): Date |
   return new Date(part3, part1 - 1, part2);
 };
 
-/**
- * Attempts to parse a string as a date in various formats.
- */
-const tryParseDate = (stringValue: string): Date | null => {
+export const tryParseDate = (stringValue: string): Date | null => {
   // Try ISO format first (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss)
   if (/^\d{4}[-/]\d{2}[-/]\d{2}/.test(stringValue)) {
     return new Date(stringValue);
@@ -49,9 +46,9 @@ const tryParseDate = (stringValue: string): Date | null => {
  * Used for first-time attribute creation to infer the dataType.
  *
  * Supported date formats:
- * - ISO 8601: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ
- * - European: DD-MM-YYYY or DD/MM/YYYY
- * - American: MM-DD-YYYY or MM/DD/YYYY
+ * - YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ
+ * - DD-MM-YYYY or DD/MM/YYYY
+ * - MM-DD-YYYY or MM/DD/YYYY
  *
  * @param value - The attribute value to detect the type of (string, number, or Date)
  * @returns The detected data type (string, number, or date)
