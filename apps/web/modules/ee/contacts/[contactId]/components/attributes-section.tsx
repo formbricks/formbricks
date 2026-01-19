@@ -3,11 +3,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributesWithMetadata } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { formatAttributeValue } from "@/modules/ee/contacts/lib/format-attribute-value";
-import {
-  getContactAttributeDataTypeIcon,
-  getContactAttributeDataTypeLabel,
-} from "@/modules/ee/contacts/utils";
-import { Badge } from "@/modules/ui/components/badge";
+import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
@@ -38,10 +34,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
       <h2 className="text-lg font-bold text-slate-700">{t("common.attributes")}</h2>
       <div>
         <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
-          <span className="flex items-center gap-1 text-slate-400">
-            {getContactAttributeDataTypeIcon("string")}
-            <Badge text={getContactAttributeDataTypeLabel("string", t)} type="gray" size="tiny" />
-          </span>
+          <span className="text-slate-400">{getContactAttributeDataTypeIcon("string")}</span>
           <span>email</span>
         </dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
@@ -54,10 +47,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
       </div>
       <div>
         <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
-          <span className="flex items-center gap-1 text-slate-400">
-            {getContactAttributeDataTypeIcon("string")}
-            <Badge text={getContactAttributeDataTypeLabel("string", t)} type="gray" size="tiny" />
-          </span>
+          <span className="text-slate-400">{getContactAttributeDataTypeIcon("string")}</span>
           <span>language</span>
         </dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
@@ -70,10 +60,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
       </div>
       <div>
         <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
-          <span className="flex items-center gap-1 text-slate-400">
-            {getContactAttributeDataTypeIcon("string")}
-            <Badge text={getContactAttributeDataTypeLabel("string", t)} type="gray" size="tiny" />
-          </span>
+          <span className="text-slate-400">{getContactAttributeDataTypeIcon("string")}</span>
           <span>userId</span>
         </dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
@@ -86,10 +73,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
       </div>
       <div>
         <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
-          <span className="flex items-center gap-1 text-slate-400">
-            {getContactAttributeDataTypeIcon("string")}
-            <Badge text={getContactAttributeDataTypeLabel("string", t)} type="gray" size="tiny" />
-          </span>
+          <span className="text-slate-400">{getContactAttributeDataTypeIcon("string")}</span>
           <span>contactId</span>
         </dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">{contact.id}</dd>
@@ -101,10 +85,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
           return (
             <div key={attr.key}>
               <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
-                <span className="flex items-center gap-1 text-slate-400">
-                  {getContactAttributeDataTypeIcon(attr.dataType)}
-                  <Badge text={getContactAttributeDataTypeLabel(attr.dataType, t)} type="gray" size="tiny" />
-                </span>
+                <span className="text-slate-400">{getContactAttributeDataTypeIcon(attr.dataType)}</span>
                 <span>{attr.name || attr.key}</span>
               </dt>
               <dd className="mt-1 text-sm text-slate-900">
