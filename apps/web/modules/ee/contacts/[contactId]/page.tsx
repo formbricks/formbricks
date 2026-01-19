@@ -3,13 +3,9 @@ import { getTranslate } from "@/lingodotdev/server";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { ContactControlBar } from "@/modules/ee/contacts/[contactId]/components/contact-control-bar";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import {
-  getContactAttributes,
-  getContactAttributesWithMetadata,
-} from "@/modules/ee/contacts/lib/contact-attributes";
+import { getContactAttributesWithMetadata } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { getPublishedLinkSurveys } from "@/modules/ee/contacts/lib/surveys";
-import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -25,27 +21,26 @@ export const SingleContactPage = async (props: {
 
   const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
 
-  const [
-    environmentTags,
-    contact,
-    contactAttributes,
-    publishedLinkSurveys,
-    attributesWithMetadata,
-    allAttributeKeys,
-  ] = await Promise.all([
-    getTagsByEnvironmentId(params.environmentId),
-    getContact(params.contactId),
-    getContactAttributes(params.contactId),
-    getPublishedLinkSurveys(params.environmentId),
-    getContactAttributesWithMetadata(params.contactId),
-    getContactAttributeKeys(params.environmentId),
-  ]);
+  const [environmentTags, contact, publishedLinkSurveys, attributesWithMetadata, allAttributeKeys] =
+    await Promise.all([
+      getTagsByEnvironmentId(params.environmentId),
+      getContact(params.contactId),
+      getPublishedLinkSurveys(params.environmentId),
+      getContactAttributesWithMetadata(params.contactId),
+      getContactAttributeKeys(params.environmentId),
+    ]);
 
   if (!contact) {
     throw new Error(t("environments.contacts.contact_not_found"));
   }
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.billing.plan);
+
+  // Derive contact identifier from metadata array
+  const getAttributeValue = (key: string): string | undefined => {
+    return attributesWithMetadata.find((attr) => attr.key === key)?.value;
+  };
+  const contactIdentifier = getAttributeValue("email") || getAttributeValue("userId") || "";
 
   const getContactControlBar = () => {
     return (
@@ -64,7 +59,7 @@ export const SingleContactPage = async (props: {
   return (
     <PageContentWrapper>
       <GoBackButton url={`/environments/${params.environmentId}/contacts`} />
-      <PageHeader pageTitle={getContactIdentifier(contactAttributes)} cta={getContactControlBar()} />
+      <PageHeader pageTitle={contactIdentifier} cta={getContactControlBar()} />
       <section className="pt-6 pb-24">
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
