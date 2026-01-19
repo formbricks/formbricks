@@ -2,6 +2,7 @@ import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -66,6 +67,10 @@ const Page = async () => {
 
   if (!firstProductionEnvironmentId) {
     if (isOwner || isManager) {
+      // On Cloud, show plan selection first for new users without any projects
+      if (IS_FORMBRICKS_CLOUD) {
+        return redirect(`/organizations/${userOrganizations[0].id}/workspaces/new/plan`);
+      }
       return redirect(`/organizations/${userOrganizations[0].id}/workspaces/new/mode`);
     } else {
       return redirect(`/organizations/${userOrganizations[0].id}/landing`);

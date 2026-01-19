@@ -1,5 +1,11 @@
 import { TFunction } from "i18next";
 
+export type TUsageLimit = {
+  label: string;
+  value: string;
+  overage?: boolean;
+};
+
 export type TPricingPlan = {
   id: string;
   name: string;
@@ -10,77 +16,89 @@ export type TPricingPlan = {
     monthly: string;
     yearly: string;
   };
-  mainFeatures: string[];
+  usageLimits: TUsageLimit[];
+  features: string[];
+  addons?: string[];
   href?: string;
 };
 
 export const getCloudPricingData = (t: TFunction): { plans: TPricingPlan[] } => {
-  const freePlan: TPricingPlan = {
+  const hobbyPlan: TPricingPlan = {
     id: "free",
-    name: t("environments.settings.billing.free"),
+    name: "Hobby",
     featured: false,
-    description: t("environments.settings.billing.free_description"),
-    price: { monthly: "$0", yearly: "$0" },
-    mainFeatures: [
-      t("environments.settings.billing.unlimited_surveys"),
-      t("environments.settings.billing.1000_monthly_responses"),
-      t("environments.settings.billing.2000_contacts"),
-      t("environments.settings.billing.1_workspace"),
-      t("environments.settings.billing.unlimited_team_members"),
-      t("environments.settings.billing.link_surveys"),
-      t("environments.settings.billing.website_surveys"),
-      t("environments.settings.billing.app_surveys"),
-      t("environments.settings.billing.ios_android_sdks"),
-      t("environments.settings.billing.email_embedded_surveys"),
-      t("environments.settings.billing.logic_jumps_hidden_fields_recurring_surveys"),
-      t("environments.settings.billing.api_webhooks"),
-      t("environments.settings.billing.all_integrations"),
-      t("environments.settings.billing.hosted_in_frankfurt") + "  🇪🇺",
+    description: "Unlimited Surveys, Team Members, and more.",
+    price: { monthly: "Start free", yearly: "Start free" },
+    usageLimits: [
+      { label: "Workspaces", value: "1" },
+      { label: "Responses per month", value: "250" },
+    ],
+    features: [
+      "Link-based Surveys",
+      "In-product Surveys",
+      "All Question Types",
+      "Multi-language Surveys incl. RTL",
+      "Conditional Logic",
+      "Hidden Fields",
+      "Partial Responses",
+      "Recall Information",
+      "Multi-media Backgrounds",
+      "File Uploads",
+      "Single-use Links",
+      "Hosted in Frankfurt 🇪🇺",
     ],
   };
 
-  const startupPlan: TPricingPlan = {
-    id: "startup",
-    name: t("environments.settings.billing.startup"),
+  const proPlan: TPricingPlan = {
+    id: "pro",
+    name: "Pro",
     featured: true,
     CTA: t("common.start_free_trial"),
-    description: t("environments.settings.billing.startup_description"),
-    price: { monthly: "$49", yearly: "$490" },
-    mainFeatures: [
-      t("environments.settings.billing.everything_in_free"),
-      t("environments.settings.billing.5000_monthly_responses"),
-      t("environments.settings.billing.7500_contacts"),
-      t("environments.settings.billing.3_workspaces"),
-      t("environments.settings.billing.remove_branding"),
-      t("environments.settings.billing.attribute_based_targeting"),
+    description: "Everything in Free with additional features.",
+    price: { monthly: "$89", yearly: "$74" },
+    usageLimits: [
+      { label: "Workspaces", value: "3" },
+      { label: "Responses per month", value: "2,000", overage: true },
+      { label: "Identified Contacts per month", value: "5,000", overage: true },
+    ],
+    features: [
+      "Everything in Free",
+      "Unlimited Seats",
+      "Hide Formbricks Branding",
+      "Respondent Identification",
+      "Contact & Segment Management",
+      "Attribute-based Segmentation",
+      "iOS & Android SDKs",
+      "Email Follow-ups",
+      "Custom Webhooks",
+      "All Integrations",
     ],
   };
 
-  const customPlan: TPricingPlan = {
-    id: "custom",
-    name: t("environments.settings.billing.custom"),
+  const scalePlan: TPricingPlan = {
+    id: "scale",
+    name: "Scale",
     featured: false,
-    CTA: t("common.request_pricing"),
-    description: t("environments.settings.billing.enterprise_description"),
-    price: {
-      monthly: t("environments.settings.billing.custom"),
-      yearly: t("environments.settings.billing.custom"),
-    },
-    mainFeatures: [
-      t("environments.settings.billing.everything_in_startup"),
-      t("environments.settings.billing.email_follow_ups"),
-      t("environments.settings.billing.custom_response_limit"),
-      t("environments.settings.billing.custom_contacts_limit"),
-      t("environments.settings.billing.custom_workspace_limit"),
-      t("environments.settings.billing.team_access_roles"),
-      t("environments.workspace.languages.multi_language_surveys"),
-      t("environments.settings.billing.uptime_sla_99"),
-      t("environments.settings.billing.premium_support_with_slas"),
+    CTA: t("common.start_free_trial"),
+    description: "Advanced features for scaling your business.",
+    price: { monthly: "$390", yearly: "$325" },
+    usageLimits: [
+      { label: "Workspaces", value: "5" },
+      { label: "Responses per month", value: "5,000", overage: true },
+      { label: "Identified Contacts per month", value: "10,000", overage: true },
     ],
-    href: "https://formbricks.com/custom-plan?source=billingView",
+    features: [
+      "Everything in Pro",
+      "Teams & Access Roles",
+      "Full API Access",
+      "Quota Management",
+      "Two-Factor Auth",
+      "Spam Protection (ReCaptcha)",
+    ],
+    addons: ["SSO Enforcement", "Custom SSO", "Hosting in USA 🇺🇸", "SOC-2 Verification"],
   };
 
   return {
-    plans: [freePlan, startupPlan, customPlan],
+    plans: [hobbyPlan, proPlan, scalePlan],
   };
 };

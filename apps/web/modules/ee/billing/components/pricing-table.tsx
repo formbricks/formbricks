@@ -5,13 +5,75 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
-import { Button } from "@/modules/ui/components/button";
 import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
 import { getCloudPricingData } from "../api/lib/constants";
-import { BillingSlider } from "./billing-slider";
+import { OverageCard } from "./overage-card";
 import { PricingCard } from "./pricing-card";
+import { SettingsId } from "./settings-id";
+
+type DemoPlanState = "trial" | "hobby" | "pro" | "scale";
+
+function getPlanDisplayName(plan: string) {
+  switch (plan) {
+    case "free":
+      return "Hobby";
+    case "pro":
+      return "Pro";
+    case "scale":
+      return "Scale";
+    default:
+      return plan.charAt(0).toUpperCase() + plan.slice(1);
+  }
+}
+
+const DEMO_PLAN_CONFIGS: Record<
+  DemoPlanState,
+  {
+    plan: string;
+    displayName: string;
+    limits: { responses: number; miu: number; projects: number };
+    hasStripeCustomer: boolean;
+    trialEndsAt: Date | null;
+    billingPeriod: TOrganizationBillingPeriod;
+  }
+> = {
+  trial: {
+    plan: "scale",
+    displayName: "Scale (Trial)",
+    limits: { responses: 5000, miu: 10000, projects: 5 },
+    hasStripeCustomer: false,
+    trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+    billingPeriod: "monthly",
+  },
+  hobby: {
+    plan: "free",
+    displayName: "Hobby",
+    limits: { responses: 500, miu: 1250, projects: 1 },
+    hasStripeCustomer: false,
+    trialEndsAt: null,
+    billingPeriod: "monthly",
+  },
+  pro: {
+    plan: "pro",
+    displayName: "Pro",
+    limits: { responses: 1000, miu: 2500, projects: 3 },
+    hasStripeCustomer: true,
+    trialEndsAt: null,
+    billingPeriod: "monthly",
+  },
+  scale: {
+    plan: "scale",
+    displayName: "Scale",
+    limits: { responses: 5000, miu: 10000, projects: 5 },
+    hasStripeCustomer: true,
+    trialEndsAt: null,
+    billingPeriod: "monthly",
+  },
+};
 
 interface PricingTableProps {
   organization: TOrganization;
@@ -23,11 +85,6 @@ interface PricingTableProps {
     STARTUP_MAY25_MONTHLY: string;
     STARTUP_MAY25_YEARLY: string;
   };
-  projectFeatureKeys: {
-    FREE: string;
-    STARTUP: string;
-    CUSTOM: string;
-  };
   hasBillingRights: boolean;
 }
 
@@ -35,7 +92,6 @@ export const PricingTable = ({
   environmentId,
   organization,
   peopleCount,
-  projectFeatureKeys,
   responseCount,
   projectCount,
   stripePriceLookupKeys,
@@ -46,8 +102,17 @@ export const PricingTable = ({
     organization.billing.period ?? "monthly"
   );
 
-  const handleMonthlyToggle = (period: TOrganizationBillingPeriod) => {
-    setPlanPeriod(period);
+  // Demo mode state
+  const [demoPlan, setDemoPlan] = useState<DemoPlanState | null>(null);
+  const [demoOverageMode, setDemoOverageMode] = useState<"allow" | "blocked">("allow");
+  const [demoSpendingLimit, setDemoSpendingLimit] = useState<number | null>(null);
+
+  // Demo overage usage (simulated values for demo)
+  const demoOverageUsage = {
+    responses: 150,
+    responseCost: 12, // $0.08/response for Pro
+    contacts: 320,
+    contactsCost: 12.8, // $0.04/contact for Pro
   };
 
   const router = useRouter();
@@ -65,7 +130,48 @@ export const PricingTable = ({
     checkSubscriptionStatus();
   }, [organization.id]);
 
+  // Get effective values based on demo mode
+  const demoConfig = demoPlan ? DEMO_PLAN_CONFIGS[demoPlan] : null;
+  const effectivePlan = demoConfig?.plan ?? organization.billing.plan;
+  const effectiveDisplayName = demoConfig?.displayName ?? getPlanDisplayName(organization.billing.plan);
+  const effectiveResponsesLimit =
+    demoConfig?.limits.responses ?? organization.billing.limits.monthly.responses;
+  const effectiveMiuLimit = demoConfig?.limits.miu ?? organization.billing.limits.monthly.miu;
+  const effectiveProjectsLimit = demoConfig?.limits.projects ?? organization.billing.limits.projects;
+  const effectiveHasStripeCustomer = demoConfig?.hasStripeCustomer ?? !!organization.billing.stripeCustomerId;
+  const effectiveTrialEndsAt = demoConfig?.trialEndsAt ?? null;
+  const effectiveBillingPeriod = demoConfig?.billingPeriod ?? organization.billing.period ?? "monthly";
+
+  // Determine if user is on a paid plan
+  const isOnPaidPlan = effectivePlan === "pro" || effectivePlan === "scale";
+  const isOnMonthlyBilling = effectiveBillingPeriod === "monthly" && isOnPaidPlan;
+
+  // Create a mock organization for the pricing cards when in demo mode
+  const effectiveOrganization: TOrganization = demoPlan
+    ? {
+        ...organization,
+        billing: {
+          ...organization.billing,
+          plan: effectivePlan,
+          period: effectiveBillingPeriod,
+          stripeCustomerId: effectiveHasStripeCustomer ? "demo_stripe_id" : null,
+          limits: {
+            ...organization.billing.limits,
+            monthly: {
+              responses: effectiveResponsesLimit,
+              miu: effectiveMiuLimit,
+            },
+            projects: effectiveProjectsLimit,
+          },
+        },
+      }
+    : organization;
+
   const openCustomerPortal = async () => {
+    if (demoPlan) {
+      toast.success("Demo: Would open Stripe Customer Portal");
+      return;
+    }
     const manageSubscriptionResponse = await manageSubscriptionAction({
       environmentId,
     });
@@ -74,7 +180,11 @@ export const PricingTable = ({
     }
   };
 
-  const upgradePlan = async (priceLookupKey) => {
+  const upgradePlan = async (priceLookupKey: string) => {
+    if (demoPlan) {
+      toast.success(`Demo: Would upgrade to ${priceLookupKey}`);
+      return;
+    }
     try {
       const upgradePlanResponse = await upgradePlanAction({
         environmentId,
@@ -107,7 +217,8 @@ export const PricingTable = ({
   };
 
   const onUpgrade = async (planId: string) => {
-    if (planId === "startup") {
+    // Map new plan IDs to existing Stripe keys
+    if (planId === "pro") {
       await upgradePlan(
         planPeriod === "monthly"
           ? stripePriceLookupKeys.STARTUP_MAY25_MONTHLY
@@ -116,8 +227,13 @@ export const PricingTable = ({
       return;
     }
 
-    if (planId === "custom") {
-      window.location.href = "https://formbricks.com/custom-plan?source=billingView";
+    if (planId === "scale") {
+      if (demoPlan) {
+        toast.success("Demo: Would redirect to Scale plan signup");
+        return;
+      }
+      // Scale plan redirects to custom plan page for now
+      globalThis.location.href = "https://formbricks.com/custom-plan?source=billingView";
       return;
     }
 
@@ -126,177 +242,274 @@ export const PricingTable = ({
     }
   };
 
-  const responsesUnlimitedCheck =
-    organization.billing.plan === "custom" && organization.billing.limits.monthly.responses === null;
-  const peopleUnlimitedCheck =
-    organization.billing.plan === "custom" && organization.billing.limits.monthly.miu === null;
-  const projectsUnlimitedCheck =
-    organization.billing.plan === "custom" && organization.billing.limits.projects === null;
+  const handleUpgradeToAnnual = async () => {
+    if (demoPlan) {
+      toast.success("Demo: Would upgrade to annual billing");
+      return;
+    }
+    await openCustomerPortal();
+  };
 
   return (
-    <main>
-      <div className="flex flex-col gap-8">
-        <div className="flex flex-col">
-          <div className="flex w-full">
-            <h2 className="mr-2 mb-3 inline-flex w-full text-2xl font-bold text-slate-700">
-              {t("environments.settings.billing.current_plan")}:{" "}
-              <span className="capitalize">{organization.billing.plan}</span>
-              {cancellingOn && (
-                <Badge
-                  className="mx-2"
-                  size="normal"
-                  type="warning"
-                  text={`Cancelling: ${
-                    cancellingOn
-                      ? cancellingOn.toLocaleDateString("en-US", {
-                          weekday: "short",
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          timeZone: "UTC",
-                        })
-                      : ""
-                  }`}
-                />
-              )}
-            </h2>
+    <div className="space-y-6">
+      {/* Demo Mode Toggle */}
+      <div className="max-w-4xl rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="text-xs font-semibold tracking-wide text-amber-700 uppercase">Demo Mode</span>
+          <span className="text-xs text-amber-600">— Preview different plan states</span>
+        </div>
+        <div className="flex gap-2">
+          {(["trial", "hobby", "pro", "scale"] as DemoPlanState[]).map((plan) => (
+            <button
+              key={plan}
+              onClick={() => setDemoPlan(demoPlan === plan ? null : plan)}
+              className={cn(
+                "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                demoPlan === plan ? "bg-amber-500 text-white" : "bg-white text-slate-700 hover:bg-amber-100"
+              )}>
+              {plan.charAt(0).toUpperCase() + plan.slice(1)}
+            </button>
+          ))}
+          {demoPlan && (
+            <button
+              onClick={() => setDemoPlan(null)}
+              className="ml-2 text-sm text-amber-600 underline hover:text-amber-800">
+              Reset to actual
+            </button>
+          )}
+        </div>
+      </div>
 
-            {organization.billing.stripeCustomerId && organization.billing.plan === "free" && (
-              <div className="flex w-full justify-end">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="justify-center py-2 shadow-sm"
-                  onClick={openCustomerPortal}>
-                  {t("environments.settings.billing.manage_card_details")}
-                </Button>
+      {/* Your Plan Status */}
+      <SettingsCard
+        title="Your Plan"
+        description="Manage your subscription and usage."
+        className="my-0"
+        buttonInfo={
+          effectiveHasStripeCustomer
+            ? {
+                text: "Manage billing",
+                onClick: () => {
+                  void openCustomerPortal();
+                },
+                variant: "secondary",
+              }
+            : undefined
+        }>
+        <div className="mb-6 flex items-center gap-4">
+          <SettingsId label="Current Plan" value={effectiveDisplayName} />
+          {effectiveTrialEndsAt && (
+            <Badge
+              type="gray"
+              size="normal"
+              text={`Trial ends ${effectiveTrialEndsAt.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}`}
+            />
+          )}
+          {cancellingOn && !demoPlan && (
+            <Badge
+              type="warning"
+              size="normal"
+              text={`Cancels ${cancellingOn.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}`}
+            />
+          )}
+        </div>
+
+        {/* Usage Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Responses this month</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">
+              {responseCount.toLocaleString()}
+              {effectiveResponsesLimit && (
+                <span className="text-sm font-normal text-slate-400">
+                  {" "}
+                  / {effectiveResponsesLimit.toLocaleString()}
+                </span>
+              )}
+            </p>
+            {effectiveResponsesLimit && (
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className={cn(
+                    "h-full rounded-full",
+                    responseCount / effectiveResponsesLimit > 0.9 ? "bg-red-500" : "bg-teal-500"
+                  )}
+                  style={{ width: `${Math.min((responseCount / effectiveResponsesLimit) * 100, 100)}%` }}
+                />
               </div>
             )}
           </div>
 
-          <div className="mt-2 flex flex-col rounded-xl border border-slate-200 bg-white py-4 shadow-sm dark:bg-slate-800">
-            <div
-              className={cn(
-                "relative mx-8 mb-8 flex flex-col gap-4",
-                responsesUnlimitedCheck && "mb-0 flex-row"
-              )}>
-              <p className="text-md font-semibold text-slate-700">{t("common.responses")}</p>
-              {organization.billing.limits.monthly.responses && (
-                <BillingSlider
-                  className="slider-class mb-8"
-                  value={responseCount}
-                  max={organization.billing.limits.monthly.responses * 1.5}
-                  freeTierLimit={organization.billing.limits.monthly.responses}
-                  metric={t("common.responses")}
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Identified Contacts</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">
+              {peopleCount.toLocaleString()}
+              {effectiveMiuLimit && (
+                <span className="text-sm font-normal text-slate-400">
+                  {" "}
+                  / {effectiveMiuLimit.toLocaleString()}
+                </span>
+              )}
+            </p>
+            {effectiveMiuLimit && (
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className={cn(
+                    "h-full rounded-full",
+                    peopleCount / effectiveMiuLimit > 0.9 ? "bg-red-500" : "bg-teal-500"
+                  )}
+                  style={{ width: `${Math.min((peopleCount / effectiveMiuLimit) * 100, 100)}%` }}
                 />
-              )}
+              </div>
+            )}
+          </div>
 
-              {responsesUnlimitedCheck && (
-                <Badge
-                  type="success"
-                  size="normal"
-                  text={t("environments.settings.billing.unlimited_responses")}
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Workspaces</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">
+              {projectCount}
+              {effectiveProjectsLimit && (
+                <span className="text-sm font-normal text-slate-400"> / {effectiveProjectsLimit}</span>
+              )}
+            </p>
+            {effectiveProjectsLimit && (
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className={cn(
+                    "h-full rounded-full",
+                    projectCount / effectiveProjectsLimit > 0.9 ? "bg-red-500" : "bg-teal-500"
+                  )}
+                  style={{ width: `${Math.min((projectCount / effectiveProjectsLimit) * 100, 100)}%` }}
                 />
-              )}
-            </div>
-
-            <div
-              className={cn(
-                "relative mx-8 mb-8 flex flex-col gap-4",
-                peopleUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
-              )}>
-              <p className="text-md font-semibold text-slate-700">
-                {t("environments.settings.billing.monthly_identified_users")}
-              </p>
-              {organization.billing.limits.monthly.miu && (
-                <BillingSlider
-                  className="slider-class mb-8"
-                  value={peopleCount}
-                  max={organization.billing.limits.monthly.miu * 1.5}
-                  freeTierLimit={organization.billing.limits.monthly.miu}
-                  metric={"MIU"}
-                />
-              )}
-
-              {peopleUnlimitedCheck && (
-                <Badge type="success" size="normal" text={t("environments.settings.billing.unlimited_miu")} />
-              )}
-            </div>
-
-            <div
-              className={cn(
-                "relative mx-8 flex flex-col gap-4 pb-6",
-                projectsUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
-              )}>
-              <p className="text-md font-semibold text-slate-700">{t("common.workspaces")}</p>
-              {organization.billing.limits.projects && (
-                <BillingSlider
-                  className="slider-class mb-8"
-                  value={projectCount}
-                  max={organization.billing.limits.projects * 1.5}
-                  freeTierLimit={organization.billing.limits.projects}
-                  metric={t("common.workspaces")}
-                />
-              )}
-
-              {projectsUnlimitedCheck && (
-                <Badge
-                  type="success"
-                  size="normal"
-                  text={t("environments.settings.billing.unlimited_workspaces")}
-                />
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {hasBillingRights && (
-          <div className="mx-auto mb-12">
-            <div className="gap-x-2">
-              <div className="mb-4 flex w-fit cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
-                <button
-                  aria-pressed={planPeriod === "monthly"}
-                  className={`flex-1 rounded-md px-4 py-0.5 text-center ${
-                    planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
-                  }`}
-                  onClick={() => handleMonthlyToggle("monthly")}>
-                  {t("environments.settings.billing.monthly")}
-                </button>
-                <button
-                  aria-pressed={planPeriod === "yearly"}
-                  className={`flex-1 items-center rounded-md py-0.5 pr-2 pl-4 text-center whitespace-nowrap ${
-                    planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
-                  }`}
-                  onClick={() => handleMonthlyToggle("yearly")}>
-                  {t("environments.settings.billing.annually")}
-                  <span className="ml-2 inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                    {t("environments.settings.billing.get_2_months_free")} 🔥
-                  </span>
-                </button>
-              </div>
-              <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-3">
-                <div
-                  className="hidden lg:absolute lg:inset-x-px lg:top-4 lg:bottom-0 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
-                  aria-hidden="true"
-                />
-                {getCloudPricingData(t).plans.map((plan) => (
-                  <PricingCard
-                    planPeriod={planPeriod}
-                    key={plan.id}
-                    plan={plan}
-                    onUpgrade={async () => {
-                      await onUpgrade(plan.id);
-                    }}
-                    organization={organization}
-                    projectFeatureKeys={projectFeatureKeys}
-                    onManageSubscription={openCustomerPortal}
-                  />
-                ))}
-              </div>
+        <p className="mt-4 text-sm text-slate-500">Your volumes renew on Feb 1, 2025</p>
+      </SettingsCard>
+
+      {/* Overage Card (only for paid plans or trial) */}
+      {(isOnPaidPlan || effectiveTrialEndsAt) && (
+        <SettingsCard
+          title="Dynamic Overage Handling"
+          description="Control how your surveys behave when you exceed your included usage limits."
+          className="my-0">
+          <OverageCard
+            currentMode={demoOverageMode}
+            spendingLimit={demoSpendingLimit}
+            overageUsage={demoOverageUsage}
+            onModeChange={async (mode) => {
+              if (demoPlan) {
+                toast.success(`Demo: Would change overage mode to ${mode}`);
+                setDemoOverageMode(mode);
+                return;
+              }
+              // TODO: Implement actual overage mode change via API
+              toast.success(`Overage mode changed to ${mode}`);
+              setDemoOverageMode(mode);
+            }}
+            onSpendingLimitChange={async (limit) => {
+              if (demoPlan) {
+                toast.success(
+                  limit ? `Demo: Would set spending limit to $${limit}` : "Demo: Would remove spending limit"
+                );
+                setDemoSpendingLimit(limit);
+                return;
+              }
+              // TODO: Implement actual spending limit change via API
+              toast.success(limit ? `Spending limit set to $${limit}` : "Spending limit removed");
+              setDemoSpendingLimit(limit);
+            }}
+          />
+        </SettingsCard>
+      )}
+
+      {/* Alert: Annual Billing Upgrade (only for monthly paid plans) */}
+      {isOnMonthlyBilling && (
+        <Alert variant="info" className="max-w-4xl">
+          <AlertTitle>Save 20% on Annual Billing</AlertTitle>
+          <AlertDescription>Simplify your billing cycle and get 2 months free.</AlertDescription>
+          <AlertButton onClick={handleUpgradeToAnnual}>Switch to Annual</AlertButton>
+        </Alert>
+      )}
+
+      {/* Alert: Special Pricing Programs (only for non-paid plans) */}
+      {!isOnPaidPlan && (
+        <Alert variant="info" className="max-w-4xl">
+          <AlertTitle>Special Pricing Programs</AlertTitle>
+          <AlertDescription>
+            Exclusive discounts for Startups, Non-profits, and Open Source projects.
+          </AlertDescription>
+          <AlertButton
+            onClick={() => {
+              if (demoPlan) {
+                toast.success("Demo: Would open discount application form");
+                return;
+              }
+              globalThis.open("https://formbricks.com/discount", "_blank");
+            }}>
+            Apply for Discount
+          </AlertButton>
+        </Alert>
+      )}
+
+      {/* Pricing Plans */}
+      {hasBillingRights && (
+        <div className="max-w-5xl">
+          {/* Period Toggle */}
+          <div className="mb-6 flex items-center gap-4">
+            <div className="flex overflow-hidden rounded-lg border border-slate-200 p-1">
+              <button
+                className={cn(
+                  "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
+                  planPeriod === "monthly" ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"
+                )}
+                onClick={() => setPlanPeriod("monthly")}>
+                Monthly
+              </button>
+              <button
+                className={cn(
+                  "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
+                  planPeriod === "yearly" ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"
+                )}
+                onClick={() => setPlanPeriod("yearly")}>
+                Annually
+              </button>
             </div>
+            {planPeriod === "yearly" && (
+              <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-700">
+                Get 2 months free 🔥
+              </span>
+            )}
           </div>
-        )}
-      </div>
-    </main>
+
+          {/* Plan Cards */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {getCloudPricingData(t).plans.map((plan) => (
+              <PricingCard
+                planPeriod={planPeriod}
+                key={plan.id}
+                plan={plan}
+                onUpgrade={async () => {
+                  await onUpgrade(plan.id);
+                }}
+                organization={effectiveOrganization}
+                onManageSubscription={openCustomerPortal}
+                isTrialActive={demoPlan === "trial" && plan.id === "scale"}
+                currentPlan={effectivePlan}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };

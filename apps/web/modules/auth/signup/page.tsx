@@ -56,7 +56,7 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const emailFromSearchParams = searchParams["email"];
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#00C4B8]">
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#D9F6F4]">
       <FormWrapper>
         <SignupForm
           webAppUrl={WEBAPP_URL}
