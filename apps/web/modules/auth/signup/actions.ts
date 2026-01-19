@@ -127,7 +127,12 @@ async function handleInviteAcceptance(
     },
   });
 
-  await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
+  await sendInviteAcceptedEmail(
+    invite.creator.name ?? "",
+    user.name,
+    invite.creator.email,
+    invite.creator.locale
+  );
   await deleteInvite(invite.id);
 }
 
@@ -168,7 +173,7 @@ async function handlePostUserCreation(
   }
 
   if (!emailVerificationDisabled) {
-    await sendVerificationEmail(user);
+    await sendVerificationEmail({ id: user.id, email: user.email, locale: user.locale });
   }
 }
 

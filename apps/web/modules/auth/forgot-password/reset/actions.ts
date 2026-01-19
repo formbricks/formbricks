@@ -33,7 +33,7 @@ export const resetPasswordAction = actionClient.schema(ZResetPasswordAction).act
       ctx.auditLoggingCtx.oldObject = oldObject;
       ctx.auditLoggingCtx.newObject = updatedUser;
 
-      await sendPasswordResetNotifyEmail(updatedUser);
+      await sendPasswordResetNotifyEmail({ email: updatedUser.email, locale: updatedUser.locale });
       return { success: true };
     }
   )
