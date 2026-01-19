@@ -5,9 +5,10 @@ import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { validators } from "./validators";
 
 // Mock translation function - just return the key for testing
-const mockT = vi.fn((key: string) => {
+const mockTFn = vi.fn((key: string) => {
   return key;
-}) as unknown as TFunction;
+});
+const mockT = mockTFn as unknown as TFunction;
 
 describe("validators", () => {
   describe("minLength", () => {
@@ -32,10 +33,10 @@ describe("validators", () => {
     });
 
     test("should return correct error message with translation function", () => {
-      mockT.mockClear();
+      mockTFn.mockClear();
       const message = validators.minLength.getDefaultMessage({ min: 10 }, {} as TSurveyElement, mockT);
       expect(message).toBe("errors.min_length");
-      expect(mockT).toHaveBeenCalledWith("errors.min_length", { min: 10 });
+      expect(mockTFn).toHaveBeenCalledWith("errors.min_length", { min: 10 });
     });
 
     test("should return fallback error message when translation function is undefined", () => {
@@ -69,10 +70,10 @@ describe("validators", () => {
     });
 
     test("should return correct error message with translation function", () => {
-      mockT.mockClear();
+      mockTFn.mockClear();
       const message = validators.maxLength.getDefaultMessage({ max: 100 }, {} as TSurveyElement, mockT);
       expect(message).toBe("errors.max_length");
-      expect(mockT).toHaveBeenCalledWith("errors.max_length", { max: 100 });
+      expect(mockTFn).toHaveBeenCalledWith("errors.max_length", { max: 100 });
     });
 
     test("should return fallback error message when translation function is undefined", () => {
