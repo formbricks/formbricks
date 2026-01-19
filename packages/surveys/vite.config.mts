@@ -51,6 +51,10 @@ const config = ({ mode }) => {
         },
         outDir: "dist",
       },
+      plugins: [
+        ...sharedConfig.plugins,
+        copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
+      ],
     });
   }
 
