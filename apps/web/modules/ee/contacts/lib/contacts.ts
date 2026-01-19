@@ -4,10 +4,13 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
+import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
+import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
@@ -210,14 +213,25 @@ const contactAttributesInclude = {
   },
 } satisfies Prisma.ContactInclude;
 
-// Helper to create attribute objects for Prisma create operations
-const createAttributeConnections = (record: Record<string, string>, environmentId: string) =>
-  Object.entries(record).map(([key, value]) => ({
-    attributeKey: {
-      connect: { key_environmentId: { key, environmentId } },
-    },
-    value,
-  }));
+// Helper to create attribute objects for Prisma create operations with typed columns
+const createAttributeConnections = (
+  record: Record<string, string>,
+  environmentId: string,
+  attributeTypeMap: Map<string, TContactAttributeDataType>
+) =>
+  Object.entries(record).map(([key, value]) => {
+    const dataType = attributeTypeMap.get(key) ?? "string";
+    const columns = prepareAttributeColumnsForStorage(value, dataType);
+
+    return {
+      attributeKey: {
+        connect: { key_environmentId: { key, environmentId } },
+      },
+      value: columns.value,
+      valueNumber: columns.valueNumber,
+      valueDate: columns.valueDate,
+    };
+  });
 
 // Helper to handle userId conflicts when updating/overwriting contacts
 const resolveUserIdConflict = (
@@ -327,7 +341,7 @@ export const createContactsFromCSV = async (
     // Fetch existing attribute keys and cache them
     const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
       where: { environmentId },
-      select: { key: true, id: true },
+      select: { key: true, id: true, dataType: true },
     });
 
     const attributeKeyMap = new Map<string, string>();
@@ -344,6 +358,71 @@ export const createContactsFromCSV = async (
     csvData.forEach((record) => {
       Object.keys(record).forEach((key) => csvKeys.add(key));
     });
+
+    // Type Detection Phase: Detect data types for new attribute keys
+    const attributeValuesByKey = new Map<string, string[]>();
+
+    csvData.forEach((record) => {
+      Object.entries(record).forEach(([key, value]) => {
+        if (!attributeValuesByKey.has(key)) {
+          attributeValuesByKey.set(key, []);
+        }
+        if (value && value.trim() !== "") {
+          attributeValuesByKey.get(key)!.push(value);
+        }
+      });
+    });
+
+    // Build a map of attribute keys to their detected/existing data types
+    const attributeTypeMap = new Map<string, TContactAttributeDataType>();
+
+    for (const [key, values] of attributeValuesByKey) {
+      // Use case-insensitive lookup for existing keys
+      const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
+      const existingKey = actualKey ? existingAttributeKeys.find((ak) => ak.key === actualKey) : null;
+
+      if (existingKey) {
+        // Use existing dataType for existing keys
+        attributeTypeMap.set(key, existingKey.dataType);
+      } else {
+        // Detect type from first non-empty value for new keys
+        const firstValue = values.find((v) => v !== "");
+        if (firstValue) {
+          const detectedType = detectAttributeDataType(firstValue);
+          attributeTypeMap.set(key, detectedType);
+        } else {
+          attributeTypeMap.set(key, "string"); // default for empty
+        }
+      }
+    }
+
+    // Validate that all values can be converted to their detected type
+    // If validation fails, fallback to string type for compatibility
+    const typeValidationErrors: string[] = [];
+
+    for (const [key, dataType] of attributeTypeMap) {
+      const values = attributeValuesByKey.get(key) || [];
+
+      // Skip validation for string type (always valid)
+      if (dataType === "string") continue;
+
+      for (const value of values) {
+        try {
+          prepareAttributeColumnsForStorage(value, dataType);
+        } catch {
+          // If any value fails conversion, downgrade to string type
+          attributeTypeMap.set(key, "string");
+          typeValidationErrors.push(
+            `Attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`
+          );
+          break;
+        }
+      }
+    }
+
+    if (typeValidationErrors.length > 0) {
+      logger.warn({ errors: typeValidationErrors }, "Type validation warnings during CSV upload");
+    }
 
     // Identify missing attribute keys (case-insensitive check)
     const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
@@ -363,6 +442,7 @@ export const createContactsFromCSV = async (
         data: Array.from(uniqueMissingKeys.values()).map((key) => ({
           key,
           name: key,
+          dataType: attributeTypeMap.get(key) ?? "string",
           environmentId,
         })),
         skipDuplicates: true,
@@ -374,7 +454,7 @@ export const createContactsFromCSV = async (
           key: { in: Array.from(uniqueMissingKeys.values()) },
           environmentId,
         },
-        select: { key: true, id: true },
+        select: { key: true, id: true, dataType: true },
       });
 
       newAttributeKeys.forEach((attrKey) => {
@@ -414,19 +494,30 @@ export const createContactsFromCSV = async (
           case "update": {
             const recordToProcess = resolveUserIdConflict(mappedRecord, existingContact, existingUserIds);
 
-            const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => ({
-              where: {
-                contactId_attributeKeyId: {
-                  contactId: existingContact.id,
-                  attributeKeyId: attributeKeyMap.get(key),
+            const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => {
+              const dataType = attributeTypeMap.get(key) ?? "string";
+              const columns = prepareAttributeColumnsForStorage(value, dataType);
+
+              return {
+                where: {
+                  contactId_attributeKeyId: {
+                    contactId: existingContact.id,
+                    attributeKeyId: attributeKeyMap.get(key),
+                  },
                 },
-              },
-              update: { value },
-              create: {
-                attributeKeyId: attributeKeyMap.get(key),
-                value,
-              },
-            }));
+                update: {
+                  value: columns.value,
+                  valueNumber: columns.valueNumber,
+                  valueDate: columns.valueDate,
+                },
+                create: {
+                  attributeKeyId: attributeKeyMap.get(key),
+                  value: columns.value,
+                  valueNumber: columns.valueNumber,
+                  valueDate: columns.valueDate,
+                },
+              };
+            });
 
             // Update contact with upserted attributes
             return prisma.contact.update({
@@ -453,7 +544,7 @@ export const createContactsFromCSV = async (
               where: { id: existingContact.id },
               data: {
                 attributes: {
-                  create: createAttributeConnections(recordToProcess, environmentId),
+                  create: createAttributeConnections(recordToProcess, environmentId, attributeTypeMap),
                 },
               },
               include: contactAttributesInclude,
@@ -466,7 +557,7 @@ export const createContactsFromCSV = async (
           data: {
             environmentId,
             attributes: {
-              create: createAttributeConnections(mappedRecord, environmentId),
+              create: createAttributeConnections(mappedRecord, environmentId, attributeTypeMap),
             },
           },
           include: contactAttributesInclude,

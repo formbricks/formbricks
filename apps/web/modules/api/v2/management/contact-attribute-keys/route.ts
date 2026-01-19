@@ -49,7 +49,7 @@ export const POST = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
     schemas: {
-      body: ZContactAttributeKeyInput,
+      body: ZContactAttributeKeyInput.sourceType(),
     },
     handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body } = parsedInput;

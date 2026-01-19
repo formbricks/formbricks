@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 
 export const ZContact = z.object({
   id: z.string().cuid2(),
@@ -11,6 +12,7 @@ const ZContactTableAttributeData = z.object({
   key: z.string(),
   name: z.string().nullable(),
   value: z.string().nullable(),
+  dataType: ZContactAttributeDataType,
 });
 
 export const ZContactTableData = z.object({
@@ -300,3 +302,82 @@ export const ZContactResponse = z.object({
 });
 
 export type TContactResponse = z.infer<typeof ZContactResponse>;
+
+// Schema for editing contact attributes in a form
+export const ZAttributeRow = z.object({
+  key: z.string().min(1, "Key is required"),
+  value: z.string(),
+});
+
+export const ZEditContactAttributesForm = z.object({
+  attributes: z
+    .array(ZAttributeRow)
+    .min(1, "At least one attribute is required")
+    .superRefine((attributes, ctx) => {
+      // Check for duplicate keys and mark each duplicate row
+      const keyOccurrences = new Map<string, number[]>();
+      attributes.forEach((attr, index) => {
+        if (attr.key) {
+          const indices = keyOccurrences.get(attr.key) || [];
+          indices.push(index);
+          keyOccurrences.set(attr.key, indices);
+        }
+      });
+
+      // Mark all duplicate rows with errors
+      keyOccurrences.forEach((indices, key) => {
+        if (indices.length > 1) {
+          indices.forEach((index) => {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Duplicate key: ${key}`,
+              path: [index, "key"],
+            });
+          });
+        }
+      });
+
+      // Check that at least one of email or userId has a value
+      const emailAttr = attributes.find((attr) => attr.key === "email");
+      const userIdAttr = attributes.find((attr) => attr.key === "userId");
+      const hasEmail = emailAttr?.value && emailAttr.value.trim() !== "";
+      const hasUserId = userIdAttr?.value && userIdAttr.value.trim() !== "";
+
+      if (!hasEmail && !hasUserId) {
+        // Find the indices to show errors on the relevant fields
+        const emailIndex = attributes.findIndex((attr) => attr.key === "email");
+        const userIdIndex = attributes.findIndex((attr) => attr.key === "userId");
+
+        // When both are empty, show "Either email or userId is required" on both fields
+        if (emailIndex !== -1 && userIdIndex !== -1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Either email or userId is required",
+            path: [emailIndex, "value"],
+          });
+
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Either email or userId is required",
+            path: [userIdIndex, "value"],
+          });
+        }
+      }
+
+      // Validate email format if key is "email" and has a value
+      attributes.forEach((attr, index) => {
+        if (attr.key === "email" && attr.value && attr.value.trim() !== "") {
+          const emailResult = z.string().email().safeParse(attr.value);
+          if (!emailResult.success) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Invalid email format",
+              path: [index, "value"],
+            });
+          }
+        }
+      });
+    }),
+});
+
+export type TEditContactAttributesForm = z.infer<typeof ZEditContactAttributesForm>;

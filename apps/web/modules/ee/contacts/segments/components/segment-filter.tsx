@@ -16,27 +16,27 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type {
-  TArithmeticOperator,
-  TAttributeOperator,
-  TBaseFilter,
-  TDeviceOperator,
-  TSegment,
-  TSegmentAttributeFilter,
-  TSegmentConnector,
-  TSegmentDeviceFilter,
-  TSegmentFilter,
-  TSegmentFilterValue,
-  TSegmentOperator,
-  TSegmentPersonFilter,
-  TSegmentSegmentFilter,
-} from "@formbricks/types/segment";
 import {
   ARITHMETIC_OPERATORS,
   DATE_OPERATORS,
   DEVICE_OPERATORS,
+  NUMBER_TYPE_OPERATORS,
   PERSON_OPERATORS,
-  TEXT_ATTRIBUTE_OPERATORS,
+  STRING_TYPE_OPERATORS,
+  type TArithmeticOperator,
+  type TAttributeOperator,
+  type TBaseFilter,
+  type TDeviceOperator,
+  type TSegment,
+  type TSegmentAttributeFilter,
+  type TSegmentConnector,
+  type TSegmentDeviceFilter,
+  type TSegmentFilter,
+  type TSegmentFilterValue,
+  type TSegmentOperator,
+  type TSegmentPersonFilter,
+  type TSegmentSegmentFilter,
+  isDateOperator,
 } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -208,7 +208,6 @@ type TAttributeSegmentFilterProps = TSegmentFilterProps & {
   resource: TSegmentAttributeFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
-
 function AttributeSegmentFilter({
   connector,
   resource,
@@ -245,12 +244,23 @@ function AttributeSegmentFilter({
 
   const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
   const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
-  // Default to 'text' if dataType is undefined (for backwards compatibility)
-  const attributeDataType = attributeKey?.dataType ?? "text";
+  // Default to 'string' if dataType is undefined (for backwards compatibility)
+  const attributeDataType = attributeKey?.dataType ?? "string";
   const isDateAttribute = attributeDataType === "date";
 
-  // Show date operators for date attributes, otherwise show standard text/number operators
-  const availableOperators = isDateAttribute ? DATE_OPERATORS : TEXT_ATTRIBUTE_OPERATORS;
+  // Show operators based on attribute data type
+  const getOperatorsForDataType = () => {
+    switch (attributeDataType) {
+      case "date":
+        return DATE_OPERATORS;
+      case "number":
+        return NUMBER_TYPE_OPERATORS;
+      case "string":
+      default:
+        return STRING_TYPE_OPERATORS;
+    }
+  };
+  const availableOperators = getOperatorsForDataType();
   const operatorArr = availableOperators.map((operator) => {
     return {
       id: operator,
@@ -274,7 +284,7 @@ function AttributeSegmentFilter({
 
       // When changing attribute, reset operator to appropriate default for the new attribute type
       const newAttributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === newAttributeClassName);
-      const newAttributeDataType = newAttributeKey?.dataType ?? "text";
+      const newAttributeDataType = newAttributeKey?.dataType ?? "string";
       const defaultOperator = newAttributeDataType === "date" ? "isOlderThan" : "equals";
       const defaultValue = newAttributeDataType === "date" ? { amount: 1, unit: "days" as const } : "";
 
@@ -332,7 +342,7 @@ function AttributeSegmentFilter({
         }}
         value={attrKeyValue}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-2">
@@ -389,9 +399,9 @@ function AttributeSegmentFilter({
 
       {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
         <>
-          {isDateAttribute && DATE_OPERATORS.includes(resource.qualifier.operator as any) ? (
+          {isDateAttribute && isDateOperator(resource.qualifier.operator) ? (
             <DateFilterValue
-              operator={resource.qualifier.operator as any}
+              operator={resource.qualifier.operator}
               value={resource.value}
               onChange={(newValue) => {
                 updateValueInLocalSurvey(resource.id, newValue);
@@ -410,7 +420,7 @@ function AttributeSegmentFilter({
                   if (viewOnly) return;
                   checkValueAndUpdate(e);
                 }}
-                value={resource.value}
+                value={resource.value as string | number}
               />
 
               {valueError ? (
@@ -545,7 +555,7 @@ function PersonSegmentFilter({
         }}
         value={personIdentifier}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-1 lowercase">
@@ -592,7 +602,7 @@ function PersonSegmentFilter({
               if (viewOnly) return;
               checkValueAndUpdate(e);
             }}
-            value={resource.value}
+            value={resource.value as string | number}
           />
 
           {valueError ? (
@@ -696,7 +706,7 @@ function SegmentSegmentFilter({
         }}
         value={currentSegment?.id}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
           hideArrow>
           <div className="flex items-center gap-1">
             <Users2Icon className="h-4 w-4 text-sm" />
@@ -708,7 +718,9 @@ function SegmentSegmentFilter({
           {segments
             .filter((segment) => !segment.isPrivate)
             .map((segment) => (
-              <SelectItem value={segment.id}>{segment.title}</SelectItem>
+              <SelectItem key={segment.id} value={segment.id}>
+                {segment.title}
+              </SelectItem>
             ))}
         </SelectContent>
       </Select>
@@ -851,7 +863,7 @@ export function SegmentFilter({
 }: TSegmentFilterProps) {
   const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const updateFilterValueInSegment = (filterId: string, newValue: string | number) => {
+  const updateFilterValueInSegment = (filterId: string, newValue: TSegmentFilterValue) => {
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {
       updateFilterValue(updatedSegment.filters, filterId, newValue);

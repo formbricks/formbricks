@@ -28,6 +28,7 @@ const selectProject = {
   environments: true,
   styling: true,
   logo: true,
+  customHeadScripts: true,
 };
 
 export const updateProject = async (
@@ -120,7 +121,7 @@ export const createProject = async (
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A project with this name already exists in your organization");
+        throw new InvalidInputError("A workspace with this name already exists in your organization");
       }
       throw new DatabaseError(error.message);
     }

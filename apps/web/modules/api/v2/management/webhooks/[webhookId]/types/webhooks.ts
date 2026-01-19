@@ -21,6 +21,7 @@ export const ZWebhookUpdateSchema = ZWebhook.omit({
   createdAt: true,
   updatedAt: true,
   environmentId: true,
+  secret: true,
 }).openapi({
   ref: "webhookUpdate",
   description: "A webhook to update.",

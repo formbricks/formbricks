@@ -4,7 +4,7 @@ export const ZContactAttributeKeyType = z.enum(["default", "custom"]);
 
 export type TContactAttributeKeyType = z.infer<typeof ZContactAttributeKeyType>;
 
-export const ZContactAttributeDataType = z.enum(["text", "number", "date"]);
+export const ZContactAttributeDataType = z.enum(["string", "number", "date"]);
 
 export type TContactAttributeDataType = z.infer<typeof ZContactAttributeDataType>;
 
@@ -17,7 +17,7 @@ export const ZContactAttributeKey = z.object({
   name: z.string().nullable(),
   description: z.string().nullable(),
   type: ZContactAttributeKeyType,
-  dataType: ZContactAttributeDataType.default("text"),
+  dataType: ZContactAttributeDataType.default("string"),
   environmentId: z.string(),
 });
 

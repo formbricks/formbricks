@@ -76,7 +76,7 @@ export const ActionActivityTab = ({
     let copyName = data.name;
     try {
       if (isReadOnly) {
-        throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
+        throw new Error(t("common.you_are_not_authorized_to_perform_this_action"));
       }
 
       if (copyName && actionClassNames.includes(copyName)) {
@@ -151,7 +151,7 @@ export const ActionActivityTab = ({
           <Label className="block text-xs font-normal text-slate-500">Type</Label>
           <div className="mt-1 flex items-center">
             <div className="mr-1.5 h-4 w-4 text-slate-600">{ACTION_TYPE_ICON_LOOKUP[actionClass.type]}</div>
-            <p className="text-sm capitalize text-slate-700">{actionClass.type}</p>
+            <p className="text-sm text-slate-700 capitalize">{actionClass.type}</p>
           </div>
         </div>
         <div className="">

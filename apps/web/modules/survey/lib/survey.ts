@@ -29,6 +29,7 @@ export const selectSurvey = {
   autoComplete: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
+  isCaptureIpEnabled: true,
   redirectUrl: true,
   projectOverwrites: true,
   styling: true,
@@ -39,6 +40,9 @@ export const selectSurvey = {
   recaptcha: true,
   isBackButtonHidden: true,
   metadata: true,
+  slug: true,
+  customHeadScripts: true,
+  customHeadScriptsMode: true,
   languages: {
     select: {
       default: true,

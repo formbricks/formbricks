@@ -105,7 +105,7 @@ export const finishOnboarding = async (
   page: Page,
   projectChannel: TProjectConfigChannel = "website"
 ): Promise<void> => {
-  await page.waitForURL(/\/organizations\/[^/]+\/projects\/new\/mode/);
+  await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
 
   await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
 
@@ -117,7 +117,7 @@ export const finishOnboarding = async (
 
   // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
   await page.getByPlaceholder("e.g. Formbricks").click();
-  await page.getByPlaceholder("e.g. Formbricks").fill("My Project");
+  await page.getByPlaceholder("e.g. Formbricks").fill("My Workspace");
   await page.locator("#form-next-button").click();
 
   if (projectChannel !== "link") {
@@ -125,7 +125,7 @@ export const finishOnboarding = async (
   }
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  await expect(page.getByText("My Project")).toBeVisible();
+  await expect(page.getByText("My Workspace")).toBeVisible();
 };
 
 export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {

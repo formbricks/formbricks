@@ -38,6 +38,7 @@ interface ThemeStylingProps {
   isUnsplashConfigured: boolean;
   isReadOnly: boolean;
   isStorageConfigured: boolean;
+  publicDomain: string;
 }
 
 export const ThemeStyling = ({
@@ -47,6 +48,7 @@ export const ThemeStyling = ({
   isUnsplashConfigured,
   isReadOnly,
   isStorageConfigured = true,
+  publicDomain,
 }: ThemeStylingProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -73,7 +75,7 @@ export const ThemeStyling = ({
 
     if (updatedProjectResponse?.data) {
       form.reset({ ...defaultStyling });
-      toast.success(t("environments.project.look.styling_updated_successfully"));
+      toast.success(t("environments.workspace.look.styling_updated_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
@@ -91,7 +93,7 @@ export const ThemeStyling = ({
 
     if (updatedProjectResponse?.data) {
       form.reset({ ...updatedProjectResponse.data.styling });
-      toast.success(t("environments.project.look.styling_updated_successfully"));
+      toast.success(t("environments.workspace.look.styling_updated_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
       toast.error(errorMessage);
@@ -131,9 +133,9 @@ export const ThemeStyling = ({
                         </FormControl>
 
                         <div>
-                          <FormLabel>{t("environments.project.look.enable_custom_styling")}</FormLabel>
+                          <FormLabel>{t("environments.workspace.look.enable_custom_styling")}</FormLabel>
                           <FormDescription>
-                            {t("environments.project.look.enable_custom_styling_description")}
+                            {t("environments.workspace.look.enable_custom_styling_description")}
                           </FormDescription>
                         </div>
                       </FormItem>
@@ -199,6 +201,7 @@ export const ThemeStyling = ({
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}
+                publicDomain={publicDomain}
               />
             </div>
           </div>
@@ -207,8 +210,8 @@ export const ThemeStyling = ({
           <AlertDialog
             open={confirmResetStylingModalOpen}
             setOpen={setConfirmResetStylingModalOpen}
-            headerText={t("environments.project.look.reset_styling")}
-            mainText={t("environments.project.look.reset_styling_confirmation")}
+            headerText={t("environments.workspace.look.reset_styling")}
+            mainText={t("environments.workspace.look.reset_styling_confirmation")}
             confirmBtnLabel={t("common.confirm")}
             onConfirm={() => {
               onReset();

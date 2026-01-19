@@ -74,6 +74,19 @@
     "@formbricks/storage#test:coverage": {
       "dependsOn": ["@formbricks/logger#build"]
     },
+    "@formbricks/survey-ui#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/survey-ui#build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/survey-ui#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/survey-ui#build"],
+      "persistent": true
+    },
     "@formbricks/surveys#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
@@ -85,6 +98,25 @@
     "@formbricks/surveys#go": {
       "cache": false,
       "dependsOn": ["@formbricks/surveys#build"],
+      "persistent": true
+    },
+    "@formbricks/surveys#test": {
+      "dependsOn": ["@formbricks/survey-ui#build"]
+    },
+    "@formbricks/surveys#test:coverage": {
+      "dependsOn": ["@formbricks/survey-ui#build"]
+    },
+    "@formbricks/ui#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/ui#build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/ui#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/ui#build"],
       "persistent": true
     },
     "@formbricks/web#go": {
@@ -120,6 +152,7 @@
         "AZUREAD_TENANT_ID",
         "AUTH_SSO_DEFAULT_TEAM_ID",
         "AUTH_SKIP_INVITE_FOR_SSO",
+        "BASE_PATH",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
         "CRON_SECRET",
@@ -130,6 +163,7 @@
         "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",
         "ENTERPRISE_LICENSE_KEY",
+        "ENVIRONMENT",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
@@ -146,8 +180,8 @@
         "IMPRINT_ADDRESS",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
-        "INTERCOM_APP_ID",
-        "INTERCOM_SECRET_KEY",
+        "CHATWOOT_WEBSITE_TOKEN",
+        "CHATWOOT_BASE_URL",
         "LOG_LEVEL",
         "MAIL_FROM",
         "MAIL_FROM_NAME",
@@ -241,6 +275,7 @@
       "outputs": []
     },
     "db:seed": {
+      "env": ["ALLOW_SEED"],
       "outputs": []
     },
     "db:setup": {

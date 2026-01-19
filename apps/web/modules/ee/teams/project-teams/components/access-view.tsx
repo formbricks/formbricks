@@ -17,7 +17,7 @@ export const AccessView = ({ teams, environmentId }: AccessViewProps) => {
     <>
       <SettingsCard
         title={t("common.team_access")}
-        description={t("environments.project.teams.team_settings_description")}>
+        description={t("environments.workspace.teams.team_settings_description")}>
         <div className="mb-4 flex justify-end">
           <ManageTeam environmentId={environmentId} />
         </div>

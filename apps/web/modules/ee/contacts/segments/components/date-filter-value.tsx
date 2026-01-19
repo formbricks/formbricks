@@ -40,8 +40,8 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
           disabled={viewOnly}
           value={relativeValue.amount}
           onChange={(e) => {
-            const amount = parseInt(e.target.value, 10);
-            if (isNaN(amount) || amount < 1) {
+            const amount = Number.parseInt(e.target.value, 10);
+            if (Number.isNaN(amount) || amount < 1) {
               setError(t("environments.segments.value_must_be_positive"));
               return;
             }

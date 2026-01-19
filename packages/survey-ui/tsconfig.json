@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "resolveJsonModule": true
+  },
+  "exclude": ["src/**/*.stories.tsx", "src/**/story-helpers.tsx", "src/**/*.test.ts"],
+  "extends": "@formbricks/config-typescript/react-library.json",
+  "include": ["src"]
+}

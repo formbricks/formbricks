@@ -43,6 +43,7 @@ interface ContactsTableProps {
   setSearchValue: (value: string) => void;
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
+  refreshContacts: () => Promise<void>;
 }
 
 export const ContactsTable = ({
@@ -56,6 +57,7 @@ export const ContactsTable = ({
   setSearchValue,
   isReadOnly,
   isQuotasAllowed,
+  refreshContacts,
 }: ContactsTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -226,24 +228,27 @@ export const ContactsTable = ({
         modifiers={[restrictToHorizontalAxis]}
         onDragEnd={handleDragEnd}
         sensors={sensors}>
-        <div className="flex items-center justify-between gap-4 pb-6">
-          <SearchBar
-            value={searchValue}
-            onChange={setSearchValue}
-            placeholder={t("environments.contacts.search_contact")}
-          />
-          <DataTableToolbar
-            setIsExpanded={setIsExpanded}
-            setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-            isExpanded={isExpanded ?? false}
-            table={table}
-            updateRowList={updateContactList}
-            type="contact"
-            deleteAction={deleteContact}
-            isQuotasAllowed={isQuotasAllowed}
-          />
-        </div>
-        <div className="w-full overflow-x-auto rounded-lg border border-slate-200">
+        <DataTableToolbar
+          setIsExpanded={setIsExpanded}
+          setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+          isExpanded={isExpanded ?? false}
+          table={table}
+          updateRowList={updateContactList}
+          type="contact"
+          deleteAction={deleteContact}
+          isQuotasAllowed={isQuotasAllowed}
+          onRefresh={refreshContacts}
+          leftContent={
+            <div className="w-64">
+              <SearchBar
+                value={searchValue}
+                onChange={setSearchValue}
+                placeholder={t("environments.contacts.search_contact")}
+              />
+            </div>
+          }
+        />
+        <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
             <TableHeader className="pointer-events-auto">
               {table.getHeaderGroups().map((headerGroup) => (
@@ -254,6 +259,7 @@ export const ContactsTable = ({
                         key={header.id}
                         header={header}
                         setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+                        showColumnDividers={false}
                       />
                     ))}
                   </SortableContext>
@@ -262,51 +268,31 @@ export const ContactsTable = ({
             </TableHeader>
 
             <TableBody ref={parent}>
-              {table.getRowModel().rows.map((row, rowIndex) => {
-                const isLastRow = rowIndex === table.getRowModel().rows.length - 1;
-                return (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className={`group cursor-pointer hover:bg-slate-50 ${isLastRow ? "rounded-b-lg" : ""}`}>
-                    {row.getVisibleCells().map((cell, cellIndex) => {
-                      const isFirstCell = cellIndex === 0;
-                      const isLastCell = cellIndex === row.getVisibleCells().length - 1;
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          onClick={() => {
-                            if (cell.column.id === "select") return;
-                            router.push(`/environments/${environmentId}/contacts/${row.id}`);
-                          }}
-                          style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
-                          className={cn(
-                            "border-slate-200 bg-white px-4 py-2 shadow-none group-hover:bg-slate-50",
-                            row.getIsSelected() && "bg-slate-100",
-                            {
-                              "sticky left-0 z-10": cell.column.id === "select",
-                            },
-                            isLastRow
-                              ? isFirstCell
-                                ? "rounded-bl-lg"
-                                : isLastCell
-                                  ? "rounded-br-lg"
-                                  : ""
-                              : ""
-                          )}>
-                          <div
-                            className={cn(
-                              "flex flex-1 items-center truncate",
-                              isExpanded ? "h-10" : "h-full"
-                            )}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </div>
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })}
+              {table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className={"group cursor-pointer"}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      onClick={() => {
+                        if (cell.column.id === "select") return;
+                        router.push(`/environments/${environmentId}/contacts/${row.id}`);
+                      }}
+                      style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
+                      className={cn(
+                        "border-slate-200 bg-white px-4 py-2 shadow-none group-hover:bg-slate-100",
+                        row.getIsSelected() && "bg-slate-100"
+                      )}>
+                      <div
+                        className={cn("flex flex-1 items-center truncate", isExpanded ? "h-10" : "h-full")}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </div>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
               {table.getRowModel().rows.length === 0 && (
                 <TableRow className="hover:bg-white">
                   <TableCell colSpan={columns.length} className="h-24 text-center">

@@ -9,7 +9,6 @@ import {
   ZContactAttributeKeyInput,
   ZGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
-import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
 
 export const getContactAttributeKeysEndpoint: ZodOpenApiOperationObject = {
@@ -59,13 +58,11 @@ export const createContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
 };
 
 export const contactAttributeKeyPaths: ZodOpenApiPathsObject = {
-  "/contact-attribute-keys": {
-    servers: managementServer,
+  "/management/contact-attribute-keys": {
     get: getContactAttributeKeysEndpoint,
     post: createContactAttributeKeyEndpoint,
   },
-  "/contact-attribute-keys/{id}": {
-    servers: managementServer,
+  "/management/contact-attribute-keys/{id}": {
     get: getContactAttributeKeyEndpoint,
     put: updateContactAttributeKeyEndpoint,
     delete: deleteContactAttributeKeyEndpoint,

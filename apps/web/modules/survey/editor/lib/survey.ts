@@ -4,11 +4,17 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { updateSurveyInternal } from "@/lib/survey/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
+
+export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
+  // Use internal version with skipValidation=true to allow incomplete drafts
+  return updateSurveyInternal(updatedSurvey, true);
+};
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   try {
@@ -265,6 +271,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       ...prismaSurvey, // Properties from prismaSurvey
       displayPercentage: Number(prismaSurvey.displayPercentage) || null,
       segment: surveySegment,
+      customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
     };
 
     return modifiedSurvey;

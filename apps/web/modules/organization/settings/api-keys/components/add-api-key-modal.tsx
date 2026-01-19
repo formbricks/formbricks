@@ -161,7 +161,7 @@ export const AddApiKeyModal = ({
     const data = getValues();
 
     if (checkForDuplicatePermissions()) {
-      toast.error(t("environments.project.api_keys.duplicate_access"));
+      toast.error(t("environments.workspace.api_keys.duplicate_access"));
       return;
     }
 
@@ -219,12 +219,12 @@ export const AddApiKeyModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="px-1">{t("environments.project.api_keys.add_api_key")}</DialogTitle>
+          <DialogTitle className="px-1">{t("environments.workspace.api_keys.add_api_key")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitAPIKey)} className="contents">
           <DialogBody className="space-y-4 overflow-y-auto px-1 py-4">
             <div className="space-y-2">
-              <Label>{t("environments.project.api_keys.api_key_label")}</Label>
+              <Label>{t("environments.workspace.api_keys.api_key_label")}</Label>
               <Input
                 placeholder="e.g. GitHub, PostHog, Slack"
                 {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
@@ -232,7 +232,7 @@ export const AddApiKeyModal = ({
             </div>
 
             <div className="space-y-2">
-              <Label>{t("environments.project.api_keys.project_access")}</Label>
+              <Label>{t("environments.workspace.api_keys.workspace_access")}</Label>
               <div className="space-y-2">
                 {/* Permission rows */}
                 {Object.keys(selectedPermissions).map((key) => {
@@ -347,7 +347,7 @@ export const AddApiKeyModal = ({
             </div>
 
             <div className="space-y-4">
-              <Label>{t("environments.project.api_keys.organization_access")}</Label>
+              <Label>{t("environments.workspace.api_keys.organization_access")}</Label>
               {Object.keys(selectedOrganizationAccess).map((key) => (
                 <div key={key} className="mt-2 flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -370,11 +370,11 @@ export const AddApiKeyModal = ({
                 </div>
               ))}
               <p className="text-sm text-slate-500">
-                {t("environments.project.api_keys.organization_access_description")}
+                {t("environments.workspace.api_keys.organization_access_description")}
               </p>
             </div>
             <Alert variant="warning">
-              <AlertTitle>{t("environments.project.api_keys.api_key_security_warning")}</AlertTitle>
+              <AlertTitle>{t("environments.workspace.api_keys.api_key_security_warning")}</AlertTitle>
             </Alert>
           </DialogBody>
           <DialogFooter>
@@ -392,7 +392,7 @@ export const AddApiKeyModal = ({
               type="submit"
               disabled={isSubmitDisabled() || isCreatingAPIKey}
               loading={isCreatingAPIKey}>
-              {t("environments.project.api_keys.add_api_key")}
+              {t("environments.workspace.api_keys.add_api_key")}
             </Button>
           </DialogFooter>
         </form>

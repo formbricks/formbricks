@@ -11,12 +11,12 @@ export const LanguagesLoading = () => {
   const { t } = useTranslation();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation activeId="languages" loading />
       </PageHeader>
       <SettingsCard
-        title={t("environments.project.languages.multi_language_surveys")}
-        description={t("environments.project.languages.multi_language_surveys_description")}>
+        title={t("environments.workspace.languages.multi_language_surveys")}
+        description={t("environments.workspace.languages.multi_language_surveys_description")}>
         <div className="flex flex-col space-y-4">
           <LanguageLabels />
           {[...Array(3)].map((_, idx) => (

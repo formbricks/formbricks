@@ -23,7 +23,7 @@ export type SegmentFilterQueryResult = {
 
 /**
  * Builds a Prisma where clause for date attribute filters
- * Since dates are stored as ISO 8601 strings, lexicographic comparison works correctly
+ * Uses the native valueDate column for performant DateTime comparisons
  */
 const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prisma.ContactWhereInput => {
   const { root, qualifier, value } = filter;
@@ -31,14 +31,14 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
   const { operator } = qualifier as { operator: TDateOperator };
   const now = new Date();
 
-  let dateCondition: Prisma.StringFilter = {};
+  let dateCondition: Prisma.DateTimeNullableFilter = {};
 
   switch (operator) {
     case "isOlderThan": {
       // value should be { amount, unit }
       if (typeof value === "object" && "amount" in value && "unit" in value) {
         const threshold = subtractTimeUnit(now, value.amount, value.unit);
-        dateCondition = { lt: threshold.toISOString() };
+        dateCondition = { lt: threshold };
       }
       break;
     }
@@ -46,29 +46,29 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
       // value should be { amount, unit }
       if (typeof value === "object" && "amount" in value && "unit" in value) {
         const threshold = subtractTimeUnit(now, value.amount, value.unit);
-        dateCondition = { gte: threshold.toISOString() };
+        dateCondition = { gte: threshold };
       }
       break;
     }
     case "isBefore":
       if (typeof value === "string") {
-        dateCondition = { lt: value };
+        dateCondition = { lt: new Date(value) };
       }
       break;
     case "isAfter":
       if (typeof value === "string") {
-        dateCondition = { gt: value };
+        dateCondition = { gt: new Date(value) };
       }
       break;
     case "isBetween":
       if (Array.isArray(value) && value.length === 2) {
-        dateCondition = { gte: value[0], lte: value[1] };
+        dateCondition = { gte: new Date(value[0]), lte: new Date(value[1]) };
       }
       break;
     case "isSameDay": {
       if (typeof value === "string") {
-        const dayStart = startOfDay(new Date(value)).toISOString();
-        const dayEnd = endOfDay(new Date(value)).toISOString();
+        const dayStart = startOfDay(new Date(value));
+        const dayEnd = endOfDay(new Date(value));
         dateCondition = { gte: dayStart, lte: dayEnd };
       }
       break;
@@ -79,7 +79,45 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
     attributes: {
       some: {
         attributeKey: { key: contactAttributeKey },
-        value: dateCondition,
+        valueDate: dateCondition,
+      },
+    },
+  };
+};
+
+/**
+ * Builds a Prisma where clause for number attribute filters
+ * Uses the native valueNumber column for performant numeric comparisons
+ */
+const buildNumberAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prisma.ContactWhereInput => {
+  const { root, qualifier, value } = filter;
+  const { contactAttributeKey } = root;
+  const { operator } = qualifier;
+
+  const numericValue = typeof value === "number" ? value : Number(value);
+
+  let numberCondition: Prisma.FloatNullableFilter = {};
+
+  switch (operator) {
+    case "greaterThan":
+      numberCondition = { gt: numericValue };
+      break;
+    case "greaterEqual":
+      numberCondition = { gte: numericValue };
+      break;
+    case "lessThan":
+      numberCondition = { lt: numericValue };
+      break;
+    case "lessEqual":
+      numberCondition = { lte: numericValue };
+      break;
+  }
+
+  return {
+    attributes: {
+      some: {
+        attributeKey: { key: contactAttributeKey },
+        valueNumber: numberCondition,
       },
     },
   };
@@ -153,17 +191,10 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
       valueQuery.attributes.some.value = { endsWith: String(value), mode: "insensitive" };
       break;
     case "greaterThan":
-      valueQuery.attributes.some.value = { gt: String(value) };
-      break;
     case "greaterEqual":
-      valueQuery.attributes.some.value = { gte: String(value) };
-      break;
     case "lessThan":
-      valueQuery.attributes.some.value = { lt: String(value) };
-      break;
     case "lessEqual":
-      valueQuery.attributes.some.value = { lte: String(value) };
-      break;
+      return buildNumberAttributeFilterWhereClause(filter);
     default:
       valueQuery.attributes.some.value = String(value);
   }

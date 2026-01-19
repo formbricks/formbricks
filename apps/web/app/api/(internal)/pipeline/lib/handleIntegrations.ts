@@ -31,6 +31,7 @@ const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   if (metadata.userAgent?.device) result.push(`Device: ${metadata.userAgent.device}`);
   if (metadata.country) result.push(`Country: ${metadata.country}`);
   if (metadata.action) result.push(`Action: ${metadata.action}`);
+  if (metadata.ipAddress) result.push(`IP Address: ${metadata.ipAddress}`);
 
   // Join all the elements in the result array with a newline for formatting
   return result.join("\n");

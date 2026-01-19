@@ -3,7 +3,8 @@
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   Code2Icon,
-  LinkIcon,
+  CodeIcon,
+  Link2Icon,
   MailIcon,
   QrCodeIcon,
   Settings,
@@ -18,10 +19,12 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { AnonymousLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/anonymous-links-tab";
 import { AppTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/app-tab";
+import { CustomHtmlTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/custom-html-tab";
 import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab";
 import { EmailTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/email-tab";
 import { LinkSettingsTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/link-settings-tab";
 import { PersonalLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/personal-links-tab";
+import { PrettyUrlTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/pretty-url-tab";
 import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
 import { SocialMediaTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/social-media-tab";
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
@@ -50,6 +53,7 @@ interface ShareSurveyModalProps {
   isFormbricksCloud: boolean;
   isReadOnly: boolean;
   isStorageConfigured: boolean;
+  projectCustomScripts?: string | null;
 }
 
 export const ShareSurveyModal = ({
@@ -64,6 +68,7 @@ export const ShareSurveyModal = ({
   isFormbricksCloud,
   isReadOnly,
   isStorageConfigured,
+  projectCustomScripts,
 }: ShareSurveyModalProps) => {
   const environmentId = survey.environmentId;
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
@@ -80,13 +85,13 @@ export const ShareSurveyModal = ({
     componentType: React.ComponentType<unknown>;
     componentProps: unknown;
     disabled?: boolean;
-  }[] = useMemo(
-    () => [
+  }[] = useMemo(() => {
+    const tabs = [
       {
         id: ShareViaType.ANON_LINKS,
         type: LinkTabsType.SHARE_VIA,
         label: t("environments.surveys.share.anonymous_links.nav_title"),
-        icon: LinkIcon,
+        icon: Link2Icon,
         title: t("environments.surveys.share.anonymous_links.nav_title"),
         description: t("environments.surveys.share.anonymous_links.description"),
         componentType: AnonymousLinksTab,
@@ -180,22 +185,49 @@ export const ShareSurveyModal = ({
         componentType: LinkSettingsTab,
         componentProps: { isReadOnly, locale: user.locale, isStorageConfigured },
       },
-    ],
-    [
-      t,
-      survey,
-      publicDomain,
-      user.locale,
-      surveyUrl,
-      isReadOnly,
-      environmentId,
-      segments,
-      isContactsEnabled,
-      isFormbricksCloud,
-      email,
-      isStorageConfigured,
-    ]
-  );
+      {
+        id: ShareSettingsType.PRETTY_URL,
+        type: LinkTabsType.SHARE_SETTING,
+        label: t("environments.surveys.share.pretty_url.title"),
+        icon: Link2Icon,
+        title: t("environments.surveys.share.pretty_url.title"),
+        description: t("environments.surveys.share.pretty_url.description"),
+        componentType: PrettyUrlTab,
+        componentProps: { publicDomain, isReadOnly },
+      },
+      {
+        id: ShareSettingsType.CUSTOM_HTML,
+        type: LinkTabsType.SHARE_SETTING,
+        label: t("environments.surveys.share.custom_html.nav_title"),
+        icon: CodeIcon,
+        title: t("environments.surveys.share.custom_html.nav_title"),
+        description: t("environments.surveys.share.custom_html.description"),
+        componentType: CustomHtmlTab,
+        componentProps: { projectCustomScripts, isReadOnly },
+      },
+    ];
+
+    // Filter out tabs that should not be shown on Formbricks Cloud
+    return isFormbricksCloud
+      ? tabs.filter(
+          (tab) => tab.id !== ShareSettingsType.PRETTY_URL && tab.id !== ShareSettingsType.CUSTOM_HTML
+        )
+      : tabs;
+  }, [
+    t,
+    survey,
+    publicDomain,
+    user.locale,
+    surveyUrl,
+    isReadOnly,
+    environmentId,
+    segments,
+    isContactsEnabled,
+    isFormbricksCloud,
+    email,
+    isStorageConfigured,
+    projectCustomScripts,
+  ]);
 
   const getDefaultActiveId = useCallback(() => {
     if (survey.type !== "link") {

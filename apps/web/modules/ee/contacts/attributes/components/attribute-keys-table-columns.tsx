@@ -3,17 +3,18 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
 import { Calendar1Icon, HashIcon, TagIcon } from "lucide-react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { Badge } from "@/modules/ui/components/badge";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
-const getIconForDataType = (dataType: string) => {
+const getIconForDataType = (dataType: TContactAttributeDataType) => {
   switch (dataType) {
     case "date":
       return <Calendar1Icon className="h-4 w-4 text-slate-600" />;
     case "number":
       return <HashIcon className="h-4 w-4 text-slate-600" />;
+    case "string":
     default:
       return <TagIcon className="h-4 w-4 text-slate-600" />;
   }

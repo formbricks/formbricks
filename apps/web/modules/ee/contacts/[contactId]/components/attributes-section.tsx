@@ -5,6 +5,7 @@ import {
   getContactAttributesWithMetadata,
 } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
+import { formatAttributeValue } from "@/modules/ee/contacts/lib/format-attribute-value";
 import { Badge } from "@/modules/ui/components/badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
@@ -70,7 +71,9 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
                 <span>{attr.name || attr.key}</span>
                 <Badge text={attr.dataType} type="gray" size="tiny" />
               </dt>
-              <dd className="mt-1 text-sm text-slate-900">{attr.value}</dd>
+              <dd className="mt-1 text-sm text-slate-900">
+                {formatAttributeValue(attr.value, attr.dataType)}
+              </dd>
             </div>
           );
         })}

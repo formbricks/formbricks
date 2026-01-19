@@ -1,6 +1,7 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
@@ -15,6 +16,7 @@ interface EnvironmentLayoutProps {
 
 export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLayoutProps) => {
   const t = await getTranslate();
+  const publicDomain = getPublicDomain();
 
   // Destructure all data from props (NO database queries)
   const {
@@ -41,7 +43,7 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
 
   // Validate that project permission exists for members
   if (isMember && !projectPermission) {
-    throw new Error(t("common.project_permission_not_found"));
+    throw new Error(t("common.workspace_permission_not_found"));
   }
 
   return (
@@ -72,6 +74,7 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           isDevelopment={IS_DEVELOPMENT}
           membershipRole={membership.role}
+          publicDomain={publicDomain}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar

@@ -10,7 +10,7 @@ import { MembersView } from "@/modules/organization/settings/teams/components/me
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-export const TeamsPage = async (props) => {
+export const TeamsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

@@ -1,3 +1,1 @@
-import { AttributesPage } from "@/modules/ee/contacts/attributes/page";
-
-export default AttributesPage;
+export { AttributesPage as default } from "@/modules/ee/contacts/attributes/page";

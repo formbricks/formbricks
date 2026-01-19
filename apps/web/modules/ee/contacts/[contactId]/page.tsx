@@ -55,8 +55,9 @@ export const SingleContactPage = async (props: {
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
         publishedLinkSurveys={publishedLinkSurveys}
-        attributes={attributesWithMetadata}
+        currentAttributes={attributesWithMetadata}
         allAttributeKeys={allAttributeKeys}
+        attributeKeys={allAttributeKeys}
       />
     );
   };
@@ -65,7 +66,7 @@ export const SingleContactPage = async (props: {
     <PageContentWrapper>
       <GoBackButton url={`/environments/${params.environmentId}/contacts`} />
       <PageHeader pageTitle={getContactIdentifier(contactAttributes)} cta={getContactControlBar()} />
-      <section className="pb-24 pt-6">
+      <section className="pt-6 pb-24">
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
           <ResponseSection

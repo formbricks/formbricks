@@ -1,18 +1,80 @@
 import { prisma } from "@formbricks/database";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attribute";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
+import { prepareNewAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
-import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
+import {
+  getContactAttributes,
+  hasEmailAttribute,
+  hasUserIdAttribute,
+} from "@/modules/ee/contacts/lib/contact-attributes";
+import { validateAndParseAttributeValue } from "@/modules/ee/contacts/lib/validate-attribute-type";
 
+// Default/system attributes that should not be deleted even if missing from payload
+const DEFAULT_ATTRIBUTES = new Set(["email", "userId", "firstName", "lastName"]);
+
+const deleteAttributes = async (
+  contactId: string,
+  currentAttributes: TContactAttributes,
+  submittedAttributes: TContactAttributes,
+  contactAttributeKeys: TContactAttributeKey[]
+): Promise<{ success: boolean }> => {
+  const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
+
+  // Determine which attributes should be deleted (exist in DB but not in payload, and not default attributes)
+  const submittedKeys = new Set(Object.keys(submittedAttributes));
+  const currentKeys = new Set(Object.keys(currentAttributes));
+  const keysToDelete = Array.from(currentKeys).filter(
+    (key) => !submittedKeys.has(key) && !DEFAULT_ATTRIBUTES.has(key)
+  );
+
+  // Get attribute key IDs for deletion
+  const attributeKeyIdsToDelete = keysToDelete
+    .map((key) => contactAttributeKeyMap.get(key)?.id)
+    .filter((id): id is string => !!id);
+
+  // Delete attributes that were removed from the form (but not default attributes)
+  if (attributeKeyIdsToDelete.length > 0) {
+    await prisma.contactAttribute.deleteMany({
+      where: {
+        contactId,
+        attributeKeyId: {
+          in: attributeKeyIdsToDelete,
+        },
+      },
+    });
+  }
+
+  return {
+    success: true,
+  };
+};
+
+/**
+ * Updates or creates contact attributes.
+ *
+ * @param contactId - The ID of the contact to update
+ * @param userId - The user ID of the contact
+ * @param environmentId - The environment ID
+ * @param contactAttributesParam - The attributes to update/create
+ * @param deleteRemovedAttributes - When true, deletes attributes that exist in DB but are not in the payload.
+ * Use this for UI forms where all attributes are submitted. Default is false (merge behavior) for API calls.
+ */
 export const updateAttributes = async (
   contactId: string,
   userId: string,
   environmentId: string,
-  contactAttributesParam: TContactAttributes
-): Promise<{ success: boolean; messages?: string[]; ignoreEmailAttribute?: boolean }> => {
+  contactAttributesParam: TContactAttributes,
+  deleteRemovedAttributes: boolean = false
+): Promise<{
+  success: boolean;
+  messages?: string[];
+  ignoreEmailAttribute?: boolean;
+  ignoreUserIdAttribute?: boolean;
+}> => {
   validateInputs(
     [contactId, ZId],
     [userId, ZString],
@@ -21,52 +83,142 @@ export const updateAttributes = async (
   );
 
   let ignoreEmailAttribute = false;
+  let ignoreUserIdAttribute = false;
+  const messages: string[] = [];
 
-  // Fetch contact attribute keys and email check in parallel
-  const [contactAttributeKeys, existingEmailAttribute] = await Promise.all([
-    getContactAttributeKeys(environmentId),
-    contactAttributesParam.email
-      ? hasEmailAttribute(contactAttributesParam.email, environmentId, contactId)
-      : Promise.resolve(null),
-  ]);
+  // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
+  const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
+    await Promise.all([
+      getContactAttributes(contactId),
+      getContactAttributeKeys(environmentId),
+      contactAttributesParam.email
+        ? hasEmailAttribute(contactAttributesParam.email, environmentId, contactId)
+        : Promise.resolve(null),
+      contactAttributesParam.userId
+        ? hasUserIdAttribute(contactAttributesParam.userId, environmentId, contactId)
+        : Promise.resolve(null),
+    ]);
 
-  // Process email existence early
-  const { email, ...remainingAttributes } = contactAttributesParam;
-  const contactAttributes = existingEmailAttribute ? remainingAttributes : contactAttributesParam;
+  // Process email and userId existence early
   const emailExists = !!existingEmailAttribute;
+  const userIdExists = !!existingUserIdAttribute;
+
+  // Remove email and/or userId from attributes if they already exist on another contact
+  let contactAttributes = { ...contactAttributesParam };
+
+  // Determine what the final email and userId values will be after this update
+  // Only consider a value as "submitted" if it was explicitly included in the attributes
+  const emailWasSubmitted = "email" in contactAttributesParam;
+  const userIdWasSubmitted = "userId" in contactAttributesParam;
+
+  const submittedEmail = emailWasSubmitted ? contactAttributes.email?.trim() || "" : null;
+  const submittedUserId = userIdWasSubmitted ? contactAttributes.userId?.trim() || "" : null;
+
+  const currentEmail = currentAttributes.email || "";
+  const currentUserId = currentAttributes.userId || "";
+
+  // Calculate final values:
+  // - If not submitted, keep current value
+  // - If submitted but duplicate exists, keep current value
+  // - If submitted and no duplicate, use submitted value
+  const getFinalEmail = (): string => {
+    if (submittedEmail === null) return currentEmail;
+    if (emailExists) return currentEmail;
+    return submittedEmail;
+  };
+
+  const getFinalUserId = (): string => {
+    if (submittedUserId === null) return currentUserId;
+    if (userIdExists) return currentUserId;
+    return submittedUserId;
+  };
+
+  const finalEmail = getFinalEmail();
+  const finalUserId = getFinalUserId();
+
+  // Ensure at least one of email or userId will have a value after update
+  if (!finalEmail && !finalUserId) {
+    // If both would be empty, preserve the current values
+    if (currentEmail) {
+      contactAttributes.email = currentEmail;
+    }
+    if (currentUserId) {
+      contactAttributes.userId = currentUserId;
+    }
+    messages.push("Either email or userId is required. The existing values were preserved.");
+  }
+
+  if (emailExists) {
+    const { email: _email, ...rest } = contactAttributes;
+    contactAttributes = rest;
+    ignoreEmailAttribute = true;
+  }
+
+  if (userIdExists) {
+    const { userId: _userId, ...rest } = contactAttributes;
+    contactAttributes = rest;
+    ignoreUserIdAttribute = true;
+  }
+
+  // Delete attributes that were removed (only when explicitly requested)
+  // This is used by UI forms where all attributes are submitted
+  // For API calls, we want merge behavior by default (only update passed attributes)
+  if (deleteRemovedAttributes) {
+    await deleteAttributes(contactId, currentAttributes, contactAttributesParam, contactAttributeKeys);
+  }
 
   // Create lookup map for attribute keys
   const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
 
-  // Separate existing and new attributes in a single pass
-  const { existingAttributes, newAttributes } = Object.entries(contactAttributes).reduce(
-    (acc, [key, value]) => {
-      const attributeKey = contactAttributeKeyMap.get(key);
-      if (attributeKey) {
-        acc.existingAttributes.push({ key, value, attributeKeyId: attributeKey.id });
+  // Separate existing and new attributes, validating types for existing attributes
+  const existingAttributes: {
+    key: string;
+    attributeKeyId: string;
+    columns: { value: string; valueNumber: number | null; valueDate: Date | null };
+  }[] = [];
+  const newAttributes: { key: string; value: string }[] = [];
+  const typeValidationErrors: string[] = [];
+
+  for (const [key, value] of Object.entries(contactAttributes)) {
+    const attributeKey = contactAttributeKeyMap.get(key);
+
+    if (attributeKey) {
+      // Existing attribute - validate type and prepare columns
+      const validationResult = validateAndParseAttributeValue(value, attributeKey.dataType, key);
+
+      if (validationResult.valid) {
+        existingAttributes.push({
+          key,
+          attributeKeyId: attributeKey.id,
+          columns: validationResult.parsedValue,
+        });
       } else {
-        acc.newAttributes.push({ key, value });
+        // Type mismatch - add to errors
+        typeValidationErrors.push(validationResult.error);
       }
-      return acc;
-    },
-    { existingAttributes: [], newAttributes: [] } as {
-      existingAttributes: { key: string; value: string; attributeKeyId: string }[];
-      newAttributes: { key: string; value: string }[];
+    } else {
+      // New attribute - will detect type on creation
+      newAttributes.push({ key, value });
     }
-  );
-
-  let messages: string[] = emailExists
-    ? ["The email already exists for this environment and was not updated."]
-    : [];
-
-  if (emailExists) {
-    ignoreEmailAttribute = true;
   }
 
-  // First, update all existing attributes
+  // Add type validation errors to messages
+  if (typeValidationErrors.length > 0) {
+    messages.push(...typeValidationErrors);
+  }
+
+  if (emailExists) {
+    messages.push("The email already exists for this environment and was not updated.");
+  }
+
+  if (userIdExists) {
+    messages.push("The userId already exists for this environment and was not updated.");
+  }
+
+  // Update all existing attributes with typed column values
   if (existingAttributes.length > 0) {
     await prisma.$transaction(
-      existingAttributes.map(({ attributeKeyId, value }) =>
+      existingAttributes.map(({ attributeKeyId, columns }) =>
         prisma.contactAttribute.upsert({
           where: {
             contactId_attributeKeyId: {
@@ -74,11 +226,17 @@ export const updateAttributes = async (
               attributeKeyId,
             },
           },
-          update: { value },
+          update: {
+            value: columns.value,
+            valueNumber: columns.valueNumber,
+            valueDate: columns.valueDate,
+          },
           create: {
             contactId,
             attributeKeyId,
-            value,
+            value: columns.value,
+            valueNumber: columns.valueNumber,
+            valueDate: columns.valueDate,
           },
         })
       )
@@ -96,10 +254,9 @@ export const updateAttributes = async (
       );
     } else {
       // Create new attributes since we're under the limit
-      // Auto-detect the data type based on the first value
       await prisma.$transaction(
         newAttributes.map(({ key, value }) => {
-          const dataType = detectAttributeDataType(value);
+          const { dataType, columns } = prepareNewAttributeForStorage(value);
           return prisma.contactAttributeKey.create({
             data: {
               key,
@@ -107,7 +264,12 @@ export const updateAttributes = async (
               dataType,
               environment: { connect: { id: environmentId } },
               attributes: {
-                create: { contactId, value },
+                create: {
+                  contactId,
+                  value: columns.value,
+                  valueNumber: columns.valueNumber,
+                  valueDate: columns.valueDate,
+                },
               },
             },
           });
@@ -118,7 +280,8 @@ export const updateAttributes = async (
 
   return {
     success: true,
-    messages,
+    messages: messages.length > 0 ? messages : undefined,
     ignoreEmailAttribute,
+    ignoreUserIdAttribute,
   };
 };

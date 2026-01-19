@@ -24,13 +24,39 @@ export const DATE_OPERATORS = [
   "isAfter",
   "isBetween",
   "isSameDay",
+  "isSet",
+  "isNotSet",
 ] as const;
 
 // time units for relative date operators
 export const TIME_UNITS = ["days", "weeks", "months", "years"] as const;
 
-// Standard operators for text/number attributes (without date operators)
-export const TEXT_ATTRIBUTE_OPERATORS = [
+// Operators for string type attributes only (text operations, no arithmetic)
+export const STRING_TYPE_OPERATORS = [
+  "equals",
+  "notEquals",
+  "isSet",
+  "isNotSet",
+  "contains",
+  "doesNotContain",
+  "startsWith",
+  "endsWith",
+] as const;
+
+// Operators for number type attributes (arithmetic + basic)
+export const NUMBER_TYPE_OPERATORS = [
+  "equals",
+  "notEquals",
+  "lessThan",
+  "lessEqual",
+  "greaterThan",
+  "greaterEqual",
+  "isSet",
+  "isNotSet",
+] as const;
+
+// Combined operators for backwards compatibility (used in validation)
+export const STRING_ATTRIBUTE_OPERATORS = [
   ...BASE_OPERATORS,
   "isSet",
   "isNotSet",
@@ -41,7 +67,7 @@ export const TEXT_ATTRIBUTE_OPERATORS = [
 ] as const;
 
 // An attribute filter can have these operators (including date operators)
-export const ATTRIBUTE_OPERATORS = [...TEXT_ATTRIBUTE_OPERATORS, ...DATE_OPERATORS] as const;
+export const ATTRIBUTE_OPERATORS = [...STRING_ATTRIBUTE_OPERATORS, ...DATE_OPERATORS] as const;
 
 // the person filter currently has the same operators as the attribute filter
 // but we might want to add more operators in the future, so we keep it separated
@@ -70,6 +96,11 @@ export type TDeviceOperator = z.infer<typeof ZDeviceOperator>;
 
 export const ZDateOperator = z.enum(DATE_OPERATORS);
 export type TDateOperator = z.infer<typeof ZDateOperator>;
+
+// Type guard to check if an operator is a date operator
+export const isDateOperator = (operator: TAttributeOperator): operator is TDateOperator => {
+  return (DATE_OPERATORS as readonly string[]).includes(operator);
+};
 
 export const ZTimeUnit = z.enum(TIME_UNITS);
 export type TTimeUnit = z.infer<typeof ZTimeUnit>;
@@ -221,10 +252,7 @@ export const ZSegmentFilter = z
 
       // for isBetween, validate we have a tuple with two non-empty strings
       if (operator === "isBetween") {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!Array.isArray(value)) return false;
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (value.length !== 2) return false;
         return (
           typeof value[0] === "string" &&
           typeof value[1] === "string" &&

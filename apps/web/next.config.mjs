@@ -16,6 +16,7 @@ const getHostname = (url) => {
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
+  basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: true,
@@ -61,10 +62,6 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
-      {
-        protocol: "https",
-        hostname: "api-iam.eu.intercom.io",
-      },
     ],
   },
   async redirects() {
@@ -94,6 +91,22 @@ const nextConfig = {
         destination: "/api/v1/management/me",
         permanent: true,
       },
+      // Redirect old project URLs to new workspace URLs
+      {
+        source: "/environments/:environmentId/project/:path*",
+        destination: "/environments/:environmentId/workspace/:path*",
+        permanent: true,
+      },
+      {
+        source: "/organizations/:organizationId/projects/new/:path*",
+        destination: "/organizations/:organizationId/workspaces/new/:path*",
+        permanent: true,
+      },
+      {
+        source: "/projects/:projectId",
+        destination: "/workspaces/:projectId",
+        permanent: true,
+      },
     ];
   },
   webpack: (config) => {
@@ -120,14 +133,31 @@ const nextConfig = {
     const isProduction = process.env.NODE_ENV === "production";
     const scriptSrcUnsafeEval = isProduction ? "" : " 'unsafe-eval'";
 
+    const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data: http://localhost:9000 https:; font-src 'self' data: https:; connect-src 'self' http://localhost:9000 https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
+
     return [
       {
-        // Apply X-Frame-Options to all routes except those starting with /s/ or /c/
+        // Apply X-Frame-Options and restricted frame-ancestors to all routes except those starting with /s/ or /c/
         source: "/((?!s/|c/).*)",
         headers: [
           {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: `${cspBase}; frame-ancestors 'self'`,
+          },
+        ],
+      },
+      {
+        // Allow surveys (/s/*) and contact survey links (/c/*) to be embedded in iframes on any domain
+        // Note: These routes need frame-ancestors * to support embedding surveys in customer websites
+        source: "/(s|c)/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: `${cspBase}; frame-ancestors *`,
           },
         ],
       },
@@ -165,10 +195,6 @@ const nextConfig = {
           {
             key: "X-Content-Type-Options",
             value: "nosniff",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https://*.intercom.io https://*.intercomcdn.com https:; style-src 'self' 'unsafe-inline' https://*.intercomcdn.com https:; img-src 'self' blob: data: http://localhost:9000 https://*.intercom.io https://*.intercomcdn.com https:; font-src 'self' data: https://*.intercomcdn.com https:; connect-src 'self' http://localhost:9000 https://*.intercom.io wss://*.intercom.io https://*.intercomcdn.com https:; frame-src 'self' https://*.intercom.io https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`,
           },
           {
             key: "Strict-Transport-Security",
@@ -407,7 +433,7 @@ const nextConfig = {
     ];
   },
   env: {
-    NEXTAUTH_URL: process.env.WEBAPP_URL,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path
   },
 };
 
@@ -444,5 +470,6 @@ const sentryOptions = {
 // Always enable Sentry plugin to inject Debug IDs
 // Runtime Sentry reporting still depends on DSN being set via environment variables
 const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
+
 
 export default exportConfig;

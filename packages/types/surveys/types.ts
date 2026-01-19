@@ -218,6 +218,12 @@ export const ZSurveyVariables = z.array(ZSurveyVariable);
 export type TSurveyVariable = z.infer<typeof ZSurveyVariable>;
 export type TSurveyVariables = z.infer<typeof ZSurveyVariables>;
 
+export const ZSurveySlug = z
+  .string()
+  .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens");
+
+export type TSurveySlug = z.infer<typeof ZSurveySlug>;
+
 export const ZSurveyProjectOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
@@ -889,10 +895,14 @@ export const ZSurvey = z
     recaptcha: ZSurveyRecaptcha.nullable(),
     isSingleResponsePerEmailEnabled: z.boolean(),
     isBackButtonHidden: z.boolean(),
+    isCaptureIpEnabled: z.boolean(),
     pin: z.string().length(4, { message: "PIN must be a four digit number" }).nullish(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
     metadata: ZSurveyMetadata,
+    slug: ZSurveySlug.nullable(),
+    customHeadScripts: z.string().nullish(),
+    customHeadScriptsMode: z.enum(["add", "replace"]).nullish(),
   })
   .superRefine((survey, ctx) => {
     const { questions, blocks, languages, welcomeCard, endings, isBackButtonHidden } = survey;
@@ -1870,6 +1880,7 @@ export const ZSurvey = z
         .forEach((followUp, index) => {
           if (followUp.action.properties.to) {
             const validOptions = [
+              "verifiedEmail", // Allow verified email from email verification feature
               ...questionsFromBlocks
                 .filter((q) => {
                   if (q.type === TSurveyElementTypeEnum.OpenText) {
@@ -3179,7 +3190,7 @@ const validateBlockConditions = (
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
-            const validElementTypes = [TSurveyElementTypeEnum.OpenText];
+            const validElementTypes: TSurveyElementTypeEnum[] = [TSurveyElementTypeEnum.OpenText];
 
             if (element.inputType === "number") {
               validElementTypes.push(...[TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS]);
@@ -3386,7 +3397,10 @@ const validateBlockConditions = (
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
-            const validElementTypes = [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date];
+            const validElementTypes: TSurveyElementTypeEnum[] = [
+              TSurveyElementTypeEnum.OpenText,
+              TSurveyElementTypeEnum.Date,
+            ];
             if (!validElementTypes.includes(elem.data.type)) {
               issues.push({
                 code: z.ZodIssueCode.custom,
@@ -3576,7 +3590,7 @@ const validateBlockActions = (
 
       if (variable.type === "text") {
         if (action.value.type === "element") {
-          const allowedElements = [
+          const allowedElements: TSurveyElementTypeEnum[] = [
             TSurveyElementTypeEnum.OpenText,
             TSurveyElementTypeEnum.MultipleChoiceSingle,
             TSurveyElementTypeEnum.Rating,
@@ -3599,7 +3613,10 @@ const validateBlockActions = (
       }
 
       if (action.value.type === "element") {
-        const allowedElements = [TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS];
+        const allowedElements: TSurveyElementTypeEnum[] = [
+          TSurveyElementTypeEnum.Rating,
+          TSurveyElementTypeEnum.NPS,
+        ];
 
         const selectedElement = allElements.get(action.value.value);
 

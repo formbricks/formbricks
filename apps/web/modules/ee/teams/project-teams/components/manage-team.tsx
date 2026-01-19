@@ -19,7 +19,7 @@ export const ManageTeam = ({ environmentId }: ManageTeamProps) => {
 
   return (
     <Button variant="secondary" size="sm" onClick={handleManageTeams}>
-      {t("environments.project.teams.manage_teams")}
+      {t("environments.workspace.teams.manage_teams")}
     </Button>
   );
 };

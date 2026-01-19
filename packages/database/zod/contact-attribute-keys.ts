@@ -37,8 +37,8 @@ export const ZContactAttributeKey = z.object({
     example: "custom",
   }),
   dataType: z.nativeEnum(ContactAttributeDataType).openapi({
-    description: "The data type of the attribute (text, number, date)",
-    example: "text",
+    description: "The data type of the attribute (string, number, date)",
+    example: "string",
   }),
   environmentId: z.string().cuid2().openapi({
     description: "The ID of the environment this attribute belongs to",

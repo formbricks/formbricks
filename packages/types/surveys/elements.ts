@@ -2,26 +2,19 @@ import { z } from "zod";
 import { ZUrl } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZAllowedFileExtension } from "../storage";
+import { TSurveyElementTypeEnum } from "./constants";
 import { FORBIDDEN_IDS } from "./validation";
 
-// Element Type Enum (same as question types)
-export enum TSurveyElementTypeEnum {
-  FileUpload = "fileUpload",
-  OpenText = "openText",
-  MultipleChoiceSingle = "multipleChoiceSingle",
-  MultipleChoiceMulti = "multipleChoiceMulti",
-  NPS = "nps",
-  CTA = "cta",
-  Rating = "rating",
-  Consent = "consent",
-  PictureSelection = "pictureSelection",
-  Cal = "cal",
-  Date = "date",
-  Matrix = "matrix",
-  Address = "address",
-  Ranking = "ranking",
-  ContactInfo = "contactInfo",
-}
+/**
+ * RE-EXPORTING FOR BACKWARDS COMPATIBILITY AND CONVENIENCE
+ *
+ * TSurveyElementTypeEnum is defined in `constants.ts` to avoid circular dependencies
+ * and ensure that the Zod library is not included in bundles that only need the Enum value.
+ *
+ * However, we re-export it here so that most consumers (who also need the Zod schemas)
+ * can import everything from a single file (`elements.ts`).
+ */
+export { TSurveyElementTypeEnum };
 
 // Element ID validation (same rules as questions - USER EDITABLE)
 export const ZSurveyElementId = z.string().superRefine((id, ctx) => {
@@ -162,7 +155,7 @@ export const ZSurveyCTAElement = ZSurveyElementBase.extend({
   buttonUrl: z.string().optional(),
   ctaButtonLabel: ZI18nString.optional(),
 }).superRefine((data, ctx) => {
-  // When buttonExternal is true, buttonUrl is required and must be valid
+  // When buttonExternal is true, buttonUrl and ctaButtonLabel are required
   if (data.buttonExternal) {
     if (!data.buttonUrl || data.buttonUrl.trim() === "") {
       ctx.addIssue({
@@ -180,6 +173,14 @@ export const ZSurveyCTAElement = ZSurveyElementBase.extend({
           path: ["buttonUrl"],
         });
       }
+    }
+
+    if (!data.ctaButtonLabel?.default || data.ctaButtonLabel.default.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Button label is required when external button is enabled",
+        path: ["ctaButtonLabel"],
+      });
     }
   }
 });

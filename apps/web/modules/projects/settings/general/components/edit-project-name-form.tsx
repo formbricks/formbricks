@@ -6,7 +6,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { TProject, ZProject } from "@formbricks/types/project";
+import { TProject, ZProjectUpdateInput } from "@formbricks/types/project";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -26,7 +26,7 @@ interface EditProjectNameProps {
   isReadOnly: boolean;
 }
 
-const ZProjectNameInput = ZProject.pick({ name: true });
+const ZProjectNameInput = ZProjectUpdateInput.pick({ name: true }).required({ name: true });
 
 type TEditProjectName = z.infer<typeof ZProjectNameInput>;
 
@@ -62,7 +62,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
       });
 
       if (updatedProjectResponse?.data) {
-        toast.success(t("environments.project.general.project_name_updated_successfully"));
+        toast.success(t("environments.workspace.general.workspace_name_updated_successfully"));
         form.resetField("name", { defaultValue: updatedProjectResponse.data.name });
         router.refresh();
       } else {
@@ -71,7 +71,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
       }
     } catch (err) {
       console.error(err);
-      toast.error(t("environments.project.general.error_saving_project_information"));
+      toast.error(t("environments.workspace.general.error_saving_workspace_information"));
     }
   };
 
@@ -85,14 +85,14 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
             render={({ field }) => (
               <FormItem>
                 <FormLabel htmlFor="name">
-                  {t("environments.project.general.whats_your_project_called")}
+                  {t("environments.workspace.general.whats_your_workspace_called")}
                 </FormLabel>
                 <FormControl>
                   <Input
                     type="text"
                     id="name"
                     {...field}
-                    placeholder={t("common.project_name")}
+                    placeholder={t("common.workspace_name")}
                     autoComplete="off"
                     required
                     isInvalid={!!nameError}

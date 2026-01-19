@@ -2,11 +2,8 @@ import { useEffect, useRef } from "preact/hooks";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
-import {
-  TSurveyElement,
-  TSurveyElementChoice,
-  TSurveyElementTypeEnum,
-} from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/types/surveys/elements";
 import { AddressElement } from "@/components/elements/address-element";
 import { CalElement } from "@/components/elements/cal-element";
 import { ConsentElement } from "@/components/elements/consent-element";
@@ -28,17 +25,13 @@ interface ElementConditionalProps {
   element: TSurveyElement;
   value: TResponseDataValue;
   onChange: (responseData: TResponseData) => void;
-  onBack: () => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   languageCode: string;
-  prefilledElementValue?: TResponseDataValue;
-  skipPrefilled?: boolean;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   surveyId: string;
   autoFocusEnabled: boolean;
   currentElementId: string;
-  isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
   formRef?: (ref: HTMLFormElement | null) => void; // Callback to expose the form element
@@ -50,8 +43,6 @@ export function ElementConditional({
   value,
   onChange,
   languageCode,
-  prefilledElementValue,
-  skipPrefilled,
   ttc,
   setTtc,
   surveyId,
@@ -99,15 +90,6 @@ export function ElementConditional({
       })
       .filter((id): id is TSurveyElementChoice["id"] => id !== undefined);
   };
-
-  useEffect(() => {
-    if (value === undefined && (prefilledElementValue || prefilledElementValue === "")) {
-      if (!skipPrefilled) {
-        onChange({ [element.id]: prefilledElementValue });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- we want to run this only once when the element renders for the first time
-  }, []);
 
   const isRecognizedType = Object.values(TSurveyElementTypeEnum).includes(element.type);
 
@@ -211,7 +193,6 @@ export function ElementConditional({
             languageCode={languageCode}
             ttc={ttc}
             setTtc={wrappedSetTtc}
-            autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
           />

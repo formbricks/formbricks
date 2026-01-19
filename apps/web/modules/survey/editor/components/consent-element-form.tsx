@@ -1,11 +1,15 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyConsentElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { Button } from "@/modules/ui/components/button";
 
 interface ConsentElementFormProps {
   localSurvey: TSurvey;
@@ -33,6 +37,7 @@ export const ConsentElementForm = ({
   isExternalUrlsAllowed,
 }: ConsentElementFormProps): JSX.Element => {
   const { t } = useTranslation();
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   // Common props shared across all ElementFormInput components
   const commonInputProps = {
@@ -47,6 +52,8 @@ export const ConsentElementForm = ({
     isExternalUrlsAllowed,
   };
 
+  const [parent] = useAutoAnimate();
+
   return (
     <form>
       <ElementFormInput
@@ -57,13 +64,35 @@ export const ConsentElementForm = ({
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
       />
 
-      <div className="mt-3">
-        <ElementFormInput
-          {...commonInputProps}
-          id="subheader"
-          value={element.subheader}
-          label={t("common.description")}
-        />
+      <div ref={parent}>
+        {element.subheader !== undefined && (
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
+              <ElementFormInput
+                {...commonInputProps}
+                id="subheader"
+                value={element.subheader}
+                label={t("common.description")}
+                autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
+              />
+            </div>
+          </div>
+        )}
+        {element.subheader === undefined && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-3"
+            type="button"
+            onClick={() => {
+              updateElement(elementIdx, {
+                subheader: createI18nString("", surveyLanguageCodes),
+              });
+            }}>
+            <PlusIcon className="mr-1 h-4 w-4" />
+            {t("environments.surveys.edit.add_description")}
+          </Button>
+        )}
       </div>
 
       <ElementFormInput

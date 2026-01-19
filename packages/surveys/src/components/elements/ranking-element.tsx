@@ -1,14 +1,11 @@
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useCallback, useMemo, useState } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { Ranking, type RankingOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyElementChoice, TSurveyRankingElement } from "@formbricks/types/surveys/elements";
-import { ElementMedia } from "@/components/general/element-media";
-import { Headline } from "@/components/general/headline";
-import { Subheader } from "@/components/general/subheader";
+import type { TSurveyRankingElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getShuffledChoicesIds } from "@/lib/utils";
+import { getShuffledChoicesIds } from "@/lib/utils";
 
 interface RankingElementProps {
   element: TSurveyRankingElement;
@@ -28,12 +25,15 @@ export function RankingElement({
   languageCode,
   ttc,
   setTtc,
-  autoFocusEnabled,
   currentElementId,
 }: Readonly<RankingElementProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+
   const shuffledChoicesIds = useMemo(() => {
     if (element.shuffleOption) {
       return getShuffledChoicesIds(element.choices, element.shuffleOption);
@@ -42,225 +42,105 @@ export function RankingElement({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [element.shuffleOption, element.choices.length]);
 
-  const [parent] = useAutoAnimate();
-
-  const [error, setError] = useState<string | null>(null);
-  const isMediaAvailable = element.imageUrl || element.videoUrl;
-
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
-
-  const [localValue, setLocalValue] = useState<string[]>(value ?? []);
-
-  const sortedItems = useMemo(() => {
-    return localValue
-      .map((id) => element.choices.find((c) => c.id === id))
-      .filter((item): item is TSurveyElementChoice => item !== undefined);
-  }, [localValue, element.choices]);
-
-  const unsortedItems = useMemo(() => {
-    if (element.shuffleOption === "all" && sortedItems.length === 0) {
-      return shuffledChoicesIds.map((id) => element.choices.find((c) => c.id === id));
+  const elementChoices = useMemo(() => {
+    if (!element.choices.length) {
+      return [];
     }
-    return element.choices.filter((c) => !localValue.includes(c.id));
-  }, [element.choices, element.shuffleOption, localValue, sortedItems, shuffledChoicesIds]);
-
-  const handleItemClick = useCallback(
-    (item: TSurveyElementChoice) => {
-      const isAlreadySorted = localValue.includes(item.id);
-      const newLocalValue = isAlreadySorted
-        ? localValue.filter((id) => id !== item.id)
-        : [...localValue, item.id];
-
-      setLocalValue(newLocalValue);
-
-      // Immediately update parent state with the new ranking
-      const sortedLabels = newLocalValue
-        .map((id) => element.choices.find((c) => c.id === id))
-        .filter((item): item is TSurveyElementChoice => item !== undefined)
-        .map((item) => getLocalizedValue(item.label, languageCode));
-      onChange({ [element.id]: sortedLabels });
-
-      setError(null);
-    },
-    [localValue, element.choices, element.id, languageCode, onChange]
-  );
-
-  const handleMove = useCallback(
-    (itemId: string, direction: "up" | "down") => {
-      const index = localValue.findIndex((id) => id === itemId);
-      if (index === -1) return;
-
-      const newLocalValue = [...localValue];
-      const [movedItem] = newLocalValue.splice(index, 1);
-      const newIndex =
-        direction === "up" ? Math.max(0, index - 1) : Math.min(newLocalValue.length, index + 1);
-      newLocalValue.splice(newIndex, 0, movedItem);
-      setLocalValue(newLocalValue);
-
-      // Immediately update parent state with the new ranking
-      const sortedLabels = newLocalValue
-        .map((id) => element.choices.find((c) => c.id === id))
-        .filter((item): item is TSurveyElementChoice => item !== undefined)
-        .map((item) => getLocalizedValue(item.label, languageCode));
-      onChange({ [element.id]: sortedLabels });
-
-      setError(null);
-    },
-    [localValue, element.choices, element.id, languageCode, onChange]
-  );
-
-  const handleSubmit = (e: Event) => {
-    e.preventDefault();
-
-    const hasIncompleteRanking =
-      (element.required && sortedItems.length !== element.choices.length) ||
-      (!element.required && sortedItems.length > 0 && sortedItems.length < element.choices.length);
-
-    if (hasIncompleteRanking) {
-      setError(t("errors.please_rank_all_items_before_submitting"));
-      return;
+    if (element.shuffleOption === "none") {
+      return element.choices;
     }
+    return shuffledChoicesIds
+      .map((shuffledIdx) => {
+        const found = element.choices.find((c) => c.id === shuffledIdx);
+        return found;
+      })
+      .filter(Boolean);
+  }, [element.shuffleOption, element.choices, shuffledChoicesIds]);
+
+  // Convert choices to RankingOption format
+  const options: RankingOption[] = useMemo(() => {
+    return elementChoices
+      .filter((choice): choice is NonNullable<typeof choice> => choice !== undefined)
+      .map((choice) => ({
+        id: choice.id,
+        label: getLocalizedValue(choice.label, languageCode),
+      }));
+  }, [elementChoices, languageCode]);
+
+  // For the survey-ui component, we need to map labels to IDs
+  const selectedValues = useMemo(() => {
+    if (!value || !Array.isArray(value)) return [];
+
+    const selected: string[] = [];
+    value.forEach((val) => {
+      // Backwards-compat: if value is already an option ID
+      const idMatch = options.find((opt) => opt.id === val);
+      if (idMatch) {
+        selected.push(idMatch.id);
+        return;
+      }
+
+      // Normal: value is a label
+      const labelMatch = options.find((opt) => opt.label === val);
+      if (labelMatch) selected.push(labelMatch.id);
+    });
+
+    return selected;
+  }, [value, options]);
+
+  // Handle selection changes - store labels directly instead of IDs
+  const handleChange = (selectedIds: string[]) => {
+    // Clear error when user changes ranking
+    setErrorMessage(undefined);
+
+    const nextLabels: string[] = [];
+    selectedIds.forEach((id) => {
+      const matchingOption = options.find((opt) => opt.id === id);
+      if (matchingOption) nextLabels.push(matchingOption.label);
+    });
+
+    onChange({ [element.id]: nextLabels });
 
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
-    onChange({
-      [element.id]: sortedItems.map((item) => getLocalizedValue(item.label, languageCode)),
-    });
+  };
+
+  const validateRequired = (): boolean => {
+    const isValueArray = Array.isArray(value);
+    const allItemsRanked = isValueArray && value.length === element.choices.length;
+
+    if ((element.required && !allItemsRanked) || (!element.required && value.length > 0 && !allItemsRanked)) {
+      setErrorMessage(t("errors.please_rank_all_items_before_submitting"));
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = (e: Event) => {
+    e.preventDefault();
+    if (!validateRequired()) return;
+
+    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="fb-w-full">
-      {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
-      <Headline
+    <form onSubmit={handleSubmit} className="w-full">
+      <Ranking
+        elementId={element.id}
+        inputId={element.id}
         headline={getLocalizedValue(element.headline, languageCode)}
-        elementId={element.id}
+        description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
+        options={options}
+        value={selectedValues}
+        onChange={handleChange}
         required={element.required}
+        requiredLabel={t("common.required")}
+        errorMessage={errorMessage}
+        imageUrl={element.imageUrl}
+        videoUrl={element.videoUrl}
       />
-      <Subheader
-        subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
-        elementId={element.id}
-      />
-      <div className="fb-mt-4">
-        <fieldset>
-          <legend className="fb-sr-only">{t("common.ranking_items")}</legend>
-          <div className="fb-relative" ref={parent}>
-            {[...sortedItems, ...unsortedItems].map((item, idx) => {
-              if (!item) return null;
-              const isSorted = sortedItems.includes(item);
-              const isFirst = isSorted && idx === 0;
-              const isLast = isSorted && idx === sortedItems.length - 1;
-
-              return (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading hover:fb-bg-input-bg-selected focus-within:fb-border-brand focus-within:fb-shadow-outline focus-within:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer w-full focus:outline-none",
-                    isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
-                  )}>
-                  <button
-                    autoFocus={idx === 0 && autoFocusEnabled}
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === " ") {
-                        e.preventDefault();
-                        handleItemClick(item);
-                      }
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleItemClick(item);
-                    }}
-                    type="button"
-                    aria-label={t("common.select_for_ranking", {
-                      item: getLocalizedValue(item.label, languageCode),
-                    })}
-                    className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group text-left focus:outline-none">
-                    <span
-                      className={cn(
-                        "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
-                        isSorted
-                          ? "fb-bg-brand fb-text-white fb-border"
-                          : "fb-border-dashed group-hover:fb-bg-white fb-text-transparent group-hover:fb-text-heading"
-                      )}>
-                      {(idx + 1).toString()}
-                    </span>
-                    <div className="fb-grow fb-shrink fb-font-medium fb-text-sm fb-text-start" dir="auto">
-                      {getLocalizedValue(item.label, languageCode)}
-                    </div>
-                  </button>
-                  {isSorted ? (
-                    <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
-                      <button
-                        tabIndex={isFirst ? -1 : 0}
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleMove(item.id, "up");
-                        }}
-                        aria-label={t("common.move_up", {
-                          item: getLocalizedValue(item.label, languageCode),
-                        })}
-                        className={cn(
-                          "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
-                          isFirst
-                            ? "fb-opacity-30 fb-cursor-not-allowed"
-                            : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
-                        )}
-                        disabled={isFirst}>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-chevron-up">
-                          <path d="m18 15-6-6-6 6" />
-                        </svg>
-                      </button>
-                      <button
-                        tabIndex={isLast ? -1 : 0}
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleMove(item.id, "down");
-                        }}
-                        className={cn(
-                          "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
-                          isLast
-                            ? "fb-opacity-30 fb-cursor-not-allowed"
-                            : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
-                        )}
-                        aria-label={t("common.move_down", {
-                          item: getLocalizedValue(item.label, languageCode),
-                        })}
-                        disabled={isLast}>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-chevron-down">
-                          <path d="m6 9 6 6 6-6" />
-                        </svg>
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </fieldset>
-      </div>
-      {error ? <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div> : null}
     </form>
   );
 }

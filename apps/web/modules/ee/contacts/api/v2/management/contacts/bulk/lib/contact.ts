@@ -2,8 +2,11 @@ import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
+import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
 
 export const upsertBulkContacts = async (
@@ -87,6 +90,72 @@ export const upsertBulkContacts = async (
       },
     }),
   ]);
+
+  // Type Detection Phase: Analyze attribute values to detect data types
+  // For each attribute key, collect all non-empty values and detect type from first value
+  const attributeValuesByKey = new Map<string, string[]>();
+
+  contacts.forEach((contact) => {
+    contact.attributes.forEach((attr) => {
+      if (!attributeValuesByKey.has(attr.attributeKey.key)) {
+        attributeValuesByKey.set(attr.attributeKey.key, []);
+      }
+      if (attr.value.trim() !== "") {
+        attributeValuesByKey.get(attr.attributeKey.key)!.push(attr.value);
+      }
+    });
+  });
+
+  // Build a map of attribute keys to their detected/existing data types
+  const attributeTypeMap = new Map<string, TContactAttributeDataType>();
+
+  for (const [key, values] of attributeValuesByKey) {
+    const existingKey = existingAttributeKeys.find((ak) => ak.key === key);
+
+    if (existingKey) {
+      // Use existing dataType for existing keys
+      attributeTypeMap.set(key, existingKey.dataType);
+    } else {
+      // Detect type from first non-empty value for new keys
+      const firstValue = values.find((v) => v !== "");
+      if (firstValue) {
+        const detectedType = detectAttributeDataType(firstValue);
+        attributeTypeMap.set(key, detectedType);
+      } else {
+        attributeTypeMap.set(key, "string"); // default for empty
+      }
+    }
+  }
+
+  // Validate that all values can be converted to their detected/expected type
+  // If validation fails for any value, we fallback to treating that attribute as string type
+  const typeValidationErrors: string[] = [];
+
+  for (const [key, dataType] of attributeTypeMap) {
+    const values = attributeValuesByKey.get(key) || [];
+
+    // Skip validation for string type (always valid)
+    if (dataType === "string") continue;
+
+    for (const value of values) {
+      try {
+        // Test if we can convert the value to the expected type
+        prepareAttributeColumnsForStorage(value, dataType);
+      } catch {
+        // If any value fails conversion, downgrade this attribute to string type for compatibility
+        attributeTypeMap.set(key, "string");
+        typeValidationErrors.push(
+          `Attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`
+        );
+        break; // No need to check remaining values for this key
+      }
+    }
+  }
+
+  // Log validation warnings if any
+  if (typeValidationErrors.length > 0) {
+    logger.warn({ errors: typeValidationErrors }, "Type validation warnings during bulk upload");
+  }
 
   // Build a map from email to contact id (if the email attribute exists)
   const contactMap = new Map<
@@ -239,28 +308,35 @@ export const upsertBulkContacts = async (
 
         for (const contact of filteredContacts) {
           for (const attr of contact.attributes) {
-            if (!attributeKeyMap[attr.attributeKey.key]) {
-              missingKeysMap.set(attr.attributeKey.key, attr.attributeKey);
-            } else {
+            if (attributeKeyMap[attr.attributeKey.key]) {
               // Check if the name has changed for existing attribute keys
               const existingKey = existingAttributeKeys.find((ak) => ak.key === attr.attributeKey.key);
               if (existingKey && existingKey.name !== attr.attributeKey.name) {
                 attributeKeyNameUpdates.set(attr.attributeKey.key, attr.attributeKey);
               }
+            } else {
+              missingKeysMap.set(attr.attributeKey.key, attr.attributeKey);
             }
           }
         }
 
         // Handle both missing keys and name updates in a single batch operation
-        const keysToUpsert = new Map<string, { key: string; name: string }>();
+        const keysToUpsert = new Map<
+          string,
+          { key: string; name: string; dataType: TContactAttributeDataType }
+        >();
 
         // Collect all keys that need to be created or updated
         for (const [key, value] of missingKeysMap) {
-          keysToUpsert.set(key, value);
+          const dataType = attributeTypeMap.get(key) ?? "string";
+          keysToUpsert.set(key, { ...value, dataType });
         }
 
         for (const [key, value] of attributeKeyNameUpdates) {
-          keysToUpsert.set(key, value);
+          // For name updates, preserve existing dataType
+          const existingKey = existingAttributeKeys.find((ak) => ak.key === key);
+          const dataType = existingKey?.dataType ?? "string";
+          keysToUpsert.set(key, { ...value, dataType });
         }
 
         if (keysToUpsert.size > 0) {
@@ -272,12 +348,13 @@ export const upsertBulkContacts = async (
 
             // Use raw query to perform upsert
             const upsertedKeys = await tx.$queryRaw<{ id: string; key: string }[]>`
-            INSERT INTO "ContactAttributeKey" ("id", "key", "name", "environmentId", "created_at", "updated_at")
+            INSERT INTO "ContactAttributeKey" ("id", "key", "name", "environmentId", "dataType", "created_at", "updated_at")
             SELECT 
               unnest(${Prisma.sql`ARRAY[${batch.map(() => createId())}]`}),
               unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.key)}]`}),
               unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.name)}]`}),
               ${environmentId},
+              unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.dataType)}]`}::text[]::"ContactAttributeDataType"[]),
               NOW(),
               NOW()
             ON CONFLICT ("key", "environmentId") 
@@ -308,25 +385,39 @@ export const upsertBulkContacts = async (
 
         // Prepare attributes for both new and existing contacts
         const attributesUpsertForCreatedUsers = contactsToCreate.flatMap((contact, idx) =>
-          contact.attributes.map((attr) => ({
-            id: createId(),
-            contactId: newContacts[idx].id,
-            attributeKeyId: attributeKeyMap[attr.attributeKey.key],
-            value: attr.value,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }))
+          contact.attributes.map((attr) => {
+            const dataType = attributeTypeMap.get(attr.attributeKey.key) ?? "string";
+            const columns = prepareAttributeColumnsForStorage(attr.value, dataType);
+
+            return {
+              id: createId(),
+              contactId: newContacts[idx].id,
+              attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+              value: columns.value,
+              valueNumber: columns.valueNumber,
+              valueDate: columns.valueDate,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+          })
         );
 
         const attributesUpsertForExistingUsers = contactsToUpdate.flatMap((contact) =>
-          contact.attributes.map((attr) => ({
-            id: attr.id,
-            contactId: contact.contactId,
-            attributeKeyId: attributeKeyMap[attr.attributeKey.key],
-            value: attr.value,
-            createdAt: attr.createdAt,
-            updatedAt: new Date(),
-          }))
+          contact.attributes.map((attr) => {
+            const dataType = attributeTypeMap.get(attr.attributeKey.key) ?? "string";
+            const columns = prepareAttributeColumnsForStorage(attr.value, dataType);
+
+            return {
+              id: attr.id,
+              contactId: contact.contactId,
+              attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+              value: columns.value,
+              valueNumber: columns.valueNumber,
+              valueDate: columns.valueDate,
+              createdAt: attr.createdAt,
+              updatedAt: new Date(),
+            };
+          })
         );
 
         const attributesToUpsert = [...attributesUpsertForCreatedUsers, ...attributesUpsertForExistingUsers];
@@ -341,7 +432,7 @@ export const upsertBulkContacts = async (
             // Use a raw query to perform a bulk insert with an ON CONFLICT clause
             await tx.$executeRaw`
             INSERT INTO "ContactAttribute" (
-              "id", "created_at", "updated_at", "contactId", "value", "attributeKeyId"
+              "id", "created_at", "updated_at", "contactId", "value", "valueNumber", "valueDate", "attributeKeyId"
             )
             SELECT 
               unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.id)}]`}),
@@ -349,9 +440,13 @@ export const upsertBulkContacts = async (
               unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.updatedAt)}]`}),
               unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.contactId)}]`}),
               unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.value)}]`}),
+              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.valueNumber)}]`}),
+              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.valueDate)}]`}),
               unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.attributeKeyId)}]`})
             ON CONFLICT ("contactId", "attributeKeyId") DO UPDATE SET
               "value" = EXCLUDED."value",
+              "valueNumber" = EXCLUDED."valueNumber",
+              "valueDate" = EXCLUDED."valueDate",
               "updated_at" = EXCLUDED."updated_at"
           `;
           }

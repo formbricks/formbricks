@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { formatAttributeValue } from "@/modules/ee/contacts/lib/format-attribute-value";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { HighlightedText } from "@/modules/ui/components/highlighted-text";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -71,7 +72,9 @@ export const generateContactTableColumns = (
           header: attr.name ?? attr.key,
           cell: ({ row }) => {
             const attribute = row.original.attributes.find((a) => a.key === attr.key);
-            return <HighlightedText value={attribute?.value} searchValue={searchValue} />;
+            if (!attribute) return null;
+            const formattedValue = formatAttributeValue(attribute.value, attribute.dataType);
+            return <HighlightedText value={formattedValue} searchValue={searchValue} />;
           },
         };
       })

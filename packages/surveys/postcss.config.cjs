@@ -27,5 +27,5 @@ const remtoEm = (opts = {}) => {
 };
 
 module.exports = {
-  plugins: [require("tailwindcss"), require("autoprefixer"), remtoEm()],
+  plugins: [require("@tailwindcss/postcss"), require("autoprefixer"), remtoEm()],
 };

@@ -10,6 +10,7 @@ import {
   TSegmentConnector,
   TSegmentDeviceFilter,
   TSegmentFilter,
+  TSegmentFilterValue,
   TSegmentOperator,
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
@@ -422,7 +423,7 @@ export const updateSegmentIdInFilter = (group: TBaseFilters, filterId: string, n
   }
 };
 
-export const updateFilterValue = (group: TBaseFilters, filterId: string, newValue: string | number) => {
+export const updateFilterValue = (group: TBaseFilters, filterId: string, newValue: TSegmentFilterValue) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 

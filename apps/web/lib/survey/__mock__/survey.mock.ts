@@ -208,6 +208,7 @@ const baseSurveyProperties = {
     },
   ],
   isBackButtonHidden: false,
+  isCaptureIpEnabled: false,
   endings: [
     {
       id: "umyknohldc7w26ocjdhaa62c",
@@ -267,6 +268,9 @@ export const mockSyncSurveyOutput: SurveyMock = {
   variables: [],
   showLanguageSwitch: null,
   metadata: {},
+  slug: null,
+  customHeadScripts: null,
+  customHeadScriptsMode: null,
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -290,6 +294,9 @@ export const mockSurveyOutput: SurveyMock = {
   variables: [],
   showLanguageSwitch: null,
   ...baseSurveyProperties,
+  slug: null,
+  customHeadScripts: null,
+  customHeadScriptsMode: null,
 };
 
 export const createSurveyInput: TSurveyCreateInput = {
@@ -319,6 +326,9 @@ export const updateSurveyInput: TSurvey = {
   followUps: [],
   ...baseSurveyProperties,
   ...commonMockProperties,
+  slug: null,
+  customHeadScripts: null,
+  customHeadScriptsMode: null,
 };
 
 export const mockTransformedSurveyOutput = {
@@ -571,4 +581,6 @@ export const mockSurveyWithLogic: TSurvey = {
     { id: "siog1dabtpo3l0a3xoxw2922", type: "text", name: "var1", value: "lmao" },
     { id: "km1srr55owtn2r7lkoh5ny1u", type: "number", name: "var2", value: 32 },
   ],
+  customHeadScripts: null,
+  customHeadScriptsMode: null,
 };

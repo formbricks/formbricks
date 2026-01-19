@@ -45,7 +45,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ project, i
     try {
       const updatedProjectResponse = await updateProjectAction({ projectId: project.id, data });
       if (updatedProjectResponse?.data) {
-        toast.success(t("environments.project.general.waiting_period_updated_successfully"));
+        toast.success(t("environments.workspace.general.waiting_period_updated_successfully"));
         form.resetField("recontactDays", { defaultValue: updatedProjectResponse.data.recontactDays });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
@@ -68,7 +68,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ project, i
             render={({ field }) => (
               <FormItem>
                 <FormLabel htmlFor="recontactDays">
-                  {t("environments.project.general.wait_x_days_before_showing_next_survey")}
+                  {t("environments.workspace.general.wait_x_days_before_showing_next_survey")}
                 </FormLabel>
                 <FormControl>
                   <Input

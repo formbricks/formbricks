@@ -51,6 +51,7 @@ model Webhook {
   environmentId String
   triggers      PipelineTriggers[]
   surveyIds     String[]
+  secret        String?
 
   @@index([environmentId])
 }
@@ -61,7 +62,9 @@ model Webhook {
 /// @property id - Unique identifier for the attribute
 /// @property attributeKey - Reference to the attribute definition
 /// @property contact - The contact this attribute belongs to
-/// @property value - The actual value of the attribute
+/// @property value - The string value of the attribute (used for string type + backwards compatibility)
+/// @property valueNumber - Native numeric storage for number type attributes
+/// @property valueDate - Native date storage for date type attributes
 model ContactAttribute {
   id             String              @id @default(cuid())
   createdAt      DateTime            @default(now()) @map(name: "created_at")
@@ -71,9 +74,13 @@ model ContactAttribute {
   contact        Contact             @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId      String
   value          String
+  valueNumber    Float?
+  valueDate      DateTime?
 
   @@unique([contactId, attributeKeyId])
   @@index([attributeKeyId, value])
+  @@index([attributeKeyId, valueNumber])
+  @@index([attributeKeyId, valueDate])
 }
 
 enum ContactAttributeType {
@@ -82,7 +89,7 @@ enum ContactAttributeType {
 }
 
 enum ContactAttributeDataType {
-  text
+  string
   number
   date
 }
@@ -95,7 +102,7 @@ enum ContactAttributeDataType {
 /// @property key - The attribute identifier used in the system
 /// @property name - Display name for the attribute
 /// @property type - Whether this is a default or custom attribute
-/// @property dataType - The data type of the attribute (text, number, date)
+/// @property dataType - The data type of the attribute (string, number, date)
 /// @property environment - The environment this attribute belongs to
 model ContactAttributeKey {
   id               String                   @id @default(cuid())
@@ -106,7 +113,7 @@ model ContactAttributeKey {
   name             String?
   description      String?
   type             ContactAttributeType     @default(custom)
-  dataType         ContactAttributeDataType @default(text)
+  dataType         ContactAttributeDataType @default(string)
   environment      Environment              @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
   attributes       ContactAttribute[]
@@ -320,6 +327,11 @@ enum displayOptions {
   respondMultiple
 }
 
+enum SurveyScriptMode {
+  add
+  replace
+}
+
 /// Represents a complete survey configuration including questions, styling, and display rules.
 /// Core model for the survey functionality in Formbricks.
 ///
@@ -332,6 +344,8 @@ enum displayOptions {
 /// @property displayOption - Rules for how often the survey can be shown
 /// @property triggers - Actions that can trigger this survey
 /// @property attributeFilters - Rules for targeting specific contacts
+/// @property customHeadScripts - Survey-specific custom HTML scripts (self-hosted only)
+/// @property customHeadScriptsMode - "add" (merge with project) or "replace" (override project)
 model Survey {
   id                  String                  @id @default(cuid())
   createdAt           DateTime                @default(now()) @map(name: "created_at")
@@ -386,6 +400,7 @@ model Survey {
   isVerifyEmailEnabled            Boolean          @default(false)
   isSingleResponsePerEmailEnabled Boolean          @default(false)
   isBackButtonHidden              Boolean          @default(false)
+  isCaptureIpEnabled              Boolean          @default(false)
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
@@ -395,6 +410,11 @@ model Survey {
   recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0.1}")
   /// [SurveyLinkMetadata]
   metadata                        Json             @default("{}")
+
+  slug String? @unique
+
+  customHeadScripts     String?
+  customHeadScriptsMode SurveyScriptMode? @default(add)
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
@@ -626,6 +646,7 @@ model Project {
   /// [Logo]
   logo                Json?
   projectTeams        ProjectTeam[]
+  customHeadScripts   String? // Custom HTML scripts for link surveys (self-hosted only)
 
   @@unique([organizationId, name])
   @@index([organizationId])

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
-import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import { getPersonalizedSurveyLink } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/openapi";
 import { ZGetSurveysFilter, ZSurveyInput } from "@/modules/api/v2/management/surveys/types/surveys";
 
@@ -52,19 +51,16 @@ export const createSurveyEndpoint: ZodOpenApiOperationObject = {
 };
 
 export const surveyPaths: ZodOpenApiPathsObject = {
-  // "/surveys": {
-  //   servers: managementServer,
+  // "/management/surveys": {
   //   get: getSurveysEndpoint,
   //   post: createSurveyEndpoint,
   // },
-  // "/surveys/{id}": {
-  //   servers: managementServer,
+  // "/management/surveys/{id}": {
   //   get: getSurveyEndpoint,
   //   put: updateSurveyEndpoint,
   //   delete: deleteSurveyEndpoint,
   // },
-  "/surveys/{surveyId}/contact-links/contacts/{contactId}/": {
-    servers: managementServer,
+  "/management/surveys/{surveyId}/contact-links/contacts/{contactId}/": {
     get: getPersonalizedSurveyLink,
   },
 };

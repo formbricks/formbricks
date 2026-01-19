@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 
 export const getMetadataForLinkSurvey = async (
@@ -15,6 +16,10 @@ export const getMetadataForLinkSurvey = async (
 
   const { title, description, ogImage } = await getBasicSurveyMetadata(surveyId, languageCode, survey);
   const surveyBrandColor = survey.styling?.brandColor?.light;
+
+  // Fetch organization whitelabel data for custom favicon
+  const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
+  const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
 
   // Use the shared function for creating the base metadata but override with custom data
   const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, surveyBrandColor);
@@ -36,6 +41,7 @@ export const getMetadataForLinkSurvey = async (
     title,
     description,
     ...baseMetadata,
+    ...(customFaviconUrl && { icons: customFaviconUrl }),
     alternates: {
       canonical: canonicalPath,
     },

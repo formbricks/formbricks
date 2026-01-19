@@ -1,11 +1,10 @@
-import { getTranslate } from "@/lingodotdev/server";
-import { AttributeKeysManager } from "@/modules/ee/contacts/attributes/components/attribute-keys-manager";
-import { CreateAttributeKeyButton } from "@/modules/ee/contacts/attributes/components/create-attribute-key-button";
-import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
+import { getLocale } from "@/lingodotdev/language";
+import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import { PageHeader } from "@/modules/ui/components/page-header";
+import { AttributesTable } from "./components/attributes-table";
+import { CreateAttributeModal } from "./components/create-attribute-modal";
 
 export const AttributesPage = async ({
   params: paramsProps,
@@ -13,23 +12,29 @@ export const AttributesPage = async ({
   params: Promise<{ environmentId: string }>;
 }) => {
   const params = await paramsProps;
-  const t = await getTranslate();
+  const locale = await getLocale();
 
-  const { isReadOnly } = await getEnvironmentAuth(params.environmentId);
-  const attributeKeys = await getContactAttributeKeys(params.environmentId);
+  const [{ isReadOnly }, contactAttributeKeys] = await Promise.all([
+    getEnvironmentAuth(params.environmentId),
+    getContactAttributeKeys(params.environmentId),
+  ]);
+
+  const isContactsEnabled = await getIsContactsEnabled();
 
   return (
-    <PageContentWrapper>
-      <PageHeader
-        pageTitle={t("common.contacts")}
-        cta={!isReadOnly ? <CreateAttributeKeyButton environmentId={params.environmentId} /> : undefined}>
-        <ContactsSecondaryNavigation activeId="attributes" environmentId={params.environmentId} />
-      </PageHeader>
-      <AttributeKeysManager
-        environmentId={params.environmentId}
-        attributeKeys={attributeKeys}
+    <ContactsPageLayout
+      pageTitle="Contacts"
+      activeId="attributes"
+      environmentId={params.environmentId}
+      isContactsEnabled={isContactsEnabled}
+      isReadOnly={isReadOnly}
+      cta={<CreateAttributeModal environmentId={params.environmentId} />}>
+      <AttributesTable
+        contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}
+        environmentId={params.environmentId}
+        locale={locale}
       />
-    </PageContentWrapper>
+    </ContactsPageLayout>
   );
 };
