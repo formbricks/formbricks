@@ -1,19 +1,13 @@
 "use client";
 
 import { debounce } from "lodash";
-import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
-import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { getContactsAction } from "../actions";
 import { TContactTableData, TContactWithAttributes } from "../types/contact";
-
-const ContactsTableDynamic = dynamic(() => import("./contacts-table").then((mod) => mod.ContactsTable), {
-  loading: () => <LoadingSpinner />,
-  ssr: false,
-});
+import { ContactsTable } from "./contacts-table";
 
 interface ContactDataViewProps {
   environment: TEnvironment;
@@ -38,9 +32,21 @@ export const ContactDataView = ({
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
-  const [isDataLoaded, setIsDataLoaded] = useState(true);
 
   const isFirstRender = useRef(true);
+  const prevEnvironmentId = useRef(environment.id);
+  const isResettingSearch = useRef(false);
+
+  // Sync state with server data only when environment changes (real tab navigation)
+  useEffect(() => {
+    if (prevEnvironmentId.current !== environment.id) {
+      prevEnvironmentId.current = environment.id;
+      setContacts([...initialContacts]);
+      setHasMore(initialHasMore);
+      isResettingSearch.current = true;
+      setSearchValue("");
+    }
+  }, [environment.id, initialContacts, initialHasMore]);
 
   const environmentAttributes = useMemo(() => {
     return contactAttributeKeys.filter(
@@ -50,9 +56,8 @@ export const ContactDataView = ({
 
   // Fetch contacts from offset 0 with current search value
   const fetchContactsFromStart = useCallback(async () => {
-    setIsDataLoaded(false);
+    // Don't show loading state - fetch in background
     try {
-      setHasMore(true);
       const contactsResponse = await getContactsAction({
         environmentId: environment.id,
         offset: 0,
@@ -60,20 +65,19 @@ export const ContactDataView = ({
       });
       if (contactsResponse?.data) {
         setContacts(contactsResponse.data);
-      }
-      if (contactsResponse?.data && contactsResponse.data.length < itemsPerPage) {
-        setHasMore(false);
+        // Only update hasMore based on actual response
+        setHasMore(contactsResponse.data.length >= itemsPerPage);
       }
     } catch (error) {
       console.error("Error fetching contacts:", error);
       toast.error("Error fetching contacts. Please try again.");
-    } finally {
-      setIsDataLoaded(true);
     }
   }, [environment.id, itemsPerPage, searchValue]);
 
+  // Only refetch when search value actually changes (debounced)
   useEffect(() => {
-    if (!isFirstRender.current) {
+    // Don't trigger search on first render or when resetting after tab navigation
+    if (!isFirstRender.current && !isResettingSearch.current) {
       const debouncedFetchData = debounce(fetchContactsFromStart, 300);
       debouncedFetchData();
 
@@ -81,7 +85,13 @@ export const ContactDataView = ({
         debouncedFetchData.cancel();
       };
     }
-  }, [fetchContactsFromStart]);
+
+    // Reset the flag after search reset completes
+    if (isResettingSearch.current) {
+      isResettingSearch.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchValue]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -137,11 +147,11 @@ export const ContactDataView = ({
   }, [contacts, environmentAttributes]);
 
   return (
-    <ContactsTableDynamic
+    <ContactsTable
       data={contactsTableData}
       fetchNextPage={fetchNextPage}
       hasMore={hasMore}
-      isDataLoaded={isFirstRender.current ? true : isDataLoaded}
+      isDataLoaded={true}
       updateContactList={updateContactList}
       environmentId={environment.id}
       searchValue={searchValue}
