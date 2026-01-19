@@ -91,7 +91,7 @@ export const ThemeStylingPreviewSurvey = ({
     shrink: {
       display: "relative",
       width: ["83.33%"],
-      height: ["95%"],
+      height: "auto",
     },
   };
 
@@ -140,9 +140,9 @@ export const ThemeStylingPreviewSurvey = ({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
-        <div className="flex h-full w-5/6 flex-1 flex-col">
-          <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
+        className="relative z-10 flex h-auto max-h-[85%] w-5/6 flex-col overflow-y-auto rounded-lg border border-slate-300 bg-white shadow-xl">
+        <div className="flex w-full flex-col rounded-lg">
+          <div className="flex h-auto w-full items-center rounded-t-lg bg-slate-100 py-2">
             <div className="ml-6 flex space-x-2">
               <div className="h-3 w-3 rounded-full bg-red-500"></div>
               <div className="h-3 w-3 rounded-full bg-amber-500"></div>
@@ -193,7 +193,7 @@ export const ThemeStylingPreviewSurvey = ({
               )}
               <div
                 key={surveyKey}
-                className={`${project.logo?.url && !project.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md rounded-lg p-4`}>
+                className={`${!project.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md overflow-hidden rounded-lg p-4`}>
                 <SurveyInline
                   appUrl={publicDomain}
                   isPreviewMode={true}
@@ -204,6 +204,7 @@ export const ThemeStylingPreviewSurvey = ({
                   responseCount={42}
                   styling={project.styling}
                   languageCode="default"
+                  className="w-full"
                 />
               </div>
             </MediaBackground>

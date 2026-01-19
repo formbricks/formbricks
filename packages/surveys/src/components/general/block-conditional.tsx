@@ -308,37 +308,36 @@ export function BlockConditional({
       {/* Scrollable container for the entire block */}
       <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div className="space-y-6">
-          <div className="space-y-6">
+          <div className="space-y-4">
             {block.elements.map((element, index) => {
               const isFirstElement = index === 0;
 
               return (
-                <div key={element.id}>
-                  <ElementConditional
-                    surveyLanguages={surveyLanguages}
-                    element={element}
-                    value={value[element.id]}
-                    onChange={(responseData) => handleElementChange(element.id, responseData)}
-                    onFileUpload={onFileUpload}
-                    languageCode={languageCode}
-                    ttc={ttc}
-                    setTtc={setTtc}
-                    surveyId={surveyId}
-                    autoFocusEnabled={autoFocusEnabled && isFirstElement}
-                    currentElementId={currentElementId}
-                    onOpenExternalURL={onOpenExternalURL}
-                    dir={dir}
-                    formRef={(ref) => {
-                      if (ref) {
-                        elementFormRefs.current.set(element.id, ref);
-                      } else {
-                        elementFormRefs.current.delete(element.id);
-                      }
-                    }}
-                    onTtcCollect={handleTtcCollect}
-                    errorMessage={getFirstErrorMessage(elementErrors, element.id)}
-                  />
-                </div>
+                <ElementConditional
+                  key={element.id}
+                  surveyLanguages={surveyLanguages}
+                  element={element}
+                  value={value[element.id]}
+                  onChange={(responseData) => handleElementChange(element.id, responseData)}
+                  onFileUpload={onFileUpload}
+                  languageCode={languageCode}
+                  ttc={ttc}
+                  setTtc={setTtc}
+                  surveyId={surveyId}
+                  autoFocusEnabled={autoFocusEnabled && isFirstElement}
+                  currentElementId={currentElementId}
+                  onOpenExternalURL={onOpenExternalURL}
+                  dir={dir}
+                  formRef={(ref) => {
+                    if (ref) {
+                      elementFormRefs.current.set(element.id, ref);
+                    } else {
+                      elementFormRefs.current.delete(element.id);
+                    }
+                  }}
+                  onTtcCollect={handleTtcCollect}
+                  errorMessage={getFirstErrorMessage(elementErrors, element.id)}
+                />
               );
             })}
           </div>
@@ -348,7 +347,7 @@ export function BlockConditional({
               "flex w-full flex-row-reverse justify-between",
               fullSizeCards ? "bg-survey-bg sticky bottom-0" : ""
             )}>
-            <div>
+            <div className="mr-1">
               <SubmitButton
                 buttonLabel={
                   block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined

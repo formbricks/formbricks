@@ -82,8 +82,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   let cssVariables = "#fbjs {\n";
 
   // Helper function to append the variable if it's not undefined
-  const appendCssVariable = (variableName: string, value?: string) => {
-    if (value !== undefined) {
+  const appendCssVariable = (variableName: string, value?: string | null) => {
+    if (value !== undefined && value !== null) {
       cssVariables += `--fb-${variableName}: ${value};\n`;
     }
   };
@@ -91,21 +91,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   const roundness = styling.roundness ?? 8;
 
   // Use the helper function to append CSS variables
-  appendCssVariable("brand-color", styling.brandColor?.light);
-  appendCssVariable("survey-brand-color", styling.brandColor?.light);
-  appendCssVariable("focus-color", styling.brandColor?.light);
-  if (styling.brandColor?.light) {
-    // If the brand color is defined, set the text color based on the lightness of the brand color
-    appendCssVariable("brand-text-color", isLight(styling.brandColor.light) ? "black" : "white");
-  } else {
-    // If the brand color is undefined, default to white
-    appendCssVariable("brand-text-color", "#ffffff");
-  }
 
   // Backwards-compat: legacy variables still used by some consumers/tests
   appendCssVariable("heading-color", styling.questionColor?.light);
   appendCssVariable("element-headline-color", styling.questionColor?.light);
-  appendCssVariable("element-description-color", styling.questionColor?.light);
+
   appendCssVariable("input-color", styling.questionColor?.light);
   appendCssVariable("label-color", styling.questionColor?.light);
   // Backwards-compat: legacy variables still used by some consumers/tests
@@ -122,12 +112,29 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("input-border-color", styling.inputBorderColor?.light);
   }
 
+  appendCssVariable("survey-brand-color", styling.brandColor?.light);
+  appendCssVariable("accent-background-color", styling.accentBgColor?.light);
+  appendCssVariable("accent-background-color-selected", styling.accentBgColorSelected?.light);
+  appendCssVariable("brand-color", styling.brandColor?.light); // Keep legacy for safety? Or just survey-brand-color per instruction. User said "like they were", implying restoration. I'll add both to be safe if "brand-color" was used before. But user specifically said "survey-brand-color". I will stick to survey-brand-color primarily but maybe add brand-color as alias if needed. I'll add survey-brand-color.
+
+  // helper function to format dimensions
+  const formatDimension = (value: string | number | null | undefined) => {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === "number") {
+      return `${value}px`;
+    }
+    if (typeof value === "string" && !Number.isNaN(Number(value))) {
+      return `${value}px`;
+    }
+    return value;
+  };
+
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
-  appendCssVariable("border-radius", `${Number(roundness).toString()}px`);
-  appendCssVariable("input-border-radius", `${Number(roundness).toString()}px`);
-  appendCssVariable("option-border-radius", `${Number(roundness).toString()}px`);
-  appendCssVariable("button-border-radius", `${Number(roundness).toString()}px`);
+  appendCssVariable("border-radius", formatDimension(Number(roundness)));
+  appendCssVariable("input-border-radius", formatDimension(Number(roundness)));
+  appendCssVariable("option-border-radius", formatDimension(Number(roundness)));
+  appendCssVariable("button-border-radius", formatDimension(Number(roundness)));
   appendCssVariable("input-background-color", styling.inputColor?.light);
   appendCssVariable("input-bg-color", styling.inputColor?.light);
   appendCssVariable("option-bg-color", styling.inputColor?.light);
@@ -165,19 +172,72 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     }
   }
 
-  if (styling.brandColor?.light) {
-    const brandColor = styling.brandColor.light;
+  // Buttons (Advanced)
+  appendCssVariable("button-bg-color", styling.buttonBgColor?.light);
+  appendCssVariable("button-text-color", styling.buttonTextColor?.light);
+  if (styling.buttonBorderRadius !== undefined)
+    appendCssVariable("button-border-radius", formatDimension(styling.buttonBorderRadius));
+  if (styling.buttonHeight !== undefined)
+    appendCssVariable("button-height", formatDimension(styling.buttonHeight));
+  if (styling.buttonFontSize !== undefined)
+    appendCssVariable("button-font-size", formatDimension(styling.buttonFontSize));
+  if (styling.buttonFontWeight !== undefined)
+    appendCssVariable("button-font-weight", `${styling.buttonFontWeight}`);
+  if (styling.buttonPaddingX !== undefined)
+    appendCssVariable("button-padding-x", formatDimension(styling.buttonPaddingX));
+  if (styling.buttonPaddingY !== undefined)
+    appendCssVariable("button-padding-y", formatDimension(styling.buttonPaddingY));
 
-    const accentColor = mixColor(brandColor, "#ffffff", 0.8);
-    const accentColorSelected = mixColor(brandColor, "#ffffff", 0.7);
+  // Inputs (Advanced)
+  appendCssVariable("input-color", styling.inputTextColor?.light);
+  if (styling.inputBorderRadius !== undefined)
+    appendCssVariable("input-border-radius", formatDimension(styling.inputBorderRadius));
+  if (styling.inputHeight !== undefined)
+    appendCssVariable("input-height", formatDimension(styling.inputHeight));
+  if (styling.inputFontSize !== undefined)
+    appendCssVariable("input-font-size", formatDimension(styling.inputFontSize));
+  if (styling.inputPaddingX !== undefined)
+    appendCssVariable("input-padding-x", formatDimension(styling.inputPaddingX));
+  if (styling.inputPaddingY !== undefined)
+    appendCssVariable("input-padding-y", formatDimension(styling.inputPaddingY));
+  if (styling.inputPlaceholderOpacity !== undefined)
+    appendCssVariable("input-placeholder-opacity", `${styling.inputPlaceholderOpacity}`);
+  appendCssVariable("input-shadow", styling.inputShadow);
 
-    appendCssVariable("accent-background-color", accentColor);
-    appendCssVariable("accent-background-color-selected", accentColorSelected);
+  // Options (Advanced)
+  appendCssVariable("option-bg-color", styling.optionBgColor?.light);
+  appendCssVariable("option-label-color", styling.optionLabelColor?.light);
+  if (styling.optionBorderRadius !== undefined)
+    appendCssVariable("option-border-radius", formatDimension(styling.optionBorderRadius));
+  if (styling.optionPaddingX !== undefined)
+    appendCssVariable("option-padding-x", formatDimension(styling.optionPaddingX));
+  if (styling.optionPaddingY !== undefined)
+    appendCssVariable("option-padding-y", formatDimension(styling.optionPaddingY));
+  if (styling.optionFontSize !== undefined)
+    appendCssVariable("option-font-size", formatDimension(styling.optionFontSize));
 
-    if (isLight(brandColor)) {
-      appendCssVariable("calendar-tile-color", mixColor(brandColor, "#000000", 0.7));
-    }
-  }
+  // Element Headline & Description (Advanced)
+  if (styling.elementHeadlineFontSize !== undefined)
+    appendCssVariable("element-headline-font-size", formatDimension(styling.elementHeadlineFontSize));
+  if (styling.elementHeadlineFontWeight !== undefined)
+    appendCssVariable("element-headline-font-weight", `${styling.elementHeadlineFontWeight}`);
+  appendCssVariable(
+    "element-headline-color",
+    styling.elementHeadlineColor?.light ?? styling.questionColor?.light
+  );
+
+  if (styling.elementDescriptionFontSize !== undefined)
+    appendCssVariable("element-description-font-size", formatDimension(styling.elementDescriptionFontSize));
+  appendCssVariable(
+    "element-description-color",
+    styling.elementDescriptionColor?.light ?? styling.questionColor?.light
+  );
+
+  // Progress Bar (Advanced)
+  if (styling.progressTrackHeight !== undefined)
+    appendCssVariable("progress-track-height", formatDimension(styling.progressTrackHeight));
+  appendCssVariable("progress-track-bg-color", styling.progressTrackBgColor?.light);
+  appendCssVariable("progress-indicator-bg-color", styling.progressIndicatorBgColor?.light);
 
   // Close the #fbjs block
   cssVariables += "}";

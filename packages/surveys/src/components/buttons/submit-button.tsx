@@ -1,6 +1,7 @@
 import { ButtonHTMLAttributes, useRef } from "preact/compat";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   buttonLabel?: string;
@@ -72,7 +73,10 @@ export function SubmitButton({
       type={type}
       tabIndex={tabIndex}
       autoFocus={focus}
-      className="bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom mb-1 flex items-center border px-3 py-3 text-base leading-4 font-medium shadow-xs hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+      className={cn(
+        "mb-1 flex items-center justify-center shadow-xs hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
+        "button-custom"
+      )}
       onClick={onClick}
       disabled={disabled}>
       {buttonLabel || (isLastQuestion ? t("common.finish") : t("common.next"))}

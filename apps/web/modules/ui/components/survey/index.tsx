@@ -21,7 +21,7 @@ declare global {
   }
 }
 
-export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) => {
+export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId"> & { className?: string }) => {
   const containerId = useMemo(() => createContainerId(), []);
   const getRecaptchaToken = useCallback(
     () => executeRecaptcha(props.recaptchaSiteKey),
@@ -40,7 +40,8 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     isLoadingScript = true;
     try {
       const scriptUrl = props.appUrl ? `${props.appUrl}/js/surveys.umd.cjs` : "/js/surveys.umd.cjs";
-      const response = await fetch(scriptUrl);
+      const urlWithCacheBuster = props.isPreviewMode ? `${scriptUrl}?v=${Date.now()}` : scriptUrl;
+      const response = await fetch(urlWithCacheBuster);
 
       if (!response.ok) {
         throw new Error("Failed to load the surveys package");
@@ -92,5 +93,5 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     }
   }, [isScriptLoaded, renderInline]);
 
-  return <div id={containerId} className="h-full w-full" />;
+  return <div id={containerId} className={props.className || "h-full w-full"} />;
 };

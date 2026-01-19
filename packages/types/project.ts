@@ -19,8 +19,8 @@ export const ZProjectMode = z.enum(["surveys", "cx"]);
 export type TProjectMode = z.infer<typeof ZProjectMode>;
 
 export const ZProjectConfig = z.object({
-  channel: ZProjectConfigChannel,
-  industry: ZProjectConfigIndustry,
+  channel: ZProjectConfigChannel.optional(),
+  industry: ZProjectConfigIndustry.optional(),
 });
 
 export type TProjectConfig = z.infer<typeof ZProjectConfig>;
