@@ -1599,10 +1599,14 @@
         "url_filters": "URLフィルター",
         "url_not_supported": "URLはサポートされていません",
         "validation": {
+          "add_validation_rule": "検証ルールを追加",
+          "answer_all_rows": "すべての行に回答してください",
           "characters": "文字数",
           "contains": "を含む",
+          "delete_validation_rule": "検証ルールを削除",
           "does_not_contain": "を含まない",
           "email": "有効なメールアドレスである",
+          "end_date": "終了日",
           "file_extension_is": "ファイル拡張子が次と一致",
           "file_extension_is_not": "ファイル拡張子が次と一致しない",
           "is": "である",
@@ -1628,6 +1632,8 @@
           "phone": "有効な電話番号である",
           "rank_all_options": "すべてのオプションをランク付け",
           "select_file_extensions": "ファイル拡張子を選択...",
+          "select_option": "オプションを選択",
+          "start_date": "開始日",
           "url": "有効なURLである"
         },
         "validation_logic_and": "すべてが真である",

@@ -40,6 +40,7 @@ export function FileUploadElement({
   const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;
   const { t } = useTranslation();
+  const isRequired = element.required;
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const [fileNames, setFileNames] = useState<Record<string, string>>({});
@@ -350,7 +351,7 @@ export function FileUploadElement({
         onFileSelect={handleFileSelect}
         allowMultiple={element.allowMultipleFiles}
         allowedFileExtensions={element.allowedFileExtensions}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         isUploading={isUploading}

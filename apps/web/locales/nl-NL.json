@@ -1599,10 +1599,14 @@
         "url_filters": "URL-filters",
         "url_not_supported": "URL niet ondersteund",
         "validation": {
+          "add_validation_rule": "Validatieregel toevoegen",
+          "answer_all_rows": "Beantwoord alle rijen",
           "characters": "Tekens",
           "contains": "Bevat",
+          "delete_validation_rule": "Validatieregel verwijderen",
           "does_not_contain": "Bevat niet",
           "email": "Is geldig e-mailadres",
+          "end_date": "Einddatum",
           "file_extension_is": "Bestandsextensie is",
           "file_extension_is_not": "Bestandsextensie is niet",
           "is": "Is",
@@ -1628,6 +1632,8 @@
           "phone": "Is geldig telefoonnummer",
           "rank_all_options": "Rangschik alle opties",
           "select_file_extensions": "Selecteer bestandsextensies...",
+          "select_option": "Optie selecteren",
+          "start_date": "Startdatum",
           "url": "Is geldige URL"
         },
         "validation_logic_and": "Alle zijn waar",

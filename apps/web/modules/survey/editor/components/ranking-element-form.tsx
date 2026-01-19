@@ -8,7 +8,7 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyElementTypeEnum, TSurveyRankingElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyRankingElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -249,7 +249,7 @@ export const RankingElementForm = ({
       </div>
 
       <ValidationRulesEditor
-        elementType={TSurveyElementTypeEnum.Ranking}
+        elementType={element.type}
         validation={element.validation}
         onUpdateValidation={(validation) => {
           updateElement(elementIdx, {

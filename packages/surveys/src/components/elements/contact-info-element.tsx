@@ -33,6 +33,7 @@ export function ContactInfoElement({
 }: Readonly<ContactInfoElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
   const { t } = useTranslation();
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
@@ -117,7 +118,7 @@ export function ContactInfoElement({
         fields={formFields}
         value={convertToValueObject(value)}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         dir={dir}
         imageUrl={element.imageUrl}

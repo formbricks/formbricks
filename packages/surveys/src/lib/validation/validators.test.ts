@@ -35,11 +35,6 @@ describe("validators", () => {
       const message = validators.minLength.getDefaultMessage({ min: 10 }, {} as TSurveyElement, mockT);
       expect(message).toBe("errors.min_length");
     });
-
-    test("should return fallback error message when translation function is not provided", () => {
-      const message = validators.minLength.getDefaultMessage({ min: 10 }, {} as TSurveyElement);
-      expect(message).toBe("Please enter at least 10 characters");
-    });
   });
 
   describe("maxLength", () => {
@@ -61,11 +56,6 @@ describe("validators", () => {
     test("should return correct error message", () => {
       const message = validators.maxLength.getDefaultMessage({ max: 100 }, {} as TSurveyElement, mockT);
       expect(message).toBe("errors.max_length");
-    });
-
-    test("should return fallback error message when translation function is not provided", () => {
-      const message = validators.maxLength.getDefaultMessage({ max: 100 }, {} as TSurveyElement);
-      expect(message).toBe("Please enter no more than 100 characters");
     });
   });
 
@@ -231,11 +221,6 @@ describe("validators", () => {
     test("should return correct error message", () => {
       const message = validators.minValue.getDefaultMessage({ min: 10 }, {} as TSurveyElement, mockT);
       expect(message).toBe("errors.min_value");
-    });
-
-    test("should return fallback error message when translation function is not provided", () => {
-      const message = validators.minValue.getDefaultMessage({ min: 10 }, {} as TSurveyElement);
-      expect(message).toBe("Value must be at least 10");
     });
   });
 

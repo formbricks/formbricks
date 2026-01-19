@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { TValidationLogic } from "@formbricks/types/surveys/elements";
+import type { TValidationLogic } from "@formbricks/types/surveys/elements";
 import {
   Select,
   SelectContent,

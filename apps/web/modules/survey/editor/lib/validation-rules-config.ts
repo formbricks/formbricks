@@ -73,25 +73,21 @@ export const RULE_TYPE_CONFIG: Record<
     labelKey: "is",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "Value",
   },
   doesNotEqual: {
     labelKey: "is_not",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "Value",
   },
   contains: {
     labelKey: "contains",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "Text",
   },
   doesNotContain: {
     labelKey: "does_not_contain",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "Text",
   },
   isGreaterThan: {
     labelKey: "is_greater_than",
@@ -145,16 +141,18 @@ export const RULE_TYPE_CONFIG: Record<
     valueType: "number",
     valuePlaceholder: "1",
   },
+  answerAllRows: {
+    labelKey: "answer_all_rows",
+    needsValue: false,
+  },
   fileExtensionIs: {
     labelKey: "file_extension_is",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "Select extensions...",
   },
   fileExtensionIsNot: {
     labelKey: "file_extension_is_not",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "Select extensions...",
   },
 };

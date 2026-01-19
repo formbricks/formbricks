@@ -1599,10 +1599,14 @@
         "url_filters": "Фильтры URL",
         "url_not_supported": "URL не поддерживается",
         "validation": {
+          "add_validation_rule": "Добавить правило проверки",
+          "answer_all_rows": "Ответьте на все строки",
           "characters": "Символы",
           "contains": "Содержит",
+          "delete_validation_rule": "Удалить правило проверки",
           "does_not_contain": "Не содержит",
           "email": "Корректный email",
+          "end_date": "Дата окончания",
           "file_extension_is": "Расширение файла —",
           "file_extension_is_not": "Расширение файла не является",
           "is": "Является",
@@ -1628,6 +1632,8 @@
           "phone": "Корректный телефон",
           "rank_all_options": "Ранжируйте все опции",
           "select_file_extensions": "Выберите расширения файлов...",
+          "select_option": "Выберите вариант",
+          "start_date": "Дата начала",
           "url": "Корректный URL"
         },
         "validation_logic_and": "Все условия выполняются",

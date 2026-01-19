@@ -33,6 +33,7 @@ export function PictureSelectionElement({
 }: Readonly<PictureSelectionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
   const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   // Convert choices to PictureSelectOption format
@@ -82,7 +83,7 @@ export function PictureSelectionElement({
         value={currentValue}
         onChange={handleChange}
         allowMulti={element.allowMulti}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         dir={dir}
         errorMessage={errorMessage}

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZI18nString } from "../i18n";
 
 // Field types for field-specific validation (address and contact info elements)
 export const ZAddressField = z.enum(["addressLine1", "addressLine2", "city", "state", "zip", "country"]);
@@ -42,6 +41,7 @@ export const ZValidationRuleType = z.enum([
 
   // Matrix rules
   "minRowsAnswered",
+  "answerAllRows",
 
   // Date rules
   "isLaterThan",
@@ -141,6 +141,7 @@ export const ZValidationRuleParamsMinRanked = z.object({
 });
 
 export const ZValidationRuleParamsRankAll = z.object({}).strict();
+export const ZValidationRuleParamsAnswerAllRows = z.object({}).strict();
 
 export const ZValidationRuleParamsMinRowsAnswered = z.object({
   min: z.number().min(1),
@@ -180,6 +181,7 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsMinRanked,
   ZValidationRuleParamsRankAll,
   ZValidationRuleParamsMinRowsAnswered,
+  ZValidationRuleParamsAnswerAllRows,
   ZValidationRuleParamsFileExtensionIs,
   ZValidationRuleParamsFileExtensionIsNot,
 ]);
@@ -210,6 +212,7 @@ export type TValidationRuleParamsIsNotBetween = z.infer<typeof ZValidationRulePa
 export type TValidationRuleParamsMinRanked = z.infer<typeof ZValidationRuleParamsMinRanked>;
 export type TValidationRuleParamsRankAll = z.infer<typeof ZValidationRuleParamsRankAll>;
 export type TValidationRuleParamsMinRowsAnswered = z.infer<typeof ZValidationRuleParamsMinRowsAnswered>;
+export type TValidationRuleParamsAnswerAllRows = z.infer<typeof ZValidationRuleParamsAnswerAllRows>;
 export type TValidationRuleParamsFileExtensionIs = z.infer<typeof ZValidationRuleParamsFileExtensionIs>;
 export type TValidationRuleParamsFileExtensionIsNot = z.infer<typeof ZValidationRuleParamsFileExtensionIsNot>;
 
@@ -219,7 +222,6 @@ export const ZValidationRule = z.object({
   id: z.string(),
   type: ZValidationRuleType,
   params: ZValidationRuleParams,
-  customErrorMessage: ZI18nString.optional(),
   field: ZValidationRuleField.optional(),
 });
 
@@ -248,8 +250,9 @@ const OPEN_TEXT_RULES = [
 ] as const;
 
 const MULTIPLE_CHOICE_MULTI_RULES = ["minSelections", "maxSelections"] as const;
+const PICTURE_SELECTION_RULES = ["minSelections", "maxSelections"] as const;
 const DATE_RULES = ["isLaterThan", "isEarlierThan", "isBetween", "isNotBetween"] as const;
-const MATRIX_RULES = ["minRowsAnswered"] as const;
+const MATRIX_RULES = ["minRowsAnswered", "answerAllRows"] as const;
 const RANKING_RULES = ["minRanked", "rankAll"] as const;
 // Note: fileSizeAtLeast and fileSizeAtMost are not included because they cannot be validated
 // from response URLs alone (responses only contain file URLs, not file metadata).
@@ -282,6 +285,7 @@ const CONTACT_INFO_RULES = [
 ] as const;
 
 // Applicable rules per element type
+// Note: pictureSelection rules are handled dynamically in getAvailableRuleTypes based on allowMulti
 export const APPLICABLE_RULES: Record<string, TValidationRuleType[]> = {
   openText: [...OPEN_TEXT_RULES],
   multipleChoiceMulti: [...MULTIPLE_CHOICE_MULTI_RULES],
@@ -289,7 +293,7 @@ export const APPLICABLE_RULES: Record<string, TValidationRuleType[]> = {
   matrix: [...MATRIX_RULES],
   ranking: [...RANKING_RULES],
   fileUpload: [...FILE_UPLOAD_RULES],
-  pictureSelection: [],
+  pictureSelection: [...PICTURE_SELECTION_RULES],
   address: [...ADDRESS_RULES],
   contactInfo: [...CONTACT_INFO_RULES],
 };
@@ -331,3 +335,10 @@ export interface TValidationResult {
 
 // Error map for block-level validation (keyed by elementId)
 export type TValidationErrorMap = Record<string, TValidationError[]>;
+
+/**
+ * Result of a validator check
+ */
+export interface TValidatorCheckResult {
+  valid: boolean;
+}

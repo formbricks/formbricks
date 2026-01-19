@@ -68,10 +68,6 @@ export const ValidationRulesEditor = ({
 
   const isEnabled = validationRules.length > 0;
 
-  // For matrix elements, only show validation rules when element is not required
-  const shouldShowValidationRules =
-    elementType !== TSurveyElementTypeEnum.Matrix || (element && !element.required);
-
   const handleEnable = () => {
     // For address/contact info, get rules for first field
     const defaultField = needsFieldSelector && fieldOptions.length > 0 ? fieldOptions[0].value : undefined;
@@ -300,11 +296,6 @@ export const ValidationRulesEditor = ({
     defaultField
   );
   const canAddMore = availableRulesForAdd.length > 0;
-
-  // Don't show validation rules for required matrix elements
-  if (!shouldShowValidationRules) {
-    return null;
-  }
 
   return (
     <AdvancedOptionToggle

@@ -105,7 +105,7 @@ describe("validateElementResponse", () => {
       expect(result.errors).toHaveLength(1);
     });
 
-    test("should handle required matrix element - all rows must be answered", () => {
+    test("should handle required matrix element - at least 1 row must be answered", () => {
       const element: TSurveyElement = {
         id: "matrix1",
         type: TSurveyElementTypeEnum.Matrix,
@@ -122,11 +122,16 @@ describe("validateElementResponse", () => {
         ],
       } as unknown as TSurveyMatrixElement;
 
-      const result = validateElementResponse(element, { row1: "col1", row2: "col2" }, "en", mockT);
-      expect(result.valid).toBe(true);
+      // At least 1 row answered should pass
+      const result1 = validateElementResponse(element, { row1: "col1" }, "en", mockT);
+      expect(result1.valid).toBe(true);
+
+      // All rows answered should also pass
+      const result2 = validateElementResponse(element, { row1: "col1", row2: "col2" }, "en", mockT);
+      expect(result2.valid).toBe(true);
     });
 
-    test("should return error when required matrix element has incomplete rows", () => {
+    test("should return error when required matrix element has no rows answered", () => {
       const element: TSurveyElement = {
         id: "matrix1",
         type: TSurveyElementTypeEnum.Matrix,
@@ -143,7 +148,7 @@ describe("validateElementResponse", () => {
         ],
       } as unknown as TSurveyMatrixElement;
 
-      const result = validateElementResponse(element, { row1: "col1" }, "en", mockT);
+      const result = validateElementResponse(element, {}, "en", mockT);
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
     });
@@ -487,7 +492,7 @@ describe("validateElementResponse", () => {
   });
 
   describe("matrix element validation rules", () => {
-    test("should skip validation rules when matrix is required", () => {
+    test("should apply validation rules when matrix is required", () => {
       const element: TSurveyElement = {
         id: "matrix1",
         type: TSurveyElementTypeEnum.Matrix,
@@ -503,13 +508,14 @@ describe("validateElementResponse", () => {
           { id: "col2", label: { default: "Col 2" } },
         ],
         validation: {
-          rules: [{ id: "rule1", type: "minRowsAnswered", params: { min: 1 } }],
+          rules: [{ id: "rule1", type: "minRowsAnswered", params: { min: 2 } }],
         },
       } as unknown as TSurveyMatrixElement;
 
-      const result = validateElementResponse(element, { row1: "col1", row2: "col2" }, "en", mockT);
-      // Should only check required, not validation rules
-      expect(result.valid).toBe(true);
+      // Required check passes (at least 1 row), but validation rule fails (needs 2 rows)
+      const result = validateElementResponse(element, { row1: "col1" }, "en", mockT);
+      expect(result.valid).toBe(false);
+      expect(result.errors.length).toBe(1);
     });
 
     test("should apply validation rules when matrix is not required", () => {
@@ -536,57 +542,34 @@ describe("validateElementResponse", () => {
       const result = validateElementResponse(element, { row1: "col1" }, "en", mockT);
       expect(result.valid).toBe(false);
     });
-  });
 
-  describe("custom error messages", () => {
-    test("should use custom error message when provided", () => {
+    test("should apply answerAllRows validation rule", () => {
       const element: TSurveyElement = {
-        id: "text1",
-        type: TSurveyElementTypeEnum.OpenText,
-        headline: { default: "Question" },
+        id: "matrix1",
+        type: TSurveyElementTypeEnum.Matrix,
+        headline: { default: "Matrix question" },
         required: false,
-        inputType: "text",
-        charLimit: 0,
+        shuffleOption: "none",
+        rows: [
+          { id: "row1", label: { default: "Row 1" } },
+          { id: "row2", label: { default: "Row 2" } },
+        ],
+        columns: [
+          { id: "col1", label: { default: "Col 1" } },
+          { id: "col2", label: { default: "Col 2" } },
+        ],
         validation: {
-          rules: [
-            {
-              id: "rule1",
-              type: "minLength",
-              params: { min: 10 },
-              customErrorMessage: { default: "Custom error message" },
-            },
-          ],
+          rules: [{ id: "rule1", type: "answerAllRows", params: {} }],
         },
-      } as unknown as TSurveyOpenTextElement;
+      } as unknown as TSurveyMatrixElement;
 
-      const result = validateElementResponse(element, "short", "en", mockT);
-      expect(result.valid).toBe(false);
-      expect(result.errors[0].message).toBe("Custom error message");
-    });
+      // Only 1 row answered, should fail
+      const result1 = validateElementResponse(element, { row1: "col1" }, "en", mockT);
+      expect(result1.valid).toBe(false);
 
-    test("should use language-specific custom error message", () => {
-      const element: TSurveyElement = {
-        id: "text1",
-        type: TSurveyElementTypeEnum.OpenText,
-        headline: { default: "Question" },
-        required: false,
-        inputType: "text",
-        charLimit: 0,
-        validation: {
-          rules: [
-            {
-              id: "rule1",
-              type: "minLength",
-              params: { min: 10 },
-              customErrorMessage: { default: "Default message", en: "English message" },
-            },
-          ],
-        },
-      } as unknown as TSurveyOpenTextElement;
-
-      const result = validateElementResponse(element, "short", "en", mockT);
-      expect(result.valid).toBe(false);
-      expect(result.errors[0].message).toBe("English message");
+      // All rows answered, should pass
+      const result2 = validateElementResponse(element, { row1: "col1", row2: "col2" }, "en", mockT);
+      expect(result2.valid).toBe(true);
     });
   });
 

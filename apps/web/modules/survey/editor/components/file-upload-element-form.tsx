@@ -7,7 +7,7 @@ import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -20,7 +20,7 @@ import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
-  project?: Project;
+  project: Project;
   element: TSurveyFileUploadElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyFileUploadElement>) => void;
@@ -53,7 +53,7 @@ export const FileUploadElementForm = ({
     billingInfo,
     error: billingInfoError,
     isLoading: billingInfoLoading,
-  } = useGetBillingInfo(project?.organizationId ?? "");
+  } = useGetBillingInfo(project.organizationId);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   const maxSizeInMBLimit = useMemo(() => {
@@ -193,7 +193,7 @@ export const FileUploadElementForm = ({
       </div>
 
       <ValidationRulesEditor
-        elementType={TSurveyElementTypeEnum.FileUpload}
+        elementType={element.type}
         validation={element.validation}
         onUpdateValidation={(validation) => {
           updateElement(elementIdx, {

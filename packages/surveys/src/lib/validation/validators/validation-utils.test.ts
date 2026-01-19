@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 // Used for parity check in tests only
-import { validateEmail, validatePhone, validateUrl } from "./validation";
+import { validateEmail, validatePhone, validateUrl } from "./validation-utils";
 
 describe("Validation Logic Parity", () => {
   describe("Email Validation", () => {

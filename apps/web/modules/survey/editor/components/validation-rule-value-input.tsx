@@ -58,10 +58,10 @@ export const ValidationRuleValueInput = ({
             const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
             onChange(`${e.target.value},${currentEndDate}`);
           }}
-          placeholder="Start date"
+          placeholder={t("environments.surveys.edit.validation.start_date")}
           className="h-9 flex-1 bg-white"
         />
-        <span className="text-sm text-slate-500">and</span>
+        <span className="text-sm text-slate-500">{t("common.and")}</span>
         <Input
           type="date"
           value={(currentValue as string)?.split(",")?.[1] ?? ""}
@@ -69,7 +69,7 @@ export const ValidationRuleValueInput = ({
             const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
             onChange(`${currentStartDate},${e.target.value}`);
           }}
-          placeholder="End date"
+          placeholder={t("environments.surveys.edit.validation.end_date")}
           className="h-9 flex-1 bg-white"
         />
       </div>
@@ -82,7 +82,7 @@ export const ValidationRuleValueInput = ({
     return (
       <Select value={optionValue} onValueChange={onChange}>
         <SelectTrigger className="h-9 min-w-[200px] bg-white">
-          <SelectValue placeholder="Select option" />
+          <SelectValue placeholder={t("environments.surveys.edit.validation.select_option")} />
         </SelectTrigger>
         <SelectContent>
           {element &&

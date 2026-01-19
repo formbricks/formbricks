@@ -33,6 +33,7 @@ export function NPSElement({
 }: Readonly<NPSElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
   const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -61,7 +62,7 @@ export function NPSElement({
         lowerLabel={getLocalizedValue(element.lowerLabel, languageCode)}
         upperLabel={getLocalizedValue(element.upperLabel, languageCode)}
         colorCoding={element.isColorCodingEnabled}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}

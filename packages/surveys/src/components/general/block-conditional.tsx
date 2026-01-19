@@ -1,15 +1,11 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
-import { type TResponseData, TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import {
-  type TSurveyElement,
-  type TSurveyMatrixElement,
-  type TSurveyRankingElement,
-} from "@formbricks/types/surveys/elements";
+import { type TSurveyElement, type TSurveyRankingElement } from "@formbricks/types/surveys/elements";
 import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
@@ -17,7 +13,7 @@ import { ElementConditional } from "@/components/general/element-conditional";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/evaluator";
+import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation";
 
 interface BlockConditionalProps {
   block: TSurveyBlock;
@@ -174,13 +170,6 @@ export function BlockConditional({
     );
   };
 
-  const hasUnansweredRows = (responseData: TResponseDataValue, element: TSurveyMatrixElement): boolean => {
-    return element.rows.some((row) => {
-      const rowLabel = getLocalizedValue(row.label, languageCode);
-      return !responseData?.[rowLabel as keyof typeof responseData];
-    });
-  };
-
   // Validate a single element's form
   const validateElementForm = (element: TSurveyElement, form: HTMLFormElement): boolean => {
     const response = value[element.id];
@@ -203,7 +192,8 @@ export function BlockConditional({
 
     // Custom validation for matrix questions
     if (element.type === TSurveyElementTypeEnum.Matrix) {
-      if (element.required && (!response || hasUnansweredRows(response, element))) {
+      // Required means at least 1 row must be answered
+      if (element.required && (!response || Object.keys(response).length === 0)) {
         form.requestSubmit();
         return false;
       }

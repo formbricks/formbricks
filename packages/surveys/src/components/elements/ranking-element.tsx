@@ -31,6 +31,7 @@ export function RankingElement({
 }: Readonly<RankingElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
   const { t } = useTranslation();
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
@@ -120,7 +121,7 @@ export function RankingElement({
         options={options}
         value={selectedValues}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}

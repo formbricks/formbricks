@@ -126,6 +126,12 @@ export const getAvailableRuleTypes = (
     return applicable.filter((ruleType) => !existingTypes.has(ruleType));
   }
 
+  if (elementType === TSurveyElementTypeEnum.PictureSelection) {
+    const applicable = APPLICABLE_RULES[elementTypeKey] ?? [];
+    const existingTypes = new Set(existingRules.map((r) => r.type));
+    return applicable.filter((ruleType) => !existingTypes.has(ruleType));
+  }
+
   // For other element types, use standard filtering
   const applicable = APPLICABLE_RULES[elementTypeKey] ?? [];
   const existingTypes = new Set(existingRules.map((r) => r.type));
@@ -213,7 +219,13 @@ export const createRuleParams = (
   value?: number | string
 ): TValidationRule["params"] => {
   // Rules that return empty params
-  if (ruleType === "email" || ruleType === "url" || ruleType === "phone" || ruleType === "rankAll") {
+  if (
+    ruleType === "email" ||
+    ruleType === "url" ||
+    ruleType === "phone" ||
+    ruleType === "rankAll" ||
+    ruleType === "answerAllRows"
+  ) {
     return {};
   }
 

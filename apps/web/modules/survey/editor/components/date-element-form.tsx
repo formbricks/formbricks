@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyDateElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -129,7 +129,7 @@ export const DateElementForm = ({
       </div>
 
       <ValidationRulesEditor
-        elementType={TSurveyElementTypeEnum.Date}
+        elementType={element.type}
         validation={element.validation}
         onUpdateValidation={(validation) => {
           updateElement(elementIdx, {

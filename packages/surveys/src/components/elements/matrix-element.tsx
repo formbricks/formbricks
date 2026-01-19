@@ -30,8 +30,8 @@ export function MatrixElement({
 }: Readonly<MatrixElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
   const { t } = useTranslation();
-
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const rowShuffleIdx = useMemo(() => {
@@ -138,7 +138,7 @@ export function MatrixElement({
         columns={columns}
         value={convertValueToIds(value)}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}

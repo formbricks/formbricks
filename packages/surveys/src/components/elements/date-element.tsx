@@ -31,8 +31,8 @@ export function DateElement({
 }: Readonly<DateElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
   const { t } = useTranslation();
-
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const handleChange = (dateValue: string) => {
@@ -65,7 +65,7 @@ export function DateElement({
         onChange={handleChange}
         minDate={getMinDate()}
         maxDate={getMaxDate()}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         locale={languageCode}

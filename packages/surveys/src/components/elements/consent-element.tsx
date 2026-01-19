@@ -32,6 +32,8 @@ export function ConsentElement({
 }: Readonly<ConsentElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -56,7 +58,7 @@ export function ConsentElement({
         checkboxLabel={getLocalizedValue(element.label, languageCode)}
         value={value === "accepted"}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
