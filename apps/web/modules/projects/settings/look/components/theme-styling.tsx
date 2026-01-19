@@ -2,9 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Project } from "@prisma/client";
-import { RotateCcwIcon } from "lucide-react";
+import { RotateCcwIcon, SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,7 @@ import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { previewSurvey } from "@/app/lib/templates";
 import { defaultStyling } from "@/lib/styling/constants";
+import { isLight, mixColor } from "@/lib/utils/colors";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
@@ -20,6 +21,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { BackgroundStylingCard } from "@/modules/ui/components/background-styling-card";
 import { Button } from "@/modules/ui/components/button";
 import { CardStylingSettings } from "@/modules/ui/components/card-styling-settings";
+import { ColorPicker } from "@/modules/ui/components/color-picker";
 import {
   FormControl,
   FormDescription,
@@ -60,16 +62,22 @@ export const ThemeStyling = ({
 
   const [previewSurveyType, setPreviewSurveyType] = useState<TSurveyType>("link");
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
+  const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
 
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
 
+  const fontFamily = form.watch("fontFamily");
+
+  // Load selected font if it's a Google Font
+
   const onReset = useCallback(async () => {
+    const defaultData = { ...defaultStyling, highlightBorderColor: null }; // Ensure undefined is null for server action
     const updatedProjectResponse = await updateProjectAction({
       projectId: project.id,
       data: {
-        styling: { ...defaultStyling },
+        styling: defaultData,
       },
     });
 
@@ -81,7 +89,81 @@ export const ThemeStyling = ({
       const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
       toast.error(errorMessage);
     }
-  }, [form, project.id, router]);
+  }, [form, project.id, router, t]);
+
+  const handleSuggestColors = () => {
+    const brandColor = form.getValues().brandColor?.light ?? "#64748b";
+
+    // Derive everything from Brand Color
+    const derivedInputBg = "#ffffff";
+    const derivedQuestionColor = "#2b2524";
+    const derivedCardBg = "#ffffff";
+    const derivedCardBorder = mixColor(brandColor, "#ffffff", 0.9) ?? "#f8fafc";
+    const derivedPageBg = mixColor(brandColor, "#ffffff", 0.95) ?? "#f8fafc";
+
+    const isBrandLight = isLight(brandColor);
+
+    // Accent derived from Brand (Monochromatic)
+    const accentColor = brandColor;
+    const derivedAccentSelected =
+      mixColor(accentColor, isBrandLight ? "#000000" : "#ffffff", 0.1) ?? accentColor;
+    // Accent for text (darkened if light)
+    const derivedAccentText = isBrandLight ? mixColor(accentColor, "#000000", 0.6) : accentColor;
+
+    // 1. General
+    form.setValue("brandColor.light", brandColor, { shouldDirty: true });
+    form.setValue("questionColor.light", derivedQuestionColor, { shouldDirty: true });
+    form.setValue("isLogoHidden", false, { shouldDirty: true });
+
+    // Accents (Synced with Brand)
+    form.setValue("accentBgColor.light", accentColor, { shouldDirty: true });
+    form.setValue("accentBgColorSelected.light", derivedAccentSelected, { shouldDirty: true });
+
+    // Headlines & Descriptions (Using Brand/Accent)
+    form.setValue("elementHeadlineColor.light", derivedAccentText, { shouldDirty: true });
+    form.setValue("elementDescriptionColor.light", derivedAccentText, { shouldDirty: true });
+
+    // 2. Buttons
+    form.setValue("buttonBgColor.light", brandColor, { shouldDirty: true });
+    form.setValue("buttonTextColor.light", isBrandLight ? "#0f172a" : "#ffffff", { shouldDirty: true });
+    form.setValue("buttonBorderRadius", 4, { shouldDirty: true });
+
+    // 3. Inputs (Card-like style)
+    form.setValue("inputBgColor.light", derivedInputBg, { shouldDirty: true });
+    form.setValue("inputBorderColor.light", derivedCardBorder, { shouldDirty: true }); // Match card border
+    form.setValue("inputTextColor.light", "#0f172a", { shouldDirty: true });
+    form.setValue("inputBorderRadius", 8, { shouldDirty: true }); // Match roundness
+    form.setValue("inputShadow", "0 1px 2px 0 rgb(0 0 0 / 0.05)", { shouldDirty: true }); // Add shadow
+    form.setValue("inputPaddingY", 16, { shouldDirty: true }); // More padding
+
+    // 4. Options (Checkboxes/Radio)
+    form.setValue("optionBgColor.light", derivedInputBg, { shouldDirty: true });
+    form.setValue("optionLabelColor.light", "#0f172a", { shouldDirty: true });
+    form.setValue("optionBorderRadius", 8, { shouldDirty: true }); // Match roundness
+    form.setValue("optionPaddingY", 16, { shouldDirty: true });
+
+    // 5. Card Styling
+    form.setValue("cardBackgroundColor.light", derivedCardBg, { shouldDirty: true });
+    form.setValue("cardBorderColor.light", derivedCardBorder, { shouldDirty: true });
+    form.setValue("roundness", 8, { shouldDirty: true });
+
+    // 6. Highlight / Accent (Focus states)
+    form.setValue("highlightBorderColor.light", accentColor, { shouldDirty: true });
+
+    // 7. Progress Bar
+    form.setValue("progressIndicatorBgColor.light", brandColor, { shouldDirty: true });
+    form.setValue("progressTrackBgColor.light", mixColor(brandColor, "#ffffff", 0.8), { shouldDirty: true });
+
+    // 8. Background Styling (Page Background)
+    form.setValue(
+      "background",
+      { bg: derivedPageBg, bgType: "color", brightness: 100 },
+      { shouldDirty: true }
+    );
+
+    toast.success(t("environments.workspace.look.styling_updated_successfully"));
+    setConfirmSuggestColorsOpen(false);
+  };
 
   const onSubmit: SubmitHandler<TProjectStyling> = async (data) => {
     const updatedProjectResponse = await updateProjectAction({
@@ -144,7 +226,37 @@ export const ThemeStyling = ({
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 rounded-lg bg-slate-50 p-4">
+              <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
+                <div className="grid grid-cols-2 items-end gap-4">
+                  <FormField
+                    control={form.control}
+                    name="brandColor.light"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel className="text-xs">
+                          {t("environments.surveys.edit.brand_color")}
+                        </FormLabel>
+                        <FormControl>
+                          <ColorPicker
+                            color={field.value ?? "#64748b"}
+                            onChange={(color) => field.onChange(color)}
+                            containerClass="w-full"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="h-10 w-full justify-center gap-2 border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+                      onClick={() => setConfirmSuggestColorsOpen(true)}>
+                      <SparklesIcon className="mr-2 h-4 w-4" />
+                      {t("environments.workspace.look.suggest_colors")}
+                    </Button>
+                  </div>
+                </div>
                 <FormStylingSettings
                   open={formStylingOpen}
                   setOpen={setFormStylingOpen}
@@ -192,7 +304,7 @@ export const ThemeStyling = ({
           {/* Survey Preview */}
 
           <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
-            <div className="sticky top-4 mb-4 h-[600px]">
+            <div className="sticky top-4 mb-4 max-h-[calc(100vh-2rem)]">
               <ThemeStylingPreviewSurvey
                 survey={previewSurvey(project.name, t)}
                 project={{
@@ -205,6 +317,18 @@ export const ThemeStyling = ({
               />
             </div>
           </div>
+
+          {/* Confirm reset styling modal */}
+          <AlertDialog
+            open={confirmSuggestColorsOpen}
+            setOpen={setConfirmSuggestColorsOpen}
+            headerText="Generate Color Theme?"
+            mainText="Would you like to generate a matching color theme based on your brand color? This will overwrite your current color settings."
+            confirmBtnLabel="Generate"
+            declineBtnLabel="Cancel"
+            onConfirm={handleSuggestColors}
+            onDecline={() => setConfirmSuggestColorsOpen(false)}
+          />
 
           {/* Confirm reset styling modal */}
           <AlertDialog

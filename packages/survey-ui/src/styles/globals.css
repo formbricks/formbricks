@@ -51,26 +51,18 @@
   --slate-50: rgb(248, 250, 252);
   --slate-100: rgb(241 245 249);
   --slate-200: rgb(226 232 240);
-
-  /* ---------------------------------------------------------------------------
-     Survey general Colors
-     The primary accent color used throughout the survey. Override this to 
-     customize the brand appearance.
-     --------------------------------------------------------------------------- */
-  --fb-survey-brand-color: #64748b;
-
-  --fb-accent-background-color: var(--slate-200);
-  --fb-accent-background-color-selected: var(--slate-100);
+  --fb-font-family: sans-serif;
+  font-family: var(--fb-font-family);
 
 
   /* ---------------------------------------------------------------------------
      Element Headline Tokens
-     Used for question headlines and main element titles.
+     Used for headline text in elements.
      --------------------------------------------------------------------------- */
   --fb-element-headline-font-family: inherit;
   --fb-element-headline-font-weight: 400;
   --fb-element-headline-font-size: 1rem;
-  --fb-element-headline-color: (--input);
+  --fb-element-headline-color: var(--input);
   --fb-element-headline-opacity: 1;
 
   /* ---------------------------------------------------------------------------
@@ -113,10 +105,10 @@
      Used for text inputs, textareas, and other form controls.
      --------------------------------------------------------------------------- */
   --fb-input-bg-color: var(--slate-50);
-  --fb-input-border-color: var(--fb-survey-brand-color);
+  --fb-input-border-color: var(--border);
   --fb-input-border-radius: var(--radius);
   --fb-input-font-family: inherit;
-  --fb-input-font-size: 0.875rem !important;
+  --fb-input-font-size: 0.875rem;
   --fb-input-font-weight: 400;
   --fb-input-color: var(--foreground);
   --fb-input-placeholder-color: var(--fb-input-color);
@@ -152,7 +144,7 @@
   --fb-option-font-weight: var(--fb-input-font-weight);
 }
 
-.button-custom {
+#fbjs .button-custom {
   width: var(--fb-button-width);
   height: var(--fb-button-height);
   background-color: var(--fb-button-bg-color);
@@ -167,7 +159,7 @@
   font-size: var(--fb-button-font-size);
 }
 
-.label-headline {
+#fbjs .label-headline {
   font-family: var(--fb-element-headline-font-family);
   font-weight: var(--fb-element-headline-font-weight);
   font-size: var(--fb-element-headline-font-size) !important;
@@ -175,15 +167,15 @@
   opacity: var(--fb-element-headline-opacity);
 }
 
-.label-description {
+#fbjs .label-description {
   font-family: var(--fb-element-description-font-family);
   font-weight: var(--fb-element-description-font-weight);
   font-size: var(--fb-element-description-font-size) !important;
-  color: var(--fb-element-description-color);
+  color: var(--fb-element-description-color) !important;
   opacity: var(--fb-element-description-opacity);
 }
 
-.label-default {
+#fbjs .label-default {
   font-family: var(--fb-label-font-family);
   font-weight: var(--fb-label-font-weight);
   font-size: var(--fb-label-font-size) !important;
@@ -191,13 +183,13 @@
   opacity: var(--fb-label-opacity);
 }
 
-.progress-track {
+#fbjs .progress-track {
   height: var(--fb-progress-track-height);
   background-color: var(--fb-progress-track-bg-color);
   border-radius: var(--fb-progress-track-border-radius);
 }
 
-.progress-indicator {
+#fbjs .progress-indicator {
   background-color: var(--fb-progress-indicator-bg-color);
   border-radius: var(--fb-progress-indicator-border-radius);
 }

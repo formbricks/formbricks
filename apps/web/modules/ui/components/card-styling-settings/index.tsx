@@ -13,7 +13,7 @@ import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
-import { Slider } from "@/modules/ui/components/slider";
+import { Input } from "@/modules/ui/components/input";
 import { Switch } from "@/modules/ui/components/switch";
 
 type CardStylingSettingsProps = {
@@ -39,9 +39,10 @@ export const CardStylingSettings = ({
 
   const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "straight";
   const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "straight";
-  const roundness = form.watch("roundness") ?? 8;
+  const hideProgressBar = form.watch("hideProgressBar");
 
   const [parent] = useAutoAnimate();
+
   return (
     <Collapsible.Root
       open={open}
@@ -59,7 +60,7 @@ export const CardStylingSettings = ({
         )}>
         <div className="inline-flex px-4 py-4">
           {!isSettingsPage && (
-            <div className="flex items-center pl-2 pr-5">
+            <div className="flex items-center pr-5 pl-2">
               <CheckIcon
                 strokeWidth={3}
                 className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -81,47 +82,18 @@ export const CardStylingSettings = ({
       <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
 
-        <div className="flex flex-col gap-6 p-6 pt-2">
-          <div className="flex flex-col justify-center">
-            <FormField
-              control={form.control}
-              name="roundness"
-              render={() => (
-                <FormItem>
-                  <div>
-                    <FormLabel>{t("environments.surveys.edit.roundness")}</FormLabel>
-                    <FormDescription>
-                      {t("environments.surveys.edit.change_the_border_radius_of_the_card_and_the_inputs")}
-                    </FormDescription>
-                  </div>
-
-                  <FormControl>
-                    <div className="rounded-lg border bg-slate-50 p-6">
-                      <Slider
-                        value={[roundness]}
-                        max={22}
-                        onValueChange={(value) => {
-                          form.setValue("roundness", value[0]);
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
+        <div className="grid grid-cols-2 gap-4 p-6 pt-2">
+          {/* Roundness */}
+          <DimensionInput form={form} name="roundness" label={t("environments.surveys.edit.roundness")} />
 
           <FormField
             control={form.control}
             name="cardBackgroundColor.light"
             render={({ field }) => (
-              <FormItem className="space-y-4">
-                <div>
-                  <FormLabel>{t("environments.surveys.edit.card_background_color")}</FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.edit.change_the_background_color_of_the_card")}
-                  </FormDescription>
-                </div>
+              <FormItem className="space-y-1">
+                <FormLabel className="text-xs">
+                  {t("environments.surveys.edit.card_background_color")}
+                </FormLabel>
 
                 <FormControl>
                   <ColorPicker
@@ -138,13 +110,8 @@ export const CardStylingSettings = ({
             control={form.control}
             name="cardBorderColor.light"
             render={({ field }) => (
-              <FormItem className="space-y-4">
-                <div>
-                  <FormLabel>{t("environments.surveys.edit.card_border_color")}</FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.edit.change_the_border_color_of_the_card")}
-                  </FormDescription>
-                </div>
+              <FormItem className="space-y-1">
+                <FormLabel className="text-xs">{t("environments.surveys.edit.card_border_color")}</FormLabel>
 
                 <FormControl>
                   <ColorPicker
@@ -156,66 +123,6 @@ export const CardStylingSettings = ({
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name={"cardArrangement"}
-            render={() => (
-              <FormItem>
-                <div>
-                  <FormLabel>
-                    {t("environments.surveys.edit.card_arrangement_for_survey_type_derived", {
-                      surveyTypeDerived: surveyTypeDerived,
-                    })}
-                  </FormLabel>
-                  <FormDescription>
-                    {t(
-                      "environments.surveys.edit.how_funky_do_you_want_your_cards_in_survey_type_derived_surveys",
-                      {
-                        surveyTypeDerived: surveyTypeDerived,
-                      }
-                    )}
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <CardArrangementTabs
-                    key={isAppSurvey ? "app" : "link"}
-                    surveyType={isAppSurvey ? "app" : "link"}
-                    activeCardArrangement={isAppSurvey ? appCardArrangement : linkCardArrangement}
-                    setActiveCardArrangement={(value, type) => {
-                      type === "app"
-                        ? form.setValue("cardArrangement.appSurveys", value)
-                        : form.setValue("cardArrangement.linkSurveys", value);
-                    }}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <div className="flex items-center space-x-1">
-            <FormField
-              control={form.control}
-              name="hideProgressBar"
-              render={({ field }) => (
-                <FormItem className="flex w-full items-center gap-2 space-y-0">
-                  <FormControl>
-                    <Switch
-                      id="hideProgressBar"
-                      checked={!!field.value}
-                      onCheckedChange={(checked) => field.onChange(checked)}
-                    />
-                  </FormControl>
-
-                  <div>
-                    <FormLabel>{t("environments.surveys.edit.hide_progress_bar")}</FormLabel>
-                    <FormDescription>
-                      {t("environments.surveys.edit.disable_the_visibility_of_survey_progress")}
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-          </div>
 
           {(!surveyType || isAppSurvey) && (
             <div className="flex max-w-xs flex-col gap-4">
@@ -245,9 +152,6 @@ export const CardStylingSettings = ({
 
                         <div>
                           <FormLabel>{t("environments.surveys.edit.add_highlight_border")}</FormLabel>
-                          <FormDescription className="text-xs font-normal text-slate-500">
-                            {t("environments.surveys.edit.add_highlight_border_description")}
-                          </FormDescription>
                         </div>
                       </div>
 
@@ -271,8 +175,171 @@ export const CardStylingSettings = ({
               </div>
             </div>
           )}
+
+          <FormField
+            control={form.control}
+            name={"cardArrangement"}
+            render={() => (
+              <FormItem className="col-span-2">
+                <div>
+                  <FormLabel>
+                    {t("environments.surveys.edit.card_arrangement_for_survey_type_derived", {
+                      surveyTypeDerived: surveyTypeDerived,
+                    })}
+                  </FormLabel>
+                </div>
+                <FormControl>
+                  <CardArrangementTabs
+                    key={isAppSurvey ? "app" : "link"}
+                    surveyType={isAppSurvey ? "app" : "link"}
+                    activeCardArrangement={isAppSurvey ? appCardArrangement : linkCardArrangement}
+                    setActiveCardArrangement={(value, type) => {
+                      type === "app"
+                        ? form.setValue("cardArrangement.appSurveys", value)
+                        : form.setValue("cardArrangement.linkSurveys", value);
+                    }}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Progress Bar Section (Moved from Advanced) */}
+        <div className="flex flex-col gap-6 p-6 pt-0">
+          <hr className="text-slate-600" />
+          <div className="flex flex-col gap-4">
+            <div className="my-2">
+              <FormField
+                control={form.control}
+                name="hideProgressBar"
+                render={({ field }) => (
+                  <FormItem className="flex w-full items-center gap-2 space-y-0">
+                    <FormControl>
+                      <Switch
+                        id="hideProgressBar"
+                        checked={!!field.value}
+                        onCheckedChange={(checked) => field.onChange(checked)}
+                      />
+                    </FormControl>
+
+                    <div>
+                      <FormLabel className="text-sm font-normal">
+                        {t("environments.surveys.edit.hide_progress_bar")}
+                      </FormLabel>
+                      <FormDescription className="text-xs">
+                        {t("environments.surveys.edit.disable_the_visibility_of_survey_progress")}
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+            {!hideProgressBar && (
+              <div className="grid grid-cols-2 gap-4">
+                <ColorField
+                  form={form}
+                  name="progressTrackBgColor.light"
+                  label={t("environments.workspace.look.advanced_styling_field_track_bg")}
+                />
+                <ColorField
+                  form={form}
+                  name="progressIndicatorBgColor.light"
+                  label={t("environments.workspace.look.advanced_styling_field_indicator_bg")}
+                />
+                <DimensionInput
+                  form={form}
+                  name="progressTrackHeight"
+                  label={t("environments.workspace.look.advanced_styling_field_track_height")}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
 };
+
+const ColorField = ({ form, name, label }: { form: any; name: string; label: string }) => (
+  <FormField
+    control={form.control}
+    name={name}
+    render={({ field }) => (
+      <FormItem className="space-y-1">
+        <FormLabel className="text-xs">{label}</FormLabel>
+        <FormControl>
+          <ColorPicker
+            color={field.value}
+            onChange={(color) => field.onChange(color)}
+            containerClass="w-full"
+          />
+        </FormControl>
+      </FormItem>
+    )}
+  />
+);
+
+const DimensionInput = ({
+  form,
+  name,
+  label,
+  placeholder,
+}: {
+  form: any;
+  name: string;
+  label: string;
+  placeholder?: string;
+}) => (
+  <FormField
+    control={form.control}
+    name={name}
+    render={({ field }) => {
+      const value = field.value;
+      const isPercentage = typeof value === "string" && value.endsWith("%");
+      const unit = isPercentage ? "%" : "px";
+      const numericValue = isPercentage ? Number.parseFloat(value) : value;
+
+      return (
+        <FormItem className="space-y-1">
+          <FormLabel className="text-xs">{label}</FormLabel>
+          <FormControl>
+            <div className="flex rounded-md shadow-xs">
+              <Input
+                type="number"
+                value={numericValue ?? ""}
+                onChange={(e) => {
+                  const valStr = e.target.value;
+                  if (valStr === "") {
+                    field.onChange(null);
+                    return;
+                  }
+                  const newVal = Number.parseFloat(valStr);
+                  if (Number.isNaN(newVal)) {
+                    return;
+                  }
+                  field.onChange(unit === "%" ? `${newVal}%` : newVal);
+                }}
+                className="flex-1 rounded-r-none border-r-0 text-xs focus-visible:ring-0"
+                placeholder={placeholder}
+              />
+              <select
+                value={unit}
+                onChange={(e) => {
+                  const newUnit = e.target.value;
+                  const currentVal = numericValue ?? 0;
+                  field.onChange(newUnit === "%" ? `${currentVal}%` : currentVal);
+                }}
+                className="ring-offset-background placeholder:text-muted-foreground focus:border-brand-dark h-10 items-center justify-between rounded-r-md border border-slate-300 bg-white pr-8 pl-3 text-xs font-medium focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50">
+                <option value="px">px</option>
+                <option value="%">%</option>
+                <option value="rem">rem</option>
+                <option value="em">em</option>
+              </select>
+            </div>
+          </FormControl>
+        </FormItem>
+      );
+    }}
+  />
+);

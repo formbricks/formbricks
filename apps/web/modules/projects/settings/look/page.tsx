@@ -56,6 +56,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
       </SettingsCard>
       <SettingsCard
         title={t("common.logo")}
+        className={cn(!isReadOnly && "max-w-7xl")}
         description={t("environments.workspace.look.logo_settings_description")}>
         <EditLogo
           project={project}
@@ -66,6 +67,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
       </SettingsCard>
       <SettingsCard
         title={t("environments.workspace.look.app_survey_placement")}
+        className={cn(!isReadOnly && "max-w-7xl")}
         description={t("environments.workspace.look.app_survey_placement_settings_description")}>
         <EditPlacementForm project={project} environmentId={params.environmentId} isReadOnly={isReadOnly} />
       </SettingsCard>
