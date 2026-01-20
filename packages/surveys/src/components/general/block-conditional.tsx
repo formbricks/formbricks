@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -58,8 +57,6 @@ export function BlockConditional({
   dir,
   fullSizeCards,
 }: BlockConditionalProps) {
-  const { t } = useTranslation();
-
   // Track the current element being filled (for TTC tracking)
   const [currentElementId, setCurrentElementId] = useState(block.elements[0]?.id);
 
@@ -270,7 +267,7 @@ export function BlockConditional({
     }
 
     // Run centralized validation for elements that support it
-    const errorMap = validateBlockResponses(block.elements, value, languageCode, t);
+    const errorMap = validateBlockResponses(block.elements, value, languageCode);
 
     // Check if there are any validation errors from centralized validation
     const hasValidationErrors = Object.keys(errorMap).length > 0;

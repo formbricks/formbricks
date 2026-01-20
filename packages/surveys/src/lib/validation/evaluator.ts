@@ -10,7 +10,7 @@ import type {
   TValidationResult,
   TValidationRule,
 } from "@formbricks/types/surveys/validation-rules";
-import { getLocalizedValue } from "@/lib/i18n";
+import { getLocalizedValue, getTranslations } from "@/lib/i18n";
 import { validators } from "./validators";
 
 /**
@@ -29,11 +29,11 @@ const isEmpty = (value: TResponseDataValue): boolean => {
 /**
  * Create a required field error
  */
-const createRequiredError = (t?: TFunction): TValidationError => {
+const createRequiredError = (t: TFunction): TValidationError => {
   return {
     ruleId: "required",
     ruleType: "minLength", // Structural field only - required is not a validation rule
-    message: t ? t("errors.please_fill_out_this_field") : "Please fill out this field",
+    message: t("errors.please_fill_out_this_field"),
   } as TValidationError;
 };
 
@@ -71,11 +71,11 @@ const getDefaultErrorMessage = (
   rule: TValidationRule,
   element: TSurveyElement,
   languageCode: string,
-  t?: TFunction
+  t: TFunction
 ): string => {
   const validator = validators[rule.type];
   if (!validator) {
-    return t ? t("errors.invalid_format") : "Invalid format";
+    return t("errors.invalid_format");
   }
 
   const baseMessage = validator.getDefaultMessage(rule.params, element, t);
@@ -94,7 +94,7 @@ const getDefaultErrorMessage = (
 /**
  * Validate required field for ranking elements
  */
-const validateRequiredRanking = (value: TResponseDataValue, t?: TFunction): TValidationError | null => {
+const validateRequiredRanking = (value: TResponseDataValue, t: TFunction): TValidationError | null => {
   const isValueArray = Array.isArray(value);
   const atLeastOneRanked = isValueArray && value.length >= 1;
   if (isEmpty(value) || !atLeastOneRanked) {
@@ -110,7 +110,7 @@ const validateRequiredRanking = (value: TResponseDataValue, t?: TFunction): TVal
 const validateRequiredMatrix = (
   value: TResponseDataValue,
   element: TSurveyElement,
-  t?: TFunction
+  t: TFunction
 ): TValidationError | null => {
   if (isEmpty(value)) {
     return createRequiredError(t);
@@ -131,7 +131,7 @@ const validateRequiredMatrix = (
 const checkRequiredField = (
   element: TSurveyElement,
   value: TResponseDataValue,
-  t?: TFunction
+  t: TFunction
 ): TValidationError | null => {
   if (!element.required) {
     return null;
@@ -269,7 +269,7 @@ const executeOrLogic = (
   value: TResponseDataValue,
   languageCode: string,
   initialErrors: TValidationError[],
-  t?: TFunction
+  t: TFunction
 ): TValidationResult => {
   const ruleResults: TValidationError[] = [];
 
@@ -307,7 +307,7 @@ const executeAndLogic = (
   value: TResponseDataValue,
   languageCode: string,
   initialErrors: TValidationError[],
-  t?: TFunction
+  t: TFunction
 ): TValidationResult => {
   const errors = [...initialErrors];
 
@@ -341,16 +341,16 @@ const executeAndLogic = (
  * @param element - The survey element being validated
  * @param value - The response value for this element
  * @param languageCode - Current language code for error messages
- * @param t - i18next translation function
  * @returns Validation result with valid flag and array of errors
  */
 export const validateElementResponse = (
   element: TSurveyElement,
   value: TResponseDataValue,
-  languageCode: string,
-  t?: TFunction
+  languageCode: string
 ): TValidationResult => {
   const errors: TValidationError[] = [];
+  // Always create translation function from surveys package's i18n instance
+  const t: TFunction = getTranslations(languageCode);
 
   // Check if element is required (separate from validation rules)
   const requiredError = checkRequiredField(element, value, t);
@@ -389,19 +389,16 @@ export const validateElementResponse = (
  * @param elements - Array of elements to validate
  * @param responses - Response data keyed by element ID
  * @param languageCode - Current language code for error messages
- * @param t - i18next translation function
  * @returns Map of element IDs to their validation errors
  */
 export const validateBlockResponses = (
   elements: TSurveyElement[],
   responses: TResponseData,
-  languageCode: string,
-  t?: TFunction
+  languageCode: string
 ): TValidationErrorMap => {
   const errorMap: TValidationErrorMap = {};
-
   for (const element of elements) {
-    const result = validateElementResponse(element, responses[element.id], languageCode, t);
+    const result = validateElementResponse(element, responses[element.id], languageCode);
     if (!result.valid) {
       errorMap[element.id] = result.errors;
     }

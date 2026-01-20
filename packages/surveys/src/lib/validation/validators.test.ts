@@ -38,19 +38,6 @@ describe("validators", () => {
       expect(message).toBe("errors.min_length");
       expect(mockTFn).toHaveBeenCalledWith("errors.min_length", { min: 10 });
     });
-
-    test("should return fallback error message when translation function is undefined", () => {
-      const message = validators.minLength.getDefaultMessage({ min: 10 }, {} as TSurveyElement, undefined);
-      expect(message).toBe("Minimum length is 10");
-    });
-
-    test("should return fallback error message with different min values", () => {
-      const message1 = validators.minLength.getDefaultMessage({ min: 5 }, {} as TSurveyElement, undefined);
-      expect(message1).toBe("Minimum length is 5");
-
-      const message2 = validators.minLength.getDefaultMessage({ min: 100 }, {} as TSurveyElement, undefined);
-      expect(message2).toBe("Minimum length is 100");
-    });
   });
 
   describe("maxLength", () => {
@@ -74,19 +61,6 @@ describe("validators", () => {
       const message = validators.maxLength.getDefaultMessage({ max: 100 }, {} as TSurveyElement, mockT);
       expect(message).toBe("errors.max_length");
       expect(mockTFn).toHaveBeenCalledWith("errors.max_length", { max: 100 });
-    });
-
-    test("should return fallback error message when translation function is undefined", () => {
-      const message = validators.maxLength.getDefaultMessage({ max: 100 }, {} as TSurveyElement, undefined);
-      expect(message).toBe("Maximum length is 100");
-    });
-
-    test("should return fallback error message with different max values", () => {
-      const message1 = validators.maxLength.getDefaultMessage({ max: 50 }, {} as TSurveyElement, undefined);
-      expect(message1).toBe("Maximum length is 50");
-
-      const message2 = validators.maxLength.getDefaultMessage({ max: 200 }, {} as TSurveyElement, undefined);
-      expect(message2).toBe("Maximum length is 200");
     });
   });
 
