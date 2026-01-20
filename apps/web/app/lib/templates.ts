@@ -4853,18 +4853,6 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
             }),
             isDraft: true,
           },
-          {
-            ...buildOpenTextElement({
-              id: "cltxxaa6x0000g8hacxdxeje4",
-              headline: "",
-              subheader: "",
-              required: false,
-              inputType: "text",
-              longAnswer: false,
-              placeholder: "Type something here...",
-            }),
-            isDraft: true,
-          },
         ],
         backButtonLabel: createI18nString(t("templates.preview_survey_question_2_back_button_label"), []),
       },
