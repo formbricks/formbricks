@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TDateOperator, TSegmentFilterValue, TTimeUnit } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
+import { toUTCDateString } from "@/modules/ee/contacts/segments/lib/date-utils";
 import { Input } from "@/modules/ui/components/input";
 import {
   Select,
@@ -81,8 +82,7 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
           disabled={viewOnly}
           value={betweenValue[0] ? betweenValue[0].split("T")[0] : ""}
           onChange={(e) => {
-            const dateValue = e.target.value ? new Date(e.target.value).toISOString() : "";
-            onChange([dateValue, betweenValue[1]]);
+            onChange([toUTCDateString(e.target.value), betweenValue[1]]);
           }}
         />
         <span className="text-sm text-slate-600">{t("common.and")}</span>
@@ -92,8 +92,7 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
           disabled={viewOnly}
           value={betweenValue[1] ? betweenValue[1].split("T")[0] : ""}
           onChange={(e) => {
-            const dateValue = e.target.value ? new Date(e.target.value).toISOString() : "";
-            onChange([betweenValue[0], dateValue]);
+            onChange([betweenValue[0], toUTCDateString(e.target.value)]);
           }}
         />
       </div>
@@ -111,8 +110,7 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
       disabled={viewOnly}
       value={dateValue ? dateValue.split("T")[0] : ""}
       onChange={(e) => {
-        const dateValue = e.target.value ? new Date(e.target.value).toISOString() : "";
-        onChange(dateValue);
+        onChange(toUTCDateString(e.target.value));
       }}
     />
   );

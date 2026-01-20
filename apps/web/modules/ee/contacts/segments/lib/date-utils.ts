@@ -57,37 +57,49 @@ export const addTimeUnit = (date: Date, amount: number, unit: TTimeUnit): Date =
 };
 
 /**
- * Gets the start of a day (00:00:00.000)
+ * Gets the start of a day in UTC (00:00:00.000 UTC)
  * @param date - The date to get the start of
- * @returns A new Date object at the start of the day
+ * @returns A new Date object at the start of the day in UTC
  */
 export const startOfDay = (date: Date): Date => {
   const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
+  result.setUTCHours(0, 0, 0, 0);
   return result;
 };
 
 /**
- * Gets the end of a day (23:59:59.999)
+ * Gets the end of a day in UTC (23:59:59.999 UTC)
  * @param date - The date to get the end of
- * @returns A new Date object at the end of the day
+ * @returns A new Date object at the end of the day in UTC
  */
 export const endOfDay = (date: Date): Date => {
   const result = new Date(date);
-  result.setHours(23, 59, 59, 999);
+  result.setUTCHours(23, 59, 59, 999);
   return result;
 };
 
 /**
- * Checks if two dates are on the same day (ignoring time)
+ * Checks if two dates are on the same day in UTC (ignoring time)
  * @param date1 - The first date
  * @param date2 - The second date
- * @returns True if the dates are on the same day
+ * @returns True if the dates are on the same UTC day
  */
 export const isSameDay = (date1: Date, date2: Date): boolean => {
   return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
+    date1.getUTCFullYear() === date2.getUTCFullYear() &&
+    date1.getUTCMonth() === date2.getUTCMonth() &&
+    date1.getUTCDate() === date2.getUTCDate()
   );
+};
+
+/**
+ * Converts a date-only string (YYYY-MM-DD) to an ISO string at midnight UTC.
+ * This avoids timezone issues where local timezone conversion can shift the day.
+ * @param dateString - The date string in YYYY-MM-DD format
+ * @returns An ISO string at midnight UTC, or empty string if input is empty
+ */
+export const toUTCDateString = (dateString: string): string => {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).toISOString();
 };

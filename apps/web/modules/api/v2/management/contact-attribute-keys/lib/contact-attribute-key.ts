@@ -49,7 +49,6 @@ export const createContactAttributeKey = async (
       name,
       description,
       key,
-      // If dataType is provided, use it; otherwise Prisma will use the default (text)
       ...(dataType && { dataType }),
     };
 

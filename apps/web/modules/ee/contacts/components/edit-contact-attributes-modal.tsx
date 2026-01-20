@@ -303,7 +303,7 @@ export const EditContactAttributesModal = ({
                                     type="button"
                                     variant="outline"
                                     disabled={["email", "userId", "firstName", "lastName"].includes(
-                                      field.key
+                                      watchedAttributes[index]?.key ?? ""
                                     )}
                                     size="sm"
                                     onClick={() => handleRemoveAttribute(index)}

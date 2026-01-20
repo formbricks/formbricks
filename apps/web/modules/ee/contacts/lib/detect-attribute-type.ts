@@ -15,13 +15,12 @@ export const parseDateFromParts = (part1: number, part2: number, part3: number):
     return new Date(part3, part1 - 1, part2);
   }
 
-  // Ambiguous - use additional heuristics
-  if (part1 > 31 || part3 < 100) {
-    // Likely YYYY-MM-DD format
+  // Check for YYYY-MM-DD format
+  if (part1 > 999) {
     return new Date(part1, part2 - 1, part3);
   }
 
-  // Default to American format MM-DD-YYYY
+  // Default to MM-DD-YYYY
   return new Date(part3, part1 - 1, part2);
 };
 
