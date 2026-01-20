@@ -51,8 +51,16 @@
   --slate-50: rgb(248, 250, 252);
   --slate-100: rgb(241 245 249);
   --slate-200: rgb(226 232 240);
-  --fb-font-family: sans-serif;
-  font-family: var(--fb-font-family);
+  
+  /* ---------------------------------------------------------------------------
+     Survey general Colors
+     The primary accent color used throughout the survey. Override this to 
+     customize the brand appearance.
+     --------------------------------------------------------------------------- */
+  --fb-survey-brand-color: #64748b;
+
+  --fb-accent-background-color: var(--slate-200);
+  --fb-accent-background-color-selected: var(--slate-100);
 
 
   /* ---------------------------------------------------------------------------
@@ -167,7 +175,8 @@
   opacity: var(--fb-element-headline-opacity);
 }
 
-#fbjs .label-description {
+#fbjs .label-description,
+#fbjs .text-subheading {
   font-family: var(--fb-element-description-font-family);
   font-weight: var(--fb-element-description-font-weight);
   font-size: var(--fb-element-description-font-size) !important;

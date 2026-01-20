@@ -96,7 +96,7 @@ const withCSSVariables: Decorator<StoryProps> = (
     "--fb-input-padding-x": inputPaddingX,
     "--fb-input-padding-y": inputPaddingY,
     "--fb-input-shadow": inputShadow,
-    "--fb-brand-color": brandColor,
+    "--fb-survey-brand-color": brandColor,
   };
 
   return (
@@ -207,7 +207,7 @@ export const StylingPlayground: Story = {
       control: "color",
       table: {
         category: "Input Styling",
-        defaultValue: { summary: "var(--fb-brand-color)" },
+        defaultValue: { summary: "var(--fb-survey-brand-color)" },
       },
     },
   },

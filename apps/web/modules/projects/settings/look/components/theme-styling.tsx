@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Project } from "@prisma/client";
 import { RotateCcwIcon, SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -67,17 +67,11 @@ export const ThemeStyling = ({
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
-
-  const fontFamily = form.watch("fontFamily");
-
-  // Load selected font if it's a Google Font
-
   const onReset = useCallback(async () => {
-    const defaultData = { ...defaultStyling, highlightBorderColor: null }; // Ensure undefined is null for server action
     const updatedProjectResponse = await updateProjectAction({
       projectId: project.id,
       data: {
-        styling: defaultData,
+        styling: { ...defaultStyling },
       },
     });
 
@@ -322,10 +316,10 @@ export const ThemeStyling = ({
           <AlertDialog
             open={confirmSuggestColorsOpen}
             setOpen={setConfirmSuggestColorsOpen}
-            headerText="Generate Color Theme?"
-            mainText="Would you like to generate a matching color theme based on your brand color? This will overwrite your current color settings."
-            confirmBtnLabel="Generate"
-            declineBtnLabel="Cancel"
+            headerText={t("environments.workspace.look.generate_theme_header")}
+            mainText={t("environments.workspace.look.generate_theme_confirmation")}
+            confirmBtnLabel={t("environments.workspace.look.generate_theme_btn")}
+            declineBtnLabel={t("common.cancel")}
             onConfirm={handleSuggestColors}
             onDecline={() => setConfirmSuggestColorsOpen(false)}
           />

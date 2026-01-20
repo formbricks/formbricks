@@ -1151,7 +1151,7 @@
         "add_fallback_placeholder": "Add a placeholder to show if there is no value to recall.",
         "add_hidden_field_id": "Add hidden field ID",
         "add_highlight_border": "Add highlight border",
-        "add_highlight_border_description": "Add an outer border to your survey card.",
+
         "add_logic": "Add logic",
         "add_none_of_the_above": "Add \"None of the Above\"",
         "add_option": "Add option",
@@ -1223,15 +1223,11 @@
         "change_background": "Change background",
         "change_question_type": "Change question type",
         "change_survey_type": "Switching survey type affects existing access",
-        "change_the_background_color_of_the_card": "Change the background color of the card.",
-        "change_the_background_color_of_the_input_fields": "Change the background color of the input fields.",
+
         "change_the_background_to_a_color_image_or_animation": "Change the background to a color, image or animation.",
-        "change_the_border_color_of_the_card": "Change the border color of the card.",
-        "change_the_border_color_of_the_input_fields": "Change the border color of the input fields.",
-        "change_the_border_radius_of_the_card_and_the_inputs": "Change the border radius of the card and the inputs.",
-        "change_the_brand_color_of_the_survey": "Change the brand color of the survey.",
+
         "change_the_placement_of_this_survey": "Change the placement of this survey.",
-        "change_the_question_color_of_the_survey": "Change the question color of the survey.",
+
         "changes_saved": "Changes saved.",
         "changing_survey_type_will_remove_existing_distribution_channels": "Changing the survey type will affect how it can be shared. If respondents already have access links for the current type, they may lose access after the switch.",
         "checkbox_label": "Checkbox Label",
@@ -1369,7 +1365,7 @@
         "hide_progress_bar": "Hide progress bar",
         "hide_question_settings": "Hide Question settings",
         "hostname": "Hostname",
-        "how_funky_do_you_want_your_cards_in_survey_type_derived_surveys": "How funky do you want your cards in {surveyTypeDerived} Surveys",
+
         "if_you_need_more_please": "If you need more, please",
         "if_you_really_want_that_answer_ask_until_you_get_it": "Keep showing whenever triggered until a response is submitted.",
         "ignore_global_waiting_time": "Ignore Cooldown Period",
@@ -1463,7 +1459,7 @@
         "protect_survey_with_pin_description": "Only users who have the PIN can access the survey.",
         "publish": "Publish",
         "question": "Question",
-        "question_color": "Question color",
+
         "question_deleted": "Question deleted.",
         "question_duplicated": "Question duplicated.",
         "question_id_updated": "Question ID updated",
@@ -1566,7 +1562,7 @@
         "styling_set_to_theme_styles": "Styling set to theme styles",
         "subheading": "Subheading",
         "subtract": "Subtract -",
-        "suggest_colors": "Suggest colors",
+
         "survey_completed_heading": "Survey Completed",
         "survey_completed_subheading": "This free & open-source survey has been closed",
         "survey_display_settings": "Survey Display Settings",
@@ -2050,26 +2046,22 @@
       "look": {
         "add_background_color": "Add background color",
         "add_background_color_description": "Add a background color to the logo container.",
-        "advanced_styling": "Advanced Styling",
-        "advanced_styling_description": "Use CSS variables to make the surveys look exactly like your brand.",
-        "advanced_styling_field_accent_bg": "Accent Background",
-        "advanced_styling_field_accent_selected": "Brand Accent",
+
         "advanced_styling_field_border_radius": "Border Radius",
-        "advanced_styling_field_brand_color": "Brand Color",
+
         "advanced_styling_field_button_bg": "Button Background",
         "advanced_styling_field_button_text": "Button Text",
         "advanced_styling_field_description_color": "Description Color",
         "advanced_styling_field_description_size": "Description Font Size",
+
         "advanced_styling_field_font_size": "Font Size",
         "advanced_styling_field_font_weight": "Font Weight",
         "advanced_styling_field_headline_color": "Headline Color",
         "advanced_styling_field_headline_size": "Headline Font Size",
-        "advanced_styling_field_font_family": "Font Family",
         "advanced_styling_field_headline_weight": "Headline Font Weight",
         "advanced_styling_field_height": "Height",
         "advanced_styling_field_indicator_bg": "Indicator Background",
-        "advanced_styling_field_input_bg": "Input Background",
-        "advanced_styling_field_input_border": "Input Border",
+
         "advanced_styling_field_input_text": "Input Text",
         "advanced_styling_field_option_bg": "Background",
         "advanced_styling_field_option_label": "Label Color",
@@ -2079,12 +2071,12 @@
         "advanced_styling_field_shadow": "Shadow",
         "advanced_styling_field_track_bg": "Track Background",
         "advanced_styling_field_track_height": "Track Height",
-        "advanced_styling_section_brand": "Brand & Accent",
+
         "advanced_styling_section_buttons": "Buttons",
         "advanced_styling_section_headlines": "Headlines & Descriptions",
         "advanced_styling_section_inputs": "Inputs",
         "advanced_styling_section_options": "Options (Radio/Checkbox)",
-        "advanced_styling_section_progress": "Progress Bar",
+
         "app_survey_placement": "App Survey Placement",
         "app_survey_placement_settings_description": "Change where surveys will be shown in your web app or website.",
         "centered_modal_overlay_color": "Centered modal overlay color",
@@ -2098,6 +2090,9 @@
         "formbricks_branding_hidden": "Formbricks branding is hidden.",
         "formbricks_branding_settings_description": "We love your support but understand if you toggle it off.",
         "formbricks_branding_shown": "Formbricks branding is shown.",
+        "generate_theme_btn": "Generate",
+        "generate_theme_confirmation": "Would you like to generate a matching color theme based on your brand color? This will overwrite your current color settings.",
+        "generate_theme_header": "Generate Color Theme?",
         "logo_removed_successfully": "Logo removed successfully",
         "logo_settings_description": "Upload your company logo to brand surveys and link previews.",
         "logo_updated_successfully": "Logo updated successfully",
@@ -2113,18 +2108,7 @@
         "show_powered_by_formbricks": "Show 'Powered by Formbricks' Signature",
         "styling_updated_successfully": "Styling updated successfully",
         "suggest_colors": "Suggest colors",
-        "color_templates": "Color templates",
         "theme": "Theme",
-        "themes": {
-          "bubblegum": "Bubblegum",
-          "fall": "Fall",
-          "forest": "Forest",
-          "monochrome": "Monochrome",
-          "ocean": "Ocean",
-          "spring": "Spring",
-          "summer": "Summer",
-          "sunset": "Sunset"
-        },
         "theme_settings_description": "Create a style theme for all surveys. You can enable custom styling for each survey."
       },
       "tags": {

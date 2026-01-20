@@ -351,7 +351,7 @@ const CSS_VAR_MAP: CSSVarMapping = {
   labelFontWeight: "--fb-label-font-weight",
   labelColor: "--fb-label-color",
   labelOpacity: "--fb-label-opacity",
-  brandColor: "--fb-brand-color",
+  brandColor: "--fb-survey-brand-color",
   optionBorderColor: "--fb-option-border-color",
   optionBgColor: "--fb-option-bg-color",
   optionLabelColor: "--fb-option-label-color",

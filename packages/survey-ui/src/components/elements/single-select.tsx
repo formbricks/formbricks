@@ -291,7 +291,7 @@ function SingleSelect({
                       disabled={disabled}
                       aria-required={required}
                       dir={dir}
-                      className="mt-4 w-full"
+                      className="mt-2 w-full"
                     />
                   ) : null}
                 </label>

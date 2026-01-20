@@ -34,7 +34,6 @@ export function Headline({
       {hasRequiredRule && isQuestionCard && (
         <span
           className="mb-[3px] leading-6 font-normal opacity-60"
-          style={{ color: "var(--fb-element-description-color)", fontSize: "var(--fb-element-description-font-size)" }}
           tabIndex={-1}
           data-testid="fb__surveys__headline-optional-text-test">
           {t("common.required")}

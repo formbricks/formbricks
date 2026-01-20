@@ -12,7 +12,7 @@ interface ModalProps {
   previewMode: string;
   clickOutsideClose: boolean;
   darkOverlay: boolean;
-  borderRadius?: number;
+  borderRadius?: number | string;
   background?: string;
 }
 
@@ -143,7 +143,7 @@ export const Modal = ({
         style={{
           ...scalingClasses,
           ...(borderRadius && {
-            borderRadius: `${borderRadius}px`,
+            borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius,
           }),
           ...(background && {
             background,

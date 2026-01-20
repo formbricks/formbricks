@@ -347,7 +347,7 @@ export function BlockConditional({
               "flex w-full flex-row-reverse justify-between",
               fullSizeCards ? "bg-survey-bg sticky bottom-0" : ""
             )}>
-            <div className="mr-1">
+            <div>
               <SubmitButton
                 buttonLabel={
                   block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined
