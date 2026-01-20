@@ -51,6 +51,7 @@ import {
   updatePersonIdentifierInFilter,
   updateSegmentIdInFilter,
 } from "@/modules/ee/contacts/segments/lib/utils";
+import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -346,13 +347,7 @@ function AttributeSegmentFilter({
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-2">
-              {isDateAttribute ? (
-                <Calendar1Icon className="h-4 w-4 text-sm" />
-              ) : attributeDataType === "number" ? (
-                <HashIcon className="h-4 w-4 text-sm" />
-              ) : (
-                <TagIcon className="h-4 w-4 text-sm" />
-              )}
+              {getContactAttributeDataTypeIcon(attributeDataType)}
               <p>{attrKeyValue}</p>
             </div>
           </SelectValue>
@@ -362,13 +357,7 @@ function AttributeSegmentFilter({
           {contactAttributeKeys.map((attrClass) => (
             <SelectItem key={attrClass.id} value={attrClass.key}>
               <div className="flex items-center gap-2">
-                {attrClass.dataType === "date" ? (
-                  <Calendar1Icon className="h-4 w-4" />
-                ) : attrClass.dataType === "number" ? (
-                  <HashIcon className="h-4 w-4" />
-                ) : (
-                  <TagIcon className="h-4 w-4" />
-                )}
+                {getContactAttributeDataTypeIcon(attrClass.dataType)}
                 <span>{attrClass.name ?? attrClass.key}</span>
               </div>
             </SelectItem>

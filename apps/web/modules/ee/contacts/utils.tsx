@@ -1,11 +1,11 @@
 import { TFunction } from "i18next";
-import { CalendarIcon, HashIcon, TagIcon } from "lucide-react";
+import { Calendar1Icon, HashIcon, TagIcon } from "lucide-react";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 
 export const getContactAttributeDataTypeIcon = (dataType: TContactAttributeDataType) => {
   switch (dataType) {
     case "date":
-      return <CalendarIcon className="h-4 w-4" />;
+      return <Calendar1Icon className="h-4 w-4" />;
     case "number":
       return <HashIcon className="h-4 w-4" />;
     case "string":

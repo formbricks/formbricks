@@ -1,6 +1,6 @@
 "use client";
 
-import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { Header, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -35,6 +35,18 @@ export function SegmentTable({
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const getHeader = (header: Header<TSegmentWithSurveyNames, unknown>) => {
+    if (header.isPlaceholder) {
+      return null;
+    }
+
+    if (typeof header.column.columnDef.header === "function") {
+      return header.column.columnDef.header(header.getContext());
+    }
+
+    return header.column.columnDef.header;
+  };
+
   return (
     <>
       <div className="rounded-lg border border-slate-200">
@@ -45,17 +57,23 @@ export function SegmentTable({
                 {headerGroup.headers.map((header, index) => {
                   const isFirstHeader = index === 0;
                   const isLastHeader = index === headerGroup.headers.length - 1;
+                  const getHeaderClass = () => {
+                    if (isFirstHeader) {
+                      return "rounded-tl-lg";
+                    }
+
+                    if (isLastHeader) {
+                      return "rounded-tr-lg";
+                    }
+
+                    return "";
+                  };
+
                   return (
                     <TableHead
                       key={header.id}
-                      className={`h-10 border-b border-slate-200 bg-white px-4 font-semibold ${
-                        isFirstHeader ? "rounded-tl-lg" : isLastHeader ? "rounded-tr-lg" : ""
-                      }`}>
-                      {header.isPlaceholder
-                        ? null
-                        : typeof header.column.columnDef.header === "function"
-                          ? header.column.columnDef.header(header.getContext())
-                          : header.column.columnDef.header}
+                      className={`h-10 border-b border-slate-200 bg-white px-4 font-semibold ${getHeaderClass()}`}>
+                      {getHeader(header)}
                     </TableHead>
                   );
                 })}
@@ -74,18 +92,24 @@ export function SegmentTable({
                     {row.getVisibleCells().map((cell, cellIndex) => {
                       const isFirstCell = cellIndex === 0;
                       const isLastCell = cellIndex === row.getVisibleCells().length - 1;
+                      const getCellClass = () => {
+                        if (!isLastRow) {
+                          return "";
+                        }
+
+                        if (isFirstCell) {
+                          return "rounded-bl-lg";
+                        }
+
+                        if (isLastCell) {
+                          return "rounded-br-lg";
+                        }
+
+                        return "";
+                      };
+
                       return (
-                        <TableCell
-                          key={cell.id}
-                          className={
-                            isLastRow
-                              ? isFirstCell
-                                ? "rounded-bl-lg"
-                                : isLastCell
-                                  ? "rounded-br-lg"
-                                  : ""
-                              : ""
-                          }>
+                        <TableCell key={cell.id} className={getCellClass()}>
                           {typeof cell.column.columnDef.cell === "function"
                             ? cell.column.columnDef.cell(cell.getContext())
                             : cell.column.columnDef.cell}

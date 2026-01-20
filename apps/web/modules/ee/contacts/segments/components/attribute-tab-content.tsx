@@ -2,6 +2,7 @@ import { Calendar1Icon, FingerprintIcon, HashIcon, TagIcon } from "lucide-react"
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter } from "@formbricks/types/segment";
+import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
 import FilterButton from "./filter-button";
 
 interface AttributeTabContentProps {
@@ -109,14 +110,7 @@ function AttributeTabContent({
         </div>
       )}
       {contactAttributeKeys.map((attributeKey) => {
-        const icon =
-          attributeKey.dataType === "date" ? (
-            <Calendar1Icon className="h-4 w-4" />
-          ) : attributeKey.dataType === "number" ? (
-            <HashIcon className="h-4 w-4" />
-          ) : (
-            <TagIcon className="h-4 w-4" />
-          );
+        const icon = getContactAttributeDataTypeIcon(attributeKey.dataType);
 
         return (
           <FilterButtonWithHandler

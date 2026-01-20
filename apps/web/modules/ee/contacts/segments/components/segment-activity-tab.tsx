@@ -23,7 +23,7 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
           {!activeSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
           {activeSurveys?.map((survey, index) => (
-            <p className="text-sm text-slate-900" key={index}>
+            <p className="text-sm text-slate-900" key={index + survey}>
               {survey}
             </p>
           ))}
@@ -33,7 +33,7 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
           {!inactiveSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
           {inactiveSurveys?.map((survey, index) => (
-            <p className="text-sm text-slate-900" key={index}>
+            <p className="text-sm text-slate-900" key={index + survey}>
               {survey}
             </p>
           ))}

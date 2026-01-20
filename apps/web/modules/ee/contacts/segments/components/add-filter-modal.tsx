@@ -19,6 +19,7 @@ import type {
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
+import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { TabBar } from "@/modules/ui/components/tab-bar";
@@ -187,7 +188,7 @@ export function AddFilterModal({
       { id: "phone", name: t("environments.segments.phone") },
       { id: "desktop", name: t("environments.segments.desktop") },
     ],
-    []
+    [t]
   );
 
   const contactAttributeKeysFiltered = useMemo(() => {
@@ -254,14 +255,7 @@ export function AddFilterModal({
         {allFiltersFiltered.map((filters, index) => (
           <div key={index}>
             {filters.attributes.map((attributeKey) => {
-              const icon =
-                attributeKey.dataType === "date" ? (
-                  <Calendar1Icon className="h-4 w-4" />
-                ) : attributeKey.dataType === "number" ? (
-                  <HashIcon className="h-4 w-4" />
-                ) : (
-                  <TagIcon className="h-4 w-4" />
-                );
+              const icon = getContactAttributeDataTypeIcon(attributeKey.dataType);
 
               return (
                 <FilterButton
