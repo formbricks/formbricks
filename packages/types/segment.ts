@@ -69,9 +69,7 @@ export const STRING_ATTRIBUTE_OPERATORS = [
 // An attribute filter can have these operators (including date operators)
 export const ATTRIBUTE_OPERATORS = [...STRING_ATTRIBUTE_OPERATORS, ...DATE_OPERATORS] as const;
 
-// the person filter currently has the same operators as the attribute filter
-// but we might want to add more operators in the future, so we keep it separated
-export const PERSON_OPERATORS = ATTRIBUTE_OPERATORS;
+export const PERSON_OPERATORS = STRING_TYPE_OPERATORS;
 
 // operators for segment filters
 export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
