@@ -17,22 +17,17 @@ const mockT = vi.fn((key: string) => {
   return key;
 }) as unknown as TFunction;
 
-// Mock getLocalizedValue
-vi.mock("@/lib/i18n", () => ({
-  getLocalizedValue: (localizedString: Record<string, string> | undefined, languageCode: string): string => {
-    if (!localizedString) return "";
-    return localizedString[languageCode] || localizedString.default || "";
-  },
-}));
-
-// Mock i18n.config to return our mock translation function
-vi.mock("@/lib/i18n.config", () => ({
-  default: {
-    language: "en",
-    changeLanguage: vi.fn(),
-    getFixedT: vi.fn(() => mockT),
-  },
-}));
+// Mock getLocalizedValue and getTranslations
+vi.mock("@/lib/i18n", () => {
+  const mockTFn = vi.fn((key: string) => key) as unknown as TFunction;
+  return {
+    getLocalizedValue: (localizedString: Record<string, string> | undefined, languageCode: string): string => {
+      if (!localizedString) return "";
+      return localizedString[languageCode] || localizedString.default || "";
+    },
+    getTranslations: () => mockTFn,
+  };
+});
 
 // Mock i18n.config to return our mock translation function
 vi.mock("@/lib/i18n.config", () => ({
@@ -582,7 +577,7 @@ describe("validateElementResponse", () => {
 
   describe("unknown validation rule type", () => {
     test("should handle unknown rule type gracefully", () => {
-      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
       const element: TSurveyElement = {
         id: "text1",
         type: TSurveyElementTypeEnum.OpenText,
