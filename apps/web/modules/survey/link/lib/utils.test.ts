@@ -73,6 +73,22 @@ describe("getWebAppLocale", () => {
     expect(getWebAppLocale("default", surveyWithLang)).toBe("de-DE");
     expect(getWebAppLocale("xx", createMockSurvey())).toBe("en-US");
   });
+
+  test("returns en-US when default requested but no default language", () => {
+    const surveyNoDefault = createMockSurvey([
+      {
+        language: { id: "l1", code: "de", alias: null, createdAt: new Date(), updatedAt: new Date(), projectId: "p1" },
+        default: false,
+        enabled: true,
+      },
+    ]);
+    expect(getWebAppLocale("default", surveyNoDefault)).toBe("en-US");
+  });
+
+  test("matches base language code for variants", () => {
+    expect(getWebAppLocale("pt-PT", createMockSurvey())).toBe("pt-PT");
+    expect(getWebAppLocale("es-MX", createMockSurvey())).toBe("es-ES");
+  });
 });
 
 describe("isRTL", () => {
@@ -133,6 +149,20 @@ describe("isRTLLanguage", () => {
     } as unknown as TSurveyElement;
     const block = { id: "b1", name: "Block", elements: [element] } as TSurveyBlock;
     expect(isRTLLanguage(createJsSurvey([], [block]), "default")).toBe(true);
+  });
+
+  test("checks welcomeCard headline when enabled and no languages", () => {
+    const survey = {
+      ...createJsSurvey([], []),
+      welcomeCard: { enabled: true, headline: { default: "مرحبا" } },
+    } as unknown as TJsEnvironmentStateSurvey;
+    expect(isRTLLanguage(survey, "default")).toBe(true);
+  });
+
+  test("returns false when no languages and no headlines found", () => {
+    const element = { id: "q1", type: TSurveyElementTypeEnum.OpenText, headline: {}, required: false };
+    const block = { id: "b1", name: "Block", elements: [element] } as TSurveyBlock;
+    expect(isRTLLanguage(createJsSurvey([], [block]), "default")).toBe(false);
   });
 });
 
