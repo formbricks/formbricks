@@ -255,8 +255,8 @@ export function isRTLLanguage(survey: TJsEnvironmentStateSurvey, languageCode: s
       languageCode === "default"
         ? survey.languages.find((language) => language.default)?.language.code
         : languageCode;
-    const baseCode = code?.split("-")[0].toLowerCase() ?? "";
-    return RTL_LANGUAGES.some((rtl) => rtl.toLowerCase().startsWith(baseCode ?? "en"));
+    const baseCode = code?.split("-")[0].toLowerCase() ?? "en";
+    return RTL_LANGUAGES.some((rtl) => rtl.toLowerCase().startsWith(baseCode));
   }
 }
 

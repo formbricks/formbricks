@@ -121,7 +121,7 @@ export const SurveyClientWrapper = ({
   // which checks both language code and survey content. This is only for logo UI positioning.
   const logoDir = useMemo(() => {
     return isRTLLanguage(survey, languageCode) ? "rtl" : "auto";
-  }, [languageCode]);
+  }, [languageCode, survey]);
 
   return (
     <>
