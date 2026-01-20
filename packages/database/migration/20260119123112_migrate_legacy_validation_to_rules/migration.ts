@@ -53,7 +53,7 @@ export const migrateLegacyValidationToRules: MigrationScript = {
     logger.info(`Found ${surveysNeedingMigration.length.toString()} surveys to migrate`);
 
     // Process surveys in batches
-    const SURVEY_BATCH_SIZE = 150;
+    const SURVEY_BATCH_SIZE = 1000;
     const updates: { id: string; blocks: SurveyRecord["blocks"] }[] = [];
 
     for (const survey of surveysNeedingMigration) {

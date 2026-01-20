@@ -13,21 +13,24 @@ export function hasMatchingRule(
 }
 
 /**
- * Initialize validation object if it doesn't exist
+ * Initialize validation object if it doesn't exist and return it
  */
-export function ensureValidationObject(element: SurveyElement): void {
-  if (!element.validation) {
-    element.validation = {
-      rules: [],
-      logic: "and",
-    };
-  }
+export function ensureValidationObject(element: SurveyElement): {
+  rules: ValidationRule[];
+  logic: "and" | "or";
+} {
+  element.validation ??= {
+    rules: [],
+    logic: "and",
+  };
   if (!element.validation.rules) {
     element.validation.rules = [];
   }
   if (!element.validation.logic) {
     element.validation.logic = "and";
   }
+  // After ensuring logic is set, we know it's defined
+  return element.validation as { rules: ValidationRule[]; logic: "and" | "or" };
 }
 
 /**
@@ -38,9 +41,8 @@ export function ensureValidationObject(element: SurveyElement): void {
 export function migrateOpenTextCharLimit(element: SurveyElement): void {
   // Skip if charLimit is missing or not enabled (already migrated)
   if (
-    !element.charLimit ||
-    element.charLimit.enabled !== true ||
-    (element.charLimit.min === undefined && element.charLimit.max === undefined)
+    element.charLimit?.enabled !== true ||
+    (element.charLimit?.min === undefined && element.charLimit?.max === undefined)
   ) {
     // Still remove legacy field if it exists but is disabled
     if (element.charLimit) {
@@ -50,9 +52,8 @@ export function migrateOpenTextCharLimit(element: SurveyElement): void {
   }
 
   // Ensure validation object exists
-  ensureValidationObject(element);
-
-  const existingRules = element.validation!.rules;
+  const validation = ensureValidationObject(element);
+  const existingRules = validation.rules;
 
   // Migrate minLength if min is defined and valid
   if (
@@ -95,8 +96,9 @@ function extensionsMatch(extensions1: string[], extensions2: string[]): boolean 
   if (extensions1.length !== extensions2.length) {
     return false;
   }
-  const sorted1 = [...extensions1].sort();
-  const sorted2 = [...extensions2].sort();
+  const compareFn = (a: string, b: string) => a.localeCompare(b);
+  const sorted1 = [...extensions1].sort(compareFn);
+  const sorted2 = [...extensions2].sort(compareFn);
   return JSON.stringify(sorted1) === JSON.stringify(sorted2);
 }
 
@@ -120,9 +122,8 @@ export function migrateFileUploadExtensions(element: SurveyElement): void {
   }
 
   // Ensure validation object exists
-  ensureValidationObject(element);
-
-  const existingRules = element.validation!.rules;
+  const validation = ensureValidationObject(element);
+  const existingRules = validation.rules;
   const extensions = element.allowedFileExtensions;
 
   // Check if a matching fileExtensionIs rule already exists
