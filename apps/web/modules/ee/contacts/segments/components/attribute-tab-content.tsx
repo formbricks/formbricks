@@ -1,4 +1,4 @@
-import { Calendar1Icon, FingerprintIcon, HashIcon, TagIcon } from "lucide-react";
+import { FingerprintIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter } from "@formbricks/types/segment";

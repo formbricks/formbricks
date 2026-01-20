@@ -170,33 +170,37 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
     return buildDateAttributeFilterWhereClause(filter);
   }
 
+  // Handle number operators
+  if (["greaterThan", "greaterEqual", "lessThan", "lessEqual"].includes(operator)) {
+    return buildNumberAttributeFilterWhereClause(filter);
+  }
+
+  // For string operators, ensure value is a primitive (not an object or array)
+  // This handles cases where value might be { amount, unit } or [start, end] from date/range filters
+  const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
+
   // Apply the appropriate operator to the attribute value
   switch (operator) {
     case "equals":
-      valueQuery.attributes.some.value = { equals: String(value), mode: "insensitive" };
+      valueQuery.attributes.some.value = { equals: stringValue, mode: "insensitive" };
       break;
     case "notEquals":
-      valueQuery.attributes.some.value = { not: String(value), mode: "insensitive" };
+      valueQuery.attributes.some.value = { not: stringValue, mode: "insensitive" };
       break;
     case "contains":
-      valueQuery.attributes.some.value = { contains: String(value), mode: "insensitive" };
+      valueQuery.attributes.some.value = { contains: stringValue, mode: "insensitive" };
       break;
     case "doesNotContain":
-      valueQuery.attributes.some.value = { not: { contains: String(value) }, mode: "insensitive" };
+      valueQuery.attributes.some.value = { not: { contains: stringValue }, mode: "insensitive" };
       break;
     case "startsWith":
-      valueQuery.attributes.some.value = { startsWith: String(value), mode: "insensitive" };
+      valueQuery.attributes.some.value = { startsWith: stringValue, mode: "insensitive" };
       break;
     case "endsWith":
-      valueQuery.attributes.some.value = { endsWith: String(value), mode: "insensitive" };
+      valueQuery.attributes.some.value = { endsWith: stringValue, mode: "insensitive" };
       break;
-    case "greaterThan":
-    case "greaterEqual":
-    case "lessThan":
-    case "lessEqual":
-      return buildNumberAttributeFilterWhereClause(filter);
     default:
-      valueQuery.attributes.some.value = String(value);
+      valueQuery.attributes.some.value = stringValue;
   }
 
   return valueQuery;

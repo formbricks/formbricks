@@ -3,12 +3,9 @@
 import {
   ArrowDownIcon,
   ArrowUpIcon,
-  Calendar1Icon,
   FingerprintIcon,
-  HashIcon,
   MonitorSmartphoneIcon,
   MoreVertical,
-  TagIcon,
   Trash2,
   Users2Icon,
 } from "lucide-react";

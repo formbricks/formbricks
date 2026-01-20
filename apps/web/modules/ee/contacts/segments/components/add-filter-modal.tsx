@@ -1,14 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import {
-  Calendar1Icon,
-  FingerprintIcon,
-  HashIcon,
-  MonitorSmartphoneIcon,
-  TagIcon,
-  Users2Icon,
-} from "lucide-react";
+import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
 import React, { type JSX, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
