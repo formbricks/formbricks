@@ -24,6 +24,7 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
   },
+  turbopack: {},
   experimental: {},
   transpilePackages: ["@formbricks/database"],
   images: {

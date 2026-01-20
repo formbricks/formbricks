@@ -34,6 +34,7 @@ const MIGRATIONS_DIR = isBuilt
   ? path.resolve(__dirname, "../migration") // From dist/scripts to dist/migration
   : path.resolve(__dirname, "../../migration"); // From src/scripts to migration
 const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
+const PRISMA_SCHEMA_PATH = path.resolve(__dirname, "../../schema.prisma");
 
 const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   logger.info(`Starting migrations: ${migrations.length.toString()} to run`);
@@ -169,7 +170,7 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
 
       // Run Prisma migrate
       // throws when migrate deploy fails
-      await execAsync("pnpm prisma migrate deploy");
+      await execAsync(`pnpm prisma migrate deploy --schema="${PRISMA_SCHEMA_PATH}"`);
       logger.info(`Successfully applied schema migration: ${migration.name}`);
     } catch (err) {
       logger.error(err, `Schema migration ${migration.name} failed`);

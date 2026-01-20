@@ -56,7 +56,7 @@ const handleDomainAwareRouting = (request: NextRequest): Response | null => {
   }
 };
 
-export const middleware = async (originalRequest: NextRequest) => {
+export const proxy = async (originalRequest: NextRequest) => {
   // Handle domain-aware routing first
   const domainResponse = handleDomainAwareRouting(originalRequest);
   if (domainResponse) return domainResponse;

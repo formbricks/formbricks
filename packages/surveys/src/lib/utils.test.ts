@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TJsEnvironmentStateSurvey } from "../../../types/js";
 import { type TAllowedFileExtension, mimeTypes } from "../../../types/storage";
-import { TSurveyElementTypeEnum } from "../../../types/surveys/elements";
 import type { TSurveyLanguage } from "../../../types/surveys/types";
 import {
   findBlockByElementId,

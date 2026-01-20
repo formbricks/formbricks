@@ -11,6 +11,17 @@ componentOverride: ""
 partOfOverride: ""
 
 ##########################################################
+# Formbricks Configuration
+##########################################################
+formbricks:
+  # REQUIRED: Base URL of the site (e.g., https://formbricks.example.com)
+  # This is used for WEBAPP_URL and NEXTAUTH_URL
+  webappUrl: ""
+  
+  # Optional: Public URL for surveys (defaults to webappUrl if not set)
+  publicUrl: ""
+
+##########################################################
 # Enterprise Configuration
 ##########################################################
 enterprise:
@@ -76,6 +87,7 @@ deployment:
   # Application container image
   image:
     repository: "ghcr.io/formbricks/formbricks"
+    tag: "" # Defaults to appVersion if not set
     digest: "" # If set, digest takes precedence over the tag
     pullPolicy: IfNotPresent
 

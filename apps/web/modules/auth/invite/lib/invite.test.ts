@@ -69,6 +69,7 @@ describe("invite", () => {
         creator: {
           name: "Test User",
           email: "test@example.com",
+          locale: "en-US",
         },
       };
 
@@ -89,6 +90,7 @@ describe("invite", () => {
             select: {
               name: true,
               email: true,
+              locale: true,
             },
           },
         },

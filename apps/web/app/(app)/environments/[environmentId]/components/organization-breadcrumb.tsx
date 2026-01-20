@@ -209,7 +209,7 @@ export const OrganizationBreadcrumb = ({
               )}
               {!isLoadingOrganizations && !loadError && (
                 <>
-                  <DropdownMenuGroup>
+                  <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
                     {organizations.map((org) => (
                       <DropdownMenuCheckboxItem
                         key={org.id}

@@ -444,11 +444,11 @@ describe("Crypto Utils", () => {
       expect(() => symmetricDecrypt(corruptedPayload, testKey)).toThrow();
 
       // Verify logger.warn was called with the correct format (object first, message second)
-      expect(logger.warn).toHaveBeenCalledWith(
-        { err: expect.any(Error) },
-        "AES-GCM decryption failed; refusing to fall back to insecure CBC"
-      );
       expect(logger.warn).toHaveBeenCalledTimes(1);
+      const [firstArg, secondArg] = vi.mocked(logger.warn).mock.calls[0];
+      expect(firstArg).toHaveProperty("err");
+      expect(firstArg.err).toHaveProperty("message");
+      expect(secondArg).toBe("AES-GCM decryption failed; refusing to fall back to insecure CBC");
     });
 
     test("logs warning and throws when GCM decryption fails with corrupted encrypted data", () => {
@@ -472,11 +472,11 @@ describe("Crypto Utils", () => {
       expect(() => symmetricDecrypt(corruptedPayload, testKey)).toThrow();
 
       // Verify logger.warn was called
-      expect(logger.warn).toHaveBeenCalledWith(
-        { err: expect.any(Error) },
-        "AES-GCM decryption failed; refusing to fall back to insecure CBC"
-      );
       expect(logger.warn).toHaveBeenCalledTimes(1);
+      const [firstArg, secondArg] = vi.mocked(logger.warn).mock.calls[0];
+      expect(firstArg).toHaveProperty("err");
+      expect(firstArg.err).toHaveProperty("message");
+      expect(secondArg).toBe("AES-GCM decryption failed; refusing to fall back to insecure CBC");
     });
 
     test("logs warning and throws when GCM decryption fails with wrong key", () => {
@@ -496,11 +496,11 @@ describe("Crypto Utils", () => {
       expect(() => symmetricDecrypt(payload, wrongKey)).toThrow();
 
       // Verify logger.warn was called
-      expect(logger.warn).toHaveBeenCalledWith(
-        { err: expect.any(Error) },
-        "AES-GCM decryption failed; refusing to fall back to insecure CBC"
-      );
       expect(logger.warn).toHaveBeenCalledTimes(1);
+      const [firstArg, secondArg] = vi.mocked(logger.warn).mock.calls[0];
+      expect(firstArg).toHaveProperty("err");
+      expect(firstArg.err).toHaveProperty("message");
+      expect(secondArg).toBe("AES-GCM decryption failed; refusing to fall back to insecure CBC");
     });
   });
 });

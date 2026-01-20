@@ -71,12 +71,12 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
       secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
       ...(SMTP_AUTHENTICATED
         ? {
-            auth: {
-              type: "LOGIN",
-              user: SMTP_USER,
-              pass: SMTP_PASSWORD,
-            },
-          }
+          auth: {
+            type: "LOGIN",
+            user: SMTP_USER,
+            pass: SMTP_PASSWORD,
+          },
+        }
         : {}),
       tls: {
         rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS,
@@ -97,9 +97,13 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
   }
 };
 
-export const sendVerificationNewEmail = async (id: string, email: string): Promise<boolean> => {
+export const sendVerificationNewEmail = async (
+  id: string,
+  email: string,
+  locale: TUserLocale
+): Promise<boolean> => {
   try {
-    const t = await getTranslate();
+    const t = await getTranslate(locale);
     const token = createEmailChangeToken(id, email);
     const verifyLink = `${WEBAPP_URL}/verify-email-change?token=${encodeURIComponent(token)}`;
 
@@ -119,12 +123,14 @@ export const sendVerificationNewEmail = async (id: string, email: string): Promi
 export const sendVerificationEmail = async ({
   id,
   email,
+  locale,
 }: {
   id: string;
   email: TUserEmail;
+  locale: TUserLocale;
 }): Promise<boolean> => {
   try {
-    const t = await getTranslate();
+    const t = await getTranslate(locale);
     const token = createToken(id, {
       expiresIn: "1d",
     });
@@ -154,7 +160,7 @@ export const sendForgotPasswordEmail = async (user: {
   email: TUserEmail;
   locale: TUserLocale;
 }): Promise<boolean> => {
-  const t = await getTranslate();
+  const t = await getTranslate(user.locale);
   const token = createToken(user.id, {
     expiresIn: "1d",
   });
@@ -167,8 +173,11 @@ export const sendForgotPasswordEmail = async (user: {
   });
 };
 
-export const sendPasswordResetNotifyEmail = async (user: { email: string }): Promise<boolean> => {
-  const t = await getTranslate();
+export const sendPasswordResetNotifyEmail = async (user: {
+  email: string;
+  locale: TUserLocale;
+}): Promise<boolean> => {
+  const t = await getTranslate(user.locale);
   const html = await renderPasswordResetNotifyEmail({ t, ...legalProps });
   return await sendEmail({
     to: user.email,
@@ -201,9 +210,10 @@ export const sendInviteMemberEmail = async (
 export const sendInviteAcceptedEmail = async (
   inviterName: string,
   inviteeName: string,
-  email: string
+  email: string,
+  inviterLocale?: TUserLocale
 ): Promise<void> => {
-  const t = await getTranslate();
+  const t = await getTranslate(inviterLocale);
   const html = await renderInviteAcceptedEmail({ inviteeName, inviterName, t, ...legalProps });
   await sendEmail({
     to: email,
@@ -214,12 +224,13 @@ export const sendInviteAcceptedEmail = async (
 
 export const sendResponseFinishedEmail = async (
   email: string,
+  locale: TUserLocale,
   environmentId: string,
   survey: TSurvey,
   response: TResponse,
   responseCount: number
 ): Promise<void> => {
-  const t = await getTranslate();
+  const t = await getTranslate(locale);
   const personEmail = response.contactAttributes?.email;
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
@@ -246,12 +257,12 @@ export const sendResponseFinishedEmail = async (
     to: email,
     subject: personEmail
       ? t("emails.response_finished_email_subject_with_email", {
-          personEmail,
-          surveyName: survey.name,
-        })
+        personEmail,
+        surveyName: survey.name,
+      })
       : t("emails.response_finished_email_subject", {
-          surveyName: survey.name,
-        }),
+        surveyName: survey.name,
+      }),
     replyTo: personEmail?.toString() ?? MAIL_FROM,
     html,
   });
@@ -261,9 +272,10 @@ export const sendEmbedSurveyPreviewEmail = async (
   to: string,
   innerHtml: string,
   environmentId: string,
+  locale: TUserLocale,
   logoUrl?: string
 ): Promise<boolean> => {
-  const t = await getTranslate();
+  const t = await getTranslate(locale);
   const html = await renderEmbedSurveyPreviewEmail({
     html: innerHtml,
     environmentId,
@@ -281,9 +293,10 @@ export const sendEmbedSurveyPreviewEmail = async (
 export const sendEmailCustomizationPreviewEmail = async (
   to: string,
   userName: string,
+  locale: TUserLocale,
   logoUrl?: string
 ): Promise<boolean> => {
-  const t = await getTranslate();
+  const t = await getTranslate(locale);
   const emailHtmlBody = await renderEmailCustomizationPreviewEmail({
     userName,
     logoUrl,
@@ -305,7 +318,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const singleUseId = data.suId;
   const logoUrl = data.logoUrl || "";
   const token = createTokenForLinkSurvey(surveyId, email);
-  const t = await getTranslate();
+  const t = await getTranslate(data.locale);
   const getSurveyLink = (): string => {
     if (singleUseId) {
       return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;

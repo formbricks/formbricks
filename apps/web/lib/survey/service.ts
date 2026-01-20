@@ -329,7 +329,7 @@ export const updateSurveyInternal = async (
         ? currentSurvey.languages.map((l) => l.language.id)
         : [];
       const updatedLanguageIds =
-        languages.length > 1 ? updatedSurvey.languages.map((l) => l.language.id) : [];
+        languages.length > 0 ? updatedSurvey.languages.map((l) => l.language.id) : [];
       const enabledLanguageIds = languages.map((language) => {
         if (language.enabled) return language.language.id;
       });

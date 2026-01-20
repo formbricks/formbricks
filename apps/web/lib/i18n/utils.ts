@@ -88,7 +88,7 @@ export const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode
   return language?.default ? "default" : language?.language.code || "default";
 };
 
-export const iso639Identifiers = iso639Languages.map((language) => language.alpha2);
+export const iso639Identifiers = iso639Languages.map((language) => language.code);
 
 // Helper function to add language keys to a multi-language object (e.g. survey or question)
 // Iterates over the object recursively and adds empty strings for new language keys

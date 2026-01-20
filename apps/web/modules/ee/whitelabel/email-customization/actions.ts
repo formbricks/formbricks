@@ -121,6 +121,7 @@ export const sendTestEmailAction = authenticatedActionClient
     await sendEmailCustomizationPreviewEmail(
       ctx.user.email,
       ctx.user.name,
+      ctx.user.locale,
       organization?.whitelabel?.logoUrl || ""
     );
 

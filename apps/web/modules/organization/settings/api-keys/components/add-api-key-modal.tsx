@@ -255,7 +255,7 @@ export const AddApiKeyModal = ({
                               </span>
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="min-w-[8rem]">
+                          <DropdownMenuContent className="max-h-[300px] min-w-[8rem] overflow-y-auto">
                             {projectOptions.map((option) => (
                               <DropdownMenuItem
                                 key={option.id}
@@ -286,7 +286,7 @@ export const AddApiKeyModal = ({
                               </span>
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="min-w-[8rem] capitalize">
+                          <DropdownMenuContent className="max-h-[300px] min-w-[8rem] overflow-y-auto capitalize">
                             {getEnvironmentOptionsForProject(permission.projectId).map((env) => (
                               <DropdownMenuItem
                                 key={env.id}

@@ -234,7 +234,7 @@ export const ProjectBreadcrumb = ({
           )}
           {!isLoadingProjects && !loadError && (
             <>
-              <DropdownMenuGroup>
+              <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
                 {projects.map((proj) => (
                   <DropdownMenuCheckboxItem
                     key={proj.id}

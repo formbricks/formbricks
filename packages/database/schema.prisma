@@ -173,7 +173,6 @@ model Response {
   @@index([createdAt])
   @@index([surveyId, createdAt]) // to determine monthly response count
   @@index([contactId, createdAt]) // to determine monthly identified users (persons)
-  @@index([surveyId])
 }
 
 /// Represents a label that can be applied to survey responses.
@@ -193,7 +192,6 @@ model Tag {
   environment   Environment       @relation(fields: [environmentId], references: [id], onDelete: Cascade)
 
   @@unique([environmentId, name])
-  @@index([environmentId])
 }
 
 /// Junction table linking tags to responses.
@@ -208,7 +206,6 @@ model TagsOnResponses {
   tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([responseId, tagId])
-  @@index([responseId])
 }
 
 enum SurveyStatus {
@@ -259,7 +256,6 @@ model SurveyTrigger {
   actionClassId String
 
   @@unique([surveyId, actionClassId])
-  @@index([surveyId])
 }
 
 enum SurveyAttributeFilterCondition {
@@ -297,7 +293,6 @@ model SurveyAttributeFilter {
   value          String
 
   @@unique([surveyId, attributeKeyId])
-  @@index([surveyId])
   @@index([attributeKeyId])
 }
 
@@ -432,7 +427,6 @@ model SurveyQuota {
   countPartialSubmissions Boolean             @default(false)
 
   @@unique([surveyId, name])
-  @@index([surveyId])
 }
 
 /// Junction table linking responses to quotas.
@@ -635,7 +629,6 @@ model Project {
   customHeadScripts   String? // Custom HTML scripts for link surveys (self-hosted only)
 
   @@unique([organizationId, name])
-  @@index([organizationId])
 }
 
 /// Represents the top-level organizational hierarchy in Formbricks.
@@ -690,7 +683,6 @@ model Membership {
   role           OrganizationRole @default(member)
 
   @@id([userId, organizationId])
-  @@index([userId])
   @@index([organizationId])
 }
 
@@ -858,8 +850,6 @@ model User {
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?
   isActive                  Boolean          @default(true)
-
-  @@index([email])
 }
 
 /// Defines a segment of contacts based on attributes.
@@ -884,7 +874,6 @@ model Segment {
   surveys       Survey[]
 
   @@unique([environmentId, title])
-  @@index([environmentId])
 }
 
 /// Represents a supported language in the system.
@@ -924,7 +913,6 @@ model SurveyLanguage {
 
   @@id([languageId, surveyId])
   @@index([surveyId])
-  @@index([languageId])
 }
 
 /// Represents a team within an organization.

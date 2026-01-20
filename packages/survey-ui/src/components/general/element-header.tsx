@@ -77,7 +77,7 @@ function ElementHeader({
       <div>
         <div>
           {required ? (
-            <span className="abel-headline mb-[3px] text-xs opacity-60">{requiredLabel}</span>
+            <span className="label-headline mb-[3px] text-xs opacity-60">{requiredLabel}</span>
           ) : null}
         </div>
         <div className="flex">

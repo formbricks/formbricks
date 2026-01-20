@@ -1,11 +1,15 @@
 import { Languages } from "lucide-react";
-import { useRef, useState } from "react";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { getEnabledLanguages } from "@/lib/i18n/utils";
-import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 
 interface LanguageDropdownProps {
   survey: TSurvey;
@@ -14,38 +18,31 @@ interface LanguageDropdownProps {
 }
 
 export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdownProps) => {
-  const [showLanguageSelect, setShowLanguageSelect] = useState(false);
-  const containerRef = useRef(null);
   const enabledLanguages = getEnabledLanguages(survey.languages ?? []);
 
-  useClickOutside(containerRef, () => setShowLanguageSelect(false));
+  if (enabledLanguages.length <= 1) {
+    return null;
+  }
 
   return (
-    enabledLanguages.length > 1 && (
-      <div className="relative" ref={containerRef}>
-        {showLanguageSelect && (
-          <div className="absolute top-12 z-30 max-h-64 max-w-48 overflow-auto rounded-lg border bg-slate-900 p-1 text-sm text-white">
-            {enabledLanguages.map((surveyLanguage) => (
-              <button
-                key={surveyLanguage.language.code}
-                className="w-full truncate rounded-md p-2 text-start hover:cursor-pointer hover:bg-slate-700"
-                onClick={() => {
-                  setLanguage(surveyLanguage.language.code);
-                  setShowLanguageSelect(false);
-                }}>
-                {getLanguageLabel(surveyLanguage.language.code, locale)}
-              </button>
-            ))}
-          </div>
-        )}
-        <Button
-          variant="secondary"
-          title="Select Language"
-          aria-label="Select Language"
-          onClick={() => setShowLanguageSelect(!showLanguageSelect)}>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="secondary" title="Select Language" aria-label="Select Language">
           <Languages className="h-5 w-5" />
         </Button>
-      </div>
-    )
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="max-h-64 max-w-48 overflow-auto bg-slate-900 p-1 text-sm text-white"
+        align="start">
+        {enabledLanguages.map((surveyLanguage) => (
+          <DropdownMenuItem
+            key={surveyLanguage.language.code}
+            className="w-full truncate rounded-md p-2 text-start text-white hover:cursor-pointer hover:bg-slate-700 focus:bg-slate-700"
+            onSelect={() => setLanguage(surveyLanguage.language.code)}>
+            {getLanguageLabel(surveyLanguage.language.code, locale)}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

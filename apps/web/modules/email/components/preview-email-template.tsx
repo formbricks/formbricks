@@ -213,8 +213,8 @@ export async function PreviewEmailTemplate({
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === firstQuestion.range - 1 },
                           firstQuestion.isColorCodingEnabled &&
-                            firstQuestion.scale === "number" &&
-                            `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
+                          firstQuestion.scale === "number" &&
+                          `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
                           firstQuestion.scale === "star" && "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
@@ -288,7 +288,7 @@ export async function PreviewEmailTemplate({
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Link
-                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block border border-solid p-4 hover:bg-slate-100"
+                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block border border-solid p-4"
                 href={`${urlWithPrefilling}${firstQuestion.id}=${getLocalizedValue(choice.label, defaultLanguageCode)}`}
                 key={choice.id}>
                 {getLocalizedValue(choice.label, defaultLanguageCode)}

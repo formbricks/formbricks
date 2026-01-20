@@ -215,7 +215,14 @@ export const POST = async (request: Request) => {
     }
 
     const emailPromises = usersWithNotifications.map((user) =>
-      sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
+      sendResponseFinishedEmail(
+        user.email,
+        user.locale,
+        environmentId,
+        survey,
+        response,
+        responseCount
+      ).catch((error) => {
         logger.error(
           { error, url: request.url, userEmail: user.email },
           `Failed to send email to ${user.email}`

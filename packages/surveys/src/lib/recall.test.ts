@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
-import { TSurveyElementTypeEnum, type TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { type TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
 import { parseRecallInformation, replaceRecallInfo } from "./recall";
 
 // Mock getLocalizedValue (assuming path and simple behavior)
