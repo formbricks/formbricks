@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { CalendarIcon, HashIcon, PlusIcon, TagIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -86,8 +86,16 @@ export const EditContactAttributesModal = ({
   // Watch form values to get currently selected keys
   const watchedAttributes = form.watch("attributes");
 
-  // Prepare combobox options from attribute keys
+  // Icon mapping for attribute data types
+  const dataTypeIcons = {
+    date: CalendarIcon,
+    number: HashIcon,
+    string: TagIcon,
+  } as const;
+
+  // Prepare combobox options from attribute keys with data type icons
   const allKeyOptions: TComboboxOption[] = attributeKeys.map((attrKey) => ({
+    icon: dataTypeIcons[attrKey.dataType] ?? TagIcon,
     label: attrKey.name ?? attrKey.key,
     value: attrKey.key,
   }));
@@ -226,6 +234,7 @@ export const EditContactAttributesModal = ({
                                 placeholder: t("environments.contacts.attribute_key_placeholder"),
                                 className: "w-full border-0",
                               }}
+                              iconClassName="h-4 w-4 text-slate-400"
                             />
                           </FormControl>
                           <FormError />

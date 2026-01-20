@@ -64,6 +64,7 @@ export interface InputComboboxProps {
   showCheckIcon?: boolean;
   comboboxClasses?: string;
   emptyDropdownText?: string;
+  iconClassName?: string;
 }
 
 // Helper to flatten all options and their children
@@ -87,6 +88,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   showCheckIcon = false,
   comboboxClasses,
   emptyDropdownText,
+  iconClassName = "h-5 w-5 text-slate-400",
 }) => {
   const { t } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
@@ -167,7 +169,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           <Fragment key={i}>
             {i > 0 && <span>, </span>}
             <div className="flex items-center gap-2">
-              {opt.icon && <opt.icon className="h-5 w-5 shrink-0 text-slate-400" />}
+              {opt.icon && <opt.icon className={cn("shrink-0", iconClassName)} />}
               {opt.imgSrc && <Image src={opt.imgSrc} alt={opt.label} width={24} height={24} />}
               <span>{opt.label}</span>
             </div>
@@ -180,12 +182,12 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     if (!opt) return null;
     return (
       <div className="flex items-center gap-2 truncate">
-        {opt.icon && <opt.icon className="h-5 w-5 shrink-0 text-slate-400" />}
+        {opt.icon && <opt.icon className={cn("shrink-0", iconClassName)} />}
         {opt.imgSrc && <Image src={opt.imgSrc} alt={opt.label} width={24} height={24} />}
         <span>{opt.label}</span>
       </div>
     );
-  }, [localValue, validOptions]);
+  }, [localValue, validOptions, iconClassName]);
 
   const handleClear = () => {
     setInputType(null);
@@ -277,7 +279,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                       {showCheckIcon && isSelected(opt) && (
                         <CheckIcon className="h-4 w-4 text-slate-300 hover:text-slate-400" />
                       )}
-                      {opt.icon && <opt.icon className="h-5 w-5 text-slate-400" />}
+                      {opt.icon && <opt.icon className={iconClassName} />}
                       {opt.imgSrc && (
                         <Image src={opt.imgSrc} alt={opt.label} width={24} height={24} className="shrink-0" />
                       )}
@@ -307,7 +309,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                                 {showCheckIcon && isSelected(opt) && (
                                   <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
                                 )}
-                                {opt.icon && <opt.icon className="h-5 w-5 text-slate-400" />}
+                                {opt.icon && <opt.icon className={iconClassName} />}
                                 {opt.imgSrc && (
                                   <Image
                                     src={opt.imgSrc}
@@ -354,7 +356,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                           {showCheckIcon && isSelected(opt) && (
                             <CheckIcon className="h-4 w-4 text-slate-300 hover:text-slate-400" />
                           )}
-                          {opt.icon && <opt.icon className="h-5 w-5 text-slate-400" />}
+                          {opt.icon && <opt.icon className={iconClassName} />}
                           {opt.imgSrc && (
                             <Image
                               src={opt.imgSrc}
