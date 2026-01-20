@@ -177,6 +177,20 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     }
   }
 
+  if (styling.brandColor?.light) {
+    const brandColor = styling.brandColor.light;
+
+    const accentColor = mixColor(brandColor, "#ffffff", 0.8);
+    const accentColorSelected = mixColor(brandColor, "#ffffff", 0.7);
+
+    appendCssVariable("accent-background-color", accentColor);
+    appendCssVariable("accent-background-color-selected", accentColorSelected);
+
+    if (isLight(brandColor)) {
+      appendCssVariable("calendar-tile-color", mixColor(brandColor, "#000000", 0.7));
+    }
+  }
+
   // Buttons (Advanced)
   appendCssVariable("button-bg-color", styling.buttonBgColor?.light);
   appendCssVariable("button-text-color", styling.buttonTextColor?.light);
