@@ -327,10 +327,22 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-signature-text-color"]).toBeDefined(); // Relies on mixColor & isLight
     expect(variables["--fb-branding-text-color"]).toBeDefined(); // Relies on mixColor & isLight
     expect(variables["--fb-input-background-color-selected"]).toBeDefined(); // Relies on mixColor
-    expect(variables["--fb-accent-background-color"]).toBeDefined(); // Relies on mixColor
-    expect(variables["--fb-accent-background-color-selected"]).toBeDefined(); // Relies on mixColor
+
+    // Check accent colors derived from brandColor when not explicitly set
+    expect(variables["--fb-accent-background-color"]).toBeDefined();
+    expect(variables["--fb-accent-background-color-selected"]).toBeDefined();
+
     // calendar-tile-color depends on isLight(brandColor)
     expect(variables["--fb-calendar-tile-color"]).toBeUndefined(); // isLight('#112233') is false, so this should be undefined
+  });
+
+  test("should generate calendar-tile-color for light brandColor", () => {
+    const styling = getBaseProjectStyling({ brandColor: { light: "#ffffff" } });
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    expect(variables["--fb-calendar-tile-color"]).toBeDefined();
   });
 
   test("should set signature and branding text colors for dark questionColor", () => {
