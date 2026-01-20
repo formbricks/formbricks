@@ -128,7 +128,7 @@ export const upsertBulkContacts = async (
   }
 
   // Validate that all values can be converted to their detected/expected type
-  // If validation fails for any value, we fallback to treating that attribute as string type
+  // If validation fails (typed column is null), fallback to string type for compatibility
   const typeValidationErrors: string[] = [];
 
   for (const [key, dataType] of attributeTypeMap) {
@@ -138,11 +138,15 @@ export const upsertBulkContacts = async (
     if (dataType === "string") continue;
 
     for (const value of values) {
-      try {
-        // Test if we can convert the value to the expected type
-        prepareAttributeColumnsForStorage(value, dataType);
-      } catch {
-        // If any value fails conversion, downgrade this attribute to string type for compatibility
+      const columns = prepareAttributeColumnsForStorage(value, dataType);
+
+      // Check if the typed column is null - means parsing failed and it degraded to string storage
+      const parseFailed =
+        (dataType === "number" && columns.valueNumber === null) ||
+        (dataType === "date" && columns.valueDate === null);
+
+      if (parseFailed) {
+        // Downgrade entire attribute to string type for consistency
         attributeTypeMap.set(key, "string");
         typeValidationErrors.push(
           `Attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`
@@ -429,20 +433,32 @@ export const upsertBulkContacts = async (
           for (let i = 0; i < attributesToUpsert.length; i += BATCH_SIZE) {
             const batch = attributesToUpsert.slice(i, i + BATCH_SIZE);
 
+            // Extract arrays for bulk insert
+            // Convert all values to strings for consistent text[] casting in PostgreSQL
+            const ids = batch.map((a) => a.id);
+            const createdAts = batch.map((a) => a.createdAt.toISOString());
+            const updatedAts = batch.map((a) => a.updatedAt.toISOString());
+            const contactIds = batch.map((a) => a.contactId);
+            const values = batch.map((a) => a.value);
+            const valueNumbers = batch.map((a) => (a.valueNumber === null ? null : String(a.valueNumber)));
+            const valueDates = batch.map((a) => (a.valueDate ? a.valueDate.toISOString() : null));
+            const attributeKeyIds = batch.map((a) => a.attributeKeyId);
+
             // Use a raw query to perform a bulk insert with an ON CONFLICT clause
+            // Cast to text[] first, then to target type to handle Prisma serialization
             await tx.$executeRaw`
             INSERT INTO "ContactAttribute" (
               "id", "created_at", "updated_at", "contactId", "value", "valueNumber", "valueDate", "attributeKeyId"
             )
             SELECT 
-              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.id)}]`}),
-              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.createdAt)}]`}),
-              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.updatedAt)}]`}),
-              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.contactId)}]`}),
-              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.value)}]`}),
-              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.valueNumber)}]`}),
-              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.valueDate)}]`}),
-              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.attributeKeyId)}]`})
+              unnest(${ids}::text[]),
+              unnest(${createdAts}::text[])::timestamp,
+              unnest(${updatedAts}::text[])::timestamp,
+              unnest(${contactIds}::text[]),
+              unnest(${values}::text[]),
+              unnest(${valueNumbers}::text[])::double precision,
+              unnest(${valueDates}::text[])::timestamp,
+              unnest(${attributeKeyIds}::text[])
             ON CONFLICT ("contactId", "attributeKeyId") DO UPDATE SET
               "value" = EXCLUDED."value",
               "valueNumber" = EXCLUDED."valueNumber",

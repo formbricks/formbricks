@@ -397,7 +397,7 @@ export const createContactsFromCSV = async (
     }
 
     // Validate that all values can be converted to their detected type
-    // If validation fails, fallback to string type for compatibility
+    // If validation fails (typed column is null), fallback to string type for compatibility
     const typeValidationErrors: string[] = [];
 
     for (const [key, dataType] of attributeTypeMap) {
@@ -407,10 +407,15 @@ export const createContactsFromCSV = async (
       if (dataType === "string") continue;
 
       for (const value of values) {
-        try {
-          prepareAttributeColumnsForStorage(value, dataType);
-        } catch {
-          // If any value fails conversion, downgrade to string type
+        const columns = prepareAttributeColumnsForStorage(value, dataType);
+
+        // Check if the typed column is null - means parsing failed and it degraded to string storage
+        const parseFailed =
+          (dataType === "number" && columns.valueNumber === null) ||
+          (dataType === "date" && columns.valueDate === null);
+
+        if (parseFailed) {
+          // Downgrade entire attribute to string type for consistency
           attributeTypeMap.set(key, "string");
           typeValidationErrors.push(
             `Attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`

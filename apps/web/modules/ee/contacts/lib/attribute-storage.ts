@@ -1,5 +1,7 @@
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
-import { detectAttributeDataType } from "./detect-attribute-type";
+import { detectAttributeDataType, tryParseDate } from "./detect-attribute-type";
+
+type TRawValue = string | number | Date;
 
 /**
  * Storage columns for a contact attribute value
@@ -18,7 +20,7 @@ export type TAttributeStorageColumns = {
  * @returns Object with dataType and column values for storage
  */
 export const prepareNewAttributeForStorage = (
-  value: string | number | Date
+  value: TRawValue
 ): {
   dataType: TContactAttributeDataType;
   columns: TAttributeStorageColumns;
@@ -27,6 +29,94 @@ export const prepareNewAttributeForStorage = (
   const columns = prepareAttributeColumnsForStorage(value, dataType);
 
   return { dataType, columns };
+};
+
+const handleStringType = (value: TRawValue): TAttributeStorageColumns => {
+  // String type - only use value column
+  let stringValue: string;
+
+  if (value instanceof Date) {
+    stringValue = value.toISOString();
+  } else if (typeof value === "number") {
+    stringValue = String(value);
+  } else {
+    stringValue = value;
+  }
+
+  return {
+    value: stringValue,
+    valueNumber: null,
+    valueDate: null,
+  };
+};
+
+const handleNumberType = (value: TRawValue): TAttributeStorageColumns => {
+  let numericValue: number | null = null;
+
+  if (typeof value === "number") {
+    numericValue = Number.isNaN(value) ? null : value;
+  } else if (typeof value === "string") {
+    const parsed = Number(value.trim());
+    numericValue = Number.isNaN(parsed) ? null : parsed;
+  } else {
+    // Date - shouldn't happen if validation passed, but handle gracefully
+    numericValue = value.getTime();
+  }
+
+  // If number parsing failed, store as string only (graceful degradation)
+  if (numericValue === null) {
+    return {
+      value: String(value),
+      valueNumber: null,
+      valueDate: null,
+    };
+  }
+
+  return {
+    value: String(numericValue),
+    valueNumber: numericValue,
+    valueDate: null,
+  };
+};
+
+const handleDateType = (value: TRawValue): TAttributeStorageColumns => {
+  // Date type - use both value (for backwards compat) and valueDate columns
+  let dateValue: Date | null = null;
+
+  if (value instanceof Date) {
+    dateValue = value;
+  } else if (typeof value === "string") {
+    const parsedDate = tryParseDate(value.trim());
+    if (parsedDate && !Number.isNaN(parsedDate.getTime())) {
+      dateValue = parsedDate;
+    } else {
+      // Try standard Date parsing as fallback
+      const standardDate = new Date(value);
+      if (!Number.isNaN(standardDate.getTime())) {
+        dateValue = standardDate;
+      }
+    }
+  } else if (typeof value === "number") {
+    dateValue = new Date(value);
+    if (Number.isNaN(dateValue.getTime())) {
+      dateValue = null;
+    }
+  }
+
+  // If date parsing failed, store as string only (graceful degradation)
+  if (!dateValue) {
+    return {
+      value: String(value),
+      valueNumber: null,
+      valueDate: null,
+    };
+  }
+
+  return {
+    value: dateValue.toISOString(),
+    valueNumber: null,
+    valueDate: dateValue,
+  };
 };
 
 /**
@@ -38,77 +128,22 @@ export const prepareNewAttributeForStorage = (
  * @returns Object with column values for storage
  */
 export const prepareAttributeColumnsForStorage = (
-  value: string | number | Date,
+  value: TRawValue,
   dataType: TContactAttributeDataType
 ): TAttributeStorageColumns => {
   switch (dataType) {
-    case "string": {
-      // String type - only use value column
-      let stringValue: string;
-
-      if (value instanceof Date) {
-        stringValue = value.toISOString();
-      } else if (typeof value === "number") {
-        stringValue = String(value);
-      } else {
-        stringValue = value;
-      }
-
-      return {
-        value: stringValue,
-        valueNumber: null,
-        valueDate: null,
-      };
-    }
-
-    case "number": {
-      // Number type - use both value (for backwards compat) and valueNumber columns
-      let numericValue: number;
-
-      if (typeof value === "number") {
-        numericValue = value;
-      } else if (typeof value === "string") {
-        numericValue = Number(value.trim());
-      } else {
-        // Date - shouldn't happen if validation passed, but handle gracefully
-        numericValue = value.getTime();
-      }
-
-      return {
-        value: String(numericValue),
-        valueNumber: numericValue,
-        valueDate: null,
-      };
-    }
-
-    case "date": {
-      // Date type - use both value (for backwards compat) and valueDate columns
-      let dateValue: Date;
-
-      if (value instanceof Date) {
-        dateValue = value;
-      } else if (typeof value === "string") {
-        dateValue = new Date(value);
-      } else {
-        // Number - treat as timestamp
-        dateValue = new Date(value);
-      }
-
-      return {
-        value: dateValue.toISOString(),
-        valueNumber: null,
-        valueDate: dateValue,
-      };
-    }
-
-    default: {
-      // Unknown type - treat as string
+    case "string":
+      return handleStringType(value);
+    case "number":
+      return handleNumberType(value);
+    case "date":
+      return handleDateType(value);
+    default:
       return {
         value: String(value),
         valueNumber: null,
         valueDate: null,
       };
-    }
   }
 };
 
