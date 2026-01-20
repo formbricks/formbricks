@@ -398,20 +398,34 @@ const evaluateAttributeFilter = (
 ): boolean => {
   const { value, qualifier, root } = filter;
   const { contactAttributeKey } = root;
+  const { operator } = qualifier;
 
   const attributeValue = attributes[contactAttributeKey];
-  if (!attributeValue) {
+
+  // Handle isSet and isNotSet operators first - they have special logic
+  if (operator === "isSet") {
+    // Return true if the attribute exists and has a truthy value
+    return attributeValue !== undefined && attributeValue !== null && attributeValue !== "";
+  }
+
+  if (operator === "isNotSet") {
+    // Return true if the attribute doesn't exist or has a falsy value
+    return attributeValue === undefined || attributeValue === null || attributeValue === "";
+  }
+
+  // For all other operators, if the attribute doesn't exist, return false
+  if (attributeValue === undefined || attributeValue === null) {
     return false;
   }
 
   // Check if this is a date operator
-  if (isDateOperator(qualifier.operator)) {
-    return evaluateDateFilter(String(attributeValue), value, qualifier.operator);
+  if (isDateOperator(operator)) {
+    return evaluateDateFilter(String(attributeValue), value, operator);
   }
 
   // Use standard comparison for non-date operators
   // For non-date operators, value is always string | number
-  const attResult = compareValues(attributeValue, value as string | number, qualifier.operator);
+  const attResult = compareValues(attributeValue, value as string | number, operator);
   return attResult;
 };
 

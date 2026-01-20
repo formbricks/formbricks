@@ -63,26 +63,26 @@ describe("date-utils", () => {
   });
 
   describe("startOfDay", () => {
-    test("sets time to 00:00:00.000", () => {
+    test("sets time to 00:00:00.000 UTC", () => {
       const date = new Date("2024-01-15T14:30:45.123Z");
       const result = startOfDay(date);
-      expect(result.getHours()).toBe(0);
-      expect(result.getMinutes()).toBe(0);
-      expect(result.getSeconds()).toBe(0);
-      expect(result.getMilliseconds()).toBe(0);
-      expect(result.getDate()).toBe(date.getDate());
+      expect(result.getUTCHours()).toBe(0);
+      expect(result.getUTCMinutes()).toBe(0);
+      expect(result.getUTCSeconds()).toBe(0);
+      expect(result.getUTCMilliseconds()).toBe(0);
+      expect(result.getUTCDate()).toBe(date.getUTCDate());
     });
   });
 
   describe("endOfDay", () => {
-    test("sets time to 23:59:59.999", () => {
+    test("sets time to 23:59:59.999 UTC", () => {
       const date = new Date("2024-01-15T14:30:45.123Z");
       const result = endOfDay(date);
-      expect(result.getHours()).toBe(23);
-      expect(result.getMinutes()).toBe(59);
-      expect(result.getSeconds()).toBe(59);
-      expect(result.getMilliseconds()).toBe(999);
-      expect(result.getDate()).toBe(date.getDate());
+      expect(result.getUTCHours()).toBe(23);
+      expect(result.getUTCMinutes()).toBe(59);
+      expect(result.getUTCSeconds()).toBe(59);
+      expect(result.getUTCMilliseconds()).toBe(999);
+      expect(result.getUTCDate()).toBe(date.getUTCDate());
     });
   });
 

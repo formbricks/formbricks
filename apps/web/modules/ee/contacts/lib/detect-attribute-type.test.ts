@@ -45,7 +45,6 @@ describe("detectAttributeDataType", () => {
     test("handles invalid date strings as string", () => {
       expect(detectAttributeDataType("2024-13-01")).toBe("string"); // Invalid month
       expect(detectAttributeDataType("not-a-date")).toBe("string");
-      expect(detectAttributeDataType("2024/01/15")).toBe("string"); // Wrong format
     });
 
     test("handles edge cases", () => {

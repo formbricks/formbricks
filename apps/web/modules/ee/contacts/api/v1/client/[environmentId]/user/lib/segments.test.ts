@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getPersonSegmentIds, getSegments } from "./segments";
 
 // Mock the cache functions
@@ -18,14 +18,17 @@ vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
-vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
-  evaluateSegment: vi.fn(),
+vi.mock("@/modules/ee/contacts/segments/lib/filter/prisma-query", () => ({
+  segmentFilterToPrismaQuery: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     segment: {
       findMany: vi.fn(),
+    },
+    contact: {
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -43,7 +46,7 @@ const mockEnvironmentId = "test-environment-id";
 const mockContactId = "test-contact-id";
 const mockContactUserId = "test-contact-user-id";
 const mockAttributes = { email: "test@example.com" };
-const mockDeviceType = "desktop";
+const mockDeviceType = "desktop" as const;
 
 const mockSegmentsData = [
   { id: "segment1", filters: [{}] as TBaseFilter[] },
@@ -61,7 +64,9 @@ describe("segments lib", () => {
 
   describe("getSegments", () => {
     test("should return segments successfully", async () => {
-      vi.mocked(prisma.segment.findMany).mockResolvedValue(mockSegmentsData as any);
+      vi.mocked(prisma.segment.findMany).mockResolvedValue(
+        mockSegmentsData as Prisma.Result<typeof prisma.segment, unknown, "findMany">
+      );
 
       const result = await getSegments(mockEnvironmentId);
 
@@ -94,11 +99,21 @@ describe("segments lib", () => {
 
   describe("getPersonSegmentIds", () => {
     beforeEach(() => {
-      vi.mocked(prisma.segment.findMany).mockResolvedValue(mockSegmentsData as any); // Mock for getSegments call
+      vi.mocked(prisma.segment.findMany).mockResolvedValue(
+        mockSegmentsData as Prisma.Result<typeof prisma.segment, unknown, "findMany">
+      );
+      vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+        ok: true,
+        data: { whereClause: { AND: [{ environmentId: mockEnvironmentId }, {}] } },
+      });
     });
 
     test("should return person segment IDs successfully", async () => {
-      vi.mocked(evaluateSegment).mockResolvedValue(true); // All segments evaluate to true
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue({ id: mockContactId } as Prisma.Result<
+        typeof prisma.contact,
+        unknown,
+        "findFirst"
+      >);
 
       const result = await getPersonSegmentIds(
         mockEnvironmentId,
@@ -114,19 +129,8 @@ describe("segments lib", () => {
         select: { id: true, filters: true },
       });
 
-      expect(evaluateSegment).toHaveBeenCalledTimes(mockSegmentsData.length);
-      mockSegmentsData.forEach((segment) => {
-        expect(evaluateSegment).toHaveBeenCalledWith(
-          {
-            attributes: mockAttributes,
-            deviceType: mockDeviceType,
-            environmentId: mockEnvironmentId,
-            contactId: mockContactId,
-            userId: mockContactUserId,
-          },
-          segment.filters
-        );
-      });
+      expect(segmentFilterToPrismaQuery).toHaveBeenCalledTimes(mockSegmentsData.length);
+      expect(prisma.contact.findFirst).toHaveBeenCalledTimes(mockSegmentsData.length);
       expect(result).toEqual(mockSegmentsData.map((s) => s.id));
     });
 
@@ -142,11 +146,11 @@ describe("segments lib", () => {
       );
 
       expect(result).toEqual([]);
-      expect(evaluateSegment).not.toHaveBeenCalled();
+      expect(segmentFilterToPrismaQuery).not.toHaveBeenCalled();
     });
 
     test("should return empty array if segments exist but none match", async () => {
-      vi.mocked(evaluateSegment).mockResolvedValue(false); // All segments evaluate to false
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
 
       const result = await getPersonSegmentIds(
         mockEnvironmentId,
@@ -156,10 +160,16 @@ describe("segments lib", () => {
         mockDeviceType
       );
       expect(result).toEqual([]);
-      expect(evaluateSegment).toHaveBeenCalledTimes(mockSegmentsData.length);
+      expect(segmentFilterToPrismaQuery).toHaveBeenCalledTimes(mockSegmentsData.length);
     });
 
     test("should call validateInputs with correct parameters", async () => {
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue({ id: mockContactId } as Prisma.Result<
+        typeof prisma.contact,
+        unknown,
+        "findFirst"
+      >);
+
       await getPersonSegmentIds(
         mockEnvironmentId,
         mockContactId,
@@ -175,9 +185,14 @@ describe("segments lib", () => {
     });
 
     test("should return only matching segment IDs", async () => {
-      vi.mocked(evaluateSegment)
-        .mockResolvedValueOnce(true) // First segment matches
-        .mockResolvedValueOnce(false); // Second segment does not match
+      // First segment matches, second doesn't
+      vi.mocked(prisma.contact.findFirst)
+        .mockResolvedValueOnce({ id: mockContactId } as Prisma.Result<
+          typeof prisma.contact,
+          unknown,
+          "findFirst"
+        >) // First segment matches
+        .mockResolvedValueOnce(null); // Second segment does not match
 
       const result = await getPersonSegmentIds(
         mockEnvironmentId,
@@ -188,7 +203,7 @@ describe("segments lib", () => {
       );
 
       expect(result).toEqual([mockSegmentsData[0].id]);
-      expect(evaluateSegment).toHaveBeenCalledTimes(mockSegmentsData.length);
+      expect(segmentFilterToPrismaQuery).toHaveBeenCalledTimes(mockSegmentsData.length);
     });
   });
 });

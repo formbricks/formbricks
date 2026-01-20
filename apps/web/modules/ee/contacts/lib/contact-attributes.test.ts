@@ -34,7 +34,12 @@ describe("getContactAttributes", () => {
     const result = await getContactAttributes(contactId);
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
       where: { contactId },
-      select: { value: true, attributeKey: { select: { key: true, name: true } } },
+      select: {
+        value: true,
+        valueNumber: true,
+        valueDate: true,
+        attributeKey: { select: { key: true, name: true, dataType: true } },
+      },
     });
     expect(result).toEqual({ email: "john@example.com", name: "John" });
   });

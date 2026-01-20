@@ -112,7 +112,7 @@ describe("validateAndParseAttributeValue", () => {
       expect(result.valid).toBe(false);
       if (!result.valid) {
         expect(result.error).toContain("purchaseDate");
-        expect(result.error).toContain("expects a date");
+        expect(result.error).toContain("expects a valid date");
       }
     });
 
@@ -120,7 +120,7 @@ describe("validateAndParseAttributeValue", () => {
       const result = validateAndParseAttributeValue(42, "date", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("expects a date");
+        expect(result.error).toContain("expects a valid date");
       }
     });
 

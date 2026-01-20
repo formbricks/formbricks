@@ -1,5 +1,6 @@
+import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TBaseFilters, TSegment } from "@formbricks/types/segment";
+import { TBaseFilters, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { getSegment } from "../segments";
 import { segmentFilterToPrismaQuery } from "./prisma-query";
 
@@ -139,7 +140,7 @@ describe("segmentFilterToPrismaQuery", () => {
             attributes: {
               some: {
                 attributeKey: { key: "age" },
-                value: { gt: "30" },
+                valueNumber: { gt: 30 },
               },
             },
           },
@@ -206,8 +207,8 @@ describe("segmentFilterToPrismaQuery", () => {
     const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
 
     if (result.ok) {
-      const nestedConditionsAnd = result.data.whereClause.AND?.[1].AND?.[0].AND;
-      const nestedConditionsOr = result.data.whereClause.AND?.[1].AND?.[0].OR;
+      const whereClause = result.data.whereClause as Prisma.ContactWhereInput as any;
+      const nestedConditionsAnd = whereClause.AND?.[1].AND?.[0].AND;
       expect(nestedConditionsAnd).toContainEqual({
         attributes: {
           some: {
@@ -226,14 +227,9 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
 
-      expect(nestedConditionsOr).toContainEqual({
-        attributes: {
-          some: {
-            attributeKey: { key: "device" },
-            value: { equals: "phone", mode: "insensitive" },
-          },
-        },
-      });
+      // Note: Device filters are evaluated at runtime (from User-Agent), not as database queries.
+      // When no deviceType is provided to segmentFilterToPrismaQuery, device filters return empty constraint.
+      // The OR clause will be empty or not present since device filter returns {}.
     }
   });
 
@@ -258,7 +254,7 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock the getSegment function to return a segment with filters
-    const mockSegment: Partial<TSegment> = {
+    const mockSegment: TSegmentWithSurveyNames = {
       id: nestedSegmentId,
       filters: nestedFilters,
       environmentId: mockEnvironmentId,
@@ -268,9 +264,11 @@ describe("segmentFilterToPrismaQuery", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       surveys: [],
+      activeSurveys: [],
+      inactiveSurveys: [],
     };
 
-    vi.mocked(getSegment).mockResolvedValue(mockSegment as TSegment);
+    vi.mocked(getSegment).mockResolvedValue(mockSegment);
 
     const filters: TBaseFilters = [
       {
@@ -321,8 +319,8 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock getSegment to return null for the non-existent segment
-    vi.mocked(getSegment).mockResolvedValueOnce(mockSegment as TSegment);
-    vi.mocked(getSegment).mockResolvedValueOnce(null as unknown as TSegment);
+    vi.mocked(getSegment).mockResolvedValueOnce(mockSegment);
+    vi.mocked(getSegment).mockResolvedValueOnce(null as unknown as TSegmentWithSurveyNames);
 
     const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
 
@@ -412,7 +410,7 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock the getSegment function to return a segment with filters
-    const mockSegment: Partial<TSegment> = {
+    const mockSegment: TSegmentWithSurveyNames = {
       id: nestedSegmentId,
       filters: nestedFilters,
       environmentId: mockEnvironmentId,
@@ -422,9 +420,11 @@ describe("segmentFilterToPrismaQuery", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       surveys: [],
+      activeSurveys: [],
+      inactiveSurveys: [],
     };
 
-    vi.mocked(getSegment).mockResolvedValue(mockSegment as TSegment);
+    vi.mocked(getSegment).mockResolvedValue(mockSegment);
 
     const filters: TBaseFilters = [
       {
@@ -474,7 +474,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
   test("handle circular references in segment filters", async () => {
     // Mock getSegment to simulate a circular reference
-    const circularSegment: Partial<TSegment> = {
+    const circularSegment: TSegmentWithSurveyNames = {
       id: mockSegmentId, // Same ID creates the circular reference
       filters: [
         {
@@ -500,9 +500,11 @@ describe("segmentFilterToPrismaQuery", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       surveys: [],
+      activeSurveys: [],
+      inactiveSurveys: [],
     };
 
-    vi.mocked(getSegment).mockResolvedValue(circularSegment as TSegment);
+    vi.mocked(getSegment).mockResolvedValue(circularSegment);
 
     const filters: TBaseFilters = [
       {
@@ -532,7 +534,7 @@ describe("segmentFilterToPrismaQuery", () => {
   test("handle missing segments in segment filters", async () => {
     const nestedSegmentId = "segment-missing-123";
 
-    vi.mocked(getSegment).mockResolvedValue(null as unknown as TSegment);
+    vi.mocked(getSegment).mockResolvedValue(null as unknown as TSegmentWithSurveyNames);
 
     const filters: TBaseFilters = [
       {
@@ -581,7 +583,7 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock the nested segment
-    const mockNestedSegment: TSegment = {
+    const mockNestedSegment: TSegmentWithSurveyNames = {
       id: nestedSegmentId,
       filters: nestedFilters,
       environmentId: mockEnvironmentId,
@@ -591,6 +593,8 @@ describe("segmentFilterToPrismaQuery", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       surveys: [],
+      activeSurveys: [],
+      inactiveSurveys: [],
     };
 
     vi.mocked(getSegment).mockResolvedValue(mockNestedSegment);
@@ -727,7 +731,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const whereClause = result.data.whereClause.AND?.[1];
+      const whereClause = (result.data.whereClause as Prisma.ContactWhereInput).AND?.[1] as any;
       expect(whereClause).toBeDefined();
 
       // First group (AND conditions)
@@ -755,7 +759,7 @@ describe("segmentFilterToPrismaQuery", () => {
         attributes: {
           some: {
             attributeKey: { key: "age" },
-            value: { gte: "18" },
+            valueNumber: { gte: 18 },
           },
         },
       });
@@ -770,18 +774,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
 
-      // Device filter (OR condition)
-      expect(whereClause.AND[0].OR[0]).toStrictEqual({
-        attributes: {
-          some: {
-            attributeKey: { key: "device" },
-            value: { not: "desktop", mode: "insensitive" },
-          },
-        },
-      });
+      // Note: Device filters are evaluated at runtime (from User-Agent), not as database queries.
+      // When no deviceType is provided to segmentFilterToPrismaQuery, device filters return empty constraint.
+      // So we check the person filter which should be in OR[0] since device filter is skipped.
 
-      // Person filter (OR condition)
-      expect(whereClause.AND[0].OR[1]).toStrictEqual({
+      // Person filter (OR condition) - device filter returns {} so person filter is at OR[0]
+      expect(whereClause.AND[0].OR[0]).toStrictEqual({
         attributes: {
           some: {
             attributeKey: { key: "userId" },
@@ -874,7 +872,7 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Set up the mocks
-    const mockCircularSegment: TSegment = {
+    const mockCircularSegment: TSegmentWithSurveyNames = {
       id: circularSegmentId,
       filters: circularFilters,
       environmentId: mockEnvironmentId,
@@ -884,9 +882,11 @@ describe("segmentFilterToPrismaQuery", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       surveys: [],
+      activeSurveys: [],
+      inactiveSurveys: [],
     };
 
-    const mockSecondSegment: TSegment = {
+    const mockSecondSegment: TSegmentWithSurveyNames = {
       id: secondSegmentId,
       filters: secondFilters,
       environmentId: mockEnvironmentId,
@@ -896,13 +896,15 @@ describe("segmentFilterToPrismaQuery", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       surveys: [],
+      activeSurveys: [],
+      inactiveSurveys: [],
     };
 
     // Set up the sequence of mock calls for different segments
     vi.mocked(getSegment)
       .mockResolvedValueOnce(mockCircularSegment) // First call for circularSegmentId
       .mockResolvedValueOnce(mockSecondSegment) // Third call for secondSegmentId
-      .mockResolvedValueOnce(null as unknown as TSegment); // Fourth call for non-existent-segment
+      .mockResolvedValueOnce(null as unknown as TSegmentWithSurveyNames); // Fourth call for non-existent-segment
 
     // Complex filters with mixed error conditions
     const filters: TBaseFilters = [
@@ -957,8 +959,9 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
+      const whereClause = result.data.whereClause as Prisma.ContactWhereInput as any;
       // The circularSegmentId should be detected as circular and return an empty object
-      expect(result.data.whereClause.AND?.[1].AND[0].AND).toContainEqual({
+      expect(whereClause.AND?.[1].AND[0].AND).toContainEqual({
         attributes: {
           some: {
             attributeKey: {
@@ -969,15 +972,8 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
 
-      // The device filter should still work
-      expect(result.data.whereClause.AND?.[1].AND[2]).toStrictEqual({
-        attributes: {
-          some: {
-            attributeKey: { key: "device" },
-            value: { equals: "unknownValue", mode: "insensitive" },
-          },
-        },
-      });
+      // Note: Device filters are evaluated at runtime (from User-Agent), not as database queries.
+      // When no deviceType is provided to segmentFilterToPrismaQuery, device filters return empty constraint.
     }
   });
 
@@ -1136,7 +1132,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const whereClause = result.data.whereClause.AND?.[1];
+      const whereClause = (result.data.whereClause as Prisma.ContactWhereInput as any).AND?.[1];
 
       // First subgroup (text operators)
       const firstSubgroup = whereClause.AND?.[0];
@@ -1172,7 +1168,7 @@ describe("segmentFilterToPrismaQuery", () => {
         attributes: {
           some: {
             attributeKey: { key: "loginCount" },
-            value: { gt: "5" },
+            valueNumber: { gt: 5 },
           },
         },
       });
@@ -1181,7 +1177,7 @@ describe("segmentFilterToPrismaQuery", () => {
         attributes: {
           some: {
             attributeKey: { key: "purchaseAmount" },
-            value: { lte: "1000" },
+            valueNumber: { lte: 1000 },
           },
         },
       });
@@ -1216,5 +1212,431 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
     }
+  });
+
+  // ==========================================
+  // DATE FILTER TESTS
+  // ==========================================
+
+  describe("date attribute filters", () => {
+    test("handle isBefore date operator", async () => {
+      const targetDate = "2024-06-15";
+      const filters: TBaseFilters = [
+        {
+          id: "filter_1",
+          connector: null,
+          resource: {
+            id: "attr_1",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "purchaseDate",
+            },
+            value: targetDate,
+            qualifier: {
+              operator: "isBefore",
+            },
+          },
+        },
+      ];
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
+        const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
+        expect(filterClause).toEqual({
+          AND: [
+            {
+              attributes: {
+                some: {
+                  attributeKey: { key: "purchaseDate" },
+                  valueDate: { lt: new Date(targetDate) },
+                },
+              },
+            },
+          ],
+        });
+      }
+    });
+
+    test("handle isAfter date operator", async () => {
+      const targetDate = "2024-01-01";
+      const filters: TBaseFilters = [
+        {
+          id: "filter_1",
+          connector: null,
+          resource: {
+            id: "attr_1",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "signupDate",
+            },
+            value: targetDate,
+            qualifier: {
+              operator: "isAfter",
+            },
+          },
+        },
+      ];
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
+        const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
+        expect(filterClause).toEqual({
+          AND: [
+            {
+              attributes: {
+                some: {
+                  attributeKey: { key: "signupDate" },
+                  valueDate: { gt: new Date(targetDate) },
+                },
+              },
+            },
+          ],
+        });
+      }
+    });
+
+    test("handle isBetween date operator", async () => {
+      const startDate = "2024-01-01";
+      const endDate = "2024-12-31";
+      const filters: TBaseFilters = [
+        {
+          id: "filter_1",
+          connector: null,
+          resource: {
+            id: "attr_1",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "lastActivityDate",
+            },
+            value: [startDate, endDate],
+            qualifier: {
+              operator: "isBetween",
+            },
+          },
+        },
+      ];
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
+        const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
+        expect(filterClause).toEqual({
+          AND: [
+            {
+              attributes: {
+                some: {
+                  attributeKey: { key: "lastActivityDate" },
+                  valueDate: { gte: new Date(startDate), lte: new Date(endDate) },
+                },
+              },
+            },
+          ],
+        });
+      }
+    });
+
+    test("handle isSameDay date operator", async () => {
+      const targetDate = "2024-07-04";
+      const filters: TBaseFilters = [
+        {
+          id: "filter_1",
+          connector: null,
+          resource: {
+            id: "attr_1",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "eventDate",
+            },
+            value: targetDate,
+            qualifier: {
+              operator: "isSameDay",
+            },
+          },
+        },
+      ];
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
+        const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
+        // isSameDay should generate gte: startOfDay and lte: endOfDay
+        const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
+        expect(dateAttr).toBeDefined();
+        const valueDate = dateAttr?.some?.valueDate;
+        expect(valueDate).toHaveProperty("gte");
+        expect(valueDate).toHaveProperty("lte");
+        // Verify the date range is for the same day
+        const gteDate = valueDate.gte as Date;
+        const lteDate = valueDate.lte as Date;
+        expect(gteDate.getUTCFullYear()).toBe(2024);
+        expect(gteDate.getUTCMonth()).toBe(6); // July is month 6 (0-indexed)
+        expect(gteDate.getUTCDate()).toBe(4);
+        expect(gteDate.getUTCHours()).toBe(0);
+        expect(gteDate.getUTCMinutes()).toBe(0);
+        expect(lteDate.getUTCFullYear()).toBe(2024);
+        expect(lteDate.getUTCMonth()).toBe(6);
+        expect(lteDate.getUTCDate()).toBe(4);
+        expect(lteDate.getUTCHours()).toBe(23);
+        expect(lteDate.getUTCMinutes()).toBe(59);
+      }
+    });
+
+    test("handle isOlderThan date operator with days unit", async () => {
+      const filters: TBaseFilters = [
+        {
+          id: "filter_1",
+          connector: null,
+          resource: {
+            id: "attr_1",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "accountCreatedAt",
+            },
+            value: { amount: 30, unit: "days" },
+            qualifier: {
+              operator: "isOlderThan",
+            },
+          },
+        },
+      ];
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
+        const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
+        const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
+        expect(dateAttr).toBeDefined();
+        const valueDate = dateAttr?.some?.valueDate;
+        expect(valueDate).toHaveProperty("lt");
+        // The threshold should be approximately 30 days ago
+        const threshold = valueDate.lt as Date;
+        const now = new Date();
+        const diffMs = now.getTime() - threshold.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        // Allow some tolerance for test execution time
+        expect(diffDays).toBeGreaterThanOrEqual(29.9);
+        expect(diffDays).toBeLessThanOrEqual(30.1);
+      }
+    });
+
+    test("handle isNewerThan date operator with weeks unit", async () => {
+      const filters: TBaseFilters = [
+        {
+          id: "filter_1",
+          connector: null,
+          resource: {
+            id: "attr_1",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "lastPurchaseDate",
+            },
+            value: { amount: 2, unit: "weeks" },
+            qualifier: {
+              operator: "isNewerThan",
+            },
+          },
+        },
+      ];
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
+        const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
+        const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
+        expect(dateAttr).toBeDefined();
+        const valueDate = dateAttr?.some?.valueDate;
+        expect(valueDate).toHaveProperty("gte");
+        // The threshold should be approximately 2 weeks (14 days) ago
+        const threshold = valueDate.gte as Date;
+        const now = new Date();
+        const diffMs = now.getTime() - threshold.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        expect(diffDays).toBeGreaterThanOrEqual(13.9);
+        expect(diffDays).toBeLessThanOrEqual(14.1);
+      }
+    });
+
+    test("handle isOlderThan date operator with months unit", async () => {
+      const filters: TBaseFilters = [
+        {
+          id: "filter_1",
+          connector: null,
+          resource: {
+            id: "attr_1",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "subscriptionStartDate",
+            },
+            value: { amount: 6, unit: "months" },
+            qualifier: {
+              operator: "isOlderThan",
+            },
+          },
+        },
+      ];
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
+        const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
+        const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
+        expect(dateAttr).toBeDefined();
+        const valueDate = dateAttr?.some?.valueDate;
+        expect(valueDate).toHaveProperty("lt");
+        // The threshold should be approximately 6 months ago
+        const threshold = valueDate.lt as Date;
+        const now = new Date();
+        // Calculate expected threshold (approximately 6 months ago)
+        const expectedThreshold = new Date(now);
+        expectedThreshold.setMonth(expectedThreshold.getMonth() - 6);
+        // Allow 2 day tolerance for month boundary differences
+        const diffMs = Math.abs(threshold.getTime() - expectedThreshold.getTime());
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        expect(diffDays).toBeLessThanOrEqual(2);
+      }
+    });
+
+    test("handle multiple date filters with AND connector", async () => {
+      const filters: TBaseFilters = [
+        {
+          id: "filter_1",
+          connector: null,
+          resource: {
+            id: "attr_1",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "signupDate",
+            },
+            value: "2024-01-01",
+            qualifier: {
+              operator: "isAfter",
+            },
+          },
+        },
+        {
+          id: "filter_2",
+          connector: "and",
+          resource: {
+            id: "attr_2",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "lastActivityDate",
+            },
+            value: { amount: 7, unit: "days" },
+            qualifier: {
+              operator: "isNewerThan",
+            },
+          },
+        },
+      ];
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
+        const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
+        const andConditions = (filterClause as unknown as any).AND as Prisma.ContactWhereInput[];
+        expect(andConditions).toHaveLength(2);
+
+        // First filter: isAfter
+        const firstFilter = andConditions[0] as unknown as any;
+        expect(firstFilter.attributes.some.attributeKey.key).toBe("signupDate");
+        expect(firstFilter.attributes.some.valueDate.gt).toEqual(new Date("2024-01-01"));
+
+        // Second filter: isNewerThan
+        const secondFilter = andConditions[1] as unknown as any;
+        expect(secondFilter.attributes.some.attributeKey.key).toBe("lastActivityDate");
+        expect(secondFilter.attributes.some.valueDate).toHaveProperty("gte");
+      }
+    });
+
+    test("handle date filter combined with string and number filters", async () => {
+      const filters: TBaseFilters = [
+        {
+          id: "filter_1",
+          connector: null,
+          resource: {
+            id: "attr_1",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "plan",
+            },
+            value: "premium",
+            qualifier: {
+              operator: "equals",
+            },
+          },
+        },
+        {
+          id: "filter_2",
+          connector: "and",
+          resource: {
+            id: "attr_2",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "purchaseCount",
+            },
+            value: 5,
+            qualifier: {
+              operator: "greaterThan",
+            },
+          },
+        },
+        {
+          id: "filter_3",
+          connector: "and",
+          resource: {
+            id: "attr_3",
+            root: {
+              type: "attribute" as const,
+              contactAttributeKey: "lastPurchaseDate",
+            },
+            value: { amount: 30, unit: "days" },
+            qualifier: {
+              operator: "isNewerThan",
+            },
+          },
+        },
+      ];
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
+        const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
+        const andConditions = (filterClause as unknown as any).AND as Prisma.ContactWhereInput[];
+        expect(andConditions).toHaveLength(3);
+
+        // String filter uses 'value'
+        expect((andConditions[0] as unknown as any).attributes.some.value).toEqual({
+          equals: "premium",
+          mode: "insensitive",
+        });
+
+        // Number filter uses 'valueNumber'
+        expect((andConditions[1] as unknown as any).attributes.some.valueNumber).toEqual({ gt: 5 });
+
+        // Date filter uses 'valueDate'
+        expect((andConditions[2] as unknown as any).attributes.some.valueDate).toHaveProperty("gte");
+      }
+    });
   });
 });
