@@ -10,6 +10,8 @@ import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/ent
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
 
 // Helper function for feature permissions (e.g., removeBranding, whitelabel)
+// On Cloud: requires active license and non-FREE plan
+// On Self-hosted: requires active license and feature enabled
 const getFeaturePermission = async (
   billingPlan: Organization["billing"]["plan"],
   featureKey: keyof Pick<TEnterpriseLicenseFeatures, "removeBranding" | "whitelabel">
@@ -21,6 +23,38 @@ const getFeaturePermission = async (
   } else {
     return license.active && !!license.features?.[featureKey];
   }
+};
+
+// Helper function for enterprise features that require CUSTOM plan on Cloud
+// On Cloud: requires active license AND CUSTOM billing plan
+// On Self-hosted: requires active license (backwards compat for older licenses)
+const getCustomPlanFeaturePermission = async (
+  billingPlan: Organization["billing"]["plan"],
+  featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "multiLanguageSurveys" | "quotas">
+): Promise<boolean> => {
+  const license = await getEnterpriseLicense();
+
+  if (!license.active) return false;
+
+  if (IS_FORMBRICKS_CLOUD) {
+    return billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
+  } else {
+    return license.features?.[featureKey] ?? false;
+  }
+};
+
+// Helper function for license-only feature flags (no billing plan check)
+// Returns true only if the license is active AND the specific feature is enabled in the license
+// Used for features that are controlled purely by the license key, not billing plans
+const getSpecificFeatureFlag = async (
+  featureKey: keyof Pick<
+    TEnterpriseLicenseFeatures,
+    "isMultiOrgEnabled" | "contacts" | "twoFactorAuth" | "sso" | "auditLogs"
+  >
+): Promise<boolean> => {
+  const licenseFeatures = await getLicenseFeatures();
+  if (!licenseFeatures) return false;
+  return typeof licenseFeatures[featureKey] === "boolean" ? licenseFeatures[featureKey] : false;
 };
 
 export const getRemoveBrandingPermission = async (
@@ -45,24 +79,6 @@ export const getBiggerUploadFileSizePermission = async (
   return false;
 };
 
-const getSpecificFeatureFlag = async (
-  featureKey: keyof Pick<
-    TEnterpriseLicenseFeatures,
-    | "isMultiOrgEnabled"
-    | "contacts"
-    | "twoFactorAuth"
-    | "sso"
-    | "auditLogs"
-    | "multiLanguageSurveys"
-    | "accessControl"
-    | "quotas"
-  >
-): Promise<boolean> => {
-  const licenseFeatures = await getLicenseFeatures();
-  if (!licenseFeatures) return false;
-  return typeof licenseFeatures[featureKey] === "boolean" ? licenseFeatures[featureKey] : false;
-};
-
 export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("isMultiOrgEnabled");
 };
@@ -80,12 +96,7 @@ export const getIsSsoEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsQuotasEnabled = async (billingPlan: Organization["billing"]["plan"]): Promise<boolean> => {
-  const isEnabled = await getSpecificFeatureFlag("quotas");
-  // If the feature is enabled in the license, return true
-  if (isEnabled) return true;
-
-  // If the feature is not enabled in the license, check the fallback(Backwards compatibility)
-  return featureFlagFallback(billingPlan);
+  return getCustomPlanFeaturePermission(billingPlan, "quotas");
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
@@ -118,33 +129,16 @@ export const getIsSpamProtectionEnabled = async (
   return license.active && !!license.features?.spamProtection;
 };
 
-const featureFlagFallback = async (billingPlan: Organization["billing"]["plan"]): Promise<boolean> => {
-  const license = await getEnterpriseLicense();
-  if (IS_FORMBRICKS_CLOUD) return license.active && billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
-  else if (!IS_FORMBRICKS_CLOUD) return license.active;
-  return false;
-};
-
 export const getMultiLanguagePermission = async (
   billingPlan: Organization["billing"]["plan"]
 ): Promise<boolean> => {
-  const isEnabled = await getSpecificFeatureFlag("multiLanguageSurveys");
-  // If the feature is enabled in the license, return true
-  if (isEnabled) return true;
-
-  // If the feature is not enabled in the license, check the fallback(Backwards compatibility)
-  return featureFlagFallback(billingPlan);
+  return getCustomPlanFeaturePermission(billingPlan, "multiLanguageSurveys");
 };
 
 export const getAccessControlPermission = async (
   billingPlan: Organization["billing"]["plan"]
 ): Promise<boolean> => {
-  const isEnabled = await getSpecificFeatureFlag("accessControl");
-  // If the feature is enabled in the license, return true
-  if (isEnabled) return true;
-
-  // If the feature is not enabled in the license, check the fallback(Backwards compatibility)
-  return featureFlagFallback(billingPlan);
+  return getCustomPlanFeaturePermission(billingPlan, "accessControl");
 };
 
 export const getOrganizationProjectsLimit = async (
