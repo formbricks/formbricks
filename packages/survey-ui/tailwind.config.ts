@@ -35,8 +35,8 @@ export default {
           foreground: "var(--secondary-foreground)",
         },
         accent: {
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
+          DEFAULT: "var(--fb-accent-background-color)",
+          selected: "var(--fb-accent-background-color-selected)",
         },
         destructive: {
           DEFAULT: "var(--destructive)",
@@ -49,15 +49,15 @@ export default {
         },
         border: "var(--border)",
         input: "var(--input)",
-        ring: "var(--fb-brand-color)",
+        ring: "var(--fb-survey-brand-color)",
         brand: {
-          DEFAULT: "var(--fb-brand-color)",
-          "20": "color-mix(in srgb, var(--fb-brand-color) 20%, white)",
-          foreground: getForeground("var(--fb-brand-color)"),
+          DEFAULT: "var(--fb-survey-brand-color)",
+          "20": "color-mix(in srgb, var(--fb-survey-brand-color) 20%, white)",
+          foreground: getForeground("var(--fb-survey-brand-color)"),
         },
         // Input CSS variables (shorter names)
         "input-bg": "var(--fb-input-bg-color)",
-        "input-border": "var(--fb-input-border-color, var(--fb-brand-color))",
+        "input-border": "var(--fb-input-border-color, var(--fb-survey-brand-color))",
         "input-text": "var(--fb-input-color)",
         "input-placeholder": "var(--fb-input-placeholder-color)",
         // Option CSS variables

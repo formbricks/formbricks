@@ -23,7 +23,7 @@ export function Subheader({ subheader, elementId }: SubheaderProps) {
   return (
     <label
       htmlFor={elementId}
-      className="label-description block text-sm leading-6 font-normal wrap-break-word"
+      className="text-subheading block text-sm leading-6 font-normal wrap-break-word"
       data-testid="subheader"
       dir="auto">
       {isHtml ? (

@@ -204,7 +204,6 @@ export const ThemeStylingPreviewSurvey = ({
                   responseCount={42}
                   styling={project.styling}
                   languageCode="default"
-                  className="w-full"
                 />
               </div>
             </MediaBackground>

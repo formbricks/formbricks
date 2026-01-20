@@ -13,7 +13,7 @@ import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
+import { ColorField, DimensionInput } from "@/modules/ui/components/styling-fields";
 import { Switch } from "@/modules/ui/components/switch";
 
 type CardStylingSettingsProps = {
@@ -260,86 +260,3 @@ export const CardStylingSettings = ({
     </Collapsible.Root>
   );
 };
-
-const ColorField = ({ form, name, label }: { form: any; name: string; label: string }) => (
-  <FormField
-    control={form.control}
-    name={name}
-    render={({ field }) => (
-      <FormItem className="space-y-1">
-        <FormLabel className="text-xs">{label}</FormLabel>
-        <FormControl>
-          <ColorPicker
-            color={field.value}
-            onChange={(color) => field.onChange(color)}
-            containerClass="w-full"
-          />
-        </FormControl>
-      </FormItem>
-    )}
-  />
-);
-
-const DimensionInput = ({
-  form,
-  name,
-  label,
-  placeholder,
-}: {
-  form: any;
-  name: string;
-  label: string;
-  placeholder?: string;
-}) => (
-  <FormField
-    control={form.control}
-    name={name}
-    render={({ field }) => {
-      const value = field.value;
-      const isPercentage = typeof value === "string" && value.endsWith("%");
-      const unit = isPercentage ? "%" : "px";
-      const numericValue = isPercentage ? Number.parseFloat(value) : value;
-
-      return (
-        <FormItem className="space-y-1">
-          <FormLabel className="text-xs">{label}</FormLabel>
-          <FormControl>
-            <div className="flex rounded-md shadow-xs">
-              <Input
-                type="number"
-                value={numericValue ?? ""}
-                onChange={(e) => {
-                  const valStr = e.target.value;
-                  if (valStr === "") {
-                    field.onChange(null);
-                    return;
-                  }
-                  const newVal = Number.parseFloat(valStr);
-                  if (Number.isNaN(newVal)) {
-                    return;
-                  }
-                  field.onChange(unit === "%" ? `${newVal}%` : newVal);
-                }}
-                className="flex-1 rounded-r-none border-r-0 text-xs focus-visible:ring-0"
-                placeholder={placeholder}
-              />
-              <select
-                value={unit}
-                onChange={(e) => {
-                  const newUnit = e.target.value;
-                  const currentVal = numericValue ?? 0;
-                  field.onChange(newUnit === "%" ? `${currentVal}%` : currentVal);
-                }}
-                className="ring-offset-background placeholder:text-muted-foreground focus:border-brand-dark h-10 items-center justify-between rounded-r-md border border-slate-300 bg-white pr-8 pl-3 text-xs font-medium focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50">
-                <option value="px">px</option>
-                <option value="%">%</option>
-                <option value="rem">rem</option>
-                <option value="em">em</option>
-              </select>
-            </div>
-          </FormControl>
-        </FormItem>
-      );
-    }}
-  />
-);

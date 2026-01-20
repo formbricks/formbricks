@@ -52,7 +52,7 @@ function ElementHeader({
   videoUrl,
   imageAltText,
   ...props
-}: Readonly<ElementHeaderProps>): React.JSX.Element | null {
+}: Readonly<ElementHeaderProps>): React.JSX.Element {
   const isMediaAvailable = imageUrl ?? videoUrl;
 
   // Check if headline is HTML
@@ -65,10 +65,6 @@ function ElementHeader({
           FORBID_ATTR: ["style"],
         })
       : "";
-      
-  if (!headline && !description && !isMediaAvailable && !required) {
-    return null;
-  }
 
   return (
     <div className={cn("space-y-2", className)} {...props}>
@@ -80,7 +76,9 @@ function ElementHeader({
       {/* Headline */}
       <div>
         <div>
-          {required ? <span className="mb-[3px] opacity-60" style={{ color: "var(--fb-element-description-color)", fontSize: "var(--fb-element-description-font-size)" }}>{requiredLabel}</span> : null}
+          {required ? (
+            <span className="abel-headline mb-[3px] text-xs opacity-60">{requiredLabel}</span>
+          ) : null}
         </div>
         <div className="flex">
           {isHeadlineHtml && safeHeadlineHtml ? (
