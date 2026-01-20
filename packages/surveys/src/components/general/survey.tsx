@@ -801,6 +801,7 @@ export function Survey({
         return (
           Boolean(block) && (
             <BlockConditional
+              surveyLanguages={localSurvey.languages}
               key={block.id}
               surveyId={localSurvey.id}
               block={{

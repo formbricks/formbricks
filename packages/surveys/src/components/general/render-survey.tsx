@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
-import { checkIfSurveyIsRTL } from "@/lib/utils";
+import { isRTLLanguage } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
 
@@ -8,12 +8,11 @@ export function RenderSurvey(props: SurveyContainerProps) {
   const [isOpen, setIsOpen] = useState(true);
   const onFinishedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const isRTL = checkIfSurveyIsRTL(props.survey, props.languageCode);
+  const isRTL = isRTLLanguage(props.survey, props.languageCode);
   const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "auto");
 
   useEffect(() => {
-    const isRTL = checkIfSurveyIsRTL(props.survey, props.languageCode);
+    const isRTL = isRTLLanguage(props.survey, props.languageCode);
     setDir(isRTL ? "rtl" : "auto");
   }, [props.languageCode, props.survey]);
 

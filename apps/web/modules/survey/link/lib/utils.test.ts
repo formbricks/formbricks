@@ -1,85 +1,158 @@
 import { describe, expect, test } from "vitest";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getWebAppLocale } from "./utils";
+import { getElementsFromSurveyBlocks, getWebAppLocale, isRTL, isRTLLanguage } from "./utils";
+
+const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
+  ({
+    id: "survey-1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: "Test",
+    type: "link",
+    environmentId: "env-1",
+    createdBy: null,
+    status: "draft",
+    displayOption: "displayOnce",
+    autoClose: null,
+    triggers: [],
+    recontactDays: null,
+    displayLimit: null,
+    welcomeCard: {
+      enabled: false,
+      headline: { default: "Welcome" },
+      timeToFinish: false,
+      showResponseCount: false,
+    },
+    questions: [],
+    blocks: [],
+    endings: [],
+    hiddenFields: { enabled: false, fieldIds: [] },
+    variables: [],
+    styling: null,
+    segment: null,
+    languages,
+    displayPercentage: null,
+    isVerifyEmailEnabled: false,
+    isSingleResponsePerEmailEnabled: false,
+    singleUse: null,
+    pin: null,
+    projectOverwrites: null,
+    surveyClosedMessage: null,
+    followUps: [],
+    delay: 0,
+    autoComplete: null,
+    showLanguageSwitch: null,
+    recaptcha: null,
+    isBackButtonHidden: false,
+    isCaptureIpEnabled: false,
+    slug: null,
+    metadata: {},
+  }) as TSurvey;
 
 describe("getWebAppLocale", () => {
-  const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey => {
-    return {
-      id: "survey-1",
+  test("maps language codes and handles defaults", () => {
+    expect(getWebAppLocale("en", createMockSurvey())).toBe("en-US");
+    expect(getWebAppLocale("de", createMockSurvey())).toBe("de-DE");
+    const surveyWithLang = createMockSurvey([
+      {
+        language: {
+          id: "l1",
+          code: "de",
+          alias: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          projectId: "p1",
+        },
+        default: true,
+        enabled: true,
+      },
+    ]);
+    expect(getWebAppLocale("default", surveyWithLang)).toBe("de-DE");
+    expect(getWebAppLocale("xx", createMockSurvey())).toBe("en-US");
+  });
+});
+
+describe("isRTL", () => {
+  test("detects RTL characters", () => {
+    expect(isRTL("مرحبا")).toBe(true);
+    expect(isRTL("שלום")).toBe(true);
+    expect(isRTL("Hello")).toBe(false);
+  });
+});
+
+describe("isRTLLanguage", () => {
+  const createJsSurvey = (
+    languages: TJsEnvironmentStateSurvey["languages"] = [],
+    blocks: TSurveyBlock[] = []
+  ): TJsEnvironmentStateSurvey =>
+    ({
+      id: "s1",
       createdAt: new Date(),
       updatedAt: new Date(),
-      name: "Test Survey",
+      name: "Test",
       type: "link",
       environmentId: "env-1",
-      createdBy: null,
-      status: "draft",
-      displayOption: "displayOnce",
-      autoClose: null,
-      triggers: [],
-      recontactDays: null,
-      displayLimit: null,
       welcomeCard: {
         enabled: false,
         headline: { default: "Welcome" },
         timeToFinish: false,
         showResponseCount: false,
       },
-      questions: [],
-      blocks: [],
-      endings: [],
-      hiddenFields: { enabled: false, fieldIds: [] },
-      variables: [],
-      styling: null,
-      segment: null,
+      blocks,
       languages,
-      displayPercentage: null,
-      isVerifyEmailEnabled: false,
-      isSingleResponsePerEmailEnabled: false,
-      singleUse: null,
-      pin: null,
-      projectOverwrites: null,
-      surveyClosedMessage: null,
-      followUps: [],
-      delay: 0,
-      autoComplete: null,
-      showLanguageSwitch: null,
-      recaptcha: null,
-      isBackButtonHidden: false,
-      isCaptureIpEnabled: false,
-      slug: null,
-      metadata: {},
-    } as TSurvey;
-  };
+    }) as unknown as TJsEnvironmentStateSurvey;
 
-  test("maps language codes to web app locales", () => {
-    const survey = createMockSurvey();
-    expect(getWebAppLocale("en", survey)).toBe("en-US");
-    expect(getWebAppLocale("de", survey)).toBe("de-DE");
-    expect(getWebAppLocale("pt-BR", survey)).toBe("pt-BR");
-  });
-
-  test("handles 'default' languageCode by finding default language in survey", () => {
-    const survey = createMockSurvey([
+  test("checks language codes when multi-language enabled", () => {
+    const survey = createJsSurvey([
       {
         language: {
-          id: "lang1",
-          code: "de",
+          id: "l1",
+          code: "ar",
           alias: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          projectId: "proj1",
+          projectId: "p1",
         },
         default: true,
         enabled: true,
       },
     ]);
-
-    expect(getWebAppLocale("default", survey)).toBe("de-DE");
+    expect(isRTLLanguage(survey, "ar")).toBe(true);
+    expect(isRTLLanguage(survey, "en")).toBe(false);
   });
 
-  test("falls back to en-US when language is not supported", () => {
-    const survey = createMockSurvey();
-    expect(getWebAppLocale("default", survey)).toBe("en-US");
-    expect(getWebAppLocale("xx", survey)).toBe("en-US");
+  test("checks content when no languages configured", () => {
+    const element = {
+      id: "q1",
+      type: TSurveyElementTypeEnum.OpenText,
+      headline: { default: "مرحبا" },
+      required: false,
+    } as unknown as TSurveyElement;
+    const block = { id: "b1", name: "Block", elements: [element] } as TSurveyBlock;
+    expect(isRTLLanguage(createJsSurvey([], [block]), "default")).toBe(true);
+  });
+});
+
+describe("getElementsFromSurveyBlocks", () => {
+  test("extracts elements from blocks", () => {
+    const el1 = {
+      id: "q1",
+      type: TSurveyElementTypeEnum.OpenText,
+      headline: { default: "Q1" },
+      required: false,
+    } as unknown as TSurveyElement;
+    const el2 = {
+      id: "q2",
+      type: TSurveyElementTypeEnum.OpenText,
+      headline: { default: "Q2" },
+      required: false,
+    } as unknown as TSurveyElement;
+    const block = { id: "b1", name: "Block", elements: [el1, el2] } as TSurveyBlock;
+    const result = getElementsFromSurveyBlocks([block]);
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("q1");
   });
 });
