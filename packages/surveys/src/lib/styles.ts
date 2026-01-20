@@ -91,11 +91,21 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   const roundness = styling.roundness ?? 8;
 
   // Use the helper function to append CSS variables
+  appendCssVariable("brand-color", styling.brandColor?.light);
+  appendCssVariable("survey-brand-color", styling.brandColor?.light);
+  appendCssVariable("focus-color", styling.brandColor?.light);
+  if (styling.brandColor?.light) {
+    // If the brand color is defined, set the text color based on the lightness of the brand color
+    appendCssVariable("brand-text-color", isLight(styling.brandColor.light) ? "black" : "white");
+  } else {
+    // If the brand color is undefined, default to white
+    appendCssVariable("brand-text-color", "#ffffff");
+  }
 
   // Backwards-compat: legacy variables still used by some consumers/tests
   appendCssVariable("heading-color", styling.questionColor?.light);
   appendCssVariable("element-headline-color", styling.questionColor?.light);
-
+  appendCssVariable("element-description-color", styling.questionColor?.light);
   appendCssVariable("input-color", styling.questionColor?.light);
   appendCssVariable("label-color", styling.questionColor?.light);
   // Backwards-compat: legacy variables still used by some consumers/tests
@@ -111,11 +121,6 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("border-color-highlight", mixColor(styling.inputBorderColor.light, "#000000", 0.1));
     appendCssVariable("input-border-color", styling.inputBorderColor?.light);
   }
-
-  appendCssVariable("survey-brand-color", styling.brandColor?.light);
-  appendCssVariable("accent-background-color", styling.accentBgColor?.light);
-  appendCssVariable("accent-background-color-selected", styling.accentBgColorSelected?.light);
-  appendCssVariable("brand-color", styling.brandColor?.light); // Keep legacy for safety? Or just survey-brand-color per instruction. User said "like they were", implying restoration. I'll add both to be safe if "brand-color" was used before. But user specifically said "survey-brand-color". I will stick to survey-brand-color primarily but maybe add brand-color as alias if needed. I'll add survey-brand-color.
 
   // helper function to format dimensions
   const formatDimension = (value: string | number | null | undefined) => {
