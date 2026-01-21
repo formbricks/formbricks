@@ -142,7 +142,7 @@ export const Modal = ({
         ref={modalRef}
         style={{
           ...scalingClasses,
-          ...(borderRadius && {
+          ...(borderRadius !== undefined && {
             borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius,
           }),
           ...(background && {

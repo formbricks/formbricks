@@ -123,7 +123,7 @@ export const ThemeStyling = ({
     form.setValue("buttonBorderRadius", 4, { shouldDirty: true });
 
     // 3. Inputs (Card-like style)
-    form.setValue("inputBgColor.light", derivedInputBg, { shouldDirty: true });
+    form.setValue("inputColor.light", derivedInputBg, { shouldDirty: true });
     form.setValue("inputBorderColor.light", derivedCardBorder, { shouldDirty: true }); // Match card border
     form.setValue("inputTextColor.light", "#0f172a", { shouldDirty: true });
     form.setValue("inputBorderRadius", 8, { shouldDirty: true }); // Match roundness

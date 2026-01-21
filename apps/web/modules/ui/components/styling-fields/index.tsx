@@ -88,7 +88,10 @@ export const NumberField = ({
           <Input
             type="number"
             {...field}
-            onChange={(e) => field.onChange(e.target.valueAsNumber)}
+            onChange={(e) => {
+              const val = e.target.valueAsNumber;
+              field.onChange(Number.isNaN(val) ? null : val);
+            }}
             step={step}
             max={max}
             className="text-xs"
