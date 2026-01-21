@@ -48,7 +48,7 @@ import {
 } from "@/modules/survey/editor/lib/blocks";
 import { findElementUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { isEndingCardValid, isWelcomeCardValid, validateSurveyElementsInBatch } from "../lib/validation";
+
 
 interface ElementsViewProps {
   localSurvey: TSurvey;
@@ -58,7 +58,6 @@ interface ElementsViewProps {
   project: Project;
   projectLanguages: Language[];
   invalidElements: string[] | null;
-  setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
@@ -80,7 +79,6 @@ export const ElementsView = ({
   project,
   projectLanguages,
   invalidElements,
-  setInvalidElements,
   setSelectedLanguageCode,
   selectedLanguageCode,
   isMultiLanguageAllowed,
@@ -97,14 +95,9 @@ export const ElementsView = ({
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
-  const internalElementIdMap = useMemo(() => {
-    return elements.reduce((acc, element) => {
-      acc[element.id] = createId();
-      return acc;
-    }, {});
-  }, [elements]);
 
-  const surveyLanguages = localSurvey.languages;
+
+
 
   const getBlockName = (index: number): string => {
     return `Block ${index + 1}`;
@@ -195,34 +188,7 @@ export const ElementsView = ({
     };
   };
 
-  useEffect(() => {
-    if (!invalidElements) return;
-    let updatedInvalidElements: string[] = [...invalidElements];
 
-    // Check welcome card
-    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
-      if (!updatedInvalidElements.includes("start")) {
-        updatedInvalidElements = [...updatedInvalidElements, "start"];
-      }
-    } else {
-      updatedInvalidElements = updatedInvalidElements.filter((elementId) => elementId !== "start");
-    }
-
-    // Check thank you card
-    localSurvey.endings.forEach((ending) => {
-      if (!isEndingCardValid(ending, surveyLanguages)) {
-        if (!updatedInvalidElements.includes(ending.id)) {
-          updatedInvalidElements = [...updatedInvalidElements, ending.id];
-        }
-      } else {
-        updatedInvalidElements = updatedInvalidElements.filter((elementId) => elementId !== ending.id);
-      }
-    });
-
-    if (JSON.stringify(updatedInvalidElements) !== JSON.stringify(invalidElements)) {
-      setInvalidElements(updatedInvalidElements);
-    }
-  }, [localSurvey.welcomeCard, localSurvey.endings, surveyLanguages, invalidElements, setInvalidElements]);
 
   const updateElement = (elementIdx: number, updatedAttributes: any) => {
     // Get element ID from current elements array (for validation)
@@ -234,7 +200,6 @@ export const ElementsView = ({
 
     // Track side effects that need to happen after state update
     let newActiveElementId: string | null = null;
-    let invalidElementsUpdate: string[] | null = null;
 
     // Use functional update to ensure we work with the latest state
     setLocalSurvey((prevSurvey) => {
@@ -280,19 +245,11 @@ export const ElementsView = ({
         const initialElementId = elementId;
         updatedSurvey = handleElementLogicChange(updatedSurvey, initialElementId, elementLevelAttributes.id);
 
-        // Track side effects to apply after state update
-        if (invalidElements?.includes(initialElementId)) {
-          invalidElementsUpdate = invalidElements.map((id) =>
-            id === initialElementId ? elementLevelAttributes.id : id
-          );
-        }
-
         // Track new active element ID
         newActiveElementId = elementLevelAttributes.id;
 
         // Update internal element ID map
-        internalElementIdMap[elementLevelAttributes.id] = internalElementIdMap[elementId];
-        delete internalElementIdMap[elementId];
+
       }
 
       // Update element-level attributes if any
@@ -328,9 +285,6 @@ export const ElementsView = ({
     });
 
     // Apply side effects after state update is queued
-    if (invalidElementsUpdate) {
-      setInvalidElements(invalidElementsUpdate);
-    }
     if (newActiveElementId) {
       setActiveElementId(newActiveElementId);
     }
@@ -468,7 +422,7 @@ export const ElementsView = ({
 
     updatedSurvey = result.data;
     setLocalSurvey(updatedSurvey);
-    delete internalElementIdMap[elementId];
+
 
     handleActiveElementAfterDeletion(elementId, elementIdx, updatedSurvey, activeElementIdTemp);
 
@@ -495,7 +449,6 @@ export const ElementsView = ({
     }
 
     setActiveElementId(newElementId);
-    internalElementIdMap[newElementId] = createId();
 
     setLocalSurvey(result.data);
     toast.success(t("environments.surveys.edit.question_duplicated"));
@@ -524,7 +477,6 @@ export const ElementsView = ({
     });
 
     setActiveElementId(element.id);
-    internalElementIdMap[element.id] = createId();
   };
 
   const _addElementToBlock = (element: TSurveyElement, blockId: string, afterElementIdx: number) => {
@@ -549,7 +501,6 @@ export const ElementsView = ({
 
     setLocalSurvey(result.data);
     setActiveElementId(updatedElement.id);
-    internalElementIdMap[updatedElement.id] = createId();
   };
 
   const moveElementToBlock = (elementId: string, targetBlockId: string) => {
@@ -664,7 +615,6 @@ export const ElementsView = ({
       const duplicatedBlock = result.data.blocks[blockIndex + 1];
       if (duplicatedBlock?.elements[0]) {
         setActiveElementId(duplicatedBlock.elements[0].id);
-        internalElementIdMap[duplicatedBlock.elements[0].id] = createId();
       }
     }
 
@@ -721,22 +671,7 @@ export const ElementsView = ({
   };
 
   //useEffect to validate survey when changes are made to languages
-  useEffect(() => {
-    if (!invalidElements) return;
-    let updatedInvalidElements: string[] = invalidElements;
-    // Validate each element
-    elements.forEach((element) => {
-      updatedInvalidElements = validateSurveyElementsInBatch(
-        element,
-        updatedInvalidElements,
-        surveyLanguages
-      );
-    });
 
-    if (JSON.stringify(updatedInvalidElements) !== JSON.stringify(invalidElements)) {
-      setInvalidElements(updatedInvalidElements);
-    }
-  }, [elements, surveyLanguages, invalidElements, setInvalidElements]);
 
   useEffect(() => {
     const elementWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
