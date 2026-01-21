@@ -56,9 +56,19 @@ export const CustomScriptsInjector = ({
           newScript.setAttribute(attr.name, attr.value);
         });
 
-        // Copy inline script content
+        // Copy inline script content and wrap in try-catch to prevent runtime errors
         if (script.textContent) {
-          newScript.textContent = script.textContent;
+          // Wrap user scripts in try-catch to prevent errors like missing browser globals
+          // from breaking the survey (e.g., ReferenceError: xbrowser is not defined)
+          newScript.textContent = `
+(function() {
+  try {
+    ${script.textContent}
+  } catch (error) {
+    console.warn("[Formbricks] Error executing custom script:", error);
+  }
+})();
+          `.trim();
         }
 
         document.head.appendChild(newScript);
