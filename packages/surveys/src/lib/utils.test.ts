@@ -10,6 +10,7 @@ import {
   getMimeType,
   getShuffledChoicesIds,
   getShuffledRowIndices,
+  safeFormRequestSubmit,
 } from "./utils";
 
 // Mock crypto.getRandomValues for deterministic shuffle tests
@@ -325,5 +326,56 @@ describe("findBlockByElementId", () => {
   test("should return undefined for non-existent element", () => {
     const block = findBlockByElementId(survey.blocks, "nonexistent");
     expect(block).toBeUndefined();
+  });
+});
+
+describe("safeFormRequestSubmit", () => {
+  let mockForm: HTMLFormElement;
+
+  beforeEach(() => {
+    // Create a mock form element
+    mockForm = document.createElement("form");
+  });
+
+  test("should call requestSubmit when it's supported", () => {
+    // Mock requestSubmit as a function
+    const requestSubmitSpy = vi.fn();
+    mockForm.requestSubmit = requestSubmitSpy;
+
+    safeFormRequestSubmit(mockForm);
+
+    expect(requestSubmitSpy).toHaveBeenCalled();
+  });
+
+  test("should use fallback when requestSubmit is not supported", () => {
+    // Remove requestSubmit to simulate iOS Safari 15.5
+    mockForm.requestSubmit = undefined as unknown as typeof mockForm.requestSubmit;
+
+    const reportValiditySpy = vi.spyOn(mockForm, "reportValidity").mockReturnValue(true);
+    const dispatchEventSpy = vi.spyOn(mockForm, "dispatchEvent");
+
+    safeFormRequestSubmit(mockForm);
+
+    expect(reportValiditySpy).toHaveBeenCalled();
+    expect(dispatchEventSpy).toHaveBeenCalled();
+
+    // Verify the submit event was dispatched with correct properties
+    const dispatchedEvent = dispatchEventSpy.mock.calls[0][0];
+    expect(dispatchedEvent.type).toBe("submit");
+    expect(dispatchedEvent.bubbles).toBe(true);
+    expect(dispatchedEvent.cancelable).toBe(true);
+  });
+
+  test("should not dispatch event when reportValidity returns false", () => {
+    // Remove requestSubmit to simulate iOS Safari 15.5
+    mockForm.requestSubmit = undefined as unknown as typeof mockForm.requestSubmit;
+
+    const reportValiditySpy = vi.spyOn(mockForm, "reportValidity").mockReturnValue(false);
+    const dispatchEventSpy = vi.spyOn(mockForm, "dispatchEvent");
+
+    safeFormRequestSubmit(mockForm);
+
+    expect(reportValiditySpy).toHaveBeenCalled();
+    expect(dispatchEventSpy).not.toHaveBeenCalled();
   });
 });
