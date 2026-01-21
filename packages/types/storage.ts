@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const ZAllowedFileExtension = z.enum([
+// Single source of truth for allowed file extensions
+const ALLOWED_FILE_EXTENSIONS_TUPLE = [
   "heic",
   "png",
   "jpeg",
@@ -27,7 +28,15 @@ export const ZAllowedFileExtension = z.enum([
   "rar",
   "7z",
   "tar",
-]);
+] as const;
+
+// Derive zod enum from the tuple
+export const ZAllowedFileExtension = z.enum(ALLOWED_FILE_EXTENSIONS_TUPLE);
+
+export type TAllowedFileExtension = z.infer<typeof ZAllowedFileExtension>;
+
+// Export the array derived from the tuple
+export const ALLOWED_FILE_EXTENSIONS: TAllowedFileExtension[] = [...ALLOWED_FILE_EXTENSIONS_TUPLE];
 
 export const mimeTypes: Record<TAllowedFileExtension, string> = {
   heic: "image/heic",
@@ -57,8 +66,6 @@ export const mimeTypes: Record<TAllowedFileExtension, string> = {
   "7z": "application/x-7z-compressed",
   tar: "application/x-tar",
 };
-
-export type TAllowedFileExtension = z.infer<typeof ZAllowedFileExtension>;
 
 export const ZAccessType = z.enum(["public", "private"]);
 export type TAccessType = z.infer<typeof ZAccessType>;

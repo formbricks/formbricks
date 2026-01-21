@@ -6,6 +6,7 @@ settings:
 
 overrides:
   axios: '>=1.12.2'
+  uuid: 11.1.0
   node-forge: '>=1.3.2'
   tar-fs: 2.1.4
   typeorm: '>=0.3.26'
@@ -669,6 +670,9 @@ importers:
       bcryptjs:
         specifier: 2.4.3
         version: 2.4.3
+      uuid:
+        specifier: 11.1.0
+        version: 11.1.0
       zod:
         specifier: 3.24.4
         version: 3.24.4
@@ -10703,14 +10707,6 @@ packages:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
 
-  uuid@8.3.2:
-    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
-    hasBin: true
-
-  uuid@9.0.1:
-    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
-    hasBin: true
-
   v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
 
@@ -11299,7 +11295,7 @@ snapshots:
       '@smithy/util-waiter': 4.2.7
       '@types/uuid': 9.0.8
       tslib: 2.8.1
-      uuid: 9.0.1
+      uuid: 11.1.0
     transitivePeerDependencies:
       - aws-crt
 
@@ -11362,7 +11358,7 @@ snapshots:
       '@smithy/util-waiter': 4.2.7
       '@types/uuid': 9.0.8
       tslib: 2.8.1
-      uuid: 9.0.1
+      uuid: 11.1.0
     transitivePeerDependencies:
       - aws-crt
 
@@ -12585,7 +12581,7 @@ snapshots:
     dependencies:
       '@azure/msal-common': 15.13.3
       jsonwebtoken: 9.0.2
-      uuid: 8.3.2
+      uuid: 11.1.0
 
   '@azure/playwright@1.0.0(@playwright/test@1.56.1)':
     dependencies:
@@ -15802,7 +15798,7 @@ snapshots:
     dependencies:
       '@sentry/bundler-plugin-core': 4.6.1(encoding@0.1.13)
       unplugin: 1.0.1
-      uuid: 9.0.1
+      uuid: 11.1.0
       webpack: 5.99.8(esbuild@0.25.11)
     transitivePeerDependencies:
       - encoding
@@ -19344,7 +19340,7 @@ snapshots:
       https-proxy-agent: 7.0.6
       is-stream: 2.0.1
       node-fetch: 2.7.0(encoding@0.1.13)
-      uuid: 9.0.1
+      uuid: 11.1.0
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -19501,7 +19497,7 @@ snapshots:
       google-auth-library: 9.15.1(encoding@0.1.13)
       qs: 6.14.0
       url-template: 2.0.8
-      uuid: 9.0.1
+      uuid: 11.1.0
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -20630,7 +20626,7 @@ snapshots:
       preact-render-to-string: 5.2.6(preact@10.26.6)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-      uuid: 8.3.2
+      uuid: 11.1.0
     optionalDependencies:
       nodemailer: 7.0.11
 
@@ -22963,10 +22959,6 @@ snapshots:
   util-deprecate@1.0.2: {}
 
   uuid@11.1.0: {}
-
-  uuid@8.3.2: {}
-
-  uuid@9.0.1: {}
 
   v8-compile-cache-lib@3.0.1: {}
 

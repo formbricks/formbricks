@@ -16,6 +16,7 @@ interface RankingElementProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentElementId: string;
+  errorMessage?: string;
   dir?: "ltr" | "rtl" | "auto";
 }
 
@@ -27,12 +28,13 @@ export function RankingElement({
   ttc,
   setTtc,
   currentElementId,
+  errorMessage,
   dir = "auto",
 }: Readonly<RankingElementProps>) {
-  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
+  const { t } = useTranslation();
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -92,9 +94,6 @@ export function RankingElement({
 
   // Handle selection changes - store labels directly instead of IDs
   const handleChange = (selectedIds: string[]) => {
-    // Clear error when user changes ranking
-    setErrorMessage(undefined);
-
     const nextLabels: string[] = [];
     selectedIds.forEach((id) => {
       const matchingOption = options.find((opt) => opt.id === id);
@@ -107,22 +106,9 @@ export function RankingElement({
     setTtc(updatedTtcObj);
   };
 
-  const validateRequired = (): boolean => {
-    const isValueArray = Array.isArray(value);
-    const allItemsRanked = isValueArray && value.length === element.choices.length;
-
-    if ((element.required && !allItemsRanked) || (!element.required && value.length > 0 && !allItemsRanked)) {
-      setErrorMessage(t("errors.please_rank_all_items_before_submitting"));
-      return false;
-    }
-
-    return true;
-  };
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (!validateRequired()) return;
-
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -138,7 +124,7 @@ export function RankingElement({
         options={options}
         value={selectedValues}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}
