@@ -1,7 +1,7 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZColor, ZId, ZPlacement, ZUrl, getZSafeUrl } from "../common";
+import { ZColor, ZEndingCardUrl, ZId, ZPlacement, ZUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { ZLanguage } from "../project";
@@ -60,7 +60,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: ZUrl.optional(),
+  buttonLink: ZEndingCardUrl.optional(),
   imageUrl: ZUrl.optional(),
   videoUrl: ZUrl.optional(),
 });
@@ -69,7 +69,7 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: ZUrl.optional(),
+  url: ZEndingCardUrl.optional(),
   label: z.string().optional(),
 });
 
@@ -1830,7 +1830,7 @@ export const ZSurvey = z
               path: ["endings", index, "buttonLink"],
             });
           } else {
-            const parsedButtonLink = getZSafeUrl.safeParse(ending.buttonLink);
+            const parsedButtonLink = ZEndingCardUrl.safeParse(ending.buttonLink);
             if (!parsedButtonLink.success) {
               const errorMessage = parsedButtonLink.error.issues[0].message;
               ctx.addIssue({
@@ -1859,7 +1859,7 @@ export const ZSurvey = z
             path: ["endings", index, "url"],
           });
         } else {
-          const parsedUrl = getZSafeUrl.safeParse(ending.url);
+          const parsedUrl = ZEndingCardUrl.safeParse(ending.url);
           if (!parsedUrl.success) {
             const errorMessage = parsedUrl.error.issues[0].message;
             ctx.addIssue({

@@ -1,7 +1,7 @@
 // extend this object in order to add more validation rules
 import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
-import { z } from "zod";
+import { ZEndingCardUrl } from "@formbricks/types/common";
 import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
@@ -206,9 +206,15 @@ export const isEndingCardValid = (
   surveyLanguages: TSurveyLanguage[]
 ) => {
   if (card.type === "endScreen") {
-    const parseResult = z.string().url().safeParse(card.buttonLink);
-    if (card.buttonLabel !== undefined && !parseResult.success) {
-      return false;
+    // Use ZEndingCardUrl for consistent validation - allows dynamic URLs via hidden fields/recall values
+    if (card.buttonLabel !== undefined) {
+      if (!card.buttonLink) {
+        return false;
+      }
+      const parseResult = ZEndingCardUrl.safeParse(card.buttonLink.trim());
+      if (!parseResult.success) {
+        return false;
+      }
     }
 
     return (
@@ -217,12 +223,15 @@ export const isEndingCardValid = (
       isContentValid(card.buttonLabel, surveyLanguages)
     );
   } else {
-    const parseResult = z.string().url().safeParse(card.url);
-    if (parseResult.success) {
-      return card.label?.trim() !== "";
-    } else {
+    // Use ZEndingCardUrl for consistent validation - allows dynamic URLs via hidden fields/recall values
+    if (!card.url || card.url.trim() === "") {
       return false;
     }
+    const parseResult = ZEndingCardUrl.safeParse(card.url.trim());
+    if (!parseResult.success) {
+      return false;
+    }
+    return card.label?.trim() !== "";
   }
 };
 
