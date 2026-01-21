@@ -188,7 +188,6 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        // @ts-expect-error - React types version mismatch - the project uses React 19 types, but some Radix UI packages (react-day-picker) bundle their own older React types, creating incompatible Ref type definitions
         Root: CalendarRoot,
         Chevron: CalendarChevron,
         DayButton: CalendarDayButton,

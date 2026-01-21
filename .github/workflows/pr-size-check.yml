@@ -111,27 +111,21 @@ jobs:
             const additions = ${{ steps.check-size.outputs.total_additions }};
             const deletions = ${{ steps.check-size.outputs.total_deletions }};
             
-            const body = `## 🚨 PR Size Warning
-            
-This PR has approximately **${totalChanges} lines** of changes (${additions} additions, ${deletions} deletions across ${countedFiles} files).
-
-Large PRs (>800 lines) are significantly harder to review and increase the chance of merge conflicts. Consider splitting this into smaller, self-contained PRs.
-
-### 💡 Suggestions:
-- **Split by feature or module** - Break down into logical, independent pieces
-- **Create a sequence of PRs** - Each building on the previous one
-- **Branch off PR branches** - Don't wait for reviews to continue dependent work
-
-### 📊 What was counted:
-- ✅ Source files, stylesheets, configuration files
-- ❌ Excluded ${excludedFiles} files (tests, locales, locks, generated files)
-
-### 📚 Guidelines:
-- **Ideal:** 300-500 lines per PR
-- **Warning:** 500-800 lines
-- **Critical:** 800+ lines ⚠️
-
-If this large PR is unavoidable (e.g., migration, dependency update, major refactor), please explain in the PR description why it couldn't be split.`;
+            const body = '## 🚨 PR Size Warning\n\n' +
+              'This PR has approximately **' + totalChanges + ' lines** of changes (' + additions + ' additions, ' + deletions + ' deletions across ' + countedFiles + ' files).\n\n' +
+              'Large PRs (>800 lines) are significantly harder to review and increase the chance of merge conflicts. Consider splitting this into smaller, self-contained PRs.\n\n' +
+              '### 💡 Suggestions:\n' +
+              '- **Split by feature or module** - Break down into logical, independent pieces\n' +
+              '- **Create a sequence of PRs** - Each building on the previous one\n' +
+              '- **Branch off PR branches** - Don\'t wait for reviews to continue dependent work\n\n' +
+              '### 📊 What was counted:\n' +
+              '- ✅ Source files, stylesheets, configuration files\n' +
+              '- ❌ Excluded ' + excludedFiles + ' files (tests, locales, locks, generated files)\n\n' +
+              '### 📚 Guidelines:\n' +
+              '- **Ideal:** 300-500 lines per PR\n' +
+              '- **Warning:** 500-800 lines\n' +
+              '- **Critical:** 800+ lines ⚠️\n\n' +
+              'If this large PR is unavoidable (e.g., migration, dependency update, major refactor), please explain in the PR description why it couldn\'t be split.';
             
             // Check if we already commented
             const { data: comments } = await github.rest.issues.listComments({

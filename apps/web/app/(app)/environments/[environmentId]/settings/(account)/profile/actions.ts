@@ -58,7 +58,7 @@ async function handleEmailUpdate({
     payload.email = inputEmail;
     await updateBrevoCustomer({ id: ctx.user.id, email: inputEmail });
   } else {
-    await sendVerificationNewEmail(ctx.user.id, inputEmail);
+    await sendVerificationNewEmail(ctx.user.id, inputEmail, ctx.user.locale);
   }
   return payload;
 }
