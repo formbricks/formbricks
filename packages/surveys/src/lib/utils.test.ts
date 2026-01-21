@@ -10,6 +10,8 @@ import {
   getMimeType,
   getShuffledChoicesIds,
   getShuffledRowIndices,
+  isRTL,
+  isRTLLanguage,
 } from "./utils";
 
 // Mock crypto.getRandomValues for deterministic shuffle tests
@@ -325,5 +327,85 @@ describe("findBlockByElementId", () => {
   test("should return undefined for non-existent element", () => {
     const block = findBlockByElementId(survey.blocks, "nonexistent");
     expect(block).toBeUndefined();
+  });
+});
+
+describe("isRTL", () => {
+  test("returns true for RTL text", () => {
+    expect(isRTL("مرحبا")).toBe(true);
+    expect(isRTL("שלום")).toBe(true);
+  });
+
+  test("returns false for LTR text", () => {
+    expect(isRTL("Hello")).toBe(false);
+    expect(isRTL("")).toBe(false);
+  });
+});
+
+describe("isRTLLanguage", () => {
+  test("returns true for RTL language codes when multi-language enabled", () => {
+    const survey: TJsEnvironmentStateSurvey = {
+      ...baseMockSurvey,
+      languages: [
+        {
+          language: {
+            id: "l1",
+            code: "ar",
+            alias: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            projectId: "p1",
+          },
+          default: true,
+          enabled: true,
+        },
+      ],
+    } as TJsEnvironmentStateSurvey;
+    expect(isRTLLanguage(survey, "ar")).toBe(true);
+    expect(isRTLLanguage(survey, "he")).toBe(true);
+  });
+
+  test("returns false for LTR language codes", () => {
+    const survey: TJsEnvironmentStateSurvey = {
+      ...baseMockSurvey,
+      languages: [
+        {
+          language: {
+            id: "l1",
+            code: "en",
+            alias: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            projectId: "p1",
+          },
+          default: true,
+          enabled: true,
+        },
+      ],
+    } as TJsEnvironmentStateSurvey;
+    expect(isRTLLanguage(survey, "en")).toBe(false);
+  });
+
+  test("checks survey content when no languages configured", () => {
+    const survey: TJsEnvironmentStateSurvey = {
+      ...baseMockSurvey,
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "مرحبا" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+          ],
+        },
+      ],
+    } as TJsEnvironmentStateSurvey;
+    expect(isRTLLanguage(survey, "default")).toBe(true);
   });
 });

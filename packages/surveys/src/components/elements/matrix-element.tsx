@@ -16,6 +16,7 @@ interface MatrixElementProps {
   setTtc: (ttc: TResponseTtc) => void;
   currentElementId: string;
   errorMessage?: string;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function MatrixElement({
@@ -27,6 +28,7 @@ export function MatrixElement({
   setTtc,
   currentElementId,
   errorMessage,
+  dir = "auto",
 }: Readonly<MatrixElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
@@ -130,6 +132,7 @@ export function MatrixElement({
   return (
     <form key={element.id} onSubmit={handleSubmit} className="w-full">
       <Matrix
+        dir={dir}
         elementId={element.id}
         inputId={element.id}
         headline={getLocalizedValue(element.headline, languageCode)}

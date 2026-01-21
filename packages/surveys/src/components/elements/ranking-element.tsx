@@ -17,6 +17,7 @@ interface RankingElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   errorMessage?: string;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function RankingElement({
@@ -28,6 +29,7 @@ export function RankingElement({
   setTtc,
   currentElementId,
   errorMessage,
+  dir = "auto",
 }: Readonly<RankingElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
@@ -114,6 +116,7 @@ export function RankingElement({
   return (
     <form onSubmit={handleSubmit} className="w-full">
       <Ranking
+        dir={dir}
         elementId={element.id}
         inputId={element.id}
         headline={getLocalizedValue(element.headline, languageCode)}

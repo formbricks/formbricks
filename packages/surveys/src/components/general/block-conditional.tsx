@@ -6,6 +6,7 @@ import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { type TSurveyElement, type TSurveyRankingElement } from "@formbricks/types/surveys/elements";
+import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
@@ -13,7 +14,7 @@ import { ElementConditional } from "@/components/general/element-conditional";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation";
+import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/evaluator";
 
 interface BlockConditionalProps {
   block: TSurveyBlock;
@@ -35,6 +36,7 @@ interface BlockConditionalProps {
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
+  surveyLanguages: TSurveyLanguage[];
 }
 
 export function BlockConditional({
@@ -57,9 +59,9 @@ export function BlockConditional({
   onOpenExternalURL,
   dir,
   fullSizeCards,
-}: BlockConditionalProps) {
+  surveyLanguages,
+}: Readonly<BlockConditionalProps>) {
   const { t } = useTranslation();
-
   // Track the current element being filled (for TTC tracking)
   const [currentElementId, setCurrentElementId] = useState(block.elements[0]?.id);
 
@@ -315,6 +317,7 @@ export function BlockConditional({
               return (
                 <div key={element.id}>
                   <ElementConditional
+                    surveyLanguages={surveyLanguages}
                     element={element}
                     value={value[element.id]}
                     onChange={(responseData) => handleElementChange(element.id, responseData)}
