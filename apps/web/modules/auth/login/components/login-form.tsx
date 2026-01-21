@@ -19,6 +19,7 @@ import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-fac
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
+import { safeFormRequestSubmit } from "@/modules/ui/lib/utils";
 
 const ZLoginForm = z.object({
   email: z.string().email(),
@@ -236,7 +237,7 @@ export const LoginForm = ({
                     // Add a slight delay before focusing the input field to ensure it's visible
                     setTimeout(() => emailRef.current?.focus(), 100);
                   } else if (formRef.current) {
-                    formRef.current.requestSubmit();
+                    safeFormRequestSubmit(formRef.current);
                   }
                 }}
                 className="relative w-full justify-center"

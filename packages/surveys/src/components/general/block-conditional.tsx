@@ -14,7 +14,7 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { ElementConditional } from "@/components/general/element-conditional";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { cn, safeFormRequestSubmit } from "@/lib/utils";
 
 interface BlockConditionalProps {
   block: TSurveyBlock;
@@ -141,7 +141,7 @@ export function BlockConditional({
         response.length < rankingElement.choices.length);
 
     if (hasIncompleteRanking) {
-      form.requestSubmit();
+      safeFormRequestSubmit(form);
       return false;
     }
     return true;
@@ -174,7 +174,7 @@ export function BlockConditional({
       element.type === TSurveyElementTypeEnum.ContactInfo
     ) {
       if (!form.checkValidity()) {
-        form.requestSubmit();
+        safeFormRequestSubmit(form);
         return false;
       }
       return true;
@@ -191,14 +191,14 @@ export function BlockConditional({
       response &&
       hasUnansweredRows(response, element)
     ) {
-      form.requestSubmit();
+      safeFormRequestSubmit(form);
       return false;
     }
 
     // For other element types, check if required fields are empty
     // CTA elements should not block navigation even if marked required (as they are informational)
     if (element.type !== TSurveyElementTypeEnum.CTA && element.required && isEmptyResponse(response)) {
-      form.requestSubmit();
+      safeFormRequestSubmit(form);
       return false;
     }
 
@@ -230,7 +230,7 @@ export function BlockConditional({
     block.elements.forEach((element) => {
       const form = elementFormRefs.current.get(element.id);
       if (form) {
-        form.requestSubmit();
+        safeFormRequestSubmit(form);
       }
     });
 
