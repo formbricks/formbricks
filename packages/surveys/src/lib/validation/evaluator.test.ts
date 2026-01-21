@@ -17,11 +17,27 @@ const mockT = vi.fn((key: string) => {
   return key;
 }) as unknown as TFunction;
 
-// Mock getLocalizedValue
-vi.mock("@/lib/i18n", () => ({
-  getLocalizedValue: (localizedString: Record<string, string> | undefined, languageCode: string): string => {
-    if (!localizedString) return "";
-    return localizedString[languageCode] || localizedString.default || "";
+// Mock getLocalizedValue and getTranslations
+vi.mock("@/lib/i18n", () => {
+  const mockTFn = vi.fn((key: string) => key) as unknown as TFunction;
+  return {
+    getLocalizedValue: (
+      localizedString: Record<string, string> | undefined,
+      languageCode: string
+    ): string => {
+      if (!localizedString) return "";
+      return localizedString[languageCode] || localizedString.default || "";
+    },
+    getTranslations: () => mockTFn,
+  };
+});
+
+// Mock i18n.config to return our mock translation function
+vi.mock("@/lib/i18n.config", () => ({
+  default: {
+    language: "en",
+    changeLanguage: vi.fn(),
+    getFixedT: vi.fn(() => mockT),
   },
 }));
 
@@ -37,7 +53,7 @@ describe("validateElementResponse", () => {
         charLimit: 0,
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "", "en", mockT);
+      const result = validateElementResponse(element, "", "en");
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].ruleId).toBe("required");
@@ -53,7 +69,7 @@ describe("validateElementResponse", () => {
         charLimit: 0,
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "test value", "en", mockT);
+      const result = validateElementResponse(element, "test value", "en");
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
@@ -68,7 +84,7 @@ describe("validateElementResponse", () => {
         charLimit: 0,
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "", "en", mockT);
+      const result = validateElementResponse(element, "", "en");
       expect(result.valid).toBe(true);
     });
 
@@ -84,7 +100,7 @@ describe("validateElementResponse", () => {
         ],
       } as unknown as TSurveyRankingElement;
 
-      const result = validateElementResponse(element, ["opt1"], "en", mockT);
+      const result = validateElementResponse(element, ["opt1"], "en");
       expect(result.valid).toBe(true);
     });
 
@@ -100,7 +116,7 @@ describe("validateElementResponse", () => {
         ],
       } as unknown as TSurveyRankingElement;
 
-      const result = validateElementResponse(element, [], "en", mockT);
+      const result = validateElementResponse(element, [], "en");
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
     });
@@ -123,11 +139,11 @@ describe("validateElementResponse", () => {
       } as unknown as TSurveyMatrixElement;
 
       // At least 1 row answered should pass
-      const result1 = validateElementResponse(element, { row1: "col1" }, "en", mockT);
+      const result1 = validateElementResponse(element, { row1: "col1" }, "en");
       expect(result1.valid).toBe(true);
 
       // All rows answered should also pass
-      const result2 = validateElementResponse(element, { row1: "col1", row2: "col2" }, "en", mockT);
+      const result2 = validateElementResponse(element, { row1: "col1", row2: "col2" }, "en");
       expect(result2.valid).toBe(true);
     });
 
@@ -148,7 +164,7 @@ describe("validateElementResponse", () => {
         ],
       } as unknown as TSurveyMatrixElement;
 
-      const result = validateElementResponse(element, {}, "en", mockT);
+      const result = validateElementResponse(element, {}, "en");
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
     });
@@ -172,7 +188,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "hello", "en", mockT);
+      const result = validateElementResponse(element, "hello", "en");
       expect(result.valid).toBe(true);
     });
 
@@ -193,7 +209,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "hi", "en", mockT);
+      const result = validateElementResponse(element, "hi", "en");
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
     });
@@ -215,7 +231,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "hello", "en", mockT);
+      const result = validateElementResponse(element, "hello", "en");
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
     });
@@ -236,7 +252,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "hello", "en", mockT);
+      const result = validateElementResponse(element, "hello", "en");
       expect(result.valid).toBe(false);
     });
   });
@@ -259,7 +275,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "hello", "en", mockT);
+      const result = validateElementResponse(element, "hello", "en");
       expect(result.valid).toBe(true);
     });
 
@@ -280,7 +296,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "hello", "en", mockT);
+      const result = validateElementResponse(element, "hello", "en");
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
     });
@@ -297,7 +313,7 @@ describe("validateElementResponse", () => {
         charLimit: 0,
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "invalid-email", "en", mockT);
+      const result = validateElementResponse(element, "invalid-email", "en");
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.ruleId === "__implicit_email__")).toBe(true);
     });
@@ -312,7 +328,7 @@ describe("validateElementResponse", () => {
         charLimit: 0,
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "not-a-url", "en", mockT);
+      const result = validateElementResponse(element, "not-a-url", "en");
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.ruleId === "__implicit_url__")).toBe(true);
     });
@@ -327,7 +343,7 @@ describe("validateElementResponse", () => {
         charLimit: 0,
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "invalid-phone", "en", mockT);
+      const result = validateElementResponse(element, "invalid-phone", "en");
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.ruleId === "__implicit_phone__")).toBe(true);
     });
@@ -345,7 +361,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "test@example.com", "en", mockT);
+      const result = validateElementResponse(element, "test@example.com", "en");
       expect(result.valid).toBe(true);
       expect(result.errors.some((e) => e.ruleId === "__implicit_email__")).toBe(false);
     });
@@ -365,7 +381,7 @@ describe("validateElementResponse", () => {
         required: false,
       } as unknown as TSurveyContactInfoElement;
 
-      const result = validateElementResponse(element, ["John", "Doe", "invalid-email", "", ""], "en", mockT);
+      const result = validateElementResponse(element, ["John", "Doe", "invalid-email", "", ""], "en");
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.ruleId === "__implicit_email_field__")).toBe(true);
     });
@@ -383,7 +399,7 @@ describe("validateElementResponse", () => {
         required: false,
       } as unknown as TSurveyContactInfoElement;
 
-      const result = validateElementResponse(element, ["John", "Doe", "", "invalid-phone", ""], "en", mockT);
+      const result = validateElementResponse(element, ["John", "Doe", "", "invalid-phone", ""], "en");
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.ruleId === "__implicit_phone_field__")).toBe(true);
     });
@@ -404,12 +420,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyContactInfoElement;
 
-      const result = validateElementResponse(
-        element,
-        ["John", "Doe", "test@example.com", "", ""],
-        "en",
-        mockT
-      );
+      const result = validateElementResponse(element, ["John", "Doe", "test@example.com", "", ""], "en");
       expect(result.valid).toBe(true);
       expect(result.errors.some((e) => e.ruleId === "__implicit_email_field__")).toBe(false);
     });
@@ -433,7 +444,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyAddressElement;
 
-      const result = validateElementResponse(element, ["123 Main St", "", "NY", "", "", ""], "en", mockT);
+      const result = validateElementResponse(element, ["123 Main St", "", "NY", "", "", ""], "en");
       expect(result.valid).toBe(false);
     });
 
@@ -454,12 +465,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyAddressElement;
 
-      const result = validateElementResponse(
-        element,
-        ["123 Main St", "", "New York", "", "", ""],
-        "en",
-        mockT
-      );
+      const result = validateElementResponse(element, ["123 Main St", "", "New York", "", "", ""], "en");
       expect(result.valid).toBe(true);
     });
   });
@@ -484,8 +490,7 @@ describe("validateElementResponse", () => {
       const result = validateElementResponse(
         element,
         ["Jo", "Doe", "test@example.com", "1234567890", ""],
-        "en",
-        mockT
+        "en"
       );
       expect(result.valid).toBe(false);
     });
@@ -513,7 +518,7 @@ describe("validateElementResponse", () => {
       } as unknown as TSurveyMatrixElement;
 
       // Required check passes (at least 1 row), but validation rule fails (needs 2 rows)
-      const result = validateElementResponse(element, { row1: "col1" }, "en", mockT);
+      const result = validateElementResponse(element, { row1: "col1" }, "en");
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBe(1);
     });
@@ -539,7 +544,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyMatrixElement;
 
-      const result = validateElementResponse(element, { row1: "col1" }, "en", mockT);
+      const result = validateElementResponse(element, { row1: "col1" }, "en");
       expect(result.valid).toBe(false);
     });
 
@@ -564,11 +569,11 @@ describe("validateElementResponse", () => {
       } as unknown as TSurveyMatrixElement;
 
       // Only 1 row answered, should fail
-      const result1 = validateElementResponse(element, { row1: "col1" }, "en", mockT);
+      const result1 = validateElementResponse(element, { row1: "col1" }, "en");
       expect(result1.valid).toBe(false);
 
       // All rows answered, should pass
-      const result2 = validateElementResponse(element, { row1: "col1", row2: "col2" }, "en", mockT);
+      const result2 = validateElementResponse(element, { row1: "col1", row2: "col2" }, "en");
       expect(result2.valid).toBe(true);
     });
   });
@@ -588,7 +593,7 @@ describe("validateElementResponse", () => {
         },
       } as unknown as TSurveyOpenTextElement;
 
-      const result = validateElementResponse(element, "test", "en", mockT);
+      const result = validateElementResponse(element, "test", "en");
       expect(result.valid).toBe(true);
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
@@ -622,7 +627,7 @@ describe("validateBlockResponses", () => {
       text2: "value2",
     };
 
-    const result = validateBlockResponses(elements, responses, "en", mockT);
+    const result = validateBlockResponses(elements, responses, "en");
     expect(Object.keys(result)).toHaveLength(0);
   });
 
@@ -651,7 +656,7 @@ describe("validateBlockResponses", () => {
       text2: "value2",
     };
 
-    const result = validateBlockResponses(elements, responses, "en", mockT);
+    const result = validateBlockResponses(elements, responses, "en");
     expect(Object.keys(result)).toHaveLength(1);
     const text1Errors = result.text1;
     expect(text1Errors).toBeDefined();
@@ -672,7 +677,7 @@ describe("validateBlockResponses", () => {
 
     const responses: TResponseData = {};
 
-    const result = validateBlockResponses(elements, responses, "en", mockT);
+    const result = validateBlockResponses(elements, responses, "en");
     expect(Object.keys(result)).toHaveLength(1);
     expect(result.text1).toBeDefined();
   });

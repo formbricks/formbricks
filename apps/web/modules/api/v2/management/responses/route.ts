@@ -13,6 +13,7 @@ import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
+import { formatValidationErrorsForApi, validateResponseData } from "./lib/validation";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -126,6 +127,24 @@ export const POST = async (request: Request) =>
             },
           ],
         });
+      }
+
+      // Validate response data against validation rules
+      const validationErrors = validateResponseData(
+        surveyQuestions.data.blocks,
+        body.data,
+        body.language ?? "en"
+      );
+
+      if (validationErrors) {
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: formatValidationErrorsForApi(validationErrors),
+          },
+          auditLog
+        );
       }
 
       const createResponseResult = await createResponseWithQuotaEvaluation(environmentId, body);
