@@ -4,6 +4,7 @@ import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/types/surveys/elements";
+import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { AddressElement } from "@/components/elements/address-element";
 import { CalElement } from "@/components/elements/cal-element";
 import { ConsentElement } from "@/components/elements/consent-element";
@@ -36,6 +37,7 @@ interface ElementConditionalProps {
   dir?: "ltr" | "rtl" | "auto";
   formRef?: (ref: HTMLFormElement | null) => void; // Callback to expose the form element
   onTtcCollect?: (elementId: string, ttc: number) => void; // Callback to collect TTC synchronously
+  surveyLanguages: TSurveyLanguage[];
 }
 
 export function ElementConditional({
@@ -53,7 +55,8 @@ export function ElementConditional({
   dir,
   formRef,
   onTtcCollect,
-}: ElementConditionalProps) {
+  surveyLanguages,
+}: Readonly<ElementConditionalProps>) {
   // Ref to the container div, used to find and expose the form element inside
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -224,6 +227,8 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
+            surveyLanguages={surveyLanguages}
+            dir={dir}
           />
         );
       case TSurveyElementTypeEnum.PictureSelection:
@@ -280,6 +285,7 @@ export function ElementConditional({
             ttc={ttc}
             setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
+            dir={dir}
           />
         );
       case TSurveyElementTypeEnum.Address:
@@ -299,6 +305,7 @@ export function ElementConditional({
       case TSurveyElementTypeEnum.Ranking:
         return (
           <RankingElement
+            dir={dir}
             element={element}
             value={Array.isArray(value) ? getResponseValueForRankingElement(value, element.choices) : []}
             onChange={onChange}

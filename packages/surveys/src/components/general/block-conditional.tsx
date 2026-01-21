@@ -9,6 +9,7 @@ import {
   type TSurveyMatrixElement,
   type TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
+import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ElementConditional } from "@/components/general/element-conditional";
@@ -36,6 +37,7 @@ interface BlockConditionalProps {
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
+  surveyLanguages: TSurveyLanguage[];
 }
 
 export function BlockConditional({
@@ -58,7 +60,8 @@ export function BlockConditional({
   onOpenExternalURL,
   dir,
   fullSizeCards,
-}: BlockConditionalProps) {
+  surveyLanguages,
+}: Readonly<BlockConditionalProps>) {
   // Track the current element being filled (for TTC tracking)
   const [currentElementId, setCurrentElementId] = useState(block.elements[0]?.id);
 
@@ -290,6 +293,7 @@ export function BlockConditional({
               return (
                 <div key={element.id}>
                   <ElementConditional
+                    surveyLanguages={surveyLanguages}
                     element={element}
                     value={value[element.id]}
                     onChange={(responseData) => handleElementChange(element.id, responseData)}

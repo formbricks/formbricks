@@ -16,6 +16,7 @@ interface RankingElementProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentElementId: string;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function RankingElement({
@@ -26,6 +27,7 @@ export function RankingElement({
   ttc,
   setTtc,
   currentElementId,
+  dir = "auto",
 }: Readonly<RankingElementProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
@@ -128,6 +130,7 @@ export function RankingElement({
   return (
     <form onSubmit={handleSubmit} className="w-full">
       <Ranking
+        dir={dir}
         elementId={element.id}
         inputId={element.id}
         headline={getLocalizedValue(element.headline, languageCode)}
