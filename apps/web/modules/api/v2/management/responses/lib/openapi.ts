@@ -11,7 +11,8 @@ import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/type
 export const getResponsesEndpoint: ZodOpenApiOperationObject = {
   operationId: "getResponses",
   summary: "Get responses",
-  description: "Gets responses from the database.",
+  description:
+    "Gets responses from the database. Use the `expand` parameter to enrich response data with additional information like choice IDs (for language-agnostic processing) or question headlines.",
   requestParams: {
     query: ZGetResponsesFilter.sourceType(),
   },

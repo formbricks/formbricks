@@ -1,6 +1,6 @@
-import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getSurvey } from "@/lib/survey/service";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -13,6 +13,7 @@ import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
+import { transformResponses } from "./lib/transform";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -34,16 +35,17 @@ export const GET = async (request: NextRequest) =>
         (permission) => permission.environmentId
       );
 
-      const environmentResponses: Response[] = [];
       const res = await getResponses(environmentIds, query);
 
       if (!res.ok) {
         return handleApiError(request, res.error);
       }
 
-      environmentResponses.push(...res.data.data);
+      // Transform responses if expansion is requested
+      const expand = query.expand ?? [];
+      const transformedResponses = await transformResponses(res.data.data, expand, getSurvey);
 
-      return responses.successResponse({ data: environmentResponses });
+      return responses.successResponse({ data: transformedResponses, meta: res.data.meta });
     },
   });
 
