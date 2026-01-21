@@ -613,7 +613,7 @@
       "attribute_created_successfully": "Attribute created successfully",
       "attribute_description": "Description",
       "attribute_description_placeholder": "Short description",
-      "attribute_key": "Key",
+      "attribute_key": "Attribute",
       "attribute_key_cannot_be_changed": "Key cannot be changed after creation",
       "attribute_key_hint": "Only lowercase letters, numbers, and underscores. Must start with a letter.",
       "attribute_key_placeholder": "e.g. date_of_birth",

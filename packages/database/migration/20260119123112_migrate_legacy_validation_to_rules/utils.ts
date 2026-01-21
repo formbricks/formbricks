@@ -1,4 +1,4 @@
-import { v7 as uuidv7 } from "uuid";
+import { createId } from "@paralleldrive/cuid2";
 import type { SurveyElement, ValidationRule } from "./types";
 
 /**
@@ -62,7 +62,7 @@ export function migrateOpenTextCharLimit(element: SurveyElement): void {
     !hasMatchingRule(existingRules, "minLength", { min: element.charLimit.min })
   ) {
     const newRule: ValidationRule = {
-      id: uuidv7(),
+      id: createId(),
       type: "minLength",
       params: { min: element.charLimit.min },
     };
@@ -78,7 +78,7 @@ export function migrateOpenTextCharLimit(element: SurveyElement): void {
     })
   ) {
     const newRule: ValidationRule = {
-      id: uuidv7(),
+      id: createId(),
       type: "maxLength",
       params: { max: element.charLimit.max },
     };
@@ -138,7 +138,7 @@ export function migrateFileUploadExtensions(element: SurveyElement): void {
   if (!hasMatchingExtensionRule) {
     // Create new fileExtensionIs rule
     const newRule: ValidationRule = {
-      id: uuidv7(),
+      id: createId(),
       type: "fileExtensionIs",
       params: { extensions: [...extensions] },
     };
