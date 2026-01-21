@@ -16,6 +16,41 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
+/**
+ * Safely calls requestSubmit on a form element with fallback for browsers
+ * that don't support it (e.g., Mobile Safari 15.5)
+ */
+const safeRequestSubmit = (form: HTMLFormElement | null | undefined): void => {
+  if (!form) {
+    return;
+  }
+
+  // Check if requestSubmit is available
+  if (typeof form.requestSubmit === "function") {
+    try {
+      form.requestSubmit();
+    } catch (error) {
+      // Fallback if requestSubmit throws an error
+      console.warn("[Formbricks] form.requestSubmit() failed, using fallback:", error);
+      dispatchSubmitEvent(form);
+    }
+  } else {
+    // Fallback for browsers that don't support requestSubmit
+    dispatchSubmitEvent(form);
+  }
+};
+
+/**
+ * Fallback method to trigger form validation by dispatching a submit event
+ */
+const dispatchSubmitEvent = (form: HTMLFormElement): void => {
+  const submitEvent = new Event("submit", {
+    bubbles: true,
+    cancelable: true,
+  });
+  form.dispatchEvent(submitEvent);
+};
+
 interface BlockConditionalProps {
   block: TSurveyBlock;
   value: TResponseData;
@@ -141,7 +176,7 @@ export function BlockConditional({
         response.length < rankingElement.choices.length);
 
     if (hasIncompleteRanking) {
-      form.requestSubmit();
+      safeRequestSubmit(form);
       return false;
     }
     return true;
@@ -174,7 +209,7 @@ export function BlockConditional({
       element.type === TSurveyElementTypeEnum.ContactInfo
     ) {
       if (!form.checkValidity()) {
-        form.requestSubmit();
+        safeRequestSubmit(form);
         return false;
       }
       return true;
@@ -191,14 +226,14 @@ export function BlockConditional({
       response &&
       hasUnansweredRows(response, element)
     ) {
-      form.requestSubmit();
+      safeRequestSubmit(form);
       return false;
     }
 
     // For other element types, check if required fields are empty
     // CTA elements should not block navigation even if marked required (as they are informational)
     if (element.type !== TSurveyElementTypeEnum.CTA && element.required && isEmptyResponse(response)) {
-      form.requestSubmit();
+      safeRequestSubmit(form);
       return false;
     }
 
@@ -229,9 +264,7 @@ export function BlockConditional({
     // Call each form's submit method to trigger TTC calculation
     block.elements.forEach((element) => {
       const form = elementFormRefs.current.get(element.id);
-      if (form) {
-        form.requestSubmit();
-      }
+      safeRequestSubmit(form);
     });
 
     // Collect TTC from the ref (populated synchronously by form submissions)
