@@ -75,7 +75,7 @@ export function SubmitButton({
       autoFocus={focus}
       className={cn(
         "bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom mb-1 flex items-center border px-3 py-3 text-base leading-4 font-medium shadow-xs hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
-        "mb-1 flex items-center justify-center shadow-xs hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
+        "justify-center shadow-xs hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
         "button-custom"
       )}
       onClick={onClick}
