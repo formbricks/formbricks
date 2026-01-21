@@ -1642,6 +1642,7 @@
         "validation_rules_description": "Acceptera endast svar som uppfyller följande kriterier",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} används i logiken för fråga {questionIndex}. Vänligen ta bort den från logiken först.",
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variabel \"{variableName}\" används i kvoten \"{quotaName}\"",
+        "variable_name_conflicts_with_hidden_field": "Variabelnamnet krockar med ett befintligt dolt fält-ID.",
         "variable_name_is_already_taken_please_choose_another": "Variabelnamnet är redan taget, vänligen välj ett annat.",
         "variable_name_must_start_with_a_letter": "Variabelnamnet måste börja med en bokstav.",
         "variable_used_in_recall": "Variabel \"{variable}\" återkallas i fråga {questionIndex}.",

@@ -304,16 +304,22 @@ export const validateId = (
   field: string,
   existingElementIds: string[],
   existingEndingCardIds: string[],
-  existingHiddenFieldIds: string[]
+  existingHiddenFieldIds: string[],
+  existingVariableNames: string[] = []
 ): string | null => {
   if (field.trim() === "") {
     return `Please enter a ${type} Id.`;
   }
 
-  const combinedIds = [...existingElementIds, ...existingHiddenFieldIds, ...existingEndingCardIds];
+  const combinedIds = [
+    ...existingElementIds,
+    ...existingHiddenFieldIds,
+    ...existingEndingCardIds,
+    ...existingVariableNames,
+  ];
 
   if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
-    return `${type} ID already exists in questions or hidden fields`;
+    return `${type} ID already exists in questions, hidden fields, or variables`;
   }
 
   if (FORBIDDEN_IDS.includes(field)) {
