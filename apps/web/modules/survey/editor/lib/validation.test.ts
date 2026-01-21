@@ -274,6 +274,24 @@ describe("validation.isEndingCardValid", () => {
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
   });
 
+  test("should return true for endScreen card with http:// URL", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "http://example.com",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
+  test("should return true for endScreen card with dynamic URL containing recall", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "https://#recall:test123/fallback:example.com",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
   // RedirectURL Card tests
   test("should return true for a valid redirectUrl card", () => {
     expect(validation.isEndingCardValid(baseRedirectUrlCard, surveyLanguagesEnabled)).toBe(true);
@@ -282,6 +300,16 @@ describe("validation.isEndingCardValid", () => {
   test("should return false for redirectUrl card if URL is invalid", () => {
     const card = { ...baseRedirectUrlCard, url: "invalid-url" };
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
+  });
+
+  test("should return true for redirectUrl card with http:// URL", () => {
+    const card = { ...baseRedirectUrlCard, url: "http://example.com" };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
+  test("should return true for redirectUrl card with dynamic URL containing recall", () => {
+    const card = { ...baseRedirectUrlCard, url: "https://#recall:test123/fallback:example.com" };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
 
   test("should return false for redirectUrl card if label is empty", () => {
