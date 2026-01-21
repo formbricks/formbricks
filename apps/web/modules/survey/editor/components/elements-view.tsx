@@ -48,6 +48,7 @@ import {
 } from "@/modules/survey/editor/lib/blocks";
 import { findElementUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { isEndingCardValid, isWelcomeCardValid, validateSurveyElementsInBatch } from "../lib/validation";
 
 interface ElementsViewProps {
@@ -94,6 +95,13 @@ export const ElementsView = ({
   isExternalUrlsAllowed,
 }: ElementsViewProps) => {
   const { t } = useTranslation();
+  const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
+    open: boolean;
+    elementIdx: number;
+  }>({
+    open: false,
+    elementIdx: 0,
+  });
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
@@ -388,14 +396,6 @@ export const ElementsView = ({
   };
 
   const validateElementDeletion = (elementId: string, elementIdx: number): boolean => {
-    const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
-    if (usedElementIdx !== -1) {
-      toast.error(
-        t("environments.surveys.edit.question_used_in_logic", { questionIndex: usedElementIdx + 1 })
-      );
-      return false;
-    }
-
     const recallElementIdx = isUsedInRecall(localSurvey, elementId);
     if (recallElementIdx === elements.length) {
       toast.error(t("environments.surveys.edit.question_used_in_recall_ending_card"));
@@ -439,15 +439,11 @@ export const ElementsView = ({
     }
   };
 
-  const deleteElement = (elementIdx: number) => {
+  const executeDeletion = (elementIdx: number) => {
     const element = elements[elementIdx];
     if (!element) return;
 
     const elementId = element.id;
-    if (!validateElementDeletion(elementId, elementIdx)) {
-      return;
-    }
-
     const activeElementIdTemp = activeElementId ?? elements[0]?.id;
     // let updatedSurvey = removeRecallReferences(localSurvey, elementId);
     let updatedSurvey = structuredClone(localSurvey);
@@ -473,6 +469,24 @@ export const ElementsView = ({
     handleActiveElementAfterDeletion(elementId, elementIdx, updatedSurvey, activeElementIdTemp);
 
     toast.success(t("environments.surveys.edit.question_deleted"));
+  };
+
+  const deleteElement = (elementIdx: number) => {
+    const element = elements[elementIdx];
+    if (!element) return;
+
+    const elementId = element.id;
+    if (!validateElementDeletion(elementId, elementIdx)) {
+      return;
+    }
+
+    const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
+    if (usedElementIdx !== -1) {
+      setLogicDeletionWarning({ open: true, elementIdx });
+      return;
+    }
+
+    executeDeletion(elementIdx);
   };
 
   const duplicateElement = (elementIdx: number) => {
@@ -918,6 +932,18 @@ export const ElementsView = ({
           </>
         )}
       </div>
+
+      <ConfirmationModal
+        open={logicDeletionWarning.open}
+        setOpen={(open) => setLogicDeletionWarning((prev) => ({ ...prev, open: open as boolean }))}
+        title={t("environments.surveys.edit.question_used_in_logic_warning")}
+        body={t("environments.surveys.edit.question_used_in_logic_warning")}
+        buttonText={t("environments.surveys.edit.delete_anyways")}
+        onConfirm={() => {
+          executeDeletion(logicDeletionWarning.elementIdx);
+          setLogicDeletionWarning((prev) => ({ ...prev, open: false }));
+        }}
+      />
     </div>
   );
 };
