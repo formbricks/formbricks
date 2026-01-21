@@ -258,6 +258,292 @@ const resolveUserIdConflict = (
   };
 };
 
+/**
+ * Extracts unique emails, userIds, and attribute keys from CSV data
+ */
+const extractCsvMetadata = (
+  csvData: Record<string, string>[]
+): {
+  csvEmails: string[];
+  csvUserIds: string[];
+  csvKeys: Set<string>;
+  attributeValuesByKey: Map<string, string[]>;
+} => {
+  const csvEmails = Array.from(new Set(csvData.map((r) => r.email).filter(Boolean)));
+  const csvUserIds = Array.from(new Set(csvData.map((r) => r.userId).filter(Boolean)));
+  const csvKeys = new Set<string>();
+  const attributeValuesByKey = new Map<string, string[]>();
+
+  for (const record of csvData) {
+    for (const [key, value] of Object.entries(record)) {
+      csvKeys.add(key);
+
+      const existingValues = attributeValuesByKey.get(key) ?? [];
+      if (value && value.trim() !== "") {
+        existingValues.push(value);
+      }
+      attributeValuesByKey.set(key, existingValues);
+    }
+  }
+
+  return { csvEmails, csvUserIds, csvKeys, attributeValuesByKey };
+};
+
+/**
+ * Builds a map of attribute keys to their detected/existing data types
+ */
+const buildAttributeTypeMap = (
+  attributeValuesByKey: Map<string, string[]>,
+  existingAttributeKeys: { key: string; dataType: TContactAttributeDataType }[],
+  lowercaseToActualKeyMap: Map<string, string>
+): Map<string, TContactAttributeDataType> => {
+  const attributeTypeMap = new Map<string, TContactAttributeDataType>();
+
+  for (const [key, values] of attributeValuesByKey) {
+    const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
+    const existingKey = actualKey ? existingAttributeKeys.find((ak) => ak.key === actualKey) : null;
+
+    if (existingKey) {
+      attributeTypeMap.set(key, existingKey.dataType);
+    } else {
+      const firstValue = values.find((v) => v !== "");
+      const detectedType = firstValue ? detectAttributeDataType(firstValue) : "string";
+      attributeTypeMap.set(key, detectedType);
+    }
+  }
+
+  return attributeTypeMap;
+};
+
+/**
+ * Validates attribute values against their detected types and downgrades to string if invalid
+ */
+const validateAndAdjustCsvAttributeTypes = (
+  attributeTypeMap: Map<string, TContactAttributeDataType>,
+  attributeValuesByKey: Map<string, string[]>
+): void => {
+  const typeValidationErrors: string[] = [];
+
+  for (const [key, dataType] of attributeTypeMap) {
+    if (dataType === "string") continue;
+
+    const values = attributeValuesByKey.get(key) || [];
+
+    for (const value of values) {
+      const columns = prepareAttributeColumnsForStorage(value, dataType);
+      const parseFailed =
+        (dataType === "number" && columns.valueNumber === null) ||
+        (dataType === "date" && columns.valueDate === null);
+
+      if (parseFailed) {
+        attributeTypeMap.set(key, "string");
+        typeValidationErrors.push(
+          `Attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`
+        );
+        break;
+      }
+    }
+  }
+
+  if (typeValidationErrors.length > 0) {
+    logger.warn({ errors: typeValidationErrors }, "Type validation warnings during CSV upload");
+  }
+};
+
+/**
+ * Creates missing attribute keys in the database
+ */
+const createMissingAttributeKeys = async (
+  csvKeys: Set<string>,
+  lowercaseToActualKeyMap: Map<string, string>,
+  attributeKeyMap: Map<string, string>,
+  attributeTypeMap: Map<string, TContactAttributeDataType>,
+  environmentId: string
+): Promise<void> => {
+  const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
+
+  if (missingKeys.length === 0) return;
+
+  // Deduplicate by lowercase to avoid creating duplicates like "firstName" and "firstname"
+  const uniqueMissingKeys = new Map<string, string>();
+  for (const key of missingKeys) {
+    const lowerKey = key.toLowerCase();
+    if (!uniqueMissingKeys.has(lowerKey)) {
+      uniqueMissingKeys.set(lowerKey, key);
+    }
+  }
+
+  await prisma.contactAttributeKey.createMany({
+    data: Array.from(uniqueMissingKeys.values()).map((key) => ({
+      key,
+      name: key,
+      dataType: attributeTypeMap.get(key) ?? "string",
+      environmentId,
+    })),
+    skipDuplicates: true,
+  });
+
+  // Fetch and update the maps with new keys
+  const newAttributeKeys = await prisma.contactAttributeKey.findMany({
+    where: {
+      key: { in: Array.from(uniqueMissingKeys.values()) },
+      environmentId,
+    },
+    select: { key: true, id: true, dataType: true },
+  });
+
+  for (const attrKey of newAttributeKeys) {
+    attributeKeyMap.set(attrKey.key, attrKey.id);
+    lowercaseToActualKeyMap.set(attrKey.key.toLowerCase(), attrKey.key);
+  }
+};
+
+type TExistingContactFromCsv = {
+  id: string;
+  attributes: { attributeKey: { key: string; id: string }; value: string }[];
+};
+
+type TExistingUserId = { value: string; contactId: string };
+
+type TCsvProcessingContext = {
+  lowercaseToActualKeyMap: Map<string, string>;
+  emailToContactMap: Map<string, TExistingContactFromCsv>;
+  existingUserIds: TExistingUserId[];
+  attributeKeyMap: Map<string, string>;
+  attributeTypeMap: Map<string, TContactAttributeDataType>;
+  duplicateContactsAction: "skip" | "update" | "overwrite";
+  environmentId: string;
+};
+
+/**
+ * Processes a single CSV record to create or update a contact
+ */
+const processCsvRecord = async (
+  record: Record<string, string>,
+  ctx: TCsvProcessingContext
+): Promise<TContact | null> => {
+  const {
+    lowercaseToActualKeyMap,
+    emailToContactMap,
+    existingUserIds,
+    attributeKeyMap,
+    attributeTypeMap,
+    duplicateContactsAction,
+    environmentId,
+  } = ctx;
+  // Map CSV keys to actual DB keys (case-insensitive matching)
+  const mappedRecord: Record<string, string> = {};
+  for (const [key, value] of Object.entries(record)) {
+    const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
+    if (!actualKey) {
+      throw new ValidationError(`Attribute key "${key}" not found in attribute key map`);
+    }
+    mappedRecord[actualKey] = value;
+  }
+
+  if (!mappedRecord.email) {
+    throw new ValidationError("Email is required for all contacts");
+  }
+
+  const existingContact = emailToContactMap.get(mappedRecord.email);
+
+  if (!existingContact) {
+    // Create new contact
+    return prisma.contact.create({
+      data: {
+        environmentId,
+        attributes: {
+          create: createAttributeConnections(mappedRecord, environmentId, attributeTypeMap),
+        },
+      },
+      include: contactAttributesInclude,
+    });
+  }
+
+  // Handle duplicate based on action
+  return handleDuplicateContact(
+    mappedRecord,
+    existingContact,
+    existingUserIds,
+    attributeKeyMap,
+    attributeTypeMap,
+    duplicateContactsAction,
+    environmentId
+  );
+};
+
+/**
+ * Handles duplicate contact based on the specified action
+ */
+const handleDuplicateContact = async (
+  mappedRecord: Record<string, string>,
+  existingContact: TExistingContactFromCsv,
+  existingUserIds: TExistingUserId[],
+  attributeKeyMap: Map<string, string>,
+  attributeTypeMap: Map<string, TContactAttributeDataType>,
+  duplicateContactsAction: "skip" | "update" | "overwrite",
+  environmentId: string
+): Promise<TContact | null> => {
+  if (duplicateContactsAction === "skip") {
+    return null;
+  }
+
+  const recordToProcess = resolveUserIdConflict(mappedRecord, existingContact, existingUserIds);
+
+  if (duplicateContactsAction === "update") {
+    const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => {
+      const dataType = attributeTypeMap.get(key) ?? "string";
+      const columns = prepareAttributeColumnsForStorage(value, dataType);
+
+      return {
+        where: {
+          contactId_attributeKeyId: {
+            contactId: existingContact.id,
+            attributeKeyId: attributeKeyMap.get(key),
+          },
+        },
+        update: {
+          value: columns.value,
+          valueNumber: columns.valueNumber,
+          valueDate: columns.valueDate,
+        },
+        create: {
+          attributeKeyId: attributeKeyMap.get(key),
+          value: columns.value,
+          valueNumber: columns.valueNumber,
+          valueDate: columns.valueDate,
+        },
+      };
+    });
+
+    return prisma.contact.update({
+      where: { id: existingContact.id },
+      data: {
+        attributes: {
+          // @ts-expect-error - Prisma types don't fully support upsert array
+          upsert: attributesToUpsert,
+        },
+      },
+      include: contactAttributesInclude,
+    });
+  }
+
+  // duplicateContactsAction = "overwrite" here
+  await prisma.contactAttribute.deleteMany({
+    where: { contactId: existingContact.id },
+  });
+
+  return prisma.contact.update({
+    where: { id: existingContact.id },
+    data: {
+      attributes: {
+        create: createAttributeConnections(recordToProcess, environmentId, attributeTypeMap),
+      },
+    },
+    include: contactAttributesInclude,
+  });
+};
+
 export const createContactsFromCSV = async (
   csvData: Record<string, string>[],
   environmentId: string,
@@ -272,309 +558,79 @@ export const createContactsFromCSV = async (
   );
 
   try {
-    // Extract unique emails and userIds from CSV data
-    const csvEmails = Array.from(new Set(csvData.map((r) => r.email).filter(Boolean)));
-    const csvUserIds = Array.from(new Set(csvData.map((r) => r.userId).filter(Boolean)));
+    // Step 1: Extract metadata from CSV data
+    const { csvEmails, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData);
 
-    // Fetch existing contacts by email
-    const existingContactsByEmail = await prisma.contact.findMany({
-      where: {
-        environmentId,
-        attributes: {
-          some: {
-            attributeKey: {
-              key: "email",
-            },
-            value: {
-              in: csvEmails,
-            },
-          },
+    // Step 2: Fetch existing data from database
+    const [existingContactsByEmail, existingUserIds, existingAttributeKeys] = await Promise.all([
+      prisma.contact.findMany({
+        where: {
+          environmentId,
+          attributes: { some: { attributeKey: { key: "email" }, value: { in: csvEmails } } },
         },
-      },
-      select: {
-        id: true,
-        attributes: {
-          select: {
-            attributeKey: { select: { key: true, id: true } },
-            value: true,
-          },
-        },
-      },
-    });
-
-    // Map emails to existing contacts
-    const emailToContactMap = new Map<
-      string,
-      Prisma.ContactGetPayload<{
         select: {
-          id: true;
-          attributes: {
-            select: {
-              attributeKey: { select: { key: true; id: true } };
-              value: true;
-            };
-          };
-        };
-      }>
-    >();
-    existingContactsByEmail.forEach((contact) => {
+          id: true,
+          attributes: { select: { attributeKey: { select: { key: true, id: true } }, value: true } },
+        },
+      }),
+      prisma.contactAttribute.findMany({
+        where: { attributeKey: { key: "userId", environmentId }, value: { in: csvUserIds } },
+        select: { value: true, contactId: true },
+      }),
+      prisma.contactAttributeKey.findMany({
+        where: { environmentId },
+        select: { key: true, id: true, dataType: true },
+      }),
+    ]);
+
+    // Step 3: Build lookup maps
+    const emailToContactMap = new Map<string, TExistingContactFromCsv>();
+    for (const contact of existingContactsByEmail) {
       const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === "email");
       if (emailAttr) {
         emailToContactMap.set(emailAttr.value, contact);
       }
-    });
-
-    // Check for duplicate userIds
-    const existingUserIds = await prisma.contactAttribute.findMany({
-      where: {
-        attributeKey: {
-          key: "userId",
-          environmentId,
-        },
-        value: {
-          in: csvUserIds,
-        },
-      },
-      select: { value: true, contactId: true },
-    });
-
-    // Fetch existing attribute keys and cache them
-    const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
-      where: { environmentId },
-      select: { key: true, id: true, dataType: true },
-    });
+    }
 
     const attributeKeyMap = new Map<string, string>();
-    // Map from lowercase key to actual DB key (for case-insensitive lookup)
     const lowercaseToActualKeyMap = new Map<string, string>();
-
-    existingAttributeKeys.forEach((attrKey) => {
+    for (const attrKey of existingAttributeKeys) {
       attributeKeyMap.set(attrKey.key, attrKey.id);
       lowercaseToActualKeyMap.set(attrKey.key.toLowerCase(), attrKey.key);
-    });
-
-    // Collect all unique CSV keys
-    const csvKeys = new Set<string>();
-    csvData.forEach((record) => {
-      Object.keys(record).forEach((key) => csvKeys.add(key));
-    });
-
-    // Type Detection Phase: Detect data types for new attribute keys
-    const attributeValuesByKey = new Map<string, string[]>();
-
-    csvData.forEach((record) => {
-      Object.entries(record).forEach(([key, value]) => {
-        if (!attributeValuesByKey.has(key)) {
-          attributeValuesByKey.set(key, []);
-        }
-        if (value && value.trim() !== "") {
-          attributeValuesByKey.get(key)!.push(value);
-        }
-      });
-    });
-
-    // Build a map of attribute keys to their detected/existing data types
-    const attributeTypeMap = new Map<string, TContactAttributeDataType>();
-
-    for (const [key, values] of attributeValuesByKey) {
-      // Use case-insensitive lookup for existing keys
-      const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
-      const existingKey = actualKey ? existingAttributeKeys.find((ak) => ak.key === actualKey) : null;
-
-      if (existingKey) {
-        // Use existing dataType for existing keys
-        attributeTypeMap.set(key, existingKey.dataType);
-      } else {
-        // Detect type from first non-empty value for new keys
-        const firstValue = values.find((v) => v !== "");
-        if (firstValue) {
-          const detectedType = detectAttributeDataType(firstValue);
-          attributeTypeMap.set(key, detectedType);
-        } else {
-          attributeTypeMap.set(key, "string"); // default for empty
-        }
-      }
     }
 
-    // Validate that all values can be converted to their detected type
-    // If validation fails (typed column is null), fallback to string type for compatibility
-    const typeValidationErrors: string[] = [];
+    // Step 4: Detect and validate attribute types
+    const attributeTypeMap = buildAttributeTypeMap(
+      attributeValuesByKey,
+      existingAttributeKeys,
+      lowercaseToActualKeyMap
+    );
+    validateAndAdjustCsvAttributeTypes(attributeTypeMap, attributeValuesByKey);
 
-    for (const [key, dataType] of attributeTypeMap) {
-      const values = attributeValuesByKey.get(key) || [];
+    // Step 5: Create missing attribute keys
+    await createMissingAttributeKeys(
+      csvKeys,
+      lowercaseToActualKeyMap,
+      attributeKeyMap,
+      attributeTypeMap,
+      environmentId
+    );
 
-      // Skip validation for string type (always valid)
-      if (dataType === "string") continue;
+    // Step 6: Process each CSV record
+    const processingContext: TCsvProcessingContext = {
+      lowercaseToActualKeyMap,
+      emailToContactMap,
+      existingUserIds,
+      attributeKeyMap,
+      attributeTypeMap,
+      duplicateContactsAction,
+      environmentId,
+    };
 
-      for (const value of values) {
-        const columns = prepareAttributeColumnsForStorage(value, dataType);
-
-        // Check if the typed column is null - means parsing failed and it degraded to string storage
-        const parseFailed =
-          (dataType === "number" && columns.valueNumber === null) ||
-          (dataType === "date" && columns.valueDate === null);
-
-        if (parseFailed) {
-          // Downgrade entire attribute to string type for consistency
-          attributeTypeMap.set(key, "string");
-          typeValidationErrors.push(
-            `Attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`
-          );
-          break;
-        }
-      }
-    }
-
-    if (typeValidationErrors.length > 0) {
-      logger.warn({ errors: typeValidationErrors }, "Type validation warnings during CSV upload");
-    }
-
-    // Identify missing attribute keys (case-insensitive check)
-    const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
-
-    // Create missing attribute keys (use original CSV casing for new keys)
-    if (missingKeys.length > 0) {
-      // Deduplicate by lowercase to avoid creating duplicates like "firstName" and "firstname"
-      const uniqueMissingKeys = new Map<string, string>();
-      missingKeys.forEach((key) => {
-        const lowerKey = key.toLowerCase();
-        if (!uniqueMissingKeys.has(lowerKey)) {
-          uniqueMissingKeys.set(lowerKey, key);
-        }
-      });
-
-      await prisma.contactAttributeKey.createMany({
-        data: Array.from(uniqueMissingKeys.values()).map((key) => ({
-          key,
-          name: key,
-          dataType: attributeTypeMap.get(key) ?? "string",
-          environmentId,
-        })),
-        skipDuplicates: true,
-      });
-
-      // Fetch and update the maps with new keys
-      const newAttributeKeys = await prisma.contactAttributeKey.findMany({
-        where: {
-          key: { in: Array.from(uniqueMissingKeys.values()) },
-          environmentId,
-        },
-        select: { key: true, id: true, dataType: true },
-      });
-
-      newAttributeKeys.forEach((attrKey) => {
-        attributeKeyMap.set(attrKey.key, attrKey.id);
-        lowercaseToActualKeyMap.set(attrKey.key.toLowerCase(), attrKey.key);
-      });
-    }
-
-    const createdContacts: TContact[] = [];
-
-    // Process contacts in parallel
-    const contactPromises = csvData.map(async (record) => {
-      // Map CSV keys to actual DB keys (case-insensitive matching, preserving DB key casing)
-      const mappedRecord: Record<string, string> = {};
-      Object.entries(record).forEach(([key, value]) => {
-        const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
-        if (!actualKey) {
-          // This should never happen since we create missing keys above
-          throw new ValidationError(`Attribute key "${key}" not found in attribute key map`);
-        }
-        mappedRecord[actualKey] = value;
-      });
-
-      // Skip records without email
-      if (!mappedRecord.email) {
-        throw new ValidationError("Email is required for all contacts");
-      }
-
-      const existingContact = emailToContactMap.get(mappedRecord.email);
-
-      if (existingContact) {
-        // Handle duplicates based on duplicateContactsAction
-        switch (duplicateContactsAction) {
-          case "skip":
-            return null;
-
-          case "update": {
-            const recordToProcess = resolveUserIdConflict(mappedRecord, existingContact, existingUserIds);
-
-            const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => {
-              const dataType = attributeTypeMap.get(key) ?? "string";
-              const columns = prepareAttributeColumnsForStorage(value, dataType);
-
-              return {
-                where: {
-                  contactId_attributeKeyId: {
-                    contactId: existingContact.id,
-                    attributeKeyId: attributeKeyMap.get(key),
-                  },
-                },
-                update: {
-                  value: columns.value,
-                  valueNumber: columns.valueNumber,
-                  valueDate: columns.valueDate,
-                },
-                create: {
-                  attributeKeyId: attributeKeyMap.get(key),
-                  value: columns.value,
-                  valueNumber: columns.valueNumber,
-                  valueDate: columns.valueDate,
-                },
-              };
-            });
-
-            // Update contact with upserted attributes
-            return prisma.contact.update({
-              where: { id: existingContact.id },
-              data: {
-                attributes: {
-                  // @ts-expect-error
-                  upsert: attributesToUpsert,
-                },
-              },
-              include: contactAttributesInclude,
-            });
-          }
-
-          case "overwrite": {
-            const recordToProcess = resolveUserIdConflict(mappedRecord, existingContact, existingUserIds);
-
-            // Overwrite by deleting existing attributes and creating new ones
-            await prisma.contactAttribute.deleteMany({
-              where: { contactId: existingContact.id },
-            });
-
-            return prisma.contact.update({
-              where: { id: existingContact.id },
-              data: {
-                attributes: {
-                  create: createAttributeConnections(recordToProcess, environmentId, attributeTypeMap),
-                },
-              },
-              include: contactAttributesInclude,
-            });
-          }
-        }
-      } else {
-        // Create new contact - use mappedRecord with proper DB key casing
-        return prisma.contact.create({
-          data: {
-            environmentId,
-            attributes: {
-              create: createAttributeConnections(mappedRecord, environmentId, attributeTypeMap),
-            },
-          },
-          include: contactAttributesInclude,
-        });
-      }
-    });
+    const contactPromises = csvData.map((record) => processCsvRecord(record, processingContext));
 
     const results = await Promise.all(contactPromises);
-    const createdContactsFiltered = results.filter((contact) => contact !== null) as TContact[];
-    createdContacts.push(...createdContactsFiltered);
-
-    return createdContacts;
+    return results.filter((contact): contact is TContact => contact !== null);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

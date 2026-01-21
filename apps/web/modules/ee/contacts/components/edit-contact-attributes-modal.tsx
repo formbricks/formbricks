@@ -260,6 +260,7 @@ export const EditContactAttributesModal = ({
                                 type="date"
                                 value={valueField.value ? valueField.value.split("T")[0] : ""}
                                 onChange={(e) => {
+                                  // NOSONAR - standard date input onchange, no need to take this out of the component
                                   const dateValue = e.target.value
                                     ? new Date(e.target.value).toISOString()
                                     : "";

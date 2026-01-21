@@ -6,11 +6,14 @@ import {
   DATE_OPERATORS,
   TBaseFilters,
   TDateOperator,
+  TRelativeDateValue,
   TSegmentAttributeFilter,
   TSegmentDeviceFilter,
   TSegmentFilter,
+  TSegmentFilterValue,
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
+  ZRelativeDateValue,
 } from "@formbricks/types/segment";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { endOfDay, startOfDay, subtractTimeUnit } from "../date-utils";
@@ -19,6 +22,10 @@ import { getSegment } from "../segments";
 // Type for the result of the segment filter to prisma query generation
 export type SegmentFilterQueryResult = {
   whereClause: Prisma.ContactWhereInput;
+};
+
+const valueIsRelativeDateValue = (value: TSegmentFilterValue): value is TRelativeDateValue => {
+  return ZRelativeDateValue.safeParse(value).success;
 };
 
 /**
@@ -36,7 +43,7 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
   switch (operator) {
     case "isOlderThan": {
       // value should be { amount, unit }
-      if (typeof value === "object" && "amount" in value && "unit" in value) {
+      if (valueIsRelativeDateValue(value)) {
         const threshold = subtractTimeUnit(now, value.amount, value.unit);
         dateCondition = { lt: threshold };
       }
@@ -44,7 +51,7 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
     }
     case "isNewerThan": {
       // value should be { amount, unit }
-      if (typeof value === "object" && "amount" in value && "unit" in value) {
+      if (valueIsRelativeDateValue(value)) {
         const threshold = subtractTimeUnit(now, value.amount, value.unit);
         dateCondition = { gte: threshold };
       }

@@ -26,6 +26,7 @@ import {
   TSegmentSegmentFilter,
   TSegmentUpdateInput,
   TSegmentWithSurveyNames,
+  ZRelativeDateValue,
   ZSegmentCreateInput,
   ZSegmentFilters,
   ZSegmentUpdateInput,
@@ -503,57 +504,31 @@ const evaluateDateFilter = (
     return false;
   }
 
-  const now = new Date();
+  // Check if filterValue is a relative date value (e.g., { amount: 30, unit: "days" })
+  const relativeDateParsed = ZRelativeDateValue.safeParse(filterValue);
 
+  if (relativeDateParsed.success) {
+    const now = new Date();
+    const threshold = subtractTimeUnit(now, relativeDateParsed.data.amount, relativeDateParsed.data.unit);
+    return operator === "isOlderThan" ? attrDate < threshold : attrDate >= threshold;
+  }
+
+  // Handle absolute date operators
   switch (operator) {
-    case "isOlderThan": {
-      // filterValue should be { amount, unit }
-      if (typeof filterValue === "object" && "amount" in filterValue && "unit" in filterValue) {
-        const threshold = subtractTimeUnit(now, filterValue.amount, filterValue.unit);
-        return attrDate < threshold;
-      }
-      return false;
-    }
-    case "isNewerThan": {
-      // filterValue should be { amount, unit }
-      if (typeof filterValue === "object" && "amount" in filterValue && "unit" in filterValue) {
-        const threshold = subtractTimeUnit(now, filterValue.amount, filterValue.unit);
-        return attrDate >= threshold;
-      }
-      return false;
-    }
-    case "isBefore": {
-      // filterValue should be an ISO date string
-      if (typeof filterValue === "string") {
-        const compareDate = new Date(filterValue);
-        return attrDate < compareDate;
-      }
-      return false;
-    }
-    case "isAfter": {
-      // filterValue should be an ISO date string
-      if (typeof filterValue === "string") {
-        const compareDate = new Date(filterValue);
-        return attrDate > compareDate;
-      }
-      return false;
+    case "isBefore":
+    case "isAfter":
+    case "isSameDay": {
+      if (typeof filterValue !== "string") return false;
+      const compareDate = new Date(filterValue);
+      if (operator === "isBefore") return attrDate < compareDate;
+      if (operator === "isAfter") return attrDate > compareDate;
+      return isSameDay(attrDate, compareDate);
     }
     case "isBetween": {
-      // filterValue should be a tuple [startDate, endDate]
-      if (Array.isArray(filterValue) && filterValue.length === 2) {
-        const startDate = new Date(filterValue[0]);
-        const endDate = new Date(filterValue[1]);
-        return attrDate >= startDate && attrDate <= endDate;
-      }
-      return false;
-    }
-    case "isSameDay": {
-      // filterValue should be an ISO date string
-      if (typeof filterValue === "string") {
-        const compareDate = new Date(filterValue);
-        return isSameDay(attrDate, compareDate);
-      }
-      return false;
+      if (!Array.isArray(filterValue) || filterValue.length !== 2) return false;
+      const startDate = new Date(filterValue[0]);
+      const endDate = new Date(filterValue[1]);
+      return attrDate >= startDate && attrDate <= endDate;
     }
     default:
       return false;
