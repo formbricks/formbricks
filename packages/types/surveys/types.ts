@@ -45,7 +45,6 @@ import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
   findQuestionsWithCyclicLogic,
-  getTextContent,
   isConditionGroup,
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
@@ -1334,68 +1333,7 @@ export const ZSurvey = z
 
       // 4. Detailed validation for each block and its elements
       blocks.forEach((block, blockIndex) => {
-        // Validate block button labels
         const defaultLanguageCode = "default";
-
-        if (
-          block.buttonLabel?.[defaultLanguageCode] &&
-          block.buttonLabel[defaultLanguageCode].trim() !== ""
-        ) {
-          // Validate button label for all enabled languages
-          const enabledLanguages = languages.filter((lang) => lang.enabled);
-          const languageCodes = enabledLanguages.map((lang) =>
-            lang.default ? "default" : lang.language.code
-          );
-
-          for (const languageCode of languageCodes.length === 0 ? ["default"] : languageCodes) {
-            const labelValue = block.buttonLabel[languageCode];
-            if (!labelValue || getTextContent(labelValue).length === 0) {
-              const invalidLanguageCode =
-                languageCode === "default"
-                  ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                  : languageCode;
-
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `The buttonLabel in block ${String(blockIndex + 1)} is missing for the following languages: ${invalidLanguageCode}`,
-                path: ["blocks", blockIndex, "buttonLabel"],
-                params: { invalidLanguageCodes: [invalidLanguageCode] },
-              });
-            }
-          }
-        }
-
-        //only validate back button label for blocks other than the first one and if back button is not hidden
-        if (
-          !isBackButtonHidden &&
-          blockIndex > 0 &&
-          block.backButtonLabel?.[defaultLanguageCode] &&
-          block.backButtonLabel[defaultLanguageCode].trim() !== ""
-        ) {
-          // Validate back button label for all enabled languages
-          const enabledLanguages = languages.filter((lang) => lang.enabled);
-          const languageCodes = enabledLanguages.map((lang) =>
-            lang.default ? "default" : lang.language.code
-          );
-
-          for (const languageCode of languageCodes.length === 0 ? ["default"] : languageCodes) {
-            const labelValue = block.backButtonLabel[languageCode];
-            if (!labelValue || getTextContent(labelValue).length === 0) {
-              const invalidLanguageCode =
-                languageCode === "default"
-                  ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                  : languageCode;
-
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `The backButtonLabel in block ${String(blockIndex + 1)} is missing for the following languages: ${invalidLanguageCode}`,
-                path: ["blocks", blockIndex, "backButtonLabel"],
-                params: { invalidLanguageCodes: [invalidLanguageCode] },
-              });
-            }
-          }
-        }
-
         // Validate each element in the block
         block.elements.forEach((element, elementIndex) => {
           // Validate headline (required for all elements)
