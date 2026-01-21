@@ -10,7 +10,7 @@ import type {
   TValidationResult,
   TValidationRule,
 } from "@formbricks/types/surveys/validation-rules";
-import { getLocalizedValue } from "@/lib/i18n";
+import { getLocalizedValue, getTranslations } from "@/lib/i18n";
 import { validators } from "./validators";
 
 /**
@@ -268,8 +268,8 @@ const executeOrLogic = (
   element: TSurveyElement,
   value: TResponseDataValue,
   languageCode: string,
-  t: TFunction,
-  initialErrors: TValidationError[]
+  initialErrors: TValidationError[],
+  t: TFunction
 ): TValidationResult => {
   const ruleResults: TValidationError[] = [];
 
@@ -306,8 +306,8 @@ const executeAndLogic = (
   element: TSurveyElement,
   value: TResponseDataValue,
   languageCode: string,
-  t: TFunction,
-  initialErrors: TValidationError[]
+  initialErrors: TValidationError[],
+  t: TFunction
 ): TValidationResult => {
   const errors = [...initialErrors];
 
@@ -341,16 +341,16 @@ const executeAndLogic = (
  * @param element - The survey element being validated
  * @param value - The response value for this element
  * @param languageCode - Current language code for error messages
- * @param t - i18next translation function
  * @returns Validation result with valid flag and array of errors
  */
 export const validateElementResponse = (
   element: TSurveyElement,
   value: TResponseDataValue,
-  languageCode: string,
-  t: TFunction
+  languageCode: string
 ): TValidationResult => {
   const errors: TValidationError[] = [];
+  // Always create translation function from surveys package's i18n instance
+  const t: TFunction = getTranslations(languageCode);
 
   // Check if element is required (separate from validation rules)
   const requiredError = checkRequiredField(element, value, t);
@@ -377,10 +377,10 @@ export const validateElementResponse = (
   const validationLogic = validation?.logic ?? "and";
 
   if (validationLogic === "or") {
-    return executeOrLogic(rules, element, value, languageCode, t, errors);
+    return executeOrLogic(rules, element, value, languageCode, errors, t);
   }
 
-  return executeAndLogic(rules, element, value, languageCode, t, errors);
+  return executeAndLogic(rules, element, value, languageCode, errors, t);
 };
 
 /**
@@ -389,19 +389,16 @@ export const validateElementResponse = (
  * @param elements - Array of elements to validate
  * @param responses - Response data keyed by element ID
  * @param languageCode - Current language code for error messages
- * @param t - i18next translation function
  * @returns Map of element IDs to their validation errors
  */
 export const validateBlockResponses = (
   elements: TSurveyElement[],
   responses: TResponseData,
-  languageCode: string,
-  t: TFunction
+  languageCode: string
 ): TValidationErrorMap => {
   const errorMap: TValidationErrorMap = {};
-
   for (const element of elements) {
-    const result = validateElementResponse(element, responses[element.id], languageCode, t);
+    const result = validateElementResponse(element, responses[element.id], languageCode);
     if (!result.valid) {
       errorMap[element.id] = result.errors;
     }

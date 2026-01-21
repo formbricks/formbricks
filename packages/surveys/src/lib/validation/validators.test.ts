@@ -5,9 +5,10 @@ import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { validators } from "./validators";
 
 // Mock translation function - just return the key for testing
-const mockT = vi.fn((key: string) => {
+const mockTFn = vi.fn((key: string) => {
   return key;
-}) as unknown as TFunction;
+});
+const mockT = mockTFn as unknown as TFunction;
 
 describe("validators", () => {
   describe("minLength", () => {
@@ -31,9 +32,11 @@ describe("validators", () => {
       expect(result.valid).toBe(true);
     });
 
-    test("should return correct error message", () => {
+    test("should return correct error message with translation function", () => {
+      mockTFn.mockClear();
       const message = validators.minLength.getDefaultMessage({ min: 10 }, {} as TSurveyElement, mockT);
       expect(message).toBe("errors.min_length");
+      expect(mockTFn).toHaveBeenCalledWith("errors.min_length", { min: 10 });
     });
   });
 
@@ -53,9 +56,11 @@ describe("validators", () => {
       expect(result.valid).toBe(true);
     });
 
-    test("should return correct error message", () => {
+    test("should return correct error message with translation function", () => {
+      mockTFn.mockClear();
       const message = validators.maxLength.getDefaultMessage({ max: 100 }, {} as TSurveyElement, mockT);
       expect(message).toBe("errors.max_length");
+      expect(mockTFn).toHaveBeenCalledWith("errors.max_length", { max: 100 });
     });
   });
 
