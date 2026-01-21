@@ -89,7 +89,12 @@ export function EndingCard({
 
   useEffect(() => {
     if (isCurrent) {
-      if (!isRedirectDisabled && endingCard.type === "redirectToUrl" && endingCard.url) {
+      if (
+        !isRedirectDisabled &&
+        endingCard.type === "redirectToUrl" &&
+        endingCard.url &&
+        isResponseSendingFinished
+      ) {
         processAndRedirect(endingCard.url);
       }
     }
@@ -109,9 +114,7 @@ export function EndingCard({
     return () => {
       document.removeEventListener("keydown", handleEnter);
     };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- we only want to run this effect when isCurrent changes
-  }, [isCurrent]);
+  }, [isCurrent, isResponseSendingFinished, isRedirectDisabled, endingCard, survey.type]);
 
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards}>
