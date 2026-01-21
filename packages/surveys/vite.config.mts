@@ -104,7 +104,7 @@ const config = ({ mode }) => {
     plugins: [
       ...sharedConfig.plugins,
       dts({
-        rollupTypes: true,
+        rollupTypes: false,
         // Generate separate .d.ts files for each entry point
         entryRoot: "src",
       }),

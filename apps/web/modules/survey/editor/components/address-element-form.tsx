@@ -169,6 +169,7 @@ export const AddressElementForm = ({
             validation,
           });
         }}
+        element={element}
       />
     </form>
   );

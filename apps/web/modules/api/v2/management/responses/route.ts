@@ -133,7 +133,8 @@ export const POST = async (request: Request) =>
       const validationErrors = validateResponseData(
         surveyQuestions.data.blocks,
         body.data,
-        body.language ?? "en"
+        body.language ?? "en",
+        surveyQuestions.data.questions
       );
 
       if (validationErrors) {

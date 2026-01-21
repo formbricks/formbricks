@@ -295,6 +295,10 @@ const executeOrLogic = (
     });
   }
 
+  if (ruleResults.length === 0) {
+    return { valid: initialErrors.length === 0, errors: initialErrors };
+  }
+
   return { valid: false, errors: [...initialErrors, ...ruleResults] };
 };
 

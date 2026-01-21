@@ -186,7 +186,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         globalThis.window !== undefined &&
         createPortal(
           <div
-            className="fixed z-[100]"
+            className="absolute z-[100]"
             style={{
               top: `${position.top}px`,
               left: `${position.left}px`,
