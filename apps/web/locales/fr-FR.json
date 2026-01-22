@@ -1642,6 +1642,7 @@
         "validation_rules_description": "Accepter uniquement les réponses qui répondent aux critères suivants",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} est utilisé dans la logique de la question {questionIndex}. Veuillez d'abord le supprimer de la logique.",
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "La variable \"{variableName}\" est utilisée dans le quota \"{quotaName}\"",
+        "variable_name_conflicts_with_hidden_field": "Le nom de la variable est en conflit avec un ID de champ masqué existant.",
         "variable_name_is_already_taken_please_choose_another": "Le nom de la variable est déjà pris, veuillez en choisir un autre.",
         "variable_name_must_start_with_a_letter": "Le nom de la variable doit commencer par une lettre.",
         "variable_used_in_recall": "La variable \"{variable}\" est rappelée dans la question {questionIndex}.",
