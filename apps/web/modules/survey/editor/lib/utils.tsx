@@ -1302,7 +1302,7 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
 
     if (
       action.objective === "calculate" &&
-      action.value.type === "variable" &&
+      action.value.type === "element" &&
       action.value.value === elementId
     ) {
       return true;

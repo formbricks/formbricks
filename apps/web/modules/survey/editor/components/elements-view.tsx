@@ -732,10 +732,22 @@ export const ElementsView = ({
   };
 
   const deleteBlockById = (blockId: string) => {
+    // First check if block is used in logic
     const usedElementIdx = findBlockUsedInLogic(localSurvey, blockId);
     if (usedElementIdx !== -1) {
       setLogicDeletionWarning({ open: true, elementIdx: 0, type: "block", blockId });
       return;
+    }
+
+    // Then check if any element in the block is used in recall/quota
+    const block = localSurvey.blocks.find((b) => b.id === blockId);
+    if (block) {
+      for (const element of block.elements) {
+        const elementIdx = elements.findIndex((e) => e.id === element.id);
+        if (!validateElementDeletion(element.id, elementIdx)) {
+          return;
+        }
+      }
     }
 
     executeBlockDeletion(blockId);
