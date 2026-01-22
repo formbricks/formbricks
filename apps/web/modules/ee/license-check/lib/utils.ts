@@ -26,8 +26,8 @@ const getFeaturePermission = async (
 };
 
 // Helper function for enterprise features that require CUSTOM plan on Cloud
-// On Cloud: requires active license AND CUSTOM billing plan
-// On Self-hosted: requires active license (backwards compat for older licenses)
+// On Cloud: requires active license AND feature enabled in license AND CUSTOM billing plan
+// On Self-hosted: requires active license AND feature enabled in license
 const getCustomPlanFeaturePermission = async (
   billingPlan: Organization["billing"]["plan"],
   featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "multiLanguageSurveys" | "quotas">
@@ -36,11 +36,14 @@ const getCustomPlanFeaturePermission = async (
 
   if (!license.active) return false;
 
+  const isFeatureEnabled = license.features?.[featureKey] ?? false;
+  if (!isFeatureEnabled) return false;
+
   if (IS_FORMBRICKS_CLOUD) {
     return billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
-  } else {
-    return license.features?.[featureKey] ?? false;
   }
+
+  return true;
 };
 
 // Helper function for license-only feature flags (no billing plan check)

@@ -302,17 +302,30 @@ describe("License Utils", () => {
       expect(result).toBe(true);
     });
 
-    test("should return true if license active and plan is CUSTOM (cloud)", async () => {
+    test("should return true if license active, quotas enabled and plan is CUSTOM (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, quotas: true },
+      });
       const result = await getIsQuotasEnabled(constants.PROJECT_FEATURE_KEYS.CUSTOM);
       expect(result).toBe(true);
     });
 
-    test("should return false if license active but plan is not CUSTOM (cloud)", async () => {
+    test("should return false if license active, quotas enabled but plan is not CUSTOM (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, quotas: true },
+      });
       const result = await getIsQuotasEnabled(constants.PROJECT_FEATURE_KEYS.STARTUP);
+      expect(result).toBe(false);
+    });
+
+    test("should return false if license active but quotas feature disabled (self-hosted)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getIsQuotasEnabled(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
 
