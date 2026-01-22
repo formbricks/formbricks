@@ -140,9 +140,9 @@ export function StackedCardsContainer({
   }, [cardArrangement]);
 
   return (
-    <div
+    <div // NOSONAR - hover handlers are for visual feedback on card animation, not interactive content
       data-testid="stacked-cards-container"
-      className="relative flex h-full items-end justify-center md:items-center"
+      className="relative flex h-full items-center justify-center"
       onMouseEnter={() => {
         setHovered(true);
       }}
