@@ -213,8 +213,8 @@ export async function PreviewEmailTemplate({
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === firstQuestion.range - 1 },
                           firstQuestion.isColorCodingEnabled &&
-                          firstQuestion.scale === "number" &&
-                          `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
+                            firstQuestion.scale === "number" &&
+                            `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
                           firstQuestion.scale === "star" && "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}

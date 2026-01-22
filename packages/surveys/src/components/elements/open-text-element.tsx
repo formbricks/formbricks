@@ -5,7 +5,6 @@ import { type TResponseData, type TResponseTtc } from "@formbricks/types/respons
 import type { TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { validateEmail, validatePhone, validateUrl } from "@/lib/validation";
 
 interface OpenTextElementProps {
   element: TSurveyOpenTextElement;
@@ -18,6 +17,7 @@ interface OpenTextElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function OpenTextElement({
@@ -29,73 +29,21 @@ export function OpenTextElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<OpenTextElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const isRequired = element.required;
   const { t } = useTranslation();
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const handleChange = (inputValue: string) => {
-    // Clear error when user starts typing
-    setErrorMessage(undefined);
     onChange({ [element.id]: inputValue });
-  };
-
-  const validateRequired = (): boolean => {
-    if (element.required && (!value || value.trim() === "")) {
-      setErrorMessage(t("errors.please_fill_out_this_field"));
-      return false;
-    }
-    return true;
-  };
-
-  const checkEmail = (): boolean => {
-    if (!validateEmail(value)) {
-      setErrorMessage(t("errors.please_enter_a_valid_email_address"));
-      return false;
-    }
-    return true;
-  };
-
-  const checkUrl = (): boolean => {
-    if (!validateUrl(value)) {
-      setErrorMessage(t("errors.please_enter_a_valid_url"));
-      return false;
-    }
-    return true;
-  };
-
-  const checkPhone = (): boolean => {
-    if (!validatePhone(value)) {
-      setErrorMessage(t("errors.please_enter_a_valid_phone_number"));
-      return false;
-    }
-    return true;
-  };
-
-  const validateInput = (): boolean => {
-    if (!value || value.trim() === "") return true;
-
-    if (element.inputType === "email") {
-      return checkEmail();
-    }
-    if (element.inputType === "url") {
-      return checkUrl();
-    }
-    if (element.inputType === "phone") {
-      return checkPhone();
-    }
-    return true;
   };
 
   const handleOnSubmit = (e: Event) => {
     e.preventDefault();
-    setErrorMessage(undefined);
-
-    if (!validateRequired()) return;
-    if (!validateInput()) return;
-
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtc = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtc);
   };
@@ -119,7 +67,7 @@ export function OpenTextElement({
         placeholder={getLocalizedValue(element.placeholder, languageCode)}
         value={value}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         longAnswer={element.longAnswer !== false}
         inputType={getInputType()}

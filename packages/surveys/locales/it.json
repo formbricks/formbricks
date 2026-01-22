@@ -12,7 +12,6 @@
     "open_in_new_tab": "Apri in una nuova scheda",
     "people_responded": "{count, plural, one {1 persona ha risposto} other {{count} persone hanno risposto}}",
     "please_retry_now_or_try_again_later": "Riprova ora o più tardi.",
-    "please_specify": "Si prega di specificare",
     "powered_by": "Offerto da",
     "privacy_policy": "Informativa sulla privacy",
     "protected_by_reCAPTCHA_and_the_Google": "Protetto da reCAPTCHA e da Google",
@@ -32,6 +31,10 @@
     "your_feedback_is_stuck": "Il tuo feedback è bloccato :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Classifica tutte le opzioni",
+    "all_rows_must_be_answered": "Rispondi a tutte le righe",
+    "file_extension_must_be": "L'estensione del file deve essere {extension}",
+    "file_extension_must_not_be": "L'estensione del file non deve essere {extension}",
     "file_input": {
       "duplicate_files": "I seguenti file sono già caricati: {duplicateNames}. I file duplicati non sono consentiti.",
       "file_size_exceeded": "I seguenti file superano la dimensione massima di {maxSizeInMB} MB e sono stati rimossi: {fileNames}",
@@ -45,18 +48,32 @@
       "message": "Per continuare a utilizzare questo dispositivo, disabilita la protezione anti-spam nelle impostazioni del sondaggio.",
       "title": "Questo dispositivo non supporta la protezione anti-spam."
     },
-    "please_book_an_appointment": "Prenota un appuntamento",
+    "invalid_format": "Inserisci un formato valido",
+    "is_between": "Seleziona una data compresa tra {startDate} e {endDate}",
+    "is_earlier_than": "Seleziona una data precedente a {date}",
+    "is_greater_than": "Inserisci un valore maggiore di {min}",
+    "is_later_than": "Seleziona una data successiva a {date}",
+    "is_less_than": "Inserisci un valore minore di {max}",
+    "is_not_between": "Seleziona una data non compresa tra {startDate} e {endDate}",
+    "max_length": "Inserisci non più di {max} caratteri",
+    "max_selections": "Seleziona non più di {max} opzioni",
+    "max_value": "Inserisci un valore non superiore a {max}",
+    "min_length": "Inserisci almeno {min} caratteri",
+    "min_selections": "Seleziona almeno {min} opzioni",
+    "min_value": "Inserisci un valore di almeno {min}",
+    "minimum_options_ranked": "Classifica almeno {min} opzioni",
+    "minimum_rows_answered": "Rispondi ad almeno {min} righe",
     "please_enter_a_valid_email_address": "Inserisci un indirizzo email valido",
     "please_enter_a_valid_phone_number": "Inserisci un numero di telefono valido",
     "please_enter_a_valid_url": "Inserisci un URL valido",
     "please_fill_out_this_field": "Compila questo campo",
-    "please_rank_all_items_before_submitting": "Classifica tutti gli elementi prima di inviare",
-    "please_select_a_date": "Seleziona una data",
-    "please_select_an_option": "Seleziona un'opzione",
-    "please_upload_a_file": "Carica un file",
     "recaptcha_error": {
       "message": "La tua risposta non può essere inviata perché è stata segnalata come attività automatizzata. Se respiri, riprova.",
       "title": "Non siamo riusciti a verificare che sei umano."
-    }
+    },
+    "value_must_contain": "Il valore deve contenere {value}",
+    "value_must_equal": "Il valore deve essere uguale a {value}",
+    "value_must_not_contain": "Il valore non deve contenere {value}",
+    "value_must_not_equal": "Il valore non deve essere uguale a {value}"
   }
 }

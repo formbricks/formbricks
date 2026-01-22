@@ -62,7 +62,7 @@ export const QuotaConditionBuilder = ({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="max-h-[150px] space-y-4 overflow-y-auto">
       <ConditionsEditor
         conditions={genericConditions}
         config={config}

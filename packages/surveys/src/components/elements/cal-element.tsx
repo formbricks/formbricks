@@ -1,5 +1,4 @@
 import { useCallback, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCalElement } from "@formbricks/types/surveys/elements";
 import { CalEmbed } from "@/components/general/cal-embed";
@@ -17,6 +16,7 @@ interface CalElementProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   currentElementId: string;
+  errorMessage?: string;
 }
 
 export function CalElement({
@@ -27,30 +27,24 @@ export function CalElement({
   ttc,
   setTtc,
   currentElementId,
+  errorMessage,
 }: Readonly<CalElementProps>) {
-  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = element.imageUrl || element.videoUrl;
-  const [errorMessage, setErrorMessage] = useState("");
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
   const onSuccessfulBooking = useCallback(() => {
-    setErrorMessage("");
     onChange({ [element.id]: "booked" });
     const updatedttc = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedttc);
-  }, [onChange, element.id, setTtc, startTime, ttc, setErrorMessage]);
+  }, [onChange, element.id, setTtc, startTime, ttc]);
 
   return (
     <form
       key={element.id}
       onSubmit={(e) => {
         e.preventDefault();
-        if (element.required && !value) {
-          setErrorMessage(t("errors.please_book_an_appointment"));
-          return;
-        }
-
+        // Validation is handled by centralized system, just update TTC
         const updatedttc = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
         setTtc(updatedttc);
 

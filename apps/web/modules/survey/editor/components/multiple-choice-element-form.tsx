@@ -17,6 +17,7 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { BulkEditOptionsModal } from "@/modules/survey/editor/components/bulk-edit-options-modal";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -398,6 +399,19 @@ export const MultipleChoiceElementForm = ({
         surveyLanguageCodes={surveyLanguageCodes}
         locale={locale}
       />
+
+      {element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && (
+        <ValidationRulesEditor
+          elementType={element.type}
+          validation={element.validation}
+          onUpdateValidation={(validation) => {
+            updateElement(elementIdx, {
+              validation,
+            });
+          }}
+          element={element}
+        />
+      )}
     </form>
   );
 };

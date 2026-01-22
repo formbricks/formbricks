@@ -10,6 +10,7 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
+import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
@@ -116,6 +117,11 @@ export const SurveyClientWrapper = ({
     }
     setResponseData({});
   };
+  // Determine text direction based on language code for logo positioning only
+  // which checks both language code and survey content. This is only for logo UI positioning.
+  const logoDir = useMemo(() => {
+    return isRTLLanguage(survey, languageCode) ? "rtl" : "auto";
+  }, [languageCode, survey]);
 
   return (
     <>
@@ -140,7 +146,8 @@ export const SurveyClientWrapper = ({
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
-        isBrandingEnabled={project.linkSurveyBranding}>
+        isBrandingEnabled={project.linkSurveyBranding}
+        dir={logoDir}>
         <SurveyInline
           appUrl={publicDomain}
           environmentId={survey.environmentId}

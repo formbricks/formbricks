@@ -8,7 +8,7 @@ import { mixColor } from "@/lib/color";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import i18n from "@/lib/i18n.config";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
-import { checkIfSurveyIsRTL, cn } from "@/lib/utils";
+import { cn, isRTLLanguage } from "@/lib/utils";
 
 interface LanguageSwitchProps {
   survey: TJsEnvironmentStateSurvey;
@@ -59,7 +59,7 @@ export function LanguageSwitch({
     handleI18nLanguage(calculatedLanguageCode);
 
     if (setDir) {
-      const calculateDir = checkIfSurveyIsRTL(survey, calculatedLanguageCode) ? "rtl" : "auto";
+      const calculateDir = isRTLLanguage(survey, calculatedLanguageCode) ? "rtl" : "auto";
       setDir?.(calculateDir);
     }
 

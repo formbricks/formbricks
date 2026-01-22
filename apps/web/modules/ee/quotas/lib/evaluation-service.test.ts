@@ -438,5 +438,45 @@ describe("Quota Evaluation Service", () => {
         "Error evaluating quotas for response"
       );
     });
+
+    test("should use 'default' language when provided language matches default language", async () => {
+      const surveyWithLanguages = {
+        ...mockSurvey,
+        languages: [
+          { default: true, language: { code: "en", flag: "🇺🇸" } },
+          { default: false, language: { code: "fr", flag: "🇫🇷" } },
+        ],
+      };
+
+      const input: QuotaEvaluationInput = {
+        surveyId: mockSurveyId,
+        responseId: mockResponseId,
+        data: mockResponseData,
+        variables: mockVariablesData,
+        language: "en",
+        responseFinished: true,
+        tx: mockTx,
+      };
+
+      const evaluateResult = {
+        passedQuotas: [mockQuota],
+        failedQuotas: [],
+      };
+
+      vi.mocked(getQuotas).mockResolvedValue([mockQuota]);
+      vi.mocked(getSurvey).mockResolvedValue(surveyWithLanguages as unknown as TSurvey);
+      vi.mocked(evaluateQuotas).mockReturnValue(evaluateResult);
+      vi.mocked(handleQuotas).mockResolvedValue(null);
+
+      await evaluateResponseQuotas(input);
+
+      expect(evaluateQuotas).toHaveBeenCalledWith(
+        surveyWithLanguages,
+        mockResponseData,
+        mockVariablesData,
+        [mockQuota],
+        "default"
+      );
+    });
   });
 });

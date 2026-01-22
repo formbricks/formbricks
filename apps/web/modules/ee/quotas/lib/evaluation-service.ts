@@ -51,8 +51,8 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
     if (!survey) {
       return { shouldEndSurvey: false };
     }
-
-    const result = evaluateQuotas(survey, data, variables, quotas, language);
+    const isDefaultLanguage = survey.languages.find((lang) => lang.default)?.language.code === language;
+    const result = evaluateQuotas(survey, data, variables, quotas, isDefaultLanguage ? "default" : language);
 
     const quotaFull = await handleQuotas(surveyId, responseId, result, responseFinished, prismaClient);
 

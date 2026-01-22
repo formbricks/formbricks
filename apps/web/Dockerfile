@@ -125,6 +125,9 @@ RUN chown nextjs:nextjs ./prisma_version.txt && chmod 644 ./prisma_version.txt
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
 
+COPY --from=installer /app/node_modules/uuid ./node_modules/uuid
+RUN chmod -R 755 ./node_modules/uuid
+
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 RUN chmod -R 755 ./node_modules/@noble/hashes
 

@@ -66,10 +66,7 @@ test.describe("API Tests for Responses", () => {
         finished: true,
         language: "en",
         data: {
-          question1: "answer1",
-          question2: 2,
-          question3: ["answer3", "answer4"],
-          question4: { subquestion1: "answer5" },
+          jpvm9b73u06xdrhzi11k2h76: "answer1",
         },
         variables: {
           variable1: "answer1",
@@ -114,10 +111,7 @@ test.describe("API Tests for Responses", () => {
         finished: true,
         language: "en",
         data: {
-          question1: "answer2",
-          question2: 3,
-          question3: ["answer5", "answer6"],
-          question4: { subquestion1: "answer7" },
+          jpvm9b73u06xdrhzi11k2h76: "answer2",
         },
         variables: {
           variable1: "answer2",
@@ -185,10 +179,7 @@ test.describe("API Tests for Responses", () => {
         finished: true,
         language: "en",
         data: {
-          question1: "answer1",
-          question2: 2,
-          question3: ["answer3", "answer4"],
-          question4: { subquestion1: "answer5" },
+          jpvm9b73u06xdrhzi11k2h76: "answer1",
         },
         variables: {
           variable1: "answer1",
@@ -218,10 +209,7 @@ test.describe("API Tests for Responses", () => {
         finished: true,
         language: "en",
         data: {
-          question1: "answer2",
-          question2: 3,
-          question3: ["answer5", "answer6"],
-          question4: { subquestion1: "answer7" },
+          jpvm9b73u06xdrhzi11k2h76: "answer2",
         },
         variables: {
           variable1: "answer2",
@@ -341,10 +329,7 @@ test.describe("API Tests for Responses", () => {
         singleUseId: null,
         displayId: null,
         data: {
-          question1: "updatedAnswer1",
-          question2: 5,
-          question3: ["updatedAnswer3", "updatedAnswer4"],
-          question4: { subquestion1: "updatedAnswer5" },
+          jpvm9b73u06xdrhzi11k2h76: "updatedAnswer1",
         },
         variables: {
           variable1: "updatedAnswer1",
@@ -400,10 +385,7 @@ test.describe("API Tests for Responses", () => {
         singleUseId: null,
         displayId: null,
         data: {
-          question1: "updatedAnswer1",
-          question2: 5,
-          question3: ["updatedAnswer3", "updatedAnswer4"],
-          question4: { subquestion1: "updatedAnswer5" },
+          jpvm9b73u06xdrhzi11k2h76: "updatedAnswer1",
         },
         variables: {
           variable1: "updatedAnswer1",
