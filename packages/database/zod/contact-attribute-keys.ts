@@ -1,4 +1,4 @@
-import { type ContactAttributeKey, ContactAttributeType } from "@prisma/client";
+import { ContactAttributeDataType, type ContactAttributeKey, ContactAttributeType } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 
@@ -35,6 +35,10 @@ export const ZContactAttributeKey = z.object({
   type: z.nativeEnum(ContactAttributeType).openapi({
     description: "Whether this is a default or custom attribute",
     example: "custom",
+  }),
+  dataType: z.nativeEnum(ContactAttributeDataType).openapi({
+    description: "The data type of the attribute (string, number, date)",
+    example: "string",
   }),
   environmentId: z.string().cuid2().openapi({
     description: "The ID of the environment this attribute belongs to",

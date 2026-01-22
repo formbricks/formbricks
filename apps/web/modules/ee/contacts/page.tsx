@@ -39,7 +39,6 @@ export const ContactsPage = async ({
       isReadOnly={isReadOnly}
       cta={AddContactsButton}>
       <ContactDataView
-        key={initialContacts.length + contactAttributeKeys.length}
         environment={environment}
         itemsPerPage={ITEMS_PER_PAGE}
         contactAttributeKeys={contactAttributeKeys}

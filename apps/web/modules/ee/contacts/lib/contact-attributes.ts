@@ -9,10 +9,13 @@ import { validateInputs } from "@/lib/utils/validate";
 
 const selectContactAttribute = {
   value: true,
+  valueNumber: true,
+  valueDate: true,
   attributeKey: {
     select: {
       key: true,
       name: true,
+      dataType: true,
     },
   },
 } satisfies Prisma.ContactAttributeSelect;
@@ -32,6 +35,34 @@ export const getContactAttributes = reactCache(async (contactId: string) => {
       acc[attr.attributeKey.key] = attr.value;
       return acc;
     }, {}) as TContactAttributes;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});
+
+export const getContactAttributesWithMetadata = reactCache(async (contactId: string) => {
+  validateInputs([contactId, ZId]);
+
+  try {
+    const prismaAttributes = await prisma.contactAttribute.findMany({
+      where: {
+        contactId,
+      },
+      select: selectContactAttribute,
+    });
+
+    return prismaAttributes.map((attr) => ({
+      key: attr.attributeKey.key,
+      name: attr.attributeKey.name,
+      value: attr.value,
+      valueNumber: attr.valueNumber,
+      valueDate: attr.valueDate,
+      dataType: attr.attributeKey.dataType,
+    }));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

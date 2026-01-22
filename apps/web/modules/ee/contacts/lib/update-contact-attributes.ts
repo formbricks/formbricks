@@ -1,5 +1,5 @@
 import "server-only";
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { TContactAttributes, TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { updateAttributes } from "./attributes";
@@ -15,7 +15,7 @@ export interface UpdateContactAttributesResult {
 
 export const updateContactAttributes = async (
   contactId: string,
-  attributes: TContactAttributes
+  attributes: TContactAttributesInput
 ): Promise<UpdateContactAttributesResult> => {
   // Load contact to get environmentId and current attributes
   const contact = await getContact(contactId);
@@ -27,7 +27,8 @@ export const updateContactAttributes = async (
 
   // Extract userId from attributes (required by updateAttributes)
   // If missing, pass empty string but note it in messages
-  const userId = attributes.userId ?? "";
+  const userIdValue = attributes.userId;
+  const userId = userIdValue === null || userIdValue === undefined ? "" : String(userIdValue);
   const messages: string[] = [];
 
   // Get current attribute keys before update to detect new ones

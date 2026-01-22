@@ -47,6 +47,7 @@ export const createContactAttributeKey = async (
         name: data.name ?? data.key,
         type: data.type,
         description: data.description ?? "",
+        ...(data.dataType && { dataType: data.dataType }),
         environment: {
           connect: {
             id: environmentId,

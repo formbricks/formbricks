@@ -1,14 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { CalendarIcon, HashIcon, PlusIcon, TagIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -31,13 +30,20 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { updateContactAttributesAction } from "../actions";
-import { TEditContactAttributesForm, ZEditContactAttributesForm } from "../types/contact";
+import { TEditContactAttributesForm, createEditContactAttributesSchema } from "../types/contact";
+
+interface AttributeWithMetadata {
+  key: string;
+  name: string | null;
+  value: string;
+  dataType: TContactAttributeDataType;
+}
 
 interface EditContactAttributesModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   contactId: string;
-  currentAttributes: TContactAttributes;
+  currentAttributes: AttributeWithMetadata[];
   attributeKeys: TContactAttributeKey[];
 }
 
@@ -50,19 +56,25 @@ export const EditContactAttributesModal = ({
 }: EditContactAttributesModalProps) => {
   const { t } = useTranslation();
   const router = useRouter();
+
+  // Create dynamic schema with type validation using factory function
+  const dynamicSchema = useMemo(() => {
+    return createEditContactAttributesSchema(attributeKeys, t);
+  }, [attributeKeys, t]);
+
   // Convert current attributes to form format
   const defaultValues: TEditContactAttributesForm = useMemo(
     () => ({
-      attributes: Object.entries(currentAttributes).map(([key, value]) => ({
-        key,
-        value: value ?? "",
+      attributes: currentAttributes.map((attr) => ({
+        key: attr.key,
+        value: attr.value ?? "",
       })),
     }),
     [currentAttributes]
   );
 
   const form = useForm<TEditContactAttributesForm>({
-    resolver: zodResolver(ZEditContactAttributesForm),
+    resolver: zodResolver(dynamicSchema),
     defaultValues,
   });
 
@@ -74,8 +86,16 @@ export const EditContactAttributesModal = ({
   // Watch form values to get currently selected keys
   const watchedAttributes = form.watch("attributes");
 
-  // Prepare combobox options from attribute keys
+  // Icon mapping for attribute data types
+  const dataTypeIcons = {
+    date: CalendarIcon,
+    number: HashIcon,
+    string: TagIcon,
+  } as const;
+
+  // Prepare combobox options from attribute keys with data type icons
   const allKeyOptions: TComboboxOption[] = attributeKeys.map((attrKey) => ({
+    icon: dataTypeIcons[attrKey.dataType] ?? TagIcon,
     label: attrKey.name ?? attrKey.key,
     value: attrKey.key,
   }));
@@ -132,10 +152,23 @@ export const EditContactAttributesModal = ({
 
   const onSubmit = async (data: TEditContactAttributesForm) => {
     try {
-      const attributes = data.attributes.reduce((acc, { key, value }) => {
-        acc[key] = value;
-        return acc;
-      }, {});
+      // Convert values based on attribute data type
+      // HTML inputs always return strings, so we need to convert numbers
+      const attributes = data.attributes.reduce(
+        (acc, { key, value }) => {
+          const attrKey = attributeKeys.find((ak) => ak.key === key);
+          const dataType = attrKey?.dataType || "string";
+
+          if (dataType === "number" && value !== "") {
+            // Convert string to number for number attributes
+            acc[key] = Number(value);
+          } else {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {} as Record<string, string | number>
+      );
 
       const result = await updateContactAttributesAction({
         contactId,
@@ -211,6 +244,7 @@ export const EditContactAttributesModal = ({
                                 placeholder: t("environments.contacts.attribute_key_placeholder"),
                                 className: "w-full border-0",
                               }}
+                              iconClassName="h-4 w-4 text-slate-400"
                             />
                           </FormControl>
                           <FormError />
@@ -221,32 +255,79 @@ export const EditContactAttributesModal = ({
                     <FormField
                       control={form.control}
                       name={`attributes.${index}.value`}
-                      render={({ field: valueField }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel>{t("environments.contacts.attribute_value")}</FormLabel>
-                          <FormControl>
-                            <div className="flex space-x-2">
+                      render={({ field: valueField }) => {
+                        // Get the data type for this attribute key
+                        const selectedKey = attributeKeys.find(
+                          (ak) => ak.key === watchedAttributes[index]?.key
+                        );
+                        const dataType = selectedKey?.dataType || "string";
+
+                        // Render input based on data type
+                        const renderValueInput = () => {
+                          if (dataType === "date") {
+                            return (
                               <Input
+                                type="date"
+                                value={valueField.value ? valueField.value.split("T")[0] : ""}
+                                onChange={(e) => {
+                                  // NOSONAR - standard date input onchange, no need to take this out of the component
+                                  const dateValue = e.target.value
+                                    ? new Date(e.target.value).toISOString()
+                                    : "";
+                                  valueField.onChange(dateValue);
+                                }}
+                                placeholder={t("environments.contacts.attribute_value_placeholder")}
+                                className="w-full"
+                              />
+                            );
+                          }
+
+                          if (dataType === "number") {
+                            return (
+                              <Input
+                                type="number"
                                 {...valueField}
                                 placeholder={t("environments.contacts.attribute_value_placeholder")}
                                 className="w-full"
                               />
-                              <div className="flex items-end pb-0.5">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  disabled={["email", "userId", "firstName", "lastName"].includes(field.key)}
-                                  size="sm"
-                                  onClick={() => handleRemoveAttribute(index)}
-                                  className="h-10 w-10 p-0">
-                                  <TrashIcon className="h-4 w-4" />
-                                </Button>
+                            );
+                          }
+
+                          return (
+                            <Input
+                              type="text"
+                              {...valueField}
+                              placeholder={t("environments.contacts.attribute_value_placeholder")}
+                              className="w-full"
+                            />
+                          );
+                        };
+
+                        return (
+                          <FormItem className="flex-1">
+                            <FormLabel>{t("environments.contacts.attribute_value")}</FormLabel>
+                            <FormControl>
+                              <div className="flex space-x-2">
+                                {renderValueInput()}
+                                <div className="flex items-end pb-0.5">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={["email", "userId", "firstName", "lastName"].includes(
+                                      watchedAttributes[index]?.key ?? ""
+                                    )}
+                                    size="sm"
+                                    onClick={() => handleRemoveAttribute(index)}
+                                    className="h-10 w-10 p-0">
+                                    <TrashIcon className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                          </FormControl>
-                          <FormError />
-                        </FormItem>
-                      )}
+                            </FormControl>
+                            <FormError />
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
                 ))}
