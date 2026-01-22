@@ -1642,6 +1642,7 @@
         "validation_rules_description": "Acceptă doar răspunsurile care îndeplinesc următoarele criterii",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} este folosit în logica întrebării {questionIndex}. Vă rugăm să-l eliminați din logică mai întâi.",
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variabila \"{variableName}\" este folosită în cota \"{quotaName}\"",
+        "variable_name_conflicts_with_hidden_field": "Numele variabilei intră în conflict cu un ID de câmp ascuns existent.",
         "variable_name_is_already_taken_please_choose_another": "Numele variabilei este deja utilizat, vă rugăm să alegeți altul.",
         "variable_name_must_start_with_a_letter": "Numele variabilei trebuie să înceapă cu o literă.",
         "variable_used_in_recall": "Variabila \"{variable}\" este reamintită în întrebarea {questionIndex}.",

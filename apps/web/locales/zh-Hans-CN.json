@@ -1642,6 +1642,7 @@
         "validation_rules_description": "仅接受符合以下条件的回复",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "\"{variable} 在 问题 {questionIndex} 的 逻辑 中 使用。请 先 从 逻辑 中 删除 它。\"",
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "变量 \"{variableName}\" 正在 被 \"{quotaName}\" 配额 使用",
+        "variable_name_conflicts_with_hidden_field": "变量名与已有的隐藏字段 ID 冲突。",
         "variable_name_is_already_taken_please_choose_another": "变量名已被占用，请选择其他。",
         "variable_name_must_start_with_a_letter": "变量名 必须 以字母开头。",
         "variable_used_in_recall": "变量 \"{variable}\" 正在召回于问题 {questionIndex}。",
