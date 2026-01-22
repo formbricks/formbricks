@@ -1476,7 +1476,7 @@
         "question_deleted": "問題已刪除。",
         "question_duplicated": "問題已複製。",
         "question_id_updated": "問題 ID 已更新",
-        "question_used_in_logic_warning_text": "此區塊已用於邏輯規則中，確定要刪除嗎？",
+        "question_used_in_logic_warning_text": "此區塊中的元素已用於邏輯規則，確定要刪除嗎？",
         "question_used_in_logic_warning_title": "邏輯不一致",
         "question_used_in_quota": "此問題 正被使用於 \"{quotaName}\" 配額中",
         "question_used_in_recall": "此問題於問題 {questionIndex} 中被召回。",

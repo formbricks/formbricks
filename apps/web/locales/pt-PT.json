@@ -1476,7 +1476,7 @@
         "question_deleted": "Pergunta eliminada.",
         "question_duplicated": "Pergunta duplicada.",
         "question_id_updated": "ID da pergunta atualizado",
-        "question_used_in_logic_warning_text": "Este bloco é usado numa regra de lógica, tem a certeza de que pretende eliminá-lo?",
+        "question_used_in_logic_warning_text": "Os elementos deste bloco são utilizados numa regra de lógica, tem a certeza de que pretende eliminá-lo?",
         "question_used_in_logic_warning_title": "Inconsistência de lógica",
         "question_used_in_quota": "Esta pergunta está a ser usada na quota \"{quotaName}\"",
         "question_used_in_recall": "Esta pergunta está a ser recordada na pergunta {questionIndex}.",

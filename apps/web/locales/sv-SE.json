@@ -1476,7 +1476,7 @@
         "question_deleted": "Fråga borttagen.",
         "question_duplicated": "Fråga duplicerad.",
         "question_id_updated": "Fråge-ID uppdaterat",
-        "question_used_in_logic_warning_text": "Detta block används i en logikregel, är du säker på att du vill ta bort det?",
+        "question_used_in_logic_warning_text": "Element från det här blocket används i en logikregel. Är du säker på att du vill ta bort det?",
         "question_used_in_logic_warning_title": "Logikkonflikt",
         "question_used_in_quota": "Denna fråga används i kvoten \"{quotaName}\"",
         "question_used_in_recall": "Denna fråga återkallas i fråga {questionIndex}.",

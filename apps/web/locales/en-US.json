@@ -1476,7 +1476,7 @@
         "question_deleted": "Question deleted.",
         "question_duplicated": "Question duplicated.",
         "question_id_updated": "Question ID updated",
-        "question_used_in_logic_warning_text": "This block is used in a logic rule, are you sure you want to delete it?",
+        "question_used_in_logic_warning_text": "Elements from this block are used in a logic rule, are you sure you want to delete it?",
         "question_used_in_logic_warning_title": "Logic Inconsistency",
         "question_used_in_quota": "This question is being used in \"{quotaName}\" quota",
         "question_used_in_recall": "This question is being recalled in question {questionIndex}.",
