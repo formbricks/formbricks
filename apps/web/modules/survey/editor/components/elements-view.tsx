@@ -46,7 +46,12 @@ import {
   renumberBlocks,
   updateElementInBlock,
 } from "@/modules/survey/editor/lib/blocks";
-import { findElementUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
+import {
+  findBlockUsedInLogic,
+  findElementUsedInLogic,
+  isUsedInQuota,
+  isUsedInRecall,
+} from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { isEndingCardValid, isWelcomeCardValid, validateSurveyElementsInBatch } from "../lib/validation";
@@ -98,9 +103,12 @@ export const ElementsView = ({
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
     open: boolean;
     elementIdx: number;
+    type: "element" | "block";
+    blockId?: string;
   }>({
     open: false,
     elementIdx: 0,
+    type: "element",
   });
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
@@ -482,7 +490,7 @@ export const ElementsView = ({
 
     const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
     if (usedElementIdx !== -1) {
-      setLogicDeletionWarning({ open: true, elementIdx });
+      setLogicDeletionWarning({ open: true, elementIdx, type: "element" });
       return;
     }
 
@@ -686,7 +694,7 @@ export const ElementsView = ({
     toast.success(t("environments.surveys.edit.block_duplicated"));
   };
 
-  const deleteBlockById = (blockId: string) => {
+  const executeBlockDeletion = (blockId: string) => {
     // First check if block exists in current state (for validation and calculating next active element)
     const blockExists = localSurvey.blocks.some((b) => b.id === blockId);
     if (!blockExists) {
@@ -721,6 +729,16 @@ export const ElementsView = ({
     if (newActiveElementId) {
       setActiveElementId(newActiveElementId);
     }
+  };
+
+  const deleteBlockById = (blockId: string) => {
+    const usedElementIdx = findBlockUsedInLogic(localSurvey, blockId);
+    if (usedElementIdx !== -1) {
+      setLogicDeletionWarning({ open: true, elementIdx: 0, type: "block", blockId });
+      return;
+    }
+
+    executeBlockDeletion(blockId);
   };
 
   const moveBlockById = (blockId: string, direction: "up" | "down") => {
@@ -936,11 +954,15 @@ export const ElementsView = ({
       <ConfirmationModal
         open={logicDeletionWarning.open}
         setOpen={(open) => setLogicDeletionWarning((prev) => ({ ...prev, open: open as boolean }))}
-        title={t("environments.surveys.edit.question_used_in_logic_warning")}
-        body={t("environments.surveys.edit.question_used_in_logic_warning")}
+        title={t("environments.surveys.edit.question_used_in_logic_warning_title")}
+        body={t("environments.surveys.edit.question_used_in_logic_warning_text")}
         buttonText={t("environments.surveys.edit.delete_anyways")}
         onConfirm={() => {
-          executeDeletion(logicDeletionWarning.elementIdx);
+          if (logicDeletionWarning.type === "element") {
+            executeDeletion(logicDeletionWarning.elementIdx);
+          } else if (logicDeletionWarning.type === "block" && logicDeletionWarning.blockId) {
+            executeBlockDeletion(logicDeletionWarning.blockId);
+          }
           setLogicDeletionWarning((prev) => ({ ...prev, open: false }));
         }}
       />
