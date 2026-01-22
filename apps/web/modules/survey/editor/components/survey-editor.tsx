@@ -1,6 +1,7 @@
 "use client";
+
 import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
@@ -18,7 +19,6 @@ import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
-import { isEndingCardValid, isWelcomeCardValid, validateSurveyElementsInBatch } from "../lib/validation";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { refetchProjectAction } from "../actions";
@@ -85,50 +85,13 @@ export const SurveyEditor = ({
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
-  
-  // Submission-time errors from SurveyMenuBar (Zod validation)
-  const [submissionInvalidElements, setSubmissionInvalidElements] = useState<string[] | null>(null);
-  
+  const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<Project>(project);
 
   const [styling, setStyling] = useState(localSurvey?.styling);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
-
-  // Derived validation state to prevent infinite loops and double renders
-  const derivedInvalidElements = useMemo(() => {
-    if (!localSurvey) return [];
-    
-    let invalidIds: string[] = [];
-    const surveyLanguages = localSurvey.languages ?? [];
-
-    // Validate Welcome Card
-    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
-      invalidIds.push("start");
-    }
-
-    // Validate Endings
-    localSurvey.endings.forEach((ending) => {
-      if (!isEndingCardValid(ending, surveyLanguages)) {
-        invalidIds.push(ending.id);
-      }
-    });
-
-    // Validate Elements
-    const elements = localSurvey.blocks.flatMap(b => b.elements);
-    elements.forEach((element) => {
-      invalidIds = validateSurveyElementsInBatch(element, invalidIds, surveyLanguages);
-    });
-
-    return invalidIds;
-  }, [localSurvey]);
-
-  // Combine derived errors with submission errors
-  const invalidElements = useMemo(() => {
-    const uniqueInvalid = new Set([...derivedInvalidElements, ...(submissionInvalidElements ?? [])]);
-    return Array.from(uniqueInvalid);
-  }, [derivedInvalidElements, submissionInvalidElements]);
 
   const fetchLatestProject = useCallback(async () => {
     const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
@@ -206,7 +169,7 @@ export const SurveyEditor = ({
         environmentId={environment.id}
         activeId={activeView}
         setActiveId={setActiveView}
-        setInvalidElements={setSubmissionInvalidElements}
+        setInvalidElements={setInvalidElements}
         project={localProject}
         responseCount={responseCount}
         selectedLanguageCode={selectedLanguageCode}
@@ -237,7 +200,7 @@ export const SurveyEditor = ({
               project={localProject}
               projectLanguages={projectLanguages}
               invalidElements={invalidElements}
-
+              setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isMultiLanguageAllowed={isMultiLanguageAllowed}
