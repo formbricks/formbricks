@@ -48,7 +48,7 @@ describe("Project Service", () => {
       },
       placement: WidgetPlacement.bottomRight,
       clickOutsideClose: true,
-      darkOverlay: false,
+      overlay: "none",
       environments: [],
       styling: {
         allowStyleOverwrite: true,
@@ -106,7 +106,7 @@ describe("Project Service", () => {
       },
       placement: WidgetPlacement.bottomRight,
       clickOutsideClose: true,
-      darkOverlay: false,
+      overlay: "none",
       environments: [],
       styling: {
         allowStyleOverwrite: true,
@@ -171,7 +171,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -196,7 +196,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -250,7 +250,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -324,7 +324,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -378,7 +378,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -403,7 +403,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -448,7 +448,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,

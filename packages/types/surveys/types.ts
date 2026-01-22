@@ -1,7 +1,7 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZColor, ZId, ZPlacement, ZUrl, getZSafeUrl } from "../common";
+import { ZColor, ZId, ZOverlay, ZPlacement, ZUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { ZLanguage } from "../project";
@@ -229,7 +229,7 @@ export const ZSurveyProjectOverwrites = z.object({
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
   clickOutsideClose: z.boolean().nullish(),
-  darkOverlay: z.boolean().nullish(),
+  overlay: ZOverlay.nullish(),
 });
 
 export type TSurveyProjectOverwrites = z.infer<typeof ZSurveyProjectOverwrites>;

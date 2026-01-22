@@ -37,6 +37,8 @@ export const ZSurveyStylingBackground = z.object({
 
 export const ZPlacement = z.enum(["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]);
 
+export const ZOverlay = z.enum(["none", "light", "dark"]);
+
 const ZSurveyBase = z.object({
   id: z.string().cuid2().openapi({
     description: "The ID of the survey",
@@ -153,7 +155,7 @@ const ZSurveyBase = z.object({
       highlightBorderColor: ZColor.nullish(),
       placement: ZPlacement.nullish(),
       clickOutsideClose: z.boolean().nullish(),
-      darkOverlay: z.boolean().nullish(),
+      overlay: ZOverlay.nullish(),
     })
     .nullable()
     .openapi({

@@ -58,7 +58,7 @@ describe("updateProjectBranding", () => {
       },
       placement: "bottomRight" as const,
       clickOutsideClose: true,
-      darkOverlay: false,
+      overlay: "none",
       environments: [{ id: "test-env-id" }],
       languages: [],
       logo: null,

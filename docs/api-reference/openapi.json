@@ -704,10 +704,6 @@
                               "example": true,
                               "type": "boolean"
                             },
-                            "darkOverlay": {
-                              "example": false,
-                              "type": "boolean"
-                            },
                             "id": {
                               "example": "cm6orqtcl000319wj9wb7dltl",
                               "type": "string"
@@ -715,6 +711,11 @@
                             "inAppSurveyBranding": {
                               "example": true,
                               "type": "boolean"
+                            },
+                            "overlay": {
+                              "enum": ["none", "light", "dark"],
+                              "example": "none",
+                              "type": "string"
                             },
                             "placement": {
                               "example": "bottomRight",

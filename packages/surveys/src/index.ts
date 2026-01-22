@@ -17,7 +17,7 @@ export const renderSurveyInline = (props: SurveyContainerProps) => {
 
 export const renderSurvey = (props: SurveyContainerProps) => {
   // render SurveyNew
-  // if survey type is link, we don't pass the placement, darkOverlay, clickOutside, onClose
+  // if survey type is link, we don't pass the placement, overlay, clickOutside, onClose
 
   const { mode, containerId, languageCode } = props;
 
@@ -36,7 +36,7 @@ export const renderSurvey = (props: SurveyContainerProps) => {
       throw new Error(`renderSurvey: Element with id ${containerId} not found.`);
     }
 
-    const { placement, darkOverlay, onClose, clickOutside, ...surveyInlineProps } = props;
+    const { placement, overlay, onClose, clickOutside, ...surveyInlineProps } = props;
 
     render(
       h(

@@ -1,17 +1,18 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { TPlacement } from "@formbricks/types/common";
+import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
 import { Label } from "@/modules/ui/components/label";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
+import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 
 interface TPlacementProps {
   currentPlacement: TPlacement;
   setCurrentPlacement: (placement: TPlacement) => void;
-  setOverlay: (overlay: string) => void;
-  overlay: string;
+  setOverlay: (overlay: TOverlay) => void;
+  overlay: TOverlay;
   setClickOutsideClose: (clickOutside: boolean) => void;
   clickOutsideClose: boolean;
 }
@@ -32,8 +33,15 @@ export const Placement = ({
     { name: t("common.bottom_left"), value: "bottomLeft", disabled: false },
     { name: t("common.centered_modal"), value: "center", disabled: false },
   ];
-  const overlayStyle =
-    currentPlacement === "center" && overlay === "dark" ? "bg-slate-700/80" : "bg-slate-200";
+
+  const hasOverlay = overlay !== "none";
+
+  const getOverlayStyle = () => {
+    if (overlay === "dark") return "bg-slate-700/80";
+    if (overlay === "light") return "bg-white/50 border border-slate-200";
+    return "bg-slate-200";
+  };
+
   return (
     <>
       <div className="flex">
@@ -50,9 +58,9 @@ export const Placement = ({
         <div
           data-testid="placement-preview"
           className={cn(
-            clickOutsideClose ? "" : "cursor-not-allowed",
+            hasOverlay && !clickOutsideClose ? "cursor-not-allowed" : "",
             "relative ml-8 h-40 w-full rounded",
-            overlayStyle
+            getOverlayStyle()
           )}>
           <div
             className={cn(
@@ -61,53 +69,44 @@ export const Placement = ({
             )}></div>
         </div>
       </div>
-      {currentPlacement === "center" && (
-        <>
-          <div className="mt-6 space-y-2">
-            <Label className="font-semibold">
-              {t("environments.surveys.edit.centered_modal_overlay_color")}
-            </Label>
-            <RadioGroup
-              onValueChange={(overlay) => setOverlay(overlay)}
-              value={overlay}
-              className="flex space-x-4">
-              <div className="flex items-center space-x-2 whitespace-nowrap">
-                <RadioGroupItem id="lightOverlay" value="light" />
-                <Label htmlFor="lightOverlay" className="text-slate-900">
-                  {t("common.light_overlay")}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 whitespace-nowrap">
-                <RadioGroupItem id="darkOverlay" value="dark" />
-                <Label htmlFor="darkOverlay" className="text-slate-900">
-                  {t("common.dark_overlay")}
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-          <div className="mt-6 space-y-2">
-            <Label className="font-semibold">
-              {t("common.allow_users_to_exit_by_clicking_outside_the_survey")}
-            </Label>
-            <RadioGroup
-              onValueChange={(value) => setClickOutsideClose(value === "allow")}
-              value={clickOutsideClose ? "allow" : "disallow"}
-              className="flex space-x-4">
-              <div className="flex items-center space-x-2 whitespace-nowrap">
-                <RadioGroupItem id="disallow" value="disallow" />
-                <Label htmlFor="disallow" className="text-slate-900">
-                  {t("common.disallow")}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 whitespace-nowrap">
-                <RadioGroupItem id="allow" value="allow" />
-                <Label htmlFor="allow" className="text-slate-900">
-                  {t("common.allow")}
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-        </>
+
+      <div className="mt-6 space-y-2">
+        <StylingTabs
+          id="overlay"
+          options={[
+            { value: "none", label: t("common.no_overlay") },
+            { value: "light", label: t("common.light_overlay") },
+            { value: "dark", label: t("common.dark_overlay") },
+          ]}
+          defaultSelected={overlay}
+          onChange={(value) => setOverlay(value)}
+          label={t("common.overlay_color")}
+        />
+      </div>
+
+      {hasOverlay && (
+        <div className="mt-6 space-y-2">
+          <Label className="font-semibold">
+            {t("common.allow_users_to_exit_by_clicking_outside_the_survey")}
+          </Label>
+          <RadioGroup
+            onValueChange={(value) => setClickOutsideClose(value === "allow")}
+            value={clickOutsideClose ? "allow" : "disallow"}
+            className="flex space-x-4">
+            <div className="flex items-center space-x-2 whitespace-nowrap">
+              <RadioGroupItem id="disallow" value="disallow" />
+              <Label htmlFor="disallow" className="text-slate-900">
+                {t("common.disallow")}
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 whitespace-nowrap">
+              <RadioGroupItem id="allow" value="allow" />
+              <Label htmlFor="allow" className="text-slate-900">
+                {t("common.allow")}
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
       )}
     </>
   );

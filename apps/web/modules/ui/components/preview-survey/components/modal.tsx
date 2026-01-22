@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { TPlacement } from "@formbricks/types/common";
+import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
 import { getPlacementStyle } from "../lib/utils";
 
@@ -11,7 +11,7 @@ interface ModalProps {
   placement: TPlacement;
   previewMode: string;
   clickOutsideClose: boolean;
-  darkOverlay: boolean;
+  overlay: TOverlay;
   borderRadius?: number;
   background?: string;
 }
@@ -22,14 +22,14 @@ export const Modal = ({
   placement,
   previewMode,
   clickOutsideClose,
-  darkOverlay,
+  overlay,
   borderRadius,
   background,
 }: ModalProps) => {
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
-  const [overlayVisible, setOverlayVisible] = useState(placement === "center");
+  const hasOverlay = overlay !== "none";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -41,10 +41,6 @@ export const Modal = ({
       return () => window.removeEventListener("resize", handleResize);
     }
   }, []);
-
-  useEffect(() => {
-    setOverlayVisible(placement === "center");
-  }, [placement]);
 
   const calculateScaling = () => {
     if (windowWidth === null) return {};
@@ -84,7 +80,7 @@ export const Modal = ({
   const scalingClasses = calculateScaling();
 
   useEffect(() => {
-    if (!clickOutsideClose || placement !== "center") return;
+    if (!clickOutsideClose || !hasOverlay) return;
     const handleClickOutside = (e: MouseEvent) => {
       const previewBase = document.getElementById("preview-survey-base");
 
@@ -106,7 +102,7 @@ export const Modal = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [clickOutsideClose, placement]);
+  }, [clickOutsideClose, hasOverlay]);
 
   useEffect(() => {
     setShow(isOpen);
@@ -135,7 +131,8 @@ export const Modal = ({
       aria-live="assertive"
       className={cn(
         "relative h-full w-full overflow-hidden rounded-b-md",
-        overlayVisible ? (darkOverlay ? "bg-slate-700/80" : "bg-white/50") : "",
+        overlay === "dark" ? "bg-slate-700/80" : "",
+        overlay === "light" ? "bg-white/50" : "",
         "transition-all duration-500 ease-in-out"
       )}>
       <div
