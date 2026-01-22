@@ -217,10 +217,10 @@ const contactAttributesInclude = {
 const createAttributeConnections = (
   record: Record<string, string>,
   environmentId: string,
-  attributeTypeMap: Map<string, TContactAttributeDataType>
+  attributeTypeMap: Map<string, TAttributeTypeInfo>
 ) =>
   Object.entries(record).map(([key, value]) => {
-    const dataType = attributeTypeMap.get(key) ?? "string";
+    const dataType = attributeTypeMap.get(key)?.dataType ?? "string";
     const columns = prepareAttributeColumnsForStorage(value, dataType);
 
     return {
@@ -292,23 +292,28 @@ const extractCsvMetadata = (
 /**
  * Builds a map of attribute keys to their detected/existing data types
  */
+type TAttributeTypeInfo = {
+  dataType: TContactAttributeDataType;
+  isExisting: boolean; // true = from DB, false = newly detected
+};
+
 const buildAttributeTypeMap = (
   attributeValuesByKey: Map<string, string[]>,
   existingAttributeKeys: { key: string; dataType: TContactAttributeDataType }[],
   lowercaseToActualKeyMap: Map<string, string>
-): Map<string, TContactAttributeDataType> => {
-  const attributeTypeMap = new Map<string, TContactAttributeDataType>();
+): Map<string, TAttributeTypeInfo> => {
+  const attributeTypeMap = new Map<string, TAttributeTypeInfo>();
 
   for (const [key, values] of attributeValuesByKey) {
     const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
     const existingKey = actualKey ? existingAttributeKeys.find((ak) => ak.key === actualKey) : null;
 
     if (existingKey) {
-      attributeTypeMap.set(key, existingKey.dataType);
+      attributeTypeMap.set(key, { dataType: existingKey.dataType, isExisting: true });
     } else {
       const firstValue = values.find((v) => v !== "");
       const detectedType = firstValue ? detectAttributeDataType(firstValue) : "string";
-      attributeTypeMap.set(key, detectedType);
+      attributeTypeMap.set(key, { dataType: detectedType, isExisting: false });
     }
   }
 
@@ -316,37 +321,73 @@ const buildAttributeTypeMap = (
 };
 
 /**
- * Validates attribute values against their detected types and downgrades to string if invalid
+ * Finds invalid values for a given attribute type
  */
-const validateAndAdjustCsvAttributeTypes = (
-  attributeTypeMap: Map<string, TContactAttributeDataType>,
-  attributeValuesByKey: Map<string, string[]>
-): void => {
-  const typeValidationErrors: string[] = [];
+const findInvalidValuesForType = (values: string[], dataType: TContactAttributeDataType): string[] => {
+  const invalidValues: string[] = [];
 
-  for (const [key, dataType] of attributeTypeMap) {
-    if (dataType === "string") continue;
+  for (const value of values) {
+    const columns = prepareAttributeColumnsForStorage(value, dataType);
+    const parseFailed =
+      (dataType === "number" && columns.valueNumber === null) ||
+      (dataType === "date" && columns.valueDate === null);
 
-    const values = attributeValuesByKey.get(key) || [];
-
-    for (const value of values) {
-      const columns = prepareAttributeColumnsForStorage(value, dataType);
-      const parseFailed =
-        (dataType === "number" && columns.valueNumber === null) ||
-        (dataType === "date" && columns.valueDate === null);
-
-      if (parseFailed) {
-        attributeTypeMap.set(key, "string");
-        typeValidationErrors.push(
-          `Attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`
-        );
-        break;
-      }
+    if (parseFailed) {
+      invalidValues.push(value);
     }
   }
 
-  if (typeValidationErrors.length > 0) {
-    logger.warn({ errors: typeValidationErrors }, "Type validation warnings during CSV upload");
+  return invalidValues;
+};
+
+/**
+ * Builds an error message for invalid attribute values
+ */
+const buildInvalidValuesErrorMessage = (
+  key: string,
+  dataType: TContactAttributeDataType,
+  invalidValues: string[]
+): string => {
+  const sampleInvalid = invalidValues.slice(0, 3).join(", ");
+  const additionalCount = invalidValues.length - 3;
+  const suffix = additionalCount > 0 ? ` (and ${additionalCount} more)` : "";
+
+  return `Attribute "${key}" is typed as "${dataType}" but CSV contains invalid values: ${sampleInvalid}${suffix}`;
+};
+
+/**
+ * Validates attribute values against their types.
+ * - For EXISTING typed attributes: throws ValidationError if values don't match
+ * - For NEW attributes: downgrades to string if values are inconsistent
+ */
+const validateAndAdjustCsvAttributeTypes = (
+  attributeTypeMap: Map<string, TAttributeTypeInfo>,
+  attributeValuesByKey: Map<string, string[]>
+): void => {
+  const typeValidationWarnings: string[] = [];
+
+  for (const [key, typeInfo] of attributeTypeMap) {
+    if (typeInfo.dataType === "string") continue;
+
+    const values = attributeValuesByKey.get(key) || [];
+    const invalidValues = findInvalidValuesForType(values, typeInfo.dataType);
+
+    if (invalidValues.length === 0) continue;
+
+    if (typeInfo.isExisting) {
+      // EXISTING typed attribute: fail the upload
+      throw new ValidationError(buildInvalidValuesErrorMessage(key, typeInfo.dataType, invalidValues));
+    }
+
+    // NEW attribute: downgrade to string
+    attributeTypeMap.set(key, { dataType: "string", isExisting: false });
+    typeValidationWarnings.push(
+      `Attribute "${key}" has mixed or invalid values for type "${typeInfo.dataType}", treating as string type`
+    );
+  }
+
+  if (typeValidationWarnings.length > 0) {
+    logger.warn({ warnings: typeValidationWarnings }, "Type validation warnings during CSV upload");
   }
 };
 
@@ -357,7 +398,7 @@ const createMissingAttributeKeys = async (
   csvKeys: Set<string>,
   lowercaseToActualKeyMap: Map<string, string>,
   attributeKeyMap: Map<string, string>,
-  attributeTypeMap: Map<string, TContactAttributeDataType>,
+  attributeTypeMap: Map<string, TAttributeTypeInfo>,
   environmentId: string
 ): Promise<void> => {
   const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
@@ -377,7 +418,7 @@ const createMissingAttributeKeys = async (
     data: Array.from(uniqueMissingKeys.values()).map((key) => ({
       key,
       name: key,
-      dataType: attributeTypeMap.get(key) ?? "string",
+      dataType: attributeTypeMap.get(key)?.dataType ?? "string",
       environmentId,
     })),
     skipDuplicates: true,
@@ -410,7 +451,7 @@ type TCsvProcessingContext = {
   emailToContactMap: Map<string, TExistingContactFromCsv>;
   existingUserIds: TExistingUserId[];
   attributeKeyMap: Map<string, string>;
-  attributeTypeMap: Map<string, TContactAttributeDataType>;
+  attributeTypeMap: Map<string, TAttributeTypeInfo>;
   duplicateContactsAction: "skip" | "update" | "overwrite";
   environmentId: string;
 };
@@ -480,7 +521,7 @@ const handleDuplicateContact = async (
   existingContact: TExistingContactFromCsv,
   existingUserIds: TExistingUserId[],
   attributeKeyMap: Map<string, string>,
-  attributeTypeMap: Map<string, TContactAttributeDataType>,
+  attributeTypeMap: Map<string, TAttributeTypeInfo>,
   duplicateContactsAction: "skip" | "update" | "overwrite",
   environmentId: string
 ): Promise<TContact | null> => {
@@ -492,7 +533,7 @@ const handleDuplicateContact = async (
 
   if (duplicateContactsAction === "update") {
     const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => {
-      const dataType = attributeTypeMap.get(key) ?? "string";
+      const dataType = attributeTypeMap.get(key)?.dataType ?? "string";
       const columns = prepareAttributeColumnsForStorage(value, dataType);
 
       return {

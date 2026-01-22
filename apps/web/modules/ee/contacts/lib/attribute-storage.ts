@@ -1,5 +1,5 @@
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
-import { detectAttributeDataType, tryParseDate } from "./detect-attribute-type";
+import { detectAttributeDataType, detectSDKAttributeDataType, tryParseDate } from "./detect-attribute-type";
 
 type TRawValue = string | number | Date;
 
@@ -14,7 +14,7 @@ export type TAttributeStorageColumns = {
 
 /**
  * Prepares an attribute value for storage by routing to the appropriate column(s).
- * Used when creating a new attribute - detects type and prepares all columns.
+ * Used when creating a new attribute from CSV upload - detects type flexibly.
  *
  * @param value - The raw value to store (string, number, or Date)
  * @returns Object with dataType and column values for storage
@@ -26,6 +26,28 @@ export const prepareNewAttributeForStorage = (
   columns: TAttributeStorageColumns;
 } => {
   const dataType = detectAttributeDataType(value);
+  const columns = prepareAttributeColumnsForStorage(value, dataType);
+
+  return { dataType, columns };
+};
+
+/**
+ * Prepares an attribute value for storage from SDK input.
+ * Uses STRICT type detection:
+ * - JS number → number type
+ * - ISO 8601 string → date type
+ * - Any other string → string type (even if it looks like a number!)
+ *
+ * @param value - The value from SDK (string or number)
+ * @returns Object with dataType and column values for storage
+ */
+export const prepareNewSDKAttributeForStorage = (
+  value: string | number
+): {
+  dataType: TContactAttributeDataType;
+  columns: TAttributeStorageColumns;
+} => {
+  const dataType = detectSDKAttributeDataType(value);
   const columns = prepareAttributeColumnsForStorage(value, dataType);
 
   return { dataType, columns };

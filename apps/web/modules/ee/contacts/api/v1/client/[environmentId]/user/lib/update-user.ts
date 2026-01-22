@@ -1,5 +1,6 @@
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
+import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
@@ -151,7 +152,7 @@ export const updateUser = async (
   environmentId: string,
   userId: string,
   device: "phone" | "desktop",
-  attributes?: Record<string, string>
+  attributes?: TContactAttributesInput
 ): Promise<{ state: TJsPersonState; messages?: string[] }> => {
   // Cached environment validation (rarely changes)
   const environment = await getEnvironment(environmentId);
@@ -185,31 +186,18 @@ export const updateUser = async (
     const hasChanges = Object.entries(attributes).some(([key, value]) => value !== contactAttributes[key]);
 
     if (hasChanges) {
-      const {
-        success,
-        messages: updateAttrMessages,
-        ignoreEmailAttribute,
-      } = await updateAttributes(contactData.id, userId, environmentId, attributes);
+      const { success, messages: updateAttrMessages } = await updateAttributes(
+        contactData.id,
+        userId,
+        environmentId,
+        attributes
+      );
 
       messages = updateAttrMessages ?? [];
 
-      // Update local attributes if successful
-      if (success) {
-        let attributesToUpdate = { ...attributes };
-
-        if (ignoreEmailAttribute) {
-          const { email, ...rest } = attributes;
-          attributesToUpdate = rest;
-        }
-
-        contactAttributes = {
-          ...contactAttributes,
-          ...attributesToUpdate,
-        };
-
-        if (attributes.language) {
-          language = attributes.language;
-        }
+      // Update language if provided (used in response state)
+      if (success && attributes.language) {
+        language = String(attributes.language);
       }
     }
   }

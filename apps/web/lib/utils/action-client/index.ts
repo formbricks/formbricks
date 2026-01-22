@@ -11,6 +11,7 @@ import {
   ResourceNotFoundError,
   TooManyRequestsError,
   UnknownError,
+  ValidationError,
 } from "@formbricks/types/errors";
 import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
@@ -35,7 +36,8 @@ export const actionClient = createSafeActionClient({
       e instanceof UnknownError ||
       e instanceof AuthenticationError ||
       e instanceof OperationNotAllowedError ||
-      e instanceof TooManyRequestsError
+      e instanceof TooManyRequestsError ||
+      e instanceof ValidationError
     ) {
       return e.message;
     }

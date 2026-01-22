@@ -1,6 +1,39 @@
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 
 /**
+ * Detects the data type of an attribute value from SDK input.
+ * This is STRICT and does NOT parse string contents:
+ * - JS number → number type
+ * - JS Date object → date type (should be converted to ISO string by SDK)
+ * - ISO 8601 string → date type
+ * - Any other string → string type (even if it looks like a number!)
+ *
+ * @param value - The attribute value from SDK (string or number, Date is converted to ISO by SDK)
+ * @returns The detected data type
+ */
+export const detectSDKAttributeDataType = (value: string | number): TContactAttributeDataType => {
+  // JS number → number type
+  if (typeof value === "number") {
+    return "number";
+  }
+
+  // String value - only check for ISO date format, NOT numeric strings
+  const stringValue = value.trim();
+
+  // Check for ISO 8601 date format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ)
+  // This is what Date.toISOString() produces
+  if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/.test(stringValue)) {
+    const parsedDate = new Date(stringValue);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return "date";
+    }
+  }
+
+  // Everything else is a string
+  return "string";
+};
+
+/**
  * Parses a date string in DD-MM-YYYY or MM-DD-YYYY format.
  * Uses heuristics to disambiguate between formats.
  */

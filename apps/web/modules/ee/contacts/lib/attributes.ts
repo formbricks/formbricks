@@ -1,10 +1,15 @@
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
-import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attribute";
+import {
+  TContactAttributes,
+  TContactAttributesInput,
+  ZContactAttributesInput,
+} from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
-import { prepareNewAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
+import { prepareNewSDKAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
   getContactAttributes,
@@ -18,8 +23,8 @@ const DEFAULT_ATTRIBUTES = new Set(["email", "userId", "firstName", "lastName"])
 
 const deleteAttributes = async (
   contactId: string,
-  currentAttributes: TContactAttributes,
-  submittedAttributes: TContactAttributes,
+  currentAttributes: TContactAttributesInput,
+  submittedAttributes: TContactAttributesInput,
   contactAttributeKeys: TContactAttributeKey[]
 ): Promise<{ success: boolean }> => {
   const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
@@ -67,7 +72,7 @@ export const updateAttributes = async (
   contactId: string,
   userId: string,
   environmentId: string,
-  contactAttributesParam: TContactAttributes,
+  contactAttributesParam: TContactAttributesInput,
   deleteRemovedAttributes: boolean = false
 ): Promise<{
   success: boolean;
@@ -79,24 +84,30 @@ export const updateAttributes = async (
     [contactId, ZId],
     [userId, ZString],
     [environmentId, ZId],
-    [contactAttributesParam, ZContactAttributes]
+    [contactAttributesParam, ZContactAttributesInput]
   );
 
   let ignoreEmailAttribute = false;
   let ignoreUserIdAttribute = false;
   const messages: string[] = [];
 
+  // Convert email and userId to strings for lookup (they should always be strings, but handle numbers gracefully)
+  const emailValue =
+    contactAttributesParam.email === null || contactAttributesParam.email === undefined
+      ? null
+      : String(contactAttributesParam.email);
+  const userIdValue =
+    contactAttributesParam.userId === null || contactAttributesParam.userId === undefined
+      ? null
+      : String(contactAttributesParam.userId);
+
   // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
   const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
     await Promise.all([
       getContactAttributes(contactId),
       getContactAttributeKeys(environmentId),
-      contactAttributesParam.email
-        ? hasEmailAttribute(contactAttributesParam.email, environmentId, contactId)
-        : Promise.resolve(null),
-      contactAttributesParam.userId
-        ? hasUserIdAttribute(contactAttributesParam.userId, environmentId, contactId)
-        : Promise.resolve(null),
+      emailValue ? hasEmailAttribute(emailValue, environmentId, contactId) : Promise.resolve(null),
+      userIdValue ? hasUserIdAttribute(userIdValue, environmentId, contactId) : Promise.resolve(null),
     ]);
 
   // Process email and userId existence early
@@ -111,8 +122,8 @@ export const updateAttributes = async (
   const emailWasSubmitted = "email" in contactAttributesParam;
   const userIdWasSubmitted = "userId" in contactAttributesParam;
 
-  const submittedEmail = emailWasSubmitted ? contactAttributes.email?.trim() || "" : null;
-  const submittedUserId = userIdWasSubmitted ? contactAttributes.userId?.trim() || "" : null;
+  const submittedEmail = emailWasSubmitted ? emailValue?.trim() || "" : null;
+  const submittedUserId = userIdWasSubmitted ? userIdValue?.trim() || "" : null;
 
   const currentEmail = currentAttributes.email || "";
   const currentUserId = currentAttributes.userId || "";
@@ -176,7 +187,7 @@ export const updateAttributes = async (
     attributeKeyId: string;
     columns: { value: string; valueNumber: number | null; valueDate: Date | null };
   }[] = [];
-  const newAttributes: { key: string; value: string }[] = [];
+  const newAttributes: { key: string; value: string | number }[] = [];
   const typeValidationErrors: string[] = [];
 
   for (const [key, value] of Object.entries(contactAttributes)) {
@@ -193,8 +204,10 @@ export const updateAttributes = async (
           columns: validationResult.parsedValue,
         });
       } else {
-        // Type mismatch - add to errors
-        typeValidationErrors.push(validationResult.error);
+        // Type mismatch - add to errors and include what type is expected
+        typeValidationErrors.push(
+          `${validationResult.error} (attribute '${key}' has dataType: ${attributeKey.dataType})`
+        );
       }
     } else {
       // New attribute - will detect type on creation
@@ -253,11 +266,22 @@ export const updateAttributes = async (
         `Could not create ${newAttributes.length} new attribute(s) as it would exceed the maximum limit of ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} attribute classes. Existing attributes were updated successfully.`
       );
     } else {
+      // Prepare new attributes with SDK-specific type detection
+      const preparedNewAttributes = newAttributes.map(({ key, value }) => {
+        const { dataType, columns } = prepareNewSDKAttributeForStorage(value);
+        return { key, dataType, columns };
+      });
+
+      // Log new attribute creation with their types
+      for (const { key, dataType } of preparedNewAttributes) {
+        logger.info({ environmentId, attributeKey: key, dataType }, "Created new contact attribute");
+        messages.push(`Created new attribute '${key}' with type '${dataType}'`);
+      }
+
       // Create new attributes since we're under the limit
       await prisma.$transaction(
-        newAttributes.map(({ key, value }) => {
-          const { dataType, columns } = prepareNewAttributeForStorage(value);
-          return prisma.contactAttributeKey.create({
+        preparedNewAttributes.map(({ key, dataType, columns }) =>
+          prisma.contactAttributeKey.create({
             data: {
               key,
               type: "custom",
@@ -272,8 +296,8 @@ export const updateAttributes = async (
                 },
               },
             },
-          });
-        })
+          })
+        )
       );
     }
   }

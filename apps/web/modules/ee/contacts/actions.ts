@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZContactAttributes } from "@formbricks/types/contact-attribute";
+import { ZContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -134,7 +134,7 @@ export const createContactsFromCSVAction = authenticatedActionClient.schema(ZCre
 
 const ZUpdateContactAttributesAction = z.object({
   contactId: ZId,
-  attributes: ZContactAttributes,
+  attributes: ZContactAttributesInput,
 });
 
 export type TUpdateContactAttributesAction = z.infer<typeof ZUpdateContactAttributesAction>;

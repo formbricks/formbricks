@@ -1,5 +1,4 @@
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
-import { tryParseDate } from "@/modules/ee/contacts/lib/detect-attribute-type";
 
 type TRawValue = string | number | Date;
 
@@ -58,7 +57,9 @@ const validateStringType = (value: TRawValue): TAttributeValidationResult => ({
 });
 
 /**
- * Validates and parses a number type attribute
+ * Validates and parses a number type attribute.
+ * STRICT: Only accepts JS numbers, NOT numeric strings.
+ * This ensures SDK users pass actual numbers for number attributes.
  */
 const validateNumberType = (value: TRawValue, attributeKey: string): TAttributeValidationResult => {
   if (typeof value === "number") {
@@ -72,27 +73,24 @@ const validateNumberType = (value: TRawValue, attributeKey: string): TAttributeV
     };
   }
 
-  if (typeof value === "string" && isValidNumber(value)) {
-    const numericValue = Number(value.trim());
-    return {
-      valid: true,
-      parsedValue: {
-        value: String(numericValue),
-        valueNumber: numericValue,
-        valueDate: null,
-      },
-    };
-  }
-
+  // Strings are NOT accepted for number attributes (even if they look like numbers)
   return {
     valid: false,
-    error: `Attribute '${attributeKey}' expects a number. Received: ${getTypeName(value)} value '${String(value)}'`,
+    error: `Attribute '${attributeKey}' expects a number but received a string. Pass an actual number value (e.g., 123 instead of "123").`,
   };
 };
 
 /**
- * Validates and parses a date type attribute
- * Supports multiple formats: ISO 8601, DD-MM-YYYY, MM-DD-YYYY, etc.
+ * Checks if a string is a valid ISO 8601 date format
+ */
+const isIsoDateString = (value: string): boolean => {
+  return /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/.test(value.trim());
+};
+
+/**
+ * Validates and parses a date type attribute.
+ * STRICT for SDK: Only accepts Date objects or ISO 8601 strings.
+ * Does NOT accept other date formats like DD-MM-YYYY (use CSV upload for that).
  */
 const validateDateType = (value: TRawValue, attributeKey: string): TAttributeValidationResult => {
   // Handle Date objects
@@ -113,19 +111,29 @@ const validateDateType = (value: TRawValue, attributeKey: string): TAttributeVal
     };
   }
 
-  // Handle string values with flexible parsing
+  // Handle string values - only accept ISO 8601 format
   if (typeof value === "string") {
-    const dateValue = tryParseDate(value.trim());
-    if (dateValue && !Number.isNaN(dateValue.getTime())) {
-      return {
-        valid: true,
-        parsedValue: {
-          value: dateValue.toISOString(),
-          valueNumber: null,
-          valueDate: dateValue,
-        },
-      };
+    const trimmedValue = value.trim();
+
+    if (isIsoDateString(trimmedValue)) {
+      const dateValue = new Date(trimmedValue);
+      if (!Number.isNaN(dateValue.getTime())) {
+        return {
+          valid: true,
+          parsedValue: {
+            value: dateValue.toISOString(),
+            valueNumber: null,
+            valueDate: dateValue,
+          },
+        };
+      }
     }
+
+    // String is not in ISO format
+    return {
+      valid: false,
+      error: `Attribute '${attributeKey}' expects a date in ISO 8601 format (e.g., "2024-01-15" or "2024-01-15T10:30:00.000Z") or a Date object. Received: "${trimmedValue}"`,
+    };
   }
 
   return {

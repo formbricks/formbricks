@@ -152,12 +152,22 @@ export const EditContactAttributesModal = ({
 
   const onSubmit = async (data: TEditContactAttributesForm) => {
     try {
+      // Convert values based on attribute data type
+      // HTML inputs always return strings, so we need to convert numbers
       const attributes = data.attributes.reduce(
         (acc, { key, value }) => {
-          acc[key] = value;
+          const attrKey = attributeKeys.find((ak) => ak.key === key);
+          const dataType = attrKey?.dataType || "string";
+
+          if (dataType === "number" && value !== "") {
+            // Convert string to number for number attributes
+            acc[key] = Number(value);
+          } else {
+            acc[key] = value;
+          }
           return acc;
         },
-        {} as Record<string, string>
+        {} as Record<string, string | number>
       );
 
       const result = await updateContactAttributesAction({

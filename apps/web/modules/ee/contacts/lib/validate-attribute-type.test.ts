@@ -44,23 +44,17 @@ describe("validateAndParseAttributeValue", () => {
       }
     });
 
-    test("accepts numeric string values", () => {
+    test("rejects numeric string values (SDK must pass actual numbers)", () => {
+      // With stricter validation, strings are NOT accepted for number attributes
+      // SDK users must pass actual numbers (e.g., 3.14 instead of "3.14")
       const result = validateAndParseAttributeValue("3.14", "number", "testKey");
-      expect(result.valid).toBe(true);
-      if (result.valid) {
-        expect(result.parsedValue.valueNumber).toBe(3.14);
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toContain("received a string");
       }
     });
 
-    test("accepts numeric strings with whitespace", () => {
-      const result = validateAndParseAttributeValue("  123  ", "number", "testKey");
-      expect(result.valid).toBe(true);
-      if (result.valid) {
-        expect(result.parsedValue.valueNumber).toBe(123);
-      }
-    });
-
-    test("rejects non-numeric strings", () => {
+    test("rejects any string values for number type", () => {
       const result = validateAndParseAttributeValue("hello", "number", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
@@ -112,7 +106,7 @@ describe("validateAndParseAttributeValue", () => {
       expect(result.valid).toBe(false);
       if (!result.valid) {
         expect(result.error).toContain("purchaseDate");
-        expect(result.error).toContain("expects a valid date");
+        expect(result.error).toContain("ISO 8601 format");
       }
     });
 
@@ -121,6 +115,14 @@ describe("validateAndParseAttributeValue", () => {
       expect(result.valid).toBe(false);
       if (!result.valid) {
         expect(result.error).toContain("expects a valid date");
+      }
+    });
+
+    test("rejects non-ISO date format strings", () => {
+      const result = validateAndParseAttributeValue("15/06/2024", "date", "testKey");
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toContain("ISO 8601 format");
       }
     });
 
@@ -147,7 +149,8 @@ describe("validateAndParseAttributeValue", () => {
       const result = validateAndParseAttributeValue("hello", "number", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("hello");
+        // New stricter message doesn't include the value, but mentions string was received
+        expect(result.error).toContain("received a string");
       }
     });
   });
