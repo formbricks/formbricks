@@ -7,10 +7,8 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
-import {
-  formatValidationErrorsForV1Api,
-  validateResponseData,
-} from "@/modules/api/v2/management/responses/lib/validation";
+import { formatValidationErrors } from "@/modules/api/lib/validation";
+import { validateResponseData } from "@/modules/api/v2/management/responses/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
 import {
@@ -165,7 +163,7 @@ export const POST = withV1ApiWrapper({
         return {
           response: responses.badRequestResponse(
             "Validation failed",
-            formatValidationErrorsForV1Api(validationErrors),
+            formatValidationErrors(validationErrors),
             true
           ),
         };

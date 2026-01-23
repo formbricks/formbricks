@@ -72,21 +72,3 @@ export const formatValidationErrorsForApi = (errorMap: TValidationErrorMap) => {
 
   return details;
 };
-
-/**
- * Converts validation error map to V1 API error response format
- *
- * @param errorMap - Validation error map from validateResponseData
- * @returns V1 API error details as Record<string, string>
- */
-export const formatValidationErrorsForV1Api = (errorMap: TValidationErrorMap): Record<string, string> => {
-  const details: Record<string, string> = {};
-
-  for (const [elementId, errors] of Object.entries(errorMap)) {
-    // Combine all error messages for each element
-    const errorMessages = errors.map((error) => error.message).join("; ");
-    details[`response.data.${elementId}`] = errorMessages;
-  }
-
-  return details;
-};

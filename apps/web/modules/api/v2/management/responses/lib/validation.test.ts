@@ -4,11 +4,8 @@ import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
-import {
-  formatValidationErrorsForApi,
-  formatValidationErrorsForV1Api,
-  validateResponseData,
-} from "./validation";
+import { formatValidationErrors } from "@/modules/api/lib/validation";
+import { formatValidationErrorsForApi, validateResponseData } from "./validation";
 
 const mockTransformQuestionsToBlocks = vi.fn();
 const mockGetElementsFromBlocks = vi.fn();
@@ -172,13 +169,13 @@ describe("formatValidationErrorsForApi", () => {
   });
 });
 
-describe("formatValidationErrorsForV1Api", () => {
-  test("should convert error map to V1 API format", () => {
+describe("formatValidationErrors", () => {
+  test("should convert error map to Record format", () => {
     const errorMap: TValidationErrorMap = {
       element1: [{ ruleId: "minLength", ruleType: "minLength", message: "Min length required" }],
     };
 
-    expect(formatValidationErrorsForV1Api(errorMap)).toEqual({
+    expect(formatValidationErrors(errorMap)).toEqual({
       "response.data.element1": "Min length required",
     });
   });
@@ -191,7 +188,7 @@ describe("formatValidationErrorsForV1Api", () => {
       ],
     };
 
-    expect(formatValidationErrorsForV1Api(errorMap)).toEqual({
+    expect(formatValidationErrors(errorMap)).toEqual({
       "response.data.element1": "Min length; Max length",
     });
   });
@@ -202,7 +199,7 @@ describe("formatValidationErrorsForV1Api", () => {
       element2: [{ ruleId: "maxLength", ruleType: "maxLength", message: "Max length" }],
     };
 
-    expect(formatValidationErrorsForV1Api(errorMap)).toEqual({
+    expect(formatValidationErrors(errorMap)).toEqual({
       "response.data.element1": "Min length",
       "response.data.element2": "Max length",
     });

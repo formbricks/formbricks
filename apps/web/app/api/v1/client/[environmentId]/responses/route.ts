@@ -12,10 +12,8 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import {
-  formatValidationErrorsForV1Api,
-  validateResponseData,
-} from "@/modules/api/v2/management/responses/lib/validation";
+import { formatValidationErrors } from "@/modules/api/lib/validation";
+import { validateResponseData } from "@/modules/api/v2/management/responses/lib/validation";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
@@ -139,7 +137,7 @@ export const POST = withV1ApiWrapper({
       return {
         response: responses.badRequestResponse(
           "Response validation failed",
-          formatValidationErrorsForV1Api(validationErrors),
+          formatValidationErrors(validationErrors),
           true
         ),
       };
