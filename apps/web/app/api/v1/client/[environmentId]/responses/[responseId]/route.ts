@@ -9,6 +9,10 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
+import {
+  formatValidationErrorsForV1Api,
+  validateResponseData,
+} from "@/modules/api/v2/management/responses/lib/validation";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
@@ -111,6 +115,27 @@ export const PUT = withV1ApiWrapper({
           true
         ),
       };
+    }
+
+    // Validate response data against validation rules (only if data is provided)
+    const updateData = inputValidation.data.data;
+    if (updateData) {
+      const validationErrors = validateResponseData(
+        survey.blocks,
+        updateData,
+        inputValidation.data.language ?? "en",
+        survey.questions
+      );
+
+      if (validationErrors) {
+        return {
+          response: responses.badRequestResponse(
+            "Response validation failed",
+            formatValidationErrorsForV1Api(validationErrors),
+            true
+          ),
+        };
+      }
     }
 
     // update response with quota evaluation

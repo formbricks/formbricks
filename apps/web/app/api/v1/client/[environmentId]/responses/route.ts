@@ -12,6 +12,10 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import {
+  formatValidationErrorsForV1Api,
+  validateResponseData,
+} from "@/modules/api/v2/management/responses/lib/validation";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
@@ -120,6 +124,24 @@ export const POST = withV1ApiWrapper({
     if (!validateFileUploads(responseInputData.data, survey.questions)) {
       return {
         response: responses.badRequestResponse("Invalid file upload response"),
+      };
+    }
+
+    // Validate response data against validation rules
+    const validationErrors = validateResponseData(
+      survey.blocks,
+      responseInputData.data,
+      responseInputData.language ?? "en",
+      survey.questions
+    );
+
+    if (validationErrors) {
+      return {
+        response: responses.badRequestResponse(
+          "Response validation failed",
+          formatValidationErrorsForV1Api(validationErrors),
+          true
+        ),
       };
     }
 
