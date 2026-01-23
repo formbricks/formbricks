@@ -207,6 +207,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 30
+      start_period: 30s
 
   # Redis/Valkey service for caching, rate limiting, and audit logging
   # Remove this service if you want to use an external Redis/Valkey instance
@@ -223,6 +224,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 30
+      start_period: 10s
 
   formbricks:
     restart: always
