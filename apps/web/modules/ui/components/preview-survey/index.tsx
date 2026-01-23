@@ -259,6 +259,7 @@ export const PreviewSurvey = ({
                       setBlockId = f;
                     }}
                     onFinished={onFinished}
+                    placement={placement}
                     isSpamProtectionEnabled={isSpamProtectionEnabled}
                   />
                 </Modal>
@@ -363,6 +364,7 @@ export const PreviewSurvey = ({
                   }}
                   onFinished={onFinished}
                   isSpamProtectionEnabled={isSpamProtectionEnabled}
+                  placement={placement}
                 />
               </Modal>
             ) : (

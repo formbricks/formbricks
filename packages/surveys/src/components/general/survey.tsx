@@ -76,6 +76,7 @@ export function Survey({
   isSpamProtectionEnabled,
   dir = "auto",
   setDir,
+  placement,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -916,6 +917,7 @@ export function Survey({
       setBlockId={setBlockId}
       shouldResetBlockId={shouldResetQuestionId}
       fullSizeCards={fullSizeCards}
+      placement={placement}
     />
   );
 }
