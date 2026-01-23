@@ -3,11 +3,11 @@ x-environment: &environment
     ######################################################## REQUIRED ########################################################
 
     # The url of your Formbricks instance used in the admin panel
-    # Set this to your public-facing URL, e.g., https://example.com
-    WEBAPP_URL:
+    # Set this to your public-facing URL, e.g., example http://localhost:3000 or https://example.com
+    WEBAPP_URL: 
 
     # Required for next-auth. Should be the same as WEBAPP_URL
-    NEXTAUTH_URL:
+    NEXTAUTH_URL: 
 
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
@@ -15,15 +15,15 @@ x-environment: &environment
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
     # You can use: `openssl rand -hex 32` to generate one
-    NEXTAUTH_SECRET:
+    NEXTAUTH_SECRET: 
 
     # Encryption Key is used for 2FA & Single use URLs for Link Surveys
     # You can use: $(openssl rand -hex 32) to generate one
-    ENCRYPTION_KEY:
+    ENCRYPTION_KEY: 
 
     # API Secret for running cron jobs.
     # You can use: $(openssl rand -hex 32) to generate a secure one
-    CRON_SECRET:
+    CRON_SECRET: 
 
     # Redis URL for caching, rate limiting, and audit logging
     # To use external Redis/Valkey: remove the redis service below and update this URL
@@ -201,9 +201,13 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
-      # Postgres DB Super User Password
-      # Replace the below with your own secure password & Make sure the password matches the password field in DATABASE_URL above
       - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
 
   # Redis/Valkey service for caching, rate limiting, and audit logging
   # Remove this service if you want to use an external Redis/Valkey instance
@@ -215,13 +219,21 @@ services:
       - redis:/data
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   formbricks:
     restart: always
     image: ghcr.io/formbricks/formbricks:latest
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - 3000:3000
     volumes:
