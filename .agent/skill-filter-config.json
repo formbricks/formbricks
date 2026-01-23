@@ -1,0 +1,63 @@
+{
+  "featureFlags": {
+    "keepCriticalPriority": true,
+    "keepHighPriority": true,
+    "keepMediumPriority": true,
+    "keepLowPriority": false,
+    "removeJsOptimizations": true,
+    "removeRenderingOptimizations": true,
+    "removeAdvancedPatterns": true
+  },
+  "priorities": {
+    "keep": [
+      "CRITICAL",
+      "HIGH"
+    ],
+    "conditionalKeep": [
+      "MEDIUM",
+      "MEDIUM-HIGH"
+    ],
+    "remove": [
+      "LOW",
+      "LOW-MEDIUM"
+    ]
+  },
+  "technologyDetection": {},
+  "alwaysKeep": [
+    "async-defer-await.md",
+    "async-parallel.md",
+    "async-dependencies.md",
+    "async-api-routes.md",
+    "bundle-barrel-imports.md",
+    "bundle-dynamic-imports.md",
+    "bundle-defer-third-party.md",
+    "bundle-conditional.md",
+    "bundle-preload.md",
+    "rerender-functional-setstate.md",
+    "rerender-memo.md",
+    "rerender-dependencies.md",
+    "rerender-defer-reads.md"
+  ],
+  "alwaysRemove": [
+    "js-batch-dom-css.md",
+    "js-cache-property-access.md",
+    "js-combine-iterations.md",
+    "js-early-exit.md",
+    "js-hoist-regexp.md",
+    "js-index-maps.md",
+    "js-length-check-first.md",
+    "js-min-max-loop.md",
+    "js-set-map-lookups.md",
+    "js-tosorted-immutable.md",
+    "js-cache-function-results.md",
+    "rendering-activity.md",
+    "rendering-animate-svg-wrapper.md",
+    "rendering-conditional-render.md",
+    "rendering-content-visibility.md",
+    "rendering-hoist-jsx.md",
+    "rendering-hydration-no-flicker.md",
+    "rendering-svg-precision.md",
+    "advanced-event-handler-refs.md",
+    "advanced-use-latest.md"
+  ]
+}

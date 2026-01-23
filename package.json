@@ -41,7 +41,9 @@
     "generate-translations": "pnpm i18n:web:generate && pnpm i18n:surveys:generate",
     "scan-translations": "pnpm --filter @formbricks/i18n-utils scan-translations",
     "i18n": "pnpm generate-translations && pnpm scan-translations",
-    "i18n:validate": "pnpm scan-translations"
+    "i18n:validate": "pnpm scan-translations",
+    "filter-skills": "tsx .agent/scripts/filter-skills.ts",
+    "filter-skills:dry-run": "tsx .agent/scripts/filter-skills.ts --dry-run"
   },
   "dependencies": {
     "react": "19.2.3",

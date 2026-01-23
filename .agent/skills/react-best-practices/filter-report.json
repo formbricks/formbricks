@@ -1,0 +1,249 @@
+{
+  "kept": [
+    {
+      "file": "_sections.md",
+      "reason": "Default (no matching rule)"
+    },
+    {
+      "file": "_template.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "async-api-routes.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "async-defer-await.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "async-dependencies.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "async-parallel.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "async-suspense-boundaries.md",
+      "reason": "Priority: HIGH"
+    },
+    {
+      "file": "bundle-barrel-imports.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "bundle-conditional.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "bundle-defer-third-party.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "bundle-dynamic-imports.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "bundle-preload.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "client-localstorage-schema.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "client-passive-event-listeners.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "client-swr-dedup.md",
+      "reason": "Priority: MEDIUM-HIGH (conditional keep)"
+    },
+    {
+      "file": "rerender-defer-reads.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "rerender-dependencies.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "rerender-derived-state-no-effect.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "rerender-derived-state.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "rerender-functional-setstate.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "rerender-lazy-state-init.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "rerender-memo-with-default-value.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "rerender-memo.md",
+      "reason": "Always keep (critical pattern)"
+    },
+    {
+      "file": "rerender-move-effect-to-event.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "rerender-transitions.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "rerender-use-ref-transient-values.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "server-after-nonblocking.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "server-auth-actions.md",
+      "reason": "Priority: CRITICAL"
+    },
+    {
+      "file": "server-cache-lru.md",
+      "reason": "Priority: HIGH"
+    },
+    {
+      "file": "server-cache-react.md",
+      "reason": "Priority: MEDIUM (conditional keep)"
+    },
+    {
+      "file": "server-parallel-fetching.md",
+      "reason": "Priority: CRITICAL"
+    },
+    {
+      "file": "server-serialization.md",
+      "reason": "Priority: HIGH"
+    }
+  ],
+  "archived": [
+    {
+      "file": "advanced-event-handler-refs.md",
+      "reason": "Feature flag: removeAdvancedPatterns"
+    },
+    {
+      "file": "advanced-init-once.md",
+      "reason": "Feature flag: removeAdvancedPatterns"
+    },
+    {
+      "file": "advanced-use-latest.md",
+      "reason": "Feature flag: removeAdvancedPatterns"
+    },
+    {
+      "file": "client-event-listeners.md",
+      "reason": "Priority: LOW"
+    },
+    {
+      "file": "js-batch-dom-css.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-cache-function-results.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-cache-property-access.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-cache-storage.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-combine-iterations.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-early-exit.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-hoist-regexp.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-index-maps.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-length-check-first.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-min-max-loop.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-set-map-lookups.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "js-tosorted-immutable.md",
+      "reason": "Feature flag: removeJsOptimizations"
+    },
+    {
+      "file": "rendering-activity.md",
+      "reason": "Feature flag: removeRenderingOptimizations"
+    },
+    {
+      "file": "rendering-animate-svg-wrapper.md",
+      "reason": "Feature flag: removeRenderingOptimizations"
+    },
+    {
+      "file": "rendering-conditional-render.md",
+      "reason": "Feature flag: removeRenderingOptimizations"
+    },
+    {
+      "file": "rendering-content-visibility.md",
+      "reason": "Feature flag: removeRenderingOptimizations"
+    },
+    {
+      "file": "rendering-hoist-jsx.md",
+      "reason": "Feature flag: removeRenderingOptimizations"
+    },
+    {
+      "file": "rendering-hydration-no-flicker.md",
+      "reason": "Feature flag: removeRenderingOptimizations"
+    },
+    {
+      "file": "rendering-hydration-suppress-warning.md",
+      "reason": "Feature flag: removeRenderingOptimizations"
+    },
+    {
+      "file": "rendering-svg-precision.md",
+      "reason": "Feature flag: removeRenderingOptimizations"
+    },
+    {
+      "file": "rendering-usetransition-loading.md",
+      "reason": "Feature flag: removeRenderingOptimizations"
+    },
+    {
+      "file": "rerender-simple-expression-in-memo.md",
+      "reason": "Priority: LOW-MEDIUM"
+    },
+    {
+      "file": "server-dedup-props.md",
+      "reason": "Priority: LOW"
+    }
+  ],
+  "technologiesDetected": [],
+  "summary": {
+    "totalRules": 59,
+    "keptRules": 32,
+    "archivedRules": 27,
+    "reductionPercent": 46
+  }
+}
