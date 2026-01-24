@@ -63,3 +63,8 @@ packages/ios/FormbricksSDK/FormbricksSDK.xcodeproj/project.xcworkspace/xcuserdat
 .cursorrules
 i18n.cache
 stats.html
+
+# Agent skill archives
+.agent/skills/**/.archived/
+.agent/.temp-skills/
+
