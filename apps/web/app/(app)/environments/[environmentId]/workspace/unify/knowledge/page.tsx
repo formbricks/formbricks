@@ -1,7 +1,6 @@
+import { IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import { PageHeader } from "@/modules/ui/components/page-header";
-import { UnifyConfigNavigation } from "../components/UnifyConfigNavigation";
+import { KnowledgeSection } from "./components/KnowledgeSection";
 
 export default async function UnifyKnowledgePage(props: { params: Promise<{ environmentId: string }> }) {
   const params = await props.params;
@@ -9,16 +8,9 @@ export default async function UnifyKnowledgePage(props: { params: Promise<{ envi
   await getEnvironmentAuth(params.environmentId);
 
   return (
-    <PageContentWrapper>
-      <PageHeader pageTitle="Unify Feedback">
-        <UnifyConfigNavigation environmentId={params.environmentId} />
-      </PageHeader>
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Knowledge</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Unify and manage feedback from all your channels in one place.
-        </p>
-      </div>
-    </PageContentWrapper>
+    <KnowledgeSection
+      environmentId={params.environmentId}
+      isStorageConfigured={IS_STORAGE_CONFIGURED}
+    />
   );
 }
