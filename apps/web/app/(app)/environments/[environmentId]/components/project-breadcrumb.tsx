@@ -133,6 +133,11 @@ export const ProjectBreadcrumb = ({
       label: t("common.tags"),
       href: `/environments/${currentEnvironmentId}/workspace/tags`,
     },
+    {
+      id: "unify",
+      label: "Unify Feedback",
+      href: `/environments/${currentEnvironmentId}/workspace/unify`,
+    },
   ];
 
   if (!currentProject) {

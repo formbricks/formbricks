@@ -1,6 +1,14 @@
 "use client";
 
-import { BlocksIcon, BrushIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
+import {
+  BlocksIcon,
+  BrushIcon,
+  Cable,
+  LanguagesIcon,
+  ListChecksIcon,
+  TagIcon,
+  UsersIcon,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
@@ -68,6 +76,13 @@ export const ProjectConfigNavigation = ({
       icon: <TagIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/workspace/tags`,
       current: pathname?.includes("/tags"),
+    },
+    {
+      id: "unify",
+      label: "Unify Feedback",
+      icon: <Cable className="h-5 w-5" />,
+      href: `/environments/${environmentId}/workspace/unify`,
+      current: pathname?.includes("/unify"),
     },
   ];
 
