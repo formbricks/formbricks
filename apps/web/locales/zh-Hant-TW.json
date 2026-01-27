@@ -613,7 +613,7 @@
       "attribute_created_successfully": "屬性建立成功",
       "attribute_description": "描述",
       "attribute_description_placeholder": "簡短描述",
-      "attribute_key": "金鑰",
+      "attribute_key": "屬性",
       "attribute_key_cannot_be_changed": "建立後無法變更金鑰",
       "attribute_key_hint": "僅限小寫字母、數字和底線，且必須以字母開頭。",
       "attribute_key_placeholder": "例如：date_of_birth",

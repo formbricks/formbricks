@@ -613,7 +613,7 @@
       "attribute_created_successfully": "属性创建成功",
       "attribute_description": "描述",
       "attribute_description_placeholder": "简短描述",
-      "attribute_key": "键",
+      "attribute_key": "属性",
       "attribute_key_cannot_be_changed": "创建后键不可更改",
       "attribute_key_hint": "仅允许小写字母、数字和下划线，且必须以字母开头。",
       "attribute_key_placeholder": "例如：date_of_birth",
