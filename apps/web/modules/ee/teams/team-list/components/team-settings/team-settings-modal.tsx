@@ -13,6 +13,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
+import { SearchableSelect } from "@/modules/ee/teams/team-list/components/team-settings/searchable-select";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import {
   TOrganizationMember,
@@ -278,29 +279,18 @@ export const TeamSettingsModal = ({
 
                                   return (
                                     <FormItem className="flex-1">
-                                      <Select
+                                      <SearchableSelect
+                                        options={memberOpts}
+                                        value={member.userId}
                                         onValueChange={(val) => {
                                           field.onChange(val);
                                           handleMemberSelectionChange(index, val);
                                         }}
+                                        placeholder={t("environments.settings.teams.select_member")}
+                                        searchPlaceholder={t("environments.settings.teams.search_members")}
+                                        emptyMessage={t("environments.settings.teams.no_members_found")}
                                         disabled={isSelectDisabled}
-                                        value={member.userId}>
-                                        <SelectTrigger>
-                                          <SelectValue
-                                            placeholder={t("environments.settings.teams.select_member")}
-                                          />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {memberOpts.map((option) => (
-                                            <SelectItem
-                                              key={option.value}
-                                              value={option.value}
-                                              id={`member-${index}-option`}>
-                                              {option.label}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
+                                      />
                                       {error?.message && (
                                         <FormError className="text-left">{error.message}</FormError>
                                       )}
