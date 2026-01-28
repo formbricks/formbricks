@@ -213,7 +213,7 @@ vi.mock("@/lib/constants", () => ({
     "en-US",
     "es-ES",
     "fr-FR",
-    "hu.HU",
+    "hu-HU",
     "ja-JP",
     "nl-NL",
     "pt-BR",
