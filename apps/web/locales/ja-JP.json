@@ -1469,7 +1469,7 @@
         "question_id_updated": "質問IDを更新しました",
         "question_used_in_logic_warning_text": "このブロックの要素はロジックルールで使用されていますが、本当に削除しますか？",
         "question_used_in_logic_warning_title": "ロジックの不整合",
-        "question_used_in_quota": "この 質問 は \"{quotaName}\" の クオータ に使用されています",
+        "question_used_in_quota": "この質問は“{quotaName}”クォータで使用されています",
         "question_used_in_recall": "この 質問 は 質問 {questionIndex} で 呼び出され て います 。",
         "question_used_in_recall_ending_card": "この 質問 は エンディング カード で 呼び出され て います。",
         "quotas": {
@@ -1643,7 +1643,7 @@
         "validation_rules": "検証ルール",
         "validation_rules_description": "次の条件を満たす回答のみを受け付ける",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} は質問 {questionIndex} のロジックで使用されています。まず、ロジックから削除してください。",
-        "variable_is_used_in_quota_please_remove_it_from_quota_first": "変数 \"{variableName}\" は \"{quotaName}\" クォータ で使用されています",
+        "variable_is_used_in_quota_please_remove_it_from_quota_first": "変数“{variableName}”は“{quotaName}”クォータで使用されています",
         "variable_name_conflicts_with_hidden_field": "変数名が既存の非表示フィールドIDと競合しています。",
         "variable_name_is_already_taken_please_choose_another": "変数名はすでに使用されています。別の名前を選択してください。",
         "variable_name_must_start_with_a_letter": "変数名はアルファベットで始まらなければなりません。",

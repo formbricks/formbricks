@@ -1469,7 +1469,7 @@
         "question_id_updated": "ID de pregunta actualizado",
         "question_used_in_logic_warning_text": "Los elementos de este bloque se usan en una regla de lógica, ¿estás seguro de que quieres eliminarlo?",
         "question_used_in_logic_warning_title": "Inconsistencia de lógica",
-        "question_used_in_quota": "Esta pregunta se está utilizando en la cuota \"{quotaName}\"",
+        "question_used_in_quota": "Esta pregunta se está utilizando en la cuota “{quotaName}”",
         "question_used_in_recall": "Esta pregunta se está recordando en la pregunta {questionIndex}.",
         "question_used_in_recall_ending_card": "Esta pregunta se está recordando en la Tarjeta Final",
         "quotas": {
@@ -1643,7 +1643,7 @@
         "validation_rules": "Reglas de validación",
         "validation_rules_description": "Solo aceptar respuestas que cumplan los siguientes criterios",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} se usa en la lógica de la pregunta {questionIndex}. Por favor, elimínala primero de la lógica.",
-        "variable_is_used_in_quota_please_remove_it_from_quota_first": "La variable \"{variableName}\" se está utilizando en la cuota \"{quotaName}\"",
+        "variable_is_used_in_quota_please_remove_it_from_quota_first": "La variable “{variableName}” se está utilizando en la cuota “{quotaName}”",
         "variable_name_conflicts_with_hidden_field": "El nombre de la variable entra en conflicto con un ID de campo oculto existente.",
         "variable_name_is_already_taken_please_choose_another": "El nombre de la variable ya está en uso, por favor elige otro.",
         "variable_name_must_start_with_a_letter": "El nombre de la variable debe comenzar con una letra.",

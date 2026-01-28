@@ -1398,7 +1398,7 @@ checksums:
     environments/surveys/edit/question_id_updated: e8d94dbefcbad00c7464b3d1fb0ee81a
     environments/surveys/edit/question_used_in_logic_warning_text: ec78767a7cf335222d41b98cb5baa6be
     environments/surveys/edit/question_used_in_logic_warning_title: 4bb8528cdc3b8649c194487067737f6d
-    environments/surveys/edit/question_used_in_quota: 311b93fcecd68a65fdefbea13bec7350
+    environments/surveys/edit/question_used_in_quota: ceb5e88f6916e4863e589c6be030bb3b
     environments/surveys/edit/question_used_in_recall: 00d74a1ede4e75e32d50fe87b85d5a8b
     environments/surveys/edit/question_used_in_recall_ending_card: ab5b0dc296cecd160a6406cbfab42695
     environments/surveys/edit/quotas/add_quota: 3676835c7f6c9ab4609b482c3b2cddd6
@@ -1568,7 +1568,7 @@ checksums:
     environments/surveys/edit/validation_rules: 0cd99f02684d633196c8b249e857d207
     environments/surveys/edit/validation_rules_description: a0a7cee05e18efd462148698e3a93399
     environments/surveys/edit/variable_is_used_in_logic_of_question_please_remove_it_from_logic_first: bd9d9c7cf0be671c4e8cf67e2ae6659e
-    environments/surveys/edit/variable_is_used_in_quota_please_remove_it_from_quota_first: 0d36e5b2713f5450fe346e0af0aaa29c
+    environments/surveys/edit/variable_is_used_in_quota_please_remove_it_from_quota_first: d6c3cfaa48189ebef5ad9a5594a1f32e
     environments/surveys/edit/variable_name_conflicts_with_hidden_field: fe2f6a711d5b663790bdd5780ad77bf2
     environments/surveys/edit/variable_name_is_already_taken_please_choose_another: 6da42fe8733c6379158bce9a176f76d7
     environments/surveys/edit/variable_name_must_start_with_a_letter: f7abbdecf1ba7b822ccabb16981ebcb5

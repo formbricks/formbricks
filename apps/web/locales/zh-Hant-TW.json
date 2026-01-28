@@ -1469,7 +1469,7 @@
         "question_id_updated": "問題 ID 已更新",
         "question_used_in_logic_warning_text": "此區塊中的元素已用於邏輯規則，確定要刪除嗎？",
         "question_used_in_logic_warning_title": "邏輯不一致",
-        "question_used_in_quota": "此問題 正被使用於 \"{quotaName}\" 配額中",
+        "question_used_in_quota": "此問題正被使用於「{quotaName}」配額中",
         "question_used_in_recall": "此問題於問題 {questionIndex} 中被召回。",
         "question_used_in_recall_ending_card": "此問題於結尾卡中被召回。",
         "quotas": {
@@ -1643,7 +1643,7 @@
         "validation_rules": "驗證規則",
         "validation_rules_description": "僅接受符合下列條件的回應",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "'{'variable'}' 用於問題 '{'questionIndex'}' 的邏輯中。請先從邏輯中移除。",
-        "variable_is_used_in_quota_please_remove_it_from_quota_first": "變數 \"{variableName}\" 正被使用於 \"{quotaName}\" 配額中",
+        "variable_is_used_in_quota_please_remove_it_from_quota_first": "變數「{variableName}」正被使用於「{quotaName}」配額中",
         "variable_name_conflicts_with_hidden_field": "變數名稱與現有的隱藏欄位 ID 衝突。",
         "variable_name_is_already_taken_please_choose_another": "已使用此變數名稱，請選擇另一個名稱。",
         "variable_name_must_start_with_a_letter": "變數名稱必須以字母開頭。",
