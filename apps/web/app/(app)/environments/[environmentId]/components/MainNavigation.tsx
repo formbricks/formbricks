@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRightIcon,
+  BarChartIcon,
   ChevronRightIcon,
   Cog,
   LogOutIcon,
@@ -9,6 +10,7 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   RocketIcon,
+  ShapesIcon,
   UserCircleIcon,
   UserIcon,
 } from "lucide-react";
@@ -99,7 +101,7 @@ export const MainNavigation = ({
   const mainNavigation = useMemo(
     () => [
       {
-        name: t("common.surveys"),
+        name: "Ask",
         href: `/environments/${environment.id}/surveys`,
         icon: MessageCircle,
         isActive: pathname?.includes("/surveys"),
@@ -107,12 +109,24 @@ export const MainNavigation = ({
       },
       {
         href: `/environments/${environment.id}/contacts`,
-        name: t("common.contacts"),
+        name: "Distribute",
         icon: UserIcon,
         isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
       },
       {
-        name: t("common.configuration"),
+        name: "Unify",
+        href: `/environments/${environment.id}/workspace/unify`,
+        icon: ShapesIcon,
+        isActive: pathname?.includes("/unify") && !pathname?.includes("/analyze"),
+      },
+      {
+        name: "Analyze",
+        href: `/environments/${environment.id}/workspace/analyze`,
+        icon: BarChartIcon,
+        isActive: pathname?.includes("/workspace/analyze"),
+      },
+      {
+        name: "Configure",
         href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
         isActive: pathname?.includes("/project"),
@@ -185,7 +199,7 @@ export const MainNavigation = ({
                 size="icon"
                 onClick={toggleSidebar}
                 className={cn(
-                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:ring-0 focus:ring-transparent focus:outline-none"
+                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
                 )}>
                 {isCollapsed ? (
                   <PanelLeftOpenIcon strokeWidth={1.5} />
