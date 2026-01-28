@@ -22,7 +22,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState(
-    iso639Languages.find((isoLang) => isoLang.alpha2 === language.code)
+    iso639Languages.find((isoLang) => isoLang.code === language.code)
   );
   const items = iso639Languages;
 
@@ -39,7 +39,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
 
   const handleOptionSelect = (option: TIso639Language) => {
     setSelectedOption(option);
-    onLanguageChange({ ...language, code: option.alpha2 || "" });
+    onLanguageChange({ ...language, code: option.code || "" });
     setIsOpen(false);
   };
 
@@ -87,7 +87,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
           {filteredItems.map((item) => (
             <button
               className="block w-full cursor-pointer rounded-md px-4 py-2 text-left text-slate-700 hover:bg-slate-100 active:bg-blue-100"
-              key={item.alpha2}
+              key={item.code}
               onClick={() => {
                 handleOptionSelect(item);
               }}>

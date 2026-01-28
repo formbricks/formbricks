@@ -2,6 +2,7 @@ import { MutableRef } from "preact/hooks";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { JSX } from "preact/jsx-runtime";
 import React from "react";
+import { type TPlacement } from "@formbricks/types/common";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 
@@ -17,6 +18,7 @@ interface StackedCardProps {
   cardWidth: number;
   hovered: boolean;
   cardArrangement: TCardArrangementOptions;
+  placement: TPlacement;
 }
 
 export const StackedCard = ({
@@ -31,17 +33,24 @@ export const StackedCard = ({
   cardWidth,
   hovered,
   cardArrangement,
+  placement,
 }: StackedCardProps) => {
   const isHidden = offset < 0;
   const [delayedOffset, setDelayedOffset] = useState<number>(offset);
   const [contentOpacity, setContentOpacity] = useState<number>(0);
   const currentCardHeight = offset === 0 ? "auto" : offset < 0 ? "initial" : cardHeight;
 
-  const getBottomStyles = () => {
+  const getTopBottomStyles = () => {
     if (survey.type !== "link")
-      return {
-        bottom: 0,
-      };
+      if (placement === "bottomLeft" || placement === "bottomRight") {
+        return {
+          bottom: 0,
+        };
+      } else if (placement === "topLeft" || placement === "topRight") {
+        return {
+          top: 0,
+        };
+      }
   };
 
   const getDummyCardContent = () => {
@@ -96,7 +105,9 @@ export const StackedCard = ({
 
   return (
     <div
-      ref={(el) => (cardRefs.current[dynamicQuestionIndex] = el)}
+      ref={(el) => {
+        cardRefs.current[dynamicQuestionIndex] = el;
+      }}
       id={`questionCard-${dynamicQuestionIndex}`}
       data-testid={`questionCard-${dynamicQuestionIndex}`}
       key={dynamicQuestionIndex}
@@ -109,7 +120,7 @@ export const StackedCard = ({
         pointerEvents: offset === 0 ? "auto" : "none",
         ...borderStyles,
         ...straightCardArrangementStyles,
-        ...getBottomStyles(),
+        ...getTopBottomStyles(),
       }}
       className="pointer rounded-custom bg-survey-bg absolute inset-x-0 overflow-hidden">
       <div

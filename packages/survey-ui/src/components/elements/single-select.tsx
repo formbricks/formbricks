@@ -41,6 +41,8 @@ interface SingleSelectProps {
   onChange: (value: string) => void;
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
+  /** Custom label for the required indicator */
+  requiredLabel?: string;
   /** Error message to display below the options */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
@@ -76,6 +78,7 @@ function SingleSelect({
   value,
   onChange,
   required = false,
+  requiredLabel,
   errorMessage,
   dir = "auto",
   disabled = false,
@@ -141,6 +144,7 @@ function SingleSelect({
         headline={headline}
         description={description}
         required={required}
+        requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}
@@ -240,6 +244,7 @@ function SingleSelect({
                   return (
                     <label
                       key={option.id}
+                      dir={dir}
                       htmlFor={optionId}
                       className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
                       <span className="flex items-center">
@@ -250,7 +255,7 @@ function SingleSelect({
                           aria-required={required}
                         />
                         <span
-                          className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                          className={cn("mx-3 grow", optionLabelClassName)}
                           style={{ fontSize: "var(--fb-option-font-size)" }}>
                           {option.label}
                         </span>
@@ -261,6 +266,7 @@ function SingleSelect({
               {hasOtherOption && otherOptionId ? (
                 <label
                   htmlFor={`${inputId}-${otherOptionId}`}
+                  dir={dir}
                   className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
                   <span className="flex items-center">
                     <RadioGroupItem
@@ -300,6 +306,7 @@ function SingleSelect({
                     <label
                       key={option.id}
                       htmlFor={optionId}
+                      dir={dir}
                       className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
                       <span className="flex items-center">
                         <RadioGroupItem
@@ -309,7 +316,7 @@ function SingleSelect({
                           aria-required={required}
                         />
                         <span
-                          className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                          className={cn("mx-3 grow", optionLabelClassName)}
                           style={{ fontSize: "var(--fb-option-font-size)" }}>
                           {option.label}
                         </span>

@@ -2,7 +2,7 @@ import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
-import { cn } from "@/lib/utils";
+import { cn, getRTLScaleOptionClasses } from "@/lib/utils";
 
 interface NPSProps {
   /** Unique identifier for the element container */
@@ -25,6 +25,8 @@ interface NPSProps {
   colorCoding?: boolean;
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
+  /** Custom label for the required indicator */
+  requiredLabel?: string;
   /** Error message to display */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
@@ -48,6 +50,7 @@ function NPS({
   upperLabel,
   colorCoding = false,
   required = false,
+  requiredLabel,
   errorMessage,
   dir = "auto",
   disabled = false,
@@ -94,18 +97,9 @@ function NPS({
     const isLast = number === 10; // Last option is 10
     const isFirst = number === 0; // First option is 0
 
-    // Determine border radius and border classes
-    // Use right border for all items to create separators, left border only on first item
-    let borderRadiusClasses = "";
-    let borderClasses = "border-t border-b border-r";
-
-    if (isFirst) {
-      borderRadiusClasses = dir === "rtl" ? "rounded-r-input" : "rounded-l-input";
-      borderClasses = "border-t border-b border-l border-r";
-    } else if (isLast) {
-      borderRadiusClasses = dir === "rtl" ? "rounded-l-input" : "rounded-r-input";
-      // Last item keeps right border for rounded corner
-    }
+    // Use CSS logical properties for RTL-aware borders and border radius
+    // The fieldset's dir attribute automatically handles direction
+    const { borderRadiusClasses, borderClasses } = getRTLScaleOptionClasses(isFirst, isLast);
 
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
@@ -171,6 +165,7 @@ function NPS({
         headline={headline}
         description={description}
         required={required}
+        requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}
@@ -179,7 +174,7 @@ function NPS({
       {/* NPS Options */}
       <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
-        <fieldset className="w-full px-[2px]">
+        <fieldset className="w-full px-[2px]" dir={dir}>
           <legend className="sr-only">NPS rating options</legend>
           <div className="flex w-full">{npsOptions.map((number) => renderNPSOption(number))}</div>
 

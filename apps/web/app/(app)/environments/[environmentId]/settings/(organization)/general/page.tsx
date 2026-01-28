@@ -12,6 +12,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
+import { SecurityListTip } from "./components/SecurityListTip";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
@@ -48,6 +49,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           </Alert>
         </div>
       )}
+      {!IS_FORMBRICKS_CLOUD && <SecurityListTip />}
       <SettingsCard
         title={t("environments.settings.general.organization_name")}
         description={t("environments.settings.general.organization_name_description")}>

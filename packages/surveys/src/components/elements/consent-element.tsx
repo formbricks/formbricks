@@ -16,6 +16,7 @@ interface ConsentElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function ConsentElement({
@@ -27,30 +28,21 @@ export function ConsentElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<ConsentElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
 
   const handleChange = (checked: boolean) => {
-    setErrorMessage(undefined);
     onChange({ [element.id]: checked ? "accepted" : "" });
-  };
-
-  const validateRequired = (): boolean => {
-    if (element.required && value !== "accepted") {
-      setErrorMessage(t("errors.please_fill_out_this_field"));
-      return false;
-    }
-    return true;
   };
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    setErrorMessage(undefined);
-    if (!validateRequired()) return;
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -65,7 +57,8 @@ export function ConsentElement({
         checkboxLabel={getLocalizedValue(element.label, languageCode)}
         value={value === "accepted"}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}

@@ -17,6 +17,7 @@ interface NPSElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function NPSElement({
@@ -28,32 +29,23 @@ export function NPSElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<NPSElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const isRequired = element.required;
   const { t } = useTranslation();
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const handleChange = (npsValue: number) => {
-    setErrorMessage(undefined);
     onChange({ [element.id]: npsValue });
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
 
-  const validateRequired = (): boolean => {
-    if (element.required && value === undefined) {
-      setErrorMessage(t("errors.please_select_an_option"));
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    setErrorMessage(undefined);
-    if (!validateRequired()) return;
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -70,7 +62,8 @@ export function NPSElement({
         lowerLabel={getLocalizedValue(element.lowerLabel, languageCode)}
         upperLabel={getLocalizedValue(element.upperLabel, languageCode)}
         colorCoding={element.isColorCodingEnabled}
-        required={element.required}
+        required={isRequired}
+        requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}

@@ -76,6 +76,7 @@ export function Survey({
   isSpamProtectionEnabled,
   dir = "auto",
   setDir,
+  placement,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -801,6 +802,7 @@ export function Survey({
         return (
           Boolean(block) && (
             <BlockConditional
+              surveyLanguages={localSurvey.languages}
               key={block.id}
               surveyId={localSurvey.id}
               block={{
@@ -915,6 +917,7 @@ export function Survey({
       setBlockId={setBlockId}
       shouldResetBlockId={shouldResetQuestionId}
       fullSizeCards={fullSizeCards}
+      placement={placement}
     />
   );
 }

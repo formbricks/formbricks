@@ -10,6 +10,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
@@ -118,6 +119,13 @@ export const POST = async (request: Request, context: Context): Promise<Response
       country: country,
       action: responseInputData?.meta?.action,
     };
+
+    // Capture IP address if the survey has IP capture enabled
+    // Server-derived IP always overwrites any client-provided value
+    if (survey.isCaptureIpEnabled) {
+      const ipAddress = await getClientIpFromHeaders();
+      meta.ipAddress = ipAddress;
+    }
 
     response = await createResponseWithQuotaEvaluation({
       ...responseInputData,

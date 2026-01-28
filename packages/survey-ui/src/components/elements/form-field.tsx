@@ -37,6 +37,8 @@ interface FormFieldProps {
   onChange: (value: Record<string, string>) => void;
   /** Whether the entire form is required (shows asterisk indicator) */
   required?: boolean;
+  /** Custom label for the required indicator */
+  requiredLabel?: string;
   /** Error message to display */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
@@ -57,6 +59,7 @@ function FormField({
   value = {},
   onChange,
   required = false,
+  requiredLabel,
   errorMessage,
   dir = "auto",
   disabled = false,
@@ -103,46 +106,49 @@ function FormField({
         headline={headline}
         description={description}
         required={required}
+        requiredLabel={requiredLabel}
         imageUrl={imageUrl}
         videoUrl={videoUrl}
       />
 
       {/* Form Fields */}
-      <div className="relative space-y-3">
+      <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
-        {visibleFields.map((field) => {
-          const fieldRequired = isFieldRequired(field);
-          const fieldValue = currentValues[field.id] ?? "";
-          const fieldInputId = `${elementId}-${field.id}`;
+        <div className="space-y-3">
+          {visibleFields.map((field) => {
+            const fieldRequired = isFieldRequired(field);
+            const fieldValue = currentValues[field.id] ?? "";
+            const fieldInputId = `${elementId}-${field.id}`;
 
-          // Determine input type
-          let inputType: "text" | "email" | "tel" | "number" | "url" = field.type ?? "text";
-          if (field.id === "email" && !field.type) {
-            inputType = "email";
-          } else if (field.id === "phone" && !field.type) {
-            inputType = "tel";
-          }
+            // Determine input type
+            let inputType: "text" | "email" | "tel" | "number" | "url" = field.type ?? "text";
+            if (field.id === "email" && !field.type) {
+              inputType = "email";
+            } else if (field.id === "phone" && !field.type) {
+              inputType = "tel";
+            }
 
-          return (
-            <div key={field.id} className="space-y-2">
-              <Label htmlFor={fieldInputId} variant="default">
-                {fieldRequired ? `${field.label}*` : field.label}
-              </Label>
-              <Input
-                id={fieldInputId}
-                type={inputType}
-                value={fieldValue}
-                onChange={(e) => {
-                  handleFieldChange(field.id, e.target.value);
-                }}
-                required={fieldRequired}
-                disabled={disabled}
-                dir={dir}
-                aria-invalid={Boolean(errorMessage) || undefined}
-              />
-            </div>
-          );
-        })}
+            return (
+              <div key={field.id} className="space-y-2">
+                <Label htmlFor={fieldInputId} variant="default">
+                  {fieldRequired ? `${field.label}*` : field.label}
+                </Label>
+                <Input
+                  id={fieldInputId}
+                  type={inputType}
+                  value={fieldValue}
+                  onChange={(e) => {
+                    handleFieldChange(field.id, e.target.value);
+                  }}
+                  required={fieldRequired}
+                  disabled={disabled}
+                  dir={dir}
+                  aria-invalid={Boolean(errorMessage) || undefined}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

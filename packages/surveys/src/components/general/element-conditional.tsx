@@ -2,11 +2,9 @@ import { useEffect, useRef } from "preact/hooks";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
-import {
-  TSurveyElement,
-  TSurveyElementChoice,
-  TSurveyElementTypeEnum,
-} from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/types/surveys/elements";
+import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { AddressElement } from "@/components/elements/address-element";
 import { CalElement } from "@/components/elements/cal-element";
 import { ConsentElement } from "@/components/elements/consent-element";
@@ -39,6 +37,8 @@ interface ElementConditionalProps {
   dir?: "ltr" | "rtl" | "auto";
   formRef?: (ref: HTMLFormElement | null) => void; // Callback to expose the form element
   onTtcCollect?: (elementId: string, ttc: number) => void; // Callback to collect TTC synchronously
+  errorMessage?: string; // Validation error message from centralized validation
+  surveyLanguages: TSurveyLanguage[];
 }
 
 export function ElementConditional({
@@ -56,7 +56,9 @@ export function ElementConditional({
   dir,
   formRef,
   onTtcCollect,
-}: ElementConditionalProps) {
+  surveyLanguages,
+  errorMessage,
+}: Readonly<ElementConditionalProps>) {
   // Ref to the container div, used to find and expose the form element inside
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -124,6 +126,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.MultipleChoiceSingle:
@@ -139,6 +142,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.MultipleChoiceMulti:
@@ -154,6 +158,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.NPS:
@@ -169,6 +174,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.CTA:
@@ -198,6 +204,7 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Consent:
@@ -213,6 +220,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Date:
@@ -227,6 +235,9 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
+            surveyLanguages={surveyLanguages}
+            dir={dir}
           />
         );
       case TSurveyElementTypeEnum.PictureSelection:
@@ -242,6 +253,7 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.FileUpload:
@@ -258,6 +270,7 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Cal:
@@ -271,6 +284,7 @@ export function ElementConditional({
             ttc={ttc}
             setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Matrix:
@@ -283,6 +297,8 @@ export function ElementConditional({
             ttc={ttc}
             setTtc={wrappedSetTtc}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
+            dir={dir}
           />
         );
       case TSurveyElementTypeEnum.Address:
@@ -297,11 +313,13 @@ export function ElementConditional({
             currentElementId={currentElementId}
             autoFocusEnabled={autoFocusEnabled}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.Ranking:
         return (
           <RankingElement
+            dir={dir}
             element={element}
             value={Array.isArray(value) ? getResponseValueForRankingElement(value, element.choices) : []}
             onChange={onChange}
@@ -310,6 +328,7 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
           />
         );
       case TSurveyElementTypeEnum.ContactInfo:
@@ -324,6 +343,7 @@ export function ElementConditional({
             currentElementId={currentElementId}
             autoFocusEnabled={autoFocusEnabled}
             dir={dir}
+            errorMessage={errorMessage}
           />
         );
       default:

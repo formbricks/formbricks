@@ -203,12 +203,14 @@ export const HiddenFieldsCard = ({
               const existingElementIds = elements.map((element) => element.id);
               const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
+              const existingVariableNames = localSurvey.variables.map((v) => v.name);
               const validateIdError = validateId(
                 "Hidden field",
                 hiddenField,
                 existingElementIds,
                 existingEndingCardIds,
-                existingHiddenFieldIds
+                existingHiddenFieldIds,
+                existingVariableNames
               );
 
               if (validateIdError) {

@@ -153,9 +153,9 @@ export const ElementFormInput = ({
       (currentElement &&
         (id.includes(".")
           ? // Handle nested properties
-          (currentElement[id.split(".")[0] as keyof TSurveyElement] as any)?.[id.split(".")[1]]
+            (currentElement[id.split(".")[0] as keyof TSurveyElement] as any)?.[id.split(".")[1]]
           : // Original behavior
-          (currentElement[id as keyof TSurveyElement] as TI18nString))) ||
+            (currentElement[id as keyof TSurveyElement] as TI18nString))) ||
       createI18nString("", surveyLanguageCodes)
     );
   }, [
@@ -391,7 +391,7 @@ export const ElementFormInput = ({
     return (
       <div className="w-full">
         {label && (
-          <div className="mb-2 mt-3 flex items-center justify-between">
+          <div className="mt-3 mb-2 flex items-center justify-between">
             <Label htmlFor={id}>{label}</Label>
             {id === "headline" && currentElement && updateElement && (
               <div className="flex items-center space-x-2">
@@ -521,23 +521,8 @@ export const ElementFormInput = ({
   return (
     <div className="w-full">
       {label && (
-        <div className="mb-2 mt-3 flex items-center justify-between">
+        <div className="mt-3 mb-2 flex items-center justify-between">
           <Label htmlFor={id}>{label}</Label>
-          {id === "headline" && currentElement && updateElement && (
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="required-toggle" className="text-sm">
-                {t("environments.surveys.edit.required")}
-              </Label>
-              <Switch
-                id="required-toggle"
-                checked={currentElement.required}
-                disabled={getIsRequiredToggleDisabled()}
-                onCheckedChange={(checked) => {
-                  updateElement(elementIdx, { required: checked });
-                }}
-              />
-            </div>
-          )}
         </div>
       )}
       <MultiLangWrapper
@@ -583,8 +568,9 @@ export const ElementFormInput = ({
                         <div className="h-10 w-full"></div>
                         <div
                           ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${localSurvey.languages?.length > 1 ? "pr-24" : ""
-                            }`}
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent ${
+                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                          }`}
                           dir="auto"
                           key={highlightedJSX.toString()}>
                           {highlightedJSX}
@@ -611,8 +597,9 @@ export const ElementFormInput = ({
                           maxLength={maxLength}
                           ref={inputRef}
                           onBlur={onBlur}
-                          className={`absolute top-0 text-black caret-black ${localSurvey.languages?.length > 1 ? "pr-24" : ""
-                            } ${className}`}
+                          className={`absolute top-0 text-black caret-black ${
+                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                          } ${className}`}
                           isInvalid={
                             isInvalid &&
                             text[usedLanguageCode]?.trim() === "" &&
