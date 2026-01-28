@@ -18,9 +18,9 @@ export const APIKeysPage = async (props) => {
 
   const projects = await getProjectsByOrganizationId(organization.id);
 
-  const isNotOwner = currentUserMembership.role !== "owner";
+  const canAccessApiKeys = currentUserMembership.role === "owner" || currentUserMembership.role === "manager";
 
-  if (isNotOwner) throw new Error(t("common.not_authorized"));
+  if (!canAccessApiKeys) throw new Error(t("common.not_authorized"));
 
   return (
     <PageContentWrapper>
@@ -38,7 +38,7 @@ export const APIKeysPage = async (props) => {
         <ApiKeyList
           organizationId={organization.id}
           locale={locale}
-          isReadOnly={isNotOwner}
+          isReadOnly={!canAccessApiKeys}
           projects={projects}
         />
       </SettingsCard>

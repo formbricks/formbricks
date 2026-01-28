@@ -7,13 +7,15 @@ import { TProjectStyling } from "@formbricks/types/project";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
+import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
   survey: TSurvey;
-  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding">;
+  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
   styling: TProjectStyling | TSurveyStyling;
   publicDomain: string;
   responseCount?: number;
@@ -115,54 +117,70 @@ export const SurveyClientWrapper = ({
     }
     setResponseData({});
   };
+  // Determine text direction based on language code for logo positioning only
+  // which checks both language code and survey content. This is only for logo UI positioning.
+  const logoDir = useMemo(() => {
+    return isRTLLanguage(survey, languageCode) ? "rtl" : "auto";
+  }, [languageCode, survey]);
 
   return (
-    <LinkSurveyWrapper
-      project={project}
-      surveyId={survey.id}
-      isWelcomeCardEnabled={survey.welcomeCard.enabled}
-      isPreview={isPreview}
-      surveyType={survey.type}
-      determineStyling={() => styling}
-      handleResetSurvey={handleResetSurvey}
-      isEmbed={isEmbed}
-      publicDomain={publicDomain}
-      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-      IMPRINT_URL={IMPRINT_URL}
-      PRIVACY_URL={PRIVACY_URL}
-      isBrandingEnabled={project.linkSurveyBranding}>
-      <SurveyInline
-        appUrl={publicDomain}
-        environmentId={survey.environmentId}
-        isPreviewMode={isPreview}
-        survey={survey}
-        styling={styling}
-        languageCode={languageCode}
+    <>
+      {/* Inject custom scripts for tracking/analytics (self-hosted only) */}
+      {!IS_FORMBRICKS_CLOUD && !isPreview && (
+        <CustomScriptsInjector
+          projectScripts={project.customHeadScripts}
+          surveyScripts={survey.customHeadScripts}
+          scriptsMode={survey.customHeadScriptsMode}
+        />
+      )}
+      <LinkSurveyWrapper
+        project={project}
+        surveyId={survey.id}
+        isWelcomeCardEnabled={survey.welcomeCard.enabled}
+        isPreview={isPreview}
+        surveyType={survey.type}
+        determineStyling={() => styling}
+        handleResetSurvey={handleResetSurvey}
+        isEmbed={isEmbed}
+        publicDomain={publicDomain}
+        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+        IMPRINT_URL={IMPRINT_URL}
+        PRIVACY_URL={PRIVACY_URL}
         isBrandingEnabled={project.linkSurveyBranding}
-        shouldResetQuestionId={false}
-        autoFocus={autoFocus}
-        prefillResponseData={prefillValue}
-        skipPrefilled={skipPrefilled}
-        responseCount={responseCount}
-        getSetBlockId={(f: (value: string) => void) => {
-          setBlockId = f;
-        }}
-        getSetResponseData={(f: (value: TResponseData) => void) => {
-          setResponseData = f;
-        }}
-        startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
-        fullSizeCards={isEmbed}
-        hiddenFieldsRecord={{
-          ...hiddenFieldsRecord,
-          ...getVerifiedEmail,
-        }}
-        singleUseId={singleUseId}
-        singleUseResponseId={singleUseResponseId}
-        getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
-        contactId={contactId}
-        recaptchaSiteKey={recaptchaSiteKey}
-        isSpamProtectionEnabled={isSpamProtectionEnabled}
-      />
-    </LinkSurveyWrapper>
+        dir={logoDir}>
+        <SurveyInline
+          appUrl={publicDomain}
+          environmentId={survey.environmentId}
+          isPreviewMode={isPreview}
+          survey={survey}
+          styling={styling}
+          languageCode={languageCode}
+          isBrandingEnabled={project.linkSurveyBranding}
+          shouldResetQuestionId={false}
+          autoFocus={autoFocus}
+          prefillResponseData={prefillValue}
+          skipPrefilled={skipPrefilled}
+          responseCount={responseCount}
+          getSetBlockId={(f: (value: string) => void) => {
+            setBlockId = f;
+          }}
+          getSetResponseData={(f: (value: TResponseData) => void) => {
+            setResponseData = f;
+          }}
+          startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
+          fullSizeCards={isEmbed}
+          hiddenFieldsRecord={{
+            ...hiddenFieldsRecord,
+            ...getVerifiedEmail,
+          }}
+          singleUseId={singleUseId}
+          singleUseResponseId={singleUseResponseId}
+          getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
+          contactId={contactId}
+          recaptchaSiteKey={recaptchaSiteKey}
+          isSpamProtectionEnabled={isSpamProtectionEnabled}
+        />
+      </LinkSurveyWrapper>
+    </>
   );
 };

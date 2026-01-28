@@ -11,6 +11,7 @@ import {
 vi.mock("@/lib/env", () => ({
   env: {
     ENTERPRISE_LICENSE_KEY: "test-license-key",
+    ENVIRONMENT: "production",
     VERCEL_URL: "some.vercel.url",
     FORMBRICKS_COM_URL: "https://app.formbricks.com",
     HTTPS_PROXY: undefined,
@@ -687,6 +688,63 @@ describe("License Core Logic", () => {
           timestamp: expect.any(String),
         }),
         expect.stringContaining("Using license fallback level: grace")
+      );
+    });
+  });
+
+  describe("Environment-based endpoint selection", () => {
+    test("should use staging endpoint when ENVIRONMENT is staging", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "staging",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      // Mock cache.withCache to execute the function (simulating cache miss)
+      mockCache.withCache.mockImplementation(async (fn) => await fn());
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            status: "active",
+            features: {
+              isMultiOrgEnabled: true,
+              projects: 5,
+              twoFactorAuth: true,
+              sso: true,
+              whitelabel: true,
+              removeBranding: true,
+              contacts: true,
+              ai: true,
+              saml: true,
+              spamProtection: true,
+              auditLogs: true,
+              multiLanguageSurveys: true,
+              accessControl: true,
+              quotas: true,
+            },
+          },
+        }),
+      } as any);
+
+      // Re-import the module to apply the new mock
+      const { fetchLicense } = await import("./license");
+      await fetchLicense();
+
+      // Verify the staging endpoint was called
+      expect(fetch).toHaveBeenCalledWith(
+        "https://staging.ee.formbricks.com/api/licenses/check",
+        expect.objectContaining({
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        })
       );
     });
   });

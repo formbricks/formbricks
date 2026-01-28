@@ -13,6 +13,7 @@ interface ClientLogoProps {
   projectLogo: Project["logo"] | null;
   surveyLogo?: TLogo | null;
   previewSurvey?: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export const ClientLogo = ({
@@ -20,13 +21,23 @@ export const ClientLogo = ({
   projectLogo,
   surveyLogo,
   previewSurvey = false,
+  dir = "auto",
 }: ClientLogoProps) => {
   const { t } = useTranslation();
   const logoToUse = surveyLogo?.url ? surveyLogo : projectLogo;
 
+  let positionClasses = "";
+  if (!previewSurvey) {
+    if (dir === "rtl") {
+      positionClasses = "top-3 right-3 md:top-7 md:right-7";
+    } else {
+      positionClasses = "top-3 left-3 md:top-7 md:left-7";
+    }
+  }
+
   return (
     <div
-      className={cn(previewSurvey ? "" : "top-3 left-3 md:top-7 md:left-7", "group absolute z-0 rounded-lg")}
+      className={cn(positionClasses, "group absolute z-0 rounded-lg")}
       style={{ backgroundColor: logoToUse?.bgColor }}>
       {previewSurvey && environmentId && (
         <Link

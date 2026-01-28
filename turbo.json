@@ -163,6 +163,7 @@
         "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",
         "ENTERPRISE_LICENSE_KEY",
+        "ENVIRONMENT",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
@@ -274,6 +275,7 @@
       "outputs": []
     },
     "db:seed": {
+      "env": ["ALLOW_SEED"],
       "outputs": []
     },
     "db:setup": {

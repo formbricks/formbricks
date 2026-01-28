@@ -48,8 +48,7 @@ describe("resendVerificationEmailAction", () => {
   const mockUser = {
     id: "user123",
     email: "test@example.com",
-    emailVerified: null, // Not verified
-    name: "Test User",
+    locale: "en-US",
   };
 
   const mockVerifiedUser = {

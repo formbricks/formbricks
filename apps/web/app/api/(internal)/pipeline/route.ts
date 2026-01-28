@@ -1,5 +1,6 @@
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
+import { v7 as uuidv7 } from "uuid";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -8,6 +9,7 @@ import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { CRON_SECRET } from "@/lib/constants";
+import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
@@ -90,28 +92,50 @@ export const POST = async (request: Request) => {
     ]);
   };
 
-  const webhookPromises = webhooks.map((webhook) =>
-    fetchWithTimeout(webhook.url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        webhookId: webhook.id,
-        event,
-        data: {
-          ...response,
-          survey: {
-            title: survey.name,
-            type: survey.type,
-            status: survey.status,
-            createdAt: survey.createdAt,
-            updatedAt: survey.updatedAt,
-          },
+  const webhookPromises = webhooks.map((webhook) => {
+    const body = JSON.stringify({
+      webhookId: webhook.id,
+      event,
+      data: {
+        ...response,
+        survey: {
+          title: survey.name,
+          type: survey.type,
+          status: survey.status,
+          createdAt: survey.createdAt,
+          updatedAt: survey.updatedAt,
         },
-      }),
+      },
+    });
+
+    // Generate Standard Webhooks headers
+    const webhookMessageId = uuidv7();
+    const webhookTimestamp = Math.floor(Date.now() / 1000);
+
+    const requestHeaders: Record<string, string> = {
+      "content-type": "application/json",
+      "webhook-id": webhookMessageId,
+      "webhook-timestamp": webhookTimestamp.toString(),
+    };
+
+    // Add signature if webhook has a secret configured
+    if (webhook.secret) {
+      requestHeaders["webhook-signature"] = generateStandardWebhookSignature(
+        webhookMessageId,
+        webhookTimestamp,
+        body,
+        webhook.secret
+      );
+    }
+
+    return fetchWithTimeout(webhook.url, {
+      method: "POST",
+      headers: requestHeaders,
+      body,
     }).catch((error) => {
       logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
-    })
-  );
+    });
+  });
 
   if (event === "responseFinished") {
     // Fetch integrations and responseCount in parallel
@@ -191,7 +215,14 @@ export const POST = async (request: Request) => {
     }
 
     const emailPromises = usersWithNotifications.map((user) =>
-      sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
+      sendResponseFinishedEmail(
+        user.email,
+        user.locale,
+        environmentId,
+        survey,
+        response,
+        responseCount
+      ).catch((error) => {
         logger.error(
           { error, url: request.url, userEmail: user.email },
           `Failed to send email to ${user.email}`

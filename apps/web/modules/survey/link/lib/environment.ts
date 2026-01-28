@@ -16,7 +16,10 @@ import { validateInputs } from "@/lib/utils/validate";
  * deduplication within the same render cycle.
  */
 
-type TProjectForLinkSurvey = Pick<Project, "id" | "name" | "styling" | "logo" | "linkSurveyBranding">;
+type TProjectForLinkSurvey = Pick<
+  Project,
+  "id" | "name" | "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts"
+>;
 
 export interface TEnvironmentContextForLinkSurvey {
   project: TProjectForLinkSurvey;
@@ -61,6 +64,7 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
               styling: true,
               logo: true,
               linkSurveyBranding: true,
+              customHeadScripts: true,
               organizationId: true,
               organization: {
                 select: {
@@ -91,6 +95,7 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
           styling: environment.project.styling,
           logo: environment.project.logo,
           linkSurveyBranding: environment.project.linkSurveyBranding,
+          customHeadScripts: environment.project.customHeadScripts,
         },
         organizationId: environment.project.organizationId,
         organizationBilling: environment.project.organization.billing,

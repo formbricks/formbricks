@@ -17,6 +17,7 @@ interface PictureSelectionProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function PictureSelectionElement({
@@ -28,12 +29,13 @@ export function PictureSelectionElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<PictureSelectionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const isRequired = element.required;
   const { t } = useTranslation();
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   // Convert choices to PictureSelectOption format
   const options: PictureSelectOption[] = element.choices.map((choice) => ({
     id: choice.id,
@@ -52,7 +54,6 @@ export function PictureSelectionElement({
   }
 
   const handleChange = (newValue: string | string[]) => {
-    setErrorMessage(undefined);
     let stringArray: string[];
     if (Array.isArray(newValue)) {
       stringArray = newValue;
@@ -66,21 +67,9 @@ export function PictureSelectionElement({
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (element.required) {
-      if (element.allowMulti) {
-        if (!currentValue || !Array.isArray(currentValue) || currentValue.length === 0) {
-          setErrorMessage(t("errors.please_select_an_option"));
-          return;
-        }
-      } else {
-        if (!currentValue) {
-          setErrorMessage(t("errors.please_select_an_option"));
-          return;
-        }
-        const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
-        setTtc(updatedTtcObj);
-      }
-    }
+    // Update TTC when form is submitted (for TTC collection)
+    const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
   };
 
   return (
@@ -94,7 +83,8 @@ export function PictureSelectionElement({
         value={currentValue}
         onChange={handleChange}
         allowMulti={element.allowMulti}
-        required={element.required}
+        required={isRequired}
+        requiredLabel={t("common.required")}
         dir={dir}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}

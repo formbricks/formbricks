@@ -11,6 +11,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
@@ -135,6 +136,13 @@ export const POST = withV1ApiWrapper({
         country: country,
         action: responseInputData?.meta?.action,
       };
+
+      // Capture IP address if the survey has IP capture enabled
+      // Server-derived IP always overwrites any client-provided value
+      if (survey.isCaptureIpEnabled) {
+        const ipAddress = await getClientIpFromHeaders();
+        meta.ipAddress = ipAddress;
+      }
 
       response = await createResponseWithQuotaEvaluation({
         ...responseInputData,

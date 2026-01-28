@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { FormField, type FormFieldConfig } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyContactInfoElement } from "@formbricks/types/surveys/elements";
@@ -16,6 +17,7 @@ interface ContactInfoElementProps {
   currentElementId: string;
   autoFocusEnabled: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function ContactInfoElement({
@@ -27,9 +29,12 @@ export function ContactInfoElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<ContactInfoElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
+  const isRequired = element.required;
+  const { t } = useTranslation();
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -113,10 +118,12 @@ export function ContactInfoElement({
         fields={formFields}
         value={convertToValueObject(value)}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
+        requiredLabel={t("common.required")}
         dir={dir}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
+        errorMessage={errorMessage}
       />
     </form>
   );

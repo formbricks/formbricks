@@ -10,7 +10,10 @@ import { validateInputs } from "@/lib/utils/validate";
 export const getProjectByEnvironmentId = reactCache(
   async (
     environmentId: string
-  ): Promise<Pick<Project, "styling" | "logo" | "linkSurveyBranding" | "name"> | null> => {
+  ): Promise<Pick<
+    Project,
+    "styling" | "logo" | "linkSurveyBranding" | "name" | "customHeadScripts"
+  > | null> => {
     validateInputs([environmentId, ZId]);
 
     let projectPrisma;
@@ -29,6 +32,7 @@ export const getProjectByEnvironmentId = reactCache(
           logo: true,
           linkSurveyBranding: true,
           name: true,
+          customHeadScripts: true,
         },
       });
 

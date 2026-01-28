@@ -8,6 +8,7 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import packageJson from "@/package.json";
+import { CustomScriptsForm } from "./components/custom-scripts-form";
 import { DeleteProject } from "./components/delete-project";
 import { EditProjectNameForm } from "./components/edit-project-name-form";
 import { EditWaitingTimeForm } from "./components/edit-waiting-time-form";
@@ -39,6 +40,13 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
         description={t("environments.workspace.general.recontact_waiting_time_settings_description")}>
         <EditWaitingTimeForm project={project} isReadOnly={isReadOnly} />
       </SettingsCard>
+      {!IS_FORMBRICKS_CLOUD && (
+        <SettingsCard
+          title={t("environments.workspace.general.custom_scripts")}
+          description={t("environments.workspace.general.custom_scripts_card_description")}>
+          <CustomScriptsForm project={project} isReadOnly={!isOwnerOrManager} />
+        </SettingsCard>
+      )}
       <SettingsCard
         title={t("environments.workspace.general.delete_workspace")}
         description={t("environments.workspace.general.delete_workspace_settings_description")}>

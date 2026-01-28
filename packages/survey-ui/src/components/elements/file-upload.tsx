@@ -37,6 +37,8 @@ interface FileUploadProps {
   allowedFileExtensions?: string[];
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
+  /** Custom label for the required indicator */
+  requiredLabel?: string;
   /** Error message to display */
   errorMessage?: string;
   /** Whether the component is in uploading state */
@@ -219,6 +221,7 @@ function FileUpload({
   allowMultiple = false,
   allowedFileExtensions,
   required = false,
+  requiredLabel,
   errorMessage,
   isUploading = false,
   dir = "auto",
@@ -279,6 +282,7 @@ function FileUpload({
         headline={headline}
         description={description}
         required={required}
+        requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}

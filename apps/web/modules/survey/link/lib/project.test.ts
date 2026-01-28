@@ -61,6 +61,7 @@ describe("getProjectByEnvironmentId", () => {
         },
       },
       select: {
+        customHeadScripts: true,
         linkSurveyBranding: true,
         logo: true,
         styling: true,

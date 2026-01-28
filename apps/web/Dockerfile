@@ -104,6 +104,9 @@ RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.n
 COPY --from=installer /app/apps/web/public ./apps/web/public
 RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
+# Create packages/database directory structure with proper ownership for runtime migrations
+RUN mkdir -p ./packages/database/migrations && chown -R nextjs:nextjs ./packages/database
+
 COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
 RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 
@@ -121,6 +124,9 @@ RUN chown nextjs:nextjs ./prisma_version.txt && chmod 644 ./prisma_version.txt
 
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
+
+COPY --from=installer /app/node_modules/uuid ./node_modules/uuid
+RUN chmod -R 755 ./node_modules/uuid
 
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 RUN chmod -R 755 ./node_modules/@noble/hashes

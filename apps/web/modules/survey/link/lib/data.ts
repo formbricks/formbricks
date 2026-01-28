@@ -48,6 +48,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         redirectUrl: true,
         pin: true,
         isBackButtonHidden: true,
+        isCaptureIpEnabled: true,
 
         // Single use configuration
         singleUse: true,
@@ -59,6 +60,10 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         showLanguageSwitch: true,
         recaptcha: true,
         metadata: true,
+
+        // Custom scripts (self-hosted only)
+        customHeadScripts: true,
+        customHeadScriptsMode: true,
 
         // Related data
         languages: {

@@ -45,6 +45,8 @@ interface MultiSelectProps {
   onChange: (value: string[]) => void;
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
+  /** Custom label for the required indicator */
+  requiredLabel?: string;
   /** Error message to display below the options */
   errorMessage?: string;
   /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
@@ -302,7 +304,7 @@ function ListVariant({
                     aria-invalid={Boolean(errorMessage)}
                   />
                   <span
-                    className={cn("mr-3 ml-3", optionLabelClassName)}
+                    className={cn("mx-3", optionLabelClassName)}
                     style={{ fontSize: "var(--fb-option-font-size)" }}>
                     {option.label}
                   </span>
@@ -334,7 +336,7 @@ function ListVariant({
                   aria-invalid={Boolean(errorMessage)}
                 />
                 <span
-                  className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                  className={cn("mx-3 grow", optionLabelClassName)}
                   style={{ fontSize: "var(--fb-option-font-size)" }}>
                   {otherOptionLabel}
                 </span>
@@ -383,7 +385,7 @@ function ListVariant({
                     aria-invalid={Boolean(errorMessage)}
                   />
                   <span
-                    className={cn("mr-3 ml-3", optionLabelClassName)}
+                    className={cn("mx-3", optionLabelClassName)}
                     style={{ fontSize: "var(--fb-option-font-size)" }}>
                     {option.label}
                   </span>
@@ -405,6 +407,7 @@ function MultiSelect({
   value = [],
   onChange,
   required = false,
+  requiredLabel,
   errorMessage,
   dir = "auto",
   disabled = false,
@@ -473,6 +476,7 @@ function MultiSelect({
         headline={headline}
         description={description}
         required={required}
+        requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}

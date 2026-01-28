@@ -43,7 +43,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         ? currentSurvey.languages.map((l) => l.language.id)
         : [];
       const updatedLanguageIds =
-        languages.length > 1 ? updatedSurvey.languages.map((l) => l.language.id) : [];
+        languages.length > 0 ? updatedSurvey.languages.map((l) => l.language.id) : [];
       const enabledLanguageIds = languages.map((language) => {
         if (language.enabled) return language.language.id;
       });
@@ -271,6 +271,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       ...prismaSurvey, // Properties from prismaSurvey
       displayPercentage: Number(prismaSurvey.displayPercentage) || null,
       segment: surveySegment,
+      customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
     };
 
     return modifiedSurvey;

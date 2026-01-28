@@ -288,7 +288,7 @@ export async function PreviewEmailTemplate({
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Link
-                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block border border-solid p-4 hover:bg-slate-100"
+                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block border border-solid p-4"
                 href={`${urlWithPrefilling}${firstQuestion.id}=${getLocalizedValue(choice.label, defaultLanguageCode)}`}
                 key={choice.id}>
                 {getLocalizedValue(choice.label, defaultLanguageCode)}

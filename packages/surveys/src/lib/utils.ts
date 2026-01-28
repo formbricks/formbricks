@@ -1,9 +1,13 @@
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/storage";
-import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { type TSurveyElement, TSurveyElementChoice } from "@formbricks/types/surveys/elements";
+import { type TAllowedFileExtension } from "@formbricks/types/storage";
+import {
+  type TSurveyBlock,
+  type TSurveyBlockLogic,
+  type TSurveyBlockLogicAction,
+} from "@formbricks/types/surveys/blocks";
+import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/types/surveys/elements";
 import { type TShuffleOption } from "@formbricks/types/surveys/types";
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
@@ -177,7 +181,36 @@ export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): strin
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
-// Function to convert file extension to its MIME type
+// Inlined from @formbricks/types/storage.ts to avoid Zod dependency
+const mimeTypes: Record<string, string> = {
+  heic: "image/heic",
+  png: "image/png",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  webp: "image/webp",
+  ico: "image/x-icon",
+  pdf: "application/pdf",
+  eml: "message/rfc822",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  txt: "text/plain",
+  csv: "text/csv",
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+  avi: "video/x-msvideo",
+  mkv: "video/x-matroska",
+  webm: "video/webm",
+  zip: "application/zip",
+  rar: "application/vnd.rar",
+  "7z": "application/x-7z-compressed",
+  tar: "application/x-tar",
+  mp3: "audio/mpeg",
+};
+
 export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];
 
 /**
@@ -189,26 +222,43 @@ export function isRTL(text: string): boolean {
   return rtlCharRegex.test(text);
 }
 
-export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCode: string): boolean => {
-  if (survey.welcomeCard.enabled) {
-    const welcomeCardHeadline = survey.welcomeCard.headline?.[languageCode];
-    if (welcomeCardHeadline) {
-      return isRTL(welcomeCardHeadline);
+/**
+ * List of RTL language codes
+ */
+const RTL_LANGUAGES = ["ar", "ar-SA", "ar-EG", "ar-AE", "ar-MA", "he", "fa", "ur"];
+
+/**
+ * Returns true if the language code represents an RTL language.
+ * @param languageCode The language code to test (e.g., "ar", "ar-SA", "he")
+ */
+export function isRTLLanguage(survey: TJsEnvironmentStateSurvey, languageCode: string): boolean {
+  if (survey.languages.length === 0) {
+    if (survey.welcomeCard.enabled) {
+      const welcomeCardHeadline = survey.welcomeCard.headline?.[languageCode];
+      if (welcomeCardHeadline) {
+        return isRTL(welcomeCardHeadline);
+      }
     }
-  }
 
-  const questions = getElementsFromSurveyBlocks(survey.blocks);
-  for (const question of questions) {
-    const questionHeadline = question.headline[languageCode];
+    const questions = getElementsFromSurveyBlocks(survey.blocks);
+    for (const question of questions) {
+      const questionHeadline = question.headline[languageCode];
 
-    // the first non-empty question headline is the survey direction
-    if (questionHeadline) {
-      return isRTL(questionHeadline);
+      // the first non-empty question headline is the survey direction
+      if (questionHeadline) {
+        return isRTL(questionHeadline);
+      }
     }
+    return false;
+  } else {
+    const code =
+      languageCode === "default"
+        ? survey.languages.find((language) => language.default)?.language.code
+        : languageCode;
+    const baseCode = code?.split("-")[0].toLowerCase() ?? "en";
+    return RTL_LANGUAGES.some((rtl) => rtl.toLowerCase().startsWith(baseCode));
   }
-
-  return false;
-};
+}
 
 /**
  * Derives a flat array of elements from the survey's blocks structure.
