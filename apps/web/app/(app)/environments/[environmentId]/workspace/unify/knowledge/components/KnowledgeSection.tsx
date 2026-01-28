@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { UnifyConfigNavigation } from "../../components/UnifyConfigNavigation";
 import type { KnowledgeItem } from "../types";
 import { AddKnowledgeModal } from "./AddKnowledgeModal";
 import { KnowledgeTable } from "./KnowledgeTable";
-import { UnifyConfigNavigation } from "../../components/UnifyConfigNavigation";
 
 interface KnowledgeSectionProps {
   environmentId: string;
@@ -16,6 +16,10 @@ interface KnowledgeSectionProps {
 export function KnowledgeSection({ environmentId, isStorageConfigured }: KnowledgeSectionProps) {
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const handleDeleteItem = (itemId: string) => {
+    setItems((prev) => prev.filter((item) => item.id !== itemId));
+  };
 
   return (
     <PageContentWrapper>
@@ -36,7 +40,7 @@ export function KnowledgeSection({ environmentId, isStorageConfigured }: Knowled
         <UnifyConfigNavigation environmentId={environmentId} />
       </PageHeader>
       <div className="space-y-6">
-        <KnowledgeTable items={items} />
+        <KnowledgeTable items={items} onDeleteItem={handleDeleteItem} />
       </div>
     </PageContentWrapper>
   );

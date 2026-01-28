@@ -2,7 +2,7 @@
 
 import {
   ArrowUpRightIcon,
-  Cable,
+  BarChartIcon,
   ChevronRightIcon,
   Cog,
   LogOutIcon,
@@ -10,6 +10,7 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   RocketIcon,
+  ShapesIcon,
   UserCircleIcon,
   UserIcon,
 } from "lucide-react";
@@ -100,26 +101,32 @@ export const MainNavigation = ({
   const mainNavigation = useMemo(
     () => [
       {
-        name: t("common.surveys"),
+        name: "Ask",
         href: `/environments/${environment.id}/surveys`,
         icon: MessageCircle,
         isActive: pathname?.includes("/surveys"),
         isHidden: false,
       },
       {
-        name: "Unify Feedback",
-        href: `/environments/${environment.id}/workspace/unify`,
-        icon: Cable,
-        isActive: pathname?.includes("/unify"),
-      },
-      {
         href: `/environments/${environment.id}/contacts`,
-        name: t("common.contacts"),
+        name: "Distribute",
         icon: UserIcon,
         isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
       },
       {
-        name: t("common.configuration"),
+        name: "Unify",
+        href: `/environments/${environment.id}/workspace/unify`,
+        icon: ShapesIcon,
+        isActive: pathname?.includes("/unify") && !pathname?.includes("/analyze"),
+      },
+      {
+        name: "Analyze",
+        href: `/environments/${environment.id}/workspace/analyze`,
+        icon: BarChartIcon,
+        isActive: pathname?.includes("/workspace/analyze"),
+      },
+      {
+        name: "Configure",
         href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
         isActive: pathname?.includes("/project"),

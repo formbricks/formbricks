@@ -15,10 +15,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
-import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
 import type { KnowledgeItem } from "../types";
 
 const DOC_EXTENSIONS: TAllowedFileExtension[] = ["pdf", "doc", "docx", "txt", "csv"];
@@ -80,12 +80,15 @@ export function AddKnowledgeModal({
       toast.error("Please enter a URL.");
       return;
     }
+    const now = new Date();
     onAdd({
       id: crypto.randomUUID(),
       type: "link",
       title: linkTitle.trim() || undefined,
       url: linkUrl.trim(),
-      createdAt: new Date(),
+      size: linkUrl.trim().length * 100, // Simulated size for links
+      createdAt: now,
+      indexedAt: now, // Links are indexed immediately
     });
     resetForm();
     onOpenChange(false);
@@ -97,11 +100,14 @@ export function AddKnowledgeModal({
       toast.error("Please enter some text.");
       return;
     }
+    const now = new Date();
     onAdd({
       id: crypto.randomUUID(),
       type: "note",
       content: noteContent.trim(),
-      createdAt: new Date(),
+      size: new Blob([noteContent.trim()]).size,
+      createdAt: now,
+      indexedAt: now, // Notes are indexed immediately
     });
     resetForm();
     onOpenChange(false);
@@ -113,13 +119,16 @@ export function AddKnowledgeModal({
       toast.error("Please upload a document first.");
       return;
     }
+    const now = new Date();
     onAdd({
       id: crypto.randomUUID(),
       type: "file",
       title: uploadedFileName ?? undefined,
       fileUrl: uploadedDocUrl,
       fileName: uploadedFileName ?? undefined,
-      createdAt: new Date(),
+      size: Math.floor(Math.random() * 500000) + 10000, // Simulated file size (10KB - 500KB)
+      createdAt: now,
+      indexedAt: undefined, // Files take time to index - will show as "Pending"
     });
     resetForm();
     onOpenChange(false);
@@ -154,9 +163,7 @@ export function AddKnowledgeModal({
           <DialogHeader>
             <PlusIcon className="size-5 text-slate-600" />
             <DialogTitle>Add knowledge</DialogTitle>
-            <DialogDescription>
-              Add knowledge via a link, document upload, or a text note.
-            </DialogDescription>
+            <DialogDescription>Add knowledge via a link, document upload, or a text note.</DialogDescription>
           </DialogHeader>
 
           <DialogBody>
@@ -210,9 +217,7 @@ export function AddKnowledgeModal({
                   handleDragOver={handleDragOver}
                   isStorageConfigured={isStorageConfigured}
                 />
-                <p className="text-xs text-slate-500">
-                  PDF, Word, text, or CSV. Max {MAX_DOC_SIZE_MB} MB.
-                </p>
+                <p className="text-xs text-slate-500">PDF, Word, text, or CSV. Max {MAX_DOC_SIZE_MB} MB.</p>
                 {isUploading && <p className="text-sm text-slate-600">Uploading…</p>}
                 {uploadedDocUrl && (
                   <p className="text-sm text-slate-700">
