@@ -1,19 +1,20 @@
 import { z } from "zod";
 
 export const ZUserLocale = z.enum([
-  "en-US",
   "de-DE",
-  "pt-BR",
+  "en-US",
+  "es-ES",
   "fr-FR",
+  "hu-HU",
+  "ja-JP",
   "nl-NL",
-  "zh-Hant-TW",
+  "pt-BR",
   "pt-PT",
   "ro-RO",
-  "ja-JP",
-  "zh-Hans-CN",
-  "es-ES",
-  "sv-SE",
   "ru-RU",
+  "sv-SE",
+  "zh-Hans-CN",
+  "zh-Hant-TW",
 ]);
 
 export type TUserLocale = z.infer<typeof ZUserLocale>;
