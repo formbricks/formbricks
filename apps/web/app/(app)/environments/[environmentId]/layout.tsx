@@ -11,6 +11,12 @@ const EnvLayout = async (props: {
   children: React.ReactNode;
 }) => {
   const params = await props.params;
+  const { environmentId } = params;
+
+  if (environmentId === "undefined") {
+    return redirect("/");
+  }
+
   const { children } = props;
 
   // Check session first (required for userId)

@@ -124,6 +124,7 @@
     "react-i18next": "15.7.3",
     "react-turnstile": "1.1.4",
     "react-use": "17.6.0",
+    "recharts": "3.7.0",
     "redis": "4.7.0",
     "sanitize-html": "2.17.0",
     "server-only": "0.0.1",
@@ -137,7 +138,8 @@
     "webpack": "5.99.8",
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "zod": "3.24.4",
-    "zod-openapi": "4.2.4"
+    "zod-openapi": "4.2.4",
+    "zustand": "5.0.10"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",

@@ -36,6 +36,24 @@ services:
     volumes:
       - minio-data:/data
 
+  cube:
+    image: cubejs/cube:latest
+    ports:
+      - 4000:4000
+      - 4001:4001
+    environment:
+      - CUBEJS_DB_HOST=postgres
+      - CUBEJS_DB_PORT=5432
+      - CUBEJS_DB_NAME=postgres
+      - CUBEJS_DB_USER=postgres
+      - CUBEJS_DB_PASS=postgres
+      - CUBEJS_DB_TYPE=postgres
+      - CUBEJS_API_SECRET=your-secret-key-change-in-production
+      - CUBEJS_DEV_MODE=true
+    volumes:
+      - ./cube/cube.js:/cube/conf/cube.js
+      - ./cube/schema:/cube/conf/model
+
 volumes:
   postgres:
     driver: local
