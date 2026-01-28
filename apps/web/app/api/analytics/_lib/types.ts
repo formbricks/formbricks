@@ -4,8 +4,8 @@
 
 export interface TimeDimension {
   dimension: string;
-  granularity?: "day" | "week" | "month" | "year";
-  dateRange?: string;
+  granularity?: "hour" | "day" | "week" | "month" | "quarter" | "year";
+  dateRange?: string | string[];
 }
 
 export interface Filter {

@@ -42,17 +42,25 @@ services:
       - 4000:4000
       - 4001:4001
     environment:
-      - CUBEJS_DB_HOST=postgres
-      - CUBEJS_DB_PORT=5432
-      - CUBEJS_DB_NAME=postgres
-      - CUBEJS_DB_USER=postgres
-      - CUBEJS_DB_PASS=postgres
-      - CUBEJS_DB_TYPE=postgres
-      - CUBEJS_API_SECRET=your-secret-key-change-in-production
-      - CUBEJS_DEV_MODE=true
+      # Database connection
+      # Connect to hub API database (formbricks_hub_postgres container)
+      CUBEJS_DB_TYPE: postgres
+      CUBEJS_DB_HOST: ${POSTGRES_HOST:-host.docker.internal}
+      CUBEJS_DB_NAME: hub
+      CUBEJS_DB_USER: formbricks
+      CUBEJS_DB_PASS: ${POSTGRES_PASSWORD:-formbricks_dev}
+      CUBEJS_DB_PORT: ${POSTGRES_PORT:-5433}
+      
+      # Cube configuration
+      CUBEJS_DEV_MODE: "true"
+      CUBEJS_API_SECRET: "25ad91c420ab742a2c0d3b17f93fd871e883304abba7a38e2620eb1416106af2"
+      # Use memory for caching in dev mode (cubestore or memory are supported)
+      CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
     volumes:
       - ./cube/cube.js:/cube/conf/cube.js
       - ./cube/schema:/cube/conf/model
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   postgres:
