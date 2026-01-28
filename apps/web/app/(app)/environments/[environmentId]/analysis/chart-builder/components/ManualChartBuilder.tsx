@@ -13,7 +13,11 @@ interface ManualChartBuilderProps {
   onCreate: () => void;
 }
 
-export function ManualChartBuilder({ selectedChartType, onChartTypeSelect, onCreate }: ManualChartBuilderProps) {
+export function ManualChartBuilder({
+  selectedChartType,
+  onChartTypeSelect,
+  onCreate,
+}: ManualChartBuilderProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredChartTypes = CHART_TYPES.filter((type) =>

@@ -3,10 +3,10 @@
 import { ActivityIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { AnalyticsResponse } from "@/app/api/analytics/_lib/types";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import { AnalyticsResponse } from "@/app/api/analytics/_lib/types";
 
 interface AIQuerySectionProps {
   onChartGenerated: (data: AnalyticsResponse) => void;
@@ -55,9 +55,7 @@ export function AIQuerySection({ onChartGenerated }: AIQuerySectionProps) {
         </div>
         <div>
           <h2 className="font-semibold text-gray-900">Ask your data</h2>
-          <p className="text-sm text-gray-500">
-            Describe what you want to see and let AI build the chart.
-          </p>
+          <p className="text-sm text-gray-500">Describe what you want to see and let AI build the chart.</p>
         </div>
       </div>
 

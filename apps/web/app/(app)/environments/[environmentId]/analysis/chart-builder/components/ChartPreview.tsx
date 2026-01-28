@@ -1,11 +1,11 @@
 "use client";
 
-import { SaveIcon, PlusIcon, EyeOffIcon, CodeIcon, DatabaseIcon, SettingsIcon } from "lucide-react";
+import { CodeIcon, DatabaseIcon, EyeOffIcon, PlusIcon, SaveIcon, SettingsIcon } from "lucide-react";
+import { AnalyticsResponse } from "@/app/api/analytics/_lib/types";
 import { Button } from "@/modules/ui/components/button";
 import { ChartRenderer } from "./ChartRenderer";
-import { QueryViewer } from "./QueryViewer";
 import { DataViewer } from "./DataViewer";
-import { AnalyticsResponse } from "@/app/api/analytics/_lib/types";
+import { QueryViewer } from "./QueryViewer";
 
 interface ChartPreviewProps {
   chartData: AnalyticsResponse;
@@ -80,11 +80,7 @@ export function ChartPreview({
               <SettingsIcon className="mr-2 h-4 w-4" />
               Configure
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onAddToDashboard}
-              disabled={isSaving}>
+            <Button variant="outline" size="sm" onClick={onAddToDashboard} disabled={isSaving}>
               <PlusIcon className="mr-2 h-4 w-4" />
               Add to Dashboard
             </Button>

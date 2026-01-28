@@ -1,19 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { createChartAction, addChartToDashboardAction, getDashboardsAction, getChartAction, executeQueryAction } from "../../actions";
 import { AnalyticsResponse } from "@/app/api/analytics/_lib/types";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import {
+  addChartToDashboardAction,
+  createChartAction,
+  executeQueryAction,
+  getChartAction,
+  getDashboardsAction,
+} from "../../actions";
 import { mapChartType, mapDatabaseChartTypeToApi } from "../lib/chart-utils";
 import { AIQuerySection } from "./AIQuerySection";
-import { ManualChartBuilder } from "./ManualChartBuilder";
+import { AddToDashboardDialog } from "./AddToDashboardDialog";
 import { AdvancedChartBuilder } from "./AdvancedChartBuilder";
 import { ChartPreview } from "./ChartPreview";
-import { SaveChartDialog } from "./SaveChartDialog";
-import { AddToDashboardDialog } from "./AddToDashboardDialog";
 import { ConfigureChartDialog } from "./ConfigureChartDialog";
-import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { ManualChartBuilder } from "./ManualChartBuilder";
+import { SaveChartDialog } from "./SaveChartDialog";
 
 interface ChartBuilderClientProps {
   environmentId: string;

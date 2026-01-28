@@ -1,8 +1,16 @@
 "use client";
 
-import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
-import { Button } from "@/modules/ui/components/button";
 import { cn } from "@/lib/cn";
+import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { CHART_TYPES } from "../lib/chart-types";
 
 interface ConfigureChartDialogProps {
@@ -22,7 +30,9 @@ export function ConfigureChartDialog({
   onChartTypeSelect,
   onReset,
 }: ConfigureChartDialogProps) {
-  const availableTypes = CHART_TYPES.filter((type) => ["bar", "line", "area", "pie", "big_number"].includes(type.id));
+  const availableTypes = CHART_TYPES.filter((type) =>
+    ["bar", "line", "area", "pie", "big_number"].includes(type.id)
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,7 +58,7 @@ export function ConfigureChartDialog({
                       className={cn(
                         "flex flex-col items-center gap-2 rounded-lg border p-4 transition-all hover:bg-gray-50",
                         isSelected
-                          ? "border-brand-dark bg-brand-dark/5 ring-2 ring-brand-dark"
+                          ? "border-brand-dark bg-brand-dark/5 ring-brand-dark ring-2"
                           : "border-gray-200"
                       )}>
                       <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">

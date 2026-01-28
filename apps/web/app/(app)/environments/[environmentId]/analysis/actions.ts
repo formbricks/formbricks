@@ -1,17 +1,14 @@
 "use server";
 
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
 import { ChartType } from "@prisma/client";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/common";
+import { executeQuery } from "@/app/api/analytics/_lib/cube-client";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import {
-  getOrganizationIdFromEnvironmentId,
-  getProjectIdFromEnvironmentId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { executeQuery } from "@/app/api/analytics/_lib/cube-client";
 
 const ZCreateChartAction = z.object({
   environmentId: ZId,
@@ -80,73 +77,71 @@ const ZAddChartToDashboardAction = z.object({
     .default({ x: 0, y: 0, w: 4, h: 3 }),
 });
 
-export const addChartToDashboardAction = authenticatedActionClient
-  .schema(ZAddChartToDashboardAction)
-  .action(
-    withAuditLogging(
-      "created",
-      "dashboardWidget",
-      async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZAddChartToDashboardAction> }) => {
-        const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-        const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+export const addChartToDashboardAction = authenticatedActionClient.schema(ZAddChartToDashboardAction).action(
+  withAuditLogging(
+    "created",
+    "dashboardWidget",
+    async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZAddChartToDashboardAction> }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
 
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId,
-          access: [
-            {
-              type: "organization",
-              roles: ["owner", "manager"],
-            },
-            {
-              type: "projectTeam",
-              minPermission: "readWrite",
-              projectId,
-            },
-          ],
-        });
-
-        // Verify chart and dashboard belong to the same project
-        const [chart, dashboard] = await Promise.all([
-          prisma.chart.findFirst({
-            where: { id: parsedInput.chartId, projectId },
-          }),
-          prisma.dashboard.findFirst({
-            where: { id: parsedInput.dashboardId, projectId },
-          }),
-        ]);
-
-        if (!chart) {
-          throw new Error("Chart not found");
-        }
-        if (!dashboard) {
-          throw new Error("Dashboard not found");
-        }
-
-        // Get the max order for widgets in this dashboard
-        const maxOrder = await prisma.dashboardWidget.aggregate({
-          where: { dashboardId: parsedInput.dashboardId },
-          _max: { order: true },
-        });
-
-        const widget = await prisma.dashboardWidget.create({
-          data: {
-            dashboardId: parsedInput.dashboardId,
-            chartId: parsedInput.chartId,
-            type: "chart",
-            title: parsedInput.title,
-            layout: parsedInput.layout,
-            order: (maxOrder._max.order ?? -1) + 1,
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
           },
-        });
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId,
+          },
+        ],
+      });
 
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.projectId = projectId;
-        ctx.auditLoggingCtx.newObject = widget;
-        return widget;
+      // Verify chart and dashboard belong to the same project
+      const [chart, dashboard] = await Promise.all([
+        prisma.chart.findFirst({
+          where: { id: parsedInput.chartId, projectId },
+        }),
+        prisma.dashboard.findFirst({
+          where: { id: parsedInput.dashboardId, projectId },
+        }),
+      ]);
+
+      if (!chart) {
+        throw new Error("Chart not found");
       }
-    )
-  );
+      if (!dashboard) {
+        throw new Error("Dashboard not found");
+      }
+
+      // Get the max order for widgets in this dashboard
+      const maxOrder = await prisma.dashboardWidget.aggregate({
+        where: { dashboardId: parsedInput.dashboardId },
+        _max: { order: true },
+      });
+
+      const widget = await prisma.dashboardWidget.create({
+        data: {
+          dashboardId: parsedInput.dashboardId,
+          chartId: parsedInput.chartId,
+          type: "chart",
+          title: parsedInput.title,
+          layout: parsedInput.layout,
+          order: (maxOrder._max.order ?? -1) + 1,
+        },
+      });
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.newObject = widget;
+      return widget;
+    }
+  )
+);
 
 const ZCreateDashboardAction = z.object({
   environmentId: ZId,
@@ -204,66 +199,65 @@ const ZUpdateDashboardAction = z.object({
   status: z.enum(["draft", "published"]).optional(),
 });
 
-export const updateDashboardAction = authenticatedActionClient
-  .schema(ZUpdateDashboardAction)
-  .action(
-    withAuditLogging(
-      "updated",
-      "dashboard",
-      async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZUpdateDashboardAction> }) => {
-        const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-        const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+export const updateDashboardAction = authenticatedActionClient.schema(ZUpdateDashboardAction).action(
+  withAuditLogging(
+    "updated",
+    "dashboard",
+    async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZUpdateDashboardAction> }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
 
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId,
-          access: [
-            {
-              type: "organization",
-              roles: ["owner", "manager"],
-            },
-            {
-              type: "projectTeam",
-              minPermission: "readWrite",
-              projectId,
-            },
-          ],
-        });
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId,
+          },
+        ],
+      });
 
-        // Verify dashboard belongs to the project
-        const dashboard = await prisma.dashboard.findFirst({
-          where: { id: parsedInput.dashboardId, projectId },
-        });
+      // Verify dashboard belongs to the project
+      const dashboard = await prisma.dashboard.findFirst({
+        where: { id: parsedInput.dashboardId, projectId },
+      });
 
-        if (!dashboard) {
-          throw new Error("Dashboard not found");
-        }
-
-        const updateData: any = {};
-        if (parsedInput.name !== undefined) updateData.name = parsedInput.name;
-        if (parsedInput.description !== undefined) updateData.description = parsedInput.description;
-        if (parsedInput.status !== undefined) updateData.status = parsedInput.status;
-
-        const updatedDashboard = await prisma.dashboard.update({
-          where: { id: parsedInput.dashboardId },
-          data: updateData,
-        });
-
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.projectId = projectId;
-        ctx.auditLoggingCtx.oldObject = dashboard;
-        ctx.auditLoggingCtx.newObject = updatedDashboard;
-        return updatedDashboard;
+      if (!dashboard) {
+        throw new Error("Dashboard not found");
       }
-    )
-  );
+
+      const updateData: any = {};
+      if (parsedInput.name !== undefined) updateData.name = parsedInput.name;
+      if (parsedInput.description !== undefined) updateData.description = parsedInput.description;
+      if (parsedInput.status !== undefined) updateData.status = parsedInput.status;
+
+      const updatedDashboard = await prisma.dashboard.update({
+        where: { id: parsedInput.dashboardId },
+        data: updateData,
+      });
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.oldObject = dashboard;
+      ctx.auditLoggingCtx.newObject = updatedDashboard;
+      return updatedDashboard;
+    }
+  )
+);
 
 const ZGetDashboardsAction = z.object({
   environmentId: ZId,
 });
 
-export const getDashboardsAction = authenticatedActionClient.schema(ZGetDashboardsAction).action(
-  async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZGetDashboardsAction> }) => {
+export const getDashboardsAction = authenticatedActionClient
+  .schema(ZGetDashboardsAction)
+  .action(async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZGetDashboardsAction> }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
 
@@ -297,16 +291,16 @@ export const getDashboardsAction = authenticatedActionClient.schema(ZGetDashboar
     });
 
     return dashboards;
-  }
-);
+  });
 
 const ZGetChartAction = z.object({
   environmentId: ZId,
   chartId: ZId,
 });
 
-export const getChartAction = authenticatedActionClient.schema(ZGetChartAction).action(
-  async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZGetChartAction> }) => {
+export const getChartAction = authenticatedActionClient
+  .schema(ZGetChartAction)
+  .action(async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZGetChartAction> }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
 
@@ -344,15 +338,15 @@ export const getChartAction = authenticatedActionClient.schema(ZGetChartAction).
     }
 
     return chart;
-  }
-);
+  });
 
 const ZGetChartsAction = z.object({
   environmentId: ZId,
 });
 
-export const getChartsAction = authenticatedActionClient.schema(ZGetChartsAction).action(
-  async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZGetChartsAction> }) => {
+export const getChartsAction = authenticatedActionClient
+  .schema(ZGetChartsAction)
+  .action(async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZGetChartsAction> }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
 
@@ -392,8 +386,7 @@ export const getChartsAction = authenticatedActionClient.schema(ZGetChartsAction
     });
 
     return charts;
-  }
-);
+  });
 
 const ZExecuteQueryAction = z.object({
   environmentId: ZId,
@@ -432,8 +425,9 @@ const ZExecuteQueryAction = z.object({
   }),
 });
 
-export const executeQueryAction = authenticatedActionClient.schema(ZExecuteQueryAction).action(
-  async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZExecuteQueryAction> }) => {
+export const executeQueryAction = authenticatedActionClient
+  .schema(ZExecuteQueryAction)
+  .action(async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZExecuteQueryAction> }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
 
@@ -459,5 +453,4 @@ export const executeQueryAction = authenticatedActionClient.schema(ZExecuteQuery
     } catch (error: any) {
       return { error: error.message || "Failed to execute query" };
     }
-  }
-);
+  });

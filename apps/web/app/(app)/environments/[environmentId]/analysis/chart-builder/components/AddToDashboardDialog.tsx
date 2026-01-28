@@ -1,9 +1,23 @@
 "use client";
 
-import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/ui/components/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 
 interface Dashboard {
   id: string;
@@ -61,7 +75,9 @@ export function AddToDashboardDialog({
               </label>
               <Select value={selectedDashboardId} onValueChange={onDashboardSelect}>
                 <SelectTrigger id="dashboard-select" className="w-full bg-white">
-                  <SelectValue placeholder={dashboards.length === 0 ? "No dashboards available" : "Select a dashboard"} />
+                  <SelectValue
+                    placeholder={dashboards.length === 0 ? "No dashboards available" : "Select a dashboard"}
+                  />
                 </SelectTrigger>
                 <SelectContent position="popper" className="z-[100] max-h-[200px]">
                   {dashboards.length === 0 ? (

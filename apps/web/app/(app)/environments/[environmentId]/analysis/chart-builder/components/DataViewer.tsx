@@ -1,7 +1,7 @@
 "use client";
 
-import { DatabaseIcon } from "lucide-react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { DatabaseIcon } from "lucide-react";
 
 interface DataViewerProps {
   data: Record<string, any>[];
@@ -40,7 +40,9 @@ export function DataViewer({ data, isOpen, onOpenChange }: DataViewerProps) {
                 {displayData.map((row, index) => {
                   const rowKey = Object.values(row)[0] ? String(Object.values(row)[0]) : `row-${index}`;
                   return (
-                    <tr key={`data-row-${rowKey}-${index}`} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr
+                      key={`data-row-${rowKey}-${index}`}
+                      className="border-b border-gray-100 hover:bg-gray-50">
                       {Object.entries(row).map(([key, value]) => (
                         <td key={`cell-${key}-${rowKey}`} className="px-3 py-2">
                           {typeof value === "object" ? JSON.stringify(value) : String(value)}
@@ -52,9 +54,7 @@ export function DataViewer({ data, isOpen, onOpenChange }: DataViewerProps) {
               </tbody>
             </table>
             {data.length > 50 && (
-              <div className="px-3 py-2 text-xs text-gray-500">
-                Showing first 50 of {data.length} rows
-              </div>
+              <div className="px-3 py-2 text-xs text-gray-500">Showing first 50 of {data.length} rows</div>
             )}
           </div>
         </div>

@@ -2,6 +2,8 @@
 
 import { Plus, TrashIcon } from "lucide-react";
 import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
 import {
   Select,
   SelectContent,
@@ -9,10 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { Input } from "@/modules/ui/components/input";
-import { MultiSelect } from "@/modules/ui/components/multi-select";
-import { FEEDBACK_FIELDS, getFilterOperatorsForType, getFieldById } from "../lib/schema-definition";
 import { FilterRow } from "../lib/query-builder";
+import { FEEDBACK_FIELDS, getFieldById, getFilterOperatorsForType } from "../lib/schema-definition";
 
 interface FiltersPanelProps {
   filters: FilterRow[];
@@ -77,7 +77,13 @@ export function FiltersPanel({
     }
 
     // For number fields with comparison operators, use number input
-    if (fieldType === "number" && (filter.operator === "gt" || filter.operator === "gte" || filter.operator === "lt" || filter.operator === "lte")) {
+    if (
+      fieldType === "number" &&
+      (filter.operator === "gt" ||
+        filter.operator === "gte" ||
+        filter.operator === "lt" ||
+        filter.operator === "lte")
+    ) {
       return (
         <Input
           type="number"

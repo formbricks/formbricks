@@ -1,20 +1,20 @@
 "use client";
 
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  AreaChart,
   Area,
-  PieChart,
-  Pie,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
   Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
   XAxis,
   YAxis,
-  CartesianGrid,
 } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
 
 // Formbricks brand colors
 const BRAND_DARK = "#00C4B8";
@@ -27,11 +27,7 @@ interface ChartRendererProps {
 
 export function ChartRenderer({ chartType, data }: ChartRendererProps) {
   if (!data || data.length === 0) {
-    return (
-      <div className="flex h-64 items-center justify-center text-gray-500">
-        No data available
-      </div>
-    );
+    return <div className="flex h-64 items-center justify-center text-gray-500">No data available</div>;
   }
 
   // Get the first data point to determine keys
@@ -75,8 +71,10 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
   switch (chartType) {
     case "bar":
       return (
-        <div className="h-64 w-full min-h-[256px]">
-          <ChartContainer config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }} className="h-full w-full">
+        <div className="h-64 min-h-[256px] w-full">
+          <ChartContainer
+            config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }}
+            className="h-full w-full">
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
@@ -89,28 +87,46 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
       );
     case "line":
       return (
-        <div className="h-64 w-full min-h-[256px]">
-          <ChartContainer config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }} className="h-full w-full">
+        <div className="h-64 min-h-[256px] w-full">
+          <ChartContainer
+            config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }}
+            className="h-full w-full">
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Line type="monotone" dataKey={dataKey} stroke={BRAND_DARK} strokeWidth={3} dot={{ fill: BRAND_DARK, r: 4 }} activeDot={{ r: 6 }} />
+              <Line
+                type="monotone"
+                dataKey={dataKey}
+                stroke={BRAND_DARK}
+                strokeWidth={3}
+                dot={{ fill: BRAND_DARK, r: 4 }}
+                activeDot={{ r: 6 }}
+              />
             </LineChart>
           </ChartContainer>
         </div>
       );
     case "area":
       return (
-        <div className="h-64 w-full min-h-[256px]">
-          <ChartContainer config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }} className="h-full w-full">
+        <div className="h-64 min-h-[256px] w-full">
+          <ChartContainer
+            config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }}
+            className="h-full w-full">
             <AreaChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Area type="monotone" dataKey={dataKey} stroke={BRAND_DARK} fill={BRAND_LIGHT} fillOpacity={0.4} strokeWidth={2} />
+              <Area
+                type="monotone"
+                dataKey={dataKey}
+                stroke={BRAND_DARK}
+                fill={BRAND_LIGHT}
+                fillOpacity={0.4}
+                strokeWidth={2}
+              />
             </AreaChart>
           </ChartContainer>
         </div>
@@ -141,9 +157,7 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
 
       if (processedData.length === 0) {
         return (
-          <div className="flex h-64 items-center justify-center text-gray-500">
-            No valid data to display
-          </div>
+          <div className="flex h-64 items-center justify-center text-gray-500">No valid data to display</div>
         );
       }
 
@@ -159,8 +173,10 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
       if (colors.length > 1) colors[1] = BRAND_LIGHT;
 
       return (
-        <div className="h-64 w-full min-h-[256px] min-w-0">
-          <ChartContainer config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }} className="h-full w-full min-w-0">
+        <div className="h-64 min-h-[256px] w-full min-w-0">
+          <ChartContainer
+            config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }}
+            className="h-full w-full min-w-0">
             <PieChart width={400} height={256}>
               <Pie
                 data={processedData}
@@ -179,7 +195,7 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
                   return <Cell key={uniqueKey} fill={colors[index] || BRAND_DARK} />;
                 })}
               </Pie>
-              <ChartTooltip 
+              <ChartTooltip
                 content={<ChartTooltipContent />}
                 formatter={(value: any, name: string) => {
                   const numValue = Number(value);

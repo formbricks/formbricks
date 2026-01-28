@@ -1,23 +1,34 @@
 "use client";
 
-import { useReducer, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "react-hot-toast";
+import * as Collapsible from "@radix-ui/react-collapsible";
 import { CodeIcon, DatabaseIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useReducer, useState } from "react";
+import { toast } from "react-hot-toast";
 import { Button } from "@/modules/ui/components/button";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { createChartAction, addChartToDashboardAction, getDashboardsAction, executeQueryAction } from "../../actions";
+import {
+  addChartToDashboardAction,
+  createChartAction,
+  executeQueryAction,
+  getDashboardsAction,
+} from "../../actions";
+import { CHART_TYPES } from "../lib/chart-types";
+import { mapChartType } from "../lib/chart-utils";
+import {
+  ChartBuilderState,
+  CustomMeasure,
+  FilterRow,
+  TimeDimensionConfig,
+  buildCubeQuery,
+} from "../lib/query-builder";
+import { AddToDashboardDialog } from "./AddToDashboardDialog";
 import { ChartRenderer } from "./ChartRenderer";
-import { MeasuresPanel } from "./MeasuresPanel";
 import { DimensionsPanel } from "./DimensionsPanel";
 import { FiltersPanel } from "./FiltersPanel";
-import { TimeDimensionPanel } from "./TimeDimensionPanel";
+import { MeasuresPanel } from "./MeasuresPanel";
 import { SaveChartDialog } from "./SaveChartDialog";
-import { AddToDashboardDialog } from "./AddToDashboardDialog";
-import { CHART_TYPES } from "../lib/chart-types";
-import { ChartBuilderState, FilterRow, TimeDimensionConfig, CustomMeasure, buildCubeQuery } from "../lib/query-builder";
-import { mapChartType } from "../lib/chart-utils";
+import { TimeDimensionPanel } from "./TimeDimensionPanel";
 
 interface AdvancedChartBuilderProps {
   environmentId: string;
@@ -250,10 +261,11 @@ export function AdvancedChartBuilder({ environmentId, initialChartType }: Advanc
                   key={chart.id}
                   type="button"
                   onClick={() => dispatch({ type: "SET_CHART_TYPE", payload: chart.id })}
-                  className={`rounded-md border p-4 text-center transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSelected
-                    ? "border-brand-dark ring-brand-dark bg-brand-dark/5 ring-1"
-                    : "border-gray-200 hover:border-gray-300"
-                    }`}>
+                  className={`rounded-md border p-4 text-center transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    isSelected
+                      ? "border-brand-dark ring-brand-dark bg-brand-dark/5 ring-1"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}>
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded bg-gray-100">
                     <chart.icon className="h-6 w-6 text-gray-600" strokeWidth={1.5} />
                   </div>
@@ -361,7 +373,9 @@ export function AdvancedChartBuilder({ environmentId, initialChartType }: Advanc
                         {Array.isArray(chartData) &&
                           chartData.length > 0 &&
                           Object.keys(chartData[0]).map((key) => (
-                            <th key={key} className="border-b border-gray-200 px-3 py-2 text-left font-medium">
+                            <th
+                              key={key}
+                              className="border-b border-gray-200 px-3 py-2 text-left font-medium">
                               {key}
                             </th>
                           ))}
