@@ -35,3 +35,29 @@ export const stripInlineStyles = (html: string): string => {
     KEEP_CONTENT: true,
   });
 };
+
+/**
+ * Generate RTL-aware border radius and border classes for rating/NPS scale options
+ * Uses CSS logical properties that automatically adapt to text direction
+ * @param isFirst - Whether this is the first item in the scale
+ * @param isLast - Whether this is the last item in the scale
+ * @returns Object containing borderRadiusClasses and borderClasses
+ */
+export const getRTLScaleOptionClasses = (
+  isFirst: boolean,
+  isLast: boolean
+): { borderRadiusClasses: string; borderClasses: string } => {
+  const borderRadiusClasses = cn(
+    isFirst &&
+      "[border-start-start-radius:var(--fb-input-border-radius)] [border-end-start-radius:var(--fb-input-border-radius)]",
+    isLast &&
+      "[border-start-end-radius:var(--fb-input-border-radius)] [border-end-end-radius:var(--fb-input-border-radius)]"
+  );
+
+  const borderClasses = cn(
+    "border-t border-b border-e", // block borders (top/bottom) and inline-end border
+    isFirst && "border-s" // inline-start border for first item
+  );
+
+  return { borderRadiusClasses, borderClasses };
+};

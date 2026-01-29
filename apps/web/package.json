@@ -158,7 +158,7 @@
     "autoprefixer": "10.4.21",
     "cross-env": "10.0.0",
     "dotenv": "16.5.0",
-    "esbuild": "0.25.11",
+    "esbuild": "0.25.12",
     "postcss": "8.5.3",
     "resize-observer-polyfill": "1.5.1",
     "ts-node": "10.9.2",

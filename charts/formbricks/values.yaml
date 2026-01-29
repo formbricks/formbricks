@@ -29,6 +29,32 @@ enterprise:
   licenseKey: ""
 
 ##########################################################
+# Database Migration Job Configuration Helm
+##########################################################
+migration:
+  # Enable migration job for ArgoCD deployments
+  # When enabled, migrations run as a PreSync hook before the deployment
+  # and the startup migration in the container is skipped
+  enabled: true
+
+  # Additional annotations for the migration job
+  annotations: {}
+
+  # Time to keep the job after completion (seconds)
+  ttlSecondsAfterFinished: 300
+
+  # Number of retries before marking the job as failed
+  backoffLimit: 3
+
+  # Resource requests and limits for the migration job
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      memory: 256Mi
+      cpu: "100m"
+
+##########################################################
 # Deployment Configuration
 ##########################################################
 deployment:

@@ -47,8 +47,13 @@ run_with_timeout() {
 }
 
 
-echo "🗃️ Running database migrations..."
-run_with_timeout 300 "database migration" node packages/database/dist/scripts/apply-migrations.js
+# Check if migrations should be skipped (e.g., when using Helm migration job)
+if [ "${SKIP_STARTUP_MIGRATION:-false}" = "true" ]; then
+  echo "⏭️ Skipping startup migrations (handled by migration job)"
+else
+  echo "🗃️ Running database migrations..."
+  run_with_timeout 300 "database migration" node packages/database/dist/scripts/apply-migrations.js
+fi
 
 echo "🗃️ Running SAML database setup..."
 run_with_timeout 60 "SAML database setup" node packages/database/dist/scripts/create-saml-database.js

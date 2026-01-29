@@ -8,6 +8,7 @@ import {
   getBiggerUploadFileSizePermission,
   getIsContactsEnabled,
   getIsMultiOrgEnabled,
+  getIsQuotasEnabled,
   getIsSamlSsoEnabled,
   getIsSpamProtectionEnabled,
   getIsSsoEnabled,
@@ -48,6 +49,7 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   auditLogs: false,
   multiLanguageSurveys: false,
   accessControl: false,
+  quotas: false,
 };
 
 const defaultLicense = {
@@ -184,10 +186,10 @@ describe("License Utils", () => {
       expect(result).toBe(true);
     });
 
-    test("should return true if license active but accessControl feature disabled because of fallback", async () => {
+    test("should return false if license active but accessControl feature disabled (self-hosted)", async () => {
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
       const result = await getAccessControlPermission(mockOrganization.billing.plan);
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     test("should return false if license is inactive", async () => {
@@ -273,10 +275,10 @@ describe("License Utils", () => {
       expect(result).toBe(true);
     });
 
-    test("should return true if license active but multiLanguageSurveys feature disabled because of fallback", async () => {
+    test("should return false if license active but multiLanguageSurveys feature disabled (self-hosted)", async () => {
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
       const result = await getMultiLanguagePermission(mockOrganization.billing.plan);
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     test("should return false if license is inactive", async () => {
@@ -285,6 +287,54 @@ describe("License Utils", () => {
         active: false,
       });
       const result = await getMultiLanguagePermission(mockOrganization.billing.plan);
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("getIsQuotasEnabled", () => {
+    test("should return true if license active and quotas feature enabled (self-hosted)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, quotas: true },
+      });
+      const result = await getIsQuotasEnabled(mockOrganization.billing.plan);
+      expect(result).toBe(true);
+    });
+
+    test("should return true if license active, quotas enabled and plan is CUSTOM (cloud)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, quotas: true },
+      });
+      const result = await getIsQuotasEnabled(constants.PROJECT_FEATURE_KEYS.CUSTOM);
+      expect(result).toBe(true);
+    });
+
+    test("should return false if license active, quotas enabled but plan is not CUSTOM (cloud)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, quotas: true },
+      });
+      const result = await getIsQuotasEnabled(constants.PROJECT_FEATURE_KEYS.STARTUP);
+      expect(result).toBe(false);
+    });
+
+    test("should return false if license active but quotas feature disabled (self-hosted)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getIsQuotasEnabled(mockOrganization.billing.plan);
+      expect(result).toBe(false);
+    });
+
+    test("should return false if license is inactive", async () => {
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+      });
+      const result = await getIsQuotasEnabled(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
   });
