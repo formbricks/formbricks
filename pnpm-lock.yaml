@@ -11,6 +11,7 @@ overrides:
   tar-fs: 2.1.4
   typeorm: '>=0.3.26'
   systeminformation: 5.27.14
+  qs: '>=6.14.1'
 
 patchedDependencies:
   next-auth@4.24.12:
@@ -9381,8 +9382,8 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  qs@6.14.0:
-    resolution: {integrity: sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==}
+  qs@6.14.1:
+    resolution: {integrity: sha512-4EK3+xJl8Ts67nLYNwqw/dsFVnCf+qR7RgXSK9jEEm9unao3njwMDdmsdvoKBKHzxd7tCYz5e5M+SnMjdtXGQQ==}
     engines: {node: '>=0.6'}
 
   quansync@0.2.11:
@@ -19498,7 +19499,7 @@ snapshots:
       extend: 3.0.2
       gaxios: 6.7.1(encoding@0.1.13)
       google-auth-library: 9.15.1(encoding@0.1.13)
-      qs: 6.14.0
+      qs: 6.14.1
       url-template: 2.0.8
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -21328,7 +21329,7 @@ snapshots:
       pngjs: 5.0.0
       yargs: 15.4.1
 
-  qs@6.14.0:
+  qs@6.14.1:
     dependencies:
       side-channel: 1.1.0
 
@@ -22379,7 +22380,7 @@ snapshots:
   stripe@16.12.0:
     dependencies:
       '@types/node': 22.15.18
-      qs: 6.14.0
+      qs: 6.14.1
 
   strnum@1.1.2: {}
 
