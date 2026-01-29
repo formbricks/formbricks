@@ -613,7 +613,7 @@
       "attribute_created_successfully": "Atributo criado com sucesso",
       "attribute_description": "Descrição",
       "attribute_description_placeholder": "Descrição curta",
-      "attribute_key": "Chave",
+      "attribute_key": "atributo",
       "attribute_key_cannot_be_changed": "A chave não pode ser alterada após a criação",
       "attribute_key_hint": "Apenas letras minúsculas, números e underscores. Deve começar com uma letra.",
       "attribute_key_placeholder": "ex: data_de_nascimento",

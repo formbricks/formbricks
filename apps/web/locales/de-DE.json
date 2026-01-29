@@ -613,7 +613,7 @@
       "attribute_created_successfully": "Attribut erfolgreich erstellt",
       "attribute_description": "Beschreibung",
       "attribute_description_placeholder": "Kurze Beschreibung",
-      "attribute_key": "Schlüssel",
+      "attribute_key": "Attribut",
       "attribute_key_cannot_be_changed": "Schlüssel kann nach der Erstellung nicht geändert werden",
       "attribute_key_hint": "Nur Kleinbuchstaben, Zahlen und Unterstriche. Muss mit einem Buchstaben beginnen.",
       "attribute_key_placeholder": "z. B. geburtsdatum",

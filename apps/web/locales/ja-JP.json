@@ -613,7 +613,7 @@
       "attribute_created_successfully": "属性を作成しました",
       "attribute_description": "説明",
       "attribute_description_placeholder": "簡単な説明",
-      "attribute_key": "キー",
+      "attribute_key": "属性",
       "attribute_key_cannot_be_changed": "キーは作成後に変更できません",
       "attribute_key_hint": "小文字のアルファベット、数字、アンダースコアのみ使用可能です。アルファベットで始める必要があります。",
       "attribute_key_placeholder": "例: date_of_birth",

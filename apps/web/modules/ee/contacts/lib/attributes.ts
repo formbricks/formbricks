@@ -11,30 +11,23 @@ import {
   hasUserIdAttribute,
 } from "@/modules/ee/contacts/lib/contact-attributes";
 
-// Default/system attributes that should not be deleted even if missing from payload
-const DEFAULT_ATTRIBUTES = new Set(["email", "userId", "firstName", "lastName"]);
-
 const deleteAttributes = async (
   contactId: string,
   currentAttributes: TContactAttributes,
   submittedAttributes: TContactAttributes,
   contactAttributeKeys: TContactAttributeKey[]
-): Promise<{ success: boolean }> => {
+): Promise<void> => {
   const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
 
-  // Determine which attributes should be deleted (exist in DB but not in payload, and not default attributes)
+  // Determine which attributes should be deleted (exist in DB but not in payload)
   const submittedKeys = new Set(Object.keys(submittedAttributes));
-  const currentKeys = new Set(Object.keys(currentAttributes));
-  const keysToDelete = Array.from(currentKeys).filter(
-    (key) => !submittedKeys.has(key) && !DEFAULT_ATTRIBUTES.has(key)
-  );
+  const keysToDelete = Object.keys(currentAttributes).filter((key) => !submittedKeys.has(key));
 
   // Get attribute key IDs for deletion
   const attributeKeyIdsToDelete = keysToDelete
     .map((key) => contactAttributeKeyMap.get(key)?.id)
     .filter((id): id is string => !!id);
 
-  // Delete attributes that were removed from the form (but not default attributes)
   if (attributeKeyIdsToDelete.length > 0) {
     await prisma.contactAttribute.deleteMany({
       where: {
@@ -45,10 +38,6 @@ const deleteAttributes = async (
       },
     });
   }
-
-  return {
-    success: true,
-  };
 };
 
 /**
@@ -161,8 +150,10 @@ export const updateAttributes = async (
   // Delete attributes that were removed (only when explicitly requested)
   // This is used by UI forms where all attributes are submitted
   // For API calls, we want merge behavior by default (only update passed attributes)
+  // We use contactAttributes (not contactAttributesParam) because it includes validation adjustments
+  // (e.g., preserving email/userId when both would be empty)
   if (deleteRemovedAttributes) {
-    await deleteAttributes(contactId, currentAttributes, contactAttributesParam, contactAttributeKeys);
+    await deleteAttributes(contactId, currentAttributes, contactAttributes, contactAttributeKeys);
   }
 
   // Create lookup map for attribute keys

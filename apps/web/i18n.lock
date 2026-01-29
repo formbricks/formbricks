@@ -577,7 +577,7 @@ checksums:
     environments/contacts/attribute_created_successfully: e9f90d366d817f2f1c81fb819c0e2f05
     environments/contacts/attribute_description: e17686a22ffad04cc7bb70524ed4478b
     environments/contacts/attribute_description_placeholder: 05af83e4cfc6328476ef9719581e47af
-    environments/contacts/attribute_key: 3d1065ab98a1c2f1210507fd5c7bf515
+    environments/contacts/attribute_key: cc92f647873ba9e17cff57d4a59737bd
     environments/contacts/attribute_key_cannot_be_changed: 0ced703e77a8e620276c1fa21fcc8900
     environments/contacts/attribute_key_hint: 1a68c6f91e1a5cf9eff811e2e54e92b8
     environments/contacts/attribute_key_placeholder: 31702e553b3f138a623dbaa42b6f878f
