@@ -90,7 +90,7 @@ class LicenseApiError extends LicenseError {
 
 // Cache keys using enterprise-grade hierarchical patterns
 const getCacheIdentifier = () => {
-  if (typeof window !== "undefined") {
+  if (typeof globalThis.window !== "undefined") {
     return "browser"; // Browser environment
   }
   if (!env.ENTERPRISE_LICENSE_KEY) {
@@ -142,36 +142,48 @@ const validateConfig = () => {
 };
 
 // Cache functions with async pattern
+let getPreviousResultPromise: Promise<TPreviousResult> | null = null;
+
 const getPreviousResult = async (): Promise<TPreviousResult> => {
-  if (typeof window !== "undefined") {
+  if (getPreviousResultPromise) return getPreviousResultPromise;
+
+  getPreviousResultPromise = (async () => {
+    if (typeof globalThis.window !== "undefined") {
+      return {
+        active: false,
+        lastChecked: new Date(0),
+        features: DEFAULT_FEATURES,
+      };
+    }
+
+    try {
+      const result = await cache.get<TPreviousResult>(getCacheKeys().PREVIOUS_RESULT_CACHE_KEY);
+      if (result.ok && result.data) {
+        return {
+          ...result.data,
+          lastChecked: new Date(result.data.lastChecked),
+        };
+      }
+    } catch (error) {
+      logger.error({ error }, "Failed to get previous result from cache");
+    }
+
     return {
       active: false,
       lastChecked: new Date(0),
       features: DEFAULT_FEATURES,
     };
-  }
+  })();
 
   try {
-    const result = await cache.get<TPreviousResult>(getCacheKeys().PREVIOUS_RESULT_CACHE_KEY);
-    if (result.ok && result.data) {
-      return {
-        ...result.data,
-        lastChecked: new Date(result.data.lastChecked),
-      };
-    }
-  } catch (error) {
-    logger.error({ error }, "Failed to get previous result from cache");
+    return await getPreviousResultPromise;
+  } finally {
+    getPreviousResultPromise = null;
   }
-
-  return {
-    active: false,
-    lastChecked: new Date(0),
-    features: DEFAULT_FEATURES,
-  };
 };
 
 const setPreviousResult = async (previousResult: TPreviousResult) => {
-  if (typeof window !== "undefined") return;
+  if (typeof globalThis.window !== "undefined") return;
 
   try {
     const result = await cache.set(
@@ -189,7 +201,7 @@ const setPreviousResult = async (previousResult: TPreviousResult) => {
 
 // Monitoring functions
 const trackFallbackUsage = (level: FallbackLevel) => {
-  logger.info(
+  logger.debug(
     {
       fallbackLevel: level,
       timestamp: new Date().toISOString(),
@@ -221,6 +233,27 @@ const validateLicenseDetails = (data: unknown): TEnterpriseLicenseDetails => {
 };
 
 // Fallback functions
+let memoryCache: {
+  data: {
+    active: boolean;
+    features: TEnterpriseLicenseFeatures | null;
+    lastChecked: Date;
+    isPendingDowngrade: boolean;
+    fallbackLevel: FallbackLevel;
+  };
+  timestamp: number;
+} | null = null;
+
+const MEMORY_CACHE_TTL_MS = 60 * 1000; // 1 minute memory cache to avoid stampedes and reduce load when Redis is slow
+
+let getEnterpriseLicensePromise: Promise<{
+  active: boolean;
+  features: TEnterpriseLicenseFeatures | null;
+  lastChecked: Date;
+  isPendingDowngrade: boolean;
+  fallbackLevel: FallbackLevel;
+}> | null = null;
+
 const getFallbackLevel = (
   liveLicense: TEnterpriseLicenseDetails | null,
   previousResult: TPreviousResult,
@@ -251,6 +284,8 @@ const handleInitialFailure = async (currentTime: Date) => {
 };
 
 // API functions
+let fetchLicensePromise: Promise<TEnterpriseLicenseDetails | null> | null = null;
+
 const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpriseLicenseDetails | null> => {
   if (!env.ENTERPRISE_LICENSE_KEY) return null;
 
@@ -266,6 +301,7 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     // first millisecond of next year => current year is fully included
     const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
 
+    const startTime = Date.now();
     const [instanceId, responseCount] = await Promise.all([
       // Skip instance ID during E2E tests to avoid license key conflicts
       // as the instance ID changes with each test run
@@ -279,6 +315,11 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
         },
       }),
     ]);
+    const duration = Date.now() - startTime;
+
+    if (duration > 1000) {
+      logger.warn({ duration, responseCount }, "Slow license check prerequisite data fetching (DB count)");
+    }
 
     // No organization exists, cannot perform license check
     // (skip this check during E2E tests as we intentionally use null)
@@ -311,7 +352,19 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
 
     if (res.ok) {
       const responseJson = (await res.json()) as { data: unknown };
-      return validateLicenseDetails(responseJson.data);
+      const licenseDetails = validateLicenseDetails(responseJson.data);
+
+      logger.debug(
+        {
+          status: licenseDetails.status,
+          instanceId: instanceId ?? "not-set",
+          responseCount,
+          timestamp: new Date().toISOString(),
+        },
+        "License check API response received"
+      );
+
+      return licenseDetails;
     }
 
     const error = new LicenseApiError(`License check API responded with status: ${res.status}`, res.status);
@@ -342,13 +395,24 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
     return null;
   }
 
-  return await cache.withCache(
+  if (fetchLicensePromise) {
+    return fetchLicensePromise;
+  }
+
+  fetchLicensePromise = cache.withCache(
     async () => {
       return await fetchLicenseFromServerInternal();
     },
     getCacheKeys().FETCH_LICENSE_CACHE_KEY,
     CONFIG.CACHE.FETCH_LICENSE_TTL_MS
   );
+
+  try {
+    const result = await fetchLicensePromise;
+    return result;
+  } finally {
+    fetchLicensePromise = null;
+  }
 };
 
 export const getEnterpriseLicense = reactCache(
@@ -359,61 +423,85 @@ export const getEnterpriseLicense = reactCache(
     isPendingDowngrade: boolean;
     fallbackLevel: FallbackLevel;
   }> => {
-    validateConfig();
-
-    if (!env.ENTERPRISE_LICENSE_KEY || env.ENTERPRISE_LICENSE_KEY.length === 0) {
-      return {
-        active: false,
-        features: null,
-        lastChecked: new Date(),
-        isPendingDowngrade: false,
-        fallbackLevel: "default" as const,
-      };
+    if (memoryCache && Date.now() - memoryCache.timestamp < MEMORY_CACHE_TTL_MS) {
+      return memoryCache.data;
     }
 
-    const currentTime = new Date();
-    const liveLicenseDetails = await fetchLicense();
-    const previousResult = await getPreviousResult();
-    const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
+    if (getEnterpriseLicensePromise) return getEnterpriseLicensePromise;
 
-    trackFallbackUsage(fallbackLevel);
+    getEnterpriseLicensePromise = (async () => {
+      validateConfig();
 
-    let currentLicenseState: TPreviousResult | undefined;
-
-    switch (fallbackLevel) {
-      case "live":
-        if (!liveLicenseDetails) throw new Error("Invalid state: live license expected");
-        currentLicenseState = {
-          active: liveLicenseDetails.status === "active",
-          features: liveLicenseDetails.features,
-          lastChecked: currentTime,
-        };
-        await setPreviousResult(currentLicenseState);
+      if (!env.ENTERPRISE_LICENSE_KEY || env.ENTERPRISE_LICENSE_KEY.length === 0) {
         return {
-          active: currentLicenseState.active,
-          features: currentLicenseState.features,
-          lastChecked: currentTime,
+          active: false,
+          features: null,
+          lastChecked: new Date(),
           isPendingDowngrade: false,
-          fallbackLevel: "live" as const,
+          fallbackLevel: "default" as const,
         };
+      }
+      const currentTime = new Date();
+      const [liveLicenseDetails, previousResult] = await Promise.all([fetchLicense(), getPreviousResult()]);
+      const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
 
-      case "grace":
-        if (!validateFallback(previousResult)) {
+      trackFallbackUsage(fallbackLevel);
+
+      let currentLicenseState: TPreviousResult | undefined;
+
+      switch (fallbackLevel) {
+        case "live":
+          if (!liveLicenseDetails) throw new Error("Invalid state: live license expected");
+          currentLicenseState = {
+            active: liveLicenseDetails.status === "active",
+            features: liveLicenseDetails.features,
+            lastChecked: currentTime,
+          };
+
+          // Only update previous result if it's actually different or if it's old (1 hour)
+          // This prevents hammering Redis on every request when the license is active
+          if (
+            !previousResult.active ||
+            previousResult.active !== currentLicenseState.active ||
+            currentTime.getTime() - previousResult.lastChecked.getTime() > 60 * 60 * 1000
+          ) {
+            await setPreviousResult(currentLicenseState);
+          }
+
+          return {
+            active: currentLicenseState.active,
+            features: currentLicenseState.features,
+            lastChecked: currentTime,
+            isPendingDowngrade: false,
+            fallbackLevel: "live" as const,
+          };
+
+        case "grace":
+          if (!validateFallback(previousResult)) {
+            return handleInitialFailure(currentTime);
+          }
+          return {
+            active: previousResult.active,
+            features: previousResult.features,
+            lastChecked: previousResult.lastChecked,
+            isPendingDowngrade: true,
+            fallbackLevel: "grace" as const,
+          };
+
+        case "default":
           return handleInitialFailure(currentTime);
-        }
-        return {
-          active: previousResult.active,
-          features: previousResult.features,
-          lastChecked: previousResult.lastChecked,
-          isPendingDowngrade: true,
-          fallbackLevel: "grace" as const,
-        };
+      }
 
-      case "default":
-        return handleInitialFailure(currentTime);
+      return handleInitialFailure(currentTime);
+    })();
+
+    try {
+      const result = await getEnterpriseLicensePromise;
+      memoryCache = { data: result, timestamp: Date.now() };
+      return result;
+    } finally {
+      getEnterpriseLicensePromise = null;
     }
-
-    return handleInitialFailure(currentTime);
   }
 );
 
