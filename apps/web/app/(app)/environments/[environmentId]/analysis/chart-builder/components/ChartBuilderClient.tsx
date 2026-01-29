@@ -11,6 +11,7 @@ import {
   executeQueryAction,
   getChartAction,
   getDashboardsAction,
+  updateChartAction,
 } from "../../actions";
 import { mapChartType, mapDatabaseChartTypeToApi } from "../lib/chart-utils";
 import { AIQuerySection } from "./AIQuerySection";
@@ -42,6 +43,7 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
   const [configuredChartType, setConfiguredChartType] = useState<string | null>(null);
   const [showAdvancedBuilder, setShowAdvancedBuilder] = useState(false);
   const [isLoadingChart, setIsLoadingChart] = useState(false);
+  const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);
 
   useEffect(() => {
     if (isAddToDashboardDialogOpen) {
@@ -86,6 +88,7 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
 
               setChartData(chartData);
               setConfiguredChartType(mapDatabaseChartTypeToApi(chart.type));
+              setCurrentChartId(chart.id);
             } else {
               toast.error("No data returned for chart");
             }
@@ -114,22 +117,44 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
 
     setIsSaving(true);
     try {
-      const result = await createChartAction({
-        environmentId,
-        name: chartName,
-        type: mapChartType(chartData.chartType),
-        query: chartData.query,
-        config: {},
-      });
+      // If we have a currentChartId, update the existing chart; otherwise create a new one
+      if (currentChartId) {
+        const result = await updateChartAction({
+          environmentId,
+          chartId: currentChartId,
+          name: chartName.trim(),
+          type: mapChartType(chartData.chartType),
+          query: chartData.query,
+          config: {},
+        });
 
-      if (!result?.data) {
-        toast.error(result?.serverError || "Failed to save chart");
-        return;
+        if (!result?.data) {
+          toast.error(result?.serverError || "Failed to update chart");
+          return;
+        }
+
+        toast.success("Chart updated successfully!");
+        setIsSaveDialogOpen(false);
+        router.push(`/environments/${environmentId}/analysis/charts`);
+      } else {
+        const result = await createChartAction({
+          environmentId,
+          name: chartName.trim(),
+          type: mapChartType(chartData.chartType),
+          query: chartData.query,
+          config: {},
+        });
+
+        if (!result?.data) {
+          toast.error(result?.serverError || "Failed to save chart");
+          return;
+        }
+
+        setCurrentChartId(result.data.id);
+        toast.success("Chart saved successfully!");
+        setIsSaveDialogOpen(false);
+        router.push(`/environments/${environmentId}/analysis/charts`);
       }
-
-      toast.success("Chart saved successfully!");
-      setIsSaveDialogOpen(false);
-      router.push(`/environments/${environmentId}/analysis/charts`);
     } catch (error: any) {
       toast.error(error.message || "Failed to save chart");
     } finally {
@@ -145,22 +170,38 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
 
     setIsSaving(true);
     try {
-      const chartResult = await createChartAction({
-        environmentId,
-        name: chartName || `Chart ${new Date().toLocaleString()}`,
-        type: mapChartType(chartData.chartType),
-        query: chartData.query,
-        config: {},
-      });
+      let chartIdToUse = currentChartId;
 
-      if (!chartResult?.data) {
-        toast.error(chartResult?.serverError || "Failed to save chart");
-        return;
+      // If we don't have a chartId (creating new chart), create it first
+      if (!chartIdToUse) {
+        if (!chartName.trim()) {
+          toast.error("Please enter a chart name");
+          setIsSaving(false);
+          return;
+        }
+
+        const chartResult = await createChartAction({
+          environmentId,
+          name: chartName.trim(),
+          type: mapChartType(chartData.chartType),
+          query: chartData.query,
+          config: {},
+        });
+
+        if (!chartResult?.data) {
+          toast.error(chartResult?.serverError || "Failed to save chart");
+          setIsSaving(false);
+          return;
+        }
+
+        chartIdToUse = chartResult.data.id;
+        setCurrentChartId(chartIdToUse);
       }
 
+      // Add the chart (existing or newly created) to the dashboard
       const widgetResult = await addChartToDashboardAction({
         environmentId,
-        chartId: chartResult.data.id,
+        chartId: chartIdToUse,
         dashboardId: selectedDashboardId,
       });
 
@@ -211,6 +252,37 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
           onConfigure={() => setIsConfigureDialogOpen(true)}
           onSave={() => setIsSaveDialogOpen(true)}
           onAddToDashboard={() => setIsAddToDashboardDialogOpen(true)}
+        />
+
+        {/* Dialogs */}
+        <SaveChartDialog
+          open={isSaveDialogOpen}
+          onOpenChange={setIsSaveDialogOpen}
+          chartName={chartName}
+          onChartNameChange={setChartName}
+          onSave={handleSaveChart}
+          isSaving={isSaving}
+        />
+
+        <AddToDashboardDialog
+          open={isAddToDashboardDialogOpen}
+          onOpenChange={setIsAddToDashboardDialogOpen}
+          chartName={chartName}
+          onChartNameChange={setChartName}
+          dashboards={dashboards}
+          selectedDashboardId={selectedDashboardId}
+          onDashboardSelect={setSelectedDashboardId}
+          onAdd={handleAddToDashboard}
+          isSaving={isSaving}
+        />
+
+        <ConfigureChartDialog
+          open={isConfigureDialogOpen}
+          onOpenChange={setIsConfigureDialogOpen}
+          currentChartType={chartData?.chartType || "bar"}
+          configuredChartType={configuredChartType}
+          onChartTypeSelect={setConfiguredChartType}
+          onReset={() => setConfiguredChartType(null)}
         />
       </div>
     );

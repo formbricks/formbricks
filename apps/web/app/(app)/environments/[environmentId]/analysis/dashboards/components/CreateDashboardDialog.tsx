@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
   DialogBody,
@@ -9,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 
 interface CreateDashboardDialogProps {
@@ -35,7 +35,7 @@ export function CreateDashboardDialog({
 }: CreateDashboardDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create Dashboard</DialogTitle>
           <DialogDescription>Enter a name for your dashboard to create it.</DialogDescription>

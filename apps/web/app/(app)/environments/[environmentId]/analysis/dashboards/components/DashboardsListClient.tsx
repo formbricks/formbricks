@@ -15,15 +15,18 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
 import { createDashboardAction } from "../../actions";
-import { CreateDashboardDialog } from "./CreateDashboardDialog";
 import { TDashboard } from "../../types/analysis";
+import { CreateDashboardDialog } from "./CreateDashboardDialog";
 
 interface DashboardsListClientProps {
   dashboards: TDashboard[];
   environmentId: string;
 }
 
-export function DashboardsListClient({ dashboards: initialDashboards, environmentId }: DashboardsListClientProps) {
+export function DashboardsListClient({
+  dashboards: initialDashboards,
+  environmentId,
+}: DashboardsListClientProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [dashboards] = useState(initialDashboards);
@@ -75,25 +78,8 @@ export function DashboardsListClient({ dashboards: initialDashboards, environmen
   return (
     <div className="flex h-full flex-col">
       {/* Header / Actions */}
-      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search dashboards"
-              className="w-[300px] pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          {/* Filter Dropdowns - Visual Only for MVP port */}
-          <Button variant="outline" className="text-gray-500">
-            Owner <span className="ml-2 text-xs">▼</span>
-          </Button>
-          <Button variant="outline" className="text-gray-500">
-            Status <span className="ml-2 text-xs">▼</span>
-          </Button>
-        </div>
+      <div className="flex items-center justify-between border-gray-200 px-6 py-4">
+        <div className="flex items-center gap-4"></div>
         <Button onClick={handleCreateDashboard}>
           <PlusIcon className="mr-2 h-4 w-4" />
           Dashboard

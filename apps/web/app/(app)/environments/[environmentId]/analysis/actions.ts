@@ -61,6 +61,70 @@ export const createChartAction = authenticatedActionClient.schema(ZCreateChartAc
   )
 );
 
+const ZUpdateChartAction = z.object({
+  environmentId: ZId,
+  chartId: ZId,
+  name: z.string().min(1).optional(),
+  type: z
+    .enum(["area", "bar", "line", "pie", "big_number", "big_number_total", "table", "funnel", "map"])
+    .optional(),
+  query: z.record(z.any()).optional(),
+  config: z.record(z.any()).optional(),
+});
+
+export const updateChartAction = authenticatedActionClient.schema(ZUpdateChartAction).action(
+  withAuditLogging(
+    "updated",
+    "chart",
+    async ({ ctx, parsedInput }: { ctx: any; parsedInput: z.infer<typeof ZUpdateChartAction> }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId,
+          },
+        ],
+      });
+
+      // Verify chart belongs to the project
+      const chart = await prisma.chart.findFirst({
+        where: { id: parsedInput.chartId, projectId },
+      });
+
+      if (!chart) {
+        throw new Error("Chart not found");
+      }
+
+      const updateData: any = {};
+      if (parsedInput.name !== undefined) updateData.name = parsedInput.name;
+      if (parsedInput.type !== undefined) updateData.type = parsedInput.type as ChartType;
+      if (parsedInput.query !== undefined) updateData.query = parsedInput.query;
+      if (parsedInput.config !== undefined) updateData.config = parsedInput.config;
+
+      const updatedChart = await prisma.chart.update({
+        where: { id: parsedInput.chartId },
+        data: updateData,
+      });
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.oldObject = chart;
+      ctx.auditLoggingCtx.newObject = updatedChart;
+      return updatedChart;
+    }
+  )
+);
+
 const ZAddChartToDashboardAction = z.object({
   environmentId: ZId,
   chartId: ZId,

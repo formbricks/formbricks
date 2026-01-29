@@ -25,9 +25,9 @@ export function ChartsListClient({ charts, dashboards, environmentId }: ChartsLi
   return (
     <div className="flex h-full flex-col">
       {/* Header / Actions */}
-      <div className="flex flex-col gap-4 border-b border-gray-200 bg-white px-6 py-4">
+      <div className="flex flex-col gap-4 border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Charts</h1>
+          <h1 className="text-xl font-semibold text-gray-900"></h1>
           <div className="flex items-center gap-2">
             <Link href="chart-builder">
               <Button size="sm">
@@ -38,22 +38,7 @@ export function ChartsListClient({ charts, dashboards, environmentId }: ChartsLi
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input placeholder="Type a value" className="w-[300px] pl-9" />
-          </div>
-          {/* Filter Dropdowns */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto">
-            {["Type", "Dataset", "Owner", "Dashboard", "Favorite", "Certified", "Modified by"].map(
-              (filter) => (
-                <Button key={filter} variant="outline" className="whitespace-nowrap text-gray-500" size="sm">
-                  {filter} <span className="ml-2 text-xs">▼</span>
-                </Button>
-              )
-            )}
-          </div>
-        </div>
+        <div className="flex items-center gap-4"></div>
       </div>
 
       {/* Table Content */}
