@@ -1,5 +1,6 @@
 import { Project } from "@prisma/client";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { cn } from "@/lib/cn";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
@@ -39,6 +40,7 @@ export const BrandingSettingsCard = async ({
   return (
     <SettingsCard
       title={t("environments.workspace.look.formbricks_branding")}
+      className={cn(!isReadOnly && "max-w-7xl")}
       description={t("environments.workspace.look.formbricks_branding_settings_description")}>
       {canRemoveBranding ? (
         <div className="space-y-4">

@@ -115,7 +115,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
                 onLoadingComplete={() => setBackgroundLoaded(true)}
               />
               {authorDetailsForUnsplash.authorName && (
-                <div className="absolute bottom-4 right-6 z-10 ml-auto hidden w-max text-xs text-slate-400 md:block">
+                <div className="absolute right-6 bottom-4 z-10 ml-auto hidden w-max text-xs text-slate-400 md:block">
                   <span>{t("common.photo_by")}</span>
                   <Link
                     href={authorDetailsForUnsplash.authorURL + "?utm_source=formbricks&utm_medium=referral"}
@@ -169,17 +169,17 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         data-testid="mobile-preview-container"
         className={`relative h-[90%] w-full overflow-hidden rounded-[3rem] border-[6px] border-slate-400 lg:w-[75%] ${getFilterStyle()}`}>
         {/* below element is use to create notch for the mobile device mockup   */}
-        <div className="absolute left-1/2 right-1/2 top-2 z-20 h-4 w-1/3 -translate-x-1/2 transform rounded-full bg-slate-400"></div>
+        <div className="absolute top-2 right-1/2 left-1/2 z-20 h-4 w-1/3 -translate-x-1/2 transform rounded-full bg-slate-400"></div>
         {surveyType === "link" && renderBackground()}
         {renderContent()}
       </div>
     );
   } else if (isEditorView) {
     return (
-      <div ref={ContentRef} className="overflow-hiddem flex flex-grow flex-col rounded-b-lg">
-        <div className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6">
+      <div ref={ContentRef} className="flex flex-col rounded-b-lg">
+        <div className="relative flex w-full flex-col items-center justify-center p-4 py-6">
           {renderBackground()}
-          <div className="flex h-full w-full items-center justify-center">{children}</div>
+          <div className="flex w-full items-center justify-center">{children}</div>
         </div>
       </div>
     );

@@ -82,8 +82,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   let cssVariables = "#fbjs {\n";
 
   // Helper function to append the variable if it's not undefined
-  const appendCssVariable = (variableName: string, value?: string) => {
-    if (value !== undefined) {
+  const appendCssVariable = (variableName: string, value?: string | null) => {
+    if (value !== undefined && value !== null) {
       cssVariables += `--fb-${variableName}: ${value};\n`;
     }
   };
@@ -122,12 +122,24 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("input-border-color", styling.inputBorderColor?.light);
   }
 
+  // helper function to format dimensions
+  const formatDimension = (value: string | number | null | undefined) => {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === "number") {
+      return `${value}px`;
+    }
+    if (typeof value === "string" && !Number.isNaN(Number(value))) {
+      return `${value}px`;
+    }
+    return value;
+  };
+
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
-  appendCssVariable("border-radius", `${Number(roundness).toString()}px`);
-  appendCssVariable("input-border-radius", `${Number(roundness).toString()}px`);
-  appendCssVariable("option-border-radius", `${Number(roundness).toString()}px`);
-  appendCssVariable("button-border-radius", `${Number(roundness).toString()}px`);
+  appendCssVariable("border-radius", formatDimension(roundness));
+  appendCssVariable("input-border-radius", formatDimension(roundness));
+  appendCssVariable("option-border-radius", formatDimension(roundness));
+  appendCssVariable("button-border-radius", formatDimension(roundness));
   appendCssVariable("input-background-color", styling.inputColor?.light);
   appendCssVariable("input-bg-color", styling.inputColor?.light);
   appendCssVariable("option-bg-color", styling.inputColor?.light);
@@ -178,6 +190,73 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
       appendCssVariable("calendar-tile-color", mixColor(brandColor, "#000000", 0.7));
     }
   }
+
+  // Buttons (Advanced)
+  appendCssVariable("button-bg-color", styling.buttonBgColor?.light);
+  appendCssVariable("button-text-color", styling.buttonTextColor?.light);
+  if (styling.buttonBorderRadius !== undefined)
+    appendCssVariable("button-border-radius", formatDimension(styling.buttonBorderRadius));
+  if (styling.buttonHeight !== undefined)
+    appendCssVariable("button-height", formatDimension(styling.buttonHeight));
+  if (styling.buttonFontSize !== undefined)
+    appendCssVariable("button-font-size", formatDimension(styling.buttonFontSize));
+  if (styling.buttonFontWeight !== undefined)
+    appendCssVariable("button-font-weight", `${styling.buttonFontWeight}`);
+  if (styling.buttonPaddingX !== undefined)
+    appendCssVariable("button-padding-x", formatDimension(styling.buttonPaddingX));
+  if (styling.buttonPaddingY !== undefined)
+    appendCssVariable("button-padding-y", formatDimension(styling.buttonPaddingY));
+
+  // Inputs (Advanced)
+  appendCssVariable("input-color", styling.inputTextColor?.light);
+  if (styling.inputBorderRadius !== undefined)
+    appendCssVariable("input-border-radius", formatDimension(styling.inputBorderRadius));
+  if (styling.inputHeight !== undefined)
+    appendCssVariable("input-height", formatDimension(styling.inputHeight));
+  if (styling.inputFontSize !== undefined)
+    appendCssVariable("input-font-size", formatDimension(styling.inputFontSize));
+  if (styling.inputPaddingX !== undefined)
+    appendCssVariable("input-padding-x", formatDimension(styling.inputPaddingX));
+  if (styling.inputPaddingY !== undefined)
+    appendCssVariable("input-padding-y", formatDimension(styling.inputPaddingY));
+  if (styling.inputPlaceholderOpacity !== undefined)
+    appendCssVariable("input-placeholder-opacity", `${styling.inputPlaceholderOpacity}`);
+  appendCssVariable("input-shadow", styling.inputShadow);
+
+  // Options (Advanced)
+  appendCssVariable("option-bg-color", styling.optionBgColor?.light);
+  appendCssVariable("option-label-color", styling.optionLabelColor?.light);
+  if (styling.optionBorderRadius !== undefined)
+    appendCssVariable("option-border-radius", formatDimension(styling.optionBorderRadius));
+  if (styling.optionPaddingX !== undefined)
+    appendCssVariable("option-padding-x", formatDimension(styling.optionPaddingX));
+  if (styling.optionPaddingY !== undefined)
+    appendCssVariable("option-padding-y", formatDimension(styling.optionPaddingY));
+  if (styling.optionFontSize !== undefined)
+    appendCssVariable("option-font-size", formatDimension(styling.optionFontSize));
+
+  // Element Headline & Description (Advanced)
+  if (styling.elementHeadlineFontSize !== undefined)
+    appendCssVariable("element-headline-font-size", formatDimension(styling.elementHeadlineFontSize));
+  if (styling.elementHeadlineFontWeight !== undefined)
+    appendCssVariable("element-headline-font-weight", `${styling.elementHeadlineFontWeight}`);
+  appendCssVariable(
+    "element-headline-color",
+    styling.elementHeadlineColor?.light ?? styling.questionColor?.light
+  );
+
+  if (styling.elementDescriptionFontSize !== undefined)
+    appendCssVariable("element-description-font-size", formatDimension(styling.elementDescriptionFontSize));
+  appendCssVariable(
+    "element-description-color",
+    styling.elementDescriptionColor?.light ?? styling.questionColor?.light
+  );
+
+  // Progress Bar (Advanced)
+  if (styling.progressTrackHeight !== undefined)
+    appendCssVariable("progress-track-height", formatDimension(styling.progressTrackHeight));
+  appendCssVariable("progress-track-bg-color", styling.progressTrackBgColor?.light);
+  appendCssVariable("progress-indicator-bg-color", styling.progressIndicatorBgColor?.light);
 
   // Close the #fbjs block
   cssVariables += "}";

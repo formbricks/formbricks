@@ -16,7 +16,7 @@ interface LanguageSwitchProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;
   hoverColor?: string;
-  borderRadius?: number;
+  borderRadius?: number | string;
   dir?: "ltr" | "rtl" | "auto";
   setDir?: (dir: "ltr" | "rtl" | "auto") => void;
 }
@@ -85,7 +85,7 @@ export function LanguageSwitch({
         style={{
           backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",
           transition: "background-color 0.2s ease",
-          borderRadius: `${borderRadius}px`,
+          borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius,
         }}
         onClick={toggleDropdown}
         tabIndex={-1}

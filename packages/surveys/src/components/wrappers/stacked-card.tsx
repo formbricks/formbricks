@@ -116,7 +116,7 @@ export const StackedCard = ({
         transform: calculateCardTransform(offset),
         opacity: isHidden ? 0 : (100 - 20 * offset) / 100,
         height: fullSizeCards ? "100%" : currentCardHeight,
-        transition: "all 600ms ease-in-out",
+        transition: "transform 600ms ease-in-out, opacity 600ms ease-in-out, width 600ms ease-in-out",
         pointerEvents: offset === 0 ? "auto" : "none",
         ...borderStyles,
         ...straightCardArrangementStyles,
