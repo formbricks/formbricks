@@ -165,7 +165,14 @@ export const AddIntegrationModal = ({
         // create action
         googleSheetIntegrationData.config.data.push(integrationData);
       }
-      await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });
+      const result = await createOrUpdateIntegrationAction({
+        environmentId,
+        integrationData: googleSheetIntegrationData,
+      });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       if (selectedIntegration) {
         toast.success(t("environments.integrations.integration_updated_successfully"));
       } else {
@@ -205,7 +212,14 @@ export const AddIntegrationModal = ({
     googleSheetIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });
+      const result = await createOrUpdateIntegrationAction({
+        environmentId,
+        integrationData: googleSheetIntegrationData,
+      });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       toast.success(t("environments.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
@@ -266,7 +280,7 @@ export const AddIntegrationModal = ({
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
-                    <div className="mt-1 max-h-[15vh] overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200">
+                    <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                         {surveyElements.map((question) => (
                           <div key={question.id} className="my-1 flex items-center space-x-2">
