@@ -67,7 +67,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
       }
       setHittingEndpoint(true);
       const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
-      if (!testEndpointActionResult?.data) {
+      if (!testEndpointActionResult?.data || testEndpointActionResult?.serverError) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
         throw new Error(errorMessage);
       }
