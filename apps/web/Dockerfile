@@ -20,7 +20,7 @@ FROM base AS installer
 # Enable corepack and prepare pnpm
 RUN npm install --ignore-scripts -g corepack@latest 
 RUN corepack enable
-RUN corepack prepare pnpm@10.28.0 --activate
+RUN corepack prepare pnpm@10.28.2 --activate
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
@@ -81,7 +81,6 @@ RUN npm install --ignore-scripts -g corepack@latest && \
     corepack enable
 
 RUN apk add --no-cache curl \
-    && apk add --no-cache supercronic \
     # && addgroup --system --gid 1001 nodejs \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
@@ -146,7 +145,7 @@ USER nextjs
 
 # Prepare pnpm as the nextjs user to ensure it's available at runtime
 # Prepare volumes for uploads and SAML connections
-RUN corepack prepare pnpm@10.28.0 --activate && \
+RUN corepack prepare pnpm@10.28.2 --activate && \
     mkdir -p /home/nextjs/apps/web/uploads/ && \
     mkdir -p /home/nextjs/apps/web/saml-connection
 
