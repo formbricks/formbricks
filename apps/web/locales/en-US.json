@@ -254,6 +254,7 @@
     "label": "Label",
     "language": "Language",
     "learn_more": "Learn more",
+    "license_expired": "License Expired",
     "light_overlay": "Light overlay",
     "limits_reached": "Limits Reached",
     "link": "Link",
@@ -460,7 +461,10 @@
     "you_have_reached_your_limit_of_workspace_limit": "You have reached your limit of {projectLimit} workspaces.",
     "you_have_reached_your_monthly_miu_limit_of": "You have reached your monthly MIU limit of",
     "you_have_reached_your_monthly_response_limit_of": "You have reached your monthly response limit of",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "You will be downgraded to the Community Edition on {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "You will be downgraded to the Community Edition on {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features.",
+    "your_workspace_has_been_downgraded_to_community_edition": "Your workspace has been downgraded to the Community Edition.",
+    "your_workspace_will_be_downgraded_to_community_edition_on_date": "Your workspace will be downgraded to the Community Edition on {date}."
   },
   "emails": {
     "accept": "Accept",
