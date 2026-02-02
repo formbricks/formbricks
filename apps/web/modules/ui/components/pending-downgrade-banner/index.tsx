@@ -12,6 +12,7 @@ interface PendingDowngradeBannerProps {
   isPendingDowngrade: boolean;
   environmentId: string;
   locale: TUserLocale;
+  status: "active" | "expired" | "unreachable" | "no-license";
 }
 
 export const PendingDowngradeBanner = ({
@@ -20,6 +21,7 @@ export const PendingDowngradeBanner = ({
   isPendingDowngrade,
   environmentId,
   locale,
+  status,
 }: PendingDowngradeBannerProps) => {
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
   const { t } = useTranslation();
@@ -36,7 +38,9 @@ export const PendingDowngradeBanner = ({
 
   const [show, setShow] = useState(true);
 
-  if (show && active && isPendingDowngrade) {
+  if (show && (isPendingDowngrade || status === "expired")) {
+    const isExpired = status === "expired";
+
     return (
       <div
         aria-live="assertive"
@@ -50,16 +54,22 @@ export const PendingDowngradeBanner = ({
                     <TriangleAlertIcon className="text-error h-6 w-6" aria-hidden="true" />
                   </div>
                   <div className="ml-3 w-0 flex-1">
-                    <p className="text-base font-medium text-slate-900">{t("common.pending_downgrade")}</p>
+                    <p className="text-base font-medium text-slate-900">
+                      {isExpired ? t("common.license_expired") : t("common.pending_downgrade")}
+                    </p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {t(
-                        "common.we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable"
-                      )}{" "}
-                      {isLastCheckedWithin72Hours
-                        ? t("common.you_will_be_downgraded_to_the_community_edition_on_date", {
-                            date: formattedDate,
-                          })
-                        : t("common.you_are_downgraded_to_the_community_edition")}
+                      {isExpired
+                        ? t("common.your_license_has_expired_please_renew")
+                        : t(
+                            "common.we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable"
+                          )}{" "}
+                      {!active
+                        ? t("common.you_are_downgraded_to_the_community_edition")
+                        : isLastCheckedWithin72Hours
+                          ? t("common.you_will_be_downgraded_to_the_community_edition_on_date", {
+                              date: formattedDate,
+                            })
+                          : t("common.you_are_downgraded_to_the_community_edition")}
                     </p>
 
                     <Link href={`/environments/${environmentId}/settings/enterprise`}>
