@@ -251,7 +251,7 @@ For operations with more complex dependency chains, use `better-all` to automati
 
 When async operations have no interdependencies, execute them concurrently using `Promise.all()`.
 
-**Incorrect: sequential execution, 3 round trips**
+**Incorrect: sequential execution, waterfall**
 
 ```typescript
 const user = await fetchUser();
@@ -259,7 +259,7 @@ const posts = await fetchPosts();
 const comments = await fetchComments();
 ```
 
-**Correct: parallel execution, 1 round trip**
+**Correct: parallel execution, no waterfall**
 
 ```typescript
 const [user, posts, comments] = await Promise.all([fetchUser(), fetchPosts(), fetchComments()]);
@@ -580,7 +580,7 @@ Optimizing server-side rendering and data fetching eliminates server-side waterf
 
 ### 3.1 Authenticate Server Actions Like API Routes
 
-**Impact: CRITICAL (prevents unauthorized access to server mutations)**
+**Prevent unauthorized access to server mutations**
 
 Server Actions (functions with `"use server"`) are exposed as public endpoints, just like API routes. Always verify authentication and authorization **inside** each Server Action—do not rely solely on middleware, layout guards, or page-level checks, as Server Actions can be invoked directly.
 
@@ -1696,7 +1696,7 @@ For simple primitives (`useState(0)`), direct references (`useState(props.value)
 
 Mark frequent, non-urgent state updates as transitions to maintain UI responsiveness.
 
-**Incorrect: blocks UI on every scroll**
+**Incorrect: triggers high-frequency re-renders**
 
 ```tsx
 function ScrollTracker() {

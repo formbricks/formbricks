@@ -9,7 +9,7 @@ tags: rerender, transitions, startTransition, performance
 
 Mark frequent, non-urgent state updates as transitions to maintain UI responsiveness.
 
-**Incorrect (blocks UI on every scroll):**
+**Incorrect (triggers high-frequency re-renders):**
 
 ```tsx
 function ScrollTracker() {

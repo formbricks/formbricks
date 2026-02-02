@@ -7,7 +7,7 @@ tags: server, server-actions, authentication, security, authorization
 
 ## Authenticate Server Actions Like API Routes
 
-**Impact: CRITICAL (prevents unauthorized access to server mutations)**
+**Prevent unauthorized access to server mutations**
 
 Server Actions (functions with `"use server"`) are exposed as public endpoints, just like API routes. Always verify authentication and authorization **inside** each Server Action—do not rely solely on middleware, layout guards, or page-level checks, as Server Actions can be invoked directly.
 
