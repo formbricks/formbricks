@@ -254,6 +254,7 @@
     "label": "Etikett",
     "language": "Språk",
     "learn_more": "Läs mer",
+    "license_expired": "License Expired",
     "light_overlay": "Ljust överlägg",
     "limits_reached": "Gränser nådda",
     "link": "Länk",
@@ -460,7 +461,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Du har nått din gräns på {projectLimit} arbetsytor.",
     "you_have_reached_your_monthly_miu_limit_of": "Du har nått din månatliga MIU-gräns på",
     "you_have_reached_your_monthly_response_limit_of": "Du har nått din månatliga svarsgräns på",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Du kommer att nedgraderas till Community Edition den {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Du kommer att nedgraderas till Community Edition den {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Acceptera",

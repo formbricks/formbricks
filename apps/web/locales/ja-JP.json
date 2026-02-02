@@ -254,6 +254,7 @@
     "label": "ラベル",
     "language": "言語",
     "learn_more": "詳細を見る",
+    "license_expired": "License Expired",
     "light_overlay": "明るいオーバーレイ",
     "limits_reached": "上限に達しました",
     "link": "リンク",
@@ -460,7 +461,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "ワークスペースの上限である{projectLimit}件に達しました。",
     "you_have_reached_your_monthly_miu_limit_of": "月間MIU（月間アクティブユーザー）の上限に達しました",
     "you_have_reached_your_monthly_response_limit_of": "月間回答数の上限に達しました",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "コミュニティ版へのダウングレードは {date} に行われます。"
+    "you_will_be_downgraded_to_the_community_edition_on_date": "コミュニティ版へのダウングレードは {date} に行われます。",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "承認",
