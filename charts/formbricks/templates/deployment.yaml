@@ -127,6 +127,10 @@ spec:
           {{- end }}
           {{- end }}
           env:
+            {{- if .Values.migration.enabled }}
+            - name: SKIP_STARTUP_MIGRATION
+              value: "true"
+            {{- end }}
             {{- range $key, $value := .Values.deployment.env }}
             - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
               {{- if kindIs "string" $value }}

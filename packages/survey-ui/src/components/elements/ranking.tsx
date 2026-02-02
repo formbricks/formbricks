@@ -60,26 +60,6 @@ interface RankingItemProps {
   dir?: TextDirection;
 }
 
-function getTopButtonRadiusClass(isFirst: boolean, dir?: TextDirection): string {
-  if (isFirst) {
-    return "cursor-not-allowed opacity-30";
-  }
-  if (dir === "rtl") {
-    return "rounded-tl-md";
-  }
-  return "rounded-tr-md";
-}
-
-function getBottomButtonRadiusClass(isLast: boolean, dir?: TextDirection): string {
-  if (isLast) {
-    return "cursor-not-allowed opacity-30";
-  }
-  if (dir === "rtl") {
-    return "rounded-bl-md";
-  }
-  return "rounded-br-md";
-}
-
 function RankingItem({
   item,
   rankedIds,
@@ -94,21 +74,11 @@ function RankingItem({
   const isLast = isRanked && rankIndex === rankedIds.length - 1;
   const displayNumber = isRanked ? rankIndex + 1 : undefined;
 
-  // RTL-aware padding class
-  const paddingClass = dir === "rtl" ? "pr-3" : "pl-3";
-
-  // RTL-aware border class for control buttons
-  const borderClass = dir === "rtl" ? "border-r" : "border-l";
-
-  // RTL-aware border radius classes for control buttons
-  const topButtonRadiusClass = getTopButtonRadiusClass(isFirst, dir);
-  const bottomButtonRadiusClass = getBottomButtonRadiusClass(isLast, dir);
-
   return (
     <div
+      dir={dir}
       className={cn(
-        "rounded-option flex h-12 cursor-pointer items-center border transition-all",
-        paddingClass,
+        "rounded-option flex h-12 cursor-pointer items-center border px-3 transition-all",
         "bg-option-bg border-option-border",
         "hover:bg-option-hover-bg focus-within:border-brand focus-within:bg-option-selected-bg focus-within:shadow-sm",
         isRanked && "bg-option-selected-bg border-brand",
@@ -138,16 +108,14 @@ function RankingItem({
           )}>
           {displayNumber}
         </span>
-        <span
-          className="font-option text-option font-option-weight text-option-label shrink grow text-start"
-          dir={dir}>
+        <span className="font-option text-option font-option-weight text-option-label shrink grow text-start">
           {item.label}
         </span>
       </button>
 
       {/* Up/Down buttons for ranked items */}
       {isRanked ? (
-        <div className={cn("border-option-border flex h-full grow-0 flex-col", borderClass)}>
+        <div className={cn("border-option-border -mx-3 flex h-full grow-0 flex-col")} dir={dir}>
           <button
             type="button"
             tabIndex={isFirst ? -1 : 0}
@@ -157,10 +125,7 @@ function RankingItem({
             }}
             disabled={isFirst || disabled}
             aria-label={`Move ${item.label} up`}
-            className={cn(
-              "flex flex-1 items-center justify-center px-2 transition-colors",
-              topButtonRadiusClass
-            )}>
+            className={cn("flex flex-1 items-center justify-center px-2 transition-colors")}>
             <ChevronUp className="h-5 w-5" />
           </button>
           <button
@@ -173,8 +138,7 @@ function RankingItem({
             disabled={isLast || disabled}
             aria-label={`Move ${item.label} down`}
             className={cn(
-              "border-option-border flex flex-1 items-center justify-center border-t px-2 transition-colors",
-              bottomButtonRadiusClass
+              "border-option-border flex flex-1 items-center justify-center border-t px-2 transition-colors"
             )}>
             <ChevronDown className="h-5 w-5" />
           </button>
@@ -261,7 +225,6 @@ function Ranking({
       {/* Ranking Options */}
       <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
-
         <fieldset className="w-full" dir={dir}>
           <legend className="sr-only">Ranking options</legend>
           <div className="space-y-2" ref={parent as React.Ref<HTMLDivElement>}>

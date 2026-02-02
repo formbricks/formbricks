@@ -425,11 +425,19 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      await updateSurveyAction({
+      const publishResult = await updateSurveyAction({
         ...localSurvey,
         status,
         segment,
       });
+
+      if (!publishResult?.data) {
+        const errorMessage = getFormattedErrorMessage(publishResult);
+        toast.error(errorMessage);
+        setIsSurveyPublishing(false);
+        return;
+      }
+
       setIsSurveyPublishing(false);
       // Set flag to prevent beforeunload warning during navigation
       isSuccessfullySavedRef.current = true;
@@ -467,7 +475,7 @@ export const SurveyMenuBar = ({
         />
       </div>
 
-      <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
+      <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
         <AutoSaveIndicator isDraft={localSurvey.status === "draft"} lastSaved={lastAutoSaved} />
         {!isStorageConfigured && (
           <div>

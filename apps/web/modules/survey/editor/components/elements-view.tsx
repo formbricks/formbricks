@@ -46,8 +46,14 @@ import {
   renumberBlocks,
   updateElementInBlock,
 } from "@/modules/survey/editor/lib/blocks";
-import { findElementUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
+import {
+  findBlockUsedInLogic,
+  findElementUsedInLogic,
+  isUsedInQuota,
+  isUsedInRecall,
+} from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { isEndingCardValid, isWelcomeCardValid, validateElement } from "../lib/validation";
 
 interface ElementsViewProps {
@@ -94,6 +100,16 @@ export const ElementsView = ({
   isExternalUrlsAllowed,
 }: ElementsViewProps) => {
   const { t } = useTranslation();
+  const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
+    open: boolean;
+    elementIdx: number;
+    type: "element" | "block";
+    blockId?: string;
+  }>({
+    open: false,
+    elementIdx: 0,
+    type: "element",
+  });
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
@@ -348,14 +364,6 @@ export const ElementsView = ({
   };
 
   const validateElementDeletion = (elementId: string, elementIdx: number): boolean => {
-    const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
-    if (usedElementIdx !== -1) {
-      toast.error(
-        t("environments.surveys.edit.question_used_in_logic", { questionIndex: usedElementIdx + 1 })
-      );
-      return false;
-    }
-
     const recallElementIdx = isUsedInRecall(localSurvey, elementId);
     if (recallElementIdx === elements.length) {
       toast.error(t("environments.surveys.edit.question_used_in_recall_ending_card"));
@@ -399,15 +407,11 @@ export const ElementsView = ({
     }
   };
 
-  const deleteElement = (elementIdx: number) => {
+  const executeDeletion = (elementIdx: number) => {
     const element = elements[elementIdx];
     if (!element) return;
 
     const elementId = element.id;
-    if (!validateElementDeletion(elementId, elementIdx)) {
-      return;
-    }
-
     const activeElementIdTemp = activeElementId ?? elements[0]?.id;
     // let updatedSurvey = removeRecallReferences(localSurvey, elementId);
     let updatedSurvey = structuredClone(localSurvey);
@@ -433,6 +437,24 @@ export const ElementsView = ({
     handleActiveElementAfterDeletion(elementId, elementIdx, updatedSurvey, activeElementIdTemp);
 
     toast.success(t("environments.surveys.edit.question_deleted"));
+  };
+
+  const deleteElement = (elementIdx: number) => {
+    const element = elements[elementIdx];
+    if (!element) return;
+
+    const elementId = element.id;
+    if (!validateElementDeletion(elementId, elementIdx)) {
+      return;
+    }
+
+    const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
+    if (usedElementIdx !== -1) {
+      setLogicDeletionWarning({ open: true, elementIdx, type: "element" });
+      return;
+    }
+
+    executeDeletion(elementIdx);
   };
 
   const duplicateElement = (elementIdx: number) => {
@@ -632,7 +654,7 @@ export const ElementsView = ({
     toast.success(t("environments.surveys.edit.block_duplicated"));
   };
 
-  const deleteBlockById = (blockId: string) => {
+  const executeBlockDeletion = (blockId: string) => {
     // First check if block exists in current state (for validation and calculating next active element)
     const blockExists = localSurvey.blocks.some((b) => b.id === blockId);
     if (!blockExists) {
@@ -667,6 +689,28 @@ export const ElementsView = ({
     if (newActiveElementId) {
       setActiveElementId(newActiveElementId);
     }
+  };
+
+  const deleteBlockById = (blockId: string) => {
+    // First check if block is used in logic
+    const usedElementIdx = findBlockUsedInLogic(localSurvey, blockId);
+    if (usedElementIdx !== -1) {
+      setLogicDeletionWarning({ open: true, elementIdx: 0, type: "block", blockId });
+      return;
+    }
+
+    // Then check if any element in the block is used in recall/quota
+    const block = localSurvey.blocks.find((b) => b.id === blockId);
+    if (block) {
+      for (const element of block.elements) {
+        const elementIdx = elements.findIndex((e) => e.id === element.id);
+        if (!validateElementDeletion(element.id, elementIdx)) {
+          return;
+        }
+      }
+    }
+
+    executeBlockDeletion(blockId);
   };
 
   const moveBlockById = (blockId: string, direction: "up" | "down") => {
@@ -922,6 +966,22 @@ export const ElementsView = ({
           </>
         )}
       </div>
+
+      <ConfirmationModal
+        open={logicDeletionWarning.open}
+        setOpen={(open) => setLogicDeletionWarning((prev) => ({ ...prev, open: open as boolean }))}
+        title={t("environments.surveys.edit.question_used_in_logic_warning_title")}
+        body={t("environments.surveys.edit.question_used_in_logic_warning_text")}
+        buttonText={t("environments.surveys.edit.delete_anyways")}
+        onConfirm={() => {
+          if (logicDeletionWarning.type === "element") {
+            executeDeletion(logicDeletionWarning.elementIdx);
+          } else if (logicDeletionWarning.type === "block" && logicDeletionWarning.blockId) {
+            executeBlockDeletion(logicDeletionWarning.blockId);
+          }
+          setLogicDeletionWarning((prev) => ({ ...prev, open: false }));
+        }}
+      />
     </div>
   );
 };

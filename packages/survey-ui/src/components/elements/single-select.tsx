@@ -244,6 +244,7 @@ function SingleSelect({
                   return (
                     <label
                       key={option.id}
+                      dir={dir}
                       htmlFor={optionId}
                       className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
                       <span className="flex items-center">
@@ -254,7 +255,7 @@ function SingleSelect({
                           aria-required={required}
                         />
                         <span
-                          className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                          className={cn("mx-3 grow", optionLabelClassName)}
                           style={{ fontSize: "var(--fb-option-font-size)" }}>
                           {option.label}
                         </span>
@@ -265,6 +266,7 @@ function SingleSelect({
               {hasOtherOption && otherOptionId ? (
                 <label
                   htmlFor={`${inputId}-${otherOptionId}`}
+                  dir={dir}
                   className={cn(getOptionContainerClassName(isOtherSelected), isOtherSelected && "z-10")}>
                   <span className="flex items-center">
                     <RadioGroupItem
@@ -304,6 +306,7 @@ function SingleSelect({
                     <label
                       key={option.id}
                       htmlFor={optionId}
+                      dir={dir}
                       className={cn(getOptionContainerClassName(isSelected), isSelected && "z-10")}>
                       <span className="flex items-center">
                         <RadioGroupItem
@@ -313,7 +316,7 @@ function SingleSelect({
                           aria-required={required}
                         />
                         <span
-                          className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                          className={cn("mx-3 grow", optionLabelClassName)}
                           style={{ fontSize: "var(--fb-option-font-size)" }}>
                           {option.label}
                         </span>
