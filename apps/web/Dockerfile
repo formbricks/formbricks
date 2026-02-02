@@ -77,12 +77,7 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 #
 FROM base AS runner
 
-RUN npm install --ignore-scripts -g corepack@latest && \
-    corepack enable
-
-RUN apk add --no-cache curl \
-    # && addgroup --system --gid 1001 nodejs \
-    && addgroup -S nextjs \
+RUN addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
 WORKDIR /home/nextjs
@@ -143,10 +138,8 @@ EXPOSE 3000
 ENV HOSTNAME="0.0.0.0"
 USER nextjs
 
-# Prepare pnpm as the nextjs user to ensure it's available at runtime
 # Prepare volumes for uploads and SAML connections
-RUN corepack prepare pnpm@10.28.2 --activate && \
-    mkdir -p /home/nextjs/apps/web/uploads/ && \
+RUN mkdir -p /home/nextjs/apps/web/uploads/ && \
     mkdir -p /home/nextjs/apps/web/saml-connection
 
 VOLUME /home/nextjs/apps/web/uploads/
