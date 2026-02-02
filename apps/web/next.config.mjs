@@ -34,6 +34,9 @@ const nextConfig = {
     formats: ["image/webp"], // WebP is faster to process and smaller than JPEG/PNG
     minimumCacheTTL: 60, // Cache optimized images for at least 60 seconds
     dangerouslyAllowSVG: true, // Allow SVG images
+    // Next.js 16+ blocks image optimization for URLs resolving to private IPs (localhost, 192.168.x.x, etc.)
+    // This is needed for self-hosted instances where WEBAPP_URL may point to localhost or internal IPs
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: "https",
