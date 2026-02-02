@@ -14,6 +14,42 @@ const getHostname = (url) => {
   return urlObj.hostname;
 };
 
+/**
+ * Checks if a hostname is a private/loopback address
+ * Used to conditionally enable dangerouslyAllowLocalIP for self-hosted instances
+ */
+const isPrivateOrLocalhost = (hostname) => {
+  if (!hostname) return false;
+
+  // Check for localhost variants
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+    return true;
+  }
+
+  // Check for private IP ranges (RFC 1918)
+  // 10.0.0.0 - 10.255.255.255
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return true;
+  }
+
+  // 172.16.0.0 - 172.31.255.255
+  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return true;
+  }
+
+  // 192.168.0.0 - 192.168.255.255
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return true;
+  }
+
+  return false;
+};
+
+// Determine if we're running in a private/localhost environment
+const webappUrl = process.env.WEBAPP_URL || "http://localhost:3000";
+const webappHostname = getHostname(webappUrl);
+const shouldAllowLocalIP = isPrivateOrLocalhost(webappHostname);
+
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   basePath: process.env.BASE_PATH || undefined,
@@ -35,8 +71,8 @@ const nextConfig = {
     minimumCacheTTL: 60, // Cache optimized images for at least 60 seconds
     dangerouslyAllowSVG: true, // Allow SVG images
     // Next.js 16+ blocks image optimization for URLs resolving to private IPs (localhost, 192.168.x.x, etc.)
-    // This is needed for self-hosted instances where WEBAPP_URL may point to localhost or internal IPs
-    dangerouslyAllowLocalIP: true,
+    // Only enable for self-hosted instances where WEBAPP_URL points to localhost or private IPs
+    ...(shouldAllowLocalIP && { dangerouslyAllowLocalIP: true }),
     remotePatterns: [
       {
         protocol: "https",
@@ -50,10 +86,15 @@ const nextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
-      {
-        protocol: "http",
-        hostname: "localhost",
-      },
+      // Only allow HTTP localhost in local/private environments
+      ...(shouldAllowLocalIP
+        ? [
+            {
+              protocol: "http",
+              hostname: "localhost",
+            },
+          ]
+        : []),
       {
         protocol: "https",
         hostname: "app.formbricks.com",
