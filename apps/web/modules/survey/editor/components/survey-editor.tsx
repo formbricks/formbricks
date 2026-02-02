@@ -85,7 +85,9 @@ export const SurveyEditor = ({
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
-  const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
+  // Submission-time errors from SurveyMenuBar (Zod validation)
+  const [submissionInvalidElements, setSubmissionInvalidElements] = useState<string[] | null>(null);
+
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<Project>(project);
@@ -169,7 +171,7 @@ export const SurveyEditor = ({
         environmentId={environment.id}
         activeId={activeView}
         setActiveId={setActiveView}
-        setInvalidElements={setInvalidElements}
+        setInvalidElements={setSubmissionInvalidElements}
         project={localProject}
         responseCount={responseCount}
         selectedLanguageCode={selectedLanguageCode}
@@ -199,8 +201,8 @@ export const SurveyEditor = ({
               setActiveElementId={setActiveElementId}
               project={localProject}
               projectLanguages={projectLanguages}
-              invalidElements={invalidElements}
-              setInvalidElements={setInvalidElements}
+              invalidElements={submissionInvalidElements || []}
+              setInvalidElements={setSubmissionInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isMultiLanguageAllowed={isMultiLanguageAllowed}
