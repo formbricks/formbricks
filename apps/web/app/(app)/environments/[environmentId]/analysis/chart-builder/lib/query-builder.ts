@@ -95,6 +95,42 @@ export function buildCubeQuery(config: ChartBuilderState): CubeQuery {
 }
 
 /**
+ * Parse a Cube.js query back into ChartBuilderState
+ */
+export function parseQueryToState(query: CubeQuery, chartType?: string): Partial<ChartBuilderState> {
+  const state: Partial<ChartBuilderState> = {
+    chartType: chartType || "",
+    selectedMeasures: query.measures || [],
+    customMeasures: [],
+    selectedDimensions: query.dimensions || [],
+    filters: [],
+    filterLogic: "and",
+    timeDimension: null,
+  };
+
+  // Parse filters
+  if (query.filters && query.filters.length > 0) {
+    state.filters = query.filters.map((f) => ({
+      field: f.member,
+      operator: f.operator,
+      values: f.values || null,
+    }));
+  }
+
+  // Parse time dimensions
+  if (query.timeDimensions && query.timeDimensions.length > 0) {
+    const timeDim = query.timeDimensions[0];
+    state.timeDimension = {
+      dimension: timeDim.dimension,
+      granularity: (timeDim.granularity || "day") as TimeDimensionConfig["granularity"],
+      dateRange: timeDim.dateRange || "last 30 days",
+    };
+  }
+
+  return state;
+}
+
+/**
  * Convert date preset string to date range
  */
 export function getDateRangeFromPreset(preset: string): [Date, Date] | null {

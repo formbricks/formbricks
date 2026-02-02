@@ -150,12 +150,7 @@ export function FiltersPanel({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">
-            5
-          </span>
-          <h3 className="font-medium text-gray-900">Filters</h3>
-        </div>
+        <h3 className="font-medium text-gray-900">Filters</h3>
         <Select value={filterLogic} onValueChange={(value) => onFilterLogicChange(value as "and" | "or")}>
           <SelectTrigger className="w-[100px]">
             <SelectValue />
@@ -167,7 +162,7 @@ export function FiltersPanel({
         </Select>
       </div>
 
-      <div className="ml-8 space-y-3">
+      <div className="space-y-3">
         {filters.map((filter, index) => {
           const field = getFieldById(filter.field);
           const fieldType = field?.type || "string";

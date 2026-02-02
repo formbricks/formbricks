@@ -12,6 +12,11 @@ export interface TDashboard {
   status: TDashboardStatus;
   owners: TAnalysisUser[];
   lastModified: string; // ISO Date string
+  createdAt: string; // ISO Date string
+  updatedAt: string; // ISO Date string
+  createdBy?: string; // User ID
+  createdByName?: string; // User name for display
+  chartCount: number;
   isFavorite: boolean;
   widgets: TDashboardWidget[];
 }
@@ -54,6 +59,10 @@ export interface TChart {
   dataset: string;
   owners: TAnalysisUser[];
   lastModified: string;
+  createdAt: string; // ISO Date string
+  updatedAt: string; // ISO Date string
+  createdBy?: string; // User ID
+  createdByName?: string; // User name for display
   dashboardIds: string[];
   config: Record<string, any>; // Flexible config for specific chart props
 }

@@ -89,13 +89,8 @@ export function TimeDimensionPanel({
   if (!timeDimension) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">
-            4
-          </span>
-          <h3 className="font-medium text-gray-900">Time Dimension</h3>
-        </div>
-        <div className="ml-8">
+        <h3 className="font-medium text-gray-900">Time Dimension</h3>
+        <div>
           <Button type="button" variant="outline" onClick={handleEnableTimeDimension}>
             Enable Time Dimension
           </Button>
@@ -107,18 +102,13 @@ export function TimeDimensionPanel({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">
-            4
-          </span>
-          <h3 className="font-medium text-gray-900">Time Dimension</h3>
-        </div>
+        <h3 className="font-medium text-gray-900">Time Dimension</h3>
         <Button type="button" variant="ghost" size="sm" onClick={handleDisableTimeDimension}>
           Disable
         </Button>
       </div>
 
-      <div className="ml-8 space-y-3">
+      <div className="space-y-3">
         {/* Field Selector */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700">Field</label>

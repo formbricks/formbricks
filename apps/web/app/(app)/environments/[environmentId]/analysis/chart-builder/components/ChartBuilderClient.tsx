@@ -38,7 +38,6 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
   const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedDashboardId, setSelectedDashboardId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
-  const [showQuery, setShowQuery] = useState(false);
   const [showData, setShowData] = useState(false);
   const [configuredChartType, setConfiguredChartType] = useState<string | null>(null);
   const [showAdvancedBuilder, setShowAdvancedBuilder] = useState(false);
@@ -244,14 +243,9 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
         <ChartPreview
           chartData={chartData}
           configuredChartType={configuredChartType}
-          showQuery={showQuery}
           showData={showData}
-          isSaving={isSaving}
-          onToggleQuery={() => setShowQuery(!showQuery)}
           onToggleData={() => setShowData(!showData)}
           onConfigure={() => setIsConfigureDialogOpen(true)}
-          onSave={() => setIsSaveDialogOpen(true)}
-          onAddToDashboard={() => setIsAddToDashboardDialogOpen(true)}
         />
 
         {/* Dialogs */}
@@ -298,14 +292,9 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
         <ChartPreview
           chartData={chartData}
           configuredChartType={configuredChartType}
-          showQuery={showQuery}
           showData={showData}
-          isSaving={isSaving}
-          onToggleQuery={() => setShowQuery(!showQuery)}
           onToggleData={() => setShowData(!showData)}
           onConfigure={() => setIsConfigureDialogOpen(true)}
-          onSave={() => setIsSaveDialogOpen(true)}
-          onAddToDashboard={() => setIsAddToDashboardDialogOpen(true)}
         />
       )}
 

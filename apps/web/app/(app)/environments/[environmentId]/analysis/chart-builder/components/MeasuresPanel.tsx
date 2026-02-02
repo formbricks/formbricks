@@ -66,14 +66,9 @@ export function MeasuresPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">
-          2
-        </span>
-        <h3 className="font-medium text-gray-900">Measures</h3>
-      </div>
+      <h3 className="font-medium text-gray-900">Measures</h3>
 
-      <div className="ml-8 space-y-4">
+      <div className="space-y-4">
         {/* Predefined Measures */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700">Predefined Measures</label>

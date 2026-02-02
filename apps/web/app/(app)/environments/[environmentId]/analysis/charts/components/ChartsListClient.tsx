@@ -1,98 +1,133 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
-import { Edit2Icon, PlusIcon, SearchIcon, TrashIcon } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/modules/ui/components/button";
-import { Input } from "@/modules/ui/components/input";
-import { TChart, TDashboard } from "../../types/analysis";
+import { format, formatDistanceToNow } from "date-fns";
+import { useState } from "react";
+import {
+  ActivityIcon,
+  AreaChartIcon,
+  BarChart3Icon,
+  LineChartIcon,
+  MapIcon,
+  PieChartIcon,
+  ScatterChart,
+  TableIcon,
+} from "lucide-react";
+import { TChart } from "../../types/analysis";
+import { ChartDropdownMenu } from "./ChartDropdownMenu";
+import { CreateChartDialog } from "./CreateChartDialog";
 
 interface ChartsListClientProps {
   charts: TChart[];
-  dashboards: TDashboard[];
+  dashboards: any[];
   environmentId: string;
 }
 
-export function ChartsListClient({ charts, dashboards, environmentId }: ChartsListClientProps) {
-  // Helper to find dashboard names
-  const getDashboardNames = (dashboardIds: string[]) => {
-    return dashboardIds
-      .map((id) => dashboards.find((d) => d.id === id)?.name)
-      .filter(Boolean)
-      .join(", ");
+const CHART_TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  area: AreaChartIcon,
+  bar: BarChart3Icon,
+  line: LineChartIcon,
+  pie: PieChartIcon,
+  table: TableIcon,
+  big_number: ActivityIcon,
+  big_number_total: ActivityIcon,
+  scatter: ScatterChart,
+  map: MapIcon,
+};
+
+export function ChartsListClient({ charts: initialCharts, dashboards, environmentId }: ChartsListClientProps) {
+  const [charts, setCharts] = useState(initialCharts);
+  const [editingChartId, setEditingChartId] = useState<string | undefined>(undefined);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const filteredCharts = charts;
+
+  const deleteChart = (chartId: string) => {
+    setCharts(charts.filter((c) => c.id !== chartId));
+  };
+
+  const getChartIcon = (type: string) => {
+    const IconComponent = CHART_TYPE_ICONS[type] || BarChart3Icon;
+    return <IconComponent className="h-5 w-5" />;
+  };
+
+  const handleChartClick = (chartId: string) => {
+    setEditingChartId(chartId);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    // Refresh charts list if needed
+    setIsEditDialogOpen(false);
+    setEditingChartId(undefined);
   };
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header / Actions */}
-      <div className="flex flex-col gap-4 border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900"></h1>
-          <div className="flex items-center gap-2">
-            <Link href="chart-builder">
-              <Button size="sm">
-                <PlusIcon className="mr-2 h-4 w-4" />
-                Chart
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4"></div>
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
+        <div className="col-span-3 pl-6">Title</div>
+        <div className="col-span-1 hidden text-center sm:block">Created By</div>
+        <div className="col-span-1 hidden text-center sm:block">Created</div>
+        <div className="col-span-1 hidden text-center sm:block">Updated</div>
+        <div className="col-span-1"></div>
       </div>
-
-      {/* Table Content */}
-      <div className="flex-1 overflow-auto bg-gray-50 pt-6">
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm text-gray-600">
-            <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500">
-              <tr>
-                <th className="border-b border-gray-200 px-6 py-3">Name</th>
-                <th className="border-b border-gray-200 px-6 py-3">Type</th>
-                <th className="border-b border-gray-200 px-6 py-3">Dataset</th>
-                <th className="border-b border-gray-200 px-6 py-3">On dashboards</th>
-                {/* Hiding owners to save space if needed, mirroring Superset compact view */}
-                <th className="border-b border-gray-200 px-6 py-3">Last Modified</th>
-                <th className="border-b border-gray-200 px-6 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {charts.map((chart) => (
-                <tr key={chart.id} className="group transition-colors hover:bg-gray-50">
-                  <td className="text-brand-dark px-6 py-4 font-medium">
-                    <Link href={`/environments/${environmentId}/analysis/chart-builder?chartId=${chart.id}`}>
-                      <span className="cursor-pointer hover:underline">{chart.name}</span>
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {chart.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </td>
-                  <td className="text-brand-dark cursor-pointer px-6 py-4 hover:underline">
-                    {chart.dataset}
-                  </td>
-                  <td className="text-brand-dark px-6 py-4">
-                    {getDashboardNames(chart.dashboardIds) || "-"}
-                  </td>
-                  <td className="px-6 py-4">
-                    {formatDistanceToNow(new Date(chart.lastModified), { addSuffix: true })}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100">
-                        <TrashIcon className="h-4 w-4 text-gray-500" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100">
-                        <Edit2Icon className="h-4 w-4 text-gray-500" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {charts.length === 0 && <div className="p-12 text-center text-gray-500">No charts found.</div>}
-        </div>
-      </div>
+      {filteredCharts.length === 0 ? (
+        <p className="py-6 text-center text-sm text-slate-400">No charts found.</p>
+      ) : (
+        <>
+          {filteredCharts.map((chart) => (
+            <div
+              key={chart.id}
+              onClick={() => handleChartClick(chart.id)}
+              className="grid h-12 w-full cursor-pointer grid-cols-7 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-100">
+              <div className="col-span-3 flex items-center pl-6 text-sm">
+                <div className="flex items-center gap-4">
+                  <div className="ph-no-capture w-8 flex-shrink-0 text-slate-500">
+                    {getChartIcon(chart.type)}
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="ph-no-capture font-medium text-slate-900">{chart.name}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-span-1 my-auto hidden text-center text-sm whitespace-nowrap text-slate-500 sm:block">
+                <div className="ph-no-capture text-slate-900">{chart.createdByName || "-"}</div>
+              </div>
+              <div className="col-span-1 my-auto hidden text-center text-sm whitespace-normal text-slate-500 sm:block">
+                <div className="ph-no-capture text-slate-900">
+                  {format(new Date(chart.createdAt), "do 'of' MMMM, yyyy")}
+                </div>
+              </div>
+              <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
+                <div className="ph-no-capture text-slate-900">
+                  {formatDistanceToNow(new Date(chart.updatedAt), {
+                    addSuffix: true,
+                  }).replace("about", "")}
+                </div>
+              </div>
+              <div
+                className="col-span-1 my-auto flex items-center justify-end pr-6"
+                onClick={(e) => e.stopPropagation()}>
+                <ChartDropdownMenu
+                  environmentId={environmentId}
+                  chart={chart}
+                  deleteChart={deleteChart}
+                  onEdit={() => {
+                    setEditingChartId(chart.id);
+                    setIsEditDialogOpen(true);
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+      <CreateChartDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        environmentId={environmentId}
+        chartId={editingChartId}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   );
 }
