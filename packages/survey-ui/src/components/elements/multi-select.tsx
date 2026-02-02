@@ -149,7 +149,7 @@ function DropdownVariant({
           <Button
             variant="outline"
             disabled={disabled}
-            className="rounded-input w-full justify-between bg-option-bg rounded-option border border-option-border my-0"
+            className="rounded-input w-full justify-between bg-option-bg rounded-option border border-option-border my-0 h-input"
             aria-invalid={Boolean(errorMessage)}
             aria-label={headline}>
             <Label className="truncate">{displayText}</Label>
