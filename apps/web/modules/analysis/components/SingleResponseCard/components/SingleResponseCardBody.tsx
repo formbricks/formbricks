@@ -3,6 +3,7 @@
 import { CheckCircle2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -67,6 +68,16 @@ export const SingleResponseCardBody = ({
           <VerifiedEmail responseData={response.data} />
         )}
         {elements.map((question) => {
+          // Skip CTA elements without external buttons only if they have no response data
+          // This preserves historical data from when buttonExternal was true
+          if (
+            question.type === TSurveyElementTypeEnum.CTA &&
+            !question.buttonExternal &&
+            !response.data[question.id]
+          ) {
+            return null;
+          }
+
           const skipped = skippedQuestions.find((skippedQuestionElement) =>
             skippedQuestionElement.includes(question.id)
           );

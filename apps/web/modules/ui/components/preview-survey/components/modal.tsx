@@ -29,7 +29,6 @@ export const Modal = ({
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
-  const hasOverlay = overlay !== "none";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -80,12 +79,11 @@ export const Modal = ({
   const scalingClasses = calculateScaling();
 
   useEffect(() => {
-    if (!clickOutsideClose || !hasOverlay) return;
+    if (!clickOutsideClose) return;
     const handleClickOutside = (e: MouseEvent) => {
       const previewBase = document.getElementById("preview-survey-base");
 
       if (
-        clickOutsideClose &&
         modalRef.current &&
         previewBase &&
         previewBase.contains(e.target as Node) &&
@@ -102,7 +100,7 @@ export const Modal = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [clickOutsideClose, hasOverlay]);
+  }, [clickOutsideClose]);
 
   useEffect(() => {
     setShow(isOpen);
@@ -132,7 +130,7 @@ export const Modal = ({
       className={cn(
         "relative h-full w-full overflow-hidden rounded-b-md",
         overlay === "dark" ? "bg-slate-700/80" : "",
-        overlay === "light" ? "bg-white/50" : "",
+        overlay === "light" ? "bg-slate-400/50" : "",
         "transition-all duration-500 ease-in-out"
       )}>
       <div

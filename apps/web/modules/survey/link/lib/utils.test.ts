@@ -77,7 +77,14 @@ describe("getWebAppLocale", () => {
   test("returns en-US when default requested but no default language", () => {
     const surveyNoDefault = createMockSurvey([
       {
-        language: { id: "l1", code: "de", alias: null, createdAt: new Date(), updatedAt: new Date(), projectId: "p1" },
+        language: {
+          id: "l1",
+          code: "de",
+          alias: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          projectId: "p1",
+        },
         default: false,
         enabled: true,
       },

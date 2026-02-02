@@ -46,6 +46,9 @@ export const EndScreenForm = ({
 
   const questions = getElementsFromBlocks(localSurvey.blocks);
 
+  const defaultLanguageCode = localSurvey.languages.find((lang) => lang.default)?.language.code ?? "default";
+  const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
+
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
@@ -174,7 +177,7 @@ export const EndScreenForm = ({
                   }}
                   isRecallAllowed
                   localSurvey={localSurvey}
-                  usedLanguageCode={"default"}
+                  usedLanguageCode={usedLanguageCode}
                   render={({ value, onChange, highlightedJSX, children }) => {
                     return (
                       <div className="group relative">
@@ -194,12 +197,12 @@ export const EndScreenForm = ({
                           value={
                             recallToHeadline(
                               {
-                                [selectedLanguageCode]: value,
+                                [usedLanguageCode]: value,
                               },
                               localSurvey,
                               false,
-                              "default"
-                            )[selectedLanguageCode]
+                              usedLanguageCode
+                            )[usedLanguageCode]
                           }
                           onChange={(e) => isExternalUrlsAllowed && onChange(e.target.value)}
                           disabled={!isExternalUrlsAllowed}

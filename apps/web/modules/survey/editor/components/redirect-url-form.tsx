@@ -81,7 +81,7 @@ export const RedirectUrlForm = ({ localSurvey, endingCard, updateSurvey }: Redir
           name="redirectUrlLabel"
           className="bg-white"
           placeholder="Formbricks App"
-          value={endingCard.label}
+          value={endingCard.label ?? ""}
           onChange={(e) => updateSurvey({ label: e.target.value })}
         />
       </div>

@@ -183,7 +183,7 @@ export async function PreviewEmailTemplate({
           {ctaElement.buttonExternal && ctaElement.ctaButtonLabel && ctaElement.buttonUrl && (
             <Container className="mx-0 mt-4 flex max-w-none items-center justify-end">
               <EmailButton
-                className="text-question-color flex items-center rounded-md border-0 bg-transparent px-3 py-3 text-base leading-4 font-medium no-underline shadow-none"
+                className="text-question-color flex items-center rounded-md border-0 bg-transparent px-3 py-3 text-base font-medium leading-4 no-underline shadow-none"
                 href={ctaElement.buttonUrl}>
                 <Text className="inline">
                   {getLocalizedValue(ctaElement.ctaButtonLabel, defaultLanguageCode)}{" "}
@@ -213,8 +213,8 @@ export async function PreviewEmailTemplate({
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === firstQuestion.range - 1 },
                           firstQuestion.isColorCodingEnabled &&
-                          firstQuestion.scale === "number" &&
-                          `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
+                            firstQuestion.scale === "number" &&
+                            `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
                           firstQuestion.scale === "star" && "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
@@ -306,13 +306,13 @@ export async function PreviewEmailTemplate({
             {firstQuestion.choices.map((choice) =>
               firstQuestion.allowMulti ? (
                 <Img
-                  className="rounded-custom mr-3 mb-3 inline-block h-[150px] w-[250px]"
+                  className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
                   key={choice.id}
                   src={choice.imageUrl}
                 />
               ) : (
                 <Link
-                  className="rounded-custom mr-3 mb-3 inline-block h-[150px] w-[250px]"
+                  className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
                   key={choice.id}
                   target="_blank">
@@ -360,11 +360,11 @@ export async function PreviewEmailTemplate({
           <Container className="mx-0">
             <Section className="w-full table-auto">
               <Row>
-                <Column className="w-40 px-4 py-2 break-words" />
+                <Column className="w-40 break-words px-4 py-2" />
                 {firstQuestion.columns.map((column) => {
                   return (
                     <Column
-                      className="text-question-color max-w-40 px-4 py-2 text-center break-words"
+                      className="text-question-color max-w-40 break-words px-4 py-2 text-center"
                       key={column.id}>
                       {getLocalizedValue(column.label, "default")}
                     </Column>
@@ -376,7 +376,7 @@ export async function PreviewEmailTemplate({
                   <Row
                     className={`${rowIndex % 2 === 0 ? "bg-input-color" : ""} rounded-custom`}
                     key={row.id}>
-                    <Column className="w-40 px-4 py-2 break-words">
+                    <Column className="w-40 break-words px-4 py-2">
                       {getLocalizedValue(row.label, "default")}
                     </Column>
                     {firstQuestion.columns.map((column) => {

@@ -2,17 +2,17 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "@prisma/client";
-import { PlusIcon, XCircleIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
-import { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -20,7 +20,7 @@ import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
-  project?: Project;
+  project: Project;
   element: TSurveyFileUploadElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyFileUploadElement>) => void;
@@ -47,71 +47,14 @@ export const FileUploadElementForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: FileUploadFormProps): JSX.Element => {
-  const [extension, setExtension] = useState("");
   const { t } = useTranslation();
-  const [isMaxSizeError, setMaxSizeError] = useState(false);
+  const [isMaxSizeError, setIsMaxSizeError] = useState(false);
   const {
     billingInfo,
     error: billingInfoError,
     isLoading: billingInfoLoading,
-  } = useGetBillingInfo(project?.organizationId ?? "");
+  } = useGetBillingInfo(project.organizationId);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-
-  const handleInputChange = (event) => {
-    setExtension(event.target.value);
-  };
-
-  const addExtension = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    let rawExtension = extension.trim();
-
-    // Remove the dot at the start if it exists
-    if (rawExtension.startsWith(".")) {
-      rawExtension = rawExtension.substring(1);
-    }
-
-    if (!rawExtension) {
-      toast.error(t("environments.surveys.edit.please_enter_a_file_extension"));
-      return;
-    }
-
-    // Convert to lowercase before validation and adding
-    const modifiedExtension = rawExtension.toLowerCase() as TAllowedFileExtension;
-
-    const parsedExtensionResult = ZAllowedFileExtension.safeParse(modifiedExtension);
-
-    if (!parsedExtensionResult.success) {
-      // This error should now be less likely unless the extension itself is invalid (e.g., "exe")
-      toast.error(t("environments.surveys.edit.this_file_type_is_not_supported"));
-      return;
-    }
-
-    const currentExtensions = element.allowedFileExtensions || [];
-
-    // Check if the lowercase extension already exists
-    if (!currentExtensions.includes(modifiedExtension)) {
-      updateElement(elementIdx, {
-        allowedFileExtensions: [...currentExtensions, modifiedExtension],
-      });
-      setExtension(""); // Clear the input field
-    } else {
-      toast.error(t("environments.surveys.edit.this_extension_is_already_added"));
-    }
-  };
-
-  const removeExtension = (event, index: number) => {
-    event.preventDefault();
-    if (element.allowedFileExtensions) {
-      const updatedExtensions = [...(element.allowedFileExtensions || [])];
-      updatedExtensions.splice(index, 1);
-      // Ensure array is set to undefined if empty, matching toggle behavior
-      updateElement(elementIdx, {
-        allowedFileExtensions: updatedExtensions.length > 0 ? updatedExtensions : undefined,
-      });
-    }
-  };
 
   const maxSizeInMBLimit = useMemo(() => {
     if (billingInfoError || billingInfoLoading || !billingInfo) {
@@ -216,18 +159,18 @@ export const FileUploadElementForm = ({
                 id="fileSizeLimit"
                 value={element.maxSizeInMB}
                 onChange={(e) => {
-                  const parsedValue = parseInt(e.target.value, 10);
+                  const parsedValue = Number.parseInt(e.target.value, 10);
 
                   if (isFormbricksCloud && parsedValue > maxSizeInMBLimit) {
                     toast.error(
                       `${t("environments.surveys.edit.max_file_size_limit_is")} ${maxSizeInMBLimit} MB`
                     );
-                    setMaxSizeError(true);
+                    setIsMaxSizeError(true);
                     updateElement(elementIdx, { maxSizeInMB: maxSizeInMBLimit });
                     return;
                   }
 
-                  updateElement(elementIdx, { maxSizeInMB: parseInt(e.target.value, 10) });
+                  updateElement(elementIdx, { maxSizeInMB: Number.parseInt(e.target.value, 10) });
                 }}
                 className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
               />
@@ -247,49 +190,18 @@ export const FileUploadElementForm = ({
             )}
           </label>
         </AdvancedOptionToggle>
-
-        <AdvancedOptionToggle
-          isChecked={!!element.allowedFileExtensions}
-          onToggle={(checked) =>
-            updateElement(elementIdx, { allowedFileExtensions: checked ? [] : undefined })
-          }
-          htmlId="limitFileType"
-          title={t("environments.surveys.edit.limit_file_types")}
-          description={t("environments.surveys.edit.control_which_file_types_can_be_uploaded")}
-          childBorder
-          customContainerClass="p-0">
-          <div className="p-4">
-            <div className="flex flex-row flex-wrap gap-2">
-              {element.allowedFileExtensions?.map((item, index) => (
-                <div
-                  key={item}
-                  className="mb-2 flex h-8 items-center space-x-2 rounded-full bg-slate-200 px-2">
-                  <p className="text-sm text-slate-800">{item}</p>
-                  <Button
-                    className="inline-flex px-0"
-                    variant="ghost"
-                    onClick={(e) => removeExtension(e, index)}>
-                    <XCircleIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center">
-              <Input
-                autoFocus
-                className="mr-2 w-20 rounded-md bg-white placeholder:text-sm"
-                placeholder=".pdf"
-                value={extension}
-                onChange={handleInputChange}
-                type="text"
-              />
-              <Button size="sm" variant="secondary" onClick={(e) => addExtension(e)}>
-                {t("environments.surveys.edit.allow_file_type")}
-              </Button>
-            </div>
-          </div>
-        </AdvancedOptionToggle>
       </div>
+
+      <ValidationRulesEditor
+        elementType={element.type}
+        validation={element.validation}
+        onUpdateValidation={(validation) => {
+          updateElement(elementIdx, {
+            validation,
+          });
+        }}
+        element={element}
+      />
     </form>
   );
 };

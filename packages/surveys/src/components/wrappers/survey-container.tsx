@@ -29,11 +29,10 @@ export function SurveyContainer({
 
   useEffect(() => {
     if (!isModal) return;
-    if (!hasOverlay) return; // Only handle click outside when overlay is visible
+    if (!clickOutside) return;
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        clickOutside &&
         isOpen &&
         modalRef.current &&
         !(modalRef.current as HTMLElement).contains(e.target as Node) &&
@@ -46,7 +45,7 @@ export function SurveyContainer({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [clickOutside, onClose, hasOverlay, isModal, isOpen]);
+  }, [clickOutside, onClose, isModal, isOpen]);
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
@@ -81,13 +80,13 @@ export function SurveyContainer({
         aria-live="assertive"
         className={cn(
           hasOverlay ? "pointer-events-auto" : "pointer-events-none",
-          isModal && "fixed inset-0 z-999999 flex items-end"
+          isModal && "z-999999 fixed inset-0 flex items-end"
         )}>
         <div
           className={cn(
             "relative h-full w-full transition-all duration-500 ease-in-out",
             isModal && overlay === "dark" ? "bg-slate-700/80" : "",
-            isModal && overlay === "light" ? "bg-white/50" : ""
+            isModal && overlay === "light" ? "bg-slate-400/50" : ""
           )}>
           <div
             ref={modalRef}

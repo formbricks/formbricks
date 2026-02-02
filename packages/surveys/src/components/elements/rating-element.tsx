@@ -15,6 +15,7 @@ interface RatingElementProps {
   setTtc: (ttc: TResponseTtc) => void;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function RatingElement({
@@ -26,31 +27,23 @@ export function RatingElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: RatingElementProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = element.id === currentElementId;
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const isRequired = element.required;
   const { t } = useTranslation();
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const handleChange = (ratingValue: number) => {
-    setErrorMessage(undefined);
     onChange({ [element.id]: ratingValue });
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
 
-  const validateRequired = (): boolean => {
-    if (element.required && !value) {
-      setErrorMessage(t("errors.please_select_an_option"));
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (!validateRequired()) return;
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -69,7 +62,7 @@ export function RatingElement({
         lowerLabel={getLocalizedValue(element.lowerLabel, languageCode)}
         upperLabel={getLocalizedValue(element.upperLabel, languageCode)}
         colorCoding={element.isColorCodingEnabled}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         dir={dir}
         imageUrl={element.imageUrl}

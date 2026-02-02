@@ -36,18 +36,35 @@ export const renderSurvey = (props: SurveyContainerProps) => {
       throw new Error(`renderSurvey: Element with id ${containerId} not found.`);
     }
 
-    const { placement, overlay, onClose, clickOutside, ...surveyInlineProps } = props;
+    // if survey type is link, we don't pass the placement, overlay, clickOutside, onClose
+    if (props.survey.type === "link") {
+      const { placement, overlay, onClose, clickOutside, ...surveyInlineProps } = props;
 
-    render(
-      h(
-        I18nProvider,
-        { language },
-        h(RenderSurvey, {
-          ...surveyInlineProps,
-        })
-      ),
-      element
-    );
+      render(
+        h(
+          I18nProvider,
+          { language },
+          h(RenderSurvey, {
+            ...surveyInlineProps,
+          })
+        ),
+        element
+      );
+    } else {
+      // For non-link surveys, pass placement through so it can be used in StackedCard
+      const { overlay, onClose, clickOutside, ...surveyInlineProps } = props;
+
+      render(
+        h(
+          I18nProvider,
+          { language },
+          h(RenderSurvey, {
+            ...surveyInlineProps,
+          })
+        ),
+        element
+      );
+    }
   } else {
     const modalContainer = document.createElement("div");
     modalContainer.id = "formbricks-modal-container";
