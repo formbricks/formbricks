@@ -186,9 +186,11 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
     };
   })();
 
-  getPreviousResultPromise.finally(() => {
-    getPreviousResultPromise = null;
-  });
+  getPreviousResultPromise
+    .finally(() => {
+      getPreviousResultPromise = null;
+    })
+    .catch(() => {});
 
   return getPreviousResultPromise;
 };
@@ -409,9 +411,11 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
     );
   })();
 
-  fetchLicensePromise.finally(() => {
-    fetchLicensePromise = null;
-  });
+  fetchLicensePromise
+    .finally(() => {
+      fetchLicensePromise = null;
+    })
+    .catch(() => {});
 
   return fetchLicensePromise;
 };
@@ -519,9 +523,11 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
     return finalFailResult;
   })();
 
-  getEnterpriseLicensePromise.finally(() => {
-    getEnterpriseLicensePromise = null;
-  });
+  getEnterpriseLicensePromise
+    .finally(() => {
+      getEnterpriseLicensePromise = null;
+    })
+    .catch(() => {});
 
   return getEnterpriseLicensePromise;
 });
