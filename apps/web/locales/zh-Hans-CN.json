@@ -254,6 +254,7 @@
     "label": "标签",
     "language": "语言",
     "learn_more": "了解 更多",
+    "license_expired": "License Expired",
     "light_overlay": "浅色遮罩层",
     "limits_reached": "限制 达到",
     "link": "链接",
@@ -460,7 +461,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "您已达到 {projectLimit} 个工作区的上限。",
     "you_have_reached_your_monthly_miu_limit_of": "您 已经 达到 每月 的 MIU 限制",
     "you_have_reached_your_monthly_response_limit_of": "您 已经 达到 每月 的 响应 限制",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "您将在 {date} 降级到社区版。"
+    "you_will_be_downgraded_to_the_community_edition_on_date": "您将在 {date} 降级到社区版。",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "接受",

@@ -254,6 +254,7 @@
     "label": "Étiquette",
     "language": "Langue",
     "learn_more": "En savoir plus",
+    "license_expired": "License Expired",
     "light_overlay": "Claire",
     "limits_reached": "Limites atteints",
     "link": "Lien",
@@ -460,7 +461,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Vous avez atteint votre limite de {projectLimit} espaces de travail.",
     "you_have_reached_your_monthly_miu_limit_of": "Vous avez atteint votre limite mensuelle de MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Vous avez atteint votre limite de réponses mensuelle de",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Vous serez rétrogradé à l'édition communautaire le {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Vous serez rétrogradé à l'édition communautaire le {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Accepter",

@@ -254,6 +254,7 @@
     "label": "Label",
     "language": "Taal",
     "learn_more": "Meer informatie",
+    "license_expired": "License Expired",
     "light_overlay": "Lichte overlay",
     "limits_reached": "Grenzen bereikt",
     "link": "Link",
@@ -460,7 +461,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Je hebt je limiet van {projectLimit} werkruimtes bereikt.",
     "you_have_reached_your_monthly_miu_limit_of": "U heeft uw maandelijkse MIU-limiet van bereikt",
     "you_have_reached_your_monthly_response_limit_of": "U heeft uw maandelijkse responslimiet bereikt van",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Je wordt gedowngraded naar de Community-editie op {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Je wordt gedowngraded naar de Community-editie op {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Accepteren",

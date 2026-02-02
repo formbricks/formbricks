@@ -254,6 +254,7 @@
     "label": "Etichetă",
     "language": "Limba",
     "learn_more": "Află mai multe",
+    "license_expired": "License Expired",
     "light_overlay": "Suprapunere ușoară",
     "limits_reached": "Limite atinse",
     "link": "Legătura",
@@ -460,7 +461,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Ați atins limita de {projectLimit} spații de lucru.",
     "you_have_reached_your_monthly_miu_limit_of": "Ați atins limita lunară MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Ați atins limita lunară de răspunsuri de",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Vei fi retrogradat la ediția Community pe {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Vei fi retrogradat la ediția Community pe {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Acceptă",
