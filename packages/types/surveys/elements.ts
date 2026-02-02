@@ -139,6 +139,9 @@ export type TSurveyElementChoice = z.infer<typeof ZSurveyElementChoice>;
 export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 
+export const ZMultipleChoiceOptionDisplayType = z.enum(["list", "dropdown"]);
+export type TMultipleChoiceOptionDisplayType = z.infer<typeof ZMultipleChoiceOptionDisplayType>;
+
 // Multiple Choice Single Element
 export const ZSurveyMultipleChoiceSingleElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.MultipleChoiceSingle),
@@ -147,6 +150,7 @@ export const ZSurveyMultipleChoiceSingleElement = ZSurveyElementBase.extend({
     .min(2, { message: "Multiple Choice Element must have at least two choices" }),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
+  displayType: ZMultipleChoiceOptionDisplayType.optional(),
 });
 
 // Multiple Choice Multi Element
@@ -158,6 +162,7 @@ export const ZSurveyMultipleChoiceMultiElement = ZSurveyElementBase.extend({
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
   validation: ZValidation.optional(),
+  displayType: ZMultipleChoiceOptionDisplayType.optional(),
 });
 
 // Union type for Multiple Choice Elements

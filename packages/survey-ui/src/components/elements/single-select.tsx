@@ -13,6 +13,7 @@ import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { RadioGroup, RadioGroupItem } from "@/components/general/radio-group";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/general/label";
 
 /**
  * Option for single-select element
@@ -151,7 +152,7 @@ function SingleSelect({
       />
 
       {/* Options */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {variant === "dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
@@ -160,15 +161,15 @@ function SingleSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="rounded-input w-full justify-between"
+                  className="rounded-input w-full justify-between bg-option-bg rounded-option border border-option-border my-0"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
-                  <span className="truncate">{displayText}</span>
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <Label className="truncate">{displayText}</Label>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 label-headline" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
+                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto"
                 align="start">
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
                   {options
@@ -181,8 +182,9 @@ function SingleSelect({
                           key={option.id}
                           value={option.id}
                           id={optionId}
+                          dir={dir}
                           disabled={disabled}>
-                          <span className={optionLabelClassName}>{option.label}</span>
+                          <Label>{option.label}</Label>
                         </DropdownMenuRadioItem>
                       );
                     })}
@@ -190,8 +192,9 @@ function SingleSelect({
                     <DropdownMenuRadioItem
                       value={otherOptionId}
                       id={`${inputId}-${otherOptionId}`}
+                      dir={dir}
                       disabled={disabled}>
-                      <span className={optionLabelClassName}>{otherValue || otherOptionLabel}</span>
+                      <Label>{otherValue || otherOptionLabel}</Label>
                     </DropdownMenuRadioItem>
                   ) : null}
                   {options
@@ -204,8 +207,9 @@ function SingleSelect({
                           key={option.id}
                           value={option.id}
                           id={optionId}
+                          dir={dir}
                           disabled={disabled}>
-                          <span className={optionLabelClassName}>{option.label}</span>
+                          <Label>{option.label}</Label>
                         </DropdownMenuRadioItem>
                       );
                     })}
