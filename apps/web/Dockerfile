@@ -74,7 +74,9 @@ RUN --mount=type=secret,id=database_url \
 #
 FROM base AS runner
 
-RUN addgroup -S nextjs \
+# Update npm to latest to fix vulnerabilities in bundled tar package, then create user
+RUN npm install --ignore-scripts -g npm@latest \
+    && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
 WORKDIR /home/nextjs
