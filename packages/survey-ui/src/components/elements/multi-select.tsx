@@ -152,7 +152,7 @@ function DropdownVariant({
             className="rounded-input w-full justify-between bg-option-bg rounded-option border border-option-border my-0 h-input"
             aria-invalid={Boolean(errorMessage)}
             aria-label={headline}>
-            <Label className="truncate">{displayText}</Label>
+            <span className="truncate font-input font-input-weight text-input-text">{displayText}</span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 label-headline" />
           </Button>
         </DropdownMenuTrigger>
@@ -178,7 +178,7 @@ function DropdownVariant({
                     e.preventDefault();
                   }}
                   disabled={disabled}>
-                  <Label>{option.label}</Label>
+                  <span className="font-input font-input-weight text-input-text">{option.label}</span>
                 </DropdownMenuCheckboxItem>
               );
             })}
@@ -198,7 +198,7 @@ function DropdownVariant({
                 e.preventDefault();
               }}
               disabled={disabled}>
-              <Label>{otherOptionLabel}</Label>
+              <span className="font-input font-input-weight text-input-text">{otherOptionLabel}</span>
             </DropdownMenuCheckboxItem>
           ) : null}
           {options
@@ -220,7 +220,7 @@ function DropdownVariant({
                     e.preventDefault();
                   }}
                   disabled={disabled}>
-                  <Label>{option.label}</Label>
+                  <span className="font-input font-input-weight text-input-text">{option.label}</span>
                 </DropdownMenuCheckboxItem>
               );
             })}

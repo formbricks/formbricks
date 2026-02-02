@@ -164,7 +164,7 @@ function SingleSelect({
                   className="rounded-input w-full justify-between bg-option-bg rounded-option border border-option-border my-0 h-input"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
-                  <Label className="truncate">{displayText}</Label>
+                  <span className="truncate font-input font-input-weight text-input-text">{displayText}</span>
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 label-headline" />
                 </Button>
               </DropdownMenuTrigger>
@@ -184,7 +184,7 @@ function SingleSelect({
                           id={optionId}
                           dir={dir}
                           disabled={disabled}>
-                          <Label>{option.label}</Label>
+                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
                         </DropdownMenuRadioItem>
                       );
                     })}
@@ -194,7 +194,7 @@ function SingleSelect({
                       id={`${inputId}-${otherOptionId}`}
                       dir={dir}
                       disabled={disabled}>
-                      <Label>{otherValue || otherOptionLabel}</Label>
+                      <span className="font-input font-input-weight text-input-text">{otherValue || otherOptionLabel}</span>
                     </DropdownMenuRadioItem>
                   ) : null}
                   {options
@@ -209,7 +209,7 @@ function SingleSelect({
                           id={optionId}
                           dir={dir}
                           disabled={disabled}>
-                          <Label>{option.label}</Label>
+                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
                         </DropdownMenuRadioItem>
                       );
                     })}
