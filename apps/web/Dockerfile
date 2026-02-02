@@ -69,9 +69,6 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=sentry_auth_token \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
-# Extract Prisma version
-RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
-
 #
 ## step 3: setup production runner
 #
@@ -107,14 +104,12 @@ RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./package
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
-COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
-RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
+# Copy all @prisma packages (client, engines, config needed for CLI)
+COPY --from=installer /app/node_modules/@prisma ./node_modules/@prisma
+RUN chown -R nextjs:nextjs ./node_modules/@prisma && chmod -R 755 ./node_modules/@prisma
 
 COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
 RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
-
-COPY --from=installer /prisma_version.txt .
-RUN chown nextjs:nextjs ./prisma_version.txt && chmod 644 ./prisma_version.txt
 
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
@@ -128,7 +123,12 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-RUN npm install -g prisma@6
+# Copy prisma CLI from installer (uses pnpm overrides for security patches)
+COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
+RUN chmod -R 755 ./node_modules/prisma
+
+# Create prisma symlink so 'prisma' command is available globally
+RUN ln -s /home/nextjs/node_modules/prisma/build/index.js /usr/local/bin/prisma
 
 # Create a startup script to handle the conditional logic
 COPY --from=installer /app/apps/web/scripts/docker/next-start.sh /home/nextjs/start.sh
