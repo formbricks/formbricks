@@ -254,6 +254,7 @@
     "label": "Метка",
     "language": "Язык",
     "learn_more": "Подробнее",
+    "license_expired": "License Expired",
     "light_overlay": "Светлый оверлей",
     "limits_reached": "Достигнуты лимиты",
     "link": "Ссылка",
@@ -460,7 +461,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Вы достигли лимита в {projectLimit} рабочих пространств.",
     "you_have_reached_your_monthly_miu_limit_of": "Вы достигли месячного лимита MIU:",
     "you_have_reached_your_monthly_response_limit_of": "Вы достигли месячного лимита ответов:",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Ваша версия будет понижена до Community Edition {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Ваша версия будет понижена до Community Edition {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Принять",
