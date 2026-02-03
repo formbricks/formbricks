@@ -350,6 +350,7 @@
     "request_trial_license": "Begär provlicens",
     "reset_to_default": "Återställ till standard",
     "response": "Svar",
+    "response_id": "Svar-ID",
     "responses": "Svar",
     "restart": "Starta om",
     "role": "Roll",
