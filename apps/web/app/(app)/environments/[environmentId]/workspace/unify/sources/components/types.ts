@@ -49,7 +49,7 @@ export const SOURCE_OPTIONS: TSourceOption[] = [
   },
 ];
 
-// Formbricks Survey types for survey selection
+// Formbricks Survey types for survey selection (legacy - kept for backwards compatibility)
 export interface TFormbricksSurveyQuestion {
   id: string;
   type: "openText" | "rating" | "nps" | "csat" | "multipleChoice" | "checkbox" | "date";
@@ -63,6 +63,23 @@ export interface TFormbricksSurvey {
   status: "draft" | "active" | "paused" | "completed";
   responseCount: number;
   questions: TFormbricksSurveyQuestion[];
+  createdAt: Date;
+}
+
+// New Unify Survey types that work with real survey data
+export interface TUnifySurveyElement {
+  id: string;
+  type: string; // Element type from TSurveyElementTypeEnum
+  headline: string;
+  required: boolean;
+}
+
+export interface TUnifySurvey {
+  id: string;
+  name: string;
+  status: "draft" | "active" | "paused" | "completed";
+  responseCount: number;
+  elements: TUnifySurveyElement[];
   createdAt: Date;
 }
 
@@ -170,7 +187,7 @@ export const MOCK_FORMBRICKS_SURVEYS: TFormbricksSurvey[] = [
   },
 ];
 
-// Helper to get question type label
+// Helper to get question type label (legacy)
 export function getQuestionTypeLabel(type: TFormbricksSurveyQuestion["type"]): string {
   switch (type) {
     case "openText":
@@ -192,7 +209,45 @@ export function getQuestionTypeLabel(type: TFormbricksSurveyQuestion["type"]): s
   }
 }
 
-// Helper to map question type to FeedbackRecord field_type
+// Helper to get element type label (for real survey elements)
+export function getElementTypeLabel(type: string): string {
+  switch (type) {
+    case "openText":
+      return "Open Text";
+    case "rating":
+      return "Rating";
+    case "nps":
+      return "NPS";
+    case "multipleChoiceSingle":
+      return "Single Choice";
+    case "multipleChoiceMulti":
+      return "Multiple Choice";
+    case "date":
+      return "Date";
+    case "consent":
+      return "Consent";
+    case "matrix":
+      return "Matrix";
+    case "ranking":
+      return "Ranking";
+    case "pictureSelection":
+      return "Picture Selection";
+    case "contactInfo":
+      return "Contact Info";
+    case "address":
+      return "Address";
+    case "fileUpload":
+      return "File Upload";
+    case "cal":
+      return "Calendar";
+    case "cta":
+      return "CTA";
+    default:
+      return type;
+  }
+}
+
+// Helper to map question type to FeedbackRecord field_type (legacy)
 export function questionTypeToFieldType(type: TFormbricksSurveyQuestion["type"]): TFeedbackRecordFieldType {
   switch (type) {
     case "openText":
@@ -208,6 +263,38 @@ export function questionTypeToFieldType(type: TFormbricksSurveyQuestion["type"])
       return "categorical";
     case "date":
       return "date";
+    default:
+      return "text";
+  }
+}
+
+// Helper to map element type to Hub field_type (for real survey elements)
+export function elementTypeToHubFieldType(type: string): TFeedbackRecordFieldType {
+  switch (type) {
+    case "openText":
+      return "text";
+    case "rating":
+      return "rating";
+    case "nps":
+      return "nps";
+    case "multipleChoiceSingle":
+    case "multipleChoiceMulti":
+      return "categorical";
+    case "date":
+      return "date";
+    case "consent":
+      return "boolean";
+    case "matrix":
+    case "ranking":
+    case "pictureSelection":
+      return "categorical";
+    case "contactInfo":
+    case "address":
+    case "fileUpload":
+    case "cal":
+      return "text";
+    case "cta":
+      return "boolean";
     default:
       return "text";
   }
@@ -440,13 +527,73 @@ export function parsePayloadToFields(payload: Record<string, unknown>): TSourceF
       const fieldId = prefix ? `${prefix}.${key}` : key;
       const fieldName = prefix ? `${prefix}.${key}` : key;
 
-      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      if (value === null || value === undefined) {
+        fields.push({
+          id: fieldId,
+          name: fieldName,
+          type: "string",
+          sampleValue: String(value),
+        });
+      } else if (Array.isArray(value)) {
+        // Handle arrays - expand first few elements with index notation
+        if (value.length === 0) {
+          fields.push({
+            id: fieldId,
+            name: fieldName,
+            type: "array",
+            sampleValue: "[]",
+          });
+        } else {
+          // Expand up to first 3 array elements
+          const maxItems = Math.min(value.length, 3);
+          for (let i = 0; i < maxItems; i++) {
+            const item = value[i];
+            const itemPrefix = `${fieldId}[${i}]`;
+
+            if (item !== null && typeof item === "object" && !Array.isArray(item)) {
+              // Array of objects - expand the object properties
+              extractFields(item as Record<string, unknown>, itemPrefix);
+            } else if (Array.isArray(item)) {
+              // Nested array
+              fields.push({
+                id: itemPrefix,
+                name: itemPrefix,
+                type: "array",
+                sampleValue: `[${item.length} items]`,
+              });
+            } else {
+              // Primitive array element
+              let type = "string";
+              if (typeof item === "number") type = "number";
+              if (typeof item === "boolean") type = "boolean";
+
+              fields.push({
+                id: itemPrefix,
+                name: itemPrefix,
+                type,
+                sampleValue: String(item),
+              });
+            }
+          }
+
+          // If there are more items, indicate that
+          if (value.length > 3) {
+            fields.push({
+              id: `${fieldId}[...]`,
+              name: `${fieldId}[...]`,
+              type: "info",
+              sampleValue: `+${value.length - 3} more items`,
+            });
+          }
+        }
+      } else if (typeof value === "object") {
+        // Handle nested objects
         extractFields(value as Record<string, unknown>, fieldId);
       } else {
+        // Handle primitives
         let type = "string";
         if (typeof value === "number") type = "number";
         if (typeof value === "boolean") type = "boolean";
-        if (Array.isArray(value)) type = "array";
 
         fields.push({
           id: fieldId,

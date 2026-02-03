@@ -8,6 +8,7 @@ import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { handleConnectorPipeline } from "@/lib/connector/pipeline-handler";
 import { CRON_SECRET } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
@@ -138,6 +139,14 @@ export const POST = async (request: Request) => {
   });
 
   if (event === "responseFinished") {
+    // Handle connector pipeline for Hub integration (only on responseFinished to avoid duplicates)
+    // This sends response data to the Hub for configured connectors
+    try {
+      await handleConnectorPipeline(response, survey, environmentId);
+    } catch (error) {
+      // Log but don't throw - connector failures shouldn't break the main pipeline
+      logger.error({ error, surveyId, responseId: response.id }, "Connector pipeline failed");
+    }
     // Fetch integrations and responseCount in parallel
     const [integrations, responseCount] = await Promise.all([
       getIntegrations(environmentId),

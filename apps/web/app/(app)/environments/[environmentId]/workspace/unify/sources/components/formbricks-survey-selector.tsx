@@ -12,36 +12,31 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/modules/ui/components/badge";
-import {
-  MOCK_FORMBRICKS_SURVEYS,
-  TFormbricksSurvey,
-  TFormbricksSurveyQuestion,
-  getQuestionTypeLabel,
-} from "./types";
+import { TUnifySurvey, getElementTypeLabel } from "./types";
 
 interface FormbricksSurveySelectorProps {
+  surveys: TUnifySurvey[];
   selectedSurveyId: string | null;
-  selectedQuestionIds: string[];
+  selectedElementIds: string[];
   onSurveySelect: (surveyId: string | null) => void;
-  onQuestionToggle: (questionId: string) => void;
-  onSelectAllQuestions: (surveyId: string) => void;
-  onDeselectAllQuestions: () => void;
+  onElementToggle: (elementId: string) => void;
+  onSelectAllElements: (surveyId: string) => void;
+  onDeselectAllElements: () => void;
 }
 
-function getQuestionIcon(type: TFormbricksSurveyQuestion["type"]) {
+function getElementIcon(type: string) {
   switch (type) {
     case "openText":
       return <MessageSquareTextIcon className="h-4 w-4 text-slate-500" />;
     case "rating":
     case "nps":
-    case "csat":
       return <StarIcon className="h-4 w-4 text-amber-500" />;
     default:
       return <FileTextIcon className="h-4 w-4 text-slate-500" />;
   }
 }
 
-function getStatusBadge(status: TFormbricksSurvey["status"]) {
+function getStatusBadge(status: TUnifySurvey["status"]) {
   switch (status) {
     case "active":
       return <Badge text="Active" type="success" size="tiny" />;
@@ -57,31 +52,31 @@ function getStatusBadge(status: TFormbricksSurvey["status"]) {
 }
 
 export function FormbricksSurveySelector({
+  surveys,
   selectedSurveyId,
-  selectedQuestionIds,
+  selectedElementIds,
   onSurveySelect,
-  onQuestionToggle,
-  onSelectAllQuestions,
-  onDeselectAllQuestions,
+  onElementToggle,
+  onSelectAllElements,
+  onDeselectAllElements,
 }: FormbricksSurveySelectorProps) {
   const [expandedSurveyId, setExpandedSurveyId] = useState<string | null>(null);
 
-  const selectedSurvey = MOCK_FORMBRICKS_SURVEYS.find((s) => s.id === selectedSurveyId);
+  const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
 
-  const handleSurveyClick = (survey: TFormbricksSurvey) => {
+  const handleSurveyClick = (survey: TUnifySurvey) => {
     if (selectedSurveyId === survey.id) {
       // Toggle expand/collapse if already selected
       setExpandedSurveyId(expandedSurveyId === survey.id ? null : survey.id);
     } else {
       // Select the survey and expand it
       onSurveySelect(survey.id);
-      onDeselectAllQuestions();
+      onDeselectAllElements();
       setExpandedSurveyId(survey.id);
     }
   };
 
-  const allQuestionsSelected =
-    selectedSurvey && selectedQuestionIds.length === selectedSurvey.questions.length;
+  const allElementsSelected = selectedSurvey && selectedElementIds.length === selectedSurvey.elements.length;
 
   return (
     <div className="grid grid-cols-2 gap-6">
@@ -89,74 +84,85 @@ export function FormbricksSurveySelector({
       <div className="space-y-3">
         <h4 className="text-sm font-medium text-slate-700">Select Survey</h4>
         <div className="space-y-2">
-          {MOCK_FORMBRICKS_SURVEYS.map((survey) => {
-            const isSelected = selectedSurveyId === survey.id;
-            const isExpanded = expandedSurveyId === survey.id;
+          {surveys.length === 0 ? (
+            <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
+              <p className="text-sm text-slate-500">No surveys found in this environment</p>
+            </div>
+          ) : (
+            surveys.map((survey) => {
+              const isSelected = selectedSurveyId === survey.id;
+              const isExpanded = expandedSurveyId === survey.id;
 
-            return (
-              <div key={survey.id}>
-                <button
-                  type="button"
-                  onClick={() => handleSurveyClick(survey)}
-                  className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                    isSelected
-                      ? "border-brand-dark bg-slate-50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">
-                    {isExpanded ? (
-                      <ChevronDownIcon className="h-4 w-4 text-slate-600" />
-                    ) : (
-                      <ChevronRightIcon className="h-4 w-4 text-slate-600" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">{survey.name}</span>
-                      {getStatusBadge(survey.status)}
+              return (
+                <div key={survey.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSurveyClick(survey)}
+                    className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                      isSelected
+                        ? "border-brand-dark bg-slate-50"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">
+                      {isExpanded ? (
+                        <ChevronDownIcon className="h-4 w-4 text-slate-600" />
+                      ) : (
+                        <ChevronRightIcon className="h-4 w-4 text-slate-600" />
+                      )}
                     </div>
-                    <p className="text-xs text-slate-500">
-                      {survey.questions.length} questions · {survey.responseCount.toLocaleString()} responses
-                    </p>
-                  </div>
-                  {isSelected && <CheckCircle2Icon className="text-brand-dark h-5 w-5" />}
-                </button>
-              </div>
-            );
-          })}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-slate-900">{survey.name}</span>
+                        {getStatusBadge(survey.status)}
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        {survey.elements.length} elements
+                        {survey.responseCount > 0 && ` · ${survey.responseCount.toLocaleString()} responses`}
+                      </p>
+                    </div>
+                    {isSelected && <CheckCircle2Icon className="text-brand-dark h-5 w-5" />}
+                  </button>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
-      {/* Right: Question Selection */}
+      {/* Right: Element Selection */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium text-slate-700">Select Questions</h4>
+          <h4 className="text-sm font-medium text-slate-700">Select Elements</h4>
           {selectedSurvey && (
             <button
               type="button"
               onClick={() =>
-                allQuestionsSelected ? onDeselectAllQuestions() : onSelectAllQuestions(selectedSurvey.id)
+                allElementsSelected ? onDeselectAllElements() : onSelectAllElements(selectedSurvey.id)
               }
               className="text-xs text-slate-500 hover:text-slate-700">
-              {allQuestionsSelected ? "Deselect all" : "Select all"}
+              {allElementsSelected ? "Deselect all" : "Select all"}
             </button>
           )}
         </div>
 
         {!selectedSurvey ? (
           <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
-            <p className="text-sm text-slate-500">Select a survey to see its questions</p>
+            <p className="text-sm text-slate-500">Select a survey to see its elements</p>
+          </div>
+        ) : selectedSurvey.elements.length === 0 ? (
+          <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
+            <p className="text-sm text-slate-500">This survey has no question elements</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {selectedSurvey.questions.map((question) => {
-              const isSelected = selectedQuestionIds.includes(question.id);
+            {selectedSurvey.elements.map((element) => {
+              const isSelected = selectedElementIds.includes(element.id);
 
               return (
                 <button
-                  key={question.id}
+                  key={element.id}
                   type="button"
-                  onClick={() => onQuestionToggle(question.id)}
+                  onClick={() => onElementToggle(element.id)}
                   className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                     isSelected
                       ? "border-green-300 bg-green-50"
@@ -168,12 +174,12 @@ export function FormbricksSurveySelector({
                     }`}>
                     {isSelected && <CheckIcon className="h-3 w-3" />}
                   </div>
-                  <div className="flex items-center gap-2">{getQuestionIcon(question.type)}</div>
+                  <div className="flex items-center gap-2">{getElementIcon(element.type)}</div>
                   <div className="flex-1">
-                    <p className="text-sm text-slate-900">{question.headline}</p>
+                    <p className="text-sm text-slate-900">{element.headline}</p>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">{getQuestionTypeLabel(question.type)}</span>
-                      {question.required && (
+                      <span className="text-xs text-slate-500">{getElementTypeLabel(element.type)}</span>
+                      {element.required && (
                         <span className="text-xs text-red-500">
                           <CircleIcon className="inline h-1.5 w-1.5 fill-current" /> Required
                         </span>
@@ -184,12 +190,12 @@ export function FormbricksSurveySelector({
               );
             })}
 
-            {selectedQuestionIds.length > 0 && (
+            {selectedElementIds.length > 0 && (
               <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
                 <p className="text-xs text-blue-700">
-                  <strong>{selectedQuestionIds.length}</strong> question
-                  {selectedQuestionIds.length !== 1 ? "s" : ""} selected. Each response to these questions
-                  will create a FeedbackRecord in the Hub.
+                  <strong>{selectedElementIds.length}</strong> element
+                  {selectedElementIds.length !== 1 ? "s" : ""} selected. Each response to these elements will
+                  create a FeedbackRecord in the Hub.
                 </p>
               </div>
             )}
