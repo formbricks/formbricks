@@ -128,12 +128,6 @@ export const MainNavigation = ({
         isActive: pathname?.includes("/unify") && !pathname?.includes("/analyze"),
       },
       {
-        name: "Analyze",
-        href: `/environments/${environment.id}/workspace/analyze`,
-        icon: BarChartIcon,
-        isActive: pathname?.includes("/workspace/analyze"),
-      },
-      {
         name: "Configure",
         href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
