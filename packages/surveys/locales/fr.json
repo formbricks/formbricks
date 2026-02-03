@@ -48,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "Veuillez désactiver la protection contre le spam dans les paramètres du sondage pour continuer à utiliser cet appareil.",
-      "title": "Cet appareil ne prend pas en charge la protection contre le spam."
+      "title": "Cet appareil ne prend pas en charge la protection anti-spam."
     },
     "invalid_format": "Veuillez saisir un format valide",
     "is_between": "Veuillez sélectionner une date entre le {startDate} et le {endDate}",
@@ -71,7 +71,7 @@
     "please_fill_out_this_field": "Veuillez remplir ce champ",
     "recaptcha_error": {
       "message": "Votre réponse n'a pas pu être soumise car elle a été signalée comme une activité automatisée. Si vous respirez, veuillez réessayer.",
-      "title": "Nous n'avons pas pu vérifier que vous êtes humain."
+      "title": "Nous n'avons pas pu vérifier que tu es humain."
     },
     "value_must_contain": "La valeur doit contenir {value}",
     "value_must_equal": "La valeur doit être égale à {value}",

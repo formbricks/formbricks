@@ -71,7 +71,7 @@
     "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
     "recaptcha_error": {
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
-      "title": "Wir konnten nicht verifizieren, dass Sie ein Mensch sind."
+      "title": "Wir konnten nicht verifizieren, dass du ein Mensch bist."
     },
     "value_must_contain": "Wert muss {value} enthalten",
     "value_must_equal": "Wert muss {value} entsprechen",

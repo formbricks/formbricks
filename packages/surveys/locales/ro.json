@@ -48,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "Dezactivați protecția împotriva spamului în setările sondajului pentru a continua să utilizați acest dispozitiv.",
-      "title": "Acest dispozitiv nu acceptă protecția împotriva spamului."
+      "title": "Acest dispozitiv nu suportă protecția împotriva spamului."
     },
     "invalid_format": "Vă rugăm să introduceți un format valid",
     "is_between": "Vă rugăm să selectați o dată între {startDate} și {endDate}",
@@ -71,7 +71,7 @@
     "please_fill_out_this_field": "Vă rugăm să completați acest câmp",
     "recaptcha_error": {
       "message": "Răspunsul dumneavoastră nu a putut fi trimis deoarece a fost marcat ca activitate automată. Dacă respirați, încercați din nou.",
-      "title": "Nu am putut verifica dacă sunteți uman."
+      "title": "Nu am putut verifica dacă ești om."
     },
     "value_must_contain": "Valoarea trebuie să conțină {value}",
     "value_must_equal": "Valoarea trebuie să fie egală cu {value}",

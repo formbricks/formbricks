@@ -48,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "Tiltsa le a szemét elleni védekezést a kérdőív beállításaiban, hogy tovább használhassa ezt az eszközt.",
-      "title": "Ez az eszköz nem támogatja a szemét elleni védekezést."
+      "title": "Ez az eszköz nem támogatja a spam elleni védelmet."
     },
     "invalid_format": "Adjon meg egy érvényes formátumot",
     "is_between": "Válasszon egy dátumot {startDate} és {endDate} között",
@@ -71,7 +71,7 @@
     "please_fill_out_this_field": "Töltse ki ezt a mezőt",
     "recaptcha_error": {
       "message": "A válaszát nem sikerült elküldeni, mert automatizált tevékenységként lett megjelölve. Ha lélegzik, akkor próbálja meg újra.",
-      "title": "Nem tudtuk ellenőrizni, hogy Ön ember-e."
+      "title": "Nem tudtuk ellenőrizni, hogy ember vagy."
     },
     "value_must_contain": "Az értéknek tartalmaznia kell ezt: {value}",
     "value_must_equal": "Az értéknek egyenlőnek kell lennie ezzel: {value}",

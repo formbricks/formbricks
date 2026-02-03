@@ -44,7 +44,7 @@ checksums:
     errors/file_input/upload_failed: 735fdfc1a37ab035121328237ddd6fd0
     errors/file_input/you_can_only_upload_a_maximum_of_files: 72fe144f81075e5b06bae53b3a84d4db
     errors/invalid_device_error/message: 8813dcd0e3e41934af18d7a15f8c83f4
-    errors/invalid_device_error/title: 20d261b478aaba161b0853a588926e23
+    errors/invalid_device_error/title: ea7dbb9970c717e4d466f8e1211bd461
     errors/invalid_format: 66df570c79b420d66f3badaf5867e4ad
     errors/is_between: 2e8e3d11ac315aed727fa3b9e0bc435b
     errors/is_earlier_than: 377af5c84d09083f57580ddd8199cda8
@@ -66,7 +66,6 @@ checksums:
     errors/please_fill_out_this_field: 88d4fd502ae8d423277aef723afcd1a7
     errors/recaptcha_error/message: b3f2c5950cbc0887f391f9e2bccb676e
     errors/recaptcha_error/title: eb8f1106e0b4cb6756c5a76fd9400e67
-    errors/recaptcha_error/title: 8e923ec38a92041569879a39c6467131
     errors/value_must_contain: cd555796372f06b42f42f6b304f98e92
     errors/value_must_equal: 227b5c87bb7761714ab9bc5a8adc6607
     errors/value_must_not_contain: 5349a544135c7d7fc6e01c4221004236
