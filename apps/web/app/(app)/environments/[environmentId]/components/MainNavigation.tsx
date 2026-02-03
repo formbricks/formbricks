@@ -9,6 +9,7 @@ import {
   MessageCircle,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
+  PieChart,
   RocketIcon,
   ShapesIcon,
   UserCircleIcon,
@@ -105,6 +106,13 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/surveys`,
         icon: MessageCircle,
         isActive: pathname?.includes("/surveys"),
+        isHidden: false,
+      },
+      {
+        name: t("common.analysis"),
+        href: `/environments/${environment.id}/analysis`,
+        icon: PieChart,
+        isActive: pathname?.includes("/analysis"),
         isHidden: false,
       },
       {

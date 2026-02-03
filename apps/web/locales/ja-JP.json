@@ -133,6 +133,7 @@
     "allow": "許可",
     "allow_users_to_exit_by_clicking_outside_the_survey": "フォームの外側をクリックしてユーザーが終了できるようにする",
     "an_unknown_error_occurred_while_deleting_table_items": "{type}の削除中に不明なエラーが発生しました",
+    "analysis": "分析",
     "and": "および",
     "and_response_limit_of": "と回答数の上限",
     "anonymous": "匿名",
