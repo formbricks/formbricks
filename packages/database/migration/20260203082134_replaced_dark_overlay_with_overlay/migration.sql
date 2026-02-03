@@ -18,3 +18,21 @@ END;
 
 -- Step 4: Drop the old darkOverlay column
 ALTER TABLE "Project" DROP COLUMN "darkOverlay";
+
+-- Step 5: Migrate Survey.projectOverwrites JSON field
+-- For surveys with projectOverwrites containing darkOverlay, convert to overlay
+-- darkOverlay: true -> overlay: "dark"
+-- darkOverlay: false -> overlay: "light"
+-- Then remove the old darkOverlay key from JSON
+UPDATE "Survey"
+SET "projectOverwrites" = jsonb_set(
+  "projectOverwrites"::jsonb - 'darkOverlay',
+  '{overlay}',
+  CASE 
+    WHEN ("projectOverwrites"::jsonb->>'darkOverlay')::boolean = true THEN '"dark"'::jsonb
+    WHEN ("projectOverwrites"::jsonb->>'darkOverlay')::boolean = false THEN '"light"'::jsonb
+    ELSE '"none"'::jsonb
+  END
+)
+WHERE "projectOverwrites" IS NOT NULL 
+  AND "projectOverwrites"::jsonb ? 'darkOverlay';

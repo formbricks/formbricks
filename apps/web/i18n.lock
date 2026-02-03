@@ -1149,7 +1149,6 @@ checksums:
     environments/surveys/edit/caution_explanation_responses_are_safe: 090ff00b7922a49c273e67c5f364730d
     environments/surveys/edit/caution_recommendation: b15090fe878ff17f2ee7cc2082dd9018
     environments/surveys/edit/caution_text: 3291e962c0e4c4656832837ddc512918
-    environments/surveys/edit/centered_modal_overlay_color: 1124ba61ee2ecb18a7175ff780dc3b60
     environments/surveys/edit/change_anyway: 6377497d40373f6d0f082670194981ab
     environments/surveys/edit/change_background: fa71a993869f7d3ac553c547c12c3e9b
     environments/surveys/edit/change_question_type: 2d555ae48df8dbedfc6a4e1ad492f4aa
@@ -1937,7 +1936,6 @@ checksums:
     environments/workspace/look/add_background_color_description: adb6fcb392862b3d0e9420d9b5405ddb
     environments/workspace/look/app_survey_placement: f09cddac6bbb77d4694df223c6edf6b6
     environments/workspace/look/app_survey_placement_settings_description: d81bcff7a866a2f83ff76936dbad4770
-    environments/workspace/look/centered_modal_overlay_color: 1124ba61ee2ecb18a7175ff780dc3b60
     environments/workspace/look/email_customization: ae399f381183a4fe0ffd41ab496b5d8f
     environments/workspace/look/email_customization_description: 5ccaf1769b2c39d7e87f3a08d056a374
     environments/workspace/look/enable_custom_styling: 4774d8fb009c27044aa0191ebcccdcc2
