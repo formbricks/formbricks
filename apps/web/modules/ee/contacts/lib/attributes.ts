@@ -23,9 +23,13 @@ const deleteAttributes = async (
   const submittedKeys = new Set(Object.keys(submittedAttributes));
   const keysToDelete = Object.keys(currentAttributes).filter((key) => !submittedKeys.has(key));
 
-  // Get attribute key IDs for deletion
+  // Get attribute key IDs for deletion, but exclude default attributes
   const attributeKeyIdsToDelete = keysToDelete
-    .map((key) => contactAttributeKeyMap.get(key)?.id)
+    .map((key) => {
+      const attributeKey = contactAttributeKeyMap.get(key);
+      // Only include non-default attributes for deletion
+      return attributeKey?.type === "custom" ? attributeKey.id : null;
+    })
     .filter((id): id is string => !!id);
 
   if (attributeKeyIdsToDelete.length > 0) {
