@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "उत्तरदाता इस कार्ड को नहीं देखेंगे",
     "retry": "पुनः प्रयास करें",
     "retrying": "पुनः प्रयास कर रहे हैं...",
+    "select_option": "एक विकल्प चुनें",
+    "select_options": "विकल्प चुनें",
     "sending_responses": "प्रतिक्रियाएँ भेज रहे हैं...",
     "takes_less_than_x_minutes": "{count, plural, one {1 मिनट से कम लगता है} other {{count} मिनट से कम लगता है}}",
     "takes_x_minutes": "{count, plural, one {1 मिनट लगता है} other {{count} मिनट लगते हैं}}",

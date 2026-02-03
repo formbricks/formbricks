@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Les répondants ne verront pas cette carte",
     "retry": "Réessayer",
     "retrying": "Nouvelle tentative...",
+    "select_option": "Sélectionner une option",
+    "select_options": "Sélectionner des options",
     "sending_responses": "Envoi des réponses...",
     "takes_less_than_x_minutes": "{count, plural, one {Prend moins d'une minute} other {Prend moins de {count} minutes}}",
     "takes_x_minutes": "{count, plural, one {Prend 1 minute} other {Prend {count} minutes}}",
