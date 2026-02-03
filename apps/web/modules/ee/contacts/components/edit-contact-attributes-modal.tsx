@@ -175,6 +175,23 @@ export const EditContactAttributesModal = ({
     setOpen(newOpen);
   };
 
+  // Memoize email/userId existence checks for delete button logic
+  // A contact MUST have either email or userId, so we prevent deletion if it would violate this
+  const { hasEmail, hasUserId } = useMemo(() => {
+    const emailAttr = watchedAttributes.find((attr) => attr.key === "email");
+    const userIdAttr = watchedAttributes.find((attr) => attr.key === "userId");
+    return {
+      hasEmail: !!emailAttr?.value?.trim(),
+      hasUserId: !!userIdAttr?.value?.trim(),
+    };
+  }, [watchedAttributes]);
+
+  const isDeleteDisabled = (key: string): boolean => {
+    if (key === "email") return !hasUserId;
+    if (key === "userId") return !hasEmail;
+    return false;
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent width="default" className="max-h-[90vh]">
@@ -235,7 +252,7 @@ export const EditContactAttributesModal = ({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  disabled={["email", "userId", "firstName", "lastName"].includes(field.key)}
+                                  disabled={isDeleteDisabled(field.key)}
                                   size="sm"
                                   onClick={() => handleRemoveAttribute(index)}
                                   className="h-10 w-10 p-0">

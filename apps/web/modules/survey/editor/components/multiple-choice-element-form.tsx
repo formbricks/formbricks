@@ -10,7 +10,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TMultipleChoiceOptionDisplayType, TSurveyElementTypeEnum, TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
+import {
+  TMultipleChoiceOptionDisplayType,
+  TSurveyElementTypeEnum,
+  TSurveyMultipleChoiceElement,
+} from "@formbricks/types/surveys/elements";
 import { TShuffleOption, TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
