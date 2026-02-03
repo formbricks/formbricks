@@ -74,8 +74,9 @@ RUN --mount=type=secret,id=database_url \
 #
 FROM base AS runner
 
-# Update npm to latest to fix vulnerabilities in bundled tar package, then create user
+# Update npm to latest and fix tar vulnerability in npm's bundled dependencies, then create user
 RUN npm install --ignore-scripts -g npm@latest \
+    && cd /usr/local/lib/node_modules/npm && npm install --ignore-scripts tar@latest \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
@@ -106,9 +107,9 @@ RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./package
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
-# Copy all @prisma packages (client, engines, config needed for CLI)
-COPY --from=installer /app/node_modules/@prisma ./node_modules/@prisma
-RUN chown -R nextjs:nextjs ./node_modules/@prisma && chmod -R 755 ./node_modules/@prisma
+# Copy prisma client packages
+COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
+RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
 
 COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
 RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
@@ -125,12 +126,8 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-# Copy prisma CLI from installer (uses pnpm overrides for security patches)
-COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
-RUN chmod -R 755 ./node_modules/prisma
-
-# Create prisma symlink so 'prisma' command is available globally
-RUN ln -s /home/nextjs/node_modules/prisma/build/index.js /usr/local/bin/prisma
+# Install prisma CLI globally for database migrations
+RUN npm install --ignore-scripts -g prisma@6
 
 # Create a startup script to handle the conditional logic
 COPY --from=installer /app/apps/web/scripts/docker/next-start.sh /home/nextjs/start.sh
