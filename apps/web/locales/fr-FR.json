@@ -989,6 +989,7 @@
         "from_your_organization": "de votre organisation",
         "invitation_sent_once_more": "Invitation envoyée une fois de plus.",
         "invite_deleted_successfully": "Invitation supprimée avec succès",
+        "invite_expires_on": "L'invitation expire le {date}",
         "invited_on": "Invité le {date}",
         "invites_failed": "Invitations échouées",
         "leave_organization": "Quitter l'organisation",

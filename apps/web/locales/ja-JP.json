@@ -989,6 +989,7 @@
         "from_your_organization": "あなたの組織から",
         "invitation_sent_once_more": "招待状を再度送信しました。",
         "invite_deleted_successfully": "招待を正常に削除しました",
+        "invite_expires_on": "招待は{date}に期限切れ",
         "invited_on": "{date}に招待",
         "invites_failed": "招待に失敗しました",
         "leave_organization": "組織を離れる",

@@ -989,6 +989,7 @@
         "from_your_organization": "din organizația ta",
         "invitation_sent_once_more": "Invitație trimisă din nou.",
         "invite_deleted_successfully": "Invitație ștearsă cu succes",
+        "invite_expires_on": "Invitația expiră pe {date}",
         "invited_on": "Invitat pe {date}",
         "invites_failed": "Invitații eșuate",
         "leave_organization": "Părăsește organizația",

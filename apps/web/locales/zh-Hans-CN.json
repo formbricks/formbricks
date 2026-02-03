@@ -989,6 +989,7 @@
         "from_your_organization": "来自你的组织",
         "invitation_sent_once_more": "再次发送邀请。",
         "invite_deleted_successfully": "邀请 删除 成功",
+        "invite_expires_on": "邀请将于 {date} 过期",
         "invited_on": "受邀于 {date}",
         "invites_failed": "邀请失败",
         "leave_organization": "离开 组织",

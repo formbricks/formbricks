@@ -989,6 +989,7 @@
         "from_your_organization": "vanuit uw organisatie",
         "invitation_sent_once_more": "Uitnodiging nogmaals verzonden.",
         "invite_deleted_successfully": "Uitnodiging succesvol verwijderd",
+        "invite_expires_on": "Uitnodiging verloopt op {date}",
         "invited_on": "Uitgenodigd op {date}",
         "invites_failed": "Uitnodigingen zijn mislukt",
         "leave_organization": "Verlaat de organisatie",

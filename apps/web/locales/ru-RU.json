@@ -989,6 +989,7 @@
         "from_your_organization": "из вашей организации",
         "invitation_sent_once_more": "Приглашение отправлено ещё раз.",
         "invite_deleted_successfully": "Приглашение успешно удалено",
+        "invite_expires_on": "Приглашение истекает {date}",
         "invited_on": "Приглашён {date}",
         "invites_failed": "Не удалось отправить приглашения",
         "leave_organization": "Покинуть организацию",
