@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Javob beruvchilar ushbu kartani ko'rmaydi",
     "retry": "Qayta urinib ko'ring",
     "retrying": "Qayta urinilmoqda...",
+    "select_option": "Variantni tanla",
+    "select_options": "Variantlarni tanla",
     "sending_responses": "Javoblar yuborilmoqda...",
     "takes_less_than_x_minutes": "{count, plural, one {1 daqiqadan kam vaqt oladi} other {{count} daqiqadan kam vaqt oladi}}",
     "takes_x_minutes": "{count, plural, one {1 daqiqa vaqt oladi} other {{count} daqiqa vaqt oladi}}",

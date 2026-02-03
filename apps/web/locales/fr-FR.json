@@ -254,6 +254,7 @@
     "label": "Étiquette",
     "language": "Langue",
     "learn_more": "En savoir plus",
+    "license_expired": "License Expired",
     "light_overlay": "Claire",
     "limits_reached": "Limites atteints",
     "link": "Lien",
@@ -462,7 +463,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Vous avez atteint votre limite de {projectLimit} espaces de travail.",
     "you_have_reached_your_monthly_miu_limit_of": "Vous avez atteint votre limite mensuelle de MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Vous avez atteint votre limite de réponses mensuelle de",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Vous serez rétrogradé à l'édition communautaire le {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Vous serez rétrogradé à l'édition communautaire le {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Accepter",
@@ -1272,6 +1274,7 @@
         "disable_the_visibility_of_survey_progress": "Désactiver la visibilité de la progression du sondage.",
         "display_an_estimate_of_completion_time_for_survey": "Afficher une estimation du temps de complétion pour l'enquête.",
         "display_number_of_responses_for_survey": "Afficher le nombre de réponses pour l'enquête",
+        "display_type": "Type d'affichage",
         "divide": "Diviser /",
         "does_not_contain": "Ne contient pas",
         "does_not_end_with": "Ne se termine pas par",
@@ -1279,6 +1282,7 @@
         "does_not_include_all_of": "n'inclut pas tout",
         "does_not_include_one_of": "n'inclut pas un de",
         "does_not_start_with": "Ne commence pas par",
+        "dropdown": "Menu déroulant",
         "duplicate_block": "Dupliquer le bloc",
         "duplicate_question": "Dupliquer la question",
         "edit_link": "Modifier le lien",
@@ -1411,6 +1415,7 @@
         "limit_the_maximum_file_size": "Limiter la taille maximale des fichiers pour les téléversements.",
         "limit_upload_file_size_to": "Limiter la taille de téléversement des fichiers à",
         "link_survey_description": "Partagez un lien vers une page d'enquête ou intégrez-le dans une page web ou un e-mail.",
+        "list": "Liste",
         "load_segment": "Segment de chargement",
         "logic_error_warning": "Changer causera des erreurs logiques",
         "logic_error_warning_text": "Changer le type de question supprimera les conditions logiques de cette question.",

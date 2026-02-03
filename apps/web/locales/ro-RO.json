@@ -254,6 +254,7 @@
     "label": "Etichetă",
     "language": "Limba",
     "learn_more": "Află mai multe",
+    "license_expired": "License Expired",
     "light_overlay": "Suprapunere ușoară",
     "limits_reached": "Limite atinse",
     "link": "Legătura",
@@ -462,7 +463,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Ați atins limita de {projectLimit} spații de lucru.",
     "you_have_reached_your_monthly_miu_limit_of": "Ați atins limita lunară MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Ați atins limita lunară de răspunsuri de",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Vei fi retrogradat la ediția Community pe {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Vei fi retrogradat la ediția Community pe {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Acceptă",
@@ -1272,6 +1274,7 @@
         "disable_the_visibility_of_survey_progress": "Dezactivați vizibilitatea progresului sondajului",
         "display_an_estimate_of_completion_time_for_survey": "Afișează o estimare a timpului de finalizare pentru sondaj",
         "display_number_of_responses_for_survey": "Afișează numărul de răspunsuri pentru sondaj",
+        "display_type": "Tip de afișare",
         "divide": "Împarte /",
         "does_not_contain": "Nu conține",
         "does_not_end_with": "Nu se termină cu",
@@ -1279,6 +1282,7 @@
         "does_not_include_all_of": "Nu include toate",
         "does_not_include_one_of": "Nu include una dintre",
         "does_not_start_with": "Nu începe cu",
+        "dropdown": "Dropdown",
         "duplicate_block": "Duplicați blocul",
         "duplicate_question": "Duplică întrebarea",
         "edit_link": "Editare legătură",
@@ -1411,6 +1415,7 @@
         "limit_the_maximum_file_size": "Limitați dimensiunea maximă a fișierului pentru încărcări.",
         "limit_upload_file_size_to": "Limitați dimensiunea fișierului încărcat la",
         "link_survey_description": "Partajați un link către o pagină de chestionar sau încorporați-l într-o pagină web sau email.",
+        "list": "Listă",
         "load_segment": "Încarcă segment",
         "logic_error_warning": "Schimbarea va provoca erori de logică",
         "logic_error_warning_text": "Schimbarea tipului de întrebare va elimina condițiile de logică din această întrebare",

@@ -254,6 +254,7 @@
     "label": "ラベル",
     "language": "言語",
     "learn_more": "詳細を見る",
+    "license_expired": "License Expired",
     "light_overlay": "明るいオーバーレイ",
     "limits_reached": "上限に達しました",
     "link": "リンク",
@@ -462,7 +463,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "ワークスペースの上限である{projectLimit}件に達しました。",
     "you_have_reached_your_monthly_miu_limit_of": "月間MIU（月間アクティブユーザー）の上限に達しました",
     "you_have_reached_your_monthly_response_limit_of": "月間回答数の上限に達しました",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "コミュニティ版へのダウングレードは {date} に行われます。"
+    "you_will_be_downgraded_to_the_community_edition_on_date": "コミュニティ版へのダウングレードは {date} に行われます。",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "承認",
@@ -1272,6 +1274,7 @@
         "disable_the_visibility_of_survey_progress": "フォームの進捗状況の表示を無効にする。",
         "display_an_estimate_of_completion_time_for_survey": "フォームの完了時間の目安を表示",
         "display_number_of_responses_for_survey": "フォームの回答数を表示",
+        "display_type": "表示タイプ",
         "divide": "除算 /",
         "does_not_contain": "を含まない",
         "does_not_end_with": "で終わらない",
@@ -1279,6 +1282,7 @@
         "does_not_include_all_of": "のすべてを含まない",
         "does_not_include_one_of": "のいずれも含まない",
         "does_not_start_with": "で始まらない",
+        "dropdown": "ドロップダウン",
         "duplicate_block": "ブロックを複製",
         "duplicate_question": "質問を複製",
         "edit_link": "編集 リンク",
@@ -1411,6 +1415,7 @@
         "limit_the_maximum_file_size": "アップロードの最大ファイルサイズを制限します。",
         "limit_upload_file_size_to": "アップロードファイルサイズの上限",
         "link_survey_description": "フォームページへのリンクを共有するか、ウェブページやメールに埋め込みます。",
+        "list": "リスト",
         "load_segment": "セグメントを読み込み",
         "logic_error_warning": "変更するとロジックエラーが発生します",
         "logic_error_warning_text": "質問の種類を変更すると、この質問のロジック条件が削除されます",

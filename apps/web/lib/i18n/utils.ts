@@ -127,21 +127,21 @@ export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[
 
 export const appLanguages = [
   {
-    code: "en-US",
-    label: {
-      "en-US": "English (US)",
-    },
-  },
-  {
     code: "de-DE",
     label: {
       "en-US": "German",
     },
   },
   {
-    code: "pt-BR",
+    code: "en-US",
     label: {
-      "en-US": "Portuguese (Brazil)",
+      "en-US": "English (US)",
+    },
+  },
+  {
+    code: "es-ES",
+    label: {
+      "en-US": "Spanish",
     },
   },
   {
@@ -151,9 +151,27 @@ export const appLanguages = [
     },
   },
   {
-    code: "zh-Hant-TW",
+    code: "hu-HU",
     label: {
-      "en-US": "Chinese (Traditional)",
+      "en-US": "Hungarian",
+    },
+  },
+  {
+    code: "ja-JP",
+    label: {
+      "en-US": "Japanese",
+    },
+  },
+  {
+    code: "nl-NL",
+    label: {
+      "en-US": "Dutch",
+    },
+  },
+  {
+    code: "pt-BR",
+    label: {
+      "en-US": "Portuguese (Brazil)",
     },
   },
   {
@@ -169,27 +187,9 @@ export const appLanguages = [
     },
   },
   {
-    code: "ja-JP",
+    code: "ru-RU",
     label: {
-      "en-US": "Japanese",
-    },
-  },
-  {
-    code: "zh-Hans-CN",
-    label: {
-      "en-US": "Chinese (Simplified)",
-    },
-  },
-  {
-    code: "nl-NL",
-    label: {
-      "en-US": "Dutch",
-    },
-  },
-  {
-    code: "es-ES",
-    label: {
-      "en-US": "Spanish",
+      "en-US": "Russian",
     },
   },
   {
@@ -199,9 +199,15 @@ export const appLanguages = [
     },
   },
   {
-    code: "ru-RU",
+    code: "zh-Hans-CN",
     label: {
-      "en-US": "Russian",
+      "en-US": "Chinese (Simplified)",
+    },
+  },
+  {
+    code: "zh-Hant-TW",
+    label: {
+      "en-US": "Chinese (Traditional)",
     },
   },
 ];

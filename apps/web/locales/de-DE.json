@@ -254,6 +254,7 @@
     "label": "Bezeichnung",
     "language": "Sprache",
     "learn_more": "Mehr erfahren",
+    "license_expired": "License Expired",
     "light_overlay": "Helle Überlagerung",
     "limits_reached": "Limits erreicht",
     "link": "Link",
@@ -462,7 +463,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Sie haben Ihr Limit von {projectLimit} Workspaces erreicht.",
     "you_have_reached_your_monthly_miu_limit_of": "Du hast dein monatliches MIU-Limit erreicht",
     "you_have_reached_your_monthly_response_limit_of": "Du hast dein monatliches Antwortlimit erreicht",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Du wirst am {date} auf die Community Edition herabgestuft."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Du wirst am {date} auf die Community Edition herabgestuft.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Annehmen",
@@ -1272,6 +1274,7 @@
         "disable_the_visibility_of_survey_progress": "Deaktiviere die Sichtbarkeit des Umfragefortschritts.",
         "display_an_estimate_of_completion_time_for_survey": "Zeige eine Schätzung der Fertigstellungszeit für die Umfrage an",
         "display_number_of_responses_for_survey": "Anzahl der Antworten für Umfrage anzeigen",
+        "display_type": "Anzeigetyp",
         "divide": "Teilen /",
         "does_not_contain": "Enthält nicht",
         "does_not_end_with": "Endet nicht mit",
@@ -1279,6 +1282,7 @@
         "does_not_include_all_of": "Enthält nicht alle von",
         "does_not_include_one_of": "Enthält nicht eines von",
         "does_not_start_with": "Fängt nicht an mit",
+        "dropdown": "Dropdown",
         "duplicate_block": "Block duplizieren",
         "duplicate_question": "Frage duplizieren",
         "edit_link": "Bearbeitungslink",
@@ -1411,6 +1415,7 @@
         "limit_the_maximum_file_size": "Begrenzen Sie die maximale Dateigröße für Uploads.",
         "limit_upload_file_size_to": "Upload-Dateigröße begrenzen auf",
         "link_survey_description": "Teile einen Link zu einer Umfrageseite oder bette ihn in eine Webseite oder E-Mail ein.",
+        "list": "Liste",
         "load_segment": "Segment laden",
         "logic_error_warning": "Änderungen werden zu Logikfehlern führen",
         "logic_error_warning_text": "Das Ändern des Fragetypen entfernt die Logikbedingungen von dieser Frage",

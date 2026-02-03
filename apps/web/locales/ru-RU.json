@@ -254,6 +254,7 @@
     "label": "Метка",
     "language": "Язык",
     "learn_more": "Подробнее",
+    "license_expired": "License Expired",
     "light_overlay": "Светлый оверлей",
     "limits_reached": "Достигнуты лимиты",
     "link": "Ссылка",
@@ -462,7 +463,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Вы достигли лимита в {projectLimit} рабочих пространств.",
     "you_have_reached_your_monthly_miu_limit_of": "Вы достигли месячного лимита MIU:",
     "you_have_reached_your_monthly_response_limit_of": "Вы достигли месячного лимита ответов:",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Ваша версия будет понижена до Community Edition {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Ваша версия будет понижена до Community Edition {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Принять",
@@ -1272,6 +1274,7 @@
         "disable_the_visibility_of_survey_progress": "Отключить отображение прогресса опроса.",
         "display_an_estimate_of_completion_time_for_survey": "Показывать примерное время прохождения опроса",
         "display_number_of_responses_for_survey": "Показывать количество ответов на опрос",
+        "display_type": "Тип отображения",
         "divide": "Разделить /",
         "does_not_contain": "Не содержит",
         "does_not_end_with": "Не заканчивается на",
@@ -1279,6 +1282,7 @@
         "does_not_include_all_of": "Не включает все из",
         "does_not_include_one_of": "Не включает ни одного из",
         "does_not_start_with": "Не начинается с",
+        "dropdown": "Выпадающий список",
         "duplicate_block": "Дублировать блок",
         "duplicate_question": "Дублировать вопрос",
         "edit_link": "Редактировать ссылку",
@@ -1411,6 +1415,7 @@
         "limit_the_maximum_file_size": "Ограничьте максимальный размер загружаемых файлов.",
         "limit_upload_file_size_to": "Ограничить размер загружаемого файла до",
         "link_survey_description": "Поделитесь ссылкой на страницу опроса или вставьте её на веб-страницу или в электронное письмо.",
+        "list": "Список",
         "load_segment": "Загрузить сегмент",
         "logic_error_warning": "Изменение приведёт к логическим ошибкам",
         "logic_error_warning_text": "Изменение типа вопроса удалит логические условия из этого вопроса",

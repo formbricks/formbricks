@@ -254,6 +254,7 @@
     "label": "Etikett",
     "language": "Språk",
     "learn_more": "Läs mer",
+    "license_expired": "License Expired",
     "light_overlay": "Ljust överlägg",
     "limits_reached": "Gränser nådda",
     "link": "Länk",
@@ -462,7 +463,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Du har nått din gräns på {projectLimit} arbetsytor.",
     "you_have_reached_your_monthly_miu_limit_of": "Du har nått din månatliga MIU-gräns på",
     "you_have_reached_your_monthly_response_limit_of": "Du har nått din månatliga svarsgräns på",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Du kommer att nedgraderas till Community Edition den {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Du kommer att nedgraderas till Community Edition den {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Acceptera",
@@ -1272,6 +1274,7 @@
         "disable_the_visibility_of_survey_progress": "Inaktivera synligheten av enkätens framsteg.",
         "display_an_estimate_of_completion_time_for_survey": "Visa en uppskattning av tid för att slutföra enkäten",
         "display_number_of_responses_for_survey": "Visa antal svar för enkäten",
+        "display_type": "Visningstyp",
         "divide": "Dividera /",
         "does_not_contain": "Innehåller inte",
         "does_not_end_with": "Slutar inte med",
@@ -1279,6 +1282,7 @@
         "does_not_include_all_of": "Inkluderar inte alla av",
         "does_not_include_one_of": "Inkluderar inte en av",
         "does_not_start_with": "Börjar inte med",
+        "dropdown": "Rullgardinsmeny",
         "duplicate_block": "Duplicera block",
         "duplicate_question": "Duplicera fråga",
         "edit_link": "Redigera länk",
@@ -1411,6 +1415,7 @@
         "limit_the_maximum_file_size": "Begränsa den maximala filstorleken för uppladdningar.",
         "limit_upload_file_size_to": "Begränsa uppladdad filstorlek till",
         "link_survey_description": "Dela en länk till en enkätsida eller bädda in den på en webbsida eller i e-post.",
+        "list": "Lista",
         "load_segment": "Ladda segment",
         "logic_error_warning": "Ändring kommer att orsaka logikfel",
         "logic_error_warning_text": "Att ändra frågetypen kommer att ta bort logikvillkoren från denna fråga",

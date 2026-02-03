@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Respondenter kommer inte att se detta kort",
     "retry": "Försök igen",
     "retrying": "Försöker igen...",
+    "select_option": "Välj ett alternativ",
+    "select_options": "Välj alternativ",
     "sending_responses": "Skickar svar...",
     "takes_less_than_x_minutes": "{count, plural, one {Tar mindre än 1 minut} other {Tar mindre än {count} minuter}}",
     "takes_x_minutes": "{count, plural, one {Tar 1 minut} other {Tar {count} minuter}}",
