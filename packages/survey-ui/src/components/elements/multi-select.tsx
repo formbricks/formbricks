@@ -12,7 +12,6 @@ import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { cn } from "@/lib/utils";
-import { Label } from "@/components/general/label";
 
 /**
  * Option for multi-select element

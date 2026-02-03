@@ -13,7 +13,6 @@ import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { RadioGroup, RadioGroupItem } from "@/components/general/radio-group";
 import { cn } from "@/lib/utils";
-import { Label } from "@/components/general/label";
 
 /**
  * Option for single-select element
