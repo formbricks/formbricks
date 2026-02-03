@@ -7,6 +7,7 @@ import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common"
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
@@ -405,6 +406,14 @@ const createMissingAttributeKeys = async (
 
   if (missingKeys.length === 0) return;
 
+  // Validate that all missing keys are safe identifiers
+  const invalidKeys = missingKeys.filter((key) => !isSafeIdentifier(key));
+  if (invalidKeys.length > 0) {
+    throw new ValidationError(
+      `Invalid attribute key(s): ${invalidKeys.join(", ")}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.`
+    );
+  }
+
   // Deduplicate by lowercase to avoid creating duplicates like "firstName" and "firstname"
   const uniqueMissingKeys = new Map<string, string>();
   for (const key of missingKeys) {
@@ -417,7 +426,7 @@ const createMissingAttributeKeys = async (
   await prisma.contactAttributeKey.createMany({
     data: Array.from(uniqueMissingKeys.values()).map((key) => ({
       key,
-      name: key,
+      name: formatSnakeCaseToTitleCase(key),
       dataType: attributeTypeMap.get(key)?.dataType ?? "string",
       environmentId,
     })),

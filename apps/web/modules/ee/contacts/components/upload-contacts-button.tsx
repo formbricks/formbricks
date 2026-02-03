@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/helper";
+import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { CsvTable } from "@/modules/ee/contacts/components/csv-table";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
@@ -121,6 +122,18 @@ export const UploadContactsCSVButton = ({
     return headers.map((header) => header.trim());
   }, [csvResponse]);
 
+  // Filter columns to only show those that can be mapped (existing attributes or valid new keys)
+  const validCsvColumns = useMemo(() => {
+    return csvColumns.filter((column) => {
+      // Check if column matches an existing attribute
+      const matchesExisting = contactAttributeKeys.some((attrKey) =>
+        isStringMatch(column, attrKey.name ?? attrKey.key)
+      );
+      // If it matches existing or is a valid safe identifier, include it
+      return matchesExisting || isSafeIdentifier(column);
+    });
+  }, [csvColumns, contactAttributeKeys]);
+
   const resetState = (closeModal?: boolean) => {
     setCSVResponse([]);
     setDuplicateContactsAction("skip");
@@ -221,21 +234,38 @@ export const UploadContactsCSVButton = ({
 
   useEffect(() => {
     const matches: Record<string, string> = {};
+    const invalidColumns: string[] = [];
+
     for (const columnName of csvColumns) {
+      let matched = false;
       for (const attributeKey of contactAttributeKeys) {
         if (isStringMatch(columnName, attributeKey.name ?? attributeKey.key)) {
           matches[columnName] = attributeKey.id;
+          matched = true;
           break;
         }
       }
 
-      if (!matches[columnName]) {
+      if (!matched) {
+        // This column will become a new attribute - validate it's a safe identifier
+        if (!isSafeIdentifier(columnName)) {
+          invalidColumns.push(columnName);
+        }
         matches[columnName] = columnName;
       }
     }
 
     setAttributeMap(matches);
-  }, [contactAttributeKeys, csvColumns]);
+
+    // Show error for invalid column names that would become new attributes
+    if (invalidColumns.length > 0) {
+      setError(
+        t("environments.contacts.invalid_csv_column_names", {
+          columns: invalidColumns.join(", "),
+        })
+      );
+    }
+  }, [contactAttributeKeys, csvColumns, t]);
 
   useEffect(() => {
     if (error && errorContainerRef.current) {
@@ -246,11 +276,11 @@ export const UploadContactsCSVButton = ({
   // Function to download an example CSV
   const handleDownloadExampleCSV = () => {
     const exampleData = [
-      { email: "user1@example.com", userId: "1001", firstName: "John", lastName: "Doe" },
-      { email: "user2@example.com", userId: "1002", firstName: "Jane", lastName: "Smith" },
-      { email: "user3@example.com", userId: "1003", firstName: "Mark", lastName: "Jones" },
-      { email: "user4@example.com", userId: "1004", firstName: "Emily", lastName: "Brown" },
-      { email: "user5@example.com", userId: "1005", firstName: "David", lastName: "Wilson" },
+      { email: "user1@example.com", userId: "1001", first_name: "John", last_name: "Doe" },
+      { email: "user2@example.com", userId: "1002", first_name: "Jane", last_name: "Smith" },
+      { email: "user3@example.com", userId: "1003", first_name: "Mark", last_name: "Jones" },
+      { email: "user4@example.com", userId: "1004", first_name: "Emily", last_name: "Brown" },
+      { email: "user5@example.com", userId: "1005", first_name: "David", last_name: "Wilson" },
     ];
 
     const headers = Object.keys(exampleData[0]);
@@ -333,7 +363,7 @@ export const UploadContactsCSVButton = ({
                         )}
                         onDragOver={(e) => handleDragOver(e)}
                         onDrop={(e) => handleDrop(e)}>
-                        <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <ArrowUpFromLineIcon className="h-6 text-slate-500" />
                           <p className={cn("mt-2 text-center text-sm text-slate-500")}>
                             <span className="font-semibold">{t("common.upload_input_description")}</span>
@@ -379,7 +409,7 @@ export const UploadContactsCSVButton = ({
                   </p>
 
                   <div className="flex flex-col gap-2">
-                    {csvColumns.map((column, index) => {
+                    {validCsvColumns.map((column, index) => {
                       return (
                         <UploadContactsAttributes
                           key={index}

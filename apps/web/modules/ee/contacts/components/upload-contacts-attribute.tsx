@@ -4,6 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { UploadContactsAttributeCombobox } from "@/modules/ee/contacts/components/upload-contacts-attribute-combobox";
 import { Badge } from "@/modules/ui/components/badge";
 
@@ -122,13 +123,16 @@ export const UploadContactsAttributes = ({
   useEffect(() => {
     if (currentKey) {
       const _isNewTag = contactAttributeKeys.findIndex((attrKey) => attrKey.id === currentKey.value) === -1;
-      setIsNewTag(_isNewTag);
+      // Only mark as new tag if it's a valid safe identifier (can actually be created)
+      const mappedValue = attributeMap[csvColumn];
+      const isValidNewKey = _isNewTag && !!mappedValue && isSafeIdentifier(mappedValue);
+      setIsNewTag(isValidNewKey);
     }
-  }, [contactAttributeKeys, currentKey]);
+  }, [contactAttributeKeys, currentKey, attributeMap, csvColumn]);
 
   return (
     <div className="flex w-full items-center justify-start gap-4">
-      <span className="w-25 overflow-hidden text-ellipsis font-medium text-slate-700">{csvColumn}</span>
+      <span className="w-25 overflow-hidden font-medium text-ellipsis text-slate-700">{csvColumn}</span>
       <h4 className="text-sm font-medium text-slate-500">
         {t("environments.contacts.upload_contacts_modal_attributes_should_be_mapped_to")}
       </h4>

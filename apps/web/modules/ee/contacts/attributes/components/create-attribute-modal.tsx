@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -64,7 +64,18 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
   };
 
   const handleKeyChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, key: value }));
+    const previousAutoLabel = formData.key ? formatSnakeCaseToTitleCase(formData.key) : "";
+    const newAutoLabel = value ? formatSnakeCaseToTitleCase(value) : "";
+
+    setFormData((prev) => {
+      // Auto-update name if it's empty or matches the previous auto-generated label
+      const shouldAutoUpdateName = !prev.name || prev.name === previousAutoLabel;
+      return {
+        ...prev,
+        key: value,
+        name: shouldAutoUpdateName ? newAutoLabel : prev.name,
+      };
+    });
     validateKey(value);
   };
 
@@ -100,7 +111,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
       const createContactAttributeKeyResponse = await createContactAttributeKeyAction({
         environmentId,
         key: formData.key,
-        name: formData.name || formData.key,
+        name: formData.name || formatSnakeCaseToTitleCase(formData.key),
         description: formData.description || undefined,
         dataType: formData.dataType,
       });

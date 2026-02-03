@@ -13,11 +13,6 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
     getContactAttributesWithMetadata(contactId),
   ]);
 
-  // Helper to get attribute value by key
-  const getAttributeValue = (key: string): string | undefined => {
-    return attributesWithMetadata.find((attr) => attr.key === key)?.value;
-  };
-
   if (!contact) {
     throw new Error(t("environments.contacts.contact_not_found"));
   }
@@ -25,52 +20,41 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
   const responses = await getResponsesByContactId(contactId);
   const numberOfResponses = responses?.length || 0;
 
-  const email = getAttributeValue("email");
-  const language = getAttributeValue("language");
-  const userId = getAttributeValue("userId");
+  const systemAttributes = attributesWithMetadata
+    .filter((attr) => attr.type === "default")
+    .sort((a, b) => (a.name || a.key).localeCompare(b.name || b.key));
+
+  const customAttributes = attributesWithMetadata
+    .filter((attr) => attr.type === "custom")
+    .sort((a, b) => (a.name || a.key).localeCompare(b.name || b.key));
+
+  const renderAttributeValue = (attr: (typeof attributesWithMetadata)[number]) => {
+    if (!attr.value) {
+      return <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>;
+    }
+
+    // Special handling for userId to show IdBadge
+    if (attr.key === "userId") {
+      return <IdBadge id={attr.value} />;
+    }
+
+    return formatAttributeValue(attr.value, attr.dataType);
+  };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-bold text-slate-700">{t("common.attributes")}</h2>
-      <div>
-        <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
-          <span className="text-slate-400">{getContactAttributeDataTypeIcon("string")}</span>
-          <span>email</span>
-        </dt>
-        <dd className="ph-no-capture mt-1 text-sm text-slate-900">
-          {email ? (
-            <span>{email}</span>
-          ) : (
-            <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>
-          )}
-        </dd>
-      </div>
-      <div>
-        <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
-          <span className="text-slate-400">{getContactAttributeDataTypeIcon("string")}</span>
-          <span>language</span>
-        </dt>
-        <dd className="ph-no-capture mt-1 text-sm text-slate-900">
-          {language ? (
-            <span>{language}</span>
-          ) : (
-            <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>
-          )}
-        </dd>
-      </div>
-      <div>
-        <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
-          <span className="text-slate-400">{getContactAttributeDataTypeIcon("string")}</span>
-          <span>userId</span>
-        </dt>
-        <dd className="ph-no-capture mt-1 text-sm text-slate-900">
-          {userId ? (
-            <IdBadge id={userId} />
-          ) : (
-            <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>
-          )}
-        </dd>
-      </div>
+      <h2 className="text-lg font-bold text-slate-700">{t("environments.contacts.system_attributes")}</h2>
+
+      {systemAttributes.map((attr) => (
+        <div key={attr.key}>
+          <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
+            <span className="text-slate-400">{getContactAttributeDataTypeIcon(attr.dataType)}</span>
+            <span>{attr.name || attr.key}</span>
+          </dt>
+          <dd className="ph-no-capture mt-1 text-sm text-slate-900">{renderAttributeValue(attr)}</dd>
+        </div>
+      ))}
+
       <div>
         <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
           <span className="text-slate-400">{getContactAttributeDataTypeIcon("string")}</span>
@@ -79,21 +63,22 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">{contact.id}</dd>
       </div>
 
-      {attributesWithMetadata
-        .filter((attr) => attr.key !== "email" && attr.key !== "userId" && attr.key !== "language")
-        .map((attr) => {
-          return (
+      {customAttributes.length > 0 && (
+        <>
+          <hr />
+          <h2 className="text-lg font-bold text-slate-700">{t("environments.contacts.custom_attributes")}</h2>
+          {customAttributes.map((attr) => (
             <div key={attr.key}>
               <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
                 <span className="text-slate-400">{getContactAttributeDataTypeIcon(attr.dataType)}</span>
                 <span>{attr.name || attr.key}</span>
               </dt>
-              <dd className="mt-1 text-sm text-slate-900">
-                {formatAttributeValue(attr.value, attr.dataType)}
-              </dd>
+              <dd className="mt-1 text-sm text-slate-900">{renderAttributeValue(attr)}</dd>
             </div>
-          );
-        })}
+          ))}
+        </>
+      )}
+
       <hr />
 
       <div>

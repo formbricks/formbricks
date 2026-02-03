@@ -1,8 +1,9 @@
 "use client";
 
 import { ChevronDownIcon } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,
@@ -46,6 +47,22 @@ export const UploadContactsAttributeCombobox = ({
       setSearchValue("");
     }
   }, [open, setSearchValue]);
+
+  // Check if the search value is a valid safe identifier for creating new attributes
+  const isValidNewKey = useMemo(() => {
+    if (!searchValue) return false;
+    return isSafeIdentifier(searchValue.trim());
+  }, [searchValue]);
+
+  const existingKeyMatch = useMemo(() => {
+    return keys.find((tag) => tag?.label?.toLowerCase().includes(searchValue?.toLowerCase()));
+  }, [keys, searchValue]);
+
+  const handleCreateKey = () => {
+    if (isValidNewKey && !existingKeyMatch) {
+      createKey(searchValue.trim());
+    }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -91,14 +108,12 @@ export const UploadContactsAttributeCombobox = ({
                   ? "Add attribute"
                   : t("environments.contacts.upload_contacts_modal_attributes_search_or_add")
               }
-              className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+              className="border-b border-none border-transparent shadow-none ring-offset-transparent outline-0 focus:border-none focus:border-transparent focus:shadow-none focus:ring-offset-transparent focus:outline-0"
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && searchValue !== "") {
-                  if (!keys.find((tag) => tag?.label?.toLowerCase().includes(searchValue?.toLowerCase()))) {
-                    createKey(searchValue);
-                  }
+                  handleCreateKey();
                 }
               }}
             />
@@ -119,18 +134,24 @@ export const UploadContactsAttributeCombobox = ({
                   </CommandItem>
                 );
               })}
-              {searchValue !== "" &&
-                !keys.find((tag) => tag.label === searchValue) &&
-                !keys.find((tag) => tag.label === searchValue) && (
-                  <CommandItem value="_create">
+              {searchValue !== "" && !keys.find((tag) => tag.label === searchValue) && (
+                <CommandItem value="_create">
+                  {isValidNewKey ? (
                     <button
-                      onClick={() => createKey(searchValue)}
+                      onClick={handleCreateKey}
                       className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!!keys.find((tag) => tag.label === searchValue)}>
+                      disabled={!!existingKeyMatch}>
                       + Add {searchValue}
                     </button>
-                  </CommandItem>
-                )}
+                  ) : (
+                    <div className="flex flex-col py-1 text-xs text-slate-500">
+                      <span className="text-red-500">
+                        {t("environments.contacts.attribute_key_safe_identifier_required")}
+                      </span>
+                    </div>
+                  )}
+                </CommandItem>
+              )}
             </CommandGroup>
           </CommandList>
         </Command>

@@ -28,7 +28,13 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { updateContactAttributesAction } from "../actions";
 import { TEditContactAttributesForm, createEditContactAttributesSchema } from "../types/contact";
 
@@ -93,22 +99,22 @@ export const EditContactAttributesModal = ({
     string: TagIcon,
   } as const;
 
-  // Prepare combobox options from attribute keys with data type icons
-  const allKeyOptions: TComboboxOption[] = attributeKeys.map((attrKey) => ({
+  // Prepare select options from attribute keys
+  const allKeyOptions = attributeKeys.map((attrKey) => ({
     icon: dataTypeIcons[attrKey.dataType] ?? TagIcon,
     label: attrKey.name ?? attrKey.key,
     value: attrKey.key,
   }));
 
   // Get available options for a specific field index (exclude already selected keys from other fields)
-  const getAvailableOptions = (currentIndex: number): TComboboxOption[] => {
+  const getAvailableOptions = (currentIndex: number) => {
     const selectedKeys = new Set(
       watchedAttributes
         .map((attr, index) => (index !== currentIndex && attr.key ? String(attr.key) : null))
         .filter((key): key is string => key !== null && key !== "")
     );
 
-    return allKeyOptions.filter((option) => !selectedKeys.has(String(option.value)));
+    return allKeyOptions.filter((option) => !selectedKeys.has(option.value));
   };
 
   // Reset form when modal closes
@@ -227,29 +233,49 @@ export const EditContactAttributesModal = ({
                     <FormField
                       control={form.control}
                       name={`attributes.${index}.key`}
-                      render={({ field: keyField }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel>{t("environments.contacts.attribute_key")}</FormLabel>
-                          <FormControl>
-                            <InputCombobox
-                              id={`attribute-key-${index}`}
-                              options={getAvailableOptions(index)}
-                              value={keyField.value || null}
-                              onChangeValue={(value) => {
-                                keyField.onChange(typeof value === "string" ? value : String(value || ""));
-                              }}
-                              withInput={true}
-                              showSearch={true}
-                              inputProps={{
-                                placeholder: t("environments.contacts.attribute_key_placeholder"),
-                                className: "w-full border-0",
-                              }}
-                              iconClassName="h-4 w-4 text-slate-400"
-                            />
-                          </FormControl>
-                          <FormError />
-                        </FormItem>
-                      )}
+                      render={({ field: keyField }) => {
+                        const availableOptions = getAvailableOptions(index);
+                        const selectedOption = allKeyOptions.find((opt) => opt.value === keyField.value);
+                        const Icon = selectedOption?.icon ?? TagIcon;
+
+                        return (
+                          <FormItem className="flex-1">
+                            <FormLabel>{t("environments.contacts.attribute_key")}</FormLabel>
+                            <FormControl>
+                              <Select
+                                value={keyField.value || undefined}
+                                onValueChange={(value) => keyField.onChange(value)}>
+                                <SelectTrigger id={`attribute-key-${index}`} className="w-full">
+                                  {keyField.value ? (
+                                    <span className="flex items-center gap-2">
+                                      <Icon className="h-4 w-4 text-slate-400" />
+                                      <span>{selectedOption?.label ?? keyField.value}</span>
+                                    </span>
+                                  ) : (
+                                    <SelectValue
+                                      placeholder={t("environments.contacts.select_attribute_key")}
+                                    />
+                                  )}
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableOptions.map((option) => {
+                                    const OptionIcon = option.icon;
+                                    return (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        <span className="flex items-center gap-2">
+                                          <OptionIcon className="h-4 w-4 text-slate-400" />
+                                          <span>{option.label}</span>
+                                        </span>
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormError />
+                          </FormItem>
+                        );
+                      }}
                     />
 
                     <FormField
@@ -333,10 +359,13 @@ export const EditContactAttributesModal = ({
                 ))}
               </div>
 
-              <Button type="button" variant="secondary" onClick={handleAddAttribute} className="w-fit">
-                <PlusIcon className="mr-2 h-4 w-4" />
-                {t("environments.contacts.add_attribute")}
-              </Button>
+              {/* Only show Add Attribute button if there are remaining attributes to add */}
+              {watchedAttributes.length < attributeKeys.length && (
+                <Button type="button" variant="secondary" onClick={handleAddAttribute} className="w-fit">
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  {t("environments.contacts.add_attribute")}
+                </Button>
+              )}
 
               {form.formState.errors.attributes?.root && (
                 <FormError>{form.formState.errors.attributes.root.message}</FormError>

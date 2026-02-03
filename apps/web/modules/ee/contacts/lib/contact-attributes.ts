@@ -15,6 +15,7 @@ const selectContactAttribute = {
     select: {
       key: true,
       name: true,
+      type: true,
       dataType: true,
     },
   },
@@ -58,6 +59,7 @@ export const getContactAttributesWithMetadata = reactCache(async (contactId: str
     return prismaAttributes.map((attr) => ({
       key: attr.attributeKey.key,
       name: attr.attributeKey.name,
+      type: attr.attributeKey.type,
       value: attr.value,
       valueNumber: attr.valueNumber,
       valueDate: attr.valueDate,
