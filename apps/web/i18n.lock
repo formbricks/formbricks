@@ -227,6 +227,7 @@ checksums:
     common/label: a5c71bf158481233f8215dbd38cc196b
     common/language: 277fd1a41cc237a437cd1d5e4a80463b
     common/learn_more: e598091d132f890c37a6d4ed94f6d794
+    common/license_expired: 7af13535e320e4197989472c01387d2c
     common/light_overlay: 0499907ea7b8405f4267b117998b5a78
     common/limits_reached: 98879ae8c2be281ad6d283d7029d0148
     common/link: 60f0aa33e70ca6df3b6659802b16f433
@@ -434,6 +435,7 @@ checksums:
     common/you_have_reached_your_monthly_miu_limit_of: ded62fc6842c707f62622386ca34f71a
     common/you_have_reached_your_monthly_response_limit_of: 3824db23ecc3dcd2b1787b98ccfdd5f9
     common/you_will_be_downgraded_to_the_community_edition_on_date: bff35b54c13e2c205dc4c19056261cc0
+    common/your_license_has_expired_please_renew: 3f21ae4a7deab351b143b407ece58254
     emails/accept: f8cc1de4f5e3c850cfdbbc0ec831ade7
     emails/click_or_drag_to_upload_files: 64f59bc339568d52b8464b82546b70ea
     emails/email_customization_preview_email_heading: 8b798cb8438b3dd356c02dab33b4c897

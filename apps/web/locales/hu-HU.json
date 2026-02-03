@@ -254,6 +254,7 @@
     "label": "Címke",
     "language": "Nyelv",
     "learn_more": "Tudjon meg többet",
+    "license_expired": "Licenc lejárt",
     "light_overlay": "Világos rávetítés",
     "limits_reached": "Korlátok elérve",
     "link": "Összekapcsolás",
@@ -460,7 +461,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Elérte a(z) {projectLimit} munkaterületből álló korlátot.",
     "you_have_reached_your_monthly_miu_limit_of": "Elérte a havi MIU-korlátját ennek:",
     "you_have_reached_your_monthly_response_limit_of": "Elérte a havi válaszkorlátját ennek:",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Vissza lesz állítva a közösségi kiadásra ekkor: {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Vissza lesz állítva a közösségi kiadásra ekkor: {date}.",
+    "your_license_has_expired_please_renew": "A vállalati licenced lejárt. Kérjük, újítsd meg, hogy továbbra is használhasd a vállalati funkciókat."
   },
   "emails": {
     "accept": "Elfogadás",
@@ -1271,6 +1273,7 @@
         "disable_the_visibility_of_survey_progress": "A kérdőív előrehaladási folyamata láthatóságának letiltása.",
         "display_an_estimate_of_completion_time_for_survey": "A kérdőív becsült kitöltési idejének megjelenítése",
         "display_number_of_responses_for_survey": "A kérdőív válaszai számának megjelenítése",
+        "display_type": "Megjelenítési típus",
         "divide": "Osztás /",
         "does_not_contain": "Nem tartalmazza",
         "does_not_end_with": "Nem ezzel végződik",
@@ -1278,6 +1281,7 @@
         "does_not_include_all_of": "Nem tartalmazza ezekből az összeset",
         "does_not_include_one_of": "Nem tartalmazza ezek egyikét",
         "does_not_start_with": "Nem ezzel kezdődik",
+        "dropdown": "Legördülő menü",
         "duplicate_block": "Blokk kettőzése",
         "duplicate_question": "Kérdés kettőzése",
         "edit_link": "Hivatkozás szerkesztése",
@@ -1410,6 +1414,7 @@
         "limit_the_maximum_file_size": "A legnagyobb fájlméret korlátozása a feltöltéseknél.",
         "limit_upload_file_size_to": "Feltöltési fájlméret korlátozása erre:",
         "link_survey_description": "Egy kérdőív oldalára mutató hivatkozás megosztása vagy a kérdőív beágyazása egy weboldalba vagy e-mailbe.",
+        "list": "Lista",
         "load_segment": "Szakasz betöltése",
         "logic_error_warning": "A változtatás logikai hibákat fog okozni",
         "logic_error_warning_text": "A kérdés típusának megváltoztatása eltávolítja a logikai feltételeket ebből a kérdésből.",

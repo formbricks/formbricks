@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "A válaszadók nem fogják látni ezt a kártyát",
     "retry": "Újrapróbálkozás",
     "retrying": "Újrapróbálkozás…",
+    "select_option": "Válassz egy lehetőséget",
+    "select_options": "Válassz lehetőségeket",
     "sending_responses": "Válaszok küldése…",
     "takes_less_than_x_minutes": "{count, plural, one {Kevesebb mint 1 percet vesz igénybe} other {Kevesebb mint {count} percet vesz igénybe}}",
     "takes_x_minutes": "{count, plural, one {1 percet vesz igénybe} other {{count} percet vesz igénybe}}",
