@@ -71,6 +71,12 @@ export const PUT = withV1ApiWrapper({
       };
     }
 
+    if (!response) {
+      return {
+        response: responses.notFoundResponse("Response", responseId, true),
+      };
+    }
+
     if (response.finished) {
       return {
         response: responses.badRequestResponse("Response is already finished", undefined, true),
