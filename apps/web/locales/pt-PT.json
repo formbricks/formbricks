@@ -1648,7 +1648,7 @@
         "validation_rules": "Regras de validação",
         "validation_rules_description": "Aceitar apenas respostas que cumpram os seguintes critérios",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} é usada na lógica da pergunta {questionIndex}. Por favor, remova-a da lógica primeiro.",
-        "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variável \"{variableName}\" está a ser utilizada na quota \"{quotaName}\"",
+        "variable_is_used_in_quota_please_remove_it_from_quota_first": "A variável \"{variableName}\" está a ser usada na quota \"{quotaName}\"",
         "variable_name_conflicts_with_hidden_field": "O nome da variável está em conflito com um ID de campo oculto existente.",
         "variable_name_is_already_taken_please_choose_another": "O nome da variável já está em uso, por favor escolha outro.",
         "variable_name_must_start_with_a_letter": "O nome da variável deve começar com uma letra.",

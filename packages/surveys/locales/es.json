@@ -48,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "Por favor, desactive la protección contra spam en la configuración de la encuesta para continuar usando este dispositivo.",
-      "title": "Este dispositivo no es compatible con la protección contra spam."
+      "title": "Este dispositivo no admite protección contra spam."
     },
     "invalid_format": "Por favor, introduce un formato válido",
     "is_between": "Por favor, selecciona una fecha entre {startDate} y {endDate}",
@@ -71,7 +71,7 @@
     "please_fill_out_this_field": "Por favor, complete este campo",
     "recaptcha_error": {
       "message": "Su respuesta no pudo ser enviada porque fue marcada como actividad automatizada. Si respira, por favor inténtelo de nuevo.",
-      "title": "No pudimos verificar que usted es humano."
+      "title": "No pudimos verificar que eres humano."
     },
     "value_must_contain": "El valor debe contener {value}",
     "value_must_equal": "El valor debe ser igual a {value}",

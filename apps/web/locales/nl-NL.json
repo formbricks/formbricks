@@ -1474,7 +1474,7 @@
         "question_id_updated": "Vraag-ID bijgewerkt",
         "question_used_in_logic_warning_text": "Elementen uit dit blok worden gebruikt in een logische regel, weet je zeker dat je het wilt verwijderen?",
         "question_used_in_logic_warning_title": "Logica-inconsistentie",
-        "question_used_in_quota": "Deze vraag wordt gebruikt in het quotum '{quotaName}'",
+        "question_used_in_quota": "Deze vraag wordt gebruikt in het quotum “{quotaName}”",
         "question_used_in_recall": "Deze vraag wordt teruggehaald in vraag {questionIndex}.",
         "question_used_in_recall_ending_card": "Deze vraag wordt teruggeroepen in de Eindkaart",
         "quotas": {
@@ -1648,7 +1648,7 @@
         "validation_rules": "Validatieregels",
         "validation_rules_description": "Accepteer alleen antwoorden die voldoen aan de volgende criteria",
         "variable_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{variable} wordt gebruikt in de logica van vraag {questionIndex}. Verwijder het eerst uit de logica.",
-        "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variabele \"{variableName}\" wordt gebruikt in het \"{quotaName}\" quotum",
+        "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variabele “{variableName}” wordt gebruikt in het quotum “{quotaName}”",
         "variable_name_conflicts_with_hidden_field": "Variabelenaam conflicteert met een bestaande verborgen veld-ID.",
         "variable_name_is_already_taken_please_choose_another": "Variabelenaam is al in gebruik, kies een andere.",
         "variable_name_must_start_with_a_letter": "Variabelenaam moet beginnen met een letter.",

@@ -48,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "Vänligen inaktivera skräppostskyddet i enkätinställningarna för att fortsätta använda denna enhet.",
-      "title": "Denna enhet stöder inte skräppostskydd."
+      "title": "Den här enheten stöder inte skräppostskydd."
     },
     "invalid_format": "Ange ett giltigt format",
     "is_between": "Välj ett datum mellan {startDate} och {endDate}",
@@ -71,7 +71,7 @@
     "please_fill_out_this_field": "Vänligen fyll i detta fält",
     "recaptcha_error": {
       "message": "Ditt svar kunde inte skickas eftersom det flaggades som automatiserad aktivitet. Om du andas, försök igen.",
-      "title": "Vi kunde inte verifiera att du är människa."
+      "title": "Vi kunde inte verifiera att du är en människa."
     },
     "value_must_contain": "Värdet måste innehålla {value}",
     "value_must_equal": "Värdet måste vara {value}",
