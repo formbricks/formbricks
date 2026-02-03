@@ -83,17 +83,37 @@ export const addPageUrlEventListeners = (): void => {
 
   // Monkey patch history methods if not already done
   if (!isHistoryPatched) {
-    // eslint-disable-next-line @typescript-eslint/unbound-method -- We need to access the original method
-    const originalPushState = history.pushState;
+    try {
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- We need to access the original method
+      const originalPushState = history.pushState;
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- We need to access the original method
+      const originalReplaceState = history.replaceState;
 
-    // eslint-disable-next-line func-names -- We need an anonymous function here
-    history.pushState = function (...args) {
-      originalPushState.apply(this, args);
-      const event = new Event("pushstate");
-      window.dispatchEvent(event);
-    };
+      // Use Object.defineProperty to override read-only properties
+      Object.defineProperty(history, "pushState", {
+        value: function (...args: Parameters<typeof originalPushState>) {
+          originalPushState.apply(this, args);
+          const event = new Event("pushstate");
+          window.dispatchEvent(event);
+        },
+        writable: true,
+        configurable: true,
+      });
 
-    isHistoryPatched = true;
+      Object.defineProperty(history, "replaceState", {
+        value: function (...args: Parameters<typeof originalReplaceState>) {
+          originalReplaceState.apply(this, args);
+          const event = new Event("replacestate");
+          window.dispatchEvent(event);
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      isHistoryPatched = true;
+    } catch (error) {
+      console.error("🧱 Formbricks - Failed to patch history methods:", error);
+    }
   }
 
   events.forEach((event) => {
