@@ -9,6 +9,7 @@ import {
   MessageCircle,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
+  PieChart,
   RocketIcon,
   ShapesIcon,
   UserCircleIcon,
@@ -108,6 +109,13 @@ export const MainNavigation = ({
         isHidden: false,
       },
       {
+        name: t("common.analysis"),
+        href: `/environments/${environment.id}/analysis`,
+        icon: PieChart,
+        isActive: pathname?.includes("/analysis"),
+        isHidden: false,
+      },
+      {
         href: `/environments/${environment.id}/contacts`,
         name: "Distribute",
         icon: UserIcon,
@@ -118,12 +126,6 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/workspace/unify`,
         icon: ShapesIcon,
         isActive: pathname?.includes("/unify") && !pathname?.includes("/analyze"),
-      },
-      {
-        name: "Analyze",
-        href: `/environments/${environment.id}/workspace/analyze`,
-        icon: BarChartIcon,
-        isActive: pathname?.includes("/workspace/analyze"),
       },
       {
         name: "Configure",
