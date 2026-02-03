@@ -254,6 +254,8 @@ export function MultipleChoiceMultiElement({
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
+        placeholder={t("common.select_options")}
+        variant={element.displayType ?? "list"}
         otherOptionId={otherOption?.id}
         otherOptionLabel={otherOption ? getLocalizedValue(otherOption.label, languageCode) : undefined}
         otherOptionPlaceholder={

@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Los encuestados no verán esta tarjeta",
     "retry": "Reintentar",
     "retrying": "Reintentando...",
+    "select_option": "Selecciona una opción",
+    "select_options": "Selecciona opciones",
     "sending_responses": "Enviando respuestas...",
     "takes_less_than_x_minutes": "{count, plural, one {Toma menos de 1 minuto} other {Toma menos de {count} minutos}}",
     "takes_x_minutes": "{count, plural, one {Toma 1 minuto} other {Toma {count} minutos}}",

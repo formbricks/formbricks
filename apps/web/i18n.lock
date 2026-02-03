@@ -227,6 +227,7 @@ checksums:
     common/label: a5c71bf158481233f8215dbd38cc196b
     common/language: 277fd1a41cc237a437cd1d5e4a80463b
     common/learn_more: e598091d132f890c37a6d4ed94f6d794
+    common/license_expired: 7af13535e320e4197989472c01387d2c
     common/light_overlay: 0499907ea7b8405f4267b117998b5a78
     common/limits_reached: 98879ae8c2be281ad6d283d7029d0148
     common/link: 60f0aa33e70ca6df3b6659802b16f433
@@ -434,6 +435,7 @@ checksums:
     common/you_have_reached_your_monthly_miu_limit_of: ded62fc6842c707f62622386ca34f71a
     common/you_have_reached_your_monthly_response_limit_of: 3824db23ecc3dcd2b1787b98ccfdd5f9
     common/you_will_be_downgraded_to_the_community_edition_on_date: bff35b54c13e2c205dc4c19056261cc0
+    common/your_license_has_expired_please_renew: 3f21ae4a7deab351b143b407ece58254
     emails/accept: f8cc1de4f5e3c850cfdbbc0ec831ade7
     emails/click_or_drag_to_upload_files: 64f59bc339568d52b8464b82546b70ea
     emails/email_customization_preview_email_heading: 8b798cb8438b3dd356c02dab33b4c897
@@ -1200,6 +1202,7 @@ checksums:
     environments/surveys/edit/disable_the_visibility_of_survey_progress: 2af631010114307ac2a91612559c9618
     environments/surveys/edit/display_an_estimate_of_completion_time_for_survey: 03f0a816569399c1c61d08dbc913de06
     environments/surveys/edit/display_number_of_responses_for_survey: 06294567ecba9aba2cce337c669577f6
+    environments/surveys/edit/display_type: 68c2deaca48289119f1a988ede39dbad
     environments/surveys/edit/divide: ca443836e15d0a1cbde5f03cc8edba78
     environments/surveys/edit/does_not_contain: d618eb0f854f7efa0d7c644e6628fa42
     environments/surveys/edit/does_not_end_with: 885c4c1981b97a4bfa213e185b78b6c4
@@ -1207,6 +1210,7 @@ checksums:
     environments/surveys/edit/does_not_include_all_of: c18c1a71e6d96c681a3e95c7bd6c9482
     environments/surveys/edit/does_not_include_one_of: 91090d2e0667faf654f6a81d9857440f
     environments/surveys/edit/does_not_start_with: 9395869b54cdfb353a51a7e0864f4fd7
+    environments/surveys/edit/dropdown: b4069d14e572b53ca4156d25b0a970c1
     environments/surveys/edit/duplicate_block: d4ea4afb5fc5b18a81cbe0302fa05997
     environments/surveys/edit/duplicate_question: 910751de01fdd327165968214717711b
     environments/surveys/edit/edit_link: 40ba9e15beac77a46c5baf30be84ac54
@@ -1339,6 +1343,7 @@ checksums:
     environments/surveys/edit/limit_the_maximum_file_size: 6ae5944fe490b9acdaaee92b30381ec0
     environments/surveys/edit/limit_upload_file_size_to: 949c48d25ae45259cc19464e95752d29
     environments/surveys/edit/link_survey_description: f45569b5e6b78be6bc02bc6a46da948b
+    environments/surveys/edit/list: 94f13e7ef909a4de9db7abaa1f9f0b61
     environments/surveys/edit/load_segment: 5341d3de37ff10f7526152e38e25e3c5
     environments/surveys/edit/logic_error_warning: 542fbb918ffdb29e6f9a4a6196ffb558
     environments/surveys/edit/logic_error_warning_text: f2afad8852a95ed169a39959efbf592c

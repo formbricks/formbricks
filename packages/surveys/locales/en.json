@@ -28,7 +28,9 @@
     "terms_of_service": "Terms of Service",
     "the_servers_cannot_be_reached_at_the_moment": "The servers cannot be reached at the moment.",
     "they_will_be_redirected_immediately": "They will be redirected immediately",
-    "your_feedback_is_stuck": "Your feedback is stuck :("
+    "your_feedback_is_stuck": "Your feedback is stuck :(",
+    "select_option": "Select an option",
+    "select_options": "Select options"
   },
   "errors": {
     "all_options_must_be_ranked": "Please rank all options",

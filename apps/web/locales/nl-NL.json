@@ -254,6 +254,7 @@
     "label": "Label",
     "language": "Taal",
     "learn_more": "Meer informatie",
+    "license_expired": "License Expired",
     "light_overlay": "Lichte overlay",
     "limits_reached": "Grenzen bereikt",
     "link": "Link",
@@ -460,7 +461,8 @@
     "you_have_reached_your_limit_of_workspace_limit": "Je hebt je limiet van {projectLimit} werkruimtes bereikt.",
     "you_have_reached_your_monthly_miu_limit_of": "U heeft uw maandelijkse MIU-limiet van bereikt",
     "you_have_reached_your_monthly_response_limit_of": "U heeft uw maandelijkse responslimiet bereikt van",
-    "you_will_be_downgraded_to_the_community_edition_on_date": "Je wordt gedowngraded naar de Community-editie op {date}."
+    "you_will_be_downgraded_to_the_community_edition_on_date": "Je wordt gedowngraded naar de Community-editie op {date}.",
+    "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."
   },
   "emails": {
     "accept": "Accepteren",
@@ -1271,6 +1273,7 @@
         "disable_the_visibility_of_survey_progress": "Schakel de zichtbaarheid van de voortgang van het onderzoek uit.",
         "display_an_estimate_of_completion_time_for_survey": "Geef een schatting weer van de voltooiingstijd voor het onderzoek",
         "display_number_of_responses_for_survey": "Weergave aantal reacties voor enquête",
+        "display_type": "Weergavetype",
         "divide": "Verdeling /",
         "does_not_contain": "Bevat niet",
         "does_not_end_with": "Eindigt niet met",
@@ -1278,6 +1281,7 @@
         "does_not_include_all_of": "Omvat niet alles",
         "does_not_include_one_of": "Bevat niet een van",
         "does_not_start_with": "Begint niet met",
+        "dropdown": "Dropdown",
         "duplicate_block": "Blok dupliceren",
         "duplicate_question": "Vraag dupliceren",
         "edit_link": "Link bewerken",
@@ -1410,6 +1414,7 @@
         "limit_the_maximum_file_size": "Beperk de maximale bestandsgrootte voor uploads.",
         "limit_upload_file_size_to": "Beperk uploadbestandsgrootte tot",
         "link_survey_description": "Deel een link naar een enquêtepagina of sluit deze in op een webpagina of e-mail.",
+        "list": "Lijst",
         "load_segment": "Laadsegment",
         "logic_error_warning": "Wijzigen zal logische fouten veroorzaken",
         "logic_error_warning_text": "Als u het vraagtype wijzigt, worden de logische voorwaarden van deze vraag verwijderd",
