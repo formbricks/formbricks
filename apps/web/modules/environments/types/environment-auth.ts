@@ -15,6 +15,7 @@ type TEnterpriseLicense = {
   lastChecked: Date;
   isPendingDowngrade: boolean;
   fallbackLevel: string;
+  status: "active" | "expired" | "unreachable" | "no-license";
 };
 
 export const ZEnvironmentAuth = z.object({

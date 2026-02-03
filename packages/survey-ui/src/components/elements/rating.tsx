@@ -15,7 +15,7 @@ import {
   TiredFace,
   WearyFace,
 } from "@/components/general/smileys";
-import { cn } from "@/lib/utils";
+import { cn, getRTLScaleOptionClasses } from "@/lib/utils";
 
 /**
  * Get smiley color class based on range and index
@@ -220,18 +220,9 @@ function Rating({
     const isLast = totalLength === number;
     const isFirst = number === 1;
 
-    // Determine border radius and border classes
-    // Use right border for all items to create separators, left border only on first item
-    let borderRadiusClasses = "";
-    let borderClasses = "border-t border-b border-r";
-
-    if (isFirst) {
-      borderRadiusClasses = dir === "rtl" ? "rounded-r-input" : "rounded-l-input";
-      borderClasses = "border-t border-b border-l border-r";
-    } else if (isLast) {
-      borderRadiusClasses = dir === "rtl" ? "rounded-l-input" : "rounded-r-input";
-      // Last item keeps right border for rounded corner
-    }
+    // Use CSS logical properties for RTL-aware borders and border radius
+    // The parent div's dir attribute automatically handles direction
+    const { borderRadiusClasses, borderClasses } = getRTLScaleOptionClasses(isFirst, isLast);
 
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
@@ -269,7 +260,7 @@ function Rating({
         }}>
         {colorCoding ? (
           <div
-            className={cn("absolute top-0 left-0 h-[6px] w-full", getRatingNumberOptionColor(range, number))}
+            className={cn("absolute left-0 top-0 h-[6px] w-full", getRatingNumberOptionColor(range, number))}
           />
         ) : null}
         <input
@@ -418,7 +409,7 @@ function Rating({
       {/* Rating Options */}
       <div className="relative">
         <ElementError errorMessage={errorMessage} dir={dir} />
-        <fieldset className="w-full">
+        <fieldset className="w-full" dir={dir}>
           <legend className="sr-only">Rating options</legend>
           <div className="flex w-full px-[2px]">
             {ratingOptions.map((number, index) => {

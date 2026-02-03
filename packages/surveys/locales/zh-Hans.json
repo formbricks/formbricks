@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "受访者将不会看到此卡片",
     "retry": "重试",
     "retrying": "重试中...",
+    "select_option": "请选择一个选项",
+    "select_options": "请选择多个选项",
     "sending_responses": "正在发送响应...",
     "takes_less_than_x_minutes": "{count, plural, one {少于 1 分钟} other {少于 {count} 分钟}}",
     "takes_x_minutes": "{count, plural, one {1 分钟} other {{count} 分钟}}",

@@ -186,6 +186,10 @@ export const SurveyVariablesCardItem = ({
                   if (!/^[a-z]/.test(value)) {
                     return t("environments.surveys.edit.variable_name_must_start_with_a_letter");
                   }
+                  const hiddenFieldIds = localSurvey.hiddenFields?.fieldIds ?? [];
+                  if (hiddenFieldIds.some((id) => id.toLowerCase() === value.toLowerCase())) {
+                    return t("environments.surveys.edit.variable_name_conflicts_with_hidden_field");
+                  }
                 },
               }}
               render={({ field }) => (

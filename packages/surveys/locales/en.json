@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Respondents will not see this card",
     "retry": "Retry",
     "retrying": "Retrying...",
+    "select_option": "Select an option",
+    "select_options": "Select options",
     "sending_responses": "Sending responses...",
     "takes_less_than_x_minutes": "{count, plural, one {Takes less than 1 minute} other {Takes less than {count} minutes}}",
     "takes_x_minutes": "{count, plural, one {Takes 1 minute} other {Takes {count} minutes}}",

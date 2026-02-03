@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
+import { type TPlacement } from "@formbricks/types/common";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
@@ -19,6 +20,7 @@ interface StackedCardsContainerProps {
   setBlockId: (blockId: string) => void;
   shouldResetBlockId?: boolean;
   fullSizeCards: boolean;
+  placement?: TPlacement;
 }
 
 export function StackedCardsContainer({
@@ -30,6 +32,7 @@ export function StackedCardsContainer({
   setBlockId,
   shouldResetBlockId = true,
   fullSizeCards = false,
+  placement = "bottomRight",
 }: Readonly<StackedCardsContainerProps>) {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor = survey.styling?.overwriteThemeStyling
@@ -140,9 +143,9 @@ export function StackedCardsContainer({
   }, [cardArrangement]);
 
   return (
-    <div
+    <div // NOSONAR - hover handlers are for visual feedback on card animation, not interactive content
       data-testid="stacked-cards-container"
-      className="relative flex h-full items-end justify-center md:items-center"
+      className="relative flex h-full items-center justify-center"
       onMouseEnter={() => {
         setHovered(true);
       }}
@@ -179,6 +182,7 @@ export function StackedCardsContainer({
               cardWidth={cardWidth}
               hovered={hovered}
               cardArrangement={cardArrangement}
+              placement={placement}
             />
           );
         })

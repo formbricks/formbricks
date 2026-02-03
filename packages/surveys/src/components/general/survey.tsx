@@ -76,6 +76,7 @@ export function Survey({
   isSpamProtectionEnabled,
   dir = "auto",
   setDir,
+  placement,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -743,7 +744,7 @@ export function Survey({
           return (
             <>
               {localSurvey.type !== "link" ? (
-                <div className="bg-survey-bg flex h-6 justify-end pt-2 pr-2">
+                <div className="bg-survey-bg flex h-6 justify-end pr-2 pt-2">
                   <SurveyCloseButton onClose={onClose} />
                 </div>
               ) : null}
@@ -916,6 +917,7 @@ export function Survey({
       setBlockId={setBlockId}
       shouldResetBlockId={shouldResetQuestionId}
       fullSizeCards={fullSizeCards}
+      placement={placement}
     />
   );
 }

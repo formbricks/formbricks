@@ -157,6 +157,7 @@ describe("License Core Logic", () => {
       lastChecked: expect.any(Date),
       isPendingDowngrade: false,
       fallbackLevel: "live" as const,
+      status: "active" as const,
     };
 
     test("should return cached license from FETCH_LICENSE_CACHE_KEY if available and valid", async () => {
@@ -233,6 +234,7 @@ describe("License Core Logic", () => {
         lastChecked: previousTime,
         isPendingDowngrade: true,
         fallbackLevel: "grace" as const,
+        status: "unreachable" as const,
       });
     });
 
@@ -309,6 +311,7 @@ describe("License Core Logic", () => {
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
+        status: "unreachable" as const,
       });
     });
 
@@ -356,6 +359,7 @@ describe("License Core Logic", () => {
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
+        status: "unreachable" as const,
       });
     });
 
@@ -389,6 +393,7 @@ describe("License Core Logic", () => {
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
+        status: "no-license" as const,
       });
       expect(mockCache.get).not.toHaveBeenCalled();
       expect(mockCache.set).not.toHaveBeenCalled();
@@ -414,6 +419,7 @@ describe("License Core Logic", () => {
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
+        status: "no-license" as const,
       });
     });
   });
