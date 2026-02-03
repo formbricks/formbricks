@@ -32,7 +32,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
           "shadow-input",
           // Placeholder styling
           "placeholder:opacity-input-placeholder",
-          "placeholder:text-input-placeholder placeholder:text-sm",
+          "placeholder:text-input-placeholder",
 
           // Selection styling
           "selection:bg-primary selection:text-primary-foreground",
