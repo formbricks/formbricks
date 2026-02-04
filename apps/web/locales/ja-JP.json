@@ -350,6 +350,7 @@
     "request_trial_license": "トライアルライセンスをリクエスト",
     "reset_to_default": "デフォルトにリセット",
     "response": "回答",
+    "response_id": "回答ID",
     "responses": "回答",
     "restart": "再開",
     "role": "役割",
