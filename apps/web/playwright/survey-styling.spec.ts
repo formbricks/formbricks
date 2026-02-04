@@ -228,9 +228,10 @@ test.describe("Survey Styling", async () => {
     await fillColor("Description Color", "#00ff00");
     await fillDimension("Headline Font Size", "24");
     await fillDimension("Description Font Size", "18");
-    await fillNumber("Headline Font Weight", "700");
+    await fillNumber("Headline Font Weight", "400");
     await fillColor("Headline Label Color", "#0000ff");
     await fillDimension("Headline Label Font Size", "12");
+    await fillNumber("Headline Label Font Weight", "700");
 
     // ===== INPUTS =====
     await page.getByText("Inputs", { exact: true }).click();
@@ -254,7 +255,7 @@ test.describe("Survey Styling", async () => {
     await fillDimension("Border Radius", "6");
     await fillDimension("Height", "44");
     await fillDimension("Font Size", "16");
-    await page.getByLabel("Font Weight").last().fill("600");
+    await page.locator('input[name="buttonFontWeight"]').fill("400");
     await fillDimension("Padding X", "20");
     await fillDimension("Padding Y", "12");
 
@@ -270,7 +271,7 @@ test.describe("Survey Styling", async () => {
     await expect(headline).toBeVisible();
     await expect(headline).toHaveCSS("font-size", "24px");
     await expect(headline).toHaveCSS("color", "rgb(255, 0, 0)");
-    await expect(headline).toHaveCSS("font-weight", "700");
+    await expect(headline).toHaveCSS("font-weight", /400|normal/);
 
     const description = page.locator("#fbjs .label-description").first();
     await expect(description).toHaveCSS("font-size", "18px");
@@ -296,6 +297,7 @@ test.describe("Survey Styling", async () => {
     await expect(upperLabel).toBeVisible();
     await expect(upperLabel).toHaveCSS("color", "rgb(0, 0, 255)");
     await expect(upperLabel).toHaveCSS("font-size", "12px");
+    await expect(upperLabel).toHaveCSS("font-weight", /700|bold/);
   });
 
   test("Apply and verify Inputs, Buttons & Options styling fields", async ({ page, users }) => {

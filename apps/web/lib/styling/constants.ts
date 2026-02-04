@@ -45,6 +45,7 @@ export const ADVANCED_DEFAULTS = {
   elementDescriptionColor: "#0f172a",
   elementUpperLabelFontSize: 12,
   elementUpperLabelColor: "#64748b",
+  elementUpperLabelFontWeight: "400",
   progressTrackHeight: 8,
   progressTrackBgColor: "#0f172a33",
   progressIndicatorBgColor: "#0f172a",
@@ -129,6 +130,7 @@ export const defaultStyling: TProjectStyling = {
   elementUpperLabelColor: {
     light: ADVANCED_DEFAULTS.elementUpperLabelColor,
   },
+  elementUpperLabelFontWeight: ADVANCED_DEFAULTS.elementUpperLabelFontWeight,
   progressTrackHeight: ADVANCED_DEFAULTS.progressTrackHeight,
   progressTrackBgColor: {
     light: ADVANCED_DEFAULTS.progressTrackBgColor,

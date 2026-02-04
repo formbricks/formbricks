@@ -82,7 +82,7 @@ function ElementHeader({
               {headline}
             </Label>
           ) : (
-            <Label htmlFor={htmlFor} variant="headline" className="font-semibold">
+            <Label htmlFor={htmlFor} variant="headline">
               {headline}
             </Label>
           )}

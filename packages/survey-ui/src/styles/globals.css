@@ -67,7 +67,7 @@
      Used for headline text in elements.
      --------------------------------------------------------------------------- */
   --fb-element-headline-font-family: inherit;
-  --fb-element-headline-font-weight: 400;
+  --fb-element-headline-font-weight: 600;
   --fb-element-headline-font-size: 1rem;
   --fb-element-headline-color: var(--input);
   --fb-element-headline-opacity: 1;
@@ -206,7 +206,7 @@
 #fbjs .label-upper,
 #fbjs .label-upper * {
   font-family: var(--fb-element-upper-label-font-family);
-  font-weight: var(--fb-element-upper-label-font-weight);
+  font-weight: var(--fb-element-upper-label-font-weight) !important;
   font-size: var(--fb-element-upper-label-font-size) !important;
   color: var(--fb-element-upper-label-color);
   opacity: var(--fb-element-upper-label-opacity);

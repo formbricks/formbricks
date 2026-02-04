@@ -1945,6 +1945,7 @@ checksums:
     environments/workspace/look/advanced_styling_field_track_height: 9ce57cb4583039c224a37e013efb6b8f
     environments/workspace/look/advanced_styling_field_upper_label_color: 65d75c60dfdba88e5fed38bcb24a0a5d
     environments/workspace/look/advanced_styling_field_upper_label_size: ea0ca9a3ffa1650f97a31df453b0afc7
+    environments/workspace/look/advanced_styling_field_upper_label_weight: 946c5836d2cfaaee21e494424d550887
     environments/workspace/look/advanced_styling_section_buttons: 3b44d6e2800e7bf3f133f1bce435f4c2
     environments/workspace/look/advanced_styling_section_headlines: 6def704c0ac2ecb5951400c806856a41
     environments/workspace/look/advanced_styling_section_inputs: 76bbeb561122a72fd3ec8c49eff7c563

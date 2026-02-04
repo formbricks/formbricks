@@ -57,7 +57,7 @@ export const FormStylingSettings = ({
         )}>
         <div className="inline-flex px-4 py-4">
           {!isSettingsPage && (
-            <div className="flex items-center pr-5 pl-2">
+            <div className="flex items-center pl-2 pr-5">
               <CheckIcon
                 strokeWidth={3}
                 className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -120,6 +120,11 @@ export const FormStylingSettings = ({
                 form={form}
                 name="elementUpperLabelFontSize"
                 label={t("environments.workspace.look.advanced_styling_field_upper_label_size")}
+              />
+              <NumberField
+                form={form}
+                name="elementUpperLabelFontWeight"
+                label={t("environments.workspace.look.advanced_styling_field_upper_label_weight")}
               />
             </div>
           </StylingSection>

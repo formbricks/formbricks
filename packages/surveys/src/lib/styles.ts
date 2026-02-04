@@ -200,7 +200,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("button-height", formatDimension(styling.buttonHeight));
   if (styling.buttonFontSize !== undefined)
     appendCssVariable("button-font-size", formatDimension(styling.buttonFontSize));
-  if (styling.buttonFontWeight !== undefined)
+  if (styling.buttonFontWeight !== undefined && styling.buttonFontWeight !== null)
     appendCssVariable("button-font-weight", `${styling.buttonFontWeight}`);
   if (styling.buttonPaddingX !== undefined)
     appendCssVariable("button-padding-x", formatDimension(styling.buttonPaddingX));
@@ -239,7 +239,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Element Headline & Description (Advanced)
   if (styling.elementHeadlineFontSize !== undefined)
     appendCssVariable("element-headline-font-size", formatDimension(styling.elementHeadlineFontSize));
-  if (styling.elementHeadlineFontWeight !== undefined)
+  if (styling.elementHeadlineFontWeight !== undefined && styling.elementHeadlineFontWeight !== null)
     appendCssVariable("element-headline-font-weight", `${styling.elementHeadlineFontWeight}`);
   appendCssVariable(
     "element-headline-color",
@@ -265,6 +265,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   if (styling.elementUpperLabelColor?.light) {
     appendCssVariable("element-upper-label-opacity", "1");
   }
+
+  appendCssVariable("element-upper-label-font-weight", `${styling.elementUpperLabelFontWeight ?? "normal"}`);
 
   // Progress Bar (Advanced)
   if (styling.progressTrackHeight !== undefined)
@@ -297,6 +299,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 #fbjs .label-upper,
 #fbjs .label-upper * {
   font-size: var(--fb-element-upper-label-font-size) !important;
+  font-weight: var(--fb-element-upper-label-font-weight) !important;
   color: var(--fb-element-upper-label-color) !important;
   opacity: var(--fb-element-upper-label-opacity, 1) !important;
 }

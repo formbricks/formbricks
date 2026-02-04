@@ -49,7 +49,7 @@ export function Headline({
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         ) : (
-          <p data-testid="fb__surveys__headline-text-test" className="label-headline font-semibold">
+          <p data-testid="fb__surveys__headline-text-test" className="label-headline">
             {headline}
           </p>
         )}

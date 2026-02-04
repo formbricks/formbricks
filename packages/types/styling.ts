@@ -52,7 +52,7 @@ export const ZBaseStyling = z.object({
   buttonBorderRadius: z.union([z.number(), z.string()]).nullish(),
   buttonHeight: z.union([z.number(), z.string()]).nullish(),
   buttonFontSize: z.union([z.number(), z.string()]).nullish(),
-  buttonFontWeight: z.string().nullish(), // Font weight is typically string in CSS (e.g. "500", "bold") but provided number in previous schema. Let's allow string.
+  buttonFontWeight: z.union([z.string(), z.number()]).nullish(),
   buttonPaddingX: z.union([z.number(), z.string()]).nullish(),
   buttonPaddingY: z.union([z.number(), z.string()]).nullish(),
 
@@ -78,12 +78,13 @@ export const ZBaseStyling = z.object({
 
   // Headlines & Descriptions
   elementHeadlineFontSize: z.union([z.number(), z.string()]).nullish(),
-  elementHeadlineFontWeight: z.string().nullish(),
+  elementHeadlineFontWeight: z.union([z.string(), z.number()]).nullish(),
   elementHeadlineColor: ZStylingColor.nullish(),
   elementDescriptionFontSize: z.union([z.number(), z.string()]).nullish(),
   elementDescriptionColor: ZStylingColor.nullish(),
   elementUpperLabelFontSize: z.union([z.number(), z.string()]).nullish(),
   elementUpperLabelColor: ZStylingColor.nullish(),
+  elementUpperLabelFontWeight: z.union([z.string(), z.number()]).nullish(),
 
   // Progress Bar
   progressTrackHeight: z.union([z.number(), z.string()]).nullish(),
