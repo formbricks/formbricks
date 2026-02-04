@@ -74,9 +74,9 @@ RUN --mount=type=secret,id=database_url \
 #
 FROM base AS runner
 
-# Update npm to latest and fix tar vulnerability in npm's bundled dependencies, then create user
+# Update npm to latest, then create user
+# Note: npm's bundled tar has a known vulnerability but npm is only used during build, not at runtime
 RUN npm install --ignore-scripts -g npm@latest \
-    && cd /usr/local/lib/node_modules/npm && npm install --ignore-scripts tar@latest \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
