@@ -6,7 +6,7 @@ import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-
 import { Logger } from "@/lib/common/logger";
 import { handleErrorOnFirstSetup, setup, tearDown } from "@/lib/common/setup";
 import { setIsSetup } from "@/lib/common/status";
-import { filterSurveys, isNowExpired } from "@/lib/common/utils";
+import { filterSurveys, getIsDebug, isNowExpired } from "@/lib/common/utils";
 import type * as Utils from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
@@ -56,6 +56,7 @@ vi.mock("@/lib/common/utils", async (importOriginal) => {
     ...originalModule,
     filterSurveys: vi.fn(),
     isNowExpired: vi.fn(),
+    getIsDebug: vi.fn(),
   };
 });
 
@@ -86,6 +87,7 @@ describe("setup.ts", () => {
 
     getInstanceConfigMock = vi.spyOn(Config, "getInstance");
     getInstanceLoggerMock = vi.spyOn(Logger, "getInstance").mockReturnValue(mockLogger as unknown as Logger);
+    (getIsDebug as unknown as Mock).mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -117,7 +119,8 @@ describe("setup.ts", () => {
       }
     });
 
-    test("skips setup if existing config is in error state and not expired", async () => {
+    test("skips setup if existing config is in error state and not expired (debug mode)", async () => {
+      (getIsDebug as unknown as Mock).mockReturnValue(true);
       const mockConfig = {
         get: vi.fn().mockReturnValue({
           environmentId: "env_123",
@@ -131,13 +134,66 @@ describe("setup.ts", () => {
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
 
-      (isNowExpired as unknown as Mock).mockReturnValue(true);
+      (isNowExpired as unknown as Mock).mockReturnValue(false); // Not expired
 
       const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith(
         "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
       );
+    });
+
+    test("skips initialization if error state is active (not expired)", async () => {
+      (getIsDebug as unknown as Mock).mockReturnValue(false);
+      const mockConfig = {
+        get: vi.fn().mockReturnValue({
+          environmentId: "env_123",
+          appUrl: "https://my.url",
+          environment: {},
+          user: { data: {}, expiresAt: null },
+          status: { value: "error", expiresAt: new Date(Date.now() + 10000) },
+        }),
+        resetConfig: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+      (isNowExpired as unknown as Mock).mockReturnValue(false); // Time is NOT up
+
+      const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
+
+      expect(result.ok).toBe(true);
+      // Should NOT fetch environment or user state
+      expect(fetchEnvironmentState).not.toHaveBeenCalled();
+      expect(mockConfig.resetConfig).not.toHaveBeenCalled();
+    });
+
+    test("continues initialization if error state is expired", async () => {
+      (getIsDebug as unknown as Mock).mockReturnValue(false);
+      const mockConfig = {
+        get: vi.fn().mockReturnValue({
+          environmentId: "env_123",
+          appUrl: "https://my.url",
+          environment: { data: { surveys: [] }, expiresAt: new Date() },
+          user: { data: {}, expiresAt: null },
+          status: { value: "error", expiresAt: new Date(Date.now() - 10000) },
+        }),
+        update: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+      (isNowExpired as unknown as Mock).mockReturnValue(true); // Time IS up
+
+      // Mock successful fetch to allow setup to proceed
+      (fetchEnvironmentState as unknown as Mock).mockResolvedValueOnce({
+        ok: true,
+        data: { data: { surveys: [] }, expiresAt: new Date() },
+      });
+      (filterSurveys as unknown as Mock).mockReturnValue([]);
+
+      const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
+
+      expect(result.ok).toBe(true);
+      expect(fetchEnvironmentState).toHaveBeenCalled();
     });
 
     test("uses existing config if environmentId/appUrl match, checks for expiration sync", async () => {
