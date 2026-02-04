@@ -399,7 +399,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-button-padding-x"]).toBe("20px");
     expect(variables["--fb-button-padding-y"]).toBe("10px");
     // Inputs
-    expect(variables["--fb-input-color"]).toBe("#input-text");
+    expect(variables["--fb-input-text-color"]).toBe("#input-text");
     expect(variables["--fb-input-border-radius"]).toBe("4px");
     expect(variables["--fb-input-height"]).toBe("40px");
     expect(variables["--fb-input-font-size"]).toBe("14px");

@@ -115,7 +115,16 @@ export const ThemeStyling = ({
 
     // Headlines & Descriptions (Using Brand/Accent)
     form.setValue("elementHeadlineColor.light", derivedAccentText, { shouldDirty: true });
-    form.setValue("elementDescriptionColor.light", derivedAccentText, { shouldDirty: true });
+    form.setValue(
+      "elementDescriptionColor.light",
+      mixColor(derivedAccentText, "#ffffff", 0.3) ?? derivedAccentText,
+      { shouldDirty: true }
+    );
+    form.setValue(
+      "elementUpperLabelColor.light",
+      mixColor(derivedAccentText, "#ffffff", 0.5) ?? derivedAccentText,
+      { shouldDirty: true }
+    );
 
     // 2. Buttons
     form.setValue("buttonBgColor.light", brandColor, { shouldDirty: true });
