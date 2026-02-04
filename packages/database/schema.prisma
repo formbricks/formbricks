@@ -839,6 +839,7 @@ model User {
   identityProviderAccountId String?
   memberships               Membership[]
   accounts                  Account[]
+  sessions                  Session[]
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
@@ -850,6 +851,34 @@ model User {
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?
   isActive                  Boolean          @default(true)
+}
+
+/// Represents an active user session for authentication.
+/// Used by NextAuth for database session strategy.
+///
+/// @property sessionToken - Unique token identifying the session
+/// @property userId - The user this session belongs to
+/// @property expires - When the session expires
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// Stores verification tokens for email verification flows.
+/// Used by NextAuth for magic link authentication.
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 /// Defines a segment of contacts based on attributes.
