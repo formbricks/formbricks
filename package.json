@@ -41,7 +41,8 @@
     "generate-translations": "pnpm i18n:web:generate && pnpm i18n:surveys:generate",
     "scan-translations": "pnpm --filter @formbricks/i18n-utils scan-translations",
     "i18n": "pnpm generate-translations && pnpm scan-translations",
-    "update:agents": "npx `@next/codemod`@canary agents-md --output AGENTS.md",
+    "update:agents": "npx @next/codemod@canary agents-md --output AGENTS.md",
+    "postinstall": "pnpm update:agents",
     "i18n:validate": "pnpm scan-translations"
   },
   "dependencies": {
