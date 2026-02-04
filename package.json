@@ -53,7 +53,7 @@
     "@azure/playwright": "1.0.0",
     "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.56.1",
-    "eslint": "8.57.0",
+    "eslint": "9.26.0",
     "glob": "^11.1.0",
     "husky": "9.1.7",
     "lint-staged": "16.0.0",
