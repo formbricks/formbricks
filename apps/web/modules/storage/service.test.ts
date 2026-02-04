@@ -14,14 +14,6 @@ vi.mock("crypto", () => ({
   randomUUID: vi.fn(),
 }));
 
-vi.mock("@/lib/constants", () => ({
-  WEBAPP_URL: "https://webapp.example.com",
-}));
-
-vi.mock("@/lib/getPublicUrl", () => ({
-  getPublicDomain: vi.fn(),
-}));
-
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
@@ -44,7 +36,6 @@ vi.mock("@formbricks/storage", () => ({
 
 // Import mocked dependencies
 const { logger } = await import("@formbricks/logger");
-const { getPublicDomain } = await import("@/lib/getPublicUrl");
 const {
   deleteFile: deleteFileFromS3,
   deleteFilesByPrefix,
@@ -63,7 +54,6 @@ describe("storage service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(randomUUID).mockReturnValue(mockUUID);
-    vi.mocked(getPublicDomain).mockReturnValue("https://public.example.com");
   });
 
   describe("getSignedUrlForUpload", () => {
@@ -90,7 +80,7 @@ describe("storage service", () => {
         expect(result.data).toEqual({
           signedUrl: "https://s3.example.com/upload",
           presignedFields: { key: "value" },
-          fileUrl: `https://public.example.com/storage/env-123/public/test-image--fid--${mockUUID}.jpg`,
+          fileUrl: `/storage/env-123/public/test-image--fid--${mockUUID}.jpg`,
         });
       }
 
@@ -102,7 +92,7 @@ describe("storage service", () => {
       );
     });
 
-    test("should use WEBAPP_URL for private files", async () => {
+    test("should return relative URL for private files", async () => {
       const mockSignedUrlResponse = {
         ok: true,
         data: {
@@ -122,9 +112,7 @@ describe("storage service", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.fileUrl).toBe(
-          `https://webapp.example.com/storage/env-123/private/test-doc--fid--${mockUUID}.pdf`
-        );
+        expect(result.data.fileUrl).toBe(`/storage/env-123/private/test-doc--fid--${mockUUID}.pdf`);
       }
     });
 
@@ -149,9 +137,7 @@ describe("storage service", () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         // The filename should be URL-encoded to prevent # from being treated as a URL fragment
-        expect(result.data.fileUrl).toBe(
-          `https://public.example.com/storage/env-123/public/testfile--fid--${mockUUID}.txt`
-        );
+        expect(result.data.fileUrl).toBe(`/storage/env-123/public/testfile--fid--${mockUUID}.txt`);
       }
 
       expect(getSignedUploadUrl).toHaveBeenCalledWith(

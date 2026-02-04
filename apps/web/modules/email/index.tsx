@@ -41,6 +41,7 @@ import { createEmailChangeToken, createInviteToken, createToken, createTokenForL
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
+import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
@@ -276,10 +277,12 @@ export const sendEmbedSurveyPreviewEmail = async (
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate(locale);
+  // Resolve relative storage URLs to absolute URLs for email rendering
+  const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
   const html = await renderEmbedSurveyPreviewEmail({
     html: innerHtml,
     environmentId,
-    logoUrl,
+    logoUrl: resolvedLogoUrl,
     t,
     ...legalProps,
   });
@@ -297,9 +300,11 @@ export const sendEmailCustomizationPreviewEmail = async (
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate(locale);
+  // Resolve relative storage URLs to absolute URLs for email rendering
+  const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
   const emailHtmlBody = await renderEmailCustomizationPreviewEmail({
     userName,
-    logoUrl,
+    logoUrl: resolvedLogoUrl,
     t,
     ...legalProps,
   });
@@ -316,7 +321,8 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const email = data.email;
   const surveyName = data.surveyName;
   const singleUseId = data.suId;
-  const logoUrl = data.logoUrl || "";
+  // Resolve relative storage URLs to absolute URLs for email rendering
+  const logoUrl = data.logoUrl ? resolveStorageUrl(data.logoUrl) : "";
   const token = createTokenForLinkSurvey(surveyId, email);
   const t = await getTranslate(data.locale);
   const getSurveyLink = (): string => {

@@ -1,17 +1,17 @@
 import { randomUUID } from "crypto";
 import { logger } from "@formbricks/logger";
 import {
+  type FileStreamResult,
   type StorageError,
   StorageErrorCode,
   deleteFile as deleteFileFromS3,
   deleteFilesByPrefix,
+  getFileStream,
   getSignedDownloadUrl,
   getSignedUploadUrl,
 } from "@formbricks/storage";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TAccessType } from "@formbricks/types/storage";
-import { WEBAPP_URL } from "@/lib/constants";
-import { getPublicDomain } from "@/lib/getPublicUrl";
 import { sanitizeFileName } from "./utils";
 
 export const getSignedUrlForUpload = async (
@@ -51,15 +51,11 @@ export const getSignedUrlForUpload = async (
       return signedUrlResult;
     }
 
-    // Use PUBLIC_URL for public files, WEBAPP_URL for private files
-    const baseUrl = accessType === "public" ? getPublicDomain() : WEBAPP_URL;
-
+    // Return relative path - can be resolved to absolute URL at runtime when needed
     return ok({
       signedUrl: signedUrlResult.data.signedUrl,
       presignedFields: signedUrlResult.data.presignedFields,
-      fileUrl: new URL(
-        `${baseUrl}/storage/${environmentId}/${accessType}/${encodeURIComponent(updatedFileName)}`
-      ).href,
+      fileUrl: `/storage/${environmentId}/${accessType}/${encodeURIComponent(updatedFileName)}`,
     });
   } catch (error) {
     logger.error({ error }, "Error getting signed url for upload");
@@ -88,6 +84,35 @@ export const getSignedUrlForDownload = async (
     return signedUrlResult;
   } catch (error) {
     logger.error({ error }, "Error getting signed url for download");
+
+    return err({
+      code: StorageErrorCode.Unknown,
+    });
+  }
+};
+
+/**
+ * Get a file stream for downloading/streaming files directly
+ * Use this instead of signed URL redirect for Next.js Image component compatibility
+ */
+export const getFileStreamForDownload = async (
+  fileName: string,
+  environmentId: string,
+  accessType: TAccessType
+): Promise<Result<FileStreamResult, StorageError>> => {
+  try {
+    const fileNameDecoded = decodeURIComponent(fileName);
+    const fileKey = `${environmentId}/${accessType}/${fileNameDecoded}`;
+
+    const streamResult = await getFileStream(fileKey);
+
+    if (!streamResult.ok) {
+      return streamResult;
+    }
+
+    return streamResult;
+  } catch (error) {
+    logger.error({ error }, "Error getting file stream for download");
 
     return err({
       code: StorageErrorCode.Unknown,

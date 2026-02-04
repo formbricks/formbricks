@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { ZId, ZUrl } from "@formbricks/types/common";
+import { ZId, ZStorageUrl } from "@formbricks/types/common";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -11,7 +11,7 @@ import { updateOrganizationFaviconUrl } from "@/modules/ee/whitelabel/favicon-cu
 
 const ZUpdateOrganizationFaviconUrlAction = z.object({
   organizationId: ZId,
-  faviconUrl: ZUrl,
+  faviconUrl: ZStorageUrl,
 });
 
 export const updateOrganizationFaviconUrlAction = authenticatedActionClient

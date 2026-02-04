@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZUrl } from "../common";
+import { ZStorageUrl, ZUrl } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZAllowedFileExtension } from "../storage";
 import { TSurveyElementTypeEnum } from "./constants";
@@ -61,8 +61,8 @@ export const ZSurveyElementBase = z.object({
   type: z.nativeEnum(TSurveyElementTypeEnum),
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
-  imageUrl: ZUrl.optional(),
-  videoUrl: ZUrl.optional(),
+  imageUrl: ZStorageUrl.optional(),
+  videoUrl: ZStorageUrl.optional(),
   required: z.boolean(),
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
@@ -232,7 +232,7 @@ export type TSurveyRatingElement = z.infer<typeof ZSurveyRatingElement>;
 // Picture Selection Element
 export const ZSurveyPictureChoice = z.object({
   id: z.string(),
-  imageUrl: z.string(),
+  imageUrl: ZStorageUrl,
 });
 
 export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
