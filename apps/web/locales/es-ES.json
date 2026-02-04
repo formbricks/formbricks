@@ -350,6 +350,7 @@
     "request_trial_license": "Solicitar licencia de prueba",
     "reset_to_default": "Restablecer a valores predeterminados",
     "response": "Respuesta",
+    "response_id": "ID de respuesta",
     "responses": "Respuestas",
     "restart": "Reiniciar",
     "role": "Rol",

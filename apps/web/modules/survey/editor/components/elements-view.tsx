@@ -54,7 +54,7 @@ import {
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { isEndingCardValid, isWelcomeCardValid, validateSurveyElementsInBatch } from "../lib/validation";
+import { isEndingCardValid, isWelcomeCardValid, validateElement } from "../lib/validation";
 
 interface ElementsViewProps {
   localSurvey: TSurvey;
@@ -211,35 +211,6 @@ export const ElementsView = ({
     };
   };
 
-  useEffect(() => {
-    if (!invalidElements) return;
-    let updatedInvalidElements: string[] = [...invalidElements];
-
-    // Check welcome card
-    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
-      if (!updatedInvalidElements.includes("start")) {
-        updatedInvalidElements = [...updatedInvalidElements, "start"];
-      }
-    } else {
-      updatedInvalidElements = updatedInvalidElements.filter((elementId) => elementId !== "start");
-    }
-
-    // Check thank you card
-    localSurvey.endings.forEach((ending) => {
-      if (!isEndingCardValid(ending, surveyLanguages)) {
-        if (!updatedInvalidElements.includes(ending.id)) {
-          updatedInvalidElements = [...updatedInvalidElements, ending.id];
-        }
-      } else {
-        updatedInvalidElements = updatedInvalidElements.filter((elementId) => elementId !== ending.id);
-      }
-    });
-
-    if (JSON.stringify(updatedInvalidElements) !== JSON.stringify(invalidElements)) {
-      setInvalidElements(updatedInvalidElements);
-    }
-  }, [localSurvey.welcomeCard, localSurvey.endings, surveyLanguages, invalidElements, setInvalidElements]);
-
   const updateElement = (elementIdx: number, updatedAttributes: any) => {
     // Get element ID from current elements array (for validation)
     const element = elements[elementIdx];
@@ -250,7 +221,6 @@ export const ElementsView = ({
 
     // Track side effects that need to happen after state update
     let newActiveElementId: string | null = null;
-    let invalidElementsUpdate: string[] | null = null;
 
     // Use functional update to ensure we work with the latest state
     setLocalSurvey((prevSurvey) => {
@@ -296,13 +266,6 @@ export const ElementsView = ({
         const initialElementId = elementId;
         updatedSurvey = handleElementLogicChange(updatedSurvey, initialElementId, elementLevelAttributes.id);
 
-        // Track side effects to apply after state update
-        if (invalidElements?.includes(initialElementId)) {
-          invalidElementsUpdate = invalidElements.map((id) =>
-            id === initialElementId ? elementLevelAttributes.id : id
-          );
-        }
-
         // Track new active element ID
         newActiveElementId = elementLevelAttributes.id;
 
@@ -344,9 +307,6 @@ export const ElementsView = ({
     });
 
     // Apply side effects after state update is queued
-    if (invalidElementsUpdate) {
-      setInvalidElements(invalidElementsUpdate);
-    }
     if (newActiveElementId) {
       setActiveElementId(newActiveElementId);
     }
@@ -764,23 +724,67 @@ export const ElementsView = ({
     setLocalSurvey(result.data);
   };
 
-  //useEffect to validate survey when changes are made to languages
-  useEffect(() => {
-    if (!invalidElements) return;
-    let updatedInvalidElements: string[] = invalidElements;
-    // Validate each element
-    elements.forEach((element) => {
-      updatedInvalidElements = validateSurveyElementsInBatch(
-        element,
-        updatedInvalidElements,
-        surveyLanguages
-      );
-    });
+  // Validate survey when changes are made to languages or elements
+  // using set for O(1) lookup
+  useEffect(
+    () => {
+      if (!invalidElements) return;
 
-    if (JSON.stringify(updatedInvalidElements) !== JSON.stringify(invalidElements)) {
-      setInvalidElements(updatedInvalidElements);
-    }
-  }, [elements, surveyLanguages, invalidElements, setInvalidElements]);
+      const currentInvalidSet = new Set(invalidElements);
+      let hasChanges = false;
+
+      // Validate each element
+      elements.forEach((element) => {
+        const isValid = validateElement(element, surveyLanguages);
+        if (isValid) {
+          if (currentInvalidSet.has(element.id)) {
+            currentInvalidSet.delete(element.id);
+            hasChanges = true;
+          }
+        } else if (!currentInvalidSet.has(element.id)) {
+          currentInvalidSet.add(element.id);
+          hasChanges = true;
+        }
+      });
+
+      // Check welcome card
+      if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
+        if (!currentInvalidSet.has("start")) {
+          currentInvalidSet.add("start");
+          hasChanges = true;
+        }
+      } else if (currentInvalidSet.has("start")) {
+        currentInvalidSet.delete("start");
+        hasChanges = true;
+      }
+
+      // Check thank you card
+      localSurvey.endings.forEach((ending) => {
+        if (!isEndingCardValid(ending, surveyLanguages)) {
+          if (!currentInvalidSet.has(ending.id)) {
+            currentInvalidSet.add(ending.id);
+            hasChanges = true;
+          }
+        } else if (currentInvalidSet.has(ending.id)) {
+          currentInvalidSet.delete(ending.id);
+          hasChanges = true;
+        }
+      });
+
+      if (hasChanges) {
+        setInvalidElements(Array.from(currentInvalidSet));
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      elements,
+      surveyLanguages,
+      invalidElements,
+      setInvalidElements,
+      localSurvey.welcomeCard,
+      localSurvey.endings,
+    ]
+  );
 
   useEffect(() => {
     const elementWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
@@ -791,7 +795,7 @@ export const ElementsView = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeElementId, setActiveElementId]);
+  }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
