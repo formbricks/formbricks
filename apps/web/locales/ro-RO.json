@@ -990,7 +990,7 @@
         "from_your_organization": "din organizația ta",
         "invitation_sent_once_more": "Invitație trimisă din nou.",
         "invite_deleted_successfully": "Invitație ștearsă cu succes",
-        "invited_on": "Invitat pe {date}",
+        "invite_expires_on": "Invitația expiră pe {date}",
         "invites_failed": "Invitații eșuate",
         "leave_organization": "Părăsește organizația",
         "leave_organization_description": "Vei părăsi această organizație și vei pierde accesul la toate sondajele și răspunsurile. Poți să te alături din nou doar dacă ești invitat.",

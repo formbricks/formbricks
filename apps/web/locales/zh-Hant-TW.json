@@ -990,7 +990,7 @@
         "from_your_organization": "來自您的組織",
         "invitation_sent_once_more": "已再次發送邀請。",
         "invite_deleted_successfully": "邀請已成功刪除",
-        "invited_on": "邀請於 '{'date'}'",
+        "invite_expires_on": "邀請將於 '{'date'}' 過期",
         "invites_failed": "邀請失敗",
         "leave_organization": "離開組織",
         "leave_organization_description": "您將離開此組織並失去對所有問卷和回應的存取權限。只有再次收到邀請，您才能重新加入。",

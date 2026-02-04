@@ -990,7 +990,7 @@
         "from_your_organization": "från din organisation",
         "invitation_sent_once_more": "Inbjudan skickad igen.",
         "invite_deleted_successfully": "Inbjudan borttagen",
-        "invited_on": "Inbjuden den {date}",
+        "invite_expires_on": "Inbjudan går ut den {date}",
         "invites_failed": "Inbjudningar misslyckades",
         "leave_organization": "Lämna organisation",
         "leave_organization_description": "Du kommer att lämna denna organisation och förlora åtkomst till alla enkäter och svar. Du kan endast återansluta om du blir inbjuden igen.",
