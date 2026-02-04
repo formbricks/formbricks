@@ -73,9 +73,9 @@
     ]
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=20.0.0"
   },
-  "packageManager": "pnpm@9.15.9",
+  "packageManager": "pnpm@10.28.2",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
@@ -90,10 +90,12 @@
       "tar-fs": "2.1.4",
       "typeorm": ">=0.3.26",
       "systeminformation": "5.27.14",
-      "qs": ">=6.14.1"
+      "qs": ">=6.14.1",
+      "fast-xml-parser": ">=5.3.4",
+      "diff": ">=8.0.3"
     },
     "comments": {
-      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: axios (CVE-2025-58754) - awaiting @boxyhq/saml-jackson update | node-forge (Dependabot #230) - awaiting @boxyhq/saml-jackson update | tar-fs (Dependabot #205) - awaiting upstream dependency updates | typeorm (Dependabot #223) - awaiting @boxyhq/saml-jackson update | systeminformation (Dependabot #241) - awaiting @opentelemetry/host-metrics update | qs (Dependabot #245) - awaiting googleapis-common and stripe updates"
+      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: axios (CVE-2025-58754) - awaiting @boxyhq/saml-jackson update | node-forge (Dependabot #230) - awaiting @boxyhq/saml-jackson update | tar-fs (Dependabot #205) - awaiting upstream dependency updates | typeorm (Dependabot #223) - awaiting @boxyhq/saml-jackson update | systeminformation (Dependabot #241) - awaiting @opentelemetry/host-metrics update | qs (Dependabot #245) - awaiting googleapis-common and stripe updates | fast-xml-parser (Dependabot #270) - awaiting @boxyhq/saml-jackson update | diff (Dependabot #269) - awaiting @microsoft/api-extractor update"
     },
     "patchedDependencies": {
       "next-auth@4.24.12": "patches/next-auth@4.24.12.patch"
