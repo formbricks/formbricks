@@ -20,14 +20,6 @@ export type TAttributeValidationResult =
     };
 
 /**
- * Checks if a string value is a valid number
- */
-const isValidNumber = (value: string): boolean => {
-  const trimmed = value.trim();
-  return trimmed !== "" && !Number.isNaN(Number(trimmed));
-};
-
-/**
  * Converts any value to a string representation
  */
 const convertToString = (value: TRawValue): string => {

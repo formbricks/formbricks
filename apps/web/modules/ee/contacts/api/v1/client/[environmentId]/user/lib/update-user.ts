@@ -153,7 +153,7 @@ export const updateUser = async (
   userId: string,
   device: "phone" | "desktop",
   attributes?: TContactAttributesInput
-): Promise<{ state: TJsPersonState; messages?: string[] }> => {
+): Promise<{ state: TJsPersonState; messages?: string[]; errors?: string[] }> => {
   // Cached environment validation (rarely changes)
   const environment = await getEnvironment(environmentId);
   if (!environment) {
@@ -178,6 +178,7 @@ export const updateUser = async (
   );
 
   let messages: string[] = [];
+  let errors: string[] = [];
   let language = contactAttributes.language;
 
   // Handle attribute updates efficiently
@@ -186,14 +187,14 @@ export const updateUser = async (
     const hasChanges = Object.entries(attributes).some(([key, value]) => value !== contactAttributes[key]);
 
     if (hasChanges) {
-      const { success, messages: updateAttrMessages } = await updateAttributes(
-        contactData.id,
-        userId,
-        environmentId,
-        attributes
-      );
+      const {
+        success,
+        messages: updateAttrMessages,
+        errors: updateAttrErrors,
+      } = await updateAttributes(contactData.id, userId, environmentId, attributes);
 
       messages = updateAttrMessages ?? [];
+      errors = updateAttrErrors ?? [];
 
       // Update language if provided (used in response state)
       if (success && attributes.language) {
@@ -219,6 +220,7 @@ export const updateUser = async (
       },
       expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
     },
-    messages,
+    messages: messages.length > 0 ? messages : undefined,
+    errors: errors.length > 0 ? errors : undefined,
   };
 };

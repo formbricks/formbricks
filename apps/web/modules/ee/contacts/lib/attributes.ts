@@ -1,13 +1,10 @@
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
-import {
-  TContactAttributes,
-  TContactAttributesInput,
-  ZContactAttributesInput,
-} from "@formbricks/types/contact-attribute";
+import { TContactAttributesInput, ZContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import { prepareNewSDKAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
@@ -77,6 +74,7 @@ export const updateAttributes = async (
 ): Promise<{
   success: boolean;
   messages?: string[];
+  errors?: string[];
   ignoreEmailAttribute?: boolean;
   ignoreUserIdAttribute?: boolean;
 }> => {
@@ -90,6 +88,7 @@ export const updateAttributes = async (
   let ignoreEmailAttribute = false;
   let ignoreUserIdAttribute = false;
   const messages: string[] = [];
+  const errors: string[] = [];
 
   // Convert email and userId to strings for lookup (they should always be strings, but handle numbers gracefully)
   const emailValue =
@@ -258,53 +257,80 @@ export const updateAttributes = async (
 
   // Then, try to create new attributes if any exist
   if (newAttributes.length > 0) {
-    const totalAttributeClassesLength = contactAttributeKeys.length + newAttributes.length;
+    // Validate that new attribute keys are safe identifiers
+    const validNewAttributes: typeof newAttributes = [];
+    const invalidKeys: string[] = [];
 
-    if (totalAttributeClassesLength > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
-      // Add warning to details about skipped attributes
-      messages.push(
-        `Could not create ${newAttributes.length} new attribute(s) as it would exceed the maximum limit of ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} attribute classes. Existing attributes were updated successfully.`
-      );
-    } else {
-      // Prepare new attributes with SDK-specific type detection
-      const preparedNewAttributes = newAttributes.map(({ key, value }) => {
-        const { dataType, columns } = prepareNewSDKAttributeForStorage(value);
-        return { key, dataType, columns };
-      });
-
-      // Log new attribute creation with their types
-      for (const { key, dataType } of preparedNewAttributes) {
-        logger.info({ environmentId, attributeKey: key, dataType }, "Created new contact attribute");
-        messages.push(`Created new attribute '${key}' with type '${dataType}'`);
+    for (const attr of newAttributes) {
+      if (isSafeIdentifier(attr.key)) {
+        validNewAttributes.push(attr);
+      } else {
+        invalidKeys.push(attr.key);
       }
+    }
 
-      // Create new attributes since we're under the limit
-      await prisma.$transaction(
-        preparedNewAttributes.map(({ key, dataType, columns }) =>
-          prisma.contactAttributeKey.create({
-            data: {
-              key,
-              type: "custom",
-              dataType,
-              environment: { connect: { id: environmentId } },
-              attributes: {
-                create: {
-                  contactId,
-                  value: columns.value,
-                  valueNumber: columns.valueNumber,
-                  valueDate: columns.valueDate,
+    // Add error message for invalid keys
+    if (invalidKeys.length > 0) {
+      errors.push(
+        `Skipped creating attribute(s) with invalid key(s): ${invalidKeys.join(", ")}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.`
+      );
+      logger.warn(
+        { environmentId, invalidKeys },
+        "SDK tried to create attributes with invalid keys - skipping"
+      );
+    }
+
+    if (validNewAttributes.length > 0) {
+      const totalAttributeClassesLength = contactAttributeKeys.length + validNewAttributes.length;
+
+      if (totalAttributeClassesLength > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+        // Add warning to details about skipped attributes
+        messages.push(
+          `Could not create ${validNewAttributes.length} new attribute(s) as it would exceed the maximum limit of ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} attribute classes. Existing attributes were updated successfully.`
+        );
+      } else {
+        // Prepare new attributes with SDK-specific type detection
+        const preparedNewAttributes = validNewAttributes.map(({ key, value }) => {
+          const { dataType, columns } = prepareNewSDKAttributeForStorage(value);
+          return { key, dataType, columns };
+        });
+
+        // Log new attribute creation with their types
+        for (const { key, dataType } of preparedNewAttributes) {
+          logger.info({ environmentId, attributeKey: key, dataType }, "Created new contact attribute");
+          messages.push(`Created new attribute '${key}' with type '${dataType}'`);
+        }
+
+        // Create new attributes since we're under the limit
+        await prisma.$transaction(
+          preparedNewAttributes.map(({ key, dataType, columns }) =>
+            prisma.contactAttributeKey.create({
+              data: {
+                key,
+                name: formatSnakeCaseToTitleCase(key),
+                type: "custom",
+                dataType,
+                environment: { connect: { id: environmentId } },
+                attributes: {
+                  create: {
+                    contactId,
+                    value: columns.value,
+                    valueNumber: columns.valueNumber,
+                    valueDate: columns.valueDate,
+                  },
                 },
               },
-            },
-          })
-        )
-      );
+            })
+          )
+        );
+      }
     }
   }
 
   return {
     success: true,
     messages: messages.length > 0 ? messages : undefined,
+    errors: errors.length > 0 ? errors : undefined,
     ignoreEmailAttribute,
     ignoreUserIdAttribute,
   };

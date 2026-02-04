@@ -106,17 +106,17 @@ export const POST = withV1ApiWrapper({
       const { device } = userAgent(req);
       const deviceType = device ? "phone" : "desktop";
 
-      const { state: userState, messages } = await updateUser(
-        environmentId,
-        userId,
-        deviceType,
-        attributeUpdatesToSend ?? undefined
-      );
+      const {
+        state: userState,
+        messages,
+        errors,
+      } = await updateUser(environmentId, userId, deviceType, attributeUpdatesToSend ?? undefined);
 
       // Build response (simplified structure)
-      const responseJson: { state: TJsPersonState; messages?: string[] } = {
+      const responseJson: { state: TJsPersonState; messages?: string[]; errors?: string[] } = {
         state: userState,
         ...(messages && messages.length > 0 && { messages }),
+        ...(errors && errors.length > 0 && { errors }),
       };
 
       return {

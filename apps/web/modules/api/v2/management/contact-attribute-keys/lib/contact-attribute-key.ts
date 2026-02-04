@@ -3,6 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { getContactAttributeKeysQuery } from "@/modules/api/v2/management/contact-attribute-keys/lib/utils";
 import {
   TContactAttributeKeyInput,
@@ -46,7 +47,7 @@ export const createContactAttributeKey = async (
           id: environmentId,
         },
       },
-      name,
+      name: name ?? formatSnakeCaseToTitleCase(key),
       description,
       key,
       ...(dataType && { dataType }),
