@@ -51,7 +51,7 @@
   --slate-50: rgb(248, 250, 252);
   --slate-100: rgb(241 245 249);
   --slate-200: rgb(226 232 240);
-  
+
   /* ---------------------------------------------------------------------------
      Survey general Colors
      The primary accent color used throughout the survey. Override this to 
@@ -61,7 +61,6 @@
 
   --fb-accent-background-color: var(--slate-200);
   --fb-accent-background-color-selected: var(--slate-100);
-
 
   /* ---------------------------------------------------------------------------
      Element Headline Tokens
@@ -81,7 +80,15 @@
   --fb-element-description-font-weight: 400;
   --fb-element-description-font-size: 0.875rem;
   --fb-element-description-color: var(--input);
-  --fb-element-description-opacity: 1;
+  /* ---------------------------------------------------------------------------
+     Element Upper Label Tokens
+     Used for "Required" label and other upper label text.
+     --------------------------------------------------------------------------- */
+  --fb-element-upper-label-font-family: inherit;
+  --fb-element-upper-label-font-weight: 400;
+  --fb-element-upper-label-font-size: 0.75rem;
+  --fb-element-upper-label-color: var(--muted-foreground);
+  --fb-element-upper-label-opacity: 0.6;
 
   /* ---------------------------------------------------------------------------
      Label Tokens
@@ -103,7 +110,7 @@
   --fb-button-font-family: inherit;
   --fb-button-font-weight: 500;
   --fb-button-border-radius: var(--radius);
-  --fb-button-bg-color: hsl(222.2 47.4% 11.2%);
+  --fb-button-bg-color: var(--fb-survey-brand-color);
   --fb-button-text-color: hsl(210 40% 98%);
   --fb-button-padding-x: 1rem;
   --fb-button-padding-y: 0.5rem;
@@ -167,16 +174,19 @@
   font-size: var(--fb-button-font-size);
 }
 
-#fbjs .label-headline {
+#fbjs .label-headline,
+#fbjs .label-headline * {
   font-family: var(--fb-element-headline-font-family);
-  font-weight: var(--fb-element-headline-font-weight);
+  font-weight: var(--fb-element-headline-font-weight) !important;
   font-size: var(--fb-element-headline-font-size) !important;
   color: var(--fb-element-headline-color);
   opacity: var(--fb-element-headline-opacity);
 }
 
 #fbjs .label-description,
-#fbjs .text-subheading {
+#fbjs .label-description *,
+#fbjs .text-subheading,
+#fbjs .text-subheading * {
   font-family: var(--fb-element-description-font-family);
   font-weight: var(--fb-element-description-font-weight);
   font-size: var(--fb-element-description-font-size) !important;
@@ -184,12 +194,22 @@
   opacity: var(--fb-element-description-opacity);
 }
 
-#fbjs .label-default {
+#fbjs .label-default,
+#fbjs .label-default * {
   font-family: var(--fb-label-font-family);
   font-weight: var(--fb-label-font-weight);
   font-size: var(--fb-label-font-size) !important;
   color: var(--fb-label-color);
   opacity: var(--fb-label-opacity);
+}
+
+#fbjs .label-upper-label,
+#fbjs .label-upper-label * {
+  font-family: var(--fb-element-upper-label-font-family);
+  font-weight: var(--fb-element-upper-label-font-weight);
+  font-size: var(--fb-element-upper-label-font-size) !important;
+  color: var(--fb-element-upper-label-color);
+  opacity: var(--fb-element-upper-label-opacity);
 }
 
 #fbjs .progress-track {

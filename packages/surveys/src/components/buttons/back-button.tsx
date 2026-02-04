@@ -17,6 +17,11 @@ export function BackButton({ onClick, backButtonLabel, tabIndex = 2 }: BackButto
       className={cn(
         "hover:bg-input-bg text-heading focus:ring-focus rounded-custom mb-1 flex items-center px-3 py-3 text-base leading-4 font-medium focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
       )}
+      style={{
+        borderRadius: "var(--fb-border-radius)",
+        backgroundColor: "transparent", // Back button is usually transparent/ghost
+        color: "var(--fb-heading-color)",
+      }}
       onClick={onClick}>
       {backButtonLabel || t("common.back")}
     </button>

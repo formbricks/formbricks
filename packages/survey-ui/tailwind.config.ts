@@ -58,7 +58,7 @@ export default {
         // Input CSS variables (shorter names)
         "input-bg": "var(--fb-input-bg-color)",
         "input-border": "var(--fb-input-border-color, var(--fb-survey-brand-color))",
-        "input-text": "var(--fb-input-color)",
+        "input-text": "var(--fb-input-text-color)",
         "input-placeholder": "var(--fb-input-placeholder-color)",
         // Option CSS variables
         "option-bg": "var(--fb-option-bg-color)",

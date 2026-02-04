@@ -208,7 +208,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("button-padding-y", formatDimension(styling.buttonPaddingY));
 
   // Inputs (Advanced)
-  appendCssVariable("input-color", styling.inputTextColor?.light);
+  appendCssVariable("input-background-color", styling.inputBgColor?.light ?? styling.inputColor?.light);
+  appendCssVariable("input-text-color", styling.inputTextColor?.light);
   if (styling.inputBorderRadius !== undefined)
     appendCssVariable("input-border-radius", formatDimension(styling.inputBorderRadius));
   if (styling.inputHeight !== undefined)
@@ -252,14 +253,132 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     styling.elementDescriptionColor?.light ?? styling.questionColor?.light
   );
 
+  appendCssVariable(
+    "element-upper-label-font-size",
+    formatDimension(styling.elementUpperLabelFontSize ?? 12)
+  );
+  appendCssVariable(
+    "element-upper-label-color",
+    styling.elementUpperLabelColor?.light ?? styling.questionColor?.light
+  );
+
+  if (styling.elementUpperLabelColor?.light) {
+    appendCssVariable("element-upper-label-opacity", "1");
+  }
+
   // Progress Bar (Advanced)
   if (styling.progressTrackHeight !== undefined)
     appendCssVariable("progress-track-height", formatDimension(styling.progressTrackHeight));
+  
+  // Implicitly set the progress track border radius to the roundness of the card
+  appendCssVariable("progress-track-border-radius", formatDimension(roundness));
+
   appendCssVariable("progress-track-bg-color", styling.progressTrackBgColor?.light);
   appendCssVariable("progress-indicator-bg-color", styling.progressIndicatorBgColor?.light);
 
-  // Close the #fbjs block
-  cssVariables += "}";
+  // Close the #fbjs variable block
+  cssVariables += "}\n";
+
+  // Add explicit overrides to ensure custom styles take precedence
+  cssVariables += `
+#fbjs .label-headline,
+#fbjs .label-headline * {
+  font-size: var(--fb-element-headline-font-size) !important;
+  font-weight: var(--fb-element-headline-font-weight) !important;
+  color: var(--fb-element-headline-color) !important;
+}
+
+#fbjs .label-description,
+#fbjs .label-description * {
+  font-size: var(--fb-element-description-font-size) !important;
+  color: var(--fb-element-description-color) !important;
+}
+
+#fbjs .label-upper-label,
+#fbjs .label-upper-label * {
+  font-size: var(--fb-element-upper-label-font-size) !important;
+  color: var(--fb-element-upper-label-color) !important;
+  opacity: var(--fb-element-upper-label-opacity, 1) !important;
+}
+
+#fbjs .button-custom,
+#fbjs button.button-custom {
+  background-color: var(--fb-button-bg-color) !important;
+  color: var(--fb-button-text-color) !important;
+  border-radius: var(--fb-button-border-radius) !important;
+  height: var(--fb-button-height) !important;
+  font-size: var(--fb-button-font-size) !important;
+  font-weight: var(--fb-button-font-weight) !important;
+  padding-left: var(--fb-button-padding-x) !important;
+  padding-right: var(--fb-button-padding-x) !important;
+  padding-top: var(--fb-button-padding-y) !important;
+  padding-bottom: var(--fb-button-padding-y) !important;
+}
+
+#fbjs .rounded-option {
+  border-radius: var(--fb-option-border-radius) !important;
+}
+
+#fbjs .bg-option-bg {
+  background-color: var(--fb-option-bg-color) !important;
+}
+
+#fbjs .text-option-label {
+  color: var(--fb-option-label-color) !important;
+  font-size: var(--fb-option-font-size) !important;
+}
+
+#fbjs .px-option-x {
+  padding-left: var(--fb-option-padding-x) !important;
+  padding-right: var(--fb-option-padding-x) !important;
+}
+
+#fbjs .py-option-y {
+  padding-top: var(--fb-option-padding-y) !important;
+  padding-bottom: var(--fb-option-padding-y) !important;
+}
+
+#fbjs .rounded-input {
+  border-radius: var(--fb-input-border-radius) !important;
+}
+
+#fbjs .bg-input-bg {
+  background-color: var(--fb-input-background-color) !important;
+}
+
+#fbjs .border-input-border {
+  border-color: var(--fb-input-border-color) !important;
+}
+
+#fbjs .text-input-text {
+  color: var(--fb-input-text-color) !important;
+  font-size: var(--fb-input-font-size) !important;
+  font-weight: var(--fb-input-font-weight) !important;
+}
+
+#fbjs .px-input-x {
+  padding-left: var(--fb-input-padding-x) !important;
+  padding-right: var(--fb-input-padding-x) !important;
+}
+
+#fbjs .py-input-y {
+  padding-top: var(--fb-input-padding-y) !important;
+  padding-bottom: var(--fb-input-padding-y) !important;
+}
+
+html body #fbjs div.progress-track {
+  border-radius: var(--fb-progress-track-border-radius) var(--fb-progress-track-border-radius) 0 0 !important;
+  height: var(--fb-progress-track-height) !important;
+  min-height: var(--fb-progress-track-height) !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
+html body #fbjs div.progress-indicator {
+  height: 100% !important;
+  border-radius: 0 !important;
+}
+`;
 
   // Set the innerHTML of the style element
   styleElement.innerHTML = cssVariables;

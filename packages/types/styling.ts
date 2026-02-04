@@ -83,6 +83,8 @@ export const ZBaseStyling = z.object({
   elementHeadlineColor: ZStylingColor.nullish(),
   elementDescriptionFontSize: z.union([z.number(), z.string()]).nullish(),
   elementDescriptionColor: ZStylingColor.nullish(),
+  elementUpperLabelFontSize: z.union([z.number(), z.string()]).nullish(),
+  elementUpperLabelColor: ZStylingColor.nullish(),
 
   // Progress Bar
   progressTrackHeight: z.union([z.number(), z.string()]).nullish(),

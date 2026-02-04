@@ -134,6 +134,7 @@ export const DimensionInput = ({
             <div className="flex rounded-md shadow-xs">
               <Input
                 type="number"
+                {...field}
                 value={numericValue ?? ""}
                 onChange={(e) => {
                   const valStr = e.target.value;

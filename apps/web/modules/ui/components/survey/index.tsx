@@ -39,7 +39,9 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     // Set loading flag immediately to prevent concurrent loads
     isLoadingScript = true;
     try {
-      const scriptUrl = props.appUrl ? `${props.appUrl}/js/surveys.umd.cjs` : "/js/surveys.umd.cjs";
+      const scriptUrl = props.appUrl
+        ? `${props.appUrl}/js/surveys.umd.cjs?v=${Date.now()}`
+        : `/js/surveys.umd.cjs?v=${Date.now()}`;
       const response = await fetch(scriptUrl);
 
       if (!response.ok) {
