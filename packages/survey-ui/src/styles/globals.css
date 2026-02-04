@@ -203,8 +203,8 @@
   opacity: var(--fb-label-opacity);
 }
 
-#fbjs .label-upper-label,
-#fbjs .label-upper-label * {
+#fbjs .label-upper,
+#fbjs .label-upper * {
   font-family: var(--fb-element-upper-label-font-family);
   font-weight: var(--fb-element-upper-label-font-weight);
   font-size: var(--fb-element-upper-label-font-size) !important;

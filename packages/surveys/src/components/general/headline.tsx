@@ -33,7 +33,7 @@ export function Headline({
     <label htmlFor={elementId} className="text-heading mb-[3px] flex flex-col">
       {hasRequiredRule && isQuestionCard && (
         <span
-          className="label-upper-label mb-[3px] leading-6"
+          className="label-upper mb-[3px] leading-6"
           tabIndex={-1}
           data-testid="fb__surveys__headline-optional-text-test">
           {t("common.required")}

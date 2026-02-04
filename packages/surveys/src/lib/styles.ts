@@ -269,7 +269,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Progress Bar (Advanced)
   if (styling.progressTrackHeight !== undefined)
     appendCssVariable("progress-track-height", formatDimension(styling.progressTrackHeight));
-  
+
   // Implicitly set the progress track border radius to the roundness of the card
   appendCssVariable("progress-track-border-radius", formatDimension(roundness));
 
@@ -294,8 +294,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   color: var(--fb-element-description-color) !important;
 }
 
-#fbjs .label-upper-label,
-#fbjs .label-upper-label * {
+#fbjs .label-upper,
+#fbjs .label-upper * {
   font-size: var(--fb-element-upper-label-font-size) !important;
   color: var(--fb-element-upper-label-color) !important;
   opacity: var(--fb-element-upper-label-opacity, 1) !important;

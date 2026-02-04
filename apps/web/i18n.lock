@@ -1943,6 +1943,8 @@ checksums:
     environments/workspace/look/advanced_styling_field_shadow: 7b4af1b447ece2b19b5d7717b2e15c4e
     environments/workspace/look/advanced_styling_field_track_bg: e569155b24616ba6d0a89a07bc85955c
     environments/workspace/look/advanced_styling_field_track_height: 9ce57cb4583039c224a37e013efb6b8f
+    environments/workspace/look/advanced_styling_field_upper_label_color: 65d75c60dfdba88e5fed38bcb24a0a5d
+    environments/workspace/look/advanced_styling_field_upper_label_size: ea0ca9a3ffa1650f97a31df453b0afc7
     environments/workspace/look/advanced_styling_section_buttons: 3b44d6e2800e7bf3f133f1bce435f4c2
     environments/workspace/look/advanced_styling_section_headlines: 6def704c0ac2ecb5951400c806856a41
     environments/workspace/look/advanced_styling_section_inputs: 76bbeb561122a72fd3ec8c49eff7c563
@@ -2694,6 +2696,7 @@ checksums:
     templates/picture_selection_description: 44115e3668be00ae4854c299e5976398
     templates/preview_survey_ending_card_description: 6a98bdb1b083e437bb71d8b6c27b0e3a
     templates/preview_survey_ending_card_headline: 3512326ea9ad9a8a6c420a1e69d4d93f
+    templates/preview_survey_input_placeholder: 743c34ea842287e929a5e7e6b7a4e89b
     templates/preview_survey_name: 82503c2dba9f071c93860e5ce9584e14
     templates/preview_survey_question_1_headline: 91622f99f8018adefb3ed0921bc1ad7a
     templates/preview_survey_question_1_lower_label: ff4681be0a94185111459994fe58478c
@@ -2703,6 +2706,7 @@ checksums:
     templates/preview_survey_question_2_choice_1_label: 7885d14d0e01962fd290395ccd96ecfc
     templates/preview_survey_question_2_choice_2_label: 1af148222f327f28cf0db6513de5989e
     templates/preview_survey_question_2_headline: 5cfb173d156555227fbc2c97ad921e72
+    templates/preview_survey_question_2_subheader: 2e652d8acd68d072e5a0ae686c4011c0
     templates/preview_survey_welcome_card_headline: 8778dc41547a2778d0f9482da989fc00
     templates/prioritize_features_description: 1eae41fad0e3947f803d8539081e59ec
     templates/prioritize_features_name: 4ca59ff1f9c319aaa68c3106d820fd6a

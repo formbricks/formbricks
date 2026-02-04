@@ -2059,8 +2059,6 @@
         "advanced_styling_field_headline_color": "Headline Color",
         "advanced_styling_field_headline_size": "Headline Font Size",
         "advanced_styling_field_headline_weight": "Headline Font Weight",
-    "advanced_styling_field_upper_label_color": "Headline Label Color",
-    "advanced_styling_field_upper_label_size": "Headline Label Font Size",
         "advanced_styling_field_height": "Height",
         "advanced_styling_field_indicator_bg": "Indicator Background",
 
@@ -2074,6 +2072,8 @@
         "advanced_styling_field_track_bg": "Track Background",
         "advanced_styling_field_track_height": "Track Height",
 
+        "advanced_styling_field_upper_label_color": "Headline Label Color",
+        "advanced_styling_field_upper_label_size": "Headline Label Font Size",
         "advanced_styling_section_buttons": "Buttons",
         "advanced_styling_section_headlines": "Headlines & Descriptions",
         "advanced_styling_section_inputs": "Inputs",
@@ -2864,9 +2864,7 @@
     "picture_selection_description": "Ask respondents to choose one or more images",
     "preview_survey_ending_card_description": "Please continue your onboarding.",
     "preview_survey_ending_card_headline": "You did it!",
-    "preview_survey_input_headline": "What's your feedback?",
     "preview_survey_input_placeholder": "Leave a note...",
-    "preview_survey_input_subheader": "We'd love to hear from you.",
     "preview_survey_name": "New Survey",
     "preview_survey_question_1_headline": "How would you rate {projectName}?",
     "preview_survey_question_1_lower_label": "Not good",
