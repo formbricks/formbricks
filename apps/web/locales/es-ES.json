@@ -990,7 +990,6 @@
         "invitation_sent_once_more": "Invitación enviada una vez más.",
         "invite_deleted_successfully": "Invitación eliminada correctamente",
         "invite_expires_on": "La invitación expira el {date}",
-        "invited_on": "Invitado el {date}",
         "invites_failed": "Las invitaciones fallaron",
         "leave_organization": "Abandonar organización",
         "leave_organization_description": "Abandonarás esta organización y perderás acceso a todas las encuestas y respuestas. Solo podrás volver a unirte si te invitan de nuevo.",

@@ -990,7 +990,6 @@
         "invitation_sent_once_more": "Convite enviado mais uma vez.",
         "invite_deleted_successfully": "Convite eliminado com sucesso",
         "invite_expires_on": "O convite expira em {date}",
-        "invited_on": "Convidado em {date}",
         "invites_failed": "Convites falharam",
         "leave_organization": "Sair da organização",
         "leave_organization_description": "Vai sair desta organização e perder o acesso a todos os inquéritos e respostas. Só pode voltar a juntar-se se for convidado novamente.",

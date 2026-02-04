@@ -990,7 +990,6 @@
         "invitation_sent_once_more": "Приглашение отправлено ещё раз.",
         "invite_deleted_successfully": "Приглашение успешно удалено",
         "invite_expires_on": "Приглашение истекает {date}",
-        "invited_on": "Приглашён {date}",
         "invites_failed": "Не удалось отправить приглашения",
         "leave_organization": "Покинуть организацию",
         "leave_organization_description": "Вы покинете эту организацию и потеряете доступ ко всем опросам и ответам. Вы сможете вернуться только по новому приглашению.",

@@ -1,7 +1,6 @@
 "use server";
 
 import { OrganizationRole } from "@prisma/client";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId, ZUuid } from "@formbricks/types/common";
@@ -26,8 +25,6 @@ import {
   getOrganizationOwnerCount,
 } from "@/modules/organization/settings/teams/lib/membership";
 import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
-
-const ORGANIZATION_SETTINGS_PATH = "/(app)/environments/[environmentId]/settings";
 
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
@@ -65,7 +62,13 @@ export const createInviteTokenAction = authenticatedActionClient.schema(ZCreateI
   withAuditLogging(
     "updated",
     "invite",
-    async ({ parsedInput, ctx }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+    async ({
+      parsedInput,
+      ctx,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZCreateInviteTokenAction>;
+    }) => {
       const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
       await checkAuthorizationUpdated({
@@ -101,8 +104,6 @@ export const createInviteTokenAction = authenticatedActionClient.schema(ZCreateI
       const inviteToken = createInviteToken(parsedInput.inviteId, updatedInvite.email, {
         expiresIn: "7d",
       });
-
-      revalidatePath(ORGANIZATION_SETTINGS_PATH, "page");
 
       return { inviteToken: encodeURIComponent(inviteToken) };
     }
@@ -218,8 +219,6 @@ export const resendInviteAction = authenticatedActionClient.schema(ZResendInvite
         invite?.creator?.name ?? "",
         updatedInvite.name ?? ""
       );
-
-      revalidatePath(ORGANIZATION_SETTINGS_PATH, "page");
 
       return updatedInvite;
     }

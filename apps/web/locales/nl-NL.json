@@ -990,7 +990,6 @@
         "invitation_sent_once_more": "Uitnodiging nogmaals verzonden.",
         "invite_deleted_successfully": "Uitnodiging succesvol verwijderd",
         "invite_expires_on": "Uitnodiging verloopt op {date}",
-        "invited_on": "Uitgenodigd op {date}",
         "invites_failed": "Uitnodigingen zijn mislukt",
         "leave_organization": "Verlaat de organisatie",
         "leave_organization_description": "U verlaat deze organisatie en verliest de toegang tot alle enquêtes en reacties. Je kunt alleen weer meedoen als je opnieuw wordt uitgenodigd.",
