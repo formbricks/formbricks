@@ -14,19 +14,28 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
     await page.getByRole("link", { name: "Look & Feel" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/workspace\/look/);
 
-    // Toggle "Add custom styles"
-    const addCustomStyles = page.getByLabel("Add custom styles");
+    // Toggle "Enable custom styling"
+    const addCustomStyles = page.getByLabel("Enable custom styling");
     if (!(await addCustomStyles.isChecked())) {
-      await addCustomStyles.check();
+      await addCustomStyles.click();
     }
 
     // Helper to open accordion if needed
     const openAccordion = async (name: string) => {
-      const accordion = page.getByText(name, { exact: false });
-      // We click it. If it's already open, it might close, but usually these are separate triggers or we can check attribute.
-      // For simplicity in this specific UI, we'll assume they start closed or checking is idempotent enough if we are careful.
-      // Actually, standard accordions usually have `aria-expanded`.
-      await accordion.click();
+      // Find the trigger by text
+      const accordionHeader = page
+        .locator("div,button")
+        .filter({ hasText: name })
+        .locator("visible=true")
+        .last();
+      const expanded = await accordionHeader.getAttribute("aria-expanded");
+      const state = await accordionHeader.getAttribute("data-state");
+
+      if (expanded === "false" || state === "closed" || (!expanded && !state)) {
+        await accordionHeader.click();
+        // Give it a moment to animate
+        await page.waitForTimeout(500);
+      }
     };
 
     // Helper to set color input
@@ -35,11 +44,11 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
       // Because labels are repeated (e.g. "Font Size"), we need to scope them to the section if possible,
       // but here we will rely on the order or assume we open one section at a time.
       // Better strategy: Find the label within the visible section.
-      
-      const labelEl = page.locator("label").filter({ hasText: label }).last(); // .last() is risky but usually works for bottom-most open section
-      // The color picker input is usually an input type text with a '#' prefix or similar. 
+
+      const labelEl = page.locator("label").filter({ hasText: label }).locator("visible=true").last();
+      // The color picker input is usually an input type text with a '#' prefix or similar.
       // Based on previous interaction, it's a textbox in the container.
-      const container = labelEl.locator(".."); 
+      const container = labelEl.locator("..");
       await container.getByRole("textbox").fill(hex);
       // Trigger blur/change
       await container.getByRole("textbox").blur();
@@ -47,31 +56,35 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
 
     // Helper to set dimension (number)
     const setDimension = async (label: string, value: string) => {
-      const labelEl = page.locator("label").filter({ hasText: label }).last();
+      const labelEl = page.locator("label").filter({ hasText: label }).locator("visible=true").last();
       const container = labelEl.locator("..");
       await container.locator('input[type="number"]').fill(value);
       await container.locator('input[type="number"]').blur();
     };
 
-     // Helper to set simple text input (e.g. Shadow)
-     const setText = async (label: string, value: string) => {
-        const labelEl = page.locator("label").filter({ hasText: label }).last();
-        const container = labelEl.locator("..");
-        await container.getByRole("textbox").fill(value);
-        await container.getByRole("textbox").blur();
-      };
+    // Helper to set simple text input (e.g. Shadow)
+    const setText = async (label: string, value: string) => {
+      const labelEl = page.locator("label").filter({ hasText: label }).locator("visible=true").last();
+      const container = labelEl.locator("..");
+      await container.getByRole("textbox").fill(value);
+      await container.getByRole("textbox").blur();
+    };
+
+    // --- Form styling (Parent) ---
+    await openAccordion("Form styling");
 
     // --- Headlines & Descriptions ---
     await openAccordion("Headlines & Descriptions");
-    
+
     // Set values
     await setColor("Headline Color", "aa0000"); // Red-ish
     await setColor("Description Color", "00aa00"); // Green-ish
     await setDimension("Headline Font Size", "24");
     await setDimension("Description Font Size", "18");
-    await setText("Headline Font Weight", "700"); // Assuming text/number input
+    await setDimension("Headline Font Weight", "700");
     await setColor("Headline Label Color", "0000aa"); // Blue-ish
     await setDimension("Headline Label Font Size", "14");
+    await setDimension("Headline Label Font Weight", "600");
 
     // Wait for updates
     await page.waitForTimeout(1000);
@@ -85,12 +98,12 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
     expect(css).toContain("--fb-element-headline-font-weight: 700");
     expect(css).toContain("--fb-element-upper-label-color: #0000aa");
     expect(css).toContain("--fb-element-upper-label-font-size: 14px");
-
+    expect(css).toContain("--fb-element-upper-label-font-weight: 600");
 
     // --- Inputs ---
     await openAccordion("Inputs");
-    
-    // Note: "Input color" usually refers to Background. 
+
+    // Note: "Input color" usually refers to Background.
     await setColor("Input color", "eeeeee");
     await setColor("Input border color", "cccccc");
     await setColor("Input Text", "024eff"); // The one we fixed!
@@ -99,7 +112,7 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
     await setDimension("Font Size", "16");
     await setDimension("Padding X", "20");
     await setDimension("Padding Y", "10");
-    await setText("Placeholder Opacity", "0.8");
+    await setDimension("Placeholder Opacity", "0.8");
     await setText("Shadow", "0 4px 6px -1px rgba(0, 0, 0, 0.1)");
 
     await page.waitForTimeout(1000);
@@ -116,7 +129,6 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
     expect(css).toContain("--fb-input-placeholder-opacity: 0.8");
     expect(css).toContain("--fb-input-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)");
 
-
     // --- Buttons ---
     await openAccordion("Buttons"); // Click "Buttons" accordion header
 
@@ -128,10 +140,10 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
     // A safer way is ensuring we only scope to the Buttons region, but for now we assume functionality.
     // Let's refine the helper to use the open accordion context if we can, or just trust the labels are unique enough OR appearing later in DOM.
     // "Border Radius" appears in both Inputs and Buttons. "Border Radius" in Buttons is likely last in DOM if Buttons is below Inputs.
-    
+
     await setDimension("Height", "48");
     await setDimension("Font Size", "18");
-    await setText("Font Weight", "600");
+    await setDimension("Font Weight", "600");
     await setDimension("Padding X", "24");
     await setDimension("Padding Y", "12");
 
@@ -148,14 +160,14 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
     expect(css).toContain("--fb-button-padding-y: 12px");
 
     // --- Options ---
-    await openAccordion("Options");
+    await openAccordion("Options (Radio/Checkbox)");
 
-    await setColor("Option Background", "eeeeee");
-    await setColor("Option Label", "111111");
+    await setColor("Background", "eeeeee");
+    await setColor("Label Color", "111111");
     // "Border Radius" is reused. We rely on order or being in the open accordion.
     // If multiple accordions are open, we might hit ambiguity.
     // For this test, we assume previous accordions might stay open or we just rely on .last() picking the bottom-most one which is Options.
-    await setDimension("Border Radius", "6"); 
+    await setDimension("Border Radius", "6");
     await setDimension("Padding X", "12");
     await setDimension("Padding Y", "8");
     await setDimension("Font Size", "15");
@@ -170,26 +182,19 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
     expect(css).toContain("--fb-option-padding-y: 8px");
     expect(css).toContain("--fb-option-font-size: 15px");
 
+    // --- Card styling ---
+    await openAccordion("Card styling");
 
-
-    // --- Progress Bar ---
-    // Located in Card Styling settings generally, but we can search for the label.
-    // Ensure it's visible (toggle off "Hide progress bar" if it's on)
     // The switch label is "Hide progress bar"
-    const hideProgressSwitch = page.getByLabel("Hide progress bar");
-    if (await hideProgressSwitch.isChecked()) {
-        await hideProgressSwitch.uncheck();
+    const hideProgressSwitch = page.locator("#hideProgressBar");
+    if ((await hideProgressSwitch.getAttribute("aria-checked")) === "true") {
+      await hideProgressSwitch.click();
     }
-    
+
     // Set Track Height
     // "Track Height" is the label
     await setDimension("Track Height", "15");
-    
-    // Test Card Roundness influence on Track Radius
-    // Card styling is usually in an accordion or section "Card Styling" or similar?
-    // In Settings -> Look & Feel -> Card Styling is a section.
-    // But in the UI it might be under "Card Styling".
-    // We already have `setDimension("Roundness", ...)` potentially available if we find the label.
+
     // "Roundness" label is unique enough usually. Default is 8.
     await setDimension("Roundness", "20");
 
@@ -208,7 +213,7 @@ test.describe("Comprehensive Survey Styling Tests", async () => {
     expect(computedTrackHeight).toBe("15px");
 
     // Final Computed Style Check for the crucial fix (Input Text Color)
-    const previewInput = page.locator('#preview_input_field_element');
+    const previewInput = page.locator("input#preview_input_field_element");
     await previewInput.click();
     await previewInput.fill("Final Check");
     await expect(previewInput).toHaveCSS("color", "rgb(2, 78, 255)"); // #024eff
