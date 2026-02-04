@@ -151,7 +151,7 @@ function SingleSelect({
       />
 
       {/* Options */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {variant === "dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
@@ -160,15 +160,15 @@ function SingleSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="rounded-input w-full justify-between"
+                  className="rounded-input w-full justify-between bg-option-bg rounded-option border border-option-border my-0 h-input"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
-                  <span className="truncate">{displayText}</span>
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <span className="truncate font-input font-input-weight text-input-text">{displayText}</span>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 label-headline" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
+                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto"
                 align="start">
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
                   {options
@@ -181,8 +181,9 @@ function SingleSelect({
                           key={option.id}
                           value={option.id}
                           id={optionId}
+                          dir={dir}
                           disabled={disabled}>
-                          <span className={optionLabelClassName}>{option.label}</span>
+                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
                         </DropdownMenuRadioItem>
                       );
                     })}
@@ -190,8 +191,9 @@ function SingleSelect({
                     <DropdownMenuRadioItem
                       value={otherOptionId}
                       id={`${inputId}-${otherOptionId}`}
+                      dir={dir}
                       disabled={disabled}>
-                      <span className={optionLabelClassName}>{otherValue || otherOptionLabel}</span>
+                      <span className="font-input font-input-weight text-input-text">{otherValue || otherOptionLabel}</span>
                     </DropdownMenuRadioItem>
                   ) : null}
                   {options
@@ -204,8 +206,9 @@ function SingleSelect({
                           key={option.id}
                           value={option.id}
                           id={optionId}
+                          dir={dir}
                           disabled={disabled}>
-                          <span className={optionLabelClassName}>{option.label}</span>
+                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
                         </DropdownMenuRadioItem>
                       );
                     })}
