@@ -126,8 +126,9 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-# Install prisma CLI globally for database migrations
-RUN npm install --ignore-scripts -g prisma@6
+# Install prisma CLI globally for database migrations and fix permissions for nextjs user
+RUN npm install --ignore-scripts -g prisma@6 \
+    && chown -R nextjs:nextjs /usr/local/lib/node_modules/prisma
 
 # Create a startup script to handle the conditional logic
 COPY --from=installer /app/apps/web/scripts/docker/next-start.sh /home/nextjs/start.sh
