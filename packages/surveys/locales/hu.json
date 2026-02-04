@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "A válaszadók nem fogják látni ezt a kártyát",
     "retry": "Újrapróbálkozás",
     "retrying": "Újrapróbálkozás…",
+    "select_option": "Lehetőség kiválasztása",
+    "select_options": "Lehetőségek kiválasztása",
     "sending_responses": "Válaszok küldése…",
     "takes_less_than_x_minutes": "{count, plural, one {Kevesebb mint 1 percet vesz igénybe} other {Kevesebb mint {count} percet vesz igénybe}}",
     "takes_x_minutes": "{count, plural, one {1 percet vesz igénybe} other {{count} percet vesz igénybe}}",
@@ -28,9 +30,7 @@
     "terms_of_service": "Használati feltételek",
     "the_servers_cannot_be_reached_at_the_moment": "Jelenleg nem lehet elérni a kiszolgálókat.",
     "they_will_be_redirected_immediately": "Azonnal át lesznek irányítva",
-    "your_feedback_is_stuck": "A visszajelzése elakadt :(",
-    "select_option": "Lehetőség kiválasztása",
-    "select_options": "Lehetőségek kiválasztása"
+    "your_feedback_is_stuck": "A visszajelzése elakadt :("
   },
   "errors": {
     "all_options_must_be_ranked": "Rangsorolja az összes lehetőséget",
