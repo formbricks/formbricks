@@ -47,7 +47,6 @@ export const ZBaseStyling = z.object({
   fontFamily: z.string().nullish(),
 
   // Buttons
-  // Buttons
   buttonBgColor: ZStylingColor.nullish(),
   buttonTextColor: ZStylingColor.nullish(),
   buttonBorderRadius: z.union([z.number(), z.string()]).nullish(),
