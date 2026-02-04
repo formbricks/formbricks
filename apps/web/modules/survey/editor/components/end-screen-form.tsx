@@ -139,7 +139,7 @@ export const EndScreenForm = ({
           </Label>
         </div>
         {showEndingCardCTA && (
-          <div className="border-1 mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
+          <div className="mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
             <div className="space-y-2">
               <ElementFormInput
                 id="buttonLabel"

@@ -24,13 +24,14 @@ ALTER TABLE "Project" DROP COLUMN "darkOverlay";
 -- darkOverlay: true -> overlay: "dark"
 -- darkOverlay: false -> overlay: "light"
 -- Then remove the old darkOverlay key from JSON
+-- Note: Compare JSON text values directly to avoid boolean cast failures on non-boolean values
 UPDATE "Survey"
 SET "projectOverwrites" = jsonb_set(
   "projectOverwrites"::jsonb - 'darkOverlay',
   '{overlay}',
   CASE 
-    WHEN ("projectOverwrites"::jsonb->>'darkOverlay')::boolean = true THEN '"dark"'::jsonb
-    WHEN ("projectOverwrites"::jsonb->>'darkOverlay')::boolean = false THEN '"light"'::jsonb
+    WHEN ("projectOverwrites"::jsonb->>'darkOverlay') = 'true' THEN '"dark"'::jsonb
+    WHEN ("projectOverwrites"::jsonb->>'darkOverlay') = 'false' THEN '"light"'::jsonb
     ELSE '"none"'::jsonb
   END
 )
