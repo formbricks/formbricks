@@ -990,7 +990,7 @@
         "from_your_organization": "a szervezetétől",
         "invitation_sent_once_more": "A meghívó még egyszer elküldve.",
         "invite_deleted_successfully": "A meghívó sikeresen törölve",
-        "invited_on": "Meghívva ekkor: {date}",
+        "invite_expires_on": "A meghívó lejár: {date}",
         "invites_failed": "A meghívás sikertelen",
         "leave_organization": "Szervezet elhagyása",
         "leave_organization_description": "Elhagyja ezt a szervezetet, és elveszíti az összes kérdőívhez és válaszhoz való hozzáférését. Csak akkor tud ismét csatlakozni, ha újra meghívják.",

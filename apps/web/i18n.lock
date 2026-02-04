@@ -929,7 +929,7 @@ checksums:
     environments/settings/general/from_your_organization: 4b7970431edb3d0f13c394dbd755a055
     environments/settings/general/invitation_sent_once_more: e6e5ea066810f9dcb65788aa4f05d6e2
     environments/settings/general/invite_deleted_successfully: 1c7dca6d0f6870d945288e38cfd2f943
-    environments/settings/general/invited_on: 83476ce4bcdfc3ccf524d1cd91b758a8
+    environments/settings/general/invite_expires_on: 6fd2356ad91a5f189070c43855904bb4
     environments/settings/general/invites_failed: 180ffb8db417050227cc2b2ea74b7aae
     environments/settings/general/leave_organization: e74132cb4a0dc98c41e61ea3b2dd268b
     environments/settings/general/leave_organization_description: 2d0cd65e4e78a9b2835cf88c4de407fb
