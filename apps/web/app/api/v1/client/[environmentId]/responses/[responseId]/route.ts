@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseUpdateInput, ZResponseUpdateInput } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -13,7 +14,6 @@ import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
@@ -33,7 +33,11 @@ const handleDatabaseError = (error: Error, url: string, endpoint: string, respon
   return responses.internalServerErrorResponse("Unknown error occurred", true);
 };
 
-const validateResponse = (response: TResponse, survey: TSurvey, responseUpdateInput: TResponseUpdateInput) => {
+const validateResponse = (
+  response: TResponse,
+  survey: TSurvey,
+  responseUpdateInput: TResponseUpdateInput
+) => {
   // Validate response data against validation rules
   const mergedData = {
     ...response.data,
@@ -142,7 +146,11 @@ export const PUT = withV1ApiWrapper({
         ),
       };
     }
-    validateResponse(response, survey, inputValidation.data)
+
+    const validationResult = validateResponse(response, survey, inputValidation.data);
+    if (validationResult) {
+      return validationResult;
+    }
 
     // update response with quota evaluation
     let updatedResponse;

@@ -6,6 +6,7 @@ import { ZEnvironmentId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -17,7 +18,6 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface Context {
   params: Promise<{
@@ -146,7 +146,10 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    validateResponse(responseInputData, survey)
+    const validationResult = validateResponse(responseInputData, survey);
+    if (validationResult) {
+      return validationResult;
+    }
 
     let response: TResponseWithQuotaFull;
     try {
