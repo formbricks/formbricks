@@ -1,0 +1,224 @@
+---
+title: "HubSpot"
+description: "Learn how to integrate Formbricks with HubSpot to automatically create or update contacts when survey responses are submitted."
+---
+
+<Note>
+  Formbricks doesn't have a native HubSpot integration yet. This guide shows you how to connect Formbricks with HubSpot using automation platforms (Make.com, n8n) or custom webhooks.
+</Note>
+
+## Prerequisites
+
+Before setting up the integration, you'll need:
+
+1. **A Formbricks account** with at least one survey that collects email addresses
+2. **A HubSpot account** with API access
+3. **HubSpot API credentials** (see authentication options below)
+4. **Automation service** like Make, n8n, or ActivePieces (for no-code methods)
+
+### HubSpot Authentication Options
+
+HubSpot offers two main ways to authenticate API requests:
+
+#### Option A: OAuth 2.0 via Public App (Recommended)
+
+OAuth is the recommended approach for production integrations. When using Make.com or n8n, they handle OAuth authentication for you through their built-in HubSpot connectors.
+
+#### Option B: Legacy Private Apps (Simple Setup)
+
+For custom webhook handlers, you can use a Legacy Private App which provides a static access token. While marked as "legacy," these apps remain fully supported by HubSpot.
+
+To create a Legacy Private App:
+
+1. Go to your HubSpot account **Settings**
+2. Navigate to **Integrations** → **Private Apps**
+3. Click **Create a private app**
+4. Give it a name (e.g., "Formbricks Integration")
+5. Under **Scopes**, add:
+   - `crm.objects.contacts.write`
+   - `crm.objects.contacts.read`
+6. Click **Create app** and copy the access token
+
+<Note>
+  For more information on HubSpot's authentication options, see the [HubSpot Authentication Overview](https://developers.hubspot.com/docs/guides/apps/authentication/intro-to-auth).
+</Note>
+
+---
+
+## Method 1: Using Make.com (Recommended for No-Code)
+
+
+### Step 1: Set Up Your Survey
+
+Before creating the Make scenario, ensure your survey has clear `questionId` values set. This makes mapping responses to HubSpot fields easier.
+
+![Update Question ID](/images/xm-and-surveys/core-features/integrations/make/update-question-id.webp)
+
+<Note>
+  You can only update `questionId` values before publishing. If your survey is already published, duplicate it and update the question IDs in the copy.
+</Note>
+
+### Step 2: Create a New Make.com Scenario
+
+1. Go to [Make.com](https://make.com) and create a new scenario
+2. Search for **Formbricks** and select it as your trigger
+3. Choose **Response Finished** as the trigger event
+
+![Search Formbricks](/images/xm-and-surveys/core-features/integrations/make/search-formbricks.webp)
+
+### Step 3: Connect Formbricks to Make
+
+1. Click **Create a webhook**
+2. Enter your Formbricks API Host (default: `https://app.formbricks.com`)
+3. Add your Formbricks API Key (see [API Key Setup](/api-reference/rest-api#how-to-generate-an-api-key))
+4. Select the survey you want to connect
+
+![Enter API Key](/images/xm-and-surveys/core-features/integrations/make/enter-api-key-and-host.webp)
+
+### Step 4: Add the HubSpot Module
+
+1. Click the **+** button after the Formbricks trigger
+2. Search for **HubSpot** and select it
+3. Choose **Create or Update a Contact** as the action
+4. Connect your HubSpot account
+
+### Step 5: Map Formbricks Fields to HubSpot
+
+Map the Formbricks response fields to HubSpot contact properties:
+
+| HubSpot Field | Formbricks Field |
+| ------------- | ---------------- |
+| Email | `data.email` (your email question ID) |
+| First Name | `data.firstName` (if collected) |
+| Last Name | `data.lastName` (if collected) |
+| Custom Property | Any other `data.*` field |
+
+You can also map metadata from the response:
+
+- **Country**: `meta.country`
+- **Browser**: `meta.userAgent.browser`
+- **Survey Name**: `survey.title`
+
+### Step 6: Test and Activate
+
+1. Submit a test response to your Formbricks survey
+2. Verify the contact appears in HubSpot
+3. Turn on your Make scenario
+
+---
+
+## Method 2: Using n8n (Self-Hosted Option)
+
+<Note>
+  The Formbricks n8n node is available as a community node. Install it via **Settings** → **Community Nodes** → install `@formbricks/n8n-nodes-formbricks`.
+</Note>
+
+### Step 1: Set Up the Formbricks Trigger
+
+1. Create a new workflow in n8n
+2. Add the **Formbricks** trigger node
+3. Connect it with your Formbricks API Key and host
+4. Select **Response Finished** as the event
+5. Choose your survey
+
+![Add Formbricks Trigger](/images/xm-and-surveys/core-features/integrations/n8n/add-formbricks-trigger.webp)
+
+### Step 2: Add the HubSpot Node
+
+1. Add a new node and search for **HubSpot**
+2. Select **Create/Update Contact** as the operation
+3. Connect your HubSpot account (n8n supports both OAuth and access token authentication)
+
+### Step 3: Configure Field Mapping
+
+In the HubSpot node, map the fields:
+
+```
+Email: {{ $json.data.email }}
+First Name: {{ $json.data.firstName }}
+Last Name: {{ $json.data.lastName }}
+```
+
+For custom HubSpot properties, use the **Additional Fields** section to add mappings like:
+
+```
+survey_source: {{ $json.survey.title }}
+response_id: {{ $json.id }}
+submission_date: {{ $json.createdAt }}
+```
+
+### Step 4: Test Your Workflow
+
+1. Click **Listen for event** in the Formbricks trigger
+2. Submit a test survey response
+3. Verify the data flows through to HubSpot
+4. Activate your workflow
+
+---
+
+## Method 3: Using Webhooks (Custom Integration)
+
+For maximum flexibility, you can use Formbricks webhooks with a custom endpoint that calls the HubSpot API directly. This approach is ideal for developers who want full control.
+
+<Note>
+  This method requires a HubSpot access token. You can use a Legacy Private App token (simplest) or implement OAuth 2.0 for production applications.
+</Note>
+
+### Step 1: Create a Formbricks Webhook
+
+1. Go to **Configuration** → **Integrations** in Formbricks
+2. Click **Manage Webhooks** → **Add Webhook**
+3. Enter your endpoint URL (see options below)
+4. Select **Response Finished** as the trigger
+5. Choose the surveys to monitor
+
+![Integrations Tab](/images/xm-and-surveys/core-features/integrations/webhooks/integrations-tab.webp)
+
+### Step 2: Build Your Webhook Handler
+
+Your webhook handler needs to:
+
+1. **Receive the Formbricks webhook** - Accept POST requests with the survey response payload
+2. **Extract contact data** - Parse the email and other fields from `data.data` (keyed by your `questionId` values)
+3. **Call the HubSpot API** - Use the [HubSpot Contacts API](https://developers.hubspot.com/docs/api/crm/contacts) to create or update contacts
+4. **Handle duplicates** - HubSpot returns a 409 error if a contact with that email exists; search and update instead
+
+You can deploy your handler using:
+- **Serverless functions** (Vercel, AWS Lambda, Cloudflare Workers)
+- **Traditional servers** (Node.js, Python, etc.)
+- **Low-code platforms** (if Make.com or n8n don't meet your needs)
+
+For webhook signature verification, see the [Webhooks documentation](/xm-and-surveys/core-features/integrations/webhooks).
+
+### Step 3: Deploy and Test
+
+1. Deploy your webhook handler to a publicly accessible URL
+2. Add the URL to your Formbricks webhook configuration
+3. Submit a test survey response
+4. Verify the contact appears in HubSpot
+
+---
+
+## Troubleshooting
+
+### Contact Not Created in HubSpot
+
+1. **Check the email field**: Ensure your survey has an email question and you're mapping the correct `questionId`
+2. **Verify API token**: Make sure your HubSpot access token has the required scopes (`crm.objects.contacts.write` and `crm.objects.contacts.read`)
+3. **Check for duplicates**: HubSpot returns a 409 error if a contact with that email already exists
+
+### Webhook Not Triggering
+
+1. Verify the webhook URL is publicly accessible
+2. Check that **Response Finished** trigger is selected
+3. Ensure the survey is linked to the webhook
+
+### Testing Your Integration
+
+1. Use a unique test email for each test
+2. Check HubSpot's **Contacts** page after submitting a response
+3. Review your webhook handler logs for errors
+
+---
+
+Still struggling or something not working as expected? [Join our GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we're happy to help!
