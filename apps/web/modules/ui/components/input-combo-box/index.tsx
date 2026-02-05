@@ -208,8 +208,11 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
       {withInput && inputType !== "dropdown" && (
         <Input
           id={`${id}-input`}
-          className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-r-slate-400"
           {...inputProps}
+          className={cn(
+            "min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-r-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0",
+            inputProps?.className
+          )}
           value={localValue ?? ""}
           onChange={onInputChange}
         />
@@ -223,7 +226,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             tabIndex={0}
             aria-controls="options"
             aria-expanded={open}
-            className={cn("flex h-10 w-full cursor-pointer items-center justify-end bg-white pr-2", {
+            className={cn("flex h-full w-full cursor-pointer items-center justify-end bg-white pr-2", {
               "w-10 justify-center pr-0": withInput && inputType !== "dropdown",
               "pointer-events-none": isClearing,
             })}>

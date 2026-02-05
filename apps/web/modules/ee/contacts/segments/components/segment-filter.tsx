@@ -65,6 +65,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { AddFilterModal } from "./add-filter-modal";
+import { AttributeValueInput } from "./attribute-value-input";
 import { DateFilterValue } from "./date-filter-value";
 
 interface TSegmentFilterProps {
@@ -293,33 +294,81 @@ function AttributeSegmentFilter({
     setSegment(updatedSegment);
   };
 
-  const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    updateValueInLocalSurvey(resource.id, value);
-
-    if (!value) {
-      setValueError(t("environments.segments.value_cannot_be_empty"));
-      return;
+  const renderValueInput = () => {
+    if (isDateAttribute && isDateOperator(resource.qualifier.operator)) {
+      return (
+        <DateFilterValue
+          operator={resource.qualifier.operator}
+          value={resource.value}
+          onChange={(newValue) => {
+            updateValueInLocalSurvey(resource.id, newValue);
+          }}
+          viewOnly={viewOnly}
+        />
+      );
     }
 
-    const { operator } = resource.qualifier;
-
-    if (ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
-      const isNumber = z.coerce.number().safeParse(value);
-
-      if (isNumber.success) {
-        setValueError("");
-        updateValueInLocalSurvey(resource.id, parseInt(value, 10));
-      } else {
-        setValueError(t("environments.segments.value_must_be_a_number"));
-        updateValueInLocalSurvey(resource.id, value);
+    if (attributeDataType === "string") {
+      // Only show combobox if we have a valid attributeKeyId
+      if (attributeKey?.id) {
+        return (
+          <AttributeValueInput
+            attributeKeyId={attributeKey.id}
+            environmentId={segment.environmentId}
+            dataType={attributeDataType}
+            value={resource.value as string | number}
+            onChange={(newValue) => {
+              updateValueInLocalSurvey(resource.id, newValue);
+            }}
+            disabled={viewOnly}
+            valueError={valueError}
+          />
+        );
       }
-
-      return;
     }
 
-    setValueError("");
-    updateValueInLocalSurvey(resource.id, value);
+    return (
+      <div className="relative flex flex-col gap-1">
+        <Input
+          className={cn("h-9 w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
+          disabled={viewOnly}
+          onChange={(e) => {
+            if (viewOnly) return;
+            const { value } = e.target;
+            updateValueInLocalSurvey(resource.id, value);
+
+            if (!value) {
+              setValueError(t("environments.segments.value_cannot_be_empty"));
+              return;
+            }
+
+            const { operator } = resource.qualifier;
+
+            if (ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
+              const isNumber = z.coerce.number().safeParse(value);
+
+              if (isNumber.success) {
+                setValueError("");
+                updateValueInLocalSurvey(resource.id, Number.parseInt(value, 10));
+              } else {
+                setValueError(t("environments.segments.value_must_be_a_number"));
+                updateValueInLocalSurvey(resource.id, value);
+              }
+
+              return;
+            }
+
+            setValueError("");
+            updateValueInLocalSurvey(resource.id, value);
+          }}
+          value={resource.value as string | number}
+        />
+
+        {valueError ? (
+          <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">{valueError}</p>
+        ) : null}
+      </div>
+    );
   };
 
   return (
@@ -383,41 +432,7 @@ function AttributeSegmentFilter({
         </SelectContent>
       </Select>
 
-      {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
-        <>
-          {isDateAttribute && isDateOperator(resource.qualifier.operator) ? (
-            <DateFilterValue
-              operator={resource.qualifier.operator}
-              value={resource.value}
-              onChange={(newValue) => {
-                updateValueInLocalSurvey(resource.id, newValue);
-              }}
-              viewOnly={viewOnly}
-            />
-          ) : (
-            <div className="relative flex flex-col gap-1">
-              <Input
-                className={cn(
-                  "h-9 w-auto bg-white",
-                  valueError && "border border-red-500 focus:border-red-500"
-                )}
-                disabled={viewOnly}
-                onChange={(e) => {
-                  if (viewOnly) return;
-                  checkValueAndUpdate(e);
-                }}
-                value={resource.value as string | number}
-              />
-
-              {valueError ? (
-                <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">
-                  {valueError}
-                </p>
-              ) : null}
-            </div>
-          )}
-        </>
-      )}
+      {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && renderValueInput()}
 
       <SegmentFilterItemContextMenu
         filterId={resource.id}
