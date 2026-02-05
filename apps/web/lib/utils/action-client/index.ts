@@ -22,23 +22,28 @@ import { ActionClientCtx } from "./types/context";
 export const actionClient = createSafeActionClient({
   handleServerError(e, utils) {
     const eventId = (utils.ctx as Record<string, any>)?.auditLoggingCtx?.eventId ?? undefined; // keep explicit fallback
-    Sentry.captureException(e, {
-      extra: {
-        eventId,
-      },
-    });
 
-    if (
+    // Expected errors that should NOT be reported to Sentry
+    // These are handled gracefully in the UI (e.g., show "no access", redirect, or retry message)
+    const isExpectedError =
       e instanceof ResourceNotFoundError ||
       e instanceof AuthorizationError ||
       e instanceof InvalidInputError ||
       e instanceof UnknownError ||
       e instanceof AuthenticationError ||
       e instanceof OperationNotAllowedError ||
-      e instanceof TooManyRequestsError
-    ) {
+      e instanceof TooManyRequestsError;
+
+    if (isExpectedError) {
       return e.message;
     }
+
+    // Only capture unexpected errors to Sentry
+    Sentry.captureException(e, {
+      extra: {
+        eventId,
+      },
+    });
 
     // eslint-disable-next-line no-console -- This error needs to be logged for debugging server-side errors
     logger.withContext({ eventId }).error(e, "SERVER ERROR");

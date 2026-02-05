@@ -61,7 +61,7 @@ export const getEnvironmentAuth = reactCache(async (environmentId: string): Prom
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   if (!currentUserMembership) {
-    throw new Error(t("common.membership_not_found"));
+    throw new AuthorizationError(t("common.membership_not_found"));
   }
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership?.role);
@@ -293,7 +293,7 @@ export const getEnvironmentLayoutData = reactCache(
 
     // Validate user's membership was found
     if (!membership) {
-      throw new Error(t("common.membership_not_found"));
+      throw new AuthorizationError(t("common.membership_not_found"));
     }
 
     // Fetch remaining data in parallel
