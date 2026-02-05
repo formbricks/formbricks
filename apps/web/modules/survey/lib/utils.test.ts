@@ -102,6 +102,42 @@ describe("Survey Utils", () => {
       expect(result.segment).toBeNull();
       expect(result.id).toBe("surveyJs");
     });
+
+    test("should default endings to empty array when null", () => {
+      const surveyPrisma = {
+        id: "survey5",
+        name: "Survey with null endings",
+        displayPercentage: "100",
+        segment: null,
+        endings: null,
+      };
+      const result = transformPrismaSurvey<TSurvey>(surveyPrisma);
+      expect(result.endings).toEqual([]);
+    });
+
+    test("should default endings to empty array when undefined", () => {
+      const surveyPrisma = {
+        id: "survey6",
+        name: "Survey with undefined endings",
+        displayPercentage: "100",
+        segment: null,
+        endings: undefined,
+      };
+      const result = transformPrismaSurvey<TSurvey>(surveyPrisma);
+      expect(result.endings).toEqual([]);
+    });
+
+    test("should preserve endings when provided", () => {
+      const surveyPrisma = {
+        id: "survey7",
+        name: "Survey with endings",
+        displayPercentage: "100",
+        segment: null,
+        endings: [{ id: "ending1", type: "endScreen" }],
+      };
+      const result = transformPrismaSurvey<TSurvey>(surveyPrisma);
+      expect(result.endings).toEqual([{ id: "ending1", type: "endScreen" }]);
+    });
   });
 
   describe("buildWhereClause", () => {
