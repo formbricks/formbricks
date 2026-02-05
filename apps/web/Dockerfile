@@ -1,4 +1,4 @@
-FROM node:22-alpine3.22 AS base
+FROM node:24-alpine3.23 AS base
 
 #
 ## step 1: Prune monorepo
@@ -20,7 +20,7 @@ FROM base AS installer
 # Enable corepack and prepare pnpm
 RUN npm install --ignore-scripts -g corepack@latest 
 RUN corepack enable
-RUN corepack prepare pnpm@9.15.9 --activate
+RUN corepack prepare pnpm@10.28.2 --activate
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
@@ -69,20 +69,14 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=sentry_auth_token \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
-# Extract Prisma version
-RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
-
 #
 ## step 3: setup production runner
 #
 FROM base AS runner
 
-RUN npm install --ignore-scripts -g corepack@latest && \
-    corepack enable
-
-RUN apk add --no-cache curl \
-    && apk add --no-cache supercronic \
-    # && addgroup --system --gid 1001 nodejs \
+# Update npm to latest, then create user
+# Note: npm's bundled tar has a known vulnerability but npm is only used during build, not at runtime
+RUN npm install --ignore-scripts -g npm@latest \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
@@ -113,14 +107,12 @@ RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./package
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
+# Copy prisma client packages
 COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
 RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
 
 COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
 RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
-
-COPY --from=installer /prisma_version.txt .
-RUN chown nextjs:nextjs ./prisma_version.txt && chmod 644 ./prisma_version.txt
 
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
@@ -134,7 +126,9 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-RUN npm install -g prisma@6
+# Install prisma CLI globally for database migrations and fix permissions for nextjs user
+RUN npm install --ignore-scripts -g prisma@6 \
+    && chown -R nextjs:nextjs /usr/local/lib/node_modules/prisma
 
 # Create a startup script to handle the conditional logic
 COPY --from=installer /app/apps/web/scripts/docker/next-start.sh /home/nextjs/start.sh
@@ -144,10 +138,8 @@ EXPOSE 3000
 ENV HOSTNAME="0.0.0.0"
 USER nextjs
 
-# Prepare pnpm as the nextjs user to ensure it's available at runtime
 # Prepare volumes for uploads and SAML connections
-RUN corepack prepare pnpm@9.15.9 --activate && \
-    mkdir -p /home/nextjs/apps/web/uploads/ && \
+RUN mkdir -p /home/nextjs/apps/web/uploads/ && \
     mkdir -p /home/nextjs/apps/web/saml-connection
 
 VOLUME /home/nextjs/apps/web/uploads/
