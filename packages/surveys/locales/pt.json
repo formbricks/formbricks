@@ -71,7 +71,7 @@
     "please_fill_out_this_field": "Por favor, preencha este campo",
     "recaptcha_error": {
       "message": "Sua resposta não pôde ser enviada porque foi sinalizada como atividade automatizada. Se você respira, por favor tente novamente.",
-      "title": "Não conseguimos verificar que você é humano."
+      "title": "Não foi possível verificar que você é humano."
     },
     "value_must_contain": "O valor deve conter {value}",
     "value_must_equal": "O valor deve ser igual a {value}",

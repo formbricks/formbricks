@@ -48,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "Schakel de spambeveiliging uit in de enquête-instellingen om dit apparaat te blijven gebruiken.",
-      "title": "Dit apparaat ondersteunt geen spambeveiliging."
+      "title": "Dit apparaat ondersteunt geen spambescherming."
     },
     "invalid_format": "Voer een geldig formaat in",
     "is_between": "Selecteer een datum tussen {startDate} en {endDate}",

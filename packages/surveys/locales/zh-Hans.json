@@ -48,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "请在调查设置中禁用垃圾邮件保护以继续使用此设备。",
-      "title": "此设备不支持垃圾邮件保护。"
+      "title": "此设备不支持垃圾信息防护。"
     },
     "invalid_format": "请输入有效的格式",
     "is_between": "请选择{startDate}到{endDate}之间的日期",
@@ -71,7 +71,7 @@
     "please_fill_out_this_field": "请填写此字段",
     "recaptcha_error": {
       "message": "您的响应未能提交，因为它被标记为自动活动。如果您是人类，请重试。",
-      "title": "我们无法验证您是人类。"
+      "title": "我们无法验证你是人类。"
     },
     "value_must_contain": "值必须包含{value}",
     "value_must_equal": "值必须等于{value}",
