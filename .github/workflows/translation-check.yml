@@ -46,7 +46,7 @@ jobs:
           version: 9.15.9
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
+        run: pnpm install --config.platform=linux --config.architecture=x64
 
       - name: Validate translation keys
         run: |
