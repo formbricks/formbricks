@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, HashIcon, PlusIcon, TagIcon, TrashIcon } from "lucide-react";
+import { CalendarIcon, HashIcon, PlusIcon, TagIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -19,24 +19,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import {
-  FormControl,
-  FormError,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormProvider,
-} from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
+import { FormError, FormProvider } from "@/modules/ui/components/form";
 import { updateContactAttributesAction } from "../actions";
 import { TEditContactAttributesForm, createEditContactAttributesSchema } from "../types/contact";
+import { AttributeFieldRow } from "./attribute-field-row";
 
 interface AttributeWithMetadata {
   key: string;
@@ -91,6 +77,29 @@ export const EditContactAttributesModal = ({
 
   // Watch form values to get currently selected keys
   const watchedAttributes = form.watch("attributes");
+
+  // Track which attributes were already saved (should be disabled)
+  const savedAttributeKeys = useMemo(
+    () => new Set(currentAttributes.map((attr) => attr.key)),
+    [currentAttributes]
+  );
+
+  // Separate system and custom attributes by index
+  const { systemFieldIndices, customFieldIndices } = useMemo(() => {
+    const system: number[] = [];
+    const custom: number[] = [];
+
+    watchedAttributes.forEach((attr, index) => {
+      const attrKey = attributeKeys.find((ak) => ak.key === attr.key);
+      if (attrKey?.type === "default") {
+        system.push(index);
+      } else {
+        custom.push(index);
+      }
+    });
+
+    return { systemFieldIndices: system, customFieldIndices: custom };
+  }, [watchedAttributes, attributeKeys]);
 
   // Icon mapping for attribute data types
   const dataTypeIcons = {
@@ -227,137 +236,54 @@ export const EditContactAttributesModal = ({
         <DialogBody>
           <FormProvider {...form}>
             <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-4">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
-                    <FormField
-                      control={form.control}
-                      name={`attributes.${index}.key`}
-                      render={({ field: keyField }) => {
-                        const availableOptions = getAvailableOptions(index);
-                        const selectedOption = allKeyOptions.find((opt) => opt.value === keyField.value);
-                        const Icon = selectedOption?.icon ?? TagIcon;
-
-                        return (
-                          <FormItem className="flex-1">
-                            <FormLabel>{t("environments.contacts.attribute_key")}</FormLabel>
-                            <FormControl>
-                              <Select
-                                value={keyField.value || undefined}
-                                onValueChange={(value) => keyField.onChange(value)}>
-                                <SelectTrigger id={`attribute-key-${index}`} className="w-full">
-                                  {keyField.value ? (
-                                    <span className="flex items-center gap-2">
-                                      <Icon className="h-4 w-4 text-slate-400" />
-                                      <span>{selectedOption?.label ?? keyField.value}</span>
-                                    </span>
-                                  ) : (
-                                    <SelectValue
-                                      placeholder={t("environments.contacts.select_attribute_key")}
-                                    />
-                                  )}
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableOptions.map((option) => {
-                                    const OptionIcon = option.icon;
-                                    return (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        <span className="flex items-center gap-2">
-                                          <OptionIcon className="h-4 w-4 text-slate-400" />
-                                          <span>{option.label}</span>
-                                        </span>
-                                      </SelectItem>
-                                    );
-                                  })}
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormError />
-                          </FormItem>
-                        );
-                      }}
+              {/* System Attributes Section */}
+              {systemFieldIndices.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-slate-700">
+                    {t("environments.contacts.system_attributes")}
+                  </h3>
+                  {systemFieldIndices.map((index) => (
+                    <AttributeFieldRow
+                      key={fields[index].id}
+                      index={index}
+                      fieldId={fields[index].id}
+                      form={form}
+                      attributeKeys={attributeKeys}
+                      watchedAttributes={watchedAttributes}
+                      allKeyOptions={allKeyOptions}
+                      getAvailableOptions={getAvailableOptions}
+                      savedAttributeKeys={savedAttributeKeys}
+                      onRemove={handleRemoveAttribute}
+                      t={t}
                     />
+                  ))}
+                </div>
+              )}
 
-                    <FormField
-                      control={form.control}
-                      name={`attributes.${index}.value`}
-                      render={({ field: valueField }) => {
-                        // Get the data type for this attribute key
-                        const selectedKey = attributeKeys.find(
-                          (ak) => ak.key === watchedAttributes[index]?.key
-                        );
-                        const dataType = selectedKey?.dataType || "string";
-
-                        // Render input based on data type
-                        const renderValueInput = () => {
-                          if (dataType === "date") {
-                            return (
-                              <Input
-                                type="date"
-                                value={valueField.value ? valueField.value.split("T")[0] : ""}
-                                onChange={(e) => {
-                                  // NOSONAR - standard date input onchange, no need to take this out of the component
-                                  const dateValue = e.target.value
-                                    ? new Date(e.target.value).toISOString()
-                                    : "";
-                                  valueField.onChange(dateValue);
-                                }}
-                                placeholder={t("environments.contacts.attribute_value_placeholder")}
-                                className="w-full"
-                              />
-                            );
-                          }
-
-                          if (dataType === "number") {
-                            return (
-                              <Input
-                                type="number"
-                                {...valueField}
-                                placeholder={t("environments.contacts.attribute_value_placeholder")}
-                                className="w-full"
-                              />
-                            );
-                          }
-
-                          return (
-                            <Input
-                              type="text"
-                              {...valueField}
-                              placeholder={t("environments.contacts.attribute_value_placeholder")}
-                              className="w-full"
-                            />
-                          );
-                        };
-
-                        return (
-                          <FormItem className="flex-1">
-                            <FormLabel>{t("environments.contacts.attribute_value")}</FormLabel>
-                            <FormControl>
-                              <div className="flex space-x-2">
-                                {renderValueInput()}
-                                <div className="flex items-end pb-0.5">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={["email", "userId", "firstName", "lastName"].includes(
-                                      watchedAttributes[index]?.key ?? ""
-                                    )}
-                                    size="sm"
-                                    onClick={() => handleRemoveAttribute(index)}
-                                    className="h-10 w-10 p-0">
-                                    <TrashIcon className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </FormControl>
-                            <FormError />
-                          </FormItem>
-                        );
-                      }}
+              {/* Custom Attributes Section */}
+              {customFieldIndices.length > 0 && (
+                <div className="space-y-4">
+                  {systemFieldIndices.length > 0 && <hr className="border-slate-200" />}
+                  <h3 className="text-sm font-semibold text-slate-700">
+                    {t("environments.contacts.custom_attributes")}
+                  </h3>
+                  {customFieldIndices.map((index) => (
+                    <AttributeFieldRow
+                      key={fields[index].id}
+                      index={index}
+                      fieldId={fields[index].id}
+                      form={form}
+                      attributeKeys={attributeKeys}
+                      watchedAttributes={watchedAttributes}
+                      allKeyOptions={allKeyOptions}
+                      getAvailableOptions={getAvailableOptions}
+                      savedAttributeKeys={savedAttributeKeys}
+                      onRemove={handleRemoveAttribute}
+                      t={t}
                     />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* Only show Add Attribute button if there are remaining attributes to add */}
               {watchedAttributes.length < attributeKeys.length && (
