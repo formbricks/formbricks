@@ -77,7 +77,7 @@ export function RenderSurvey(props: SurveyContainerProps) {
                   close();
                 }
               },
-              props.survey.endings.length ? 3000 : 0 // close modal automatically after 3 seconds if no ending is enabled; otherwise, close immediately
+              (props.survey.endings?.length ?? 0) ? 3000 : 0 // close modal automatically after 3 seconds if no ending is enabled; otherwise, close immediately
             );
           }
         }}

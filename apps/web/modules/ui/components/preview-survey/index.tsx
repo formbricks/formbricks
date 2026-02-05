@@ -102,7 +102,7 @@ export const PreviewSurvey = ({
       }
 
       // check the endings
-      const ending = survey.endings.find((e) => e.id === newElementId);
+      const ending = (survey.endings ?? []).find((e) => e.id === newElementId);
       if (ending) {
         setBlockId(ending.id);
         return;
@@ -119,7 +119,7 @@ export const PreviewSurvey = ({
 
   const onFinished = () => {
     // close modal if there are no elements left
-    if (survey.type === "app" && survey.endings.length === 0) {
+    if (survey.type === "app" && (survey.endings?.length ?? 0) === 0) {
       setIsModalOpen(false);
       setTimeout(() => {
         if (survey.blocks[0]) {

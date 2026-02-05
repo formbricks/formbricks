@@ -85,7 +85,7 @@ export const EditorCardMenu = ({
 
   const elements = getElementsFromBlocks(survey.blocks);
   const isDeleteDisabled =
-    cardType === "element" ? elements.length === 1 : survey.type === "link" && survey.endings.length === 1;
+    cardType === "element" ? elements.length === 1 : survey.type === "link" && (survey.endings?.length ?? 0) === 1;
 
   const availableElementTypes = isCxMode ? getCXElementNameMap(t) : getElementNameMap(t);
 

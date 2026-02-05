@@ -422,7 +422,7 @@ export function Survey({
   const evaluateLogicAndGetNextBlockId = (
     data: TResponseData
   ): { nextBlockId: string | undefined; calculatedVariables: TResponseVariables } => {
-    const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
+    const firstEndingId = (survey.endings?.length ?? 0) > 0 ? survey.endings[0].id : undefined;
 
     if (blockId === "start")
       return { nextBlockId: localSurvey.blocks[0]?.id || firstEndingId, calculatedVariables: {} };
@@ -657,7 +657,7 @@ export function Survey({
     setIsSurveyFinished(finished);
 
     const endingId = nextBlockId
-      ? localSurvey.endings.find((ending) => ending.id === nextBlockId)?.id
+      ? (localSurvey.endings ?? []).find((ending) => ending.id === nextBlockId)?.id
       : undefined;
 
     onChange(surveyResponseData);
@@ -776,7 +776,7 @@ export function Survey({
           />
         );
       } else if (blockIdx >= localSurvey.blocks.length) {
-        const endingCard = localSurvey.endings.find((ending) => {
+        const endingCard = (localSurvey.endings ?? []).find((ending) => {
           return ending.id === blockId;
         });
         if (endingCard) {

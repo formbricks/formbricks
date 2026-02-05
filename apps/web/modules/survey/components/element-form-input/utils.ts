@@ -57,7 +57,7 @@ export const getEndingCardText = (
   questionIdx: number
 ): TI18nString => {
   const endingCardIndex = questionIdx - questions.length;
-  const card = survey.endings[endingCardIndex];
+  const card = survey.endings?.[endingCardIndex];
 
   if (card?.type === "endScreen") {
     return (card[id as keyof typeof card] as TI18nString) || createI18nString("", surveyLanguageCodes);

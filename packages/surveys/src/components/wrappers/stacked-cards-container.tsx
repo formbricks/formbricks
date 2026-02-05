@@ -164,7 +164,7 @@ export function StackedCardsContainer({
       ) : (
         blockIdxTemp !== undefined &&
         [prevBlockIdx, currentBlockIdx, nextBlockIdx, nextBlockIdx + 1].map((dynamicBlockIndex, index) => {
-          const hasEndingCard = survey.endings.length > 0;
+          const hasEndingCard = (survey.endings?.length ?? 0) > 0;
           // Check for hiding extra card
           if (dynamicBlockIndex > survey.blocks.length + (hasEndingCard ? 0 : -1)) return;
           const offset = index - 1;

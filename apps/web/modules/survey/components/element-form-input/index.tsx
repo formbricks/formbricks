@@ -115,7 +115,7 @@ export const ElementFormInput = ({
         : currentElement.id;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWelcomeCard, isEndingCard, currentElement?.id]);
-  const endingCard = localSurvey.endings.find((ending) => ending.id === elementId);
+  const endingCard = (localSurvey.endings ?? []).find((ending) => ending.id === elementId);
 
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),

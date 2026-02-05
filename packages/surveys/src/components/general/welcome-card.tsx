@@ -86,7 +86,7 @@ export function WelcomeCard({
   const calculateTimeToComplete = () => {
     const questions = getElementsFromSurveyBlocks(survey.blocks);
     let totalCards = questions.length;
-    if (survey.endings.length > 0) totalCards += 1;
+    if ((survey.endings?.length ?? 0) > 0) totalCards += 1;
     let idx = calculateElementIdx(survey, 0, totalCards);
     if (idx === 0.5) {
       idx = 1;
