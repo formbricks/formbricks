@@ -17,6 +17,7 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface Context {
   params: Promise<{
@@ -32,6 +33,27 @@ export const OPTIONS = async (): Promise<Response> => {
     // Balances performance gains with flexibility for CORS policy changes
     "public, s-maxage=3600, max-age=3600"
   );
+};
+
+const validateResponse = (responseInputData: TResponseInput, survey: TSurvey) => {
+  // Validate response data against validation rules
+  const validationErrors = validateResponseData(
+    survey.blocks,
+    responseInputData.data,
+    responseInputData.language ?? "en",
+    responseInputData.finished,
+    survey.questions
+  );
+
+  if (validationErrors) {
+    return {
+      response: responses.badRequestResponse(
+        "Validation failed",
+        formatValidationErrorsForV1Api(validationErrors),
+        true
+      ),
+    };
+  }
 };
 
 export const POST = withV1ApiWrapper({
@@ -124,24 +146,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    // Validate response data against validation rules
-    const validationErrors = validateResponseData(
-      survey.blocks,
-      responseInputData.data,
-      responseInputData.language ?? "en",
-      responseInputData.finished,
-      survey.questions
-    );
-
-    if (validationErrors) {
-      return {
-        response: responses.badRequestResponse(
-          "Validation failed",
-          formatValidationErrorsForV1Api(validationErrors),
-          true
-        ),
-      };
-    }
+    validateResponse(responseInputData, survey)
 
     let response: TResponseWithQuotaFull;
     try {

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZResponseUpdateInput } from "@formbricks/types/responses";
+import { TResponse, TResponseUpdateInput, ZResponseUpdateInput } from "@formbricks/types/responses";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -13,6 +13,7 @@ import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
@@ -30,6 +31,34 @@ const handleDatabaseError = (error: Error, url: string, endpoint: string, respon
     return responses.internalServerErrorResponse(error.message, true);
   }
   return responses.internalServerErrorResponse("Unknown error occurred", true);
+};
+
+const validateResponse = (response: TResponse, survey: TSurvey, responseUpdateInput: TResponseUpdateInput) => {
+  // Validate response data against validation rules
+  const mergedData = {
+    ...response.data,
+    ...responseUpdateInput.data,
+  };
+
+  const isFinished = responseUpdateInput.finished ?? false;
+
+  const validationErrors = validateResponseData(
+    survey.blocks,
+    mergedData,
+    responseUpdateInput.language ?? response.language ?? "en",
+    isFinished,
+    survey.questions
+  );
+
+  if (validationErrors) {
+    return {
+      response: responses.badRequestResponse(
+        "Validation failed",
+        formatValidationErrorsForV1Api(validationErrors),
+        true
+      ),
+    };
+  }
 };
 
 export const PUT = withV1ApiWrapper({
@@ -113,32 +142,7 @@ export const PUT = withV1ApiWrapper({
         ),
       };
     }
-
-    // Validate response data against validation rules
-    const mergedData = {
-      ...response.data,
-      ...inputValidation.data.data,
-    };
-
-    const isFinished = inputValidation.data.finished ?? false;
-
-    const validationErrors = validateResponseData(
-      survey.blocks,
-      mergedData,
-      inputValidation.data.language ?? response.language ?? "en",
-      isFinished,
-      survey.questions
-    );
-
-    if (validationErrors) {
-      return {
-        response: responses.badRequestResponse(
-          "Validation failed",
-          formatValidationErrorsForV1Api(validationErrors),
-          true
-        ),
-      };
-    }
+    validateResponse(response, survey, inputValidation.data)
 
     // update response with quota evaluation
     let updatedResponse;
