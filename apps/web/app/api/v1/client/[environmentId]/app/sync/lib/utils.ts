@@ -38,7 +38,7 @@ export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes)
       }
     });
   }
-  surveyTemp.endings.forEach((ending) => {
+  (surveyTemp.endings ?? []).forEach((ending) => {
     if (ending.type === "endScreen") {
       languages.forEach((language) => {
         if (ending.headline && ending.headline[language]?.includes("recall:")) {
