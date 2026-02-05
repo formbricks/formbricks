@@ -12,6 +12,7 @@ overrides:
   typeorm: '>=0.3.26'
   systeminformation: 5.27.14
   qs: '>=6.14.1'
+  preact: '>=10.26.10'
 
 patchedDependencies:
   next-auth@4.24.12:
@@ -987,7 +988,7 @@ importers:
         specifier: 2.33.0
         version: 2.33.0
       preact:
-        specifier: 10.28.2
+        specifier: '>=10.26.10'
         version: 10.28.2
       react-i18next:
         specifier: 15.7.3
@@ -3305,7 +3306,7 @@ packages:
   '@prefresh/core@1.5.9':
     resolution: {integrity: sha512-IKBKCPaz34OFVC+adiQ2qaTF5qdztO2/4ZPf4KsRTgjKosWqxVXmEbxCiUydYZRY8GVie+DQlKzQr9gt6HQ+EQ==}
     peerDependencies:
-      preact: ^10.0.0 || ^11.0.0-0
+      preact: '>=10.26.10'
 
   '@prefresh/utils@1.2.1':
     resolution: {integrity: sha512-vq/sIuN5nYfYzvyayXI4C2QkprfNaHUQ9ZX+3xLD8nL3rWyzpxOm1+K7RtMbhd+66QcaISViK7amjnheQ/4WZw==}
@@ -3313,7 +3314,7 @@ packages:
   '@prefresh/vite@2.4.11':
     resolution: {integrity: sha512-/XjURQqdRiCG3NpMmWqE9kJwrg9IchIOWHzulCfqg2sRe/8oQ1g5De7xrk9lbqPIQLn7ntBkKdqWXIj4E9YXyg==}
     peerDependencies:
-      preact: ^10.4.0 || ^11.0.0-0
+      preact: '>=10.26.10'
       vite: '>=2.0.0'
 
   '@prisma/client@6.14.0':
@@ -5091,7 +5092,7 @@ packages:
     resolution: {integrity: sha512-F+kJ243LP6VmEK1M809unzTE/ijg+bsMNuiRN0JEDIJBELKKDNhdgC/WrUSZ7klwJvtlO3wQZ9ix+jhObG07Fg==}
     engines: {node: '>= 12'}
     peerDependencies:
-      preact: '>=10 || ^10.0.0-alpha.0 || ^10.0.0-beta.0'
+      preact: '>=10.26.10'
 
   '@testing-library/react@16.3.0':
     resolution: {integrity: sha512-kFSyxiEDwv1WLl2fgsq6pPBbw5aWKrsY2/noi1Id0TK0UParSF62oFQFGHXIyaG4pp2tEub/Zlel+fjjZILDsw==}
@@ -9192,10 +9193,7 @@ packages:
   preact-render-to-string@5.2.6:
     resolution: {integrity: sha512-JyhErpYOvBV1hEPwIxc/fHWXPfnEGdRKxc8gFdAZ7XV4tlzyzG847XAyEZqoDnynP88akM4eaHcSOzNcLWFguw==}
     peerDependencies:
-      preact: '>=10'
-
-  preact@10.26.6:
-    resolution: {integrity: sha512-5SRRBinwpwkaD+OqlBDeITlRgvd8I8QlxHJw9AxSdMNV6O+LodN9nUyYGpSF7sadHjs6RzeFShMexC6DbtWr9g==}
+      preact: '>=10.26.10'
 
   preact@10.28.2:
     resolution: {integrity: sha512-lbteaWGzGHdlIuiJ0l2Jq454m6kcpI1zNje6d8MlGAFlYvP2GO4ibnat7P74Esfz4sPTdM6UxtTwh/d3pwM9JA==}
@@ -20628,8 +20626,8 @@ snapshots:
       next: 16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       oauth: 0.9.15
       openid-client: 5.7.1
-      preact: 10.26.6
-      preact-render-to-string: 5.2.6(preact@10.26.6)
+      preact: 10.28.2
+      preact-render-to-string: 5.2.6(preact@10.28.2)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       uuid: 11.1.0
@@ -21183,12 +21181,10 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
-  preact-render-to-string@5.2.6(preact@10.26.6):
+  preact-render-to-string@5.2.6(preact@10.28.2):
     dependencies:
-      preact: 10.26.6
+      preact: 10.28.2
       pretty-format: 3.8.0
-
-  preact@10.26.6: {}
 
   preact@10.28.2: {}
 
