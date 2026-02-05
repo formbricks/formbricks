@@ -39,7 +39,6 @@ export const BrandingSettingsCard = async ({
   return (
     <SettingsCard
       title={t("environments.workspace.look.formbricks_branding")}
-      className={"max-w-7xl"}
       description={t("environments.workspace.look.formbricks_branding_settings_description")}>
       {canRemoveBranding ? (
         <div className="space-y-4">
