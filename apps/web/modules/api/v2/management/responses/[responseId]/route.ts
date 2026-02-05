@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -15,7 +16,6 @@ import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[respo
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
-import { formatValidationErrorsForApi, validateResponseData } from "../lib/validation";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
@@ -198,6 +198,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         questionsResponse.data.blocks,
         body.data,
         body.language ?? "en",
+        body.finished,
         questionsResponse.data.questions
       );
 
@@ -206,7 +207,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
           request,
           {
             type: "bad_request",
-            details: formatValidationErrorsForApi(validationErrors),
+            details: formatValidationErrorsForV2Api(validationErrors),
           },
           auditLog
         );

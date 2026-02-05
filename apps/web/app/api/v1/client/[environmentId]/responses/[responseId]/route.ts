@@ -8,6 +8,7 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
@@ -108,6 +109,32 @@ export const PUT = withV1ApiWrapper({
           {
             questionId: otherResponseInvalidQuestionId,
           },
+          true
+        ),
+      };
+    }
+
+    // Validate response data against validation rules
+    const mergedData = {
+      ...response.data,
+      ...inputValidation.data.data,
+    };
+
+    const isFinished = inputValidation.data.finished ?? false;
+
+    const validationErrors = validateResponseData(
+      survey.blocks,
+      mergedData,
+      inputValidation.data.language ?? response.language ?? "en",
+      isFinished,
+      survey.questions
+    );
+
+    if (validationErrors) {
+      return {
+        response: responses.badRequestResponse(
+          "Validation failed",
+          formatValidationErrorsForV1Api(validationErrors),
           true
         ),
       };
