@@ -161,6 +161,7 @@
                   "xm-and-surveys/core-features/integrations/activepieces",
                   "xm-and-surveys/core-features/integrations/airtable",
                   "xm-and-surveys/core-features/integrations/google-sheets",
+                  "xm-and-surveys/core-features/integrations/hubspot",
                   "xm-and-surveys/core-features/integrations/make",
                   "xm-and-surveys/core-features/integrations/n8n",
                   "xm-and-surveys/core-features/integrations/notion",
