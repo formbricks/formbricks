@@ -20,20 +20,26 @@ END;
 ALTER TABLE "Project" DROP COLUMN "darkOverlay";
 
 -- Step 5: Migrate Survey.projectOverwrites JSON field
--- For surveys with projectOverwrites containing darkOverlay, convert to overlay
--- darkOverlay: true -> overlay: "dark"
--- darkOverlay: false -> overlay: "light"
--- Then remove the old darkOverlay key from JSON
--- Note: Compare JSON text values directly to avoid boolean cast failures on non-boolean values
+-- Only convert darkOverlay -> overlay when placement is explicitly 'center' in projectOverwrites
+-- For all other cases, just remove darkOverlay (survey will inherit overlay from project)
+
+-- Case 5a: Survey has placement: 'center' explicitly in projectOverwrites - convert darkOverlay to overlay
 UPDATE "Survey"
 SET "projectOverwrites" = jsonb_set(
   "projectOverwrites"::jsonb - 'darkOverlay',
   '{overlay}',
   CASE 
     WHEN ("projectOverwrites"::jsonb->>'darkOverlay') = 'true' THEN '"dark"'::jsonb
-    WHEN ("projectOverwrites"::jsonb->>'darkOverlay') = 'false' THEN '"light"'::jsonb
-    ELSE '"none"'::jsonb
+    ELSE '"light"'::jsonb
   END
 )
+WHERE "projectOverwrites" IS NOT NULL 
+  AND "projectOverwrites"::jsonb ? 'darkOverlay'
+  AND ("projectOverwrites"::jsonb->>'placement') = 'center';
+
+-- Case 5b: Any remaining surveys with darkOverlay (placement != 'center' or not present) - just remove darkOverlay
+-- These surveys will inherit the overlay setting from their project
+UPDATE "Survey"
+SET "projectOverwrites" = "projectOverwrites"::jsonb - 'darkOverlay'
 WHERE "projectOverwrites" IS NOT NULL 
   AND "projectOverwrites"::jsonb ? 'darkOverlay';

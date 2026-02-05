@@ -426,7 +426,7 @@ export function Survey({
 
     if (blockId === "start")
       return {
-        nextBlockId: (localSurvey.blocks[0]?.id as string | undefined) || firstEndingId,
+        nextBlockId: localSurvey.blocks[0]?.id || firstEndingId,
         calculatedVariables: {},
       };
 
@@ -660,7 +660,7 @@ export function Survey({
     setIsSurveyFinished(finished);
 
     const endingId = nextBlockId
-      ? (localSurvey.endings.find((ending) => ending.id === nextBlockId)?.id as string | undefined)
+      ? localSurvey.endings.find((ending) => ending.id === nextBlockId)?.id
       : undefined;
 
     onChange(surveyResponseData);
@@ -693,7 +693,7 @@ export function Survey({
   };
 
   const onBack = (): void => {
-    let prevBlockId;
+    let prevBlockId: string | undefined;
     // use history if available
     if (history.length > 0) {
       const newHistory = [...history];

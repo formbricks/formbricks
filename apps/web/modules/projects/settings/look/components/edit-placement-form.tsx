@@ -6,7 +6,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { TOverlay } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
@@ -46,7 +45,7 @@ export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) =
   const form = useForm<EditPlacementFormValues>({
     defaultValues: {
       placement: project.placement,
-      overlay: (project.overlay as TOverlay) ?? "none",
+      overlay: project.overlay ?? "none",
       clickOutsideClose: project.clickOutsideClose ?? false,
     },
     resolver: zodResolver(ZProjectPlacementInput),
@@ -61,7 +60,7 @@ export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) =
 
   const getOverlayStyle = () => {
     if (overlay === "dark") return "bg-slate-700/80";
-    if (overlay === "light") return "bg-white/50 border border-slate-200";
+    if (overlay === "light") return "bg-slate-400/50";
     return "bg-slate-200";
   };
 

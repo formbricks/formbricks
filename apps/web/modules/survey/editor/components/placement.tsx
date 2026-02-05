@@ -38,7 +38,7 @@ export const Placement = ({
 
   const getOverlayStyle = () => {
     if (overlay === "dark") return "bg-slate-700/80";
-    if (overlay === "light") return "bg-white/50 border border-slate-200";
+    if (overlay === "light") return "bg-slate-400/50";
     return "bg-slate-200";
   };
 
@@ -81,6 +81,8 @@ export const Placement = ({
           defaultSelected={overlay}
           onChange={(value) => setOverlay(value)}
           label={t("common.overlay_color")}
+          activeTabClassName="bg-slate-200"
+          inactiveTabClassName="bg-transparent"
         />
       </div>
 

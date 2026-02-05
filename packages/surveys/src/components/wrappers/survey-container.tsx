@@ -30,6 +30,7 @@ export function SurveyContainer({
   useEffect(() => {
     if (!isModal) return;
     if (!clickOutside) return;
+    if (!hasOverlay) return;
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -41,6 +42,7 @@ export function SurveyContainer({
         onClose();
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);

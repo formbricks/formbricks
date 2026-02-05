@@ -2,6 +2,7 @@
 import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
+import { ZOverlay } from "../../types/common";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
 import { ZLogo } from "../../types/styling";
 import { ZSurveyBlocks } from "../../types/surveys/blocks";
@@ -36,8 +37,6 @@ export const ZSurveyStylingBackground = z.object({
 });
 
 export const ZPlacement = z.enum(["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]);
-
-export const ZOverlay = z.enum(["none", "light", "dark"]);
 
 const ZSurveyBase = z.object({
   id: z.string().cuid2().openapi({
