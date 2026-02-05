@@ -36,6 +36,7 @@ export const ContactDataView = ({
   const isFirstRender = useRef(true);
   const prevEnvironmentId = useRef(environment.id);
   const isResettingSearch = useRef(false);
+  const prevInitialContactsLength = useRef(initialContacts.length);
 
   // Sync state with server data only when environment changes (real tab navigation)
   useEffect(() => {
@@ -45,8 +46,23 @@ export const ContactDataView = ({
       setHasMore(initialHasMore);
       isResettingSearch.current = true;
       setSearchValue("");
+      prevInitialContactsLength.current = initialContacts.length;
     }
   }, [environment.id, initialContacts, initialHasMore]);
+
+  // Sync state when initialContacts changes from server refresh (e.g., after CSV upload)
+  // Only update if we're viewing the first page without search
+  useEffect(() => {
+    if (
+      !searchValue &&
+      initialContacts.length !== prevInitialContactsLength.current &&
+      prevEnvironmentId.current === environment.id
+    ) {
+      setContacts([...initialContacts]);
+      setHasMore(initialHasMore);
+      prevInitialContactsLength.current = initialContacts.length;
+    }
+  }, [initialContacts, initialHasMore, searchValue, environment.id]);
 
   const environmentAttributes = useMemo(() => {
     return contactAttributeKeys.filter(

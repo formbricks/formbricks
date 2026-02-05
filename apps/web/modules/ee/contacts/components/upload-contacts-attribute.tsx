@@ -131,12 +131,9 @@ export const UploadContactsAttributes = ({
   }, [contactAttributeKeys, currentKey, attributeMap, csvColumn]);
 
   return (
-    <div className="flex w-full items-center justify-start gap-4">
-      <span className="w-25 overflow-hidden font-medium text-ellipsis text-slate-700">{csvColumn}</span>
-      <h4 className="text-sm font-medium text-slate-500">
-        {t("environments.contacts.upload_contacts_modal_attributes_should_be_mapped_to")}
-      </h4>
-      <div className="flex flex-1 items-center gap-2">
+    <>
+      <span className="overflow-hidden font-medium text-ellipsis text-slate-700">{csvColumn}</span>
+      <div className="flex items-center gap-2">
         <UploadContactsAttributeCombobox
           open={open}
           setOpen={setOpen}
@@ -157,6 +154,6 @@ export const UploadContactsAttributes = ({
           />
         ) : null}
       </div>
-    </div>
+    </>
   );
 };

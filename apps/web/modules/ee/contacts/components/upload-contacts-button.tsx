@@ -215,6 +215,8 @@ export const UploadContactsCSVButton = ({
 
     if (result?.serverError) {
       setError(result.serverError);
+      setLoading(false);
+      return;
     }
 
     if (result?.validationErrors) {
@@ -227,6 +229,8 @@ export const UploadContactsCSVButton = ({
       } else {
         setError("An error occurred while uploading the contacts. Please try again later.");
       }
+      setLoading(false);
+      return;
     }
 
     setLoading(false);
@@ -269,7 +273,10 @@ export const UploadContactsCSVButton = ({
 
   useEffect(() => {
     if (error && errorContainerRef.current) {
-      errorContainerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Small delay to ensure DOM has updated and the alert is visible
+      setTimeout(() => {
+        errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
     }
   }, [error]);
 
@@ -348,9 +355,11 @@ export const UploadContactsCSVButton = ({
           <DialogBody unconstrained={false}>
             <div className="flex flex-col gap-4">
               {error ? (
-                <Alert variant="error" size="small">
-                  {error}
-                </Alert>
+                <div ref={errorContainerRef}>
+                  <Alert variant="error" size="small">
+                    {error}
+                  </Alert>
+                </div>
               ) : null}
               <div className="flex flex-col gap-2">
                 <div className="no-scrollbar rounded-md border-2 border-dashed border-slate-300 bg-slate-50 p-4">
@@ -408,7 +417,14 @@ export const UploadContactsCSVButton = ({
                     {t("environments.contacts.upload_contacts_modal_attributes_description")}
                   </p>
 
-                  <div className="flex flex-col gap-2">
+                  <div className="grid grid-cols-[minmax(150px,1fr)_minmax(200px,2fr)] gap-x-4 gap-y-3">
+                    <div className="font-medium text-slate-900">
+                      {t("environments.contacts.upload_contacts_modal_csv_column_header")}
+                    </div>
+                    <div className="font-medium text-slate-900">
+                      {t("environments.contacts.upload_contacts_modal_attribute_header")}
+                    </div>
+
                     {validCsvColumns.map((column, index) => {
                       return (
                         <UploadContactsAttributes
