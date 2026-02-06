@@ -20,7 +20,7 @@ export const StylingSection = ({ title, open, setOpen, children }: StylingSectio
   const [parent] = useAutoAnimate();
 
   return (
-    <div ref={parent} className="overflow-hidden rounded-md border">
+    <div ref={parent} className={`rounded-md border ${open ? "overflow-visible" : "overflow-hidden"}`}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
