@@ -147,29 +147,24 @@ export const ThemeStylingPreviewSurvey = ({
             : "shrink"
         }
         className={cn(
-          "relative z-10 flex w-5/6 rounded-lg border border-slate-300 shadow-xl", // Common classes (removed flex-col)
-          isAppSurvey
-            ? "h-[600px] max-h-[95%] items-center justify-center bg-slate-200" // App: Fixed height, Centered, Grey
-            : "h-auto max-h-[85%] flex-col overflow-y-auto bg-white" // Link: Auto height, Vertical flow, White, Scroll
+          "relative z-10 flex w-5/6 flex-col rounded-lg border border-slate-300 shadow-xl",
+          isAppSurvey ? "h-[600px] max-h-[95%] bg-slate-200" : "h-auto max-h-[85%] overflow-y-auto bg-white"
         )}>
-        <div className={cn("flex w-full flex-col rounded-lg", isAppSurvey && "h-full w-5/6 flex-1")}>
-          {!isAppSurvey && (
-            <div className="flex h-auto w-full items-center rounded-t-lg bg-slate-100 py-2">
-              <div className="ml-6 flex space-x-2">
-                <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
-              </div>
-              <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
+        <div className="flex h-auto w-full items-center rounded-t-lg bg-slate-100 py-2">
+          <div className="ml-6 flex space-x-2">
+            <div className="h-3 w-3 rounded-full bg-red-500"></div>
+            <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+            <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+          </div>
+          <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+            <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
 
-                <div className="flex items-center">
-                  <ResetProgressButton onClick={resetQuestionProgress} />
-                </div>
-              </div>
+            <div className="flex items-center">
+              <ResetProgressButton onClick={resetQuestionProgress} />
             </div>
-          )}
-
+          </div>
+        </div>
+        <div className="flex w-full flex-1 flex-col rounded-b-lg">
           {isAppSurvey ? (
             <Modal
               isOpen
