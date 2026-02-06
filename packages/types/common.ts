@@ -20,7 +20,12 @@ export const ZPlacement = z.enum(["bottomLeft", "bottomRight", "topLeft", "topRi
 
 export type TPlacement = z.infer<typeof ZPlacement>;
 
-export const ZId = z.string().cuid2();
+export const ZId = z
+  .string()
+  .cuid2()
+  .refine((id) => id !== "undefined" && id !== "null", {
+    message: "ID cannot be 'undefined' or 'null'",
+  });
 
 export const ZUuid = z.string().uuid();
 
