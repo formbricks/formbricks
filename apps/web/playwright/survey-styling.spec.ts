@@ -193,9 +193,7 @@ test.describe("Survey Styling", async () => {
     await page.waitForTimeout(1000);
 
     // Verify non-color CSS vars are set before suggesting
-    let cssBefore = await page.evaluate(
-      () => document.getElementById("formbricks__css__custom")?.innerHTML
-    );
+    let cssBefore = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
     expect(cssBefore).toContain("--fb-input-border-radius: 12px");
     expect(cssBefore).toContain("--fb-input-padding-y: 20px");
     expect(cssBefore).toContain("--fb-option-border-radius: 10px");
@@ -214,9 +212,7 @@ test.describe("Survey Styling", async () => {
     // Wait for the preview to update with derived colors
     await page.waitForTimeout(1500);
 
-    const css = await page.evaluate(
-      () => document.getElementById("formbricks__css__custom")?.innerHTML
-    );
+    const css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
     expect(css).toBeDefined();
 
     // --- Verify colors ARE derived from brand (not hardcoded) ---
@@ -253,6 +249,48 @@ test.describe("Survey Styling", async () => {
     expect(css).toContain("--fb-input-padding-y: 20px");
     expect(css).toContain("--fb-option-border-radius: 10px");
     expect(css).toContain("--fb-option-padding-y: 14px");
+  });
+
+  test("Initial load derives button, progress, input, and option colors from brand color", async ({
+    page,
+    users,
+  }) => {
+    const user = await users.create();
+    await user.login();
+
+    // Navigate to Look & Feel settings
+    await page.getByRole("link", { name: "Configuration" }).click();
+    await page.getByRole("link", { name: "Look & Feel" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/workspace\/look/);
+
+    // Toggle "Enable custom styling"
+    const addCustomStyles = page.getByLabel("Enable custom styling");
+    if (!(await addCustomStyles.isChecked())) {
+      await addCustomStyles.click();
+    }
+
+    // Wait for the preview to render with default styling
+    await page.waitForTimeout(1500);
+
+    const css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
+    expect(css).toBeDefined();
+
+    // On initial load (no saved styling), button and progress bar should derive from brand color (#64748b)
+    // NOT from the old hardcoded dark navy (#0f172a)
+    expect(css).not.toContain("--fb-button-bg-color: #0f172a");
+    expect(css).not.toContain("--fb-progress-indicator-bg-color: #0f172a");
+
+    // Input text and option label colors should be brand-derived, not hardcoded
+    expect(css).toContain("--fb-input-text-color:");
+    expect(css).not.toContain("--fb-input-text-color: #0f172a");
+    expect(css).toContain("--fb-option-label-color:");
+    expect(css).not.toContain("--fb-option-label-color: #0f172a");
+
+    // Option background should be brand-tinted, not plain white
+    expect(css).toContain("--fb-option-bg-color:");
+
+    // Headline color should be brand-derived
+    expect(css).toContain("--fb-element-headline-color:");
   });
 
   test("Survey Specific Styling (Survey Editor Override)", async ({ page, users }) => {

@@ -59,8 +59,8 @@
      --------------------------------------------------------------------------- */
   --fb-survey-brand-color: #64748b;
 
-  --fb-accent-background-color: var(--slate-200);
-  --fb-accent-background-color-selected: var(--slate-100);
+  --fb-accent-background-color: var(--fb-survey-brand-color);
+  --fb-accent-background-color-selected: color-mix(in srgb, var(--fb-survey-brand-color) 90%, white);
 
   /* ---------------------------------------------------------------------------
      Element Headline Tokens
@@ -69,7 +69,7 @@
   --fb-element-headline-font-family: inherit;
   --fb-element-headline-font-weight: 600;
   --fb-element-headline-font-size: 1rem;
-  --fb-element-headline-color: var(--input);
+  --fb-element-headline-color: var(--fb-survey-brand-color);
   --fb-element-headline-opacity: 1;
 
   /* ---------------------------------------------------------------------------
@@ -79,7 +79,7 @@
   --fb-element-description-font-family: inherit;
   --fb-element-description-font-weight: 400;
   --fb-element-description-font-size: 0.875rem;
-  --fb-element-description-color: var(--input);
+  --fb-element-description-color: color-mix(in srgb, var(--fb-survey-brand-color) 70%, white);
   /* ---------------------------------------------------------------------------
      Element Upper Label Tokens
      Used for "Required" label and other upper label text.
@@ -87,8 +87,8 @@
   --fb-element-upper-label-font-family: inherit;
   --fb-element-upper-label-font-weight: 400;
   --fb-element-upper-label-font-size: 0.75rem;
-  --fb-element-upper-label-color: var(--muted-foreground);
-  --fb-element-upper-label-opacity: 0.6;
+  --fb-element-upper-label-color: color-mix(in srgb, var(--fb-survey-brand-color) 50%, white);
+  --fb-element-upper-label-opacity: 1;
 
   /* ---------------------------------------------------------------------------
      Label Tokens
@@ -125,7 +125,7 @@
   --fb-input-font-family: inherit;
   --fb-input-font-size: 0.875rem;
   --fb-input-font-weight: 400;
-  --fb-input-color: var(--foreground);
+  --fb-input-color: color-mix(in srgb, var(--fb-survey-brand-color) 10%, #0f172a);
   --fb-input-placeholder-color: var(--fb-input-color);
   --fb-input-placeholder-opacity: 0.5;
   --fb-input-width: 100%;
@@ -139,9 +139,9 @@
      Used for the Progress component track and indicator.
      --------------------------------------------------------------------------- */
   --fb-progress-track-height: 0.5rem;
-  --fb-progress-track-bg-color: hsl(222.2 47.4% 11.2% / 0.2);
+  --fb-progress-track-bg-color: color-mix(in srgb, var(--fb-survey-brand-color) 20%, transparent);
   --fb-progress-track-border-radius: var(--radius);
-  --fb-progress-indicator-bg-color: hsl(222.2 47.4% 11.2%);
+  --fb-progress-indicator-bg-color: var(--fb-survey-brand-color);
   --fb-progress-indicator-border-radius: var(--radius);
 
   /* ---------------------------------------------------------------------------

@@ -1934,6 +1934,7 @@ checksums:
     environments/workspace/look/advanced_styling_field_button_text: 3304e88bcc3869f3a306634b541e1e07
     environments/workspace/look/advanced_styling_field_description_color: e2f4cbc96d3f0b75837a9edc95a5eeda
     environments/workspace/look/advanced_styling_field_description_size: a0d51c3ab7dc56320ecedc2b27917842
+    environments/workspace/look/advanced_styling_field_description_weight: 514680cc7202ad29835c1cbcde3def1c
     environments/workspace/look/advanced_styling_field_font_size: ca44d14429b2175a1b194793b4ab8f6b
     environments/workspace/look/advanced_styling_field_font_weight: bfef83778146cf40550df9650d8a07da
     environments/workspace/look/advanced_styling_field_headline_color: 4ccf3935ad90c88ad4add24f498673ce

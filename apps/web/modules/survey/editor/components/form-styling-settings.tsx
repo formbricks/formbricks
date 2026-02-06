@@ -111,6 +111,11 @@ export const FormStylingSettings = ({
                 name="elementHeadlineFontWeight"
                 label={t("environments.workspace.look.advanced_styling_field_headline_weight")}
               />
+              <NumberField
+                form={form}
+                name="elementDescriptionFontWeight"
+                label={t("environments.workspace.look.advanced_styling_field_description_weight")}
+              />
               <ColorField
                 form={form}
                 name="elementUpperLabelColor.light"

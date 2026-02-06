@@ -248,6 +248,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   if (styling.elementDescriptionFontSize !== undefined)
     appendCssVariable("element-description-font-size", formatDimension(styling.elementDescriptionFontSize));
+  if (styling.elementDescriptionFontWeight !== undefined && styling.elementDescriptionFontWeight !== null)
+    appendCssVariable("element-description-font-weight", `${styling.elementDescriptionFontWeight}`);
   appendCssVariable(
     "element-description-color",
     styling.elementDescriptionColor?.light ?? styling.questionColor?.light
@@ -293,6 +295,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 #fbjs .label-description,
 #fbjs .label-description * {
   font-size: var(--fb-element-description-font-size) !important;
+  font-weight: var(--fb-element-description-font-weight) !important;
   color: var(--fb-element-description-color) !important;
 }
 

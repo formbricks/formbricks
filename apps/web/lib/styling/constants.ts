@@ -157,20 +157,22 @@ export const getSuggestedColors = (brandColor: string) => {
 
   // Accent text: darken the brand if it's light, otherwise use as-is
   const accentText = isBrandLight ? mixColor(brandColor, "#000000", 0.6) : brandColor;
-  // Dark text: mostly dark with a hint of brand
-  const darkText = mixColor(brandColor, "#0f172a", 0.9);
-  // Input / option background: almost white with a touch of brand
-  const inputBg = mixColor(brandColor, "#ffffff", 0.97);
+  // Question / dark text: brand darkened with black (visible brand tint)
+  const questionColor = mixColor(brandColor, "#000000", 0.35);
+  // Input / option background: white with noticeable brand tint
+  const inputBg = mixColor(brandColor, "#ffffff", 0.92);
+  // Input border: visible brand-tinted border
+  const inputBorder = mixColor(brandColor, "#ffffff", 0.6);
   // Card tones
-  const cardBg = mixColor(brandColor, "#ffffff", 0.96);
-  const cardBorder = mixColor(brandColor, "#ffffff", 0.9);
+  const cardBg = mixColor(brandColor, "#ffffff", 0.97);
+  const cardBorder = mixColor(brandColor, "#ffffff", 0.8);
   // Page background
-  const pageBg = mixColor(brandColor, "#ffffff", 0.95);
+  const pageBg = mixColor(brandColor, "#ffffff", 0.855);
 
   return {
     // General
     "brandColor.light": brandColor,
-    "questionColor.light": darkText,
+    "questionColor.light": questionColor,
 
     // Accent
     "accentBgColor.light": brandColor,
@@ -187,19 +189,19 @@ export const getSuggestedColors = (brandColor: string) => {
 
     // Inputs
     "inputColor.light": inputBg,
-    "inputBorderColor.light": cardBorder,
-    "inputTextColor.light": darkText,
+    "inputBorderColor.light": inputBorder,
+    "inputTextColor.light": questionColor,
 
     // Options (Radio / Checkbox)
     "optionBgColor.light": inputBg,
-    "optionLabelColor.light": darkText,
+    "optionLabelColor.light": questionColor,
 
     // Card
     "cardBackgroundColor.light": cardBg,
     "cardBorderColor.light": cardBorder,
 
     // Highlight / Focus
-    "highlightBorderColor.light": brandColor,
+    "highlightBorderColor.light": mixColor(brandColor, "#ffffff", 0.25),
 
     // Progress Bar
     "progressIndicatorBgColor.light": brandColor,

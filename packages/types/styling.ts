@@ -81,6 +81,7 @@ export const ZBaseStyling = z.object({
   elementHeadlineFontWeight: z.union([z.string(), z.number()]).nullish(),
   elementHeadlineColor: ZStylingColor.nullish(),
   elementDescriptionFontSize: z.union([z.number(), z.string()]).nullish(),
+  elementDescriptionFontWeight: z.union([z.string(), z.number()]).nullish(),
   elementDescriptionColor: ZStylingColor.nullish(),
   elementUpperLabelFontSize: z.union([z.number(), z.string()]).nullish(),
   elementUpperLabelColor: ZStylingColor.nullish(),
