@@ -17,16 +17,15 @@ export const ADVANCED_DEFAULTS = {
   accentBgColorSelected: "#f1f5f9",
   buttonBgColor: COLOR_DEFAULTS.brandColor,
   buttonTextColor: "#ffffff",
-  buttonBorderRadius: 10,
-  buttonHeight: 36,
-  buttonFontSize: 14,
+  buttonBorderRadius: 8,
+  buttonFontSize: 16,
   buttonFontWeight: "500",
-  buttonPaddingX: 16,
-  buttonPaddingY: 8,
+  buttonPaddingX: 12,
+  buttonPaddingY: 12,
   inputBgColor: "#f8fafc",
-  inputBorderColor: "#64748b",
+  inputBorderColor: COLOR_DEFAULTS.inputBorderColor,
   inputTextColor: "#0f172a",
-  inputBorderRadius: 10,
+  inputBorderRadius: 8,
   inputHeight: 40,
   inputFontSize: 14,
   inputPaddingX: 16,
@@ -35,16 +34,16 @@ export const ADVANCED_DEFAULTS = {
   inputShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
   optionBgColor: "#f8fafc",
   optionLabelColor: "#0f172a",
-  optionBorderRadius: 10,
+  optionBorderRadius: 8,
   optionPaddingX: 16,
   optionPaddingY: 16,
   optionFontSize: 14,
   elementHeadlineFontSize: 16,
-  elementHeadlineFontWeight: "400",
+  elementHeadlineFontWeight: "600",
   elementHeadlineColor: "#0f172a",
   elementDescriptionFontSize: 14,
   elementDescriptionFontWeight: "400",
-  elementDescriptionColor: "#0f172a",
+  elementDescriptionColor: "#334155",
   elementUpperLabelFontSize: 12,
   elementUpperLabelColor: "#64748b",
   elementUpperLabelFontWeight: "400",
@@ -94,7 +93,6 @@ export const defaultStyling: TProjectStyling = {
     light: ADVANCED_DEFAULTS.buttonTextColor,
   },
   buttonBorderRadius: ADVANCED_DEFAULTS.buttonBorderRadius,
-  buttonHeight: ADVANCED_DEFAULTS.buttonHeight,
   buttonFontSize: ADVANCED_DEFAULTS.buttonFontSize,
   buttonFontWeight: ADVANCED_DEFAULTS.buttonFontWeight,
   buttonPaddingX: ADVANCED_DEFAULTS.buttonPaddingX,
@@ -226,17 +224,39 @@ export const getBrandDerivedDefaults = (brandColor: string) => {
   const suggested = getSuggestedColors(brandColor);
 
   return {
+    // General colors
+    questionColor: { light: suggested["questionColor.light"] },
+
+    // Accent
     accentBgColor: { light: suggested["accentBgColor.light"] },
     accentBgColorSelected: { light: suggested["accentBgColorSelected.light"] },
+
+    // Headlines & Descriptions
     elementHeadlineColor: { light: suggested["elementHeadlineColor.light"] },
     elementDescriptionColor: { light: suggested["elementDescriptionColor.light"] },
     elementUpperLabelColor: { light: suggested["elementUpperLabelColor.light"] },
+
+    // Buttons
     buttonBgColor: { light: suggested["buttonBgColor.light"] },
     buttonTextColor: { light: suggested["buttonTextColor.light"] },
+
+    // Inputs
+    inputColor: { light: suggested["inputColor.light"] },
+    inputBorderColor: { light: suggested["inputBorderColor.light"] },
     inputTextColor: { light: suggested["inputTextColor.light"] },
+
+    // Options (Radio / Checkbox)
     optionBgColor: { light: suggested["optionBgColor.light"] },
     optionLabelColor: { light: suggested["optionLabelColor.light"] },
+
+    // Card
+    cardBackgroundColor: { light: suggested["cardBackgroundColor.light"] },
+    cardBorderColor: { light: suggested["cardBorderColor.light"] },
+
+    // Highlight / Focus
     highlightBorderColor: { light: suggested["highlightBorderColor.light"] },
+
+    // Progress Bar
     progressIndicatorBgColor: { light: suggested["progressIndicatorBgColor.light"] },
     progressTrackBgColor: { light: suggested["progressTrackBgColor.light"] },
   };
