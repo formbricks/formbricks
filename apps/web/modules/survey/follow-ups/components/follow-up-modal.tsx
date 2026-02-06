@@ -188,6 +188,8 @@ export const FollowUpModal = ({
       subject: defaultValues?.subject ?? t("environments.surveys.edit.follow_ups_modal_action_subject"),
       body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
       attachResponseData: defaultValues?.attachResponseData ?? false,
+      includeVariables: defaultValues?.includeVariables ?? false,
+      includeHiddenFields: defaultValues?.includeHiddenFields ?? false,
     },
     resolver: zodResolver(ZCreateSurveyFollowUpFormSchema),
     mode: "onChange",
