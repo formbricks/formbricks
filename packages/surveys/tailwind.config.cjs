@@ -33,38 +33,6 @@ module.exports = {
         "close-button-focus": "var(--fb-close-btn-hover-color)",
         "calendar-tile": "var(--fb-calendar-tile-color)",
       },
-      width: {
-        input: "var(--fb-input-width)",
-        button: "var(--fb-button-width)",
-      },
-      height: {
-        input: "var(--fb-input-height)",
-        button: "var(--fb-button-height)",
-      },
-      fontSize: {
-        input: "var(--fb-input-font-size)",
-        option: "var(--fb-option-font-size)",
-        button: "var(--fb-button-font-size)",
-      },
-      fontWeight: {
-        "input-weight": "var(--fb-input-font-weight)",
-        "option-weight": "var(--fb-option-font-weight)",
-        "button-weight": "var(--fb-button-font-weight)",
-      },
-      padding: {
-        "input-x": "var(--fb-input-padding-x)",
-        "input-y": "var(--fb-input-padding-y)",
-        "option-x": "var(--fb-option-padding-x)",
-        "option-y": "var(--fb-option-padding-y)",
-        "button-x": "var(--fb-button-padding-x)",
-        "button-y": "var(--fb-button-padding-y)",
-      },
-      boxShadow: {
-        input: "var(--fb-input-shadow)",
-      },
-      opacity: {
-        "input-placeholder": "var(--fb-input-placeholder-opacity)",
-      },
       borderRadius: {
         custom: "var(--fb-border-radius)",
       },
