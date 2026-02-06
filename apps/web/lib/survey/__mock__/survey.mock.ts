@@ -168,6 +168,7 @@ export const mockContactAttributeKey: TContactAttributeKey = {
   type: "custom",
   description: "mock action class",
   isUnique: false,
+  dataType: "string",
   ...commonMockProperties,
 };
 

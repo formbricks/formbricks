@@ -69,21 +69,17 @@ export class ApiClient {
 
   async createOrUpdateUser(userUpdateInput: {
     userId: string;
-    attributes?: Record<string, string>;
+    attributes?: Record<string, string | number>;
   }): Promise<Result<CreateOrUpdateUserResponse, ApiErrorResponse>> {
-    // transform all attributes to string if attributes are present into a new attributes copy
-    const attributes: Record<string, string> = {};
-    for (const key in userUpdateInput.attributes) {
-      attributes[key] = String(userUpdateInput.attributes[key]);
-    }
-
+    // Pass attributes as-is to preserve number types
+    // The backend will use the JS type to determine the attribute data type
     return makeRequest(
       this.appUrl,
       `/api/v2/client/${this.environmentId}/user`,
       "POST",
       {
         userId: userUpdateInput.userId,
-        attributes,
+        attributes: userUpdateInput.attributes,
       },
       this.isDebug
     );

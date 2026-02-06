@@ -62,7 +62,9 @@ model Webhook {
 /// @property id - Unique identifier for the attribute
 /// @property attributeKey - Reference to the attribute definition
 /// @property contact - The contact this attribute belongs to
-/// @property value - The actual value of the attribute
+/// @property value - The string value of the attribute (used for string type + backwards compatibility)
+/// @property valueNumber - Native numeric storage for number type attributes
+/// @property valueDate - Native date storage for date type attributes
 model ContactAttribute {
   id             String              @id @default(cuid())
   createdAt      DateTime            @default(now()) @map(name: "created_at")
@@ -72,14 +74,24 @@ model ContactAttribute {
   contact        Contact             @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId      String
   value          String
+  valueNumber    Float?
+  valueDate      DateTime?
 
   @@unique([contactId, attributeKeyId])
   @@index([attributeKeyId, value])
+  @@index([attributeKeyId, valueNumber])
+  @@index([attributeKeyId, valueDate])
 }
 
 enum ContactAttributeType {
   default
   custom
+}
+
+enum ContactAttributeDataType {
+  string
+  number
+  date
 }
 
 /// Defines the possible attributes that can be assigned to contacts.
@@ -90,17 +102,19 @@ enum ContactAttributeType {
 /// @property key - The attribute identifier used in the system
 /// @property name - Display name for the attribute
 /// @property type - Whether this is a default or custom attribute
+/// @property dataType - The data type of the attribute (string, number, date)
 /// @property environment - The environment this attribute belongs to
 model ContactAttributeKey {
-  id               String                  @id @default(cuid())
-  createdAt        DateTime                @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                @updatedAt @map(name: "updated_at")
-  isUnique         Boolean                 @default(false)
+  id               String                   @id @default(cuid())
+  createdAt        DateTime                 @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                 @updatedAt @map(name: "updated_at")
+  isUnique         Boolean                  @default(false)
   key              String
   name             String?
   description      String?
-  type             ContactAttributeType    @default(custom)
-  environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  type             ContactAttributeType     @default(custom)
+  dataType         ContactAttributeDataType @default(string)
+  environment      Environment              @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
   attributes       ContactAttribute[]
   attributeFilters SurveyAttributeFilter[]

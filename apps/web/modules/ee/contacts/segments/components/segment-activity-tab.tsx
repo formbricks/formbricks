@@ -1,23 +1,19 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { TSegment } from "@formbricks/types/segment";
+import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { convertDateTimeStringShort } from "@/lib/time";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 
 interface SegmentActivityTabProps {
-  environmentId: string;
-  currentSegment: TSegment & {
-    activeSurveys: string[];
-    inactiveSurveys: string[];
-  };
+  currentSegment: TSegmentWithSurveyNames;
 }
 
 export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) => {
   const { t } = useTranslation();
-  const activeSurveys = currentSegment?.activeSurveys;
-  const inactiveSurveys = currentSegment?.inactiveSurveys;
+
+  const { activeSurveys, inactiveSurveys } = currentSegment;
 
   return (
     <div className="grid grid-cols-3 pb-2">
@@ -27,7 +23,7 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
           {!activeSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
           {activeSurveys?.map((survey, index) => (
-            <p className="text-sm text-slate-900" key={index}>
+            <p className="text-sm text-slate-900" key={index + survey}>
               {survey}
             </p>
           ))}
@@ -36,7 +32,11 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
           <Label className="text-slate-500">{t("common.inactive_surveys")}</Label>
           {!inactiveSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
-          {inactiveSurveys?.map((survey) => <p className="text-sm text-slate-900">{survey}</p>)}
+          {inactiveSurveys?.map((survey, index) => (
+            <p className="text-sm text-slate-900" key={index + survey}>
+              {survey}
+            </p>
+          ))}
         </div>
       </div>
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">

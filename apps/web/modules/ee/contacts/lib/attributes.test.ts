@@ -205,7 +205,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     // Include email to satisfy the "at least one of email or userId" requirement
-    const attributes = { name: "John", email: "john@example.com", newAttr: "val" };
+    const attributes = { name: "John", email: "john@example.com", new_attr: "val" };
     const result = await updateAttributes(contactId, userId, environmentId, attributes);
     expect(result.success).toBe(true);
     expect(result.messages?.[0]).toMatch(/Could not create 1 new attribute/);

@@ -26,6 +26,14 @@ export const ZContactAttribute = z.object({
     description: "The value of the attribute",
     example: "example@email.com",
   }),
+  valueNumber: z.number().nullable().openapi({
+    description: "The numeric value of the attribute (used for number type)",
+    example: 123,
+  }),
+  valueDate: z.coerce.date().nullable().openapi({
+    description: "The date value of the attribute (used for date type)",
+    example: "2022-01-19 00:00:00",
+  }),
 }) satisfies z.ZodType<ContactAttribute>;
 
 ZContactAttribute.openapi({

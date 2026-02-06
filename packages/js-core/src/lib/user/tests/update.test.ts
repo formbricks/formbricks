@@ -158,6 +158,9 @@ describe("sendUpdates", () => {
     const result = await sendUpdates({ updates: { userId: mockUserId, attributes: mockAttributes } });
 
     expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.hasWarnings).toBe(false);
+    }
   });
 
   test("handles backend errors", async () => {

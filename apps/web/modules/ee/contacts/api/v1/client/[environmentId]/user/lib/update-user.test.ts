@@ -121,7 +121,7 @@ describe("updateUser", () => {
         lastDisplayAt: null,
       })
     );
-    expect(result.messages).toEqual([]);
+    expect(result.messages).toBeUndefined();
   });
 
   test("should update existing contact attributes", async () => {
@@ -137,7 +137,7 @@ describe("updateUser", () => {
       newAttributes
     );
     expect(result.state.data?.language).toBe("en");
-    expect(result.messages).toEqual([]);
+    expect(result.messages).toBeUndefined();
   });
 
   test("should not update attributes if they are the same", async () => {

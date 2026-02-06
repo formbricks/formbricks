@@ -90,7 +90,7 @@ describe("createContactAttributeKey", () => {
     const created = {
       id: "cak-2",
       key: data.key,
-      name: data.key,
+      name: "Company",
       description: null,
       environmentId,
       type: "custom",
@@ -102,7 +102,7 @@ describe("createContactAttributeKey", () => {
     expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
       data: {
         key: data.key,
-        name: data.key,
+        name: "Company",
         description: null,
         environmentId,
         type: "custom",

@@ -20,6 +20,7 @@ import {
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
 import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   cloneSegment,
@@ -310,3 +311,30 @@ export const resetSegmentFiltersAction = authenticatedActionClient.schema(ZReset
     }
   )
 );
+
+const ZGetDistinctAttributeValuesAction = z.object({
+  environmentId: ZId,
+  attributeKeyId: ZId,
+});
+
+export const getDistinctAttributeValuesAction = authenticatedActionClient
+  .schema(ZGetDistinctAttributeValuesAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
+    });
+
+    return await getDistinctAttributeValues(parsedInput.attributeKeyId);
+  });

@@ -1,6 +1,6 @@
 import { NextRequest, userAgent } from "next/server";
 import { logger } from "@formbricks/logger";
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { ZEnvironmentId } from "@formbricks/types/environment";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
@@ -96,27 +96,27 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      let attributeUpdatesToSend: TContactAttributes | null = null;
+      let attributeUpdatesToSend: TContactAttributesInput | null = null;
       if (attributes) {
         // remove userId and id from attributes
         const { userId: userIdAttr, id: idAttr, ...updatedAttributes } = attributes;
-        attributeUpdatesToSend = updatedAttributes;
+        attributeUpdatesToSend = updatedAttributes as TContactAttributesInput;
       }
 
       const { device } = userAgent(req);
       const deviceType = device ? "phone" : "desktop";
 
-      const { state: userState, messages } = await updateUser(
-        environmentId,
-        userId,
-        deviceType,
-        attributeUpdatesToSend ?? undefined
-      );
+      const {
+        state: userState,
+        messages,
+        errors,
+      } = await updateUser(environmentId, userId, deviceType, attributeUpdatesToSend ?? undefined);
 
       // Build response (simplified structure)
-      const responseJson: { state: TJsPersonState; messages?: string[] } = {
+      const responseJson: { state: TJsPersonState; messages?: string[]; errors?: string[] } = {
         state: userState,
         ...(messages && messages.length > 0 && { messages }),
+        ...(errors && errors.length > 0 && { errors }),
       };
 
       return {

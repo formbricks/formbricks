@@ -177,7 +177,7 @@ describe("createContactAttributeKey", () => {
     expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
       data: {
         key: inputWithoutName.key,
-        name: inputWithoutName.key, // Should fall back to key when name is not provided
+        name: "TestKey", // formatSnakeCaseToTitleCase("testKey") capitalizes first letter
         type: inputWithoutName.type,
         description: inputWithoutName.description || "",
         environment: { connect: { id: environmentId } },

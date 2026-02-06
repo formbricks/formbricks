@@ -1,12 +1,13 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
+import { Calendar1Icon, HashIcon, PlusIcon, TagIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -18,6 +19,13 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { createContactAttributeKeyAction } from "../actions";
 
 interface CreateAttributeModalProps {
@@ -33,6 +41,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
     key: "",
     name: "",
     description: "",
+    dataType: "string" as TContactAttributeDataType,
   });
   const [keyError, setKeyError] = useState<string>("");
 
@@ -41,6 +50,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
       key: "",
       name: "",
       description: "",
+      dataType: "string",
     });
     setKeyError("");
     setOpen(false);
@@ -54,7 +64,18 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
   };
 
   const handleKeyChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, key: value }));
+    const previousAutoLabel = formData.key ? formatSnakeCaseToTitleCase(formData.key) : "";
+    const newAutoLabel = value ? formatSnakeCaseToTitleCase(value) : "";
+
+    setFormData((prev) => {
+      // Auto-update name if it's empty or matches the previous auto-generated label
+      const shouldAutoUpdateName = !prev.name || prev.name === previousAutoLabel;
+      return {
+        ...prev,
+        key: value,
+        name: shouldAutoUpdateName ? newAutoLabel : prev.name,
+      };
+    });
     validateKey(value);
   };
 
@@ -90,8 +111,9 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
       const createContactAttributeKeyResponse = await createContactAttributeKeyAction({
         environmentId,
         key: formData.key,
-        name: formData.name || formData.key,
+        name: formData.name || formatSnakeCaseToTitleCase(formData.key),
         description: formData.description || undefined,
+        dataType: formData.dataType,
       });
 
       if (!createContactAttributeKeyResponse?.data) {
@@ -164,6 +186,42 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
                     onChange={(e) => handleNameChange(e.target.value)}
                     placeholder={t("environments.contacts.attribute_label_placeholder")}
                   />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-slate-900">
+                    {t("environments.contacts.data_type")}
+                  </label>
+                  <Select
+                    value={formData.dataType}
+                    onValueChange={(value: TContactAttributeDataType) =>
+                      setFormData((prev) => ({ ...prev, dataType: value }))
+                    }>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="string">
+                        <div className="flex items-center gap-2">
+                          <TagIcon className="h-4 w-4" />
+                          <span>{t("common.string")}</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="number">
+                        <div className="flex items-center gap-2">
+                          <HashIcon className="h-4 w-4" />
+                          <span>{t("common.number")}</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="date">
+                        <div className="flex items-center gap-2">
+                          <Calendar1Icon className="h-4 w-4" />
+                          <span>{t("common.date")}</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500">{t("environments.contacts.data_type_description")}</p>
                 </div>
 
                 <div className="flex flex-col gap-2">

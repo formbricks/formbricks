@@ -30,6 +30,9 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   description: true,
   environmentId: true,
 })
+  .extend({
+    dataType: ZContactAttributeKey.shape.dataType.optional(),
+  })
   .superRefine((data, ctx) => {
     // Enforce safe identifier format for key
     if (!isSafeIdentifier(data.key)) {

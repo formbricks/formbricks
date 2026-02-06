@@ -426,17 +426,15 @@ describe("Contacts Lib", () => {
       const attributeMap = { email: "email", userId: "userId", name: "name" };
       vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 3 });
+      vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
 
-      const newAttributeKeys = [
-        { key: "email", id: "key-1" },
-        { key: "userId", id: "key-2" },
-        { key: "name", id: "key-3" },
-      ];
+      // email and userId already exist as default keys; only "name" is new
       vi.mocked(prisma.contactAttributeKey.findMany)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(newAttributeKeys as any);
+        .mockResolvedValueOnce([
+          { key: "email", id: "key-1", dataType: "string" },
+          { key: "userId", id: "key-2", dataType: "string" },
+        ] as any)
+        .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }] as any);
 
       const mockCreatedContact = {
         id: "new-contact-1",
@@ -460,13 +458,14 @@ describe("Contacts Lib", () => {
 
       vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([existingContact as any]);
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+      // email and userId already exist as default keys; only "name" is new
       vi.mocked(prisma.contactAttributeKey.findMany)
-        .mockResolvedValueOnce([{ key: "email", id: "key-1" }] as any)
         .mockResolvedValueOnce([
-          { key: "userId", id: "key-2" },
-          { key: "name", id: "key-3" },
-        ] as any);
-      vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 2 });
+          { key: "email", id: "key-1", dataType: "string" },
+          { key: "userId", id: "key-2", dataType: "string" },
+        ] as any)
+        .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }] as any);
+      vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
 
       const result = await createContactsFromCSV(csvData, mockEnvironmentId, "skip", attributeMap);
 
@@ -558,14 +557,14 @@ describe("Contacts Lib", () => {
       const attributeMap = { email: "email", userId: "userId" };
       vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+      // email and userId already exist as default keys; only "name" is new
       vi.mocked(prisma.contactAttributeKey.findMany)
-        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
-          { key: "email", id: "key-1" },
-          { key: "userId", id: "key-2" },
-          { key: "name", id: "key-3" },
-        ] as any);
-      vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 3 });
+          { key: "email", id: "key-1", dataType: "string" },
+          { key: "userId", id: "key-2", dataType: "string" },
+        ] as any)
+        .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }] as any);
+      vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
       vi.mocked(prisma.contact.create).mockResolvedValue({
         id: "new-1",
         environmentId: mockEnvironmentId,
@@ -582,23 +581,14 @@ describe("Contacts Lib", () => {
       const csvDataWithMixedCase = [{ Email: "john@example.com", UserId: "user-1" }];
       const attributeMap = { email: "email", userid: "userId" };
 
-      vi.mocked(prisma.contact.findMany)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([
-          { key: "email", id: "key-1" },
-          { key: "userid", id: "key-2" },
-        ] as any);
+      vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
 
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.contactAttributeKey.findMany)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([
-          { key: "email", id: "key-1" },
-          { key: "userid", id: "key-2" },
-        ] as any);
-
-      vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 2 });
+      // Email and UserId already exist (case-insensitive matching via lowercaseToActualKeyMap)
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce([
+        { key: "email", id: "key-1", dataType: "string" },
+        { key: "UserId", id: "key-2", dataType: "string" },
+      ] as any);
       vi.mocked(prisma.contact.create).mockResolvedValue({
         id: "new-1",
         environmentId: mockEnvironmentId,

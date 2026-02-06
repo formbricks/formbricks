@@ -1,14 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { CalendarIcon, HashIcon, PlusIcon, TagIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -20,24 +19,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import {
-  FormControl,
-  FormError,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormProvider,
-} from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
-import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import { FormError, FormProvider } from "@/modules/ui/components/form";
 import { updateContactAttributesAction } from "../actions";
-import { TEditContactAttributesForm, ZEditContactAttributesForm } from "../types/contact";
+import { TEditContactAttributesForm, createEditContactAttributesSchema } from "../types/contact";
+import { AttributeFieldRow } from "./attribute-field-row";
+
+interface AttributeWithMetadata {
+  key: string;
+  name: string | null;
+  value: string;
+  dataType: TContactAttributeDataType;
+}
 
 interface EditContactAttributesModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   contactId: string;
-  currentAttributes: TContactAttributes;
+  currentAttributes: AttributeWithMetadata[];
   attributeKeys: TContactAttributeKey[];
 }
 
@@ -50,19 +48,25 @@ export const EditContactAttributesModal = ({
 }: EditContactAttributesModalProps) => {
   const { t } = useTranslation();
   const router = useRouter();
+
+  // Create dynamic schema with type validation using factory function
+  const dynamicSchema = useMemo(() => {
+    return createEditContactAttributesSchema(attributeKeys, t);
+  }, [attributeKeys, t]);
+
   // Convert current attributes to form format
   const defaultValues: TEditContactAttributesForm = useMemo(
     () => ({
-      attributes: Object.entries(currentAttributes).map(([key, value]) => ({
-        key,
-        value: value ?? "",
+      attributes: currentAttributes.map((attr) => ({
+        key: attr.key,
+        value: attr.value ?? "",
       })),
     }),
     [currentAttributes]
   );
 
   const form = useForm<TEditContactAttributesForm>({
-    resolver: zodResolver(ZEditContactAttributesForm),
+    resolver: zodResolver(dynamicSchema),
     defaultValues,
   });
 
@@ -74,21 +78,52 @@ export const EditContactAttributesModal = ({
   // Watch form values to get currently selected keys
   const watchedAttributes = form.watch("attributes");
 
-  // Prepare combobox options from attribute keys
-  const allKeyOptions: TComboboxOption[] = attributeKeys.map((attrKey) => ({
+  // Track which attributes were already saved (should be disabled)
+  const savedAttributeKeys = useMemo(
+    () => new Set(currentAttributes.map((attr) => attr.key)),
+    [currentAttributes]
+  );
+
+  // Separate system and custom attributes by index
+  const { systemFieldIndices, customFieldIndices } = useMemo(() => {
+    const system: number[] = [];
+    const custom: number[] = [];
+
+    watchedAttributes.forEach((attr, index) => {
+      const attrKey = attributeKeys.find((ak) => ak.key === attr.key);
+      if (attrKey?.type === "default") {
+        system.push(index);
+      } else {
+        custom.push(index);
+      }
+    });
+
+    return { systemFieldIndices: system, customFieldIndices: custom };
+  }, [watchedAttributes, attributeKeys]);
+
+  // Icon mapping for attribute data types
+  const dataTypeIcons = {
+    date: CalendarIcon,
+    number: HashIcon,
+    string: TagIcon,
+  } as const;
+
+  // Prepare select options from attribute keys
+  const allKeyOptions = attributeKeys.map((attrKey) => ({
+    icon: dataTypeIcons[attrKey.dataType] ?? TagIcon,
     label: attrKey.name ?? attrKey.key,
     value: attrKey.key,
   }));
 
   // Get available options for a specific field index (exclude already selected keys from other fields)
-  const getAvailableOptions = (currentIndex: number): TComboboxOption[] => {
+  const getAvailableOptions = (currentIndex: number) => {
     const selectedKeys = new Set(
       watchedAttributes
         .map((attr, index) => (index !== currentIndex && attr.key ? String(attr.key) : null))
         .filter((key): key is string => key !== null && key !== "")
     );
 
-    return allKeyOptions.filter((option) => !selectedKeys.has(String(option.value)));
+    return allKeyOptions.filter((option) => !selectedKeys.has(option.value));
   };
 
   // Reset form when modal closes
@@ -132,10 +167,23 @@ export const EditContactAttributesModal = ({
 
   const onSubmit = async (data: TEditContactAttributesForm) => {
     try {
-      const attributes = data.attributes.reduce((acc, { key, value }) => {
-        acc[key] = value;
-        return acc;
-      }, {});
+      // Convert values based on attribute data type
+      // HTML inputs always return strings, so we need to convert numbers
+      const attributes = data.attributes.reduce(
+        (acc, { key, value }) => {
+          const attrKey = attributeKeys.find((ak) => ak.key === key);
+          const dataType = attrKey?.dataType || "string";
+
+          if (dataType === "number" && value !== "") {
+            // Convert string to number for number attributes
+            acc[key] = Number(value);
+          } else {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {} as Record<string, string | number>
+      );
 
       const result = await updateContactAttributesAction({
         contactId,
@@ -188,74 +236,62 @@ export const EditContactAttributesModal = ({
         <DialogBody>
           <FormProvider {...form}>
             <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-4">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
-                    <FormField
-                      control={form.control}
-                      name={`attributes.${index}.key`}
-                      render={({ field: keyField }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel>{t("environments.contacts.attribute_key")}</FormLabel>
-                          <FormControl>
-                            <InputCombobox
-                              id={`attribute-key-${index}`}
-                              options={getAvailableOptions(index)}
-                              value={keyField.value || null}
-                              onChangeValue={(value) => {
-                                keyField.onChange(typeof value === "string" ? value : String(value || ""));
-                              }}
-                              withInput={true}
-                              showSearch={true}
-                              inputProps={{
-                                placeholder: t("environments.contacts.attribute_key_placeholder"),
-                                className: "w-full border-0",
-                              }}
-                            />
-                          </FormControl>
-                          <FormError />
-                        </FormItem>
-                      )}
+              {/* System Attributes Section */}
+              {systemFieldIndices.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-slate-700">
+                    {t("environments.contacts.system_attributes")}
+                  </h3>
+                  {systemFieldIndices.map((index) => (
+                    <AttributeFieldRow
+                      key={fields[index].id}
+                      index={index}
+                      fieldId={fields[index].id}
+                      form={form}
+                      attributeKeys={attributeKeys}
+                      watchedAttributes={watchedAttributes}
+                      allKeyOptions={allKeyOptions}
+                      getAvailableOptions={getAvailableOptions}
+                      savedAttributeKeys={savedAttributeKeys}
+                      onRemove={handleRemoveAttribute}
+                      t={t}
                     />
+                  ))}
+                </div>
+              )}
 
-                    <FormField
-                      control={form.control}
-                      name={`attributes.${index}.value`}
-                      render={({ field: valueField }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel>{t("environments.contacts.attribute_value")}</FormLabel>
-                          <FormControl>
-                            <div className="flex space-x-2">
-                              <Input
-                                {...valueField}
-                                placeholder={t("environments.contacts.attribute_value_placeholder")}
-                                className="w-full"
-                              />
-                              <div className="flex items-end pb-0.5">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  disabled={["email", "userId", "firstName", "lastName"].includes(field.key)}
-                                  size="sm"
-                                  onClick={() => handleRemoveAttribute(index)}
-                                  className="h-10 w-10 p-0">
-                                  <TrashIcon className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </FormControl>
-                          <FormError />
-                        </FormItem>
-                      )}
+              {/* Custom Attributes Section */}
+              {customFieldIndices.length > 0 && (
+                <div className="space-y-4">
+                  {systemFieldIndices.length > 0 && <hr className="border-slate-200" />}
+                  <h3 className="text-sm font-semibold text-slate-700">
+                    {t("environments.contacts.custom_attributes")}
+                  </h3>
+                  {customFieldIndices.map((index) => (
+                    <AttributeFieldRow
+                      key={fields[index].id}
+                      index={index}
+                      fieldId={fields[index].id}
+                      form={form}
+                      attributeKeys={attributeKeys}
+                      watchedAttributes={watchedAttributes}
+                      allKeyOptions={allKeyOptions}
+                      getAvailableOptions={getAvailableOptions}
+                      savedAttributeKeys={savedAttributeKeys}
+                      onRemove={handleRemoveAttribute}
+                      t={t}
                     />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
-              <Button type="button" variant="secondary" onClick={handleAddAttribute} className="w-fit">
-                <PlusIcon className="mr-2 h-4 w-4" />
-                {t("environments.contacts.add_attribute")}
-              </Button>
+              {/* Only show Add Attribute button if there are remaining attributes to add */}
+              {watchedAttributes.length < attributeKeys.length && (
+                <Button type="button" variant="secondary" onClick={handleAddAttribute} className="w-fit">
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  {t("environments.contacts.add_attribute")}
+                </Button>
+              )}
 
               {form.formState.errors.attributes?.root && (
                 <FormError>{form.formState.errors.attributes.root.message}</FormError>

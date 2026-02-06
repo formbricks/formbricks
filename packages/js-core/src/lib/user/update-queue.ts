@@ -93,7 +93,7 @@ export class UpdateQueue {
                   ...config.get().user,
                   data: {
                     ...config.get().user.data,
-                    language: currentUpdates.attributes?.language,
+                    language: currentUpdates.attributes?.language as string | undefined,
                   },
                 },
               });
@@ -133,7 +133,8 @@ export class UpdateQueue {
                 if (isNewUser) {
                   logger.debug(`User successfully identified: ${effectiveUserId}`);
                 }
-                if (hasAttributes) {
+                // Only log success message if there were no warnings (e.g., skipped attributes)
+                if (hasAttributes && !result.data.hasWarnings) {
                   const attributeKeys = Object.keys(currentUpdates.attributes ?? {}).join(", ");
                   logger.debug(`Attributes successfully set: ${attributeKeys}`);
                 }
