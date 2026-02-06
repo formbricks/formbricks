@@ -2051,6 +2051,7 @@
         "advanced_styling_field_button_text": "ボタンのテキスト",
         "advanced_styling_field_description_color": "説明文の色",
         "advanced_styling_field_description_size": "説明文のフォントサイズ",
+        "advanced_styling_field_description_weight": "説明文のフォントの太さ",
         "advanced_styling_field_font_size": "フォントサイズ",
         "advanced_styling_field_font_weight": "フォントの太さ",
         "advanced_styling_field_headline_color": "見出しの色",

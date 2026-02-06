@@ -2051,6 +2051,7 @@
         "advanced_styling_field_button_text": "Текст кнопки",
         "advanced_styling_field_description_color": "Цвет описания",
         "advanced_styling_field_description_size": "Размер шрифта описания",
+        "advanced_styling_field_description_weight": "Толщина шрифта описания",
         "advanced_styling_field_font_size": "Размер шрифта",
         "advanced_styling_field_font_weight": "Толщина шрифта",
         "advanced_styling_field_headline_color": "Цвет заголовка",

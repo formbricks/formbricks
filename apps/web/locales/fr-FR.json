@@ -2051,6 +2051,7 @@
         "advanced_styling_field_button_text": "Texte du bouton",
         "advanced_styling_field_description_color": "Couleur de la description",
         "advanced_styling_field_description_size": "Taille de police de la description",
+        "advanced_styling_field_description_weight": "Graisse de police de la description",
         "advanced_styling_field_font_size": "Taille de police",
         "advanced_styling_field_font_weight": "Graisse de police",
         "advanced_styling_field_headline_color": "Couleur du titre",

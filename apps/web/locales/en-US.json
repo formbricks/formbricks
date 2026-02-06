@@ -2060,6 +2060,7 @@
         "advanced_styling_field_button_text": "Button Text",
         "advanced_styling_field_description_color": "Description Color",
         "advanced_styling_field_description_size": "Description Font Size",
+        "advanced_styling_field_description_weight": "Description Font Weight",
 
         "advanced_styling_field_font_size": "Font Size",
         "advanced_styling_field_font_weight": "Font Weight",

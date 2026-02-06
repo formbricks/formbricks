@@ -1,5 +1,6 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
 import { TProjectStyling } from "@formbricks/types/project";
+import { isLight, mixColor } from "@/lib/utils/colors";
 
 export const COLOR_DEFAULTS = {
   brandColor: "#64748b",
@@ -14,8 +15,8 @@ export const COLOR_DEFAULTS = {
 export const ADVANCED_DEFAULTS = {
   accentBgColor: "#e2e8f0",
   accentBgColorSelected: "#f1f5f9",
-  buttonBgColor: "#0f172a",
-  buttonTextColor: "#f8fafc",
+  buttonBgColor: COLOR_DEFAULTS.brandColor,
+  buttonTextColor: "#ffffff",
   buttonBorderRadius: 10,
   buttonHeight: 36,
   buttonFontSize: 14,
@@ -42,13 +43,14 @@ export const ADVANCED_DEFAULTS = {
   elementHeadlineFontWeight: "400",
   elementHeadlineColor: "#0f172a",
   elementDescriptionFontSize: 14,
+  elementDescriptionFontWeight: "400",
   elementDescriptionColor: "#0f172a",
   elementUpperLabelFontSize: 12,
   elementUpperLabelColor: "#64748b",
   elementUpperLabelFontWeight: "400",
   progressTrackHeight: 8,
-  progressTrackBgColor: "#0f172a33",
-  progressIndicatorBgColor: "#0f172a",
+  progressTrackBgColor: `${COLOR_DEFAULTS.brandColor}33`,
+  progressIndicatorBgColor: COLOR_DEFAULTS.brandColor,
 } as const;
 
 export const defaultStyling: TProjectStyling = {
@@ -123,6 +125,7 @@ export const defaultStyling: TProjectStyling = {
     light: ADVANCED_DEFAULTS.elementHeadlineColor,
   },
   elementDescriptionFontSize: ADVANCED_DEFAULTS.elementDescriptionFontSize,
+  elementDescriptionFontWeight: ADVANCED_DEFAULTS.elementDescriptionFontWeight,
   elementDescriptionColor: {
     light: ADVANCED_DEFAULTS.elementDescriptionColor,
   },
@@ -138,4 +141,101 @@ export const defaultStyling: TProjectStyling = {
   progressIndicatorBgColor: {
     light: ADVANCED_DEFAULTS.progressIndicatorBgColor,
   },
+};
+
+/**
+ * Derives a complete set of suggested color values from a single brand color.
+ *
+ * Used by both the project-level "Suggest Colors" button and as the
+ * brand-aware defaults when opening a styling form for the first time.
+ *
+ * The returned object is a flat map of form-field paths to values so it
+ * can be spread directly into form defaults or applied via `form.setValue`.
+ */
+export const getSuggestedColors = (brandColor: string) => {
+  const isBrandLight = isLight(brandColor);
+
+  // Accent text: darken the brand if it's light, otherwise use as-is
+  const accentText = isBrandLight ? mixColor(brandColor, "#000000", 0.6) : brandColor;
+  // Dark text: mostly dark with a hint of brand
+  const darkText = mixColor(brandColor, "#0f172a", 0.9);
+  // Input / option background: almost white with a touch of brand
+  const inputBg = mixColor(brandColor, "#ffffff", 0.97);
+  // Card tones
+  const cardBg = mixColor(brandColor, "#ffffff", 0.96);
+  const cardBorder = mixColor(brandColor, "#ffffff", 0.9);
+  // Page background
+  const pageBg = mixColor(brandColor, "#ffffff", 0.95);
+
+  return {
+    // General
+    "brandColor.light": brandColor,
+    "questionColor.light": darkText,
+
+    // Accent
+    "accentBgColor.light": brandColor,
+    "accentBgColorSelected.light": mixColor(brandColor, isBrandLight ? "#000000" : "#ffffff", 0.1),
+
+    // Headlines & Descriptions
+    "elementHeadlineColor.light": accentText,
+    "elementDescriptionColor.light": mixColor(accentText, "#ffffff", 0.3),
+    "elementUpperLabelColor.light": mixColor(accentText, "#ffffff", 0.5),
+
+    // Buttons
+    "buttonBgColor.light": brandColor,
+    "buttonTextColor.light": isBrandLight ? "#0f172a" : "#ffffff",
+
+    // Inputs
+    "inputColor.light": inputBg,
+    "inputBorderColor.light": cardBorder,
+    "inputTextColor.light": darkText,
+
+    // Options (Radio / Checkbox)
+    "optionBgColor.light": inputBg,
+    "optionLabelColor.light": darkText,
+
+    // Card
+    "cardBackgroundColor.light": cardBg,
+    "cardBorderColor.light": cardBorder,
+
+    // Highlight / Focus
+    "highlightBorderColor.light": brandColor,
+
+    // Progress Bar
+    "progressIndicatorBgColor.light": brandColor,
+    "progressTrackBgColor.light": mixColor(brandColor, "#ffffff", 0.8),
+
+    // Background
+    background: { bg: pageBg, bgType: "color" as const, brightness: 100 },
+  };
+};
+
+/**
+ * Returns brand-color-derived defaults for styling fields that should
+ * match the brand color when not explicitly saved by the user.
+ *
+ * These values sit between `defaultStyling` and the saved styling in
+ * the spread order so that explicitly saved values always win.
+ *
+ * Re-uses `getSuggestedColors` internally but reshapes the flat
+ * dot-path keys into the nested object format expected by form defaults.
+ */
+export const getBrandDerivedDefaults = (brandColor: string) => {
+  const suggested = getSuggestedColors(brandColor);
+
+  return {
+    accentBgColor: { light: suggested["accentBgColor.light"] },
+    accentBgColorSelected: { light: suggested["accentBgColorSelected.light"] },
+    elementHeadlineColor: { light: suggested["elementHeadlineColor.light"] },
+    elementDescriptionColor: { light: suggested["elementDescriptionColor.light"] },
+    elementUpperLabelColor: { light: suggested["elementUpperLabelColor.light"] },
+    buttonBgColor: { light: suggested["buttonBgColor.light"] },
+    buttonTextColor: { light: suggested["buttonTextColor.light"] },
+    inputTextColor: { light: suggested["inputTextColor.light"] },
+    optionBgColor: { light: suggested["optionBgColor.light"] },
+    optionLabelColor: { light: suggested["optionLabelColor.light"] },
+    highlightBorderColor: { light: suggested["highlightBorderColor.light"] },
+    progressIndicatorBgColor: { light: suggested["progressIndicatorBgColor.light"] },
+    progressTrackBgColor: { light: suggested["progressTrackBgColor.light"] },
+  };
 };

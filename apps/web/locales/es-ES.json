@@ -2051,6 +2051,7 @@
         "advanced_styling_field_button_text": "Texto del botón",
         "advanced_styling_field_description_color": "Color de la descripción",
         "advanced_styling_field_description_size": "Tamaño de fuente de la descripción",
+        "advanced_styling_field_description_weight": "Grosor de fuente de la descripción",
         "advanced_styling_field_font_size": "Tamaño de fuente",
         "advanced_styling_field_font_weight": "Grosor de fuente",
         "advanced_styling_field_headline_color": "Color del titular",

@@ -11,8 +11,12 @@ import { useTranslation } from "react-i18next";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { previewSurvey } from "@/app/lib/templates";
-import { COLOR_DEFAULTS, defaultStyling } from "@/lib/styling/constants";
-import { isLight, mixColor } from "@/lib/utils/colors";
+import {
+  COLOR_DEFAULTS,
+  defaultStyling,
+  getBrandDerivedDefaults,
+  getSuggestedColors,
+} from "@/lib/styling/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
@@ -55,8 +59,11 @@ export const ThemeStyling = ({
   const { t } = useTranslation();
   const router = useRouter();
 
+  const savedStyling = project.styling as Partial<TProjectStyling> | null;
+  const brandColor = savedStyling?.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
+
   const form = useForm<TProjectStyling>({
-    defaultValues: { ...defaultStyling, ...project.styling },
+    defaultValues: { ...defaultStyling, ...getBrandDerivedDefaults(brandColor), ...savedStyling },
     resolver: zodResolver(ZProjectStyling),
   });
 
@@ -87,74 +94,11 @@ export const ThemeStyling = ({
 
   const handleSuggestColors = () => {
     const brandColor = form.getValues().brandColor?.light ?? COLOR_DEFAULTS.brandColor;
+    const suggested = getSuggestedColors(brandColor);
 
-    // Derive everything from Brand Color
-    const derivedInputBg = mixColor(brandColor, "#ffffff", 0.97) ?? "#ffffff";
-    const derivedDarkTextColor = mixColor(brandColor, "#0f172a", 0.9) ?? "#0f172a";
-    const derivedCardBg = mixColor(brandColor, "#ffffff", 0.96) ?? "#ffffff";
-    const derivedCardBorder = mixColor(brandColor, "#ffffff", 0.9) ?? "#f8fafc";
-    const derivedPageBg = mixColor(brandColor, "#ffffff", 0.95) ?? "#f8fafc";
-
-    const isBrandLight = isLight(brandColor);
-
-    // Accent derived from Brand (Monochromatic)
-    const accentColor = brandColor;
-    const derivedAccentSelected =
-      mixColor(accentColor, isBrandLight ? "#000000" : "#ffffff", 0.1) ?? accentColor;
-    // Accent for text (darkened if light)
-    const derivedAccentText = isBrandLight ? mixColor(accentColor, "#000000", 0.6) : accentColor;
-
-    // 1. General
-    form.setValue("brandColor.light", brandColor, { shouldDirty: true });
-    form.setValue("questionColor.light", derivedDarkTextColor, { shouldDirty: true });
-
-    // Accents (Synced with Brand)
-    form.setValue("accentBgColor.light", accentColor, { shouldDirty: true });
-    form.setValue("accentBgColorSelected.light", derivedAccentSelected, { shouldDirty: true });
-
-    // Headlines & Descriptions (Using Brand/Accent)
-    form.setValue("elementHeadlineColor.light", derivedAccentText, { shouldDirty: true });
-    form.setValue(
-      "elementDescriptionColor.light",
-      mixColor(derivedAccentText, "#ffffff", 0.3) ?? derivedAccentText,
-      { shouldDirty: true }
-    );
-    form.setValue(
-      "elementUpperLabelColor.light",
-      mixColor(derivedAccentText, "#ffffff", 0.5) ?? derivedAccentText,
-      { shouldDirty: true }
-    );
-
-    // 2. Buttons
-    form.setValue("buttonBgColor.light", brandColor, { shouldDirty: true });
-    form.setValue("buttonTextColor.light", isBrandLight ? "#0f172a" : "#ffffff", { shouldDirty: true });
-
-    // 3. Inputs
-    form.setValue("inputColor.light", derivedInputBg, { shouldDirty: true });
-    form.setValue("inputBorderColor.light", derivedCardBorder, { shouldDirty: true });
-    form.setValue("inputTextColor.light", derivedDarkTextColor, { shouldDirty: true });
-
-    // 4. Options (Checkboxes/Radio)
-    form.setValue("optionBgColor.light", derivedInputBg, { shouldDirty: true });
-    form.setValue("optionLabelColor.light", derivedDarkTextColor, { shouldDirty: true });
-
-    // 5. Card Styling
-    form.setValue("cardBackgroundColor.light", derivedCardBg, { shouldDirty: true });
-    form.setValue("cardBorderColor.light", derivedCardBorder, { shouldDirty: true });
-
-    // 6. Highlight / Accent (Focus states)
-    form.setValue("highlightBorderColor.light", accentColor, { shouldDirty: true });
-
-    // 7. Progress Bar
-    form.setValue("progressIndicatorBgColor.light", brandColor, { shouldDirty: true });
-    form.setValue("progressTrackBgColor.light", mixColor(brandColor, "#ffffff", 0.8), { shouldDirty: true });
-
-    // 8. Background Styling (Page Background)
-    form.setValue(
-      "background",
-      { bg: derivedPageBg, bgType: "color", brightness: 100 },
-      { shouldDirty: true }
-    );
+    for (const [key, value] of Object.entries(suggested)) {
+      form.setValue(key as keyof TProjectStyling, value, { shouldDirty: true });
+    }
 
     toast.success(t("environments.workspace.look.styling_updated_successfully"));
     setConfirmSuggestColorsOpen(false);
