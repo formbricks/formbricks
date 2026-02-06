@@ -5,10 +5,10 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
 import {
-  formatValidationErrorsForApi,
   formatValidationErrorsForV1Api,
+  formatValidationErrorsForV2Api,
   validateResponseData,
-} from "./validation";
+} from "@/modules/api/lib/validation";
 
 const mockTransformQuestionsToBlocks = vi.fn();
 const mockGetElementsFromBlocks = vi.fn();
@@ -95,7 +95,7 @@ describe("validateResponseData", () => {
     mockGetElementsFromBlocks.mockReturnValue(mockElements);
     mockValidateBlockResponses.mockReturnValue({});
 
-    validateResponseData([], mockResponseData, "en", mockQuestions);
+    validateResponseData([], mockResponseData, "en", true, mockQuestions);
 
     expect(mockTransformQuestionsToBlocks).toHaveBeenCalledWith(mockQuestions, []);
     expect(mockGetElementsFromBlocks).toHaveBeenCalledWith(transformedBlocks);
@@ -105,15 +105,15 @@ describe("validateResponseData", () => {
     mockGetElementsFromBlocks.mockReturnValue(mockElements);
     mockValidateBlockResponses.mockReturnValue({});
 
-    validateResponseData(mockBlocks, mockResponseData, "en", mockQuestions);
+    validateResponseData(mockBlocks, mockResponseData, "en", true, mockQuestions);
 
     expect(mockTransformQuestionsToBlocks).not.toHaveBeenCalled();
   });
 
   test("should return null when both blocks and questions are empty", () => {
-    expect(validateResponseData([], mockResponseData, "en", [])).toBeNull();
-    expect(validateResponseData(null, mockResponseData, "en", [])).toBeNull();
-    expect(validateResponseData(undefined, mockResponseData, "en", null)).toBeNull();
+    expect(validateResponseData([], mockResponseData, "en", true, [])).toBeNull();
+    expect(validateResponseData(null, mockResponseData, "en", true, [])).toBeNull();
+    expect(validateResponseData(undefined, mockResponseData, "en", true, null)).toBeNull();
   });
 
   test("should use default language code", () => {
@@ -124,15 +124,36 @@ describe("validateResponseData", () => {
 
     expect(mockValidateBlockResponses).toHaveBeenCalledWith(mockElements, mockResponseData, "en");
   });
+
+  test("should validate only present fields when finished is false", () => {
+    const partialResponseData: TResponseData = { element1: "test" };
+    const partialElements = [mockElements[0]];
+    mockGetElementsFromBlocks.mockReturnValue(mockElements);
+    mockValidateBlockResponses.mockReturnValue({});
+
+    validateResponseData(mockBlocks, partialResponseData, "en", false);
+
+    expect(mockValidateBlockResponses).toHaveBeenCalledWith(partialElements, partialResponseData, "en");
+  });
+
+  test("should validate all fields when finished is true", () => {
+    const partialResponseData: TResponseData = { element1: "test" };
+    mockGetElementsFromBlocks.mockReturnValue(mockElements);
+    mockValidateBlockResponses.mockReturnValue({});
+
+    validateResponseData(mockBlocks, partialResponseData, "en", true);
+
+    expect(mockValidateBlockResponses).toHaveBeenCalledWith(mockElements, partialResponseData, "en");
+  });
 });
 
-describe("formatValidationErrorsForApi", () => {
+describe("formatValidationErrorsForV2Api", () => {
   test("should convert error map to V2 API format", () => {
     const errorMap: TValidationErrorMap = {
       element1: [{ ruleId: "minLength", ruleType: "minLength", message: "Min length required" }],
     };
 
-    const result = formatValidationErrorsForApi(errorMap);
+    const result = formatValidationErrorsForV2Api(errorMap);
 
     expect(result).toEqual([
       {
@@ -151,7 +172,7 @@ describe("formatValidationErrorsForApi", () => {
       ],
     };
 
-    const result = formatValidationErrorsForApi(errorMap);
+    const result = formatValidationErrorsForV2Api(errorMap);
 
     expect(result).toHaveLength(2);
     expect(result[0].field).toBe("response.data.element1");
@@ -164,7 +185,7 @@ describe("formatValidationErrorsForApi", () => {
       element2: [{ ruleId: "maxLength", ruleType: "maxLength", message: "Max length" }],
     };
 
-    const result = formatValidationErrorsForApi(errorMap);
+    const result = formatValidationErrorsForV2Api(errorMap);
 
     expect(result).toHaveLength(2);
     expect(result[0].field).toBe("response.data.element1");

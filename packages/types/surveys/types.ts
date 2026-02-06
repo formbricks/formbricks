@@ -1,7 +1,7 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZColor, ZEndingCardUrl, ZId, ZPlacement, ZUrl, getZSafeUrl } from "../common";
+import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { ZLanguage } from "../project";
@@ -228,7 +228,7 @@ export const ZSurveyProjectOverwrites = z.object({
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
   clickOutsideClose: z.boolean().nullish(),
-  darkOverlay: z.boolean().nullish(),
+  overlay: ZOverlay.nullish(),
 });
 
 export type TSurveyProjectOverwrites = z.infer<typeof ZSurveyProjectOverwrites>;
@@ -2866,7 +2866,7 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 
@@ -3697,7 +3697,7 @@ const validateBlockLogicFallback = (
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 

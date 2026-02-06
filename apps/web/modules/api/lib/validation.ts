@@ -10,17 +10,20 @@ import { ApiErrorDetails } from "@/modules/api/v2/types/api-error";
 
 /**
  * Validates response data against survey validation rules
+ * Handles partial responses (in-progress) by only validating present fields when finished is false
  *
  * @param blocks - Survey blocks containing elements with validation rules (preferred)
- * @param questions - Survey questions (legacy format, used as fallback if blocks are empty)
  * @param responseData - Response data to validate (keyed by element ID)
  * @param languageCode - Language code for error messages (defaults to "en")
+ * @param finished - Whether the response is finished (defaults to true for management APIs)
+ * @param questions - Survey questions (legacy format, used as fallback if blocks are empty)
  * @returns Validation error map keyed by element ID, or null if validation passes
  */
 export const validateResponseData = (
   blocks: TSurveyBlock[] | undefined | null,
   responseData: TResponseData,
   languageCode: string = "en",
+  finished: boolean = true,
   questions?: TSurveyQuestion[] | undefined | null
 ): TValidationErrorMap | null => {
   // Use blocks if available, otherwise transform questions to blocks
@@ -37,22 +40,26 @@ export const validateResponseData = (
   }
 
   // Extract elements from blocks
-  const elements = getElementsFromBlocks(blocksToUse);
+  const allElements = getElementsFromBlocks(blocksToUse);
 
-  // Validate all elements
-  const errorMap = validateBlockResponses(elements, responseData, languageCode);
+  // If response is not finished, only validate elements that are present in the response data
+  // This prevents "required" errors for fields the user hasn't reached yet
+  const elementsToValidate = finished ? allElements : allElements.filter((element) => Object.keys(responseData).includes(element.id));
+
+  // Validate selected elements
+  const errorMap = validateBlockResponses(elementsToValidate, responseData, languageCode);
 
   // Return null if no errors (validation passed), otherwise return error map
   return Object.keys(errorMap).length === 0 ? null : errorMap;
 };
 
 /**
- * Converts validation error map to API error response format (V2)
+ * Converts validation error map to V2 API error response format
  *
  * @param errorMap - Validation error map from validateResponseData
- * @returns API error response details
+ * @returns V2 API error response details
  */
-export const formatValidationErrorsForApi = (errorMap: TValidationErrorMap) => {
+export const formatValidationErrorsForV2Api = (errorMap: TValidationErrorMap) => {
   const details: ApiErrorDetails = [];
 
   for (const [elementId, errors] of Object.entries(errorMap)) {

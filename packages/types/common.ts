@@ -20,6 +20,10 @@ export const ZPlacement = z.enum(["bottomLeft", "bottomRight", "topLeft", "topRi
 
 export type TPlacement = z.infer<typeof ZPlacement>;
 
+export const ZOverlay = z.enum(["none", "light", "dark"]);
+
+export type TOverlay = z.infer<typeof ZOverlay>;
+
 export const ZId = z.string().cuid2();
 
 export const ZUuid = z.string().uuid();

@@ -52,7 +52,7 @@ export const ZJsEnvironmentStateProject = ZProject.pick({
   id: true,
   recontactDays: true,
   clickOutsideClose: true,
-  darkOverlay: true,
+  overlay: true,
   placement: true,
   inAppSurveyBranding: true,
   styling: true,
