@@ -151,7 +151,7 @@ function SingleSelect({
       />
 
       {/* Options */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {variant === "dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
@@ -160,15 +160,15 @@ function SingleSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="rounded-input w-full justify-between"
+                  className="rounded-input bg-option-bg rounded-option border-option-border h-input my-0 w-full justify-between border"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
-                  <span className="truncate">{displayText}</span>
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
+                  <ChevronDown className="label-headline ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
+                className="bg-option-bg max-h-[300px] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
                 align="start">
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
                   {options
@@ -181,8 +181,9 @@ function SingleSelect({
                           key={option.id}
                           value={option.id}
                           id={optionId}
+                          dir={dir}
                           disabled={disabled}>
-                          <span className={optionLabelClassName}>{option.label}</span>
+                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
                         </DropdownMenuRadioItem>
                       );
                     })}
@@ -190,8 +191,11 @@ function SingleSelect({
                     <DropdownMenuRadioItem
                       value={otherOptionId}
                       id={`${inputId}-${otherOptionId}`}
+                      dir={dir}
                       disabled={disabled}>
-                      <span className={optionLabelClassName}>{otherValue || otherOptionLabel}</span>
+                      <span className="font-input font-input-weight text-input-text">
+                        {otherValue || otherOptionLabel}
+                      </span>
                     </DropdownMenuRadioItem>
                   ) : null}
                   {options
@@ -204,8 +208,9 @@ function SingleSelect({
                           key={option.id}
                           value={option.id}
                           id={optionId}
+                          dir={dir}
                           disabled={disabled}>
-                          <span className={optionLabelClassName}>{option.label}</span>
+                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
                         </DropdownMenuRadioItem>
                       );
                     })}
@@ -276,7 +281,7 @@ function SingleSelect({
                       aria-required={required}
                     />
                     <span
-                      className={cn("mr-3 ml-3 grow", optionLabelClassName)}
+                      className={cn("ml-3 mr-3 grow", optionLabelClassName)}
                       style={{ fontSize: "var(--fb-option-font-size)" }}>
                       {otherOptionLabel}
                     </span>

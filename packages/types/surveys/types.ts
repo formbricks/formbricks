@@ -228,7 +228,7 @@ export const ZSurveyProjectOverwrites = z.object({
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
   clickOutsideClose: z.boolean().nullish(),
-  darkOverlay: z.boolean().nullish(),
+  overlay: ZOverlay.nullish(),
 });
 
 export type TSurveyProjectOverwrites = z.infer<typeof ZSurveyProjectOverwrites>;
@@ -2866,7 +2866,7 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 
@@ -3697,7 +3697,7 @@ const validateBlockLogicFallback = (
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 

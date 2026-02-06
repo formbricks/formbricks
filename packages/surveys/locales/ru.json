@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Респонденты не увидят эту карточку",
     "retry": "Повторить",
     "retrying": "Повторная попытка...",
+    "select_option": "Выбери вариант",
+    "select_options": "Выбери варианты",
     "sending_responses": "Отправка ответов...",
     "takes_less_than_x_minutes": "{count, plural, one {Займёт меньше 1 минуты} few {Займёт меньше {count} минут} many {Займёт меньше {count} минут} other {Займёт меньше {count} минуты}}",
     "takes_x_minutes": "{count, plural, one {Займёт 1 минуту} few {Займёт {count} минуты} many {Займёт {count} минут} other {Займёт {count} минуты}}",
@@ -69,7 +71,7 @@
     "please_fill_out_this_field": "Пожалуйста, заполните это поле",
     "recaptcha_error": {
       "message": "Ваш ответ не может быть отправлен, так как он был помечен как автоматическая активность. Если вы дышите, попробуйте ещё раз.",
-      "title": "Мы не смогли подтвердить, что вы человек."
+      "title": "Не удалось подтвердить, что ты человек."
     },
     "value_must_contain": "Значение должно содержать {value}",
     "value_must_equal": "Значение должно быть равно {value}",

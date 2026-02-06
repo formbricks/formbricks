@@ -96,11 +96,11 @@ export const ThemeStylingPreviewSurvey = ({
   };
 
   const { placement: surveyPlacement } = projectOverwrites || {};
-  const { darkOverlay: surveyDarkOverlay } = projectOverwrites || {};
+  const { overlay: surveyOverlay } = projectOverwrites || {};
   const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
 
   const placement = surveyPlacement || project.placement;
-  const darkOverlay = surveyDarkOverlay ?? project.darkOverlay;
+  const overlay = surveyOverlay ?? project.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
   const highlightBorderColor = project.styling.highlightBorderColor?.light;
@@ -162,7 +162,7 @@ export const ThemeStylingPreviewSurvey = ({
               isOpen
               placement={placement}
               clickOutsideClose={clickOutsideClose}
-              darkOverlay={darkOverlay}
+              overlay={overlay}
               previewMode="desktop"
               background={project.styling.cardBackgroundColor?.light}
               borderRadius={project.styling.roundness ?? 8}>
@@ -187,7 +187,7 @@ export const ThemeStylingPreviewSurvey = ({
               ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
               isEditorView>
               {!project.styling?.isLogoHidden && (
-                <button className="absolute top-5 left-5" onClick={scrollToEditLogoSection}>
+                <button className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
                   <ClientLogo projectLogo={project.logo} previewSurvey />
                 </button>
               )}

@@ -36,7 +36,7 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
   // Calculate derived values (no queries)
   const { isMember, isOwner, isManager } = getAccessFlags(membership.role);
 
-  const { features, lastChecked, isPendingDowngrade, active } = license;
+  const { features, lastChecked, isPendingDowngrade, active, status } = license;
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
   const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
   const isOwnerOrManager = isOwner || isManager;
@@ -63,6 +63,7 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
         active={active}
         environmentId={environment.id}
         locale={user.locale}
+        status={status}
       />
 
       <div className="flex h-full">

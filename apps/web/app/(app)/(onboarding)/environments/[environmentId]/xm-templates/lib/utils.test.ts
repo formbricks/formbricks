@@ -25,7 +25,7 @@ const mockProject: TProject = {
   },
   placement: "bottomRight",
   clickOutsideClose: true,
-  darkOverlay: false,
+  overlay: "none",
   environments: [],
   languages: [],
   logo: null,

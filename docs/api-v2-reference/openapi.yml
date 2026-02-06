@@ -5411,10 +5411,15 @@ components:
               type:
                 - boolean
                 - "null"
-            darkOverlay:
+            overlay:
               type:
-                - boolean
+                - string
                 - "null"
+              enum:
+                - none
+                - light
+                - dark
+                - null
           description: Project specific overwrites
         styling:
           type:
