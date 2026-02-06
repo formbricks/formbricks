@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { cn } from "@/lib/cn";
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { getDistinctAttributeValuesAction } from "../actions";
@@ -9,9 +8,8 @@ import { getDistinctAttributeValuesAction } from "../actions";
 interface AttributeValueInputProps {
   attributeKeyId: string;
   environmentId: string;
-  dataType: TContactAttributeDataType;
-  value: string | number;
-  onChange: (value: string | number) => void;
+  value: string;
+  onChange: (value: string) => void;
   disabled?: boolean;
   className?: string;
   valueError?: string;
@@ -20,7 +18,6 @@ interface AttributeValueInputProps {
 export const AttributeValueInput = ({
   attributeKeyId,
   environmentId,
-  dataType,
   value,
   onChange,
   disabled,
@@ -45,14 +42,14 @@ export const AttributeValueInput = ({
         const result = await getDistinctAttributeValuesAction({
           environmentId,
           attributeKeyId,
-          dataType,
         });
 
         if (!isCancelled && result?.data) {
           const comboboxOptions: TComboboxOption[] = result.data.map((val) => ({
-            label: String(val),
+            label: val,
             value: val,
           }));
+
           setOptions(comboboxOptions);
         }
       } catch (error) {
@@ -71,7 +68,7 @@ export const AttributeValueInput = ({
     return () => {
       isCancelled = true;
     };
-  }, [environmentId, attributeKeyId, dataType]);
+  }, [environmentId, attributeKeyId]);
 
   const emptyDropdownText = useMemo(() => {
     if (loading) return "Loading values...";
@@ -85,7 +82,7 @@ export const AttributeValueInput = ({
         id={`attribute-value-${attributeKeyId}`}
         options={options}
         value={value}
-        onChangeValue={(newValue) => onChange(newValue as string | number)}
+        onChangeValue={(newValue) => onChange(newValue as string)}
         withInput={true}
         showSearch={true}
         clearable={true}

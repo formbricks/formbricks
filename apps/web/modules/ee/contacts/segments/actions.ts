@@ -315,7 +315,6 @@ export const resetSegmentFiltersAction = authenticatedActionClient.schema(ZReset
 const ZGetDistinctAttributeValuesAction = z.object({
   environmentId: ZId,
   attributeKeyId: ZId,
-  dataType: z.enum(["string", "number", "date"]),
 });
 
 export const getDistinctAttributeValuesAction = authenticatedActionClient
@@ -337,5 +336,5 @@ export const getDistinctAttributeValuesAction = authenticatedActionClient
       ],
     });
 
-    return await getDistinctAttributeValues(parsedInput.attributeKeyId, parsedInput.dataType);
+    return await getDistinctAttributeValues(parsedInput.attributeKeyId);
   });

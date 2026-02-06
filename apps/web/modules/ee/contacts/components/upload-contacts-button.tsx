@@ -283,11 +283,51 @@ export const UploadContactsCSVButton = ({
   // Function to download an example CSV
   const handleDownloadExampleCSV = () => {
     const exampleData = [
-      { email: "user1@example.com", userId: "1001", first_name: "John", last_name: "Doe" },
-      { email: "user2@example.com", userId: "1002", first_name: "Jane", last_name: "Smith" },
-      { email: "user3@example.com", userId: "1003", first_name: "Mark", last_name: "Jones" },
-      { email: "user4@example.com", userId: "1004", first_name: "Emily", last_name: "Brown" },
-      { email: "user5@example.com", userId: "1005", first_name: "David", last_name: "Wilson" },
+      {
+        email: "user1@example.com",
+        userId: "1001",
+        first_name: "John",
+        last_name: "Doe",
+        age: "28",
+        plan: "premium",
+        signup_date: "2024-01-15",
+      },
+      {
+        email: "user2@example.com",
+        userId: "1002",
+        first_name: "Jane",
+        last_name: "Smith",
+        age: "34",
+        plan: "free",
+        signup_date: "2024-02-20",
+      },
+      {
+        email: "user3@example.com",
+        userId: "1003",
+        first_name: "Mark",
+        last_name: "Jones",
+        age: "45",
+        plan: "enterprise",
+        signup_date: "2023-11-08",
+      },
+      {
+        email: "user4@example.com",
+        userId: "1004",
+        first_name: "Emily",
+        last_name: "Brown",
+        age: "22",
+        plan: "premium",
+        signup_date: "2024-03-01",
+      },
+      {
+        email: "user5@example.com",
+        userId: "1005",
+        first_name: "David",
+        last_name: "Wilson",
+        age: "31",
+        plan: "free",
+        signup_date: "2024-01-28",
+      },
     ];
 
     const headers = Object.keys(exampleData[0]);

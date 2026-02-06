@@ -604,6 +604,7 @@ checksums:
     environments/contacts/create_key: 0d385c354af8963acbe35cd646710f86
     environments/contacts/create_new_attribute: c17d407dacd0b90f360f9f5e899d662f
     environments/contacts/create_new_attribute_description: cc19d76bb6940537bbe3461191f25d26
+    environments/contacts/custom_attributes: fffc7722742d1291b102dc737cf2fc9e
     environments/contacts/data_type: 1ea127ba2c18d0d91fb0361cc6747e2b
     environments/contacts/data_type_cannot_be_changed: 22603f6193fdac3784eeef8315df70de
     environments/contacts/data_type_description: 800bf4935df15e6cb14269e1b60c506e
@@ -619,6 +620,7 @@ checksums:
     environments/contacts/edit_attributes_success: 39f93b1a6f1605bc5951f4da5847bb22
     environments/contacts/generate_personal_link: 9ac0865f6876d40fe858f94eae781eb8
     environments/contacts/generate_personal_link_description: b9dbaf9e2d8362505b7e3cfa40f415a6
+    environments/contacts/invalid_csv_column_names: dcb8534e7d4c00b9ea7bdaf389f72328
     environments/contacts/invalid_date_format: 5bad9730ac5a5bacd0792098f712b1c4
     environments/contacts/invalid_number_format: bd0422507385f671c3046730a6febc64
     environments/contacts/no_published_link_surveys_available: 9c1abc5b21aba827443cdf87dd6c8bfe
@@ -634,13 +636,16 @@ checksums:
     environments/contacts/search_contact: 020205a93846ab3e12c203ac4fa97c12
     environments/contacts/select_a_survey: 1f49086dfb874307aae1136e88c3d514
     environments/contacts/select_attribute: d93fb60eb4fbb42bf13a22f6216fbd79
+    environments/contacts/select_attribute_key: 673a6683fab41b387d921841cded7e38
+    environments/contacts/system_attributes: eadb6a8888c7b32c0e68881f945ae9b6
     environments/contacts/unlock_contacts_description: c5572047f02b4c39e5109f9de715499d
     environments/contacts/unlock_contacts_title: a8b3d7db03eb404d9267fd5cdd6d5ddb
+    environments/contacts/upload_contacts_modal_attribute_header: 263246ad2a76f8e2f80f0ed175d7629a
     environments/contacts/upload_contacts_modal_attributes_description: e2cedbd4a043423002cbb2048e2145ac
     environments/contacts/upload_contacts_modal_attributes_new: 9829382598c681de74130440a37b560f
     environments/contacts/upload_contacts_modal_attributes_search_or_add: 1874839e465650d353282b43b00247a9
-    environments/contacts/upload_contacts_modal_attributes_should_be_mapped_to: 693dfe5836e90b1c4c7c65b015418174
     environments/contacts/upload_contacts_modal_attributes_title: 86d0ae6fea0fbb119722ed3841f8385a
+    environments/contacts/upload_contacts_modal_csv_column_header: f181add48fb8325efaa40579fe8c343e
     environments/contacts/upload_contacts_modal_description: 41566d40d25cc882aa9f82d87b4e2f03
     environments/contacts/upload_contacts_modal_download_example_csv: 7a186fc4941b264452ee6c9e785769de
     environments/contacts/upload_contacts_modal_duplicates_description: 112ce4641088520469a83a0bd740b073

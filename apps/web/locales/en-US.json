@@ -680,7 +680,6 @@
       "upload_contacts_modal_attributes_description": "Map the columns in your CSV to the attributes in Formbricks.",
       "upload_contacts_modal_attributes_new": "New attribute",
       "upload_contacts_modal_attributes_search_or_add": "Search or add attribute",
-      "upload_contacts_modal_attributes_should_be_mapped_to": "should be mapped to",
       "upload_contacts_modal_attributes_title": "Attributes",
       "upload_contacts_modal_csv_column_header": "CSV Column",
       "upload_contacts_modal_description": "Upload a CSV to quickly import contacts with attributes",

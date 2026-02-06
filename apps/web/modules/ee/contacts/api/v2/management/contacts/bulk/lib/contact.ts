@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
@@ -496,6 +497,22 @@ export const upsertBulkContacts = async (
       where: { key: { in: attributeKeys }, environmentId },
     }),
   ]);
+
+  // Validate new attribute keys are safe identifiers before proceeding
+  const existingKeySet = new Set(existingAttributeKeys.map((ak) => ak.key));
+  const invalidNewKeys = attributeKeys.filter((key) => !existingKeySet.has(key) && !isSafeIdentifier(key));
+
+  if (invalidNewKeys.length > 0) {
+    return err({
+      type: "bad_request",
+      details: [
+        {
+          field: "attributes",
+          issue: `Invalid attribute key(s): ${invalidNewKeys.join(", ")}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.`,
+        },
+      ],
+    });
+  }
 
   // Type Detection Phase
   const attributeValuesByKey = buildAttributeValuesByKey(contacts);
