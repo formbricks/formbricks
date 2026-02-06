@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { previewSurvey } from "@/app/lib/templates";
-import { defaultStyling } from "@/lib/styling/constants";
+import { COLOR_DEFAULTS, defaultStyling } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
@@ -86,12 +86,12 @@ export const ThemeStyling = ({
   }, [form, project.id, router, t]);
 
   const handleSuggestColors = () => {
-    const brandColor = form.getValues().brandColor?.light ?? "#64748b";
+    const brandColor = form.getValues().brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
     // Derive everything from Brand Color
-    const derivedInputBg = "#ffffff";
-    const derivedQuestionColor = "#2b2524";
-    const derivedCardBg = "#ffffff";
+    const derivedInputBg = mixColor(brandColor, "#ffffff", 0.97) ?? "#ffffff";
+    const derivedDarkTextColor = mixColor(brandColor, "#0f172a", 0.9) ?? "#0f172a";
+    const derivedCardBg = mixColor(brandColor, "#ffffff", 0.96) ?? "#ffffff";
     const derivedCardBorder = mixColor(brandColor, "#ffffff", 0.9) ?? "#f8fafc";
     const derivedPageBg = mixColor(brandColor, "#ffffff", 0.95) ?? "#f8fafc";
 
@@ -106,8 +106,7 @@ export const ThemeStyling = ({
 
     // 1. General
     form.setValue("brandColor.light", brandColor, { shouldDirty: true });
-    form.setValue("questionColor.light", derivedQuestionColor, { shouldDirty: true });
-    form.setValue("isLogoHidden", false, { shouldDirty: true });
+    form.setValue("questionColor.light", derivedDarkTextColor, { shouldDirty: true });
 
     // Accents (Synced with Brand)
     form.setValue("accentBgColor.light", accentColor, { shouldDirty: true });
@@ -129,26 +128,19 @@ export const ThemeStyling = ({
     // 2. Buttons
     form.setValue("buttonBgColor.light", brandColor, { shouldDirty: true });
     form.setValue("buttonTextColor.light", isBrandLight ? "#0f172a" : "#ffffff", { shouldDirty: true });
-    form.setValue("buttonBorderRadius", 4, { shouldDirty: true });
 
-    // 3. Inputs (Card-like style)
+    // 3. Inputs
     form.setValue("inputColor.light", derivedInputBg, { shouldDirty: true });
-    form.setValue("inputBorderColor.light", derivedCardBorder, { shouldDirty: true }); // Match card border
-    form.setValue("inputTextColor.light", "#0f172a", { shouldDirty: true });
-    form.setValue("inputBorderRadius", 8, { shouldDirty: true }); // Match roundness
-    form.setValue("inputShadow", "0 1px 2px 0 rgb(0 0 0 / 0.05)", { shouldDirty: true }); // Add shadow
-    form.setValue("inputPaddingY", 16, { shouldDirty: true }); // More padding
+    form.setValue("inputBorderColor.light", derivedCardBorder, { shouldDirty: true });
+    form.setValue("inputTextColor.light", derivedDarkTextColor, { shouldDirty: true });
 
     // 4. Options (Checkboxes/Radio)
     form.setValue("optionBgColor.light", derivedInputBg, { shouldDirty: true });
-    form.setValue("optionLabelColor.light", "#0f172a", { shouldDirty: true });
-    form.setValue("optionBorderRadius", 8, { shouldDirty: true }); // Match roundness
-    form.setValue("optionPaddingY", 16, { shouldDirty: true });
+    form.setValue("optionLabelColor.light", derivedDarkTextColor, { shouldDirty: true });
 
     // 5. Card Styling
     form.setValue("cardBackgroundColor.light", derivedCardBg, { shouldDirty: true });
     form.setValue("cardBorderColor.light", derivedCardBorder, { shouldDirty: true });
-    form.setValue("roundness", 8, { shouldDirty: true });
 
     // 6. Highlight / Accent (Focus states)
     form.setValue("highlightBorderColor.light", accentColor, { shouldDirty: true });
@@ -241,7 +233,7 @@ export const ThemeStyling = ({
                         </FormLabel>
                         <FormControl>
                           <ColorPicker
-                            color={field.value ?? "#64748b"}
+                            color={field.value ?? COLOR_DEFAULTS.brandColor}
                             onChange={(color) => field.onChange(color)}
                             containerClass="w-full"
                           />

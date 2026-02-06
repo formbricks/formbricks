@@ -162,6 +162,99 @@ test.describe("Survey Styling", async () => {
     expect(css).toContain("--fb-progress-track-border-radius: 20px");
   });
 
+  test("Suggest Colors derives all colors from brand color without changing non-color properties", async ({
+    page,
+    users,
+  }) => {
+    const user = await users.create();
+    await user.login();
+
+    // Navigate to Look & Feel settings
+    await page.getByRole("link", { name: "Configuration" }).click();
+    await page.getByRole("link", { name: "Look & Feel" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/workspace\/look/);
+
+    // Toggle "Enable custom styling"
+    const addCustomStyles = page.getByLabel("Enable custom styling");
+    if (!(await addCustomStyles.isChecked())) {
+      await addCustomStyles.click();
+    }
+
+    // Set some non-color properties BEFORE suggesting colors, so we can verify they aren't overwritten
+    await openAccordion(page, "Form styling");
+    await openAccordion(page, "Inputs");
+    await setDimension(page, "Border Radius", "12");
+    await setDimension(page, "Padding Y", "20");
+
+    await openAccordion(page, "Options (Radio/Checkbox)");
+    await setDimension(page, "Border Radius", "10");
+    await setDimension(page, "Padding Y", "14");
+
+    await page.waitForTimeout(1000);
+
+    // Verify non-color CSS vars are set before suggesting
+    let cssBefore = await page.evaluate(
+      () => document.getElementById("formbricks__css__custom")?.innerHTML
+    );
+    expect(cssBefore).toContain("--fb-input-border-radius: 12px");
+    expect(cssBefore).toContain("--fb-input-padding-y: 20px");
+    expect(cssBefore).toContain("--fb-option-border-radius: 10px");
+    expect(cssBefore).toContain("--fb-option-padding-y: 14px");
+
+    // Set a distinctive brand color (rose-600)
+    await setColor(page, "Brand color", "e11d48");
+    await page.waitForTimeout(500);
+
+    // Click "Suggest colors" button
+    await page.getByRole("button", { name: "Suggest colors" }).click();
+
+    // Confirm the dialog
+    await page.getByRole("button", { name: "Generate" }).click();
+
+    // Wait for the preview to update with derived colors
+    await page.waitForTimeout(1500);
+
+    const css = await page.evaluate(
+      () => document.getElementById("formbricks__css__custom")?.innerHTML
+    );
+    expect(css).toBeDefined();
+
+    // --- Verify colors ARE derived from brand (not hardcoded) ---
+
+    // Brand color itself should be present
+    expect(css).toContain("--fb-brand-color: #e11d48");
+
+    // Input background should be brand-tinted, NOT hardcoded #ffffff
+    expect(css).toContain("--fb-input-background-color:");
+    expect(css).not.toContain("--fb-input-background-color: #ffffff");
+
+    // Card/survey background should be brand-tinted, NOT hardcoded #ffffff
+    expect(css).toContain("--fb-survey-background-color:");
+    expect(css).not.toContain("--fb-survey-background-color: #ffffff");
+
+    // Question/heading color should be derived, NOT the old hardcoded #2b2524
+    expect(css).toContain("--fb-heading-color:");
+    expect(css).not.toContain("--fb-heading-color: #2b2524");
+
+    // Input text color should be derived, NOT hardcoded #0f172a
+    expect(css).toContain("--fb-input-text-color:");
+    expect(css).not.toContain("--fb-input-text-color: #0f172a");
+
+    // Option label color should be derived, NOT hardcoded #0f172a
+    expect(css).toContain("--fb-option-label-color:");
+    expect(css).not.toContain("--fb-option-label-color: #0f172a");
+
+    // Option background should be brand-tinted (same as input bg)
+    expect(css).toContain("--fb-option-bg-color:");
+    expect(css).not.toContain("--fb-option-bg-color: #ffffff");
+
+    // --- Verify non-color properties were NOT changed ---
+    expect(css).toContain("--fb-input-border-radius: 12px");
+    expect(css).toContain("--fb-input-padding-y: 20px");
+    expect(css).toContain("--fb-option-border-radius: 10px");
+    expect(css).toContain("--fb-option-padding-y: 14px");
+  });
+
   test("Survey Specific Styling (Survey Editor Override)", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
