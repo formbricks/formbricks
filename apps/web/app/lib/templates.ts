@@ -4857,7 +4857,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
           {
             ...buildOpenTextElement({
               id: "preview_input_field_element",
-              headline: "",
+              headline: t("templates.preview_survey_input_headline"),
               subheader: "",
               placeholder: t("templates.preview_survey_input_placeholder"),
               required: false,

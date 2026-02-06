@@ -2872,6 +2872,7 @@
     "picture_selection_description": "Ask respondents to choose one or more images",
     "preview_survey_ending_card_description": "Please continue your onboarding.",
     "preview_survey_ending_card_headline": "You did it!",
+    "preview_survey_input_headline": "Anything else to share?",
     "preview_survey_input_placeholder": "Leave a note...",
     "preview_survey_name": "New Survey",
     "preview_survey_question_1_headline": "How would you rate {projectName}?",

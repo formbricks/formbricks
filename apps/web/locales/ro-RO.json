@@ -2859,6 +2859,7 @@
     "picture_selection_description": "Cereți respondenților să aleagă una sau mai multe imagini",
     "preview_survey_ending_card_description": "Vă rugăm să continuați onboarding-ul.",
     "preview_survey_ending_card_headline": "Ai reușit!",
+    "preview_survey_input_headline": "Mai vrei să adaugi ceva?",
     "preview_survey_input_placeholder": "Lasă o notă...",
     "preview_survey_name": "Previzualizare chestionar",
     "preview_survey_question_1_headline": "Cum ai evalua {projectName}?",
