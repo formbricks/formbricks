@@ -126,7 +126,7 @@ export const CustomStyles: Story = {
       control: "color",
       table: {
         category: "Progress Styling",
-        defaultValue: { summary: "hsl(222.2 47.4% 11.2% / 0.2)" },
+        defaultValue: { summary: "brand color at 20% opacity" },
       },
     },
     trackBorderRadius: {
@@ -140,7 +140,7 @@ export const CustomStyles: Story = {
       control: "color",
       table: {
         category: "Progress Styling",
-        defaultValue: { summary: "hsl(222.2 47.4% 11.2%)" },
+        defaultValue: { summary: "brand color (#64748b)" },
       },
     },
     indicatorBorderRadius: {

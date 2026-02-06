@@ -75,18 +75,14 @@ function ElementHeader({
 
       {/* Headline */}
       <div>
-        <div>
-          {required ? (
-            <span className="label-headline mb-[3px] text-xs opacity-60">{requiredLabel}</span>
-          ) : null}
-        </div>
+        <div>{required ? <span className="label-upper mb-[3px]">{requiredLabel}</span> : null}</div>
         <div className="flex">
           {isHeadlineHtml && safeHeadlineHtml ? (
             <Label htmlFor={htmlFor} variant="headline">
               {headline}
             </Label>
           ) : (
-            <Label htmlFor={htmlFor} variant="headline" className="font-semibold">
+            <Label htmlFor={htmlFor} variant="headline">
               {headline}
             </Label>
           )}

@@ -62,15 +62,14 @@
   --fb-accent-background-color: var(--slate-200);
   --fb-accent-background-color-selected: var(--slate-100);
 
-
   /* ---------------------------------------------------------------------------
      Element Headline Tokens
-     Used for question headlines and main element titles.
+     Used for headline text in elements.
      --------------------------------------------------------------------------- */
   --fb-element-headline-font-family: inherit;
-  --fb-element-headline-font-weight: 400;
+  --fb-element-headline-font-weight: 600;
   --fb-element-headline-font-size: 1rem;
-  --fb-element-headline-color: (--input);
+  --fb-element-headline-color: var(--input);
   --fb-element-headline-opacity: 1;
 
   /* ---------------------------------------------------------------------------
@@ -81,7 +80,15 @@
   --fb-element-description-font-weight: 400;
   --fb-element-description-font-size: 0.875rem;
   --fb-element-description-color: var(--input);
-  --fb-element-description-opacity: 1;
+  /* ---------------------------------------------------------------------------
+     Element Upper Label Tokens
+     Used for "Required" label and other upper label text.
+     --------------------------------------------------------------------------- */
+  --fb-element-upper-label-font-family: inherit;
+  --fb-element-upper-label-font-weight: 400;
+  --fb-element-upper-label-font-size: 0.75rem;
+  --fb-element-upper-label-color: var(--muted-foreground);
+  --fb-element-upper-label-opacity: 0.6;
 
   /* ---------------------------------------------------------------------------
      Label Tokens
@@ -103,7 +110,7 @@
   --fb-button-font-family: inherit;
   --fb-button-font-weight: 500;
   --fb-button-border-radius: var(--radius);
-  --fb-button-bg-color: hsl(222.2 47.4% 11.2%);
+  --fb-button-bg-color: var(--fb-survey-brand-color);
   --fb-button-text-color: hsl(210 40% 98%);
   --fb-button-padding-x: 1rem;
   --fb-button-padding-y: 0.5rem;
@@ -113,10 +120,10 @@
      Used for text inputs, textareas, and other form controls.
      --------------------------------------------------------------------------- */
   --fb-input-bg-color: var(--slate-50);
-  --fb-input-border-color: var(--fb-survey-brand-color);
+  --fb-input-border-color: var(--border);
   --fb-input-border-radius: var(--radius);
   --fb-input-font-family: inherit;
-  --fb-input-font-size: 0.875rem !important;
+  --fb-input-font-size: 0.875rem;
   --fb-input-font-weight: 400;
   --fb-input-color: var(--foreground);
   --fb-input-placeholder-color: var(--fb-input-color);
@@ -152,7 +159,7 @@
   --fb-option-font-weight: var(--fb-input-font-weight);
 }
 
-.button-custom {
+#fbjs .button-custom {
   width: var(--fb-button-width);
   height: var(--fb-button-height);
   background-color: var(--fb-button-bg-color);
@@ -167,23 +174,28 @@
   font-size: var(--fb-button-font-size);
 }
 
-.label-headline {
+#fbjs .label-headline,
+#fbjs .label-headline * {
   font-family: var(--fb-element-headline-font-family);
-  font-weight: var(--fb-element-headline-font-weight);
+  font-weight: var(--fb-element-headline-font-weight) !important;
   font-size: var(--fb-element-headline-font-size) !important;
   color: var(--fb-element-headline-color);
   opacity: var(--fb-element-headline-opacity);
 }
 
-.label-description {
+#fbjs .label-description,
+#fbjs .label-description *,
+#fbjs .text-subheading,
+#fbjs .text-subheading * {
   font-family: var(--fb-element-description-font-family);
   font-weight: var(--fb-element-description-font-weight);
   font-size: var(--fb-element-description-font-size) !important;
-  color: var(--fb-element-description-color);
+  color: var(--fb-element-description-color) !important;
   opacity: var(--fb-element-description-opacity);
 }
 
-.label-default {
+#fbjs .label-default,
+#fbjs .label-default * {
   font-family: var(--fb-label-font-family);
   font-weight: var(--fb-label-font-weight);
   font-size: var(--fb-label-font-size) !important;
@@ -191,13 +203,22 @@
   opacity: var(--fb-label-opacity);
 }
 
-.progress-track {
+#fbjs .label-upper,
+#fbjs .label-upper * {
+  font-family: var(--fb-element-upper-label-font-family);
+  font-weight: var(--fb-element-upper-label-font-weight) !important;
+  font-size: var(--fb-element-upper-label-font-size) !important;
+  color: var(--fb-element-upper-label-color);
+  opacity: var(--fb-element-upper-label-opacity);
+}
+
+#fbjs .progress-track {
   height: var(--fb-progress-track-height);
   background-color: var(--fb-progress-track-bg-color);
   border-radius: var(--fb-progress-track-border-radius);
 }
 
-.progress-indicator {
+#fbjs .progress-indicator {
   background-color: var(--fb-progress-indicator-bg-color);
   border-radius: var(--fb-progress-indicator-border-radius);
 }

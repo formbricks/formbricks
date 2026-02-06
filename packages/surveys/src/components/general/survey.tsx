@@ -849,7 +849,7 @@ export function Survey({
         setHasInteracted={setHasInteracted}>
         <div
           className={cn(
-            "no-scrollbar bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
+            "no-scrollbar bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-opacity duration-1000 ease-in-out",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
           <div className={cn("relative")}>
