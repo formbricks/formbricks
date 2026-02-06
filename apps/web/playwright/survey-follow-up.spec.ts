@@ -1,12 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 
-test.use({
-  launchOptions: {
-    slowMo: 150,
-  },
-});
-
 test.describe("Survey Follow-Up Create & Edit", async () => {
   // 3 minutes
   test.setTimeout(1000 * 60 * 3);
