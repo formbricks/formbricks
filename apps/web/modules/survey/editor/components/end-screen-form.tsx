@@ -69,6 +69,7 @@ export const EndScreenForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!endingCard.headline?.default || endingCard.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div>
         {endingCard.subheader !== undefined && (
@@ -87,6 +88,7 @@ export const EndScreenForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!endingCard.subheader?.default || endingCard.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>
