@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "لن يرى المستجيبون هذه البطاقة",
     "retry": "إعادة المحاولة",
     "retrying": "إعادة المحاولة...",
+    "select_option": "اختر خيارًا",
+    "select_options": "اختر الخيارات",
     "sending_responses": "جارٍ إرسال الردود...",
     "takes_less_than_x_minutes": "{count, plural, zero {يستغرق أقل من دقيقة} one {يستغرق أقل من دقيقة واحدة} two {يستغرق أقل من دقيقتين} few {يستغرق أقل من {count} دقائق} many {يستغرق أقل من {count} دقيقة} other {يستغرق أقل من {count} دقيقة}}",
     "takes_x_minutes": "{count, plural, zero {يستغرق صفر دقائق} one {يستغرق دقيقة واحدة} two {يستغرق دقيقتين} few {يستغرق {count} دقائق} many {يستغرق {count} دقيقة} other {يستغرق {count} دقيقة}}",
@@ -46,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "يرجى تعطيل حماية البريد المزعج في إعدادات الاستبيان للاستمرار في استخدام هذا الجهاز.",
-      "title": "هذا الجهاز لا يدعم حماية البريد المزعج."
+      "title": "هذا الجهاز لا يدعم الحماية من الرسائل المزعجة."
     },
     "invalid_format": "يرجى إدخال تنسيق صالح",
     "is_between": "يرجى اختيار تاريخ بين {startDate} و {endDate}",

@@ -93,6 +93,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       if (createInviteTokenResponse?.data) {
         setShareInviteToken(createInviteTokenResponse.data.inviteToken);
         setShowShareInviteModal(true);
+        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(createInviteTokenResponse);
         toast.error(errorMessage);
@@ -112,6 +113,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       });
       if (resendInviteResponse?.data) {
         toast.success(t("environments.settings.general.invitation_sent_once_more"));
+        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(resendInviteResponse);
         toast.error(errorMessage);

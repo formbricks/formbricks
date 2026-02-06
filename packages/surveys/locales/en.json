@@ -20,15 +20,17 @@
     "required": "Required",
     "respondents_will_not_see_this_card": "Respondents will not see this card",
     "retry": "Retry",
-    "retrying": "Retrying...",
-    "sending_responses": "Sending responses...",
+    "retrying": "Retrying…",
+    "sending_responses": "Sending responses…",
     "takes_less_than_x_minutes": "{count, plural, one {Takes less than 1 minute} other {Takes less than {count} minutes}}",
     "takes_x_minutes": "{count, plural, one {Takes 1 minute} other {Takes {count} minutes}}",
     "takes_x_plus_minutes": "Takes {count}+ minutes",
     "terms_of_service": "Terms of Service",
     "the_servers_cannot_be_reached_at_the_moment": "The servers cannot be reached at the moment.",
     "they_will_be_redirected_immediately": "They will be redirected immediately",
-    "your_feedback_is_stuck": "Your feedback is stuck :("
+    "your_feedback_is_stuck": "Your feedback is stuck :(",
+    "select_option": "Select an option",
+    "select_options": "Select options"
   },
   "errors": {
     "all_options_must_be_ranked": "Please rank all options",
@@ -46,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "Please disable spam protection in the survey settings to continue using this device.",
-      "title": "This device doesn’t support spam protection."
+      "title": "This device does not support spam protection."
     },
     "invalid_format": "Please enter a valid format",
     "is_between": "Please select a date between {startDate} and {endDate}",
@@ -69,7 +71,7 @@
     "please_fill_out_this_field": "Please fill out this field",
     "recaptcha_error": {
       "message": "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",
-      "title": "We couldn't verify that you're human."
+      "title": "We could not verify that you are human."
     },
     "value_must_contain": "Value must contain {value}",
     "value_must_equal": "Value must equal {value}",

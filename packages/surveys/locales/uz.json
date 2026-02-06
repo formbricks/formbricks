@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Javob beruvchilar ushbu kartani ko'rmaydi",
     "retry": "Qayta urinib ko'ring",
     "retrying": "Qayta urinilmoqda...",
+    "select_option": "Variantni tanla",
+    "select_options": "Variantlarni tanla",
     "sending_responses": "Javoblar yuborilmoqda...",
     "takes_less_than_x_minutes": "{count, plural, one {1 daqiqadan kam vaqt oladi} other {{count} daqiqadan kam vaqt oladi}}",
     "takes_x_minutes": "{count, plural, one {1 daqiqa vaqt oladi} other {{count} daqiqa vaqt oladi}}",
@@ -46,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "Iltimos, ushbu qurilmadan foydalanishni davom ettirish uchun so'rov sozlamalarida spam himoyasini o'chiring.",
-      "title": "Ushbu qurilma spam himoyasini qo'llab-quvvatlamaydi."
+      "title": "Bu qurilmada spamdan himoya qilish qo‘llab-quvvatlanmaydi."
     },
     "invalid_format": "Iltimos, to‘g‘ri formatda kiriting",
     "is_between": "Iltimos, {startDate} va {endDate} oralig‘idagi sanani tanlang",
@@ -69,7 +71,7 @@
     "please_fill_out_this_field": "Iltimos, ushbu maydonni to'ldiring",
     "recaptcha_error": {
       "message": "Sizning javobingiz avtomatlashtirilgan faoliyat sifatida belgilanganligi sababli yuborilmadi. Agar siz nafas olayotgan bo'lsangiz, qayta urinib ko'ring.",
-      "title": "Biz sizning inson ekanligingizni tasdiqlay olmadik."
+      "title": "Sizning inson ekanligingizni tasdiqlay olmadik."
     },
     "value_must_contain": "Qiymatda {value} bo‘lishi kerak",
     "value_must_equal": "Qiymat {value} ga teng bo‘lishi kerak",
