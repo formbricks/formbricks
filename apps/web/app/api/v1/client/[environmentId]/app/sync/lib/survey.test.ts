@@ -64,7 +64,7 @@ const mockProject = {
   linkSurveyBranding: true,
   placement: "bottomRight",
   clickOutsideClose: true,
-  darkOverlay: false,
+  overlay: "none",
   languages: [],
 } as unknown as TProject;
 

@@ -85,7 +85,7 @@ export const mockProject: TProject = {
   inAppSurveyBranding: false,
   placement: "bottomRight",
   clickOutsideClose: false,
-  darkOverlay: false,
+  overlay: "none",
   environments: [],
   languages: [],
   config: {
