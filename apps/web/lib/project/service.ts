@@ -22,7 +22,7 @@ const selectProject = {
   config: true,
   placement: true,
   clickOutsideClose: true,
-  darkOverlay: true,
+  overlay: true,
   environments: true,
   styling: true,
   logo: true,

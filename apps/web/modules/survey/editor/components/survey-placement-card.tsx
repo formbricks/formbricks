@@ -6,7 +6,7 @@ import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TPlacement } from "@formbricks/types/common";
+import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyProjectOverwrites } from "@formbricks/types/surveys/types";
 import { Placement } from "@/modules/survey/editor/components/placement";
 import { Label } from "@/modules/ui/components/label";
@@ -27,7 +27,7 @@ export const SurveyPlacementCard = ({
   const [open, setOpen] = useState(false);
 
   const { projectOverwrites } = localSurvey ?? {};
-  const { placement, clickOutsideClose, darkOverlay } = projectOverwrites ?? {};
+  const { placement, clickOutsideClose, overlay } = projectOverwrites ?? {};
 
   const setProjectOverwrites = (projectOverwrites: TSurveyProjectOverwrites | null) => {
     setLocalSurvey({ ...localSurvey, projectOverwrites: projectOverwrites });
@@ -41,7 +41,7 @@ export const SurveyPlacementCard = ({
         setProjectOverwrites({
           placement: "bottomRight",
           clickOutsideClose: false,
-          darkOverlay: false,
+          overlay: "none",
         });
       }
     }
@@ -56,13 +56,11 @@ export const SurveyPlacementCard = ({
     }
   };
 
-  const handleOverlay = (overlayType: string) => {
-    const darkOverlay = overlayType === "dark";
-
+  const handleOverlay = (overlayValue: TOverlay) => {
     if (setProjectOverwrites) {
       setProjectOverwrites({
         ...projectOverwrites,
-        darkOverlay,
+        overlay: overlayValue,
       });
     }
   };
@@ -91,7 +89,7 @@ export const SurveyPlacementCard = ({
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pr-5 pl-2">
+          <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -132,7 +130,7 @@ export const SurveyPlacementCard = ({
                       currentPlacement={placement}
                       setCurrentPlacement={handlePlacementChange}
                       setOverlay={handleOverlay}
-                      overlay={darkOverlay ? "dark" : "light"}
+                      overlay={overlay ?? "none"}
                       setClickOutsideClose={handleClickOutsideClose}
                       clickOutsideClose={!!clickOutsideClose}
                     />

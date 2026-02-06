@@ -4,8 +4,8 @@ import { Project } from "@prisma/client";
 import { Variants, motion } from "framer-motion";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/cn";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { Modal } from "@/modules/ui/components/preview-survey/components/modal";
@@ -97,11 +97,11 @@ export const ThemeStylingPreviewSurvey = ({
   };
 
   const { placement: surveyPlacement } = projectOverwrites || {};
-  const { darkOverlay: surveyDarkOverlay } = projectOverwrites || {};
+  const { overlay: surveyOverlay } = projectOverwrites || {};
   const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
 
   const placement = surveyPlacement || project.placement;
-  const darkOverlay = surveyDarkOverlay ?? project.darkOverlay;
+  const overlay = surveyOverlay ?? project.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
   const highlightBorderColor = project.styling.highlightBorderColor?.light;
@@ -117,7 +117,6 @@ export const ThemeStylingPreviewSurvey = ({
     }
     return project.styling;
   }, [project.styling, survey.styling]);
-
 
   // Create a unique key that includes both timestamp and preview type
   // This ensures the survey remounts when switching between app and link
@@ -156,19 +155,19 @@ export const ThemeStylingPreviewSurvey = ({
         <div className={cn("flex w-full flex-col rounded-lg", isAppSurvey && "h-full w-5/6 flex-1")}>
           {!isAppSurvey && (
             <div className="flex h-auto w-full items-center rounded-t-lg bg-slate-100 py-2">
-            <div className="ml-6 flex space-x-2">
-              <div className="h-3 w-3 rounded-full bg-red-500"></div>
-              <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-              <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
-            </div>
-            <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-              <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
+              <div className="ml-6 flex space-x-2">
+                <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+              </div>
+              <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+                <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
 
-              <div className="flex items-center">
-                <ResetProgressButton onClick={resetQuestionProgress} />
+                <div className="flex items-center">
+                  <ResetProgressButton onClick={resetQuestionProgress} />
+                </div>
               </div>
             </div>
-          </div>
           )}
 
           {isAppSurvey ? (
@@ -176,7 +175,7 @@ export const ThemeStylingPreviewSurvey = ({
               isOpen
               placement={placement}
               clickOutsideClose={clickOutsideClose}
-              darkOverlay={darkOverlay}
+              overlay={overlay}
               previewMode="desktop"
               background={project.styling.cardBackgroundColor?.light}
               borderRadius={project.styling.roundness ?? 8}>
@@ -201,7 +200,7 @@ export const ThemeStylingPreviewSurvey = ({
               ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
               isEditorView>
               {!project.styling?.isLogoHidden && (
-                <button className="absolute top-5 left-5" onClick={scrollToEditLogoSection}>
+                <button className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
                   <ClientLogo projectLogo={project.logo} previewSurvey />
                 </button>
               )}
