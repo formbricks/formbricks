@@ -110,7 +110,7 @@ export const sendUpdates = async ({
         filteredSurveys,
       });
 
-      return ok({ hasWarnings: !!hasWarnings });
+      return ok({ hasWarnings: Boolean(hasWarnings) });
     }
 
     return err(updatesResponse.error);

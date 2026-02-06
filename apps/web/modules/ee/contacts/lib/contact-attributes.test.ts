@@ -72,7 +72,7 @@ describe("getContactAttributes", () => {
         value: true,
         valueNumber: true,
         valueDate: true,
-        attributeKey: { select: { key: true, name: true, dataType: true } },
+        attributeKey: { select: { key: true, name: true, type: true, dataType: true } },
       },
     });
     expect(result).toEqual({ email: "john@example.com", name: "John" });
@@ -124,7 +124,7 @@ describe("getContactAttributesWithMetadata", () => {
         value: true,
         valueNumber: true,
         valueDate: true,
-        attributeKey: { select: { key: true, name: true, dataType: true } },
+        attributeKey: { select: { key: true, name: true, type: true, dataType: true } },
       },
     });
 
