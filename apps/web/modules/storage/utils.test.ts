@@ -7,6 +7,7 @@ import {
   isAllowedFileExtension,
   isValidFileTypeForExtension,
   isValidImageFile,
+  resolveStorageUrl,
   sanitizeFileName,
   validateFileUploads,
   validateSingleFile,
@@ -394,6 +395,40 @@ describe("storage utils", () => {
     test("should handle case insensitivity correctly", () => {
       mockGetOriginalFileNameFromUrl.mockImplementationOnce(() => "image.JPG");
       expect(isValidImageFile("https://example.com/image.JPG")).toBe(true);
+    });
+  });
+
+  describe("resolveStorageUrl", () => {
+    test("should return empty string for null or undefined input", () => {
+      expect(resolveStorageUrl(null)).toBe("");
+      expect(resolveStorageUrl(undefined)).toBe("");
+      expect(resolveStorageUrl("")).toBe("");
+    });
+
+    test("should return absolute URL unchanged (backward compatibility)", () => {
+      const httpsUrl = "https://example.com/storage/env-123/public/image.jpg";
+      const httpUrl = "http://example.com/storage/env-123/public/image.jpg";
+
+      expect(resolveStorageUrl(httpsUrl)).toBe(httpsUrl);
+      expect(resolveStorageUrl(httpUrl)).toBe(httpUrl);
+    });
+
+    test("should resolve relative /storage/ path to absolute URL", async () => {
+      // Use actual implementation with mocked dependencies
+      const { resolveStorageUrl: actualResolveStorageUrl } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+
+      const relativePath = "/storage/env-123/public/image.jpg";
+      const result = actualResolveStorageUrl(relativePath);
+
+      // Should prepend the base URL (from mocked WEBAPP_URL or getPublicDomain)
+      expect(result).toContain("/storage/env-123/public/image.jpg");
+      expect(result.startsWith("http")).toBe(true);
+    });
+
+    test("should return non-storage paths unchanged", () => {
+      expect(resolveStorageUrl("/some/other/path")).toBe("/some/other/path");
+      expect(resolveStorageUrl("relative/path.jpg")).toBe("relative/path.jpg");
     });
   });
 });

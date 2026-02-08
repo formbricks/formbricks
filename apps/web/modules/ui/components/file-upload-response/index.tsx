@@ -2,7 +2,7 @@
 
 import { DownloadIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
+import { getOriginalFileNameFromUrl } from "@/modules/storage/url-helpers";
 
 interface FileUploadResponseProps {
   selected: string[];

@@ -8,7 +8,7 @@ import { TSurvey, TSurveyElementSummaryFileUpload } from "@formbricks/types/surv
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
-import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
+import { getOriginalFileNameFromUrl } from "@/modules/storage/url-helpers";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";

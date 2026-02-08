@@ -9,11 +9,6 @@ jiti("./lib/env");
 
 /** @type {import('next').NextConfig} */
 
-const getHostname = (url) => {
-  const urlObj = new URL(url);
-  return urlObj.hostname;
-};
-
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   basePath: process.env.BASE_PATH || undefined,

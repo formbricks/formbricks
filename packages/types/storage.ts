@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZStorageUrl } from "./common";
 
 // Single source of truth for allowed file extensions
 const ALLOWED_FILE_EXTENSIONS_TUPLE = [
@@ -125,7 +126,7 @@ export type TUploadPrivateFileRequest = z.infer<typeof ZUploadPrivateFileRequest
 export const ZUploadFileResponse = z.object({
   data: z.object({
     signedUrl: z.string(),
-    fileUrl: z.string(),
+    fileUrl: ZStorageUrl,
     signingData: z
       .object({
         signature: z.string(),

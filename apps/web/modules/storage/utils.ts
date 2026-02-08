@@ -1,30 +1,15 @@
-import { logger } from "@formbricks/logger";
+import "server-only";
 import { StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { TAllowedFileExtension, ZAllowedFileExtension, mimeTypes } from "@formbricks/types/storage";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
+import { WEBAPP_URL } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getOriginalFileNameFromUrl } from "./url-helpers";
 
-export const getOriginalFileNameFromUrl = (fileURL: string) => {
-  try {
-    const lastSegment = fileURL.startsWith("/storage/")
-      ? fileURL
-      : (new URL(fileURL).pathname.split("/").pop() ?? "");
-    const fileNameFromURL = lastSegment.split(/[?#]/)[0];
-
-    const [namePart, fidPart] = fileNameFromURL.split("--fid--");
-    if (!fidPart) return namePart ? decodeURIComponent(namePart) : "";
-
-    const dotIdx = fileNameFromURL.lastIndexOf(".");
-    const hasExt = dotIdx > fileNameFromURL.indexOf("--fid--");
-    const ext = hasExt ? fileNameFromURL.slice(dotIdx + 1) : "";
-
-    return decodeURIComponent(ext ? `${namePart}.${ext}` : namePart);
-  } catch (error) {
-    logger.error({ error, fileURL }, "Error parsing file URL");
-    return "";
-  }
-};
+// Re-export for backward compatibility with server-side code
+export { getOriginalFileNameFromUrl };
 
 /**
  * Sanitize a provided file name to a safe subset.
@@ -162,4 +147,32 @@ export const getErrorResponseFromStorageError = (
       return responses.internalServerErrorResponse("Internal server error", true);
     }
   }
+};
+
+/**
+ * Resolves a storage URL to an absolute URL.
+ * - If already absolute, returns as-is (backward compatibility for old data)
+ * - If relative (/storage/...), prepends the appropriate base URL
+ * @param url The storage URL (relative or absolute)
+ * @param accessType The access type to determine which base URL to use (defaults to "public")
+ * @returns The resolved absolute URL, or empty string if url is falsy
+ */
+export const resolveStorageUrl = (
+  url: string | undefined | null,
+  accessType: "public" | "private" = "public"
+): string => {
+  if (!url) return "";
+
+  // Already absolute URL - return as-is (backward compatibility for old data)
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+
+  // Relative path - resolve with base URL
+  if (url.startsWith("/storage/")) {
+    const baseUrl = accessType === "public" ? getPublicDomain() : WEBAPP_URL;
+    return `${baseUrl}${url}`;
+  }
+
+  return url;
 };

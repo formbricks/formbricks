@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZStorageUrl } from "./common";
 import { ZUserLocale } from "./user";
 
 export const ZLinkSurveyEmailData = z.object({
@@ -7,7 +8,7 @@ export const ZLinkSurveyEmailData = z.object({
   suId: z.string().optional(),
   surveyName: z.string(),
   locale: ZUserLocale,
-  logoUrl: z.string().optional(),
+  logoUrl: ZStorageUrl.optional(),
 });
 
 export type TLinkSurveyEmailData = z.infer<typeof ZLinkSurveyEmailData>;

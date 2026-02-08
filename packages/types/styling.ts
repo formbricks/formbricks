@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZColor } from "./common";
+import { ZColor, ZStorageUrl } from "./common";
 
 export const ZStylingColor = z.object({
   light: ZColor,
@@ -16,7 +16,7 @@ export const ZCardArrangement = z.object({
 });
 
 export const ZLogo = z.object({
-  url: z.string().optional(),
+  url: ZStorageUrl.optional(),
   bgColor: z.string().optional(),
 });
 export type TLogo = z.infer<typeof ZLogo>;

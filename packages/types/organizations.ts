@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZStorageUrl } from "./common";
 
 export const ZOrganizationBillingPlan = z.enum(["free", "startup", "custom"]);
 export type TOrganizationBillingPlan = z.infer<typeof ZOrganizationBillingPlan>;
@@ -34,8 +35,8 @@ export const ZOrganizationBilling = z.object({
 export type TOrganizationBilling = z.infer<typeof ZOrganizationBilling>;
 
 export const ZOrganizationWhitelabel = z.object({
-  logoUrl: z.string().nullable(),
-  faviconUrl: z.string().url().nullish(),
+  logoUrl: ZStorageUrl.nullable(),
+  faviconUrl: ZStorageUrl.nullish(),
 });
 
 export type TOrganizationWhitelabel = z.infer<typeof ZOrganizationWhitelabel>;
