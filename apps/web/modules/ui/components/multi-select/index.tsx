@@ -38,6 +38,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   const [inputValue, setInputValue] = React.useState("");
   const [position, setPosition] = React.useState<{ top: number; left: number; width: number } | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const isSelectingRef = React.useRef(false);
 
   // Track if changes are user-initiated (not from value prop)
   const isUserInitiatedRef = React.useRef(false);
@@ -144,9 +145,8 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       className={`relative overflow-visible bg-white ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
       <div
         ref={containerRef}
-        className={`border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2 ${
-          disabled ? "pointer-events-none" : "focus-within:ring-ring"
-        }`}>
+        className={`border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2 ${disabled ? "pointer-events-none" : "focus-within:ring-ring"
+          }`}>
         <div className="flex flex-wrap gap-1">
           {selected.map((option) => (
             <Badge key={option.value} className="rounded-md">
@@ -171,7 +171,12 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
             ref={inputRef}
             value={inputValue}
             onValueChange={setInputValue}
-            onBlur={() => setOpen(false)}
+            onBlur={(e) => {
+              // Don't close if we're selecting an option
+              if (!isSelectingRef.current) {
+                setOpen(false);
+              }
+            }}
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
             disabled={disabled}
@@ -186,7 +191,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         globalThis.window !== undefined &&
         createPortal(
           <div
-            className="absolute z-[100]"
+            className="absolute z-[9999]"
             style={{
               top: `${position.top}px`,
               left: `${position.left}px`,
@@ -201,12 +206,18 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        isSelectingRef.current = true;
                       }}
                       onSelect={() => {
                         if (disabled) return;
                         isUserInitiatedRef.current = true; // Mark as user-initiated
                         setSelected((prev) => [...prev, option]);
                         setInputValue("");
+                        // Reset the flag after a short delay to allow the selection to complete
+                        setTimeout(() => {
+                          isSelectingRef.current = false;
+                          setOpen(false);
+                        }, 100);
                       }}
                       className="cursor-pointer">
                       {option.label}

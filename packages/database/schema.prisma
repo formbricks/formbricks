@@ -378,19 +378,20 @@ model Survey {
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  isVerifyEmailEnabled            Boolean          @default(false)
-  isSingleResponsePerEmailEnabled Boolean          @default(false)
-  isBackButtonHidden              Boolean          @default(false)
-  isCaptureIpEnabled              Boolean          @default(false)
+  isVerifyEmailEnabled            Boolean                      @default(false)
+  isSingleResponsePerEmailEnabled Boolean                      @default(false)
+  isBackButtonHidden              Boolean                      @default(false)
+  isCaptureIpEnabled              Boolean                      @default(false)
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
   followUps                       SurveyFollowUp[]
   /// [SurveyRecaptcha]
-  recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0.1}")
+  recaptcha                       Json?                        @default("{\"enabled\": false, \"threshold\":0.1}")
   /// [SurveyLinkMetadata]
-  metadata                        Json             @default("{}")
+  metadata                        Json                         @default("{}")
+  connectorMappings               ConnectorFormbricksMapping[]
 
   slug String? @unique
 
@@ -581,6 +582,7 @@ model Environment {
   segments          Segment[]
   integration       Integration[]
   ApiKeyEnvironment ApiKeyEnvironment[]
+  connectors        Connector[]
 
   @@index([projectId])
 }
@@ -633,6 +635,8 @@ model Project {
   logo                Json?
   projectTeams        ProjectTeam[]
   customHeadScripts   String? // Custom HTML scripts for link surveys (self-hosted only)
+  charts              Chart[]
+  dashboards          Dashboard[]
 
   @@unique([organizationId, name])
 }
@@ -989,4 +993,207 @@ model ProjectTeam {
 
   @@id([projectId, teamId])
   @@index([teamId])
+}
+
+enum ConnectorType {
+  formbricks
+  webhook
+  csv
+  email
+  slack
+}
+
+enum ConnectorStatus {
+  active
+  paused
+  error
+}
+
+/// Base connector for all integration types.
+/// Connects external data sources to the Hub for feedback record creation.
+///
+/// @property id - Unique identifier for the connector
+/// @property name - Display name for the connector
+/// @property type - Type of connector (formbricks, webhook, csv, email, slack)
+/// @property status - Current state of the connector (active, paused, error)
+/// @property environment - The environment this connector belongs to
+/// @property config - Type-specific configuration (e.g., webhook secret, S3 config)
+/// @property formbricksMappings - Element mappings for Formbricks connectors
+/// @property fieldMappings - Field mappings for other connector types
+model Connector {
+  id                 String                       @id @default(cuid())
+  createdAt          DateTime                     @default(now()) @map(name: "created_at")
+  updatedAt          DateTime                     @updatedAt @map(name: "updated_at")
+  name               String
+  type               ConnectorType
+  status             ConnectorStatus              @default(active)
+  environmentId      String
+  environment        Environment                  @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  /// [ConnectorConfig]
+  config             Json?
+  formbricksMappings ConnectorFormbricksMapping[]
+  fieldMappings      ConnectorFieldMapping[]
+  lastSyncAt         DateTime?                    @map(name: "last_sync_at")
+  errorMessage       String?                      @map(name: "error_message")
+
+  @@unique([environmentId, name])
+  @@index([environmentId])
+  @@index([type])
+}
+
+/// Maps survey elements to Hub FeedbackRecords for Formbricks connectors.
+/// Each row represents one element that will create FeedbackRecords when answered.
+///
+/// @property id - Unique identifier for the mapping
+/// @property connector - The parent connector
+/// @property survey - The survey containing the element
+/// @property elementId - The element ID within the survey (from blocks[].elements[].id)
+/// @property hubFieldType - The field_type to use in Hub (text, nps, rating, etc.)
+/// @property customFieldLabel - Optional override for the element headline as field_label in Hub
+model ConnectorFormbricksMapping {
+  id               String    @id @default(cuid())
+  createdAt        DateTime  @default(now()) @map(name: "created_at")
+  connectorId      String
+  connector        Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  surveyId         String
+  survey           Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  elementId        String
+  hubFieldType     String
+  customFieldLabel String?   @map(name: "custom_field_label")
+
+  @@unique([connectorId, surveyId, elementId])
+  @@index([connectorId])
+  @@index([surveyId])
+}
+
+/// Generic field mapping for Webhook, CSV, Email, Slack connectors.
+/// Maps source fields to Hub FeedbackRecord fields.
+///
+/// @property id - Unique identifier for the mapping
+/// @property connector - The parent connector
+/// @property sourceFieldId - Field path for webhook (e.g., "user.id"), column name for CSV
+/// @property targetFieldId - Hub field (collected_at, field_id, value_text, etc.)
+/// @property staticValue - If set, use this value instead of reading from sourceFieldId
+model ConnectorFieldMapping {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  connectorId   String
+  connector     Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  sourceFieldId String    @map(name: "source_field_id")
+  targetFieldId String    @map(name: "target_field_id")
+  staticValue   String?   @map(name: "static_value")
+
+  @@unique([connectorId, sourceFieldId, targetFieldId])
+  @@index([connectorId])
+}
+
+enum ChartType {
+  area
+  bar
+  line
+  pie
+  big_number
+  big_number_total
+  table
+  funnel
+  map
+}
+
+enum DashboardStatus {
+  draft
+  published
+}
+
+enum WidgetType {
+  chart
+  markdown
+  header
+  divider
+}
+
+/// Represents a chart/visualization that can be used in multiple dashboards.
+/// Charts are reusable components that query analytics data.
+///
+/// @property id - Unique identifier for the chart
+/// @property name - Display name of the chart
+/// @property type - Type of visualization (bar, line, pie, etc.)
+/// @property project - The project this chart belongs to
+/// @property query - Cube.js query configuration (JSON)
+/// @property config - Chart-specific configuration (colors, labels, etc.)
+/// @property createdBy - User who created the chart
+/// @property dashboards - Dashboards that use this chart
+model Chart {
+  id        String            @id @default(cuid())
+  createdAt DateTime          @default(now()) @map(name: "created_at")
+  updatedAt DateTime          @updatedAt @map(name: "updated_at")
+  name      String
+  type      ChartType
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  /// [ChartQuery] - Cube.js query configuration
+  query     Json              @default("{}")
+  /// [ChartConfig] - Visualization configuration (colors, labels, formatting)
+  config    Json              @default("{}")
+  createdBy String?
+  widgets   DashboardWidget[]
+
+  @@unique([projectId, name])
+  @@index([projectId, createdAt])
+}
+
+/// Represents a dashboard containing multiple widgets/charts.
+/// Dashboards aggregate analytics insights at the project level.
+///
+/// @property id - Unique identifier for the dashboard
+/// @property name - Display name of the dashboard
+/// @property description - Optional description
+/// @property status - Whether the dashboard is draft or published
+/// @property project - The project this dashboard belongs to
+/// @property widgets - Charts and other widgets on this dashboard
+/// @property createdBy - User who created the dashboard
+model Dashboard {
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now()) @map(name: "created_at")
+  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
+  name        String
+  description String?
+  status      DashboardStatus   @default(draft)
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  createdBy   String?
+  widgets     DashboardWidget[]
+
+  @@unique([projectId, name])
+  @@index([projectId, createdAt])
+  @@index([projectId, status])
+}
+
+/// Represents a widget on a dashboard (chart, markdown, header, etc.).
+/// Widgets are positioned using a grid layout system.
+///
+/// @property id - Unique identifier for the widget
+/// @property dashboard - The dashboard this widget belongs to
+/// @property type - Type of widget (chart, markdown, header, divider)
+/// @property title - Optional title for the widget
+/// @property chart - Reference to chart if type is "chart"
+/// @property content - Content for markdown/header widgets
+/// @property layout - Grid layout configuration (x, y, width, height)
+/// @property order - Display order within the dashboard
+model DashboardWidget {
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now()) @map(name: "created_at")
+  updatedAt   DateTime   @updatedAt @map(name: "updated_at")
+  dashboard   Dashboard  @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  dashboardId String
+  type        WidgetType
+  title       String?
+  chart       Chart?     @relation(fields: [chartId], references: [id], onDelete: SetNull)
+  chartId     String?
+  /// [WidgetContent] - Content for markdown/header widgets
+  content     Json?
+  /// [WidgetLayout] - Grid layout: { x, y, w, h }
+  layout      Json       @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
+  order       Int        @default(0)
+
+  @@index([dashboardId, order])
 }

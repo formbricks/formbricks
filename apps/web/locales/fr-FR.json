@@ -133,6 +133,7 @@
     "allow": "Autoriser",
     "allow_users_to_exit_by_clicking_outside_the_survey": "Permettre aux utilisateurs de quitter en cliquant hors de l'enquête",
     "an_unknown_error_occurred_while_deleting_table_items": "Une erreur inconnue est survenue lors de la suppression des {type}s",
+    "analysis": "Analyse",
     "and": "Et",
     "and_response_limit_of": "et limite de réponse de",
     "anonymous": "Anonyme",

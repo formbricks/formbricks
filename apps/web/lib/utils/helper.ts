@@ -2,6 +2,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
   getApiKey,
+  getConnector,
   getContact,
   getEnvironment,
   getIntegration,
@@ -328,4 +329,32 @@ export const isStringMatch = (query: string, value: string): boolean => {
   const valueModified = value.toLowerCase().replace(/ /g, "").replace(/_/g, "").replace(/-/g, "");
 
   return valueModified.includes(queryModified);
+};
+
+// Connector helpers
+export const getOrganizationIdFromConnectorId = async (connectorId: string) => {
+  const connector = await getConnector(connectorId);
+  if (!connector) {
+    throw new ResourceNotFoundError("connector", connectorId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(connector.environmentId);
+};
+
+export const getProjectIdFromConnectorId = async (connectorId: string) => {
+  const connector = await getConnector(connectorId);
+  if (!connector) {
+    throw new ResourceNotFoundError("connector", connectorId);
+  }
+
+  return await getProjectIdFromEnvironmentId(connector.environmentId);
+};
+
+export const getEnvironmentIdFromConnectorId = async (connectorId: string) => {
+  const connector = await getConnector(connectorId);
+  if (!connector) {
+    throw new ResourceNotFoundError("connector", connectorId);
+  }
+
+  return connector.environmentId;
 };
