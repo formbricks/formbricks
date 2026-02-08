@@ -160,7 +160,12 @@ export const convertDatesInObject = <T>(obj: T): T => {
     return obj.map((item) => convertDatesInObject(item)) as unknown as T;
   }
   const newObj: any = {};
+  const keysToIgnore = new Set(["contactAttributes", "variables", "data", "meta"]);
   for (const key in obj) {
+    if (keysToIgnore.has(key)) {
+      newObj[key] = obj[key];
+      continue;
+    }
     if (
       (key === "createdAt" || key === "updatedAt") &&
       typeof obj[key] === "string" &&
