@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProjectUpdateInput } from "@formbricks/types/project";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
@@ -138,7 +138,7 @@ export const getProjectsForSwitcherAction = authenticatedActionClient
     // Need membership for getProjectsByUserId (1 DB query)
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
     if (!membership) {
-      throw new Error("Membership not found");
+      throw new AuthorizationError("Membership not found");
     }
 
     return await getProjectsByUserId(ctx.user.id, membership);

@@ -9,6 +9,12 @@ import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 
 /**
+ * Expected error names that should NOT be reported to Sentry.
+ * These are handled gracefully in the UI (e.g., show "no access" or redirect).
+ */
+const EXPECTED_ERROR_NAMES = new Set(["AuthorizationError", "AuthenticationError", "TooManyRequestsError"]);
+
+/**
  * Get translated error messages based on error type
  */
 const getErrorMessages = (type: ClientErrorType, t: TFunction) => {
@@ -30,10 +36,16 @@ const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) =>
   const errorData = getClientErrorData(error);
   const { title, description } = getErrorMessages(errorData.type, t);
 
+  const isExpectedError = EXPECTED_ERROR_NAMES.has(error.name);
+
   if (process.env.NODE_ENV === "development") {
     console.error(error.message);
   } else {
-    Sentry.captureException(error);
+    // Only report unexpected errors to Sentry
+    // Expected errors (auth failures, rate limits) are handled gracefully in the UI
+    if (!isExpectedError) {
+      Sentry.captureException(error);
+    }
   }
 
   return (
