@@ -71,7 +71,12 @@ export const OrganizationActions = ({
   const handleLeaveOrganization = async () => {
     setLoading(true);
     try {
-      await leaveOrganizationAction({ organizationId: organization.id });
+      const result = await leaveOrganizationAction({ organizationId: organization.id });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        setLoading(false);
+        return;
+      }
       toast.success(t("environments.settings.general.member_deleted_successfully"));
       router.refresh();
       setLoading(false);

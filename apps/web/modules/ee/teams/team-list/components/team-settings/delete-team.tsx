@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Button } from "@/modules/ui/components/button";
@@ -27,6 +28,12 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
     setIsDeleting(true);
 
     const deleteTeamActionResponse = await deleteTeamAction({ teamId });
+    if (deleteTeamActionResponse?.serverError) {
+      toast.error(getFormattedErrorMessage(deleteTeamActionResponse));
+      setIsDeleteDialogOpen(false);
+      setIsDeleting(false);
+      return;
+    }
     if (deleteTeamActionResponse?.data) {
       toast.success(t("environments.settings.teams.team_deleted_successfully"));
       onDelete?.();

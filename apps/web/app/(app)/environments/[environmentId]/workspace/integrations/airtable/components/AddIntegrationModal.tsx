@@ -21,6 +21,7 @@ import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[envir
 import { BaseSelectDropdown } from "@/app/(app)/environments/[environmentId]/workspace/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/workspace/integrations/airtable/lib/airtable";
 import AirtableLogo from "@/images/airtableLogo.svg";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
@@ -268,7 +269,14 @@ export const AddIntegrationModal = ({
         airtableIntegrationData.config?.data.push(integrationData);
       }
 
-      await createOrUpdateIntegrationAction({ environmentId, integrationData: airtableIntegrationData });
+      const result = await createOrUpdateIntegrationAction({
+        environmentId,
+        integrationData: airtableIntegrationData,
+      });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       if (isEditMode) {
         toast.success(t("environments.integrations.integration_updated_successfully"));
       } else {
@@ -304,7 +312,11 @@ export const AddIntegrationModal = ({
       const integrationData = structuredClone(airtableIntegrationData);
       integrationData.config.data.splice(index, 1);
 
-      await createOrUpdateIntegrationAction({ environmentId, integrationData });
+      const result = await createOrUpdateIntegrationAction({ environmentId, integrationData });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       handleClose();
       router.refresh();
 
