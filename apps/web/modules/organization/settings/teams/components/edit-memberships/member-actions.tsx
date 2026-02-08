@@ -42,14 +42,27 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       if (!member && invite) {
         // This is an invite
 
-        await deleteInviteAction({ inviteId: invite?.id, organizationId: organization.id });
+        const result = await deleteInviteAction({ inviteId: invite?.id, organizationId: organization.id });
+        if (result?.serverError) {
+          toast.error(getFormattedErrorMessage(result));
+          setIsDeleting(false);
+          return;
+        }
         toast.success(t("environments.settings.general.invite_deleted_successfully"));
       }
 
       if (member && !invite) {
         // This is a member
 
-        await deleteMembershipAction({ userId: member.userId, organizationId: organization.id });
+        const result = await deleteMembershipAction({
+          userId: member.userId,
+          organizationId: organization.id,
+        });
+        if (result?.serverError) {
+          toast.error(getFormattedErrorMessage(result));
+          setIsDeleting(false);
+          return;
+        }
         toast.success(t("environments.settings.general.member_deleted_successfully"));
       }
 

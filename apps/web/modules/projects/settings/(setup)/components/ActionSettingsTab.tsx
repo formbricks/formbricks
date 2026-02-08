@@ -8,6 +8,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   deleteActionClassAction,
   updateActionClassAction,
@@ -92,10 +93,14 @@ export const ActionSettingsTab = ({
       validatePermissions(isReadOnly, t);
       const updatedAction = buildActionObject(data, actionClass.environmentId, t);
 
-      await updateActionClassAction({
+      const result = await updateActionClassAction({
         actionClassId: actionClass.id,
         updatedAction: updatedAction,
       });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       setOpen(false);
       router.refresh();
       toast.success(t("environments.actions.action_updated_successfully"));
@@ -109,7 +114,11 @@ export const ActionSettingsTab = ({
   const handleDeleteAction = async () => {
     try {
       setIsDeletingAction(true);
-      await deleteActionClassAction({ actionClassId: actionClass.id });
+      const result = await deleteActionClassAction({ actionClassId: actionClass.id });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       router.refresh();
       toast.success(t("environments.actions.action_deleted_successfully"));
       setOpen(false);
