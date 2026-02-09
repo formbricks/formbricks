@@ -321,7 +321,7 @@ export const setup = async (
   logger.debug("Set up complete");
 
   // Retry the command queue after setup is complete to prevent deadlocks
-  CommandQueue.getInstance().run();
+  void CommandQueue.getInstance().run();
 
   return okVoid();
 };
