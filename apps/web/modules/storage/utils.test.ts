@@ -146,7 +146,8 @@ describe("storage utils", () => {
       const { getOriginalFileNameFromUrl } =
         await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
       const path = "/storage/env/public/Document%20Name.pdf";
-      expect(getOriginalFileNameFromUrl(path)).toBe("/storage/env/public/Document Name.pdf");
+      // Function extracts filename, not full path
+      expect(getOriginalFileNameFromUrl(path)).toBe("Document Name.pdf");
     });
 
     test("returns empty string on invalid URL input", async () => {
