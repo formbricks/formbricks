@@ -1,16 +1,24 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
+import { Trash2Icon } from "lucide-react";
 import { type JSX, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString } from "@formbricks/types/i18n";
+import { TOptionList } from "@formbricks/types/option-list";
 import { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString } from "@/lib/i18n/utils";
+import {
+  createOptionListAction,
+  deleteOptionListAction,
+  getOptionListsAction,
+} from "@/modules/survey/editor/actions";
 import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
+import { DEFAULT_OPTION_LISTS } from "@/modules/survey/editor/lib/default-option-lists";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
@@ -22,6 +30,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { Input } from "@/modules/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 
 interface BulkEditOptionsModalProps {
   isOpen: boolean;
@@ -33,6 +49,7 @@ interface BulkEditOptionsModalProps {
   selectedLanguageCode: string;
   surveyLanguageCodes: string[];
   locale: TUserLocale;
+  environmentId: string;
 }
 
 const parseUniqueLines = (content: string): string[] => {
@@ -70,10 +87,14 @@ export const BulkEditOptionsModal = ({
   selectedLanguageCode,
   surveyLanguageCodes,
   locale,
+  environmentId,
 }: BulkEditOptionsModalProps): JSX.Element => {
   const { t } = useTranslation();
   const [textareaValue, setTextareaValue] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [savedLists, setSavedLists] = useState<TOptionList[]>([]);
+  const [newListName, setNewListName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const selectedLanguageName = useMemo(() => {
     if (localSurvey.languages.length <= 1) return null;
@@ -88,8 +109,20 @@ export const BulkEditOptionsModal = ({
     if (isOpen) {
       setTextareaValue(regularChoices.map((c) => c.label[selectedLanguageCode] || "").join("\n"));
       setValidationError(null);
+      setNewListName("");
+
+      // Fetch saved option lists
+      getOptionListsAction({ environmentId })
+        .then((result) => {
+          if (result?.data) {
+            setSavedLists(result.data);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to load option lists:", error);
+        });
     }
-  }, [isOpen, regularChoices, selectedLanguageCode]);
+  }, [isOpen, regularChoices, selectedLanguageCode, environmentId]);
 
   const validateRemovedOptions = (newLabels: string[]): string | null => {
     const originalLabels = regularChoices.map((c) => c.label[selectedLanguageCode] || "");
@@ -131,6 +164,56 @@ export const BulkEditOptionsModal = ({
     });
   };
 
+  const handleLoadList = (options: string[]) => {
+    setTextareaValue(options.join("\n"));
+    setValidationError(null);
+    toast.success(t("environments.surveys.edit.list_loaded"));
+  };
+
+  const handleSaveList = async () => {
+    if (!newListName.trim()) {
+      toast.error(t("environments.surveys.edit.list_name") + " is required");
+      return;
+    }
+
+    const currentOptions = parseUniqueLines(textareaValue);
+    if (currentOptions.length === 0) {
+      toast.error("Cannot save an empty list");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await createOptionListAction({
+        environmentId,
+        name: newListName.trim(),
+        options: currentOptions,
+      });
+
+      if (result?.data) {
+        setSavedLists([...savedLists, result.data]);
+        setNewListName("");
+        toast.success(t("environments.surveys.edit.list_saved_successfully"));
+      }
+    } catch (error) {
+      toast.error("Failed to save list");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteList = async (listId: string) => {
+    try {
+      await deleteOptionListAction({ optionListId: listId });
+      setSavedLists(savedLists.filter((list) => list.id !== listId));
+      toast.success(t("environments.surveys.edit.list_deleted_successfully"));
+    } catch (error) {
+      toast.error("Failed to delete list");
+      console.error(error);
+    }
+  };
+
   const handleSave = () => {
     const newLabels = parseUniqueLines(textareaValue);
     const error = validateRemovedOptions(newLabels);
@@ -163,7 +246,84 @@ export const BulkEditOptionsModal = ({
           <DialogDescription>{t("environments.surveys.edit.bulk_edit_description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2">
+        <div className="space-y-4">
+          {/* Load from list dropdown */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <Select
+                onValueChange={(value) => {
+                  const defaultList = DEFAULT_OPTION_LISTS.find((list) => list.id === value);
+                  if (defaultList) {
+                    handleLoadList(defaultList.options);
+                    return;
+                  }
+
+                  const savedList = savedLists.find((list) => list.id === value);
+                  if (savedList) {
+                    handleLoadList(savedList.options);
+                  }
+                }}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t("environments.surveys.edit.load_from_list")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEFAULT_OPTION_LISTS.length > 0 && (
+                    <>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-slate-500">
+                        {t("environments.surveys.edit.defaults")}
+                      </div>
+                      {DEFAULT_OPTION_LISTS.map((list) => (
+                        <SelectItem key={list.id} value={list.id}>
+                          {list.name}
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+                  {savedLists.length > 0 && (
+                    <>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-slate-500">
+                        {t("environments.surveys.edit.saved_lists")}
+                      </div>
+                      {savedLists.map((list) => (
+                        <SelectItem key={list.id} value={list.id}>
+                          <div className="flex w-full items-center justify-between gap-2">
+                            <span>{list.name}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto p-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteList(list.id);
+                              }}>
+                              <Trash2Icon className="h-3 w-3 text-slate-500 hover:text-red-600" />
+                            </Button>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+                  {DEFAULT_OPTION_LISTS.length === 0 && savedLists.length === 0 && (
+                    <div className="px-2 py-4 text-center text-sm text-slate-500">No saved lists</div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Save as list section */}
+          <div className="flex items-center gap-2">
+            <Input
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              placeholder={t("environments.surveys.edit.list_name")}
+              className="flex-1"
+            />
+            <Button variant="secondary" onClick={handleSaveList} disabled={isSaving || !newListName.trim()}>
+              {t("environments.surveys.edit.save_as_list")}
+            </Button>
+          </div>
+
           <textarea
             value={textareaValue}
             onChange={(e) => {

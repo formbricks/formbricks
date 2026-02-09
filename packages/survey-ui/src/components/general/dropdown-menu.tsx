@@ -20,10 +20,18 @@ function DropdownMenuTrigger({ ...props }: React.ComponentProps<typeof DropdownM
 function DropdownMenuContent({
   className,
   sideOffset = 4,
+  container,
   ...props
-}: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Content>>) {
+}: Readonly<
+  React.ComponentProps<typeof DropdownMenuPrimitive.Content> & { container?: HTMLElement | null }
+>) {
+  // Try to find the survey container (#fbjs) for proper portal positioning
+  // when inside transformed elements (CSS transforms break fixed positioning)
+  const portalContainer =
+    container ?? (typeof document !== "undefined" ? document.getElementById("fbjs") : null);
+
   return (
-    <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Portal container={portalContainer}>
       <DropdownMenuPrimitive.Content
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}

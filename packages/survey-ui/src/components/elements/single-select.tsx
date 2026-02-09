@@ -164,7 +164,7 @@ function SingleSelect({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
+                className="z-[1100] w-[var(--radix-dropdown-menu-trigger-width)] border-slate-200 bg-white shadow-lg"
                 align="start">
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
                   {options

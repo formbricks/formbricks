@@ -59,7 +59,9 @@ export function SurveyContainer({
       case "bottomLeft":
         return "sm:bottom-3 sm:left-3";
       case "center":
-        return "sm:top-1/2 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2";
+        // Note: Using margin:auto instead of transform to avoid breaking fixed positioning
+        // for portaled elements (dropdowns, tooltips, etc.)
+        return "sm:top-0 sm:bottom-0 sm:left-0 sm:right-0 sm:m-auto";
       default:
         return "sm:bottom-3 sm:right-3";
     }

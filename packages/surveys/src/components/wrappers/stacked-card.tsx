@@ -58,17 +58,21 @@ export const StackedCard = ({
     }
 
     return (offset: number) => {
+      // Don't apply transform to current card (offset === 0) to avoid breaking
+      // fixed positioning for portaled elements (dropdowns, tooltips, etc.)
+      if (offset === 0) return "none";
+
       switch (cardArrangement) {
         case "casual":
           return offset < 0
             ? `translateX(33%)`
-            : `translateX(0) rotate(-${((hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset).toString()}deg)`;
+            : `rotate(-${((hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset).toString()}deg)`;
         case "straight":
           return offset < 0
             ? `translateY(25%)`
             : `translateY(-${((hovered ? 12 : 10) * offset).toString()}px)`;
         default:
-          return `translateX(0)`;
+          return "none";
       }
     };
   }, [cardArrangement, hovered, cardWidth]);
