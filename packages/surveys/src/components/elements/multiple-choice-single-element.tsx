@@ -199,6 +199,7 @@ export function MultipleChoiceSingleElement({
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
         variant={element.displayType || "list"}
+        columns={element.columns}
       />
     </form>
   );

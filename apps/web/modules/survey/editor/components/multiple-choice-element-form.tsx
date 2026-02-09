@@ -393,6 +393,21 @@ export const MultipleChoiceElementForm = ({
                   </SelectItem>
                 </SelectContent>
               </Select>
+              {element.displayType === "list" && (
+                <Select
+                  value={element.columns || "1"}
+                  onValueChange={(value: "1" | "2") => {
+                    updateElement(elementIdx, { columns: value });
+                  }}>
+                  <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 column</SelectItem>
+                    <SelectItem value="2">2 columns</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <ShuffleOptionSelect
                 elementIdx={elementIdx}
                 shuffleOption={element.shuffleOption}

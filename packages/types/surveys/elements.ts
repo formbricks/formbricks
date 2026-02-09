@@ -142,6 +142,7 @@ export const ZSurveyMultipleChoiceElement = ZSurveyElementBase.extend({
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
   displayType: z.enum(["list", "dropdown"]).optional(),
+  columns: z.enum(["1", "2"]).optional(),
 });
 
 export type TSurveyMultipleChoiceElement = z.infer<typeof ZSurveyMultipleChoiceElement>;

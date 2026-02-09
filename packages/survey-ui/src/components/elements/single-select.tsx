@@ -65,6 +65,8 @@ interface SingleSelectProps {
   imageUrl?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
+  /** Number of columns for list display: "1" (default) or "2" (responsive: single column on mobile, two columns on desktop) */
+  columns?: "1" | "2";
 }
 
 function SingleSelect({
@@ -88,6 +90,7 @@ function SingleSelect({
   onOtherValueChange,
   imageUrl,
   videoUrl,
+  columns = "1",
 }: Readonly<SingleSelectProps>): React.JSX.Element {
   // Ensure value is always a string or undefined
   const selectedValue = value ?? undefined;
@@ -230,7 +233,9 @@ function SingleSelect({
               onValueChange={onChange}
               disabled={disabled}
               errorMessage={errorMessage}
-              className="w-full gap-0 space-y-2">
+              className={
+                columns === "2" ? "grid w-full grid-cols-1 gap-2 md:grid-cols-2" : "w-full gap-0 space-y-2"
+              }>
               {options
                 .filter((option) => option.id !== "none")
                 .map((option) => {

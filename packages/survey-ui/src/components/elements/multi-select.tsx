@@ -71,6 +71,8 @@ interface MultiSelectProps {
   imageUrl?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
+  /** Number of columns for list display: "1" (default) or "2" (responsive: single column on mobile, two columns on desktop) */
+  columns?: "1" | "2";
 }
 
 // Shared className for option labels
@@ -248,6 +250,7 @@ interface ListVariantProps {
   dir: TextDirection;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
   required: boolean;
+  columns?: "1" | "2";
 }
 
 function ListVariant({
@@ -270,13 +273,16 @@ function ListVariant({
   dir,
   otherInputRef,
   required,
+  columns = "1",
 }: Readonly<ListVariantProps>): React.JSX.Element {
   const isNoneSelected = value.includes("none");
 
   return (
     <>
       <ElementError errorMessage={errorMessage} dir={dir} />
-      <fieldset className="space-y-2" aria-label={headline}>
+      <fieldset
+        className={columns === "2" ? "grid grid-cols-1 gap-2 md:grid-cols-2" : "space-y-2"}
+        aria-label={headline}>
         {options
           .filter((option) => option.id !== "none")
           .map((option) => {
@@ -420,6 +426,7 @@ function MultiSelect({
   exclusiveOptionIds = [],
   imageUrl,
   videoUrl,
+  columns = "1",
 }: Readonly<MultiSelectProps>): React.JSX.Element {
   // Ensure value is always an array
   const selectedValues = Array.isArray(value) ? value : [];
@@ -525,6 +532,7 @@ function MultiSelect({
             dir={dir}
             otherInputRef={otherInputRef}
             required={required}
+            columns={columns}
           />
         )}
       </div>
