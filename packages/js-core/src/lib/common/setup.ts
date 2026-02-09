@@ -1,5 +1,6 @@
 /* eslint-disable no-console -- required for logging */
 import { Config } from "@/lib/common/config";
+import { CommandQueue } from "@/lib/common/command-queue";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
 import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
@@ -318,6 +319,9 @@ export const setup = async (
 
   setIsSetup(true);
   logger.debug("Set up complete");
+
+  // Retry the command queue after setup is complete to prevent deadlocks
+  CommandQueue.getInstance().run();
 
   return okVoid();
 };

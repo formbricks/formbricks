@@ -71,86 +71,63 @@ export class CommandQueue {
     }
   }
 
-  private async run(): Promise<void> {
+  async run(): Promise<void> {
     this.running = true;
 
     while (this.queue.length > 0) {
-      let didExecute = false;
-      let movedSetup = false;
+      const currentItem = this.queue[0]; // Peek at the first item
 
-      // Iterate through the queue to find the first runnable command
-      for (let i = 0; i < this.queue.length; i++) {
-        const currentItem = this.queue[i];
-
-        if (!currentItem) {
-          this.queue.splice(i, 1);
-          i--;
-          continue;
-        }
-
-        // CHECK SETUP REQUIREMENT
-        if (currentItem.checkSetup) {
-          const setupResult = checkSetup();
-          if (!setupResult.ok) {
-            // Command needs setup, but we are not set up.
-            // Look ahead for a Setup command to prioritize
-            // We only search for setup commands AFTER the current blocked item
-            const setupCommandIndex = this.queue.findIndex(
-              (item, index) => index > i && item.type === CommandType.Setup
-            );
-
-            if (setupCommandIndex !== -1 && setupCommandIndex > 0) {
-              // Found a setup command! Move it to the FRONT (index 0)
-              const setupCommand = this.queue.splice(setupCommandIndex, 1)[0];
-              this.queue.unshift(setupCommand);
-
-              movedSetup = true;
-              // Break inner loop to restart scanning from index 0 immediately
-              break;
-            }
-
-            // No setup command found. This item is BLOCKED.
-            // SKIP IT and continue searching for independent work.
-            continue;
-          }
-        }
-
-        // IF WE REACH HERE, COMMAND IS RUNNABLE
-        // Remove from queue
-        this.queue.splice(i, 1);
-
-        // Execute logic
-        if (currentItem.type === CommandType.GeneralAction) {
-          const updateQueue = UpdateQueue.getInstance();
-          if (!updateQueue.isEmpty()) {
-            await updateQueue.processUpdates();
-          }
-        }
-
-        const executeCommand = async (): Promise<Result<void, unknown>> => {
-          return (await currentItem.command.apply(null, currentItem.commandArgs)) as Result<void, unknown>;
-        };
-
-        const result = await wrapThrowsAsync(executeCommand)();
-        if (!result.ok) {
-          console.error("🧱 Formbricks - Global error: ", result.error);
-        } else if (!result.data.ok) {
-          console.error("🧱 Formbricks - Global error: ", result.data.error);
-        }
-
-        // We executed something!
-        didExecute = true;
-
-        // Restart search from the beginning (index 0) to preserve priority/order
-        break;
+      if (!currentItem) {
+        this.queue.shift();
+        continue;
       }
 
-      // STARVATION PROTECTION
-      // If we iterated the whole queue and executed nothing AND didn't move any setup command,
-      // then we are truly stalled (all remaining items are blocked).
-      if (!didExecute && !movedSetup) {
-        // All remaining commands are blocked; exit to avoid deadlock
-        break;
+      if (currentItem.checkSetup) {
+        const setupResult = checkSetup();
+        if (!setupResult.ok) {
+          const setupCommandIndex = this.queue.findIndex(
+            (item, index) => index > 0 && item.type === CommandType.Setup
+          );
+
+          if (setupCommandIndex !== -1) {
+            const setupCommand = this.queue.splice(setupCommandIndex, 1)[0];
+            this.queue.unshift(setupCommand);
+            continue;
+          }
+
+          // stop the queue if setup is not complete and no setup command is in the queue
+          this.running = false;
+          if (this.resolvePromise) {
+            this.resolvePromise();
+            this.resolvePromise = null;
+            this.commandPromise = null;
+          }
+          return;
+        }
+      }
+
+      // remove the item from the queue
+      this.queue.shift();
+
+      if (currentItem.type === CommandType.GeneralAction) {
+        // first check if there are pending updates in the update queue
+        const updateQueue = UpdateQueue.getInstance();
+        if (!updateQueue.isEmpty()) {
+          console.log("🧱 Formbricks - Waiting for pending updates to complete before executing command");
+          await updateQueue.processUpdates();
+        }
+      }
+
+      const executeCommand = async (): Promise<Result<void, unknown>> => {
+        return (await currentItem.command.apply(null, currentItem.commandArgs)) as Result<void, unknown>;
+      };
+
+      const result = await wrapThrowsAsync(executeCommand)();
+
+      if (!result.ok) {
+        console.error("🧱 Formbricks - Global error: ", result.error);
+      } else if (!result.data.ok) {
+        console.error("🧱 Formbricks - Global error: ", result.data.error);
       }
     }
 
