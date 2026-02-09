@@ -172,7 +172,7 @@ describe("CommandQueue", () => {
   test("processes UpdateQueue before executing GeneralAction commands", async () => {
     const mockUpdateQueue = {
       isEmpty: vi.fn().mockReturnValue(false),
-      processUpdates: vi.fn().mockResolvedValue("test"),
+      processUpdates: vi.fn().mockResolvedValue(undefined),
     };
 
     const mockUpdateQueueInstance = vi.spyOn(UpdateQueue, "getInstance");
@@ -228,12 +228,12 @@ describe("CommandQueue", () => {
 
     await queue.wait();
 
-    // cmd2 should be skipped due to failed setup check, AND the queue should pause
-    // So cmd3 (GeneralAction) will ALSO not run because the queue is blocked by cmd2
-    expect(executionOrder).toEqual(["cmd1"]);
+    // cmd2 should be skipped due to failed setup check, BUT the queue should continue
+    // So cmd3 (GeneralAction) WILL run because the queue is no longer blocked by cmd2
+    expect(executionOrder).toEqual(["cmd1", "cmd3"]);
     expect(cmd1).toHaveBeenCalled();
     expect(cmd2).not.toHaveBeenCalled();
-    expect(cmd3).not.toHaveBeenCalled();
+    expect(cmd3).toHaveBeenCalled();
   });
 
   test("executes later setup command if initial command requires setup", async () => {
@@ -261,7 +261,7 @@ describe("CommandQueue", () => {
     // 1. Add Track command (requires setup)
     // Queue: [Track]
     // Run loop starts -> Peeks [Track] -> checkSetup fails -> isSetup=false
-    // No Setup in queue -> Pauses queue (running=false) -> Resolves promise (CRITICAL FIX)
+    // No Setup in queue -> Skips [Track] -> Queue continues (but nothing else to run)
     await queue.add(trackCmd, CommandType.GeneralAction, true);
 
     // Verify that wait() resolves even if the queue is paused due to missing setup
@@ -281,5 +281,36 @@ describe("CommandQueue", () => {
     expect(executionOrder).toEqual(["setup", "track"]);
     expect(trackCmd).toHaveBeenCalled();
     expect(setupCmd).toHaveBeenCalled();
+  });
+
+  test("executes independent command while dependent command waits", async () => {
+    const executionOrder: string[] = [];
+
+    const dependentCmd = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("dependent");
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    const independentCmd = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("independent");
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    // Mock checkSetup:
+    // 1. False for dependentCmd
+    // 2. True for independentCmd
+    vi.mocked(checkSetup)
+      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } })
+      .mockReturnValueOnce({ ok: true, data: undefined });
+
+    await queue.add(dependentCmd, CommandType.GeneralAction, true);
+    await queue.add(independentCmd, CommandType.GeneralAction, true);
+
+    await queue.wait();
+
+    // Dependent command should be skipped, Independent command should run
+    expect(executionOrder).toEqual(["independent"]);
+    expect(dependentCmd).not.toHaveBeenCalled();
+    expect(independentCmd).toHaveBeenCalled();
   });
 });
