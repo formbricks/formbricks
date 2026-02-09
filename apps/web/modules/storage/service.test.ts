@@ -2,7 +2,12 @@ import { randomUUID } from "crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { StorageErrorCode } from "@formbricks/storage";
 import { TAccessType } from "@formbricks/types/storage";
-import { deleteFile, deleteFilesByEnvironmentId, getSignedUrlForUpload } from "./service";
+import {
+  deleteFile,
+  deleteFilesByEnvironmentId,
+  getFileStreamForDownload,
+  getSignedUrlForUpload,
+} from "./service";
 
 // Mock external dependencies
 vi.mock("crypto", () => ({
@@ -25,21 +30,22 @@ vi.mock("@formbricks/storage", () => ({
   },
   deleteFile: vi.fn(),
   deleteFilesByPrefix: vi.fn(),
+  getFileStream: vi.fn(),
   getSignedDownloadUrl: vi.fn(),
   getSignedUploadUrl: vi.fn(),
 }));
 
 // Import mocked dependencies
 const { logger } = await import("@formbricks/logger");
+const storageModule = await import("@formbricks/storage");
 const {
   deleteFile: deleteFileFromS3,
   deleteFilesByPrefix,
-  getSignedDownloadUrl,
   getSignedUploadUrl,
-} = await import("@formbricks/storage");
-
+  getFileStream,
+} = storageModule;
 type MockedSignedUploadReturn = Awaited<ReturnType<typeof getSignedUploadUrl>>;
-type MockedSignedDownloadReturn = Awaited<ReturnType<typeof getSignedDownloadUrl>>;
+type MockedFileStreamReturn = Awaited<ReturnType<typeof getFileStream>>;
 type MockedDeleteFileReturn = Awaited<ReturnType<typeof deleteFile>>;
 type MockedDeleteFilesByPrefixReturn = Awaited<ReturnType<typeof deleteFilesByPrefix>>;
 
@@ -332,6 +338,149 @@ describe("storage service", () => {
 
       expect(result).toEqual(mockErrorResult);
       expect(deleteFilesByPrefix).toHaveBeenCalledWith("env-123");
+    });
+  });
+
+  describe("getFileStreamForDownload", () => {
+    test("should return file stream for public file", async () => {
+      const mockStream = new ReadableStream();
+      const mockStreamResult = {
+        ok: true,
+        data: {
+          body: mockStream,
+          contentType: "image/jpeg",
+          contentLength: 12345,
+        },
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
+
+      const result = await getFileStreamForDownload("test-image.jpg", "env-123", "public" as TAccessType);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.body).toBe(mockStream);
+        expect(result.data.contentType).toBe("image/jpeg");
+        expect(result.data.contentLength).toBe(12345);
+      }
+      expect(getFileStream).toHaveBeenCalledWith("env-123/public/test-image.jpg");
+    });
+
+    test("should return file stream for private file", async () => {
+      const mockStream = new ReadableStream();
+      const mockStreamResult = {
+        ok: true,
+        data: {
+          body: mockStream,
+          contentType: "application/pdf",
+          contentLength: 54321,
+        },
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
+
+      const result = await getFileStreamForDownload("document.pdf", "env-456", "private" as TAccessType);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.contentType).toBe("application/pdf");
+      }
+      expect(getFileStream).toHaveBeenCalledWith("env-456/private/document.pdf");
+    });
+
+    test("should decode URL-encoded filename", async () => {
+      const mockStream = new ReadableStream();
+      const mockStreamResult = {
+        ok: true,
+        data: {
+          body: mockStream,
+          contentType: "image/png",
+          contentLength: 1000,
+        },
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
+
+      // URL-encoded filename with spaces: "my file.png" -> "my%20file.png"
+      const result = await getFileStreamForDownload("my%20file.png", "env-123", "public" as TAccessType);
+
+      expect(result.ok).toBe(true);
+      // Should decode %20 to space before passing to getFileStream
+      expect(getFileStream).toHaveBeenCalledWith("env-123/public/my file.png");
+    });
+
+    test("should return error when getFileStream fails with FileNotFoundError", async () => {
+      const mockErrorResult = {
+        ok: false,
+        error: {
+          code: StorageErrorCode.FileNotFoundError,
+        },
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValue(mockErrorResult);
+
+      const result = await getFileStreamForDownload("missing-file.jpg", "env-123", "public" as TAccessType);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(StorageErrorCode.FileNotFoundError);
+      }
+    });
+
+    test("should return error when getFileStream fails with S3ClientError", async () => {
+      const mockErrorResult = {
+        ok: false,
+        error: {
+          code: StorageErrorCode.S3ClientError,
+        },
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValue(mockErrorResult);
+
+      const result = await getFileStreamForDownload("some-file.jpg", "env-123", "public" as TAccessType);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(StorageErrorCode.S3ClientError);
+      }
+    });
+
+    test("should handle unexpected errors and return unknown error", async () => {
+      vi.mocked(getFileStream).mockRejectedValue(new Error("Unexpected S3 error"));
+
+      const result = await getFileStreamForDownload("test-file.jpg", "env-123", "public" as TAccessType);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(StorageErrorCode.Unknown);
+      }
+      expect(logger.error).toHaveBeenCalledWith(
+        { error: expect.any(Error) },
+        "Error getting file stream for download"
+      );
+    });
+
+    test("should handle filename with fid pattern", async () => {
+      const mockStream = new ReadableStream();
+      const mockStreamResult = {
+        ok: true,
+        data: {
+          body: mockStream,
+          contentType: "image/jpeg",
+          contentLength: 5000,
+        },
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
+
+      const result = await getFileStreamForDownload(
+        "photo--fid--abc123-def456.jpg",
+        "env-123",
+        "public" as TAccessType
+      );
+
+      expect(result.ok).toBe(true);
+      expect(getFileStream).toHaveBeenCalledWith("env-123/public/photo--fid--abc123-def456.jpg");
     });
   });
 });
