@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZColor, ZPlacement } from "./common";
+import { ZColor, ZOverlay, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
 import { ZBaseStyling, ZLogo } from "./styling";
 
@@ -65,7 +65,7 @@ export const ZProject = z.object({
   config: ZProjectConfig,
   placement: ZPlacement,
   clickOutsideClose: z.boolean(),
-  darkOverlay: z.boolean(),
+  overlay: ZOverlay,
   environments: z.array(ZEnvironment),
   languages: z.array(ZLanguage),
   logo: ZLogo.nullish(),
@@ -84,7 +84,7 @@ export const ZProjectUpdateInput = z.object({
   config: ZProjectConfig.optional(),
   placement: ZPlacement.optional(),
   clickOutsideClose: z.boolean().optional(),
-  darkOverlay: z.boolean().optional(),
+  overlay: ZOverlay.optional(),
   environments: z.array(ZEnvironment).optional(),
   styling: ZProjectStyling.optional(),
   logo: ZLogo.optional(),

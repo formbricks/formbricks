@@ -154,7 +154,12 @@ export function EditLanguage({
 
   const performLanguageDeletion = async (languageId: string) => {
     try {
-      await deleteLanguageAction({ languageId, projectId: project.id });
+      const result = await deleteLanguageAction({ languageId, projectId: project.id });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
+        return;
+      }
       setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
       toast.success(t("environments.workspace.languages.language_deleted_successfully"));
       // Close the modal after deletion
@@ -187,7 +192,7 @@ export function EditLanguage({
 
   const handleSaveChanges = async () => {
     if (!validateLanguages(languages, t)) return;
-    await Promise.all(
+    const results = await Promise.all(
       languages.map((lang) => {
         return lang.id === "new"
           ? createLanguageAction({
@@ -201,6 +206,11 @@ export function EditLanguage({
             });
       })
     );
+    const errorResult = results.find((result) => result?.serverError);
+    if (errorResult) {
+      toast.error(getFormattedErrorMessage(errorResult));
+      return;
+    }
     toast.success(t("environments.workspace.languages.languages_updated_successfully"));
     router.refresh();
     setIsEditing(false);

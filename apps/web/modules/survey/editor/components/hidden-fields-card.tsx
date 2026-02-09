@@ -158,7 +158,7 @@ export const HiddenFieldsCard = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
+          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none"
         )}>
         <EyeOff className="h-4 w-4" />
       </div>
@@ -191,7 +191,7 @@ export const HiddenFieldsCard = ({
                 );
               })
             ) : (
-              <p className="mt-2 text-sm italic text-slate-500">
+              <p className="mt-2 text-sm text-slate-500 italic">
                 {t("environments.surveys.edit.no_hidden_fields_yet_add_first_one_below")}
               </p>
             )}
@@ -203,12 +203,14 @@ export const HiddenFieldsCard = ({
               const existingElementIds = elements.map((element) => element.id);
               const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
+              const existingVariableNames = localSurvey.variables.map((v) => v.name);
               const validateIdError = validateId(
                 "Hidden field",
                 hiddenField,
                 existingElementIds,
                 existingEndingCardIds,
-                existingHiddenFieldIds
+                existingHiddenFieldIds,
+                existingVariableNames
               );
 
               if (validateIdError) {

@@ -18,6 +18,8 @@ interface StylingTabsProps<T> {
 
   label?: string;
   subLabel?: string;
+  activeTabClassName?: string;
+  inactiveTabClassName?: string;
 }
 
 export const StylingTabs = <T extends string | number>({
@@ -29,6 +31,8 @@ export const StylingTabs = <T extends string | number>({
   tabsContainerClassName,
   label,
   subLabel,
+  activeTabClassName,
+  inactiveTabClassName,
 }: StylingTabsProps<T>) => {
   const [selectedOption, setSelectedOption] = useState<T | undefined>(defaultSelected);
 
@@ -57,7 +61,8 @@ export const StylingTabs = <T extends string | number>({
             className={cn(
               "flex flex-1 cursor-pointer items-center justify-center gap-4 rounded-md py-2 text-center text-sm",
               selectedOption === option.value ? "bg-slate-100" : "bg-white",
-              "focus:ring-brand-dark focus:outline-none focus:ring-2 focus:ring-opacity-50"
+              "focus:ring-brand-dark focus:ring-opacity-50 focus:ring-2 focus:outline-none",
+              selectedOption === option.value ? activeTabClassName : inactiveTabClassName
             )}>
             <input
               type="radio"

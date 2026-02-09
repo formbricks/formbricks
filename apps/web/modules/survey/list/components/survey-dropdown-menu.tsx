@@ -69,7 +69,11 @@ export const SurveyDropDownMenu = ({
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
     try {
-      await deleteSurveyAction({ surveyId });
+      const result = await deleteSurveyAction({ surveyId });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       deleteSurvey(surveyId);
       toast.success(t("environments.surveys.survey_deleted_successfully"));
     } catch (error) {

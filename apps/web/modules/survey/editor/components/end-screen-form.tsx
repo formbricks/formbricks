@@ -46,6 +46,9 @@ export const EndScreenForm = ({
 
   const questions = getElementsFromBlocks(localSurvey.blocks);
 
+  const defaultLanguageCode = localSurvey.languages.find((lang) => lang.default)?.language.code ?? "default";
+  const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
+
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
@@ -66,6 +69,7 @@ export const EndScreenForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!endingCard.headline?.default || endingCard.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div>
         {endingCard.subheader !== undefined && (
@@ -84,6 +88,7 @@ export const EndScreenForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!endingCard.subheader?.default || endingCard.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>
@@ -136,7 +141,7 @@ export const EndScreenForm = ({
           </Label>
         </div>
         {showEndingCardCTA && (
-          <div className="border-1 mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
+          <div className="mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
             <div className="space-y-2">
               <ElementFormInput
                 id="buttonLabel"
@@ -174,13 +179,13 @@ export const EndScreenForm = ({
                   }}
                   isRecallAllowed
                   localSurvey={localSurvey}
-                  usedLanguageCode={"default"}
+                  usedLanguageCode={usedLanguageCode}
                   render={({ value, onChange, highlightedJSX, children }) => {
                     return (
                       <div className="group relative">
                         {/* The highlight container is absolutely positioned behind the input */}
                         <div
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent`}
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent`}
                           dir="auto"
                           key={highlightedJSX.toString()}>
                           {highlightedJSX}
@@ -194,12 +199,12 @@ export const EndScreenForm = ({
                           value={
                             recallToHeadline(
                               {
-                                [selectedLanguageCode]: value,
+                                [usedLanguageCode]: value,
                               },
                               localSurvey,
                               false,
-                              "default"
-                            )[selectedLanguageCode]
+                              usedLanguageCode
+                            )[usedLanguageCode]
                           }
                           onChange={(e) => isExternalUrlsAllowed && onChange(e.target.value)}
                           disabled={!isExternalUrlsAllowed}

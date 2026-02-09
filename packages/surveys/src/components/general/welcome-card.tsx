@@ -30,7 +30,7 @@ interface WelcomeCardProps {
 
 function TimerIcon() {
   return (
-    <div className="mr-1">
+    <div>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="16"
@@ -177,7 +177,7 @@ export function WelcomeCard({
         </div>
         {timeToFinish && !showResponseCount ? (
           <div
-            className="text-subheading my-4 flex items-center"
+            className="text-subheading my-4 flex items-center space-x-1"
             data-testid="fb__surveys__welcome-card__time-display">
             <TimerIcon />
             <p className="pt-1 text-xs">
@@ -186,7 +186,7 @@ export function WelcomeCard({
           </div>
         ) : null}
         {showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-          <div className="text-subheading my-4 flex items-center">
+          <div className="text-subheading my-4 flex items-center space-x-1">
             <UsersIcon />
             <p className="pt-1 text-xs">
               <span data-testid="fb__surveys__welcome-card__response-count">
@@ -196,7 +196,7 @@ export function WelcomeCard({
           </div>
         ) : null}
         {timeToFinish && showResponseCount ? (
-          <div className="text-subheading my-4 flex items-center">
+          <div className="text-subheading my-4 flex items-center space-x-1">
             <TimerIcon />
             <p className="pt-1 text-xs" data-testid="fb__surveys__welcome-card__info-text-test">
               <span>{calculateTimeToComplete()} </span>

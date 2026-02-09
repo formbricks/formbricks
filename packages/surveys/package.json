@@ -23,14 +23,18 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.umd.cjs"
+    },
+    "./validation": {
+      "types": "./dist/validation.d.ts",
+      "import": "./dist/validation.js"
     }
   },
   "scripts": {
-    "dev": "vite build --watch --mode dev",
-    "build": "tsc && vite build",
+    "dev": "concurrently -n \"ESM,UMD\" \"vite build --watch --mode dev\" \"BUILD_UMD=true vite build --watch --mode dev\"",
+    "build": "tsc && vite build && BUILD_UMD=true vite build",
     "build:analyze": "tsc && ANALYZE=true vite build",
     "build:dev": "tsc && vite build --mode dev",
-    "go": "vite build --watch --mode dev",
+    "go": "concurrently -n \"ESM,UMD\" \"vite build --watch --mode dev\" \"BUILD_UMD=true vite build --watch --mode dev\"",
     "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
     "clean": "rimraf .turbo node_modules dist",

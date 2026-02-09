@@ -17,6 +17,7 @@ interface MultipleChoiceSingleElementProps {
   autoFocusEnabled: boolean;
   currentElementId: string;
   dir?: "ltr" | "rtl" | "auto";
+  errorMessage?: string;
 }
 
 export function MultipleChoiceSingleElement({
@@ -28,13 +29,14 @@ export function MultipleChoiceSingleElement({
   setTtc,
   currentElementId,
   dir = "auto",
+  errorMessage,
 }: Readonly<MultipleChoiceSingleElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherValue, setOtherValue] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const isCurrent = element.id === currentElementId;
-  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const isRequired = element.required;
   const { t } = useTranslation();
+  useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const shuffledChoicesIds = useMemo(() => {
     if (element.shuffleOption) {
@@ -90,7 +92,6 @@ export function MultipleChoiceSingleElement({
   }, [isOtherSelected, value]);
 
   const handleChange = (selectedValue: string) => {
-    setErrorMessage(undefined);
     if (selectedValue === otherOption?.id) {
       setOtherValue("");
       onChange({ [element.id]: "" });
@@ -152,24 +153,9 @@ export function MultipleChoiceSingleElement({
     return undefined;
   }, [value, otherOption, allOptions, isOtherSelected]);
 
-  const validateRequired = (): boolean => {
-    // Check if nothing is selected
-    if (element.required && selectedValue === undefined) {
-      setErrorMessage(t("errors.please_select_an_option"));
-      return false;
-    }
-    // Check if "other" is selected but not filled
-    if (element.required && isOtherSelected && !otherValue.trim()) {
-      setErrorMessage(t("errors.please_fill_out_this_field"));
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    setErrorMessage(undefined);
-    if (!validateRequired()) return;
+    // Update TTC when form is submitted (for TTC collection)
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
@@ -184,10 +170,12 @@ export function MultipleChoiceSingleElement({
         options={allOptions}
         value={selectedValue}
         onChange={handleChange}
-        required={element.required}
+        required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         dir={dir}
+        placeholder={t("common.select_option")}
+        variant={element.displayType ?? "list"}
         otherOptionId={otherOption?.id}
         otherOptionLabel={otherOption ? getLocalizedValue(otherOption.label, languageCode) : undefined}
         otherOptionPlaceholder={

@@ -425,11 +425,19 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      await updateSurveyAction({
+      const publishResult = await updateSurveyAction({
         ...localSurvey,
         status,
         segment,
       });
+
+      if (!publishResult?.data) {
+        const errorMessage = getFormattedErrorMessage(publishResult);
+        toast.error(errorMessage);
+        setIsSurveyPublishing(false);
+        return;
+      }
+
       setIsSurveyPublishing(false);
       // Set flag to prevent beforeunload warning during navigation
       isSuccessfullySavedRef.current = true;

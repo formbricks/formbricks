@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
-import { checkIfSurveyIsRTL } from "@/lib/utils";
+import { isRTLLanguage } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
 
@@ -8,12 +8,11 @@ export function RenderSurvey(props: SurveyContainerProps) {
   const [isOpen, setIsOpen] = useState(true);
   const onFinishedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const isRTL = checkIfSurveyIsRTL(props.survey, props.languageCode);
+  const isRTL = isRTLLanguage(props.survey, props.languageCode);
   const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "auto");
 
   useEffect(() => {
-    const isRTL = checkIfSurveyIsRTL(props.survey, props.languageCode);
+    const isRTL = isRTLLanguage(props.survey, props.languageCode);
     setDir(isRTL ? "rtl" : "auto");
   }, [props.languageCode, props.survey]);
 
@@ -53,11 +52,13 @@ export function RenderSurvey(props: SurveyContainerProps) {
     return null;
   }
 
+  const hasOverlay = props.overlay && props.overlay !== "none";
+
   return (
     <SurveyContainer
       mode={props.mode ?? "modal"}
       placement={props.placement}
-      darkOverlay={props.darkOverlay}
+      overlay={props.overlay}
       clickOutside={props.clickOutside}
       onClose={close}
       isOpen={isOpen}
@@ -65,7 +66,7 @@ export function RenderSurvey(props: SurveyContainerProps) {
       {/* @ts-expect-error -- TODO: fix this */}
       <Survey
         {...props}
-        clickOutside={props.placement === "center" ? props.clickOutside : true}
+        clickOutside={hasOverlay ? props.clickOutside : true}
         onClose={close}
         onFinished={() => {
           props.onFinished?.();

@@ -165,7 +165,14 @@ export const AddIntegrationModal = ({
         // create action
         googleSheetIntegrationData.config.data.push(integrationData);
       }
-      await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });
+      const result = await createOrUpdateIntegrationAction({
+        environmentId,
+        integrationData: googleSheetIntegrationData,
+      });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       if (selectedIntegration) {
         toast.success(t("environments.integrations.integration_updated_successfully"));
       } else {
@@ -205,7 +212,14 @@ export const AddIntegrationModal = ({
     googleSheetIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });
+      const result = await createOrUpdateIntegrationAction({
+        environmentId,
+        integrationData: googleSheetIntegrationData,
+      });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       toast.success(t("environments.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {

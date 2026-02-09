@@ -8,6 +8,7 @@ import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
@@ -137,6 +138,25 @@ export const PUT = withV1ApiWrapper({
       if (!validateFileUploads(responseUpdate.data, result.survey.questions)) {
         return {
           response: responses.badRequestResponse("Invalid file upload response"),
+        };
+      }
+
+      // Validate response data against validation rules
+      const validationErrors = validateResponseData(
+        result.survey.blocks,
+        responseUpdate.data,
+        responseUpdate.language ?? "en",
+        responseUpdate.finished,
+        result.survey.questions
+      );
+
+      if (validationErrors) {
+        return {
+          response: responses.badRequestResponse(
+            "Validation failed",
+            formatValidationErrorsForV1Api(validationErrors),
+            true
+          ),
         };
       }
 

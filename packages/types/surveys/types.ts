@@ -1,7 +1,7 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZColor, ZId, ZPlacement, ZUrl, getZSafeUrl } from "../common";
+import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { ZLanguage } from "../project";
@@ -45,7 +45,6 @@ import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
   findQuestionsWithCyclicLogic,
-  getTextContent,
   isConditionGroup,
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
@@ -60,7 +59,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: ZUrl.optional(),
+  buttonLink: ZEndingCardUrl.optional(),
   imageUrl: ZUrl.optional(),
   videoUrl: ZUrl.optional(),
 });
@@ -69,7 +68,7 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: ZUrl.optional(),
+  url: ZEndingCardUrl.optional(),
   label: z.string().optional(),
 });
 
@@ -229,7 +228,7 @@ export const ZSurveyProjectOverwrites = z.object({
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
   clickOutsideClose: z.boolean().nullish(),
-  darkOverlay: z.boolean().nullish(),
+  overlay: ZOverlay.nullish(),
 });
 
 export type TSurveyProjectOverwrites = z.infer<typeof ZSurveyProjectOverwrites>;
@@ -1334,68 +1333,7 @@ export const ZSurvey = z
 
       // 4. Detailed validation for each block and its elements
       blocks.forEach((block, blockIndex) => {
-        // Validate block button labels
         const defaultLanguageCode = "default";
-
-        if (
-          block.buttonLabel?.[defaultLanguageCode] &&
-          block.buttonLabel[defaultLanguageCode].trim() !== ""
-        ) {
-          // Validate button label for all enabled languages
-          const enabledLanguages = languages.filter((lang) => lang.enabled);
-          const languageCodes = enabledLanguages.map((lang) =>
-            lang.default ? "default" : lang.language.code
-          );
-
-          for (const languageCode of languageCodes.length === 0 ? ["default"] : languageCodes) {
-            const labelValue = block.buttonLabel[languageCode];
-            if (!labelValue || getTextContent(labelValue).length === 0) {
-              const invalidLanguageCode =
-                languageCode === "default"
-                  ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                  : languageCode;
-
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `The buttonLabel in block ${String(blockIndex + 1)} is missing for the following languages: ${invalidLanguageCode}`,
-                path: ["blocks", blockIndex, "buttonLabel"],
-                params: { invalidLanguageCodes: [invalidLanguageCode] },
-              });
-            }
-          }
-        }
-
-        //only validate back button label for blocks other than the first one and if back button is not hidden
-        if (
-          !isBackButtonHidden &&
-          blockIndex > 0 &&
-          block.backButtonLabel?.[defaultLanguageCode] &&
-          block.backButtonLabel[defaultLanguageCode].trim() !== ""
-        ) {
-          // Validate back button label for all enabled languages
-          const enabledLanguages = languages.filter((lang) => lang.enabled);
-          const languageCodes = enabledLanguages.map((lang) =>
-            lang.default ? "default" : lang.language.code
-          );
-
-          for (const languageCode of languageCodes.length === 0 ? ["default"] : languageCodes) {
-            const labelValue = block.backButtonLabel[languageCode];
-            if (!labelValue || getTextContent(labelValue).length === 0) {
-              const invalidLanguageCode =
-                languageCode === "default"
-                  ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                  : languageCode;
-
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `The backButtonLabel in block ${String(blockIndex + 1)} is missing for the following languages: ${invalidLanguageCode}`,
-                path: ["blocks", blockIndex, "backButtonLabel"],
-                params: { invalidLanguageCodes: [invalidLanguageCode] },
-              });
-            }
-          }
-        }
-
         // Validate each element in the block
         block.elements.forEach((element, elementIndex) => {
           // Validate headline (required for all elements)
@@ -1830,7 +1768,7 @@ export const ZSurvey = z
               path: ["endings", index, "buttonLink"],
             });
           } else {
-            const parsedButtonLink = getZSafeUrl.safeParse(ending.buttonLink);
+            const parsedButtonLink = ZEndingCardUrl.safeParse(ending.buttonLink);
             if (!parsedButtonLink.success) {
               const errorMessage = parsedButtonLink.error.issues[0].message;
               ctx.addIssue({
@@ -1859,7 +1797,7 @@ export const ZSurvey = z
             path: ["endings", index, "url"],
           });
         } else {
-          const parsedUrl = getZSafeUrl.safeParse(ending.url);
+          const parsedUrl = ZEndingCardUrl.safeParse(ending.url);
           if (!parsedUrl.success) {
             const errorMessage = parsedUrl.error.issues[0].message;
             ctx.addIssue({
@@ -1953,6 +1891,19 @@ const isInvalidOperatorsForQuestionType = (
               "doesNotStartWith",
               "endsWith",
               "doesNotEndWith",
+              "isValidEmail",
+              "isValidUrl",
+              "isValidCountry",
+              "isValidCity",
+              "isLongerThan",
+              "isLongerThanOrEqual",
+              "isShorterThan",
+              "isShorterThanOrEqual",
+              "matchesRegex",
+              "isGreaterThan",
+              "isGreaterThanOrEqual",
+              "isLessThan",
+              "isLessThanOrEqual",
               "isSubmitted",
               "isSkipped",
             ].includes(operator)
@@ -1965,10 +1916,10 @@ const isInvalidOperatorsForQuestionType = (
             ![
               "equals",
               "doesNotEqual",
-              "isGreaterThan",
               "isLessThan",
-              "isGreaterThanOrEqual",
               "isLessThanOrEqual",
+              "isGreaterThan",
+              "isGreaterThanOrEqual",
               "isSubmitted",
               "isSkipped",
             ].includes(operator)
@@ -2915,7 +2866,7 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 
@@ -3746,7 +3697,7 @@ const validateBlockLogicFallback = (
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 

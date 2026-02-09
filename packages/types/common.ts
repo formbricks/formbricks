@@ -20,6 +20,10 @@ export const ZPlacement = z.enum(["bottomLeft", "bottomRight", "topLeft", "topRi
 
 export type TPlacement = z.infer<typeof ZPlacement>;
 
+export const ZOverlay = z.enum(["none", "light", "dark"]);
+
+export type TOverlay = z.infer<typeof ZOverlay>;
+
 export const ZId = z.string().cuid2();
 
 export const ZUuid = z.string().uuid();
@@ -27,6 +31,24 @@ export const ZUuid = z.string().uuid();
 export const getZSafeUrl = z.string().superRefine((url, ctx) => {
   safeUrlRefinement(url, ctx);
 });
+
+// Simple URL validation for ending cards - only checks if URL starts with http:// or https://
+// This allows dynamic URLs via hidden fields/recall values
+export const ZEndingCardUrl = z.string().superRefine((url, ctx) => {
+  endingCardUrlRefinement(url, ctx);
+});
+
+export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
+  // Trim the URL to handle trailing/leading spaces
+  const trimmedUrl = url.trim();
+
+  if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "URL must start with http:// or https://",
+    });
+  }
+};
 
 export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   if (url.includes(" ") || url.endsWith(" ") || url.startsWith(" ")) {

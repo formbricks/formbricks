@@ -12,7 +12,6 @@
     "open_in_new_tab": "In neuem Tab öffnen",
     "people_responded": "{count, plural, one {1 Person hat geantwortet} other {{count} Personen haben geantwortet}}",
     "please_retry_now_or_try_again_later": "Bitte versuchen Sie es jetzt erneut oder später noch einmal.",
-    "please_specify": "Bitte angeben",
     "powered_by": "Bereitgestellt von",
     "privacy_policy": "Datenschutzrichtlinie",
     "protected_by_reCAPTCHA_and_the_Google": "Geschützt durch reCAPTCHA und die Google",
@@ -22,6 +21,8 @@
     "respondents_will_not_see_this_card": "Befragte werden diese Karte nicht sehen",
     "retry": "Wiederholen",
     "retrying": "Erneuter Versuch...",
+    "select_option": "Wähle eine Option",
+    "select_options": "Wähle Optionen",
     "sending_responses": "Antworten werden gesendet...",
     "takes_less_than_x_minutes": "{count, plural, one {Dauert weniger als 1 Minute} other {Dauert weniger als {count} Minuten}}",
     "takes_x_minutes": "{count, plural, one {Dauert 1 Minute} other {Dauert {count} Minuten}}",
@@ -32,6 +33,10 @@
     "your_feedback_is_stuck": "Ihr Feedback steckt fest :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Bitte ordnen Sie alle Optionen ein",
+    "all_rows_must_be_answered": "Bitte beantworten Sie alle Zeilen",
+    "file_extension_must_be": "Die Dateierweiterung muss {extension} sein",
+    "file_extension_must_not_be": "Die Dateierweiterung darf nicht {extension} sein",
     "file_input": {
       "duplicate_files": "Die folgenden Dateien sind bereits hochgeladen: {duplicateNames}. Doppelte Dateien sind nicht erlaubt.",
       "file_size_exceeded": "Die folgenden Dateien überschreiten die maximale Größe von {maxSizeInMB} MB und wurden entfernt: {fileNames}",
@@ -45,18 +50,32 @@
       "message": "Bitte deaktivieren Sie den Spam-Schutz in den Umfrageeinstellungen, um dieses Gerät weiterhin zu verwenden.",
       "title": "Dieses Gerät unterstützt keinen Spam-Schutz."
     },
-    "please_book_an_appointment": "Bitte vereinbaren Sie einen Termin",
+    "invalid_format": "Bitte geben Sie ein gültiges Format ein",
+    "is_between": "Bitte wählen Sie ein Datum zwischen {startDate} und {endDate}",
+    "is_earlier_than": "Bitte wählen Sie ein Datum vor dem {date}",
+    "is_greater_than": "Bitte geben Sie einen Wert größer als {min} ein",
+    "is_later_than": "Bitte wählen Sie ein Datum nach dem {date}",
+    "is_less_than": "Bitte geben Sie einen Wert kleiner als {max} ein",
+    "is_not_between": "Bitte wählen Sie ein Datum, das nicht zwischen {startDate} und {endDate} liegt",
+    "max_length": "Bitte geben Sie nicht mehr als {max} Zeichen ein",
+    "max_selections": "Bitte wählen Sie nicht mehr als {max} Optionen aus",
+    "max_value": "Bitte geben Sie einen Wert ein, der nicht größer als {max} ist",
+    "min_length": "Bitte geben Sie mindestens {min} Zeichen ein",
+    "min_selections": "Bitte wählen Sie mindestens {min} Optionen aus",
+    "min_value": "Bitte geben Sie einen Wert von mindestens {min} ein",
+    "minimum_options_ranked": "Bitte ordnen Sie mindestens {min} Optionen",
+    "minimum_rows_answered": "Bitte beantworten Sie mindestens {min} Zeilen",
     "please_enter_a_valid_email_address": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "please_enter_a_valid_phone_number": "Bitte geben Sie eine gültige Telefonnummer ein",
     "please_enter_a_valid_url": "Bitte geben Sie eine gültige URL ein",
     "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
-    "please_rank_all_items_before_submitting": "Bitte ordnen Sie alle Elemente vor dem Absenden",
-    "please_select_a_date": "Bitte wählen Sie ein Datum aus",
-    "please_select_an_option": "Bitte wählen Sie eine Option",
-    "please_upload_a_file": "Bitte laden Sie eine Datei hoch",
     "recaptcha_error": {
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
-      "title": "Wir konnten nicht verifizieren, dass Sie ein Mensch sind."
-    }
+      "title": "Wir konnten nicht verifizieren, dass du ein Mensch bist."
+    },
+    "value_must_contain": "Wert muss {value} enthalten",
+    "value_must_equal": "Wert muss {value} entsprechen",
+    "value_must_not_contain": "Wert darf {value} nicht enthalten",
+    "value_must_not_equal": "Wert darf nicht {value} entsprechen"
   }
 }

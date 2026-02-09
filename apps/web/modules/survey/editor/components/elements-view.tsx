@@ -46,9 +46,15 @@ import {
   renumberBlocks,
   updateElementInBlock,
 } from "@/modules/survey/editor/lib/blocks";
-import { findElementUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
+import {
+  findBlockUsedInLogic,
+  findElementUsedInLogic,
+  isUsedInQuota,
+  isUsedInRecall,
+} from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { isEndingCardValid, isWelcomeCardValid, validateSurveyElementsInBatch } from "../lib/validation";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { isEndingCardValid, isWelcomeCardValid, validateElement } from "../lib/validation";
 
 interface ElementsViewProps {
   localSurvey: TSurvey;
@@ -94,6 +100,16 @@ export const ElementsView = ({
   isExternalUrlsAllowed,
 }: ElementsViewProps) => {
   const { t } = useTranslation();
+  const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
+    open: boolean;
+    elementIdx: number;
+    type: "element" | "block";
+    blockId?: string;
+  }>({
+    open: false,
+    elementIdx: 0,
+    type: "element",
+  });
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
@@ -195,35 +211,6 @@ export const ElementsView = ({
     };
   };
 
-  useEffect(() => {
-    if (!invalidElements) return;
-    let updatedInvalidElements: string[] = [...invalidElements];
-
-    // Check welcome card
-    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
-      if (!updatedInvalidElements.includes("start")) {
-        updatedInvalidElements = [...updatedInvalidElements, "start"];
-      }
-    } else {
-      updatedInvalidElements = updatedInvalidElements.filter((elementId) => elementId !== "start");
-    }
-
-    // Check thank you card
-    localSurvey.endings.forEach((ending) => {
-      if (!isEndingCardValid(ending, surveyLanguages)) {
-        if (!updatedInvalidElements.includes(ending.id)) {
-          updatedInvalidElements = [...updatedInvalidElements, ending.id];
-        }
-      } else {
-        updatedInvalidElements = updatedInvalidElements.filter((elementId) => elementId !== ending.id);
-      }
-    });
-
-    if (JSON.stringify(updatedInvalidElements) !== JSON.stringify(invalidElements)) {
-      setInvalidElements(updatedInvalidElements);
-    }
-  }, [localSurvey.welcomeCard, localSurvey.endings, surveyLanguages, invalidElements, setInvalidElements]);
-
   const updateElement = (elementIdx: number, updatedAttributes: any) => {
     // Get element ID from current elements array (for validation)
     const element = elements[elementIdx];
@@ -234,7 +221,6 @@ export const ElementsView = ({
 
     // Track side effects that need to happen after state update
     let newActiveElementId: string | null = null;
-    let invalidElementsUpdate: string[] | null = null;
 
     // Use functional update to ensure we work with the latest state
     setLocalSurvey((prevSurvey) => {
@@ -280,13 +266,6 @@ export const ElementsView = ({
         const initialElementId = elementId;
         updatedSurvey = handleElementLogicChange(updatedSurvey, initialElementId, elementLevelAttributes.id);
 
-        // Track side effects to apply after state update
-        if (invalidElements?.includes(initialElementId)) {
-          invalidElementsUpdate = invalidElements.map((id) =>
-            id === initialElementId ? elementLevelAttributes.id : id
-          );
-        }
-
         // Track new active element ID
         newActiveElementId = elementLevelAttributes.id;
 
@@ -328,9 +307,6 @@ export const ElementsView = ({
     });
 
     // Apply side effects after state update is queued
-    if (invalidElementsUpdate) {
-      setInvalidElements(invalidElementsUpdate);
-    }
     if (newActiveElementId) {
       setActiveElementId(newActiveElementId);
     }
@@ -388,14 +364,6 @@ export const ElementsView = ({
   };
 
   const validateElementDeletion = (elementId: string, elementIdx: number): boolean => {
-    const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
-    if (usedElementIdx !== -1) {
-      toast.error(
-        t("environments.surveys.edit.question_used_in_logic", { questionIndex: usedElementIdx + 1 })
-      );
-      return false;
-    }
-
     const recallElementIdx = isUsedInRecall(localSurvey, elementId);
     if (recallElementIdx === elements.length) {
       toast.error(t("environments.surveys.edit.question_used_in_recall_ending_card"));
@@ -439,15 +407,11 @@ export const ElementsView = ({
     }
   };
 
-  const deleteElement = (elementIdx: number) => {
+  const executeDeletion = (elementIdx: number) => {
     const element = elements[elementIdx];
     if (!element) return;
 
     const elementId = element.id;
-    if (!validateElementDeletion(elementId, elementIdx)) {
-      return;
-    }
-
     const activeElementIdTemp = activeElementId ?? elements[0]?.id;
     // let updatedSurvey = removeRecallReferences(localSurvey, elementId);
     let updatedSurvey = structuredClone(localSurvey);
@@ -473,6 +437,24 @@ export const ElementsView = ({
     handleActiveElementAfterDeletion(elementId, elementIdx, updatedSurvey, activeElementIdTemp);
 
     toast.success(t("environments.surveys.edit.question_deleted"));
+  };
+
+  const deleteElement = (elementIdx: number) => {
+    const element = elements[elementIdx];
+    if (!element) return;
+
+    const elementId = element.id;
+    if (!validateElementDeletion(elementId, elementIdx)) {
+      return;
+    }
+
+    const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
+    if (usedElementIdx !== -1) {
+      setLogicDeletionWarning({ open: true, elementIdx, type: "element" });
+      return;
+    }
+
+    executeDeletion(elementIdx);
   };
 
   const duplicateElement = (elementIdx: number) => {
@@ -672,7 +654,7 @@ export const ElementsView = ({
     toast.success(t("environments.surveys.edit.block_duplicated"));
   };
 
-  const deleteBlockById = (blockId: string) => {
+  const executeBlockDeletion = (blockId: string) => {
     // First check if block exists in current state (for validation and calculating next active element)
     const blockExists = localSurvey.blocks.some((b) => b.id === blockId);
     if (!blockExists) {
@@ -709,6 +691,28 @@ export const ElementsView = ({
     }
   };
 
+  const deleteBlockById = (blockId: string) => {
+    // First check if block is used in logic
+    const usedElementIdx = findBlockUsedInLogic(localSurvey, blockId);
+    if (usedElementIdx !== -1) {
+      setLogicDeletionWarning({ open: true, elementIdx: 0, type: "block", blockId });
+      return;
+    }
+
+    // Then check if any element in the block is used in recall/quota
+    const block = localSurvey.blocks.find((b) => b.id === blockId);
+    if (block) {
+      for (const element of block.elements) {
+        const elementIdx = elements.findIndex((e) => e.id === element.id);
+        if (!validateElementDeletion(element.id, elementIdx)) {
+          return;
+        }
+      }
+    }
+
+    executeBlockDeletion(blockId);
+  };
+
   const moveBlockById = (blockId: string, direction: "up" | "down") => {
     const result = moveBlockHelper(localSurvey, blockId, direction);
 
@@ -720,23 +724,67 @@ export const ElementsView = ({
     setLocalSurvey(result.data);
   };
 
-  //useEffect to validate survey when changes are made to languages
-  useEffect(() => {
-    if (!invalidElements) return;
-    let updatedInvalidElements: string[] = invalidElements;
-    // Validate each element
-    elements.forEach((element) => {
-      updatedInvalidElements = validateSurveyElementsInBatch(
-        element,
-        updatedInvalidElements,
-        surveyLanguages
-      );
-    });
+  // Validate survey when changes are made to languages or elements
+  // using set for O(1) lookup
+  useEffect(
+    () => {
+      if (!invalidElements) return;
 
-    if (JSON.stringify(updatedInvalidElements) !== JSON.stringify(invalidElements)) {
-      setInvalidElements(updatedInvalidElements);
-    }
-  }, [elements, surveyLanguages, invalidElements, setInvalidElements]);
+      const currentInvalidSet = new Set(invalidElements);
+      let hasChanges = false;
+
+      // Validate each element
+      elements.forEach((element) => {
+        const isValid = validateElement(element, surveyLanguages);
+        if (isValid) {
+          if (currentInvalidSet.has(element.id)) {
+            currentInvalidSet.delete(element.id);
+            hasChanges = true;
+          }
+        } else if (!currentInvalidSet.has(element.id)) {
+          currentInvalidSet.add(element.id);
+          hasChanges = true;
+        }
+      });
+
+      // Check welcome card
+      if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
+        if (!currentInvalidSet.has("start")) {
+          currentInvalidSet.add("start");
+          hasChanges = true;
+        }
+      } else if (currentInvalidSet.has("start")) {
+        currentInvalidSet.delete("start");
+        hasChanges = true;
+      }
+
+      // Check thank you card
+      localSurvey.endings.forEach((ending) => {
+        if (!isEndingCardValid(ending, surveyLanguages)) {
+          if (!currentInvalidSet.has(ending.id)) {
+            currentInvalidSet.add(ending.id);
+            hasChanges = true;
+          }
+        } else if (currentInvalidSet.has(ending.id)) {
+          currentInvalidSet.delete(ending.id);
+          hasChanges = true;
+        }
+      });
+
+      if (hasChanges) {
+        setInvalidElements(Array.from(currentInvalidSet));
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      elements,
+      surveyLanguages,
+      invalidElements,
+      setInvalidElements,
+      localSurvey.welcomeCard,
+      localSurvey.endings,
+    ]
+  );
 
   useEffect(() => {
     const elementWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
@@ -747,7 +795,7 @@ export const ElementsView = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeElementId, setActiveElementId]);
+  }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -918,6 +966,22 @@ export const ElementsView = ({
           </>
         )}
       </div>
+
+      <ConfirmationModal
+        open={logicDeletionWarning.open}
+        setOpen={(open) => setLogicDeletionWarning((prev) => ({ ...prev, open: open as boolean }))}
+        title={t("environments.surveys.edit.question_used_in_logic_warning_title")}
+        body={t("environments.surveys.edit.question_used_in_logic_warning_text")}
+        buttonText={t("environments.surveys.edit.delete_anyways")}
+        onConfirm={() => {
+          if (logicDeletionWarning.type === "element") {
+            executeDeletion(logicDeletionWarning.elementIdx);
+          } else if (logicDeletionWarning.type === "block" && logicDeletionWarning.blockId) {
+            executeBlockDeletion(logicDeletionWarning.blockId);
+          }
+          setLogicDeletionWarning((prev) => ({ ...prev, open: false }));
+        }}
+      />
     </div>
   );
 };

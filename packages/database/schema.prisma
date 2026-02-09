@@ -607,6 +607,12 @@ enum WidgetPlacement {
   center
 }
 
+enum SurveyOverlay {
+  none
+  light
+  dark
+}
+
 /// Main grouping mechanism for resources in Formbricks.
 /// Each organization can have multiple projects to separate different applications or products.
 ///
@@ -635,7 +641,7 @@ model Project {
   inAppSurveyBranding Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
   placement           WidgetPlacement @default(bottomRight)
   clickOutsideClose   Boolean         @default(true)
-  darkOverlay         Boolean         @default(false)
+  overlay             SurveyOverlay   @default(none)
   languages           Language[]
   /// [Logo]
   logo                Json?

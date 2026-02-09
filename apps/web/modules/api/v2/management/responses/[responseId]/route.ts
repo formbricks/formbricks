@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -190,6 +191,26 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
             },
           ],
         });
+      }
+
+      // Validate response data against validation rules
+      const validationErrors = validateResponseData(
+        questionsResponse.data.blocks,
+        body.data,
+        body.language ?? "en",
+        body.finished,
+        questionsResponse.data.questions
+      );
+
+      if (validationErrors) {
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: formatValidationErrorsForV2Api(validationErrors),
+          },
+          auditLog
+        );
       }
 
       const response = await updateResponseWithQuotaEvaluation(params.responseId, body);

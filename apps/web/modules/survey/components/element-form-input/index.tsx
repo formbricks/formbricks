@@ -523,21 +523,6 @@ export const ElementFormInput = ({
       {label && (
         <div className="mt-3 mb-2 flex items-center justify-between">
           <Label htmlFor={id}>{label}</Label>
-          {id === "headline" && currentElement && updateElement && (
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="required-toggle" className="text-sm">
-                {t("environments.surveys.edit.required")}
-              </Label>
-              <Switch
-                id="required-toggle"
-                checked={currentElement.required}
-                disabled={getIsRequiredToggleDisabled()}
-                onCheckedChange={(checked) => {
-                  updateElement(elementIdx, { required: checked });
-                }}
-              />
-            </div>
-          )}
         </div>
       )}
       <MultiLangWrapper

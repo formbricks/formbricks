@@ -5,12 +5,13 @@ import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
@@ -26,6 +27,7 @@ interface PictureSelectionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const PictureSelectionForm = ({
@@ -38,6 +40,7 @@ export const PictureSelectionForm = ({
   isInvalid,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: PictureSelectionFormProps): JSX.Element => {
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -87,6 +90,7 @@ export const PictureSelectionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
       />
       <div ref={parent}>
@@ -105,6 +109,7 @@ export const PictureSelectionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
               />
             </div>
@@ -156,7 +161,19 @@ export const PictureSelectionForm = ({
           checked={element.allowMulti}
           onClick={(e) => {
             e.stopPropagation();
-            updateElement(elementIdx, { allowMulti: !element.allowMulti });
+            const newAllowMulti = !element.allowMulti;
+            // If switching to single-select (allowMulti = false), remove validation rules
+            // since they're only applicable for multi-select
+            const updatedAttributes: Partial<TSurveyPictureSelectionElement> = {
+              allowMulti: newAllowMulti,
+            };
+            if (!newAllowMulti && element.validation?.rules && element.validation.rules.length > 0) {
+              updatedAttributes.validation = {
+                ...element.validation,
+                rules: [],
+              };
+            }
+            updateElement(elementIdx, updatedAttributes);
           }}
         />
         <Label htmlFor="multi-select-toggle" className="cursor-pointer">
@@ -170,6 +187,18 @@ export const PictureSelectionForm = ({
           </div>
         </Label>
       </div>
+      {element.allowMulti && (
+        <ValidationRulesEditor
+          elementType={element.type}
+          validation={element.validation}
+          onUpdateValidation={(validation) => {
+            updateElement(elementIdx, {
+              validation,
+            });
+          }}
+          element={element}
+        />
+      )}
     </form>
   );
 };

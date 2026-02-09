@@ -12,7 +12,6 @@
     "open_in_new_tab": "Openen in nieuw tabblad",
     "people_responded": "{count, plural, one {1 persoon heeft gereageerd} other {{count} mensen hebben gereageerd}}",
     "please_retry_now_or_try_again_later": "Probeer het nu opnieuw of probeer het later opnieuw.",
-    "please_specify": "Graag specificeren",
     "powered_by": "Aangedreven door",
     "privacy_policy": "Privacybeleid",
     "protected_by_reCAPTCHA_and_the_Google": "Beschermd door reCAPTCHA en Google",
@@ -22,6 +21,8 @@
     "respondents_will_not_see_this_card": "Respondenten zien deze kaart niet",
     "retry": "Opnieuw proberen",
     "retrying": "Opnieuw proberen...",
+    "select_option": "Selecteer een optie",
+    "select_options": "Selecteer opties",
     "sending_responses": "Reacties verzenden...",
     "takes_less_than_x_minutes": "{count, plural, one {Duurt minder dan 1 minuut} other {Duurt minder dan {count} minuten}}",
     "takes_x_minutes": "{count, plural, one {Duurt 1 minuut} other {Duurt {count} minuten}}",
@@ -32,6 +33,10 @@
     "your_feedback_is_stuck": "Je feedback blijft hangen :("
   },
   "errors": {
+    "all_options_must_be_ranked": "Rangschik alle opties",
+    "all_rows_must_be_answered": "Beantwoord alle rijen",
+    "file_extension_must_be": "Bestandsextensie moet {extension} zijn",
+    "file_extension_must_not_be": "Bestandsextensie mag niet {extension} zijn",
     "file_input": {
       "duplicate_files": "De volgende bestanden zijn al geüpload: {duplicateNames}. Dubbele bestanden zijn niet toegestaan.",
       "file_size_exceeded": "De volgende bestanden overschrijden de maximale grootte van {maxSizeInMB} MB en zijn verwijderd: {fileNames}",
@@ -43,20 +48,34 @@
     },
     "invalid_device_error": {
       "message": "Schakel de spambeveiliging uit in de enquête-instellingen om dit apparaat te blijven gebruiken.",
-      "title": "Dit apparaat ondersteunt geen spambeveiliging."
+      "title": "Dit apparaat ondersteunt geen spambescherming."
     },
-    "please_book_an_appointment": "Maak een afspraak",
+    "invalid_format": "Voer een geldig formaat in",
+    "is_between": "Selecteer een datum tussen {startDate} en {endDate}",
+    "is_earlier_than": "Selecteer een datum vóór {date}",
+    "is_greater_than": "Voer een waarde in die groter is dan {min}",
+    "is_later_than": "Selecteer een datum na {date}",
+    "is_less_than": "Voer een waarde in die kleiner is dan {max}",
+    "is_not_between": "Selecteer een datum die niet tussen {startDate} en {endDate} ligt",
+    "max_length": "Voer niet meer dan {max} tekens in",
+    "max_selections": "Selecteer niet meer dan {max} opties",
+    "max_value": "Voer een waarde in die niet groter is dan {max}",
+    "min_length": "Voer minimaal {min} tekens in",
+    "min_selections": "Selecteer minimaal {min} opties",
+    "min_value": "Voer een waarde in van minimaal {min}",
+    "minimum_options_ranked": "Rangschik minimaal {min} opties",
+    "minimum_rows_answered": "Beantwoord minimaal {min} rijen",
     "please_enter_a_valid_email_address": "Voer een geldig e-mailadres in",
     "please_enter_a_valid_phone_number": "Voer een geldig telefoonnummer in",
     "please_enter_a_valid_url": "Voer een geldige URL in",
     "please_fill_out_this_field": "Vul dit veld in",
-    "please_rank_all_items_before_submitting": "Rangschik alle items voordat u ze verzendt",
-    "please_select_a_date": "Selecteer een datum",
-    "please_select_an_option": "Selecteer een optie",
-    "please_upload_a_file": "Upload een bestand",
     "recaptcha_error": {
       "message": "Uw reactie kan niet worden verzonden omdat deze is gemarkeerd als geautomatiseerde activiteit. Als u ademhaalt, probeer het dan opnieuw.",
       "title": "We konden niet verifiëren dat je een mens bent."
-    }
+    },
+    "value_must_contain": "Waarde moet {value} bevatten",
+    "value_must_equal": "Waarde moet gelijk zijn aan {value}",
+    "value_must_not_contain": "Waarde mag {value} niet bevatten",
+    "value_must_not_equal": "Waarde mag niet gelijk zijn aan {value}"
   }
 }

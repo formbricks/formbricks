@@ -76,6 +76,7 @@ export function Survey({
   isSpamProtectionEnabled,
   dir = "auto",
   setDir,
+  placement,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -424,7 +425,10 @@ export function Survey({
     const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
 
     if (blockId === "start")
-      return { nextBlockId: localSurvey.blocks[0]?.id || firstEndingId, calculatedVariables: {} };
+      return {
+        nextBlockId: localSurvey.blocks[0]?.id || firstEndingId,
+        calculatedVariables: {},
+      };
 
     if (!currentBlock) {
       console.error(
@@ -675,7 +679,7 @@ export function Survey({
       setBlockId(nextBlockId);
     } else if (finished) {
       // Survey is finished, show the first ending or set to a value > blocks.length
-      const firstEndingId = localSurvey.endings[0]?.id;
+      const firstEndingId = localSurvey.endings[0]?.id as string | undefined;
       if (firstEndingId) {
         setBlockId(firstEndingId);
       } else {
@@ -689,7 +693,7 @@ export function Survey({
   };
 
   const onBack = (): void => {
-    let prevBlockId;
+    let prevBlockId: string | undefined;
     // use history if available
     if (history.length > 0) {
       const newHistory = [...history];
@@ -801,6 +805,7 @@ export function Survey({
         return (
           Boolean(block) && (
             <BlockConditional
+              surveyLanguages={localSurvey.languages}
               key={block.id}
               surveyId={localSurvey.id}
               block={{
@@ -915,6 +920,7 @@ export function Survey({
       setBlockId={setBlockId}
       shouldResetBlockId={shouldResetQuestionId}
       fullSizeCards={fullSizeCards}
+      placement={placement}
     />
   );
 }

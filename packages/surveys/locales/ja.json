@@ -12,7 +12,6 @@
     "open_in_new_tab": "新しいタブで開く",
     "people_responded": "{count, plural, other {{count}人が回答しました}}",
     "please_retry_now_or_try_again_later": "今すぐ再試行するか、後でもう一度お試しください。",
-    "please_specify": "具体的に記入してください",
     "powered_by": "提供：",
     "privacy_policy": "プライバシーポリシー",
     "protected_by_reCAPTCHA_and_the_Google": "reCAPTCHAとGoogleによって保護されています",
@@ -22,6 +21,8 @@
     "respondents_will_not_see_this_card": "回答者はこのカードを見ることができません",
     "retry": "再試行",
     "retrying": "再試行中...",
+    "select_option": "オプションを選択",
+    "select_options": "オプションを選択",
     "sending_responses": "回答を送信中...",
     "takes_less_than_x_minutes": "{count, plural, one {1分未満} other {{count}分未満}}",
     "takes_x_minutes": "{count, plural, one {1分} other {{count}分}}",
@@ -32,6 +33,10 @@
     "your_feedback_is_stuck": "フィードバックが送信できません :("
   },
   "errors": {
+    "all_options_must_be_ranked": "すべてのオプションをランク付けしてください",
+    "all_rows_must_be_answered": "すべての行に回答してください",
+    "file_extension_must_be": "ファイル拡張子は{extension}である必要があります",
+    "file_extension_must_not_be": "ファイル拡張子は{extension}であってはなりません",
     "file_input": {
       "duplicate_files": "以下のファイルはすでにアップロードされています：{duplicateNames}。重複ファイルは許可されていません。",
       "file_size_exceeded": "以下のファイルは最大サイズ{maxSizeInMB}MBを超えているため削除されました：{fileNames}",
@@ -45,18 +50,32 @@
       "message": "このデバイスを引き続き使用するには、アンケート設定でスパム保護を無効にしてください。",
       "title": "このデバイスはスパム保護に対応していません。"
     },
-    "please_book_an_appointment": "予約をお取りください",
+    "invalid_format": "有効な形式を入力してください",
+    "is_between": "{startDate}から{endDate}の間の日付を選択してください",
+    "is_earlier_than": "{date}より前の日付を選択してください",
+    "is_greater_than": "{min}より大きい値を入力してください",
+    "is_later_than": "{date}より後の日付を選択してください",
+    "is_less_than": "{max}より小さい値を入力してください",
+    "is_not_between": "{startDate}から{endDate}の間以外の日付を選択してください",
+    "max_length": "{max}文字以内で入力してください",
+    "max_selections": "{max}個以内のオプションを選択してください",
+    "max_value": "{max}以下の値を入力してください",
+    "min_length": "{min}文字以上入力してください",
+    "min_selections": "{min}個以上のオプションを選択してください",
+    "min_value": "{min}以上の値を入力してください",
+    "minimum_options_ranked": "最低{min}個のオプションをランク付けしてください",
+    "minimum_rows_answered": "最低{min}行に回答してください",
     "please_enter_a_valid_email_address": "有効なメールアドレスを入力してください",
     "please_enter_a_valid_phone_number": "有効な電話番号を入力してください",
     "please_enter_a_valid_url": "有効なURLを入力してください",
     "please_fill_out_this_field": "このフィールドに入力してください",
-    "please_rank_all_items_before_submitting": "送信する前にすべての項目をランク付けしてください",
-    "please_select_a_date": "日付を選択してください",
-    "please_select_an_option": "オプションを選択してください",
-    "please_upload_a_file": "ファイルをアップロードしてください",
     "recaptcha_error": {
       "message": "自動化された活動としてフラグが立てられたため、回答を送信できませんでした。人間の方は、もう一度お試しください。",
       "title": "あなたが人間であることを確認できませんでした。"
-    }
+    },
+    "value_must_contain": "値に{value}を含める必要があります",
+    "value_must_equal": "値は{value}と等しい必要があります",
+    "value_must_not_contain": "値に{value}を含めることはできません",
+    "value_must_not_equal": "値は{value}と等しくない必要があります"
   }
 }
