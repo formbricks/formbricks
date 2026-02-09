@@ -87,9 +87,9 @@ test.describe("Survey Styling", async () => {
     await setDimension(page, "Padding X", "20");
     await setDimension(page, "Padding Y", "10");
     await setDimension(page, "Placeholder Opacity", "0.8");
-    // Shadow is a text input
-    await page.getByLabel("Shadow").fill("0 4px 6px -1px rgba(0, 0, 0, 0.1)");
-    await page.getByLabel("Shadow").blur();
+    // Shadow is a text input – use setDimension helper (label→parent→input)
+    // because getByLabel relies on for/id linkage which FormLabel doesn't guarantee
+    await setDimension(page, "Shadow", "0 4px 6px -1px rgba(0, 0, 0, 0.1)");
 
     await page.waitForTimeout(1000);
     css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
