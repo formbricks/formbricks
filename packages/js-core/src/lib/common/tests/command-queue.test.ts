@@ -233,11 +233,12 @@ describe("CommandQueue", () => {
 
     await queue.wait();
 
-    // cmd2 should be skipped due to failed setup check
-    expect(executionOrder).toEqual(["cmd1", "cmd3"]);
+    // cmd2 should be skipped due to failed setup check, AND the queue should pause
+    // So cmd3 (GeneralAction) will ALSO not run because the queue is blocked by cmd2
+    expect(executionOrder).toEqual(["cmd1"]);
     expect(cmd1).toHaveBeenCalled();
     expect(cmd2).not.toHaveBeenCalled();
-    expect(cmd3).toHaveBeenCalled();
+    expect(cmd3).not.toHaveBeenCalled();
   });
 
   test("executes later setup command if initial command requires setup", async () => {
