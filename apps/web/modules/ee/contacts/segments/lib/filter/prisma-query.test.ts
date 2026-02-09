@@ -4,6 +4,14 @@ import { TBaseFilters, TSegmentWithSurveyNames } from "@formbricks/types/segment
 import { getSegment } from "../segments";
 import { segmentFilterToPrismaQuery } from "./prisma-query";
 
+const mockQueryRawUnsafe = vi.fn();
+
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    $queryRawUnsafe: (...args: unknown[]) => mockQueryRawUnsafe(...args),
+  },
+}));
+
 vi.mock("../segments", () => ({
   getSegment: vi.fn(),
 }));
@@ -18,6 +26,8 @@ describe("segmentFilterToPrismaQuery", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default mock: number filter raw SQL returns one matching contact
+    mockQueryRawUnsafe.mockResolvedValue([{ contactId: "mock-contact-1" }]);
   });
 
   afterEach(() => {
@@ -135,16 +145,7 @@ describe("segmentFilterToPrismaQuery", () => {
             },
           },
         ],
-        OR: [
-          {
-            attributes: {
-              some: {
-                attributeKey: { key: "age" },
-                valueNumber: { gt: 30 },
-              },
-            },
-          },
-        ],
+        OR: [{ id: { in: ["mock-contact-1"] } }],
       });
     }
   });
@@ -756,12 +757,7 @@ describe("segmentFilterToPrismaQuery", () => {
       });
 
       expect(subgroup.AND[0].AND[2]).toStrictEqual({
-        attributes: {
-          some: {
-            attributeKey: { key: "age" },
-            valueNumber: { gte: 18 },
-          },
-        },
+        id: { in: ["mock-contact-1"] },
       });
 
       // Segment inclusion
@@ -1162,24 +1158,10 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
 
-      // Second subgroup (numeric operators)
+      // Second subgroup (numeric operators - now use raw SQL subquery returning contact IDs)
       const secondSubgroup = whereClause.AND?.[0];
       expect(secondSubgroup.AND[1].AND).toContainEqual({
-        attributes: {
-          some: {
-            attributeKey: { key: "loginCount" },
-            valueNumber: { gt: 5 },
-          },
-        },
-      });
-
-      expect(secondSubgroup.AND[1].AND).toContainEqual({
-        attributes: {
-          some: {
-            attributeKey: { key: "purchaseAmount" },
-            valueNumber: { lte: 1000 },
-          },
-        },
+        id: { in: ["mock-contact-1"] },
       });
 
       // Third subgroup (negation operators in OR clause)
@@ -1251,7 +1233,10 @@ describe("segmentFilterToPrismaQuery", () => {
               attributes: {
                 some: {
                   attributeKey: { key: "purchaseDate" },
-                  valueDate: { lt: new Date(targetDate) },
+                  OR: [
+                    { valueDate: { lt: new Date(targetDate) } },
+                    { valueDate: null, value: { lt: new Date(targetDate).toISOString() } },
+                  ],
                 },
               },
             },
@@ -1292,7 +1277,10 @@ describe("segmentFilterToPrismaQuery", () => {
               attributes: {
                 some: {
                   attributeKey: { key: "signupDate" },
-                  valueDate: { gt: new Date(targetDate) },
+                  OR: [
+                    { valueDate: { gt: new Date(targetDate) } },
+                    { valueDate: null, value: { gt: new Date(targetDate).toISOString() } },
+                  ],
                 },
               },
             },
@@ -1334,7 +1322,16 @@ describe("segmentFilterToPrismaQuery", () => {
               attributes: {
                 some: {
                   attributeKey: { key: "lastActivityDate" },
-                  valueDate: { gte: new Date(startDate), lte: new Date(endDate) },
+                  OR: [
+                    { valueDate: { gte: new Date(startDate), lte: new Date(endDate) } },
+                    {
+                      valueDate: null,
+                      value: {
+                        gte: new Date(startDate).toISOString(),
+                        lte: new Date(endDate).toISOString(),
+                      },
+                    },
+                  ],
                 },
               },
             },
@@ -1369,10 +1366,12 @@ describe("segmentFilterToPrismaQuery", () => {
       if (result.ok) {
         const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
-        // isSameDay should generate gte: startOfDay and lte: endOfDay
+        // isSameDay should generate OR with valueDate and string fallback
         const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
         expect(dateAttr).toBeDefined();
-        const valueDate = dateAttr?.some?.valueDate;
+        const orConditions = dateAttr?.some?.OR;
+        expect(orConditions).toHaveLength(2);
+        const valueDate = orConditions?.[0]?.valueDate;
         expect(valueDate).toHaveProperty("gte");
         expect(valueDate).toHaveProperty("lte");
         // Verify the date range is for the same day
@@ -1418,7 +1417,9 @@ describe("segmentFilterToPrismaQuery", () => {
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
         const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
         expect(dateAttr).toBeDefined();
-        const valueDate = dateAttr?.some?.valueDate;
+        const orConditions = dateAttr?.some?.OR;
+        expect(orConditions).toHaveLength(2);
+        const valueDate = orConditions?.[0]?.valueDate;
         expect(valueDate).toHaveProperty("lt");
         // The threshold should be approximately 30 days ago
         const threshold = valueDate.lt as Date;
@@ -1458,7 +1459,9 @@ describe("segmentFilterToPrismaQuery", () => {
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
         const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
         expect(dateAttr).toBeDefined();
-        const valueDate = dateAttr?.some?.valueDate;
+        const orConditions = dateAttr?.some?.OR;
+        expect(orConditions).toHaveLength(2);
+        const valueDate = orConditions?.[0]?.valueDate;
         expect(valueDate).toHaveProperty("gte");
         // The threshold should be approximately 2 weeks (14 days) ago
         const threshold = valueDate.gte as Date;
@@ -1497,7 +1500,9 @@ describe("segmentFilterToPrismaQuery", () => {
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
         const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
         expect(dateAttr).toBeDefined();
-        const valueDate = dateAttr?.some?.valueDate;
+        const orConditions = dateAttr?.some?.OR;
+        expect(orConditions).toHaveLength(2);
+        const valueDate = orConditions?.[0]?.valueDate;
         expect(valueDate).toHaveProperty("lt");
         // The threshold should be approximately 6 months ago
         const threshold = valueDate.lt as Date;
@@ -1555,15 +1560,17 @@ describe("segmentFilterToPrismaQuery", () => {
         const andConditions = (filterClause as unknown as any).AND as Prisma.ContactWhereInput[];
         expect(andConditions).toHaveLength(2);
 
-        // First filter: isAfter
+        // First filter: isAfter (with OR fallback for transition)
         const firstFilter = andConditions[0] as unknown as any;
         expect(firstFilter.attributes.some.attributeKey.key).toBe("signupDate");
-        expect(firstFilter.attributes.some.valueDate.gt).toEqual(new Date("2024-01-01"));
+        expect(firstFilter.attributes.some.OR[0].valueDate.gt).toEqual(new Date("2024-01-01"));
+        expect(firstFilter.attributes.some.OR[1].valueDate).toBeNull();
+        expect(firstFilter.attributes.some.OR[1].value.gt).toBe(new Date("2024-01-01").toISOString());
 
-        // Second filter: isNewerThan
+        // Second filter: isNewerThan (with OR fallback for transition)
         const secondFilter = andConditions[1] as unknown as any;
         expect(secondFilter.attributes.some.attributeKey.key).toBe("lastActivityDate");
-        expect(secondFilter.attributes.some.valueDate).toHaveProperty("gte");
+        expect(secondFilter.attributes.some.OR[0].valueDate).toHaveProperty("gte");
       }
     });
 
@@ -1631,11 +1638,11 @@ describe("segmentFilterToPrismaQuery", () => {
           mode: "insensitive",
         });
 
-        // Number filter uses 'valueNumber'
-        expect((andConditions[1] as unknown as any).attributes.some.valueNumber).toEqual({ gt: 5 });
+        // Number filter uses raw SQL subquery (transition code) returning contact IDs
+        expect(andConditions[1]).toEqual({ id: { in: ["mock-contact-1"] } });
 
-        // Date filter uses 'valueDate'
-        expect((andConditions[2] as unknown as any).attributes.some.valueDate).toHaveProperty("gte");
+        // Date filter uses OR fallback with 'valueDate' and string 'value'
+        expect((andConditions[2] as unknown as any).attributes.some.OR[0].valueDate).toHaveProperty("gte");
       }
     });
   });
