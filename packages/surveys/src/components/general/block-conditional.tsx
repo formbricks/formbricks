@@ -308,7 +308,7 @@ export function BlockConditional({
       {/* Scrollable container for the entire block */}
       <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div className="space-y-6">
-          <div className="space-y-4">
+          <div className="space-y-6">
             {block.elements.map((element, index) => {
               const isFirstElement = index === 0;
 

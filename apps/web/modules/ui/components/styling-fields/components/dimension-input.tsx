@@ -1,16 +1,26 @@
 "use client";
 
-import { FormControl, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 
 interface DimensionInputProps {
   form: any;
   name: string;
   label: string;
   placeholder?: string;
+  description?: string;
 }
 
-export const DimensionInput = ({ form, name, label, placeholder }: DimensionInputProps) => (
+const UNITS = ["px", "%", "rem", "em"] as const;
+
+export const DimensionInput = ({ form, name, label, description, placeholder }: DimensionInputProps) => (
   <FormField
     control={form.control}
     name={name}
@@ -26,9 +36,10 @@ export const DimensionInput = ({ form, name, label, placeholder }: DimensionInpu
 
       return (
         <FormItem className="space-y-1">
-          <FormLabel className="text-xs">{label}</FormLabel>
+          <FormLabel>{label}</FormLabel>
+          {description && <FormDescription>{description}</FormDescription>}
           <FormControl>
-            <div className="flex rounded-md shadow-xs">
+            <div className="focus-within:border-brand-dark flex h-10 rounded-md border border-slate-300 focus-within:ring-2 focus-within:ring-slate-400 focus-within:ring-offset-2">
               <Input
                 type="number"
                 {...field}
@@ -45,26 +56,30 @@ export const DimensionInput = ({ form, name, label, placeholder }: DimensionInpu
                   }
                   field.onChange(unit === "px" ? newVal : `${newVal}${unit}`);
                 }}
-                className="flex-1 rounded-r-none border-r-0 text-xs focus-visible:ring-0"
                 placeholder={placeholder}
+                className="flex-1 rounded-r-none border-0 shadow-none focus:ring-0 focus:ring-offset-0"
               />
-              <select
+              <Select
                 value={unit}
-                onChange={(e) => {
-                  const newUnit = e.target.value;
+                onValueChange={(newUnit) => {
                   const currentVal = numericValue ?? 0;
                   if (newUnit === "px") {
                     field.onChange(currentVal);
                   } else {
                     field.onChange(`${currentVal}${newUnit}`);
                   }
-                }}
-                className="ring-offset-background placeholder:text-muted-foreground focus:border-brand-dark h-10 items-center justify-between rounded-r-md border border-slate-300 bg-white pr-8 pl-3 text-xs font-medium focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50">
-                <option value="px">px</option>
-                <option value="%">%</option>
-                <option value="rem">rem</option>
-                <option value="em">em</option>
-              </select>
+                }}>
+                <SelectTrigger className="h-full w-[70px] rounded-l-none border-0 border-l border-slate-300 text-sm font-medium shadow-none focus:ring-0 focus:ring-offset-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNITS.map((u) => (
+                    <SelectItem key={u} value={u} className="text-sm">
+                      {u}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </FormControl>
         </FormItem>

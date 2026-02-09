@@ -12,149 +12,19 @@ export const COLOR_DEFAULTS = {
   highlightBorderColor: "#64748b",
 } as const;
 
-export const ADVANCED_DEFAULTS = {
-  accentBgColor: "#e2e8f0",
-  accentBgColorSelected: "#f1f5f9",
-  buttonBgColor: COLOR_DEFAULTS.brandColor,
-  buttonTextColor: "#ffffff",
-  buttonBorderRadius: 8,
-  buttonFontSize: 16,
-  buttonFontWeight: "500",
-  buttonPaddingX: 12,
-  buttonPaddingY: 12,
-  inputBgColor: "#f8fafc",
-  inputBorderColor: COLOR_DEFAULTS.inputBorderColor,
-  inputTextColor: "#0f172a",
-  inputBorderRadius: 8,
-  inputHeight: 40,
-  inputFontSize: 14,
-  inputPaddingX: 16,
-  inputPaddingY: 16,
-  inputPlaceholderOpacity: 0.5,
-  inputShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-  optionBgColor: "#f8fafc",
-  optionLabelColor: "#0f172a",
-  optionBorderRadius: 8,
-  optionPaddingX: 16,
-  optionPaddingY: 16,
-  optionFontSize: 14,
-  elementHeadlineFontSize: 16,
-  elementHeadlineFontWeight: "600",
-  elementHeadlineColor: "#0f172a",
-  elementDescriptionFontSize: 14,
-  elementDescriptionFontWeight: "400",
-  elementDescriptionColor: "#334155",
-  elementUpperLabelFontSize: 12,
-  elementUpperLabelColor: "#64748b",
-  elementUpperLabelFontWeight: "400",
-  progressTrackHeight: 8,
-  progressTrackBgColor: `${COLOR_DEFAULTS.brandColor}33`,
-  progressIndicatorBgColor: COLOR_DEFAULTS.brandColor,
-} as const;
-
-export const defaultStyling: TProjectStyling = {
-  allowStyleOverwrite: true,
-  brandColor: {
-    light: COLOR_DEFAULTS.brandColor,
-  },
-  questionColor: {
-    light: COLOR_DEFAULTS.questionColor,
-  },
-  inputColor: {
-    light: COLOR_DEFAULTS.inputColor,
-  },
-  inputBorderColor: {
-    light: COLOR_DEFAULTS.inputBorderColor,
-  },
-  cardBackgroundColor: {
-    light: COLOR_DEFAULTS.cardBackgroundColor,
-  },
-  cardBorderColor: {
-    light: COLOR_DEFAULTS.cardBorderColor,
-  },
-  isLogoHidden: false,
-  highlightBorderColor: undefined,
-  isDarkModeEnabled: false,
-  roundness: 8,
-  cardArrangement: {
-    linkSurveys: "straight",
-    appSurveys: "straight",
-  },
-  accentBgColor: {
-    light: ADVANCED_DEFAULTS.accentBgColor,
-  },
-  accentBgColorSelected: {
-    light: ADVANCED_DEFAULTS.accentBgColorSelected,
-  },
-  buttonBgColor: {
-    light: ADVANCED_DEFAULTS.buttonBgColor,
-  },
-  buttonTextColor: {
-    light: ADVANCED_DEFAULTS.buttonTextColor,
-  },
-  buttonBorderRadius: ADVANCED_DEFAULTS.buttonBorderRadius,
-  buttonFontSize: ADVANCED_DEFAULTS.buttonFontSize,
-  buttonFontWeight: ADVANCED_DEFAULTS.buttonFontWeight,
-  buttonPaddingX: ADVANCED_DEFAULTS.buttonPaddingX,
-  buttonPaddingY: ADVANCED_DEFAULTS.buttonPaddingY,
-  inputTextColor: {
-    light: ADVANCED_DEFAULTS.inputTextColor,
-  },
-  inputBorderRadius: ADVANCED_DEFAULTS.inputBorderRadius,
-  inputHeight: ADVANCED_DEFAULTS.inputHeight,
-  inputFontSize: ADVANCED_DEFAULTS.inputFontSize,
-  inputPaddingX: ADVANCED_DEFAULTS.inputPaddingX,
-  inputPaddingY: ADVANCED_DEFAULTS.inputPaddingY,
-  inputPlaceholderOpacity: ADVANCED_DEFAULTS.inputPlaceholderOpacity,
-  inputShadow: ADVANCED_DEFAULTS.inputShadow,
-  optionBgColor: {
-    light: ADVANCED_DEFAULTS.optionBgColor,
-  },
-  optionLabelColor: {
-    light: ADVANCED_DEFAULTS.optionLabelColor,
-  },
-  optionBorderRadius: ADVANCED_DEFAULTS.optionBorderRadius,
-  optionPaddingX: ADVANCED_DEFAULTS.optionPaddingX,
-  optionPaddingY: ADVANCED_DEFAULTS.optionPaddingY,
-  optionFontSize: ADVANCED_DEFAULTS.optionFontSize,
-  elementHeadlineFontSize: ADVANCED_DEFAULTS.elementHeadlineFontSize,
-  elementHeadlineFontWeight: ADVANCED_DEFAULTS.elementHeadlineFontWeight,
-  elementHeadlineColor: {
-    light: ADVANCED_DEFAULTS.elementHeadlineColor,
-  },
-  elementDescriptionFontSize: ADVANCED_DEFAULTS.elementDescriptionFontSize,
-  elementDescriptionFontWeight: ADVANCED_DEFAULTS.elementDescriptionFontWeight,
-  elementDescriptionColor: {
-    light: ADVANCED_DEFAULTS.elementDescriptionColor,
-  },
-  elementUpperLabelFontSize: ADVANCED_DEFAULTS.elementUpperLabelFontSize,
-  elementUpperLabelColor: {
-    light: ADVANCED_DEFAULTS.elementUpperLabelColor,
-  },
-  elementUpperLabelFontWeight: ADVANCED_DEFAULTS.elementUpperLabelFontWeight,
-  progressTrackHeight: ADVANCED_DEFAULTS.progressTrackHeight,
-  progressTrackBgColor: {
-    light: ADVANCED_DEFAULTS.progressTrackBgColor,
-  },
-  progressIndicatorBgColor: {
-    light: ADVANCED_DEFAULTS.progressIndicatorBgColor,
-  },
-};
+const DEFAULT_BRAND_COLOR = "#64748b";
 
 /**
  * Derives a complete set of suggested color values from a single brand color.
  *
- * Used by both the project-level "Suggest Colors" button and as the
- * brand-aware defaults when opening a styling form for the first time.
+ * Used by the project-level "Suggest Colors" button **and** to build
+ * `STYLE_DEFAULTS` so that a fresh install always has colours that are
+ * visually cohesive with the default brand.
  *
  * The returned object is a flat map of form-field paths to values so it
  * can be spread directly into form defaults or applied via `form.setValue`.
  */
-export const getSuggestedColors = (brandColor: string) => {
-  const isBrandLight = isLight(brandColor);
-
-  // Accent text: darken the brand if it's light, otherwise use as-is
-  const accentText = isBrandLight ? mixColor(brandColor, "#000000", 0.6) : brandColor;
+export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => {
   // Question / dark text: brand darkened with black (visible brand tint)
   const questionColor = mixColor(brandColor, "#000000", 0.35);
   // Input / option background: white with noticeable brand tint
@@ -172,18 +42,15 @@ export const getSuggestedColors = (brandColor: string) => {
     "brandColor.light": brandColor,
     "questionColor.light": questionColor,
 
-    // Accent
-    "accentBgColor.light": brandColor,
-    "accentBgColorSelected.light": mixColor(brandColor, isBrandLight ? "#000000" : "#ffffff", 0.1),
+    // Headlines & Descriptions — use questionColor to match the legacy behaviour
+    // where all text elements derived their color from questionColor.
+    "elementHeadlineColor.light": questionColor,
+    "elementDescriptionColor.light": questionColor,
+    "elementUpperLabelColor.light": questionColor,
 
-    // Headlines & Descriptions
-    "elementHeadlineColor.light": accentText,
-    "elementDescriptionColor.light": mixColor(accentText, "#ffffff", 0.3),
-    "elementUpperLabelColor.light": mixColor(accentText, "#ffffff", 0.5),
-
-    // Buttons
+    // Buttons — use the brand color so the button matches the user's intent.
     "buttonBgColor.light": brandColor,
-    "buttonTextColor.light": isBrandLight ? "#0f172a" : "#ffffff",
+    "buttonTextColor.light": isLight(brandColor) ? "#0f172a" : "#ffffff",
 
     // Inputs
     "inputColor.light": inputBg,
@@ -201,7 +68,7 @@ export const getSuggestedColors = (brandColor: string) => {
     // Highlight / Focus
     "highlightBorderColor.light": mixColor(brandColor, "#ffffff", 0.25),
 
-    // Progress Bar
+    // Progress Bar — indicator uses the brand color; track is a lighter tint.
     "progressIndicatorBgColor.light": brandColor,
     "progressTrackBgColor.light": mixColor(brandColor, "#ffffff", 0.8),
 
@@ -210,54 +77,74 @@ export const getSuggestedColors = (brandColor: string) => {
   };
 };
 
+// Pre-compute colors derived from the default brand color.
+const _colors = getSuggestedColors(DEFAULT_BRAND_COLOR);
+
 /**
- * Returns brand-color-derived defaults for styling fields that should
- * match the brand color when not explicitly saved by the user.
+ * Single source of truth for every styling default.
  *
- * These values sit between `defaultStyling` and the saved styling in
- * the spread order so that explicitly saved values always win.
+ * Color values are derived from the default brand color (#64748b) via
+ * `getSuggestedColors()`.  Non-color values (dimensions, weights, sizes)
+ * are hardcoded here and must be kept in sync with globals.css.
  *
- * Re-uses `getSuggestedColors` internally but reshapes the flat
- * dot-path keys into the nested object format expected by form defaults.
+ * Used everywhere: form defaults, preview rendering, email templates,
+ * and as the reset target for "Restore defaults".
  */
-export const getBrandDerivedDefaults = (brandColor: string) => {
-  const suggested = getSuggestedColors(brandColor);
+export const STYLE_DEFAULTS: TProjectStyling = {
+  allowStyleOverwrite: true,
+  brandColor: { light: _colors["brandColor.light"] },
+  questionColor: { light: _colors["questionColor.light"] },
+  inputColor: { light: _colors["inputColor.light"] },
+  inputBorderColor: { light: _colors["inputBorderColor.light"] },
+  cardBackgroundColor: { light: _colors["cardBackgroundColor.light"] },
+  cardBorderColor: { light: _colors["cardBorderColor.light"] },
+  isLogoHidden: false,
+  highlightBorderColor: { light: _colors["highlightBorderColor.light"] },
+  isDarkModeEnabled: false,
+  roundness: 8,
+  cardArrangement: { linkSurveys: "simple", appSurveys: "simple" },
 
-  return {
-    // General colors
-    questionColor: { light: suggested["questionColor.light"] },
+  // Headlines & Descriptions
+  elementHeadlineColor: { light: _colors["elementHeadlineColor.light"] },
+  elementHeadlineFontSize: 16,
+  elementHeadlineFontWeight: 600,
+  elementDescriptionColor: { light: _colors["elementDescriptionColor.light"] },
+  elementDescriptionFontSize: 14,
+  elementDescriptionFontWeight: 400,
+  elementUpperLabelColor: { light: _colors["elementUpperLabelColor.light"] },
+  elementUpperLabelFontSize: 12,
+  elementUpperLabelFontWeight: 400,
 
-    // Accent
-    accentBgColor: { light: suggested["accentBgColor.light"] },
-    accentBgColorSelected: { light: suggested["accentBgColorSelected.light"] },
+  // Inputs
+  inputTextColor: { light: _colors["inputTextColor.light"] },
+  inputBorderRadius: 8,
+  inputHeight: 40,
+  inputFontSize: 14,
+  inputPaddingX: 16,
+  inputPaddingY: 16,
+  inputPlaceholderOpacity: 0.5,
+  inputShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
 
-    // Headlines & Descriptions
-    elementHeadlineColor: { light: suggested["elementHeadlineColor.light"] },
-    elementDescriptionColor: { light: suggested["elementDescriptionColor.light"] },
-    elementUpperLabelColor: { light: suggested["elementUpperLabelColor.light"] },
+  // Buttons
+  buttonBgColor: { light: _colors["buttonBgColor.light"] },
+  buttonTextColor: { light: _colors["buttonTextColor.light"] },
+  buttonBorderRadius: 8,
+  buttonHeight: 36,
+  buttonFontSize: 14,
+  buttonFontWeight: 500,
+  buttonPaddingX: 16,
+  buttonPaddingY: 8,
 
-    // Buttons
-    buttonBgColor: { light: suggested["buttonBgColor.light"] },
-    buttonTextColor: { light: suggested["buttonTextColor.light"] },
+  // Options
+  optionBgColor: { light: _colors["optionBgColor.light"] },
+  optionLabelColor: { light: _colors["optionLabelColor.light"] },
+  optionBorderRadius: 8,
+  optionPaddingX: 16,
+  optionPaddingY: 16,
+  optionFontSize: 14,
 
-    // Inputs
-    inputColor: { light: suggested["inputColor.light"] },
-    inputBorderColor: { light: suggested["inputBorderColor.light"] },
-    inputTextColor: { light: suggested["inputTextColor.light"] },
-
-    // Options (Radio / Checkbox)
-    optionBgColor: { light: suggested["optionBgColor.light"] },
-    optionLabelColor: { light: suggested["optionLabelColor.light"] },
-
-    // Card
-    cardBackgroundColor: { light: suggested["cardBackgroundColor.light"] },
-    cardBorderColor: { light: suggested["cardBorderColor.light"] },
-
-    // Highlight / Focus
-    highlightBorderColor: { light: suggested["highlightBorderColor.light"] },
-
-    // Progress Bar
-    progressIndicatorBgColor: { light: suggested["progressIndicatorBgColor.light"] },
-    progressTrackBgColor: { light: suggested["progressTrackBgColor.light"] },
-  };
+  // Progress Bar
+  progressTrackHeight: 8,
+  progressTrackBgColor: { light: _colors["progressTrackBgColor.light"] },
+  progressIndicatorBgColor: { light: _colors["progressIndicatorBgColor.light"] },
 };

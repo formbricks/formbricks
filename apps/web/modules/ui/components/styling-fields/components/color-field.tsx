@@ -1,25 +1,27 @@
 "use client";
 
 import { ColorPicker } from "@/modules/ui/components/color-picker";
-import { FormControl, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 
 interface ColorFieldProps {
   form: any;
   name: string;
   label: string;
+  description?: string;
   containerClass?: string;
 }
 
-export const ColorField = ({ form, name, label, containerClass }: ColorFieldProps) => (
+export const ColorField = ({ form, name, label, description, containerClass }: ColorFieldProps) => (
   <FormField
     control={form.control}
     name={name}
     render={({ field }) => (
       <FormItem className="space-y-1">
-        <FormLabel className="text-xs">{label}</FormLabel>
+        <FormLabel>{label}</FormLabel>
+        {description && <FormDescription>{description}</FormDescription>}
         <FormControl>
           <ColorPicker
-            color={field.value}
+            color={field.value ?? ""}
             onChange={(color) => field.onChange(color)}
             containerClass={containerClass || "w-full"}
           />

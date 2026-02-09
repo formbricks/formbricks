@@ -283,108 +283,139 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Close the #fbjs variable block
   cssVariables += "}\n";
 
-  // Add explicit overrides to ensure custom styles take precedence
-  cssVariables += `
-#fbjs .label-headline,
-#fbjs .label-headline * {
-  font-size: var(--fb-element-headline-font-size) !important;
-  font-weight: var(--fb-element-headline-font-weight) !important;
-  color: var(--fb-element-headline-color) !important;
-}
+  // ---------------------------------------------------------------------------
+  // Conditional !important overrides
+  //
+  // Only emit rules for properties the user has *explicitly* set.  This ensures
+  // the Tailwind baseline classes are used when no custom value is provided,
+  // and prevents the brand-color change from cascading into unrelated elements
+  // (e.g. button bg, headline color) unless the user opted in.
+  // ---------------------------------------------------------------------------
 
-#fbjs .label-description,
-#fbjs .label-description * {
-  font-size: var(--fb-element-description-font-size) !important;
-  font-weight: var(--fb-element-description-font-weight) !important;
-  color: var(--fb-element-description-color) !important;
-}
+  const addRule = (selector: string, declarations: string) => {
+    if (declarations.trim()) {
+      cssVariables += `${selector} {\n${declarations}}\n`;
+    }
+  };
 
-#fbjs .label-upper,
-#fbjs .label-upper * {
-  font-size: var(--fb-element-upper-label-font-size) !important;
-  font-weight: var(--fb-element-upper-label-font-weight) !important;
-  color: var(--fb-element-upper-label-color) !important;
-  opacity: var(--fb-element-upper-label-opacity, 1) !important;
-}
+  // --- Headlines ---
+  let headlineDecls = "";
+  if (styling.elementHeadlineFontSize !== undefined)
+    headlineDecls += "  font-size: var(--fb-element-headline-font-size) !important;\n";
+  if (styling.elementHeadlineFontWeight !== undefined && styling.elementHeadlineFontWeight !== null)
+    headlineDecls += "  font-weight: var(--fb-element-headline-font-weight) !important;\n";
+  if (styling.elementHeadlineColor?.light)
+    headlineDecls += "  color: var(--fb-element-headline-color) !important;\n";
+  addRule("#fbjs .label-headline,\n#fbjs .label-headline *", headlineDecls);
 
-#fbjs .button-custom,
-#fbjs button.button-custom {
-  background-color: var(--fb-button-bg-color) !important;
-  color: var(--fb-button-text-color) !important;
-  border-radius: var(--fb-button-border-radius) !important;
-  height: var(--fb-button-height) !important;
-  font-size: var(--fb-button-font-size) !important;
-  font-weight: var(--fb-button-font-weight) !important;
-  padding-left: var(--fb-button-padding-x) !important;
-  padding-right: var(--fb-button-padding-x) !important;
-  padding-top: var(--fb-button-padding-y) !important;
-  padding-bottom: var(--fb-button-padding-y) !important;
-}
+  // --- Descriptions ---
+  let descriptionDecls = "";
+  if (styling.elementDescriptionFontSize !== undefined)
+    descriptionDecls += "  font-size: var(--fb-element-description-font-size) !important;\n";
+  if (styling.elementDescriptionFontWeight !== undefined && styling.elementDescriptionFontWeight !== null)
+    descriptionDecls += "  font-weight: var(--fb-element-description-font-weight) !important;\n";
+  if (styling.elementDescriptionColor?.light)
+    descriptionDecls += "  color: var(--fb-element-description-color) !important;\n";
+  addRule("#fbjs .label-description,\n#fbjs .label-description *", descriptionDecls);
 
-#fbjs .rounded-option {
-  border-radius: var(--fb-option-border-radius) !important;
-}
+  // --- Upper labels ---
+  let upperDecls = "";
+  if (styling.elementUpperLabelFontSize !== undefined)
+    upperDecls += "  font-size: var(--fb-element-upper-label-font-size) !important;\n";
+  if (styling.elementUpperLabelFontWeight !== undefined && styling.elementUpperLabelFontWeight !== null)
+    upperDecls += "  font-weight: var(--fb-element-upper-label-font-weight) !important;\n";
+  if (styling.elementUpperLabelColor?.light) {
+    upperDecls += "  color: var(--fb-element-upper-label-color) !important;\n";
+    upperDecls += "  opacity: var(--fb-element-upper-label-opacity, 1) !important;\n";
+  }
+  addRule("#fbjs .label-upper,\n#fbjs .label-upper *", upperDecls);
 
-#fbjs .bg-option-bg {
-  background-color: var(--fb-option-bg-color) !important;
-}
+  // --- Buttons ---
+  let buttonDecls = "";
+  if (styling.buttonBgColor?.light)
+    buttonDecls += "  background-color: var(--fb-button-bg-color) !important;\n";
+  if (styling.buttonTextColor?.light) buttonDecls += "  color: var(--fb-button-text-color) !important;\n";
+  if (styling.buttonBorderRadius !== undefined)
+    buttonDecls += "  border-radius: var(--fb-button-border-radius) !important;\n";
+  if (styling.buttonHeight !== undefined) buttonDecls += "  height: var(--fb-button-height) !important;\n";
+  if (styling.buttonFontSize !== undefined)
+    buttonDecls += "  font-size: var(--fb-button-font-size) !important;\n";
+  if (styling.buttonFontWeight !== undefined && styling.buttonFontWeight !== null)
+    buttonDecls += "  font-weight: var(--fb-button-font-weight) !important;\n";
+  if (styling.buttonPaddingX !== undefined) {
+    buttonDecls += "  padding-left: var(--fb-button-padding-x) !important;\n";
+    buttonDecls += "  padding-right: var(--fb-button-padding-x) !important;\n";
+  }
+  if (styling.buttonPaddingY !== undefined) {
+    buttonDecls += "  padding-top: var(--fb-button-padding-y) !important;\n";
+    buttonDecls += "  padding-bottom: var(--fb-button-padding-y) !important;\n";
+  }
+  addRule("#fbjs .button-custom,\n#fbjs button.button-custom", buttonDecls);
 
-#fbjs .text-option-label {
-  color: var(--fb-option-label-color) !important;
-  font-size: var(--fb-option-font-size) !important;
-}
+  // --- Options ---
+  if (styling.optionBorderRadius !== undefined)
+    addRule("#fbjs .rounded-option", "  border-radius: var(--fb-option-border-radius) !important;\n");
+  if (styling.optionBgColor?.light)
+    addRule("#fbjs .bg-option-bg", "  background-color: var(--fb-option-bg-color) !important;\n");
 
-#fbjs .px-option-x {
-  padding-left: var(--fb-option-padding-x) !important;
-  padding-right: var(--fb-option-padding-x) !important;
-}
+  let optionLabelDecls = "";
+  if (styling.optionLabelColor?.light)
+    optionLabelDecls += "  color: var(--fb-option-label-color) !important;\n";
+  if (styling.optionFontSize !== undefined)
+    optionLabelDecls += "  font-size: var(--fb-option-font-size) !important;\n";
+  addRule("#fbjs .text-option-label", optionLabelDecls);
 
-#fbjs .py-option-y {
-  padding-top: var(--fb-option-padding-y) !important;
-  padding-bottom: var(--fb-option-padding-y) !important;
-}
+  if (styling.optionPaddingX !== undefined)
+    addRule(
+      "#fbjs .px-option-x",
+      "  padding-left: var(--fb-option-padding-x) !important;\n  padding-right: var(--fb-option-padding-x) !important;\n"
+    );
+  if (styling.optionPaddingY !== undefined)
+    addRule(
+      "#fbjs .py-option-y",
+      "  padding-top: var(--fb-option-padding-y) !important;\n  padding-bottom: var(--fb-option-padding-y) !important;\n"
+    );
 
-#fbjs .rounded-input {
-  border-radius: var(--fb-input-border-radius) !important;
-}
+  // --- Inputs ---
+  if (styling.inputBorderRadius !== undefined)
+    addRule("#fbjs .rounded-input", "  border-radius: var(--fb-input-border-radius) !important;\n");
+  if (styling.inputBgColor?.light || styling.inputColor?.light)
+    addRule("#fbjs .bg-input-bg", "  background-color: var(--fb-input-background-color) !important;\n");
+  if (styling.inputBorderColor?.light)
+    addRule("#fbjs .border-input-border", "  border-color: var(--fb-input-border-color) !important;\n");
 
-#fbjs .bg-input-bg {
-  background-color: var(--fb-input-background-color) !important;
-}
+  let inputTextDecls = "";
+  if (styling.inputTextColor?.light) inputTextDecls += "  color: var(--fb-input-text-color) !important;\n";
+  if (styling.inputFontSize !== undefined)
+    inputTextDecls += "  font-size: var(--fb-input-font-size) !important;\n";
+  addRule("#fbjs .text-input-text", inputTextDecls);
 
-#fbjs .border-input-border {
-  border-color: var(--fb-input-border-color) !important;
-}
+  if (styling.inputPaddingX !== undefined)
+    addRule(
+      "#fbjs .px-input-x",
+      "  padding-left: var(--fb-input-padding-x) !important;\n  padding-right: var(--fb-input-padding-x) !important;\n"
+    );
+  if (styling.inputPaddingY !== undefined)
+    addRule(
+      "#fbjs .py-input-y",
+      "  padding-top: var(--fb-input-padding-y) !important;\n  padding-bottom: var(--fb-input-padding-y) !important;\n"
+    );
 
-#fbjs .text-input-text {
-  color: var(--fb-input-text-color) !important;
-  font-size: var(--fb-input-font-size) !important;
-  font-weight: var(--fb-input-font-weight) !important;
-}
-
-#fbjs .px-input-x {
-  padding-left: var(--fb-input-padding-x) !important;
-  padding-right: var(--fb-input-padding-x) !important;
-}
-
-#fbjs .py-input-y {
-  padding-top: var(--fb-input-padding-y) !important;
-  padding-bottom: var(--fb-input-padding-y) !important;
-}
-
-html body #fbjs div.progress-track {
-  border-radius: var(--fb-progress-track-border-radius) var(--fb-progress-track-border-radius) 0 0 !important;
-  height: var(--fb-progress-track-height) !important;
-  min-height: var(--fb-progress-track-height) !important;
-  max-height: none !important;
-  overflow: hidden !important;
-}
-
-html body #fbjs div.progress-indicator {
-  height: 100% !important;
-  border-radius: 0 !important;
-}
-`;
+  // --- Progress bar ---
+  if (styling.progressTrackHeight !== undefined) {
+    addRule(
+      "html body #fbjs div.progress-track",
+      "  border-radius: var(--fb-progress-track-border-radius) var(--fb-progress-track-border-radius) 0 0 !important;\n" +
+        "  height: var(--fb-progress-track-height) !important;\n" +
+        "  min-height: var(--fb-progress-track-height) !important;\n" +
+        "  max-height: none !important;\n" +
+        "  overflow: hidden !important;\n"
+    );
+    addRule(
+      "html body #fbjs div.progress-indicator",
+      "  height: 100% !important;\n  border-radius: 0 !important;\n"
+    );
+  }
 
   // Set the innerHTML of the style element
   styleElement.innerHTML = cssVariables;

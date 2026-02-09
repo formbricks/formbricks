@@ -9,12 +9,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
-import {
-  COLOR_DEFAULTS,
-  defaultStyling,
-  getBrandDerivedDefaults,
-  getSuggestedColors,
-} from "@/lib/styling/constants";
+import { STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -64,17 +59,20 @@ export const StylingView = ({
   const { t } = useTranslation();
 
   const savedProjectStyling = project.styling as Partial<TProjectStyling> | null;
-  const brandColor =
-    localSurvey.styling?.brandColor?.light ??
-    savedProjectStyling?.brandColor?.light ??
-    COLOR_DEFAULTS.brandColor;
+
+  // Strip null/undefined values so they don't override STYLE_DEFAULTS.
+  const cleanProject = savedProjectStyling
+    ? Object.fromEntries(Object.entries(savedProjectStyling).filter(([, v]) => v != null))
+    : {};
+  const cleanSurvey = localSurvey.styling
+    ? Object.fromEntries(Object.entries(localSurvey.styling).filter(([, v]) => v != null))
+    : {};
 
   const form = useForm<TSurveyStyling>({
     defaultValues: {
-      ...defaultStyling,
-      ...getBrandDerivedDefaults(brandColor),
-      ...savedProjectStyling,
-      ...localSurvey.styling,
+      ...STYLE_DEFAULTS,
+      ...cleanProject,
+      ...cleanSurvey,
     },
   });
 
@@ -89,7 +87,7 @@ export const StylingView = ({
   const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
 
   const handleSuggestColors = () => {
-    const currentBrandColor = form.getValues().brandColor?.light ?? COLOR_DEFAULTS.brandColor;
+    const currentBrandColor = form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light;
     const suggested = getSuggestedColors(currentBrandColor);
 
     for (const [key, value] of Object.entries(suggested)) {
@@ -226,10 +224,13 @@ export const StylingView = ({
                 name="brandColor.light"
                 render={({ field }) => (
                   <FormItem className="space-y-1">
-                    <FormLabel className="text-xs">{t("environments.surveys.edit.brand_color")}</FormLabel>
+                    <FormLabel>{t("environments.surveys.edit.brand_color")}</FormLabel>
+                    <FormDescription>
+                      {t("environments.surveys.edit.brand_color_description")}
+                    </FormDescription>
                     <FormControl>
                       <ColorPicker
-                        color={field.value ?? COLOR_DEFAULTS.brandColor}
+                        color={field.value ?? STYLE_DEFAULTS.brandColor?.light}
                         onChange={(color) => field.onChange(color)}
                         containerClass="w-full"
                       />

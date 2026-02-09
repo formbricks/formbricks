@@ -90,46 +90,73 @@ export const FormStylingSettings = ({
                 form={form}
                 name="elementHeadlineColor.light"
                 label={t("environments.workspace.look.advanced_styling_field_headline_color")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_headline_color_description"
+                )}
               />
               <ColorField
                 form={form}
                 name="elementDescriptionColor.light"
                 label={t("environments.workspace.look.advanced_styling_field_description_color")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_description_color_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="elementHeadlineFontSize"
                 label={t("environments.workspace.look.advanced_styling_field_headline_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_headline_size_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="elementDescriptionFontSize"
                 label={t("environments.workspace.look.advanced_styling_field_description_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_description_size_description"
+                )}
               />
               <NumberField
                 form={form}
                 name="elementHeadlineFontWeight"
                 label={t("environments.workspace.look.advanced_styling_field_headline_weight")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_headline_weight_description"
+                )}
               />
               <NumberField
                 form={form}
                 name="elementDescriptionFontWeight"
                 label={t("environments.workspace.look.advanced_styling_field_description_weight")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_description_weight_description"
+                )}
               />
               <ColorField
                 form={form}
                 name="elementUpperLabelColor.light"
                 label={t("environments.workspace.look.advanced_styling_field_upper_label_color")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_upper_label_color_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="elementUpperLabelFontSize"
                 label={t("environments.workspace.look.advanced_styling_field_upper_label_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_upper_label_size_description"
+                )}
               />
               <NumberField
                 form={form}
                 name="elementUpperLabelFontWeight"
                 label={t("environments.workspace.look.advanced_styling_field_upper_label_weight")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_upper_label_weight_description"
+                )}
               />
             </div>
           </StylingSection>
@@ -144,47 +171,66 @@ export const FormStylingSettings = ({
                 form={form}
                 name="inputColor.light"
                 label={t("environments.surveys.edit.input_color")}
+                description={t("environments.surveys.edit.input_color_description")}
               />
               <ColorField
                 form={form}
                 name="inputBorderColor.light"
                 label={t("environments.surveys.edit.input_border_color")}
+                description={t("environments.surveys.edit.input_border_color_description")}
               />
               <ColorField
                 form={form}
                 name="inputTextColor.light"
                 label={t("environments.workspace.look.advanced_styling_field_input_text")}
+                description={t("environments.workspace.look.advanced_styling_field_input_text_description")}
               />
               <div className="hidden" /> {/* Spacer if needed, or remove for auto flow */}
               <DimensionInput
                 form={form}
                 name="inputBorderRadius"
                 label={t("environments.workspace.look.advanced_styling_field_border_radius")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_border_radius_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="inputHeight"
                 label={t("environments.workspace.look.advanced_styling_field_height")}
+                description={t("environments.workspace.look.advanced_styling_field_input_height_description")}
               />
               <DimensionInput
                 form={form}
                 name="inputFontSize"
                 label={t("environments.workspace.look.advanced_styling_field_font_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_font_size_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="inputPaddingX"
                 label={t("environments.workspace.look.advanced_styling_field_padding_x")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_padding_x_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="inputPaddingY"
                 label={t("environments.workspace.look.advanced_styling_field_padding_y")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_padding_y_description"
+                )}
               />
               <NumberField
                 form={form}
                 name="inputPlaceholderOpacity"
                 label={t("environments.workspace.look.advanced_styling_field_placeholder_opacity")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_placeholder_opacity_description"
+                )}
                 step={0.1}
                 max={1}
               />
@@ -192,6 +238,7 @@ export const FormStylingSettings = ({
                 form={form}
                 name="inputShadow"
                 label={t("environments.workspace.look.advanced_styling_field_shadow")}
+                description={t("environments.workspace.look.advanced_styling_field_input_shadow_description")}
               />
             </div>
           </StylingSection>
@@ -206,41 +253,61 @@ export const FormStylingSettings = ({
                 form={form}
                 name="buttonBgColor.light"
                 label={t("environments.workspace.look.advanced_styling_field_button_bg")}
+                description={t("environments.workspace.look.advanced_styling_field_button_bg_description")}
               />
               <ColorField
                 form={form}
                 name="buttonTextColor.light"
                 label={t("environments.workspace.look.advanced_styling_field_button_text")}
+                description={t("environments.workspace.look.advanced_styling_field_button_text_description")}
               />
               <DimensionInput
                 form={form}
                 name="buttonBorderRadius"
                 label={t("environments.workspace.look.advanced_styling_field_border_radius")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_border_radius_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="buttonHeight"
                 label={t("environments.workspace.look.advanced_styling_field_height")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_height_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="buttonFontSize"
                 label={t("environments.workspace.look.advanced_styling_field_font_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_font_size_description"
+                )}
               />
               <NumberField
                 form={form}
                 name="buttonFontWeight"
                 label={t("environments.workspace.look.advanced_styling_field_font_weight")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_font_weight_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="buttonPaddingX"
                 label={t("environments.workspace.look.advanced_styling_field_padding_x")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_padding_x_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="buttonPaddingY"
                 label={t("environments.workspace.look.advanced_styling_field_padding_y")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_padding_y_description"
+                )}
               />
             </div>
           </StylingSection>
@@ -255,31 +322,45 @@ export const FormStylingSettings = ({
                 form={form}
                 name="optionBgColor.light"
                 label={t("environments.workspace.look.advanced_styling_field_option_bg")}
+                description={t("environments.workspace.look.advanced_styling_field_option_bg_description")}
               />
               <ColorField
                 form={form}
                 name="optionLabelColor.light"
                 label={t("environments.workspace.look.advanced_styling_field_option_label")}
+                description={t("environments.workspace.look.advanced_styling_field_option_label_description")}
               />
               <DimensionInput
                 form={form}
                 name="optionBorderRadius"
                 label={t("environments.workspace.look.advanced_styling_field_border_radius")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_option_border_radius_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="optionPaddingX"
                 label={t("environments.workspace.look.advanced_styling_field_padding_x")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_option_padding_x_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="optionPaddingY"
                 label={t("environments.workspace.look.advanced_styling_field_padding_y")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_option_padding_y_description"
+                )}
               />
               <DimensionInput
                 form={form}
                 name="optionFontSize"
                 label={t("environments.workspace.look.advanced_styling_field_font_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_option_font_size_description"
+                )}
               />
             </div>
           </StylingSection>

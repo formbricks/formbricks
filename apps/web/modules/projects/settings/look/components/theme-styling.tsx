@@ -11,12 +11,7 @@ import { useTranslation } from "react-i18next";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { previewSurvey } from "@/app/lib/templates";
-import {
-  COLOR_DEFAULTS,
-  defaultStyling,
-  getBrandDerivedDefaults,
-  getSuggestedColors,
-} from "@/lib/styling/constants";
+import { STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
@@ -60,10 +55,15 @@ export const ThemeStyling = ({
   const router = useRouter();
 
   const savedStyling = project.styling as Partial<TProjectStyling> | null;
-  const brandColor = savedStyling?.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
+
+  // Strip null/undefined values so they don't override STYLE_DEFAULTS.
+  // Saved styling from before advanced fields existed will have nullish entries.
+  const cleanSaved = savedStyling
+    ? Object.fromEntries(Object.entries(savedStyling).filter(([, v]) => v != null))
+    : {};
 
   const form = useForm<TProjectStyling>({
-    defaultValues: { ...defaultStyling, ...getBrandDerivedDefaults(brandColor), ...savedStyling },
+    defaultValues: { ...STYLE_DEFAULTS, ...cleanSaved },
     resolver: zodResolver(ZProjectStyling),
   });
 
@@ -78,12 +78,12 @@ export const ThemeStyling = ({
     const updatedProjectResponse = await updateProjectAction({
       projectId: project.id,
       data: {
-        styling: { ...defaultStyling },
+        styling: { ...STYLE_DEFAULTS },
       },
     });
 
     if (updatedProjectResponse?.data) {
-      form.reset({ ...defaultStyling });
+      form.reset({ ...STYLE_DEFAULTS });
       toast.success(t("environments.workspace.look.styling_updated_successfully"));
       router.refresh();
     } else {
@@ -93,7 +93,7 @@ export const ThemeStyling = ({
   }, [form, project.id, router, t]);
 
   const handleSuggestColors = () => {
-    const brandColor = form.getValues().brandColor?.light ?? COLOR_DEFAULTS.brandColor;
+    const brandColor = form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light;
     const suggested = getSuggestedColors(brandColor);
 
     for (const [key, value] of Object.entries(suggested)) {
@@ -172,12 +172,13 @@ export const ThemeStyling = ({
                     name="brandColor.light"
                     render={({ field }) => (
                       <FormItem className="space-y-1">
-                        <FormLabel className="text-xs">
-                          {t("environments.surveys.edit.brand_color")}
-                        </FormLabel>
+                        <FormLabel>{t("environments.surveys.edit.brand_color")}</FormLabel>
+                        <FormDescription>
+                          {t("environments.surveys.edit.brand_color_description")}
+                        </FormDescription>
                         <FormControl>
                           <ColorPicker
-                            color={field.value ?? COLOR_DEFAULTS.brandColor}
+                            color={field.value ?? STYLE_DEFAULTS.brandColor?.light}
                             onChange={(color) => field.onChange(color)}
                             containerClass="w-full"
                           />
@@ -248,7 +249,7 @@ export const ThemeStyling = ({
                 survey={previewSurvey(project.name, t)}
                 project={{
                   ...project,
-                  styling: form.watch(),
+                  styling: form.watch("allowStyleOverwrite") ? form.watch() : STYLE_DEFAULTS,
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}

@@ -1,24 +1,34 @@
 "use client";
 
-import { FormControl, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 
 interface NumberFieldProps {
   form: any;
   name: string;
   label: string;
+  description?: string;
   step?: number;
   max?: number;
   placeholder?: string;
 }
 
-export const NumberField = ({ form, name, label, step = 1, max, placeholder }: NumberFieldProps) => (
+export const NumberField = ({
+  form,
+  name,
+  label,
+  description,
+  placeholder,
+  step = 1,
+  max,
+}: NumberFieldProps) => (
   <FormField
     control={form.control}
     name={name}
     render={({ field }) => (
       <FormItem className="space-y-1">
-        <FormLabel className="text-xs">{label}</FormLabel>
+        <FormLabel>{label}</FormLabel>
+        {description && <FormDescription>{description}</FormDescription>}
         <FormControl>
           <Input
             type="number"
@@ -29,7 +39,6 @@ export const NumberField = ({ form, name, label, step = 1, max, placeholder }: N
             }}
             step={step}
             max={max}
-            className="text-xs"
             placeholder={placeholder}
           />
         </FormControl>
