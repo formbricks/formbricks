@@ -17,6 +17,7 @@ import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserEmail, TUserLocale } from "@formbricks/types/user";
 import {
@@ -242,6 +243,22 @@ export const sendResponseFinishedEmail = async (
   // Pre-process the element response mapping before passing to email
   const elements = getElementResponseMapping(survey, response);
 
+  // Resolve relative storage URLs to absolute URLs for email rendering
+  const elementsWithResolvedUrls = elements.map((element) => {
+    if (
+      (element.type === TSurveyElementTypeEnum.PictureSelection ||
+        element.type === TSurveyElementTypeEnum.FileUpload) &&
+      Array.isArray(element.response)
+    ) {
+      return {
+        ...element,
+        response: element.response.map((url) => resolveStorageUrl(url)),
+      };
+    }
+
+    return element;
+  });
+
   const html = await renderResponseFinishedEmail({
     survey,
     responseCount,
@@ -249,7 +266,7 @@ export const sendResponseFinishedEmail = async (
     WEBAPP_URL,
     environmentId,
     organization,
-    elements,
+    elements: elementsWithResolvedUrls,
     t,
     ...legalProps,
   });

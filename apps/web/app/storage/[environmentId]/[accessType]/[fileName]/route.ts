@@ -39,8 +39,7 @@ export const GET = async (
     }
   }
 
-  // Stream the file directly instead of redirecting to S3
-  // This enables Next.js Image component to work with relative URLs
+  // Stream the file directly
   const streamResult = await getFileStreamForDownload(fileName, environmentId, accessType);
 
   if (!streamResult.ok) {

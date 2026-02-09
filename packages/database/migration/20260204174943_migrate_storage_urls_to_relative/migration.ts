@@ -61,16 +61,17 @@ export const migrateStorageUrlsToRelative: MigrationScript = {
     // ==================== MIGRATE SURVEYS ====================
     logger.info("Starting Survey migration...");
 
-    // Use 'http%/storage/%' to only match absolute URLs, not already-migrated relative paths
+    // Use '%http%/storage/%' to match absolute URLs anywhere in the JSON text
+    // This won't match already-migrated relative paths like /storage/... (no 'http' before it)
     const surveyQuery = Prisma.sql`
       SELECT id, "welcomeCard", questions, blocks, endings, styling, metadata
       FROM "Survey"
-      WHERE "welcomeCard"::text LIKE 'http%/storage/%'
-         OR questions::text LIKE 'http%/storage/%'
-         OR blocks::text LIKE 'http%/storage/%'
-         OR endings::text LIKE 'http%/storage/%'
-         OR styling::text LIKE 'http%/storage/%'
-         OR metadata::text LIKE 'http%/storage/%'
+      WHERE "welcomeCard"::text LIKE '%http%/storage/%'
+         OR questions::text LIKE '%http%/storage/%'
+         OR blocks::text LIKE '%http%/storage/%'
+         OR endings::text LIKE '%http%/storage/%'
+         OR styling::text LIKE '%http%/storage/%'
+         OR metadata::text LIKE '%http%/storage/%'
     `;
 
     const surveysToMigrate: SurveyRecord[] = await tx.$queryRaw(surveyQuery);
@@ -185,12 +186,12 @@ export const migrateStorageUrlsToRelative: MigrationScript = {
     // ==================== MIGRATE PROJECTS ====================
     logger.info("Starting Project migration...");
 
-    // Use 'http%/storage/%' to only match absolute URLs
+    // Use '%http%/storage/%' to match absolute URLs anywhere in the JSON text
     const projectQuery = Prisma.sql`
       SELECT id, styling, logo
       FROM "Project"
-      WHERE styling::text LIKE 'http%/storage/%'
-         OR logo::text LIKE 'http%/storage/%'
+      WHERE styling::text LIKE '%http%/storage/%'
+         OR logo::text LIKE '%http%/storage/%'
     `;
 
     const projectsToMigrate: ProjectRecord[] = await tx.$queryRaw(projectQuery);
@@ -244,11 +245,11 @@ export const migrateStorageUrlsToRelative: MigrationScript = {
     // ==================== MIGRATE ORGANIZATIONS ====================
     logger.info("Starting Organization migration...");
 
-    // Use 'http%/storage/%' to only match absolute URLs
+    // Use '%http%/storage/%' to match absolute URLs anywhere in the JSON text
     const orgQuery = Prisma.sql`
       SELECT id, whitelabel
       FROM "Organization"
-      WHERE whitelabel::text LIKE 'http%/storage/%'
+      WHERE whitelabel::text LIKE '%http%/storage/%'
     `;
 
     const orgsToMigrate: OrganizationRecord[] = await tx.$queryRaw(orgQuery);
@@ -282,12 +283,12 @@ export const migrateStorageUrlsToRelative: MigrationScript = {
     let hasMore = true;
 
     while (hasMore) {
-      // Use 'http%/storage/%' to only match absolute URLs
+      // Use '%http%/storage/%' to match absolute URLs anywhere in the JSON text
       const responseQuery = lastId
         ? Prisma.sql`
             SELECT id, data
             FROM "Response"
-            WHERE data::text LIKE 'http%/storage/%'
+            WHERE data::text LIKE '%http%/storage/%'
               AND id > ${lastId}
             ORDER BY id
             LIMIT ${BATCH_SIZE}
@@ -295,7 +296,7 @@ export const migrateStorageUrlsToRelative: MigrationScript = {
         : Prisma.sql`
             SELECT id, data
             FROM "Response"
-            WHERE data::text LIKE 'http%/storage/%'
+            WHERE data::text LIKE '%http%/storage/%'
             ORDER BY id
             LIMIT ${BATCH_SIZE}
           `;
