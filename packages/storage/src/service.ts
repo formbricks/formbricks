@@ -187,8 +187,8 @@ export const getFileStream = async (fileKey: string): Promise<Result<FileStreamR
 
     return ok({
       body: webStream,
-      contentType: response.ContentType || "application/octet-stream",
-      contentLength: response.ContentLength || 0,
+      contentType: response.ContentType ?? "application/octet-stream",
+      contentLength: response.ContentLength ?? 0,
     });
   } catch (error) {
     if ((error as { name?: string }).name === "NoSuchKey") {

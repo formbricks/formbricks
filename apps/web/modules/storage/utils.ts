@@ -9,7 +9,7 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getOriginalFileNameFromUrl } from "./url-helpers";
 
 // Re-export for backward compatibility with server-side code
-export { getOriginalFileNameFromUrl };
+export { getOriginalFileNameFromUrl } from "./url-helpers";
 
 /**
  * Sanitize a provided file name to a safe subset.
