@@ -17,7 +17,7 @@ export const renderSurveyInline = (props: SurveyContainerProps) => {
 
 export const renderSurvey = (props: SurveyContainerProps) => {
   // render SurveyNew
-  // if survey type is link, we don't pass the placement, darkOverlay, clickOutside, onClose
+  // if survey type is link, we don't pass the placement, overlay, clickOutside, onClose
 
   const { mode, containerId, languageCode } = props;
 
@@ -36,9 +36,9 @@ export const renderSurvey = (props: SurveyContainerProps) => {
       throw new Error(`renderSurvey: Element with id ${containerId} not found.`);
     }
 
-    // if survey type is link, we don't pass the placement, darkOverlay, clickOutside, onClose
+    // if survey type is link, we don't pass the placement, overlay, clickOutside, onClose
     if (props.survey.type === "link") {
-      const { placement, darkOverlay, onClose, clickOutside, ...surveyInlineProps } = props;
+      const { placement, overlay, onClose, clickOutside, ...surveyInlineProps } = props;
 
       render(
         h(
@@ -52,7 +52,7 @@ export const renderSurvey = (props: SurveyContainerProps) => {
       );
     } else {
       // For non-link surveys, pass placement through so it can be used in StackedCard
-      const { darkOverlay, onClose, clickOutside, ...surveyInlineProps } = props;
+      const { overlay, onClose, clickOutside, ...surveyInlineProps } = props;
 
       render(
         h(

@@ -170,7 +170,7 @@ describe("utils.ts", () => {
             id: mockProjectId,
             recontactDays: 7, // fallback if survey doesn't have it
             clickOutsideClose: false,
-            darkOverlay: false,
+            overlay: "none",
             placement: "bottomRight",
             inAppSurveyBranding: true,
             styling: { allowStyleOverwrite: false },

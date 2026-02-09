@@ -316,6 +316,14 @@ export const generateResponseTableColumns = (
     },
   };
 
+  const responseIdColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "responseId",
+    header: () => <div className="gap-x-1.5">{t("common.response_id")}</div>,
+    cell: ({ row }) => {
+      return <IdBadge id={row.original.responseId} />;
+    },
+  };
+
   const quotasColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "quota",
     header: t("common.quota"),
@@ -376,24 +384,24 @@ export const generateResponseTableColumns = (
 
   const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = survey.hiddenFields.fieldIds
     ? survey.hiddenFields.fieldIds.map((hiddenFieldId) => {
-        return {
-          accessorKey: "HIDDEN_FIELD_" + hiddenFieldId,
-          header: () => (
-            <div className="flex items-center space-x-2 overflow-hidden">
-              <span className="h-4 w-4">
-                <EyeOffIcon className="h-4 w-4" />
-              </span>
-              <span className="truncate">{hiddenFieldId}</span>
-            </div>
-          ),
-          cell: ({ row }) => {
-            const hiddenFieldResponse = row.original.responseData[hiddenFieldId];
-            if (typeof hiddenFieldResponse === "string") {
-              return <div className="text-slate-900">{hiddenFieldResponse}</div>;
-            }
-          },
-        };
-      })
+      return {
+        accessorKey: "HIDDEN_FIELD_" + hiddenFieldId,
+        header: () => (
+          <div className="flex items-center space-x-2 overflow-hidden">
+            <span className="h-4 w-4">
+              <EyeOffIcon className="h-4 w-4" />
+            </span>
+            <span className="truncate">{hiddenFieldId}</span>
+          </div>
+        ),
+        cell: ({ row }) => {
+          const hiddenFieldResponse = row.original.responseData[hiddenFieldId];
+          if (typeof hiddenFieldResponse === "string") {
+            return <div className="text-slate-900">{hiddenFieldResponse}</div>;
+          }
+        },
+      };
+    })
     : [];
 
   const metadataColumns = getMetadataColumnsData(t);
@@ -414,6 +422,7 @@ export const generateResponseTableColumns = (
   const baseColumns = [
     personColumn,
     singleUseIdColumn,
+    responseIdColumn,
     dateColumn,
     ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,

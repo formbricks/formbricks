@@ -258,6 +258,7 @@ checksums:
     common/no_background_image_found: 4108a781a9022c65671a826d4e299d5b
     common/no_code: f602144ab7d28a5b19a446bf74b4dcc4
     common/no_files_uploaded: c97be829e195a41b2f6b6717b87a232b
+    common/no_overlay: 03cde9e91f08e4dd539d788e1e01407f
     common/no_quotas_found: 19dea6bcc39b579351073b3974990cb6
     common/no_result_found: fedddbc0149972ea072a9e063198a16d
     common/no_results: 0e9b73265c6542240f5a3bf6b43e9280
@@ -284,6 +285,7 @@ checksums:
     common/organization_teams_not_found: ce29fcb7a4e8b4582f92b65dea9b7d4e
     common/other: 79acaa6cd481262bea4e743a422529d2
     common/others: 39160224ce0e35eb4eb252c997edf4d8
+    common/overlay_color: 4b72073285d13fff93d094aabffe05ac
     common/overview: 30c54e4dc4ce599b87d94be34a8617f5
     common/password: 223a61cf906ab9c40d22612c588dff48
     common/paused: edb1f7b7219e1c9b7aa67159090d6991
@@ -323,6 +325,7 @@ checksums:
     common/request_trial_license: 560df1240ef621f7c60d3f7d65422ccd
     common/reset_to_default: 68ee98b46677392f44b505b268053b26
     common/response: c7a9d88269d8ff117abcbc0d97f88b2c
+    common/response_id: 73375099cc976dc7203b8e27f5f709e0
     common/responses: 14bb6c69f906d7bbd1359f7ef1bb3c28
     common/restart: bab6232e89f24e3129f8e48268739d5b
     common/role: 53743bbb6ca938f5b893552e839d067f
@@ -928,7 +931,7 @@ checksums:
     environments/settings/general/from_your_organization: 4b7970431edb3d0f13c394dbd755a055
     environments/settings/general/invitation_sent_once_more: e6e5ea066810f9dcb65788aa4f05d6e2
     environments/settings/general/invite_deleted_successfully: 1c7dca6d0f6870d945288e38cfd2f943
-    environments/settings/general/invited_on: 83476ce4bcdfc3ccf524d1cd91b758a8
+    environments/settings/general/invite_expires_on: 6fd2356ad91a5f189070c43855904bb4
     environments/settings/general/invites_failed: 180ffb8db417050227cc2b2ea74b7aae
     environments/settings/general/leave_organization: e74132cb4a0dc98c41e61ea3b2dd268b
     environments/settings/general/leave_organization_description: 2d0cd65e4e78a9b2835cf88c4de407fb
@@ -1149,7 +1152,6 @@ checksums:
     environments/surveys/edit/caution_explanation_responses_are_safe: 090ff00b7922a49c273e67c5f364730d
     environments/surveys/edit/caution_recommendation: b15090fe878ff17f2ee7cc2082dd9018
     environments/surveys/edit/caution_text: 3291e962c0e4c4656832837ddc512918
-    environments/surveys/edit/centered_modal_overlay_color: 1124ba61ee2ecb18a7175ff780dc3b60
     environments/surveys/edit/change_anyway: 6377497d40373f6d0f082670194981ab
     environments/surveys/edit/change_background: fa71a993869f7d3ac553c547c12c3e9b
     environments/surveys/edit/change_question_type: 2d555ae48df8dbedfc6a4e1ad492f4aa
@@ -1940,7 +1942,6 @@ checksums:
     environments/workspace/look/add_background_color_description: adb6fcb392862b3d0e9420d9b5405ddb
     environments/workspace/look/app_survey_placement: f09cddac6bbb77d4694df223c6edf6b6
     environments/workspace/look/app_survey_placement_settings_description: d81bcff7a866a2f83ff76936dbad4770
-    environments/workspace/look/centered_modal_overlay_color: 1124ba61ee2ecb18a7175ff780dc3b60
     environments/workspace/look/email_customization: ae399f381183a4fe0ffd41ab496b5d8f
     environments/workspace/look/email_customization_description: 5ccaf1769b2c39d7e87f3a08d056a374
     environments/workspace/look/enable_custom_styling: 4774d8fb009c27044aa0191ebcccdcc2

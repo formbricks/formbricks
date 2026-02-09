@@ -6,12 +6,14 @@ import { ZEnvironmentId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
@@ -31,6 +33,27 @@ export const OPTIONS = async (): Promise<Response> => {
     // Balances performance gains with flexibility for CORS policy changes
     "public, s-maxage=3600, max-age=3600"
   );
+};
+
+const validateResponse = (responseInputData: TResponseInput, survey: TSurvey) => {
+  // Validate response data against validation rules
+  const validationErrors = validateResponseData(
+    survey.blocks,
+    responseInputData.data,
+    responseInputData.language ?? "en",
+    responseInputData.finished,
+    survey.questions
+  );
+
+  if (validationErrors) {
+    return {
+      response: responses.badRequestResponse(
+        "Validation failed",
+        formatValidationErrorsForV1Api(validationErrors),
+        true
+      ),
+    };
+  }
 };
 
 export const POST = withV1ApiWrapper({
@@ -121,6 +144,11 @@ export const POST = withV1ApiWrapper({
       return {
         response: responses.badRequestResponse("Invalid file upload response"),
       };
+    }
+
+    const validationResult = validateResponse(responseInputData, survey);
+    if (validationResult) {
+      return validationResult;
     }
 
     let response: TResponseWithQuotaFull;

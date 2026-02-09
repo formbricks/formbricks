@@ -1,7 +1,7 @@
 "use client";
 
+import { useMemo, useTransition } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
@@ -74,6 +74,8 @@ export function LocalizedEditor({
     [id, isInvalid, localSurvey.languages, value]
   );
 
+  const [, startTransition] = useTransition();
+
   return (
     <div className="relative w-full">
       <Editor
@@ -109,44 +111,45 @@ export function LocalizedEditor({
             sanitizedContent = v.replaceAll(/<a[^>]*>(.*?)<\/a>/gi, "$1");
           }
 
-          // Check if the elements still exists before updating
           const currentElement = elements[elementIdx];
 
-          // if this is a card, we wanna check if the card exists in the localSurvey
-          if (isCard) {
-            const isWelcomeCard = elementIdx === -1;
-            const isEndingCard = elementIdx >= elements.length;
+          startTransition(() => {
+            // if this is a card, we wanna check if the card exists in the localSurvey
+            if (isCard) {
+              const isWelcomeCard = elementIdx === -1;
+              const isEndingCard = elementIdx >= elements.length;
 
-            // For ending cards, check if the field exists before updating
-            if (isEndingCard) {
-              const ending = localSurvey.endings.find((ending) => ending.id === elementId);
-              // If the field doesn't exist on the ending card, don't create it
-              if (!ending || ending[id] === undefined) {
+              // For ending cards, check if the field exists before updating
+              if (isEndingCard) {
+                const ending = localSurvey.endings.find((ending) => ending.id === elementId);
+                // If the field doesn't exist on the ending card, don't create it
+                if (!ending || ending[id] === undefined) {
+                  return;
+                }
+              }
+
+              // For welcome cards, check if it exists
+              if (isWelcomeCard && !localSurvey.welcomeCard) {
                 return;
               }
-            }
 
-            // For welcome cards, check if it exists
-            if (isWelcomeCard && !localSurvey.welcomeCard) {
+              const translatedContent = {
+                ...value,
+                [selectedLanguageCode]: sanitizedContent,
+              };
+              updateElement({ [id]: translatedContent });
               return;
             }
 
-            const translatedContent = {
-              ...value,
-              [selectedLanguageCode]: sanitizedContent,
-            };
-            updateElement({ [id]: translatedContent });
-            return;
-          }
-
-          // Check if the field exists on the element (not just if it's not undefined)
-          if (currentElement && id in currentElement && currentElement[id] !== undefined) {
-            const translatedContent = {
-              ...value,
-              [selectedLanguageCode]: sanitizedContent,
-            };
-            updateElement(elementIdx, { [id]: translatedContent });
-          }
+            // Check if the field exists on the element (not just if it's not undefined)
+            if (currentElement && id in currentElement && currentElement[id] !== undefined) {
+              const translatedContent = {
+                ...value,
+                [selectedLanguageCode]: sanitizedContent,
+              };
+              updateElement(elementIdx, { [id]: translatedContent });
+            }
+          });
         }}
         localSurvey={localSurvey}
         elementId={elementId}
