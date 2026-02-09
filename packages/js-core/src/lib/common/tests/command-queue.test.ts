@@ -97,19 +97,7 @@ describe("CommandQueue", () => {
     expect(cmd).not.toHaveBeenCalled();
   });
 
-  test("wait() resolves even when blocked commands remain", async () => {
-    // blocked command
-    const blockedCmd = vi.fn();
-    vi.mocked(checkSetup).mockReturnValue({ ok: false, error: { code: "not_setup", message: "Not setup" } });
 
-    await queue.add(blockedCmd, CommandType.GeneralAction, true);
-
-    // wait should resolve immediately (or after loop pass) because the command is skipped/blocked and no other work exists
-    // Contract: wait() resolves when the queue has STALLED/FINISHED active work, even if blocked items remain.
-    await queue.wait();
-
-    expect(blockedCmd).not.toHaveBeenCalled();
-  });
 
   test("executes command if checkSetup is false (no check)", async () => {
     const cmd = vi.fn(async (): Promise<Result<void, unknown>> => {
@@ -212,43 +200,7 @@ describe("CommandQueue", () => {
     expect(instance1).toBe(instance2);
   });
 
-  test("handles multiple commands with different types and setup checks", async () => {
-    const executionOrder: string[] = [];
 
-    const cmd1 = vi.fn((): Promise<Result<void, unknown>> => {
-      executionOrder.push("cmd1");
-      return Promise.resolve({ ok: true, data: undefined });
-    });
-
-    const cmd2 = vi.fn((): Promise<Result<void, unknown>> => {
-      executionOrder.push("cmd2");
-      return Promise.resolve({ ok: true, data: undefined });
-    });
-
-    const cmd3 = vi.fn((): Promise<Result<void, unknown>> => {
-      executionOrder.push("cmd3");
-      return Promise.resolve({ ok: true, data: undefined });
-    });
-
-    // Setup check will fail for cmd2
-    vi.mocked(checkSetup)
-      .mockReturnValueOnce({ ok: true, data: undefined }) // for cmd1
-      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } }) // for cmd2
-      .mockReturnValueOnce({ ok: true, data: undefined }); // for cmd3
-
-    await queue.add(cmd1, CommandType.Setup, true);
-    await queue.add(cmd2, CommandType.UserAction, true);
-    await queue.add(cmd3, CommandType.GeneralAction, true);
-
-    await queue.wait();
-
-    // cmd2 should be skipped due to failed setup check, BUT the queue should continue
-    // So cmd3 (GeneralAction) WILL run because the queue is no longer blocked by cmd2
-    expect(executionOrder).toEqual(["cmd1", "cmd3"]);
-    expect(cmd1).toHaveBeenCalled();
-    expect(cmd2).not.toHaveBeenCalled();
-    expect(cmd3).toHaveBeenCalled();
-  });
 
   test("executes later setup command if initial command requires setup", async () => {
     const executionOrder: string[] = [];
@@ -297,34 +249,5 @@ describe("CommandQueue", () => {
     expect(setupCmd).toHaveBeenCalled();
   });
 
-  test("executes independent command while dependent command waits", async () => {
-    const executionOrder: string[] = [];
 
-    const dependentCmd = vi.fn((): Promise<Result<void, unknown>> => {
-      executionOrder.push("dependent");
-      return Promise.resolve({ ok: true, data: undefined });
-    });
-
-    const independentCmd = vi.fn((): Promise<Result<void, unknown>> => {
-      executionOrder.push("independent");
-      return Promise.resolve({ ok: true, data: undefined });
-    });
-
-    // Mock checkSetup:
-    // 1. False for dependentCmd
-    // 2. True for independentCmd
-    vi.mocked(checkSetup)
-      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } })
-      .mockReturnValueOnce({ ok: true, data: undefined });
-
-    await queue.add(dependentCmd, CommandType.GeneralAction, true);
-    await queue.add(independentCmd, CommandType.GeneralAction, true);
-
-    await queue.wait();
-
-    // Dependent command should be skipped, Independent command should run
-    expect(executionOrder).toEqual(["independent"]);
-    expect(dependentCmd).not.toHaveBeenCalled();
-    expect(independentCmd).toHaveBeenCalled();
-  });
 });

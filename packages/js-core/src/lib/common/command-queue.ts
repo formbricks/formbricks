@@ -75,51 +75,58 @@ export class CommandQueue {
     this.running = true;
 
     while (this.queue.length > 0) {
-      const currentItem = this.queue[0]; // Peek at the first item
+      // Peek at the next command instead of shifting
+      const currentItem = this.queue[0];
 
-      if (!currentItem) {
-        this.queue.shift();
-        continue;
-      }
+      if (!currentItem) break;
 
-      if (currentItem.checkSetup) {
+      // Check if this command requires setup
+      if (currentItem.checkSetup && currentItem.type !== CommandType.Setup) {
         const setupResult = checkSetup();
         if (!setupResult.ok) {
-          const setupCommandIndex = this.queue.findIndex(
-            (item, index) => index > 0 && item.type === CommandType.Setup
+          // Setup is required but not complete
+          // Look for a Setup command in the queue
+          const setupIndex = this.queue.findIndex(
+            (item) => item.type === CommandType.Setup
           );
 
-          if (setupCommandIndex !== -1) {
-            const setupCommand = this.queue.splice(setupCommandIndex, 1)[0];
-            this.queue.unshift(setupCommand);
-            continue;
+          if (setupIndex > 0) {
+            // Found Setup command - move it to the front
+            const [setupItem] = this.queue.splice(setupIndex, 1);
+            this.queue.unshift(setupItem);
+            continue; // Process the Setup command next
+          } else if (setupIndex === -1) {
+            // No Setup command in queue - pause execution
+            console.warn(
+              `🧱 Formbricks - Waiting for setup command to be added`
+            );
+            break;
           }
-
-          // stop the queue if setup is not complete and no setup command is in the queue
-          this.running = false;
-          if (this.resolvePromise) {
-            this.resolvePromise();
-            this.resolvePromise = null;
-            this.commandPromise = null;
-          }
-          return;
+          // If setupIndex === 0, Setup is already first, so continue below
         }
       }
 
-      // remove the item from the queue
-      this.queue.shift();
+      // Now safely remove the command we're about to execute
+      const itemToExecute = this.queue.shift();
+      if (!itemToExecute) continue;
 
-      if (currentItem.type === CommandType.GeneralAction) {
-        // first check if there are pending updates in the update queue
+      // Handle GeneralAction - process UpdateQueue first
+      if (itemToExecute.type === CommandType.GeneralAction) {
         const updateQueue = UpdateQueue.getInstance();
         if (!updateQueue.isEmpty()) {
-          console.log("🧱 Formbricks - Waiting for pending updates to complete before executing command");
+          console.log(
+            "🧱 Formbricks - Waiting for pending updates to complete before executing command"
+          );
           await updateQueue.processUpdates();
         }
       }
 
+      // Execute the command
       const executeCommand = async (): Promise<Result<void, unknown>> => {
-        return (await currentItem.command.apply(null, currentItem.commandArgs)) as Result<void, unknown>;
+        return (await itemToExecute.command.apply(
+          null,
+          itemToExecute.commandArgs
+        )) as Result<void, unknown>;
       };
 
       const result = await wrapThrowsAsync(executeCommand)();
