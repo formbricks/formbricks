@@ -64,6 +64,7 @@ export interface InputComboboxProps {
   showCheckIcon?: boolean;
   comboboxClasses?: string;
   emptyDropdownText?: string;
+  disabled?: boolean;
 }
 
 // Helper to flatten all options and their children
@@ -87,6 +88,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   showCheckIcon = false,
   comboboxClasses,
   emptyDropdownText,
+  disabled = false,
 }) => {
   const { t } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
@@ -201,6 +203,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     <div
       className={cn(
         "group/icon flex max-w-[440px] overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
+        disabled && "pointer-events-none opacity-50",
         comboboxClasses
       )}>
       {withInput && inputType !== "dropdown" && (
@@ -213,7 +216,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         />
       )}
 
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenu open={open} onOpenChange={(o) => !disabled && setOpen(o)}>
         <DropdownMenuTrigger asChild className="z-10">
           <div
             id={id}

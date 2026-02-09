@@ -36,6 +36,7 @@ import {
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Input } from "@/modules/ui/components/input";
+import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import {
   Select,
   SelectContent,
@@ -187,14 +188,16 @@ export const TeamSettingsModal = ({
     const currentMemberId = watchMembers[index]?.userId;
     return orgMembers
       .filter((om) => !selectedMemberIds.includes(om?.id) || om?.id === currentMemberId)
-      .map((om) => ({ label: om?.name, value: om?.id }));
+      .map((om) => ({ label: om?.name, value: om?.id }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   };
 
   const getProjectOptionsForIndex = (index: number) => {
     const currentProjectId = watchProjects[index]?.projectId;
     return orgProjects
       .filter((op) => !selectedProjectIds.includes(op?.id) || op?.id === currentProjectId)
-      .map((op) => ({ label: op?.name, value: op?.id }));
+      .map((op) => ({ label: op?.name, value: op?.id }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   };
 
   const handleMemberSelectionChange = (index: number, userId: string) => {
@@ -278,29 +281,21 @@ export const TeamSettingsModal = ({
 
                                   return (
                                     <FormItem className="flex-1">
-                                      <Select
-                                        onValueChange={(val) => {
-                                          field.onChange(val);
-                                          handleMemberSelectionChange(index, val);
+                                      <InputCombobox
+                                        id={`member-${index}-select`}
+                                        options={memberOpts}
+                                        value={member.userId || null}
+                                        onChangeValue={(val) => {
+                                          const userId = val as string;
+                                          field.onChange(userId);
+                                          handleMemberSelectionChange(index, userId);
                                         }}
-                                        disabled={isSelectDisabled}
-                                        value={member.userId}>
-                                        <SelectTrigger>
-                                          <SelectValue
-                                            placeholder={t("environments.settings.teams.select_member")}
-                                          />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {memberOpts.map((option) => (
-                                            <SelectItem
-                                              key={option.value}
-                                              value={option.value}
-                                              id={`member-${index}-option`}>
-                                              {option.label}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
+                                        disabled={!!isSelectDisabled}
+                                        comboboxClasses="max-w-full"
+                                        searchPlaceholder={t(
+                                          "environments.settings.teams.select_member"
+                                        )}
+                                      />
                                       {error?.message && (
                                         <FormError className="text-left">{error.message}</FormError>
                                       )}
@@ -426,26 +421,19 @@ export const TeamSettingsModal = ({
 
                                   return (
                                     <FormItem className="flex-1">
-                                      <Select
-                                        onValueChange={field.onChange}
-                                        value={project.projectId}
-                                        disabled={isSelectDisabled}>
-                                        <SelectTrigger>
-                                          <SelectValue
-                                            placeholder={t("environments.settings.teams.select_workspace")}
-                                          />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {projectOpts.map((option) => (
-                                            <SelectItem
-                                              key={option.value}
-                                              value={option.value}
-                                              id={`project-${index}-option`}>
-                                              {option.label}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
+                                      <InputCombobox
+                                        id={`project-${index}-select`}
+                                        options={projectOpts}
+                                        value={project.projectId || null}
+                                        onChangeValue={(val) => {
+                                          field.onChange(val as string);
+                                        }}
+                                        disabled={!!isSelectDisabled}
+                                        comboboxClasses="max-w-full"
+                                        searchPlaceholder={t(
+                                          "environments.settings.teams.select_workspace"
+                                        )}
+                                      />
                                       {error?.message && (
                                         <FormError className="text-left">{error.message}</FormError>
                                       )}
