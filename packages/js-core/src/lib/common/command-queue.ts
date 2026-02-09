@@ -85,7 +85,9 @@ export class CommandQueue {
       if (currentItem.checkSetup) {
         const setupResult = checkSetup();
         if (!setupResult.ok) {
-          const setupCommandIndex = this.queue.findIndex((item) => item.type === CommandType.Setup);
+          const setupCommandIndex = this.queue.findIndex(
+            (item, index) => index > 0 && item.type === CommandType.Setup
+          );
 
           if (setupCommandIndex !== -1) {
             const setupCommand = this.queue.splice(setupCommandIndex, 1)[0];
