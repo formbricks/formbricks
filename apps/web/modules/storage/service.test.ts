@@ -2,12 +2,7 @@ import { randomUUID } from "crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { StorageErrorCode } from "@formbricks/storage";
 import { TAccessType } from "@formbricks/types/storage";
-import {
-  deleteFile,
-  deleteFilesByEnvironmentId,
-  getSignedUrlForDownload,
-  getSignedUrlForUpload,
-} from "./service";
+import { deleteFile, deleteFilesByEnvironmentId, getSignedUrlForUpload } from "./service";
 
 // Mock external dependencies
 vi.mock("crypto", () => ({
@@ -259,86 +254,6 @@ describe("storage service", () => {
       if (!result.ok) {
         expect(result.error.code).toBe(StorageErrorCode.InvalidInput);
       }
-    });
-  });
-
-  describe("getSignedUrlForDownload", () => {
-    test("should generate signed URL for download", async () => {
-      const mockSignedUrlResponse = {
-        ok: true,
-        data: "https://s3.example.com/download?signature=abc123",
-      } as MockedSignedDownloadReturn;
-
-      vi.mocked(getSignedDownloadUrl).mockResolvedValue(mockSignedUrlResponse);
-
-      const result = await getSignedUrlForDownload("test-file.jpg", "env-123", "public" as TAccessType);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBe("https://s3.example.com/download?signature=abc123");
-      }
-      expect(getSignedDownloadUrl).toHaveBeenCalledWith("env-123/public/test-file.jpg");
-    });
-
-    test("should decode URI-encoded filename", async () => {
-      const mockSignedUrlResponse = {
-        ok: true,
-        data: "https://s3.example.com/download?signature=abc123",
-      } as MockedSignedDownloadReturn;
-
-      vi.mocked(getSignedDownloadUrl).mockResolvedValue(mockSignedUrlResponse);
-
-      const encodedFileName = encodeURIComponent("file with spaces.jpg");
-      await getSignedUrlForDownload(encodedFileName, "env-123", "private" as TAccessType);
-
-      expect(getSignedDownloadUrl).toHaveBeenCalledWith("env-123/private/file with spaces.jpg");
-    });
-
-    test("should return error when getSignedDownloadUrl fails", async () => {
-      const mockErrorResponse = {
-        ok: false,
-        error: {
-          code: StorageErrorCode.S3ClientError,
-        },
-      } as MockedSignedDownloadReturn;
-
-      vi.mocked(getSignedDownloadUrl).mockResolvedValue(mockErrorResponse);
-
-      const result = await getSignedUrlForDownload("missing-file.jpg", "env-123", "public" as TAccessType);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe(StorageErrorCode.S3ClientError);
-      }
-    });
-
-    test("should handle unexpected errors and return unknown error", async () => {
-      vi.mocked(getSignedDownloadUrl).mockRejectedValue(new Error("Network error"));
-
-      const result = await getSignedUrlForDownload("test-file.jpg", "env-123", "public" as TAccessType);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe(StorageErrorCode.Unknown);
-      }
-      expect(logger.error).toHaveBeenCalledWith(
-        { error: expect.any(Error) },
-        "Error getting signed url for download"
-      );
-    });
-
-    test("should handle files with special characters", async () => {
-      const mockSignedUrlResponse = {
-        ok: true,
-        data: "https://s3.example.com/download?signature=abc123",
-      } as MockedSignedDownloadReturn;
-
-      vi.mocked(getSignedDownloadUrl).mockResolvedValue(mockSignedUrlResponse);
-
-      const specialFileName = "file%20with%20%26%20symbols.jpg";
-      await getSignedUrlForDownload(specialFileName, "env-123", "public" as TAccessType);
-
-      expect(getSignedDownloadUrl).toHaveBeenCalledWith("env-123/public/file with & symbols.jpg");
     });
   });
 

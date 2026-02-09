@@ -7,7 +7,6 @@ import {
   deleteFile as deleteFileFromS3,
   deleteFilesByPrefix,
   getFileStream,
-  getSignedDownloadUrl,
   getSignedUploadUrl,
 } from "@formbricks/storage";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
@@ -59,31 +58,6 @@ export const getSignedUrlForUpload = async (
     });
   } catch (error) {
     logger.error({ error }, "Error getting signed url for upload");
-
-    return err({
-      code: StorageErrorCode.Unknown,
-    });
-  }
-};
-
-export const getSignedUrlForDownload = async (
-  fileName: string,
-  environmentId: string,
-  accessType: TAccessType
-): Promise<Result<string, StorageError>> => {
-  try {
-    const fileNameDecoded = decodeURIComponent(fileName);
-    const fileKey = `${environmentId}/${accessType}/${fileNameDecoded}`;
-
-    const signedUrlResult = await getSignedDownloadUrl(fileKey);
-
-    if (!signedUrlResult.ok) {
-      return signedUrlResult;
-    }
-
-    return signedUrlResult;
-  } catch (error) {
-    logger.error({ error }, "Error getting signed url for download");
 
     return err({
       code: StorageErrorCode.Unknown,
