@@ -95,6 +95,11 @@ export class CommandQueue {
 
           // stop the queue if setup is not complete and no setup command is in the queue
           this.running = false;
+          if (this.resolvePromise) {
+            this.resolvePromise();
+            this.resolvePromise = null;
+            this.commandPromise = null;
+          }
           return;
         }
       }

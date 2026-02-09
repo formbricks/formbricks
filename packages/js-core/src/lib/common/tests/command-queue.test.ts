@@ -265,8 +265,11 @@ describe("CommandQueue", () => {
     // 1. Add Track command (requires setup)
     // Queue: [Track]
     // Run loop starts -> Peeks [Track] -> checkSetup fails -> isSetup=false
-    // No Setup in queue -> Pauses queue (running=false)
+    // No Setup in queue -> Pauses queue (running=false) -> Resolves promise (CRITICAL FIX)
     await queue.add(trackCmd, CommandType.GeneralAction, true);
+
+    // Verify that wait() resolves even if the queue is paused due to missing setup
+    await queue.wait();
 
     // 2. Add Setup command
     // Queue: [Track, Setup] -> Triggers run()
