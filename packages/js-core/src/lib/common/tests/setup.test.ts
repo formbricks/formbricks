@@ -69,6 +69,16 @@ vi.mock("@/lib/survey/no-code-action", () => ({
   checkPageUrl: vi.fn(),
 }));
 
+// 9) Mock CommandQueue
+vi.mock("@/lib/common/command-queue", () => ({
+  CommandQueue: {
+    getInstance: vi.fn(() => ({
+      run: vi.fn(),
+      add: vi.fn(),
+    })),
+  },
+}));
+
 describe("setup.ts", () => {
   let getInstanceConfigMock: MockInstance<() => Config>;
   let getInstanceLoggerMock: MockInstance<() => Logger>;
