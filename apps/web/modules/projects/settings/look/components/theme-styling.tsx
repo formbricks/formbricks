@@ -189,7 +189,7 @@ export const ThemeStyling = ({
                     <Button
                       type="button"
                       variant="secondary"
-                      className="h-10 w-full justify-center gap-2 border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+                      className="h-10 w-full justify-center gap-2"
                       onClick={() => setConfirmSuggestColorsOpen(true)}>
                       <SparklesIcon className="mr-2 h-4 w-4" />
                       {t("environments.workspace.look.suggest_colors")}
