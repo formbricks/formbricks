@@ -118,12 +118,7 @@ describe("CommandQueue", () => {
 
   test("logs errors if a command throws or returns error", async () => {
     // Spy on console.error to see if it's called
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {
-      return {
-        ok: true,
-        data: undefined,
-      };
-    });
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
 
     // Force checkSetup to succeed
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
@@ -132,7 +127,7 @@ describe("CommandQueue", () => {
     const failingCmd = vi.fn(async () => {
       await new Promise((resolve) => {
         setTimeout(() => {
-          resolve("some error");
+          resolve(undefined);
         }, 10);
       });
 
