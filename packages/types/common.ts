@@ -19,7 +19,8 @@ export const ZStorageUrl = z.string().refine(
     }
     // Otherwise validate as URL
     try {
-      new URL(val);
+      // Using void to satisfy ESLint "no-new" rule while still validating the URL
+      void new URL(val);
       return true;
     } catch {
       return false;
