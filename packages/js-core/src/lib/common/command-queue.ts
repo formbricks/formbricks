@@ -75,7 +75,7 @@ export class CommandQueue {
     this.running = true;
 
     while (this.queue.length > 0) {
-      let executedSomething = false;
+      let didExecute = false;
       let movedSetup = false;
 
       // Iterate through the queue to find the first runnable command
@@ -84,7 +84,7 @@ export class CommandQueue {
 
         if (!currentItem) {
           this.queue.splice(i, 1);
-          i--; // Adjust index
+          i--;
           continue;
         }
 
@@ -94,17 +94,18 @@ export class CommandQueue {
           if (!setupResult.ok) {
             // Command needs setup, but we are not set up.
             // Look ahead for a Setup command to prioritize
+            // We only search for setup commands AFTER the current blocked item
             const setupCommandIndex = this.queue.findIndex(
               (item, index) => index > i && item.type === CommandType.Setup
             );
 
-            if (setupCommandIndex !== -1) {
+            if (setupCommandIndex !== -1 && setupCommandIndex > 0) {
               // Found a setup command! Move it to the FRONT (index 0)
               const setupCommand = this.queue.splice(setupCommandIndex, 1)[0];
               this.queue.unshift(setupCommand);
 
-              // Flag that we moved a setup command, so we should break and restart the loop
               movedSetup = true;
+              // Break inner loop to restart scanning from index 0 immediately
               break;
             }
 
@@ -120,10 +121,8 @@ export class CommandQueue {
 
         // Execute logic
         if (currentItem.type === CommandType.GeneralAction) {
-          // first check if there are pending updates in the update queue
           const updateQueue = UpdateQueue.getInstance();
           if (!updateQueue.isEmpty()) {
-            console.log("🧱 Formbricks - Waiting for pending updates to complete before executing command");
             await updateQueue.processUpdates();
           }
         }
@@ -133,7 +132,6 @@ export class CommandQueue {
         };
 
         const result = await wrapThrowsAsync(executeCommand)();
-
         if (!result.ok) {
           console.error("🧱 Formbricks - Global error: ", result.error);
         } else if (!result.data.ok) {
@@ -141,15 +139,17 @@ export class CommandQueue {
         }
 
         // We executed something!
-        executedSomething = true;
+        didExecute = true;
 
         // Restart search from the beginning (index 0) to preserve priority/order
         break;
       }
 
       // STARVATION PROTECTION
-      // If we iterated the whole queue and executed nothing (and didn't move Setup), we are stalled.
-      if (!executedSomething && !movedSetup) {
+      // If we iterated the whole queue and executed nothing AND didn't move any setup command,
+      // then we are truly stalled (all remaining items are blocked).
+      if (!didExecute && !movedSetup) {
+        // All remaining commands are blocked; exit to avoid deadlock
         break;
       }
     }

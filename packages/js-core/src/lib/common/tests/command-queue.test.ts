@@ -97,6 +97,20 @@ describe("CommandQueue", () => {
     expect(cmd).not.toHaveBeenCalled();
   });
 
+  test("wait() resolves even when blocked commands remain", async () => {
+    // blocked command
+    const blockedCmd = vi.fn();
+    vi.mocked(checkSetup).mockReturnValue({ ok: false, error: { code: "not_setup", message: "Not setup" } });
+
+    await queue.add(blockedCmd, CommandType.GeneralAction, true);
+
+    // wait should resolve immediately (or after loop pass) because the command is skipped/blocked and no other work exists
+    // Contract: wait() resolves when the queue has STALLED/FINISHED active work, even if blocked items remain.
+    await queue.wait();
+
+    expect(blockedCmd).not.toHaveBeenCalled();
+  });
+
   test("executes command if checkSetup is false (no check)", async () => {
     const cmd = vi.fn(async (): Promise<Result<void, unknown>> => {
       return new Promise((resolve) => {
