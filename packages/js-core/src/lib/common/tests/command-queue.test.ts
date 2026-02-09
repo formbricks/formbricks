@@ -239,4 +239,48 @@ describe("CommandQueue", () => {
     expect(cmd2).not.toHaveBeenCalled();
     expect(cmd3).toHaveBeenCalled();
   });
+
+  test("executes later setup command if initial command requires setup", async () => {
+    const executionOrder: string[] = [];
+
+    const trackCmd = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("track");
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    const setupCmd = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("setup");
+      // Simulate setup taking some time and then succeeding
+      // Crucially, we must now mock checkSetup to return true for subsequent calls
+      vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    // Initial state: Not Setup
+    vi.mocked(checkSetup).mockReturnValue({
+      ok: false,
+      error: { code: "not_setup", message: "Not setup" },
+    });
+
+    // 1. Add Track command (requires setup)
+    // Queue: [Track]
+    // Run loop starts -> Peeks [Track] -> checkSetup fails -> isSetup=false
+    // No Setup in queue -> Pauses queue (running=false)
+    await queue.add(trackCmd, CommandType.GeneralAction, true);
+
+    // 2. Add Setup command
+    // Queue: [Track, Setup] -> Triggers run()
+    // Run loop starts -> Peeks [Track] -> checkSetup fails
+    // Finds [Setup] at index 1 -> Moves [Setup] to front -> Queue: [Setup, Track]
+    // Peeks [Setup] -> checkSetup skipped (or valid for setup type/arg) -> shifts & executes Setup
+    // ... Setup sets checkSetup mock to true ...
+    // Loop repeats -> Peeks [Track] -> checkSetup OK -> shifts & executes Track
+    await queue.add(setupCmd, CommandType.Setup, false);
+
+    await queue.wait();
+
+    expect(executionOrder).toEqual(["setup", "track"]);
+    expect(trackCmd).toHaveBeenCalled();
+    expect(setupCmd).toHaveBeenCalled();
+  });
 });

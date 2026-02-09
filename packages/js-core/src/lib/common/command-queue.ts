@@ -75,17 +75,32 @@ export class CommandQueue {
     this.running = true;
 
     while (this.queue.length > 0) {
-      const currentItem = this.queue.shift();
+      const currentItem = this.queue[0]; // Peek at the first item
 
-      if (!currentItem) continue;
+      if (!currentItem) {
+        this.queue.shift();
+        continue;
+      }
 
       if (currentItem.checkSetup) {
         const setupResult = checkSetup();
         if (!setupResult.ok) {
-          console.warn(`🧱 Formbricks - Setup not complete.`);
-          continue;
+          const setupCommandIndex = this.queue.findIndex((item) => item.type === CommandType.Setup);
+
+          if (setupCommandIndex !== -1) {
+            const setupCommand = this.queue.splice(setupCommandIndex, 1)[0];
+            this.queue.unshift(setupCommand);
+            continue;
+          }
+
+          // stop the queue if setup is not complete and no setup command is in the queue
+          this.running = false;
+          return;
         }
       }
+
+      // remove the item from the queue
+      this.queue.shift();
 
       if (currentItem.type === CommandType.GeneralAction) {
         // first check if there are pending updates in the update queue
