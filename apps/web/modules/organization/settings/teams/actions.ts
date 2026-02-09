@@ -2,6 +2,7 @@
 
 import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
@@ -23,7 +24,7 @@ import {
   getMembershipsByUserId,
   getOrganizationOwnerCount,
 } from "@/modules/organization/settings/teams/lib/membership";
-import { deleteInvite, getInvite, inviteUser, resendInvite } from "./lib/invite";
+import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
 
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
@@ -57,30 +58,57 @@ const ZCreateInviteTokenAction = z.object({
   inviteId: ZUuid,
 });
 
-export const createInviteTokenAction = authenticatedActionClient
-  .schema(ZCreateInviteTokenAction)
-  .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromInviteId(parsedInput.inviteId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
+export const createInviteTokenAction = authenticatedActionClient.schema(ZCreateInviteTokenAction).action(
+  withAuditLogging(
+    "updated",
+    "invite",
+    async ({
+      parsedInput,
+      ctx,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZCreateInviteTokenAction>;
+    }) => {
+      const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
-    const invite = await getInvite(parsedInput.inviteId);
-    if (!invite) {
-      throw new ValidationError("Invite not found");
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+        ],
+      });
+
+      // Get old expiresAt for audit logging before update
+      const oldInvite = await prisma.invite.findUnique({
+        where: { id: parsedInput.inviteId },
+        select: { email: true, expiresAt: true },
+      });
+
+      if (!oldInvite) {
+        throw new ValidationError("Invite not found");
+      }
+
+      // Refresh the invitation expiration
+      const updatedInvite = await refreshInviteExpiration(parsedInput.inviteId);
+
+      // Set audit context
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
+      ctx.auditLoggingCtx.oldObject = { expiresAt: oldInvite.expiresAt };
+      ctx.auditLoggingCtx.newObject = { expiresAt: updatedInvite.expiresAt };
+
+      const inviteToken = createInviteToken(parsedInput.inviteId, updatedInvite.email, {
+        expiresIn: "7d",
+      });
+
+      return { inviteToken: encodeURIComponent(inviteToken) };
     }
-    const inviteToken = createInviteToken(parsedInput.inviteId, invite.email, {
-      expiresIn: "7d",
-    });
-
-    return { inviteToken: encodeURIComponent(inviteToken) };
-  });
+  )
+);
 
 const ZDeleteMembershipAction = z.object({
   userId: ZId,
@@ -191,6 +219,7 @@ export const resendInviteAction = authenticatedActionClient.schema(ZResendInvite
         invite?.creator?.name ?? "",
         updatedInvite.name ?? ""
       );
+
       return updatedInvite;
     }
   )

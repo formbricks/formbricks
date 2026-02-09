@@ -35,7 +35,7 @@ test.describe("Onboarding Flow Test", async () => {
     await page.getByPlaceholder("e.g. Formbricks").fill(projectName);
     await page.locator("#form-next-button").click();
 
-    await page.getByRole("button", { name: "I'll do it later" }).click();
+    await page.getByRole("button", { name: "I will do it later" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(projectName)).toBeVisible();

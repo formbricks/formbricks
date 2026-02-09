@@ -1,6 +1,7 @@
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -13,7 +14,6 @@ import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
-import { formatValidationErrorsForApi, validateResponseData } from "./lib/validation";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -134,6 +134,7 @@ export const POST = async (request: Request) =>
         surveyQuestions.data.blocks,
         body.data,
         body.language ?? "en",
+        body.finished,
         surveyQuestions.data.questions
       );
 
@@ -142,7 +143,7 @@ export const POST = async (request: Request) =>
           request,
           {
             type: "bad_request",
-            details: formatValidationErrorsForApi(validationErrors),
+            details: formatValidationErrorsForV2Api(validationErrors),
           },
           auditLog
         );

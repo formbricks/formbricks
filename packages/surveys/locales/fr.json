@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Les répondants ne verront pas cette carte",
     "retry": "Réessayer",
     "retrying": "Nouvelle tentative...",
+    "select_option": "Sélectionner une option",
+    "select_options": "Sélectionner des options",
     "sending_responses": "Envoi des réponses...",
     "takes_less_than_x_minutes": "{count, plural, one {Prend moins d'une minute} other {Prend moins de {count} minutes}}",
     "takes_x_minutes": "{count, plural, one {Prend 1 minute} other {Prend {count} minutes}}",
@@ -46,7 +48,7 @@
     },
     "invalid_device_error": {
       "message": "Veuillez désactiver la protection contre le spam dans les paramètres du sondage pour continuer à utiliser cet appareil.",
-      "title": "Cet appareil ne prend pas en charge la protection contre le spam."
+      "title": "Cet appareil ne prend pas en charge la protection anti-spam."
     },
     "invalid_format": "Veuillez saisir un format valide",
     "is_between": "Veuillez sélectionner une date entre le {startDate} et le {endDate}",
@@ -69,7 +71,7 @@
     "please_fill_out_this_field": "Veuillez remplir ce champ",
     "recaptcha_error": {
       "message": "Votre réponse n'a pas pu être soumise car elle a été signalée comme une activité automatisée. Si vous respirez, veuillez réessayer.",
-      "title": "Nous n'avons pas pu vérifier que vous êtes humain."
+      "title": "Nous n'avons pas pu vérifier que tu es humain."
     },
     "value_must_contain": "La valeur doit contenir {value}",
     "value_must_equal": "La valeur doit être égale à {value}",

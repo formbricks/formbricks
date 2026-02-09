@@ -21,7 +21,7 @@ const baseProject: Project = {
   config: { channel: null, industry: null } as any,
   placement: "bottomRight",
   clickOutsideClose: false,
-  darkOverlay: false,
+  overlay: "none",
   logo: null,
   brandColor: null,
   highlightBorderColor: null,

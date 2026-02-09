@@ -10,7 +10,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyElementTypeEnum, TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
+import {
+  TMultipleChoiceOptionDisplayType,
+  TSurveyElementTypeEnum,
+  TSurveyMultipleChoiceElement,
+} from "@formbricks/types/surveys/elements";
 import { TShuffleOption, TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -21,6 +25,7 @@ import { ValidationRulesEditor } from "@/modules/survey/editor/components/valida
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
+import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 
 interface MultipleChoiceElementFormProps {
@@ -74,6 +79,11 @@ export const MultipleChoiceElementForm = ({
       show: true,
     },
   };
+
+  const multipleChoiceOptionDisplayTypeOptions = [
+    { value: "list", label: t("environments.surveys.edit.list") },
+    { value: "dropdown", label: t("environments.surveys.edit.dropdown") },
+  ];
 
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
     let newChoices: any[] = [];
@@ -382,6 +392,20 @@ export const MultipleChoiceElementForm = ({
           </div>
         </div>
       </div>
+
+      <div className="mt-3">
+        <Label>{t("environments.surveys.edit.display_type")}</Label>
+        <div className="mt-2">
+          <OptionsSwitch
+            options={multipleChoiceOptionDisplayTypeOptions}
+            currentOption={element.displayType ?? "list"}
+            handleOptionChange={(value: TMultipleChoiceOptionDisplayType) =>
+              updateElement(elementIdx, { displayType: value })
+            }
+          />
+        </div>
+      </div>
+
       <BulkEditOptionsModal
         isOpen={isBulkEditOpen}
         onClose={() => setIsBulkEditOpen(false)}

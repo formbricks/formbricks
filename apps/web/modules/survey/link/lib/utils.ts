@@ -68,6 +68,7 @@ export const getWebAppLocale = (languageCode: string, survey: TSurvey): string =
     "pt-BR": "pt-BR",
     "pt-PT": "pt-PT",
     fr: "fr-FR",
+    hu: "hu-HU",
     nl: "nl-NL",
     zh: "zh-Hans-CN", // Default to Simplified Chinese
     "zh-Hans": "zh-Hans-CN",

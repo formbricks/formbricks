@@ -97,7 +97,7 @@ describe("widget-file", () => {
           data: {
             project: {
               clickOutsideClose: true,
-              darkOverlay: false,
+              overlay: "none",
               placement: "bottomRight",
               inAppSurveyBranding: true,
             },
@@ -163,7 +163,7 @@ describe("widget-file", () => {
           data: {
             project: {
               clickOutsideClose: true,
-              darkOverlay: false,
+              overlay: "none",
               placement: "bottomRight",
               inAppSurveyBranding: true,
             },
@@ -209,7 +209,7 @@ describe("widget-file", () => {
           data: {
             project: {
               clickOutsideClose: true,
-              darkOverlay: false,
+              overlay: "none",
               placement: "bottomRight",
               inAppSurveyBranding: true,
             },

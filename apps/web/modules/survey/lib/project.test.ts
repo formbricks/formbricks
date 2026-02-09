@@ -47,7 +47,7 @@ const mockProjectPrisma = {
   linkSurveyBranding: false,
   placement: "bottomRight",
   clickOutsideClose: false,
-  darkOverlay: false,
+  overlay: "none",
   segment: null,
   surveyClosedMessage: null,
   singleUseId: null,
