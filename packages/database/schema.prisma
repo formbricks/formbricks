@@ -620,6 +620,7 @@ model Project {
   /// [Logo]
   logo                Json?
   projectTeams        ProjectTeam[]
+  optionLists         OptionList[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -892,6 +893,19 @@ model Language {
   surveyLanguages SurveyLanguage[]
 
   @@unique([projectId, code])
+}
+
+model OptionList {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  name      String
+  options   String[]
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  @@unique([projectId, name])
+  @@index([projectId])
 }
 
 /// Links surveys to their supported languages.

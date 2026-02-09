@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
@@ -20,6 +21,11 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-external-urls-permission";
+import {
+  createOptionList,
+  deleteOptionList,
+  getOptionListsByProjectId,
+} from "@/modules/survey/editor/lib/option-list";
 import { updateSurvey, updateSurveyDraft } from "@/modules/survey/editor/lib/survey";
 import { TSurveyDraft, ZSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
@@ -293,3 +299,97 @@ export const createActionClassAction = authenticatedActionClient.schema(ZCreateA
     }
   )
 );
+
+const ZGetOptionListsAction = z.object({
+  environmentId: z.string().cuid2(),
+});
+
+export const getOptionListsAction = authenticatedActionClient
+  .schema(ZGetOptionListsAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId,
+          minPermission: "read",
+        },
+      ],
+    });
+
+    return await getOptionListsByProjectId(projectId);
+  });
+
+const ZCreateOptionListAction = z.object({
+  environmentId: z.string().cuid2(),
+  name: z.string().min(1).max(100),
+  options: z.array(z.string().min(1)).min(1),
+});
+
+export const createOptionListAction = authenticatedActionClient
+  .schema(ZCreateOptionListAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId,
+          minPermission: "readWrite",
+        },
+      ],
+    });
+
+    return await createOptionList(projectId, {
+      name: parsedInput.name,
+      options: parsedInput.options,
+    });
+  });
+
+const ZDeleteOptionListAction = z.object({
+  optionListId: z.string().cuid2(),
+});
+
+export const deleteOptionListAction = authenticatedActionClient
+  .schema(ZDeleteOptionListAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const optionList = await prisma.optionList.findUnique({
+      where: { id: parsedInput.optionListId },
+      select: { projectId: true },
+    });
+
+    if (!optionList) {
+      throw new ResourceNotFoundError("OptionList", parsedInput.optionListId);
+    }
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromProjectId(optionList.projectId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: optionList.projectId,
+          minPermission: "readWrite",
+        },
+      ],
+    });
+
+    await deleteOptionList(parsedInput.optionListId);
+  });

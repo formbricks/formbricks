@@ -20,7 +20,13 @@ import { ElementOptionChoice } from "@/modules/survey/editor/components/element-
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/ui/components/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 
 interface MultipleChoiceElementFormProps {
@@ -382,7 +388,9 @@ export const MultipleChoiceElementForm = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="list">{t("environments.surveys.edit.display_as_list")}</SelectItem>
-                  <SelectItem value="dropdown">{t("environments.surveys.edit.display_as_dropdown")}</SelectItem>
+                  <SelectItem value="dropdown">
+                    {t("environments.surveys.edit.display_as_dropdown")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <ShuffleOptionSelect
@@ -411,6 +419,7 @@ export const MultipleChoiceElementForm = ({
         selectedLanguageCode={selectedLanguageCode}
         surveyLanguageCodes={surveyLanguageCodes}
         locale={locale}
+        environmentId={localSurvey.environmentId}
       />
     </form>
   );
