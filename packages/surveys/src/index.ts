@@ -6,6 +6,36 @@ import { FILE_PICK_EVENT } from "@/lib/constants";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import { addCustomThemeToDom, addStylesToDom, setStyleNonce } from "@/lib/styles";
 
+// Polyfill for webkit messageHandlers to prevent errors in browsers that don't fully support it
+// (e.g., Facebook's iOS in-app browser). This prevents TypeError when accessing unregistered handlers.
+if (typeof window !== "undefined") {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- WebKit types are not standard
+  const win = window as any;
+
+  if (win.webkit?.messageHandlers) {
+    const originalMessageHandlers = win.webkit.messageHandlers;
+
+    // Create a Proxy that safely handles access to potentially undefined message handlers
+    win.webkit.messageHandlers = new Proxy(originalMessageHandlers, {
+      get(target, prop) {
+        const handler = target[prop as keyof typeof target];
+
+        // If the handler doesn't exist, return a safe mock object with a no-op postMessage
+        if (!handler) {
+          return {
+            postMessage: () => {
+              // Silently ignore - the message handler is not registered in this environment
+              console.debug(`WebKit message handler "${String(prop)}" is not available in this environment`);
+            },
+          };
+        }
+
+        return handler;
+      },
+    });
+  }
+}
+
 export const renderSurveyInline = (props: SurveyContainerProps) => {
   const inlineProps: SurveyContainerProps = {
     ...props,
