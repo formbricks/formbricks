@@ -7,14 +7,14 @@ const NUMBER_PATTERN = "^-?[0-9]+(\\.[0-9]+)?$";
 // ISO_DATE_PATTERN: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ
 const ISO_DATE_PATTERN = "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z?)?$";
 
-type KeyTypeAnalysis = {
+interface KeyTypeAnalysis {
   id: string;
   key: string;
   detected_type: "number" | "date" | "string";
   non_empty_count: bigint;
-};
+}
 
-type MigrationStats = {
+interface MigrationStats {
   totalKeys: number;
   defaultKeys: number;
   customKeys: number;
@@ -23,7 +23,11 @@ type MigrationStats = {
   dateTypeKeys: number;
   stringTypeKeys: number;
   skippedEmptyKeys: number;
-};
+  totalAttributeRows: number;
+  valueBackfillSkipped: boolean;
+  numberRowsBackfilled: number;
+  dateRowsBackfilled: number;
+}
 
 export const addedAttributesDataTypes: MigrationScript = {
   type: "data",
@@ -39,6 +43,10 @@ export const addedAttributesDataTypes: MigrationScript = {
       dateTypeKeys: 0,
       stringTypeKeys: 0,
       skippedEmptyKeys: 0,
+      totalAttributeRows: 0,
+      valueBackfillSkipped: false,
+      numberRowsBackfilled: 0,
+      dateRowsBackfilled: 0,
     };
 
     // ============================================================
@@ -145,10 +153,6 @@ export const addedAttributesDataTypes: MigrationScript = {
       logger.info("Step 3: No number keys to update, skipping");
     }
 
-    // NOTE: Value backfill for number attributes (populating valueNumber) is handled
-    // by a separate post-deploy script: packages/database/src/scripts/backfill-attribute-values.ts
-    // The transition code in prisma-query.ts handles queries correctly during the backfill window.
-
     // ============================================================
     // STEP 4: Update dataType for date keys (in batches)
     // ============================================================
@@ -172,17 +176,118 @@ export const addedAttributesDataTypes: MigrationScript = {
       logger.info("Step 4: No date keys to update, skipping");
     }
 
-    // NOTE: Value backfill for date attributes (populating valueDate) is handled
-    // by a separate post-deploy script: packages/database/src/scripts/backfill-attribute-values.ts
-    // The transition code in prisma-query.ts handles queries correctly during the backfill window.
+    // ============================================================
+    // STEP 5: Conditional value backfill
+    // For small datasets (< 1M rows), backfill valueNumber and valueDate inline.
+    // For large datasets (>= 1M rows), skip and point to the standalone script.
+    // ============================================================
+    const BACKFILL_THRESHOLD = 1_000_000;
+
+    const totalAttributeCount = await tx.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) as count FROM "ContactAttribute"
+    `;
+
+    stats.totalAttributeRows = Number(totalAttributeCount[0].count);
+
+    logger.info(
+      `Step 5: Total ContactAttribute rows: ${stats.totalAttributeRows.toString()} (threshold: ${BACKFILL_THRESHOLD.toString()})`
+    );
+
+    if (stats.totalAttributeRows < BACKFILL_THRESHOLD) {
+      // ============================================================
+      // STEP 5a: Inline value backfill for number attributes
+      // ============================================================
+      if (numberKeys.length > 0) {
+        logger.info(
+          `Step 5a: Backfilling valueNumber for ${stats.numberTypeKeys.toString()} number-type keys...`
+        );
+
+        const VALUE_BATCH_SIZE = 10;
+        for (let i = 0; i < numberKeys.length; i += VALUE_BATCH_SIZE) {
+          const batch = numberKeys.slice(i, i + VALUE_BATCH_SIZE);
+
+          const batchResult = await tx.$executeRawUnsafe(
+            `
+            UPDATE "ContactAttribute"
+            SET "valueNumber" = value::DOUBLE PRECISION
+            WHERE "attributeKeyId" = ANY($1)
+              AND "valueNumber" IS NULL
+              AND TRIM(value) != ''
+              AND value ~ $2
+            `,
+            batch,
+            NUMBER_PATTERN
+          );
+
+          stats.numberRowsBackfilled += batchResult;
+          logger.info(
+            `Number backfill progress: ${Math.min(i + VALUE_BATCH_SIZE, numberKeys.length).toString()}/${numberKeys.length.toString()} keys (${stats.numberRowsBackfilled.toString()} rows updated)`
+          );
+        }
+
+        logger.info(`Step 5a complete: ${stats.numberRowsBackfilled.toString()} number rows backfilled`);
+      } else {
+        logger.info("Step 5a: No number keys to backfill, skipping");
+      }
+
+      // ============================================================
+      // STEP 5b: Inline value backfill for date attributes
+      // ============================================================
+      if (dateKeys.length > 0) {
+        logger.info(`Step 5b: Backfilling valueDate for ${stats.dateTypeKeys.toString()} date-type keys...`);
+
+        const VALUE_BATCH_SIZE = 10;
+        for (let i = 0; i < dateKeys.length; i += VALUE_BATCH_SIZE) {
+          const batch = dateKeys.slice(i, i + VALUE_BATCH_SIZE);
+
+          const batchResult = await tx.$executeRawUnsafe(
+            `
+            UPDATE "ContactAttribute"
+            SET "valueDate" = value::TIMESTAMP
+            WHERE "attributeKeyId" = ANY($1)
+              AND "valueDate" IS NULL
+              AND TRIM(value) != ''
+              AND value ~ $2
+            `,
+            batch,
+            ISO_DATE_PATTERN
+          );
+
+          stats.dateRowsBackfilled += batchResult;
+          logger.info(
+            `Date backfill progress: ${Math.min(i + VALUE_BATCH_SIZE, dateKeys.length).toString()}/${dateKeys.length.toString()} keys (${stats.dateRowsBackfilled.toString()} rows updated)`
+          );
+        }
+
+        logger.info(`Step 5b complete: ${stats.dateRowsBackfilled.toString()} date rows backfilled`);
+      } else {
+        logger.info("Step 5b: No date keys to backfill, skipping");
+      }
+    } else {
+      stats.valueBackfillSkipped = true;
+      logger.info(
+        `Step 5: Skipping value backfill (${stats.totalAttributeRows.toString()} rows >= ${BACKFILL_THRESHOLD.toString()} threshold)`
+      );
+      logger.info("Value backfill must be run separately after deploy using the standalone script:");
+      logger.info(
+        "  docker exec <container> node packages/database/dist/scripts/backfill-attribute-values.js"
+      );
+    }
 
     // ============================================================
     // FINAL: Log summary
     // ============================================================
+    const backfillStatus = stats.valueBackfillSkipped
+      ? `Value backfill: SKIPPED (${stats.totalAttributeRows.toString()} rows >= ${BACKFILL_THRESHOLD.toString()} threshold)
+  Run after deploy: docker exec <container> node packages/database/dist/scripts/backfill-attribute-values.js`
+      : `Value backfill: COMPLETED inline
+    - valueNumber rows updated: ${stats.numberRowsBackfilled.toString()}
+    - valueDate rows updated: ${stats.dateRowsBackfilled.toString()}`;
+
     logger.info(
       `
 ========================================
-Migration Complete (keys-only)!
+Migration Complete!
 ========================================
 Total attribute keys: ${stats.totalKeys.toString()}
   - Default keys (skipped): ${stats.defaultKeys.toString()}
@@ -191,10 +296,8 @@ Total attribute keys: ${stats.totalKeys.toString()}
     - Date type: ${stats.dateTypeKeys.toString()}
     - String type: ${stats.stringTypeKeys.toString()}
     - Empty (skipped): ${stats.skippedEmptyKeys.toString()}
-
-NOTE: Value backfill (valueNumber/valueDate) is deferred.
-Run the backfill script after deploy for large datasets:
-  npx tsx packages/database/src/scripts/backfill-attribute-values.ts
+Total attribute rows: ${stats.totalAttributeRows.toString()}
+${backfillStatus}
 ========================================`
     );
   },

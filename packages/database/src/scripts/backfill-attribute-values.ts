@@ -5,11 +5,10 @@
  * This script is intended to be run AFTER the keys-only data migration
  * (20260203033241_added_attributes_data_types) has completed.
  *
- * - Required for Formbricks Cloud (~6M rows) to restore optimized query performance.
- * - Optional for self-hosters (the transition code in prisma-query.ts handles
- *   un-migrated rows correctly for small datasets).
+ * Usage (Docker):
+ *   docker exec <container> node packages/database/dist/scripts/backfill-attribute-values.js
  *
- * Usage:
+ * Usage (Development):
  *   npx tsx packages/database/src/scripts/backfill-attribute-values.ts
  *
  * Key characteristics:
@@ -64,7 +63,7 @@ const backfillNumberAttributes = async (): Promise<number> => {
       NUMBER_PATTERN
     );
 
-    totalUpdated += Number(batchResult);
+    totalUpdated += batchResult;
     console.log(
       `  Number backfill progress: ${Math.min(i + KEY_BATCH_SIZE, keyIds.length).toString()}/${keyIds.length.toString()} keys (${totalUpdated.toString()} rows updated)`
     );
@@ -107,7 +106,7 @@ const backfillDateAttributes = async (): Promise<number> => {
       ISO_DATE_PATTERN
     );
 
-    totalUpdated += Number(batchResult);
+    totalUpdated += batchResult;
     console.log(
       `  Date backfill progress: ${Math.min(i + KEY_BATCH_SIZE, keyIds.length).toString()}/${keyIds.length.toString()} keys (${totalUpdated.toString()} rows updated)`
     );
