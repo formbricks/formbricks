@@ -958,16 +958,16 @@
         "keep_full_control_over_your_data_privacy_and_security": "Keep full control over your data privacy and security.",
         "license_status": "License Status",
         "license_status_active": "Active",
+        "license_status_description": "Status of your enterprise license.",
         "license_status_expired": "Expired",
         "license_status_no_license": "No License",
         "license_status_unreachable": "Unreachable",
-        "license_status_description": "Status of your enterprise license.",
         "no_call_needed_no_strings_attached_request_a_free_30_day_trial_license_to_test_all_features_by_filling_out_this_form": "No call needed, no strings attached: Request a free 30-day trial license to test all features by filling out this form:",
         "no_credit_card_no_sales_call_just_test_it": "No credit card. No sales call. Just test it :)",
         "on_request": "On request",
         "organization_roles": "Organization Roles (Admin, Editor, Developer, etc.)",
         "questions_please_reach_out_to": "Questions? Please reach out to",
-        "recheck_license": "Recheck License",
+        "recheck_license": "Recheck license",
         "recheck_license_failed": "License check failed. The license server may be unreachable.",
         "recheck_license_success": "License check successful",
         "recheck_license_unreachable": "License server is unreachable. Please try again later.",
@@ -978,8 +978,7 @@
         "soc2_hipaa_iso_27001_compliance_check": "SOC2, HIPAA, ISO 27001 Compliance check",
         "sso": "SSO (Google, Microsoft, OpenID Connect)",
         "teams": "Teams & Access Roles (Read, Read & Write, Manage)",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Unlock the full power of Formbricks. Free for 30 days.",
-        "your_enterprise_license_is_active_all_features_unlocked": "Your Enterprise License is active. All features unlocked."
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Unlock the full power of Formbricks. Free for 30 days."
       },
       "general": {
         "bulk_invite_warning_description": "On the free plan, all organization members are always assigned the “Owner” role.",

@@ -978,8 +978,7 @@
         "soc2_hipaa_iso_27001_compliance_check": "SOC2、HIPAA、ISO 27001 合規性檢查",
         "sso": "SSO（Google、Microsoft、OpenID Connect）",
         "teams": "團隊和存取角色（讀取、讀取和寫入、管理）",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "免費解鎖 Formbricks 的全部功能，為期 30 天。",
-        "your_enterprise_license_is_active_all_features_unlocked": "您的企業授權處於活動狀態。所有功能都已解鎖。"
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "免費解鎖 Formbricks 的全部功能，為期 30 天。"
       },
       "general": {
         "bulk_invite_warning_description": "在免費方案中，所有組織成員始終會被指派「擁有者」角色。",

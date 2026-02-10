@@ -978,8 +978,7 @@
         "soc2_hipaa_iso_27001_compliance_check": "SOC2, HIPAA, ISO 27001 Conformiteitscontrole",
         "sso": "SSO (Google, Microsoft, OpenID Connect)",
         "teams": "Teams en toegangsrollen (lezen, lezen en schrijven, beheren)",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Ontgrendel de volledige kracht van Formbricks. 30 dagen gratis.",
-        "your_enterprise_license_is_active_all_features_unlocked": "Uw Enterprise-licentie is actief. Alle functies ontgrendeld."
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Ontgrendel de volledige kracht van Formbricks. 30 dagen gratis."
       },
       "general": {
         "bulk_invite_warning_description": "Bij het gratis abonnement krijgen alle organisatieleden altijd de rol 'Eigenaar' toegewezen.",

@@ -967,7 +967,7 @@
         "on_request": "Bajo petición",
         "organization_roles": "Roles de organización (administrador, editor, desarrollador, etc.)",
         "questions_please_reach_out_to": "¿Preguntas? Por favor, contacta con",
-        "recheck_license": "Volver a comprobar la licencia",
+        "recheck_license": "Volver a comprobar licencia",
         "recheck_license_failed": "Error al comprobar la licencia. Es posible que el servidor de licencias no esté disponible.",
         "recheck_license_success": "Comprobación de licencia correcta",
         "recheck_license_unreachable": "El servidor de licencias no está disponible. Inténtalo de nuevo más tarde.",
@@ -978,8 +978,7 @@
         "soc2_hipaa_iso_27001_compliance_check": "Verificación de cumplimiento SOC2, HIPAA, ISO 27001",
         "sso": "SSO (Google, Microsoft, OpenID Connect)",
         "teams": "Equipos y roles de acceso (lectura, lectura y escritura, gestión)",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Desbloquea todo el potencial de Formbricks. Gratis durante 30 días.",
-        "your_enterprise_license_is_active_all_features_unlocked": "Tu licencia empresarial está activa. Todas las características desbloqueadas."
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Desbloquea todo el potencial de Formbricks. Gratis durante 30 días."
       },
       "general": {
         "bulk_invite_warning_description": "En el plan gratuito, a todos los miembros de la organización se les asigna siempre el rol de \"Propietario\".",

@@ -908,7 +908,7 @@ checksums:
     environments/settings/enterprise/on_request: cf9949748c15313a8fd57bf965bec16b
     environments/settings/enterprise/organization_roles: 731d5028521c2a3a7bdbd7ed215dd861
     environments/settings/enterprise/questions_please_reach_out_to: ac4be65ffef9349eaeb137c254d3fee7
-    environments/settings/enterprise/recheck_license: 8d0889fdbee4c9d34a5be6bd4b12f2d5
+    environments/settings/enterprise/recheck_license: b913b64f89df184b5059710f4a0b26fa
     environments/settings/enterprise/recheck_license_failed: dd410acbb8887625cf194189f832dd7c
     environments/settings/enterprise/recheck_license_success: 700ddd805be904a415f614de3df1da78
     environments/settings/enterprise/recheck_license_unreachable: 0ca81bd89595a9da24bc94dcef132175
@@ -920,7 +920,6 @@ checksums:
     environments/settings/enterprise/sso: 95e98e279bb89233d63549b202bd9112
     environments/settings/enterprise/teams: 21ab78abcba0f16c3029741563f789ea
     environments/settings/enterprise/unlock_the_full_power_of_formbricks_free_for_30_days: 104d07b63a42911c9673ceb08a4dbd43
-    environments/settings/enterprise/your_enterprise_license_is_active_all_features_unlocked: f03f3c7a81f61eb5cd78fa7ad32896f8
     environments/settings/general/bulk_invite_warning_description: e8737a2fbd5ff353db5580d17b4b5a37
     environments/settings/general/cannot_delete_only_organization: 833cc6848b28f2694a4552b4de91a6ba
     environments/settings/general/cannot_leave_only_organization: dd8463262e4299fef7ad73512225c55b

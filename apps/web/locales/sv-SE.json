@@ -967,7 +967,7 @@
         "on_request": "På begäran",
         "organization_roles": "Organisationsroller (Admin, Redaktör, Utvecklare, etc.)",
         "questions_please_reach_out_to": "Frågor? Kontakta",
-        "recheck_license": "Kontrollera licens igen",
+        "recheck_license": "Kontrollera licensen igen",
         "recheck_license_failed": "Licenskontrollen misslyckades. Licensservern kan vara otillgänglig.",
         "recheck_license_success": "Licenskontrollen lyckades",
         "recheck_license_unreachable": "Licensservern är otillgänglig. Försök igen senare.",
@@ -978,8 +978,7 @@
         "soc2_hipaa_iso_27001_compliance_check": "SOC2, HIPAA, ISO 27001 efterlevnadskontroll",
         "sso": "SSO (Google, Microsoft, OpenID Connect)",
         "teams": "Team och åtkomstroller (Läs, Läs och skriv, Hantera)",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Lås upp Formbricks fulla kraft. Gratis i 30 dagar.",
-        "your_enterprise_license_is_active_all_features_unlocked": "Din Enterprise-licens är aktiv. Alla funktioner upplåsta."
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Lås upp Formbricks fulla kraft. Gratis i 30 dagar."
       },
       "general": {
         "bulk_invite_warning_description": "På gratisplanen tilldelas alla organisationsmedlemmar alltid rollen \"Ägare\".",

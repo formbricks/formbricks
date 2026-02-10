@@ -978,8 +978,7 @@
         "soc2_hipaa_iso_27001_compliance_check": "SOC2, HIPAA, ISO 27001 megfelelőségi ellenőrzés",
         "sso": "SSO (Google, Microsoft, OpenID-kapcsolat)",
         "teams": "Csapatok és hozzáférési szerepek (olvasás, olvasás és írás, kezelés)",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "A Formbricks teljes erejének feloldása. 30 napig ingyen.",
-        "your_enterprise_license_is_active_all_features_unlocked": "A vállalati licence aktív. Az összes funkció feloldva."
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "A Formbricks teljes erejének feloldása. 30 napig ingyen."
       },
       "general": {
         "bulk_invite_warning_description": "Az ingyenes csomagban az összes szervezeti tag mindig a „Tulajdonos” szerephez van hozzárendelve.",

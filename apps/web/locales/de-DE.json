@@ -978,8 +978,7 @@
         "soc2_hipaa_iso_27001_compliance_check": "SOC2-, HIPAA- und ISO 27001-Konformitätsprüfung",
         "sso": "SSO (Google, Microsoft, OpenID Connect)",
         "teams": "Teams & Zugriffskontrolle (Lesen, Lesen & Schreiben, Verwalten)",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Schalte die volle Power von Formbricks frei. 30 Tage kostenlos.",
-        "your_enterprise_license_is_active_all_features_unlocked": "Deine Unternehmenslizenz ist aktiv. Alle Funktionen freigeschaltet."
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Schalte die volle Power von Formbricks frei. 30 Tage kostenlos."
       },
       "general": {
         "bulk_invite_warning_description": "Bitte beachte, dass im Free-Plan alle Organisationsmitglieder automatisch die Rolle \"Owner\" zugewiesen bekommen, unabhängig von der im CSV-File angegebenen Rolle.",

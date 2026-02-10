@@ -1,5 +1,6 @@
 "use client";
 
+import { TFunction } from "i18next";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -18,19 +19,20 @@ interface EnterpriseLicenseStatusProps {
 }
 
 const getBadgeConfig = (
-  status: LicenseStatus
-): { type: "success" | "error" | "warning" | "gray"; labelKey: string } => {
+  status: LicenseStatus,
+  t: TFunction
+): { type: "success" | "error" | "warning" | "gray"; label: string } => {
   switch (status) {
     case "active":
-      return { type: "success", labelKey: "environments.settings.enterprise.license_status_active" };
+      return { type: "success", label: t("environments.settings.enterprise.license_status_active") };
     case "expired":
-      return { type: "error", labelKey: "environments.settings.enterprise.license_status_expired" };
+      return { type: "error", label: t("environments.settings.enterprise.license_status_expired") };
     case "unreachable":
-      return { type: "warning", labelKey: "environments.settings.enterprise.license_status_unreachable" };
+      return { type: "warning", label: t("environments.settings.enterprise.license_status_unreachable") };
     case "no-license":
-      return { type: "gray", labelKey: "environments.settings.enterprise.license_status_no_license" };
+      return { type: "gray", label: t("environments.settings.enterprise.license_status_no_license") };
     default:
-      return { type: "gray", labelKey: "environments.settings.enterprise.license_status" };
+      return { type: "gray", label: t("environments.settings.enterprise.license_status") };
   }
 };
 
@@ -67,7 +69,7 @@ export const EnterpriseLicenseStatus = ({ status, environmentId }: EnterpriseLic
     }
   };
 
-  const badgeConfig = getBadgeConfig(status);
+  const badgeConfig = getBadgeConfig(status, t);
 
   return (
     <SettingsCard
@@ -75,7 +77,7 @@ export const EnterpriseLicenseStatus = ({ status, environmentId }: EnterpriseLic
       description={t("environments.settings.enterprise.license_status_description")}>
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Badge type={badgeConfig.type} text={t(badgeConfig.labelKey)} size="normal" />
+          <Badge type={badgeConfig.type} text={badgeConfig.label} size="normal" />
           <Button
             type="button"
             variant="outline"

@@ -978,8 +978,7 @@
         "soc2_hipaa_iso_27001_compliance_check": "SOC2、HIPAA、ISO 27001準拠チェック",
         "sso": "SSO（Google、Microsoft、OpenID Connect）",
         "teams": "チーム＆アクセスロール（読み取り、読み書き、管理）",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Formbricksの全機能をアンロック。30日間無料。",
-        "your_enterprise_license_is_active_all_features_unlocked": "あなたのエンタープライズライセンスは有効です。すべての機能がアンロックされました。"
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Formbricksの全機能をアンロック。30日間無料。"
       },
       "general": {
         "bulk_invite_warning_description": "無料プランでは、すべての組織メンバーに常に「オーナー」ロールが割り当てられます。",
