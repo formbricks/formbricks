@@ -37,6 +37,11 @@ const CONFIG = {
   },
 } as const;
 
+/** TTL in ms for successful license fetch results (24h). Re-export for use in actions. */
+export const FETCH_LICENSE_TTL_MS = CONFIG.CACHE.FETCH_LICENSE_TTL_MS;
+/** TTL in ms for failed license fetch results (10 min). Re-export for use in actions. */
+export const FAILED_FETCH_TTL_MS = CONFIG.CACHE.FAILED_FETCH_TTL_MS;
+
 // Types
 type FallbackLevel = "live" | "cached" | "grace" | "default";
 
@@ -415,9 +420,9 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
 
     // Only use cache if:
     // 1. Cache lookup succeeded
-    // 2. Key exists in cache (distinguishes between "not cached" and "cached null")
-    // 3. Cached value is NOT null (null means previous fetch failed - we should retry, not use cached failure)
-    if (cached.ok && exists.ok && exists.data && cached.data !== null && cached.data !== undefined) {
+    // 2. Key exists in cache (distinguishes "not cached" from "cached null")
+    // 3. Return cached.data (including null) - honors FAILED_FETCH_TTL_MS to suppress retries
+    if (cached.ok && exists.ok && exists.data) {
       return cached.data;
     }
 

@@ -48,7 +48,6 @@ export const EnterpriseLicenseStatus = ({ active, status, environmentId }: Enter
     setIsRechecking(true);
     try {
       const result = await recheckLicenseAction({ environmentId });
-      console.log({ result });
       if (result?.serverError) {
         toast.error(result.serverError || t("environments.settings.enterprise.recheck_license_failed"));
         return;

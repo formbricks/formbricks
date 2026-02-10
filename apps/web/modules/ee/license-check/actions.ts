@@ -11,7 +11,14 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { clearLicenseCache, fetchLicenseFresh, getCacheKeys, getEnterpriseLicense } from "./lib/license";
+import {
+  FAILED_FETCH_TTL_MS,
+  FETCH_LICENSE_TTL_MS,
+  clearLicenseCache,
+  fetchLicenseFresh,
+  getCacheKeys,
+  getEnterpriseLicense,
+} from "./lib/license";
 
 const ZRecheckLicenseAction = z.object({
   environmentId: ZId,
@@ -65,11 +72,11 @@ export const recheckLicenseAction = authenticatedActionClient
 
       if (freshLicense) {
         // Success - cache with full TTL
-        await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, freshLicense, 24 * 60 * 60 * 1000);
+        await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, freshLicense, FETCH_LICENSE_TTL_MS);
       } else {
         // Failure - cache null with short TTL
         // The previous result cache is preserved, so grace period will still work
-        await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, null, 10 * 60 * 1000);
+        await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, null, FAILED_FETCH_TTL_MS);
       }
 
       // Now get the license state - it should use the fresh data we just cached

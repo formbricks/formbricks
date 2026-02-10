@@ -27,6 +27,7 @@ const Page = async (props) => {
   }
 
   const licenseState = await getEnterpriseLicense();
+  const hasLicense = licenseState.status !== "no-license";
 
   const paidFeatures = [
     {
@@ -91,7 +92,7 @@ const Page = async (props) => {
           activeId="enterprise"
         />
       </PageHeader>
-      {licenseState.active ? (
+      {hasLicense ? (
         <EnterpriseLicenseStatus
           active={licenseState.active}
           status={licenseState.status}
