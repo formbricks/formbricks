@@ -44,7 +44,9 @@ export const validateResponseData = (
 
   // If response is not finished, only validate elements that are present in the response data
   // This prevents "required" errors for fields the user hasn't reached yet
-  const elementsToValidate = finished ? allElements : allElements.filter((element) => Object.keys(responseData).includes(element.id));
+  const elementsToValidate = finished
+    ? allElements
+    : allElements.filter((element) => Object.keys(responseData).includes(element.id));
 
   // Validate selected elements
   const errorMap = validateBlockResponses(elementsToValidate, responseData, languageCode);

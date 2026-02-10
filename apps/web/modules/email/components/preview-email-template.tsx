@@ -24,6 +24,7 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { isLight, mixColor } from "@/lib/utils/colors";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
+import { resolveStorageUrl } from "@/modules/storage/utils";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 
 interface PreviewEmailTemplateProps {
@@ -308,7 +309,7 @@ export async function PreviewEmailTemplate({
                 <Img
                   className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
                   key={choice.id}
-                  src={choice.imageUrl}
+                  src={resolveStorageUrl(choice.imageUrl)}
                 />
               ) : (
                 <Link
@@ -316,7 +317,7 @@ export async function PreviewEmailTemplate({
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
                   key={choice.id}
                   target="_blank">
-                  <Img className="rounded-custom h-full w-full" src={choice.imageUrl} />
+                  <Img className="rounded-custom h-full w-full" src={resolveStorageUrl(choice.imageUrl)} />
                 </Link>
               )
             )}

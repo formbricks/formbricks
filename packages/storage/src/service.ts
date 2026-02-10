@@ -141,6 +141,68 @@ export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<stri
   }
 };
 
+export interface FileStreamResult {
+  body: ReadableStream<Uint8Array>;
+  contentType: string;
+  contentLength: number;
+}
+
+/**
+ * Get a file stream from S3
+ * Use this for streaming files directly to clients instead of redirecting to signed URLs
+ * @param fileKey - The key of the file in S3
+ * @returns A Result containing the file stream and metadata or an error: StorageError
+ */
+export const getFileStream = async (fileKey: string): Promise<Result<FileStreamResult, StorageError>> => {
+  try {
+    const s3Client = createS3Client();
+
+    if (!s3Client) {
+      return err({
+        code: StorageErrorCode.S3ClientError,
+      });
+    }
+
+    if (!S3_BUCKET_NAME) {
+      return err({
+        code: StorageErrorCode.S3CredentialsError,
+      });
+    }
+
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: S3_BUCKET_NAME,
+      Key: fileKey,
+    });
+
+    const response = await s3Client.send(getObjectCommand);
+
+    if (!response.Body) {
+      return err({
+        code: StorageErrorCode.FileNotFoundError,
+      });
+    }
+
+    // Convert the SDK stream to a web ReadableStream
+    const webStream = response.Body.transformToWebStream();
+
+    return ok({
+      body: webStream,
+      contentType: response.ContentType ?? "application/octet-stream",
+      contentLength: response.ContentLength ?? 0,
+    });
+  } catch (error) {
+    if ((error as { name?: string }).name === "NoSuchKey") {
+      return err({
+        code: StorageErrorCode.FileNotFoundError,
+      });
+    }
+    logger.error({ error }, "Failed to get file stream");
+    return err({
+      code: StorageErrorCode.Unknown,
+    });
+  }
+};
+
 /**
  * Delete a file from S3
  * @param fileKey - The key of the file in S3 (e.g. "surveys/123/responses/456/file.pdf")
