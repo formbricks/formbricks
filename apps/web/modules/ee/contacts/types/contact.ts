@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { TContactAttributeKey, ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
+import {
+  TContactAttributeDataType,
+  TContactAttributeKey,
+  ZContactAttributeDataType,
+} from "@formbricks/types/contact-attribute-key";
 
 export const ZContact = z.object({
   id: z.string().cuid2(),
@@ -39,9 +43,12 @@ export type TTransformPersonInput = {
   environmentId: string;
   attributes: {
     value: string;
+    valueNumber: number | null;
+    valueDate: Date | null;
     attributeKey: {
       key: string;
       name: string | null;
+      dataType: TContactAttributeDataType;
     };
   }[];
   createdAt: Date;

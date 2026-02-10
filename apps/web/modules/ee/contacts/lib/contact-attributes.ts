@@ -6,6 +6,7 @@ import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { validateInputs } from "@/lib/utils/validate";
+import { readAttributeValue } from "./attribute-storage";
 
 const selectContactAttribute = {
   value: true,
@@ -33,7 +34,7 @@ export const getContactAttributes = reactCache(async (contactId: string) => {
     });
 
     return prismaAttributes.reduce((acc, attr) => {
-      acc[attr.attributeKey.key] = attr.value;
+      acc[attr.attributeKey.key] = readAttributeValue(attr, attr.attributeKey.dataType);
       return acc;
     }, {}) as TContactAttributes;
   } catch (error) {
@@ -60,9 +61,7 @@ export const getContactAttributesWithMetadata = reactCache(async (contactId: str
       key: attr.attributeKey.key,
       name: attr.attributeKey.name,
       type: attr.attributeKey.type,
-      value: attr.value,
-      valueNumber: attr.valueNumber,
-      valueDate: attr.valueDate,
+      value: readAttributeValue(attr, attr.attributeKey.dataType),
       dataType: attr.attributeKey.dataType,
     }));
   } catch (error) {

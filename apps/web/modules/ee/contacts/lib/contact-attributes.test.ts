@@ -133,32 +133,24 @@ describe("getContactAttributesWithMetadata", () => {
       key: "email",
       name: "Email",
       value: "john@example.com",
-      valueNumber: null,
-      valueDate: null,
       dataType: "string",
     });
     expect(result[1]).toEqual({
       key: "name",
       name: "Name",
       value: "John Doe",
-      valueNumber: null,
-      valueDate: null,
       dataType: "string",
     });
     expect(result[2]).toEqual({
       key: "age",
       name: "Age",
-      value: "42",
-      valueNumber: 42,
-      valueDate: null,
+      value: "42", // resolved from valueNumber via readAttributeValue
       dataType: "number",
     });
     expect(result[3]).toEqual({
       key: "signupDate",
       name: "Signup Date",
-      value: "2024-06-15T00:00:00.000Z",
-      valueNumber: null,
-      valueDate: new Date("2024-06-15T00:00:00.000Z"),
+      value: "2024-06-15T00:00:00.000Z", // resolved from valueDate via readAttributeValue
       dataType: "date",
     });
   });
@@ -201,16 +193,13 @@ describe("getContactAttributesWithMetadata", () => {
 
     expect(result).toHaveLength(3);
     expect(result[0].dataType).toBe("string");
-    expect(result[0].valueNumber).toBeNull();
-    expect(result[0].valueDate).toBeNull();
+    expect(result[0].value).toBe("text value");
 
     expect(result[1].dataType).toBe("number");
-    expect(result[1].valueNumber).toBe(100);
-    expect(result[1].valueDate).toBeNull();
+    expect(result[1].value).toBe("100"); // resolved from valueNumber
 
     expect(result[2].dataType).toBe("date");
-    expect(result[2].valueNumber).toBeNull();
-    expect(result[2].valueDate).toBeInstanceOf(Date);
+    expect(result[2].value).toBe("2024-01-01T00:00:00.000Z"); // resolved from valueDate
   });
 
   test("throws DatabaseError on Prisma error", async () => {
