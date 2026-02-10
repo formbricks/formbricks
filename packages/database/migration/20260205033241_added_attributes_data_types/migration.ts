@@ -32,7 +32,7 @@ interface MigrationStats {
 export const addedAttributesDataTypes: MigrationScript = {
   type: "data",
   id: "jdxclvxcwfh7031hmvwy3pe2",
-  name: "20260203033241_added_attributes_data_types",
+  name: "20260205033241_added_attributes_data_types",
   run: async ({ tx }) => {
     const stats: MigrationStats = {
       totalKeys: 0,
