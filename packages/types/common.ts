@@ -6,6 +6,29 @@ export const ZString = z.string();
 
 export const ZUrl = z.string().url();
 
+/**
+ * Schema for storage URLs that can be either:
+ * - Full URLs (http:// or https://)
+ * - Relative storage paths (/storage/...)
+ */
+export const ZStorageUrl = z.string().refine(
+  (val) => {
+    // Allow relative storage paths
+    if (val.startsWith("/storage/")) {
+      return true;
+    }
+    // Otherwise validate as URL
+    try {
+      // Using void to satisfy ESLint "no-new" rule while still validating the URL
+      void new URL(val);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  { message: "Must be a valid URL or a relative storage path (/storage/...)" }
+);
+
 export const ZNumber = z.number();
 
 export const ZOptionalNumber = z.number().optional();

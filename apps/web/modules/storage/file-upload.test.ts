@@ -72,13 +72,13 @@ describe("fileUpload", () => {
   test("should handle successful file upload with presigned fields", async () => {
     const file = createMockFile("test.jpg", "image/jpeg", 1000);
 
-    // Mock successful API response
+    // Mock successful API response - now returns relative path
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         data: {
           signedUrl: "https://s3.example.com/upload",
-          fileUrl: "https://s3.example.com/file.jpg",
+          fileUrl: "/storage/test-env/public/file.jpg",
           presignedFields: {
             key: "value",
           },
@@ -98,18 +98,18 @@ describe("fileUpload", () => {
 
     const result = await fileUploadModule.handleFileUpload(file, "test-env");
     expect(result.error).toBeUndefined();
-    expect(result.url).toBe("https://s3.example.com/file.jpg");
+    expect(result.url).toBe("/storage/test-env/public/file.jpg");
   });
 
   test("should handle upload error with presigned fields", async () => {
     const file = createMockFile("test.jpg", "image/jpeg", 1000);
-    // Mock successful API response
+    // Mock successful API response - now returns relative path
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         data: {
           signedUrl: "https://s3.example.com/upload",
-          fileUrl: "https://s3.example.com/file.jpg",
+          fileUrl: "/storage/test-env/public/file.jpg",
           presignedFields: {
             key: "value",
           },
@@ -134,13 +134,13 @@ describe("fileUpload", () => {
   test("should handle upload error", async () => {
     const file = createMockFile("test.jpg", "image/jpeg", 1000);
 
-    // Mock successful API response
+    // Mock successful API response - now returns relative path
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         data: {
           signedUrl: "https://s3.example.com/upload",
-          fileUrl: "https://s3.example.com/file.jpg",
+          fileUrl: "/storage/test-env/public/file.jpg",
           presignedFields: {
             key: "value",
           },
