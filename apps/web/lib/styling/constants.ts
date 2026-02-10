@@ -129,11 +129,11 @@ export const STYLE_DEFAULTS: TProjectStyling = {
   buttonBgColor: { light: _colors["buttonBgColor.light"] },
   buttonTextColor: { light: _colors["buttonTextColor.light"] },
   buttonBorderRadius: 8,
-  buttonHeight: 36,
-  buttonFontSize: 14,
+  buttonHeight: "auto",
+  buttonFontSize: 16,
   buttonFontWeight: 500,
-  buttonPaddingX: 16,
-  buttonPaddingY: 8,
+  buttonPaddingX: 12,
+  buttonPaddingY: 12,
 
   // Options
   optionBgColor: { light: _colors["optionBgColor.light"] },

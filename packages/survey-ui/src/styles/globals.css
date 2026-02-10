@@ -108,16 +108,16 @@
   --fb-label-opacity: 1;
 
   /* ── Buttons ───────────────────────────────────────────────────────── */
-  --fb-button-height: 36px;
+  --fb-button-height: auto;
   --fb-button-width: auto;
   --fb-button-font-family: inherit;
-  --fb-button-font-size: 14px;
+  --fb-button-font-size: 16px;
   --fb-button-font-weight: 500;
   --fb-button-border-radius: 8px;
   --fb-button-bg-color: #414b5a;
   --fb-button-text-color: #ffffff;
-  --fb-button-padding-x: 16px;
-  --fb-button-padding-y: 8px;
+  --fb-button-padding-x: 12px;
+  --fb-button-padding-y: 12px;
 
   /* ── Inputs ────────────────────────────────────────────────────────── */
   --fb-input-bg-color: #f3f4f6;
