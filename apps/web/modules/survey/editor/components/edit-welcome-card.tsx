@@ -67,7 +67,7 @@ export const EditWelcomeCard = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "",
-          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none",
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <Hand className="h-4 w-4" />
@@ -101,7 +101,11 @@ export const EditWelcomeCard = ({
                 checked={localSurvey?.welcomeCard?.enabled}
                 onClick={(e) => {
                   e.stopPropagation();
-                  updateSurvey({ enabled: !localSurvey.welcomeCard?.enabled });
+                  const newEnabledState = !localSurvey.welcomeCard?.enabled;
+                  updateSurvey({ enabled: newEnabledState });
+                  if (newEnabledState && !open) {
+                    setActiveElementId("start");
+                  }
                 }}
               />
             </div>
