@@ -1,14 +1,17 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
 import * as Sentry from "@sentry/nextjs";
 import { DEFAULT_SERVER_ERROR_MESSAGE } from "next-safe-action";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   AuthenticationError,
   AuthorizationError,
+  EXPECTED_ERROR_NAMES,
   InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
   TooManyRequestsError,
   UnknownError,
+  ValidationError,
+  isExpectedError,
 } from "@formbricks/types/errors";
 
 // Mock Sentry
@@ -57,6 +60,54 @@ vi.mock("@/modules/ee/audit-logs/types/audit-log", () => ({
   UNKNOWN_DATA: "unknown",
 }));
 
+describe("isExpectedError (shared helper)", () => {
+  test("EXPECTED_ERROR_NAMES contains exactly the right error names", () => {
+    const expected = [
+      "ResourceNotFoundError",
+      "AuthorizationError",
+      "InvalidInputError",
+      "ValidationError",
+      "AuthenticationError",
+      "OperationNotAllowedError",
+      "TooManyRequestsError",
+    ];
+
+    expect(EXPECTED_ERROR_NAMES.size).toBe(expected.length);
+    for (const name of expected) {
+      expect(EXPECTED_ERROR_NAMES.has(name)).toBe(true);
+    }
+  });
+
+  test.each([
+    { ErrorClass: AuthorizationError, args: ["Not authorized"] },
+    { ErrorClass: AuthenticationError, args: ["Not authenticated"] },
+    { ErrorClass: TooManyRequestsError, args: ["Rate limit exceeded"] },
+    { ErrorClass: ResourceNotFoundError, args: ["Survey", "123"] },
+    { ErrorClass: InvalidInputError, args: ["Invalid input"] },
+    { ErrorClass: ValidationError, args: ["Invalid data"] },
+    { ErrorClass: OperationNotAllowedError, args: ["Not allowed"] },
+  ])("returns true for $ErrorClass.name", ({ ErrorClass, args }) => {
+    const error = new (ErrorClass as any)(...args);
+    expect(isExpectedError(error)).toBe(true);
+  });
+
+  test("returns true for serialised errors that only have a matching name", () => {
+    // Simulates errors crossing the server/client boundary where instanceof won't work
+    const serialisedError = new Error("Auth failed");
+    serialisedError.name = "AuthorizationError";
+    expect(isExpectedError(serialisedError)).toBe(true);
+  });
+
+  test.each([
+    { error: new Error("Something broke"), label: "Error" },
+    { error: new TypeError("Cannot read properties"), label: "TypeError" },
+    { error: new RangeError("Maximum call stack"), label: "RangeError" },
+    { error: new UnknownError("Unknown"), label: "UnknownError" },
+  ])("returns false for $label", ({ error }) => {
+    expect(isExpectedError(error)).toBe(false);
+  });
+});
+
 // We need to test the handleServerError function directly
 // Since it's embedded in createSafeActionClient, we extract and test the logic
 describe("action-client handleServerError", () => {
@@ -67,18 +118,9 @@ describe("action-client handleServerError", () => {
     vi.clearAllMocks();
   });
 
-  // Helper to simulate handleServerError behavior
+  // Helper to simulate handleServerError behavior using the shared isExpectedError helper
   const simulateHandleServerError = (error: Error) => {
-    const isExpectedError =
-      error instanceof ResourceNotFoundError ||
-      error instanceof AuthorizationError ||
-      error instanceof InvalidInputError ||
-      error instanceof UnknownError ||
-      error instanceof AuthenticationError ||
-      error instanceof OperationNotAllowedError ||
-      error instanceof TooManyRequestsError;
-
-    if (isExpectedError) {
+    if (isExpectedError(error)) {
       return { sentryCapture: false, returnedMessage: error.message };
     }
 
@@ -139,15 +181,6 @@ describe("action-client handleServerError", () => {
       expect(result.returnedMessage).toBe("Not allowed");
       expect(Sentry.captureException).not.toHaveBeenCalled();
     });
-
-    test("UnknownError is not sent to Sentry", () => {
-      const error = new UnknownError("Unknown error");
-      const result = simulateHandleServerError(error);
-
-      expect(result.sentryCapture).toBe(false);
-      expect(result.returnedMessage).toBe("Unknown error");
-      expect(Sentry.captureException).not.toHaveBeenCalled();
-    });
   });
 
   describe("unexpected errors SHOULD be reported to Sentry", () => {
@@ -175,6 +208,16 @@ describe("action-client handleServerError", () => {
 
     test("RangeError is sent to Sentry", () => {
       const error = new RangeError("Maximum call stack size exceeded");
+      const result = simulateHandleServerError(error);
+
+      expect(result.sentryCapture).toBe(true);
+      expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+        extra: { eventId: undefined },
+      });
+    });
+
+    test("UnknownError is sent to Sentry (not an expected business-logic error)", () => {
+      const error = new UnknownError("Unknown error");
       const result = simulateHandleServerError(error);
 
       expect(result.sentryCapture).toBe(true);

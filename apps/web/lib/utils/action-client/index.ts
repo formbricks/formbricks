@@ -3,15 +3,7 @@ import { getServerSession } from "next-auth";
 import { DEFAULT_SERVER_ERROR_MESSAGE, createSafeActionClient } from "next-safe-action";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@formbricks/logger";
-import {
-  AuthenticationError,
-  AuthorizationError,
-  InvalidInputError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-  TooManyRequestsError,
-  UnknownError,
-} from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, isExpectedError } from "@formbricks/types/errors";
 import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -23,18 +15,7 @@ export const actionClient = createSafeActionClient({
   handleServerError(e, utils) {
     const eventId = (utils.ctx as Record<string, any>)?.auditLoggingCtx?.eventId ?? undefined; // keep explicit fallback
 
-    // Expected errors that should NOT be reported to Sentry
-    // These are handled gracefully in the UI (e.g., show "no access", redirect, or retry message)
-    const isExpectedError =
-      e instanceof ResourceNotFoundError ||
-      e instanceof AuthorizationError ||
-      e instanceof InvalidInputError ||
-      e instanceof UnknownError ||
-      e instanceof AuthenticationError ||
-      e instanceof OperationNotAllowedError ||
-      e instanceof TooManyRequestsError;
-
-    if (isExpectedError) {
+    if (isExpectedError(e)) {
       return e.message;
     }
 

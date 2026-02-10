@@ -3,16 +3,11 @@
 // Error components must be Client components
 import * as Sentry from "@sentry/nextjs";
 import { TFunction } from "i18next";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { type ClientErrorType, getClientErrorData } from "@formbricks/types/errors";
+import { type ClientErrorType, getClientErrorData, isExpectedError } from "@formbricks/types/errors";
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
-
-/**
- * Expected error names that should NOT be reported to Sentry.
- * These are handled gracefully in the UI (e.g., show "no access" or redirect).
- */
-const EXPECTED_ERROR_NAMES = new Set(["AuthorizationError", "AuthenticationError", "TooManyRequestsError"]);
 
 /**
  * Get translated error messages based on error type
@@ -36,17 +31,13 @@ const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) =>
   const errorData = getClientErrorData(error);
   const { title, description } = getErrorMessages(errorData.type, t);
 
-  const isExpectedError = EXPECTED_ERROR_NAMES.has(error.name);
-
-  if (process.env.NODE_ENV === "development") {
-    console.error(error.message);
-  } else {
-    // Only report unexpected errors to Sentry
-    // Expected errors (auth failures, rate limits) are handled gracefully in the UI
-    if (!isExpectedError) {
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.error(error.message);
+    } else if (!isExpectedError(error)) {
       Sentry.captureException(error);
     }
-  }
+  }, [error]);
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
