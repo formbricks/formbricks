@@ -45,9 +45,13 @@ export const SavedActionsTab = ({
       <Input
         type="text"
         onChange={(e) => {
+          const query = e.target.value.toLowerCase();
           setFilteredActionClasses(
-            availableActions.filter((actionClass) =>
-              actionClass.name.toLowerCase().includes(e.target.value.toLowerCase())
+            availableActions.filter(
+              (actionClass) =>
+                actionClass.name.toLowerCase().includes(query) ||
+                (actionClass.description ?? "").toLowerCase().includes(query) ||
+                (actionClass.key ?? "").toLowerCase().includes(query)
             )
           );
         }}
