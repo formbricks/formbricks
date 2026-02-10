@@ -958,6 +958,7 @@
         "keep_full_control_over_your_data_privacy_and_security": "Behåll full kontroll över din datasekretess och säkerhet.",
         "license_status": "Licensstatus",
         "license_status_active": "Aktiv",
+        "license_status_description": "Status för din företagslicens.",
         "license_status_expired": "Utgången",
         "license_status_no_license": "Ingen licens",
         "license_status_unreachable": "Otillgänglig",

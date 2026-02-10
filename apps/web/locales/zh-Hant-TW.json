@@ -958,6 +958,7 @@
         "keep_full_control_over_your_data_privacy_and_security": "完全掌控您的資料隱私權和安全性。",
         "license_status": "授權狀態",
         "license_status_active": "有效",
+        "license_status_description": "你的企業授權狀態。",
         "license_status_expired": "已過期",
         "license_status_no_license": "無授權",
         "license_status_unreachable": "無法連線",

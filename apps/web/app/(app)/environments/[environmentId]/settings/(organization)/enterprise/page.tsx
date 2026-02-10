@@ -94,7 +94,6 @@ const Page = async (props) => {
       </PageHeader>
       {hasLicense ? (
         <EnterpriseLicenseStatus
-          active={licenseState.active}
           status={licenseState.status}
           environmentId={params.environmentId}
         />

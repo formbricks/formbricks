@@ -958,6 +958,7 @@
         "keep_full_control_over_your_data_privacy_and_security": "データのプライバシーとセキュリティを完全に制御できます。",
         "license_status": "ライセンスステータス",
         "license_status_active": "有効",
+        "license_status_description": "エンタープライズライセンスのステータス。",
         "license_status_expired": "期限切れ",
         "license_status_no_license": "ライセンスなし",
         "license_status_unreachable": "接続不可",

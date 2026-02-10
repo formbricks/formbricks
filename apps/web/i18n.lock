@@ -899,6 +899,7 @@ checksums:
     environments/settings/enterprise/keep_full_control_over_your_data_privacy_and_security: 43aa041cc3e2b2fdd35d2d34659a6b7a
     environments/settings/enterprise/license_status: f6f85c59074ca2455321bd5288d94be8
     environments/settings/enterprise/license_status_active: 3e1ec025c4a50830bbb9ad57a176630a
+    environments/settings/enterprise/license_status_description: 828e4527f606471cd8cf58b55ff824f6
     environments/settings/enterprise/license_status_expired: 63b27cccba4ab2143e0f5f3d46e4168a
     environments/settings/enterprise/license_status_no_license: dbffdac22aeaff8ef85335dc47ceefc3
     environments/settings/enterprise/license_status_unreachable: 202b110dab099f1167b13c326349e570

@@ -958,6 +958,7 @@
         "keep_full_control_over_your_data_privacy_and_security": "Az adatvédelem és biztonság fölötti rendelkezés teljes kézben tartása.",
         "license_status": "Licenc állapota",
         "license_status_active": "Aktív",
+        "license_status_description": "A vállalati licenced állapota.",
         "license_status_expired": "Lejárt",
         "license_status_no_license": "Nincs licenc",
         "license_status_unreachable": "Nem elérhető",

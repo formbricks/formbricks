@@ -961,6 +961,7 @@
         "license_status_expired": "Expired",
         "license_status_no_license": "No License",
         "license_status_unreachable": "Unreachable",
+        "license_status_description": "Status of your enterprise license.",
         "no_call_needed_no_strings_attached_request_a_free_30_day_trial_license_to_test_all_features_by_filling_out_this_form": "No call needed, no strings attached: Request a free 30-day trial license to test all features by filling out this form:",
         "no_credit_card_no_sales_call_just_test_it": "No credit card. No sales call. Just test it :)",
         "on_request": "On request",

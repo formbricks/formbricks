@@ -958,6 +958,7 @@
         "keep_full_control_over_your_data_privacy_and_security": "Полный контроль над конфиденциальностью и безопасностью ваших данных.",
         "license_status": "Статус лицензии",
         "license_status_active": "Активна",
+        "license_status_description": "Статус вашей корпоративной лицензии.",
         "license_status_expired": "Срок действия истёк",
         "license_status_no_license": "Нет лицензии",
         "license_status_unreachable": "Недоступна",

@@ -958,6 +958,7 @@
         "keep_full_control_over_your_data_privacy_and_security": "Mențineți controlul complet asupra confidențialității și securității datelor dumneavoastră.",
         "license_status": "Stare licență",
         "license_status_active": "Activă",
+        "license_status_description": "Starea licenței tale enterprise.",
         "license_status_expired": "Expirată",
         "license_status_no_license": "Fără licență",
         "license_status_unreachable": "Indisponibilă",

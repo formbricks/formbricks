@@ -958,6 +958,7 @@
         "keep_full_control_over_your_data_privacy_and_security": "Behalte die volle Kontrolle über deine Daten, Privatsphäre und Sicherheit.",
         "license_status": "Lizenzstatus",
         "license_status_active": "Aktiv",
+        "license_status_description": "Status deiner Enterprise-Lizenz.",
         "license_status_expired": "Abgelaufen",
         "license_status_no_license": "Keine Lizenz",
         "license_status_unreachable": "Nicht erreichbar",

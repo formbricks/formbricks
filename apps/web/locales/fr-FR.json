@@ -958,6 +958,7 @@
         "keep_full_control_over_your_data_privacy_and_security": "Gardez un contrôle total sur la confidentialité et la sécurité de vos données.",
         "license_status": "Statut de la licence",
         "license_status_active": "Active",
+        "license_status_description": "Statut de votre licence entreprise.",
         "license_status_expired": "Expirée",
         "license_status_no_license": "Aucune licence",
         "license_status_unreachable": "Inaccessible",

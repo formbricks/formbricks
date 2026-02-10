@@ -958,6 +958,7 @@
         "keep_full_control_over_your_data_privacy_and_security": "Houd de volledige controle over de privacy en beveiliging van uw gegevens.",
         "license_status": "Licentiestatus",
         "license_status_active": "Actief",
+        "license_status_description": "Status van je enterprise-licentie.",
         "license_status_expired": "Verlopen",
         "license_status_no_license": "Geen licentie",
         "license_status_unreachable": "Niet bereikbaar",
