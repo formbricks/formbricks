@@ -84,23 +84,6 @@ export const EditContactAttributesModal = ({
     [currentAttributes]
   );
 
-  // Separate system and custom attributes by index
-  const { systemFieldIndices, customFieldIndices } = useMemo(() => {
-    const system: number[] = [];
-    const custom: number[] = [];
-
-    watchedAttributes.forEach((attr, index) => {
-      const attrKey = attributeKeys.find((ak) => ak.key === attr.key);
-      if (attrKey?.type === "default") {
-        system.push(index);
-      } else {
-        custom.push(index);
-      }
-    });
-
-    return { systemFieldIndices: system, customFieldIndices: custom };
-  }, [watchedAttributes, attributeKeys]);
-
   // Icon mapping for attribute data types
   const dataTypeIcons = {
     date: CalendarIcon,
@@ -236,42 +219,13 @@ export const EditContactAttributesModal = ({
         <DialogBody>
           <FormProvider {...form}>
             <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* System Attributes Section */}
-              {systemFieldIndices.length > 0 && (
+              {fields.length > 0 && (
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-slate-700">
-                    {t("environments.contacts.system_attributes")}
-                  </h3>
-                  {systemFieldIndices.map((index) => (
+                  {fields.map((field, index) => (
                     <AttributeFieldRow
-                      key={fields[index].id}
+                      key={field.id}
                       index={index}
-                      fieldId={fields[index].id}
-                      form={form}
-                      attributeKeys={attributeKeys}
-                      watchedAttributes={watchedAttributes}
-                      allKeyOptions={allKeyOptions}
-                      getAvailableOptions={getAvailableOptions}
-                      savedAttributeKeys={savedAttributeKeys}
-                      onRemove={handleRemoveAttribute}
-                      t={t}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Custom Attributes Section */}
-              {customFieldIndices.length > 0 && (
-                <div className="space-y-4">
-                  {systemFieldIndices.length > 0 && <hr className="border-slate-200" />}
-                  <h3 className="text-sm font-semibold text-slate-700">
-                    {t("environments.contacts.custom_attributes")}
-                  </h3>
-                  {customFieldIndices.map((index) => (
-                    <AttributeFieldRow
-                      key={fields[index].id}
-                      index={index}
-                      fieldId={fields[index].id}
+                      fieldId={field.id}
                       form={form}
                       attributeKeys={attributeKeys}
                       watchedAttributes={watchedAttributes}
