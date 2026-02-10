@@ -17,7 +17,7 @@ import {
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { previewSurvey } from "@/app/lib/templates";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
-import { getSuggestedColors } from "@/lib/styling/constants";
+import { buildStylingFromBrandColor } from "@/lib/styling/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
@@ -65,10 +65,17 @@ export const ProjectSettings = ({
   const { t } = useTranslation();
   const addProject = async (data: TProjectUpdateInput) => {
     try {
+      // Build the full styling from the chosen brand color so all derived
+      // colours (question, button, input, option, progress, etc.) are persisted.
+      // Without this, only brandColor is saved and the look-and-feel page falls
+      // back to STYLE_DEFAULTS computed from the default brand (#64748b).
+      const fullStyling = buildStylingFromBrandColor(data.styling?.brandColor?.light);
+
       const createProjectResponse = await createProjectAction({
         organizationId,
         data: {
           ...data,
+          styling: fullStyling,
           config: { channel, industry },
           teamIds: data.teamIds,
         },
@@ -113,7 +120,7 @@ export const ProjectSettings = ({
   const projectName = form.watch("name");
   const logoUrl = form.watch("logo.url");
   const brandColor = form.watch("styling.brandColor.light") ?? defaultBrandColor;
-  const suggestedColors = useMemo(() => getSuggestedColors(brandColor), [brandColor]);
+  const previewStyling = useMemo(() => buildStylingFromBrandColor(brandColor), [brandColor]);
   const { isSubmitting } = form.formState;
 
   const organizationTeamsOptions = organizationTeams.map((team) => ({
@@ -237,19 +244,7 @@ export const ProjectSettings = ({
             appUrl={publicDomain}
             isPreviewMode={true}
             survey={previewSurvey(projectName || "my Product", t)}
-            styling={{
-              brandColor: { light: brandColor },
-              questionColor: { light: suggestedColors["questionColor.light"] },
-              buttonBgColor: { light: suggestedColors["buttonBgColor.light"] },
-              buttonTextColor: { light: suggestedColors["buttonTextColor.light"] },
-              inputColor: { light: suggestedColors["inputColor.light"] },
-              inputBorderColor: { light: suggestedColors["inputBorderColor.light"] },
-              cardBackgroundColor: { light: suggestedColors["cardBackgroundColor.light"] },
-              cardBorderColor: { light: suggestedColors["cardBorderColor.light"] },
-              highlightBorderColor: { light: suggestedColors["highlightBorderColor.light"] },
-              progressIndicatorBgColor: { light: suggestedColors["progressIndicatorBgColor.light"] },
-              progressTrackBgColor: { light: suggestedColors["progressTrackBgColor.light"] },
-            }}
+            styling={previewStyling}
             isBrandingEnabled={false}
             languageCode="default"
             onFileUpload={async (file) => file.name}

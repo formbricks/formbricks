@@ -148,3 +148,38 @@ export const STYLE_DEFAULTS: TProjectStyling = {
   progressTrackBgColor: { light: _colors["progressTrackBgColor.light"] },
   progressIndicatorBgColor: { light: _colors["progressIndicatorBgColor.light"] },
 };
+
+/**
+ * Builds a complete TProjectStyling object from a single brand color.
+ *
+ * Uses STYLE_DEFAULTS for all non-color properties (dimensions, weights, etc.)
+ * and derives every color from the given brand color via getSuggestedColors().
+ *
+ * Useful when only a brand color is known (e.g. onboarding) and a fully
+ * coherent styling object is needed for both preview rendering and persistence.
+ */
+export const buildStylingFromBrandColor = (brandColor: string = DEFAULT_BRAND_COLOR): TProjectStyling => {
+  const colors = getSuggestedColors(brandColor);
+
+  return {
+    ...STYLE_DEFAULTS,
+    brandColor: { light: colors["brandColor.light"] },
+    questionColor: { light: colors["questionColor.light"] },
+    elementHeadlineColor: { light: colors["elementHeadlineColor.light"] },
+    elementDescriptionColor: { light: colors["elementDescriptionColor.light"] },
+    elementUpperLabelColor: { light: colors["elementUpperLabelColor.light"] },
+    buttonBgColor: { light: colors["buttonBgColor.light"] },
+    buttonTextColor: { light: colors["buttonTextColor.light"] },
+    inputColor: { light: colors["inputColor.light"] },
+    inputBorderColor: { light: colors["inputBorderColor.light"] },
+    inputTextColor: { light: colors["inputTextColor.light"] },
+    optionBgColor: { light: colors["optionBgColor.light"] },
+    optionLabelColor: { light: colors["optionLabelColor.light"] },
+    cardBackgroundColor: { light: colors["cardBackgroundColor.light"] },
+    cardBorderColor: { light: colors["cardBorderColor.light"] },
+    highlightBorderColor: { light: colors["highlightBorderColor.light"] },
+    progressIndicatorBgColor: { light: colors["progressIndicatorBgColor.light"] },
+    progressTrackBgColor: { light: colors["progressTrackBgColor.light"] },
+    background: colors.background,
+  };
+};
