@@ -897,11 +897,21 @@ checksums:
     environments/settings/enterprise/enterprise_features: 3271476140733924b2a2477c4fdf3d12
     environments/settings/enterprise/get_an_enterprise_license_to_get_access_to_all_features: afd3c00f19097e88ed051800979eea44
     environments/settings/enterprise/keep_full_control_over_your_data_privacy_and_security: 43aa041cc3e2b2fdd35d2d34659a6b7a
+    environments/settings/enterprise/license_status: f6f85c59074ca2455321bd5288d94be8
+    environments/settings/enterprise/license_status_active: 3e1ec025c4a50830bbb9ad57a176630a
+    environments/settings/enterprise/license_status_expired: 63b27cccba4ab2143e0f5f3d46e4168a
+    environments/settings/enterprise/license_status_no_license: dbffdac22aeaff8ef85335dc47ceefc3
+    environments/settings/enterprise/license_status_unreachable: 202b110dab099f1167b13c326349e570
     environments/settings/enterprise/no_call_needed_no_strings_attached_request_a_free_30_day_trial_license_to_test_all_features_by_filling_out_this_form: daef55124d4363526008eb91a0b68246
     environments/settings/enterprise/no_credit_card_no_sales_call_just_test_it: 18f9859cdf12537b7019ecdb0a0a2b53
     environments/settings/enterprise/on_request: cf9949748c15313a8fd57bf965bec16b
     environments/settings/enterprise/organization_roles: 731d5028521c2a3a7bdbd7ed215dd861
     environments/settings/enterprise/questions_please_reach_out_to: ac4be65ffef9349eaeb137c254d3fee7
+    environments/settings/enterprise/recheck_license: 8d0889fdbee4c9d34a5be6bd4b12f2d5
+    environments/settings/enterprise/recheck_license_failed: dd410acbb8887625cf194189f832dd7c
+    environments/settings/enterprise/recheck_license_success: 700ddd805be904a415f614de3df1da78
+    environments/settings/enterprise/recheck_license_unreachable: 0ca81bd89595a9da24bc94dcef132175
+    environments/settings/enterprise/rechecking: 54c454aa8e4d27363543349b7c2a28bc
     environments/settings/enterprise/request_30_day_trial_license: 8d5a1b5d9f0790783693122ac30c16ef
     environments/settings/enterprise/saml_sso: 86b76024524fc585b2c3950126ef6f62
     environments/settings/enterprise/service_level_agreement: e31e74f66f5c7c79e82878f4f68abc37

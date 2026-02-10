@@ -14,12 +14,14 @@ import { getInstanceId } from "@/lib/instance";
 import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
+  TEnterpriseLicenseStatusReturn,
 } from "@/modules/ee/license-check/types/enterprise-license";
 
 // Configuration
 const CONFIG = {
   CACHE: {
     FETCH_LICENSE_TTL_MS: 24 * 60 * 60 * 1000, // 24 hours
+    FAILED_FETCH_TTL_MS: 10 * 60 * 1000, // 10 minutes for failed/null results
     PREVIOUS_RESULT_TTL_MS: 4 * 24 * 60 * 60 * 1000, // 4 days
     GRACE_PERIOD_MS: 3 * 24 * 60 * 60 * 1000, // 3 days
     MAX_RETRIES: 3,
@@ -37,8 +39,6 @@ const CONFIG = {
 
 // Types
 type FallbackLevel = "live" | "cached" | "grace" | "default";
-
-type TEnterpriseLicenseStatusReturn = "active" | "expired" | "unreachable" | "no-license";
 
 type TEnterpriseLicenseResult = {
   active: boolean;
@@ -384,6 +384,12 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
       throw error;
     }
     logger.error(error, "Error while fetching license from server");
+    logger.warn(
+      {
+        timestamp: new Date().toISOString(),
+      },
+      "License server fetch returned null - server may be unreachable"
+    );
     return null;
   }
 };
@@ -402,13 +408,35 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
   }
 
   fetchLicensePromise = (async () => {
-    return await cache.withCache(
-      async () => {
-        return await fetchLicenseFromServerInternal();
-      },
-      getCacheKeys().FETCH_LICENSE_CACHE_KEY,
-      CONFIG.CACHE.FETCH_LICENSE_TTL_MS
-    );
+    // Check cache first
+    const cacheKey = getCacheKeys().FETCH_LICENSE_CACHE_KEY;
+    const cached = await cache.get<TEnterpriseLicenseDetails | null>(cacheKey);
+    const exists = await cache.exists(cacheKey);
+
+    // Only use cache if:
+    // 1. Cache lookup succeeded
+    // 2. Key exists in cache (distinguishes between "not cached" and "cached null")
+    // 3. Cached value is NOT null (null means previous fetch failed - we should retry, not use cached failure)
+    if (cached.ok && exists.ok && exists.data && cached.data !== null && cached.data !== undefined) {
+      return cached.data;
+    }
+
+    // Cache miss -- fetch fresh
+    const result = await fetchLicenseFromServerInternal();
+    const ttl = result ? CONFIG.CACHE.FETCH_LICENSE_TTL_MS : CONFIG.CACHE.FAILED_FETCH_TTL_MS;
+
+    if (!result) {
+      logger.warn(
+        {
+          ttlMinutes: Math.floor(ttl / 60000),
+          timestamp: new Date().toISOString(),
+        },
+        "License fetch failed, caching null result with short TTL for faster retry"
+      );
+    }
+
+    await cache.set(getCacheKeys().FETCH_LICENSE_CACHE_KEY, result, ttl);
+    return result;
   })();
 
   fetchLicensePromise
@@ -447,7 +475,6 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
     const currentTime = new Date();
     const [liveLicenseDetails, previousResult] = await Promise.all([fetchLicense(), getPreviousResult()]);
     const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
-
     trackFallbackUsage(fallbackLevel);
 
     let currentLicenseState: TPreviousResult | undefined;
@@ -487,6 +514,16 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
         if (!validateFallback(previousResult)) {
           return await handleInitialFailure(currentTime);
         }
+        logger.warn(
+          {
+            lastChecked: previousResult.lastChecked.toISOString(),
+            gracePeriodEnds: new Date(
+              previousResult.lastChecked.getTime() + CONFIG.CACHE.GRACE_PERIOD_MS
+            ).toISOString(),
+            timestamp: new Date().toISOString(),
+          },
+          "License server unreachable, using grace period. Will retry in ~10 minutes."
+        );
         const graceResult: TEnterpriseLicenseResult = {
           active: previousResult.active,
           features: previousResult.features,
@@ -540,6 +577,29 @@ export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures |
     logger.error(e, "Error getting license features");
     return null;
   }
+};
+
+/**
+ * Clear license fetch cache (but preserve previous result cache for grace period)
+ * Used by the recheck license action to force a fresh fetch without losing grace period
+ */
+export const clearLicenseCache = async (): Promise<void> => {
+  memoryCache = null;
+  const cacheKeys = getCacheKeys();
+  // Only clear the main fetch cache, NOT the previous result cache
+  // This preserves the grace period fallback if the server is unreachable
+  const delResult = await cache.del([cacheKeys.FETCH_LICENSE_CACHE_KEY]);
+  if (!delResult.ok) {
+    logger.warn({ error: delResult.error }, "Failed to delete license cache");
+  }
+};
+
+/**
+ * Fetch license directly from server without using cache
+ * Used by the recheck license action for a fresh check
+ */
+export const fetchLicenseFresh = async (): Promise<TEnterpriseLicenseDetails | null> => {
+  return await fetchLicenseFromServerInternal();
 };
 
 // All permission checking functions and their helpers have been moved to utils.ts

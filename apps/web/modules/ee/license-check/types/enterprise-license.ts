@@ -29,3 +29,5 @@ export const ZEnterpriseLicenseDetails = z.object({
 });
 
 export type TEnterpriseLicenseDetails = z.infer<typeof ZEnterpriseLicenseDetails>;
+
+export type TEnterpriseLicenseStatusReturn = "active" | "expired" | "unreachable" | "no-license";
