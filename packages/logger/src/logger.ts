@@ -75,7 +75,7 @@ const buildTransport = (): LoggerOptions["transport"] => {
       levelFirst: true,
       translateTime: "SYS:standard",
       ignore: "pid,hostname,ip,requestId",
-      customLevels: "trace:10,debug:20,info:30,audit:35,warn:40,error:50,fatal:60",
+      customLevels: "trace:10,debug:20,info:30,warn:40,error:50,fatal:60,audit:90",
       useOnlyCustomProps: true,
     },
     level: getLogLevel(),

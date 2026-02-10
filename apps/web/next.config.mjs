@@ -17,6 +17,7 @@ const nextConfig = {
   productionBrowserSourceMaps: true,
   serverExternalPackages: [
     "@aws-sdk",
+    "@opentelemetry/api",
     "@opentelemetry/auto-instrumentations-node",
     "@opentelemetry/exporter-metrics-otlp-http",
     "@opentelemetry/exporter-prometheus",

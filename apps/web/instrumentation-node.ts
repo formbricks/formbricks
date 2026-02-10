@@ -84,9 +84,11 @@ const resourceAttributes: Record<string, string> = {
 
 // --- Configure sampler ---
 const samplerType = process.env.OTEL_TRACES_SAMPLER || "always_on";
-const samplerArg = process.env.OTEL_TRACES_SAMPLER_ARG
+const parsedSamplerArg = process.env.OTEL_TRACES_SAMPLER_ARG
   ? Number.parseFloat(process.env.OTEL_TRACES_SAMPLER_ARG)
   : undefined;
+const samplerArg =
+  parsedSamplerArg !== undefined && !Number.isNaN(parsedSamplerArg) ? parsedSamplerArg : undefined;
 
 let sampler: Sampler;
 switch (samplerType) {
@@ -102,6 +104,16 @@ switch (samplerType) {
   case "parentbased_traceidratio":
     sampler = new ParentBasedSampler({
       root: new TraceIdRatioBasedSampler(samplerArg ?? 1),
+    });
+    break;
+  case "parentbased_always_on":
+    sampler = new ParentBasedSampler({
+      root: new AlwaysOnSampler(),
+    });
+    break;
+  case "parentbased_always_off":
+    sampler = new ParentBasedSampler({
+      root: new AlwaysOffSampler(),
     });
     break;
   default:
