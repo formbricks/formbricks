@@ -27,6 +27,7 @@ interface PictureSelectionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const PictureSelectionForm = ({
@@ -39,6 +40,7 @@ export const PictureSelectionForm = ({
   isInvalid,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: PictureSelectionFormProps): JSX.Element => {
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -88,6 +90,7 @@ export const PictureSelectionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
       />
       <div ref={parent}>
@@ -106,6 +109,7 @@ export const PictureSelectionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
               />
             </div>
