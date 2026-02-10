@@ -9,11 +9,11 @@ import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
-import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
-import { Slider } from "@/modules/ui/components/slider";
+import { ColorField, DimensionInput } from "@/modules/ui/components/styling-fields";
 import { Switch } from "@/modules/ui/components/switch";
 
 type CardStylingSettingsProps = {
@@ -39,9 +39,10 @@ export const CardStylingSettings = ({
 
   const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "straight";
   const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "straight";
-  const roundness = form.watch("roundness") ?? 8;
+  const hideProgressBar = form.watch("hideProgressBar");
 
   const [parent] = useAutoAnimate();
+
   return (
     <Collapsible.Root
       open={open}
@@ -81,51 +82,28 @@ export const CardStylingSettings = ({
       <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
 
-        <div className="flex flex-col gap-6 p-6 pt-2">
-          <div className="flex flex-col justify-center">
-            <FormField
-              control={form.control}
-              name="roundness"
-              render={() => (
-                <FormItem>
-                  <div>
-                    <FormLabel>{t("environments.surveys.edit.roundness")}</FormLabel>
-                    <FormDescription>
-                      {t("environments.surveys.edit.change_the_border_radius_of_the_card_and_the_inputs")}
-                    </FormDescription>
-                  </div>
-
-                  <FormControl>
-                    <div className="rounded-lg border bg-slate-50 p-6">
-                      <Slider
-                        value={[roundness]}
-                        max={22}
-                        onValueChange={(value) => {
-                          form.setValue("roundness", value[0]);
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
+        <div className="grid grid-cols-2 gap-4 p-6 pt-2">
+          {/* Roundness */}
+          <DimensionInput
+            form={form}
+            name="roundness"
+            label={t("environments.surveys.edit.roundness")}
+            description={t("environments.surveys.edit.roundness_description")}
+          />
 
           <FormField
             control={form.control}
             name="cardBackgroundColor.light"
             render={({ field }) => (
-              <FormItem className="space-y-4">
-                <div>
-                  <FormLabel>{t("environments.surveys.edit.card_background_color")}</FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.edit.change_the_background_color_of_the_card")}
-                  </FormDescription>
-                </div>
+              <FormItem className="space-y-1">
+                <FormLabel>{t("environments.surveys.edit.card_background_color")}</FormLabel>
+                <FormDescription>
+                  {t("environments.surveys.edit.card_background_color_description")}
+                </FormDescription>
 
                 <FormControl>
                   <ColorPicker
-                    color={field.value || COLOR_DEFAULTS.cardBackgroundColor}
+                    color={field.value || STYLE_DEFAULTS.cardBackgroundColor?.light || "#ffffff"}
                     onChange={(color) => field.onChange(color)}
                     containerClass="max-w-xs"
                   />
@@ -138,17 +116,15 @@ export const CardStylingSettings = ({
             control={form.control}
             name="cardBorderColor.light"
             render={({ field }) => (
-              <FormItem className="space-y-4">
-                <div>
-                  <FormLabel>{t("environments.surveys.edit.card_border_color")}</FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.edit.change_the_border_color_of_the_card")}
-                  </FormDescription>
-                </div>
+              <FormItem className="space-y-1">
+                <FormLabel>{t("environments.surveys.edit.card_border_color")}</FormLabel>
+                <FormDescription>
+                  {t("environments.surveys.edit.card_border_color_description")}
+                </FormDescription>
 
                 <FormControl>
                   <ColorPicker
-                    color={field.value || COLOR_DEFAULTS.cardBorderColor}
+                    color={field.value || STYLE_DEFAULTS.cardBorderColor?.light || "#f8fafc"}
                     onChange={(color) => field.onChange(color)}
                     containerClass="max-w-xs"
                   />
@@ -156,66 +132,6 @@ export const CardStylingSettings = ({
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name={"cardArrangement"}
-            render={() => (
-              <FormItem>
-                <div>
-                  <FormLabel>
-                    {t("environments.surveys.edit.card_arrangement_for_survey_type_derived", {
-                      surveyTypeDerived: surveyTypeDerived,
-                    })}
-                  </FormLabel>
-                  <FormDescription>
-                    {t(
-                      "environments.surveys.edit.how_funky_do_you_want_your_cards_in_survey_type_derived_surveys",
-                      {
-                        surveyTypeDerived: surveyTypeDerived,
-                      }
-                    )}
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <CardArrangementTabs
-                    key={isAppSurvey ? "app" : "link"}
-                    surveyType={isAppSurvey ? "app" : "link"}
-                    activeCardArrangement={isAppSurvey ? appCardArrangement : linkCardArrangement}
-                    setActiveCardArrangement={(value, type) => {
-                      type === "app"
-                        ? form.setValue("cardArrangement.appSurveys", value)
-                        : form.setValue("cardArrangement.linkSurveys", value);
-                    }}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <div className="flex items-center space-x-1">
-            <FormField
-              control={form.control}
-              name="hideProgressBar"
-              render={({ field }) => (
-                <FormItem className="flex w-full items-center gap-2 space-y-0">
-                  <FormControl>
-                    <Switch
-                      id="hideProgressBar"
-                      checked={!!field.value}
-                      onCheckedChange={(checked) => field.onChange(checked)}
-                    />
-                  </FormControl>
-
-                  <div>
-                    <FormLabel>{t("environments.surveys.edit.hide_progress_bar")}</FormLabel>
-                    <FormDescription>
-                      {t("environments.surveys.edit.disable_the_visibility_of_survey_progress")}
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-          </div>
 
           {(!surveyType || isAppSurvey) && (
             <div className="flex max-w-xs flex-col gap-4">
@@ -237,7 +153,7 @@ export const CardStylingSettings = ({
                               }
 
                               field.onChange({
-                                light: COLOR_DEFAULTS.highlightBorderColor,
+                                light: STYLE_DEFAULTS.highlightBorderColor?.light,
                               });
                             }}
                           />
@@ -245,16 +161,13 @@ export const CardStylingSettings = ({
 
                         <div>
                           <FormLabel>{t("environments.surveys.edit.add_highlight_border")}</FormLabel>
-                          <FormDescription className="text-xs font-normal text-slate-500">
-                            {t("environments.surveys.edit.add_highlight_border_description")}
-                          </FormDescription>
                         </div>
                       </div>
 
                       {!!field.value && (
                         <FormControl>
                           <ColorPicker
-                            color={field.value?.light ?? COLOR_DEFAULTS.highlightBorderColor}
+                            color={field.value?.light ?? STYLE_DEFAULTS.highlightBorderColor?.light}
                             onChange={(color: string) =>
                               field.onChange({
                                 ...field.value,
@@ -271,6 +184,93 @@ export const CardStylingSettings = ({
               </div>
             </div>
           )}
+
+          <FormField
+            control={form.control}
+            name={"cardArrangement"}
+            render={() => (
+              <FormItem className="col-span-2">
+                <div>
+                  <FormLabel>
+                    {t("environments.surveys.edit.card_arrangement_for_survey_type_derived", {
+                      surveyTypeDerived: surveyTypeDerived,
+                    })}
+                  </FormLabel>
+                </div>
+                <FormControl>
+                  <CardArrangementTabs
+                    key={isAppSurvey ? "app" : "link"}
+                    surveyType={isAppSurvey ? "app" : "link"}
+                    activeCardArrangement={isAppSurvey ? appCardArrangement : linkCardArrangement}
+                    setActiveCardArrangement={(value, type) => {
+                      type === "app"
+                        ? form.setValue("cardArrangement.appSurveys", value)
+                        : form.setValue("cardArrangement.linkSurveys", value);
+                    }}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Progress Bar Section (Moved from Advanced) */}
+        <div className="flex flex-col gap-6 p-6 pt-0">
+          <hr className="text-slate-600" />
+          <div className="flex flex-col gap-4">
+            <div className="my-2">
+              <FormField
+                control={form.control}
+                name="hideProgressBar"
+                render={({ field }) => (
+                  <FormItem className="flex w-full items-center gap-2 space-y-0">
+                    <FormControl>
+                      <Switch
+                        id="hideProgressBar"
+                        checked={!!field.value}
+                        onCheckedChange={(checked) => field.onChange(checked)}
+                      />
+                    </FormControl>
+
+                    <div>
+                      <FormLabel className="text-sm font-normal">
+                        {t("environments.surveys.edit.hide_progress_bar")}
+                      </FormLabel>
+                      <FormDescription className="text-xs">
+                        {t("environments.surveys.edit.disable_the_visibility_of_survey_progress")}
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+            {!hideProgressBar && (
+              <div className="grid grid-cols-2 gap-4">
+                <ColorField
+                  form={form}
+                  name="progressTrackBgColor.light"
+                  label={t("environments.workspace.look.advanced_styling_field_track_bg")}
+                  description={t("environments.workspace.look.advanced_styling_field_track_bg_description")}
+                />
+                <ColorField
+                  form={form}
+                  name="progressIndicatorBgColor.light"
+                  label={t("environments.workspace.look.advanced_styling_field_indicator_bg")}
+                  description={t(
+                    "environments.workspace.look.advanced_styling_field_indicator_bg_description"
+                  )}
+                />
+                <DimensionInput
+                  form={form}
+                  name="progressTrackHeight"
+                  label={t("environments.workspace.look.advanced_styling_field_track_height")}
+                  description={t(
+                    "environments.workspace.look.advanced_styling_field_track_height_description"
+                  )}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

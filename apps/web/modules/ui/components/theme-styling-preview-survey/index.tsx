@@ -2,9 +2,10 @@
 
 import { Project } from "@prisma/client";
 import { Variants, motion } from "framer-motion";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { Modal } from "@/modules/ui/components/preview-survey/components/modal";
@@ -59,6 +60,7 @@ export const ThemeStylingPreviewSurvey = ({
   const [shrink] = useState(false);
   const { t } = useTranslation();
   const { projectOverwrites } = survey || {};
+  const isAppSurvey = previewType === "app"; // Moved up
 
   const previewScreenVariants: Variants = {
     expanded: {
@@ -89,9 +91,8 @@ export const ThemeStylingPreviewSurvey = ({
       },
     },
     shrink: {
-      display: "relative",
       width: ["83.33%"],
-      height: ["95%"],
+      height: ["660px"],
     },
   };
 
@@ -110,7 +111,12 @@ export const ThemeStylingPreviewSurvey = ({
     setSurveyFormKey(Date.now());
   };
 
-  const isAppSurvey = previewType === "app";
+  const styling = useMemo(() => {
+    if (survey.styling?.overwriteThemeStyling) {
+      return { ...project.styling, ...survey.styling };
+    }
+    return project.styling;
+  }, [project.styling, survey.styling]);
 
   // Create a unique key that includes both timestamp and preview type
   // This ensures the survey remounts when switching between app and link
@@ -140,23 +146,26 @@ export const ThemeStylingPreviewSurvey = ({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
-        <div className="flex h-full w-5/6 flex-1 flex-col">
-          <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
-            <div className="ml-6 flex space-x-2">
-              <div className="h-3 w-3 rounded-full bg-red-500"></div>
-              <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-              <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
-            </div>
-            <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-              <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
+        className={cn(
+          "relative z-10 flex w-5/6 flex-col rounded-lg border border-slate-300 shadow-xl",
+          "h-[660px] max-h-[95%]",
+          isAppSurvey ? "bg-slate-200" : "overflow-y-auto bg-white"
+        )}>
+        <div className="flex h-auto w-full items-center rounded-t-lg bg-slate-100 py-2">
+          <div className="ml-6 flex space-x-2">
+            <div className="h-3 w-3 rounded-full bg-red-500"></div>
+            <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+            <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+          </div>
+          <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+            <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
 
-              <div className="flex items-center">
-                <ResetProgressButton onClick={resetQuestionProgress} />
-              </div>
+            <div className="flex items-center">
+              <ResetProgressButton onClick={resetQuestionProgress} />
             </div>
           </div>
-
+        </div>
+        <div className="flex w-full flex-1 flex-col rounded-b-lg">
           {isAppSurvey ? (
             <Modal
               isOpen
@@ -174,7 +183,7 @@ export const ThemeStylingPreviewSurvey = ({
                   isBrandingEnabled={project.inAppSurveyBranding}
                   isRedirectDisabled={true}
                   onFileUpload={async (file) => file.name}
-                  styling={project.styling}
+                  styling={styling}
                   isCardBorderVisible={!highlightBorderColor}
                   languageCode="default"
                 />
@@ -183,7 +192,7 @@ export const ThemeStylingPreviewSurvey = ({
           ) : (
             <MediaBackground
               surveyType={survey.type}
-              styling={project.styling}
+              styling={styling}
               ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
               isEditorView>
               {!project.styling?.isLogoHidden && (
@@ -193,7 +202,7 @@ export const ThemeStylingPreviewSurvey = ({
               )}
               <div
                 key={surveyKey}
-                className={`${project.logo?.url && !project.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md rounded-lg p-4`}>
+                className={`${!project.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md overflow-hidden rounded-lg p-4`}>
                 <SurveyInline
                   appUrl={publicDomain}
                   isPreviewMode={true}
@@ -202,7 +211,7 @@ export const ThemeStylingPreviewSurvey = ({
                   isRedirectDisabled={true}
                   onFileUpload={async (file) => file.name}
                   responseCount={42}
-                  styling={project.styling}
+                  styling={styling}
                   languageCode="default"
                 />
               </div>

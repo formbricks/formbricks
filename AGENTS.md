@@ -15,6 +15,19 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 - `pnpm test:e2e` — launch the Playwright browser regression suite.
 - `pnpm db:migrate:dev` — apply Prisma migrations against the dev database.
 
+### Survey Packages Build & Cache
+
+The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:
+
+- After any change to `packages/surveys` or its dependencies (`packages/survey-ui`, `packages/types`, etc.), you **must rebuild** for changes to take effect in the running app.
+- Turborepo caches build outputs aggressively. Always use `--force` to bypass the cache when iterating on survey packages:
+  ```
+  rm -rf packages/surveys/dist apps/web/public/js/surveys.* node_modules/.cache/turbo
+  pnpm build --filter=@formbricks/surveys... --force
+  ```
+- The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
+- If changes still don't appear, restart the Next.js dev server (`pnpm dev`).
+
 ## Coding Style & Naming Conventions
 
 TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
