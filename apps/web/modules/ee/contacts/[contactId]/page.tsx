@@ -40,6 +40,7 @@ export const SingleContactPage = async (props: {
   const getAttributeValue = (key: string): string | undefined => {
     return attributesWithMetadata.find((attr) => attr.key === key)?.value;
   };
+
   const contactIdentifier = getAttributeValue("email") || getAttributeValue("userId") || "";
 
   const getContactControlBar = () => {
@@ -60,7 +61,7 @@ export const SingleContactPage = async (props: {
     <PageContentWrapper>
       <GoBackButton url={`/environments/${params.environmentId}/contacts`} />
       <PageHeader pageTitle={contactIdentifier} cta={getContactControlBar()} />
-      <section className="pt-6 pb-24">
+      <section className="pb-24 pt-6">
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
           <ResponseSection

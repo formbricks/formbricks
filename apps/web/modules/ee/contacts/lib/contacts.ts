@@ -101,10 +101,13 @@ const selectContact = {
   attributes: {
     select: {
       value: true,
+      valueNumber: true,
+      valueDate: true,
       attributeKey: {
         select: {
           key: true,
           name: true,
+          dataType: true,
         },
       },
     },

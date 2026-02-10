@@ -12,12 +12,33 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 const mockContactId = "xn8b8ol97q2pcp8dnlpsfs1m";
+const mockAttributeKeyId = "cmlg3j70w00002e6hxs5mpkuu";
 
 describe("getContactAttributes", () => {
   test("should return transformed attributes when found", async () => {
     const mockContactAttributes = [
-      { attributeKey: { key: "email" }, value: "test@example.com" },
-      { attributeKey: { key: "name" }, value: "Test User" },
+      {
+        id: "ca1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        attributeKeyId: mockAttributeKeyId,
+        contactId: mockContactId,
+        attributeKey: { key: "email", dataType: "string" },
+        value: "test@example.com",
+        valueNumber: null,
+        valueDate: null,
+      },
+      {
+        id: "ca2",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        attributeKeyId: mockAttributeKeyId,
+        contactId: mockContactId,
+        attributeKey: { key: "name", dataType: "string" },
+        value: "Test User",
+        valueNumber: null,
+        valueDate: null,
+      },
     ];
     const expectedTransformedAttributes = {
       email: "test@example.com",
@@ -33,7 +54,12 @@ describe("getContactAttributes", () => {
       where: {
         contactId: mockContactId,
       },
-      select: { attributeKey: { select: { key: true } }, value: true },
+      select: {
+        value: true,
+        valueNumber: true,
+        valueDate: true,
+        attributeKey: { select: { key: true, dataType: true } },
+      },
     });
   });
 
@@ -47,7 +73,12 @@ describe("getContactAttributes", () => {
       where: {
         contactId: mockContactId,
       },
-      select: { attributeKey: { select: { key: true } }, value: true },
+      select: {
+        value: true,
+        valueNumber: true,
+        valueDate: true,
+        attributeKey: { select: { key: true, dataType: true } },
+      },
     });
   });
 

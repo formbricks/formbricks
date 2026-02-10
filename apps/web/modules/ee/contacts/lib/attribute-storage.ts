@@ -192,6 +192,7 @@ export const readAttributeValue = (
       if (attribute.valueNumber === null) {
         return attribute.value;
       }
+
       return String(attribute.valueNumber);
 
     case "date":
@@ -199,6 +200,7 @@ export const readAttributeValue = (
       if (attribute.valueDate === null) {
         return attribute.value;
       }
+
       return attribute.valueDate.toISOString();
 
     case "string":
