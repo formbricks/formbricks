@@ -10,6 +10,7 @@
     "schema": "packages/database/schema.prisma"
   },
   "scripts": {
+    "agents:update": "npx @next/codemod@canary agents-md --output AGENTS.md",
     "clean:all": "turbo run clean && rimraf node_modules pnpm-lock.yaml .turbo coverage out",
     "clean": "turbo run clean && rimraf node_modules .turbo coverage out",
     "build": "turbo run build",

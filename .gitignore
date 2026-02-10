@@ -64,3 +64,5 @@ packages/ios/FormbricksSDK/FormbricksSDK.xcodeproj/project.xcworkspace/xcuserdat
 .cursorrules
 i18n.cache
 stats.html
+# next-agents-md
+.next-docs/
