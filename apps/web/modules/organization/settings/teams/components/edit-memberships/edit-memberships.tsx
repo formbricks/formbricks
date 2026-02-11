@@ -2,8 +2,6 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { getTeamIdsByUserIds } from "@/modules/ee/teams/team-list/lib/team";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { MembersInfo } from "@/modules/organization/settings/teams/components/edit-memberships/members-info";
 import { getInvitesByOrganizationId } from "@/modules/organization/settings/teams/lib/invite";
 import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
@@ -14,9 +12,6 @@ interface EditMembershipsProps {
   role: TOrganizationRole;
   isAccessControlAllowed: boolean;
   isUserManagementDisabledFromUi: boolean;
-  teams: TOrganizationTeam[];
-  isOwnerOrManager: boolean;
-  userAdminTeamIds?: string[];
 }
 
 export const EditMemberships = async ({
@@ -25,21 +20,10 @@ export const EditMemberships = async ({
   role,
   isAccessControlAllowed,
   isUserManagementDisabledFromUi,
-  teams,
-  isOwnerOrManager,
-  userAdminTeamIds,
 }: EditMembershipsProps) => {
   const members = await getMembershipByOrganizationId(organization.id);
   const invites = await getInvitesByOrganizationId(organization.id);
   const t = await getTranslate();
-
-  const memberUserIds = (members ?? []).map((m) => m.userId);
-  const memberTeamIdsMap =
-    memberUserIds.length > 0 ? await getTeamIdsByUserIds(memberUserIds, organization.id) : {};
-
-  const assignableTeams = isOwnerOrManager
-    ? teams
-    : teams.filter((team) => userAdminTeamIds?.includes(team.id));
 
   return (
     <div>
@@ -67,8 +51,6 @@ export const EditMemberships = async ({
             isAccessControlAllowed={isAccessControlAllowed}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
-            assignableTeams={assignableTeams}
-            memberTeamIdsMap={memberTeamIdsMap}
           />
         )}
       </div>

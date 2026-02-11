@@ -2,8 +2,6 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { InvalidInputError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -163,88 +161,3 @@ export const getTeamRoleAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     return await getTeamRoleByTeamIdUserId(parsedInput.teamId, ctx.user.id);
   });
-
-const ZAddMemberToTeamAction = z.object({
-  teamId: ZId,
-  userId: ZId,
-  role: z.enum(["admin", "contributor"]).default("contributor"),
-});
-
-export const addMemberToTeamAction = authenticatedActionClient.schema(ZAddMemberToTeamAction).action(
-  withAuditLogging(
-    "updated",
-    "team",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZAddMemberToTeamAction>;
-    }) => {
-      const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
-
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "team",
-            teamId: parsedInput.teamId,
-            minPermission: "admin",
-          },
-        ],
-      });
-
-      await checkRoleManagementPermission(organizationId);
-
-      const teamDetails = await getTeamDetails(parsedInput.teamId);
-      if (!teamDetails) {
-        throw new ResourceNotFoundError("Team", parsedInput.teamId);
-      }
-
-      if (teamDetails.projects.length === 0) {
-        throw new InvalidInputError("team_requires_workspace");
-      }
-
-      const isAlreadyMember = teamDetails.members.some((m) => m.userId === parsedInput.userId);
-      if (isAlreadyMember) {
-        return { data: true };
-      }
-
-      // Owners and managers are always team admins, never contributors
-      const userMembership = await getMembershipByUserIdOrganizationId(parsedInput.userId, organizationId);
-      const isOwnerOrManager = userMembership?.role === "owner" || userMembership?.role === "manager";
-      const teamRole = isOwnerOrManager ? "admin" : parsedInput.role;
-
-      const updatedMembers = [
-        ...teamDetails.members.map((m) => ({ userId: m.userId, role: m.role })),
-        { userId: parsedInput.userId, role: teamRole },
-      ];
-
-      const updatedProjects = teamDetails.projects.map((p) => ({
-        projectId: p.projectId,
-        permission: p.permission,
-      }));
-
-      const result = await updateTeamDetails(parsedInput.teamId, {
-        name: teamDetails.name,
-        members: updatedMembers,
-        projects: updatedProjects,
-      });
-
-      if (!result) {
-        throw new UnknownError("Failed to add member to team");
-      }
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.teamId = parsedInput.teamId;
-      ctx.auditLoggingCtx.oldObject = teamDetails;
-      ctx.auditLoggingCtx.newObject = await getTeamDetails(parsedInput.teamId);
-      return { data: true };
-    }
-  )
-);

@@ -4,9 +4,8 @@ import { useTranslation } from "react-i18next";
 import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { formatDateWithOrdinal } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
@@ -22,8 +21,6 @@ interface MembersInfoProps {
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isUserManagementDisabledFromUi: boolean;
-  assignableTeams: TOrganizationTeam[];
-  memberTeamIdsMap: Record<string, string[]>;
 }
 
 // Type guard to check if member is an invitee
@@ -40,8 +37,6 @@ export const MembersInfo = ({
   isAccessControlAllowed,
   isFormbricksCloud,
   isUserManagementDisabledFromUi,
-  assignableTeams,
-  memberTeamIdsMap,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
   const { t } = useTranslation();
@@ -53,7 +48,7 @@ export const MembersInfo = ({
       ) : (
         <TooltipRenderer
           tooltipContent={`${t("environments.settings.general.invite_expires_on", {
-            date: getFormattedDateTimeString(member.expiresAt),
+            date: formatDateWithOrdinal(member.expiresAt),
           })}`}>
           <Badge type="warning" text="Pending" size="tiny" />
         </TooltipRenderer>
@@ -135,9 +130,6 @@ export const MembersInfo = ({
                 member={isInvitee(member) ? undefined : member}
                 invite={isInvitee(member) ? member : undefined}
                 showDeleteButton={showDeleteButton(member)}
-                assignableTeams={assignableTeams}
-                memberTeamIdsMap={memberTeamIdsMap}
-                isAccessControlAllowed={isAccessControlAllowed}
               />
             </div>
           )}
