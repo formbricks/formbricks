@@ -200,6 +200,19 @@ autoscaling:
         target:
           type: Utilization
           averageUtilization: 60
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # Wait 5 minutes before scaling down to prevent thrashing
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120 # Remove at most 1 pod every 2 minutes
+    scaleUp:
+      stabilizationWindowSeconds: 60 # Wait 1 minute before scaling up
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60 # Add at most 2 pods every minute
 
 ##########################################################
 # Service Configuration
