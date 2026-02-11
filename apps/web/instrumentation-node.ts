@@ -125,14 +125,19 @@ switch (samplerType) {
 const sdk = new NodeSDK({
   sampler,
   resource: resourceFromAttributes(resourceAttributes),
-  spanProcessor: traceExporter
-    ? new BatchSpanProcessor(traceExporter, {
-        maxQueueSize: 2048,
-        maxExportBatchSize: 512,
-        scheduledDelayMillis: 5000,
-        exportTimeoutMillis: 30000,
-      })
-    : undefined,
+  // When no OTLP endpoint is configured (e.g. Prometheus-only setups), pass an empty
+  // spanProcessors array to prevent the SDK from falling back to its default OTLP exporter
+  // which would attempt connections to localhost:4318 and cause noisy errors.
+  spanProcessors: traceExporter
+    ? [
+        new BatchSpanProcessor(traceExporter, {
+          maxQueueSize: 2048,
+          maxExportBatchSize: 512,
+          scheduledDelayMillis: 5000,
+          exportTimeoutMillis: 30000,
+        }),
+      ]
+    : [],
   metricReaders: metricReaders.length > 0 ? metricReaders : undefined,
   instrumentations: [
     getNodeAutoInstrumentations({
