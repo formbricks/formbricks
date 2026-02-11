@@ -1156,7 +1156,6 @@
         "add_fallback_placeholder": "Add a placeholder to show if there is no value to recall.",
         "add_hidden_field_id": "Add hidden field ID",
         "add_highlight_border": "Add highlight border",
-
         "add_logic": "Add logic",
         "add_none_of_the_above": "Add “None of the Above”",
         "add_option": "Add option",
@@ -1230,11 +1229,8 @@
         "change_background": "Change background",
         "change_question_type": "Change question type",
         "change_survey_type": "Switching survey type affects existing access",
-
         "change_the_background_to_a_color_image_or_animation": "Change the background to a color, image or animation.",
-
         "change_the_placement_of_this_survey": "Change the placement of this survey.",
-
         "changes_saved": "Changes saved.",
         "changing_survey_type_will_remove_existing_distribution_channels": "Changing the survey type will affect how it can be shared. If respondents already have access links for the current type, they may lose access after the switch.",
         "checkbox_label": "Checkbox Label",
@@ -1374,7 +1370,6 @@
         "hide_progress_bar": "Hide progress bar",
         "hide_question_settings": "Hide Question settings",
         "hostname": "Hostname",
-
         "if_you_need_more_please": "If you need more, please",
         "if_you_really_want_that_answer_ask_until_you_get_it": "Keep showing whenever triggered until a response is submitted.",
         "ignore_global_waiting_time": "Ignore Cooldown Period",
@@ -1471,7 +1466,6 @@
         "protect_survey_with_pin_description": "Only users who have the PIN can access the survey.",
         "publish": "Publish",
         "question": "Question",
-
         "question_deleted": "Question deleted.",
         "question_duplicated": "Question duplicated.",
         "question_id_updated": "Question ID updated",
@@ -1575,7 +1569,6 @@
         "styling_set_to_theme_styles": "Styling set to theme styles",
         "subheading": "Subheading",
         "subtract": "Subtract -",
-
         "survey_completed_heading": "Survey Completed",
         "survey_completed_subheading": "This free & open-source survey has been closed",
         "survey_display_settings": "Survey Display Settings",
@@ -2059,9 +2052,7 @@
       "look": {
         "add_background_color": "Add background color",
         "add_background_color_description": "Add a background color to the logo container.",
-
         "advanced_styling_field_border_radius": "Border Radius",
-
         "advanced_styling_field_button_bg": "Button Background",
         "advanced_styling_field_button_bg_description": "Fills the Next / Submit button.",
         "advanced_styling_field_button_border_radius_description": "Rounds the button corners.",
@@ -2078,7 +2069,6 @@
         "advanced_styling_field_description_size_description": "Scales the description text.",
         "advanced_styling_field_description_weight": "Description Font Weight",
         "advanced_styling_field_description_weight_description": "Makes description text lighter or bolder.",
-
         "advanced_styling_field_font_size": "Font Size",
         "advanced_styling_field_font_weight": "Font Weight",
         "advanced_styling_field_headline_color": "Headline Color",
@@ -2090,7 +2080,6 @@
         "advanced_styling_field_height": "Height",
         "advanced_styling_field_indicator_bg": "Indicator Background",
         "advanced_styling_field_indicator_bg_description": "Colors the filled portion of the bar.",
-
         "advanced_styling_field_input_border_radius_description": "Rounds the input corners.",
         "advanced_styling_field_input_font_size_description": "Scales the typed text in inputs.",
         "advanced_styling_field_input_height_description": "Controls the input field height.",
@@ -2116,7 +2105,6 @@
         "advanced_styling_field_track_bg_description": "Colors the unfilled portion of the bar.",
         "advanced_styling_field_track_height": "Track Height",
         "advanced_styling_field_track_height_description": "Controls the progress bar thickness.",
-
         "advanced_styling_field_upper_label_color": "Headline Label Color",
         "advanced_styling_field_upper_label_color_description": "Colors the small label above inputs.",
         "advanced_styling_field_upper_label_size": "Headline Label Font Size",
@@ -2127,7 +2115,6 @@
         "advanced_styling_section_headlines": "Headlines & Descriptions",
         "advanced_styling_section_inputs": "Inputs",
         "advanced_styling_section_options": "Options (Radio/Checkbox)",
-
         "app_survey_placement": "App Survey Placement",
         "app_survey_placement_settings_description": "Change where surveys will be shown in your web app or website.",
         "email_customization": "Email Customization",
@@ -2912,8 +2899,6 @@
     "picture_selection_description": "Ask respondents to choose one or more images",
     "preview_survey_ending_card_description": "Please continue your onboarding.",
     "preview_survey_ending_card_headline": "You did it!",
-    "preview_survey_input_headline": "Anything else to share?",
-    "preview_survey_input_placeholder": "Leave a note...",
     "preview_survey_name": "New Survey",
     "preview_survey_question_1_headline": "How would you rate {projectName}?",
     "preview_survey_question_1_lower_label": "Not good",
