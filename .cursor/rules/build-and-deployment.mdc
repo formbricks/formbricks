@@ -59,3 +59,72 @@ useEffect(() => {
 - Monitor AWS RDS Performance Insights for database issues
 - Verify environment-specific configurations
 - Check pod health and resource usage
+
+## Local Build & Deploy to Azure VM (surveys.aslalabs.org)
+
+When the server doesn't have enough RAM to build, build locally and transfer the image.
+
+### Prerequisites
+- Docker Desktop running locally
+- SSH key: `~/.ssh/id_ed25519_workgh`
+- Server: `20.185.219.8:2222` (user: `gregcohen`)
+- Build secrets in `.secrets/` directory (database_url, encryption_key, redis_url, sentry_auth_token)
+
+### Step 1: Build AMD64 Image Locally
+```bash
+cd /Users/gcohen/dev/formbricks
+
+# IMPORTANT: Use --platform linux/amd64 since server is AMD64
+docker buildx build \
+  --platform linux/amd64 \
+  --secret id=database_url,src=.secrets/database_url \
+  --secret id=encryption_key,src=.secrets/encryption_key \
+  --secret id=redis_url,src=.secrets/redis_url \
+  --secret id=sentry_auth_token,src=.secrets/sentry_auth_token \
+  -t formbricks-local:YOUR-TAG-amd64 \
+  -f apps/web/Dockerfile \
+  --load \
+  .
+```
+
+### Step 2: Save & Transfer Image
+```bash
+# Save image to tar.gz
+docker save formbricks-local:YOUR-TAG-amd64 | gzip > /tmp/formbricks-YOUR-TAG.tar.gz
+
+# Copy to server
+scp -i ~/.ssh/id_ed25519_workgh -P 2222 \
+  /tmp/formbricks-YOUR-TAG.tar.gz \
+  gregcohen@20.185.219.8:/tmp/
+```
+
+### Step 3: Load Image on Server
+```bash
+ssh -i ~/.ssh/id_ed25519_workgh -p 2222 gregcohen@20.185.219.8 \
+  "gunzip -c /tmp/formbricks-YOUR-TAG.tar.gz | docker load"
+```
+
+### Step 4: Update docker-compose & Restart
+```bash
+# Update /Users/gcohen/dev/azure_vm/formbricks/docker-compose.yml
+# Change: image: formbricks-local:YOUR-TAG-amd64
+
+# Copy to server
+scp -i ~/.ssh/id_ed25519_workgh -P 2222 \
+  /Users/gcohen/dev/azure_vm/formbricks/docker-compose.yml \
+  gregcohen@20.185.219.8:/opt/formbricks/
+
+# Restart container
+ssh -i ~/.ssh/id_ed25519_workgh -p 2222 gregcohen@20.185.219.8 \
+  "cd /opt/formbricks && docker compose up -d formbricks"
+```
+
+### Step 5: Verify Deployment
+```bash
+ssh -i ~/.ssh/id_ed25519_workgh -p 2222 gregcohen@20.185.219.8 \
+  "docker ps | grep formbricks && docker logs formbricks --tail 20"
+```
+
+### Common Issues
+- **"exec format error"**: Built ARM64 image on Mac but server is AMD64. Must use `--platform linux/amd64`
+- **Build fails with OOM**: Increase Docker Desktop memory allocation (8GB+ recommended)

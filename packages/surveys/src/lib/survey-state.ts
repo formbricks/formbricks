@@ -8,19 +8,22 @@ export class SurveyState {
   surveyId: string;
   responseAcc: TResponseUpdate = { finished: false, data: {}, ttc: {}, variables: {} };
   singleUseId: string | null;
+  initialValues: Record<string, string> = {};
 
   constructor(
     surveyId: string,
     singleUseId?: string | null,
     responseId?: string | null,
     userId?: string | null,
-    contactId?: string | null
+    contactId?: string | null,
+    initialValues?: Record<string, string>
   ) {
     this.surveyId = surveyId;
     this.userId = userId ?? null;
     this.singleUseId = singleUseId ?? null;
     this.responseId = responseId ?? null;
     this.contactId = contactId ?? null;
+    this.initialValues = initialValues ?? {};
   }
 
   /**
@@ -40,11 +43,20 @@ export class SurveyState {
       this.singleUseId ?? undefined,
       this.responseId ?? undefined,
       this.userId ?? undefined,
-      this.contactId ?? undefined
+      this.contactId ?? undefined,
+      this.initialValues
     );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
     return copyInstance;
+  }
+
+  /**
+   * Get initial value for a question/element
+   * @param questionId - The question or element ID
+   */
+  getInitialValue(questionId: string): string | undefined {
+    return this.initialValues[questionId];
   }
 
   /**

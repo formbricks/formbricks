@@ -3,6 +3,7 @@ import { ChatwootWidget } from "@/app/chatwoot/ChatwootWidget";
 import { CHATWOOT_BASE_URL, CHATWOOT_WEBSITE_TOKEN, IS_CHATWOOT_CONFIGURED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { AgplFooter } from "@/modules/ui/components/agpl-footer";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { NoMobileOverlay } from "@/modules/ui/components/no-mobile-overlay";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
@@ -29,7 +30,10 @@ const AppLayout = async ({ children }) => {
         />
       )}
       <ToasterClient />
-      {children}
+      <div className="flex min-h-screen flex-col">
+        <div className="flex-1">{children}</div>
+        <AgplFooter />
+      </div>
     </>
   );
 };

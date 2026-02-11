@@ -29,6 +29,7 @@ interface PinScreenProps {
   isSpamProtectionEnabled?: boolean;
   responseCount?: number;
   styling: TProjectStyling | TSurveyStyling;
+  initialValues?: Record<string, string>;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -50,6 +51,7 @@ export const PinScreen = (props: PinScreenProps) => {
     isSpamProtectionEnabled = false,
     responseCount,
     styling,
+    initialValues,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -135,6 +137,7 @@ export const PinScreen = (props: PinScreenProps) => {
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      initialValues={initialValues}
     />
   );
 };

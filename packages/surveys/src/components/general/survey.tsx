@@ -24,6 +24,7 @@ import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
+import { callExternalAPI } from "@/lib/external-api-client";
 import { evaluateLogic, performActions } from "@/lib/logic";
 import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
@@ -418,9 +419,9 @@ export function Survey({
     });
   };
 
-  const evaluateLogicAndGetNextBlockId = (
+  const evaluateLogicAndGetNextBlockId = async (
     data: TResponseData
-  ): { nextBlockId: string | undefined; calculatedVariables: TResponseVariables } => {
+  ): Promise<{ nextBlockId: string | undefined; calculatedVariables: TResponseVariables }> => {
     const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
 
     if (blockId === "start")
@@ -443,8 +444,14 @@ export function Survey({
     const processLogicRule = (
       logic: TSurveyBlockLogic,
       currentJumpTarget: string | undefined,
-      currentRequiredIds: string[]
-    ): { jumpTarget: string | undefined; requiredIds: string[]; updatedCalculations: TResponseVariables } => {
+      currentRequiredIds: string[],
+      allApiCalls: any[]
+    ): {
+      jumpTarget: string | undefined;
+      requiredIds: string[];
+      updatedCalculations: TResponseVariables;
+      apiCalls: any[];
+    } => {
       const isLogicMet = evaluateLogic(
         localSurvey,
         localResponseData,
@@ -458,10 +465,11 @@ export function Survey({
           jumpTarget: currentJumpTarget,
           requiredIds: currentRequiredIds,
           updatedCalculations: calculationResults,
+          apiCalls: allApiCalls,
         };
       }
 
-      const { jumpTarget, requiredQuestionIds, calculations } = performActions(
+      const { jumpTarget, requiredQuestionIds, calculations, apiCallsToMake } = performActions(
         localSurvey,
         logic.actions,
         localResponseData,
@@ -471,11 +479,13 @@ export function Survey({
       const newJumpTarget = jumpTarget && !currentJumpTarget ? jumpTarget : currentJumpTarget;
       const newRequiredIds = [...currentRequiredIds, ...requiredQuestionIds];
       const updatedCalculations = { ...calculationResults, ...calculations };
+      const newApiCalls = [...allApiCalls, ...apiCallsToMake];
 
       return {
         jumpTarget: newJumpTarget,
         requiredIds: newRequiredIds,
         updatedCalculations,
+        apiCalls: newApiCalls,
       };
     };
 
@@ -483,14 +493,17 @@ export function Survey({
     const evaluateBlockLogic = () => {
       let firstJumpTarget: string | undefined;
       const allRequiredQuestionIds: string[] = [];
+      const allApiCalls: any[] = [];
 
       if (currentBlock.logic && currentBlock.logic.length > 0) {
         for (const logic of currentBlock.logic) {
-          const result = processLogicRule(logic, firstJumpTarget, allRequiredQuestionIds);
+          const result = processLogicRule(logic, firstJumpTarget, allRequiredQuestionIds, allApiCalls);
           firstJumpTarget = result.jumpTarget;
           allRequiredQuestionIds.length = 0;
           allRequiredQuestionIds.push(...result.requiredIds);
           calculationResults = result.updatedCalculations;
+          allApiCalls.length = 0;
+          allApiCalls.push(...result.apiCalls);
         }
       }
 
@@ -499,10 +512,40 @@ export function Survey({
         firstJumpTarget = currentBlock.logicFallback;
       }
 
-      return { firstJumpTarget, allRequiredQuestionIds };
+      return { firstJumpTarget, allRequiredQuestionIds, allApiCalls };
     };
 
-    const { firstJumpTarget, allRequiredQuestionIds } = evaluateBlockLogic();
+    const { firstJumpTarget, allRequiredQuestionIds, allApiCalls } = evaluateBlockLogic();
+
+    // Execute external API calls if any
+    if (allApiCalls.length > 0) {
+      for (const apiCall of allApiCalls) {
+        if (apiCall.objective === "callExternalAPI") {
+          const externalDataSource = localSurvey.externalDataSources?.find(
+            (ds) => ds.id === apiCall.externalDataSourceId
+          );
+
+          if (externalDataSource) {
+            try {
+              const result = await callExternalAPI({
+                externalDataSource,
+                parametersMapping: apiCall.parametersMapping,
+                responseData: localResponseData,
+                variables: calculationResults,
+                hiddenFields: hiddenFieldsRecord || {},
+              });
+
+              if (result.success && result.updatedVariables) {
+                calculationResults = { ...calculationResults, ...result.updatedVariables };
+              }
+            } catch (error) {
+              console.error("Failed to call external API:", error);
+              // Continue with the survey even if API call fails
+            }
+          }
+        }
+      }
+    }
 
     // Handle required questions
     const handleRequiredQuestions = (requiredIds: string[]) => {
@@ -896,7 +939,7 @@ export function Survey({
                 "flex flex-col justify-center gap-2",
                 isCloseButtonVisible || isLanguageSwitchVisible ? "p-2" : "p-3"
               )}>
-              {isBrandingEnabled ? <FormbricksBranding /> : null}
+              <FormbricksBranding />
               {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
             </div>
           </div>

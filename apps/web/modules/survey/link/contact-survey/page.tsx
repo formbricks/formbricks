@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getContactAttributesByContactId } from "@formbricks/database/contact";
+import { prePopulateFromContactAttributes } from "@formbricks/surveys/lib/pre-populate";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
@@ -134,12 +136,14 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     singleUseId = validatedSingleUseId;
   }
 
-  // Parallel fetch of environment context and locale
-  const [environmentContext, locale, singleUseResponse] = await Promise.all([
+  // Parallel fetch of environment context, locale, and contact attributes
+  const [environmentContext, locale, singleUseResponse, contactAttributes] = await Promise.all([
     getEnvironmentContextForLinkSurvey(survey.environmentId),
     findMatchingLocale(),
     // Fetch existing response for this contact
     getExistingContactResponse(survey.id, contactId)(),
+    // Fetch contact attributes for pre-population
+    getContactAttributesByContactId(contactId),
   ]);
 
   // Get multi-language permission
@@ -152,6 +156,9 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     ? await getResponseCountBySurveyId(survey.id)
     : undefined;
 
+  // Pre-populate initial values from contact attributes
+  const initialValues = prePopulateFromContactAttributes(survey, contactAttributes);
+
   return renderSurvey({
     survey,
     searchParams,
@@ -163,5 +170,6 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     locale,
     isMultiLanguageAllowed,
     responseCount,
+    initialValues,
   });
 };

@@ -188,6 +188,50 @@ export const ZSurveyHiddenFields = z.object({
 
 export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
 
+export const ZSurveyAttributeMapping = z.record(
+  z.string(), // questionId or elementId
+  z.string() // contact attribute key name
+);
+
+export type TSurveyAttributeMapping = z.infer<typeof ZSurveyAttributeMapping>;
+
+// External data source configuration
+export const ZExternalDataSourceAuth = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("none"),
+  }),
+  z.object({
+    type: z.literal("bearer"),
+    token: z.string().min(1, "Bearer token cannot be empty"),
+  }),
+  z.object({
+    type: z.literal("apiKey"),
+    key: z.string().min(1, "API key name cannot be empty"),
+    value: z.string().min(1, "API key value cannot be empty"),
+    in: z.enum(["header", "query"]),
+  }),
+]);
+
+export type TExternalDataSourceAuth = z.infer<typeof ZExternalDataSourceAuth>;
+
+export const ZExternalDataSourceFieldMapping = z.object({
+  responseField: z.string().min(1, "Response field path cannot be empty"),
+  variableId: z.string().cuid2(),
+});
+
+export type TExternalDataSourceFieldMapping = z.infer<typeof ZExternalDataSourceFieldMapping>;
+
+export const ZExternalDataSource = z.object({
+  id: z.string().cuid2(),
+  url: z.string().url("Must be a valid URL"),
+  method: z.enum(["GET", "POST"]),
+  auth: ZExternalDataSourceAuth,
+  headers: z.record(z.string()).optional(),
+  fieldMappings: z.array(ZExternalDataSourceFieldMapping),
+});
+
+export type TExternalDataSource = z.infer<typeof ZExternalDataSource>;
+
 export const ZSurveyVariable = z
   .discriminatedUnion("type", [
     z.object({
@@ -855,6 +899,8 @@ export const ZSurvey = z
       }
     }),
     hiddenFields: ZSurveyHiddenFields,
+    attributeMapping: ZSurveyAttributeMapping.default({}),
+    externalDataSources: z.array(ZExternalDataSource).default([]),
     variables: ZSurveyVariables.superRefine((variables, ctx) => {
       // variable ids must be unique
       const variableIds = variables.map((v) => v.id);

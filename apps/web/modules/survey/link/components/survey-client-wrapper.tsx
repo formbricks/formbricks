@@ -29,6 +29,7 @@ interface SurveyClientWrapperProps {
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
+  initialValues?: Record<string, string>;
 }
 
 let setBlockId = (_: string) => {};
@@ -52,6 +53,7 @@ export const SurveyClientWrapper = ({
   IMPRINT_URL,
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
+  initialValues,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
@@ -80,6 +82,19 @@ export const SurveyClientWrapper = ({
   }, [welcomeCardEnabled, elements, startAt]);
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
+
+  // Merge initial values from contact attributes with prefill values
+  // Prefill values from URL take precedence over initial values
+  const mergedPrefillValue = useMemo(() => {
+    if (!initialValues || Object.keys(initialValues).length === 0) {
+      return prefillValue;
+    }
+    return {
+      ...initialValues,
+      ...prefillValue, // URL params override initial values
+    };
+  }, [initialValues, prefillValue]);
+
   const [autoFocus, setAutoFocus] = useState(false);
 
   // Enable autofocus only when not in iframe
@@ -141,7 +156,7 @@ export const SurveyClientWrapper = ({
         isBrandingEnabled={project.linkSurveyBranding}
         shouldResetQuestionId={false}
         autoFocus={autoFocus}
-        prefillResponseData={prefillValue}
+        prefillResponseData={mergedPrefillValue}
         skipPrefilled={skipPrefilled}
         responseCount={responseCount}
         getSetBlockId={(f: (value: string) => void) => {

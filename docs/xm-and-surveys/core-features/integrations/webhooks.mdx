@@ -48,13 +48,89 @@ If you encounter any issues or need help setting up webhooks, feel free to reach
 
 ---
 
+## Contact Attributes in Webhooks
+
+When a response is linked to an identified contact (user), the webhook payload includes `contact` and `contactAttributes` fields. Contact attributes are key-value pairs that store information about your users, such as:
+
+- User details: name, email, company
+- Plan information: subscription tier, billing status
+- Custom attributes: role, department, custom fields
+
+The `contactAttributes` field contains a snapshot of the contact's attributes at the time the response was created. This allows you to:
+- Segment responses by user attributes
+- Personalize follow-up actions based on user data
+- Sync response data with other tools using contact information
+
+<Note>
+  For anonymous responses (link surveys without user identification), both `contact` and `contactAttributes` will be `null`.
+</Note>
+
+---
+
 ## Example Webhook Payloads
 
-We provide the following webhook payloads, `responseCreated`, `responseUpdated`, and `responseFinished`.
+We provide the following webhook payloads: `responseCreated`, `responseUpdated`, and `responseFinished`.
 
 ### Response Created
 
-Example of Response Created webhook payload:
+Example of Response Created webhook payload with contact attributes:
+
+```json
+[
+  {
+    "data": {
+      "contact": {
+        "id": "contactId",
+        "userId": "user123"
+      },
+      "contactAttributes": {
+        "email": "user@example.com",
+        "name": "John Doe",
+        "plan": "Pro",
+        "company": "Acme Inc",
+        "role": "Product Manager"
+      },
+      "createdAt": "2025-07-24T07:47:29.507Z",
+      "data": {
+        "q1": "clicked"
+      },
+      "displayId": "displayId",
+      "endingId": null,
+      "finished": false,
+      "id": "responseId",
+      "language": "en",
+      "meta": {
+        "country": "DE",
+        "url": "https://app.formbricks.com/s/surveyId",
+        "userAgent": {
+          "browser": "Chrome",
+          "device": "desktop",
+          "os": "macOS"
+        }
+      },
+      "singleUseId": null,
+      "survey": {
+        "title": "Customer Satisfaction Survey",
+        "type": "link",
+        "status": "inProgress",
+        "createdAt": "2025-07-20T10:30:00.000Z",
+        "updatedAt": "2025-07-24T07:45:00.000Z"
+      },
+      "surveyId": "surveyId",
+      "tags": [],
+      "ttc": {
+        "q1": 2154.700000047684
+      },
+      "updatedAt": "2025-07-24T07:47:29.507Z",
+      "variables": {}
+    },
+    "event": "responseCreated",
+    "webhookId": "webhookId"
+  }
+]
+```
+
+**For anonymous responses**, the payload looks like this:
 
 ```json
 [
@@ -104,14 +180,23 @@ Example of Response Created webhook payload:
 
 ### Response Updated
 
-Example of Response Updated webhook payload:
+Example of Response Updated webhook payload with contact attributes:
 
 ```json
 [
   {
     "data": {
-      "contact": null,
-      "contactAttributes": null,
+      "contact": {
+        "id": "contactId",
+        "userId": "user123"
+      },
+      "contactAttributes": {
+        "email": "user@example.com",
+        "name": "John Doe",
+        "plan": "Pro",
+        "company": "Acme Inc",
+        "role": "Product Manager"
+      },
       "createdAt": "2025-07-24T07:47:29.507Z",
       "data": {
         "q1": "clicked",
@@ -156,14 +241,23 @@ Example of Response Updated webhook payload:
 
 ### Response Finished
 
-Example of Response Finished webhook payload:
+Example of Response Finished webhook payload with contact attributes:
 
 ```json
 [
   {
     "data": {
-      "contact": null,
-      "contactAttributes": null,
+      "contact": {
+        "id": "contactId",
+        "userId": "user123"
+      },
+      "contactAttributes": {
+        "email": "user@example.com",
+        "name": "John Doe",
+        "plan": "Pro",
+        "company": "Acme Inc",
+        "role": "Product Manager"
+      },
       "createdAt": "2025-07-24T07:47:29.507Z",
       "data": {
         "q1": "clicked",
@@ -206,3 +300,115 @@ Example of Response Finished webhook payload:
   }
 ]
 ```
+
+---
+
+## Using Contact Attributes in Integrations
+
+Contact attributes enable powerful workflows by providing context about who submitted the response. Here are some common use cases:
+
+### Accessing Contact Attributes
+
+In webhook payloads, contact attributes are available under `data.contactAttributes`. You can access individual attributes like this:
+
+- **Email**: `data.contactAttributes.email`
+- **Name**: `data.contactAttributes.name`
+- **Plan**: `data.contactAttributes.plan`
+- **Company**: `data.contactAttributes.company`
+- **Custom attributes**: `data.contactAttributes.yourCustomAttribute`
+
+### Example Use Cases
+
+**1. Segment by Plan Type**
+- Route Pro plan users to a priority support channel
+- Send different follow-up emails based on subscription tier
+
+**2. Personalize Responses**
+- Address users by name in automated messages
+- Include company information in CRM updates
+
+**3. Enrich Analytics**
+- Track satisfaction scores by user role or department
+- Analyze feedback patterns across different customer segments
+
+**4. Conditional Workflows**
+- Trigger different actions based on user attributes
+- Filter responses by specific attribute values
+
+### Integration Examples
+
+**Zapier / Make.com**
+
+When setting up your integration, you can access contact attributes in the data mapping:
+
+1. Select the webhook trigger
+2. Use the test response to see available fields
+3. Map `data.contactAttributes.email` to your email field
+4. Map `data.contactAttributes.plan` to custom fields for segmentation
+5. Use conditional logic based on attribute values
+
+**n8n**
+
+In your n8n workflow:
+
+1. Add the Formbricks trigger node
+2. Access contact attributes using: `{{ $json.data.contactAttributes.email }}`
+3. Use IF nodes to create conditional logic based on attributes
+4. Pass attributes to downstream services (CRM, email, analytics)
+
+**Custom Webhooks**
+
+If you're building a custom webhook receiver, parse the JSON payload and access:
+
+```javascript
+// Node.js example
+app.post('/webhook', (req, res) => {
+  const payload = req.body[0]; // Formbricks sends an array
+  const response = payload.data;
+
+  // Access contact information
+  if (response.contactAttributes) {
+    const email = response.contactAttributes.email;
+    const plan = response.contactAttributes.plan;
+    const name = response.contactAttributes.name;
+
+    // Use the attributes in your logic
+    if (plan === 'Pro') {
+      // Handle Pro users differently
+    }
+  }
+
+  res.status(200).send('OK');
+});
+```
+
+---
+
+## Testing Your Webhook
+
+To test your webhook integration with contact attributes:
+
+1. **Create a Test Contact**
+   - In Formbricks, identify a test user with attributes
+   - Set attributes like email, plan, or custom fields
+
+2. **Submit a Test Response**
+   - Fill out your survey as the identified user
+   - This will trigger the webhook with contact attributes
+
+3. **Verify the Payload**
+   - Check that `contactAttributes` field is populated
+   - Confirm all expected attributes are present
+   - Validate the data types and values
+
+4. **Test Different Scenarios**
+   - Submit responses with different attribute values
+   - Test anonymous responses (contactAttributes will be null)
+   - Verify conditional logic based on attributes works correctly
+
+<Note>
+  If `contactAttributes` is `null` when you expect it to have data, make sure:
+  - The user is properly identified before taking the survey
+  - Contact attributes have been set for that user
+  - The survey allows user identification (not a completely anonymous link survey)
+</Note>

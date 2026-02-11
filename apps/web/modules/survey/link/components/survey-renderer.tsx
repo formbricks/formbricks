@@ -37,6 +37,7 @@ interface SurveyRendererProps {
   locale: TUserLocale;
   isMultiLanguageAllowed: boolean;
   responseCount?: number;
+  initialValues?: Record<string, string>;
 }
 
 /**
@@ -62,6 +63,7 @@ export const renderSurvey = async ({
   locale,
   isMultiLanguageAllowed,
   responseCount,
+  initialValues,
 }: SurveyRendererProps) => {
   const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
@@ -153,6 +155,7 @@ export const renderSurvey = async ({
         recaptchaSiteKey={RECAPTCHA_SITE_KEY}
         isSpamProtectionEnabled={isSpamProtectionEnabled}
         responseCount={responseCount}
+        initialValues={initialValues}
       />
     );
   }
@@ -177,6 +180,7 @@ export const renderSurvey = async ({
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      initialValues={initialValues}
     />
   );
 };

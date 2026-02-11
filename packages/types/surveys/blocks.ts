@@ -54,7 +54,11 @@ export const ZActionCalculate = z.union([ZActionCalculateText, ZActionCalculateN
 
 export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 
-export type TSurveyBlockLogicActionObjective = "calculate" | "requireAnswer" | "jumpToBlock";
+export type TSurveyBlockLogicActionObjective =
+  | "calculate"
+  | "requireAnswer"
+  | "jumpToBlock"
+  | "callExternalAPI";
 
 // RequireAnswer action - targets element IDs
 
@@ -100,9 +104,43 @@ export const ZActionJumpToBlock = z.object({
 
 export type TActionJumpToBlock = z.infer<typeof ZActionJumpToBlock>;
 
+// CallExternalAPI action - triggers external API calls
+
+export const ZActionCallExternalAPI = z.object({
+  id: ZId,
+  objective: z.literal("callExternalAPI"),
+  externalDataSourceId: z.string().cuid2("Conditional Logic: External data source id must be a valid cuid"),
+  parametersMapping: z.array(
+    z.object({
+      urlParam: z.string().min(1, "Conditional Logic: URL parameter name cannot be empty"),
+      source: z.discriminatedUnion("type", [
+        z.object({
+          type: z.literal("element"),
+          elementId: z.string().min(1, "Conditional Logic: Element id cannot be empty"),
+        }),
+        z.object({
+          type: z.literal("variable"),
+          variableId: z.string().cuid2("Conditional Logic: Variable id must be a valid cuid"),
+        }),
+        z.object({
+          type: z.literal("hiddenField"),
+          fieldId: z.string().min(1, "Conditional Logic: Hidden field id cannot be empty"),
+        }),
+      ]),
+    })
+  ),
+});
+
+export type TActionCallExternalAPI = z.infer<typeof ZActionCallExternalAPI>;
+
 // Block logic actions
 
-export const ZSurveyBlockLogicAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToBlock]);
+export const ZSurveyBlockLogicAction = z.union([
+  ZActionCalculate,
+  ZActionRequireAnswer,
+  ZActionJumpToBlock,
+  ZActionCallExternalAPI,
+]);
 
 export type TSurveyBlockLogicAction = z.infer<typeof ZSurveyBlockLogicAction>;
 

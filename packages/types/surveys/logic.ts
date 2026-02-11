@@ -244,3 +244,57 @@ export interface TConditionGroupDeprecated {
   connector: TConnector;
   conditions: (TSingleConditionDeprecated | TConditionGroupDeprecated)[];
 }
+
+// Survey logic actions
+export const ZSurveyLogicActionJumpToBlock = z.object({
+  type: z.literal("jumpToBlock"),
+  blockId: ZId,
+});
+
+export const ZSurveyLogicActionCalculateVariable = z.object({
+  type: z.literal("calculateVariable"),
+  variableId: z.string().cuid2(),
+  operator: z.union([ZActionTextVariableCalculateOperator, ZActionNumberVariableCalculateOperator]),
+  value: z.union([
+    z.object({
+      type: z.literal("static"),
+      value: z.union([z.string(), z.number()]),
+    }),
+    ZDynamicLogicFieldValue,
+  ]),
+});
+
+export const ZSurveyLogicActionCallExternalAPI = z.object({
+  type: z.literal("callExternalAPI"),
+  externalDataSourceId: z.string().cuid2(),
+  parametersMapping: z.array(
+    z.object({
+      urlParam: z.string().min(1, "URL parameter name cannot be empty"),
+      source: z.union([
+        z.object({
+          type: z.literal("element"),
+          elementId: ZId,
+        }),
+        z.object({
+          type: z.literal("variable"),
+          variableId: z.string().cuid2(),
+        }),
+        z.object({
+          type: z.literal("hiddenField"),
+          fieldId: z.string(),
+        }),
+      ]),
+    })
+  ),
+});
+
+export const ZSurveyLogicAction = z.discriminatedUnion("type", [
+  ZSurveyLogicActionJumpToBlock,
+  ZSurveyLogicActionCalculateVariable,
+  ZSurveyLogicActionCallExternalAPI,
+]);
+
+export type TSurveyLogicAction = z.infer<typeof ZSurveyLogicAction>;
+export type TSurveyLogicActionJumpToBlock = z.infer<typeof ZSurveyLogicActionJumpToBlock>;
+export type TSurveyLogicActionCalculateVariable = z.infer<typeof ZSurveyLogicActionCalculateVariable>;
+export type TSurveyLogicActionCallExternalAPI = z.infer<typeof ZSurveyLogicActionCallExternalAPI>;
