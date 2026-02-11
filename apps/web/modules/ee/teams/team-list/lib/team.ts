@@ -95,6 +95,34 @@ export const getUserTeams = reactCache(
   }
 );
 
+export const getTeamIdsByUserIds = reactCache(
+  async (userIds: string[], organizationId: string): Promise<Record<string, string[]>> => {
+    validateInputs([organizationId, ZId]);
+    if (userIds.length === 0) return {};
+    try {
+      const teamUsers = await prisma.teamUser.findMany({
+        where: {
+          userId: { in: userIds },
+          team: { organizationId },
+        },
+        select: { userId: true, teamId: true },
+      });
+
+      const map: Record<string, string[]> = {};
+      for (const tu of teamUsers) {
+        if (!map[tu.userId]) map[tu.userId] = [];
+        map[tu.userId].push(tu.teamId);
+      }
+      return map;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
 export const getOtherTeams = reactCache(
   async (userId: string, organizationId: string): Promise<TOtherTeam[]> => {
     validateInputs([userId, z.string()], [organizationId, ZId]);

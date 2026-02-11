@@ -3,6 +3,7 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
@@ -56,6 +57,9 @@ export const MembersView = async ({
     teams = (await getTeamsByOrganizationId(organization.id)) ?? [];
   }
 
+  const { isOwner, isManager } = getAccessFlags(membershipRole);
+  const isOwnerOrManager = isOwner || isManager;
+
   return (
     <SettingsCard
       title={t("environments.settings.general.manage_members")}
@@ -87,6 +91,9 @@ export const MembersView = async ({
             currentUserId={currentUserId}
             role={membershipRole}
             isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+            teams={teams}
+            isOwnerOrManager={isOwnerOrManager}
+            userAdminTeamIds={userAdminTeamIds}
           />
         </Suspense>
       )}

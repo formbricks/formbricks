@@ -8,12 +8,14 @@ import { useTranslation } from "react-i18next";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import {
   createInviteTokenAction,
   deleteInviteAction,
   deleteMembershipAction,
   resendInviteAction,
 } from "@/modules/organization/settings/teams/actions";
+import { AssignToTeamPopover } from "@/modules/organization/settings/teams/components/edit-memberships/assign-to-team-popover";
 import { ShareInviteModal } from "@/modules/organization/settings/teams/components/invite-member/share-invite-modal";
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
@@ -25,15 +27,25 @@ interface MemberActionsProps {
   member?: TMember;
   invite?: TInvite;
   showDeleteButton?: boolean;
+  assignableTeams: TOrganizationTeam[];
+  memberTeamIdsMap: Record<string, string[]>;
+  isAccessControlAllowed: boolean;
 }
 
-export const MemberActions = ({ organization, member, invite, showDeleteButton }: MemberActionsProps) => {
+export const MemberActions = ({
+  organization,
+  member,
+  invite,
+  showDeleteButton,
+  assignableTeams,
+  memberTeamIdsMap,
+  isAccessControlAllowed,
+}: MemberActionsProps) => {
   const router = useRouter();
   const { t } = useTranslation();
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showShareInviteModal, setShowShareInviteModal] = useState(false);
-
   const [shareInviteToken, setShareInviteToken] = useState("");
 
   const handleDeleteMember = async () => {
@@ -123,6 +135,8 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
     }
   };
 
+  const showAssignToTeamButton = Boolean(member) && isAccessControlAllowed;
+
   return (
     <div className="flex gap-2">
       <TooltipRenderer tooltipContent={t("common.delete")} shouldRender={!!showDeleteButton}>
@@ -165,6 +179,14 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
           <SendHorizonalIcon />
         </Button>
       </TooltipRenderer>
+
+      {showAssignToTeamButton && member && (
+        <AssignToTeamPopover
+          member={member}
+          assignableTeams={assignableTeams}
+          memberTeamIdsMap={memberTeamIdsMap}
+        />
+      )}
 
       <DeleteDialog
         open={isDeleteMemberModalOpen}

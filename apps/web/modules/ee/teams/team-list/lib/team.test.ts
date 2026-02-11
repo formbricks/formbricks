@@ -8,6 +8,7 @@ import {
   deleteTeam,
   getOtherTeams,
   getTeamDetails,
+  getTeamIdsByUserIds,
   getTeams,
   getTeamsByOrganizationId,
   getUserTeams,
@@ -23,6 +24,9 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+    },
+    teamUser: {
+      findMany: vi.fn(),
     },
     membership: { findUnique: vi.fn(), count: vi.fn() },
     project: { count: vi.fn() },
@@ -78,6 +82,40 @@ describe("getTeamsByOrganizationId", () => {
       new Prisma.PrismaClientKnownRequestError("fail", { code: "P2002", clientVersion: "1.0.0" })
     );
     await expect(getTeamsByOrganizationId("org1")).rejects.toThrow(DatabaseError);
+  });
+});
+
+describe("getTeamIdsByUserIds", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  test("returns mapped team IDs by user ID", async () => {
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValueOnce([
+      { userId: "u1", teamId: "t1" },
+      { userId: "u1", teamId: "t2" },
+      { userId: "u2", teamId: "t1" },
+    ]);
+    const result = await getTeamIdsByUserIds(["u1", "u2"], "org1");
+    expect(result).toEqual({
+      u1: ["t1", "t2"],
+      u2: ["t1"],
+    });
+  });
+  test("returns empty object when userIds is empty", async () => {
+    const result = await getTeamIdsByUserIds([], "org1");
+    expect(result).toEqual({});
+    expect(prisma.teamUser.findMany).not.toHaveBeenCalled();
+  });
+  test("returns empty object when no team memberships exist", async () => {
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValueOnce([]);
+    const result = await getTeamIdsByUserIds(["u1"], "org1");
+    expect(result).toEqual({});
+  });
+  test("throws DatabaseError on Prisma error", async () => {
+    vi.mocked(prisma.teamUser.findMany).mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("fail", { code: "P2002", clientVersion: "1.0.0" })
+    );
+    await expect(getTeamIdsByUserIds(["u1"], "org1")).rejects.toThrow(DatabaseError);
   });
 });
 
