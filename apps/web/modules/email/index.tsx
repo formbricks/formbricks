@@ -17,6 +17,7 @@ import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserEmail, TUserLocale } from "@formbricks/types/user";
 import {
@@ -41,6 +42,7 @@ import { createEmailChangeToken, createInviteToken, createToken, createTokenForL
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
+import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
@@ -241,6 +243,22 @@ export const sendResponseFinishedEmail = async (
   // Pre-process the element response mapping before passing to email
   const elements = getElementResponseMapping(survey, response);
 
+  // Resolve relative storage URLs to absolute URLs for email rendering
+  const elementsWithResolvedUrls = elements.map((element) => {
+    if (
+      (element.type === TSurveyElementTypeEnum.PictureSelection ||
+        element.type === TSurveyElementTypeEnum.FileUpload) &&
+      Array.isArray(element.response)
+    ) {
+      return {
+        ...element,
+        response: element.response.map((url) => resolveStorageUrl(url)),
+      };
+    }
+
+    return element;
+  });
+
   const html = await renderResponseFinishedEmail({
     survey,
     responseCount,
@@ -248,7 +266,7 @@ export const sendResponseFinishedEmail = async (
     WEBAPP_URL,
     environmentId,
     organization,
-    elements,
+    elements: elementsWithResolvedUrls,
     t,
     ...legalProps,
   });
@@ -276,10 +294,12 @@ export const sendEmbedSurveyPreviewEmail = async (
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate(locale);
+  // Resolve relative storage URLs to absolute URLs for email rendering
+  const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
   const html = await renderEmbedSurveyPreviewEmail({
     html: innerHtml,
     environmentId,
-    logoUrl,
+    logoUrl: resolvedLogoUrl,
     t,
     ...legalProps,
   });
@@ -297,9 +317,11 @@ export const sendEmailCustomizationPreviewEmail = async (
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate(locale);
+  // Resolve relative storage URLs to absolute URLs for email rendering
+  const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
   const emailHtmlBody = await renderEmailCustomizationPreviewEmail({
     userName,
-    logoUrl,
+    logoUrl: resolvedLogoUrl,
     t,
     ...legalProps,
   });
@@ -316,7 +338,8 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const email = data.email;
   const surveyName = data.surveyName;
   const singleUseId = data.suId;
-  const logoUrl = data.logoUrl || "";
+  // Resolve relative storage URLs to absolute URLs for email rendering
+  const logoUrl = data.logoUrl ? resolveStorageUrl(data.logoUrl) : "";
   const token = createTokenForLinkSurvey(surveyId, email);
   const t = await getTranslate(data.locale);
   const getSurveyLink = (): string => {

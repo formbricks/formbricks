@@ -88,16 +88,16 @@
       "persistent": true
     },
     "@formbricks/surveys#build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "@formbricks/survey-ui#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/surveys#build:dev": {
-      "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build"],
+      "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build", "@formbricks/survey-ui#build:dev"],
       "outputs": ["dist/**"]
     },
     "@formbricks/surveys#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/surveys#build"],
+      "dependsOn": ["@formbricks/survey-ui#build", "@formbricks/surveys#build"],
       "persistent": true
     },
     "@formbricks/surveys#test": {

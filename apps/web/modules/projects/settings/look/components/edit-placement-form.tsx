@@ -15,6 +15,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@/mod
 import { Label } from "@/modules/ui/components/label";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
+import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 
 interface EditPlacementProps {
   project: Project;
@@ -24,7 +25,7 @@ interface EditPlacementProps {
 
 const ZProjectPlacementInput = z.object({
   placement: z.enum(["bottomRight", "topRight", "topLeft", "bottomLeft", "center"]),
-  darkOverlay: z.boolean(),
+  overlay: z.enum(["none", "light", "dark"]),
   clickOutsideClose: z.boolean(),
 });
 
@@ -40,28 +41,35 @@ export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) =
     { name: t("common.bottom_left"), value: "bottomLeft", disabled: false },
     { name: t("common.centered_modal"), value: "center", disabled: false },
   ];
+
   const form = useForm<EditPlacementFormValues>({
     defaultValues: {
       placement: project.placement,
-      darkOverlay: project.darkOverlay ?? false,
+      overlay: project.overlay ?? "none",
       clickOutsideClose: project.clickOutsideClose ?? false,
     },
     resolver: zodResolver(ZProjectPlacementInput),
   });
 
   const currentPlacement = form.watch("placement");
-  const darkOverlay = form.watch("darkOverlay");
+  const overlay = form.watch("overlay");
   const clickOutsideClose = form.watch("clickOutsideClose");
   const isSubmitting = form.formState.isSubmitting;
 
-  const overlayStyle = currentPlacement === "center" && darkOverlay ? "bg-slate-700/80" : "bg-slate-200";
+  const hasOverlay = overlay !== "none";
+
+  const getOverlayStyle = () => {
+    if (overlay === "dark") return "bg-slate-700/80";
+    if (overlay === "light") return "bg-slate-400/50";
+    return "bg-slate-200";
+  };
 
   const onSubmit: SubmitHandler<EditPlacementFormValues> = async (data) => {
     const updatedProjectResponse = await updateProjectAction({
       projectId: project.id,
       data: {
         placement: data.placement,
-        darkOverlay: data.darkOverlay,
+        overlay: data.overlay,
         clickOutsideClose: data.clickOutsideClose,
       },
     });
@@ -113,9 +121,9 @@ export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) =
             />
             <div
               className={cn(
-                clickOutsideClose ? "" : "cursor-not-allowed",
+                hasOverlay && !clickOutsideClose ? "cursor-not-allowed" : "",
                 "relative ml-8 h-40 w-full rounded",
-                overlayStyle
+                getOverlayStyle()
               )}>
               <div
                 className={cn(
@@ -125,85 +133,69 @@ export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) =
             </div>
           </div>
 
-          {currentPlacement === "center" && (
-            <>
-              <div className="mt-6 space-y-2">
-                <FormField
-                  control={form.control}
-                  name="darkOverlay"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold">
-                        {t("environments.workspace.look.centered_modal_overlay_color")}
-                      </FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={(value) => {
-                            field.onChange(value === "darkOverlay");
-                          }}
-                          disabled={isReadOnly}
-                          className="flex space-x-4">
-                          <div className="flex items-center space-x-2 whitespace-nowrap">
-                            <RadioGroupItem id="lightOverlay" value="lightOverlay" checked={!field.value} />
-                            <Label
-                              htmlFor="lightOverlay"
-                              className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
-                              {t("common.light_overlay")}
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2 whitespace-nowrap">
-                            <RadioGroupItem id="darkOverlay" value="darkOverlay" checked={field.value} />
-                            <Label
-                              htmlFor="darkOverlay"
-                              className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
-                              {t("common.dark_overlay")}
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="mt-6 space-y-2">
-                <FormField
-                  control={form.control}
-                  name="clickOutsideClose"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold">
-                        {t("common.allow_users_to_exit_by_clicking_outside_the_survey")}
-                      </FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          disabled={isReadOnly}
-                          onValueChange={(value) => {
-                            field.onChange(value === "allow");
-                          }}
-                          className="flex space-x-4">
-                          <div className="flex items-center space-x-2 whitespace-nowrap">
-                            <RadioGroupItem id="disallow" value="disallow" checked={!field.value} />
-                            <Label
-                              htmlFor="disallow"
-                              className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
-                              {t("common.disallow")}
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2 whitespace-nowrap">
-                            <RadioGroupItem id="allow" value="allow" checked={field.value} />
-                            <Label
-                              htmlFor="allow"
-                              className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
-                              {t("common.allow")}
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </>
+          <div className="mt-6 space-y-2">
+            <FormField
+              control={form.control}
+              name="overlay"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <StylingTabs
+                      id="overlay"
+                      options={[
+                        { value: "none", label: t("common.no_overlay") },
+                        { value: "light", label: t("common.light_overlay") },
+                        { value: "dark", label: t("common.dark_overlay") },
+                      ]}
+                      defaultSelected={field.value}
+                      onChange={(value) => field.onChange(value)}
+                      label={t("common.overlay_color")}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {hasOverlay && (
+            <div className="mt-6 space-y-2">
+              <FormField
+                control={form.control}
+                name="clickOutsideClose"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold">
+                      {t("common.allow_users_to_exit_by_clicking_outside_the_survey")}
+                    </FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        disabled={isReadOnly}
+                        onValueChange={(value) => {
+                          field.onChange(value === "allow");
+                        }}
+                        className="flex space-x-4">
+                        <div className="flex items-center space-x-2 whitespace-nowrap">
+                          <RadioGroupItem id="disallow" value="disallow" checked={!field.value} />
+                          <Label
+                            htmlFor="disallow"
+                            className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+                            {t("common.disallow")}
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 whitespace-nowrap">
+                          <RadioGroupItem id="allow" value="allow" checked={field.value} />
+                          <Label
+                            htmlFor="allow"
+                            className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+                            {t("common.allow")}
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
           )}
 
           <Button className="mt-4 w-fit" size="sm" loading={isSubmitting} disabled={isReadOnly}>

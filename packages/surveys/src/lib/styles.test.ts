@@ -327,10 +327,120 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-signature-text-color"]).toBeDefined(); // Relies on mixColor & isLight
     expect(variables["--fb-branding-text-color"]).toBeDefined(); // Relies on mixColor & isLight
     expect(variables["--fb-input-background-color-selected"]).toBeDefined(); // Relies on mixColor
-    expect(variables["--fb-accent-background-color"]).toBeDefined(); // Relies on mixColor
-    expect(variables["--fb-accent-background-color-selected"]).toBeDefined(); // Relies on mixColor
+
+    // Check accent colors derived from brandColor when not explicitly set
+    expect(variables["--fb-accent-background-color"]).toBeDefined();
+    expect(variables["--fb-accent-background-color-selected"]).toBeDefined();
+
     // calendar-tile-color depends on isLight(brandColor)
     expect(variables["--fb-calendar-tile-color"]).toBeUndefined(); // isLight('#112233') is false, so this should be undefined
+  });
+
+  test("should generate calendar-tile-color for light brandColor", () => {
+    const styling = getBaseProjectStyling({ brandColor: { light: "#ffffff" } });
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    expect(variables["--fb-calendar-tile-color"]).toBeDefined();
+  });
+
+  test("should apply advanced styling properties", () => {
+    const styling: TSurveyStyling = {
+      ...getBaseProjectStyling(),
+      // Buttons
+      buttonBgColor: { light: "#btn-bg" },
+      buttonTextColor: { light: "#btn-text" },
+      buttonBorderRadius: 4,
+      buttonHeight: "40",
+      buttonFontSize: 16,
+      buttonFontWeight: "bold",
+      buttonPaddingX: 20,
+      buttonPaddingY: 10,
+      // Inputs
+      inputTextColor: { light: "#input-text" },
+      inputBorderRadius: 4,
+      inputHeight: 40,
+      inputFontSize: 14,
+      inputPaddingX: 12,
+      inputPaddingY: 8,
+      inputPlaceholderOpacity: 0.5,
+      inputShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+      // Options
+      optionBgColor: { light: "#option-bg" },
+      optionLabelColor: { light: "#option-label" },
+      optionBorderRadius: 4,
+      optionPaddingX: 12,
+      optionPaddingY: 8,
+      optionFontSize: 14,
+      // Element Headline & Description
+      elementHeadlineFontSize: 24,
+      elementHeadlineFontWeight: "bold",
+      elementHeadlineColor: { light: "#headline-color" },
+      elementDescriptionFontSize: 16,
+      elementDescriptionColor: { light: "#desc-color" },
+      // Progress Bar
+      progressTrackHeight: 4,
+      progressTrackBgColor: { light: "#track-bg" },
+      progressIndicatorBgColor: { light: "#indicator-bg" },
+    };
+
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    // Buttons
+    expect(variables["--fb-button-bg-color"]).toBe("#btn-bg");
+    expect(variables["--fb-button-text-color"]).toBe("#btn-text");
+    expect(variables["--fb-button-border-radius"]).toBe("4px");
+    expect(variables["--fb-button-height"]).toBe("40px");
+    expect(variables["--fb-button-font-size"]).toBe("16px");
+    expect(variables["--fb-button-font-weight"]).toBe("bold");
+    expect(variables["--fb-button-padding-x"]).toBe("20px");
+    expect(variables["--fb-button-padding-y"]).toBe("10px");
+    // Inputs
+    expect(variables["--fb-input-text-color"]).toBe("#input-text");
+    expect(variables["--fb-input-border-radius"]).toBe("4px");
+    expect(variables["--fb-input-height"]).toBe("40px");
+    expect(variables["--fb-input-font-size"]).toBe("14px");
+    expect(variables["--fb-input-padding-x"]).toBe("12px");
+    expect(variables["--fb-input-padding-y"]).toBe("8px");
+    expect(variables["--fb-input-placeholder-opacity"]).toBe("0.5");
+    expect(variables["--fb-input-shadow"]).toBe("0 1px 2px 0 rgba(0, 0, 0, 0.05)");
+    // Options
+    expect(variables["--fb-option-bg-color"]).toBe("#option-bg");
+    expect(variables["--fb-option-label-color"]).toBe("#option-label");
+    expect(variables["--fb-option-border-radius"]).toBe("4px");
+    expect(variables["--fb-option-padding-x"]).toBe("12px");
+    expect(variables["--fb-option-padding-y"]).toBe("8px");
+    expect(variables["--fb-option-font-size"]).toBe("14px");
+    // Element Headline & Description
+    expect(variables["--fb-element-headline-font-size"]).toBe("24px");
+    expect(variables["--fb-element-headline-font-weight"]).toBe("bold");
+    expect(variables["--fb-element-headline-color"]).toBe("#headline-color");
+    expect(variables["--fb-element-description-font-size"]).toBe("16px");
+    expect(variables["--fb-element-description-color"]).toBe("#desc-color");
+    // Progress Bar
+    expect(variables["--fb-progress-track-height"]).toBe("4px");
+    expect(variables["--fb-progress-track-bg-color"]).toBe("#track-bg");
+    expect(variables["--fb-progress-indicator-bg-color"]).toBe("#indicator-bg");
+  });
+
+  test("should format dimensions correctly", () => {
+    const styling: TSurveyStyling = {
+      ...getBaseProjectStyling(),
+      buttonBorderRadius: 10, // number -> px
+      buttonHeight: "20", // numeric string -> px
+      buttonFontSize: "1.5rem", // string -> string
+    };
+
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    expect(variables["--fb-button-border-radius"]).toBe("10px");
+    expect(variables["--fb-button-height"]).toBe("20px");
+    expect(variables["--fb-button-font-size"]).toBe("1.5rem");
   });
 
   test("should set signature and branding text colors for dark questionColor", () => {

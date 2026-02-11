@@ -1,7 +1,7 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZColor, ZEndingCardUrl, ZId, ZPlacement, ZUrl, getZSafeUrl } from "../common";
+import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { ZLanguage } from "../project";
@@ -60,8 +60,8 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
   buttonLink: ZEndingCardUrl.optional(),
-  imageUrl: ZUrl.optional(),
-  videoUrl: ZUrl.optional(),
+  imageUrl: ZStorageUrl.optional(),
+  videoUrl: ZStorageUrl.optional(),
 });
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
@@ -142,11 +142,11 @@ export const ZSurveyWelcomeCard = z
     enabled: z.boolean(),
     headline: ZI18nString.optional(),
     subheader: ZI18nString.optional(),
-    fileUrl: ZUrl.optional(),
+    fileUrl: ZStorageUrl.optional(),
     buttonLabel: ZI18nString.optional(),
     timeToFinish: z.boolean().default(true),
     showResponseCount: z.boolean().default(false),
-    videoUrl: ZUrl.optional(),
+    videoUrl: ZStorageUrl.optional(),
   })
   .refine((schema) => !(schema.enabled && !schema.headline), {
     message: "Welcome card must have a headline",
@@ -228,7 +228,7 @@ export const ZSurveyProjectOverwrites = z.object({
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
   clickOutsideClose: z.boolean().nullish(),
-  darkOverlay: z.boolean().nullish(),
+  overlay: ZOverlay.nullish(),
 });
 
 export type TSurveyProjectOverwrites = z.infer<typeof ZSurveyProjectOverwrites>;
@@ -277,7 +277,7 @@ export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
 export const ZSurveyMetadata = z.object({
   title: ZI18nString.optional(),
   description: ZI18nString.optional(),
-  ogImage: z.string().url().optional(),
+  ogImage: ZStorageUrl.optional(),
 });
 
 export type TSurveyMetadata = z.infer<typeof ZSurveyMetadata>;
@@ -289,7 +289,7 @@ export const ZSurveyQuestionChoice = z.object({
 
 export const ZSurveyPictureChoice = z.object({
   id: z.string(),
-  imageUrl: z.string(),
+  imageUrl: ZStorageUrl,
 });
 
 export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
@@ -405,8 +405,8 @@ export const ZSurveyQuestionBase = z.object({
   type: z.string(),
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
-  imageUrl: z.string().optional(),
-  videoUrl: z.string().optional(),
+  imageUrl: ZStorageUrl.optional(),
+  videoUrl: ZStorageUrl.optional(),
   required: z.boolean(),
   buttonLabel: ZI18nString.optional(),
   backButtonLabel: ZI18nString.optional(),
@@ -2866,7 +2866,7 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 
@@ -3697,7 +3697,7 @@ const validateBlockLogicFallback = (
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 
@@ -3932,7 +3932,7 @@ export const ZSurveyElementSummaryPictureSelection = z.object({
   choices: z.array(
     z.object({
       id: z.string(),
-      imageUrl: z.string(),
+      imageUrl: ZStorageUrl,
       count: z.number(),
       percentage: z.number(),
     })

@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { ZId, ZUrl } from "@formbricks/types/common";
+import { ZId, ZStorageUrl } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationWhitelabel } from "@formbricks/types/organizations";
 import { validateInputs } from "@/lib/utils/validate";
@@ -11,7 +11,7 @@ export const updateOrganizationFaviconUrl = async (
   organizationId: string,
   faviconUrl: string | null
 ): Promise<boolean> => {
-  validateInputs([organizationId, ZId], [faviconUrl, ZUrl.nullable()]);
+  validateInputs([organizationId, ZId], [faviconUrl, ZStorageUrl.nullable()]);
 
   try {
     const organization = await prisma.organization.findUnique({
