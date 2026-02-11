@@ -53,7 +53,7 @@ export const EditMemberships = async ({
           <div className="col-span-2 whitespace-nowrap">{t("common.status")}</div>
 
           {!isUserManagementDisabledFromUi && (
-            <div className="col-span-3 whitespace-nowrap">{t("common.actions")}</div>
+            <div className="col-span-3 whitespace-nowrap text-center">{t("common.actions")}</div>
           )}
         </div>
 

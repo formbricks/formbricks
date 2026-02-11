@@ -138,7 +138,7 @@ export const MemberActions = ({
   const showAssignToTeamButton = Boolean(member) && isAccessControlAllowed;
 
   return (
-    <div className="flex gap-2">
+    <div className="flex justify-end gap-2">
       <TooltipRenderer tooltipContent={t("common.delete")} shouldRender={!!showDeleteButton}>
         <Button
           variant="destructive"
