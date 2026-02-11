@@ -30,6 +30,7 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSur
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
     customHeadScriptsMode: surveyPrisma.customHeadScriptsMode,
+    endings: surveyPrisma.endings || [],
   } as T;
 
   return transformedSurvey;

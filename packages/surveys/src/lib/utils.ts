@@ -87,7 +87,7 @@ export const calculateElementIdx = (
   const currentQuestion = questions[currentQustionIdx];
   const middleIdx = Math.floor(totalCards / 2);
   const possibleNextBlockIds = getPossibleNextBlocks(survey.blocks, currentQuestion);
-  const endingCardIds = survey.endings.map((ending) => ending.id);
+  const endingCardIds = (survey.endings || []).map((ending) => ending.id);
 
   // Convert block IDs to element IDs (get first element of each block)
   const possibleNextQuestionIds = possibleNextBlockIds

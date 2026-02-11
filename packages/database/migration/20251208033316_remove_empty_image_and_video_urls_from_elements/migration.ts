@@ -62,7 +62,7 @@ export const removeEmptyImageAndVideoUrlsFromElements: MigrationScript = {
           delete cleanedWelcomeCard.videoUrl;
         }
 
-        const cleanedEndings = survey.endings.map((ending) => {
+        const cleanedEndings = (survey.endings || []).map((ending) => {
           const cleanedEnding = { ...ending };
           if (cleanedEnding.imageUrl === "") {
             delete cleanedEnding.imageUrl;

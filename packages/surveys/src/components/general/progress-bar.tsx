@@ -13,7 +13,7 @@ export function ProgressBar({ survey, blockId }: ProgressBarProps) {
     [survey.blocks, blockId]
   );
 
-  const endingCardIds = useMemo(() => survey.endings.map((ending) => ending.id), [survey.endings]);
+  const endingCardIds = useMemo(() => (survey.endings || []).map((ending) => ending.id), [survey.endings]);
 
   const calculateProgress = useCallback(
     (blockIndex: number) => {
