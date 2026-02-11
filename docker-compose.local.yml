@@ -1,0 +1,149 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=formbricks
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis/Valkey for caching
+  valkey:
+    image: valkey/valkey:latest
+    restart: always
+    command: valkey-server
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # MailHog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: always
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI
+    logging:
+      driver: "none"
+
+  # MinIO for file storage
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Web Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Formbricks App
+  formbricks:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      # Core Configuration
+      WEBAPP_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3000
+
+      # Database
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
+
+      # Redis
+      REDIS_URL: redis://valkey:6379
+
+      # Secrets (generate with: openssl rand -hex 32)
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-changeme-nextauth-secret-changeme}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-changeme-encryption-key-changeme}
+      CRON_SECRET: ${CRON_SECRET:-changeme-cron-secret-changeme}
+
+      # Email (using MailHog)
+      MAIL_FROM: noreply@formbricks.local
+      MAIL_FROM_NAME: Formbricks Local
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_SECURE_ENABLED: 0
+      SMTP_AUTHENTICATED: 0
+      EMAIL_VERIFICATION_DISABLED: 1
+      PASSWORD_RESET_DISABLED: 1
+
+      # S3/MinIO Storage
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_REGION: us-east-1
+      S3_BUCKET_NAME: formbricks
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_FORCE_PATH_STYLE: 1
+
+      # Logging
+      LOG_LEVEL: info
+
+      # AGPL Compliance
+      NEXT_PUBLIC_SOURCE_CODE_URL: https://github.com/ASLA1899/formbricks
+
+      # Member Lookup API (YOUR CREDENTIALS - DON'T COMMIT!)
+      MEMBER_LOOKUP_API_KEY: ${MEMBER_LOOKUP_API_KEY}
+      SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
+      SNOWFLAKE_USERNAME: ${SNOWFLAKE_USERNAME}
+      SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD}
+      SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE}
+      SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA:-PUBLIC}
+      SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE}
+
+    volumes:
+      # Mount query config for easy editing
+      - ./apps/web/app/api/member-lookup/query-config.json:/app/apps/web/app/api/member-lookup/query-config.json:ro
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data:
+    driver: local
+  valkey_data:
+    driver: local
+  minio_data:
+    driver: local
