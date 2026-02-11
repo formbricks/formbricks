@@ -412,7 +412,7 @@ export const UploadContactsCSVButton = ({
                         )}
                         onDragOver={(e) => handleDragOver(e)}
                         onDrop={(e) => handleDrop(e)}>
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <div className="flex flex-col items-center justify-center pb-6 pt-5">
                           <ArrowUpFromLineIcon className="h-6 text-slate-500" />
                           <p className={cn("mt-2 text-center text-sm text-slate-500")}>
                             <span className="font-semibold">{t("common.upload_input_description")}</span>
@@ -534,7 +534,10 @@ export const UploadContactsCSVButton = ({
               </Button>
             ) : null}
 
-            <Button onClick={handleUpload} loading={loading} disabled={loading || !csvResponse.length}>
+            <Button
+              onClick={handleUpload}
+              loading={loading}
+              disabled={loading || !csvResponse.length || !!error}>
               {t("environments.contacts.upload_contacts_modal_upload_btn")}
             </Button>
           </DialogFooter>
