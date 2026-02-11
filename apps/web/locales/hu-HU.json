@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "Önnek nem engedélyezett ennek a csapatnak a törlése.",
         "team_name": "Csapat neve",
         "team_name_settings_title": "{teamName} beállításai",
+        "team_requires_workspace": "Kérlek, adj hozzá legalább egy munkaterületet a csapathoz.",
         "team_select_placeholder": "Csapatnév keresése…",
         "team_settings_description": "Csapattagok, hozzáférési jogok és egyebek kezelése.",
         "team_updated_successfully": "A csapat sikeresen frissítve",

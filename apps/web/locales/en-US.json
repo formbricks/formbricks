@@ -1115,6 +1115,7 @@
         "team_name_settings_title": "{teamName} Settings",
         "team_select_placeholder": "Search team name…",
         "team_settings_description": "Manage team members, access rights, and more.",
+        "team_requires_workspace": "Please add at least one workspace to the team.",
         "team_updated_successfully": "Team updated successfully",
         "teams": "Teams",
         "teams_description": "Assign members into teams and give teams access to workspaces.",

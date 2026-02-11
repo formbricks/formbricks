@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "Du darfst dieses Team nicht löschen.",
         "team_name": "Teamname",
         "team_name_settings_title": "{teamName} Einstellungen",
+        "team_requires_workspace": "Bitte füge mindestens einen Workspace zum Team hinzu.",
         "team_select_placeholder": "Teamnamen suchen...",
         "team_settings_description": "Teammitglieder, Zugriffsrechte und mehr verwalten.",
         "team_updated_successfully": "Team erfolgreich aktualisiert",

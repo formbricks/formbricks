@@ -1046,6 +1046,7 @@ checksums:
     environments/settings/teams/team_deletion_not_allowed: 08e49405709ed851cfd7e930c560c524
     environments/settings/teams/team_name: d1a5f99dbf503ca53f06b3a98b511d02
     environments/settings/teams/team_name_settings_title: af7236cfaadfe794525f9e6e29cb6f0e
+    environments/settings/teams/team_requires_workspace: 806eca0d8bcfa3e30d2c39cb5d3a2647
     environments/settings/teams/team_select_placeholder: 209b87d4b87db9121d3ff16173d2eee5
     environments/settings/teams/team_settings_description: 686f772f08d864d28cde23b900c9facf
     environments/settings/teams/team_updated_successfully: 5f769a5073aa0fcaad76f8ba73e17e97

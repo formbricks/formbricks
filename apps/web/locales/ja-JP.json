@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "このチームを削除する権限がありません。",
         "team_name": "チーム名",
         "team_name_settings_title": "{teamName} 設定",
+        "team_requires_workspace": "チームに少なくとも1つのワークスペースを追加してください。",
         "team_select_placeholder": "チーム名を検索...",
         "team_settings_description": "チームメンバー、アクセス権などを管理します。",
         "team_updated_successfully": "チームを正常に更新しました",

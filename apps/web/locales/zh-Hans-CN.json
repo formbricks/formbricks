@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "您 不 可以 删除 此 团队。",
         "team_name": "团队 名称",
         "team_name_settings_title": "{teamName} 设置",
+        "team_requires_workspace": "请为该团队添加至少一个工作区。",
         "team_select_placeholder": "搜索 团队 名称...",
         "team_settings_description": "管理 团队成员、访问 权限 和 更多。",
         "team_updated_successfully": "团队 更新 成功",

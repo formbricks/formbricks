@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "Du har inte behörighet att ta bort detta team.",
         "team_name": "Teamnamn",
         "team_name_settings_title": "{teamName}-inställningar",
+        "team_requires_workspace": "Lägg till minst en arbetsyta i teamet.",
         "team_select_placeholder": "Sök teamnamn...",
         "team_settings_description": "Hantera teammedlemmar, åtkomsträttigheter och mer.",
         "team_updated_successfully": "Team uppdaterat",

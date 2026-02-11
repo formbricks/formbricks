@@ -44,7 +44,7 @@ export const EditMemberships = async ({
   return (
     <div>
       <div className="rounded-lg border border-slate-200">
-        <div className="flex grid h-12 w-full max-w-full grid-cols-12 items-center gap-x-4 rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
+        <div className="grid h-12 w-full max-w-full grid-cols-12 items-center gap-x-4 rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-2 overflow-hidden">{t("common.full_name")}</div>
           <div className="col-span-3 overflow-hidden">{t("common.email")}</div>
 

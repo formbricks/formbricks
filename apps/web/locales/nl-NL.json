@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "Je mag dit team niet verwijderen.",
         "team_name": "Teamnaam",
         "team_name_settings_title": "{teamName} Instellingen",
+        "team_requires_workspace": "Voeg alsjeblieft minstens één werkruimte toe aan het team.",
         "team_select_placeholder": "Zoek teamnaam...",
         "team_settings_description": "Beheer teamleden, toegangsrechten en meer.",
         "team_updated_successfully": "Team succesvol bijgewerkt",

@@ -101,7 +101,7 @@ export const MembersInfo = ({
       {allMembers.map((member) => (
         <div
           id="singleMemberInfo"
-          className="flex grid w-full max-w-full grid-cols-12 items-center gap-x-4 text-left text-sm text-slate-900"
+          className="grid w-full max-w-full grid-cols-12 items-center gap-x-4 text-left text-sm text-slate-900"
           key={member.email}>
           <div className="ph-no-capture col-span-2 overflow-hidden">
             <p className="w-full truncate">{member.name}</p>

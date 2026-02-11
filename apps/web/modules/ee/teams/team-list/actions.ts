@@ -207,7 +207,7 @@ export const addMemberToTeamAction = authenticatedActionClient.schema(ZAddMember
       }
 
       if (teamDetails.projects.length === 0) {
-        throw new InvalidInputError("Please add at least one workspace to the team " + teamDetails.name);
+        throw new InvalidInputError("team_requires_workspace");
       }
 
       const isAlreadyMember = teamDetails.members.some((m) => m.userId === parsedInput.userId);

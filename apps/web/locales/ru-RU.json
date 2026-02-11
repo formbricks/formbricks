@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "У вас нет прав на удаление этой команды.",
         "team_name": "Название команды",
         "team_name_settings_title": "Настройки {teamName}",
+        "team_requires_workspace": "Пожалуйста, добавь хотя бы одно рабочее пространство в команду.",
         "team_select_placeholder": "Поиск по названию команды...",
         "team_settings_description": "Управляйте участниками команды, правами доступа и другими параметрами.",
         "team_updated_successfully": "Команда успешно обновлена",

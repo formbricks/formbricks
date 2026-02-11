@@ -77,11 +77,16 @@ export const AssignToTeamPopover = ({
         assignToTeamForm.reset({ teamId: null, role: "contributor" });
         router.refresh();
       } else {
-        const errorMessage = getFormattedErrorMessage(result);
+        const rawMessage = getFormattedErrorMessage(result);
+        const errorMessage =
+          rawMessage === "team_requires_workspace"
+            ? t("environments.settings.teams.team_requires_workspace")
+            : rawMessage;
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(`${t("common.error")}: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`${t("common.error")}: ${message}`);
     } finally {
       setIsAssigningToTeam(false);
     }

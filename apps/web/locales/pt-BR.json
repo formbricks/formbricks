@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "Você não tem permissão para excluir esta equipe.",
         "team_name": "Nome da equipe",
         "team_name_settings_title": "Configurações de {teamName}",
+        "team_requires_workspace": "Por favor, adicione pelo menos um espaço de trabalho à equipe.",
         "team_select_placeholder": "Pesquisar nome da equipe...",
         "team_settings_description": "Gerencie membros da equipe, direitos de acesso e muito mais.",
         "team_updated_successfully": "Equipe atualizada com sucesso",

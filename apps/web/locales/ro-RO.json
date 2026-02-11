@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "Nu aveți permisiunea să ștergeți această echipă.",
         "team_name": "Nume echipă",
         "team_name_settings_title": "{teamName} Setări",
+        "team_requires_workspace": "Te rugăm să adaugi cel puțin un spațiu de lucru la echipă.",
         "team_select_placeholder": "Caută numele echipei...",
         "team_settings_description": "Gestionați membrii echipei, drepturile de acces și altele.",
         "team_updated_successfully": "Echipă actualizată cu succes",

@@ -1113,6 +1113,7 @@
         "team_deletion_not_allowed": "No tienes permiso para eliminar este equipo.",
         "team_name": "Nombre del equipo",
         "team_name_settings_title": "Ajustes de {teamName}",
+        "team_requires_workspace": "Añade al menos un proyecto al equipo.",
         "team_select_placeholder": "Buscar nombre de equipo...",
         "team_settings_description": "Gestiona miembros del equipo, derechos de acceso y más.",
         "team_updated_successfully": "Equipo actualizado correctamente",
