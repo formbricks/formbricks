@@ -2899,8 +2899,6 @@
     "picture_selection_description": "Pide a los encuestados que elijan una o más imágenes",
     "preview_survey_ending_card_description": "Por favor, continúa con tu incorporación.",
     "preview_survey_ending_card_headline": "¡Lo has conseguido!",
-    "preview_survey_input_headline": "¿Algo más que compartir?",
-    "preview_survey_input_placeholder": "Deja una nota...",
     "preview_survey_name": "Encuesta nueva",
     "preview_survey_question_1_headline": "¿Cómo valorarías {projectName}?",
     "preview_survey_question_1_lower_label": "No es bueno",

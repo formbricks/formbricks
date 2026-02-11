@@ -2899,8 +2899,6 @@
     "picture_selection_description": "A válaszadók megkérése, hogy egy vagy több képet válasszanak",
     "preview_survey_ending_card_description": "Folytassa a beléptetését.",
     "preview_survey_ending_card_headline": "Megcsinálta!",
-    "preview_survey_input_headline": "Van még valami, amit meg szeretne osztani?",
-    "preview_survey_input_placeholder": "Hagyj egy megjegyzést...",
     "preview_survey_name": "Új kérdőív",
     "preview_survey_question_1_headline": "Hogyan értékelné a(z) {projectName} projektet?",
     "preview_survey_question_1_lower_label": "Nem jó",

@@ -2899,8 +2899,6 @@
     "picture_selection_description": "Bitte die Befragten, ein oder mehrere Bilder auszuwählen",
     "preview_survey_ending_card_description": "Mach bitte mit deinem Onboarding weiter.",
     "preview_survey_ending_card_headline": "Geschafft!",
-    "preview_survey_input_headline": "Möchtest Du noch etwas mitteilen?",
-    "preview_survey_input_placeholder": "Hinterlasse eine Notiz...",
     "preview_survey_name": "Vorschau",
     "preview_survey_question_1_headline": "Wie würdest Du {projectName} bewerten?",
     "preview_survey_question_1_lower_label": "Nicht gut",

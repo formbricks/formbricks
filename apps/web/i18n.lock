@@ -2744,8 +2744,6 @@ checksums:
     templates/picture_selection_description: 44115e3668be00ae4854c299e5976398
     templates/preview_survey_ending_card_description: 6a98bdb1b083e437bb71d8b6c27b0e3a
     templates/preview_survey_ending_card_headline: 3512326ea9ad9a8a6c420a1e69d4d93f
-    templates/preview_survey_input_headline: 277d044caa828f35758b165516da917d
-    templates/preview_survey_input_placeholder: 743c34ea842287e929a5e7e6b7a4e89b
     templates/preview_survey_name: 82503c2dba9f071c93860e5ce9584e14
     templates/preview_survey_question_1_headline: 91622f99f8018adefb3ed0921bc1ad7a
     templates/preview_survey_question_1_lower_label: ff4681be0a94185111459994fe58478c
