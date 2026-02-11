@@ -1,0 +1,418 @@
+---
+title: "Dynamic API Lookup During Surveys"
+description: "Call external APIs during survey flow to fetch and pre-fill data based on user responses."
+icon: "cloud-arrow-down"
+---
+
+Formbricks surveys can call external APIs mid-survey based on user responses, enabling dynamic data fetching and pre-population of subsequent questions. This is perfect for validating member IDs, fetching user details, or enriching survey data in real-time.
+
+## How It Works
+
+1. **User answers a question** (e.g., enters their member ID)
+2. **Survey logic triggers an API call** using that answer
+3. **API response is stored** in survey variables
+4. **Subsequent questions are pre-filled** with data from the API response
+
+This enables workflows like:
+- Member lookup by ID or email
+- Product details by SKU
+- Account information by username
+- Real-time validation and enrichment
+
+## Use Cases
+
+### Member ID Lookup
+```
+Block 1: "Enter your Member ID"
+  → Call membership API
+Block 2: "Confirm your name: [John Doe]" (pre-filled from API)
+Block 3: "Your membership level: [Premium]" (pre-filled from API)
+```
+
+### Product Feedback
+```
+Block 1: "Enter product SKU"
+  → Call product database API
+Block 2: "Product: [Widget Pro 3000]" (pre-filled)
+Block 3: "How would you rate [Widget Pro 3000]?"
+```
+
+### Account Verification
+```
+Block 1: "Enter your email address"
+  → Call CRM API
+Block 2: "Welcome back, [Jane Smith]!" (pre-filled)
+Block 3: "Your account status: [Active since 2023]" (pre-filled)
+```
+
+## Setting Up External API Lookup
+
+### Step 1: Configure External Data Source
+
+In your survey settings, add an external data source:
+
+1. Open your survey in the editor
+2. Navigate to **Survey Settings** → **External Data Sources**
+3. Click **Add Data Source**
+4. Configure the API:
+
+**Basic Configuration:**
+- **Name**: Descriptive name for the data source (e.g., "Member Lookup API")
+- **API URL**: Your API endpoint (e.g., `https://api.example.com/members`)
+- **HTTP Method**: GET or POST
+- **Timeout**: Maximum wait time (default: 5000ms)
+
+**Authentication:**
+Choose from:
+- **None**: No authentication required
+- **Bearer Token**: Include `Authorization: Bearer <token>` header
+- **API Key**: Include `X-API-Key: <key>` header or query parameter
+- **Custom Headers**: Add any custom headers needed
+
+**Example Configuration:**
+```json
+{
+  "name": "Member Lookup",
+  "apiUrl": "https://api.example.com/members/lookup",
+  "method": "GET",
+  "authType": "bearer",
+  "authToken": "your-api-key-here",
+  "timeout": 5000
+}
+```
+
+### Step 2: Add Questions and Logic
+
+Create a survey with the trigger question and API call logic:
+
+1. **Add trigger question** (the question whose answer will be used for the lookup):
+   - Type: Open Text
+   - ID: `memberId` (or any identifier)
+   - Headline: "Enter your Member ID"
+
+2. **Configure logic rule** on the trigger question:
+   - Condition: "After this question is answered"
+   - Action: **Call External API**
+   - Select your configured data source
+   - Configure parameter mapping (see below)
+
+3. **Add follow-up questions** that will be pre-filled with API data
+
+### Step 3: Configure Parameter Mapping
+
+Map the question answer to the API request:
+
+**For GET requests:**
+```json
+{
+  "id": "{{memberId}}"
+}
+```
+This appends `?id=12345` to the URL.
+
+**For POST requests:**
+```json
+{
+  "memberId": "{{memberId}}",
+  "source": "survey"
+}
+```
+This sends a JSON body with the member ID.
+
+### Step 4: Configure Response Mapping
+
+Map API response fields to survey variables:
+
+If your API returns:
+```json
+{
+  "data": {
+    "user": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john@example.com"
+    },
+    "membership": {
+      "level": "Premium",
+      "since": "2023-01-15"
+    }
+  }
+}
+```
+
+Configure response mapping:
+```json
+{
+  "data.user.firstName": "firstName",
+  "data.user.lastName": "lastName",
+  "data.user.email": "email",
+  "data.membership.level": "membershipLevel",
+  "data.membership.since": "memberSince"
+}
+```
+
+This creates survey variables that can pre-fill subsequent questions.
+
+### Step 5: Pre-fill Subsequent Questions
+
+Add questions after the API call that use the fetched data:
+
+```
+Question 2:
+  Type: Open Text
+  Headline: "Confirm your name"
+  Initial Value: {{firstName}} {{lastName}}
+
+Question 3:
+  Type: Open Text
+  Headline: "Your email address"
+  Initial Value: {{email}}
+
+Question 4:
+  Type: Open Text (read-only or editable)
+  Headline: "Your membership level"
+  Initial Value: {{membershipLevel}}
+```
+
+The survey automatically fills these fields with data from the API response.
+
+## Authentication Methods
+
+### No Authentication
+```json
+{
+  "authType": "none"
+}
+```
+
+### Bearer Token
+```json
+{
+  "authType": "bearer",
+  "authToken": "sk_live_1234567890abcdef"
+}
+```
+
+Sends: `Authorization: Bearer sk_live_1234567890abcdef`
+
+### API Key (Header)
+```json
+{
+  "authType": "apiKey",
+  "authToken": "your-api-key",
+  "authLocation": "header"
+}
+```
+
+Sends: `X-API-Key: your-api-key`
+
+### API Key (Query Parameter)
+```json
+{
+  "authType": "apiKey",
+  "authToken": "your-api-key",
+  "authLocation": "query"
+}
+```
+
+Sends: `?api_key=your-api-key`
+
+### Custom Headers
+```json
+{
+  "customHeaders": {
+    "X-Custom-Header": "value",
+    "X-Request-ID": "survey-{{timestamp}}"
+  }
+}
+```
+
+## Response Field Mapping
+
+Use dot notation to access nested fields:
+
+**Simple fields:**
+```json
+{
+  "name": "userName",
+  "email": "userEmail"
+}
+```
+
+**Nested fields:**
+```json
+{
+  "user.profile.firstName": "firstName",
+  "user.profile.lastName": "lastName",
+  "user.account.status": "accountStatus"
+}
+```
+
+**Array access:**
+```json
+{
+  "items[0].name": "firstItemName",
+  "metadata.tags[1]": "secondTag"
+}
+```
+
+## Testing Your Configuration
+
+Before launching your survey:
+
+1. **Use Test Connection**: Click "Test Connection" in the data source configuration
+2. **Try with sample data**: Enter a test value and see the API response
+3. **Verify mapping**: Check that response fields are correctly mapped to variables
+4. **Test full flow**: Complete the survey yourself to ensure pre-filling works
+
+Example test:
+```
+Input: 12345
+API Response: { "name": "John Doe", "level": "Premium" }
+Expected: Questions show "John Doe" and "Premium"
+```
+
+## Error Handling
+
+The survey handles API failures gracefully:
+
+- **API timeout**: Survey continues with empty pre-fill values
+- **API returns error**: Survey continues (no data pre-filled)
+- **Invalid response**: Survey logs error but doesn't crash
+- **Network failure**: Survey continues normally
+
+**Best practice**: Always make pre-filled questions editable so users can manually enter data if the API fails.
+
+## Performance Considerations
+
+- **Timeout**: Set reasonable timeouts (5-10 seconds max)
+- **Async execution**: API calls run asynchronously without blocking survey
+- **Single call per trigger**: Each logic rule makes one API call
+- **Caching**: Consider implementing caching in your API for frequently requested data
+
+## Security Best Practices
+
+### ✅ Do
+- Use HTTPS endpoints only
+- Store API keys securely (environment variables)
+- Implement rate limiting in your API
+- Validate and sanitize user input before sending to API
+- Use read-only API endpoints when possible
+- Implement API key rotation
+
+### ❌ Don't
+- Hardcode API keys in survey configuration (use environment variables)
+- Expose sensitive endpoints without authentication
+- Send PII without encryption
+- Use unlimited timeout values
+- Trust user input without validation
+
+## Example: Complete Member Lookup Flow
+
+```json
+{
+  "survey": {
+    "name": "Member Survey",
+    "externalDataSources": [
+      {
+        "id": "memberLookup",
+        "name": "Member Lookup API",
+        "apiUrl": "https://api.example.com/members/lookup",
+        "method": "GET",
+        "authType": "bearer",
+        "authToken": "sk_live_abc123",
+        "timeout": 5000
+      }
+    ],
+    "questions": [
+      {
+        "id": "memberId",
+        "type": "openText",
+        "headline": "Enter your Member ID",
+        "logic": [
+          {
+            "condition": "submitted",
+            "action": "callExternalAPI",
+            "dataSourceId": "memberLookup",
+            "parameterMapping": {
+              "id": "{{memberId}}"
+            },
+            "responseMapping": {
+              "data.firstName": "firstName",
+              "data.lastName": "lastName",
+              "data.email": "email",
+              "data.membershipLevel": "membershipLevel"
+            }
+          }
+        ]
+      },
+      {
+        "id": "confirmName",
+        "type": "openText",
+        "headline": "Confirm your name",
+        "initialValue": "{{firstName}} {{lastName}}"
+      },
+      {
+        "id": "confirmEmail",
+        "type": "openText",
+        "headline": "Confirm your email",
+        "initialValue": "{{email}}"
+      },
+      {
+        "id": "feedback",
+        "type": "openText",
+        "headline": "How would you rate your {{membershipLevel}} membership?"
+      }
+    ]
+  }
+}
+```
+
+## Limitations
+
+- Maximum timeout: 30 seconds (recommended: 5-10 seconds)
+- One API call per logic rule
+- Response size limit: 1MB
+- Currently supports REST APIs (GraphQL support coming soon)
+- Browser CORS restrictions may apply for client-side calls
+
+## Troubleshooting
+
+### API Call Not Triggering
+
+**Check:**
+1. Is the logic rule properly configured on the question?
+2. Is the data source ID correct?
+3. Are you testing with a valid trigger answer?
+
+### Pre-fill Not Working
+
+**Check:**
+1. Is the response mapping correct?
+2. Does the API response match the expected structure?
+3. Are the variable names in initialValue matching the mapping?
+4. Check browser console for errors
+
+### Authentication Failing
+
+**Check:**
+1. Is the API token valid and not expired?
+2. Is the authentication type correct?
+3. Does your API require additional headers?
+4. Test the API directly with curl/Postman first
+
+### Timeout Errors
+
+**Check:**
+1. Is your API responding within the timeout period?
+2. Try increasing the timeout value
+3. Check your API's response time
+4. Consider implementing caching in your API
+
+## API Reference
+
+Technical implementation details:
+- **Client-side utility**: `packages/surveys/src/lib/external-api-client.ts`
+- **Server-side utility**: `apps/web/modules/survey/link/lib/external-data.ts`
+- **Type definitions**: `packages/types/surveys/types.ts`
+- **Logic types**: `packages/types/surveys/logic.ts`

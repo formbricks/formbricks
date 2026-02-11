@@ -1,0 +1,224 @@
+---
+title: "Pre-populate Survey Questions from Contact Attributes"
+description: "Automatically fill survey fields with contact attribute data for personalized survey experiences."
+icon: "address-card"
+---
+
+When using personalized survey links (contact links), you can pre-populate visible survey questions with data from contact attributes. This creates a more personalized experience and reduces friction for respondents.
+
+## How It Works
+
+1. **Upload contacts** with attributes (name, email, company, etc.)
+2. **Configure attribute mapping** in your survey to map contact attributes to specific questions
+3. **Generate personalized links** for each contact
+4. When contacts open their unique link, their **questions are automatically pre-filled** with their attribute data
+
+## Setting Up Pre-population
+
+### Step 1: Create Contact Attributes
+
+First, ensure your contacts have the attributes you want to use for pre-population:
+
+```csv
+email,firstName,lastName,company,membershipLevel
+john@example.com,John,Doe,Acme Corp,Premium
+jane@example.com,Jane,Smith,Tech Inc,Standard
+```
+
+Upload this CSV via the Contacts page in your Formbricks environment.
+
+### Step 2: Add Questions to Your Survey
+
+Create survey questions that you want to pre-populate. Currently supported question types:
+
+- **Open Text** - Single or multi-line text inputs
+- **Contact Info** - Email, name, phone fields
+
+Example questions:
+- "What is your first name?" (questionId: `firstName`)
+- "What is your last name?" (questionId: `lastName`)
+- "What company do you work for?" (questionId: `company`)
+
+### Step 3: Configure Attribute Mapping
+
+In the survey editor, configure which contact attributes map to which questions:
+
+1. Open your survey in the editor
+2. Find the **Attribute Mapping** section in survey settings
+3. Click **Add Mapping**
+4. Select a question from the dropdown
+5. Enter the contact attribute key (e.g., `firstName`, `lastName`, `company`)
+6. Save the mapping
+
+Example mapping configuration:
+```json
+{
+  "firstName": "firstName",
+  "lastName": "lastName",
+  "company": "company"
+}
+```
+
+This maps:
+- Contact attribute `firstName` → Question with ID `firstName`
+- Contact attribute `lastName` → Question with ID `lastName`
+- Contact attribute `company` → Question with ID `company`
+
+### Step 4: Generate Personalized Links
+
+Generate personalized links for your contacts via:
+
+1. **Contacts page**: Select contacts and click "Generate Links"
+2. **API**: Use the Management API to generate links programmatically
+
+Each link contains an encrypted JWT token that identifies the contact.
+
+### Step 5: Send Links to Contacts
+
+Distribute the personalized links to your contacts via:
+- Email campaigns
+- SMS
+- In-app notifications
+- Any other channel
+
+When contacts click their link, the survey loads with pre-filled fields.
+
+## Data Priority
+
+When multiple data sources are available, values are applied in this order (last wins):
+
+1. **Contact attributes** (from database)
+2. **URL parameters** (query string prefill)
+
+This means URL parameters will override contact attributes, allowing for flexibility.
+
+Example:
+```
+https://app.formbricks.com/s/abc123?firstName=CustomName
+```
+
+Even if the contact has `firstName="John"` in their attributes, the survey will show "CustomName" because the URL parameter takes precedence.
+
+## Use Cases
+
+### Customer Feedback
+Pre-fill customer information to make it easy for them to provide feedback:
+- Name and email already filled
+- Account tier/subscription level shown
+- Purchase history referenced
+
+### Employee Surveys
+Make internal surveys easier:
+- Department pre-filled
+- Manager name shown
+- Tenure information included
+
+### Membership Surveys
+Personalize member experience:
+- Membership level displayed
+- Join date referenced
+- Benefits tier shown
+
+## Best Practices
+
+### ✅ Do
+- Use clear, consistent attribute key names
+- Test with sample contacts before sending to all
+- Provide edit capability - don't lock pre-filled fields
+- Consider data privacy - only pre-fill non-sensitive data
+
+### ❌ Don't
+- Pre-fill sensitive information (passwords, SSN, payment info)
+- Lock fields that might need correction
+- Use outdated contact data - keep attributes current
+- Over-pre-fill - only populate what's actually needed
+
+## Example: Complete Flow
+
+```typescript
+// 1. Upload contacts with attributes
+const contacts = [
+  { email: "john@example.com", firstName: "John", lastName: "Doe", plan: "Premium" },
+  { email: "jane@example.com", firstName: "Jane", lastName: "Smith", plan: "Standard" }
+];
+
+// 2. Create survey with questions
+const survey = {
+  name: "Customer Feedback",
+  questions: [
+    { id: "firstName", type: "openText", headline: "First Name" },
+    { id: "lastName", type: "openText", headline: "Last Name" },
+    { id: "feedback", type: "openText", headline: "What can we improve?" }
+  ],
+  // 3. Configure attribute mapping
+  attributeMapping: {
+    firstName: "firstName", // Question ID → Attribute Key
+    lastName: "lastName"
+  }
+};
+
+// 4. Generate personalized links
+const links = await generatePersonalizedLinks(contacts, survey.id);
+
+// 5. Contacts receive:
+// https://app.formbricks.com/s/abc123?contactId=encrypted_token
+// Survey loads with firstName and lastName pre-filled
+```
+
+## Technical Details
+
+### Architecture
+
+- **Contact service**: `packages/database/contact.ts` - Fetches contact attributes
+- **Pre-population logic**: `packages/surveys/src/lib/pre-populate.ts` - Maps attributes to questions
+- **Survey state**: Includes `initialValues` property for pre-filled data
+- **Survey renderer**: Passes initial values to question components
+
+### Performance
+
+- Contact attributes are fetched in parallel with survey data
+- Pre-population happens server-side before rendering
+- No additional client-side API calls required
+
+### Security
+
+- Contact links use encrypted JWT tokens
+- Only the specific contact's data is accessible via their token
+- Tokens expire and cannot be shared
+
+## Limitations
+
+- Pre-population only works with **personalized contact links** (not anonymous survey links)
+- Currently supports **Open Text** and **Contact Info** question types
+- Other question types (multiple choice, rating, etc.) coming soon
+- Contact attributes must be set before link generation
+
+## Troubleshooting
+
+### Fields Not Pre-filling
+
+**Check:**
+1. Are you using a personalized contact link (contains contactId parameter)?
+2. Does the contact have the attribute in the database?
+3. Is the attribute key spelled correctly in the mapping?
+4. Is the question ID correct in the mapping?
+
+### Wrong Data Showing
+
+**Check:**
+1. Is there a URL parameter overriding the attribute?
+2. Is the contact attribute up-to-date in the database?
+3. Are you testing with the correct contact's link?
+
+### Attribute Not Found
+
+**Check:**
+1. Was the attribute created when uploading contacts?
+2. Use the Contacts page to verify the attribute exists
+3. Check the attribute key name matches exactly (case-sensitive)
+
+## API Reference
+
+For programmatic access, see:
+- [Get Contact Attributes API](/api-reference/management-api--contact-attributes/get-all-contact-attributes)
+- [Get Contacts API](/api-reference/management-api--contacts/get-all-contacts)
