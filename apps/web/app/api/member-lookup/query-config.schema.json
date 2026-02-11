@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Query Configuration Schema",
+  "description": "Schema for configuring Snowflake queries for member lookup",
+  "type": "object",
+  "required": ["version", "queries"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Configuration version"
+    },
+    "queries": {
+      "type": "object",
+      "description": "Named query configurations",
+      "patternProperties": {
+        "^[a-z0-9-]+$": {
+          "$ref": "#/definitions/query"
+        }
+      }
+    },
+    "security": {
+      "$ref": "#/definitions/security"
+    },
+    "defaults": {
+      "$ref": "#/definitions/defaults"
+    }
+  },
+  "definitions": {
+    "query": {
+      "type": "object",
+      "required": ["name", "sql", "parameters", "fields"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable name for the query"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of what this query returns"
+        },
+        "database": {
+          "type": "string",
+          "description": "Database name (supports env var interpolation)"
+        },
+        "schema": {
+          "type": "string",
+          "description": "Schema name (supports env var interpolation)"
+        },
+        "sql": {
+          "type": "string",
+          "description": "SQL query with named parameters (:paramName)"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of required parameters"
+        },
+        "fields": {
+          "type": "object",
+          "description": "Mapping of output field names to SQL column names",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "cache": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ttl": {
+              "type": "integer",
+              "description": "Cache TTL in seconds"
+            }
+          }
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "allowCustomQueries": {
+          "type": "boolean",
+          "description": "Allow custom SQL queries (dangerous!)"
+        },
+        "maxQueryLength": {
+          "type": "integer",
+          "description": "Maximum SQL query length"
+        },
+        "allowedStatements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Allowed SQL statement types"
+        },
+        "blockedKeywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Blocked SQL keywords"
+        },
+        "requireWhereClause": {
+          "type": "boolean",
+          "description": "Require WHERE clause in queries"
+        },
+        "requireLimit": {
+          "type": "boolean",
+          "description": "Require LIMIT clause in queries"
+        },
+        "maxRows": {
+          "type": "integer",
+          "description": "Maximum number of rows that can be returned"
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "description": "Default query timeout in milliseconds"
+        },
+        "cache": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ttl": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  }
+}

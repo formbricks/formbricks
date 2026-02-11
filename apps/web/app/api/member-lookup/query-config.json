@@ -1,0 +1,162 @@
+{
+  "$schema": "./query-config.schema.json",
+  "version": "1.0",
+  "queries": {
+    "member-basic": {
+      "name": "Basic Member Info",
+      "description": "Minimal member information for quick surveys",
+      "database": "{{SNOWFLAKE_DATABASE}}",
+      "schema": "{{SNOWFLAKE_SCHEMA}}",
+      "sql": "SELECT record_number, first_name, last_name, email FROM members WHERE record_number = :recordNumber LIMIT 1",
+      "parameters": ["recordNumber"],
+      "fields": {
+        "recordNumber": "record_number",
+        "firstName": "first_name",
+        "lastName": "last_name",
+        "email": "email"
+      },
+      "cache": {
+        "enabled": true,
+        "ttl": 300
+      }
+    },
+
+    "member-detailed": {
+      "name": "Detailed Member Profile",
+      "description": "Complete member information including address and membership details",
+      "database": "{{SNOWFLAKE_DATABASE}}",
+      "schema": "{{SNOWFLAKE_SCHEMA}}",
+      "sql": "SELECT record_number, first_name, last_name, email, phone, organization, department, membership_level, membership_status, join_date, renewal_date, address_line1, city, state, postal_code, country FROM members WHERE record_number = :recordNumber AND membership_status = 'ACTIVE' LIMIT 1",
+      "parameters": ["recordNumber"],
+      "fields": {
+        "recordNumber": "record_number",
+        "firstName": "first_name",
+        "lastName": "last_name",
+        "email": "email",
+        "phone": "phone",
+        "organization": "organization",
+        "department": "department",
+        "membershipLevel": "membership_level",
+        "membershipStatus": "membership_status",
+        "joinDate": "join_date",
+        "renewalDate": "renewal_date",
+        "addressLine1": "address_line1",
+        "city": "city",
+        "state": "state",
+        "postalCode": "postal_code",
+        "country": "country"
+      },
+      "cache": {
+        "enabled": true,
+        "ttl": 180
+      }
+    },
+
+    "member-premium": {
+      "name": "Premium Members with Benefits",
+      "description": "Premium and VIP members with their benefits",
+      "database": "{{SNOWFLAKE_DATABASE}}",
+      "schema": "{{SNOWFLAKE_SCHEMA}}",
+      "sql": "SELECT m.record_number, m.first_name, m.last_name, m.email, m.membership_level, m.join_date, LISTAGG(b.benefit_name, ', ') as benefits FROM members m LEFT JOIN member_benefits b ON m.record_number = b.record_number WHERE m.record_number = :recordNumber AND m.membership_level IN ('Premium', 'VIP') AND m.membership_status = 'ACTIVE' GROUP BY m.record_number, m.first_name, m.last_name, m.email, m.membership_level, m.join_date LIMIT 1",
+      "parameters": ["recordNumber"],
+      "fields": {
+        "recordNumber": "record_number",
+        "firstName": "first_name",
+        "lastName": "last_name",
+        "email": "email",
+        "membershipLevel": "membership_level",
+        "joinDate": "join_date",
+        "benefits": "benefits"
+      },
+      "cache": {
+        "enabled": true,
+        "ttl": 300
+      }
+    },
+
+    "employee": {
+      "name": "Employee Information",
+      "description": "Employee data from HR system",
+      "database": "{{SNOWFLAKE_DATABASE}}",
+      "schema": "{{SNOWFLAKE_SCHEMA}}",
+      "sql": "SELECT employee_id as record_number, first_name, last_name, email, department, job_title, manager_name, hire_date, employment_status FROM employees WHERE employee_id = :employeeId AND employment_status = 'ACTIVE' LIMIT 1",
+      "parameters": ["employeeId"],
+      "fields": {
+        "recordNumber": "record_number",
+        "firstName": "first_name",
+        "lastName": "last_name",
+        "email": "email",
+        "department": "department",
+        "jobTitle": "job_title",
+        "managerName": "manager_name",
+        "hireDate": "hire_date",
+        "employmentStatus": "employment_status"
+      },
+      "cache": {
+        "enabled": true,
+        "ttl": 600
+      }
+    },
+
+    "customer-orders": {
+      "name": "Customer with Order History",
+      "description": "Customer information with purchase history",
+      "database": "{{SNOWFLAKE_DATABASE}}",
+      "schema": "{{SNOWFLAKE_SCHEMA}}",
+      "sql": "SELECT c.customer_id as record_number, c.first_name, c.last_name, c.email, c.customer_since, COUNT(o.order_id) as total_orders, COALESCE(SUM(o.order_total), 0) as lifetime_value, MAX(o.order_date) as last_order_date FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id WHERE c.customer_id = :customerId GROUP BY c.customer_id, c.first_name, c.last_name, c.email, c.customer_since LIMIT 1",
+      "parameters": ["customerId"],
+      "fields": {
+        "recordNumber": "record_number",
+        "firstName": "first_name",
+        "lastName": "last_name",
+        "email": "email",
+        "customerSince": "customer_since",
+        "totalOrders": "total_orders",
+        "lifetimeValue": "lifetime_value",
+        "lastOrderDate": "last_order_date"
+      },
+      "cache": {
+        "enabled": false
+      }
+    },
+
+    "member-by-email": {
+      "name": "Member Lookup by Email",
+      "description": "Find member using email address instead of record number",
+      "database": "{{SNOWFLAKE_DATABASE}}",
+      "schema": "{{SNOWFLAKE_SCHEMA}}",
+      "sql": "SELECT record_number, first_name, last_name, email, membership_level, membership_status FROM members WHERE LOWER(email) = LOWER(:email) AND membership_status = 'ACTIVE' LIMIT 1",
+      "parameters": ["email"],
+      "fields": {
+        "recordNumber": "record_number",
+        "firstName": "first_name",
+        "lastName": "last_name",
+        "email": "email",
+        "membershipLevel": "membership_level",
+        "membershipStatus": "membership_status"
+      },
+      "cache": {
+        "enabled": true,
+        "ttl": 300
+      }
+    }
+  },
+
+  "security": {
+    "allowCustomQueries": false,
+    "maxQueryLength": 2000,
+    "allowedStatements": ["SELECT"],
+    "blockedKeywords": ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "CREATE", "TRUNCATE", "EXEC", "EXECUTE"],
+    "requireWhereClause": true,
+    "requireLimit": true,
+    "maxRows": 1
+  },
+
+  "defaults": {
+    "timeout": 10000,
+    "cache": {
+      "enabled": true,
+      "ttl": 300
+    }
+  }
+}
