@@ -275,7 +275,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("button", { name: "Confirm" }).click();
     await page.getByLabel("German").click();
     await page.locator("#welcome-toggle").click();
-    await page.getByText("Welcome CardShownOn").click();
 
     // Add questions in default language
     await page.getByText("Add Block").click();

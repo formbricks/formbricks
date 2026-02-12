@@ -151,16 +151,20 @@ export const getTodaysDateTimeFormatted = (seperator: string) => {
   return [formattedDate, formattedTime].join(seperator);
 };
 
-export const convertDatesInObject = <T>(obj: T): T => {
+export const convertDatesInObject = <T>(obj: T, keysToIgnore?: Set<string>): T => {
   if (obj === null || typeof obj !== "object") {
     return obj; // Return if obj is not an object
   }
   if (Array.isArray(obj)) {
     // Handle arrays by mapping each element through the function
-    return obj.map((item) => convertDatesInObject(item)) as unknown as T;
+    return obj.map((item) => convertDatesInObject(item, keysToIgnore)) as unknown as T;
   }
-  const newObj: any = {};
+  const newObj: Record<string, unknown> = {};
   for (const key in obj) {
+    if (keysToIgnore?.has(key)) {
+      newObj[key] = obj[key];
+      continue;
+    }
     if (
       (key === "createdAt" || key === "updatedAt") &&
       typeof obj[key] === "string" &&
@@ -168,10 +172,10 @@ export const convertDatesInObject = <T>(obj: T): T => {
     ) {
       newObj[key] = new Date(obj[key] as unknown as string);
     } else if (typeof obj[key] === "object" && obj[key] !== null) {
-      newObj[key] = convertDatesInObject(obj[key]);
+      newObj[key] = convertDatesInObject(obj[key], keysToIgnore);
     } else {
       newObj[key] = obj[key];
     }
   }
-  return newObj;
+  return newObj as T;
 };

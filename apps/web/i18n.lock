@@ -598,6 +598,12 @@ checksums:
     environments/contacts/attribute_updated_successfully: 0e64422156c29940cd4dab2f9d1f40b2
     environments/contacts/attribute_value: 34b0eaa85808b15cbc4be94c64d0146b
     environments/contacts/attribute_value_placeholder: 90fb17015de807031304d7a650a6cb8c
+    environments/contacts/attributes_msg_attribute_limit_exceeded: a6c430860f307f9cc90c449f96a1284f
+    environments/contacts/attributes_msg_attribute_type_validation_error: ed177ce83bd174ed6be7e889664f93a1
+    environments/contacts/attributes_msg_email_already_exists: a3ea1265e3db885f53d0e589aecf6260
+    environments/contacts/attributes_msg_email_or_userid_required: 3be0e745cd3500c9a23bad2e25ad3147
+    environments/contacts/attributes_msg_new_attribute_created: c4c7b27523058f43b70411d7aa6510e5
+    environments/contacts/attributes_msg_userid_already_exists: d2d95ece4b06507be18c9ba240b0a26b
     environments/contacts/contact_deleted_successfully: c5b64a42a50e055f9e27ec49e20e03fa
     environments/contacts/contact_not_found: 045396f0b13fafd43612a286263737c0
     environments/contacts/contacts_table_refresh: 6a959475991dd4ab28ad881bae569a09
@@ -642,6 +648,12 @@ checksums:
     environments/contacts/system_attributes: eadb6a8888c7b32c0e68881f945ae9b6
     environments/contacts/unlock_contacts_description: c5572047f02b4c39e5109f9de715499d
     environments/contacts/unlock_contacts_title: a8b3d7db03eb404d9267fd5cdd6d5ddb
+    environments/contacts/upload_contacts_error_attribute_type_mismatch: 70a60f0886ce767c00defa7d4aad0f93
+    environments/contacts/upload_contacts_error_duplicate_mappings: 9c1e1f07e476226bad98ccfa07979fec
+    environments/contacts/upload_contacts_error_file_too_large: 0c1837286c55d18049277465bc2444c1
+    environments/contacts/upload_contacts_error_generic: 3a8d35a421b377198361af9972392693
+    environments/contacts/upload_contacts_error_invalid_file_type: 15ef4fa7c2d5273b05a042f398655e81
+    environments/contacts/upload_contacts_error_no_valid_contacts: 27fbd24ed2d2fa3b6ed7b3a8c1dad343
     environments/contacts/upload_contacts_modal_attribute_header: 263246ad2a76f8e2f80f0ed175d7629a
     environments/contacts/upload_contacts_modal_attributes_description: e2cedbd4a043423002cbb2048e2145ac
     environments/contacts/upload_contacts_modal_attributes_new: 9829382598c681de74130440a37b560f
@@ -814,6 +826,40 @@ checksums:
     environments/segments/no_attributes_yet: 57beecc917dcd598ccdd0ccfb364a960
     environments/segments/no_filters_yet: d885a68516840e15dd27f1c17d9a8975
     environments/segments/no_segments_yet: 6307a4163a5bd553bb2aba074d24be9c
+    environments/segments/operator_contains: 06dd606c0a8f81f9a03b414e9ae89440
+    environments/segments/operator_does_not_contain: 854da2bdf10613ce62fb454bab16c58b
+    environments/segments/operator_ends_with: 2bd866369766c6a2ef74bb9fa74b1d7e
+    environments/segments/operator_is_after: f9d9296eb9a5a7d168cc4e65a4095a87
+    environments/segments/operator_is_before: 2462480cf4e8d2832b64004fbd463e55
+    environments/segments/operator_is_between: 41ff45044d8a017a8a74f72be57916b8
+    environments/segments/operator_is_newer_than: c41e03366623caed6b2c224e50387614
+    environments/segments/operator_is_not_set: 906801489132487ef457652af4835142
+    environments/segments/operator_is_older_than: acca6b309da507bbc5973c4b56b698b0
+    environments/segments/operator_is_same_day: c06506b6eb9f6491f15685baccd68897
+    environments/segments/operator_is_set: 9850468156356f95884bbaf56b6687aa
+    environments/segments/operator_starts_with: 37e55e9080c84a1855956161e7885c21
+    environments/segments/operator_title_contains: 41c8c25407527a5336404313f4c8d650
+    environments/segments/operator_title_does_not_contain: d618eb0f854f7efa0d7c644e6628fa42
+    environments/segments/operator_title_ends_with: c8a5f60f1bd1d8fa018dbbf49806fb5b
+    environments/segments/operator_title_equals: 73439e2839b8049e68079b1b6f2e3c41
+    environments/segments/operator_title_greater_equal: 556b342cee0ac7055171e41be80f49e4
+    environments/segments/operator_title_greater_than: e06dabbbf3a9c527502c997101edab40
+    environments/segments/operator_title_is_after: bd4cf644e442fca330cb483528485e5f
+    environments/segments/operator_title_is_before: a47ce3825c5c7cea7ed7eb8d5505a2d5
+    environments/segments/operator_title_is_between: 5721c877c60f0005dc4ce78d4c0d3fdc
+    environments/segments/operator_title_is_newer_than: 133731671413c702a55cdfb9134d63f8
+    environments/segments/operator_title_is_not_set: c1a6fd89387686d3a5426a768bb286e9
+    environments/segments/operator_title_is_older_than: 9064cd482f2312c8b10aee4937d0278d
+    environments/segments/operator_title_is_same_day: 9340bf7bd6ab504d71b0e957ca9fcf4c
+    environments/segments/operator_title_is_set: 1c66019bd162201db83aef305ab2a161
+    environments/segments/operator_title_less_equal: 235dbef60cd0af5ff1d319aab24a1109
+    environments/segments/operator_title_less_than: e9f3c9742143760b28bf4e326f63a97b
+    environments/segments/operator_title_not_equals: a186482f46739c9fe8683826a1cab723
+    environments/segments/operator_title_starts_with: f6673c17475708313c6a0f245b561781
+    environments/segments/operator_title_user_is_in: 33ecd1bc30f56d97133368f1b244ee4b
+    environments/segments/operator_title_user_is_not_in: 99d576a3611d171947fd88c317aaf5f3
+    environments/segments/operator_user_is_in: 33ecd1bc30f56d97133368f1b244ee4b
+    environments/segments/operator_user_is_not_in: 99d576a3611d171947fd88c317aaf5f3
     environments/segments/person_and_attributes: 507023d577326a6326dd9603dcdc589d
     environments/segments/phone: b9537ee90fc5b0116942e0af29d926cc
     environments/segments/please_remove_the_segment_from_these_surveys_in_order_to_delete_it: 1858a8ae40bed3a8c06c3bb518e0b8aa

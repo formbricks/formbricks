@@ -4,7 +4,7 @@ import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
-import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 
 /**
@@ -193,8 +193,8 @@ export const updateUser = async (
         errors: updateAttrErrors,
       } = await updateAttributes(contactData.id, userId, environmentId, attributes);
 
-      messages = updateAttrMessages ?? [];
-      errors = updateAttrErrors ?? [];
+      messages = updateAttrMessages?.map(formatAttributeMessage) ?? [];
+      errors = updateAttrErrors?.map(formatAttributeMessage) ?? [];
 
       // Update language if provided (used in response state)
       if (success && attributes.language) {

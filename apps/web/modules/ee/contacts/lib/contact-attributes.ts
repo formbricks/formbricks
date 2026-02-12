@@ -46,7 +46,7 @@ export const getContactAttributes = reactCache(async (contactId: string) => {
   }
 });
 
-export const getContactAttributesWithMetadata = reactCache(async (contactId: string) => {
+export const getContactAttributesWithKeyInfo = reactCache(async (contactId: string) => {
   validateInputs([contactId, ZId]);
 
   try {

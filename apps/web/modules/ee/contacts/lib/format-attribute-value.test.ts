@@ -45,13 +45,13 @@ describe("formatAttributeValue", () => {
 
   describe("number dataType", () => {
     test("should format integer with locale string", () => {
-      const result = formatAttributeValue(1000, "number");
+      const result = formatAttributeValue(1000, "number", "en-US");
       // toLocaleString adds commas for thousands in en-US
       expect(result).toBe("1,000");
     });
 
     test("should format large number with locale string", () => {
-      const result = formatAttributeValue(1234567, "number");
+      const result = formatAttributeValue(1234567, "number", "en-US");
       expect(result).toBe("1,234,567");
     });
 
@@ -71,7 +71,7 @@ describe("formatAttributeValue", () => {
     });
 
     test("should parse numeric string", () => {
-      const result = formatAttributeValue("1000", "number");
+      const result = formatAttributeValue("1000", "number", "en-US");
       expect(result).toBe("1,000");
     });
 
@@ -90,20 +90,20 @@ describe("formatAttributeValue", () => {
   });
 
   describe("date dataType", () => {
-    test("should format Date object as 'MMM d, yyyy'", () => {
+    test("should format Date object with locale-aware formatting", () => {
       const date = new Date("2024-06-15T10:30:00.000Z");
-      const result = formatAttributeValue(date, "date");
+      const result = formatAttributeValue(date, "date", "en-US");
       // Note: The exact format depends on timezone, but should contain these parts
       expect(result).toMatch(/Jun \d+, 2024/);
     });
 
     test("should format ISO date string", () => {
-      const result = formatAttributeValue("2024-01-15", "date");
+      const result = formatAttributeValue("2024-01-15", "date", "en-US");
       expect(result).toMatch(/Jan \d+, 2024/);
     });
 
     test("should format date string with time", () => {
-      const result = formatAttributeValue("2024-12-25T00:00:00.000Z", "date");
+      const result = formatAttributeValue("2024-12-25T00:00:00.000Z", "date", "en-US");
       expect(result).toMatch(/Dec \d+, 2024/);
     });
 
@@ -114,8 +114,15 @@ describe("formatAttributeValue", () => {
 
     test("should handle timestamp number", () => {
       const timestamp = new Date("2024-06-15T10:30:00.000Z").getTime();
-      const result = formatAttributeValue(timestamp, "date");
+      const result = formatAttributeValue(timestamp, "date", "en-US");
       expect(result).toMatch(/Jun \d+, 2024/);
+    });
+
+    test("should format date in different locale", () => {
+      const date = new Date("2024-06-15T10:30:00.000Z");
+      const result = formatAttributeValue(date, "date", "de-DE");
+      // German format uses different month abbreviation
+      expect(result).toMatch(/Juni?\s+\d+,?\s+2024|15\.\s*Juni?\s*2024/);
     });
   });
 
@@ -133,7 +140,7 @@ describe("formatAttributeValue", () => {
 
   describe("edge cases", () => {
     test("should handle very large numbers", () => {
-      const result = formatAttributeValue(999999999999, "number");
+      const result = formatAttributeValue(999999999999, "number", "en-US");
       expect(result).toBe("999,999,999,999");
     });
 

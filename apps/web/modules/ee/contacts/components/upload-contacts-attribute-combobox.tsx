@@ -108,7 +108,7 @@ export const UploadContactsAttributeCombobox = ({
                   ? "Add attribute"
                   : t("environments.contacts.upload_contacts_modal_attributes_search_or_add")
               }
-              className="border-b border-none border-transparent shadow-none ring-offset-transparent outline-0 focus:border-none focus:border-transparent focus:shadow-none focus:ring-offset-transparent focus:outline-0"
+              className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}
               onKeyDown={(e) => {
@@ -134,7 +134,7 @@ export const UploadContactsAttributeCombobox = ({
                   </CommandItem>
                 );
               })}
-              {searchValue !== "" && !keys.find((tag) => tag.label === searchValue) && (
+              {searchValue !== "" && !keys.some((tag) => tag.label === searchValue) && (
                 <CommandItem value="_create">
                   {isValidNewKey ? (
                     <button

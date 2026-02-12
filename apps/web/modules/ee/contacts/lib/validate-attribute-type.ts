@@ -3,6 +3,14 @@ import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-k
 type TRawValue = string | number | Date;
 
 /**
+ * Structured validation error with code and params for i18n
+ */
+export interface TAttributeValidationError {
+  code: string;
+  params: Record<string, string>;
+}
+
+/**
  * Result of attribute value validation
  */
 export type TAttributeValidationResult =
@@ -16,7 +24,7 @@ export type TAttributeValidationResult =
     }
   | {
       valid: false;
-      error: string;
+      error: TAttributeValidationError;
     };
 
 /**
@@ -68,7 +76,10 @@ const validateNumberType = (value: TRawValue, attributeKey: string): TAttributeV
   // Strings are NOT accepted for number attributes (even if they look like numbers)
   return {
     valid: false,
-    error: `Attribute '${attributeKey}' expects a number but received a string. Pass an actual number value (e.g., 123 instead of "123").`,
+    error: {
+      code: "number_type_mismatch",
+      params: { key: attributeKey },
+    },
   };
 };
 
@@ -90,7 +101,10 @@ const validateDateType = (value: TRawValue, attributeKey: string): TAttributeVal
     if (Number.isNaN(value.getTime())) {
       return {
         valid: false,
-        error: `Attribute '${attributeKey}' expects a valid date. Received: Invalid Date`,
+        error: {
+          code: "date_invalid",
+          params: { key: attributeKey },
+        },
       };
     }
     return {
@@ -124,13 +138,19 @@ const validateDateType = (value: TRawValue, attributeKey: string): TAttributeVal
     // String is not in ISO format
     return {
       valid: false,
-      error: `Attribute '${attributeKey}' expects a date in ISO 8601 format (e.g., "2024-01-15" or "2024-01-15T10:30:00.000Z") or a Date object. Received: "${trimmedValue}"`,
+      error: {
+        code: "date_format_invalid",
+        params: { key: attributeKey, value: trimmedValue },
+      },
     };
   }
 
   return {
     valid: false,
-    error: `Attribute '${attributeKey}' expects a valid date. Received: ${getTypeName(value)} value '${String(value)}'`,
+    error: {
+      code: "date_unexpected_type",
+      params: { key: attributeKey, type: getTypeName(value), value: String(value) },
+    },
   };
 };
 
@@ -158,4 +178,25 @@ export const validateAndParseAttributeValue = (
     default:
       return validateStringType(value);
   }
+};
+
+/**
+ * Formats a structured validation error to a human-readable English string.
+ * Used for API/SDK responses.
+ */
+const VALIDATION_ERROR_TEMPLATES: Record<string, string> = {
+  number_type_mismatch:
+    "Attribute '{key}' expects a number but received a string. Pass an actual number value (e.g., 123 instead of \"123\").",
+  date_invalid: "Attribute '{key}' expects a valid date. Received: Invalid Date",
+  date_format_invalid:
+    'Attribute \'{key}\' expects a date in ISO 8601 format (e.g., "2024-01-15" or "2024-01-15T10:30:00.000Z") or a Date object. Received: "{value}"',
+  date_unexpected_type: "Attribute '{key}' expects a valid date. Received: {type} value '{value}'",
+};
+
+export const formatValidationError = (error: TAttributeValidationError): string => {
+  let template = VALIDATION_ERROR_TEMPLATES[error.code] || error.code;
+  for (const [key, value] of Object.entries(error.params)) {
+    template = template.replaceAll(`{${key}}`, value);
+  }
+  return template;
 };

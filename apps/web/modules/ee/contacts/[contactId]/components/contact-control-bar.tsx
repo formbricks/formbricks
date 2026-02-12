@@ -14,7 +14,7 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { GeneratePersonalLinkModal } from "./generate-personal-link-modal";
 
-interface AttributeWithMetadata {
+interface TContactAttributeWithKeyInfo {
   key: string;
   name: string | null;
   value: string;
@@ -28,7 +28,7 @@ interface ContactControlBarProps {
   isQuotasAllowed: boolean;
   publishedLinkSurveys: PublishedLinkSurvey[];
   allAttributeKeys: TContactAttributeKey[];
-  currentAttributes: AttributeWithMetadata[];
+  currentAttributes: TContactAttributeWithKeyInfo[];
 }
 
 export const ContactControlBar = ({

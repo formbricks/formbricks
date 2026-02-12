@@ -79,41 +79,36 @@ export const sendUpdates = async ({
   try {
     const updatesResponse = await sendUpdatesToBackend({ appUrl, environmentId, updates });
 
-    if (updatesResponse.ok) {
-      const userState = updatesResponse.data.state;
-      const filteredSurveys = filterSurveys(config.get().environment, userState);
-
-      // messages => informational debug messages (e.g., "email already exists")
-      // errors => error messages that should always be visible (e.g., invalid attribute keys)
-      const { messages, errors } = updatesResponse.data;
-      const hasWarnings = errors && errors.length > 0;
-
-      // Log errors (always visible)
-      if (errors && errors.length > 0) {
-        for (const error of errors) {
-          logger.error(error);
-        }
-      }
-
-      // Log informational messages (debug only)
-      if (messages && messages.length > 0) {
-        for (const message of messages) {
-          logger.debug(`User update message: ${message}`);
-        }
-      }
-
-      config.update({
-        ...config.get(),
-        user: {
-          ...userState,
-        },
-        filteredSurveys,
-      });
-
-      return ok({ hasWarnings: Boolean(hasWarnings) });
+    if (!updatesResponse.ok) {
+      return err(updatesResponse.error);
     }
 
-    return err(updatesResponse.error);
+    const userState = updatesResponse.data.state;
+    const filteredSurveys = filterSurveys(config.get().environment, userState);
+
+    // messages => informational debug messages (e.g., "email already exists")
+    // errors => error messages that should always be visible (e.g., invalid attribute keys)
+    const { messages, errors } = updatesResponse.data;
+
+    // Log errors (always visible)
+    errors?.forEach((error) => {
+      logger.error(error);
+    });
+
+    // Log informational messages (debug only)
+    messages?.forEach((message) => {
+      logger.debug(`User update message: ${message}`);
+    });
+
+    config.update({
+      ...config.get(),
+      user: {
+        ...userState,
+      },
+      filteredSurveys,
+    });
+
+    return ok({ hasWarnings: Boolean(errors?.length) });
   } catch (e) {
     console.error("error in sending updates: ", e);
 

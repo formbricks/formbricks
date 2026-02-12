@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { TFunction } from "i18next";
 import {
   TAllOperators,
   TAttributeOperator,
@@ -21,7 +22,9 @@ export const isResourceFilter = (resource: TSegmentFilter | TBaseFilters): resou
   return (resource as TSegmentFilter).root !== undefined;
 };
 
-export const convertOperatorToText = (operator: TAllOperators) => {
+// type TTranslate = (key: string) => string;
+
+export const convertOperatorToText = (operator: TAllOperators, t: TFunction) => {
   switch (operator) {
     case "equals":
       return "=";
@@ -36,80 +39,80 @@ export const convertOperatorToText = (operator: TAllOperators) => {
     case "greaterEqual":
       return ">=";
     case "isSet":
-      return "is set";
+      return t("environments.segments.operator_is_set");
     case "isNotSet":
-      return "is not set";
+      return t("environments.segments.operator_is_not_set");
     case "contains":
-      return "contains ";
+      return t("environments.segments.operator_contains");
     case "doesNotContain":
-      return "does not contain";
+      return t("environments.segments.operator_does_not_contain");
     case "startsWith":
-      return "starts with";
+      return t("environments.segments.operator_starts_with");
     case "endsWith":
-      return "ends with";
+      return t("environments.segments.operator_ends_with");
     case "userIsIn":
-      return "User is in";
+      return t("environments.segments.operator_user_is_in");
     case "userIsNotIn":
-      return "User is not in";
+      return t("environments.segments.operator_user_is_not_in");
     case "isOlderThan":
-      return "is older than";
+      return t("environments.segments.operator_is_older_than");
     case "isNewerThan":
-      return "is newer than";
+      return t("environments.segments.operator_is_newer_than");
     case "isBefore":
-      return "is before";
+      return t("environments.segments.operator_is_before");
     case "isAfter":
-      return "is after";
+      return t("environments.segments.operator_is_after");
     case "isBetween":
-      return "is between";
+      return t("environments.segments.operator_is_between");
     case "isSameDay":
-      return "is same day";
+      return t("environments.segments.operator_is_same_day");
     default:
       return operator;
   }
 };
 
-export const convertOperatorToTitle = (operator: TAllOperators) => {
+export const convertOperatorToTitle = (operator: TAllOperators, t: TFunction) => {
   switch (operator) {
     case "equals":
-      return "Equals";
+      return t("environments.segments.operator_title_equals");
     case "notEquals":
-      return "Not equals to";
+      return t("environments.segments.operator_title_not_equals");
     case "lessThan":
-      return "Less than";
+      return t("environments.segments.operator_title_less_than");
     case "lessEqual":
-      return "Less than or equal to";
+      return t("environments.segments.operator_title_less_equal");
     case "greaterThan":
-      return "Greater than";
+      return t("environments.segments.operator_title_greater_than");
     case "greaterEqual":
-      return "Greater than or equal to";
+      return t("environments.segments.operator_title_greater_equal");
     case "isSet":
-      return "Is set";
+      return t("environments.segments.operator_title_is_set");
     case "isNotSet":
-      return "Is not set";
+      return t("environments.segments.operator_title_is_not_set");
     case "contains":
-      return "Contains";
+      return t("environments.segments.operator_title_contains");
     case "doesNotContain":
-      return "Does not contain";
+      return t("environments.segments.operator_title_does_not_contain");
     case "startsWith":
-      return "Starts with";
+      return t("environments.segments.operator_title_starts_with");
     case "endsWith":
-      return "Ends with";
+      return t("environments.segments.operator_title_ends_with");
     case "userIsIn":
-      return "User is in";
+      return t("environments.segments.operator_title_user_is_in");
     case "userIsNotIn":
-      return "User is not in";
+      return t("environments.segments.operator_title_user_is_not_in");
     case "isOlderThan":
-      return "Is older than";
+      return t("environments.segments.operator_title_is_older_than");
     case "isNewerThan":
-      return "Is newer than";
+      return t("environments.segments.operator_title_is_newer_than");
     case "isBefore":
-      return "Is before";
+      return t("environments.segments.operator_title_is_before");
     case "isAfter":
-      return "Is after";
+      return t("environments.segments.operator_title_is_after");
     case "isBetween":
-      return "Is between";
+      return t("environments.segments.operator_title_is_between");
     case "isSameDay":
-      return "Is same day";
+      return t("environments.segments.operator_title_is_same_day");
     default:
       return operator;
   }

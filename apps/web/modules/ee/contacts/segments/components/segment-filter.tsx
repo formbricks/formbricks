@@ -222,7 +222,7 @@ function AttributeSegmentFilter({
 }: TAttributeSegmentFilterProps) {
   const { contactAttributeKey } = resource.root;
   const { t } = useTranslation();
-  const operatorText = convertOperatorToText(resource.qualifier.operator);
+  const operatorText = convertOperatorToText(resource.qualifier.operator, t);
 
   const [valueError, setValueError] = useState("");
 
@@ -263,7 +263,7 @@ function AttributeSegmentFilter({
   const operatorArr = availableOperators.map((operator) => {
     return {
       id: operator,
-      name: convertOperatorToText(operator),
+      name: convertOperatorToText(operator, t),
     };
   });
 
@@ -388,7 +388,7 @@ function AttributeSegmentFilter({
         }}
         value={attrKeyValue}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-2">
@@ -424,7 +424,7 @@ function AttributeSegmentFilter({
 
         <SelectContent>
           {operatorArr.map((operator) => (
-            <SelectItem title={convertOperatorToTitle(operator.id)} value={operator.id} key={operator.id}>
+            <SelectItem title={convertOperatorToTitle(operator.id, t)} value={operator.id} key={operator.id}>
               {operator.name}
             </SelectItem>
           ))}
@@ -464,8 +464,8 @@ function PersonSegmentFilter({
   viewOnly,
 }: TPersonSegmentFilterProps) {
   const { personIdentifier } = resource.root;
-  const operatorText = convertOperatorToText(resource.qualifier.operator);
   const { t } = useTranslation();
+  const operatorText = convertOperatorToText(resource.qualifier.operator, t);
   const [valueError, setValueError] = useState("");
 
   // when the operator changes, we need to check if the value is valid
@@ -486,7 +486,7 @@ function PersonSegmentFilter({
   const operatorArr = PERSON_OPERATORS.map((operator) => {
     return {
       id: operator,
-      name: convertOperatorToText(operator),
+      name: convertOperatorToText(operator, t),
     };
   });
 
@@ -555,7 +555,7 @@ function PersonSegmentFilter({
         }}
         value={personIdentifier}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-1 lowercase">
@@ -586,7 +586,7 @@ function PersonSegmentFilter({
 
         <SelectContent>
           {operatorArr.map((operator) => (
-            <SelectItem title={convertOperatorToTitle(operator.id)} value={operator.id} key={operator.id}>
+            <SelectItem title={convertOperatorToTitle(operator.id, t)} value={operator.id} key={operator.id}>
               {operator.name}
             </SelectItem>
           ))}
@@ -642,7 +642,8 @@ function SegmentSegmentFilter({
   viewOnly,
 }: TSegmentSegmentFilterProps) {
   const { segmentId } = resource.root;
-  const operatorText = convertOperatorToText(resource.qualifier.operator);
+  const { t } = useTranslation();
+  const operatorText = convertOperatorToText(resource.qualifier.operator, t);
 
   const currentSegment = segments.find((segment) => segment.id === segmentId);
 
@@ -706,7 +707,7 @@ function SegmentSegmentFilter({
         }}
         value={currentSegment?.id}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
           hideArrow>
           <div className="flex items-center gap-1">
             <Users2Icon className="h-4 w-4 text-sm" />
@@ -754,10 +755,10 @@ function DeviceFilter({
 }: TDeviceFilterProps) {
   const { value } = resource;
   const { t } = useTranslation();
-  const operatorText = convertOperatorToText(resource.qualifier.operator);
+  const operatorText = convertOperatorToText(resource.qualifier.operator, t);
   const operatorArr = DEVICE_OPERATORS.map((operator) => ({
     id: operator,
-    name: convertOperatorToText(operator),
+    name: convertOperatorToText(operator, t),
   }));
 
   const updateOperatorInSegment = (filterId: string, newOperator: TDeviceOperator) => {

@@ -5,7 +5,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TBaseFilter, TBaseFilters } from "@formbricks/types/segment";
+import { TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
@@ -96,20 +96,16 @@ export const getPersonSegmentIds = async (
       return [];
     }
 
-    const personSegments: { id: string; filters: TBaseFilter[] }[] = [];
-
-    // Use Prisma-based evaluation for all segments
     // Device filters are evaluated at query build time using the provided deviceType
-    for (const segment of segments) {
-      const filters = segment.filters as TBaseFilters;
+    const segmentPromises = segments.map(async (segment) => {
+      const filters = segment.filters;
       const isIncluded = await isContactInSegment(contactId, segment.id, filters, environmentId, deviceType);
+      return isIncluded ? segment.id : null;
+    });
 
-      if (isIncluded) {
-        personSegments.push(segment);
-      }
-    }
+    const results = await Promise.all(segmentPromises);
 
-    return personSegments.map((segment) => segment.id);
+    return results.filter((id): id is string => id !== null);
   } catch (error) {
     // Log error for debugging but don't throw to prevent "segments is not iterable" error
     logger.warn(
