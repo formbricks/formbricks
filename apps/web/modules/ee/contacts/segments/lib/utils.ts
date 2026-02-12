@@ -22,8 +22,6 @@ export const isResourceFilter = (resource: TSegmentFilter | TBaseFilters): resou
   return (resource as TSegmentFilter).root !== undefined;
 };
 
-// type TTranslate = (key: string) => string;
-
 export const convertOperatorToText = (operator: TAllOperators, t: TFunction) => {
   switch (operator) {
     case "equals":

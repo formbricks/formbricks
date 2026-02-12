@@ -125,13 +125,12 @@ export const createContactsFromCSVAction = authenticatedActionClient.schema(ZCre
         parsedInput.attributeMap
       );
 
-      if ("validationErrors" in result) {
-        return result;
+      if ("contacts" in result) {
+        ctx.auditLoggingCtx.newObject = {
+          contacts: result.contacts,
+        };
       }
 
-      ctx.auditLoggingCtx.newObject = {
-        contacts: result.contacts,
-      };
       return result;
     }
   )
