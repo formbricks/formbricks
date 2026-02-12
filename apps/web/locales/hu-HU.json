@@ -1105,8 +1105,6 @@
         "please_fill_all_workspace_fields": "Töltse ki az összes mezőt egy új munkaterület hozzáadásához.",
         "read": "Olvasás",
         "read_write": "Olvasás és írás",
-        "select_member": "Tag kiválasztása",
-        "select_workspace": "Munkaterület kiválasztása",
         "team_admin": "Csapatadminisztrátor",
         "team_created_successfully": "A csapat sikeresen létrehozva",
         "team_deleted_successfully": "A csapat sikeresen törölve",

@@ -1105,8 +1105,6 @@
         "please_fill_all_workspace_fields": "Fyll i alla fält för att lägga till en ny arbetsyta.",
         "read": "Läs",
         "read_write": "Läs och skriv",
-        "select_member": "Välj medlem",
-        "select_workspace": "Välj arbetsyta",
         "team_admin": "Teamadministratör",
         "team_created_successfully": "Team skapat.",
         "team_deleted_successfully": "Team borttaget.",

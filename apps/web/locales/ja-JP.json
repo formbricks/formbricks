@@ -1105,8 +1105,6 @@
         "please_fill_all_workspace_fields": "新しいワークスペースを追加するには、すべてのフィールドを入力してください。",
         "read": "読み取り",
         "read_write": "読み書き",
-        "select_member": "メンバーを選択",
-        "select_workspace": "ワークスペースを選択",
         "team_admin": "チーム管理者",
         "team_created_successfully": "チームを正常に作成しました。",
         "team_deleted_successfully": "チームを正常に削除しました。",

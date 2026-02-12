@@ -1105,8 +1105,6 @@
         "please_fill_all_workspace_fields": "Veuillez remplir tous les champs pour ajouter un nouvel espace de travail.",
         "read": "Lire",
         "read_write": "Lire et Écrire",
-        "select_member": "Sélectionner membre",
-        "select_workspace": "Sélectionner un espace de travail",
         "team_admin": "Administrateur d'équipe",
         "team_created_successfully": "Équipe créée avec succès.",
         "team_deleted_successfully": "Équipe supprimée avec succès.",

@@ -1105,8 +1105,6 @@
         "please_fill_all_workspace_fields": "Bitte füllen Sie alle Felder aus, um einen neuen Workspace hinzuzufügen.",
         "read": "Lesen",
         "read_write": "Lesen & Schreiben",
-        "select_member": "Mitglied auswählen",
-        "select_workspace": "Workspace auswählen",
         "team_admin": "Team-Admin",
         "team_created_successfully": "Team erfolgreich erstellt.",
         "team_deleted_successfully": "Team erfolgreich gelöscht.",

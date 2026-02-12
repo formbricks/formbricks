@@ -33,7 +33,6 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showShareInviteModal, setShowShareInviteModal] = useState(false);
-
   const [shareInviteToken, setShareInviteToken] = useState("");
 
   const handleDeleteMember = async () => {
@@ -124,7 +123,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex justify-end gap-2">
       <TooltipRenderer tooltipContent={t("common.delete")} shouldRender={!!showDeleteButton}>
         <Button
           variant="destructive"

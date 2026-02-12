@@ -1105,8 +1105,6 @@
         "please_fill_all_workspace_fields": "Please fill all the fields to add a new workspace.",
         "read": "Read",
         "read_write": "Read & Write",
-        "select_member": "Select member",
-        "select_workspace": "Select workspace",
         "team_admin": "Team Admin",
         "team_created_successfully": "Team created successfully",
         "team_deleted_successfully": "Team deleted successfully",

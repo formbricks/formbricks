@@ -1105,8 +1105,6 @@
         "please_fill_all_workspace_fields": "Пожалуйста, заполните все поля для добавления нового рабочего пространства.",
         "read": "Чтение",
         "read_write": "Чтение и запись",
-        "select_member": "Выберите участника",
-        "select_workspace": "Выберите рабочее пространство",
         "team_admin": "Администратор команды",
         "team_created_successfully": "Команда успешно создана.",
         "team_deleted_successfully": "Команда успешно удалена.",
