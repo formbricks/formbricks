@@ -29,9 +29,11 @@ const KEY_BATCH_SIZE = 10;
 
 const prisma = new PrismaClient();
 
+const SAFE_CAST_FUNCTION_NAME = "_backfill_safe_to_timestamp";
+
 const createSafeCastFunction = async (): Promise<void> => {
-  await prisma.$executeRaw`
-    CREATE OR REPLACE FUNCTION pg_temp.safe_to_timestamp(text)
+  await prisma.$executeRawUnsafe(`
+    CREATE OR REPLACE FUNCTION ${SAFE_CAST_FUNCTION_NAME}(text)
     RETURNS TIMESTAMP AS $$
     BEGIN
       RETURN $1::TIMESTAMP;
@@ -39,7 +41,11 @@ const createSafeCastFunction = async (): Promise<void> => {
       RETURN NULL;
     END;
     $$ LANGUAGE plpgsql
-  `;
+  `);
+};
+
+const dropSafeCastFunction = async (): Promise<void> => {
+  await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${SAFE_CAST_FUNCTION_NAME}(text)`);
 };
 
 const backfillNumberAttributes = async (): Promise<number> => {
@@ -109,7 +115,7 @@ const backfillDateAttributes = async (): Promise<number> => {
     const batchResult = await prisma.$executeRawUnsafe(
       `
       UPDATE "ContactAttribute"
-      SET "valueDate" = pg_temp.safe_to_timestamp(value)
+            SET "valueDate" = _backfill_safe_to_timestamp(value)
       WHERE "attributeKeyId" = ANY($1)
         AND "valueDate" IS NULL
         AND TRIM(value) != ''
@@ -161,7 +167,13 @@ main()
     process.exit(1);
   })
   .finally(() => {
-    prisma.$disconnect().catch((e: unknown) => {
-      console.error(e);
-    });
+    dropSafeCastFunction()
+      .catch((e: unknown) => {
+        console.error("Failed to drop safe cast function:", e);
+      })
+      .finally(() => {
+        prisma.$disconnect().catch((e: unknown) => {
+          console.error(e);
+        });
+      });
   });
