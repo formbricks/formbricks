@@ -1030,8 +1030,6 @@ checksums:
     environments/settings/teams/manage_team_disabled: 2aaa0557b403a5bc657ec9e8b19ac5ac
     environments/settings/teams/manager_role_description: 020b8674cc330536239dafe5db087de6
     environments/settings/teams/member: 1606dc30b369856b9dba1fe9aec425d2
-    environments/settings/teams/member_added_to_team: 82bd83175a2434b1cbe87a6550b0a956
-    environments/settings/teams/member_in_all_teams: df051e8db2dcb142948e7fc44ded10c3
     environments/settings/teams/member_role_description: 8c2447cb929850b41619988be0b9b1ac
     environments/settings/teams/member_role_info_message: 511f3b954486f9c8a3b043e498f21c69
     environments/settings/teams/organization_role: 979b75fcc3696952e5922d659c839c10
@@ -1046,7 +1044,6 @@ checksums:
     environments/settings/teams/team_deletion_not_allowed: 08e49405709ed851cfd7e930c560c524
     environments/settings/teams/team_name: d1a5f99dbf503ca53f06b3a98b511d02
     environments/settings/teams/team_name_settings_title: af7236cfaadfe794525f9e6e29cb6f0e
-    environments/settings/teams/team_requires_workspace: 806eca0d8bcfa3e30d2c39cb5d3a2647
     environments/settings/teams/team_select_placeholder: 209b87d4b87db9121d3ff16173d2eee5
     environments/settings/teams/team_settings_description: 686f772f08d864d28cde23b900c9facf
     environments/settings/teams/team_updated_successfully: 5f769a5073aa0fcaad76f8ba73e17e97
