@@ -18,6 +18,7 @@ import {
   fetchLicenseFresh,
   getCacheKeys,
   getEnterpriseLicense,
+  LicenseApiError,
 } from "./lib/license";
 
 const ZRecheckLicenseAction = z.object({
@@ -64,23 +65,26 @@ export const recheckLicenseAction = authenticatedActionClient
       // This prevents instant downgrade if the license server is temporarily unreachable
       await clearLicenseCache();
 
-      // Fetch fresh license directly (bypasses cache)
-      const freshLicense = await fetchLicenseFresh();
+      const cacheKeys = getCacheKeys();
+      let freshLicense: Awaited<ReturnType<typeof fetchLicenseFresh>>;
+
+      try {
+        freshLicense = await fetchLicenseFresh();
+      } catch (error) {
+        // 400 = invalid license key — return directly so the UI shows the correct message
+        if (error instanceof LicenseApiError && error.status === 400) {
+          return { active: false, status: "invalid_license" as const };
+        }
+        throw error;
+      }
 
       // Cache the fresh result (or null if failed) so getEnterpriseLicense can use it
-      const cacheKeys = getCacheKeys();
-
       if (freshLicense) {
-        // Success - cache with full TTL
         await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, freshLicense, FETCH_LICENSE_TTL_MS);
       } else {
-        // Failure - cache null with short TTL
-        // The previous result cache is preserved, so grace period will still work
         await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, null, FAILED_FETCH_TTL_MS);
       }
 
-      // Now get the license state - it should use the fresh data we just cached
-      // If fetch failed, it will fall back to the preserved previous result (grace period)
       const licenseState = await getEnterpriseLicense();
 
       return {

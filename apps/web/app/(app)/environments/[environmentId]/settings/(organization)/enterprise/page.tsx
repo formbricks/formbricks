@@ -5,7 +5,7 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { EnterpriseLicenseStatus } from "@/app/(app)/environments/[environmentId]/settings/(organization)/enterprise/components/EnterpriseLicenseStatus";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
+import { GRACE_PERIOD_MS, getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -94,7 +94,12 @@ const Page = async (props) => {
       </PageHeader>
       {hasLicense ? (
         <EnterpriseLicenseStatus
-          status={licenseState.status}
+          status={licenseState.status as "active" | "expired" | "unreachable" | "invalid_license"}
+          gracePeriodEnd={
+            licenseState.status === "unreachable"
+              ? new Date(licenseState.lastChecked.getTime() + GRACE_PERIOD_MS)
+              : undefined
+          }
           environmentId={params.environmentId}
         />
       ) : (

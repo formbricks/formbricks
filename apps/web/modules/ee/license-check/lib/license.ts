@@ -37,6 +37,8 @@ const CONFIG = {
   },
 } as const;
 
+export const GRACE_PERIOD_MS = CONFIG.CACHE.GRACE_PERIOD_MS;
+
 /** TTL in ms for successful license fetch results (24h). Re-export for use in actions. */
 export const FETCH_LICENSE_TTL_MS = CONFIG.CACHE.FETCH_LICENSE_TTL_MS;
 /** TTL in ms for failed license fetch results (10 min). Re-export for use in actions. */
@@ -94,7 +96,7 @@ class LicenseError extends Error {
   }
 }
 
-class LicenseApiError extends LicenseError {
+export class LicenseApiError extends LicenseError {
   constructor(
     message: string,
     public readonly status: number
@@ -195,7 +197,7 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
     .finally(() => {
       getPreviousResultPromise = null;
     })
-    .catch(() => {});
+    .catch(() => { });
 
   return getPreviousResultPromise;
 };
@@ -383,6 +385,11 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
       return fetchLicenseFromServerInternal(retryCount + 1);
     }
 
+    // 400 = invalid license key — propagate so callers can distinguish from unreachable
+    if (res.status === 400) {
+      throw error;
+    }
+
     return null;
   } catch (error) {
     if (error instanceof LicenseApiError) {
@@ -448,7 +455,7 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
     .finally(() => {
       fetchLicensePromise = null;
     })
-    .catch(() => {});
+    .catch(() => { });
 
   return fetchLicensePromise;
 };
@@ -478,7 +485,29 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
       };
     }
     const currentTime = new Date();
-    const [liveLicenseDetails, previousResult] = await Promise.all([fetchLicense(), getPreviousResult()]);
+
+    const previousResultPromise = getPreviousResult();
+    let liveLicenseDetails: TEnterpriseLicenseDetails | null = null;
+
+    try {
+      liveLicenseDetails = await fetchLicense();
+    } catch (error) {
+      if (error instanceof LicenseApiError && error.status === 400) {
+        const invalidResult: TEnterpriseLicenseResult = {
+          active: false,
+          features: DEFAULT_FEATURES,
+          lastChecked: currentTime,
+          isPendingDowngrade: false,
+          fallbackLevel: "default" as const,
+          status: "invalid_license" as const,
+        };
+        memoryCache = { data: invalidResult, timestamp: Date.now() };
+        return invalidResult;
+      }
+      // Other errors: liveLicenseDetails stays null (treated as unreachable)
+    }
+
+    const previousResult = await previousResultPromise;
     const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
     trackFallbackUsage(fallbackLevel);
 
@@ -569,7 +598,7 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
     .finally(() => {
       getEnterpriseLicensePromise = null;
     })
-    .catch(() => {});
+    .catch(() => { });
 
   return getEnterpriseLicensePromise;
 });
