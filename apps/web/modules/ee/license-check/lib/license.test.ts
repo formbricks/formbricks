@@ -424,6 +424,37 @@ describe("License Core Logic", () => {
         status: "unreachable" as const,
       });
     });
+
+    test("should return invalid_license when API returns 400 (bad license key)", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "production",
+          VERCEL_URL: "some.vercel.url",
+          FORMBRICKS_COM_URL: "https://app.formbricks.com",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      mockCache.get.mockResolvedValue({ ok: true, data: null });
+      fetch.mockResolvedValueOnce({ ok: false, status: 400 } as any);
+
+      const license = await getEnterpriseLicense();
+
+      expect(license).toEqual({
+        active: false,
+        features: expect.objectContaining({ projects: 3 }),
+        lastChecked: expect.any(Date),
+        isPendingDowngrade: false,
+        fallbackLevel: "default" as const,
+        status: "invalid_license" as const,
+      });
+    });
   });
 
   describe("getLicenseFeatures", () => {
@@ -919,6 +950,98 @@ describe("License Core Logic", () => {
         fallbackLevel: "default",
         status: "expired",
       });
+    });
+  });
+
+  describe("clearLicenseCache", () => {
+    test("should clear memory cache and delete FETCH_LICENSE_CACHE_KEY", async () => {
+      const { clearLicenseCache, getEnterpriseLicense } = await import("./license");
+      const activeLicense = {
+        status: "active" as const,
+        features: {
+          isMultiOrgEnabled: true,
+          projects: 5,
+          twoFactorAuth: true,
+          sso: true,
+          whitelabel: true,
+          removeBranding: true,
+          contacts: true,
+          ai: true,
+          saml: true,
+          spamProtection: true,
+          auditLogs: true,
+          multiLanguageSurveys: true,
+          accessControl: true,
+          quotas: true,
+        },
+      };
+      mockCache.get.mockImplementation(async (key: string) => {
+        if (key.includes(":previous_result")) return { ok: true, data: null };
+        if (key.includes(":status")) return { ok: true, data: { value: activeLicense } };
+        return { ok: true, data: null };
+      });
+      mockCache.del.mockResolvedValue({ ok: true });
+
+      await getEnterpriseLicense();
+      await clearLicenseCache();
+
+      expect(mockCache.del).toHaveBeenCalledWith(expect.arrayContaining([expect.stringContaining("fb:license:")]));
+    });
+
+    test("should log warning when cache.del fails", async () => {
+      const { clearLicenseCache } = await import("./license");
+      mockCache.del.mockResolvedValue({ ok: false, error: new Error("Redis error") });
+
+      await clearLicenseCache();
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        { error: new Error("Redis error") },
+        "Failed to delete license cache"
+      );
+    });
+  });
+
+  describe("fetchLicenseFresh", () => {
+    test("should fetch directly from server without using cache", async () => {
+      const { fetchLicenseFresh } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      mockCache.get.mockResolvedValue({ ok: true, data: null });
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            status: "active",
+            features: {
+              isMultiOrgEnabled: true,
+              projects: 5,
+              twoFactorAuth: true,
+              sso: true,
+              whitelabel: true,
+              removeBranding: true,
+              contacts: true,
+              ai: true,
+              saml: true,
+              spamProtection: true,
+              auditLogs: true,
+              multiLanguageSurveys: true,
+              accessControl: true,
+              quotas: true,
+            },
+          },
+        }),
+      } as any);
+
+      const result = await fetchLicenseFresh();
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          status: "active",
+          features: expect.objectContaining({ projects: 5 }),
+        })
+      );
+      expect(fetch).toHaveBeenCalled();
+      expect(mockCache.get).not.toHaveBeenCalled();
     });
   });
 
