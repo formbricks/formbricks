@@ -2,7 +2,11 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { AuthenticationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -14,11 +18,11 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   FAILED_FETCH_TTL_MS,
   FETCH_LICENSE_TTL_MS,
+  LicenseApiError,
   clearLicenseCache,
+  computeFreshLicenseState,
   fetchLicenseFresh,
   getCacheKeys,
-  getEnterpriseLicense,
-  LicenseApiError,
 } from "./lib/license";
 
 const ZRecheckLicenseAction = z.object({
@@ -48,7 +52,7 @@ export const recheckLicenseAction = authenticatedActionClient
       // Get organization from environment
       const organization = await getOrganizationByEnvironmentId(parsedInput.environmentId);
       if (!organization) {
-        throw new Error("Organization not found");
+        throw new ResourceNotFoundError("Organization", null);
       }
 
       // Check user is owner or manager (not member)
@@ -78,14 +82,15 @@ export const recheckLicenseAction = authenticatedActionClient
         throw error;
       }
 
-      // Cache the fresh result (or null if failed) so getEnterpriseLicense can use it
+      // Cache the fresh result (or null if failed) so getEnterpriseLicense can use it.
+      // Wrapped in { value: ... } so fetchLicense can distinguish cache miss from cached null.
       if (freshLicense) {
-        await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, freshLicense, FETCH_LICENSE_TTL_MS);
+        await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, { value: freshLicense }, FETCH_LICENSE_TTL_MS);
       } else {
-        await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, null, FAILED_FETCH_TTL_MS);
+        await cache.set(cacheKeys.FETCH_LICENSE_CACHE_KEY, { value: null }, FAILED_FETCH_TTL_MS);
       }
 
-      const licenseState = await getEnterpriseLicense();
+      const licenseState = await computeFreshLicenseState(freshLicense);
 
       return {
         active: licenseState.active,

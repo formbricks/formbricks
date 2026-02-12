@@ -32,7 +32,6 @@ const CONFIG = {
       env.ENVIRONMENT === "staging"
         ? "https://staging.ee.formbricks.com/api/licenses/check"
         : "https://ee.formbricks.com/api/licenses/check",
-    // ENDPOINT: "https://localhost:8080/api/licenses/check",
     TIMEOUT_MS: 5000,
   },
 } as const;
@@ -61,6 +60,13 @@ type TPreviousResult = {
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
 };
+
+// Wrapper type for cached license fetch results.
+// Storing { value: <result> } instead of <result> directly lets us distinguish
+// "key not in cache" (get returns null) from "key exists with a null value"
+// ({ value: null }) in a single cache.get call, eliminating the TOCTOU race
+// that existed between separate get + exists calls.
+type TCachedFetchResult = { value: TEnterpriseLicenseDetails | null };
 
 // Validation schemas
 const LicenseFeaturesSchema = z.object({
@@ -197,7 +203,7 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
     .finally(() => {
       getPreviousResultPromise = null;
     })
-    .catch(() => { });
+    .catch(() => {});
 
   return getPreviousResultPromise;
 };
@@ -420,17 +426,13 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
   }
 
   fetchLicensePromise = (async () => {
-    // Check cache first
+    // Check cache first — a single get call distinguishes "not cached"
+    // (data is null) from "cached null" (data is { value: null }).
     const cacheKey = getCacheKeys().FETCH_LICENSE_CACHE_KEY;
-    const cached = await cache.get<TEnterpriseLicenseDetails | null>(cacheKey);
-    const exists = await cache.exists(cacheKey);
+    const cached = await cache.get<TCachedFetchResult>(cacheKey);
 
-    // Only use cache if:
-    // 1. Cache lookup succeeded
-    // 2. Key exists in cache (distinguishes "not cached" from "cached null")
-    // 3. Return cached.data (including null) - honors FAILED_FETCH_TTL_MS to suppress retries
-    if (cached.ok && exists.ok && exists.data) {
-      return cached.data;
+    if (cached.ok && cached.data !== null && "value" in cached.data) {
+      return cached.data.value;
     }
 
     // Cache miss -- fetch fresh
@@ -447,7 +449,7 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
       );
     }
 
-    await cache.set(getCacheKeys().FETCH_LICENSE_CACHE_KEY, result, ttl);
+    await cache.set(getCacheKeys().FETCH_LICENSE_CACHE_KEY, { value: result }, ttl);
     return result;
   })();
 
@@ -455,9 +457,118 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
     .finally(() => {
       fetchLicensePromise = null;
     })
-    .catch(() => { });
+    .catch(() => {});
 
   return fetchLicensePromise;
+};
+
+/**
+ * Core license state evaluation logic.
+ * Accepts pre-fetched license details and applies fallback / grace-period rules.
+ * Sets the in-process memoryCache as a side effect so subsequent requests benefit.
+ */
+const computeLicenseState = async (
+  liveLicenseDetails: TEnterpriseLicenseDetails | null
+): Promise<TEnterpriseLicenseResult> => {
+  validateConfig();
+
+  if (!env.ENTERPRISE_LICENSE_KEY || env.ENTERPRISE_LICENSE_KEY.length === 0) {
+    return {
+      active: false,
+      features: null,
+      lastChecked: new Date(),
+      isPendingDowngrade: false,
+      fallbackLevel: "default" as const,
+      status: "no-license" as const,
+    };
+  }
+
+  const currentTime = new Date();
+  const previousResult = await getPreviousResult();
+  const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
+  trackFallbackUsage(fallbackLevel);
+
+  let currentLicenseState: TPreviousResult | undefined;
+
+  switch (fallbackLevel) {
+    case "live": {
+      if (!liveLicenseDetails) throw new Error("Invalid state: live license expected");
+      currentLicenseState = {
+        active: liveLicenseDetails.status === "active",
+        features: liveLicenseDetails.features,
+        lastChecked: currentTime,
+      };
+
+      // Only update previous result if it's actually different or if it's old (1 hour)
+      // This prevents hammering Redis on every request when the license is active
+      if (
+        !previousResult.active ||
+        previousResult.active !== currentLicenseState.active ||
+        currentTime.getTime() - previousResult.lastChecked.getTime() > 60 * 60 * 1000
+      ) {
+        await setPreviousResult(currentLicenseState);
+      }
+
+      const liveResult: TEnterpriseLicenseResult = {
+        active: currentLicenseState.active,
+        features: currentLicenseState.features,
+        lastChecked: currentTime,
+        isPendingDowngrade: false,
+        fallbackLevel: "live" as const,
+        status: liveLicenseDetails.status,
+      };
+      memoryCache = { data: liveResult, timestamp: Date.now() };
+      return liveResult;
+    }
+
+    case "grace": {
+      if (!validateFallback(previousResult)) {
+        return await handleInitialFailure(currentTime);
+      }
+      logger.warn(
+        {
+          lastChecked: previousResult.lastChecked.toISOString(),
+          gracePeriodEnds: new Date(
+            previousResult.lastChecked.getTime() + CONFIG.CACHE.GRACE_PERIOD_MS
+          ).toISOString(),
+          timestamp: new Date().toISOString(),
+        },
+        "License server unreachable, using grace period. Will retry in ~10 minutes."
+      );
+      const graceResult: TEnterpriseLicenseResult = {
+        active: previousResult.active,
+        features: previousResult.features,
+        lastChecked: previousResult.lastChecked,
+        isPendingDowngrade: true,
+        fallbackLevel: "grace" as const,
+        status: (liveLicenseDetails?.status as TEnterpriseLicenseStatusReturn) ?? "unreachable",
+      };
+      memoryCache = { data: graceResult, timestamp: Date.now() };
+      return graceResult;
+    }
+
+    case "default": {
+      if (liveLicenseDetails?.status === "expired") {
+        const expiredResult: TEnterpriseLicenseResult = {
+          active: false,
+          features: DEFAULT_FEATURES,
+          lastChecked: currentTime,
+          isPendingDowngrade: false,
+          fallbackLevel: "default" as const,
+          status: "expired" as const,
+        };
+        memoryCache = { data: expiredResult, timestamp: Date.now() };
+        return expiredResult;
+      }
+      const failResult = await handleInitialFailure(currentTime);
+      memoryCache = { data: failResult, timestamp: Date.now() };
+      return failResult;
+    }
+  }
+
+  const finalFailResult = await handleInitialFailure(currentTime);
+  memoryCache = { data: finalFailResult, timestamp: Date.now() };
+  return finalFailResult;
 };
 
 export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLicenseResult> => {
@@ -472,21 +583,6 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
   if (getEnterpriseLicensePromise) return getEnterpriseLicensePromise;
 
   getEnterpriseLicensePromise = (async () => {
-    validateConfig();
-
-    if (!env.ENTERPRISE_LICENSE_KEY || env.ENTERPRISE_LICENSE_KEY.length === 0) {
-      return {
-        active: false,
-        features: null,
-        lastChecked: new Date(),
-        isPendingDowngrade: false,
-        fallbackLevel: "default" as const,
-        status: "no-license" as const,
-      };
-    }
-    const currentTime = new Date();
-
-    const previousResultPromise = getPreviousResult();
     let liveLicenseDetails: TEnterpriseLicenseDetails | null = null;
 
     try {
@@ -496,7 +592,7 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
         const invalidResult: TEnterpriseLicenseResult = {
           active: false,
           features: DEFAULT_FEATURES,
-          lastChecked: currentTime,
+          lastChecked: new Date(),
           isPendingDowngrade: false,
           fallbackLevel: "default" as const,
           status: "invalid_license" as const,
@@ -507,98 +603,14 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
       // Other errors: liveLicenseDetails stays null (treated as unreachable)
     }
 
-    const previousResult = await previousResultPromise;
-    const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
-    trackFallbackUsage(fallbackLevel);
-
-    let currentLicenseState: TPreviousResult | undefined;
-
-    switch (fallbackLevel) {
-      case "live": {
-        if (!liveLicenseDetails) throw new Error("Invalid state: live license expected");
-        currentLicenseState = {
-          active: liveLicenseDetails.status === "active",
-          features: liveLicenseDetails.features,
-          lastChecked: currentTime,
-        };
-
-        // Only update previous result if it's actually different or if it's old (1 hour)
-        // This prevents hammering Redis on every request when the license is active
-        if (
-          !previousResult.active ||
-          previousResult.active !== currentLicenseState.active ||
-          currentTime.getTime() - previousResult.lastChecked.getTime() > 60 * 60 * 1000
-        ) {
-          await setPreviousResult(currentLicenseState);
-        }
-
-        const liveResult: TEnterpriseLicenseResult = {
-          active: currentLicenseState.active,
-          features: currentLicenseState.features,
-          lastChecked: currentTime,
-          isPendingDowngrade: false,
-          fallbackLevel: "live" as const,
-          status: liveLicenseDetails.status,
-        };
-        memoryCache = { data: liveResult, timestamp: Date.now() };
-        return liveResult;
-      }
-
-      case "grace": {
-        if (!validateFallback(previousResult)) {
-          return await handleInitialFailure(currentTime);
-        }
-        logger.warn(
-          {
-            lastChecked: previousResult.lastChecked.toISOString(),
-            gracePeriodEnds: new Date(
-              previousResult.lastChecked.getTime() + CONFIG.CACHE.GRACE_PERIOD_MS
-            ).toISOString(),
-            timestamp: new Date().toISOString(),
-          },
-          "License server unreachable, using grace period. Will retry in ~10 minutes."
-        );
-        const graceResult: TEnterpriseLicenseResult = {
-          active: previousResult.active,
-          features: previousResult.features,
-          lastChecked: previousResult.lastChecked,
-          isPendingDowngrade: true,
-          fallbackLevel: "grace" as const,
-          status: (liveLicenseDetails?.status as TEnterpriseLicenseStatusReturn) ?? "unreachable",
-        };
-        memoryCache = { data: graceResult, timestamp: Date.now() };
-        return graceResult;
-      }
-
-      case "default": {
-        if (liveLicenseDetails?.status === "expired") {
-          const expiredResult: TEnterpriseLicenseResult = {
-            active: false,
-            features: DEFAULT_FEATURES,
-            lastChecked: currentTime,
-            isPendingDowngrade: false,
-            fallbackLevel: "default" as const,
-            status: "expired" as const,
-          };
-          memoryCache = { data: expiredResult, timestamp: Date.now() };
-          return expiredResult;
-        }
-        const failResult = await handleInitialFailure(currentTime);
-        memoryCache = { data: failResult, timestamp: Date.now() };
-        return failResult;
-      }
-    }
-
-    const finalFailResult = await handleInitialFailure(currentTime);
-    memoryCache = { data: finalFailResult, timestamp: Date.now() };
-    return finalFailResult;
+    return computeLicenseState(liveLicenseDetails);
   })();
 
   getEnterpriseLicensePromise
     .finally(() => {
       getEnterpriseLicensePromise = null;
     })
-    .catch(() => { });
+    .catch(() => {});
 
   return getEnterpriseLicensePromise;
 });
@@ -629,11 +641,39 @@ export const clearLicenseCache = async (): Promise<void> => {
 };
 
 /**
- * Fetch license directly from server without using cache
- * Used by the recheck license action for a fresh check
+ * Fetch license directly from server without using cache.
+ * Used by the recheck license action for a fresh check.
+ * Concurrent callers share a single in-flight request to avoid
+ * hammering the license server (e.g. multiple managers rechecking).
  */
+let fetchLicenseFreshPromise: Promise<TEnterpriseLicenseDetails | null> | null = null;
+
 export const fetchLicenseFresh = async (): Promise<TEnterpriseLicenseDetails | null> => {
-  return await fetchLicenseFromServerInternal();
+  if (fetchLicenseFreshPromise) return fetchLicenseFreshPromise;
+
+  fetchLicenseFreshPromise = fetchLicenseFromServerInternal();
+
+  fetchLicenseFreshPromise
+    .finally(() => {
+      fetchLicenseFreshPromise = null;
+    })
+    .catch(() => {});
+
+  return fetchLicenseFreshPromise;
+};
+
+/**
+ * Compute license state from pre-fetched license data, bypassing React cache
+ * and the in-process memory cache. Used by the recheck action to guarantee
+ * fresh evaluation after clearing caches and fetching new data.
+ * Refreshes the in-process memory cache as a side effect so subsequent
+ * requests benefit from the fresh result.
+ */
+export const computeFreshLicenseState = async (
+  freshLicense: TEnterpriseLicenseDetails | null
+): Promise<TEnterpriseLicenseResult> => {
+  memoryCache = null;
+  return computeLicenseState(freshLicense);
 };
 
 // All permission checking functions and their helpers have been moved to utils.ts

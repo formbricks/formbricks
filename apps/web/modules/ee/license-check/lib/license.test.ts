@@ -166,22 +166,20 @@ describe("License Core Logic", () => {
       const { getEnterpriseLicense } = await import("./license");
       const fetch = (await import("node-fetch")).default as Mock;
 
-      // Mock cache hit: get returns license for status key, exists returns true
+      // Mock cache hit: get returns wrapped license for status key
       mockCache.get.mockImplementation(async (key: string) => {
         if (key.includes(":previous_result")) {
           return { ok: true, data: null };
         }
         if (key.includes(":status")) {
-          return { ok: true, data: mockFetchedLicenseDetails };
+          return { ok: true, data: { value: mockFetchedLicenseDetails } };
         }
         return { ok: true, data: null };
       });
-      mockCache.exists.mockResolvedValue({ ok: true, data: true });
 
       const license = await getEnterpriseLicense();
       expect(license).toEqual(expectedActiveLicenseState);
       expect(mockCache.get).toHaveBeenCalledWith(expect.stringContaining("fb:license:"));
-      expect(mockCache.exists).toHaveBeenCalledWith(expect.stringContaining("fb:license:"));
       expect(fetch).not.toHaveBeenCalled();
     });
 
@@ -189,7 +187,7 @@ describe("License Core Logic", () => {
       const { getEnterpriseLicense } = await import("./license");
       const fetch = (await import("node-fetch")).default as Mock;
 
-      // Default mocks give cache miss (get null, exists false)
+      // Default mocks give cache miss (get returns null)
       fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: mockFetchedLicenseDetails }),
@@ -199,7 +197,6 @@ describe("License Core Logic", () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(mockCache.get).toHaveBeenCalledWith(expect.stringContaining("fb:license:"));
-      expect(mockCache.exists).toHaveBeenCalledWith(expect.stringContaining("fb:license:"));
       expect(license).toEqual(expectedActiveLicenseState);
     });
 
@@ -433,7 +430,7 @@ describe("License Core Logic", () => {
     test("should return features if license is active", async () => {
       vi.resetModules();
       vi.stubGlobal("window", undefined);
-      // Mock cache hit for fetchLicense (get returns license, exists true)
+      // Mock cache hit for fetchLicense (get returns wrapped license)
       const activeLicenseDetails = {
         status: "active" as const,
         features: {
@@ -458,11 +455,10 @@ describe("License Core Logic", () => {
           return { ok: true, data: null };
         }
         if (key.includes(":status")) {
-          return { ok: true, data: activeLicenseDetails };
+          return { ok: true, data: { value: activeLicenseDetails } };
         }
         return { ok: true, data: null };
       });
-      mockCache.exists.mockResolvedValue({ ok: true, data: true });
 
       const { getLicenseFeatures } = await import("./license");
       const features = await getLicenseFeatures();
@@ -487,7 +483,7 @@ describe("License Core Logic", () => {
     test("should return null if license is inactive", async () => {
       const { getLicenseFeatures } = await import("./license");
 
-      // Mock cache hit with expired license (features can be default for schema)
+      // Mock cache hit with expired license wrapped in { value: ... }
       mockCache.get.mockImplementation(async (key: string) => {
         if (key.includes(":previous_result")) {
           return { ok: true, data: null };
@@ -496,29 +492,30 @@ describe("License Core Logic", () => {
           return {
             ok: true,
             data: {
-              status: "expired",
-              features: {
-                isMultiOrgEnabled: false,
-                projects: 3,
-                twoFactorAuth: false,
-                sso: false,
-                whitelabel: false,
-                removeBranding: false,
-                contacts: false,
-                ai: false,
-                saml: false,
-                spamProtection: false,
-                auditLogs: false,
-                multiLanguageSurveys: false,
-                accessControl: false,
-                quotas: false,
+              value: {
+                status: "expired",
+                features: {
+                  isMultiOrgEnabled: false,
+                  projects: 3,
+                  twoFactorAuth: false,
+                  sso: false,
+                  whitelabel: false,
+                  removeBranding: false,
+                  contacts: false,
+                  ai: false,
+                  saml: false,
+                  spamProtection: false,
+                  auditLogs: false,
+                  multiLanguageSurveys: false,
+                  accessControl: false,
+                  quotas: false,
+                },
               },
             },
           };
         }
         return { ok: true, data: null };
       });
-      mockCache.exists.mockResolvedValue({ ok: true, data: true });
 
       const features = await getLicenseFeatures();
       expect(features).toBeNull();
@@ -560,9 +557,8 @@ describe("License Core Logic", () => {
         },
       }));
 
-      // Cache miss so fetch runs; mock get/exists for cache checks
+      // Cache miss so fetch runs; mock get for cache check
       mockCache.get.mockResolvedValue({ ok: true, data: null });
-      mockCache.exists.mockResolvedValue({ ok: true, data: false });
 
       const fetch = (await import("node-fetch")).default as Mock;
       fetch.mockResolvedValueOnce({
@@ -593,7 +589,6 @@ describe("License Core Logic", () => {
       const { getEnterpriseLicense } = await import("./license");
       await getEnterpriseLicense();
       expect(mockCache.get).toHaveBeenCalledWith(expect.stringContaining("fb:license:browser:status"));
-      expect(mockCache.exists).toHaveBeenCalledWith(expect.stringContaining("fb:license:browser:status"));
     });
 
     test("should use 'no-license' as cache key when ENTERPRISE_LICENSE_KEY is not set", async () => {
@@ -633,7 +628,6 @@ describe("License Core Logic", () => {
       }));
 
       mockCache.get.mockResolvedValue({ ok: true, data: null });
-      mockCache.exists.mockResolvedValue({ ok: true, data: false });
 
       const fetch = (await import("node-fetch")).default as Mock;
       fetch.mockResolvedValueOnce({
@@ -665,8 +659,9 @@ describe("License Core Logic", () => {
       const expectedHash = hashString(testLicenseKey);
       const { getEnterpriseLicense } = await import("./license");
       await getEnterpriseLicense();
-      expect(mockCache.get).toHaveBeenCalledWith(expect.stringContaining(`fb:license:${expectedHash}:status`));
-      expect(mockCache.exists).toHaveBeenCalledWith(expect.stringContaining(`fb:license:${expectedHash}:status`));
+      expect(mockCache.get).toHaveBeenCalledWith(
+        expect.stringContaining(`fb:license:${expectedHash}:status`)
+      );
     });
   });
 
@@ -699,17 +694,16 @@ describe("License Core Logic", () => {
         },
       };
 
-      // Cache hit - fetchLicense returns cached license
+      // Cache hit - fetchLicense returns wrapped cached license
       mockCache.get.mockImplementation(async (key: string) => {
         if (key.includes(":previous_result")) {
           return { ok: true, data: null };
         }
         if (key.includes(":status")) {
-          return { ok: true, data: mockFetchedLicenseDetails };
+          return { ok: true, data: { value: mockFetchedLicenseDetails } };
         }
         return { ok: true, data: null };
       });
-      mockCache.exists.mockResolvedValue({ ok: true, data: true });
 
       // cache.set fails when setPreviousResult tries to save (called for previous_result key)
       mockCache.set.mockResolvedValue({
@@ -803,6 +797,128 @@ describe("License Core Logic", () => {
         }),
         expect.stringContaining("Using license fallback level: grace")
       );
+    });
+  });
+
+  describe("computeFreshLicenseState", () => {
+    const mockActiveLicenseDetails: TEnterpriseLicenseDetails = {
+      status: "active",
+      features: {
+        isMultiOrgEnabled: true,
+        contacts: true,
+        projects: 10,
+        whitelabel: true,
+        removeBranding: true,
+        twoFactorAuth: true,
+        sso: true,
+        saml: true,
+        spamProtection: true,
+        ai: false,
+        auditLogs: true,
+        multiLanguageSurveys: true,
+        accessControl: true,
+        quotas: true,
+      },
+    };
+
+    beforeEach(() => {
+      vi.resetModules();
+      vi.resetAllMocks();
+      mockCache.get.mockResolvedValue({ ok: true, data: null });
+      mockCache.exists.mockResolvedValue({ ok: true, data: false });
+      mockCache.set.mockResolvedValue({ ok: true });
+    });
+
+    test("should return active license state from pre-fetched active license without calling fetch", async () => {
+      const { computeFreshLicenseState } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      const result = await computeFreshLicenseState(mockActiveLicenseDetails);
+
+      expect(result).toEqual({
+        active: true,
+        features: mockActiveLicenseDetails.features,
+        lastChecked: expect.any(Date),
+        isPendingDowngrade: false,
+        fallbackLevel: "live",
+        status: "active",
+      });
+      // Must not call the license API — the data was passed in directly
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    test("should apply grace period fallback when freshLicense is null and previous result exists within grace", async () => {
+      const previousTime = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
+      const mockPreviousResult = {
+        active: true,
+        features: { removeBranding: true, projects: 5 },
+        lastChecked: previousTime,
+      };
+
+      mockCache.get.mockImplementation(async (key: string) => {
+        if (key.includes(":previous_result")) {
+          return { ok: true, data: mockPreviousResult };
+        }
+        return { ok: true, data: null };
+      });
+
+      const { computeFreshLicenseState } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      const result = await computeFreshLicenseState(null);
+
+      expect(result).toEqual({
+        active: true,
+        features: mockPreviousResult.features,
+        lastChecked: previousTime,
+        isPendingDowngrade: true,
+        fallbackLevel: "grace",
+        status: "unreachable",
+      });
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    test("should return inactive default when freshLicense is null and no previous result", async () => {
+      const { computeFreshLicenseState } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      const result = await computeFreshLicenseState(null);
+
+      expect(result).toEqual({
+        active: false,
+        features: expect.objectContaining({
+          isMultiOrgEnabled: false,
+          projects: 3,
+        }),
+        lastChecked: expect.any(Date),
+        isPendingDowngrade: false,
+        fallbackLevel: "default",
+        status: "unreachable",
+      });
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    test("should return expired state when freshLicense has expired status", async () => {
+      const expiredLicense: TEnterpriseLicenseDetails = {
+        status: "expired",
+        features: mockActiveLicenseDetails.features,
+      };
+
+      const { computeFreshLicenseState } = await import("./license");
+
+      const result = await computeFreshLicenseState(expiredLicense);
+
+      expect(result).toEqual({
+        active: false,
+        features: expect.objectContaining({
+          isMultiOrgEnabled: false,
+          projects: 3,
+        }),
+        lastChecked: expect.any(Date),
+        isPendingDowngrade: false,
+        fallbackLevel: "default",
+        status: "expired",
+      });
     });
   });
 
