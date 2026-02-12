@@ -29,6 +29,19 @@ const KEY_BATCH_SIZE = 10;
 
 const prisma = new PrismaClient();
 
+const createSafeCastFunction = async (): Promise<void> => {
+  await prisma.$executeRaw`
+    CREATE OR REPLACE FUNCTION pg_temp.safe_to_timestamp(text)
+    RETURNS TIMESTAMP AS $$
+    BEGIN
+      RETURN $1::TIMESTAMP;
+    EXCEPTION WHEN OTHERS THEN
+      RETURN NULL;
+    END;
+    $$ LANGUAGE plpgsql
+  `;
+};
+
 const backfillNumberAttributes = async (): Promise<number> => {
   console.log("Fetching number-type attribute keys...");
 
@@ -96,7 +109,7 @@ const backfillDateAttributes = async (): Promise<number> => {
     const batchResult = await prisma.$executeRawUnsafe(
       `
       UPDATE "ContactAttribute"
-      SET "valueDate" = value::TIMESTAMP
+      SET "valueDate" = pg_temp.safe_to_timestamp(value)
       WHERE "attributeKeyId" = ANY($1)
         AND "valueDate" IS NULL
         AND TRIM(value) != ''
@@ -123,6 +136,8 @@ const main = async (): Promise<void> => {
 
   const startTime = Date.now();
 
+  await createSafeCastFunction();
+
   const numberRowsUpdated = await backfillNumberAttributes();
   console.log("");
   const dateRowsUpdated = await backfillDateAttributes();
@@ -145,6 +160,8 @@ main()
     console.error("Backfill failed:", error);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
+  .finally(() => {
+    prisma.$disconnect().catch((e: unknown) => {
+      console.error(e);
+    });
   });
