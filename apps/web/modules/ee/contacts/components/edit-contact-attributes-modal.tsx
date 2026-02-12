@@ -24,7 +24,7 @@ import { updateContactAttributesAction } from "../actions";
 import { TEditContactAttributesForm, createEditContactAttributesSchema } from "../types/contact";
 import { AttributeFieldRow } from "./attribute-field-row";
 
-interface AttributeWithMetadata {
+interface TContactAttributeWithKeyInfo {
   key: string;
   name: string | null;
   value: string;
@@ -35,7 +35,7 @@ interface EditContactAttributesModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   contactId: string;
-  currentAttributes: AttributeWithMetadata[];
+  currentAttributes: TContactAttributeWithKeyInfo[];
   attributeKeys: TContactAttributeKey[];
 }
 
@@ -177,10 +177,31 @@ export const EditContactAttributesModal = ({
         toast.success(t("environments.contacts.edit_attributes_success"));
 
         if (result.data.messages && result.data.messages.length > 0) {
-          result.data.messages.forEach((message) => {
-            toast.error(message, { duration: 5000 });
+          const translateMessage = (code: string, params: Record<string, string>): string => {
+            switch (code) {
+              case "email_or_userid_required":
+                return t("environments.contacts.attributes_msg_email_or_userid_required");
+              case "attribute_type_validation_error":
+                return t("environments.contacts.attributes_msg_attribute_type_validation_error", params);
+              case "email_already_exists":
+                return t("environments.contacts.attributes_msg_email_already_exists");
+              case "userid_already_exists":
+                return t("environments.contacts.attributes_msg_userid_already_exists");
+              case "attribute_limit_exceeded":
+                return t("environments.contacts.attributes_msg_attribute_limit_exceeded", params);
+              case "new_attribute_created":
+                return t("environments.contacts.attributes_msg_new_attribute_created", params);
+              default:
+                return code;
+            }
+          };
+
+          result.data.messages.forEach((msg) => {
+            const errorMessage = translateMessage(msg.code, msg.params);
+            toast.error(errorMessage);
           });
         }
+
         router.refresh();
 
         setOpen(false);

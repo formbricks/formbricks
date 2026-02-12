@@ -3,7 +3,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { ContactControlBar } from "@/modules/ee/contacts/[contactId]/components/contact-control-bar";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getContactAttributesWithMetadata } from "@/modules/ee/contacts/lib/contact-attributes";
+import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { getPublishedLinkSurveys } from "@/modules/ee/contacts/lib/surveys";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -21,12 +21,12 @@ export const SingleContactPage = async (props: {
 
   const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
 
-  const [environmentTags, contact, publishedLinkSurveys, attributesWithMetadata, allAttributeKeys] =
+  const [environmentTags, contact, publishedLinkSurveys, attributesWithKeyInfo, allAttributeKeys] =
     await Promise.all([
       getTagsByEnvironmentId(params.environmentId),
       getContact(params.contactId),
       getPublishedLinkSurveys(params.environmentId),
-      getContactAttributesWithMetadata(params.contactId),
+      getContactAttributesWithKeyInfo(params.contactId),
       getContactAttributeKeys(params.environmentId),
     ]);
 
@@ -38,7 +38,7 @@ export const SingleContactPage = async (props: {
 
   // Derive contact identifier from metadata array
   const getAttributeValue = (key: string): string | undefined => {
-    return attributesWithMetadata.find((attr) => attr.key === key)?.value;
+    return attributesWithKeyInfo.find((attr) => attr.key === key)?.value;
   };
 
   const contactIdentifier = getAttributeValue("email") || getAttributeValue("userId") || "";
@@ -51,7 +51,7 @@ export const SingleContactPage = async (props: {
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
         publishedLinkSurveys={publishedLinkSurveys}
-        currentAttributes={attributesWithMetadata}
+        currentAttributes={attributesWithKeyInfo}
         allAttributeKeys={allAttributeKeys}
       />
     );

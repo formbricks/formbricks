@@ -152,7 +152,9 @@ describe("updateUser", () => {
   test("should return messages from updateAttributes if any", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const newAttributes = { company: "Formbricks" };
-    const updateMessages = ["Attribute 'company' created."];
+    const updateMessages = [
+      { code: "new_attribute_created", params: { key: "company", dataType: "string" } },
+    ];
     vi.mocked(updateAttributes).mockResolvedValue({ success: true, messages: updateMessages });
 
     const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", newAttributes);
@@ -163,7 +165,7 @@ describe("updateUser", () => {
       mockEnvironmentId,
       newAttributes
     );
-    expect(result.messages).toEqual(updateMessages);
+    expect(result.messages).toEqual(["Created new attribute 'company' with type 'string'"]);
   });
 
   test("should use device type 'phone'", async () => {

@@ -108,18 +108,24 @@ const determineAttributeTypes = (
 };
 
 /**
- * Validates attribute values against their expected types and downgrades to string if invalid
+ * Validates attribute values against their expected types.
+ * For NEW keys (not yet in DB): downgrades to string if values are mixed/invalid.
+ * For EXISTING keys: returns errors for invalid values (the type is already set in the DB and must be respected).
  */
 const validateAndAdjustAttributeTypes = (
   attributeTypeMap: Map<string, TContactAttributeDataType>,
-  attributeValuesByKey: Map<string, string[]>
-): void => {
-  const typeValidationErrors: string[] = [];
+  attributeValuesByKey: Map<string, string[]>,
+  existingAttributeKeys: { key: string; dataType: TContactAttributeDataType }[]
+): { existingKeyErrors: string[] } => {
+  const existingKeySet = new Set(existingAttributeKeys.map((ak) => ak.key));
+  const newKeyWarnings: string[] = [];
+  const existingKeyErrors: string[] = [];
 
   for (const [key, dataType] of attributeTypeMap) {
     if (dataType === "string") continue;
 
     const values = attributeValuesByKey.get(key) || [];
+    const invalidValues: string[] = [];
 
     for (const value of values) {
       const columns = prepareAttributeColumnsForStorage(value, dataType);
@@ -128,18 +134,34 @@ const validateAndAdjustAttributeTypes = (
         (dataType === "date" && columns.valueDate === null);
 
       if (parseFailed) {
-        attributeTypeMap.set(key, "string");
-        typeValidationErrors.push(
-          `Attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`
-        );
-        break;
+        invalidValues.push(value);
       }
+    }
+
+    if (invalidValues.length === 0) continue;
+
+    if (existingKeySet.has(key)) {
+      // Existing key with a set type - invalid values must be rejected
+      const sampleInvalid = invalidValues.slice(0, 3).join(", ");
+      const additionalCount = invalidValues.length - 3;
+      const suffix = additionalCount > 0 ? ` (and ${additionalCount.toString()} more)` : "";
+      existingKeyErrors.push(
+        `Attribute "${key}" is typed as "${dataType}" but received invalid values: ${sampleInvalid}${suffix}`
+      );
+    } else {
+      // New key - safe to downgrade to string
+      attributeTypeMap.set(key, "string");
+      newKeyWarnings.push(
+        `New attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`
+      );
     }
   }
 
-  if (typeValidationErrors.length > 0) {
-    logger.warn({ errors: typeValidationErrors }, "Type validation warnings during bulk upload");
+  if (newKeyWarnings.length > 0) {
+    logger.warn({ errors: newKeyWarnings }, "Type validation warnings during bulk upload");
   }
+
+  return { existingKeyErrors };
 };
 
 /**
@@ -517,7 +539,21 @@ export const upsertBulkContacts = async (
   // Type Detection Phase
   const attributeValuesByKey = buildAttributeValuesByKey(contacts);
   const attributeTypeMap = determineAttributeTypes(attributeValuesByKey, existingAttributeKeys);
-  validateAndAdjustAttributeTypes(attributeTypeMap, attributeValuesByKey);
+  const { existingKeyErrors } = validateAndAdjustAttributeTypes(
+    attributeTypeMap,
+    attributeValuesByKey,
+    existingAttributeKeys
+  );
+
+  if (existingKeyErrors.length > 0) {
+    return err({
+      type: "bad_request",
+      details: existingKeyErrors.map((issue) => ({
+        field: "attributes",
+        issue,
+      })),
+    });
+  }
 
   // Build contact lookup map
   const contactMap = buildExistingContactMap(existingContactsByEmail);

@@ -5,7 +5,7 @@ import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getContactByUserIdWithAttributes } from "./lib/contact";
 
@@ -119,8 +119,8 @@ export const PUT = withV1ApiWrapper({
           {
             changed: true,
             message: "The person was successfully updated.",
-            ...(messages && messages.length > 0 ? { messages } : {}),
-            ...(errors && errors.length > 0 ? { errors } : {}),
+            ...(messages && messages.length > 0 ? { messages: messages.map(formatAttributeMessage) } : {}),
+            ...(errors && errors.length > 0 ? { errors: errors.map(formatAttributeMessage) } : {}),
           },
           true
         ),

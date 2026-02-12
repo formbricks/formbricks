@@ -344,31 +344,23 @@ const findInvalidValuesForType = (values: string[], dataType: TContactAttributeD
   return invalidValues;
 };
 
-/**
- * Builds an error message for invalid attribute values
- */
-const buildInvalidValuesErrorMessage = (
-  key: string,
-  dataType: TContactAttributeDataType,
-  invalidValues: string[]
-): string => {
-  const sampleInvalid = invalidValues.slice(0, 3).join(", ");
-  const additionalCount = invalidValues.length - 3;
-  const suffix = additionalCount > 0 ? ` (and ${additionalCount} more)` : "";
-
-  return `Attribute "${key}" is typed as "${dataType}" but CSV contains invalid values: ${sampleInvalid}${suffix}`;
-};
+interface TCsvAttributeValidationError {
+  key: string;
+  dataType: TContactAttributeDataType;
+  invalidValues: string[];
+}
 
 /**
  * Validates attribute values against their types.
- * - For EXISTING typed attributes: throws ValidationError if values don't match
+ * - For EXISTING typed attributes: returns validation errors
  * - For NEW attributes: downgrades to string if values are inconsistent
  */
 const validateAndAdjustCsvAttributeTypes = (
   attributeTypeMap: Map<string, TAttributeTypeInfo>,
   attributeValuesByKey: Map<string, string[]>
-): void => {
+): TCsvAttributeValidationError[] => {
   const typeValidationWarnings: string[] = [];
+  const validationErrors: TCsvAttributeValidationError[] = [];
 
   for (const [key, typeInfo] of attributeTypeMap) {
     if (typeInfo.dataType === "string") continue;
@@ -379,8 +371,9 @@ const validateAndAdjustCsvAttributeTypes = (
     if (invalidValues.length === 0) continue;
 
     if (typeInfo.isExisting) {
-      // EXISTING typed attribute: fail the upload
-      throw new ValidationError(buildInvalidValuesErrorMessage(key, typeInfo.dataType, invalidValues));
+      // EXISTING typed attribute: collect error
+      validationErrors.push({ key, dataType: typeInfo.dataType, invalidValues });
+      continue;
     }
 
     // NEW attribute: downgrade to string
@@ -393,6 +386,8 @@ const validateAndAdjustCsvAttributeTypes = (
   if (typeValidationWarnings.length > 0) {
     logger.warn({ warnings: typeValidationWarnings }, "Type validation warnings during CSV upload");
   }
+
+  return validationErrors;
 };
 
 /**
@@ -597,12 +592,16 @@ const handleDuplicateContact = async (
   });
 };
 
+export type TCreateContactsFromCSVResult =
+  | { contacts: TContact[] }
+  | { validationErrors: TCsvAttributeValidationError[] };
+
 export const createContactsFromCSV = async (
   csvData: Record<string, string>[],
   environmentId: string,
   duplicateContactsAction: "skip" | "update" | "overwrite",
   attributeMap: Record<string, string>
-): Promise<TContact[]> => {
+): Promise<TCreateContactsFromCSVResult> => {
   validateInputs(
     [csvData, ZContactCSVUploadResponse],
     [environmentId, ZId],
@@ -658,7 +657,10 @@ export const createContactsFromCSV = async (
       existingAttributeKeys,
       lowercaseToActualKeyMap
     );
-    validateAndAdjustCsvAttributeTypes(attributeTypeMap, attributeValuesByKey);
+    const validationErrors = validateAndAdjustCsvAttributeTypes(attributeTypeMap, attributeValuesByKey);
+    if (validationErrors.length > 0) {
+      return { validationErrors };
+    }
 
     // Step 5: Create missing attribute keys
     await createMissingAttributeKeys(
@@ -683,7 +685,7 @@ export const createContactsFromCSV = async (
     const contactPromises = csvData.map((record) => processCsvRecord(record, processingContext));
 
     const results = await Promise.all(contactPromises);
-    return results.filter((contact): contact is TContact => contact !== null);
+    return { contacts: results.filter((contact): contact is TContact => contact !== null) };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

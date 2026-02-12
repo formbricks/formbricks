@@ -54,19 +54,19 @@ export const UploadContactsCSVButton = ({
 
     // Check file type
     if (!file.type && !file.name.endsWith(".csv")) {
-      setError("Please upload a CSV file");
+      setError(t("environments.contacts.upload_contacts_error_invalid_file_type"));
       return;
     }
 
     if (file.type && file.type !== "text/csv" && !file.type.includes("csv")) {
-      setError("Please upload a CSV file");
+      setError(t("environments.contacts.upload_contacts_error_invalid_file_type"));
       return;
     }
 
     // Max file size check (800KB)
     const maxSizeInBytes = 800 * 1024;
     if (file.size > maxSizeInBytes) {
-      setError("File size exceeds the maximum limit of 800KB");
+      setError(t("environments.contacts.upload_contacts_error_file_too_large"));
       return;
     }
 
@@ -89,9 +89,7 @@ export const UploadContactsCSVButton = ({
         }
 
         if (!parsedRecords.data.length) {
-          setError(
-            "The uploaded CSV file does not contain any valid contacts, please see the sample CSV file for the correct format."
-          );
+          setError(t("environments.contacts.upload_contacts_error_no_valid_contacts"));
           return;
         }
 
@@ -170,7 +168,11 @@ export const UploadContactsCSVButton = ({
         .filter(([_, value]) => duplicateValues.includes(value))
         .map(([key, _]) => key);
 
-      setError(`Duplicate mappings found for the following attributes: ${duplicateAttributeKeys.join(", ")}`);
+      setError(
+        t("environments.contacts.upload_contacts_error_duplicate_mappings", {
+          attributes: duplicateAttributeKeys.join(", "),
+        })
+      );
       errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       setLoading(false);
       return;
@@ -205,6 +207,23 @@ export const UploadContactsCSVButton = ({
     });
 
     if (result?.data) {
+      if ("validationErrors" in result.data) {
+        const { validationErrors } = result.data;
+        const errorMessages = validationErrors.map((err) => {
+          const sampleInvalid = err.invalidValues.slice(0, 3).join(", ");
+          const additionalCount = err.invalidValues.length - 3;
+          const suffix = additionalCount > 0 ? ` (${additionalCount.toString()} more)` : "";
+          return t("environments.contacts.upload_contacts_error_attribute_type_mismatch", {
+            key: err.key,
+            dataType: err.dataType,
+            values: `${sampleInvalid}${suffix}`,
+          });
+        });
+        setError(errorMessages.join("\n"));
+        setLoading(false);
+        return;
+      }
+
       setError("");
       toast.success(t("environments.contacts.upload_contacts_success"));
       resetState(true);
@@ -227,7 +246,7 @@ export const UploadContactsCSVButton = ({
       if (csvDataErrors) {
         setError(csvDataErrors);
       } else {
-        setError("An error occurred while uploading the contacts. Please try again later.");
+        setError(t("environments.contacts.upload_contacts_error_generic"));
       }
       setLoading(false);
       return;

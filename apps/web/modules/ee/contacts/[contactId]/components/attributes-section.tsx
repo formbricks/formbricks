@@ -1,6 +1,6 @@
 import { getResponsesByContactId } from "@/lib/response/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getContactAttributesWithMetadata } from "@/modules/ee/contacts/lib/contact-attributes";
+import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { formatAttributeValue } from "@/modules/ee/contacts/lib/format-attribute-value";
 import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
@@ -8,9 +8,9 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
   const t = await getTranslate();
-  const [contact, attributesWithMetadata] = await Promise.all([
+  const [contact, attributesWithKeyInfo] = await Promise.all([
     getContact(contactId),
-    getContactAttributesWithMetadata(contactId),
+    getContactAttributesWithKeyInfo(contactId),
   ]);
 
   if (!contact) {
@@ -20,15 +20,15 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
   const responses = await getResponsesByContactId(contactId);
   const numberOfResponses = responses?.length || 0;
 
-  const systemAttributes = attributesWithMetadata
+  const systemAttributes = attributesWithKeyInfo
     .filter((attr) => attr.type === "default")
     .sort((a, b) => (a.name || a.key).localeCompare(b.name || b.key));
 
-  const customAttributes = attributesWithMetadata
+  const customAttributes = attributesWithKeyInfo
     .filter((attr) => attr.type === "custom")
     .sort((a, b) => (a.name || a.key).localeCompare(b.name || b.key));
 
-  const renderAttributeValue = (attr: (typeof attributesWithMetadata)[number]) => {
+  const renderAttributeValue = (attr: (typeof attributesWithKeyInfo)[number]) => {
     if (!attr.value) {
       return <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>;
     }

@@ -446,7 +446,7 @@ describe("Contacts Lib", () => {
       const result = await createContactsFromCSV(csvData, mockEnvironmentId, "skip", attributeMap);
 
       expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
+      expect("contacts" in result).toBe(true);
     });
 
     test("skips duplicate contacts when duplicateContactsAction is skip", async () => {
@@ -469,7 +469,7 @@ describe("Contacts Lib", () => {
 
       const result = await createContactsFromCSV(csvData, mockEnvironmentId, "skip", attributeMap);
 
-      expect(Array.isArray(result)).toBe(true);
+      expect("contacts" in result).toBe(true);
     });
 
     test("updates duplicate contacts when duplicateContactsAction is update", async () => {
@@ -495,7 +495,7 @@ describe("Contacts Lib", () => {
 
       const result = await createContactsFromCSV(csvData, mockEnvironmentId, "update", attributeMap);
 
-      expect(Array.isArray(result)).toBe(true);
+      expect("contacts" in result).toBe(true);
     });
 
     test("overwrites duplicate contacts when duplicateContactsAction is overwrite", async () => {
@@ -522,7 +522,7 @@ describe("Contacts Lib", () => {
 
       const result = await createContactsFromCSV(csvData, mockEnvironmentId, "overwrite", attributeMap);
 
-      expect(Array.isArray(result)).toBe(true);
+      expect("contacts" in result).toBe(true);
     });
 
     test("throws ValidationError when email is missing", async () => {
@@ -574,7 +574,7 @@ describe("Contacts Lib", () => {
       const result = await createContactsFromCSV(csvData, mockEnvironmentId, "skip", attributeMap);
 
       expect(prisma.contactAttributeKey.createMany).toHaveBeenCalled();
-      expect(Array.isArray(result)).toBe(true);
+      expect("contacts" in result).toBe(true);
     });
 
     test("handles case-insensitive attribute keys", async () => {
@@ -602,7 +602,7 @@ describe("Contacts Lib", () => {
         attributeMap
       );
 
-      expect(Array.isArray(result)).toBe(true);
+      expect("contacts" in result).toBe(true);
     });
 
     test("handles userId conflict in update mode when userId already exists for another contact", async () => {
@@ -640,7 +640,7 @@ describe("Contacts Lib", () => {
         attributeMap
       );
 
-      expect(Array.isArray(result)).toBe(true);
+      expect("contacts" in result).toBe(true);
       expect(prisma.contact.update).toHaveBeenCalled();
     });
 
@@ -680,7 +680,7 @@ describe("Contacts Lib", () => {
         attributeMap
       );
 
-      expect(Array.isArray(result)).toBe(true);
+      expect("contacts" in result).toBe(true);
       expect(prisma.contactAttribute.deleteMany).toHaveBeenCalled();
       expect(prisma.contact.update).toHaveBeenCalled();
     });
@@ -712,7 +712,7 @@ describe("Contacts Lib", () => {
         attributeMap
       );
 
-      expect(Array.isArray(result)).toBe(true);
+      expect("contacts" in result).toBe(true);
     });
   });
 

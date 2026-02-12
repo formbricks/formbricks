@@ -13,7 +13,47 @@ import {
   hasEmailAttribute,
   hasUserIdAttribute,
 } from "@/modules/ee/contacts/lib/contact-attributes";
-import { validateAndParseAttributeValue } from "@/modules/ee/contacts/lib/validate-attribute-type";
+import {
+  formatValidationError,
+  validateAndParseAttributeValue,
+} from "@/modules/ee/contacts/lib/validate-attribute-type";
+
+/**
+ * Structured message with code and params for i18n support.
+ * Used for both UI-facing messages (translated) and API/SDK responses (formatted to English).
+ */
+export interface TAttributeUpdateMessage {
+  code: string;
+  params: Record<string, string>;
+}
+
+/**
+ * English templates for formatting structured messages to human-readable strings.
+ * Used by SDK/API paths that return English responses.
+ */
+const MESSAGE_TEMPLATES: Record<string, string> = {
+  email_or_userid_required: "Either email or userId is required. The existing values were preserved.",
+  attribute_type_validation_error: "{error} (attribute '{key}' has dataType: {dataType})",
+  email_already_exists: "The email already exists for this environment and was not updated.",
+  userid_already_exists: "The userId already exists for this environment and was not updated.",
+  invalid_attribute_keys:
+    "Skipped creating attribute(s) with invalid key(s): {keys}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.",
+  attribute_limit_exceeded:
+    "Could not create {count} new attribute(s) as it would exceed the maximum limit of {limit} attribute classes. Existing attributes were updated successfully.",
+  new_attribute_created: "Created new attribute '{key}' with type '{dataType}'",
+};
+
+/**
+ * Formats a structured message to a human-readable English string.
+ * Used for API/SDK responses.
+ */
+export const formatAttributeMessage = (msg: TAttributeUpdateMessage): string => {
+  let template = MESSAGE_TEMPLATES[msg.code] || msg.code;
+  for (const [key, value] of Object.entries(msg.params)) {
+    template = template.replaceAll(`{${key}}`, value);
+  }
+  return template;
+};
 
 // Default/system attributes that should not be deleted even if missing from payload
 const DEFAULT_ATTRIBUTES = new Set(["email", "userId", "firstName", "lastName"]);
@@ -73,8 +113,8 @@ export const updateAttributes = async (
   deleteRemovedAttributes: boolean = false
 ): Promise<{
   success: boolean;
-  messages?: string[];
-  errors?: string[];
+  messages?: TAttributeUpdateMessage[];
+  errors?: TAttributeUpdateMessage[];
   ignoreEmailAttribute?: boolean;
   ignoreUserIdAttribute?: boolean;
 }> => {
@@ -87,8 +127,8 @@ export const updateAttributes = async (
 
   let ignoreEmailAttribute = false;
   let ignoreUserIdAttribute = false;
-  const messages: string[] = [];
-  const errors: string[] = [];
+  const messages: TAttributeUpdateMessage[] = [];
+  const errors: TAttributeUpdateMessage[] = [];
 
   // Convert email and userId to strings for lookup (they should always be strings, but handle numbers gracefully)
   const emailValue =
@@ -155,7 +195,7 @@ export const updateAttributes = async (
     if (currentUserId) {
       contactAttributes.userId = currentUserId;
     }
-    messages.push("Either email or userId is required. The existing values were preserved.");
+    messages.push({ code: "email_or_userid_required", params: {} });
   }
 
   if (emailExists) {
@@ -187,7 +227,6 @@ export const updateAttributes = async (
     columns: { value: string; valueNumber: number | null; valueDate: Date | null };
   }[] = [];
   const newAttributes: { key: string; value: string | number }[] = [];
-  const typeValidationErrors: string[] = [];
 
   for (const [key, value] of Object.entries(contactAttributes)) {
     const attributeKey = contactAttributeKeyMap.get(key);
@@ -203,10 +242,15 @@ export const updateAttributes = async (
           columns: validationResult.parsedValue,
         });
       } else {
-        // Type mismatch - add to errors and include what type is expected
-        typeValidationErrors.push(
-          `${validationResult.error} (attribute '${key}' has dataType: ${attributeKey.dataType})`
-        );
+        // Type mismatch - add structured error
+        messages.push({
+          code: "attribute_type_validation_error",
+          params: {
+            key,
+            dataType: attributeKey.dataType,
+            error: formatValidationError(validationResult.error),
+          },
+        });
       }
     } else {
       // New attribute - will detect type on creation
@@ -214,17 +258,12 @@ export const updateAttributes = async (
     }
   }
 
-  // Add type validation errors to messages
-  if (typeValidationErrors.length > 0) {
-    messages.push(...typeValidationErrors);
-  }
-
   if (emailExists) {
-    messages.push("The email already exists for this environment and was not updated.");
+    messages.push({ code: "email_already_exists", params: {} });
   }
 
   if (userIdExists) {
-    messages.push("The userId already exists for this environment and was not updated.");
+    messages.push({ code: "userid_already_exists", params: {} });
   }
 
   // Update all existing attributes with typed column values
@@ -271,9 +310,10 @@ export const updateAttributes = async (
 
     // Add error message for invalid keys
     if (invalidKeys.length > 0) {
-      errors.push(
-        `Skipped creating attribute(s) with invalid key(s): ${invalidKeys.join(", ")}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.`
-      );
+      errors.push({
+        code: "invalid_attribute_keys",
+        params: { keys: invalidKeys.join(", ") },
+      });
       logger.warn(
         { environmentId, invalidKeys },
         "SDK tried to create attributes with invalid keys - skipping"
@@ -285,9 +325,13 @@ export const updateAttributes = async (
 
       if (totalAttributeClassesLength > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
         // Add warning to details about skipped attributes
-        messages.push(
-          `Could not create ${validNewAttributes.length} new attribute(s) as it would exceed the maximum limit of ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} attribute classes. Existing attributes were updated successfully.`
-        );
+        messages.push({
+          code: "attribute_limit_exceeded",
+          params: {
+            count: validNewAttributes.length.toString(),
+            limit: MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT.toString(),
+          },
+        });
       } else {
         // Prepare new attributes with SDK-specific type detection
         const preparedNewAttributes = validNewAttributes.map(({ key, value }) => {
@@ -298,7 +342,7 @@ export const updateAttributes = async (
         // Log new attribute creation with their types
         for (const { key, dataType } of preparedNewAttributes) {
           logger.info({ environmentId, attributeKey: key, dataType }, "Created new contact attribute");
-          messages.push(`Created new attribute '${key}' with type '${dataType}'`);
+          messages.push({ code: "new_attribute_created", params: { key, dataType } });
         }
 
         // Create new attributes since we're under the limit

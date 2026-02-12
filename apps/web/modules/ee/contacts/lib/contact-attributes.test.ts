@@ -5,7 +5,7 @@ import { TContactAttribute } from "@formbricks/types/contact-attribute";
 import { DatabaseError } from "@formbricks/types/errors";
 import {
   getContactAttributes,
-  getContactAttributesWithMetadata,
+  getContactAttributesWithKeyInfo,
   hasEmailAttribute,
   hasUserIdAttribute,
 } from "./contact-attributes";
@@ -31,7 +31,7 @@ const mockAttributes = [
   { value: "John", attributeKey: { key: "name", name: "Name" } },
 ] as unknown as TContactAttribute[];
 
-const mockAttributesWithMetadata = [
+const mockAttributesWithKeyInfo = [
   {
     value: "john@example.com",
     valueNumber: null,
@@ -102,21 +102,21 @@ describe("getContactAttributes", () => {
   });
 });
 
-describe("getContactAttributesWithMetadata", () => {
+describe("getContactAttributesWithKeyInfo", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   test("returns attributes with full metadata", async () => {
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue(
-      mockAttributesWithMetadata as unknown as Prisma.Result<
+      mockAttributesWithKeyInfo as unknown as Prisma.Result<
         typeof prisma.contactAttribute,
         unknown,
         "findMany"
       >
     );
 
-    const result = await getContactAttributesWithMetadata(contactId);
+    const result = await getContactAttributesWithKeyInfo(contactId);
 
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
       where: { contactId },
@@ -158,7 +158,7 @@ describe("getContactAttributesWithMetadata", () => {
   test("returns empty array if no attributes", async () => {
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
 
-    const result = await getContactAttributesWithMetadata(contactId);
+    const result = await getContactAttributesWithKeyInfo(contactId);
 
     expect(result).toEqual([]);
   });
@@ -189,7 +189,7 @@ describe("getContactAttributesWithMetadata", () => {
       mixedTypeAttributes as unknown as Prisma.Result<typeof prisma.contactAttribute, unknown, "findMany">
     );
 
-    const result = await getContactAttributesWithMetadata(contactId);
+    const result = await getContactAttributesWithKeyInfo(contactId);
 
     expect(result).toHaveLength(3);
     expect(result[0].dataType).toBe("string");
@@ -209,14 +209,14 @@ describe("getContactAttributesWithMetadata", () => {
     });
     vi.mocked(prisma.contactAttribute.findMany).mockRejectedValue(prismaError);
 
-    await expect(getContactAttributesWithMetadata(contactId)).rejects.toThrow(DatabaseError);
+    await expect(getContactAttributesWithKeyInfo(contactId)).rejects.toThrow(DatabaseError);
   });
 
   test("rethrows non-Prisma errors", async () => {
     const genericError = new Error("Generic error");
     vi.mocked(prisma.contactAttribute.findMany).mockRejectedValue(genericError);
 
-    await expect(getContactAttributesWithMetadata(contactId)).rejects.toThrow("Generic error");
+    await expect(getContactAttributesWithKeyInfo(contactId)).rejects.toThrow("Generic error");
   });
 });
 
