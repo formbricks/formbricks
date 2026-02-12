@@ -183,9 +183,23 @@ export const addedAttributesDataTypes: MigrationScript = {
     }
 
     if (backfillKeyIds.length > 0) {
+      // Count only rows that still need backfilling (typed column is NULL)
+      // This ensures already-backfilled rows are not counted on re-runs
       const backfillRowCount = await tx.$queryRawUnsafe<{ count: bigint }[]>(
-        `SELECT COUNT(*) as count FROM "ContactAttribute" WHERE "attributeKeyId" = ANY($1)`,
-        backfillKeyIds
+        `
+        SELECT COUNT(*) as count FROM "ContactAttribute" ca
+        WHERE (
+          ca."attributeKeyId" = ANY($1) AND ca."valueNumber" IS NULL
+          AND TRIM(ca.value) != '' AND ca.value ~ $2
+        ) OR (
+          ca."attributeKeyId" = ANY($3) AND ca."valueDate" IS NULL
+          AND TRIM(ca.value) != '' AND ca.value ~ $4
+        )
+        `,
+        numberKeys.length > 0 ? numberKeys : ["__none__"],
+        NUMBER_PATTERN,
+        dateKeys.length > 0 ? dateKeys : ["__none__"],
+        ISO_DATE_PATTERN
       );
 
       stats.totalAttributeRows = Number(backfillRowCount[0].count);
