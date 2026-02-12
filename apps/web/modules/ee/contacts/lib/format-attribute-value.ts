@@ -22,7 +22,8 @@ export const formatAttributeValue = (
   switch (dataType) {
     case "date": {
       try {
-        const date = value instanceof Date ? value : new Date(String(value));
+        const date =
+          value instanceof Date ? value : new Date(typeof value === "number" ? value : String(value));
         if (Number.isNaN(date.getTime())) {
           return String(value);
         }

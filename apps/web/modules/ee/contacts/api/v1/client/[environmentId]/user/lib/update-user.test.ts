@@ -12,9 +12,13 @@ vi.mock("@/lib/cache", () => ({
   },
 }));
 
-vi.mock("@/modules/ee/contacts/lib/attributes", () => ({
-  updateAttributes: vi.fn(),
-}));
+vi.mock("@/modules/ee/contacts/lib/attributes", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/ee/contacts/lib/attributes")>();
+  return {
+    ...actual,
+    updateAttributes: vi.fn(),
+  };
+});
 
 vi.mock("@formbricks/database", () => ({
   prisma: {

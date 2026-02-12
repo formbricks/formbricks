@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { validateAndParseAttributeValue } from "./validate-attribute-type";
+import { formatValidationError, validateAndParseAttributeValue } from "./validate-attribute-type";
 
 describe("validateAndParseAttributeValue", () => {
   describe("string type", () => {
@@ -50,7 +50,9 @@ describe("validateAndParseAttributeValue", () => {
       const result = validateAndParseAttributeValue("3.14", "number", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("received a string");
+        expect(result.error.code).toBe("number_type_mismatch");
+        expect(result.error.params.key).toBe("testKey");
+        expect(formatValidationError(result.error)).toContain("received a string");
       }
     });
 
@@ -58,8 +60,8 @@ describe("validateAndParseAttributeValue", () => {
       const result = validateAndParseAttributeValue("hello", "number", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("testKey");
-        expect(result.error).toContain("expects a number");
+        expect(result.error.code).toBe("number_type_mismatch");
+        expect(result.error.params.key).toBe("testKey");
       }
     });
 
@@ -68,7 +70,7 @@ describe("validateAndParseAttributeValue", () => {
       const result = validateAndParseAttributeValue(date, "number", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("expects a number");
+        expect(result.error.code).toBe("number_type_mismatch");
       }
     });
   });
@@ -105,8 +107,9 @@ describe("validateAndParseAttributeValue", () => {
       const result = validateAndParseAttributeValue("not-a-date", "date", "purchaseDate");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("purchaseDate");
-        expect(result.error).toContain("ISO 8601 format");
+        expect(result.error.code).toBe("date_format_invalid");
+        expect(result.error.params.key).toBe("purchaseDate");
+        expect(result.error.params.value).toBe("not-a-date");
       }
     });
 
@@ -114,7 +117,8 @@ describe("validateAndParseAttributeValue", () => {
       const result = validateAndParseAttributeValue(42, "date", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("expects a valid date");
+        expect(result.error.code).toBe("date_unexpected_type");
+        expect(result.error.params.key).toBe("testKey");
       }
     });
 
@@ -122,7 +126,7 @@ describe("validateAndParseAttributeValue", () => {
       const result = validateAndParseAttributeValue("15/06/2024", "date", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("ISO 8601 format");
+        expect(result.error.code).toBe("date_format_invalid");
       }
     });
 
@@ -131,26 +135,27 @@ describe("validateAndParseAttributeValue", () => {
       const result = validateAndParseAttributeValue(invalidDate, "date", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("Invalid Date");
+        expect(result.error.code).toBe("date_invalid");
       }
     });
   });
 
   describe("error messages", () => {
-    test("includes attribute key in error message", () => {
+    test("includes attribute key in error params", () => {
       const result = validateAndParseAttributeValue("hello", "number", "purchaseAmount");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("purchaseAmount");
+        expect(result.error.params.key).toBe("purchaseAmount");
       }
     });
 
-    test("includes received value type in error message", () => {
+    test("formatValidationError produces human-readable message", () => {
       const result = validateAndParseAttributeValue("hello", "number", "testKey");
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        // New stricter message doesn't include the value, but mentions string was received
-        expect(result.error).toContain("received a string");
+        const formatted = formatValidationError(result.error);
+        expect(formatted).toContain("testKey");
+        expect(formatted).toContain("received a string");
       }
     });
   });
