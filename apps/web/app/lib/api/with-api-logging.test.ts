@@ -68,7 +68,6 @@ vi.mock("@/app/middleware/endpoint-validator", async () => {
     isClientSideApiRoute: vi.fn().mockReturnValue({ isClientSideApi: false, isRateLimited: true }),
     isManagementApiRoute: vi.fn().mockReturnValue({ isManagementApi: false, authenticationMethod: "apiKey" }),
     isIntegrationRoute: vi.fn().mockReturnValue(false),
-    isSyncWithUserIdentificationEndpoint: vi.fn().mockReturnValue(null),
   };
 });
 
@@ -82,7 +81,6 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
     api: {
       client: { windowMs: 60000, max: 100 },
       v1: { windowMs: 60000, max: 1000 },
-      syncUserIdentification: { windowMs: 60000, max: 50 },
     },
   },
 }));
@@ -461,45 +459,6 @@ describe("withV1ApiWrapper", () => {
 
     expect(res.status).toBe(429);
     expect(handler).not.toHaveBeenCalled();
-  });
-
-  test("handles sync user identification rate limiting", async () => {
-    const { applyRateLimit, applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
-    const {
-      isClientSideApiRoute,
-      isManagementApiRoute,
-      isIntegrationRoute,
-      isSyncWithUserIdentificationEndpoint,
-    } = await import("@/app/middleware/endpoint-validator");
-    const { authenticateRequest } = await import("@/app/api/v1/auth");
-
-    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
-    vi.mocked(isManagementApiRoute).mockReturnValue({
-      isManagementApi: false,
-      authenticationMethod: AuthenticationMethod.None,
-    });
-    vi.mocked(isIntegrationRoute).mockReturnValue(false);
-    vi.mocked(isSyncWithUserIdentificationEndpoint).mockReturnValue({
-      userId: "user-123",
-      environmentId: "env-123",
-    });
-    vi.mocked(authenticateRequest).mockResolvedValue(null);
-    vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
-    const rateLimitError = new Error("Sync rate limit exceeded");
-    rateLimitError.message = "Sync rate limit exceeded";
-    vi.mocked(applyRateLimit).mockRejectedValue(rateLimitError);
-
-    const handler = vi.fn();
-    const req = createMockRequest({ url: "/api/v1/client/env-123/app/sync/user-123" });
-    const { withV1ApiWrapper } = await import("./with-api-logging");
-    const wrapped = withV1ApiWrapper({ handler });
-    const res = await wrapped(req, undefined);
-
-    expect(res.status).toBe(429);
-    expect(applyRateLimit).toHaveBeenCalledWith(
-      expect.objectContaining({ windowMs: 60000, max: 50 }),
-      "user-123"
-    );
   });
 
   test("skips audit log creation when no action/targetType provided", async () => {

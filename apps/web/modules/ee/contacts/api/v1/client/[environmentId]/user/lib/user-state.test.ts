@@ -20,7 +20,6 @@ const mockEnvironmentId = "test-environment-id";
 const mockUserId = "test-user-id";
 const mockContactId = "test-contact-id";
 const mockDevice = "desktop";
-const mockAttributes = { email: "test@example.com" };
 
 describe("getUserState", () => {
   beforeEach(() => {
@@ -45,7 +44,6 @@ describe("getUserState", () => {
       userId: mockUserId,
       contactId: mockContactId,
       device: mockDevice,
-      attributes: mockAttributes,
     });
 
     expect(prisma.contact.findUniqueOrThrow).toHaveBeenCalledWith({
@@ -65,7 +63,6 @@ describe("getUserState", () => {
       mockEnvironmentId,
       mockContactId,
       mockUserId,
-      mockAttributes,
       mockDevice
     );
     expect(result).toEqual<TJsPersonState["data"]>({
@@ -98,7 +95,6 @@ describe("getUserState", () => {
       userId: mockUserId,
       contactId: mockContactId,
       device: mockDevice,
-      attributes: mockAttributes,
     });
 
     expect(result).toEqual<TJsPersonState["data"]>({
@@ -129,7 +125,6 @@ describe("getUserState", () => {
       userId: mockUserId,
       contactId: mockContactId,
       device: mockDevice,
-      attributes: mockAttributes,
     });
 
     expect(result).toEqual<TJsPersonState["data"]>({

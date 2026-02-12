@@ -82,8 +82,6 @@ export const getPersonSegmentIds = async (
   environmentId: string,
   contactId: string,
   contactUserId: string,
-  // Attributes param kept for backwards compatibility but unused - Prisma fetches from DB
-  _attributes: Record<string, string>,
   deviceType: "phone" | "desktop"
 ): Promise<string[]> => {
   try {

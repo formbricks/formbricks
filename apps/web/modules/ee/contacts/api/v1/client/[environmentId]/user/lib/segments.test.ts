@@ -45,7 +45,6 @@ vi.mock("react", async () => {
 const mockEnvironmentId = "test-environment-id";
 const mockContactId = "test-contact-id";
 const mockContactUserId = "test-contact-user-id";
-const mockAttributes = { email: "test@example.com" };
 const mockDeviceType = "desktop" as const;
 
 const mockSegmentsData = [
@@ -119,7 +118,6 @@ describe("segments lib", () => {
         mockEnvironmentId,
         mockContactId,
         mockContactUserId,
-        mockAttributes,
         mockDeviceType
       );
 
@@ -141,7 +139,6 @@ describe("segments lib", () => {
         mockEnvironmentId,
         mockContactId,
         mockContactUserId,
-        mockAttributes,
         mockDeviceType
       );
 
@@ -156,7 +153,6 @@ describe("segments lib", () => {
         mockEnvironmentId,
         mockContactId,
         mockContactUserId,
-        mockAttributes,
         mockDeviceType
       );
       expect(result).toEqual([]);
@@ -170,13 +166,7 @@ describe("segments lib", () => {
         "findFirst"
       >);
 
-      await getPersonSegmentIds(
-        mockEnvironmentId,
-        mockContactId,
-        mockContactUserId,
-        mockAttributes,
-        mockDeviceType
-      );
+      await getPersonSegmentIds(mockEnvironmentId, mockContactId, mockContactUserId, mockDeviceType);
       expect(validateInputs).toHaveBeenCalledWith(
         [mockEnvironmentId, expect.anything()],
         [mockContactId, expect.anything()],
@@ -198,7 +188,6 @@ describe("segments lib", () => {
         mockEnvironmentId,
         mockContactId,
         mockContactUserId,
-        mockAttributes,
         mockDeviceType
       );
 

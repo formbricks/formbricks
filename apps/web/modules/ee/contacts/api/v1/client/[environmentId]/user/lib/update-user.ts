@@ -111,14 +111,13 @@ const buildUserStateFromContact = async (
   contactData: NonNullable<Awaited<ReturnType<typeof getContactWithFullData>>>,
   environmentId: string,
   userId: string,
-  device: "phone" | "desktop",
-  attributes: Record<string, string>
+  device: "phone" | "desktop"
 ) => {
   // Get segments (only remaining external call)
   // Ensure segments is always an array to prevent "segments is not iterable" error
   let segments: string[] = [];
   try {
-    segments = await getPersonSegmentIds(environmentId, contactData.id, userId, attributes, device);
+    segments = await getPersonSegmentIds(environmentId, contactData.id, userId, device);
     // Double-check that segments is actually an array
     if (!Array.isArray(segments)) {
       segments = [];
@@ -204,13 +203,7 @@ export const updateUser = async (
   }
 
   // Build user state from already-fetched data (no additional query needed)
-  const userStateData = await buildUserStateFromContact(
-    contactData,
-    environmentId,
-    userId,
-    device,
-    contactAttributes
-  );
+  const userStateData = await buildUserStateFromContact(contactData, environmentId, userId, device);
 
   return {
     state: {
