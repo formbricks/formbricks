@@ -123,11 +123,16 @@ const getCacheIdentifier = () => {
   return hashString(env.ENTERPRISE_LICENSE_KEY); // Valid license key
 };
 
+const LICENSE_FETCH_LOCK_TTL_MS = 90 * 1000; // 90s lock so only one process fetches when cache is cold
+const LICENSE_FETCH_POLL_MS = 2 * 1000; // Wait up to 2s for another process to populate cache
+const LICENSE_FETCH_POLL_INTERVAL_MS = 400;
+
 export const getCacheKeys = () => {
   const identifier = getCacheIdentifier();
   return {
     FETCH_LICENSE_CACHE_KEY: createCacheKey.license.status(identifier),
     PREVIOUS_RESULT_CACHE_KEY: createCacheKey.license.previous_result(identifier),
+    FETCH_LOCK_CACHE_KEY: createCacheKey.license.fetch_lock(identifier),
   };
 };
 
@@ -298,6 +303,19 @@ const handleInitialFailure = async (currentTime: Date): Promise<TEnterpriseLicen
   };
 };
 
+/**
+ * Try to read cached license from Redis. Returns undefined on miss or error.
+ */
+const getCachedLicense = async (): Promise<TEnterpriseLicenseDetails | null | undefined> => {
+  const keys = getCacheKeys();
+  const result = await cache.get<TCachedFetchResult>(keys.FETCH_LICENSE_CACHE_KEY);
+  if (!result.ok) return undefined;
+  if (result.data !== null && result.data !== undefined && "value" in result.data) {
+    return result.data.value;
+  }
+  return undefined;
+};
+
 // API functions
 let fetchLicensePromise: Promise<TEnterpriseLicenseDetails | null> | null = null;
 
@@ -426,31 +444,59 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
   }
 
   fetchLicensePromise = (async () => {
-    // Check cache first — a single get call distinguishes "not cached"
-    // (data is null) from "cached null" (data is { value: null }).
-    const cacheKey = getCacheKeys().FETCH_LICENSE_CACHE_KEY;
-    const cached = await cache.get<TCachedFetchResult>(cacheKey);
+    const keys = getCacheKeys();
+    const cached = await getCachedLicense();
+    if (cached !== undefined) return cached;
 
-    if (cached.ok && cached.data !== null && "value" in cached.data) {
-      return cached.data.value;
+    const lockResult = await cache.tryLock(keys.FETCH_LOCK_CACHE_KEY, "1", LICENSE_FETCH_LOCK_TTL_MS);
+    const acquired = lockResult.ok && lockResult.data === true;
+    const redisError = !lockResult.ok;
+
+    if (acquired) {
+      try {
+        const fresh = await fetchLicenseFromServerInternal();
+        const ttl = fresh ? CONFIG.CACHE.FETCH_LICENSE_TTL_MS : CONFIG.CACHE.FAILED_FETCH_TTL_MS;
+
+        if (!fresh) {
+          logger.warn(
+            {
+              ttlMinutes: Math.floor(ttl / 60000),
+              timestamp: new Date().toISOString(),
+            },
+            "License fetch failed, caching null result with short TTL for faster retry"
+          );
+        }
+
+        await cache.set(keys.FETCH_LICENSE_CACHE_KEY, { value: fresh }, ttl);
+        return fresh;
+      } finally {
+        // Lock expires automatically; no need to release
+      }
     }
 
-    // Cache miss -- fetch fresh
-    const result = await fetchLicenseFromServerInternal();
-    const ttl = result ? CONFIG.CACHE.FETCH_LICENSE_TTL_MS : CONFIG.CACHE.FAILED_FETCH_TTL_MS;
-
-    if (!result) {
-      logger.warn(
-        {
-          ttlMinutes: Math.floor(ttl / 60000),
-          timestamp: new Date().toISOString(),
-        },
-        "License fetch failed, caching null result with short TTL for faster retry"
-      );
+    // If Redis itself is down, skip the polling loop (it would just fail repeatedly)
+    // and go directly to fetching from the server.
+    if (redisError) {
+      logger.warn("Redis unavailable during license fetch lock; skipping poll and fetching directly");
+      return await fetchLicenseFromServerInternal();
     }
 
-    await cache.set(getCacheKeys().FETCH_LICENSE_CACHE_KEY, { value: result }, ttl);
-    return result;
+    // Another process holds the lock — poll until the cache is populated or timeout
+    const deadline = Date.now() + LICENSE_FETCH_POLL_MS;
+    while (Date.now() < deadline) {
+      await sleep(LICENSE_FETCH_POLL_INTERVAL_MS);
+      const value = await getCachedLicense();
+      if (value !== undefined) return value;
+    }
+
+    logger.warn(
+      { pollMs: LICENSE_FETCH_POLL_MS },
+      "License cache not populated by holder within poll window; fetching in this process"
+    );
+    const fallback = await fetchLicenseFromServerInternal();
+    const fallbackTtl = fallback ? CONFIG.CACHE.FETCH_LICENSE_TTL_MS : CONFIG.CACHE.FAILED_FETCH_TTL_MS;
+    await cache.set(keys.FETCH_LICENSE_CACHE_KEY, { value: fallback }, fallbackTtl);
+    return fallback;
   })();
 
   fetchLicensePromise
