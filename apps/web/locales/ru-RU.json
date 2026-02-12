@@ -2900,8 +2900,6 @@
     "picture_selection_description": "Попросите респондентов выбрать одно или несколько изображений",
     "preview_survey_ending_card_description": "Пожалуйста, продолжайте регистрацию.",
     "preview_survey_ending_card_headline": "Вы справились!",
-    "preview_survey_input_headline": "Есть ещё что-то, чем хочешь поделиться?",
-    "preview_survey_input_placeholder": "Оставь заметку...",
     "preview_survey_name": "Новый опрос",
     "preview_survey_question_1_headline": "Как бы вы оценили {projectName}?",
     "preview_survey_question_1_lower_label": "Плохо",

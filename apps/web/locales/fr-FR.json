@@ -2900,8 +2900,6 @@
     "picture_selection_description": "Demandez aux répondants de choisir une ou plusieurs images",
     "preview_survey_ending_card_description": "Continue ton onboarding, s'il te plaît.",
     "preview_survey_ending_card_headline": "C'est fait !",
-    "preview_survey_input_headline": "Autre chose à partager ?",
-    "preview_survey_input_placeholder": "Laisse une note...",
     "preview_survey_name": "Nouveau Sondage",
     "preview_survey_question_1_headline": "Comment évalueriez-vous {projectName} ?",
     "preview_survey_question_1_lower_label": "Pas bon",

@@ -2900,8 +2900,6 @@
     "picture_selection_description": "回答者に1つまたは複数の画像を選択させる",
     "preview_survey_ending_card_description": "オンボーディングを続けてください。",
     "preview_survey_ending_card_headline": "完了しました！",
-    "preview_survey_input_headline": "他に共有したいことはありますか？",
-    "preview_survey_input_placeholder": "メモを残す...",
     "preview_survey_name": "新しいアンケート",
     "preview_survey_question_1_headline": "{projectName}をどう評価しますか？",
     "preview_survey_question_1_lower_label": "良くない",

@@ -2900,8 +2900,6 @@
     "picture_selection_description": "要求回應者選擇一張或多張圖片",
     "preview_survey_ending_card_description": "請繼續您的新手上路程序。",
     "preview_survey_ending_card_headline": "您完成了！",
-    "preview_survey_input_headline": "還有其他想分享的嗎？",
-    "preview_survey_input_placeholder": "留下備註⋯⋯",
     "preview_survey_name": "新問卷",
     "preview_survey_question_1_headline": "您對 '{'projectName'}' 的評分如何？",
     "preview_survey_question_1_lower_label": "不好",
