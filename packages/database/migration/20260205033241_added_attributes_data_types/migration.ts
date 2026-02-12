@@ -1,33 +1,12 @@
 import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
+import type { KeyTypeAnalysis, MigrationStats } from "./types";
 
 // Regex patterns as constants for consistency
 // NUMBER_PATTERN: requires digits after decimal if present (e.g., "123", "-45.67")
 const NUMBER_PATTERN = "^-?[0-9]+(\\.[0-9]+)?$";
 // ISO_DATE_PATTERN: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ
 const ISO_DATE_PATTERN = "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z?)?$";
-
-interface KeyTypeAnalysis {
-  id: string;
-  key: string;
-  detected_type: "number" | "date" | "string";
-  non_empty_count: bigint;
-}
-
-interface MigrationStats {
-  totalKeys: number;
-  defaultKeys: number;
-  customKeys: number;
-  processedKeys: number;
-  numberTypeKeys: number;
-  dateTypeKeys: number;
-  stringTypeKeys: number;
-  skippedEmptyKeys: number;
-  totalAttributeRows: number;
-  valueBackfillSkipped: boolean;
-  numberRowsBackfilled: number;
-  dateRowsBackfilled: number;
-}
 
 export const addedAttributesDataTypes: MigrationScript = {
   type: "data",
@@ -48,6 +27,21 @@ export const addedAttributesDataTypes: MigrationScript = {
       numberRowsBackfilled: 0,
       dateRowsBackfilled: 0,
     };
+
+    // ============================================================
+    // Create a session-scoped temp function for safe date casting.
+    // Returns NULL instead of throwing on invalid dates like 2024-02-30.
+    // ============================================================
+    await tx.$executeRaw`
+      CREATE OR REPLACE FUNCTION pg_temp.safe_to_timestamp(text)
+      RETURNS TIMESTAMP AS $$
+      BEGIN
+        RETURN $1::TIMESTAMP;
+      EXCEPTION WHEN OTHERS THEN
+        RETURN NULL;
+      END;
+      $$ LANGUAGE plpgsql
+    `;
 
     // ============================================================
     // STEP 1: Get overall counts for logging
@@ -133,10 +127,10 @@ export const addedAttributesDataTypes: MigrationScript = {
     // ============================================================
     // STEP 3: Update dataType for number keys (in batches)
     // ============================================================
+    const KEY_BATCH_SIZE = 100;
+
     if (numberKeys.length > 0) {
       logger.info(`Step 3: Updating ${numberKeys.length.toString()} keys to 'number' type...`);
-
-      const KEY_BATCH_SIZE = 100;
       for (let i = 0; i < numberKeys.length; i += KEY_BATCH_SIZE) {
         const batch = numberKeys.slice(i, i + KEY_BATCH_SIZE);
         logger.info(`Step 3: Updating batch ${Math.floor(i / KEY_BATCH_SIZE + 1).toString()}...`);
@@ -159,10 +153,9 @@ export const addedAttributesDataTypes: MigrationScript = {
     if (dateKeys.length > 0) {
       logger.info(`Step 4: Updating ${dateKeys.length.toString()} keys to 'date' type...`);
 
-      const DATE_KEY_BATCH_SIZE = 100;
-      for (let i = 0; i < dateKeys.length; i += DATE_KEY_BATCH_SIZE) {
-        const batch = dateKeys.slice(i, i + DATE_KEY_BATCH_SIZE);
-        logger.info(`Step 4: Updating batch ${Math.floor(i / DATE_KEY_BATCH_SIZE + 1).toString()}...`);
+      for (let i = 0; i < dateKeys.length; i += KEY_BATCH_SIZE) {
+        const batch = dateKeys.slice(i, i + KEY_BATCH_SIZE);
+        logger.info(`Step 4: Updating batch ${Math.floor(i / KEY_BATCH_SIZE + 1).toString()}...`);
 
         await tx.$executeRaw`
           UPDATE "ContactAttributeKey"
@@ -182,18 +175,27 @@ export const addedAttributesDataTypes: MigrationScript = {
     // For large datasets (>= 1M rows), skip and point to the standalone script.
     // ============================================================
     const BACKFILL_THRESHOLD = 1_000_000;
+    const backfillKeyIds = [...numberKeys, ...dateKeys];
 
-    const totalAttributeCount = await tx.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*) as count FROM "ContactAttribute"
-    `;
+    if (backfillKeyIds.length === 0) {
+      stats.totalAttributeRows = 0;
+      logger.info("Step 5: No number/date keys detected, skipping value backfill");
+    }
 
-    stats.totalAttributeRows = Number(totalAttributeCount[0].count);
+    if (backfillKeyIds.length > 0) {
+      const backfillRowCount = await tx.$queryRawUnsafe<{ count: bigint }[]>(
+        `SELECT COUNT(*) as count FROM "ContactAttribute" WHERE "attributeKeyId" = ANY($1)`,
+        backfillKeyIds
+      );
+
+      stats.totalAttributeRows = Number(backfillRowCount[0].count);
+    }
 
     logger.info(
-      `Step 5: Total ContactAttribute rows: ${stats.totalAttributeRows.toString()} (threshold: ${BACKFILL_THRESHOLD.toString()})`
+      `Step 5: Rows to backfill: ${stats.totalAttributeRows.toString()} (threshold: ${BACKFILL_THRESHOLD.toString()})`
     );
 
-    if (stats.totalAttributeRows < BACKFILL_THRESHOLD) {
+    if (stats.totalAttributeRows > 0 && stats.totalAttributeRows < BACKFILL_THRESHOLD) {
       // ============================================================
       // STEP 5a: Inline value backfill for number attributes
       // ============================================================
@@ -243,7 +245,7 @@ export const addedAttributesDataTypes: MigrationScript = {
           const batchResult = await tx.$executeRawUnsafe(
             `
             UPDATE "ContactAttribute"
-            SET "valueDate" = value::TIMESTAMP
+            SET "valueDate" = pg_temp.safe_to_timestamp(value)
             WHERE "attributeKeyId" = ANY($1)
               AND "valueDate" IS NULL
               AND TRIM(value) != ''
@@ -263,7 +265,7 @@ export const addedAttributesDataTypes: MigrationScript = {
       } else {
         logger.info("Step 5b: No date keys to backfill, skipping");
       }
-    } else {
+    } else if (stats.totalAttributeRows >= BACKFILL_THRESHOLD) {
       stats.valueBackfillSkipped = true;
       logger.info(
         `Step 5: Skipping value backfill (${stats.totalAttributeRows.toString()} rows >= ${BACKFILL_THRESHOLD.toString()} threshold)`
@@ -296,7 +298,7 @@ Total attribute keys: ${stats.totalKeys.toString()}
     - Date type: ${stats.dateTypeKeys.toString()}
     - String type: ${stats.stringTypeKeys.toString()}
     - Empty (skipped): ${stats.skippedEmptyKeys.toString()}
-Total attribute rows: ${stats.totalAttributeRows.toString()}
+Rows to backfill (number/date keys only): ${stats.totalAttributeRows.toString()}
 ${backfillStatus}
 ========================================`
     );
