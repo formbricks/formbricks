@@ -108,6 +108,33 @@ const determineAttributeTypes = (
 };
 
 /**
+ * Finds values that fail parsing for the given data type.
+ */
+const findInvalidValues = (values: string[], dataType: TContactAttributeDataType): string[] => {
+  return values.filter((value) => {
+    const columns = prepareAttributeColumnsForStorage(value, dataType);
+    return (
+      (dataType === "number" && columns.valueNumber === null) ||
+      (dataType === "date" && columns.valueDate === null)
+    );
+  });
+};
+
+/**
+ * Builds a human-readable error message for invalid attribute values.
+ */
+const buildInvalidValuesError = (
+  key: string,
+  dataType: TContactAttributeDataType,
+  invalidValues: string[]
+): string => {
+  const sampleInvalid = invalidValues.slice(0, 3).join(", ");
+  const additionalCount = invalidValues.length - 3;
+  const suffix = additionalCount > 0 ? ` (and ${additionalCount.toString()} more)` : "";
+  return `Attribute "${key}" is typed as "${dataType}" but received invalid values: ${sampleInvalid}${suffix}`;
+};
+
+/**
  * Validates attribute values against their expected types.
  * For NEW keys (not yet in DB): downgrades to string if values are mixed/invalid.
  * For EXISTING keys: returns errors for invalid values (the type is already set in the DB and must be respected).
@@ -125,31 +152,13 @@ const validateAndAdjustAttributeTypes = (
     if (dataType === "string") continue;
 
     const values = attributeValuesByKey.get(key) || [];
-    const invalidValues: string[] = [];
-
-    for (const value of values) {
-      const columns = prepareAttributeColumnsForStorage(value, dataType);
-      const parseFailed =
-        (dataType === "number" && columns.valueNumber === null) ||
-        (dataType === "date" && columns.valueDate === null);
-
-      if (parseFailed) {
-        invalidValues.push(value);
-      }
-    }
+    const invalidValues = findInvalidValues(values, dataType);
 
     if (invalidValues.length === 0) continue;
 
     if (existingKeySet.has(key)) {
-      // Existing key with a set type - invalid values must be rejected
-      const sampleInvalid = invalidValues.slice(0, 3).join(", ");
-      const additionalCount = invalidValues.length - 3;
-      const suffix = additionalCount > 0 ? ` (and ${additionalCount.toString()} more)` : "";
-      existingKeyErrors.push(
-        `Attribute "${key}" is typed as "${dataType}" but received invalid values: ${sampleInvalid}${suffix}`
-      );
+      existingKeyErrors.push(buildInvalidValuesError(key, dataType, invalidValues));
     } else {
-      // New key - safe to downgrade to string
       attributeTypeMap.set(key, "string");
       newKeyWarnings.push(
         `New attribute "${key}" has mixed or invalid values for type "${dataType}", treating as string type`
