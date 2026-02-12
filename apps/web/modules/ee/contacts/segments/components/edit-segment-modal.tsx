@@ -60,7 +60,7 @@ export const EditSegmentModal = ({
   const tabs = [
     {
       title: t("common.activity"),
-      children: <SegmentActivityTab environmentId={environmentId} currentSegment={currentSegment} />,
+      children: <SegmentActivityTab currentSegment={currentSegment} />,
     },
     {
       title: t("common.settings"),

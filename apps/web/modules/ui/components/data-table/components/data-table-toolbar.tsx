@@ -38,7 +38,7 @@ export const DataTableToolbar = <T,>({
   const { t } = useTranslation();
 
   return (
-    <div className="sticky top-0 z-30 flex w-full items-center justify-between bg-slate-50 py-2">
+    <div className="flex w-full items-center justify-between py-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <SelectedRowSettings
           table={table}

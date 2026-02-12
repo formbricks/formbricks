@@ -10,8 +10,10 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import {
+  DATE_OPERATORS,
   TAllOperators,
   TBaseFilters,
+  TDateOperator,
   TEvaluateSegmentUserAttributeData,
   TEvaluateSegmentUserData,
   TSegment,
@@ -19,9 +21,12 @@ import {
   TSegmentConnector,
   TSegmentCreateInput,
   TSegmentDeviceFilter,
+  TSegmentFilterValue,
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
   TSegmentUpdateInput,
+  TSegmentWithSurveyNames,
+  ZRelativeDateValue,
   ZSegmentCreateInput,
   ZSegmentFilters,
   ZSegmentUpdateInput,
@@ -29,12 +34,15 @@ import {
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
 import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
+import { isSameDay, subtractTimeUnit } from "./date-utils";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {
     surveys: {
       select: {
         id: true;
+        name: true;
+        status: true;
       };
     };
   };
@@ -58,14 +66,24 @@ export const selectSegment = {
   },
 } satisfies Prisma.SegmentSelect;
 
-export const transformPrismaSegment = (segment: PrismaSegment): TSegment => {
+export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurveyNames => {
+  const activeSurveys = segment.surveys
+    .filter((survey) => survey.status === "inProgress")
+    .map((survey) => survey.name);
+
+  const inactiveSurveys = segment.surveys
+    .filter((survey) => survey.status !== "inProgress")
+    .map((survey) => survey.name);
+
   return {
     ...segment,
     surveys: segment.surveys.map((survey) => survey.id),
+    activeSurveys,
+    inactiveSurveys,
   };
 };
 
-export const getSegment = reactCache(async (segmentId: string): Promise<TSegment> => {
+export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithSurveyNames> => {
   validateInputs([segmentId, ZId]);
   try {
     const segment = await prisma.segment.findUnique({
@@ -89,7 +107,7 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
   }
 });
 
-export const getSegments = reactCache(async (environmentId: string): Promise<TSegment[]> => {
+export const getSegments = reactCache(async (environmentId: string): Promise<TSegmentWithSurveyNames[]> => {
   validateInputs([environmentId, ZId]);
   try {
     const segments = await prisma.segment.findMany({
@@ -381,13 +399,34 @@ const evaluateAttributeFilter = (
 ): boolean => {
   const { value, qualifier, root } = filter;
   const { contactAttributeKey } = root;
+  const { operator } = qualifier;
 
   const attributeValue = attributes[contactAttributeKey];
-  if (!attributeValue) {
+
+  // Handle isSet and isNotSet operators first - they have special logic
+  if (operator === "isSet") {
+    // Return true if the attribute exists and has a truthy value
+    return attributeValue !== undefined && attributeValue !== null && attributeValue !== "";
+  }
+
+  if (operator === "isNotSet") {
+    // Return true if the attribute doesn't exist or has a falsy value
+    return attributeValue === undefined || attributeValue === null || attributeValue === "";
+  }
+
+  // For all other operators, if the attribute doesn't exist, return false
+  if (attributeValue === undefined || attributeValue === null) {
     return false;
   }
 
-  const attResult = compareValues(attributeValue, value, qualifier.operator);
+  // Check if this is a date operator
+  if (isDateOperator(operator)) {
+    return evaluateDateFilter(String(attributeValue), value, operator);
+  }
+
+  // Use standard comparison for non-date operators
+  // For non-date operators, value is always string | number
+  const attResult = compareValues(attributeValue, value as string | number, operator);
   return attResult;
 };
 
@@ -396,7 +435,8 @@ const evaluatePersonFilter = (userId: string, filter: TSegmentPersonFilter): boo
   const { personIdentifier } = root;
 
   if (personIdentifier === "userId") {
-    const attResult = compareValues(userId, value, qualifier.operator);
+    // For userId comparison, value is always string | number
+    const attResult = compareValues(userId, value as string | number, qualifier.operator);
     return attResult;
   }
 
@@ -437,7 +477,62 @@ const evaluateSegmentFilter = async (
 
 const evaluateDeviceFilter = (device: "phone" | "desktop", filter: TSegmentDeviceFilter): boolean => {
   const { value, qualifier } = filter;
-  return compareValues(device, value, qualifier.operator);
+  // For device comparison, value is always string | number
+  return compareValues(device, value as string | number, qualifier.operator);
+};
+
+/**
+ * Checks if an operator is a date-specific operator
+ */
+const isDateOperator = (operator: TAllOperators): operator is TDateOperator => {
+  return DATE_OPERATORS.includes(operator as TDateOperator);
+};
+
+/**
+ * Evaluates a date filter against an attribute value
+ */
+const evaluateDateFilter = (
+  attributeValue: string,
+  filterValue: TSegmentFilterValue,
+  operator: TDateOperator
+): boolean => {
+  // Parse the attribute value as a date
+  const attrDate = new Date(attributeValue);
+
+  // Validate the attribute value is a valid date
+  if (Number.isNaN(attrDate.getTime())) {
+    return false;
+  }
+
+  // Check if filterValue is a relative date value (e.g., { amount: 30, unit: "days" })
+  const relativeDateParsed = ZRelativeDateValue.safeParse(filterValue);
+
+  if (relativeDateParsed.success) {
+    const now = new Date();
+    const threshold = subtractTimeUnit(now, relativeDateParsed.data.amount, relativeDateParsed.data.unit);
+    return operator === "isOlderThan" ? attrDate < threshold : attrDate >= threshold;
+  }
+
+  // Handle absolute date operators
+  switch (operator) {
+    case "isBefore":
+    case "isAfter":
+    case "isSameDay": {
+      if (typeof filterValue !== "string") return false;
+      const compareDate = new Date(filterValue);
+      if (operator === "isBefore") return attrDate < compareDate;
+      if (operator === "isAfter") return attrDate > compareDate;
+      return isSameDay(attrDate, compareDate);
+    }
+    case "isBetween": {
+      if (!Array.isArray(filterValue) || filterValue.length !== 2) return false;
+      const startDate = new Date(filterValue[0]);
+      const endDate = new Date(filterValue[1]);
+      return attrDate >= startDate && attrDate <= endDate;
+    }
+    default:
+      return false;
+  }
 };
 
 export const compareValues = (

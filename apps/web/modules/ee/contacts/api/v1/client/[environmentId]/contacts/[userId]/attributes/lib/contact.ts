@@ -2,7 +2,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 
 export const getContactByUserIdWithAttributes = reactCache(
-  async (environmentId: string, userId: string, updatedAttributes: Record<string, string>) => {
+  async (environmentId: string, userId: string, updatedAttributes: Record<string, string | number>) => {
     const contact = await prisma.contact.findFirst({
       where: {
         environmentId,

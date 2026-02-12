@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/helper";
+import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { CsvTable } from "@/modules/ee/contacts/components/csv-table";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
@@ -53,19 +54,19 @@ export const UploadContactsCSVButton = ({
 
     // Check file type
     if (!file.type && !file.name.endsWith(".csv")) {
-      setError("Please upload a CSV file");
+      setError(t("environments.contacts.upload_contacts_error_invalid_file_type"));
       return;
     }
 
     if (file.type && file.type !== "text/csv" && !file.type.includes("csv")) {
-      setError("Please upload a CSV file");
+      setError(t("environments.contacts.upload_contacts_error_invalid_file_type"));
       return;
     }
 
     // Max file size check (800KB)
     const maxSizeInBytes = 800 * 1024;
     if (file.size > maxSizeInBytes) {
-      setError("File size exceeds the maximum limit of 800KB");
+      setError(t("environments.contacts.upload_contacts_error_file_too_large"));
       return;
     }
 
@@ -88,9 +89,7 @@ export const UploadContactsCSVButton = ({
         }
 
         if (!parsedRecords.data.length) {
-          setError(
-            "The uploaded CSV file does not contain any valid contacts, please see the sample CSV file for the correct format."
-          );
+          setError(t("environments.contacts.upload_contacts_error_no_valid_contacts"));
           return;
         }
 
@@ -120,6 +119,18 @@ export const UploadContactsCSVButton = ({
 
     return headers.map((header) => header.trim());
   }, [csvResponse]);
+
+  // Filter columns to only show those that can be mapped (existing attributes or valid new keys)
+  const validCsvColumns = useMemo(() => {
+    return csvColumns.filter((column) => {
+      // Check if column matches an existing attribute
+      const matchesExisting = contactAttributeKeys.some((attrKey) =>
+        isStringMatch(column, attrKey.name ?? attrKey.key)
+      );
+      // If it matches existing or is a valid safe identifier, include it
+      return matchesExisting || isSafeIdentifier(column);
+    });
+  }, [csvColumns, contactAttributeKeys]);
 
   const resetState = (closeModal?: boolean) => {
     setCSVResponse([]);
@@ -157,7 +168,11 @@ export const UploadContactsCSVButton = ({
         .filter(([_, value]) => duplicateValues.includes(value))
         .map(([key, _]) => key);
 
-      setError(`Duplicate mappings found for the following attributes: ${duplicateAttributeKeys.join(", ")}`);
+      setError(
+        t("environments.contacts.upload_contacts_error_duplicate_mappings", {
+          attributes: duplicateAttributeKeys.join(", "),
+        })
+      );
       errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       setLoading(false);
       return;
@@ -192,6 +207,23 @@ export const UploadContactsCSVButton = ({
     });
 
     if (result?.data) {
+      if ("validationErrors" in result.data) {
+        const { validationErrors } = result.data;
+        const errorMessages = validationErrors.map((err) => {
+          const sampleInvalid = err.invalidValues.slice(0, 3).join(", ");
+          const additionalCount = err.invalidValues.length - 3;
+          const suffix = additionalCount > 0 ? ` (${additionalCount.toString()} more)` : "";
+          return t("environments.contacts.upload_contacts_error_attribute_type_mismatch", {
+            key: err.key,
+            dataType: err.dataType,
+            values: `${sampleInvalid}${suffix}`,
+          });
+        });
+        setError(errorMessages.join("\n"));
+        setLoading(false);
+        return;
+      }
+
       setError("");
       toast.success(t("environments.contacts.upload_contacts_success"));
       resetState(true);
@@ -202,6 +234,8 @@ export const UploadContactsCSVButton = ({
 
     if (result?.serverError) {
       setError(result.serverError);
+      setLoading(false);
+      return;
     }
 
     if (result?.validationErrors) {
@@ -212,8 +246,10 @@ export const UploadContactsCSVButton = ({
       if (csvDataErrors) {
         setError(csvDataErrors);
       } else {
-        setError("An error occurred while uploading the contacts. Please try again later.");
+        setError(t("environments.contacts.upload_contacts_error_generic"));
       }
+      setLoading(false);
+      return;
     }
 
     setLoading(false);
@@ -221,36 +257,96 @@ export const UploadContactsCSVButton = ({
 
   useEffect(() => {
     const matches: Record<string, string> = {};
+    const invalidColumns: string[] = [];
+
     for (const columnName of csvColumns) {
+      let matched = false;
       for (const attributeKey of contactAttributeKeys) {
         if (isStringMatch(columnName, attributeKey.name ?? attributeKey.key)) {
           matches[columnName] = attributeKey.id;
+          matched = true;
           break;
         }
       }
 
-      if (!matches[columnName]) {
+      if (!matched) {
+        // This column will become a new attribute - validate it's a safe identifier
+        if (!isSafeIdentifier(columnName)) {
+          invalidColumns.push(columnName);
+        }
         matches[columnName] = columnName;
       }
     }
 
     setAttributeMap(matches);
-  }, [contactAttributeKeys, csvColumns]);
+
+    // Show error for invalid column names that would become new attributes
+    if (invalidColumns.length > 0) {
+      setError(
+        t("environments.contacts.invalid_csv_column_names", {
+          columns: invalidColumns.join(", "),
+        })
+      );
+    }
+  }, [contactAttributeKeys, csvColumns, t]);
 
   useEffect(() => {
     if (error && errorContainerRef.current) {
-      errorContainerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Small delay to ensure DOM has updated and the alert is visible
+      setTimeout(() => {
+        errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
     }
   }, [error]);
 
   // Function to download an example CSV
   const handleDownloadExampleCSV = () => {
     const exampleData = [
-      { email: "user1@example.com", userId: "1001", firstName: "John", lastName: "Doe" },
-      { email: "user2@example.com", userId: "1002", firstName: "Jane", lastName: "Smith" },
-      { email: "user3@example.com", userId: "1003", firstName: "Mark", lastName: "Jones" },
-      { email: "user4@example.com", userId: "1004", firstName: "Emily", lastName: "Brown" },
-      { email: "user5@example.com", userId: "1005", firstName: "David", lastName: "Wilson" },
+      {
+        email: "user1@example.com",
+        userId: "1001",
+        first_name: "John",
+        last_name: "Doe",
+        age: "28",
+        plan: "premium",
+        signup_date: "2024-01-15",
+      },
+      {
+        email: "user2@example.com",
+        userId: "1002",
+        first_name: "Jane",
+        last_name: "Smith",
+        age: "34",
+        plan: "free",
+        signup_date: "2024-02-20",
+      },
+      {
+        email: "user3@example.com",
+        userId: "1003",
+        first_name: "Mark",
+        last_name: "Jones",
+        age: "45",
+        plan: "enterprise",
+        signup_date: "2023-11-08",
+      },
+      {
+        email: "user4@example.com",
+        userId: "1004",
+        first_name: "Emily",
+        last_name: "Brown",
+        age: "22",
+        plan: "premium",
+        signup_date: "2024-03-01",
+      },
+      {
+        email: "user5@example.com",
+        userId: "1005",
+        first_name: "David",
+        last_name: "Wilson",
+        age: "31",
+        plan: "free",
+        signup_date: "2024-01-28",
+      },
     ];
 
     const headers = Object.keys(exampleData[0]);
@@ -318,9 +414,11 @@ export const UploadContactsCSVButton = ({
           <DialogBody unconstrained={false}>
             <div className="flex flex-col gap-4">
               {error ? (
-                <Alert variant="error" size="small">
-                  {error}
-                </Alert>
+                <div ref={errorContainerRef}>
+                  <Alert variant="error" size="small">
+                    {error}
+                  </Alert>
+                </div>
               ) : null}
               <div className="flex flex-col gap-2">
                 <div className="no-scrollbar rounded-md border-2 border-dashed border-slate-300 bg-slate-50 p-4">
@@ -378,8 +476,15 @@ export const UploadContactsCSVButton = ({
                     {t("environments.contacts.upload_contacts_modal_attributes_description")}
                   </p>
 
-                  <div className="flex flex-col gap-2">
-                    {csvColumns.map((column, index) => {
+                  <div className="grid grid-cols-[minmax(150px,1fr)_minmax(200px,2fr)] gap-x-4 gap-y-3">
+                    <div className="font-medium text-slate-900">
+                      {t("environments.contacts.upload_contacts_modal_csv_column_header")}
+                    </div>
+                    <div className="font-medium text-slate-900">
+                      {t("environments.contacts.upload_contacts_modal_attribute_header")}
+                    </div>
+
+                    {validCsvColumns.map((column, index) => {
                       return (
                         <UploadContactsAttributes
                           key={index}
@@ -448,7 +553,10 @@ export const UploadContactsCSVButton = ({
               </Button>
             ) : null}
 
-            <Button onClick={handleUpload} loading={loading} disabled={loading || !csvResponse.length}>
+            <Button
+              onClick={handleUpload}
+              loading={loading}
+              disabled={loading || !csvResponse.length || !!error}>
               {t("environments.contacts.upload_contacts_modal_upload_btn")}
             </Button>
           </DialogFooter>

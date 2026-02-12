@@ -1,6 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { readAttributeValue } from "@/modules/ee/contacts/lib/attribute-storage";
 import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
 
 export const createContact = async (
@@ -115,10 +116,10 @@ export const createContact = async (
       },
     });
 
-    // Format the response with flattened attributes
+    // Format the response with flattened attributes, resolving from typed columns
     const flattenedAttributes: Record<string, string> = {};
     result.attributes.forEach((attr) => {
-      flattenedAttributes[attr.attributeKey.key] = attr.value;
+      flattenedAttributes[attr.attributeKey.key] = readAttributeValue(attr, attr.attributeKey.dataType);
     });
 
     const response: TContactResponse = {

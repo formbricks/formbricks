@@ -1,8 +1,9 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 
 export const getContactAttributeKeys = reactCache(
   async (environmentId: string): Promise<TContactAttributeKey[]> => {
@@ -28,15 +29,17 @@ export const createContactAttributeKey = async (data: {
   key: string;
   name?: string;
   description?: string;
+  dataType?: TContactAttributeDataType;
 }): Promise<TContactAttributeKey> => {
   try {
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
         key: data.key,
-        name: data.name ?? data.key,
+        name: data.name ?? formatSnakeCaseToTitleCase(data.key),
         description: data.description ?? null,
         environmentId: data.environmentId,
         type: "custom",
+        ...(data.dataType && { dataType: data.dataType }),
       },
     });
 
@@ -63,7 +66,6 @@ export const updateContactAttributeKey = async (
   });
 
   if (!existingKey) {
-    console.log("throwing resource not found error");
     throw new ResourceNotFoundError("contactAttributeKey", id);
   }
 

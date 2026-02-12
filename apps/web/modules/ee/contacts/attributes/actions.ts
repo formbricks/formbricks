@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -24,6 +25,7 @@ const ZCreateContactAttributeKeyAction = z.object({
   }),
   name: z.string().optional(),
   description: z.string().optional(),
+  dataType: ZContactAttributeDataType.optional(),
 });
 
 type TCreateContactAttributeKeyActionInput = z.infer<typeof ZCreateContactAttributeKeyAction>;
@@ -66,6 +68,7 @@ export const createContactAttributeKeyAction = authenticatedActionClient
           key: parsedInput.key,
           name: parsedInput.name,
           description: parsedInput.description,
+          dataType: parsedInput.dataType,
         });
 
         ctx.auditLoggingCtx.newObject = contactAttributeKey;

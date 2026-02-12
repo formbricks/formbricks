@@ -19,6 +19,8 @@ import tailwindcss from "@tailwindcss/vite";
  */
 export default defineConfig({
   build: {
+    // Keep dist when running watch so surveys (and others) can resolve types during parallel go
+    emptyOutDir: false,
     lib: {
       entry: "src/index.ts",
       formats: ["es"],

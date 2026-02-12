@@ -5,7 +5,7 @@ import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getContactByUserIdWithAttributes } from "./lib/contact";
 
@@ -25,11 +25,15 @@ const validateParams = (
   return { isValid: true };
 };
 
-const checkIfAttributesNeedUpdate = (contact: any, updatedAttributes: Record<string, string>) => {
-  const oldAttributes = new Map(contact.attributes.map((attr: any) => [attr.attributeKey.key, attr.value]));
+const checkIfAttributesNeedUpdate = (
+  contact: { attributes: { attributeKey: { key: string }; value: string }[] },
+  updatedAttributes: Record<string, string | number>
+) => {
+  const oldAttributes = new Map(contact.attributes.map((attr) => [attr.attributeKey.key, attr.value]));
 
   for (const [key, value] of Object.entries(updatedAttributes)) {
-    if (value !== oldAttributes.get(key)) {
+    // Convert value to string for comparison since stored values are strings
+    if (String(value) !== oldAttributes.get(key)) {
       return false; // needs update
     }
   }
@@ -103,14 +107,20 @@ export const PUT = withV1ApiWrapper({
       }
 
       // Perform update
-      const { messages } = await updateAttributes(contact.id, userId, environmentId, updatedAttributes);
+      const { messages, errors } = await updateAttributes(
+        contact.id,
+        userId,
+        environmentId,
+        updatedAttributes
+      );
 
       return {
         response: responses.successResponse(
           {
             changed: true,
             message: "The person was successfully updated.",
-            ...(messages && messages.length > 0 ? { messages } : {}),
+            ...(messages && messages.length > 0 ? { messages: messages.map(formatAttributeMessage) } : {}),
+            ...(errors && errors.length > 0 ? { errors: errors.map(formatAttributeMessage) } : {}),
           },
           true
         ),
