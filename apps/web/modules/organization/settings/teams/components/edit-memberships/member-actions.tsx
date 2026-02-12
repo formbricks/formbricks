@@ -33,7 +33,6 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showShareInviteModal, setShowShareInviteModal] = useState(false);
-
   const [shareInviteToken, setShareInviteToken] = useState("");
 
   const handleDeleteMember = async () => {
@@ -42,14 +41,27 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       if (!member && invite) {
         // This is an invite
 
-        await deleteInviteAction({ inviteId: invite?.id, organizationId: organization.id });
+        const result = await deleteInviteAction({ inviteId: invite?.id, organizationId: organization.id });
+        if (result?.serverError) {
+          toast.error(getFormattedErrorMessage(result));
+          setIsDeleting(false);
+          return;
+        }
         toast.success(t("environments.settings.general.invite_deleted_successfully"));
       }
 
       if (member && !invite) {
         // This is a member
 
-        await deleteMembershipAction({ userId: member.userId, organizationId: organization.id });
+        const result = await deleteMembershipAction({
+          userId: member.userId,
+          organizationId: organization.id,
+        });
+        if (result?.serverError) {
+          toast.error(getFormattedErrorMessage(result));
+          setIsDeleting(false);
+          return;
+        }
         toast.success(t("environments.settings.general.member_deleted_successfully"));
       }
 
@@ -111,7 +123,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex justify-end gap-2">
       <TooltipRenderer tooltipContent={t("common.delete")} shouldRender={!!showDeleteButton}>
         <Button
           variant="destructive"

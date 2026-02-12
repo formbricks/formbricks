@@ -2,18 +2,20 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon, SparklesIcon } from "lucide-react";
-import React from "react";
+import { CheckIcon } from "lucide-react";
+import React, { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
-import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { mixColor } from "@/lib/utils/colors";
-import { Button } from "@/modules/ui/components/button";
-import { ColorPicker } from "@/modules/ui/components/color-picker";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import {
+  ColorField,
+  DimensionInput,
+  NumberField,
+  StylingSection,
+  TextField,
+} from "@/modules/ui/components/styling-fields";
 
 type FormStylingSettingsProps = {
   open: boolean;
@@ -31,45 +33,12 @@ export const FormStylingSettings = ({
   form,
 }: FormStylingSettingsProps) => {
   const { t } = useTranslation();
-  const brandColor = form.watch("brandColor.light") || COLOR_DEFAULTS.brandColor;
-  const background = form.watch("background");
-  const highlightBorderColor = form.watch("highlightBorderColor");
-
-  const setQuestionColor = (color: string) => form.setValue("questionColor.light", color);
-  const setInputColor = (color: string) => form.setValue("inputColor.light", color);
-  const setInputBorderColor = (color: string) => form.setValue("inputBorderColor.light", color);
-  const setCardBackgroundColor = (color: string) => form.setValue("cardBackgroundColor.light", color);
-  const setCardBorderColor = (color: string) => form.setValue("cardBorderColor.light", color);
-
-  const setBackgroundColor = (color: string) => {
-    form.setValue("background", {
-      bg: color,
-      bgType: "color",
-    });
-  };
-  const setHighlightBorderColor = (color: string) => {
-    form.setValue("highlightBorderColor", { light: mixColor(color, "#ffffff", 0.25) });
-  };
-
-  const suggestColors = () => {
-    // mix the brand color with different weights of white and set the result as the other colors
-    setQuestionColor(mixColor(brandColor, "#000000", 0.35));
-    setInputColor(mixColor(brandColor, "#ffffff", 0.92));
-    setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
-
-    setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.97));
-    setCardBorderColor(mixColor(brandColor, "#ffffff", 0.8));
-
-    if (!background || background?.bgType === "color") {
-      setBackgroundColor(mixColor(brandColor, "#ffffff", 0.855));
-    }
-
-    if (highlightBorderColor) {
-      setHighlightBorderColor(brandColor);
-    }
-  };
 
   const [parent] = useAutoAnimate();
+  const [headlinesOpen, setHeadlinesOpen] = useState(false);
+  const [inputsOpen, setInputsOpen] = useState(false);
+  const [buttonsOpen, setButtonsOpen] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   return (
     <Collapsible.Root
@@ -110,110 +79,291 @@ export const FormStylingSettings = ({
       <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
 
-        <div className="flex flex-col gap-6 p-6 pt-2">
-          <div className="flex flex-col gap-2">
-            <FormField
-              control={form.control}
-              name="brandColor.light"
-              render={({ field }) => (
-                <FormItem className="space-y-4">
-                  <div>
-                    <FormLabel>{t("environments.surveys.edit.brand_color")}</FormLabel>
-                    <FormDescription>
-                      {t("environments.surveys.edit.change_the_brand_color_of_the_survey")}
-                    </FormDescription>
-                  </div>
+        <div className="flex flex-col gap-6 p-6">
+          {/* Headlines & Descriptions */}
+          <StylingSection
+            title={t("environments.workspace.look.advanced_styling_section_headlines")}
+            open={headlinesOpen}
+            setOpen={setHeadlinesOpen}>
+            <div className="grid grid-cols-2 gap-4">
+              <ColorField
+                form={form}
+                name="elementHeadlineColor.light"
+                label={t("environments.workspace.look.advanced_styling_field_headline_color")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_headline_color_description"
+                )}
+              />
+              <ColorField
+                form={form}
+                name="elementDescriptionColor.light"
+                label={t("environments.workspace.look.advanced_styling_field_description_color")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_description_color_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="elementHeadlineFontSize"
+                label={t("environments.workspace.look.advanced_styling_field_headline_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_headline_size_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="elementDescriptionFontSize"
+                label={t("environments.workspace.look.advanced_styling_field_description_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_description_size_description"
+                )}
+              />
+              <NumberField
+                form={form}
+                name="elementHeadlineFontWeight"
+                label={t("environments.workspace.look.advanced_styling_field_headline_weight")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_headline_weight_description"
+                )}
+              />
+              <NumberField
+                form={form}
+                name="elementDescriptionFontWeight"
+                label={t("environments.workspace.look.advanced_styling_field_description_weight")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_description_weight_description"
+                )}
+              />
+              <ColorField
+                form={form}
+                name="elementUpperLabelColor.light"
+                label={t("environments.workspace.look.advanced_styling_field_upper_label_color")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_upper_label_color_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="elementUpperLabelFontSize"
+                label={t("environments.workspace.look.advanced_styling_field_upper_label_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_upper_label_size_description"
+                )}
+              />
+              <NumberField
+                form={form}
+                name="elementUpperLabelFontWeight"
+                label={t("environments.workspace.look.advanced_styling_field_upper_label_weight")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_upper_label_weight_description"
+                )}
+              />
+            </div>
+          </StylingSection>
 
-                  <FormControl>
-                    <ColorPicker
-                      color={field.value || COLOR_DEFAULTS.brandColor}
-                      onChange={(color) => field.onChange(color)}
-                      containerClass="max-w-xs"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+          {/* Inputs */}
+          <StylingSection
+            title={t("environments.workspace.look.advanced_styling_section_inputs")}
+            open={inputsOpen}
+            setOpen={setInputsOpen}>
+            <div className="grid grid-cols-2 gap-4">
+              <ColorField
+                form={form}
+                name="inputColor.light"
+                label={t("environments.surveys.edit.input_color")}
+                description={t("environments.surveys.edit.input_color_description")}
+              />
+              <ColorField
+                form={form}
+                name="inputBorderColor.light"
+                label={t("environments.surveys.edit.input_border_color")}
+                description={t("environments.surveys.edit.input_border_color_description")}
+              />
+              <ColorField
+                form={form}
+                name="inputTextColor.light"
+                label={t("environments.workspace.look.advanced_styling_field_input_text")}
+                description={t("environments.workspace.look.advanced_styling_field_input_text_description")}
+              />
+              <div className="hidden" /> {/* Spacer if needed, or remove for auto flow */}
+              <DimensionInput
+                form={form}
+                name="inputBorderRadius"
+                label={t("environments.workspace.look.advanced_styling_field_border_radius")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_border_radius_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="inputHeight"
+                label={t("environments.workspace.look.advanced_styling_field_height")}
+                description={t("environments.workspace.look.advanced_styling_field_input_height_description")}
+              />
+              <DimensionInput
+                form={form}
+                name="inputFontSize"
+                label={t("environments.workspace.look.advanced_styling_field_font_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_font_size_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="inputPaddingX"
+                label={t("environments.workspace.look.advanced_styling_field_padding_x")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_padding_x_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="inputPaddingY"
+                label={t("environments.workspace.look.advanced_styling_field_padding_y")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_padding_y_description"
+                )}
+              />
+              <NumberField
+                form={form}
+                name="inputPlaceholderOpacity"
+                label={t("environments.workspace.look.advanced_styling_field_placeholder_opacity")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_input_placeholder_opacity_description"
+                )}
+                step={0.1}
+                max={1}
+              />
+              <TextField
+                form={form}
+                name="inputShadow"
+                label={t("environments.workspace.look.advanced_styling_field_shadow")}
+                description={t("environments.workspace.look.advanced_styling_field_input_shadow_description")}
+              />
+            </div>
+          </StylingSection>
 
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="w-fit"
-              onClick={() => suggestColors()}>
-              {t("environments.surveys.edit.suggest_colors")}
-              <SparklesIcon />
-            </Button>
-          </div>
+          {/* Buttons */}
+          <StylingSection
+            title={t("environments.workspace.look.advanced_styling_section_buttons")}
+            open={buttonsOpen}
+            setOpen={setButtonsOpen}>
+            <div className="grid grid-cols-2 gap-4">
+              <ColorField
+                form={form}
+                name="buttonBgColor.light"
+                label={t("environments.workspace.look.advanced_styling_field_button_bg")}
+                description={t("environments.workspace.look.advanced_styling_field_button_bg_description")}
+              />
+              <ColorField
+                form={form}
+                name="buttonTextColor.light"
+                label={t("environments.workspace.look.advanced_styling_field_button_text")}
+                description={t("environments.workspace.look.advanced_styling_field_button_text_description")}
+              />
+              <DimensionInput
+                form={form}
+                name="buttonBorderRadius"
+                label={t("environments.workspace.look.advanced_styling_field_border_radius")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_border_radius_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="buttonHeight"
+                label={t("environments.workspace.look.advanced_styling_field_height")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_height_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="buttonFontSize"
+                label={t("environments.workspace.look.advanced_styling_field_font_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_font_size_description"
+                )}
+              />
+              <NumberField
+                form={form}
+                name="buttonFontWeight"
+                label={t("environments.workspace.look.advanced_styling_field_font_weight")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_font_weight_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="buttonPaddingX"
+                label={t("environments.workspace.look.advanced_styling_field_padding_x")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_padding_x_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="buttonPaddingY"
+                label={t("environments.workspace.look.advanced_styling_field_padding_y")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_button_padding_y_description"
+                )}
+              />
+            </div>
+          </StylingSection>
 
-          <FormField
-            control={form.control}
-            name="questionColor.light"
-            render={({ field }) => (
-              <FormItem className="space-y-4">
-                <div>
-                  <FormLabel>{t("environments.surveys.edit.question_color")}</FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.edit.change_the_question_color_of_the_survey")}
-                  </FormDescription>
-                </div>
-
-                <FormControl>
-                  <ColorPicker
-                    color={field.value || COLOR_DEFAULTS.questionColor}
-                    onChange={(color) => field.onChange(color)}
-                    containerClass="max-w-xs"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="inputColor.light"
-            render={({ field }) => (
-              <FormItem className="space-y-4">
-                <div>
-                  <FormLabel>{t("environments.surveys.edit.input_color")}</FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.edit.change_the_background_color_of_the_input_fields")}
-                  </FormDescription>
-                </div>
-
-                <FormControl>
-                  <ColorPicker
-                    color={field.value || COLOR_DEFAULTS.inputColor}
-                    onChange={(color: string) => field.onChange(color)}
-                    containerClass="max-w-xs"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="inputBorderColor.light"
-            render={({ field }) => (
-              <FormItem className="space-y-4">
-                <div>
-                  <FormLabel>{t("environments.surveys.edit.input_border_color")}</FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.edit.change_the_border_color_of_the_input_fields")}
-                  </FormDescription>
-                </div>
-
-                <FormControl>
-                  <ColorPicker
-                    color={field.value || COLOR_DEFAULTS.inputBorderColor}
-                    onChange={(color: string) => field.onChange(color)}
-                    containerClass="max-w-xs"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+          {/* Options */}
+          <StylingSection
+            title={t("environments.workspace.look.advanced_styling_section_options")}
+            open={optionsOpen}
+            setOpen={setOptionsOpen}>
+            <div className="grid grid-cols-2 gap-4">
+              <ColorField
+                form={form}
+                name="optionBgColor.light"
+                label={t("environments.workspace.look.advanced_styling_field_option_bg")}
+                description={t("environments.workspace.look.advanced_styling_field_option_bg_description")}
+              />
+              <ColorField
+                form={form}
+                name="optionLabelColor.light"
+                label={t("environments.workspace.look.advanced_styling_field_option_label")}
+                description={t("environments.workspace.look.advanced_styling_field_option_label_description")}
+              />
+              <DimensionInput
+                form={form}
+                name="optionBorderRadius"
+                label={t("environments.workspace.look.advanced_styling_field_border_radius")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_option_border_radius_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="optionPaddingX"
+                label={t("environments.workspace.look.advanced_styling_field_padding_x")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_option_padding_x_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="optionPaddingY"
+                label={t("environments.workspace.look.advanced_styling_field_padding_y")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_option_padding_y_description"
+                )}
+              />
+              <DimensionInput
+                form={form}
+                name="optionFontSize"
+                label={t("environments.workspace.look.advanced_styling_field_font_size")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_option_font_size_description"
+                )}
+              />
+            </div>
+          </StylingSection>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

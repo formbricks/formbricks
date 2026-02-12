@@ -275,7 +275,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("button", { name: "Confirm" }).click();
     await page.getByLabel("German").click();
     await page.locator("#welcome-toggle").click();
-    await page.getByText("Welcome CardShownOn").click();
 
     // Add questions in default language
     await page.getByText("Add Block").click();
@@ -447,9 +446,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page
@@ -474,9 +473,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page
@@ -494,9 +493,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page
@@ -518,9 +517,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page
@@ -542,9 +541,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page
@@ -562,9 +561,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page
@@ -582,9 +581,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page
@@ -616,9 +615,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page
@@ -658,9 +657,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page
@@ -688,9 +687,9 @@ test.describe("Multi Language Survey Create", async () => {
       .getByRole("textbox", { name: "Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: '“Back” Button Label', exact: true }).first().click();
+    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
     await page
-      .getByRole("textbox", { name: '“Back” Button Label', exact: true })
+      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
       .first()
       .fill(surveys.germanCreate.back);
     await page

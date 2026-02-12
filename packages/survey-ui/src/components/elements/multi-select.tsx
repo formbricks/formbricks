@@ -148,15 +148,15 @@ function DropdownVariant({
           <Button
             variant="outline"
             disabled={disabled}
-            className="rounded-input w-full justify-between bg-option-bg rounded-option border border-option-border my-0 h-input"
+            className="rounded-input bg-option-bg rounded-option border-option-border h-input my-0 w-full justify-between border"
             aria-invalid={Boolean(errorMessage)}
             aria-label={headline}>
-            <span className="truncate font-input font-input-weight text-input-text">{displayText}</span>
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 label-headline" />
+            <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
+            <ChevronDown className="label-headline ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto"
+          className="bg-option-bg max-h-[300px] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
           align="start">
           {options
             .filter((option) => option.id !== "none")
@@ -318,8 +318,7 @@ function ListVariant({
                     aria-invalid={Boolean(errorMessage)}
                   />
                   <span
-                    className={cn("mx-3", optionLabelClassName)}
-                    style={{ fontSize: "var(--fb-option-font-size)" }}>
+                    className={cn("mx-3", optionLabelClassName)}>
                     {option.label}
                   </span>
                 </span>
@@ -350,8 +349,7 @@ function ListVariant({
                   aria-invalid={Boolean(errorMessage)}
                 />
                 <span
-                  className={cn("mx-3 grow", optionLabelClassName)}
-                  style={{ fontSize: "var(--fb-option-font-size)" }}>
+                  className={cn("mx-3 grow", optionLabelClassName)}>
                   {otherOptionLabel}
                 </span>
               </span>
@@ -399,8 +397,7 @@ function ListVariant({
                     aria-invalid={Boolean(errorMessage)}
                   />
                   <span
-                    className={cn("mx-3", optionLabelClassName)}
-                    style={{ fontSize: "var(--fb-option-font-size)" }}>
+                    className={cn("mx-3", optionLabelClassName)}>
                     {option.label}
                   </span>
                 </span>

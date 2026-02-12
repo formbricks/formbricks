@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
@@ -13,6 +13,8 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
+import { MemberRow } from "@/modules/ee/teams/team-list/components/team-settings/member-row";
+import { WorkspaceRow } from "@/modules/ee/teams/team-list/components/team-settings/workspace-row";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import {
   TOrganizationMember,
@@ -36,13 +38,6 @@ import {
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Input } from "@/modules/ui/components/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Muted } from "@/modules/ui/components/typography";
 
@@ -187,14 +182,16 @@ export const TeamSettingsModal = ({
     const currentMemberId = watchMembers[index]?.userId;
     return orgMembers
       .filter((om) => !selectedMemberIds.includes(om?.id) || om?.id === currentMemberId)
-      .map((om) => ({ label: om?.name, value: om?.id }));
+      .map((om) => ({ label: om?.name ?? "", value: om?.id }))
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
   };
 
   const getProjectOptionsForIndex = (index: number) => {
     const currentProjectId = watchProjects[index]?.projectId;
     return orgProjects
       .filter((op) => !selectedProjectIds.includes(op?.id) || op?.id === currentProjectId)
-      .map((op) => ({ label: op?.name, value: op?.id }));
+      .map((op) => ({ label: op?.name ?? "", value: op?.id }))
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
   };
 
   const handleMemberSelectionChange = (index: number, userId: string) => {
@@ -262,110 +259,25 @@ export const TeamSettingsModal = ({
                   render={({ fieldState: { error } }) => (
                     <FormItem className="flex-1">
                       <div className="space-y-2 overflow-y-auto">
-                        {watchMembers.map((member, index) => {
-                          const memberOpts = getMemberOptionsForIndex(index);
-                          return (
-                            <div key={`member-${member.userId}-${index}`} className="flex gap-2.5">
-                              <FormField
-                                control={control}
-                                name={`members.${index}.userId`}
-                                render={({ field, fieldState: { error } }) => {
-                                  // Disable user select for existing members (can only remove or change role)
-                                  const isExistingMember =
-                                    member.userId && initialMemberIds.has(member.userId);
-                                  const isSelectDisabled =
-                                    isExistingMember || (!isOwnerOrManager && !isTeamAdminMember);
-
-                                  return (
-                                    <FormItem className="flex-1">
-                                      <Select
-                                        onValueChange={(val) => {
-                                          field.onChange(val);
-                                          handleMemberSelectionChange(index, val);
-                                        }}
-                                        disabled={isSelectDisabled}
-                                        value={member.userId}>
-                                        <SelectTrigger>
-                                          <SelectValue
-                                            placeholder={t("environments.settings.teams.select_member")}
-                                          />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {memberOpts.map((option) => (
-                                            <SelectItem
-                                              key={option.value}
-                                              value={option.value}
-                                              id={`member-${index}-option`}>
-                                              {option.label}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                      {error?.message && (
-                                        <FormError className="text-left">{error.message}</FormError>
-                                      )}
-                                    </FormItem>
-                                  );
-                                }}
-                              />
-
-                              <FormField
-                                control={control}
-                                name={`members.${index}.role`}
-                                render={({ field }) => (
-                                  <FormItem className="flex-1">
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      value={member.role}
-                                      disabled={(() => {
-                                        const chosenMember = orgMembers.find(
-                                          (m) => m.id === watchMembers[index]?.userId
-                                        );
-                                        if (!chosenMember) return !isOwnerOrManager && !isTeamAdminMember;
-
-                                        return (
-                                          chosenMember.role === "owner" ||
-                                          chosenMember.role === "manager" ||
-                                          isTeamContributorMember ||
-                                          chosenMember.id === currentUserId
-                                        );
-                                      })()}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select role" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value={ZTeamRole.enum.admin}>
-                                          {t("environments.settings.teams.team_admin")}
-                                        </SelectItem>
-                                        <SelectItem value={ZTeamRole.enum.contributor}>
-                                          {t("environments.settings.teams.contributor")}
-                                        </SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </FormItem>
-                                )}
-                              />
-
-                              {/* Delete Button for Member */}
-                              {watchMembers.length > 1 && (
-                                <TooltipRenderer tooltipContent={t("common.remove_from_team")}>
-                                  <Button
-                                    size="icon"
-                                    type="button"
-                                    variant="destructive"
-                                    className="shrink-0"
-                                    disabled={
-                                      !isOwnerOrManager &&
-                                      (!isTeamAdminMember || member.userId === currentUserId)
-                                    }
-                                    onClick={() => handleRemoveMember(index)}>
-                                    <XIcon className="h-4 w-4" />
-                                  </Button>
-                                </TooltipRenderer>
-                              )}
-                            </div>
-                          );
-                        })}
+                        {watchMembers.map((member, index) => (
+                          <MemberRow
+                            key={`member-${member.userId}-${index}`}
+                            index={index}
+                            member={member}
+                            memberOpts={getMemberOptionsForIndex(index)}
+                            control={control}
+                            orgMembers={orgMembers}
+                            watchMembers={watchMembers}
+                            initialMemberIds={initialMemberIds}
+                            isOwnerOrManager={isOwnerOrManager}
+                            isTeamAdminMember={isTeamAdminMember}
+                            isTeamContributorMember={isTeamContributorMember}
+                            currentUserId={currentUserId}
+                            onMemberSelectionChange={handleMemberSelectionChange}
+                            onRemoveMember={handleRemoveMember}
+                            memberCount={watchMembers.length}
+                          />
+                        ))}
                       </div>
                       {error?.root?.message && (
                         <FormError className="text-left">{error.root.message}</FormError>
@@ -411,90 +323,19 @@ export const TeamSettingsModal = ({
                   render={({ fieldState: { error } }) => (
                     <FormItem className="flex-1">
                       <div className="space-y-2">
-                        {watchProjects.map((project, index) => {
-                          const projectOpts = getProjectOptionsForIndex(index);
-                          return (
-                            <div key={`project-${project.projectId}-${index}`} className="flex gap-2.5">
-                              <FormField
-                                control={control}
-                                name={`projects.${index}.projectId`}
-                                render={({ field, fieldState: { error } }) => {
-                                  // Disable project select for existing projects (can only remove or change permission)
-                                  const isExistingProject =
-                                    project.projectId && initialProjectIds.has(project.projectId);
-                                  const isSelectDisabled = isExistingProject || !isOwnerOrManager;
-
-                                  return (
-                                    <FormItem className="flex-1">
-                                      <Select
-                                        onValueChange={field.onChange}
-                                        value={project.projectId}
-                                        disabled={isSelectDisabled}>
-                                        <SelectTrigger>
-                                          <SelectValue
-                                            placeholder={t("environments.settings.teams.select_workspace")}
-                                          />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {projectOpts.map((option) => (
-                                            <SelectItem
-                                              key={option.value}
-                                              value={option.value}
-                                              id={`project-${index}-option`}>
-                                              {option.label}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                      {error?.message && (
-                                        <FormError className="text-left">{error.message}</FormError>
-                                      )}
-                                    </FormItem>
-                                  );
-                                }}
-                              />
-
-                              <FormField
-                                control={control}
-                                name={`projects.${index}.permission`}
-                                render={({ field }) => (
-                                  <FormItem className="flex-1">
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      value={project.permission}
-                                      disabled={!isOwnerOrManager}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select project role" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value={ZTeamPermission.enum.read}>
-                                          {t("environments.settings.teams.read")}
-                                        </SelectItem>
-                                        <SelectItem value={ZTeamPermission.enum.readWrite}>
-                                          {t("environments.settings.teams.read_write")}
-                                        </SelectItem>
-                                        <SelectItem value={ZTeamPermission.enum.manage}>
-                                          {t("environments.settings.teams.manage")}
-                                        </SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </FormItem>
-                                )}
-                              />
-                              {watchProjects.length > 1 && (
-                                <Button
-                                  size="icon"
-                                  type="button"
-                                  variant="secondary"
-                                  className="shrink-0"
-                                  disabled={!isOwnerOrManager}
-                                  onClick={() => handleRemoveProject(index)}>
-                                  <Trash2Icon className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          );
-                        })}
+                        {watchProjects.map((project, index) => (
+                          <WorkspaceRow
+                            key={`workspace-${project.projectId}-${index}`}
+                            index={index}
+                            project={project}
+                            projectOpts={getProjectOptionsForIndex(index)}
+                            control={control}
+                            initialProjectIds={initialProjectIds}
+                            isOwnerOrManager={isOwnerOrManager}
+                            onRemoveProject={handleRemoveProject}
+                            projectCount={watchProjects.length}
+                          />
+                        ))}
                       </div>
                       {error?.root?.message && (
                         <FormError className="text-left">{error.root.message}</FormError>

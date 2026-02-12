@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { formatDateWithOrdinal } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
@@ -48,7 +48,7 @@ export const MembersInfo = ({
       ) : (
         <TooltipRenderer
           tooltipContent={`${t("environments.settings.general.invite_expires_on", {
-            date: getFormattedDateTimeString(member.expiresAt),
+            date: formatDateWithOrdinal(member.expiresAt),
           })}`}>
           <Badge type="warning" text="Pending" size="tiny" />
         </TooltipRenderer>
@@ -96,17 +96,17 @@ export const MembersInfo = ({
       {allMembers.map((member) => (
         <div
           id="singleMemberInfo"
-          className="flex w-full max-w-full items-center gap-x-4 text-left text-sm text-slate-900"
+          className="grid w-full max-w-full grid-cols-12 items-center gap-x-4 text-left text-sm text-slate-900"
           key={member.email}>
-          <div className="ph-no-capture w-1/2 overflow-hidden">
+          <div className="ph-no-capture col-span-2 overflow-hidden">
             <p className="w-full truncate">{member.name}</p>
           </div>
-          <div className="ph-no-capture w-1/2 overflow-hidden">
+          <div className="ph-no-capture col-span-3 overflow-hidden">
             <p className="w-full truncate"> {member.email}</p>
           </div>
 
           {isAccessControlAllowed && allMembers?.length > 0 && (
-            <div className="ph-no-capture min-w-[100px]">
+            <div className="ph-no-capture col-span-2">
               <EditMembershipRole
                 currentUserRole={currentUserRole}
                 memberRole={member.role}
@@ -121,15 +121,17 @@ export const MembersInfo = ({
               />
             </div>
           )}
-          <div className="min-w-[80px]">{getMembershipBadge(member)}</div>
+          <div className="col-span-2 flex items-center">{getMembershipBadge(member)}</div>
 
           {!isUserManagementDisabledFromUi && (
-            <MemberActions
-              organization={organization}
-              member={!isInvitee(member) ? member : undefined}
-              invite={isInvitee(member) ? member : undefined}
-              showDeleteButton={showDeleteButton(member)}
-            />
+            <div className="col-span-3">
+              <MemberActions
+                organization={organization}
+                member={isInvitee(member) ? undefined : member}
+                invite={isInvitee(member) ? member : undefined}
+                showDeleteButton={showDeleteButton(member)}
+              />
+            </div>
           )}
         </div>
       ))}

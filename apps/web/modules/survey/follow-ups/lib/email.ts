@@ -7,12 +7,14 @@ import {
   renderFollowUpEmail,
 } from "@formbricks/email";
 import { TResponse } from "@formbricks/types/responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL, TERMS_URL } from "@/lib/constants";
 import { getElementResponseMapping } from "@/lib/responses";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { getTranslate } from "@/lingodotdev/server";
 import { sendEmail } from "@/modules/email";
+import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export const sendFollowUpEmail = async ({
   followUp,
@@ -57,12 +59,27 @@ export const sendFollowUpEmail = async ({
   });
 
   // Process response data
+  // Resolve relative storage URLs to absolute URLs for email rendering
   const responseData: ProcessedResponseElement[] = attachResponseData
-    ? getElementResponseMapping(survey, response).map((e) => ({
-        element: e.element,
-        response: e.response,
-        type: e.type,
-      }))
+    ? getElementResponseMapping(survey, response).map((e) => {
+        // Resolve URLs for picture selection and file upload responses
+        if (
+          (e.type === TSurveyElementTypeEnum.PictureSelection ||
+            e.type === TSurveyElementTypeEnum.FileUpload) &&
+          Array.isArray(e.response)
+        ) {
+          return {
+            element: e.element,
+            response: e.response.map((url) => resolveStorageUrl(url)),
+            type: e.type,
+          };
+        }
+        return {
+          element: e.element,
+          response: e.response,
+          type: e.type,
+        };
+      })
     : [];
 
   // Process variables
