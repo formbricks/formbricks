@@ -35,11 +35,6 @@ const baseLoggerConfig: LoggerOptions = {
   },
   useOnlyCustomLevels: true,
   timestamp: true,
-  formatters: {
-    level: (label) => {
-      return { level: label };
-    },
-  },
   name: "formbricks",
 };
 
@@ -102,9 +97,21 @@ const buildTransport = (): LoggerOptions["transport"] => {
   return undefined; // Default JSON to stdout
 };
 
+const transport = buildTransport();
+
+// Pino does not allow custom `formatters` (functions) when using multi-target transports
+// because targets run in worker threads and functions cannot be serialized.
+// Only attach the level formatter when we're NOT using `{ targets: [...] }`.
+const useMultiTransport = transport !== undefined && "targets" in transport;
+
 const loggerConfig: LoggerOptions = {
   ...baseLoggerConfig,
-  transport: buildTransport(),
+  transport,
+  ...(!useMultiTransport && {
+    formatters: {
+      level: (label) => ({ level: label }),
+    },
+  }),
 };
 
 const pinoLogger: Logger = Pino(loggerConfig);
