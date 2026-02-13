@@ -1,13 +1,19 @@
+import type { Iso639Code } from "@formbricks/i18n-utils";
+
 /**
  * Native-script display names for every ISO 639 code Formbricks supports.
  *
  * Each language is shown in its own script (e.g. "Deutsch", "français", "日本語")
  * so users can recognise their language regardless of the current UI locale.
  *
+ * The `Iso639Code` key type is derived from the `iso639Languages` array in
+ * @formbricks/i18n-utils via `as const satisfies`, so adding or removing a
+ * language there will cause a compile-time error here until this map is updated.
+ *
  * ~5 KB — still ~71 KB smaller than the old 14-locale static list from
  * @formbricks/i18n-utils that was previously bundled.
  */
-const NATIVE_NAMES: Record<string, string> = {
+const NATIVE_NAMES: Record<Iso639Code, string> = {
   aa: "Afar",
   ab: "Abkhazian",
   ae: "Avestan",
@@ -228,5 +234,5 @@ const NATIVE_NAMES: Record<string, string> = {
  * Falls back to the raw code if the code is not in the map.
  */
 export function getLanguageDisplayName(code: string): string {
-  return NATIVE_NAMES[code] ?? code;
+  return NATIVE_NAMES[code as Iso639Code] ?? code;
 }

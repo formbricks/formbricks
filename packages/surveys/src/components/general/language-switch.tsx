@@ -4,9 +4,9 @@ import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
-import { getLanguageDisplayName } from "@/lib/get-language-display-name";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import i18n from "@/lib/i18n.config";
+import { getLanguageDisplayName } from "@/lib/language-display-name";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { cn, isRTLLanguage } from "@/lib/utils";
 

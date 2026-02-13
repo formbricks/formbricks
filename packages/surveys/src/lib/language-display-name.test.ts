@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getLanguageDisplayName } from "./get-language-display-name";
+import { getLanguageDisplayName } from "./language-display-name";
 
 describe("getLanguageDisplayName", () => {
   test("returns native name for common language codes", () => {

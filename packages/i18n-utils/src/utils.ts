@@ -18,7 +18,7 @@ export interface TIso639Language {
   };
 }
 
-export const iso639Languages: TIso639Language[] = [
+export const iso639Languages = [
   {
     code: "aa",
     label: {
@@ -4072,7 +4072,14 @@ export const iso639Languages: TIso639Language[] = [
       "hu-HU": "Zulu",
     },
   },
-];
+] as const satisfies readonly TIso639Language[];
+
+/**
+ * Union of every ISO 639 language code Formbricks supports.
+ * Derived automatically from the `iso639Languages` array — stays in sync
+ * without any manual maintenance.
+ */
+export type Iso639Code = (typeof iso639Languages)[number]["code"];
 
 export const getLanguageLabel = (languageCode: string, locale: string): string | undefined => {
   const language = iso639Languages.find((lang) => lang.code === languageCode);
