@@ -143,7 +143,7 @@ export function LogicEditorActions({
                   />
                 </div>
 
-                {action.objective !== "calculate" && (
+                {(action.objective === "jumpToBlock" || action.objective === "requireAnswer") && (
                   <div className="col-span-8">
                     <InputCombobox
                       id={`action-${idx}-target`}

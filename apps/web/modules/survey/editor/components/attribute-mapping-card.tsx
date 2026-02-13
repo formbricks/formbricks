@@ -5,7 +5,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { Contact2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -38,8 +37,6 @@ export const AttributeMappingCard = ({
   const open = activeElementId === "attributeMapping";
   const [selectedQuestionId, setSelectedQuestionId] = useState<string>("");
   const [selectedAttributeKey, setSelectedAttributeKey] = useState<string>("");
-  const { t } = useTranslation();
-
   const setOpen = (open: boolean) => {
     if (open) {
       setActiveElementId("attributeMapping");
@@ -52,7 +49,7 @@ export const AttributeMappingCard = ({
 
   // Get eligible elements for pre-population (OpenText and FormField types)
   const eligibleElements = useMemo(() => {
-    return elements.filter((element) => element.type === "openText" || element.type === "formField");
+    return elements.filter((element) => element.type === "openText" || element.type === "contactInfo");
   }, [elements]);
 
   const updateSurvey = (attributeMapping: Record<string, string>) => {
@@ -146,7 +143,7 @@ export const AttributeMappingCard = ({
                       </p>
                     </div>
                     <Button
-                      variant="minimal"
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteMapping(questionId)}
                       className="ml-2 text-red-600 hover:bg-red-50">
@@ -193,8 +190,8 @@ export const AttributeMappingCard = ({
                   </SelectTrigger>
                   <SelectContent>
                     {contactAttributeKeys.map((attributeKey) => (
-                      <SelectItem key={attributeKey.id} value={attributeKey.name}>
-                        {attributeKey.name}
+                      <SelectItem key={attributeKey.id} value={attributeKey.key}>
+                        {attributeKey.key}
                       </SelectItem>
                     ))}
                   </SelectContent>

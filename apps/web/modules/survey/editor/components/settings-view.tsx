@@ -6,6 +6,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { QuotasCard } from "@/modules/ee/quotas/components/quotas-card";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { ExternalDataConfig } from "@/modules/survey/editor/components/external-data-config";
 import { HowToSendCard } from "@/modules/survey/editor/components/how-to-send-card";
 import { RecontactOptionsCard } from "@/modules/survey/editor/components/recontact-options-card";
 import { ResponseOptionsCard } from "@/modules/survey/editor/components/response-options-card";
@@ -95,6 +96,13 @@ export const SettingsView = ({
         setLocalSurvey={setLocalSurvey}
         responseCount={responseCount}
         isSpamProtectionAllowed={isSpamProtectionAllowed}
+      />
+
+      <ExternalDataConfig
+        externalDataSources={localSurvey.externalDataSources ?? []}
+        variables={localSurvey.variables}
+        onUpdate={(externalDataSources) => setLocalSurvey({ ...localSurvey, externalDataSources })}
+        environmentId={environment.id}
       />
 
       <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />

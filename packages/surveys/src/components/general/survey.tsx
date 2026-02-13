@@ -46,7 +46,7 @@ export function Survey({
   mode,
   survey,
   styling,
-  isBrandingEnabled,
+  isBrandingEnabled: _isBrandingEnabled,
   onDisplay,
   onResponse,
   onClose,
@@ -532,7 +532,9 @@ export function Survey({
                 parametersMapping: apiCall.parametersMapping,
                 responseData: localResponseData,
                 variables: calculationResults,
-                hiddenFields: hiddenFieldsRecord || {},
+                hiddenFields: Object.fromEntries(
+                  Object.entries(hiddenFieldsRecord || {}).map(([k, v]) => [k, String(v)])
+                ),
               });
 
               if (result.success && result.updatedVariables) {
@@ -692,7 +694,7 @@ export function Survey({
 
     pushVariableState(firstRespondedElementId);
 
-    const { nextBlockId, calculatedVariables } = evaluateLogicAndGetNextBlockId(surveyResponseData);
+    const { nextBlockId, calculatedVariables } = await evaluateLogicAndGetNextBlockId(surveyResponseData);
     const finished =
       nextBlockId === undefined || !localSurvey.blocks.map((block) => block.id).includes(nextBlockId);
 

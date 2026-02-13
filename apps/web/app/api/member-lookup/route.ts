@@ -61,12 +61,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (apiKey !== process.env.MEMBER_LOOKUP_API_KEY) {
-      console.warn("Invalid API key attempt from IP:", request.ip);
+      const clientIp =
+        request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+      console.warn("Invalid API key attempt from IP:", clientIp);
       return NextResponse.json({ success: false, error: "Invalid API key" }, { status: 401 });
     }
 
     // 2. Rate Limiting
-    const clientIp = request.ip || "unknown";
+    const clientIp = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
     const rateLimit = checkRateLimit(clientIp);
 
     if (!rateLimit.allowed) {
@@ -168,6 +170,6 @@ export async function GET(request: NextRequest) {
 }
 
 // Health check endpoint
-export async function HEAD(request: NextRequest) {
+export async function HEAD() {
   return new NextResponse(null, { status: 200 });
 }

@@ -126,6 +126,10 @@ const nextConfig = {
     config.resolve.fallback = {
       http: false, // Prevents Next.js from trying to bundle 'http'
       https: false,
+      // TypeORM optional dependencies (needed for snowflake-sdk)
+      'react-native-sqlite-storage': false,
+      'mysql': false,
+      '@sap/hana-client/extension/Stream': false,
     };
     return config;
   },

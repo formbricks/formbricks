@@ -216,6 +216,63 @@ function interpolateString(str: string): string {
 }
 
 /**
+ * Get full query configurations with all details (parameters, fields, etc.)
+ * Used by the UI to auto-generate field mappings
+ */
+export function getFullQueryConfigs(): Array<{
+  id: string;
+  name: string;
+  description?: string;
+  sql: string;
+  parameters: string[];
+  fields: Record<string, string>;
+  cache?: { enabled: boolean; ttl?: number };
+}> {
+  const config = loadQueryConfig();
+
+  return Object.entries(config.queries).map(([id, query]) => ({
+    id,
+    name: query.name,
+    description: query.description,
+    sql: query.sql,
+    parameters: query.parameters,
+    fields: query.fields,
+    cache: query.cache,
+  }));
+}
+
+/**
+ * Add a new query configuration to the config file
+ */
+export function addQueryConfig(id: string, queryConfig: QueryConfig): void {
+  const configPath = path.join(process.cwd(), "apps/web/app/api/member-lookup/query-config.json");
+
+  let configContent: string;
+  let config: QueryConfigFile;
+
+  try {
+    configContent = fs.readFileSync(configPath, "utf-8");
+    config = JSON.parse(configContent);
+  } catch {
+    config = { version: "1.0", queries: {} };
+  }
+
+  if (config.queries[id]) {
+    throw new Error(`Query configuration already exists: ${id}`);
+  }
+
+  config.queries[id] = queryConfig;
+
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
+
+  // Invalidate cache so the new query is available immediately
+  cachedConfig = null;
+  configLoadTime = 0;
+
+  console.log(`[Query Config] Added new query configuration: ${id}`);
+}
+
+/**
  * Reload configuration (for hot-reloading in development)
  */
 export function reloadQueryConfig(): void {

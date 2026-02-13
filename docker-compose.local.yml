@@ -10,7 +10,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=formbricks
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -25,7 +25,7 @@ services:
     restart: always
     command: valkey-server
     ports:
-      - "6379:6379"
+      - "6381:6379"
     volumes:
       - valkey_data:/data
     healthcheck:
@@ -70,6 +70,10 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
+      secrets:
+        - database_url
+        - encryption_key
+        - redis_url
     restart: always
     depends_on:
       postgres:
@@ -79,11 +83,11 @@ services:
       minio:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       # Core Configuration
-      WEBAPP_URL: http://localhost:3000
-      NEXTAUTH_URL: http://localhost:3000
+      WEBAPP_URL: http://localhost:3001
+      NEXTAUTH_URL: http://localhost:3001
 
       # Database
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
@@ -147,3 +151,11 @@ volumes:
     driver: local
   minio_data:
     driver: local
+
+secrets:
+  database_url:
+    environment: "DATABASE_URL_BUILD"
+  encryption_key:
+    environment: "ENCRYPTION_KEY_BUILD"
+  redis_url:
+    environment: "REDIS_URL_BUILD"

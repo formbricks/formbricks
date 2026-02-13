@@ -308,13 +308,13 @@ export const UploadContactsCSVButton = ({
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              variant={showPreview === "original" ? "primary" : "secondary"}
+                              variant={showPreview === "original" ? "default" : "secondary"}
                               onClick={() => setShowPreview("original")}>
                               Original
                             </Button>
                             <Button
                               size="sm"
-                              variant={showPreview === "enriched" ? "primary" : "secondary"}
+                              variant={showPreview === "enriched" ? "default" : "secondary"}
                               onClick={() => setShowPreview("enriched")}>
                               Enriched
                             </Button>
@@ -352,7 +352,7 @@ export const UploadContactsCSVButton = ({
                       </Button>
                       {enriching && (
                         <div className="flex flex-col gap-1">
-                          <ProgressBar progress={enrichmentProgress} height={8} />
+                          <ProgressBar progress={enrichmentProgress} height={5} barColor="bg-brand-dark" />
                           <p className="text-center text-xs text-slate-500">{enrichmentProgress}% complete</p>
                         </div>
                       )}

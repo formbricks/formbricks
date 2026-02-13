@@ -65,7 +65,7 @@ async function executeQuery<T = any>(sqlText: string, binds: any[] = []): Promis
     connection.execute({
       sqlText,
       binds,
-      complete: (err, stmt, rows) => {
+      complete: (err, _stmt, rows) => {
         if (err) {
           console.error("Snowflake query error:", err);
           reject(err);

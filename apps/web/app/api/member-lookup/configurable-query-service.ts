@@ -1,6 +1,5 @@
 import snowflake from "snowflake-sdk";
-
-import { getQueryConfig, loadQueryConfig, validateQueryConfig } from "./query-config-loader";
+import { getQueryConfig, validateQueryConfig } from "./query-config-loader";
 
 /**
  * Configurable Query Service
@@ -53,7 +52,7 @@ async function executeQuery<T = any>(sqlText: string, binds: any[] = []): Promis
     connection.execute({
       sqlText,
       binds,
-      complete: (err, stmt, rows) => {
+      complete: (err, _stmt, rows) => {
         if (err) {
           console.error("Snowflake query error:", err);
           reject(err);
@@ -144,14 +143,11 @@ export async function executeConfiguredQuery(
  * Convert named parameters to positional
  * :paramName -> ?
  */
-function convertNamedParameters(
-  sql: string,
-  parameters: Record<string, any>
-): { sql: string; binds: any[] } {
+function convertNamedParameters(sql: string, parameters: Record<string, any>): { sql: string; binds: any[] } {
   const binds: any[] = [];
   const paramRegex = /:(\w+)/g;
 
-  const convertedSql = sql.replace(paramRegex, (match, paramName) => {
+  const convertedSql = sql.replace(paramRegex, (_match, paramName) => {
     if (!(paramName in parameters)) {
       throw new Error(`Parameter ${paramName} not provided`);
     }
@@ -203,7 +199,10 @@ export function getCacheStats(): { size: number; keys: string[] } {
 /**
  * Test a query configuration without executing
  */
-export function testQueryConfig(queryId: string, parameters: Record<string, any>): {
+export function testQueryConfig(
+  queryId: string,
+  parameters: Record<string, any>
+): {
   valid: boolean;
   sql?: string;
   binds?: any[];

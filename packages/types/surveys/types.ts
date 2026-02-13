@@ -228,6 +228,7 @@ export const ZExternalDataSource = z.object({
   auth: ZExternalDataSourceAuth,
   headers: z.record(z.string()).optional(),
   fieldMappings: z.array(ZExternalDataSourceFieldMapping),
+  queryId: z.string().optional(),
 });
 
 export type TExternalDataSource = z.infer<typeof ZExternalDataSource>;
@@ -899,8 +900,8 @@ export const ZSurvey = z
       }
     }),
     hiddenFields: ZSurveyHiddenFields,
-    attributeMapping: ZSurveyAttributeMapping.default({}),
-    externalDataSources: z.array(ZExternalDataSource).default([]),
+    attributeMapping: ZSurveyAttributeMapping.optional(),
+    externalDataSources: z.array(ZExternalDataSource).optional(),
     variables: ZSurveyVariables.superRefine((variables, ctx) => {
       // variable ids must be unique
       const variableIds = variables.map((v) => v.id);
@@ -3709,8 +3710,8 @@ const validateBlockActions = (
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
-    } else {
-      // action.objective === "jumpToBlock"
+    } else if (action.objective === "jumpToBlock") {
+      // jumpToBlock action
       const targetBlockId = action.target;
       const blockIds = survey.blocks.map((b) => b.id);
       const endingIds = survey.endings.map((ending) => ending.id);
@@ -3732,6 +3733,10 @@ const validateBlockActions = (
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
+    } else if (action.objective === "callExternalAPI") {
+      // callExternalAPI action - TODO: Add validation for external data source
+      // For now, just return undefined (no validation errors)
+      return undefined;
     }
 
     return undefined;

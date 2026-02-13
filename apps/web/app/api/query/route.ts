@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import { executeConfiguredQuery } from "../member-lookup/configurable-query-service";
 import { listQueryConfigs } from "../member-lookup/query-config-loader";
 
@@ -56,14 +55,11 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Rate Limiting
-    const clientIp = request.ip || "unknown";
+    const clientIp = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
     const rateLimit = checkRateLimit(clientIp);
 
     if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { success: false, error: "Rate limit exceeded" },
-        { status: 429 }
-      );
+      return NextResponse.json({ success: false, error: "Rate limit exceeded" }, { status: 429 });
     }
 
     // 3. Extract query ID from path

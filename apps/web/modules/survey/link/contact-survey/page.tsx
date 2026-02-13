@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getContactAttributesByContactId } from "@formbricks/database/contact";
-import { prePopulateFromContactAttributes } from "@formbricks/surveys/lib/pre-populate";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
@@ -10,6 +8,8 @@ import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
+import { getContactAttributesByContactId } from "@/modules/survey/link/contact-survey/lib/contact-attributes";
+import { prePopulateFromContactAttributes } from "@/modules/survey/link/contact-survey/lib/pre-populate";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
 import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";

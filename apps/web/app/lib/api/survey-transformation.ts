@@ -306,36 +306,38 @@ const reverseLogicActions = (
   blockIdToQuestionId: Map<string, string>,
   endingIds: Set<string>
 ): TSurveyLogicAction[] => {
-  return actions.map((action) => {
-    if (action.objective === "jumpToBlock") {
-      const target = action.target;
-      const questionId = blockIdToQuestionId.get(target);
+  return actions
+    .filter((action) => action.objective !== "callExternalAPI")
+    .map((action) => {
+      if (action.objective === "jumpToBlock") {
+        const target = action.target;
+        const questionId = blockIdToQuestionId.get(target);
 
-      if (questionId) {
+        if (questionId) {
+          return {
+            ...action,
+            objective: "jumpToQuestion" as const,
+            target: questionId,
+          };
+        }
+
+        if (endingIds.has(target)) {
+          return {
+            ...action,
+            objective: "jumpToQuestion" as const,
+            target,
+          };
+        }
+
         return {
           ...action,
-          objective: "jumpToQuestion",
-          target: questionId,
-        };
-      }
-
-      if (endingIds.has(target)) {
-        return {
-          ...action,
-          objective: "jumpToQuestion",
+          objective: "jumpToQuestion" as const,
           target,
         };
       }
 
-      return {
-        ...action,
-        objective: "jumpToQuestion",
-        target,
-      };
-    }
-
-    return action;
-  });
+      return action;
+    });
 };
 
 const reverseLogicFallback = (

@@ -393,7 +393,7 @@ export const MultipleChoiceElementForm = ({
                   </SelectItem>
                 </SelectContent>
               </Select>
-              {element.displayType === "list" && (
+              {(element.displayType || "list") === "list" && (
                 <Select
                   value={element.columns || "1"}
                   onValueChange={(value: "1" | "2") => {
