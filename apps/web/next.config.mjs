@@ -35,6 +35,13 @@ const nextConfig = {
   ],
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
+    // pino loads transports in worker threads via dynamic require() — the file tracer
+    // cannot detect these string-based targets, so we must include them explicitly.
+    "/*": [
+      "../../node_modules/pino-opentelemetry-transport/**/*",
+      "../../node_modules/pino-abstract-transport/**/*",
+      "../../node_modules/otlp-logger/**/*",
+    ],
   },
   turbopack: {},
   experimental: {},

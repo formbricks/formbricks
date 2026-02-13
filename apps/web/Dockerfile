@@ -126,6 +126,17 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
+# Pino transports are loaded in worker threads via dynamic require() and cannot be
+# detected by Next.js file tracing — copy them explicitly for runtime availability.
+COPY --from=installer /app/node_modules/pino-opentelemetry-transport ./node_modules/pino-opentelemetry-transport
+RUN chmod -R 755 ./node_modules/pino-opentelemetry-transport
+
+COPY --from=installer /app/node_modules/pino-abstract-transport ./node_modules/pino-abstract-transport
+RUN chmod -R 755 ./node_modules/pino-abstract-transport
+
+COPY --from=installer /app/node_modules/otlp-logger ./node_modules/otlp-logger
+RUN chmod -R 755 ./node_modules/otlp-logger
+
 # Install prisma CLI globally for database migrations and fix permissions for nextjs user
 RUN npm install --ignore-scripts -g prisma@6 \
     && chown -R nextjs:nextjs /usr/local/lib/node_modules/prisma
