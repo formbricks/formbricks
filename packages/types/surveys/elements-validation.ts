@@ -104,8 +104,9 @@ export const findLanguageCodesForDuplicateLabels = (
   for (const language of languagesToCheck) {
     const labelTexts = labels
       .map((label) => label[language])
-      .filter((text): text is string => typeof text === "string" && text.trim().length > 0)
-      .map((text) => text.trim());
+      .filter((text): text is string => typeof text === "string")
+      .map((text) => text.trim())
+      .filter((text) => text.length > 0);
     const uniqueLabels = new Set(labelTexts);
 
     if (uniqueLabels.size !== labelTexts.length) {
