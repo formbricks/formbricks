@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { err, ok } from "@formbricks/types/error-handlers";
 import {
@@ -19,6 +20,17 @@ import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { endOfDay, startOfDay, subtractTimeUnit } from "../date-utils";
 import { getSegment } from "../segments";
 
+// SQL operator mapping for number filters
+const SQL_OPERATORS: Record<string, string> = {
+  greaterThan: ">",
+  greaterEqual: ">=",
+  lessThan: "<",
+  lessEqual: "<=",
+};
+
+// Regex pattern for validating numeric strings in SQL
+const NUMBER_PATTERN_SQL = "^-?[0-9]+(\\.[0-9]+)?$";
+
 // Type for the result of the segment filter to prisma query generation
 export type SegmentFilterQueryResult = {
   whereClause: Prisma.ContactWhereInput;
@@ -29,8 +41,10 @@ const valueIsRelativeDateValue = (value: TSegmentFilterValue): value is TRelativ
 };
 
 /**
- * Builds a Prisma where clause for date attribute filters
- * Uses the native valueDate column for performant DateTime comparisons
+ * Builds a Prisma where clause for date attribute filters.
+ * Uses an OR fallback to handle both migrated rows (valueDate populated)
+ * and un-migrated rows (valueDate NULL, value contains ISO string).
+ * ISO 8601 strings sort lexicographically correctly, so string gt/lt works.
  */
 const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prisma.ContactWhereInput => {
   const { root, qualifier, value } = filter;
@@ -39,37 +53,44 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
   const now = new Date();
 
   let dateCondition: Prisma.DateTimeNullableFilter = {};
+  let stringDateCondition: Prisma.StringFilter = {};
 
   switch (operator) {
     case "isOlderThan": {
-      // value should be { amount, unit }
       if (valueIsRelativeDateValue(value)) {
         const threshold = subtractTimeUnit(now, value.amount, value.unit);
         dateCondition = { lt: threshold };
+        stringDateCondition = { lt: threshold.toISOString() };
       }
       break;
     }
     case "isNewerThan": {
-      // value should be { amount, unit }
       if (valueIsRelativeDateValue(value)) {
         const threshold = subtractTimeUnit(now, value.amount, value.unit);
         dateCondition = { gte: threshold };
+        stringDateCondition = { gte: threshold.toISOString() };
       }
       break;
     }
     case "isBefore":
       if (typeof value === "string") {
         dateCondition = { lt: new Date(value) };
+        stringDateCondition = { lt: new Date(value).toISOString() };
       }
       break;
     case "isAfter":
       if (typeof value === "string") {
         dateCondition = { gt: new Date(value) };
+        stringDateCondition = { gt: new Date(value).toISOString() };
       }
       break;
     case "isBetween":
       if (Array.isArray(value) && value.length === 2) {
         dateCondition = { gte: new Date(value[0]), lte: new Date(value[1]) };
+        stringDateCondition = {
+          gte: new Date(value[0]).toISOString(),
+          lte: new Date(value[1]).toISOString(),
+        };
       }
       break;
     case "isSameDay": {
@@ -77,6 +98,7 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
         const dayStart = startOfDay(new Date(value));
         const dayEnd = endOfDay(new Date(value));
         dateCondition = { gte: dayStart, lte: dayEnd };
+        stringDateCondition = { gte: dayStart.toISOString(), lte: dayEnd.toISOString() };
       }
       break;
     }
@@ -86,54 +108,68 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
     attributes: {
       some: {
         attributeKey: { key: contactAttributeKey },
-        valueDate: dateCondition,
+        OR: [{ valueDate: dateCondition }, { valueDate: null, value: stringDateCondition }],
       },
     },
   };
 };
 
 /**
- * Builds a Prisma where clause for number attribute filters
- * Uses the native valueNumber column for performant numeric comparisons
+ * Builds a Prisma where clause for number attribute filters.
+ * Uses a raw SQL subquery to handle both migrated rows (valueNumber populated)
+ * and un-migrated rows (valueNumber NULL, value contains numeric string).
+ * This is transition code for the deferred value backfill.
+ *
+ * TODO: After the backfill script has been run and all valueNumber columns are populated,
+ * revert this to the clean Prisma-only version that queries valueNumber directly.
  */
-const buildNumberAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prisma.ContactWhereInput => {
+const buildNumberAttributeFilterWhereClause = async (
+  filter: TSegmentAttributeFilter
+): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier, value } = filter;
   const { contactAttributeKey } = root;
   const { operator } = qualifier;
 
   const numericValue = typeof value === "number" ? value : Number(value);
+  const sqlOp = SQL_OPERATORS[operator];
 
-  let numberCondition: Prisma.FloatNullableFilter = {};
-
-  switch (operator) {
-    case "greaterThan":
-      numberCondition = { gt: numericValue };
-      break;
-    case "greaterEqual":
-      numberCondition = { gte: numericValue };
-      break;
-    case "lessThan":
-      numberCondition = { lt: numericValue };
-      break;
-    case "lessEqual":
-      numberCondition = { lte: numericValue };
-      break;
+  if (!sqlOp) {
+    return {};
   }
 
-  return {
-    attributes: {
-      some: {
-        attributeKey: { key: contactAttributeKey },
-        valueNumber: numberCondition,
-      },
-    },
-  };
+  const matchingContactIds = await prisma.$queryRawUnsafe<{ contactId: string }[]>(
+    `
+    SELECT DISTINCT ca."contactId"
+    FROM "ContactAttribute" ca
+    JOIN "ContactAttributeKey" cak ON ca."attributeKeyId" = cak.id
+    WHERE cak.key = $1
+    AND (
+      (ca."valueNumber" IS NOT NULL AND ca."valueNumber" ${sqlOp} $2)
+      OR
+      (ca."valueNumber" IS NULL AND ca.value ~ $3 AND ca.value::double precision ${sqlOp} $2)
+    )
+    `,
+    contactAttributeKey,
+    numericValue,
+    NUMBER_PATTERN_SQL
+  );
+
+  const contactIds = matchingContactIds.map((r) => r.contactId);
+
+  if (contactIds.length === 0) {
+    // Return an impossible condition so the filter correctly excludes all contacts
+    return { id: "__NUMBER_FILTER_NO_MATCH__" };
+  }
+
+  return { id: { in: contactIds } };
 };
 
 /**
  * Builds a Prisma where clause from a segment attribute filter
  */
-const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prisma.ContactWhereInput => {
+const buildAttributeFilterWhereClause = async (
+  filter: TSegmentAttributeFilter
+): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier, value } = filter;
   const { contactAttributeKey } = root;
   const { operator } = qualifier;
@@ -179,7 +215,7 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
 
   // Handle number operators
   if (["greaterThan", "greaterEqual", "lessThan", "lessEqual"].includes(operator)) {
-    return buildNumberAttributeFilterWhereClause(filter);
+    return await buildNumberAttributeFilterWhereClause(filter);
   }
 
   // For string operators, ensure value is a primitive (not an object or array)
@@ -216,7 +252,9 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
 /**
  * Builds a Prisma where clause from a person filter
  */
-const buildPersonFilterWhereClause = (filter: TSegmentPersonFilter): Prisma.ContactWhereInput => {
+const buildPersonFilterWhereClause = async (
+  filter: TSegmentPersonFilter
+): Promise<Prisma.ContactWhereInput> => {
   const { personIdentifier } = filter.root;
 
   if (personIdentifier === "userId") {
@@ -227,7 +265,7 @@ const buildPersonFilterWhereClause = (filter: TSegmentPersonFilter): Prisma.Cont
         contactAttributeKey: personIdentifier,
       },
     };
-    return buildAttributeFilterWhereClause(personFilter);
+    return await buildAttributeFilterWhereClause(personFilter);
   }
 
   return {};
@@ -314,9 +352,9 @@ const processSingleFilter = async (
 
   switch (root.type) {
     case "attribute":
-      return buildAttributeFilterWhereClause(filter as TSegmentAttributeFilter);
+      return await buildAttributeFilterWhereClause(filter as TSegmentAttributeFilter);
     case "person":
-      return buildPersonFilterWhereClause(filter as TSegmentPersonFilter);
+      return await buildPersonFilterWhereClause(filter as TSegmentPersonFilter);
     case "device":
       return buildDeviceFilterWhereClause(filter as TSegmentDeviceFilter, deviceType);
     case "segment":
