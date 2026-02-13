@@ -2,9 +2,10 @@ import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { EnterpriseLicenseStatus } from "@/app/(app)/environments/[environmentId]/settings/(organization)/enterprise/components/EnterpriseLicenseStatus";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
+import { GRACE_PERIOD_MS, getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -25,7 +26,8 @@ const Page = async (props) => {
     return notFound();
   }
 
-  const { active: isEnterpriseEdition } = await getEnterpriseLicense();
+  const licenseState = await getEnterpriseLicense();
+  const hasLicense = licenseState.status !== "no-license";
 
   const paidFeatures = [
     {
@@ -90,35 +92,22 @@ const Page = async (props) => {
           activeId="enterprise"
         />
       </PageHeader>
-      {isEnterpriseEdition ? (
-        <div>
-          <div className="mt-8 max-w-4xl rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
-            <div className="space-y-4 p-8">
-              <div className="flex items-center gap-x-2">
-                <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                  <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
-                </div>
-                <p className="text-slate-800">
-                  {t(
-                    "environments.settings.enterprise.your_enterprise_license_is_active_all_features_unlocked"
-                  )}
-                </p>
-              </div>
-              <p className="text-sm text-slate-500">
-                {t("environments.settings.enterprise.questions_please_reach_out_to")}{" "}
-                <a className="font-semibold underline" href="mailto:hola@formbricks.com">
-                  hola@formbricks.com
-                </a>
-              </p>
-            </div>
-          </div>
-        </div>
+      {hasLicense ? (
+        <EnterpriseLicenseStatus
+          status={licenseState.status as "active" | "expired" | "unreachable" | "invalid_license"}
+          gracePeriodEnd={
+            licenseState.status === "unreachable"
+              ? new Date(licenseState.lastChecked.getTime() + GRACE_PERIOD_MS)
+              : undefined
+          }
+          environmentId={params.environmentId}
+        />
       ) : (
         <div>
           <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
             <svg
               viewBox="0 0 1024 1024"
-              className="absolute top-1/2 left-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+              className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
               aria-hidden="true">
               <circle
                 cx={512}
@@ -153,8 +142,8 @@ const Page = async (props) => {
                 {t("environments.settings.enterprise.enterprise_features")}
               </h2>
               <ul className="my-4 space-y-4">
-                {paidFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-center">
+                {paidFeatures.map((feature) => (
+                  <li key={feature.title} className="flex items-center">
                     <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
                       <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
                     </div>

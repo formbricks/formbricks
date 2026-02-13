@@ -12,7 +12,7 @@ interface PendingDowngradeBannerProps {
   isPendingDowngrade: boolean;
   environmentId: string;
   locale: TUserLocale;
-  status: "active" | "expired" | "unreachable" | "no-license";
+  status: "active" | "expired" | "unreachable" | "no-license" | "invalid_license";
 }
 
 export const PendingDowngradeBanner = ({
