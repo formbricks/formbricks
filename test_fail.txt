@@ -1,0 +1,257 @@
+﻿
+> @formbricks/js-core@1.0.0 test C:\Users\bhara\FormBricks\formbricks\packages\js-core
+> vitest "command-queue"
+
+
+[1m[46m RUN [49m[22m [36mv3.1.3 [39m[90mC:/Users/bhara/FormBricks/formbricks/packages/js-core[39m
+
+[90mstdout[2m | src/lib/common/tests/command-queue.test.ts[2m > [22m[2mCommandQueue[2m > [22m[2mexecutes commands in FIFO order
+[22m[39m≡ƒº▒ Formbricks - Waiting for pending updates to complete before executing command
+
+[90mstdout[2m | src/lib/common/tests/command-queue.test.ts[2m > [22m[2mCommandQueue[2m > [22m[2mexecutes commands in FIFO order
+[22m[39m≡ƒº▒ Formbricks - Waiting for pending updates to complete before executing command
+
+node.exe : 
+[90mstderr[2m | src
+/lib/common/tests/com
+mand-queue.test.ts[2
+m > [22m[2mCommandQ
+ueue[2m > 
+[22m[2mpauses 
+execution if 
+checkSetup() fails 
+(Strict FIFO)
+At C:\nvm4w\nodejs\pn
+pm.ps1:16 char:5
++     & 
+"$basedir/node$exe"  
+"$basedir/node_module
+s/corepack/dist/pnpm.
+ ...
++     ~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: ([90mst   
+ derr[2m...s (St    
+rict FIFO):Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+[22m[39m≡ƒº▒ 
+Formbricks - SDK not 
+setup. Pausing queue 
+until setup 
+completes.
+
+[90mstdout[2m | src/lib/common/tests/command-queue.test.ts[2m > [22m[2mCommandQueue[2m > [22m[2mpauses execution if checkSetup() fails (Strict FIFO)
+[22m[39m≡ƒº▒ Formbricks - Waiting for pending updates to complete before executing command
+
+[90mstderr[2m | src
+/lib/common/tests/com
+mand-queue.test.ts[2
+m > [22m[2mCommandQ
+ueue[2m > 
+[22m[2mdoes NOT 
+executing later 
+commands if first is 
+blocked (Strict FIFO)
+[22m[39m≡ƒº▒ 
+Formbricks - SDK not 
+setup. Pausing queue 
+until setup 
+completes.
+
+[90mstderr[2m | src
+/lib/common/tests/com
+mand-queue.test.ts[2
+m > [22m[2mCommandQ
+ueue[2m > 
+[22m[2mdoes NOT 
+executing later 
+commands if first is 
+blocked (Strict FIFO)
+[22m[39m≡ƒº▒ 
+Formbricks - SDK not 
+setup. Pausing queue 
+until setup 
+completes.
+
+[90mstdout[2m | src/lib/common/tests/command-queue.test.ts[2m > [22m[2mCommandQueue[2m > [22m[2mdoes NOT executing later commands if first is blocked (Strict FIFO)
+[22m[39m≡ƒº▒ Formbricks - Waiting for pending updates to complete before executing command
+
+[90mstdout[2m | src/lib/common/tests/command-queue.test.ts[2m > [22m[2mCommandQueue[2m > [22m[2mhandles re-entrancy gracefully (recursive run calls)
+[22m[39m≡ƒº▒ Formbricks - Waiting for pending updates to complete before executing command
+
+[90mstdout[2m | src/lib/common/tests/command-queue.test.ts[2m > [22m[2mCommandQueue[2m > [22m[2mprocesses UpdateQueue before executing GeneralAction commands
+[22m[39m≡ƒº▒ Formbricks - Waiting for pending updates to complete before executing command
+
+[90mstdout[2m | src/lib/common/tests/command-queue.test.ts[2m > [22m[2mCommandQueue[2m > [22m[2mlogs errors if a command throws
+[22m[39m≡ƒº▒ Formbricks - Waiting for pending updates to complete before executing command
+
+[90mstderr[2m | src
+/lib/common/tests/com
+mand-queue.test.ts[2
+m > [22m[2mCommandQ
+ueue[2m > 
+[22m[2mpromotes 
+Setup commands to 
+unblock queue 
+(Deadlock Fix)
+[22m[39m≡ƒº▒ 
+Formbricks - SDK not 
+setup. Pausing queue 
+until setup 
+completes.
+
+[90mstdout[2m | src/lib/common/tests/command-queue.test.ts[2m > [22m[2mCommandQueue[2m > [22m[2mpromotes Setup commands to unblock queue (Deadlock Fix)
+[22m[39m≡ƒº▒ Formbricks - Promoting Setup command to front of queue to unblock.
+
+[90mstdout[2m | src/lib/common/tests/command-queue.test.ts[2m > [22m[2mCommandQueue[2m > [22m[2mpromotes Setup commands to unblock queue (Deadlock Fix)
+[22m[39m≡ƒº▒ Formbricks - Waiting for pending updates to complete before executing command
+
+ [31mΓ¥»[39m src/lib/common/tests/command-queue.test.ts [2m([22m[2m7 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 28[2mms[22m[39m
+   [32mΓ£ô[39m CommandQueue[2m > [22mexecutes commands in FIFO order[32m 7[2mms[22m[39m
+[31m   [31m├ù[31m CommandQueue[2m > [22mpauses execution if checkSetup() fails (Strict FIFO)[39m[32m 10[2mms[22m[39m
+[31m     ΓåÆ Cannot read properties of undefined (reading 'ok')[39m
+[31m   [31m├ù[31m CommandQueue[2m > [22mdoes NOT executing later commands if first is blocked (Strict FIFO)[39m[32m 3[2mms[22m[39m
+[31m     ΓåÆ Cannot read properties of undefined (reading 'ok')[39m
+   [32mΓ£ô[39m CommandQueue[2m > [22mhandles re-entrancy gracefully (recursive run calls)[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m CommandQueue[2m > [22mprocesses UpdateQueue before executing GeneralAction commands[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m CommandQueue[2m > [22mlogs errors if a command throws[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CommandQueue[2m > [22mpromotes Setup commands to unblock queue (Deadlock Fix)[32m 2[2mms[22m[39m
+
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»Γ
+Ä»ΓÄ»[39m[1m[41m 
+Failed Tests 2 [49m
+[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»
+ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL 
+[22m[49m src/lib/co
+mmon/tests/command-qu
+eue.test.ts[2m > [2
+2mCommandQueue[2m > 
+[22mpauses 
+execution if 
+checkSetup() fails 
+(Strict FIFO)
+[31m[1mTypeError[2
+2m: Cannot read 
+properties of 
+undefined (reading 
+'ok')[39m
+[36m [2mΓ¥»[22m 
+CommandQueue.run src/
+lib/common/command-qu
+eue.ts:[2m142:30[22
+m[39m
+    [90m140| [39m  
+        [90m// 
+check if the command 
+returned an error 
+result[39m
+    [90m141| [39m  
+        
+[35mconst[39m 
+commandResult 
+[33m=[39m result[3
+3m.[39mdata[33m;[3
+9m
+    [90m142| [39m  
+        [35mif[39m 
+([33m![39mcommandRe
+sult[33m.[39mok) {
+    [90m   | [39m  
+                     
+      [31m^[39m
+    [90m143| [39m  
+          
+console.error("≡ƒº▒ 
+Formbricks - Global 
+error: ", 
+commandResΓÇª
+    [90m144| [39m  
+        }
+[90m [2mΓ¥»[22m sr
+c/lib/common/tests/co
+mmand-queue.test.ts:
+[2m68:5[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/
+2]ΓÄ»[22m[39m
+
+[41m[1m FAIL 
+[22m[49m src/lib/co
+mmon/tests/command-qu
+eue.test.ts[2m > [2
+2mCommandQueue[2m > 
+[22mdoes NOT 
+executing later 
+commands if first is 
+blocked (Strict FIFO)
+[31m[1mTypeError[2
+2m: Cannot read 
+properties of 
+undefined (reading 
+'ok')[39m
+[36m [2mΓ¥»[22m 
+CommandQueue.run src/
+lib/common/command-qu
+eue.ts:[2m142:30[22
+m[39m
+    [90m140| [39m  
+        [90m// 
+check if the command 
+returned an error 
+result[39m
+    [90m141| [39m  
+        
+[35mconst[39m 
+commandResult 
+[33m=[39m result[3
+3m.[39mdata[33m;[3
+9m
+    [90m142| [39m  
+        [35mif[39m 
+([33m![39mcommandRe
+sult[33m.[39mok) {
+    [90m   | [39m  
+                     
+      [31m^[39m
+    [90m143| [39m  
+          
+console.error("≡ƒº▒ 
+Formbricks - Global 
+error: ", 
+commandResΓÇª
+    [90m144| [39m  
+        }
+[90m [2mΓ¥»[22m sr
+c/lib/common/tests/co
+mmand-queue.test.ts:
+[2m94:5[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/
+2]ΓÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (7)[39m
+[2m   Start at [22m 17:50:12
+[2m   Duration [22m 1.18s[2m (transform 159ms, setup 52ms, collect 323ms, tests 28ms, environment 0ms, prepare 208ms)[22m
+
+C:\Users\bhara\FormBricks\formbricks\packages\js-core:
+ΓÇëERR_PNPM_RECURSIVE_RUN_FIRST_FAILΓÇë @formbricks/js-core@1.0.0 test: `vitest "command-queue"`
+Exit status 1

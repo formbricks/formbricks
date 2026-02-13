@@ -152,4 +152,37 @@ describe("CommandQueue", () => {
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
+
+  test("promotes Setup commands to unblock queue (Deadlock Fix)", async () => {
+    // 1. Setup initially FALSE
+    let isSetup = false;
+    vi.mocked(checkSetup).mockImplementation(() => {
+      return isSetup
+        ? { ok: true, data: undefined }
+        : { ok: false, error: { code: "not_setup", message: "Not setup" } };
+    });
+
+    // 2. Queue "track" command (Requires Setup)
+    // This command should blocked the queue initially
+    const trackSpy = vi.fn().mockResolvedValue({ ok: true as const, data: undefined });
+    await queue.add(trackSpy, CommandType.GeneralAction, true);
+
+    // 3. Queue "init" command (Does NOT require Setup, Should set isSetup=true)
+    // This command should be promoted to the front
+    const initSpy = vi.fn(async () => {
+      isSetup = true; // SIMULATE setup completion
+      return { ok: true as const, data: undefined };
+    });
+
+    await queue.add(initSpy, CommandType.Setup, false);
+
+    // 4. Wait for queue to process
+    await queue.wait();
+
+    // 5. Verification
+    // Init should have run (despite being added second)
+    expect(initSpy).toHaveBeenCalled();
+    // Track should have run AFTER init
+    expect(trackSpy).toHaveBeenCalled();
+  });
 });

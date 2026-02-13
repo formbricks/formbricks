@@ -85,10 +85,20 @@ export class CommandQueue {
         if (currentItem.checkSetup && currentItem.type !== CommandType.Setup) {
           const setupResult = checkSetup();
           if (!setupResult.ok) {
+            // Strict FIFO: If the head is blocked, we check if there is a SETUP command later in the queue.
+            // If yes, we promote it to the front to unblock the queue.
+            const setupCommandIndex = this.queue.findIndex((item) => item.type === CommandType.Setup);
+
+            if (setupCommandIndex !== -1) {
+              const [setupCommand] = this.queue.splice(setupCommandIndex, 1);
+              this.queue.unshift(setupCommand);
+              console.log("🧱 Formbricks - Promoting Setup command to front of queue to unblock.");
+              continue;
+            }
+
             console.warn(`🧱 Formbricks - SDK not setup. Pausing queue until setup completes.`);
-            // Strict FIFO: If the head of the queue is blocked, we PAUSE.
-            // We do NOT shift it. We do NOT search for other commands.
-            // We return to exit the run loop.
+            // If no setup command is in the queue, we strictly PAUSE.
+            // We do NOT shift the blocked command.
             // The queue will resume when run() is called again (e.g. by setup completion).
             return;
           }
@@ -123,7 +133,7 @@ export class CommandQueue {
           // The command execution itself succeeded (didn't throw),
           // check if the command returned an error result
           const commandResult = result.data;
-          if (!commandResult.ok) {
+          if (commandResult && !commandResult.ok) {
             console.error("🧱 Formbricks - Global error: ", commandResult.error);
           }
         }
