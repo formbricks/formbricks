@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { EditContactAttributesModal } from "@/modules/ee/contacts/components/edit-contact-attributes-modal";
@@ -15,14 +14,21 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { GeneratePersonalLinkModal } from "./generate-personal-link-modal";
 
+interface TContactAttributeWithKeyInfo {
+  key: string;
+  name: string | null;
+  value: string;
+  dataType: TContactAttributeDataType;
+}
+
 interface ContactControlBarProps {
   environmentId: string;
   contactId: string;
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
   publishedLinkSurveys: PublishedLinkSurvey[];
-  currentAttributes: TContactAttributes;
-  attributeKeys: TContactAttributeKey[];
+  allAttributeKeys: TContactAttributeKey[];
+  currentAttributes: TContactAttributeWithKeyInfo[];
 }
 
 export const ContactControlBar = ({
@@ -31,8 +37,8 @@ export const ContactControlBar = ({
   isReadOnly,
   isQuotasAllowed,
   publishedLinkSurveys,
+  allAttributeKeys,
   currentAttributes,
-  attributeKeys,
 }: ContactControlBarProps) => {
   const router = useRouter();
   const { t } = useTranslation();
@@ -63,7 +69,7 @@ export const ContactControlBar = ({
   const iconActions = [
     {
       icon: PencilIcon,
-      tooltip: t("environments.contacts.edit_attribute_values"),
+      tooltip: t("environments.contacts.edit_attributes"),
       onClick: () => {
         setIsEditAttributesModalOpen(true);
       },
@@ -115,7 +121,7 @@ export const ContactControlBar = ({
         setOpen={setIsEditAttributesModalOpen}
         contactId={contactId}
         currentAttributes={currentAttributes}
-        attributeKeys={attributeKeys}
+        attributeKeys={allAttributeKeys}
       />
     </>
   );

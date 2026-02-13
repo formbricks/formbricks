@@ -8,16 +8,13 @@ export const ZContactAttribute = z.object({
   attributeKeyId: ZId,
   contactId: ZId,
   value: z.string(),
+  valueNumber: z.number().nullable(),
+  valueDate: z.date().nullable(),
 });
 export type TContactAttribute = z.infer<typeof ZContactAttribute>;
 
-export const ZContactAttributeUpdateInput = z.object({
-  environmentId: z.string().cuid2(),
-  contactId: z.string(),
-  attributes: z.record(z.union([z.string(), z.number()])),
-});
-
-export type TContactAttributeUpdateInput = z.infer<typeof ZContactAttributeUpdateInput>;
-
 export const ZContactAttributes = z.record(z.string());
 export type TContactAttributes = z.infer<typeof ZContactAttributes>;
+
+export const ZContactAttributesInput = z.record(z.union([z.string(), z.number()]));
+export type TContactAttributesInput = z.infer<typeof ZContactAttributesInput>;

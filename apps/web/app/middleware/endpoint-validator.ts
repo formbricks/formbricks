@@ -43,14 +43,6 @@ export const isAuthProtectedRoute = (url: string): boolean => {
   return protectedRoutes.some((route) => url.startsWith(route));
 };
 
-export const isSyncWithUserIdentificationEndpoint = (
-  url: string
-): { environmentId: string; userId: string } | false => {
-  const regex = /\/api\/v1\/client\/(?<environmentId>[^/]+)\/app\/sync\/(?<userId>[^/]+)/;
-  const match = url.match(regex);
-  return match ? { environmentId: match.groups!.environmentId, userId: match.groups!.userId } : false;
-};
-
 /**
  * Check if the route should be accessible on the public domain (PUBLIC_URL)
  * Uses whitelist approach - only explicitly allowed routes are accessible

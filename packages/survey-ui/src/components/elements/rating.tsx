@@ -260,7 +260,7 @@ function Rating({
         }}>
         {colorCoding ? (
           <div
-            className={cn("absolute left-0 top-0 h-[6px] w-full", getRatingNumberOptionColor(range, number))}
+            className={cn("absolute top-0 left-0 h-[6px] w-full", getRatingNumberOptionColor(range, number))}
           />
         ) : null}
         <input

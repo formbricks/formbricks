@@ -172,7 +172,7 @@ export const FileUploadElementForm = ({
 
                   updateElement(elementIdx, { maxSizeInMB: Number.parseInt(e.target.value, 10) });
                 }}
-                className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
               />
               MB
             </p>

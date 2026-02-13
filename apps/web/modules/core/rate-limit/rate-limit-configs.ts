@@ -12,11 +12,6 @@ export const rateLimitConfigs = {
     v1: { interval: 60, allowedPerInterval: 100, namespace: "api:v1" }, // 100 per minute (Management API)
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
-    syncUserIdentification: {
-      interval: 60,
-      allowedPerInterval: 5,
-      namespace: "api:sync-user-identification",
-    }, // 5 per minute per environment-user pair
   },
 
   // Server actions - varies by action type

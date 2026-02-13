@@ -259,10 +259,7 @@ function SingleSelect({
                           disabled={disabled}
                           aria-required={required}
                         />
-                        <span
-                          className={cn("mx-3 grow", optionLabelClassName)}>
-                          {option.label}
-                        </span>
+                        <span className={cn("mx-3 grow", optionLabelClassName)}>{option.label}</span>
                       </span>
                     </label>
                   );
@@ -279,10 +276,7 @@ function SingleSelect({
                       disabled={disabled}
                       aria-required={required}
                     />
-                    <span
-                      className={cn("mr-3 ml-3 grow", optionLabelClassName)}>
-                      {otherOptionLabel}
-                    </span>
+                    <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
                   </span>
                   {isOtherSelected ? (
                     <Input
@@ -318,10 +312,7 @@ function SingleSelect({
                           disabled={disabled}
                           aria-required={required}
                         />
-                        <span
-                          className={cn("mx-3 grow", optionLabelClassName)}>
-                          {option.label}
-                        </span>
+                        <span className={cn("mx-3 grow", optionLabelClassName)}>{option.label}</span>
                       </span>
                     </label>
                   );

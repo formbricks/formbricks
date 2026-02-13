@@ -265,7 +265,7 @@ export const BlockCard = ({
         </div>
 
         <button
-          className="opacity-0 hover:cursor-move group-hover:opacity-100"
+          className="opacity-0 group-hover:opacity-100 hover:cursor-move"
           aria-label="Drag to reorder block">
           <GripIcon className="h-4 w-4" />
         </button>

@@ -317,10 +317,7 @@ function ListVariant({
                     disabled={isDisabled}
                     aria-invalid={Boolean(errorMessage)}
                   />
-                  <span
-                    className={cn("mx-3", optionLabelClassName)}>
-                    {option.label}
-                  </span>
+                  <span className={cn("mx-3", optionLabelClassName)}>{option.label}</span>
                 </span>
               </label>
             );
@@ -348,10 +345,7 @@ function ListVariant({
                   disabled={disabled || isNoneSelected}
                   aria-invalid={Boolean(errorMessage)}
                 />
-                <span
-                  className={cn("mx-3 grow", optionLabelClassName)}>
-                  {otherOptionLabel}
-                </span>
+                <span className={cn("mx-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
               </span>
               {isOtherSelected ? (
                 <Input
@@ -396,10 +390,7 @@ function ListVariant({
                     required={false}
                     aria-invalid={Boolean(errorMessage)}
                   />
-                  <span
-                    className={cn("mx-3", optionLabelClassName)}>
-                    {option.label}
-                  </span>
+                  <span className={cn("mx-3", optionLabelClassName)}>{option.label}</span>
                 </span>
               </label>
             );

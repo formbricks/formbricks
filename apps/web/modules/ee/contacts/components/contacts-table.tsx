@@ -294,9 +294,9 @@ export const ContactsTable = ({
                 </TableRow>
               ))}
               {table.getRowModel().rows.length === 0 && (
-                <TableRow>
+                <TableRow className="hover:bg-white">
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    {t("common.no_results")}
+                    <p className="text-slate-400">{t("common.no_results")}</p>
                   </TableCell>
                 </TableRow>
               )}

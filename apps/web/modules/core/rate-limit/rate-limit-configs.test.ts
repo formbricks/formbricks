@@ -68,7 +68,7 @@ describe("rateLimitConfigs", () => {
 
     test("should have all API configurations", () => {
       const apiConfigs = Object.keys(rateLimitConfigs.api);
-      expect(apiConfigs).toEqual(["v1", "v2", "client", "syncUserIdentification"]);
+      expect(apiConfigs).toEqual(["v1", "v2", "client"]);
     });
 
     test("should have all action configurations", () => {
@@ -137,7 +137,6 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
         { config: rateLimitConfigs.api.client, identifier: "client-api-key" },
-        { config: rateLimitConfigs.api.syncUserIdentification, identifier: "sync-user-id" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
         { config: rateLimitConfigs.storage.upload, identifier: "storage-upload" },
         { config: rateLimitConfigs.storage.delete, identifier: "storage-delete" },
@@ -157,31 +156,6 @@ describe("rateLimitConfigs", () => {
         const exceededResult = await checkRateLimit(config, identifier);
         expect(exceededResult.ok).toBe(true);
         expect((exceededResult as any).data.allowed).toBe(false);
-      }
-    });
-
-    test("should properly configure syncUserIdentification rate limit", async () => {
-      const config = rateLimitConfigs.api.syncUserIdentification;
-
-      // Verify configuration values
-      expect(config.interval).toBe(60); // 1 minute
-      expect(config.allowedPerInterval).toBe(5); // 5 requests per minute
-      expect(config.namespace).toBe("api:sync-user-identification");
-
-      // Test with allowed request
-      mockEval.mockResolvedValue([1, 1]); // 1 request used, allowed (1 = true)
-      const allowedResult = await checkRateLimit(config, "env-user-123");
-      expect(allowedResult.ok).toBe(true);
-      if (allowedResult.ok) {
-        expect(allowedResult.data.allowed).toBe(true);
-      }
-
-      // Test when limit is exceeded
-      mockEval.mockResolvedValue([6, 0]); // 6 requests used (exceeds limit of 5), not allowed (0 = false)
-      const exceededResult = await checkRateLimit(config, "env-user-123");
-      expect(exceededResult.ok).toBe(true);
-      if (exceededResult.ok) {
-        expect(exceededResult.data.allowed).toBe(false);
       }
     });
 
