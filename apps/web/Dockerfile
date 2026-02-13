@@ -126,8 +126,13 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-# Pino transports are loaded in worker threads via dynamic require() and cannot be
-# detected by Next.js file tracing — copy them explicitly for runtime availability.
+# Pino loads transport code in worker threads via dynamic require().
+# Next.js file tracing only traces static imports, missing runtime-loaded files
+# (e.g. pino/lib/transport-stream.js, transport targets).
+# Copy the full packages to ensure all runtime files are available.
+COPY --from=installer /app/node_modules/pino ./node_modules/pino
+RUN chmod -R 755 ./node_modules/pino
+
 COPY --from=installer /app/node_modules/pino-opentelemetry-transport ./node_modules/pino-opentelemetry-transport
 RUN chmod -R 755 ./node_modules/pino-opentelemetry-transport
 
