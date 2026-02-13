@@ -1,0 +1,14 @@
+﻿
+> @formbricks/js-core@1.0.0 lint C:\Users\bhara\FormBricks\formbricks\packages\js-core
+> eslint . --ext .ts,.js,.tsx,.jsx
+
+
+C:\Users\bhara\FormBricks\formbricks\packages\js-core\src\lib\common\command-queue.ts
+  131:33  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+Γ£û 1 problem (1 error, 0 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+
+C:\Users\bhara\FormBricks\formbricks\packages\js-core:
+ΓÇëERR_PNPM_RECURSIVE_RUN_FIRST_FAILΓÇë @formbricks/js-core@1.0.0 lint: `eslint . --ext .ts,.js,.tsx,.jsx`
+Exit status 1

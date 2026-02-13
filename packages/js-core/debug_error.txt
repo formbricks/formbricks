@@ -1,0 +1,6 @@
+Cannot read properties of undefined (reading 'ok')
+TypeError: Cannot read properties of undefined (reading 'ok')
+    at CommandQueue.run (C:\Users\bhara\FormBricks\formbricks\packages\js-core\src\lib\common\command-queue.ts:128:33)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at C:\Users\bhara\FormBricks\formbricks\packages\js-core\src\lib\common\tests\debug_pause.test.ts:52:13
+    at file:///C:/Users/bhara/FormBricks/formbricks/node_modules/@vitest/runner/dist/index.js:596:20

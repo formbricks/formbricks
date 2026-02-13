@@ -1,0 +1,31 @@
+﻿
+> @formbricks/js-core@1.0.0 build C:\Users\bhara\FormBricks\formbricks\packages\js-core
+> tsc && vite build
+
+src/lib/common/tests/command-queue.test.ts(44,21): error TS2345: Argument of type 'Mock<() => Promise<{ ok: boolean; data: undefined; }>>' is not assignable to parameter of type 'TCommand'.
+  Type 'Promise<{ ok: boolean; data: undefined; }>' is not assignable to type 'Promise<void> | Result<void, unknown> | Promise<Result<void, unknown>>'.
+    Type 'Promise<{ ok: boolean; data: undefined; }>' is not assignable to type 'Promise<void>'.
+      Type '{ ok: boolean; data: undefined; }' is not assignable to type 'void'.
+src/lib/common/tests/command-queue.test.ts(45,21): error TS2345: Argument of type 'Mock<() => Promise<{ ok: boolean; data: undefined; }>>' is not assignable to parameter of type 'TCommand'.
+  Type 'Promise<{ ok: boolean; data: undefined; }>' is not assignable to type 'Promise<void> | Result<void, unknown> | Promise<Result<void, unknown>>'.
+    Type 'Promise<{ ok: boolean; data: undefined; }>' is not assignable to type 'Promise<void>'.
+      Type '{ ok: boolean; data: undefined; }' is not assignable to type 'void'.
+src/lib/common/tests/command-queue.test.ts(114,21): error TS2345: Argument of type 'Mock<() => Promise<{ ok: boolean; data: undefined; }>>' is not assignable to parameter of type 'TCommand'.
+  Type 'Promise<{ ok: boolean; data: undefined; }>' is not assignable to type 'Promise<void> | Result<void, unknown> | Promise<Result<void, unknown>>'.
+    Type 'Promise<{ ok: boolean; data: undefined; }>' is not assignable to type 'Promise<void>'.
+      Type '{ ok: boolean; data: undefined; }' is not assignable to type 'void'.
+src/lib/common/tests/debug_pause.test.ts(1,32): error TS6133: 'expect' is declared but its value is never read.
+src/lib/common/tests/repro_demo.test.ts(29,25): error TS2345: Argument of type 'Mock<() => Promise<{ ok: boolean; data: undefined; }>>' is not assignable to parameter of type 'TCommand'.
+  Type 'Promise<{ ok: boolean; data: undefined; }>' is not assignable to type 'Promise<void> | Result<void, unknown> | Promise<Result<void, unknown>>'.
+    Type 'Promise<{ ok: boolean; data: undefined; }>' is not assignable to type 'Promise<void>'.
+      Type '{ ok: boolean; data: undefined; }' is not assignable to type 'void'.
+src/lib/common/utils.ts(313,13): error TS7006: Parameter 'sel' implicitly has an 'any' type.
+src/types/config.ts(2,15): error TS2305: Module '"@prisma/client"' has no exported member 'ActionClass'.
+src/types/config.ts(2,28): error TS2305: Module '"@prisma/client"' has no exported member 'Language'.
+src/types/config.ts(2,38): error TS2305: Module '"@prisma/client"' has no exported member 'Project'.
+src/types/config.ts(2,47): error TS2305: Module '"@prisma/client"' has no exported member 'Segment'.
+src/types/config.ts(2,56): error TS2305: Module '"@prisma/client"' has no exported member 'Survey'.
+src/types/config.ts(2,64): error TS2305: Module '"@prisma/client"' has no exported member 'SurveyLanguage'.
+C:\Users\bhara\FormBricks\formbricks\packages\js-core:
+ΓÇëERR_PNPM_RECURSIVE_RUN_FIRST_FAILΓÇë @formbricks/js-core@1.0.0 build: `tsc && vite build`
+Exit status 2

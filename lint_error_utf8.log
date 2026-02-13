@@ -1,0 +1,28 @@
+﻿
+> @formbricks/js-core@1.0.0 lint C:\Users\bhara\FormBricks\formbricks\packages\js-core
+> eslint . --ext .ts,.js,.tsx,.jsx
+
+
+C:\Users\bhara\FormBricks\formbricks\packages\js-core\src\lib\common\command-queue.ts
+   84:14  error  Unnecessary conditional, value is always falsy   @typescript-eslint/no-unnecessary-condition
+  128:20  error  Unnecessary conditional, value is always truthy  @typescript-eslint/no-unnecessary-condition
+  128:57  error  Unsafe member access .ok on an `any` value       @typescript-eslint/no-unsafe-member-access
+  129:80  error  Unsafe member access .error on an `any` value    @typescript-eslint/no-unsafe-member-access
+
+C:\Users\bhara\FormBricks\formbricks\packages\js-core\src\lib\common\tests\command-queue.test.ts
+  144:81  error  Unexpected empty arrow function                 @typescript-eslint/no-empty-function
+  147:39  error  Async arrow function has no 'await' expression  @typescript-eslint/require-await
+
+C:\Users\bhara\FormBricks\formbricks\packages\js-core\src\lib\common\tests\repro_demo.test.ts
+   1:1   error  Filename is not in kebab case. Rename it to `repro-demo.test.ts`  unicorn/filename-case
+  23:13  error  Unexpected console statement                                      no-console
+  27:9   error  Unexpected console statement                                      no-console
+  32:9   error  Unexpected console statement                                      no-console
+  38:13  error  Unexpected console statement                                      no-console
+  40:13  error  Unexpected console statement                                      no-console
+
+Γ£û 12 problems (12 errors, 0 warnings)
+
+C:\Users\bhara\FormBricks\formbricks\packages\js-core:
+ΓÇëERR_PNPM_RECURSIVE_RUN_FIRST_FAILΓÇë @formbricks/js-core@1.0.0 lint: `eslint . --ext .ts,.js,.tsx,.jsx`
+Exit status 1

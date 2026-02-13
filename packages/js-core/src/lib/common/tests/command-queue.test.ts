@@ -32,11 +32,11 @@ describe("CommandQueue", () => {
 
     const cmdA = vi.fn(async () => {
       executionOrder.push("A");
-      return Promise.resolve({ ok: true, data: undefined });
+      return Promise.resolve({ ok: true as const, data: undefined });
     });
     const cmdB = vi.fn(async () => {
       executionOrder.push("B");
-      return Promise.resolve({ ok: true, data: undefined });
+      return Promise.resolve({ ok: true as const, data: undefined });
     });
 
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
@@ -106,7 +106,7 @@ describe("CommandQueue", () => {
       // This should return immediately because running=true
       await queue.run();
       executionOrder.push("end");
-      return { ok: true, data: undefined };
+      return { ok: true as const, data: undefined };
     });
 
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
@@ -127,7 +127,7 @@ describe("CommandQueue", () => {
     mockUpdateQueueInstance.mockReturnValue(mockUpdateQueue as unknown as UpdateQueue);
 
     const generalActionCmd = vi.fn((): Promise<Result<void, unknown>> => {
-      return Promise.resolve({ ok: true, data: undefined });
+      return Promise.resolve({ ok: true as const, data: undefined });
     });
 
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
@@ -141,12 +141,10 @@ describe("CommandQueue", () => {
   });
 
   test("logs errors if a command throws", async () => {
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
-    const failingCmd = vi.fn(async () => {
-      throw new Error("fail");
-    });
+    const failingCmd = vi.fn(() => Promise.reject(new Error("fail")));
 
     await queue.add(failingCmd, CommandType.GeneralAction, true);
     await queue.wait();

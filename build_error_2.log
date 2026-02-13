@@ -1,0 +1,8 @@
+﻿
+> @formbricks/js-core@1.0.0 build C:\Users\bhara\FormBricks\formbricks\packages\js-core
+> tsc && vite build
+
+src/lib/common/tests/debug_pause.test.ts(1,32): error TS6133: 'expect' is declared but its value is never read.
+C:\Users\bhara\FormBricks\formbricks\packages\js-core:
+ΓÇëERR_PNPM_RECURSIVE_RUN_FIRST_FAILΓÇë @formbricks/js-core@1.0.0 build: `tsc && vite build`
+Exit status 2

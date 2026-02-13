@@ -81,15 +81,11 @@ export class CommandQueue {
         // Peek at the next command instead of shifting
         const currentItem = this.queue[0];
 
-        if (!currentItem) break;
-
         // Check if this command requires setup
         if (currentItem.checkSetup && currentItem.type !== CommandType.Setup) {
           const setupResult = checkSetup();
           if (!setupResult.ok) {
-            console.warn(
-              `🧱 Formbricks - SDK not setup. Pausing queue until setup completes.`
-            );
+            console.warn(`🧱 Formbricks - SDK not setup. Pausing queue until setup completes.`);
             // Strict FIFO: If the head of the queue is blocked, we PAUSE.
             // We do NOT shift it. We do NOT search for other commands.
             // We return to exit the run loop.
@@ -106,27 +102,30 @@ export class CommandQueue {
         if (itemToExecute.type === CommandType.GeneralAction) {
           const updateQueue = UpdateQueue.getInstance();
           if (!updateQueue.isEmpty()) {
-            console.log(
-              "🧱 Formbricks - Waiting for pending updates to complete before executing command"
-            );
+            console.log("🧱 Formbricks - Waiting for pending updates to complete before executing command");
             await updateQueue.processUpdates();
           }
         }
 
         // Execute the command
         const executeCommand = async (): Promise<Result<void, unknown>> => {
-          return (await itemToExecute.command.apply(
-            null,
-            itemToExecute.commandArgs
-          )) as Result<void, unknown>;
+          return (await itemToExecute.command.apply(null, itemToExecute.commandArgs)) as Result<
+            void,
+            unknown
+          >;
         };
 
         const result = await wrapThrowsAsync(executeCommand)();
 
         if (!result.ok) {
           console.error("🧱 Formbricks - Global error: ", result.error);
-        } else if (result.data && !(result.data as any).ok) {
-          console.error("🧱 Formbricks - Global error: ", (result.data as any).error);
+        } else {
+          // The command execution itself succeeded (didn't throw),
+          // check if the command returned an error result
+          const commandResult = result.data;
+          if (!commandResult.ok) {
+            console.error("🧱 Formbricks - Global error: ", commandResult.error);
+          }
         }
       }
     } finally {
