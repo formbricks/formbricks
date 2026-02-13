@@ -52,7 +52,15 @@ icon: "windows"
 
    ```
 
-6. **Start the development setup:**
+6. **Generate the Next.js AGENTS.md file (optional, for AI-assisted development):**
+
+   This step generates an `AGENTS.md` file at the repository root that provides Next.js documentation context for AI coding assistants (e.g. Cursor, GitHub Copilot). It runs `npx @next/codemod agents-md` under the hood. Re-run it whenever you upgrade Next.js.
+
+   ```bash
+   pnpm agents:update
+   ```
+
+7. **Start the development setup:**
    ```bash
    pnpm go
    ```

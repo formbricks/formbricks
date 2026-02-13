@@ -116,7 +116,7 @@ export const setup = async (
 
     const expiresAt = existingConfig.status.expiresAt;
 
-    if (expiresAt && isNowExpired(new Date(expiresAt))) {
+    if (expiresAt && !isNowExpired(new Date(expiresAt))) {
       console.error("🧱 Formbricks - Error state is not expired, skipping initialization");
       return okVoid();
     }

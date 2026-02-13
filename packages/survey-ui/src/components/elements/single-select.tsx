@@ -129,7 +129,7 @@ function SingleSelect({
     );
 
   // Shared className for option labels
-  const optionLabelClassName = "font-option  font-option-weight text-option-label";
+  const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
 
   // Get selected option label for dropdown display
   const selectedOption = options.find((opt) => opt.id === selectedValue);
@@ -160,15 +160,15 @@ function SingleSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="rounded-input w-full justify-between bg-option-bg rounded-option border border-option-border my-0 h-input"
+                  className="rounded-input bg-option-bg rounded-option border-option-border h-input my-0 w-full justify-between border"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
-                  <span className="truncate font-input font-input-weight text-input-text">{displayText}</span>
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 label-headline" />
+                  <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
+                  <ChevronDown className="label-headline ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto"
+                className="bg-option-bg max-h-[300px] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
                 align="start">
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
                   {options
@@ -193,7 +193,9 @@ function SingleSelect({
                       id={`${inputId}-${otherOptionId}`}
                       dir={dir}
                       disabled={disabled}>
-                      <span className="font-input font-input-weight text-input-text">{otherValue || otherOptionLabel}</span>
+                      <span className="font-input font-input-weight text-input-text">
+                        {otherValue || otherOptionLabel}
+                      </span>
                     </DropdownMenuRadioItem>
                   ) : null}
                   {options
@@ -258,8 +260,7 @@ function SingleSelect({
                           aria-required={required}
                         />
                         <span
-                          className={cn("mx-3 grow", optionLabelClassName)}
-                          style={{ fontSize: "var(--fb-option-font-size)" }}>
+                          className={cn("mx-3 grow", optionLabelClassName)}>
                           {option.label}
                         </span>
                       </span>
@@ -279,8 +280,7 @@ function SingleSelect({
                       aria-required={required}
                     />
                     <span
-                      className={cn("mr-3 ml-3 grow", optionLabelClassName)}
-                      style={{ fontSize: "var(--fb-option-font-size)" }}>
+                      className={cn("mr-3 ml-3 grow", optionLabelClassName)}>
                       {otherOptionLabel}
                     </span>
                   </span>
@@ -319,8 +319,7 @@ function SingleSelect({
                           aria-required={required}
                         />
                         <span
-                          className={cn("mx-3 grow", optionLabelClassName)}
-                          style={{ fontSize: "var(--fb-option-font-size)" }}>
+                          className={cn("mx-3 grow", optionLabelClassName)}>
                           {option.label}
                         </span>
                       </span>

@@ -51,11 +51,11 @@ export const PreviewSurvey = ({
   const { projectOverwrites } = survey || {};
 
   const { placement: surveyPlacement } = projectOverwrites || {};
-  const { darkOverlay: surveyDarkOverlay } = projectOverwrites || {};
+  const { overlay: surveyOverlay } = projectOverwrites || {};
   const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
 
   const placement = surveyPlacement || project.placement;
-  const darkOverlay = surveyDarkOverlay ?? project.darkOverlay;
+  const overlay = surveyOverlay ?? project.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
   const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
@@ -241,7 +241,7 @@ export const PreviewSurvey = ({
                   isOpen={isModalOpen}
                   placement={placement}
                   previewMode="mobile"
-                  darkOverlay={darkOverlay}
+                  overlay={overlay}
                   clickOutsideClose={clickOutsideClose}
                   borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
@@ -345,7 +345,7 @@ export const PreviewSurvey = ({
                 isOpen={isModalOpen}
                 placement={placement}
                 clickOutsideClose={clickOutsideClose}
-                darkOverlay={darkOverlay}
+                overlay={overlay}
                 previewMode="desktop"
                 borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>

@@ -9,18 +9,30 @@ jiti("./lib/env");
 
 /** @type {import('next').NextConfig} */
 
-const getHostname = (url) => {
-  const urlObj = new URL(url);
-  return urlObj.hostname;
-};
-
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: true,
-  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
+  serverExternalPackages: [
+    "@aws-sdk",
+    "@opentelemetry/api",
+    "@opentelemetry/auto-instrumentations-node",
+    "@opentelemetry/exporter-metrics-otlp-http",
+    "@opentelemetry/exporter-prometheus",
+    "@opentelemetry/exporter-trace-otlp-http",
+    "@opentelemetry/instrumentation",
+    "@opentelemetry/resources",
+    "@opentelemetry/sdk-metrics",
+    "@opentelemetry/sdk-node",
+    "@opentelemetry/sdk-trace-base",
+    "@opentelemetry/semantic-conventions",
+    "@prisma/instrumentation",
+    "pino",
+    "pino-pretty",
+    "pino-opentelemetry-transport",
+  ],
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
   },

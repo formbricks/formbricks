@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "preact/hooks";
-import { type TPlacement } from "@formbricks/types/common";
+import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/utils";
 
 interface SurveyContainerProps {
   mode: "modal" | "inline";
   placement?: TPlacement;
-  darkOverlay?: boolean;
+  overlay?: TOverlay;
   children: React.ReactNode;
   onClose?: () => void;
   clickOutside?: boolean;
@@ -16,7 +16,7 @@ interface SurveyContainerProps {
 export function SurveyContainer({
   mode,
   placement = "bottomRight",
-  darkOverlay = false,
+  overlay = "none",
   children,
   onClose,
   clickOutside,
@@ -24,16 +24,16 @@ export function SurveyContainer({
   dir = "auto",
 }: Readonly<SurveyContainerProps>) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const isCenter = placement === "center";
   const isModal = mode === "modal";
+  const hasOverlay = overlay !== "none";
 
   useEffect(() => {
     if (!isModal) return;
-    if (!isCenter) return;
+    if (!clickOutside) return;
+    if (!hasOverlay) return;
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        clickOutside &&
         isOpen &&
         modalRef.current &&
         !(modalRef.current as HTMLElement).contains(e.target as Node) &&
@@ -42,11 +42,12 @@ export function SurveyContainer({
         onClose();
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [clickOutside, onClose, isCenter, isModal, isOpen]);
+  }, [clickOutside, onClose, isModal, isOpen]);
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
@@ -80,15 +81,14 @@ export function SurveyContainer({
       <div
         aria-live="assertive"
         className={cn(
-          isCenter ? "pointer-events-auto" : "pointer-events-none",
-          isModal && "fixed inset-0 z-999999 flex items-end"
+          hasOverlay ? "pointer-events-auto" : "pointer-events-none",
+          isModal && "z-999999 fixed inset-0 flex items-end"
         )}>
         <div
           className={cn(
-            "relative h-full w-full",
-            !isCenter ? "bg-none transition-all duration-500 ease-in-out" : "",
-            isModal && isCenter && darkOverlay ? "bg-slate-700/80" : "",
-            isModal && isCenter && !darkOverlay ? "bg-white/50" : ""
+            "relative h-full w-full transition-all duration-500 ease-in-out",
+            isModal && overlay === "dark" ? "bg-slate-700/80" : "",
+            isModal && overlay === "light" ? "bg-slate-400/50" : ""
           )}>
           <div
             ref={modalRef}

@@ -55,7 +55,6 @@ export const env = createEnv({
     OIDC_DISPLAY_NAME: z.string().optional(),
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
-    OPENTELEMETRY_LISTENER_URL: z.string().optional(),
     REDIS_URL:
       process.env.NODE_ENV === "test"
         ? z.string().optional()
@@ -174,7 +173,6 @@ export const env = createEnv({
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     SENTRY_DSN: process.env.SENTRY_DSN,
-    OPENTELEMETRY_LISTENER_URL: process.env.OPENTELEMETRY_LISTENER_URL,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
     OIDC_CLIENT_ID: process.env.OIDC_CLIENT_ID,

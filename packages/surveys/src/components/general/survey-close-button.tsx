@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 interface SurveyCloseButtonProps {
   onClose?: () => void;
   hoverColor?: string;
-  borderRadius?: number;
+  borderRadius?: number | string;
 }
 
 export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonly<SurveyCloseButtonProps>) {
@@ -23,7 +23,7 @@ export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonl
         style={{
           backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",
           transition: "background-color 0.2s ease",
-          borderRadius: `${borderRadius}px`,
+          borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius,
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}

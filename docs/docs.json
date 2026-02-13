@@ -80,7 +80,8 @@
                   "xm-and-surveys/surveys/general-features/email-followups",
                   "xm-and-surveys/surveys/general-features/quota-management",
                   "xm-and-surveys/surveys/general-features/spam-protection",
-                  "xm-and-surveys/surveys/general-features/tags"
+                  "xm-and-surveys/surveys/general-features/tags",
+                  "xm-and-surveys/surveys/general-features/validation-rules"
                 ]
               },
               {
@@ -161,6 +162,7 @@
                   "xm-and-surveys/core-features/integrations/activepieces",
                   "xm-and-surveys/core-features/integrations/airtable",
                   "xm-and-surveys/core-features/integrations/google-sheets",
+                  "xm-and-surveys/core-features/integrations/hubspot",
                   "xm-and-surveys/core-features/integrations/make",
                   "xm-and-surveys/core-features/integrations/n8n",
                   "xm-and-surveys/core-features/integrations/notion",
