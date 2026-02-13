@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { TI18nString } from "../i18n";
 import type { TSurveyLanguage } from "./types";
 import { findLanguageCodesForDuplicateLabels } from "./validation";
@@ -17,7 +17,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     },
   ];
 
-  it("should handle undefined language values without throwing", () => {
+  test("should handle undefined language values without throwing", () => {
     const labels: TI18nString[] = [
       { default: "Option 1", es: "Opción 1" },
       { default: "Option 2" }, // Missing 'es' key - this was causing the error
@@ -28,7 +28,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(() => findLanguageCodesForDuplicateLabels(labels, mockLanguages)).not.toThrow();
   });
 
-  it("should detect duplicates when labels are the same", () => {
+  test("should detect duplicates when labels are the same", () => {
     const labels: TI18nString[] = [
       { default: "Option 1", es: "Opción 1" },
       { default: "Option 1", es: "Opción 1" }, // Duplicate
@@ -40,7 +40,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).toContain("es");
   });
 
-  it("should not detect duplicates when labels are different", () => {
+  test("should not detect duplicates when labels are different", () => {
     const labels: TI18nString[] = [
       { default: "Option 1", es: "Opción 1" },
       { default: "Option 2", es: "Opción 2" },
@@ -51,7 +51,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).toHaveLength(0);
   });
 
-  it("should ignore empty strings when detecting duplicates", () => {
+  test("should ignore empty strings when detecting duplicates", () => {
     const labels: TI18nString[] = [
       { default: "Option 1", es: "Opción 1" },
       { default: "", es: "" }, // Empty strings
@@ -63,7 +63,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).toHaveLength(0);
   });
 
-  it("should handle mixed scenarios with undefined and duplicates", () => {
+  test("should handle mixed scenarios with undefined and duplicates", () => {
     const labels: TI18nString[] = [
       { default: "Option 1" }, // Missing 'es'
       { default: "Option 2", es: "Opción" },
@@ -75,7 +75,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).toContain("es");
   });
 
-  it("should work with only default language enabled", () => {
+  test("should work with only default language enabled", () => {
     const defaultOnlyLanguages: TSurveyLanguage[] = [
       {
         default: true,
@@ -93,7 +93,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).toContain("default");
   });
 
-  it("should handle completely undefined values gracefully", () => {
+  test("should handle completely undefined values gracefully", () => {
     const labels: TI18nString[] = [
       { default: "Option 1" },
       { default: "Option 2" },
