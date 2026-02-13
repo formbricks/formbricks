@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { getServerSession } from "next-auth";
 import { responses } from "@/app/lib/api/response";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
@@ -6,16 +7,27 @@ import {
   GOOGLE_SHEETS_REDIRECT_URL,
   WEBAPP_URL,
 } from "@/lib/constants";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 
 export const GET = async (req: Request) => {
-  const url = req.url;
-  const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-  const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
-  const code = queryParams.get("code");
+  const url = new URL(req.url);
+  const environmentId = url.searchParams.get("state");
+  const code = url.searchParams.get("code");
 
   if (!environmentId) {
     return responses.badRequestResponse("Invalid environmentId");
+  }
+
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return responses.notAuthenticatedResponse();
+  }
+
+  const canUserAccessEnvironment = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!canUserAccessEnvironment) {
+    return responses.unauthorizedResponse();
   }
 
   if (code && typeof code !== "string") {
