@@ -10,7 +10,6 @@ import {
   isClientSideApiRoute,
   isIntegrationRoute,
   isManagementApiRoute,
-  isSyncWithUserIdentificationEndpoint,
 } from "@/app/middleware/endpoint-validator";
 import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -48,23 +47,16 @@ enum ApiV1RouteTypeEnum {
 }
 
 /**
- * Apply client-side API rate limiting (IP-based or sync-specific)
+ * Apply client-side API rate limiting (IP-based)
  */
-const applyClientRateLimit = async (url: string, customRateLimitConfig?: TRateLimitConfig): Promise<void> => {
-  const syncEndpoint = isSyncWithUserIdentificationEndpoint(url);
-  if (syncEndpoint) {
-    const syncRateLimitConfig = rateLimitConfigs.api.syncUserIdentification;
-    await applyRateLimit(syncRateLimitConfig, syncEndpoint.userId);
-  } else {
-    await applyIPRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.client);
-  }
+const applyClientRateLimit = async (customRateLimitConfig?: TRateLimitConfig): Promise<void> => {
+  await applyIPRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.client);
 };
 
 /**
  * Handle rate limiting based on authentication and API type
  */
 const handleRateLimiting = async (
-  url: string,
   authentication: TApiV1Authentication,
   routeType: ApiV1RouteTypeEnum,
   customRateLimitConfig?: TRateLimitConfig
@@ -84,7 +76,7 @@ const handleRateLimiting = async (
     }
 
     if (routeType === ApiV1RouteTypeEnum.Client) {
-      await applyClientRateLimit(url, customRateLimitConfig);
+      await applyClientRateLimit(customRateLimitConfig);
     }
   } catch (error) {
     return responses.tooManyRequestsResponse(error.message);
@@ -255,7 +247,6 @@ const getRouteType = (
  * Features:
  * - Performs authentication once and passes result to handler
  * - Applies API key-based rate limiting with differentiated limits for client vs management APIs
- * - Includes additional sync user identification rate limiting for client-side sync endpoints
  * - Sets userId and organizationId in audit log automatically when audit logging is enabled
  * - System and Sentry logs are always called for non-success responses
  * - Uses function overloads to provide type safety without requiring type guards
@@ -328,12 +319,7 @@ export const withV1ApiWrapper: {
 
     // === Rate Limiting ===
     if (isRateLimited) {
-      const rateLimitResponse = await handleRateLimiting(
-        req.nextUrl.pathname,
-        authentication,
-        routeType,
-        customRateLimitConfig
-      );
+      const rateLimitResponse = await handleRateLimiting(authentication, routeType, customRateLimitConfig);
       if (rateLimitResponse) return rateLimitResponse;
     }
 

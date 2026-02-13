@@ -175,24 +175,12 @@ describe("updateUser", () => {
   test("should use device type 'phone'", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     await updateUser(mockEnvironmentId, mockUserId, "phone");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(
-      mockEnvironmentId,
-      mockContactId,
-      mockUserId,
-      { userId: mockUserId, email: "test@example.com" },
-      "phone"
-    );
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockEnvironmentId, mockContactId, mockUserId, "phone");
   });
 
   test("should use device type 'desktop'", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     await updateUser(mockEnvironmentId, mockUserId, "desktop");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(
-      mockEnvironmentId,
-      mockContactId,
-      mockUserId,
-      { userId: mockUserId, email: "test@example.com" },
-      "desktop"
-    );
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockEnvironmentId, mockContactId, mockUserId, "desktop");
   });
 });
