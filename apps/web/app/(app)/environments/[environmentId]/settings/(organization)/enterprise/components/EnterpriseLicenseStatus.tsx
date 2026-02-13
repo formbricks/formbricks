@@ -38,7 +38,11 @@ const getBadgeConfig = (
   }
 };
 
-export const EnterpriseLicenseStatus = ({ status, gracePeriodEnd, environmentId }: EnterpriseLicenseStatusProps) => {
+export const EnterpriseLicenseStatus = ({
+  status,
+  gracePeriodEnd,
+  environmentId,
+}: EnterpriseLicenseStatusProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isRechecking, setIsRechecking] = useState(false);

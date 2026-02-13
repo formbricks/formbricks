@@ -1,12 +1,12 @@
 import { useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import i18n from "@/lib/i18n.config";
+import { getLanguageDisplayName } from "@/lib/language-display-name";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { cn, isRTLLanguage } from "@/lib/utils";
 
@@ -80,7 +80,7 @@ export function LanguageSwitch({
         title={t("common.language_switch")}
         type="button"
         className={cn(
-          "text-heading relative flex h-8 w-8 items-center justify-center rounded-md focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+          "text-heading focus:outline-hidden relative flex h-8 w-8 items-center justify-center rounded-md focus:ring-2 focus:ring-offset-2"
         )}
         style={{
           backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",
@@ -113,7 +113,7 @@ export function LanguageSwitch({
                 onClick={() => {
                   changeLanguage(surveyLanguage.language.code);
                 }}>
-                {getLanguageLabel(surveyLanguage.language.code, "en-US")}
+                {getLanguageDisplayName(surveyLanguage.language.code)}
               </button>
             );
           })}
