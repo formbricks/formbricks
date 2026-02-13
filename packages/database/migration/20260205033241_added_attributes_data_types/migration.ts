@@ -300,21 +300,13 @@ export const addedAttributesDataTypes: MigrationScript = {
     - valueNumber rows updated: ${stats.numberRowsBackfilled.toString()}
     - valueDate rows updated: ${stats.dateRowsBackfilled.toString()}`;
 
-    logger.info(
-      `
-========================================
-Migration Complete!
-========================================
-Total attribute keys: ${stats.totalKeys.toString()}
-  - Default keys (skipped): ${stats.defaultKeys.toString()}
-  - Custom keys: ${stats.customKeys.toString()}
-    - Number type: ${stats.numberTypeKeys.toString()}
-    - Date type: ${stats.dateTypeKeys.toString()}
-    - String type: ${stats.stringTypeKeys.toString()}
-    - Empty (skipped): ${stats.skippedEmptyKeys.toString()}
-Rows to backfill (number/date keys only): ${stats.totalAttributeRows.toString()}
-${backfillStatus}
-========================================`
-    );
+    logger.info(`Total attribute keys: ${stats.totalKeys.toString()}`);
+    logger.info(`Default keys (skipped): ${stats.defaultKeys.toString()}`);
+    logger.info(`Custom keys: ${stats.customKeys.toString()}`);
+    logger.info(`Number type: ${stats.numberTypeKeys.toString()}`);
+    logger.info(`Date type: ${stats.dateTypeKeys.toString()}`);
+    logger.info(`String type: ${stats.stringTypeKeys.toString()}`);
+    logger.info(`Empty (skipped): ${stats.skippedEmptyKeys.toString()}`);
+    logger.info(`Backfill status: ${backfillStatus}`);
   },
 };
