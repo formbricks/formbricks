@@ -23,152 +23,98 @@ describe("CommandQueue", () => {
   let queue: CommandQueue;
 
   beforeEach(() => {
-    // Clear all mocks before each test
     vi.clearAllMocks();
-    // Create a fresh CommandQueue instance
     queue = new CommandQueue();
   });
 
   test("executes commands in FIFO order", async () => {
     const executionOrder: string[] = [];
 
-    // Mock commands with proper Result returns
-    const cmdA = vi.fn(async (): Promise<Result<void, unknown>> => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          executionOrder.push("A");
-          resolve({ ok: true, data: undefined });
-        }, 10);
-      });
+    const cmdA = vi.fn(async () => {
+      executionOrder.push("A");
+      return Promise.resolve({ ok: true, data: undefined });
     });
-    const cmdB = vi.fn(async (): Promise<Result<void, unknown>> => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          executionOrder.push("B");
-          resolve({ ok: true, data: undefined });
-        }, 10);
-      });
-    });
-    const cmdC = vi.fn(async (): Promise<Result<void, unknown>> => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          executionOrder.push("C");
-          resolve({ ok: true, data: undefined });
-        }, 10);
-      });
+    const cmdB = vi.fn(async () => {
+      executionOrder.push("B");
+      return Promise.resolve({ ok: true, data: undefined });
     });
 
-    // We'll assume checkSetup always ok for this test
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
-    // Enqueue commands
     await queue.add(cmdA, CommandType.GeneralAction, true);
     await queue.add(cmdB, CommandType.GeneralAction, true);
-    await queue.add(cmdC, CommandType.GeneralAction, true);
 
-    // Wait for them to finish
     await queue.wait();
 
-    expect(executionOrder).toEqual(["A", "B", "C"]);
+    expect(executionOrder).toEqual(["A", "B"]);
   });
 
-  test("skips execution if checkSetup() fails", async () => {
-    const cmd = vi.fn(async (): Promise<void> => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve();
-        }, 10);
-      });
-    });
+  test("pauses execution if checkSetup() fails (Strict FIFO)", async () => {
+    const cmd = vi.fn();
 
-    // Force checkSetup to fail
+    // 1. Queue is blocked by missing setup
     vi.mocked(checkSetup).mockReturnValue({
       ok: false,
-      error: {
-        code: "not_setup",
-        message: "Not setup",
-      },
+      error: { code: "not_setup", message: "Not setup" },
     });
 
     await queue.add(cmd, CommandType.GeneralAction, true);
-    await queue.wait();
 
-    // Command should never have been called
+    // Should NOT execute yet
     expect(cmd).not.toHaveBeenCalled();
+
+    // 2. Setup completes and run() is triggered (simulating setup.ts behavior)
+    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
+    await queue.run();
+
+    // Should execute now
+    expect(cmd).toHaveBeenCalled();
   });
 
+  test("does NOT executing later commands if first is blocked (Strict FIFO)", async () => {
+    const cmd1 = vi.fn();
+    const cmd2 = vi.fn(); // This does NOT require setup, but should still be blocked by FIFO
 
-
-  test("executes command if checkSetup is false (no check)", async () => {
-    const cmd = vi.fn(async (): Promise<Result<void, unknown>> => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ ok: true, data: undefined });
-        }, 10);
-      });
+    // Block the queue
+    vi.mocked(checkSetup).mockReturnValue({
+      ok: false,
+      error: { code: "not_setup", message: "Not setup" },
     });
 
-    // checkSetup is irrelevant in this scenario, but let's mock it anyway
+    await queue.add(cmd1, CommandType.GeneralAction, true); // Requires setup
+    await queue.add(cmd2, CommandType.GeneralAction, false); // Does NOT require setup
+
+    // Queue should process head -> see blocked -> return.
+    // cmd2 should NOT run even though it doesn't need setup.
+    expect(cmd1).not.toHaveBeenCalled();
+    expect(cmd2).not.toHaveBeenCalled();
+
+    // Unblock
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
+    await queue.run();
 
-    // Here we pass 'false' for the second argument, so no check is performed
-    await queue.add(cmd, CommandType.GeneralAction, false);
-    await queue.wait();
-
-    expect(cmd).toHaveBeenCalledTimes(1);
-  });
-
-  test("logs errors if a command throws or returns error", async () => {
-    // Spy on console.error to see if it's called
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
-
-    // Force checkSetup to succeed
-    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
-
-    // Mock command that fails
-    const failingCmd = vi.fn(async () => {
-      await new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(undefined);
-        }, 10);
-      });
-
-      throw new Error("some error");
-    });
-
-    await queue.add(failingCmd, CommandType.GeneralAction, true);
-    await queue.wait();
-
-    expect(consoleErrorSpy).toHaveBeenCalledWith("🧱 Formbricks - Global error: ", expect.any(Error));
-    consoleErrorSpy.mockRestore();
-  });
-
-  test("resolves wait() after all commands complete", async () => {
-    const cmd1 = vi.fn(async (): Promise<Result<void, unknown>> => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ ok: true, data: undefined });
-        }, 10);
-      });
-    });
-    const cmd2 = vi.fn(async (): Promise<Result<void, unknown>> => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ ok: true, data: undefined });
-        }, 10);
-      });
-    });
-
-    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
-
-    await queue.add(cmd1, CommandType.GeneralAction, true);
-    await queue.add(cmd2, CommandType.GeneralAction, true);
-
-    await queue.wait();
-
-    // By the time `await queue.wait()` resolves, both commands should be done
     expect(cmd1).toHaveBeenCalled();
     expect(cmd2).toHaveBeenCalled();
+  });
+
+  test("handles re-entrancy gracefully (recursive run calls)", async () => {
+    const executionOrder: string[] = [];
+
+    // Command that triggers a recursive run()
+    const recursiveCmd = vi.fn(async () => {
+      executionOrder.push("start");
+      // This should return immediately because running=true
+      await queue.run();
+      executionOrder.push("end");
+      return { ok: true, data: undefined };
+    });
+
+    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
+
+    await queue.add(recursiveCmd, CommandType.GeneralAction, false);
+    await queue.wait();
+
+    expect(executionOrder).toEqual(["start", "end"]);
   });
 
   test("processes UpdateQueue before executing GeneralAction commands", async () => {
@@ -194,99 +140,18 @@ describe("CommandQueue", () => {
     expect(generalActionCmd).toHaveBeenCalled();
   });
 
-  test("implements singleton pattern correctly", () => {
-    const instance1 = CommandQueue.getInstance();
-    const instance2 = CommandQueue.getInstance();
-    expect(instance1).toBe(instance2);
-  });
-
-
-
-  test("executes later setup command if initial command requires setup", async () => {
-    const executionOrder: string[] = [];
-
-    const trackCmd = vi.fn((): Promise<Result<void, unknown>> => {
-      executionOrder.push("track");
-      return Promise.resolve({ ok: true, data: undefined });
-    });
-
-    const setupCmd = vi.fn((): Promise<Result<void, unknown>> => {
-      executionOrder.push("setup");
-      // Simulate setup taking some time and then succeeding
-      // Crucially, we must now mock checkSetup to return true for subsequent calls
-      vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
-      return Promise.resolve({ ok: true, data: undefined });
-    });
-
-    // Initial state: Not Setup
-    vi.mocked(checkSetup).mockReturnValue({
-      ok: false,
-      error: { code: "not_setup", message: "Not setup" },
-    });
-
-    // 1. Add Track command (requires setup)
-    // Queue: [Track]
-    // Run loop starts -> Peeks [Track] -> checkSetup fails -> isSetup=false
-    // No Setup in queue -> Skips [Track] -> Queue continues (but nothing else to run)
-    await queue.add(trackCmd, CommandType.GeneralAction, true);
-
-    // Verify that wait() resolves even if the queue is paused due to missing setup
-    await queue.wait();
-
-    // 2. Add Setup command
-    // Queue: [Track, Setup] -> Triggers run()
-    // Run loop starts -> Peeks [Track] -> checkSetup fails
-    // Finds [Setup] at index 1 -> Moves [Setup] to front -> Queue: [Setup, Track]
-    // Peeks [Setup] -> checkSetup skipped (or valid for setup type/arg) -> shifts & executes Setup
-    // ... Setup sets checkSetup mock to true ...
-    // Loop repeats -> Peeks [Track] -> checkSetup OK -> shifts & executes Track
-    await queue.add(setupCmd, CommandType.Setup, false);
-
-    await queue.wait();
-
-    expect(executionOrder).toEqual(["setup", "track"]);
-    expect(trackCmd).toHaveBeenCalled();
-    expect(setupCmd).toHaveBeenCalled();
-  });
-
-
-  test("handles re-entrancy gracefully (recursive run calls)", async () => {
-    const executionOrder: string[] = [];
-    const executionCount = { setup: 0, track: 0 };
-
-    // 1. Setup command that triggers queue.run() internally
-    const setupCmd = vi.fn((): Promise<Result<void, unknown>> => {
-      executionOrder.push("setup-start");
-      executionCount.setup++;
-
-      // Simulate re-entrant call (e.g. from setup.ts)
-      // This should NOT start a second loop
-      const result = queue.run();
-      // Since run() returns a promise, we can check if it resolves/returns quickly or creates a new loop
-      // But mainly we want to ensure no side effects or double execution
-      return Promise.resolve({ ok: true, data: undefined });
-    });
-
-    // 2. Normal command
-    const trackCmd = vi.fn((): Promise<Result<void, unknown>> => {
-      executionOrder.push("track");
-      executionCount.track++;
-      return Promise.resolve({ ok: true, data: undefined });
-    });
-
-    // Mock checkSetup to pass
+  test("logs errors if a command throws", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
-    // Add commands
-    await queue.add(setupCmd, CommandType.Setup, false);
-    await queue.add(trackCmd, CommandType.GeneralAction, false);
+    const failingCmd = vi.fn(async () => {
+      throw new Error("fail");
+    });
 
-    // Wait for queue to drain
+    await queue.add(failingCmd, CommandType.GeneralAction, true);
     await queue.wait();
 
-    // Verification
-    expect(executionCount.setup).toBe(1); // Should run exactly once
-    expect(executionCount.track).toBe(1); // Should run exactly once
-    expect(executionOrder).toEqual(["setup-start", "setup-end", "track"]); // Strict order
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });

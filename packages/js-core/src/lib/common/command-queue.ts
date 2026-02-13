@@ -87,29 +87,18 @@ export class CommandQueue {
         if (currentItem.checkSetup && currentItem.type !== CommandType.Setup) {
           const setupResult = checkSetup();
           if (!setupResult.ok) {
-            // Setup is required but not complete
-            // Look for a Setup command in the queue
-            const setupIndex = this.queue.findIndex(
-              (item) => item.type === CommandType.Setup
+            console.warn(
+              `🧱 Formbricks - SDK not setup. Pausing queue until setup completes.`
             );
-
-            if (setupIndex > 0) {
-              // Found Setup command - move it to the front
-              const [setupItem] = this.queue.splice(setupIndex, 1);
-              this.queue.unshift(setupItem);
-              continue; // Process the Setup command next
-            } else if (setupIndex === -1) {
-              // No Setup command in queue - pause execution
-              console.warn(
-                `🧱 Formbricks - Waiting for setup command to be added`
-              );
-              break;
-            }
-            // If setupIndex === 0, Setup is already first, so continue below
+            // Strict FIFO: If the head of the queue is blocked, we PAUSE.
+            // We do NOT shift it. We do NOT search for other commands.
+            // We return to exit the run loop.
+            // The queue will resume when run() is called again (e.g. by setup completion).
+            return;
           }
         }
 
-        // Now safely remove the command we're about to execute
+        // Runnaable: safely remove the command we're about to execute
         const itemToExecute = this.queue.shift();
         if (!itemToExecute) continue;
 
@@ -136,13 +125,19 @@ export class CommandQueue {
 
         if (!result.ok) {
           console.error("🧱 Formbricks - Global error: ", result.error);
-        } else if (!result.data.ok) {
-          console.error("🧱 Formbricks - Global error: ", result.data.error);
+        } else if (result.data && !(result.data as any).ok) {
+          console.error("🧱 Formbricks - Global error: ", (result.data as any).error);
         }
       }
     } finally {
       this.running = false;
-      if (this.resolvePromise) {
+      // Only resolve the wait promise if the queue is actually empty.
+      // If we paused due to blocking, we keeping the promise implementation implicitly handles "not resolved yet"
+      // BUT, existing wait() might expect to be resolved when "idle".
+      // Strict interpretation: wait() waits for DRAIN. If not drained (paused), it should not resolve?
+      // Or does wait() mean "wait until current processing batch finishes"?
+      // Usually "wait" implies "wait until empty".
+      if (this.queue.length === 0 && this.resolvePromise) {
         this.resolvePromise();
         this.resolvePromise = null;
         this.commandPromise = null;
