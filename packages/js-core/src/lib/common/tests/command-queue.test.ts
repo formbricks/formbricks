@@ -250,4 +250,43 @@ describe("CommandQueue", () => {
   });
 
 
+  test("handles re-entrancy gracefully (recursive run calls)", async () => {
+    const executionOrder: string[] = [];
+    const executionCount = { setup: 0, track: 0 };
+
+    // 1. Setup command that triggers queue.run() internally
+    const setupCmd = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("setup-start");
+      executionCount.setup++;
+
+      // Simulate re-entrant call (e.g. from setup.ts)
+      // This should NOT start a second loop
+      const result = queue.run();
+      // Since run() returns a promise, we can check if it resolves/returns quickly or creates a new loop
+      // But mainly we want to ensure no side effects or double execution
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    // 2. Normal command
+    const trackCmd = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("track");
+      executionCount.track++;
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    // Mock checkSetup to pass
+    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
+
+    // Add commands
+    await queue.add(setupCmd, CommandType.Setup, false);
+    await queue.add(trackCmd, CommandType.GeneralAction, false);
+
+    // Wait for queue to drain
+    await queue.wait();
+
+    // Verification
+    expect(executionCount.setup).toBe(1); // Should run exactly once
+    expect(executionCount.track).toBe(1); // Should run exactly once
+    expect(executionOrder).toEqual(["setup-start", "setup-end", "track"]); // Strict order
+  });
 });
