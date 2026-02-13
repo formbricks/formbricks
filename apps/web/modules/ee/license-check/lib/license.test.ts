@@ -24,6 +24,7 @@ const mockCache = {
   set: vi.fn(),
   del: vi.fn(),
   exists: vi.fn(),
+  tryLock: vi.fn(),
   withCache: vi.fn(),
   getRedisClient: vi.fn(),
 };
@@ -38,6 +39,7 @@ vi.mock("@formbricks/cache", () => ({
     license: {
       status: (identifier: string) => `fb:license:${identifier}:status`,
       previous_result: (identifier: string) => `fb:license:${identifier}:previous_result`,
+      fetch_lock: (identifier: string) => `fb:license:${identifier}:fetch_lock`,
     },
     custom: (namespace: string, identifier: string, subResource?: string) => {
       const base = `fb:${namespace}:${identifier}`;
@@ -99,6 +101,7 @@ describe("License Core Logic", () => {
     mockCache.set.mockReset();
     mockCache.del.mockReset();
     mockCache.exists.mockReset();
+    mockCache.tryLock.mockReset();
     mockCache.withCache.mockReset();
     mockLogger.error.mockReset();
     mockLogger.warn.mockReset();
@@ -106,9 +109,10 @@ describe("License Core Logic", () => {
     mockLogger.debug.mockReset();
 
     // Set up default mock implementations for Result types
-    // fetchLicense uses get + exists; getPreviousResult uses get with :previous_result key
+    // fetchLicense uses get with TCachedFetchResult wrapper + distributed lock; getPreviousResult uses get with :previous_result key
     mockCache.get.mockResolvedValue({ ok: true, data: null });
     mockCache.exists.mockResolvedValue({ ok: true, data: false }); // default: cache miss
+    mockCache.tryLock.mockResolvedValue({ ok: true, data: true }); // default: lock acquired
     mockCache.set.mockResolvedValue({ ok: true });
 
     vi.mocked(prisma.response.count).mockResolvedValue(100);
@@ -180,6 +184,8 @@ describe("License Core Logic", () => {
       const license = await getEnterpriseLicense();
       expect(license).toEqual(expectedActiveLicenseState);
       expect(mockCache.get).toHaveBeenCalledWith(expect.stringContaining("fb:license:"));
+      // Should have checked cache but NOT acquired lock or called fetch
+      expect(mockCache.tryLock).not.toHaveBeenCalled();
       expect(fetch).not.toHaveBeenCalled();
     });
 
@@ -197,6 +203,9 @@ describe("License Core Logic", () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(mockCache.get).toHaveBeenCalledWith(expect.stringContaining("fb:license:"));
+      // Should have tried to acquire lock and set the cache
+      expect(mockCache.tryLock).toHaveBeenCalled();
+      expect(mockCache.set).toHaveBeenCalled();
       expect(license).toEqual(expectedActiveLicenseState);
     });
 
@@ -388,6 +397,7 @@ describe("License Core Logic", () => {
       expect(mockCache.get).not.toHaveBeenCalled();
       expect(mockCache.set).not.toHaveBeenCalled();
       expect(mockCache.exists).not.toHaveBeenCalled();
+      expect(mockCache.tryLock).not.toHaveBeenCalled();
     });
 
     test("should handle fetch throwing an error and use grace period or return inactive", async () => {
@@ -454,6 +464,280 @@ describe("License Core Logic", () => {
         fallbackLevel: "default" as const,
         status: "invalid_license" as const,
       });
+    });
+
+    test("should skip polling and fetch directly when Redis is unavailable (tryLock error)", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "production",
+          VERCEL_URL: "some.vercel.url",
+          FORMBRICKS_COM_URL: "https://app.formbricks.com",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      const mockLicense: TEnterpriseLicenseDetails = {
+        status: "active",
+        features: {
+          isMultiOrgEnabled: true,
+          contacts: true,
+          projects: 10,
+          whitelabel: true,
+          removeBranding: true,
+          twoFactorAuth: true,
+          sso: true,
+          saml: true,
+          spamProtection: true,
+          ai: false,
+          auditLogs: true,
+          multiLanguageSurveys: true,
+          accessControl: true,
+          quotas: true,
+        },
+      };
+
+      // Redis is down: cache.get returns error, tryLock returns error
+      mockCache.get.mockResolvedValue({ ok: false, error: { code: "redis_connection_error" } });
+      mockCache.tryLock.mockResolvedValue({ ok: false, error: { code: "redis_connection_error" } });
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockLicense }),
+      } as any);
+
+      const startTime = Date.now();
+      const license = await getEnterpriseLicense();
+      const elapsed = Date.now() - startTime;
+
+      // Should NOT have waited for polling — should complete quickly
+      expect(elapsed).toBeLessThan(5000);
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        "Redis unavailable during license fetch lock; skipping poll and fetching directly"
+      );
+      expect(license).toEqual({
+        active: true,
+        features: mockLicense.features,
+        lastChecked: expect.any(Date),
+        isPendingDowngrade: false,
+        fallbackLevel: "live" as const,
+        status: "active" as const,
+      });
+    });
+
+    test("should poll and return cached value when another process holds the lock", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "production",
+          VERCEL_URL: "some.vercel.url",
+          FORMBRICKS_COM_URL: "https://app.formbricks.com",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      const { fetchLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      const mockLicense: TEnterpriseLicenseDetails = {
+        status: "active",
+        features: {
+          isMultiOrgEnabled: true,
+          contacts: true,
+          projects: 10,
+          whitelabel: true,
+          removeBranding: true,
+          twoFactorAuth: true,
+          sso: true,
+          saml: true,
+          spamProtection: true,
+          ai: false,
+          auditLogs: true,
+          multiLanguageSurveys: true,
+          accessControl: true,
+          quotas: true,
+        },
+      };
+
+      // Lock held by another process (ok: true, data: false)
+      mockCache.tryLock.mockResolvedValue({ ok: true, data: false });
+
+      // First get returns cache miss, subsequent gets return the populated license
+      let getCalls = 0;
+      mockCache.get.mockImplementation(async (key: string) => {
+        if (key.includes(":status")) {
+          getCalls++;
+          if (getCalls <= 1) return { ok: true, data: null };
+          return { ok: true, data: { value: mockLicense } };
+        }
+        return { ok: true, data: null };
+      });
+
+      const result = await fetchLicense();
+
+      expect(fetch).not.toHaveBeenCalled();
+      expect(result).toEqual(mockLicense);
+    });
+
+    test("should fall back to direct fetch after poll timeout when lock is held", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "production",
+          VERCEL_URL: "some.vercel.url",
+          FORMBRICKS_COM_URL: "https://app.formbricks.com",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      const { fetchLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      const mockLicense: TEnterpriseLicenseDetails = {
+        status: "active",
+        features: {
+          isMultiOrgEnabled: true,
+          contacts: true,
+          projects: 10,
+          whitelabel: true,
+          removeBranding: true,
+          twoFactorAuth: true,
+          sso: true,
+          saml: true,
+          spamProtection: true,
+          ai: false,
+          auditLogs: true,
+          multiLanguageSurveys: true,
+          accessControl: true,
+          quotas: true,
+        },
+      };
+
+      // Lock held, cache never gets populated
+      mockCache.tryLock.mockResolvedValue({ ok: true, data: false });
+      mockCache.get.mockResolvedValue({ ok: true, data: null });
+      mockCache.set.mockResolvedValue({ ok: true });
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockLicense }),
+      } as any);
+
+      const result = await fetchLicense();
+
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ pollMs: expect.any(Number) }),
+        "License cache not populated by holder within poll window; fetching in this process"
+      );
+      expect(result).toEqual(mockLicense);
+    });
+
+    test("should log warning and use short TTL when lock acquired but fetch returns null", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "production",
+          VERCEL_URL: "some.vercel.url",
+          FORMBRICKS_COM_URL: "https://app.formbricks.com",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      const { fetchLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      mockCache.get.mockResolvedValue({ ok: true, data: null });
+      mockCache.tryLock.mockResolvedValue({ ok: true, data: true });
+      mockCache.set.mockResolvedValue({ ok: true });
+
+      fetch.mockResolvedValueOnce({ ok: false, status: 500 } as any);
+
+      const result = await fetchLicense();
+
+      expect(result).toBeNull();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ttlMinutes: expect.any(Number),
+          timestamp: expect.any(String),
+        }),
+        "License fetch failed, caching null result with short TTL for faster retry"
+      );
+      expect(mockCache.set).toHaveBeenCalledWith(
+        expect.stringContaining("fb:license:"),
+        { value: null },
+        10 * 60 * 1000
+      );
+    });
+
+    test("should return null during build time (NEXT_PHASE = phase-production-build)", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "production",
+          VERCEL_URL: "some.vercel.url",
+          FORMBRICKS_COM_URL: "https://app.formbricks.com",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      // eslint-disable-next-line turbo/no-undeclared-env-vars -- NEXT_PHASE is a Next.js env variable
+      process.env.NEXT_PHASE = "phase-production-build";
+
+      const { fetchLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      const result = await fetchLicense();
+
+      expect(result).toBeNull();
+      expect(fetch).not.toHaveBeenCalled();
+      expect(mockCache.get).not.toHaveBeenCalled();
+    });
+
+    test("should return null after poll timeout when fallback fetch also fails", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "production",
+          VERCEL_URL: "some.vercel.url",
+          FORMBRICKS_COM_URL: "https://app.formbricks.com",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      const { fetchLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      mockCache.tryLock.mockResolvedValue({ ok: true, data: false });
+      mockCache.get.mockResolvedValue({ ok: true, data: null });
+      mockCache.set.mockResolvedValue({ ok: true });
+
+      fetch.mockResolvedValueOnce({ ok: false, status: 500 } as any);
+
+      const result = await fetchLicense();
+
+      expect(result).toBeNull();
+      expect(mockCache.set).toHaveBeenCalledWith(
+        expect.stringContaining("fb:license:"),
+        { value: null },
+        10 * 60 * 1000
+      );
     });
   });
 
@@ -985,7 +1269,9 @@ describe("License Core Logic", () => {
       await getEnterpriseLicense();
       await clearLicenseCache();
 
-      expect(mockCache.del).toHaveBeenCalledWith(expect.arrayContaining([expect.stringContaining("fb:license:")]));
+      expect(mockCache.del).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.stringContaining("fb:license:")])
+      );
     });
 
     test("should log warning when cache.del fails", async () => {
