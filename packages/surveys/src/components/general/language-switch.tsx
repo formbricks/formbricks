@@ -16,7 +16,7 @@ interface LanguageSwitchProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;
   hoverColor?: string;
-  borderRadius?: number;
+  borderRadius?: number | string;
   dir?: "ltr" | "rtl" | "auto";
   setDir?: (dir: "ltr" | "rtl" | "auto") => void;
 }
@@ -80,12 +80,12 @@ export function LanguageSwitch({
         title={t("common.language_switch")}
         type="button"
         className={cn(
-          "text-heading relative flex h-8 w-8 items-center justify-center rounded-md focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+          "text-heading focus:outline-hidden relative flex h-8 w-8 items-center justify-center rounded-md focus:ring-2 focus:ring-offset-2"
         )}
         style={{
           backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",
           transition: "background-color 0.2s ease",
-          borderRadius: `${borderRadius}px`,
+          borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius,
         }}
         onClick={toggleDropdown}
         tabIndex={-1}

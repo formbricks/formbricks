@@ -169,8 +169,13 @@ x-environment: &environment
     # Set the below to 1 to disable Rate Limiting across Formbricks
     # RATE_LIMITING_DISABLED: 1
 
-    # Set the below to send OpenTelemetry data for tracing
-    # OPENTELEMETRY_LISTENER_URL: http://localhost:4318/v1/traces
+    # Set the below to send OpenTelemetry data via OTLP to your collector
+    # OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
+    # OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    # OTEL_SERVICE_NAME: formbricks
+    # OTEL_RESOURCE_ATTRIBUTES: deployment.environment=development
+    # OTEL_TRACES_SAMPLER: parentbased_traceidratio
+    # OTEL_TRACES_SAMPLER_ARG: 1
 
     ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
 

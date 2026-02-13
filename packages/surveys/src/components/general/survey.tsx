@@ -747,7 +747,7 @@ export function Survey({
           return (
             <>
               {localSurvey.type !== "link" ? (
-                <div className="bg-survey-bg flex h-6 justify-end pt-2 pr-2">
+                <div className="bg-survey-bg flex h-6 justify-end pr-2 pt-2">
                   <SurveyCloseButton onClose={onClose} />
                 </div>
               ) : null}
@@ -849,7 +849,7 @@ export function Survey({
         setHasInteracted={setHasInteracted}>
         <div
           className={cn(
-            "no-scrollbar bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
+            "no-scrollbar bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-opacity duration-1000 ease-in-out",
             offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
           <div className={cn("relative")}>

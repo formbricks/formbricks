@@ -51,74 +51,82 @@
   --slate-50: rgb(248, 250, 252);
   --slate-100: rgb(241 245 249);
   --slate-200: rgb(226 232 240);
+  --slate-700: rgb(51 65 85);
+  --slate-900: rgb(15 23 42);
 
   /* ---------------------------------------------------------------------------
-     Survey general Colors
-     The primary accent color used throughout the survey. Override this to 
-     customize the brand appearance.
+     Theming Tokens (--fb-*)
+
+     Color values MUST match the output of getSuggestedColors("#64748b") in
+     apps/web/lib/styling/constants.ts.  Non-color values MUST match
+     STYLE_DEFAULTS in the same file.
+
+     At runtime styles.ts always overrides these from the JS object, but the
+     CSS values below act as the initial / fallback state so the survey looks
+     correct before JS executes.
+
+     Derived colour palette for brand #64748b:
+       questionColor  = #414b5a   (brand mixed with black @ 0.35)
+       inputBg        = #f3f4f6   (brand mixed with white @ 0.92)
+       inputBorder    = #c1c7d1   (brand mixed with white @ 0.60)
+       cardBg         = #fafbfc   (brand mixed with white @ 0.97)
+       cardBorder     = #e0e3e8   (brand mixed with white @ 0.80)
+       progressTrack  = #d9dbde   (questionColor mixed with white @ 0.80)
      --------------------------------------------------------------------------- */
+
+  /* ── Brand ─────────────────────────────────────────────────────────── */
   --fb-survey-brand-color: #64748b;
+  --fb-accent-background-color: #e2e8f0;
+  --fb-accent-background-color-selected: #f1f5f9;
 
-  --fb-accent-background-color: var(--slate-200);
-  --fb-accent-background-color-selected: var(--slate-100);
-
-
-  /* ---------------------------------------------------------------------------
-     Element Headline Tokens
-     Used for question headlines and main element titles.
-     --------------------------------------------------------------------------- */
+  /* ── Headlines ─────────────────────────────────────────────────────── */
   --fb-element-headline-font-family: inherit;
-  --fb-element-headline-font-weight: 400;
-  --fb-element-headline-font-size: 1rem;
-  --fb-element-headline-color: (--input);
+  --fb-element-headline-font-weight: 600;
+  --fb-element-headline-font-size: 16px;
+  --fb-element-headline-color: #414b5a;
   --fb-element-headline-opacity: 1;
 
-  /* ---------------------------------------------------------------------------
-     Element Description Tokens
-     Used for descriptive text below headlines.
-     --------------------------------------------------------------------------- */
+  /* ── Descriptions ──────────────────────────────────────────────────── */
   --fb-element-description-font-family: inherit;
   --fb-element-description-font-weight: 400;
-  --fb-element-description-font-size: 0.875rem;
-  --fb-element-description-color: var(--input);
+  --fb-element-description-font-size: 14px;
+  --fb-element-description-color: #414b5a;
   --fb-element-description-opacity: 1;
 
-  /* ---------------------------------------------------------------------------
-     Label Tokens
-     Used for form labels and secondary text.
-     --------------------------------------------------------------------------- */
+  /* ── Upper Labels ──────────────────────────────────────────────────── */
+  --fb-element-upper-label-font-family: inherit;
+  --fb-element-upper-label-font-weight: 400;
+  --fb-element-upper-label-font-size: 12px;
+  --fb-element-upper-label-color: #414b5a;
+  --fb-element-upper-label-opacity: 0.6;
+
+  /* ── Labels ────────────────────────────────────────────────────────── */
   --fb-label-font-family: inherit;
   --fb-label-font-weight: 400;
-  --fb-label-font-size: 0.875rem;
-  --fb-label-color: var(--foreground);
+  --fb-label-font-size: 14px;
+  --fb-label-color: #414b5a;
   --fb-label-opacity: 1;
 
-  /* ---------------------------------------------------------------------------
-     Button Tokens
-     Used for the custom button variant. Standard variants use Tailwind defaults.
-     --------------------------------------------------------------------------- */
-  --fb-button-height: 2.25rem;
+  /* ── Buttons ───────────────────────────────────────────────────────── */
+  --fb-button-height: auto;
   --fb-button-width: auto;
-  --fb-button-font-size: 0.875rem;
   --fb-button-font-family: inherit;
+  --fb-button-font-size: 16px;
   --fb-button-font-weight: 500;
-  --fb-button-border-radius: var(--radius);
-  --fb-button-bg-color: hsl(222.2 47.4% 11.2%);
-  --fb-button-text-color: hsl(210 40% 98%);
-  --fb-button-padding-x: 1rem;
-  --fb-button-padding-y: 0.5rem;
+  --fb-button-border-radius: 8px;
+  --fb-button-bg-color: #414b5a;
+  --fb-button-text-color: #ffffff;
+  --fb-button-padding-x: 12px;
+  --fb-button-padding-y: 12px;
 
-  /* ---------------------------------------------------------------------------
-     Input Tokens
-     Used for text inputs, textareas, and other form controls.
-     --------------------------------------------------------------------------- */
-  --fb-input-bg-color: var(--slate-50);
-  --fb-input-border-color: var(--fb-survey-brand-color);
-  --fb-input-border-radius: var(--radius);
+  /* ── Inputs ────────────────────────────────────────────────────────── */
+  --fb-input-bg-color: #f3f4f6;
+  --fb-input-border-color: #c1c7d1;
+  --fb-input-border-radius: 8px;
   --fb-input-font-family: inherit;
-  --fb-input-font-size: 0.875rem !important;
+  --fb-input-font-size: 14px;
   --fb-input-font-weight: 400;
-  --fb-input-color: var(--foreground);
+  --fb-input-color: #414b5a;
   --fb-input-placeholder-color: var(--fb-input-color);
   --fb-input-placeholder-opacity: 0.5;
   --fb-input-width: 100%;
@@ -127,32 +135,25 @@
   --fb-input-padding-y: 16px;
   --fb-input-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 
-  /* ---------------------------------------------------------------------------
-     Progress Tokens
-     Used for the Progress component track and indicator.
-     --------------------------------------------------------------------------- */
-  --fb-progress-track-height: 0.5rem;
-  --fb-progress-track-bg-color: hsl(222.2 47.4% 11.2% / 0.2);
-  --fb-progress-track-border-radius: var(--radius);
-  --fb-progress-indicator-bg-color: hsl(222.2 47.4% 11.2%);
-  --fb-progress-indicator-border-radius: var(--radius);
+  /* ── Progress Bar ──────────────────────────────────────────────────── */
+  --fb-progress-track-height: 8px;
+  --fb-progress-track-bg-color: #d9dbde;
+  --fb-progress-track-border-radius: 8px;
+  --fb-progress-indicator-bg-color: #414b5a;
+  --fb-progress-indicator-border-radius: 8px;
 
-  /* ---------------------------------------------------------------------------
-     Option Tokens
-     Used for selectable options (radio, checkbox, multi-select).
-     These inherit from input tokens by default for consistency.
-     --------------------------------------------------------------------------- */
-  --fb-option-bg-color: var(--fb-input-bg-color);
-  --fb-option-label-color: var(--fb-input-color);
-  --fb-option-border-radius: var(--fb-input-border-radius);
-  --fb-option-padding-x: var(--fb-input-padding-x);
-  --fb-option-padding-y: var(--fb-input-padding-y);
-  --fb-option-font-family: var(--fb-input-font-family);
-  --fb-option-font-size: var(--fb-input-font-size);
-  --fb-option-font-weight: var(--fb-input-font-weight);
+  /* ── Options (radio / checkbox / multi-select) ─────────────────────── */
+  --fb-option-bg-color: #f3f4f6;
+  --fb-option-label-color: #414b5a;
+  --fb-option-border-radius: 8px;
+  --fb-option-padding-x: 16px;
+  --fb-option-padding-y: 16px;
+  --fb-option-font-family: inherit;
+  --fb-option-font-size: 14px;
+  --fb-option-font-weight: 400;
 }
 
-.button-custom {
+#fbjs .button-custom {
   width: var(--fb-button-width);
   height: var(--fb-button-height);
   background-color: var(--fb-button-bg-color);
@@ -167,37 +168,51 @@
   font-size: var(--fb-button-font-size);
 }
 
-.label-headline {
+#fbjs .label-headline,
+#fbjs .label-headline * {
   font-family: var(--fb-element-headline-font-family);
   font-weight: var(--fb-element-headline-font-weight);
-  font-size: var(--fb-element-headline-font-size) !important;
+  font-size: var(--fb-element-headline-font-size);
   color: var(--fb-element-headline-color);
   opacity: var(--fb-element-headline-opacity);
 }
 
-.label-description {
+#fbjs .label-description,
+#fbjs .label-description *,
+#fbjs .text-subheading,
+#fbjs .text-subheading * {
   font-family: var(--fb-element-description-font-family);
   font-weight: var(--fb-element-description-font-weight);
-  font-size: var(--fb-element-description-font-size) !important;
+  font-size: var(--fb-element-description-font-size);
   color: var(--fb-element-description-color);
   opacity: var(--fb-element-description-opacity);
 }
 
-.label-default {
+#fbjs .label-default,
+#fbjs .label-default * {
   font-family: var(--fb-label-font-family);
   font-weight: var(--fb-label-font-weight);
-  font-size: var(--fb-label-font-size) !important;
+  font-size: var(--fb-label-font-size);
   color: var(--fb-label-color);
   opacity: var(--fb-label-opacity);
 }
 
-.progress-track {
+#fbjs .label-upper,
+#fbjs .label-upper * {
+  font-family: var(--fb-element-upper-label-font-family);
+  font-weight: var(--fb-element-upper-label-font-weight);
+  font-size: var(--fb-element-upper-label-font-size);
+  color: var(--fb-element-upper-label-color);
+  opacity: var(--fb-element-upper-label-opacity);
+}
+
+#fbjs .progress-track {
   height: var(--fb-progress-track-height);
   background-color: var(--fb-progress-track-bg-color);
   border-radius: var(--fb-progress-track-border-radius);
 }
 
-.progress-indicator {
+#fbjs .progress-indicator {
   background-color: var(--fb-progress-indicator-bg-color);
   border-radius: var(--fb-progress-indicator-border-radius);
 }

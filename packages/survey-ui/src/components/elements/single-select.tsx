@@ -129,7 +129,7 @@ function SingleSelect({
     );
 
   // Shared className for option labels
-  const optionLabelClassName = "font-option  font-option-weight text-option-label";
+  const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
 
   // Get selected option label for dropdown display
   const selectedOption = options.find((opt) => opt.id === selectedValue);
@@ -259,11 +259,7 @@ function SingleSelect({
                           disabled={disabled}
                           aria-required={required}
                         />
-                        <span
-                          className={cn("mx-3 grow", optionLabelClassName)}
-                          style={{ fontSize: "var(--fb-option-font-size)" }}>
-                          {option.label}
-                        </span>
+                        <span className={cn("mx-3 grow", optionLabelClassName)}>{option.label}</span>
                       </span>
                     </label>
                   );
@@ -280,11 +276,7 @@ function SingleSelect({
                       disabled={disabled}
                       aria-required={required}
                     />
-                    <span
-                      className={cn("mr-3 ml-3 grow", optionLabelClassName)}
-                      style={{ fontSize: "var(--fb-option-font-size)" }}>
-                      {otherOptionLabel}
-                    </span>
+                    <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
                   </span>
                   {isOtherSelected ? (
                     <Input
@@ -320,11 +312,7 @@ function SingleSelect({
                           disabled={disabled}
                           aria-required={required}
                         />
-                        <span
-                          className={cn("mx-3 grow", optionLabelClassName)}
-                          style={{ fontSize: "var(--fb-option-font-size)" }}>
-                          {option.label}
-                        </span>
+                        <span className={cn("mx-3 grow", optionLabelClassName)}>{option.label}</span>
                       </span>
                     </label>
                   );
