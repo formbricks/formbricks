@@ -6,7 +6,9 @@
   "sideEffects": false,
   "scripts": {
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
-    "clean": "rimraf node_modules .turbo"
+    "clean": "rimraf node_modules .turbo",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@prisma/client": "6.14.0",
@@ -16,6 +18,7 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/database": "workspace:*"
+    "@formbricks/database": "workspace:*",
+    "vitest": "3.0.1"
   }
 }
