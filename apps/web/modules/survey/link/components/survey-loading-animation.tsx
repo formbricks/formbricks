@@ -20,10 +20,20 @@ export const SurveyLoadingAnimation = ({
   const [isMediaLoaded, setIsMediaLoaded] = useState(false); // Tracks if all media are fully loaded
   const [isSurveyPackageLoaded, setIsSurveyPackageLoaded] = useState(false); // Tracks if the survey package has been loaded into the DOM
   const isReadyToTransition = isMediaLoaded && minTimePassed && isBackgroundLoaded;
-  const cardId = isWelcomeCardEnabled ? `questionCard--1` : `questionCard-0`;
+  // Ensure cardId is always a valid string by explicitly checking for boolean type
+  const cardId =
+    typeof isWelcomeCardEnabled === "boolean" && isWelcomeCardEnabled
+      ? `questionCard--1`
+      : `questionCard-0`;
 
   // Function to check if all media elements (images and iframes) within the survey card are loaded
   const checkMediaLoaded = useCallback(() => {
+    // Guard against empty cardId
+    if (!cardId) {
+      setIsMediaLoaded(true);
+      return;
+    }
+
     const cardElement = document.getElementById(cardId);
     const images = cardElement ? Array.from(cardElement.getElementsByTagName("img")) : [];
 
@@ -36,6 +46,12 @@ export const SurveyLoadingAnimation = ({
 
   useEffect(() => {
     if (!isSurveyPackageLoaded) return;
+
+    // Guard against empty cardId to prevent "'' is not a valid selector" error
+    if (!cardId) {
+      setIsMediaLoaded(true);
+      return;
+    }
 
     checkMediaLoaded();
 
