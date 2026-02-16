@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "显示“Powered by Formbricks”标识",
         "styling_updated_successfully": "样式更新成功",
         "suggest_colors": "推荐颜色",
+        "suggested_colors_applied_please_save": "已成功生成推荐配色。请点击“保存”以保留更改。",
         "theme": "主题",
         "theme_settings_description": "为所有问卷创建一个样式主题。你可以为每个问卷启用自定义样式。"
       },

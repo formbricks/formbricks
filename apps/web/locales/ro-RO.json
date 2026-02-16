@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "Afișează semnătura „Powered by Formbricks”",
         "styling_updated_successfully": "Stilizarea a fost actualizată cu succes",
         "suggest_colors": "Sugerează culori",
+        "suggested_colors_applied_please_save": "Culorile sugerate au fost generate cu succes. Apasă pe „Salvează” pentru a păstra modificările.",
         "theme": "Temă",
         "theme_settings_description": "Creează o temă de stil pentru toate sondajele. Poți activa stilizare personalizată pentru fiecare sondaj."
       },

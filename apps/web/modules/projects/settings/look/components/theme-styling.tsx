@@ -100,7 +100,7 @@ export const ThemeStyling = ({
       form.setValue(key as keyof TProjectStyling, value, { shouldDirty: true });
     }
 
-    toast.success(t("environments.workspace.look.styling_updated_successfully"));
+    toast.success(t("environments.workspace.look.suggested_colors_applied_please_save"));
     setConfirmSuggestColorsOpen(false);
   };
 
