@@ -99,13 +99,13 @@ function Matrix({
 
         {/* Table container with overflow for mobile */}
         <div className="overflow-x-auto">
-          <table className="w-full table-fixed border-collapse">
+          <table className="w-full border-collapse">
             {/* Column headers */}
             <thead>
               <tr>
-                <th className="w-1/4 p-2 text-left" />
+                <th className="p-2 text-left" />
                 {columns.map((column) => (
-                  <th key={column.id} className="break-words p-2 text-center font-normal">
+                  <th key={column.id} className="p-2 text-center font-normal">
                     <Label className="justify-center">{column.label}</Label>
                   </th>
                 ))}
