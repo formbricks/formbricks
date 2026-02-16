@@ -28,15 +28,6 @@ export type TAttributeValidationResult =
     };
 
 /**
- * Converts any value to a string representation
- */
-const convertToString = (value: TRawValue): string => {
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value === "number") return String(value);
-  return value;
-};
-
-/**
  * Gets a human-readable type name for error messages
  */
 const getTypeName = (value: TRawValue): string => {
@@ -45,16 +36,28 @@ const getTypeName = (value: TRawValue): string => {
 };
 
 /**
- * Validates and parses a string type attribute
+ * Validates and parses a string type attribute.
  */
-const validateStringType = (value: TRawValue): TAttributeValidationResult => ({
-  valid: true,
-  parsedValue: {
-    value: convertToString(value),
-    valueNumber: null,
-    valueDate: null,
-  },
-});
+const validateStringType = (value: TRawValue, attributeKey: string): TAttributeValidationResult => {
+  if (typeof value === "string") {
+    return {
+      valid: true,
+      parsedValue: {
+        value,
+        valueNumber: null,
+        valueDate: null,
+      },
+    };
+  }
+
+  return {
+    valid: false,
+    error: {
+      code: "string_type_mismatch",
+      params: { key: attributeKey, type: getTypeName(value) },
+    },
+  };
+};
 
 /**
  * Validates and parses a number type attribute.
@@ -170,13 +173,13 @@ export const validateAndParseAttributeValue = (
 ): TAttributeValidationResult => {
   switch (expectedDataType) {
     case "string":
-      return validateStringType(value);
+      return validateStringType(value, attributeKey);
     case "number":
       return validateNumberType(value, attributeKey);
     case "date":
       return validateDateType(value, attributeKey);
     default:
-      return validateStringType(value);
+      return validateStringType(value, attributeKey);
   }
 };
 
@@ -185,6 +188,8 @@ export const validateAndParseAttributeValue = (
  * Used for API/SDK responses.
  */
 const VALIDATION_ERROR_TEMPLATES: Record<string, string> = {
+  string_type_mismatch:
+    "Attribute '{key}' expects a string but received a {type}. Pass an actual string value.",
   number_type_mismatch:
     "Attribute '{key}' expects a number but received a string. Pass an actual number value (e.g., 123 instead of \"123\").",
   date_invalid: "Attribute '{key}' expects a valid date. Received: Invalid Date",

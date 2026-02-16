@@ -13,22 +13,14 @@ describe("validateAndParseAttributeValue", () => {
       }
     });
 
-    test("converts numbers to string", () => {
+    test("rejects number values (SDK must pass actual strings)", () => {
       const result = validateAndParseAttributeValue(42, "string", "testKey");
-      expect(result.valid).toBe(true);
-      if (result.valid) {
-        expect(result.parsedValue.value).toBe("42");
-        expect(result.parsedValue.valueNumber).toBeNull();
-      }
-    });
-
-    test("converts Date to ISO string", () => {
-      const date = new Date("2024-01-15T10:30:00.000Z");
-      const result = validateAndParseAttributeValue(date, "string", "testKey");
-      expect(result.valid).toBe(true);
-      if (result.valid) {
-        expect(result.parsedValue.value).toBe("2024-01-15T10:30:00.000Z");
-        expect(result.parsedValue.valueDate).toBeNull();
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error.code).toBe("string_type_mismatch");
+        expect(result.error.params.key).toBe("testKey");
+        expect(result.error.params.type).toBe("number");
+        expect(formatValidationError(result.error)).toContain("received a number");
       }
     });
   });
