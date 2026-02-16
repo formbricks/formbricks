@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "Показывать подпись «Работает на Formbricks»",
         "styling_updated_successfully": "Стили успешно обновлены",
         "suggest_colors": "Предложить цвета",
+        "suggested_colors_applied_please_save": "Рекомендованные цвета успешно сгенерированы. Нажми «Сохранить», чтобы применить изменения.",
         "theme": "Тема",
         "theme_settings_description": "Создайте стиль для всех опросов. Вы можете включить индивидуальное оформление для каждого опроса."
       },

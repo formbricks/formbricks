@@ -2104,6 +2104,7 @@ checksums:
     environments/workspace/look/show_powered_by_formbricks: a0e96edadec8ef326423feccc9d06be7
     environments/workspace/look/styling_updated_successfully: b8b74b50dde95abcd498633e9d0c891f
     environments/workspace/look/suggest_colors: ddc4543b416ab774007b10a3434343cd
+    environments/workspace/look/suggested_colors_applied_please_save: 226fa70af5efc8ffa0a3755909c8163e
     environments/workspace/look/theme: 21fe00b7a518089576fb83c08631107a
     environments/workspace/look/theme_settings_description: 9fc45322818c3774ab4a44ea14d7836e
     environments/workspace/tags/add: 87c4a663507f2bcbbf79934af8164e13

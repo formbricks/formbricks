@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "顯示「Powered by Formbricks」標記",
         "styling_updated_successfully": "樣式已成功更新",
         "suggest_colors": "建議顏色",
+        "suggested_colors_applied_please_save": "已成功產生建議色彩。請按「儲存」以保存變更。",
         "theme": "主題",
         "theme_settings_description": "為所有調查建立樣式主題。您可以為每個調查啟用自訂樣式。"
       },

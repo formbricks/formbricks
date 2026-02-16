@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "Az „A gépházban: Formbricks” aláírás megjelenítése",
         "styling_updated_successfully": "A stílus sikeresen frissítve",
         "suggest_colors": "Színek ajánlása",
+        "suggested_colors_applied_please_save": "A javasolt színek sikeresen generálva. Nyomd meg a \"Mentés\" gombot a változtatások véglegesítéséhez.",
         "theme": "Téma",
         "theme_settings_description": "Stílustéma létrehozása az összes kérdőívhez. Egyéni stílust engedélyezhet minden egyes kérdőívhez."
       },
