@@ -96,7 +96,6 @@ test.describe("Survey Styling", async () => {
     expect(css).toContain("--fb-input-background-color: #eeeeee");
     expect(css).toContain("--fb-input-border-color: #cccccc");
     expect(css).toContain("--fb-input-text-color: #024eff");
-    // Placeholder color should be derived from inputTextColor, not questionColor/brandColor
     expect(css).toContain("--fb-input-placeholder-color:");
     expect(css).toContain("--fb-input-border-radius: 5px");
     expect(css).toContain("--fb-input-height: 50px");
