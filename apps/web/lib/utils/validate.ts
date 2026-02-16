@@ -14,7 +14,7 @@ export function validateInputs<T extends ValidationPair<any>[]>(
     if (!inputValidation.success) {
       const zodDetails = inputValidation.error.issues
         .map((issue) => {
-          const path = issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
+          const path = issue?.path?.join(".") ?? "";
           return `${path}${issue.message}`;
         })
         .join("; ");
