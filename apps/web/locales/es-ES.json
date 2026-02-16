@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "Mostrar firma 'Powered by Formbricks'",
         "styling_updated_successfully": "Estilo actualizado correctamente",
         "suggest_colors": "Sugerir colores",
+        "suggested_colors_applied_please_save": "Colores sugeridos generados correctamente. Pulsa \"Guardar\" para conservar los cambios.",
         "theme": "Tema",
         "theme_settings_description": "Crea un tema de estilo para todas las encuestas. Puedes activar el estilo personalizado para cada encuesta."
       },
