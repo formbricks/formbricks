@@ -24,7 +24,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
           // Layout and behavior
           "flex min-w-0 border outline-none transition-[color,box-shadow]",
           // Customizable styles via CSS variables (using Tailwind theme extensions)
-          "w-input min-h-[var(--fb-input-height)]",
+          "w-input h-[var(--fb-input-height)]",
           "bg-input-bg border-input-border rounded-input",
           "font-input font-input-weight",
           "text-input-text",

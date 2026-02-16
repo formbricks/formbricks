@@ -118,7 +118,7 @@ export const STYLE_DEFAULTS: TProjectStyling = {
   // Inputs
   inputTextColor: { light: _colors["inputTextColor.light"] },
   inputBorderRadius: 8,
-  inputHeight: 40,
+  inputHeight: 20,
   inputFontSize: 14,
   inputPaddingX: 16,
   inputPaddingY: 16,
