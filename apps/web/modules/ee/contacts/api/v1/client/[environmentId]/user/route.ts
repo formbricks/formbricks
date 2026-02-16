@@ -2,12 +2,25 @@ import { NextRequest, userAgent } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { ZEnvironmentId } from "@formbricks/types/environment";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
+
+const handleError = (err: unknown, url: string): { response: Response } => {
+  if (err instanceof ResourceNotFoundError) {
+    return { response: responses.notFoundResponse(err.resourceType, err.resourceId) };
+  }
+
+  if (err instanceof ValidationError) {
+    return { response: responses.badRequestResponse(err.message, undefined, true) };
+  }
+
+  logger.error({ error: err, url }, "Error in POST /api/v1/client/[environmentId]/user");
+  return { response: responses.internalServerErrorResponse("Unable to fetch user state", true) };
+};
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -123,16 +136,7 @@ export const POST = withV1ApiWrapper({
         response: responses.successResponse(responseJson, true),
       };
     } catch (err) {
-      if (err instanceof ResourceNotFoundError) {
-        return {
-          response: responses.notFoundResponse(err.resourceType, err.resourceId),
-        };
-      }
-
-      logger.error({ error: err, url: req.url }, "Error in POST /api/v1/client/[environmentId]/user");
-      return {
-        response: responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true),
-      };
+      return handleError(err, req.url);
     }
   },
 });
