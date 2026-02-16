@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "Mostrar assinatura 'Powered by Formbricks'",
         "styling_updated_successfully": "Estilo atualizado com sucesso",
         "suggest_colors": "Sugerir cores",
+        "suggested_colors_applied_please_save": "Cores sugeridas geradas com sucesso. Pressiona \"Guardar\" para manter as alterações.",
         "theme": "Tema",
         "theme_settings_description": "Crie um tema de estilo para todos os inquéritos. Pode ativar estilos personalizados para cada inquérito."
       },
