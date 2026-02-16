@@ -623,7 +623,7 @@ describe("endpoint-validator", () => {
         // These should not match due to case sensitivity
         expect(isPublicDomainRoute("/S/survey123")).toBe(false);
         expect(isPublicDomainRoute("/C/jwt-token")).toBe(false);
-        expect(isPublicDomainRoute("/P/jwt-token")).toBe(false);
+        expect(isPublicDomainRoute("/P/pretty123")).toBe(false);
         expect(isClientSideApiRoute("/API/V1/CLIENT/test")).toEqual({
           isClientSideApi: false,
           isRateLimited: true,
