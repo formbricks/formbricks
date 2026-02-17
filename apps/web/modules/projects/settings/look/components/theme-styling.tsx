@@ -11,7 +11,12 @@ import { useTranslation } from "react-i18next";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { previewSurvey } from "@/app/lib/templates";
-import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
+import {
+  COLOR_DEFAULTS,
+  STYLE_DEFAULTS,
+  deriveNewFieldsFromLegacy,
+  getSuggestedColors,
+} from "@/lib/styling/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
@@ -62,8 +67,10 @@ export const ThemeStyling = ({
     ? Object.fromEntries(Object.entries(savedStyling).filter(([, v]) => v != null))
     : {};
 
+  const legacyFills = deriveNewFieldsFromLegacy(cleanSaved);
+
   const form = useForm<TProjectStyling>({
-    defaultValues: { ...STYLE_DEFAULTS, ...cleanSaved },
+    defaultValues: { ...STYLE_DEFAULTS, ...legacyFills, ...cleanSaved },
     resolver: zodResolver(ZProjectStyling),
   });
 
