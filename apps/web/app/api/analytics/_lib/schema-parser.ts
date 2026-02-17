@@ -189,9 +189,7 @@ export function parseSchemaFile(): {
     const dimensions = parseDimensions(schemaContent);
 
     return { measures, dimensions };
-  } catch (error) {
-    console.error("Error parsing schema file:", error);
-    // Fallback to empty arrays if parsing fails
+  } catch {
     return { measures: [], dimensions: [] };
   }
 }

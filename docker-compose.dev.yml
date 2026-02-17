@@ -53,7 +53,7 @@ services:
       
       # Cube configuration
       CUBEJS_DEV_MODE: "true"
-      CUBEJS_API_SECRET: "25ad91c420ab742a2c0d3b17f93fd871e883304abba7a38e2620eb1416106af2"
+      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET}
       # Use memory for caching in dev mode (cubestore or memory are supported)
       CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
     volumes:

@@ -186,48 +186,48 @@ export async function POST(request: NextRequest) {
     // Extract chartType (for UI purposes only, not part of CubeJS query)
     const { chartType, ...cubeQuery } = validatedQuery;
 
-    // Clean up null/empty values to conform to CubeJS expectations
-    if (
-      cubeQuery.dimensions === null ||
-      (Array.isArray(cubeQuery.dimensions) && cubeQuery.dimensions.length === 0)
-    ) {
-      delete (cubeQuery as any).dimensions;
+    // Build a clean query object, stripping null / empty arrays so Cube.js is happy
+    const cleanQuery: Record<string, unknown> = {
+      measures: cubeQuery.measures,
+    };
+
+    if (Array.isArray(cubeQuery.dimensions) && cubeQuery.dimensions.length > 0) {
+      cleanQuery.dimensions = cubeQuery.dimensions;
     }
-    if (!cubeQuery.filters || cubeQuery.filters.length === 0) {
-      delete (cubeQuery as any).filters;
-    } else {
-      // Clean up null values in filters
-      cubeQuery.filters = cubeQuery.filters.map((f: any) => {
-        const newFilter: any = { ...f };
-        if (newFilter.values === null) delete newFilter.values;
-        return newFilter;
-      });
+
+    if (Array.isArray(cubeQuery.filters) && cubeQuery.filters.length > 0) {
+      cleanQuery.filters = cubeQuery.filters.map(
+        (f: { member: string; operator: string; values?: string[] | null }) => {
+          const cleaned: Record<string, unknown> = { member: f.member, operator: f.operator };
+          if (f.values !== null && f.values !== undefined) cleaned.values = f.values;
+          return cleaned;
+        }
+      );
     }
-    if (cubeQuery.timeDimensions === null) {
-      delete (cubeQuery as any).timeDimensions;
-    } else if (Array.isArray(cubeQuery.timeDimensions)) {
-      // Filter out null properties in timeDimensions objects
-      cubeQuery.timeDimensions = cubeQuery.timeDimensions.map((td: any) => {
-        const newTd: any = { ...td };
-        if (newTd.granularity === null) delete newTd.granularity;
-        if (newTd.dateRange === null) delete newTd.dateRange;
-        return newTd;
-      });
+
+    if (Array.isArray(cubeQuery.timeDimensions) && cubeQuery.timeDimensions.length > 0) {
+      cleanQuery.timeDimensions = cubeQuery.timeDimensions.map(
+        (td: { dimension: string; granularity?: string | null; dateRange?: string | null }) => {
+          const cleaned: Record<string, unknown> = { dimension: td.dimension };
+          if (td.granularity !== null && td.granularity !== undefined) cleaned.granularity = td.granularity;
+          if (td.dateRange !== null && td.dateRange !== undefined) cleaned.dateRange = td.dateRange;
+          return cleaned;
+        }
+      );
     }
 
     // Execute query if requested (default: true)
-    let data: Record<string, any>[] | undefined;
+    let data: Record<string, unknown>[] | undefined;
     if (shouldExecuteQuery) {
       try {
-        data = await executeQuery(cubeQuery);
-      } catch (queryError: any) {
-        console.error("Error executing Cube.js query:", queryError);
-        // Return the query even if execution fails, so client can retry
+        data = await executeQuery(cleanQuery);
+      } catch (queryError: unknown) {
+        const message = queryError instanceof Error ? queryError.message : "Unknown error";
         return NextResponse.json(
           {
-            query: cubeQuery,
+            query: cleanQuery,
             chartType,
-            error: `Failed to execute query: ${queryError.message || "Unknown error"}`,
+            error: `Failed to execute query: ${message}`,
           },
           { status: 500 }
         );
@@ -235,12 +235,12 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      query: cubeQuery,
+      query: cleanQuery,
       chartType,
       data,
     });
-  } catch (error: any) {
-    console.error("Error generating query:", error);
-    return NextResponse.json({ error: error.message || "Failed to generate query" }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to generate query";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
