@@ -90,5 +90,5 @@ After changing this value, restart the server.
 ## Operational Notes
 
 - Redis/Valkey is required for robust rate limiting (`REDIS_URL`).
-- If Redis is unavailable at runtime, rate-limiter checks currently fail open (requests are allowed).
-- Authentication failure audit logging also uses throttling internally, but that mechanism does not return `429` or block requests.
+- If Redis is unavailable at runtime, rate-limiter checks currently fail open (requests are allowed through without enforcement).
+- Authentication failure audit logging uses a separate throttle (`shouldLogAuthFailure()`) and is intentionally **fail-closed**: when Redis is unavailable or errors occur, audit log entries are **skipped entirely** rather than written without throttle control. This prevents spam while preserving the hash-integrity chain required for compliance. In other words, if Redis is down, no authentication-failure audit logs will be recorded—requests themselves are still allowed (fail-open rate limiting above), but the audit trail for those failures will not be written.
