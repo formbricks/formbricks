@@ -85,7 +85,7 @@ export const mockProject: TProject = {
   inAppSurveyBranding: false,
   placement: "bottomRight",
   clickOutsideClose: false,
-  darkOverlay: false,
+  overlay: "none",
   environments: [],
   languages: [],
   config: {
@@ -168,6 +168,7 @@ export const mockContactAttributeKey: TContactAttributeKey = {
   type: "custom",
   description: "mock action class",
   isUnique: false,
+  dataType: "string",
   ...commonMockProperties,
 };
 

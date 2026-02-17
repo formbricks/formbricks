@@ -38,7 +38,7 @@ export function SegmentSettings({
   const router = useRouter();
   const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const [segment, setSegment] = useState<TSegment>(initialSegment);
+  const [segment, setSegment] = useState<TSegmentWithSurveyNames>(initialSegment);
 
   const [isUpdatingSegment, setIsUpdatingSegment] = useState(false);
   const [isDeletingSegment, setIsDeletingSegment] = useState(false);
@@ -109,7 +109,13 @@ export function SegmentSettings({
   const handleDeleteSegment = async () => {
     try {
       setIsDeletingSegment(true);
-      await deleteSegmentAction({ segmentId: segment.id });
+      const result = await deleteSegmentAction({ segmentId: segment.id });
+
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        setIsDeletingSegment(false);
+        return;
+      }
 
       setIsDeletingSegment(false);
       toast.success(t("environments.segments.segment_deleted_successfully"));

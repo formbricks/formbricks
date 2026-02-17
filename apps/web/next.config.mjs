@@ -9,20 +9,42 @@ jiti("./lib/env");
 
 /** @type {import('next').NextConfig} */
 
-const getHostname = (url) => {
-  const urlObj = new URL(url);
-  return urlObj.hostname;
-};
-
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: true,
-  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
+  serverExternalPackages: [
+    "@aws-sdk",
+    "@opentelemetry/api",
+    "@opentelemetry/auto-instrumentations-node",
+    "@opentelemetry/exporter-metrics-otlp-http",
+    "@opentelemetry/exporter-prometheus",
+    "@opentelemetry/exporter-trace-otlp-http",
+    "@opentelemetry/instrumentation",
+    "@opentelemetry/resources",
+    "@opentelemetry/sdk-metrics",
+    "@opentelemetry/sdk-node",
+    "@opentelemetry/sdk-trace-base",
+    "@opentelemetry/semantic-conventions",
+    "@prisma/instrumentation",
+    "pino",
+    "pino-pretty",
+    "pino-opentelemetry-transport",
+  ],
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
+    // pino loads transport code in worker threads via dynamic require() — the file tracer
+    // only traces static imports and misses these runtime-loaded files.
+    // Include the full pino package (worker.js needs transport-stream.js, etc.)
+    // and its transport targets with their dependencies.
+    "/*": [
+      "../../node_modules/pino/**/*",
+      "../../node_modules/pino-opentelemetry-transport/**/*",
+      "../../node_modules/pino-abstract-transport/**/*",
+      "../../node_modules/otlp-logger/**/*",
+    ],
   },
   turbopack: {},
   experimental: {},
@@ -406,18 +428,6 @@ const nextConfig = {
       {
         source: "/api/v1/client/:environmentId/app/environment",
         destination: "/api/v1/client/:environmentId/environment",
-      },
-      {
-        source: "/api/v1/client/:environmentId/app/people/:userId",
-        destination: "/api/v1/client/:environmentId/identify/people/:userId",
-      },
-      {
-        source: "/api/v1/client/:environmentId/identify/people/:userId",
-        destination: "/api/v1/client/:environmentId/identify/contacts/:userId",
-      },
-      {
-        source: "/api/v1/client/:environmentId/people/:userId/attributes",
-        destination: "/api/v1/client/:environmentId/contacts/:userId/attributes",
       },
       {
         source: "/api/v1/management/people/:id*",

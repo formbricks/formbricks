@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "回答者はこのカードを見ることができません",
     "retry": "再試行",
     "retrying": "再試行中...",
+    "select_option": "オプションを選択",
+    "select_options": "オプションを選択",
     "sending_responses": "回答を送信中...",
     "takes_less_than_x_minutes": "{count, plural, one {1分未満} other {{count}分未満}}",
     "takes_x_minutes": "{count, plural, one {1分} other {{count}分}}",

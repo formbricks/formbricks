@@ -33,7 +33,6 @@ const getUserStateDataOptimized = async (contactId: string) => {
  * @param environmentId - The environment id
  * @param userId - The user id
  * @param device - The device type
- * @param attributes - The contact attributes
  * @returns The person state
  * @throws {ValidationError} - If the input is invalid
  * @throws {ResourceNotFoundError} - If the environment or organization is not found
@@ -43,19 +42,17 @@ export const getUserState = async ({
   userId,
   contactId,
   device,
-  attributes,
 }: {
   environmentId: string;
   userId: string;
   contactId: string;
   device: "phone" | "desktop";
-  attributes: Record<string, string>;
 }): Promise<TJsPersonState["data"]> => {
   // Single optimized query for all contact data
   const contactData = await getUserStateDataOptimized(contactId);
 
-  // Get segments (this might have its own optimization)
-  const segments = await getPersonSegmentIds(environmentId, contactId, userId, attributes, device);
+  // Get segments using Prisma-based evaluation (no attributes needed - fetched from DB)
+  const segments = await getPersonSegmentIds(environmentId, contactId, userId, device);
 
   // Process displays efficiently
   const displays = (contactData.displays ?? []).map((display) => ({

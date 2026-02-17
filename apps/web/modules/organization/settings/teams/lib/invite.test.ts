@@ -9,7 +9,14 @@ import {
 } from "@formbricks/types/errors";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { TInvitee } from "../types/invites";
-import { deleteInvite, getInvite, getInvitesByOrganizationId, inviteUser, resendInvite } from "./invite";
+import {
+  deleteInvite,
+  getInvite,
+  getInvitesByOrganizationId,
+  inviteUser,
+  refreshInviteExpiration,
+  resendInvite,
+} from "./invite";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -46,32 +53,129 @@ const mockInvite: Invite = {
   teamIds: [],
 };
 
-describe("resendInvite", () => {
+describe("refreshInviteExpiration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
-  test("returns email and name if invite exists", async () => {
-    vi.mocked(prisma.invite.findUnique).mockResolvedValue({ ...mockInvite, creator: {} });
-    vi.mocked(prisma.invite.update).mockResolvedValue({ ...mockInvite, organizationId: "org-1" });
-    const result = await resendInvite("invite-1");
-    expect(result).toEqual({ email: mockInvite.email, name: mockInvite.name });
+
+  test("updates expiresAt to approximately 7 days from now", async () => {
+    const now = Date.now();
+    const expectedExpiresAt = new Date(now + 1000 * 60 * 60 * 24 * 7);
+
+    vi.mocked(prisma.invite.update).mockResolvedValue({
+      ...mockInvite,
+      expiresAt: expectedExpiresAt,
+    });
+
+    const result = await refreshInviteExpiration("invite-1");
+
+    expect(prisma.invite.update).toHaveBeenCalledWith({
+      where: { id: "invite-1" },
+      data: {
+        expiresAt: expect.any(Date),
+      },
+    });
+
+    expect(result.expiresAt.getTime()).toBeGreaterThanOrEqual(now + 1000 * 60 * 60 * 24 * 7 - 1000);
+    expect(result.expiresAt.getTime()).toBeLessThanOrEqual(now + 1000 * 60 * 60 * 24 * 7 + 1000);
   });
-  test("throws ResourceNotFoundError if invite not found", async () => {
-    vi.mocked(prisma.invite.findUnique).mockResolvedValue(null);
-    await expect(resendInvite("invite-1")).rejects.toThrow(ResourceNotFoundError);
+
+  test("throws ResourceNotFoundError if invite not found (P2025)", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
+      code: "P2025",
+      clientVersion: "1.0.0",
+    });
+    vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
+    await expect(refreshInviteExpiration("invite-1")).rejects.toThrow(ResourceNotFoundError);
   });
-  test("throws DatabaseError on prisma error", async () => {
+
+  test("throws DatabaseError on other prisma errors", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("db", {
       code: "P2002",
       clientVersion: "1.0.0",
     });
-    vi.mocked(prisma.invite.findUnique).mockRejectedValue(prismaError);
+    vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
+    await expect(refreshInviteExpiration("invite-1")).rejects.toThrow(DatabaseError);
+  });
+
+  test("throws error if non-prisma error", async () => {
+    const error = new Error("db");
+    vi.mocked(prisma.invite.update).mockRejectedValue(error);
+    await expect(refreshInviteExpiration("invite-1")).rejects.toThrow("db");
+  });
+
+  test("returns full invite object with all fields", async () => {
+    const updatedInvite = {
+      ...mockInvite,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    };
+    vi.mocked(prisma.invite.update).mockResolvedValue(updatedInvite);
+
+    const result = await refreshInviteExpiration("invite-1");
+
+    expect(result).toEqual(updatedInvite);
+    expect(result.id).toBe("invite-1");
+    expect(result.email).toBe("test@example.com");
+    expect(result.name).toBe("Test User");
+  });
+});
+
+describe("resendInvite", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("returns email and name after updating expiration", async () => {
+    const updatedInvite = {
+      ...mockInvite,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    };
+    vi.mocked(prisma.invite.update).mockResolvedValue(updatedInvite);
+
+    const result = await resendInvite("invite-1");
+
+    expect(result).toEqual({ email: mockInvite.email, name: mockInvite.name });
+    expect(prisma.invite.update).toHaveBeenCalledWith({
+      where: { id: "invite-1" },
+      data: {
+        expiresAt: expect.any(Date),
+      },
+    });
+  });
+
+  test("calls refreshInviteExpiration helper", async () => {
+    const updatedInvite = {
+      ...mockInvite,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    };
+    vi.mocked(prisma.invite.update).mockResolvedValue(updatedInvite);
+
+    await resendInvite("invite-1");
+
+    expect(prisma.invite.update).toHaveBeenCalledTimes(1);
+  });
+
+  test("throws ResourceNotFoundError if invite not found", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
+      code: "P2025",
+      clientVersion: "1.0.0",
+    });
+    vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
+    await expect(resendInvite("invite-1")).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  test("throws DatabaseError on other prisma errors", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("db", {
+      code: "P2002",
+      clientVersion: "1.0.0",
+    });
+    vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
     await expect(resendInvite("invite-1")).rejects.toThrow(DatabaseError);
   });
 
-  test("throws error if prisma error", async () => {
+  test("throws error if non-prisma error", async () => {
     const error = new Error("db");
-    vi.mocked(prisma.invite.findUnique).mockRejectedValue(error);
+    vi.mocked(prisma.invite.update).mockRejectedValue(error);
     await expect(resendInvite("invite-1")).rejects.toThrow("db");
   });
 });

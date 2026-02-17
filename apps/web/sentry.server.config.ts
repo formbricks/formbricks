@@ -16,6 +16,9 @@ if (SENTRY_DSN) {
     // No tracing while Sentry doesn't update to telemetry 2.0.0 - https://github.com/getsentry/sentry-javascript/issues/15737
     tracesSampleRate: 0,
 
+    // Keep Sentry from registering its own TracerProvider; app telemetry is handled by instrumentation-node.ts
+    skipOpenTelemetrySetup: true,
+
     // Setting this option to true will print useful information to the console while you're setting up Sentry.
     debug: false,
 
@@ -30,7 +33,7 @@ if (SENTRY_DSN) {
       const error = hint.originalException as Error;
 
       // @ts-expect-error
-      if (error && error.digest === "NEXT_NOT_FOUND") {
+      if (error?.digest === "NEXT_NOT_FOUND") {
         return null;
       }
 

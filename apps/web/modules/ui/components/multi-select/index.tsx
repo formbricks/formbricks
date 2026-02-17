@@ -21,7 +21,7 @@ interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
 }
 
 export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
-  props: MultiSelectProps<T, K>
+  props: Readonly<MultiSelectProps<T, K>>
 ) {
   const { options, value, onChange, disabled = false, placeholder = "Select options..." } = props;
 
@@ -39,6 +39,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   const [position, setPosition] = React.useState<{ top: number; left: number; width: number } | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const isSelectingRef = React.useRef(false);
+  const [portalContainer, setPortalContainer] = React.useState<HTMLElement | null>(null);
 
   // Track if changes are user-initiated (not from value prop)
   const isUserInitiatedRef = React.useRef(false);
@@ -127,17 +128,38 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
 
   // Calculate position for dropdown when opening
   React.useEffect(() => {
-    if (open && containerRef.current) {
+    if (!open || !containerRef.current) {
+      setPosition(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       setPosition({
-        top: rect.bottom + window.scrollY + 6,
-        left: rect.left + window.scrollX,
+        top: rect.bottom,
+        left: rect.left,
         width: rect.width,
       });
-    } else {
-      setPosition(null);
-    }
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
   }, [open]);
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+
+    // In modal contexts (Radix dialog), rendering inside body can make dropdown non-interactive.
+    const dialogContent = containerRef.current.closest("[role='dialog']");
+    setPortalContainer((dialogContent as HTMLElement) ?? document.body);
+  }, []);
 
   return (
     <Command
@@ -145,8 +167,9 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       className={`relative overflow-visible bg-white ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
       <div
         ref={containerRef}
-        className={`border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2 ${disabled ? "pointer-events-none" : "focus-within:ring-ring"
-          }`}>
+        className={`border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2 ${
+          disabled ? "pointer-events-none" : "focus-within:ring-ring"
+        }`}>
         <div className="flex flex-wrap gap-1">
           {selected.map((option) => (
             <Badge key={option.value} className="rounded-md">
@@ -189,9 +212,10 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         !disabled &&
         position &&
         globalThis.window !== undefined &&
+        portalContainer &&
         createPortal(
           <div
-            className="absolute z-[9999]"
+            className="fixed z-[100]"
             style={{
               top: `${position.top}px`,
               left: `${position.left}px`,
@@ -227,7 +251,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
               </div>
             </CommandList>
           </div>,
-          document.body
+          portalContainer
         )}
     </Command>
   );

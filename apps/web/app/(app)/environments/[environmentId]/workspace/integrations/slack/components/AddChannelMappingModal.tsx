@@ -17,6 +17,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/workspace/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
@@ -144,7 +145,14 @@ export const AddChannelMappingModal = ({
         // create action
         slackIntegrationData.config.data.push(integrationData);
       }
-      await createOrUpdateIntegrationAction({ environmentId, integrationData: slackIntegrationData });
+      const result = await createOrUpdateIntegrationAction({
+        environmentId,
+        integrationData: slackIntegrationData,
+      });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       if (selectedIntegration) {
         toast.success(t("environments.integrations.integration_updated_successfully"));
       } else {
@@ -181,7 +189,14 @@ export const AddChannelMappingModal = ({
     slackIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await createOrUpdateIntegrationAction({ environmentId, integrationData: slackIntegrationData });
+      const result = await createOrUpdateIntegrationAction({
+        environmentId,
+        integrationData: slackIntegrationData,
+      });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       toast.success(t("environments.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {

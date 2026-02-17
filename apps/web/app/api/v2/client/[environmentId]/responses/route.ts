@@ -11,6 +11,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
@@ -102,6 +103,23 @@ export const POST = async (request: Request, context: Context): Promise<Response
       {
         questionId: otherResponseInvalidQuestionId,
       },
+      true
+    );
+  }
+
+  // Validate response data against validation rules
+  const validationErrors = validateResponseData(
+    survey.blocks,
+    responseInputData.data,
+    responseInputData.language ?? "en",
+    responseInputData.finished,
+    survey.questions
+  );
+
+  if (validationErrors) {
+    return responses.badRequestResponse(
+      "Validation failed",
+      formatValidationErrorsForV1Api(validationErrors),
       true
     );
   }

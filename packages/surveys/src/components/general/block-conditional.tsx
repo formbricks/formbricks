@@ -313,32 +313,31 @@ export function BlockConditional({
               const isFirstElement = index === 0;
 
               return (
-                <div key={element.id}>
-                  <ElementConditional
-                    surveyLanguages={surveyLanguages}
-                    element={element}
-                    value={value[element.id]}
-                    onChange={(responseData) => handleElementChange(element.id, responseData)}
-                    onFileUpload={onFileUpload}
-                    languageCode={languageCode}
-                    ttc={ttc}
-                    setTtc={setTtc}
-                    surveyId={surveyId}
-                    autoFocusEnabled={autoFocusEnabled && isFirstElement}
-                    currentElementId={currentElementId}
-                    onOpenExternalURL={onOpenExternalURL}
-                    dir={dir}
-                    formRef={(ref) => {
-                      if (ref) {
-                        elementFormRefs.current.set(element.id, ref);
-                      } else {
-                        elementFormRefs.current.delete(element.id);
-                      }
-                    }}
-                    onTtcCollect={handleTtcCollect}
-                    errorMessage={getFirstErrorMessage(elementErrors, element.id)}
-                  />
-                </div>
+                <ElementConditional
+                  key={element.id}
+                  surveyLanguages={surveyLanguages}
+                  element={element}
+                  value={value[element.id]}
+                  onChange={(responseData) => handleElementChange(element.id, responseData)}
+                  onFileUpload={onFileUpload}
+                  languageCode={languageCode}
+                  ttc={ttc}
+                  setTtc={setTtc}
+                  surveyId={surveyId}
+                  autoFocusEnabled={autoFocusEnabled && isFirstElement}
+                  currentElementId={currentElementId}
+                  onOpenExternalURL={onOpenExternalURL}
+                  dir={dir}
+                  formRef={(ref) => {
+                    if (ref) {
+                      elementFormRefs.current.set(element.id, ref);
+                    } else {
+                      elementFormRefs.current.delete(element.id);
+                    }
+                  }}
+                  onTtcCollect={handleTtcCollect}
+                  errorMessage={getFirstErrorMessage(elementErrors, element.id)}
+                />
               );
             })}
           </div>

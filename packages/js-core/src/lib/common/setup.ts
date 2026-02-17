@@ -46,7 +46,7 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
             data: {
               ...personState.data,
               // Copy over language from attributes if it exists
-              ...(attributes?.language && { language: attributes.language }),
+              ...(attributes?.language && { language: attributes.language as string }),
             },
           },
         }),
@@ -115,7 +115,7 @@ export const setup = async (
 
     const expiresAt = existingConfig.status.expiresAt;
 
-    if (expiresAt && isNowExpired(new Date(expiresAt))) {
+    if (expiresAt && !isNowExpired(new Date(expiresAt))) {
       console.error("🧱 Formbricks - Error state is not expired, skipping initialization");
       return okVoid();
     }

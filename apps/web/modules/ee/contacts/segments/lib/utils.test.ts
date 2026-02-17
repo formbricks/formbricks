@@ -92,41 +92,56 @@ describe("Segment Utils", () => {
   });
 
   test("convertOperatorToText", () => {
-    expect(convertOperatorToText("equals")).toBe("=");
-    expect(convertOperatorToText("notEquals")).toBe("!=");
-    expect(convertOperatorToText("lessThan")).toBe("<");
-    expect(convertOperatorToText("lessEqual")).toBe("<=");
-    expect(convertOperatorToText("greaterThan")).toBe(">");
-    expect(convertOperatorToText("greaterEqual")).toBe(">=");
-    expect(convertOperatorToText("isSet")).toBe("is set");
-    expect(convertOperatorToText("isNotSet")).toBe("is not set");
-    expect(convertOperatorToText("contains")).toBe("contains ");
-    expect(convertOperatorToText("doesNotContain")).toBe("does not contain");
-    expect(convertOperatorToText("startsWith")).toBe("starts with");
-    expect(convertOperatorToText("endsWith")).toBe("ends with");
-    expect(convertOperatorToText("userIsIn")).toBe("User is in");
-    expect(convertOperatorToText("userIsNotIn")).toBe("User is not in");
+    // Mock t() that returns the i18n key for verification
+    const t = (key: string) => key;
+
+    expect(convertOperatorToText("equals", t)).toBe("=");
+    expect(convertOperatorToText("notEquals", t)).toBe("!=");
+    expect(convertOperatorToText("lessThan", t)).toBe("<");
+    expect(convertOperatorToText("lessEqual", t)).toBe("<=");
+    expect(convertOperatorToText("greaterThan", t)).toBe(">");
+    expect(convertOperatorToText("greaterEqual", t)).toBe(">=");
+    expect(convertOperatorToText("isSet", t)).toBe("environments.segments.operator_is_set");
+    expect(convertOperatorToText("isNotSet", t)).toBe("environments.segments.operator_is_not_set");
+    expect(convertOperatorToText("contains", t)).toBe("environments.segments.operator_contains");
+    expect(convertOperatorToText("doesNotContain", t)).toBe(
+      "environments.segments.operator_does_not_contain"
+    );
+    expect(convertOperatorToText("startsWith", t)).toBe("environments.segments.operator_starts_with");
+    expect(convertOperatorToText("endsWith", t)).toBe("environments.segments.operator_ends_with");
+    expect(convertOperatorToText("userIsIn", t)).toBe("environments.segments.operator_user_is_in");
+    expect(convertOperatorToText("userIsNotIn", t)).toBe("environments.segments.operator_user_is_not_in");
     // @ts-expect-error - testing default case
-    expect(convertOperatorToText("unknown")).toBe("unknown");
+    expect(convertOperatorToText("unknown", t)).toBe("unknown");
   });
 
   test("convertOperatorToTitle", () => {
-    expect(convertOperatorToTitle("equals")).toBe("Equals");
-    expect(convertOperatorToTitle("notEquals")).toBe("Not equals to");
-    expect(convertOperatorToTitle("lessThan")).toBe("Less than");
-    expect(convertOperatorToTitle("lessEqual")).toBe("Less than or equal to");
-    expect(convertOperatorToTitle("greaterThan")).toBe("Greater than");
-    expect(convertOperatorToTitle("greaterEqual")).toBe("Greater than or equal to");
-    expect(convertOperatorToTitle("isSet")).toBe("Is set");
-    expect(convertOperatorToTitle("isNotSet")).toBe("Is not set");
-    expect(convertOperatorToTitle("contains")).toBe("Contains");
-    expect(convertOperatorToTitle("doesNotContain")).toBe("Does not contain");
-    expect(convertOperatorToTitle("startsWith")).toBe("Starts with");
-    expect(convertOperatorToTitle("endsWith")).toBe("Ends with");
-    expect(convertOperatorToTitle("userIsIn")).toBe("User is in");
-    expect(convertOperatorToTitle("userIsNotIn")).toBe("User is not in");
+    const t = (key: string) => key;
+
+    expect(convertOperatorToTitle("equals", t)).toBe("environments.segments.operator_title_equals");
+    expect(convertOperatorToTitle("notEquals", t)).toBe("environments.segments.operator_title_not_equals");
+    expect(convertOperatorToTitle("lessThan", t)).toBe("environments.segments.operator_title_less_than");
+    expect(convertOperatorToTitle("lessEqual", t)).toBe("environments.segments.operator_title_less_equal");
+    expect(convertOperatorToTitle("greaterThan", t)).toBe(
+      "environments.segments.operator_title_greater_than"
+    );
+    expect(convertOperatorToTitle("greaterEqual", t)).toBe(
+      "environments.segments.operator_title_greater_equal"
+    );
+    expect(convertOperatorToTitle("isSet", t)).toBe("environments.segments.operator_title_is_set");
+    expect(convertOperatorToTitle("isNotSet", t)).toBe("environments.segments.operator_title_is_not_set");
+    expect(convertOperatorToTitle("contains", t)).toBe("environments.segments.operator_title_contains");
+    expect(convertOperatorToTitle("doesNotContain", t)).toBe(
+      "environments.segments.operator_title_does_not_contain"
+    );
+    expect(convertOperatorToTitle("startsWith", t)).toBe("environments.segments.operator_title_starts_with");
+    expect(convertOperatorToTitle("endsWith", t)).toBe("environments.segments.operator_title_ends_with");
+    expect(convertOperatorToTitle("userIsIn", t)).toBe("environments.segments.operator_title_user_is_in");
+    expect(convertOperatorToTitle("userIsNotIn", t)).toBe(
+      "environments.segments.operator_title_user_is_not_in"
+    );
     // @ts-expect-error - testing default case
-    expect(convertOperatorToTitle("unknown")).toBe("unknown");
+    expect(convertOperatorToTitle("unknown", t)).toBe("unknown");
   });
 
   test("addFilterBelow", () => {

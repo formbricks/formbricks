@@ -141,5 +141,68 @@ describe("Time Utilities", () => {
       expect(convertDatesInObject("string")).toBe("string");
       expect(convertDatesInObject(123)).toBe(123);
     });
+
+    test("should not convert dates in ignored keys when keysToIgnore is provided", () => {
+      const keysToIgnore = new Set(["contactAttributes", "variables", "data", "meta"]);
+      const input = {
+        createdAt: "2024-03-20T15:30:00",
+        contactAttributes: {
+          createdAt: "2024-03-20T16:30:00",
+          email: "test@example.com",
+        },
+      };
+
+      const result = convertDatesInObject(input, keysToIgnore);
+      expect(result.createdAt).toBeInstanceOf(Date);
+      expect(result.contactAttributes.createdAt).toBe("2024-03-20T16:30:00");
+      expect(result.contactAttributes.email).toBe("test@example.com");
+    });
+
+    test("should not convert dates in variables when keysToIgnore is provided", () => {
+      const keysToIgnore = new Set(["contactAttributes", "variables", "data", "meta"]);
+      const input = {
+        updatedAt: "2024-03-20T15:30:00",
+        variables: {
+          createdAt: "2024-03-20T16:30:00",
+          userId: "123",
+        },
+      };
+
+      const result = convertDatesInObject(input, keysToIgnore);
+      expect(result.updatedAt).toBeInstanceOf(Date);
+      expect(result.variables.createdAt).toBe("2024-03-20T16:30:00");
+      expect(result.variables.userId).toBe("123");
+    });
+
+    test("should not convert dates in data or meta when keysToIgnore is provided", () => {
+      const keysToIgnore = new Set(["contactAttributes", "variables", "data", "meta"]);
+      const input = {
+        createdAt: "2024-03-20T15:30:00",
+        data: {
+          createdAt: "2024-03-20T16:30:00",
+        },
+        meta: {
+          updatedAt: "2024-03-20T17:30:00",
+        },
+      };
+
+      const result = convertDatesInObject(input, keysToIgnore);
+      expect(result.createdAt).toBeInstanceOf(Date);
+      expect(result.data.createdAt).toBe("2024-03-20T16:30:00");
+      expect(result.meta.updatedAt).toBe("2024-03-20T17:30:00");
+    });
+
+    test("should recurse into all keys when keysToIgnore is not provided", () => {
+      const input = {
+        createdAt: "2024-03-20T15:30:00",
+        contactAttributes: {
+          createdAt: "2024-03-20T16:30:00",
+        },
+      };
+
+      const result = convertDatesInObject(input);
+      expect(result.createdAt).toBeInstanceOf(Date);
+      expect(result.contactAttributes.createdAt).toBeInstanceOf(Date);
+    });
   });
 });

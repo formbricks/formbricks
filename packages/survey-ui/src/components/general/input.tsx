@@ -22,9 +22,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
         style={{ fontSize: "var(--fb-input-font-size)" }}
         className={cn(
           // Layout and behavior
-          "flex min-w-0 border transition-[color,box-shadow] outline-none",
+          "flex min-w-0 border outline-none transition-[color,box-shadow]",
           // Customizable styles via CSS variables (using Tailwind theme extensions)
-          "w-input h-input",
+          "w-input min-h-[var(--fb-input-height)]",
           "bg-input-bg border-input-border rounded-input",
           "font-input font-input-weight",
           "text-input-text",
@@ -32,7 +32,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
           "shadow-input",
           // Placeholder styling
           "placeholder:opacity-input-placeholder",
-          "placeholder:text-input-placeholder placeholder:text-sm",
+          "placeholder:text-input-placeholder",
 
           // Selection styling
           "selection:bg-primary selection:text-primary-foreground",

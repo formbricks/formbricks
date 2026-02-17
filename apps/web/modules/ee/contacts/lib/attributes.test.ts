@@ -111,7 +111,7 @@ describe("updateAttributes", () => {
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
-    expect(result.messages).toContain("The email already exists for this environment and was not updated.");
+    expect(result.messages).toContainEqual({ code: "email_already_exists", params: {} });
   });
 
   test("skips updating userId if it already exists", async () => {
@@ -140,7 +140,7 @@ describe("updateAttributes", () => {
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
-    expect(result.messages).toContain("The userId already exists for this environment and was not updated.");
+    expect(result.messages).toContainEqual({ code: "userid_already_exists", params: {} });
     expect(result.ignoreUserIdAttribute).toBe(true);
   });
 
@@ -174,8 +174,8 @@ describe("updateAttributes", () => {
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
-    expect(result.messages).toContain("The email already exists for this environment and was not updated.");
-    expect(result.messages).toContain("The userId already exists for this environment and was not updated.");
+    expect(result.messages).toContainEqual({ code: "email_already_exists", params: {} });
+    expect(result.messages).toContainEqual({ code: "userid_already_exists", params: {} });
     expect(result.ignoreEmailAttribute).toBe(true);
     expect(result.ignoreUserIdAttribute).toBe(true);
   });
@@ -205,10 +205,15 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     // Include email to satisfy the "at least one of email or userId" requirement
-    const attributes = { name: "John", email: "john@example.com", newAttr: "val" };
+    const attributes = { name: "John", email: "john@example.com", new_attr: "val" };
     const result = await updateAttributes(contactId, userId, environmentId, attributes);
     expect(result.success).toBe(true);
-    expect(result.messages?.[0]).toMatch(/Could not create 1 new attribute/);
+    expect(result.messages?.[0]).toEqual(
+      expect.objectContaining({
+        code: "attribute_limit_exceeded",
+        params: expect.objectContaining({ count: "1" }),
+      })
+    );
   });
 
   test("returns success with only email attribute", async () => {
@@ -430,8 +435,6 @@ describe("updateAttributes", () => {
     const result = await updateAttributes(contactId, userId, environmentId, attributes);
 
     expect(result.success).toBe(true);
-    expect(result.messages).toContain(
-      "Either email or userId is required. The existing values were preserved."
-    );
+    expect(result.messages).toContainEqual({ code: "email_or_userid_required", params: {} });
   });
 });

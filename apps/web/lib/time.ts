@@ -1,5 +1,5 @@
 import { formatDistance, intlFormat } from "date-fns";
-import { de, enUS, es, fr, ja, nl, pt, ptBR, ro, ru, sv, zhCN, zhTW } from "date-fns/locale";
+import { de, enUS, es, fr, hu, ja, nl, pt, ptBR, ro, ru, sv, zhCN, zhTW } from "date-fns/locale";
 import { TUserLocale } from "@formbricks/types/user";
 
 export const convertDateString = (dateString: string | null) => {
@@ -87,28 +87,30 @@ const getLocaleForTimeSince = (locale: TUserLocale) => {
       return de;
     case "en-US":
       return enUS;
-    case "pt-BR":
-      return ptBR;
+    case "es-ES":
+      return es;
     case "fr-FR":
       return fr;
+    case "hu-HU":
+      return hu;
+    case "ja-JP":
+      return ja;
     case "nl-NL":
       return nl;
-    case "sv-SE":
-      return sv;
-    case "zh-Hant-TW":
-      return zhTW;
+    case "pt-BR":
+      return ptBR;
     case "pt-PT":
       return pt;
     case "ro-RO":
       return ro;
-    case "ja-JP":
-      return ja;
-    case "zh-Hans-CN":
-      return zhCN;
-    case "es-ES":
-      return es;
     case "ru-RU":
       return ru;
+    case "sv-SE":
+      return sv;
+    case "zh-Hans-CN":
+      return zhCN;
+    case "zh-Hant-TW":
+      return zhTW;
   }
 };
 
@@ -149,16 +151,20 @@ export const getTodaysDateTimeFormatted = (seperator: string) => {
   return [formattedDate, formattedTime].join(seperator);
 };
 
-export const convertDatesInObject = <T>(obj: T): T => {
+export const convertDatesInObject = <T>(obj: T, keysToIgnore?: Set<string>): T => {
   if (obj === null || typeof obj !== "object") {
     return obj; // Return if obj is not an object
   }
   if (Array.isArray(obj)) {
     // Handle arrays by mapping each element through the function
-    return obj.map((item) => convertDatesInObject(item)) as unknown as T;
+    return obj.map((item) => convertDatesInObject(item, keysToIgnore)) as unknown as T;
   }
-  const newObj: any = {};
+  const newObj: Record<string, unknown> = {};
   for (const key in obj) {
+    if (keysToIgnore?.has(key)) {
+      newObj[key] = obj[key];
+      continue;
+    }
     if (
       (key === "createdAt" || key === "updatedAt") &&
       typeof obj[key] === "string" &&
@@ -166,10 +172,10 @@ export const convertDatesInObject = <T>(obj: T): T => {
     ) {
       newObj[key] = new Date(obj[key] as unknown as string);
     } else if (typeof obj[key] === "object" && obj[key] !== null) {
-      newObj[key] = convertDatesInObject(obj[key]);
+      newObj[key] = convertDatesInObject(obj[key], keysToIgnore);
     } else {
       newObj[key] = obj[key];
     }
   }
-  return newObj;
+  return newObj as T;
 };

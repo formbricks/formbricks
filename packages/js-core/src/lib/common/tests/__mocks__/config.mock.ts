@@ -86,7 +86,7 @@ export const mockConfig: TConfig = {
         id: mockProjectId,
         recontactDays: 14,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         placement: "bottomRight",
         inAppSurveyBranding: true,
         styling: {

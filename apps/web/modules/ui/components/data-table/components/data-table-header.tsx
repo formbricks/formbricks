@@ -44,24 +44,22 @@ export const DataTableHeader = <T,>({
         "border-r": showColumnDividers && !header.column.getIsLastColumn(),
         "border-l": showColumnDividers && !header.column.getIsFirstColumn(),
       })}>
-      <div className="flex items-center justify-between">
-        <div className="w-full truncate text-left font-semibold">
-          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-        </div>
-
+      <div className="flex items-center gap-1">
         {header.column.id !== "select" && header.column.id !== "createdAt" && (
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <ColumnSettingsDropdown
-                column={header.column}
-                setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-              />
-            </div>
+          <div className="flex flex-shrink-0">
+            <ColumnSettingsDropdown
+              column={header.column}
+              setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+            />
             <button {...attributes} {...listeners} className="cursor-move">
               <GripVerticalIcon className="h-4 w-4" />
             </button>
           </div>
         )}
+
+        <div className="w-full truncate text-left font-semibold">
+          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+        </div>
 
         {/* Resize handle */}
         <button
@@ -70,7 +68,7 @@ export const DataTableHeader = <T,>({
           onTouchStart={header.getResizeHandler()}
           data-testid="column-resize-handle"
           className={cn(
-            "absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-slate-500",
+            "absolute right-0 top-0 hidden h-full w-1 cursor-col-resize bg-slate-500",
             header.column.getIsResizing() ? "bg-black" : "bg-slate-500",
             !header.column.getCanResize() ? "hidden" : "group-hover:block"
           )}></button>

@@ -35,34 +35,86 @@ const baseLoggerConfig: LoggerOptions = {
   },
   useOnlyCustomLevels: true,
   timestamp: true,
-  formatters: {
-    level: (label) => {
-      return { level: label };
-    },
-  },
   name: "formbricks",
 };
 
-const developmentConfig: LoggerOptions = {
-  ...baseLoggerConfig,
-  transport: {
+/**
+ * Build transport configuration based on environment.
+ * - Development: pino-pretty for readable console output
+ * - Production: JSON to stdout (default Pino behavior)
+ * - Both: optional pino-opentelemetry-transport for SigNoz log correlation when OTEL is configured
+ */
+const buildTransport = (): LoggerOptions["transport"] => {
+  const hasOtelEndpoint =
+    process.env.NEXT_RUNTIME === "nodejs" && Boolean(process.env.OTEL_EXPORTER_OTLP_ENDPOINT);
+
+  const serviceName = process.env.OTEL_SERVICE_NAME ?? "formbricks";
+  const serviceVersion = process.env.npm_package_version ?? "0.0.0";
+
+  const otelTarget = {
+    target: "pino-opentelemetry-transport",
+    options: {
+      resourceAttributes: {
+        "service.name": serviceName,
+        "service.version": serviceVersion,
+        "deployment.environment": process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? "development",
+      },
+    },
+    level: getLogLevel(),
+  };
+
+  const prettyTarget = {
     target: "pino-pretty",
     options: {
       colorize: true,
       levelFirst: true,
       translateTime: "SYS:standard",
       ignore: "pid,hostname,ip,requestId",
-      customLevels: "trace:10,debug:20,info:30,audit:35,warn:40,error:50,fatal:60",
+      customLevels: "trace:10,debug:20,info:30,warn:40,error:50,fatal:60,audit:90",
       useOnlyCustomProps: true,
     },
-  },
+    level: getLogLevel(),
+  };
+
+  if (!IS_PRODUCTION) {
+    // Development: pretty print + optional OTEL
+    if (hasOtelEndpoint) {
+      return { targets: [prettyTarget, otelTarget] };
+    }
+    return { target: prettyTarget.target, options: prettyTarget.options };
+  }
+
+  // Production: stdout JSON + optional OTEL
+  if (hasOtelEndpoint) {
+    const fileTarget = {
+      target: "pino/file",
+      options: { destination: 1 }, // stdout
+      level: getLogLevel(),
+    };
+    return { targets: [fileTarget, otelTarget] };
+  }
+
+  return undefined; // Default JSON to stdout
 };
 
-const productionConfig: LoggerOptions = {
+const transport = buildTransport();
+
+// Pino does not allow custom `formatters` (functions) when using multi-target transports
+// because targets run in worker threads and functions cannot be serialized.
+// Only attach the level formatter when we're NOT using `{ targets: [...] }`.
+const useMultiTransport = transport !== undefined && "targets" in transport;
+
+const loggerConfig: LoggerOptions = {
   ...baseLoggerConfig,
+  transport,
+  ...(!useMultiTransport && {
+    formatters: {
+      level: (label) => ({ level: label }),
+    },
+  }),
 };
 
-const pinoLogger: Logger = IS_PRODUCTION ? Pino(productionConfig) : Pino(developmentConfig);
+const pinoLogger: Logger = Pino(loggerConfig);
 
 // Ensure all log levels are properly bound
 const boundLogger = {

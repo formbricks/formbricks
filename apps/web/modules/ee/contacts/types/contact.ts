@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  TContactAttributeDataType,
+  TContactAttributeKey,
+  ZContactAttributeDataType,
+} from "@formbricks/types/contact-attribute-key";
 
 export const ZContact = z.object({
   id: z.string().cuid2(),
@@ -11,6 +16,7 @@ const ZContactTableAttributeData = z.object({
   key: z.string(),
   name: z.string().nullable(),
   value: z.string().nullable(),
+  dataType: ZContactAttributeDataType,
 });
 
 export const ZContactTableData = z.object({
@@ -37,9 +43,12 @@ export type TTransformPersonInput = {
   environmentId: string;
   attributes: {
     value: string;
+    valueNumber: number | null;
+    valueDate: Date | null;
     attributeKey: {
       key: string;
       name: string | null;
+      dataType: TContactAttributeDataType;
     };
   }[];
   createdAt: Date;
@@ -379,3 +388,67 @@ export const ZEditContactAttributesForm = z.object({
 });
 
 export type TEditContactAttributesForm = z.infer<typeof ZEditContactAttributesForm>;
+
+/**
+ * Creates a dynamic schema for editing contact attributes with data type validation.
+ * This extends the base ZEditContactAttributesForm with additional validation based on attribute data types.
+ *
+ * @param attributeKeys - Array of contact attribute keys with their data types
+ * @param t - Translation function for error messages
+ * @returns Zod schema with type-specific validation
+ */
+export const createEditContactAttributesSchema = (
+  attributeKeys: TContactAttributeKey[],
+  t: (key: string) => string
+) => {
+  return ZEditContactAttributesForm.superRefine((data, ctx) => {
+    // Validate data types for each attribute
+    data.attributes.forEach((attr, index) => {
+      if (!attr.key) return;
+
+      const attributeKey = attributeKeys.find((ak) => ak.key === attr.key);
+      if (!attributeKey) return;
+
+      const { dataType } = attributeKey;
+      const hasValue = attr.value && attr.value.trim() !== "";
+
+      // For typed fields (date/number), require a value - use delete button to remove
+      if (dataType === "date") {
+        if (!hasValue) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("environments.contacts.date_value_required"),
+            path: ["attributes", index, "value"],
+          });
+          return;
+        }
+        // Validate date format
+        const date = new Date(attr.value);
+        if (Number.isNaN(date.getTime())) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("environments.contacts.invalid_date_format"),
+            path: ["attributes", index, "value"],
+          });
+        }
+      } else if (dataType === "number") {
+        if (!hasValue) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("environments.contacts.number_value_required"),
+            path: ["attributes", index, "value"],
+          });
+          return;
+        }
+        // Validate number format
+        if (Number.isNaN(Number(attr.value))) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("environments.contacts.invalid_number_format"),
+            path: ["attributes", index, "value"],
+          });
+        }
+      }
+    });
+  });
+};

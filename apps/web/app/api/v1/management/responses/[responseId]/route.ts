@@ -8,10 +8,7 @@ import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import {
-  formatValidationErrorsForV1Api,
-  validateResponseData,
-} from "@/modules/api/v2/management/responses/lib/validation";
+import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
@@ -149,6 +146,7 @@ export const PUT = withV1ApiWrapper({
         result.survey.blocks,
         responseUpdate.data,
         responseUpdate.language ?? "en",
+        responseUpdate.finished,
         result.survey.questions
       );
 

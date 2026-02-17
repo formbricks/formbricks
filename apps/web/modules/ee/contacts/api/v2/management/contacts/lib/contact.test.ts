@@ -92,7 +92,6 @@ describe("contact.ts", () => {
       vi.mocked(prisma.contact.findFirst).mockResolvedValueOnce({
         id: "existing-contact-id",
         environmentId: "env123",
-        userId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -122,7 +121,6 @@ describe("contact.ts", () => {
         .mockResolvedValueOnce({
           id: "existing-contact-id",
           environmentId: "env123",
-          userId: "user123",
           createdAt: new Date(),
           updatedAt: new Date(),
         }); // Existing contact by userId
@@ -160,12 +158,16 @@ describe("contact.ts", () => {
         userId: null,
         attributes: [
           {
-            attributeKey: existingAttributeKeys[0],
+            attributeKey: { ...existingAttributeKeys[0], dataType: "string" },
             value: "john@example.com",
+            valueNumber: null,
+            valueDate: null,
           },
           {
-            attributeKey: existingAttributeKeys[1],
+            attributeKey: { ...existingAttributeKeys[1], dataType: "string" },
             value: "John",
+            valueNumber: null,
+            valueDate: null,
           },
         ],
       };
@@ -256,8 +258,10 @@ describe("contact.ts", () => {
         userId: null,
         attributes: [
           {
-            attributeKey: existingAttributeKeys[0],
+            attributeKey: { ...existingAttributeKeys[0], dataType: "string" },
             value: "john@example.com",
+            valueNumber: null,
+            valueDate: null,
           },
         ],
       };
@@ -323,9 +327,24 @@ describe("contact.ts", () => {
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
         userId: null,
         attributes: [
-          { attributeKey: existingAttributeKeys[0], value: "john@example.com" },
-          { attributeKey: existingAttributeKeys[1], value: "user123" },
-          { attributeKey: existingAttributeKeys[2], value: "John" },
+          {
+            attributeKey: { ...existingAttributeKeys[0], dataType: "string" },
+            value: "john@example.com",
+            valueNumber: null,
+            valueDate: null,
+          },
+          {
+            attributeKey: { ...existingAttributeKeys[1], dataType: "string" },
+            value: "user123",
+            valueNumber: null,
+            valueDate: null,
+          },
+          {
+            attributeKey: { ...existingAttributeKeys[2], dataType: "string" },
+            value: "John",
+            valueNumber: null,
+            valueDate: null,
+          },
         ],
       };
 

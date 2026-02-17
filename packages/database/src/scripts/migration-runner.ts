@@ -170,7 +170,7 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
 
       // Run Prisma migrate
       // throws when migrate deploy fails
-      await execAsync(`pnpm prisma migrate deploy --schema="${PRISMA_SCHEMA_PATH}"`);
+      await execAsync(`prisma migrate deploy --schema="${PRISMA_SCHEMA_PATH}"`);
       logger.info(`Successfully applied schema migration: ${migration.name}`);
     } catch (err) {
       logger.error(err, `Schema migration ${migration.name} failed`);

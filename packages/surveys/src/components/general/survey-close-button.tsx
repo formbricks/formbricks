@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 interface SurveyCloseButtonProps {
   onClose?: () => void;
   hoverColor?: string;
-  borderRadius?: number;
+  borderRadius?: number | string;
 }
 
 export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonly<SurveyCloseButtonProps>) {
@@ -23,12 +23,12 @@ export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonl
         style={{
           backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",
           transition: "background-color 0.2s ease",
-          borderRadius: `${borderRadius}px`,
+          borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius,
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
-          "text-heading relative flex h-8 w-8 items-center justify-center p-2 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+          "text-heading focus:outline-hidden relative flex h-8 w-8 items-center justify-center p-2 focus:ring-2 focus:ring-offset-2"
         )}
         aria-label={t("common.close_survey")}>
         <CloseIcon />

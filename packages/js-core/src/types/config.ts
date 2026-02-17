@@ -32,7 +32,7 @@ export type TEnvironmentStateSurvey = Pick<
 
 export type TEnvironmentStateProject = Pick<
   Project,
-  "id" | "recontactDays" | "clickOutsideClose" | "darkOverlay" | "placement" | "inAppSurveyBranding"
+  "id" | "recontactDays" | "clickOutsideClose" | "overlay" | "placement" | "inAppSurveyBranding"
 > & {
   styling: TProjectStyling;
 };
@@ -81,7 +81,7 @@ export type TConfigUpdateInput = Omit<TConfig, "status"> & {
   };
 };
 
-export type TAttributes = Record<string, string>;
+export type TAttributes = Record<string, string | number>;
 
 export interface TConfigInput {
   environmentId: string;

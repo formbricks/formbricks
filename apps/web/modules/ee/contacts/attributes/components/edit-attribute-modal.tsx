@@ -1,11 +1,13 @@
 "use client";
 
+import { Calendar1Icon, HashIcon, TagIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -18,6 +20,18 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { updateContactAttributeKeyAction } from "../actions";
+
+const getDataTypeIcon = (dataType: string) => {
+  switch (dataType) {
+    case "date":
+      return <Calendar1Icon className="h-4 w-4" />;
+    case "number":
+      return <HashIcon className="h-4 w-4" />;
+    case "string":
+    default:
+      return <TagIcon className="h-4 w-4" />;
+  }
+};
 
 interface EditAttributeModalProps {
   attribute: TContactAttributeKey;
@@ -83,6 +97,19 @@ export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAt
                 <Input value={attribute.key} disabled className="bg-slate-50" />
                 <p className="text-xs text-slate-500">
                   {t("environments.contacts.attribute_key_cannot_be_changed")}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-900">
+                  {t("environments.contacts.data_type")}
+                </label>
+                <div className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3">
+                  {getDataTypeIcon(attribute.dataType)}
+                  <Badge text={t(`common.${attribute.dataType}`)} type="gray" size="tiny" />
+                </div>
+                <p className="text-xs text-slate-500">
+                  {t("environments.contacts.data_type_cannot_be_changed")}
                 </p>
               </div>
 

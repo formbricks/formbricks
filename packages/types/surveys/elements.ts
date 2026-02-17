@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZUrl } from "../common";
+import { ZStorageUrl, ZUrl } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZAllowedFileExtension } from "../storage";
 import { TSurveyElementTypeEnum } from "./constants";
@@ -61,8 +61,8 @@ export const ZSurveyElementBase = z.object({
   type: z.nativeEnum(TSurveyElementTypeEnum),
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
-  imageUrl: ZUrl.optional(),
-  videoUrl: ZUrl.optional(),
+  imageUrl: ZStorageUrl.optional(),
+  videoUrl: ZStorageUrl.optional(),
   required: z.boolean(),
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
@@ -139,6 +139,9 @@ export type TSurveyElementChoice = z.infer<typeof ZSurveyElementChoice>;
 export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 
+export const ZMultipleChoiceOptionDisplayType = z.enum(["list", "dropdown"]);
+export type TMultipleChoiceOptionDisplayType = z.infer<typeof ZMultipleChoiceOptionDisplayType>;
+
 // Multiple Choice Single Element
 export const ZSurveyMultipleChoiceSingleElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.MultipleChoiceSingle),
@@ -147,6 +150,7 @@ export const ZSurveyMultipleChoiceSingleElement = ZSurveyElementBase.extend({
     .min(2, { message: "Multiple Choice Element must have at least two choices" }),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
+  displayType: ZMultipleChoiceOptionDisplayType.optional(),
 });
 
 // Multiple Choice Multi Element
@@ -158,6 +162,7 @@ export const ZSurveyMultipleChoiceMultiElement = ZSurveyElementBase.extend({
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
   validation: ZValidation.optional(),
+  displayType: ZMultipleChoiceOptionDisplayType.optional(),
 });
 
 // Union type for Multiple Choice Elements
@@ -232,7 +237,7 @@ export type TSurveyRatingElement = z.infer<typeof ZSurveyRatingElement>;
 // Picture Selection Element
 export const ZSurveyPictureChoice = z.object({
   id: z.string(),
-  imageUrl: z.string(),
+  imageUrl: ZStorageUrl,
 });
 
 export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;

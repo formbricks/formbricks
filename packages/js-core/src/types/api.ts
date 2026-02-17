@@ -10,4 +10,5 @@ export interface ApiSuccessResponse<T = Record<string, unknown>> {
 export interface CreateOrUpdateUserResponse {
   state: TUserState;
   messages?: string[];
+  errors?: string[];
 }
