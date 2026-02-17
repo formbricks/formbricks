@@ -36,6 +36,36 @@ services:
     volumes:
       - minio-data:/data
 
+  # Run Hub DB migrations (goose + river) before the API starts. Idempotent; runs on every compose up.
+  hub-migrate:
+    image: ghcr.io/formbricks/hub:latest
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command: ["if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres \"$$DATABASE_URL\" up && /usr/local/bin/river migrate-up --database-url \"$$DATABASE_URL\"; else echo 'Migration tools (goose/river) not in image, skipping migrations.'; fi"]
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres?schema=public
+    depends_on:
+      - postgres
+
+  # Formbricks Hub API (ghcr.io/formbricks/hub). Shares the same Postgres database as Formbricks by default.
+  hub:
+    image: ghcr.io/formbricks/hub:latest
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    environment:
+      API_KEY: ${HUB_API_KEY:-dev-api-key}
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres?schema=public&sslmode=disable
+      # Explicit Postgres env so migrations and any libpq fallback use the service host, not localhost
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+      PGSSLMODE: disable
+
 volumes:
   postgres:
     driver: local

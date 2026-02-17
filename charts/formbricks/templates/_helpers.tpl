@@ -7,6 +7,10 @@ It also truncates the name to a maximum of 63 characters and removes trailing hy
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "formbricks.hubname" -}}
+{{- printf "%s-hub" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 
 {{/*
 Define the application version to be used in labels.
