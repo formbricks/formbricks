@@ -120,8 +120,8 @@ export const STYLE_DEFAULTS: TProjectStyling = {
   inputBorderRadius: 8,
   inputHeight: 20,
   inputFontSize: 14,
-  inputPaddingX: 16,
-  inputPaddingY: 16,
+  inputPaddingX: 8,
+  inputPaddingY: 8,
   inputPlaceholderOpacity: 0.5,
   inputShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
 

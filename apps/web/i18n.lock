@@ -2036,12 +2036,12 @@ checksums:
     environments/workspace/look/advanced_styling_field_headline_size_description: 13debc3855e4edae992c7a1ebff599c3
     environments/workspace/look/advanced_styling_field_headline_weight: 0c8b8262945c61f8e2978502362e0a42
     environments/workspace/look/advanced_styling_field_headline_weight_description: 1a9c40bd76ff5098b1e48b1d3893171b
-    environments/workspace/look/advanced_styling_field_height: f4da6d7ecd26e3fa75cfea03abb60c00
+    environments/workspace/look/advanced_styling_field_height: 40ca2224bb2936ad1329091b35a9ffe2
     environments/workspace/look/advanced_styling_field_indicator_bg: 00febda2901af0f1b0c17e44f9917c38
     environments/workspace/look/advanced_styling_field_indicator_bg_description: 7eb3b54a8b331354ec95c0dc1545c620
     environments/workspace/look/advanced_styling_field_input_border_radius_description: 0007f1bb572b35d9a3720daeb7a55617
     environments/workspace/look/advanced_styling_field_input_font_size_description: 5311f95dcbd083623e35c98ea5374c3b
-    environments/workspace/look/advanced_styling_field_input_height_description: b704fc67e805223992c811d6f86a9c00
+    environments/workspace/look/advanced_styling_field_input_height_description: e19ec0dc432478def0fd1199ad765e38
     environments/workspace/look/advanced_styling_field_input_padding_x_description: 10e14296468321c13fda77fd1ba58dfd
     environments/workspace/look/advanced_styling_field_input_padding_y_description: 98b4aeff2940516d05ea61bdc1211d0d
     environments/workspace/look/advanced_styling_field_input_placeholder_opacity_description: f55a6700884d24014404e58876121ddf
