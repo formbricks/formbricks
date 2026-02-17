@@ -406,6 +406,14 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: "/hub",
+        destination: "https://hub.stldocs.app",
+      },
+      {
+        source: "/hub/:path*",
+        destination: "https://hub.stldocs.app/:path*",
+      },
+      {
         source: "/api/packages/website",
         destination: "/js/formbricks.umd.cjs",
       },
@@ -481,6 +489,5 @@ const sentryOptions = {
 // Always enable Sentry plugin to inject Debug IDs
 // Runtime Sentry reporting still depends on DSN being set via environment variables
 const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
-
 
 export default exportConfig;
