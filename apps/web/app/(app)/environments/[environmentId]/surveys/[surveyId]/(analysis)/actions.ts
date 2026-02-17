@@ -110,8 +110,8 @@ export const getResponseCountAction = authenticatedActionClient
 
 const ZGetDisplaysWithContactAction = z.object({
   surveyId: ZId,
-  limit: z.number(),
-  offset: z.number(),
+  limit: z.number().int().min(1),
+  offset: z.number().int().nonnegative(),
 });
 
 export const getDisplaysWithContactAction = authenticatedActionClient

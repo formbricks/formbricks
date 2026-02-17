@@ -48,6 +48,16 @@ export const ActivityTimeline = ({
   const [responses, setResponses] = useState(initialResponses);
   const [isReversed, setIsReversed] = useState(false);
 
+  // Fetch membership role once for the environment
+  const { membershipRole } = useMembershipRole(environment.id, user.id);
+
+  // Compute isReadOnly once for all responses
+  const isReadOnly = useMemo(() => {
+    const { isMember } = getAccessFlags(membershipRole);
+    const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
+    return isMember && hasReadAccess;
+  }, [membershipRole, projectPermission]);
+
   useEffect(() => {
     setResponses(initialResponses);
   }, [initialResponses]);
@@ -121,7 +131,7 @@ export const ActivityTimeline = ({
                 updateResponseList={updateResponseList}
                 updateResponse={updateResponse}
                 locale={locale}
-                projectPermission={projectPermission}
+                isReadOnly={isReadOnly}
               />
             )
           )}
@@ -164,7 +174,7 @@ const DisplayCard = ({
           )}
         </div>
       </div>
-      <span className="text-sm text-slate-500">{timeSince(display.createdAt.toISOString(), locale)}</span>
+      <span className="text-sm text-slate-500">{timeSince(display.createdAt.toString(), locale)}</span>
     </div>
   );
 };
@@ -178,7 +188,7 @@ const ResponseSurveyCard = ({
   updateResponseList,
   updateResponse,
   locale,
-  projectPermission,
+  isReadOnly,
 }: {
   response: TResponseWithQuotas;
   surveys: TSurvey[];
@@ -188,13 +198,9 @@ const ResponseSurveyCard = ({
   updateResponseList: (responseIds: string[]) => void;
   updateResponse: (responseId: string, response: TResponseWithQuotas) => void;
   locale: TUserLocale;
-  projectPermission: TTeamPermission | null;
+  isReadOnly: boolean;
 }) => {
   const survey = surveys.find((s) => s.id === response.surveyId);
-  const { membershipRole } = useMembershipRole(survey?.environmentId || "", user.id);
-  const { isMember } = getAccessFlags(membershipRole);
-  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
-  const isReadOnly = isMember && hasReadAccess;
 
   if (!survey) return null;
 
