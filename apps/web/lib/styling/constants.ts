@@ -150,6 +150,42 @@ export const STYLE_DEFAULTS: TProjectStyling = {
 };
 
 /**
+ * Fills in new v4.7 color fields from legacy v4.6 fields when they are missing.
+ *
+ * v4.6 stored: brandColor, questionColor, inputColor, inputBorderColor.
+ * v4.7 adds: elementHeadlineColor, buttonBgColor, optionBgColor, etc.
+ *
+ * When loading v4.6 data the new fields are absent. Without this helper the
+ * form would fall back to STYLE_DEFAULTS (derived from the *default* brand
+ * colour), causing a visible mismatch.  This function derives the new fields
+ * from the actually-saved legacy fields so the preview and form stay coherent.
+ *
+ * Only sets a field when the legacy source exists AND the new field is absent.
+ */
+export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Record<string, unknown> => {
+  const light = (key: string): string | undefined =>
+    (saved[key] as { light?: string } | null | undefined)?.light;
+
+  const q = light("questionColor");
+  const b = light("brandColor");
+  const i = light("inputColor");
+
+  return {
+    ...(q && !saved.elementHeadlineColor && { elementHeadlineColor: { light: q } }),
+    ...(q && !saved.elementDescriptionColor && { elementDescriptionColor: { light: q } }),
+    ...(q && !saved.elementUpperLabelColor && { elementUpperLabelColor: { light: q } }),
+    ...(q && !saved.inputTextColor && { inputTextColor: { light: q } }),
+    ...(q && !saved.optionLabelColor && { optionLabelColor: { light: q } }),
+    ...(b && !saved.buttonBgColor && { buttonBgColor: { light: b } }),
+    ...(b && !saved.buttonTextColor && { buttonTextColor: { light: isLight(b) ? "#0f172a" : "#ffffff" } }),
+    ...(i && !saved.optionBgColor && { optionBgColor: { light: i } }),
+    ...(b && !saved.progressIndicatorBgColor && { progressIndicatorBgColor: { light: b } }),
+    ...(b &&
+      !saved.progressTrackBgColor && { progressTrackBgColor: { light: mixColor(b, "#ffffff", 0.8) } }),
+  };
+};
+
+/**
  * Builds a complete TProjectStyling object from a single brand color.
  *
  * Uses STYLE_DEFAULTS for all non-color properties (dimensions, weights, etc.)
