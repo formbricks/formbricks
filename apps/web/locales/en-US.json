@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "Show “Powered by Formbricks” Signature",
         "styling_updated_successfully": "Styling updated successfully",
         "suggest_colors": "Suggest colors",
+        "suggested_colors_applied_please_save": "Suggested colors generated successfully. Press \"Save\" to persist the changes.",
         "theme": "Theme",
         "theme_settings_description": "Create a style theme for all surveys. You can enable custom styling for each survey."
       },

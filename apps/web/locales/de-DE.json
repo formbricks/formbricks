@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "\"Powered by Formbricks\"-Signatur anzeigen",
         "styling_updated_successfully": "Styling erfolgreich aktualisiert",
         "suggest_colors": "Farben vorschlagen",
+        "suggested_colors_applied_please_save": "Vorgeschlagene Farben erfolgreich generiert. Drücke \"Speichern\", um die Änderungen zu übernehmen.",
         "theme": "Theme",
         "theme_settings_description": "Erstelle ein Style-Theme für alle Umfragen. Du kannst für jede Umfrage individuelles Styling aktivieren."
       },

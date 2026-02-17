@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "Toon 'Powered by Formbricks' handtekening",
         "styling_updated_successfully": "Styling succesvol bijgewerkt",
         "suggest_colors": "Kleuren voorstellen",
+        "suggested_colors_applied_please_save": "Voorgestelde kleuren succesvol gegenereerd. Druk op \"Opslaan\" om de wijzigingen te behouden.",
         "theme": "Thema",
         "theme_settings_description": "Maak een stijlthema voor alle enquêtes. Je kunt aangepaste styling inschakelen voor elke enquête."
       },

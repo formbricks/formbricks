@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "Visa 'Powered by Formbricks'-signatur",
         "styling_updated_successfully": "Stiluppdatering lyckades",
         "suggest_colors": "Föreslå färger",
+        "suggested_colors_applied_please_save": "Föreslagna färger har skapats. Tryck på \"Spara\" för att spara ändringarna.",
         "theme": "Tema",
         "theme_settings_description": "Skapa ett stilmall för alla undersökningar. Du kan aktivera anpassad stil för varje undersökning."
       },

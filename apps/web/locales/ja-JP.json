@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "「Powered by Formbricks」署名を表示",
         "styling_updated_successfully": "スタイルを正常に更新しました",
         "suggest_colors": "カラーを提案",
+        "suggested_colors_applied_please_save": "推奨カラーが正常に生成されました。変更を保存するには「保存」を押してください。",
         "theme": "テーマ",
         "theme_settings_description": "すべてのアンケート用のスタイルテーマを作成します。各アンケートでカスタムスタイルを有効にできます。"
       },

@@ -2221,6 +2221,7 @@
         "show_powered_by_formbricks": "Afficher la signature « Propulsé par Formbricks »",
         "styling_updated_successfully": "Style mis à jour avec succès",
         "suggest_colors": "Suggérer des couleurs",
+        "suggested_colors_applied_please_save": "Couleurs suggérées générées avec succès. Appuyez sur « Enregistrer » pour conserver les modifications.",
         "theme": "Thème",
         "theme_settings_description": "Créez un thème de style pour toutes les enquêtes. Vous pouvez activer un style personnalisé pour chaque enquête."
       },
