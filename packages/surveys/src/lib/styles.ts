@@ -111,8 +111,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Backwards-compat: legacy variables still used by some consumers/tests
   appendCssVariable("subheading-color", styling.questionColor?.light);
 
-  if (styling.questionColor?.light) {
-    appendCssVariable("placeholder-color", mixColor(styling.questionColor.light, "#ffffff", 0.3));
+  const placeholderBaseColor = styling.inputTextColor?.light ?? styling.questionColor?.light;
+  if (placeholderBaseColor) {
+    appendCssVariable("placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
+    appendCssVariable("input-placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
   }
 
   appendCssVariable("border-color", styling.inputBorderColor?.light);
@@ -210,6 +212,12 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Inputs (Advanced)
   appendCssVariable("input-background-color", styling.inputBgColor?.light ?? styling.inputColor?.light);
   appendCssVariable("input-text-color", styling.inputTextColor?.light);
+  if (styling.inputTextColor?.light) {
+    appendCssVariable(
+      "input-placeholder-color",
+      mixColor(styling.inputTextColor.light, "#ffffff", 0.3)
+    );
+  }
   if (styling.inputBorderRadius !== undefined)
     appendCssVariable("input-border-radius", formatDimension(styling.inputBorderRadius));
   if (styling.inputHeight !== undefined)
