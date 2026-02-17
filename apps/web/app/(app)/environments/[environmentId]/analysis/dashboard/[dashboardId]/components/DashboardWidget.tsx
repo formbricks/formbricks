@@ -32,11 +32,11 @@ export function DashboardWidget({ widget, environmentId }: DashboardWidgetProps)
       setError(null);
       executeQueryAction({
         environmentId,
-        query: widget.chart.query,
+        query: widget.chart.query as any,
       })
         .then((result) => {
-          if (result?.serverError || result?.error) {
-            setError(result.serverError || result.error || "Failed to load chart data");
+          if (result?.serverError || result?.data?.error) {
+            setError(result.serverError || result.data?.error || "Failed to load chart data");
             setChartData(null);
           } else if (result?.data?.data) {
             const data = Array.isArray(result.data.data) ? result.data.data : [];

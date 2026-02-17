@@ -24,7 +24,7 @@ interface ChartDropdownMenuProps {
 }
 
 export const ChartDropdownMenu = ({
-  environmentId,
+  environmentId: _environmentId,
   chart,
   disabled,
   deleteChart,

@@ -10,12 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { Input } from "@/modules/ui/components/input";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import Calendar from "react-calendar";
 import { format } from "date-fns";
 import { FEEDBACK_FIELDS, TIME_GRANULARITIES, DATE_PRESETS } from "../lib/schema-definition";
-import { TimeDimensionConfig, getDateRangeFromPreset } from "../lib/query-builder";
+import { TimeDimensionConfig } from "../lib/query-builder";
 import "@/modules/ui/components/date-picker/styles.css";
 
 interface TimeDimensionPanelProps {

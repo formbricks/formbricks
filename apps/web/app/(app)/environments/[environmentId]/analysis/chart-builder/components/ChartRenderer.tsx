@@ -222,7 +222,7 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
     default:
       return (
         <div className="flex h-64 items-center justify-center text-gray-500">
-          Chart type "{chartType}" not yet supported
+          Chart type &quot;{chartType}&quot; not yet supported
         </div>
       );
   }

@@ -16,7 +16,7 @@ const AVAILABLE_CHART_TYPES = CHART_TYPES.filter(
 export function ManualChartBuilder({
   selectedChartType,
   onChartTypeSelect,
-}: Omit<ManualChartBuilderProps, "onCreate">) {
+}: ManualChartBuilderProps) {
   return (
     <div className="space-y-4">
       <h2 className="font-medium text-gray-900">Choose chart type</h2>

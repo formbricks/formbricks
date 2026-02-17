@@ -16,7 +16,7 @@ export function DashboardsListClient({
   dashboards: initialDashboards,
   environmentId,
 }: DashboardsListClientProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, _setSearchQuery] = useState("");
   const [dashboards, setDashboards] = useState(initialDashboards);
 
   const filteredDashboards = dashboards.filter((dashboard) =>

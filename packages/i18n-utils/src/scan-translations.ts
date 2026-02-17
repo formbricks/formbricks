@@ -13,11 +13,11 @@
  *   1: Validation errors found (missing or unused keys)
  *   2: Invalid or missing API key
  */
-import { glob } from "glob";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { glob } from "glob";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);

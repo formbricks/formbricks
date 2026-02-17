@@ -123,7 +123,7 @@ export function parseQueryToState(query: CubeQuery, chartType?: string): Partial
     state.timeDimension = {
       dimension: timeDim.dimension,
       granularity: (timeDim.granularity || "day") as TimeDimensionConfig["granularity"],
-      dateRange: timeDim.dateRange || "last 30 days",
+      dateRange: (timeDim.dateRange || "last 30 days") as TimeDimensionConfig["dateRange"],
     };
   }
 

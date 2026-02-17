@@ -194,7 +194,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
             ref={inputRef}
             value={inputValue}
             onValueChange={setInputValue}
-            onBlur={(e) => {
+            onBlur={(_e) => {
               // Don't close if we're selecting an option
               if (!isSelectingRef.current) {
                 setOpen(false);

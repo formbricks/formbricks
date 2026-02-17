@@ -34,7 +34,7 @@ const CHART_TYPE_ICONS: Record<string, React.ComponentType<{ className?: string 
   map: MapIcon,
 };
 
-export function ChartsListClient({ charts: initialCharts, dashboards, environmentId }: ChartsListClientProps) {
+export function ChartsListClient({ charts: initialCharts, dashboards: _dashboards, environmentId }: ChartsListClientProps) {
   const [charts, setCharts] = useState(initialCharts);
   const [editingChartId, setEditingChartId] = useState<string | undefined>(undefined);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);

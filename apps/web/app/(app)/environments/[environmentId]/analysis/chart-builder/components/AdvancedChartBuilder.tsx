@@ -242,7 +242,8 @@ export function AdvancedChartBuilder({
       .finally(() => {
         setIsLoading(false);
       });
-  }, [state.chartType, state.selectedMeasures, state.selectedDimensions, state.filters, state.timeDimension, isInitialized, environmentId, onChartGenerated, chartData, query]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.chartType, state.selectedMeasures, state.selectedDimensions, state.filters, state.filterLogic, state.customMeasures, state.timeDimension, isInitialized, environmentId, onChartGenerated, chartData, query]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -371,7 +372,6 @@ export function AdvancedChartBuilder({
     }
 
     setIsSaving(true);
-    console.log(query);
     try {
       const chartResult = await createChartAction({
         environmentId,
@@ -581,7 +581,7 @@ export function AdvancedChartBuilder({
 
           {!chartData && !isLoading && !error && (
             <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500">
-              Configure your chart and click "Run Query" to preview
+              Configure your chart and click &quot;Run Query&quot; to preview
             </div>
           )}
         </div>

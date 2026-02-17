@@ -87,8 +87,8 @@ export function CreateChartDialog({
               query: chart.query as any,
             });
 
-            if (queryResult?.error || queryResult?.serverError) {
-              toast.error(queryResult.error || queryResult.serverError || "Failed to load chart data");
+            if (queryResult?.data?.error || queryResult?.serverError) {
+              toast.error(queryResult.data?.error || queryResult.serverError || "Failed to load chart data");
               setIsLoadingChart(false);
               return;
             }
@@ -370,14 +370,14 @@ export function CreateChartDialog({
                     setSelectedChartType(data.chartType);
                   }
                 }}
-                onSave={(chartId) => {
-                  setCurrentChartId(chartId);
+                onSave={(savedChartId) => {
+                  setCurrentChartId(savedChartId);
                   setIsSaveDialogOpen(false);
                   onOpenChange(false);
                   onSuccess?.();
                 }}
-                onAddToDashboard={(chartId, dashboardId) => {
-                  setCurrentChartId(chartId);
+                onAddToDashboard={(savedChartId, _dashboardId) => {
+                  setCurrentChartId(savedChartId);
                   setIsAddToDashboardDialogOpen(false);
                   onOpenChange(false);
                   onSuccess?.();

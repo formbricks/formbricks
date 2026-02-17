@@ -3,7 +3,7 @@
 import { Plus, TrashIcon } from "lucide-react";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { MultiSelect } from "@/modules/ui/components/multi-select";
+
 import {
   Select,
   SelectContent,
@@ -69,7 +69,6 @@ export function FiltersPanel({
   const getValueInput = (filter: FilterRow, index: number) => {
     const field = getFieldById(filter.field);
     const fieldType = field?.type || "string";
-    const operators = getFilterOperatorsForType(fieldType as "string" | "number" | "time");
 
     // For set/notSet operators, no value input needed
     if (filter.operator === "set" || filter.operator === "notSet") {

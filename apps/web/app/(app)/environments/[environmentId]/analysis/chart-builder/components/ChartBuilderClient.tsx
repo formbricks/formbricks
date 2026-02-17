@@ -16,7 +16,7 @@ import {
 import { mapChartType, mapDatabaseChartTypeToApi } from "../lib/chart-utils";
 import { AIQuerySection } from "./AIQuerySection";
 import { AddToDashboardDialog } from "./AddToDashboardDialog";
-import { AdvancedChartBuilder } from "./AdvancedChartBuilder";
+
 import { ChartPreview } from "./ChartPreview";
 import { ConfigureChartDialog } from "./ConfigureChartDialog";
 import { ManualChartBuilder } from "./ManualChartBuilder";
@@ -38,9 +38,9 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
   const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedDashboardId, setSelectedDashboardId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
-  const [showData, setShowData] = useState(false);
+
   const [configuredChartType, setConfiguredChartType] = useState<string | null>(null);
-  const [showAdvancedBuilder, setShowAdvancedBuilder] = useState(false);
+
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);
 
@@ -71,8 +71,8 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
               query: chart.query as any,
             });
 
-            if (queryResult?.error || queryResult?.serverError) {
-              toast.error(queryResult.error || queryResult.serverError || "Failed to load chart data");
+            if (queryResult?.data?.error || queryResult?.serverError) {
+              toast.error(queryResult.data?.error || queryResult.serverError || "Failed to load chart data");
               setIsLoadingChart(false);
               return;
             }
@@ -219,14 +219,6 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
     }
   };
 
-  const handleManualCreate = () => {
-    if (!selectedChartType) {
-      toast.error("Please select a chart type first");
-      return;
-    }
-    setShowAdvancedBuilder(true);
-  };
-
   // If loading an existing chart, show loading state
   if (chartId && isLoadingChart) {
     return (
@@ -240,13 +232,7 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
   if (chartId && chartData) {
     return (
       <div className="grid gap-8">
-        <ChartPreview
-          chartData={chartData}
-          configuredChartType={configuredChartType}
-          showData={showData}
-          onToggleData={() => setShowData(!showData)}
-          onConfigure={() => setIsConfigureDialogOpen(true)}
-        />
+        <ChartPreview chartData={chartData} />
 
         {/* Dialogs */}
         <SaveChartDialog
@@ -289,13 +275,7 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
 
       {/* Chart Preview */}
       {chartData && (
-        <ChartPreview
-          chartData={chartData}
-          configuredChartType={configuredChartType}
-          showData={showData}
-          onToggleData={() => setShowData(!showData)}
-          onConfigure={() => setIsConfigureDialogOpen(true)}
-        />
+        <ChartPreview chartData={chartData} />
       )}
 
       <div className="relative">
@@ -308,15 +288,10 @@ export function ChartBuilderClient({ environmentId, chartId }: ChartBuilderClien
       </div>
 
       {/* Option 2: Build Manually */}
-      {showAdvancedBuilder ? (
-        <AdvancedChartBuilder environmentId={environmentId} initialChartType={selectedChartType} />
-      ) : (
-        <ManualChartBuilder
-          selectedChartType={selectedChartType}
-          onChartTypeSelect={setSelectedChartType}
-          onCreate={handleManualCreate}
-        />
-      )}
+      <ManualChartBuilder
+        selectedChartType={selectedChartType}
+        onChartTypeSelect={setSelectedChartType}
+      />
 
       {/* Dialogs */}
       <SaveChartDialog
