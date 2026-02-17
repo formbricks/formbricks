@@ -195,9 +195,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   // Buttons (Advanced)
   const buttonBg = styling.buttonBgColor?.light ?? styling.brandColor?.light;
-  const buttonText =
-    styling.buttonTextColor?.light ??
-    (buttonBg ? (isLight(buttonBg) ? "#0f172a" : "#ffffff") : undefined);
+  let buttonText = styling.buttonTextColor?.light;
+  if (buttonText === undefined && buttonBg) {
+    buttonText = isLight(buttonBg) ? "#0f172a" : "#ffffff";
+  }
   appendCssVariable("button-bg-color", buttonBg);
   appendCssVariable("button-text-color", buttonText);
   if (styling.buttonBorderRadius !== undefined)
@@ -292,7 +293,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     styling.progressTrackBgColor?.light ??
       (styling.brandColor?.light ? mixColor(styling.brandColor.light, "#ffffff", 0.8) : undefined)
   );
-  appendCssVariable("progress-indicator-bg-color", styling.progressIndicatorBgColor?.light ?? styling.brandColor?.light);
+  appendCssVariable(
+    "progress-indicator-bg-color",
+    styling.progressIndicatorBgColor?.light ?? styling.brandColor?.light
+  );
 
   // Close the #fbjs variable block
   cssVariables += "}\n";

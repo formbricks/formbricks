@@ -134,9 +134,11 @@ export const ThemeStyling = ({
     });
 
     if (updatedProjectResponse?.data) {
-      const saved = updatedProjectResponse.data.styling as TProjectStyling;
+      const saved = updatedProjectResponse.data.styling;
       form.reset({ ...saved });
-      setPreviewBrandColor(saved?.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
+      setPreviewBrandColor(
+        saved?.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor
+      );
       toast.success(t("environments.workspace.look.styling_updated_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
