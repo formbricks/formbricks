@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { previewSurvey } from "@/app/lib/templates";
-import { STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
+import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
@@ -67,6 +67,16 @@ export const ThemeStyling = ({
     resolver: zodResolver(ZProjectStyling),
   });
 
+  // Brand color shown in the preview.  Only updated when the user triggers
+  // "Suggest colors", "Save", or "Reset to default" — NOT on every keystroke
+  // in the brand-color picker.  This prevents the loading-spinner / progress
+  // bar from updating while the user is still picking a colour.
+  const [previewBrandColor, setPreviewBrandColor] = useState<string>(
+    (cleanSaved as Partial<TProjectStyling>).brandColor?.light ??
+      STYLE_DEFAULTS.brandColor?.light ??
+      COLOR_DEFAULTS.brandColor
+  );
+
   const [previewSurveyType, setPreviewSurveyType] = useState<TSurveyType>("link");
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
   const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
@@ -84,6 +94,7 @@ export const ThemeStyling = ({
 
     if (updatedProjectResponse?.data) {
       form.reset({ ...STYLE_DEFAULTS });
+      setPreviewBrandColor(STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
       toast.success(t("environments.workspace.look.styling_updated_successfully"));
       router.refresh();
     } else {
@@ -100,6 +111,9 @@ export const ThemeStyling = ({
       form.setValue(key as keyof TProjectStyling, value, { shouldDirty: true });
     }
 
+    // Commit brand color to the preview now that all derived colours are in sync.
+    setPreviewBrandColor(brandColor ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
+
     toast.success(t("environments.workspace.look.suggested_colors_applied_please_save"));
     setConfirmSuggestColorsOpen(false);
   };
@@ -113,7 +127,9 @@ export const ThemeStyling = ({
     });
 
     if (updatedProjectResponse?.data) {
-      form.reset({ ...updatedProjectResponse.data.styling });
+      const saved = updatedProjectResponse.data.styling as TProjectStyling;
+      form.reset({ ...saved });
+      setPreviewBrandColor(saved?.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
       toast.success(t("environments.workspace.look.styling_updated_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
@@ -249,7 +265,9 @@ export const ThemeStyling = ({
                 survey={previewSurvey(project.name, t)}
                 project={{
                   ...project,
-                  styling: form.watch("allowStyleOverwrite") ? form.watch() : STYLE_DEFAULTS,
+                  styling: form.watch("allowStyleOverwrite")
+                    ? { ...form.watch(), brandColor: { light: previewBrandColor } }
+                    : STYLE_DEFAULTS,
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}
