@@ -4,7 +4,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { BarChart3Icon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { TDashboard } from "../types/analysis";
+import { TDashboard } from "../../types/analysis";
 import { DashboardDropdownMenu } from "./dashboard-dropdown-menu";
 
 interface DashboardsListClientProps {

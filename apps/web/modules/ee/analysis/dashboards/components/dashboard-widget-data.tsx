@@ -1,4 +1,4 @@
-import { ChartRenderer } from "./chart-builder/chart-renderer";
+import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-builder/chart-renderer";
 
 interface DashboardWidgetDataProps {
   dataPromise: Promise<{ data: Record<string, unknown>[] } | { error: string }>;

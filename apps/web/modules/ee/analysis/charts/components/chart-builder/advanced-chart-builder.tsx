@@ -8,12 +8,8 @@ import { toast } from "react-hot-toast";
 import { AnalyticsResponse } from "@/app/api/analytics/_lib/types";
 import { Button } from "@/modules/ui/components/button";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import {
-  addChartToDashboardAction,
-  createChartAction,
-  executeQueryAction,
-  getDashboardsAction,
-} from "../../actions";
+import { createChartAction, executeQueryAction } from "../../actions";
+import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import { CHART_TYPES } from "../../lib/chart-types";
 import { mapChartType } from "../../lib/chart-utils";
 import {
@@ -23,8 +19,8 @@ import {
   TimeDimensionConfig,
   buildCubeQuery,
   parseQueryToState,
-} from "../../lib/query-builder";
-import { TCubeQuery } from "../../types/analysis";
+} from "@/modules/ee/analysis/lib/query-builder";
+import { TCubeQuery } from "@/modules/ee/analysis/types/analysis";
 import { AddToDashboardDialog } from "./add-to-dashboard-dialog";
 import { ChartRenderer } from "./chart-renderer";
 import { DimensionsPanel } from "./dimensions-panel";

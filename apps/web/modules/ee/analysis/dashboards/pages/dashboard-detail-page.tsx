@@ -3,13 +3,13 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { CreateChartButton } from "../components/create-chart-button";
+import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
 import { DashboardControlBar } from "../components/dashboard-control-bar";
 import { DashboardWidget } from "../components/dashboard-widget";
 import { DashboardWidgetData } from "../components/dashboard-widget-data";
 import { DashboardWidgetSkeleton } from "../components/dashboard-widget-skeleton";
 import { executeWidgetQuery, getDashboard } from "../lib/data";
-import { TDashboardWidget } from "../types/analysis";
+import { TDashboardWidget } from "../../types/analysis";
 
 function getColSpan(w: number) {
   if (w <= 2) return "col-span-12 md:col-span-2";

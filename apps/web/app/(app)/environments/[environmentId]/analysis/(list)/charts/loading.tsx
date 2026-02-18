@@ -1,4 +1,4 @@
-import { ChartsListSkeleton } from "@/modules/ee/analysis/components/charts-list-skeleton";
+import { ChartsListSkeleton } from "@/modules/ee/analysis/charts/components/charts-list-skeleton";
 
 export default function ChartsListLoading() {
     return <ChartsListSkeleton />;

@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { deleteDashboardAction } from "../actions";
-import { TDashboard } from "../types/analysis";
+import { TDashboard } from "../../types/analysis";
 import { EditDashboardDialog } from "./edit-dashboard-dialog";
 
 interface DashboardControlBarProps {

@@ -6,13 +6,12 @@ import { toast } from "react-hot-toast";
 import { AnalyticsResponse } from "@/app/api/analytics/_lib/types";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import {
-  addChartToDashboardAction,
   createChartAction,
   executeQueryAction,
   getChartAction,
-  getDashboardsAction,
   updateChartAction,
 } from "../../actions";
+import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import { mapChartType, mapDatabaseChartTypeToApi } from "../../lib/chart-utils";
 import { AddToDashboardDialog } from "./add-to-dashboard-dialog";
 import { AIQuerySection } from "./ai-query-section";

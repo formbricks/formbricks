@@ -11,8 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { CustomMeasure } from "../../lib/query-builder";
-import { FEEDBACK_FIELDS } from "../../lib/schema-definition";
+import { CustomMeasure } from "@/modules/ee/analysis/lib/query-builder";
+import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
 
 interface MeasuresPanelProps {
   selectedMeasures: string[];

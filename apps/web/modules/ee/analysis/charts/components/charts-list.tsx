@@ -5,7 +5,7 @@ import { BarChart3Icon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CHART_TYPE_ICONS } from "../lib/chart-types";
-import { TChart } from "../types/analysis";
+import { TChart } from "../../types/analysis";
 import { ChartDropdownMenu } from "./chart-dropdown-menu";
 import { CreateChartDialog } from "./create-chart-dialog";
 

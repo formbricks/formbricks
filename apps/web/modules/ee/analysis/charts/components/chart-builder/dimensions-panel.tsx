@@ -1,7 +1,7 @@
 "use client";
 
 import { MultiSelect } from "@/modules/ui/components/multi-select";
-import { FEEDBACK_FIELDS } from "../../lib/schema-definition";
+import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
 
 interface DimensionsPanelProps {
   selectedDimensions: string[];

@@ -14,8 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { TimeDimensionConfig } from "../../lib/query-builder";
-import { DATE_PRESETS, FEEDBACK_FIELDS, TIME_GRANULARITIES } from "../../lib/schema-definition";
+import { TimeDimensionConfig } from "@/modules/ee/analysis/lib/query-builder";
+import { DATE_PRESETS, FEEDBACK_FIELDS, TIME_GRANULARITIES } from "@/modules/ee/analysis/lib/schema-definition";
 
 interface TimeDimensionPanelProps {
   timeDimension: TimeDimensionConfig | null;

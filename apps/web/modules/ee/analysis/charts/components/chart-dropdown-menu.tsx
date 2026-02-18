@@ -14,7 +14,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Button } from "@/modules/ui/components/button";
 import { deleteChartAction, duplicateChartAction } from "../actions";
-import { TChart } from "../types/analysis";
+import { TChart } from "../../types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useRouter } from "next/navigation";
 

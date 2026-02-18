@@ -1,4 +1,4 @@
-import { TApiChartType, TChartType } from "../types/analysis";
+import { TApiChartType, TChartType } from "../../types/analysis";
 
 /**
  * Map API chart type (used in AnalyticsResponse) to database chart type (Prisma enum).

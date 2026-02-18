@@ -10,8 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { FilterRow } from "../../lib/query-builder";
-import { FEEDBACK_FIELDS, getFieldById, getFilterOperatorsForType } from "../../lib/schema-definition";
+import { FilterRow } from "@/modules/ee/analysis/lib/query-builder";
+import { FEEDBACK_FIELDS, getFieldById, getFilterOperatorsForType } from "@/modules/ee/analysis/lib/schema-definition";
 
 interface FiltersPanelProps {
   filters: FilterRow[];

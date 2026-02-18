@@ -622,6 +622,8 @@
     },
     "analysis": {
       "charts": {
+        "edit_chart_description": "View and edit your chart configuration.",
+        "edit_chart_title": "Edit Chart",
         "chart_deleted_successfully": "Chart deleted successfully",
         "chart_duplicated_successfully": "Chart duplicated successfully",
         "chart_duplication_error": "Failed to duplicate chart",

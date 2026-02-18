@@ -3,8 +3,8 @@
 import { usePathname } from "next/navigation";
 import { use } from "react";
 import { AnalysisPageLayout } from "./analysis-page-layout";
-import { CreateChartButton } from "./create-chart-button";
-import { CreateDashboardButton } from "./create-dashboard-button";
+import { CreateChartButton } from "../charts/components/create-chart-button";
+import { CreateDashboardButton } from "../dashboards/components/create-dashboard-button";
 
 interface AnalysisLayoutClientProps {
   children: React.ReactNode;

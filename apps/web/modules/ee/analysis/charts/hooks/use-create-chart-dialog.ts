@@ -1,38 +1,18 @@
 "use client";
 
-import { PlusIcon, SaveIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { AnalyticsResponse } from "@/app/api/analytics/_lib/types";
-import { Button } from "@/modules/ui/components/button";
 import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/modules/ui/components/dialog";
-import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import {
-  addChartToDashboardAction,
   createChartAction,
   executeQueryAction,
   getChartAction,
-  getDashboardsAction,
   updateChartAction,
 } from "../actions";
+import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import { mapChartType, mapDatabaseChartTypeToApi } from "../lib/chart-utils";
-import { TCubeQuery } from "../types/analysis";
-import { AddToDashboardDialog } from "./chart-builder/add-to-dashboard-dialog";
-import { AdvancedChartBuilder } from "./chart-builder/advanced-chart-builder";
-import { AIQuerySection } from "./chart-builder/ai-query-section";
-import { ChartPreview } from "./chart-builder/chart-preview";
-import { ManualChartBuilder } from "./chart-builder/manual-chart-builder";
-import { SaveChartDialog } from "./chart-builder/save-chart-dialog";
 
-interface CreateChartDialogProps {
+export interface UseCreateChartDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   environmentId: string;
@@ -40,13 +20,13 @@ interface CreateChartDialogProps {
   onSuccess?: () => void;
 }
 
-export function CreateChartDialog({
+export function useCreateChartDialog({
   open,
   onOpenChange,
   environmentId,
   chartId,
   onSuccess,
-}: CreateChartDialogProps) {
+}: UseCreateChartDialogProps) {
   const [selectedChartType, setSelectedChartType] = useState<string>("");
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -255,161 +235,43 @@ export function CreateChartDialog({
     }
   };
 
-  if (chartId && isLoadingChart) {
-    return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-[90vw] max-h-[90vh] overflow-y-auto">
-          <div className="flex h-64 items-center justify-center">
-            <LoadingSpinner />
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const handleAdvancedBuilderSave = (savedChartId: string) => {
+    setCurrentChartId(savedChartId);
+    setIsSaveDialogOpen(false);
+    onOpenChange(false);
+    onSuccess?.();
+  };
 
-  if (chartId && chartData) {
-    return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-7xl">
-          <DialogHeader>
-            <DialogTitle>Edit Chart</DialogTitle>
-            <DialogDescription>View and edit your chart configuration.</DialogDescription>
-          </DialogHeader>
-          <DialogBody>
-            <ChartPreview chartData={chartData} />
-          </DialogBody>
+  const handleAdvancedBuilderAddToDashboard = (savedChartId: string, _dashboardId?: string) => {
+    setCurrentChartId(savedChartId);
+    setIsAddToDashboardDialogOpen(false);
+    onOpenChange(false);
+    onSuccess?.();
+  };
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddToDashboardDialogOpen(true)} disabled={isSaving}>
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Add to Dashboard
-            </Button>
-            <Button onClick={() => setIsSaveDialogOpen(true)} disabled={isSaving}>
-              <SaveIcon className="mr-2 h-4 w-4" />
-              Save Chart
-            </Button>
-          </DialogFooter>
-
-          <SaveChartDialog
-            open={isSaveDialogOpen}
-            onOpenChange={setIsSaveDialogOpen}
-            chartName={chartName}
-            onChartNameChange={setChartName}
-            onSave={handleSaveChart}
-            isSaving={isSaving}
-          />
-
-          <AddToDashboardDialog
-            open={isAddToDashboardDialogOpen}
-            onOpenChange={setIsAddToDashboardDialogOpen}
-            chartName={chartName}
-            onChartNameChange={setChartName}
-            dashboards={dashboards}
-            selectedDashboardId={selectedDashboardId}
-            onDashboardSelect={setSelectedDashboardId}
-            onAdd={handleAddToDashboard}
-            isSaving={isSaving}
-          />
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto" width="wide">
-        <DialogHeader>
-          <DialogTitle>{chartId ? "Edit Chart" : "Create Chart"}</DialogTitle>
-          <DialogDescription>
-            {chartId
-              ? "View and edit your chart configuration."
-              : "Use AI to generate a chart or build one manually."}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogBody>
-          <div className="grid gap-4">
-            <AIQuerySection onChartGenerated={handleChartGenerated} />
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-gray-50 px-2 text-sm text-gray-500">OR</span>
-              </div>
-            </div>
-
-            <ManualChartBuilder
-              selectedChartType={selectedChartType}
-              onChartTypeSelect={setSelectedChartType}
-            />
-
-            {shouldShowAdvancedBuilder && (
-              <AdvancedChartBuilder
-                environmentId={environmentId}
-                initialChartType={selectedChartType || chartData?.chartType || ""}
-                initialQuery={chartData?.query as TCubeQuery | undefined}
-                hidePreview={true}
-                onChartGenerated={(data) => {
-                  setChartData(data);
-                  setChartName(data.chartType ? `Chart ${new Date().toLocaleString()}` : "");
-                  if (data.chartType) {
-                    setSelectedChartType(data.chartType);
-                  }
-                }}
-                onSave={(savedChartId) => {
-                  setCurrentChartId(savedChartId);
-                  setIsSaveDialogOpen(false);
-                  onOpenChange(false);
-                  onSuccess?.();
-                }}
-                onAddToDashboard={(savedChartId) => {
-                  setCurrentChartId(savedChartId);
-                  setIsAddToDashboardDialogOpen(false);
-                  onOpenChange(false);
-                  onSuccess?.();
-                }}
-              />
-            )}
-
-            {chartData && <ChartPreview chartData={chartData} />}
-          </div>
-        </DialogBody>
-
-        {chartData && (
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddToDashboardDialogOpen(true)} disabled={isSaving}>
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Add to Dashboard
-            </Button>
-            <Button onClick={() => setIsSaveDialogOpen(true)} disabled={isSaving}>
-              <SaveIcon className="mr-2 h-4 w-4" />
-              Save Chart
-            </Button>
-          </DialogFooter>
-        )}
-
-        <SaveChartDialog
-          open={isSaveDialogOpen}
-          onOpenChange={setIsSaveDialogOpen}
-          chartName={chartName}
-          onChartNameChange={setChartName}
-          onSave={handleSaveChart}
-          isSaving={isSaving}
-        />
-
-        <AddToDashboardDialog
-          open={isAddToDashboardDialogOpen}
-          onOpenChange={setIsAddToDashboardDialogOpen}
-          chartName={chartName}
-          onChartNameChange={setChartName}
-          dashboards={dashboards}
-          selectedDashboardId={selectedDashboardId}
-          onDashboardSelect={setSelectedDashboardId}
-          onAdd={handleAddToDashboard}
-          isSaving={isSaving}
-        />
-      </DialogContent>
-    </Dialog>
-  );
+  return {
+    chartData,
+    chartName,
+    setChartName,
+    selectedChartType,
+    setSelectedChartType,
+    currentChartId,
+    setCurrentChartId,
+    isSaveDialogOpen,
+    setIsSaveDialogOpen,
+    isAddToDashboardDialogOpen,
+    setIsAddToDashboardDialogOpen,
+    dashboards,
+    selectedDashboardId,
+    setSelectedDashboardId,
+    isSaving,
+    isLoadingChart,
+    shouldShowAdvancedBuilder,
+    handleChartGenerated,
+    handleSaveChart,
+    handleAddToDashboard,
+    handleClose,
+    handleAdvancedBuilderSave,
+    handleAdvancedBuilderAddToDashboard,
+  };
 }

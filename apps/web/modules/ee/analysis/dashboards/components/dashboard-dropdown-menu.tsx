@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { deleteDashboardAction } from "../actions";
-import { TDashboard } from "../types/analysis";
+import { TDashboard } from "../../types/analysis";
 
 interface DashboardDropdownMenuProps {
   environmentId: string;
