@@ -37,6 +37,7 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       delete: vi.fn(),
       update: vi.fn(),
+      upsert: vi.fn(),
       findFirst: vi.fn(),
     },
     survey: {
@@ -205,6 +206,73 @@ describe("Segment Service Tests", () => {
     test("should throw DatabaseError on Prisma error", async () => {
       vi.mocked(prisma.segment.create).mockRejectedValue(new Error("DB error"));
       await expect(createSegment(mockSegmentCreateInput)).rejects.toThrow(Error);
+    });
+
+    test("should upsert a private segment without surveyId", async () => {
+      const privateInput: TSegmentCreateInput = {
+        ...mockSegmentCreateInput,
+        isPrivate: true,
+      };
+      const privateSegmentPrisma = { ...mockSegmentPrisma, isPrivate: true };
+      vi.mocked(prisma.segment.upsert).mockResolvedValue(privateSegmentPrisma);
+      const segment = await createSegment(privateInput);
+      expect(segment).toEqual({ ...mockSegment, isPrivate: true });
+      expect(prisma.segment.upsert).toHaveBeenCalledWith({
+        where: {
+          environmentId_title: {
+            environmentId,
+            title: privateInput.title,
+          },
+        },
+        create: {
+          environmentId,
+          title: privateInput.title,
+          description: undefined,
+          isPrivate: true,
+          filters: [],
+        },
+        update: {
+          description: undefined,
+          filters: [],
+        },
+        select: selectSegment,
+      });
+      expect(prisma.segment.create).not.toHaveBeenCalled();
+    });
+
+    test("should upsert a private segment with surveyId", async () => {
+      const privateInputWithSurvey: TSegmentCreateInput = {
+        ...mockSegmentCreateInput,
+        isPrivate: true,
+        surveyId,
+      };
+      const privateSegmentPrisma = { ...mockSegmentPrisma, isPrivate: true };
+      vi.mocked(prisma.segment.upsert).mockResolvedValue(privateSegmentPrisma);
+      const segment = await createSegment(privateInputWithSurvey);
+      expect(segment).toEqual({ ...mockSegment, isPrivate: true });
+      expect(prisma.segment.upsert).toHaveBeenCalledWith({
+        where: {
+          environmentId_title: {
+            environmentId,
+            title: privateInputWithSurvey.title,
+          },
+        },
+        create: {
+          environmentId,
+          title: privateInputWithSurvey.title,
+          description: undefined,
+          isPrivate: true,
+          filters: [],
+          surveys: { connect: { id: surveyId } },
+        },
+        update: {
+          description: undefined,
+          filters: [],
+          surveys: { connect: { id: surveyId } },
+        },
+        select: selectSegment,
+      });
+      expect(prisma.segment.create).not.toHaveBeenCalled();
     });
   });
 
