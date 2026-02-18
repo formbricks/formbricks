@@ -1013,22 +1013,6 @@ enum ChartType {
   line
   pie
   big_number
-  big_number_total
-  table
-  funnel
-  map
-}
-
-enum DashboardStatus {
-  draft
-  published
-}
-
-enum WidgetType {
-  chart
-  markdown
-  header
-  divider
 }
 
 /// Represents a chart/visualization that can be used in multiple dashboards.
@@ -1061,15 +1045,14 @@ model Chart {
   @@index([projectId, createdAt])
 }
 
-/// Represents a dashboard containing multiple widgets/charts.
+/// Represents a dashboard containing multiple charts.
 /// Dashboards aggregate analytics insights at the project level.
 ///
 /// @property id - Unique identifier for the dashboard
 /// @property name - Display name of the dashboard
 /// @property description - Optional description
-/// @property status - Whether the dashboard is draft or published
 /// @property project - The project this dashboard belongs to
-/// @property widgets - Charts and other widgets on this dashboard
+/// @property widgets - Charts on this dashboard
 /// @property createdBy - User who created the dashboard
 model Dashboard {
   id          String            @id @default(cuid())
@@ -1077,7 +1060,6 @@ model Dashboard {
   updatedAt   DateTime          @updatedAt @map(name: "updated_at")
   name        String
   description String?
-  status      DashboardStatus   @default(draft)
   project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId   String
   createdBy   String?
@@ -1085,35 +1067,29 @@ model Dashboard {
 
   @@unique([projectId, name])
   @@index([projectId, createdAt])
-  @@index([projectId, status])
 }
 
-/// Represents a widget on a dashboard (chart, markdown, header, etc.).
+/// Represents a chart widget on a dashboard.
 /// Widgets are positioned using a grid layout system.
 ///
 /// @property id - Unique identifier for the widget
 /// @property dashboard - The dashboard this widget belongs to
-/// @property type - Type of widget (chart, markdown, header, divider)
 /// @property title - Optional title for the widget
-/// @property chart - Reference to chart if type is "chart"
-/// @property content - Content for markdown/header widgets
+/// @property chart - The chart displayed in this widget
 /// @property layout - Grid layout configuration (x, y, width, height)
 /// @property order - Display order within the dashboard
 model DashboardWidget {
-  id          String     @id @default(cuid())
-  createdAt   DateTime   @default(now()) @map(name: "created_at")
-  updatedAt   DateTime   @updatedAt @map(name: "updated_at")
-  dashboard   Dashboard  @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now()) @map(name: "created_at")
+  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
   dashboardId String
-  type        WidgetType
   title       String?
-  chart       Chart?     @relation(fields: [chartId], references: [id], onDelete: SetNull)
-  chartId     String?
-  /// [WidgetContent] - Content for markdown/header widgets
-  content     Json?
+  chart       Chart     @relation(fields: [chartId], references: [id], onDelete: Cascade)
+  chartId     String
   /// [WidgetLayout] - Grid layout: { x, y, w, h }
-  layout      Json       @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
-  order       Int        @default(0)
+  layout      Json      @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
+  order       Int       @default(0)
 
   @@index([dashboardId, order])
 }

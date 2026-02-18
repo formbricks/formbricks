@@ -1,11 +1,5 @@
 -- CreateEnum
-CREATE TYPE "public"."ChartType" AS ENUM ('area', 'bar', 'line', 'pie', 'big_number', 'big_number_total', 'table', 'funnel', 'map');
-
--- CreateEnum
-CREATE TYPE "public"."DashboardStatus" AS ENUM ('draft', 'published');
-
--- CreateEnum
-CREATE TYPE "public"."WidgetType" AS ENUM ('chart', 'markdown', 'header', 'divider');
+CREATE TYPE "public"."ChartType" AS ENUM ('area', 'bar', 'line', 'pie', 'big_number');
 
 -- CreateTable
 CREATE TABLE "public"."Chart" (
@@ -29,7 +23,6 @@ CREATE TABLE "public"."Dashboard" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
-    "status" "public"."DashboardStatus" NOT NULL DEFAULT 'draft',
     "projectId" TEXT NOT NULL,
     "createdBy" TEXT,
 
@@ -42,10 +35,8 @@ CREATE TABLE "public"."DashboardWidget" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "dashboardId" TEXT NOT NULL,
-    "type" "public"."WidgetType" NOT NULL,
     "title" TEXT,
-    "chartId" TEXT,
-    "content" JSONB,
+    "chartId" TEXT NOT NULL,
     "layout" JSONB NOT NULL DEFAULT '{"x":0,"y":0,"w":4,"h":3}',
     "order" INTEGER NOT NULL DEFAULT 0,
 
@@ -60,9 +51,6 @@ CREATE UNIQUE INDEX "Chart_projectId_name_key" ON "public"."Chart"("projectId", 
 
 -- CreateIndex
 CREATE INDEX "Dashboard_projectId_created_at_idx" ON "public"."Dashboard"("projectId", "created_at");
-
--- CreateIndex
-CREATE INDEX "Dashboard_projectId_status_idx" ON "public"."Dashboard"("projectId", "status");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Dashboard_projectId_name_key" ON "public"."Dashboard"("projectId", "name");
@@ -80,4 +68,4 @@ ALTER TABLE "public"."Dashboard" ADD CONSTRAINT "Dashboard_projectId_fkey" FOREI
 ALTER TABLE "public"."DashboardWidget" ADD CONSTRAINT "DashboardWidget_dashboardId_fkey" FOREIGN KEY ("dashboardId") REFERENCES "public"."Dashboard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."DashboardWidget" ADD CONSTRAINT "DashboardWidget_chartId_fkey" FOREIGN KEY ("chartId") REFERENCES "public"."Chart"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."DashboardWidget" ADD CONSTRAINT "DashboardWidget_chartId_fkey" FOREIGN KEY ("chartId") REFERENCES "public"."Chart"("id") ON DELETE CASCADE ON UPDATE CASCADE;
