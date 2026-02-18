@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Befragte werden diese Karte nicht sehen",
     "retry": "Wiederholen",
     "retrying": "Erneuter Versuch...",
+    "select_option": "Wähle eine Option",
+    "select_options": "Wähle Optionen",
     "sending_responses": "Antworten werden gesendet...",
     "takes_less_than_x_minutes": "{count, plural, one {Dauert weniger als 1 Minute} other {Dauert weniger als {count} Minuten}}",
     "takes_x_minutes": "{count, plural, one {Dauert 1 Minute} other {Dauert {count} Minuten}}",
@@ -69,7 +71,7 @@
     "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
     "recaptcha_error": {
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
-      "title": "Wir konnten nicht verifizieren, dass Sie ein Mensch sind."
+      "title": "Wir konnten nicht verifizieren, dass du ein Mensch bist."
     },
     "value_must_contain": "Wert muss {value} enthalten",
     "value_must_equal": "Wert muss {value} entsprechen",

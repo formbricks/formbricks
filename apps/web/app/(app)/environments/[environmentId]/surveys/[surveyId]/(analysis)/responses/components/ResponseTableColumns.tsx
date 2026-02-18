@@ -316,6 +316,14 @@ export const generateResponseTableColumns = (
     },
   };
 
+  const responseIdColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "responseId",
+    header: () => <div className="gap-x-1.5">{t("common.response_id")}</div>,
+    cell: ({ row }) => {
+      return <IdBadge id={row.original.responseId} />;
+    },
+  };
+
   const quotasColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "quota",
     header: t("common.quota"),
@@ -414,6 +422,7 @@ export const generateResponseTableColumns = (
   const baseColumns = [
     personColumn,
     singleUseIdColumn,
+    responseIdColumn,
     dateColumn,
     ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,

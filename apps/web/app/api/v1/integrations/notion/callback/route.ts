@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 import { responses } from "@/app/lib/api/response";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import {
   ENCRYPTION_KEY,
   NOTION_OAUTH_CLIENT_ID,
@@ -10,10 +10,17 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req }: { req: NextRequest }) => {
+  handler: async ({
+    req,
+    authentication,
+  }: {
+    req: NextRequest;
+    authentication: NonNullable<TSessionAuthentication>;
+  }) => {
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
     const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -23,6 +30,13 @@ export const GET = withV1ApiWrapper({
     if (!environmentId) {
       return {
         response: responses.badRequestResponse("Invalid environmentId"),
+      };
+    }
+
+    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
+    if (!canUserAccessEnvironment) {
+      return {
+        response: responses.unauthorizedResponse(),
       };
     }
 

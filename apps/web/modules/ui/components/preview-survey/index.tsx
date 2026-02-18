@@ -51,11 +51,11 @@ export const PreviewSurvey = ({
   const { projectOverwrites } = survey || {};
 
   const { placement: surveyPlacement } = projectOverwrites || {};
-  const { darkOverlay: surveyDarkOverlay } = projectOverwrites || {};
+  const { overlay: surveyOverlay } = projectOverwrites || {};
   const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
 
   const placement = surveyPlacement || project.placement;
-  const darkOverlay = surveyDarkOverlay ?? project.darkOverlay;
+  const overlay = surveyOverlay ?? project.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
   const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
@@ -225,10 +225,10 @@ export const PreviewSurvey = ({
         )}>
         {previewMode === "mobile" && (
           <>
-            <p className="absolute top-0 left-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
+            <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
               Preview
             </p>
-            <div className="absolute top-0 right-0 m-2">
+            <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton onClick={resetProgress} />
             </div>
             <MediaBackground
@@ -241,7 +241,7 @@ export const PreviewSurvey = ({
                   isOpen={isModalOpen}
                   placement={placement}
                   previewMode="mobile"
-                  darkOverlay={darkOverlay}
+                  overlay={overlay}
                   clickOutsideClose={clickOutsideClose}
                   borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
@@ -265,7 +265,7 @@ export const PreviewSurvey = ({
                 </Modal>
               ) : (
                 <div className="flex h-full w-full flex-col justify-center px-1">
-                  <div className="absolute top-5 left-5">
+                  <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
                       <ClientLogo
                         environmentId={environment.id}
@@ -296,7 +296,7 @@ export const PreviewSurvey = ({
           </>
         )}
         {previewMode === "desktop" && (
-          <div className="flex h-full flex-1 flex-col">
+          <div className="flex h-full w-full flex-1 flex-col">
             <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
               <div className="ml-6 flex space-x-2">
                 <div className="h-3 w-3 rounded-full bg-red-500"></div>
@@ -345,7 +345,7 @@ export const PreviewSurvey = ({
                 isOpen={isModalOpen}
                 placement={placement}
                 clickOutsideClose={clickOutsideClose}
-                darkOverlay={darkOverlay}
+                overlay={overlay}
                 previewMode="desktop"
                 borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>
@@ -373,7 +373,7 @@ export const PreviewSurvey = ({
                 styling={styling}
                 ContentRef={ContentRef as React.RefObject<HTMLDivElement>}
                 isEditorView>
-                <div className="absolute top-5 left-5">
+                <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (
                     <ClientLogo
                       environmentId={environment.id}

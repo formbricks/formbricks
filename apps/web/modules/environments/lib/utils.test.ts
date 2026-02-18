@@ -177,9 +177,9 @@ describe("utils.ts", () => {
       await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.organization_not_found");
     });
 
-    test("throws error if membership not found", async () => {
+    test("throws AuthorizationError if membership not found", async () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.membership_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(AuthorizationError);
     });
   });
 
@@ -241,7 +241,7 @@ describe("utils.ts", () => {
         config: {},
         placement: "bottomRight" as const,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         styling: {},
         logo: null,
         environments: [
@@ -389,7 +389,7 @@ describe("utils.ts", () => {
           config: {},
           placement: "bottomRight",
           clickOutsideClose: true,
-          darkOverlay: false,
+          overlay: "none",
           styling: {},
           logo: null,
           environments: [
@@ -481,7 +481,7 @@ describe("utils.ts", () => {
       await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthorizationError);
     });
 
-    test("throws error if membership not found", async () => {
+    test("throws AuthorizationError if membership not found", async () => {
       vi.mocked(prisma.environment.findUnique).mockResolvedValueOnce({
         id: "env123",
         createdAt: new Date(),
@@ -502,7 +502,7 @@ describe("utils.ts", () => {
           config: {},
           placement: "bottomRight",
           clickOutsideClose: true,
-          darkOverlay: false,
+          overlay: "none",
           styling: {},
           logo: null,
           environments: [],
@@ -519,9 +519,7 @@ describe("utils.ts", () => {
         },
       } as any);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(
-        "common.membership_not_found"
-      );
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthorizationError);
     });
 
     test("fetches user before auth check, then environment data after authorization", async () => {
@@ -588,7 +586,7 @@ describe("utils.ts", () => {
           config: {},
           placement: "bottomRight",
           clickOutsideClose: true,
-          darkOverlay: false,
+          overlay: "none",
           styling: {},
           logo: null,
           environments: [],
@@ -627,7 +625,7 @@ describe("utils.ts", () => {
           config: {},
           placement: "bottomRight",
           clickOutsideClose: true,
-          darkOverlay: false,
+          overlay: "none",
           styling: {},
           logo: null,
           environments: [],

@@ -86,6 +86,7 @@ export const SurveyEditor = ({
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
+
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<Project>(project);

@@ -270,14 +270,14 @@ describe("updateContactAttributes", () => {
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
     vi.mocked(updateAttributes).mockResolvedValue({
       success: true,
-      messages: ["The email already exists for this environment and was not updated."],
+      messages: [{ code: "email_already_exists", params: {} }],
     });
     vi.mocked(getContactAttributes).mockResolvedValue(mockUpdatedAttributes);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
 
     const result = await updateContactAttributes(contactId, attributes);
 
-    expect(result.messages).toContain("The email already exists for this environment and was not updated.");
+    expect(result.messages).toContainEqual({ code: "email_already_exists", params: {} });
   });
 
   test("should throw error if contact not found", async () => {

@@ -35,12 +35,16 @@ describe("utils", () => {
       updatedAt: new Date("2024-01-02T00:00:00.000Z"),
       attributes: [
         {
-          attributeKey: { key: "email", name: "Email" },
+          attributeKey: { key: "email", name: "Email", dataType: "string" },
           value: "john@example.com",
+          valueNumber: null,
+          valueDate: null,
         },
         {
-          attributeKey: { key: "name", name: "Name" },
+          attributeKey: { key: "name", name: "Name", dataType: "string" },
           value: "John",
+          valueNumber: null,
+          valueDate: null,
         },
       ],
     };
@@ -50,5 +54,41 @@ describe("utils", () => {
     expect(result.attributes).toEqual({ email: "john@example.com", name: "John" });
     expect(result.createdAt).toBeInstanceOf(Date);
     expect(result.updatedAt).toBeInstanceOf(Date);
+  });
+
+  test("transformPrismaContact resolves typed columns for number and date attributes", () => {
+    const testDate = new Date("2024-06-15T10:30:00.000Z");
+    const person: TTransformPersonInput = {
+      id: "c2",
+      environmentId: "env-1",
+      createdAt: new Date("2024-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2024-01-02T00:00:00.000Z"),
+      attributes: [
+        {
+          attributeKey: { key: "age", name: "Age", dataType: "number" },
+          value: "",
+          valueNumber: 42,
+          valueDate: null,
+        },
+        {
+          attributeKey: { key: "signupDate", name: "Signup Date", dataType: "date" },
+          value: "2024-06-15T10:30:00.000Z",
+          valueNumber: null,
+          valueDate: testDate,
+        },
+        {
+          attributeKey: { key: "score", name: "Score", dataType: "number" },
+          value: "99",
+          valueNumber: null, // un-migrated: should fall back to value
+          valueDate: null,
+        },
+      ],
+    };
+    const result = transformPrismaContact(person);
+    expect(result.attributes).toEqual({
+      age: "42",
+      signupDate: testDate.toISOString(),
+      score: "99", // fallback to value when valueNumber is null
+    });
   });
 });

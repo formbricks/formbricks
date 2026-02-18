@@ -31,7 +31,10 @@ export const POST = async (request: Request) => {
   }
 
   const jsonInput = await request.json();
-  const convertedJsonInput = convertDatesInObject(jsonInput);
+  const convertedJsonInput = convertDatesInObject(
+    jsonInput,
+    new Set(["contactAttributes", "variables", "data", "meta"])
+  );
 
   const inputValidation = ZPipelineInput.safeParse(convertedJsonInput);
 

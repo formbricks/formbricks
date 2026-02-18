@@ -141,21 +141,23 @@ function DropdownVariant({
   };
 
   return (
-    <>
+    <div className="space-y-2">
       <ElementError errorMessage={errorMessage} dir={dir} />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
             disabled={disabled}
-            className="rounded-input w-full justify-between"
+            className="rounded-input bg-option-bg rounded-option border-option-border h-input my-0 w-full justify-between border"
             aria-invalid={Boolean(errorMessage)}
             aria-label={headline}>
-            <span className="truncate">{displayText}</span>
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
+            <ChevronDown className="label-headline ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+        <DropdownMenuContent
+          className="bg-option-bg max-h-[300px] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
+          align="start">
           {options
             .filter((option) => option.id !== "none")
             .map((option) => {
@@ -166,18 +168,23 @@ function DropdownVariant({
                 <DropdownMenuCheckboxItem
                   key={option.id}
                   id={optionId}
+                  dir={dir}
                   checked={isChecked}
                   onCheckedChange={() => {
                     handleOptionToggle(option.id);
                   }}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                  }}
                   disabled={disabled}>
-                  <span className={optionLabelClassName}>{option.label}</span>
+                  <span className="font-input font-input-weight text-input-text">{option.label}</span>
                 </DropdownMenuCheckboxItem>
               );
             })}
           {hasOtherOption && otherOptionId ? (
             <DropdownMenuCheckboxItem
               id={`${inputId}-${otherOptionId}`}
+              dir={dir}
               checked={isOtherSelected}
               onCheckedChange={() => {
                 if (isOtherSelected) {
@@ -186,8 +193,11 @@ function DropdownVariant({
                   handleOptionAdd(otherOptionId);
                 }
               }}
+              onSelect={(e) => {
+                e.preventDefault();
+              }}
               disabled={disabled}>
-              <span className={optionLabelClassName}>{otherOptionLabel}</span>
+              <span className="font-input font-input-weight text-input-text">{otherOptionLabel}</span>
             </DropdownMenuCheckboxItem>
           ) : null}
           {options
@@ -200,12 +210,16 @@ function DropdownVariant({
                 <DropdownMenuCheckboxItem
                   key={option.id}
                   id={optionId}
+                  dir={dir}
                   checked={isChecked}
                   onCheckedChange={() => {
                     handleOptionToggle(option.id);
                   }}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                  }}
                   disabled={disabled}>
-                  <span className={optionLabelClassName}>{option.label}</span>
+                  <span className="font-input font-input-weight text-input-text">{option.label}</span>
                 </DropdownMenuCheckboxItem>
               );
             })}
@@ -224,7 +238,7 @@ function DropdownVariant({
           className="w-full"
         />
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -303,11 +317,7 @@ function ListVariant({
                     disabled={isDisabled}
                     aria-invalid={Boolean(errorMessage)}
                   />
-                  <span
-                    className={cn("mx-3", optionLabelClassName)}
-                    style={{ fontSize: "var(--fb-option-font-size)" }}>
-                    {option.label}
-                  </span>
+                  <span className={cn("mx-3", optionLabelClassName)}>{option.label}</span>
                 </span>
               </label>
             );
@@ -335,11 +345,7 @@ function ListVariant({
                   disabled={disabled || isNoneSelected}
                   aria-invalid={Boolean(errorMessage)}
                 />
-                <span
-                  className={cn("mx-3 grow", optionLabelClassName)}
-                  style={{ fontSize: "var(--fb-option-font-size)" }}>
-                  {otherOptionLabel}
-                </span>
+                <span className={cn("mx-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
               </span>
               {isOtherSelected ? (
                 <Input
@@ -384,11 +390,7 @@ function ListVariant({
                     required={false}
                     aria-invalid={Boolean(errorMessage)}
                   />
-                  <span
-                    className={cn("mx-3", optionLabelClassName)}
-                    style={{ fontSize: "var(--fb-option-font-size)" }}>
-                    {option.label}
-                  </span>
+                  <span className={cn("mx-3", optionLabelClassName)}>{option.label}</span>
                 </span>
               </label>
             );
@@ -463,10 +465,17 @@ function MultiSelect({
   // Get selected option labels for dropdown display
   const selectedLabels = options.filter((opt) => selectedValues.includes(opt.id)).map((opt) => opt.label);
 
+  // Handle "other" option label display
+  if (hasOtherOption && otherOptionId && selectedValues.includes(otherOptionId)) {
+    const otherLabel = otherValue || otherOptionLabel;
+    if (!selectedLabels.includes(otherLabel)) {
+      selectedLabels.push(otherLabel);
+    }
+  }
+
   let displayText = placeholder;
   if (selectedLabels.length > 0) {
-    displayText =
-      selectedLabels.length === 1 ? selectedLabels[0] : `${String(selectedLabels.length)} selected`;
+    displayText = selectedLabels.join(", ");
   }
 
   return (

@@ -24,6 +24,9 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    teamUser: {
+      findMany: vi.fn(),
+    },
     membership: { findUnique: vi.fn(), count: vi.fn() },
     project: { count: vi.fn() },
     environment: { findMany: vi.fn() },
@@ -31,13 +34,16 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 const mockTeams = [
-  { id: "t1", name: "Team 1" },
-  { id: "t2", name: "Team 2" },
+  { id: "t1", name: "Team 1", organizationId: "org1", createdAt: new Date(), updatedAt: new Date() },
+  { id: "t2", name: "Team 2", organizationId: "org1", createdAt: new Date(), updatedAt: new Date() },
 ];
 const mockUserTeams = [
   {
     id: "t1",
     name: "Team 1",
+    organizationId: "org1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
     teamUsers: [{ role: "admin" }],
     _count: { teamUsers: 2 },
   },
@@ -46,14 +52,24 @@ const mockOtherTeams = [
   {
     id: "t2",
     name: "Team 2",
+    organizationId: "org1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
     _count: { teamUsers: 3 },
   },
 ];
-const mockMembership = { role: "admin" };
+const mockMembership = {
+  userId: "u1",
+  accepted: true,
+  role: "owner" as const,
+  organizationId: "org1",
+};
 const mockTeamDetails = {
   id: "t1",
   name: "Team 1",
   organizationId: "org1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
   teamUsers: [
     { userId: "u1", role: "admin", user: { name: "User 1" } },
     { userId: "u2", role: "member", user: { name: "User 2" } },
@@ -153,7 +169,13 @@ describe("createTeam", () => {
     expect(result).toBe("t1");
   });
   test("throws InvalidInputError if team exists", async () => {
-    vi.mocked(prisma.team.findFirst).mockResolvedValueOnce({ id: "t1" });
+    vi.mocked(prisma.team.findFirst).mockResolvedValueOnce({
+      id: "t1",
+      name: "Team 1",
+      organizationId: "org1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
     await expect(createTeam("org1", "Team 1")).rejects.toThrow(InvalidInputError);
   });
   test("throws InvalidInputError if name too short", async () => {
@@ -253,7 +275,16 @@ describe("updateTeamDetails", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    vi.mocked(prisma.environment.findMany).mockResolvedValueOnce([{ id: "env1" }]);
+    vi.mocked(prisma.environment.findMany).mockResolvedValueOnce([
+      {
+        id: "env1",
+        type: "production" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        projectId: "p1",
+        appSetupCompleted: false,
+      },
+    ]);
     const result = await updateTeamDetails("t1", data);
     expect(result).toBe(true);
   });
@@ -284,9 +315,11 @@ describe("updateTeamDetails", () => {
       id: "t1",
       name: "Team 1",
       organizationId: "org1",
-      members: [],
-      projects: [],
-    });
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      teamUsers: [],
+      projectTeams: [],
+    } as any);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(0);
     await expect(updateTeamDetails("t1", data)).rejects.toThrow();
   });
@@ -302,9 +335,11 @@ describe("updateTeamDetails", () => {
       id: "t1",
       name: "Team 1",
       organizationId: "org1",
-      members: [],
-      projects: [],
-    });
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      teamUsers: [],
+      projectTeams: [],
+    } as any);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
     vi.mocked(prisma.project.count).mockResolvedValueOnce(0);
     await expect(

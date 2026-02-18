@@ -58,7 +58,7 @@ const mockProject: TJsEnvironmentStateProject = {
   inAppSurveyBranding: true,
   placement: "bottomRight",
   clickOutsideClose: true,
-  darkOverlay: false,
+  overlay: "none",
   styling: {
     allowStyleOverwrite: false,
   },

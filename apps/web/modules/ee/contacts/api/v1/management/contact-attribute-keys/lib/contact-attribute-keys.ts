@@ -5,6 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 
 export const getContactAttributeKeys = reactCache(
@@ -44,9 +45,10 @@ export const createContactAttributeKey = async (
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
         key: data.key,
-        name: data.name ?? data.key,
+        name: data.name ?? formatSnakeCaseToTitleCase(data.key),
         type: data.type,
         description: data.description ?? "",
+        ...(data.dataType && { dataType: data.dataType }),
         environment: {
           connect: {
             id: environmentId,

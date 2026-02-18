@@ -21,6 +21,8 @@
     "respondents_will_not_see_this_card": "Os respondentes não verão este cartão",
     "retry": "Tentar novamente",
     "retrying": "Tentando novamente...",
+    "select_option": "Selecione uma opção",
+    "select_options": "Selecione opções",
     "sending_responses": "Enviando respostas...",
     "takes_less_than_x_minutes": "{count, plural, one {Leva menos de 1 minuto} other {Leva menos de {count} minutos}}",
     "takes_x_minutes": "{count, plural, one {Leva 1 minuto} other {Leva {count} minutos}}",
@@ -69,7 +71,7 @@
     "please_fill_out_this_field": "Por favor, preencha este campo",
     "recaptcha_error": {
       "message": "Sua resposta não pôde ser enviada porque foi sinalizada como atividade automatizada. Se você respira, por favor tente novamente.",
-      "title": "Não conseguimos verificar que você é humano."
+      "title": "Não foi possível verificar que você é humano."
     },
     "value_must_contain": "O valor deve conter {value}",
     "value_must_equal": "O valor deve ser igual a {value}",

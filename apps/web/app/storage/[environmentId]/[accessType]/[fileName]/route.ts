@@ -8,7 +8,7 @@ import { authorizePrivateDownload } from "@/app/storage/[environmentId]/[accessT
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { deleteFile, getSignedUrlForDownload } from "@/modules/storage/service";
+import { deleteFile, getFileStreamForDownload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 import { logFileDeletion } from "./lib/audit-logs";
 
@@ -39,21 +39,25 @@ export const GET = async (
     }
   }
 
-  const signedUrlResult = await getSignedUrlForDownload(fileName, environmentId, accessType);
+  // Stream the file directly
+  const streamResult = await getFileStreamForDownload(fileName, environmentId, accessType);
 
-  if (!signedUrlResult.ok) {
-    const errorResponse = getErrorResponseFromStorageError(signedUrlResult.error, { fileName });
+  if (!streamResult.ok) {
+    const errorResponse = getErrorResponseFromStorageError(streamResult.error, { fileName });
     return errorResponse;
   }
 
-  return new Response(null, {
-    status: 302,
+  const { body, contentType, contentLength } = streamResult.data;
+
+  return new Response(body, {
+    status: 200,
     headers: {
-      Location: signedUrlResult.data,
+      "Content-Type": contentType,
+      ...(contentLength > 0 && { "Content-Length": String(contentLength) }),
       "Cache-Control":
         accessType === "private"
           ? "no-store, no-cache, must-revalidate"
-          : "public, max-age=300, s-maxage=300, stale-while-revalidate=300",
+          : "public, max-age=31536000, immutable",
     },
   });
 };

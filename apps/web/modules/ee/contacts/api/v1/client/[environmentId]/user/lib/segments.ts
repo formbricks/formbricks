@@ -5,10 +5,10 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TBaseFilter } from "@formbricks/types/segment";
+import { TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 
 export const getSegments = reactCache(
   async (environmentId: string) =>
@@ -17,7 +17,6 @@ export const getSegments = reactCache(
         try {
           const segments = await prisma.segment.findMany({
             where: { environmentId },
-            // Include all necessary fields for evaluateSegment to work
             select: {
               id: true,
               filters: true,
@@ -38,11 +37,51 @@ export const getSegments = reactCache(
     )
 );
 
+/**
+ * Checks if a contact matches a segment using Prisma query
+ * This leverages native DB types (valueDate, valueNumber) for accurate comparisons
+ * Device filters are evaluated at query build time using the provided deviceType
+ */
+const isContactInSegment = async (
+  contactId: string,
+  segmentId: string,
+  filters: TBaseFilters,
+  environmentId: string,
+  deviceType: "phone" | "desktop"
+): Promise<boolean> => {
+  // If no filters, segment matches all contacts
+  if (!filters || filters.length === 0) {
+    return true;
+  }
+
+  const queryResult = await segmentFilterToPrismaQuery(segmentId, filters, environmentId, deviceType);
+
+  if (!queryResult.ok) {
+    logger.warn(
+      { segmentId, environmentId, error: queryResult.error },
+      "Failed to build Prisma query for segment"
+    );
+    return false;
+  }
+
+  const { whereClause } = queryResult.data;
+
+  // Check if this specific contact matches the segment filters
+  const matchingContact = await prisma.contact.findFirst({
+    where: {
+      id: contactId,
+      ...whereClause,
+    },
+    select: { id: true },
+  });
+
+  return matchingContact !== null;
+};
+
 export const getPersonSegmentIds = async (
   environmentId: string,
   contactId: string,
   contactUserId: string,
-  attributes: Record<string, string>,
   deviceType: "phone" | "desktop"
 ): Promise<string[]> => {
   try {
@@ -55,26 +94,16 @@ export const getPersonSegmentIds = async (
       return [];
     }
 
-    const personSegments: { id: string; filters: TBaseFilter[] }[] = [];
+    // Device filters are evaluated at query build time using the provided deviceType
+    const segmentPromises = segments.map(async (segment) => {
+      const filters = segment.filters;
+      const isIncluded = await isContactInSegment(contactId, segment.id, filters, environmentId, deviceType);
+      return isIncluded ? segment.id : null;
+    });
 
-    for (const segment of segments) {
-      const isIncluded = await evaluateSegment(
-        {
-          attributes,
-          deviceType,
-          environmentId,
-          contactId: contactId,
-          userId: contactUserId,
-        },
-        segment.filters
-      );
+    const results = await Promise.all(segmentPromises);
 
-      if (isIncluded) {
-        personSegments.push(segment);
-      }
-    }
-
-    return personSegments.map((segment) => segment.id);
+    return results.filter((id): id is string => id !== null);
   } catch (error) {
     // Log error for debugging but don't throw to prevent "segments is not iterable" error
     logger.warn(

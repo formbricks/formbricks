@@ -84,7 +84,7 @@ export const renderWidget = async (
 
   const projectOverwrites = survey.projectOverwrites ?? {};
   const clickOutside = projectOverwrites.clickOutsideClose ?? project.clickOutsideClose;
-  const darkOverlay = projectOverwrites.darkOverlay ?? project.darkOverlay;
+  const overlay = projectOverwrites.overlay ?? project.overlay;
   const placement = projectOverwrites.placement ?? project.placement;
   const isBrandingEnabled = project.inAppSurveyBranding;
   const formbricksSurveys = await loadFormbricksSurveysExternally();
@@ -110,7 +110,7 @@ export const renderWidget = async (
       survey,
       isBrandingEnabled,
       clickOutside,
-      darkOverlay,
+      overlay,
       languageCode,
       placement,
       styling: getStyling(project, survey),

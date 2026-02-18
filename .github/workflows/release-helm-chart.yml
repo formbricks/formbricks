@@ -65,8 +65,8 @@ jobs:
           set -euo pipefail
 
           echo "Updating Chart.yaml with version: ${VERSION}"
-          yq -i ".version = \"${VERSION}\"" helm-chart/Chart.yaml
-          yq -i ".appVersion = \"${VERSION}\"" helm-chart/Chart.yaml
+          yq -i ".version = \"${VERSION}\"" charts/formbricks/Chart.yaml
+          yq -i ".appVersion = \"${VERSION}\"" charts/formbricks/Chart.yaml
 
           echo "✅ Successfully updated Chart.yaml"
 
@@ -77,7 +77,7 @@ jobs:
           set -euo pipefail
 
           echo "Packaging Helm chart version: ${VERSION}"
-          helm package ./helm-chart
+          helm package ./charts/formbricks
 
           echo "✅ Successfully packaged formbricks-${VERSION}.tgz"
 

@@ -110,7 +110,10 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/contacts`,
         name: "Distribute",
         icon: UserIcon,
-        isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
+        isActive:
+          pathname?.includes("/contacts") ||
+          pathname?.includes("/segments") ||
+          pathname?.includes("/attributes"),
       },
       {
         name: "Unify",

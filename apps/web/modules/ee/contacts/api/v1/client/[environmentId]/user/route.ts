@@ -1,13 +1,26 @@
 import { NextRequest, userAgent } from "next/server";
 import { logger } from "@formbricks/logger";
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { ZEnvironmentId } from "@formbricks/types/environment";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
+
+const handleError = (err: unknown, url: string): { response: Response } => {
+  if (err instanceof ResourceNotFoundError) {
+    return { response: responses.notFoundResponse(err.resourceType, err.resourceId) };
+  }
+
+  if (err instanceof ValidationError) {
+    return { response: responses.badRequestResponse(err.message, undefined, true) };
+  }
+
+  logger.error({ error: err, url }, "Error in POST /api/v1/client/[environmentId]/user");
+  return { response: responses.internalServerErrorResponse("Unable to fetch user state", true) };
+};
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -96,43 +109,34 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      let attributeUpdatesToSend: TContactAttributes | null = null;
+      let attributeUpdatesToSend: TContactAttributesInput | null = null;
       if (attributes) {
         // remove userId and id from attributes
         const { userId: userIdAttr, id: idAttr, ...updatedAttributes } = attributes;
-        attributeUpdatesToSend = updatedAttributes;
+        attributeUpdatesToSend = updatedAttributes as TContactAttributesInput;
       }
 
       const { device } = userAgent(req);
       const deviceType = device ? "phone" : "desktop";
 
-      const { state: userState, messages } = await updateUser(
-        environmentId,
-        userId,
-        deviceType,
-        attributeUpdatesToSend ?? undefined
-      );
+      const {
+        state: userState,
+        messages,
+        errors,
+      } = await updateUser(environmentId, userId, deviceType, attributeUpdatesToSend ?? undefined);
 
       // Build response (simplified structure)
-      const responseJson: { state: TJsPersonState; messages?: string[] } = {
+      const responseJson: { state: TJsPersonState; messages?: string[]; errors?: string[] } = {
         state: userState,
         ...(messages && messages.length > 0 && { messages }),
+        ...(errors && errors.length > 0 && { errors }),
       };
 
       return {
         response: responses.successResponse(responseJson, true),
       };
     } catch (err) {
-      if (err instanceof ResourceNotFoundError) {
-        return {
-          response: responses.notFoundResponse(err.resourceType, err.resourceId),
-        };
-      }
-
-      logger.error({ error: err, url: req.url }, "Error in POST /api/v1/client/[environmentId]/user");
-      return {
-        response: responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true),
-      };
+      return handleError(err, req.url);
     }
   },
 });

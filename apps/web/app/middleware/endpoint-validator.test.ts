@@ -8,7 +8,6 @@ import {
   isManagementApiRoute,
   isPublicDomainRoute,
   isRouteAllowedForDomain,
-  isSyncWithUserIdentificationEndpoint,
 } from "./endpoint-validator";
 
 describe("endpoint-validator", () => {
@@ -267,58 +266,6 @@ describe("endpoint-validator", () => {
       expect(isAuthProtectedRoute("/organization")).toBe(false); // partial match should not work
       expect(isAuthProtectedRoute("/setup/team")).toBe(false); // not in protected routes
       expect(isAuthProtectedRoute("/setup")).toBe(false); // partial match should not work
-    });
-  });
-
-  describe("isSyncWithUserIdentificationEndpoint", () => {
-    test("should return environmentId and userId for valid sync URLs", () => {
-      const result1 = isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456");
-      expect(result1).toEqual({
-        environmentId: "env123",
-        userId: "user456",
-      });
-
-      const result2 = isSyncWithUserIdentificationEndpoint("/api/v1/client/abc-123/app/sync/xyz-789");
-      expect(result2).toEqual({
-        environmentId: "abc-123",
-        userId: "xyz-789",
-      });
-
-      const result3 = isSyncWithUserIdentificationEndpoint(
-        "/api/v1/client/env_123_test/app/sync/user_456_test"
-      );
-      expect(result3).toEqual({
-        environmentId: "env_123_test",
-        userId: "user_456_test",
-      });
-    });
-
-    test("should handle optional trailing slash", () => {
-      // Test both with and without trailing slash
-      const result1 = isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456");
-      expect(result1).toEqual({
-        environmentId: "env123",
-        userId: "user456",
-      });
-
-      const result2 = isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456/");
-      expect(result2).toEqual({
-        environmentId: "env123",
-        userId: "user456",
-      });
-    });
-
-    test("should return false for invalid sync URLs", () => {
-      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync")).toBe(false);
-      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/something")).toBe(false);
-      expect(isSyncWithUserIdentificationEndpoint("/api/something")).toBe(false);
-      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/other/user456")).toBe(false);
-      expect(isSyncWithUserIdentificationEndpoint("/api/v2/client/env123/app/sync/user456")).toBe(false); // only v1 supported
-    });
-
-    test("should handle empty or malformed IDs", () => {
-      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client//app/sync/user456")).toBe(false);
-      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/")).toBe(false);
     });
   });
 
@@ -582,12 +529,6 @@ describe("endpoint-validator", () => {
       test("should handle special characters in survey IDs", () => {
         expect(isPublicDomainRoute("/s/survey-123_test.v2")).toBe(true);
         expect(isPublicDomainRoute("/c/jwt.token.with.dots")).toBe(true);
-        expect(
-          isSyncWithUserIdentificationEndpoint("/api/v1/client/env-123_test/app/sync/user-456_test")
-        ).toEqual({
-          environmentId: "env-123_test",
-          userId: "user-456_test",
-        });
       });
     });
 
@@ -628,15 +569,6 @@ describe("endpoint-validator", () => {
         const longSurveyId = "a".repeat(1000);
         const longPath = `s/${longSurveyId}`;
         expect(isPublicDomainRoute(`/${longPath}`)).toBe(true);
-
-        const longEnvironmentId = "env" + "a".repeat(1000);
-        const longUserId = "user" + "b".repeat(1000);
-        expect(
-          isSyncWithUserIdentificationEndpoint(`/api/v1/client/${longEnvironmentId}/app/sync/${longUserId}`)
-        ).toEqual({
-          environmentId: longEnvironmentId,
-          userId: longUserId,
-        });
       });
 
       test("should handle empty and minimal inputs", () => {
@@ -651,7 +583,6 @@ describe("endpoint-validator", () => {
         });
         expect(isIntegrationRoute("")).toBe(false);
         expect(isAuthProtectedRoute("")).toBe(false);
-        expect(isSyncWithUserIdentificationEndpoint("")).toBe(false);
       });
     });
 
