@@ -156,6 +156,8 @@
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
         "CRON_SECRET",
+        "CUBEJS_API_TOKEN",
+        "CUBEJS_API_URL",
         "DATABASE_URL",
         "DEBUG",
         "E2E_TESTING",
