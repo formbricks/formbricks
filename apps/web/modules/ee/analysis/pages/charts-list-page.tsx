@@ -1,19 +1,13 @@
-import { Suspense } from "react";
-import { ChartsListClient } from "../components/charts-list-client";
-import { ChartsListSkeleton } from "../components/charts-list-skeleton";
-import { getCharts, getDashboards } from "../lib/data";
+import { ChartsList } from "../components/charts-list";
+import { getCharts } from "../lib/data";
 
-async function ChartsListContent({ environmentId }: { environmentId: string }) {
-  const [charts, dashboards] = await Promise.all([getCharts(environmentId), getDashboards(environmentId)]);
-  return <ChartsListClient charts={charts} dashboards={dashboards} environmentId={environmentId} />;
+interface ChartsListPageProps {
+  params: Promise<{ environmentId: string }>;
 }
 
-export async function ChartsListPage({ params }: { params: Promise<{ environmentId: string }> }) {
+export async function ChartsListPage({ params }: Readonly<ChartsListPageProps>) {
   const { environmentId } = await params;
+  const charts = await getCharts(environmentId);
 
-  return (
-    <Suspense fallback={<ChartsListSkeleton />}>
-      <ChartsListContent environmentId={environmentId} />
-    </Suspense>
-  );
+  return <ChartsList charts={charts} environmentId={environmentId} />;
 }

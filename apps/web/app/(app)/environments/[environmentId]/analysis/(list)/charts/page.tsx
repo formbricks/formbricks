@@ -1,3 +1,1 @@
-import { ChartsListPage } from "@/modules/ee/analysis/pages/charts-list-page";
-
-export default ChartsListPage;
+export { ChartsListPage as default } from "@/modules/ee/analysis/pages/charts-list-page";

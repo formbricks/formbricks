@@ -4,7 +4,6 @@ import { CopyIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/cn";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -13,25 +12,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { deleteChartAction } from "../actions";
+import { Button } from "@/modules/ui/components/button";
+import { deleteChartAction, duplicateChartAction } from "../actions";
 import { TChart } from "../types/analysis";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { useRouter } from "next/navigation";
 
 interface ChartDropdownMenuProps {
   environmentId: string;
   chart: TChart;
-  disabled?: boolean;
-  deleteChart: (chartId: string) => void;
-  onEdit?: () => void;
+  onEdit?: (chartId: string) => void;
 }
 
 export const ChartDropdownMenu = ({
   environmentId,
   chart,
-  disabled,
-  deleteChart,
   onEdit,
 }: ChartDropdownMenuProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
@@ -41,16 +40,49 @@ export const ChartDropdownMenu = ({
     try {
       const result = await deleteChartAction({ environmentId, chartId });
       if (result?.data) {
-        deleteChart(chartId);
-        toast.success("Chart deleted successfully");
+        toast.success(t("environments.analysis.charts.chart_deleted_successfully"));
+        setDeleteDialogOpen(false);
+        router.refresh();
       } else {
-        toast.error(result?.serverError || "Failed to delete chart");
+        toast.error(getFormattedErrorMessage(result));
       }
-    } catch (error) {
-      toast.error("Error deleting chart");
+    } catch {
+      toast.error(t("common.something_went_wrong_please_try_again"));
     } finally {
       setLoading(false);
     }
+  };
+
+  const closeDropdown = () => {
+    setTimeout(() => setIsDropDownOpen(false), 0);
+  };
+
+  const handleDuplicateChart = async () => {
+    closeDropdown();
+    setLoading(true);
+    try {
+      const result = await duplicateChartAction({ environmentId, chartId: chart.id });
+      if (result?.data) {
+        toast.success(t("environments.analysis.charts.chart_duplicated_successfully"));
+        router.refresh();
+      } else {
+        toast.error(getFormattedErrorMessage(result) || t("environments.analysis.charts.chart_duplication_error"));
+      }
+    } catch {
+      toast.error(t("environments.analysis.charts.chart_duplication_error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = () => {
+    closeDropdown();
+    setTimeout(() => onEdit?.(chart.id), 0);
+  };
+
+  const handleOpenDeleteDialog = () => {
+    closeDropdown();
+    setTimeout(() => setDeleteDialogOpen(true), 0);
   };
 
   return (
@@ -58,16 +90,14 @@ export const ChartDropdownMenu = ({
       id={`${chart.name.toLowerCase().split(" ").join("-")}-chart-actions`}
       data-testid="chart-dropdown-menu">
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
-        <DropdownMenuTrigger className="z-10" asChild disabled={disabled}>
-          <div
-            className={cn(
-              "rounded-lg border bg-white p-2",
-              disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-slate-50"
-            )}
+        <DropdownMenuTrigger className="z-10" asChild>
+          <Button
+            variant="outline"
+            className="px-2"
             onClick={(e) => e.stopPropagation()}>
-            <span className="sr-only">Open options</span>
+            <span className="sr-only">{t("environments.analysis.charts.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
-          </div>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
@@ -77,8 +107,7 @@ export const ChartDropdownMenu = ({
                 className="flex w-full items-center"
                 onClick={(e) => {
                   e.preventDefault();
-                  setIsDropDownOpen(false);
-                  onEdit?.();
+                  handleEdit();
                 }}>
                 <SquarePenIcon className="mr-2 size-4" />
                 {t("common.edit")}
@@ -89,11 +118,11 @@ export const ChartDropdownMenu = ({
               <button
                 type="button"
                 className="flex w-full items-center"
-                onClick={async (e) => {
+                onClick={(e) => {
                   e.preventDefault();
-                  setIsDropDownOpen(false);
-                  toast.success("Duplicate functionality coming soon");
-                }}>
+                  handleDuplicateChart();
+                }}
+                disabled={loading}>
                 <CopyIcon className="mr-2 h-4 w-4" />
                 {t("common.duplicate")}
               </button>
@@ -105,8 +134,7 @@ export const ChartDropdownMenu = ({
                 className="flex w-full items-center"
                 onClick={(e) => {
                   e.preventDefault();
-                  setIsDropDownOpen(false);
-                  setDeleteDialogOpen(true);
+                  handleOpenDeleteDialog();
                 }}>
                 <TrashIcon className="mr-2 h-4 w-4" />
                 {t("common.delete")}
@@ -117,11 +145,11 @@ export const ChartDropdownMenu = ({
       </DropdownMenu>
 
       <DeleteDialog
-        deleteWhat="Chart"
+        deleteWhat={t("common.chart")}
         open={isDeleteDialogOpen}
         setOpen={setDeleteDialogOpen}
         onDelete={() => handleDeleteChart(chart.id)}
-        text="Are you sure you want to delete this chart? This action cannot be undone."
+        text={t("environments.analysis.charts.delete_chart_confirmation")}
         isDeleting={loading}
       />
     </div>

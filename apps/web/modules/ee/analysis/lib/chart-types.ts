@@ -1,3 +1,4 @@
+import type React from "react";
 import {
   ActivityIcon,
   AreaChartIcon,
@@ -19,3 +20,7 @@ export const CHART_TYPES = [
   { id: "scatter", name: "Scatter Plot", icon: ScatterChart },
   { id: "map", name: "World Map", icon: MapIcon },
 ] as const;
+
+export const CHART_TYPE_ICONS = Object.fromEntries(
+  CHART_TYPES.map(({ id, icon }) => [id, icon])
+) as Record<string, React.ComponentType<{ className?: string }>>;

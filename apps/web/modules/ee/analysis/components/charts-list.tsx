@@ -1,49 +1,25 @@
 "use client";
 
 import { format, formatDistanceToNow } from "date-fns";
-import {
-  ActivityIcon,
-  AreaChartIcon,
-  BarChart3Icon,
-  LineChartIcon,
-  MapIcon,
-  PieChartIcon,
-  ScatterChart,
-  TableIcon,
-} from "lucide-react";
+import { BarChart3Icon } from "lucide-react";
 import { useState } from "react";
-import { TChart, TDashboard } from "../types/analysis";
+import { useTranslation } from "react-i18next";
+import { CHART_TYPE_ICONS } from "../lib/chart-types";
+import { TChart } from "../types/analysis";
 import { ChartDropdownMenu } from "./chart-dropdown-menu";
 import { CreateChartDialog } from "./create-chart-dialog";
 
-interface ChartsListClientProps {
+interface ChartsListProps {
   charts: TChart[];
-  dashboards: TDashboard[];
   environmentId: string;
 }
 
-const CHART_TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  area: AreaChartIcon,
-  bar: BarChart3Icon,
-  line: LineChartIcon,
-  pie: PieChartIcon,
-  table: TableIcon,
-  big_number: ActivityIcon,
-  big_number_total: ActivityIcon,
-  scatter: ScatterChart,
-  map: MapIcon,
-};
-
-export function ChartsListClient({ charts: initialCharts, environmentId }: ChartsListClientProps) {
-  const [charts, setCharts] = useState(initialCharts);
+export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>) {
   const [editingChartId, setEditingChartId] = useState<string | undefined>(undefined);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
+  const { t } = useTranslation();
   const filteredCharts = charts;
 
-  const deleteChart = (chartId: string) => {
-    setCharts(charts.filter((c) => c.id !== chartId));
-  };
 
   const getChartIcon = (type: string) => {
     const IconComponent = CHART_TYPE_ICONS[type] || BarChart3Icon;
@@ -63,10 +39,10 @@ export function ChartsListClient({ charts: initialCharts, environmentId }: Chart
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
-        <div className="col-span-3 pl-6">Title</div>
-        <div className="col-span-1 hidden text-center sm:block">Created By</div>
-        <div className="col-span-1 hidden text-center sm:block">Created</div>
-        <div className="col-span-1 hidden text-center sm:block">Updated</div>
+        <div className="col-span-3 pl-6">{t("common.title")}</div>
+        <div className="col-span-1 hidden text-center sm:block">{t("common.created_by")}</div>
+        <div className="col-span-1 hidden text-center sm:block">{t("common.created_at")}</div>
+        <div className="col-span-1 hidden text-center sm:block">{t("common.updated_at")}</div>
         <div className="col-span-1"></div>
       </div>
       {filteredCharts.length === 0 ? (
@@ -109,9 +85,8 @@ export function ChartsListClient({ charts: initialCharts, environmentId }: Chart
                 <ChartDropdownMenu
                   environmentId={environmentId}
                   chart={chart}
-                  deleteChart={deleteChart}
-                  onEdit={() => {
-                    setEditingChartId(chart.id);
+                  onEdit={(chartId) => {
+                    setEditingChartId(chartId);
                     setIsEditDialogOpen(true);
                   }}
                 />

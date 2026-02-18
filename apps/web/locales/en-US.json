@@ -400,6 +400,7 @@
     "styling": "Styling",
     "submit": "Submit",
     "summary": "Summary",
+    "chart": "Chart",
     "survey": "Survey",
     "survey_completed": "Survey completed.",
     "survey_id": "Survey ID",
@@ -618,6 +619,15 @@
       "insert_this_code_into_the_head_tag_of_your_website": "Insert this code into the head tag of your website:",
       "subtitle": "It takes less than 4 minutes.",
       "waiting_for_your_signal": "Waiting for your signal…"
+    },
+    "analysis": {
+      "charts": {
+        "chart_deleted_successfully": "Chart deleted successfully",
+        "chart_duplicated_successfully": "Chart duplicated successfully",
+        "chart_duplication_error": "Failed to duplicate chart",
+        "delete_chart_confirmation": "Are you sure you want to delete this chart? This action cannot be undone.",
+        "open_options": "Open options"
+      }
     },
     "contacts": {
       "add_attribute": "Add Attribute",

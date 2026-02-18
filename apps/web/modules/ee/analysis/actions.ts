@@ -143,6 +143,68 @@ export const updateChartAction = authenticatedActionClient.schema(ZUpdateChartAc
   )
 );
 
+const ZDuplicateChartAction = z.object({
+  environmentId: ZId,
+  chartId: ZId,
+});
+
+export const duplicateChartAction = authenticatedActionClient.schema(ZDuplicateChartAction).action(
+  withAuditLogging(
+    "created",
+    "chart",
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZDuplicateChartAction>;
+    }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId,
+          },
+        ],
+      });
+
+      const sourceChart = await prisma.chart.findFirst({
+        where: { id: parsedInput.chartId, projectId },
+      });
+
+      if (!sourceChart) {
+        throw new Error("Chart not found");
+      }
+
+      const duplicatedChart = await prisma.chart.create({
+        data: {
+          name: `${sourceChart.name} (copy)`,
+          type: sourceChart.type,
+          projectId,
+          query: sourceChart.query as object,
+          config: (sourceChart.config as object) || {},
+          createdBy: ctx.user.id,
+        },
+      });
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.newObject = duplicatedChart;
+      return duplicatedChart;
+    }
+  )
+);
+
 // --- Dashboard widget actions ---
 
 const ZAddChartToDashboardAction = z.object({
