@@ -36,6 +36,31 @@ services:
     volumes:
       - minio-data:/data
 
+  # Cube connects to the Formbricks Hub Postgres which owns the feedback_records table.
+  # The CUBEJS_DB_* defaults below must match the Hub's Postgres credentials.
+  # Override via env vars if your Hub database uses different credentials or runs on another host.
+  cube:
+    image: cubejs/cube:v1.3.21
+    ports:
+      - 4000:4000
+      - 4001:4001 # Cube Playground UI (dev only)
+    environment:
+      CUBEJS_DB_TYPE: postgres
+      CUBEJS_DB_HOST: ${CUBEJS_DB_HOST:-postgres}
+      CUBEJS_DB_NAME: ${CUBEJS_DB_NAME:-postgres}
+      CUBEJS_DB_USER: ${CUBEJS_DB_USER:-postgres}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-postgres}
+      CUBEJS_DB_PORT: ${CUBEJS_DB_PORT:-5432}
+      CUBEJS_DEV_MODE: "true"
+      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:-changeme}
+      CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
+    volumes:
+      - ./cube/cube.js:/cube/conf/cube.js
+      - ./cube/schema:/cube/conf/model
+    restart: on-failure
+    depends_on:
+      - postgres
+
 volumes:
   postgres:
     driver: local
