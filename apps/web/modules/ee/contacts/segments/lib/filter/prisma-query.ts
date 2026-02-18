@@ -116,59 +116,100 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
 
 /**
  * Builds a Prisma where clause for number attribute filters.
- * Uses a raw SQL subquery to handle both migrated rows (valueNumber populated)
- * and un-migrated rows (valueNumber NULL, value contains numeric string).
- * This is transition code for the deferred value backfill.
+ * Uses a clean Prisma query when all rows have valueNumber populated (post-backfill).
+ * Falls back to a raw SQL subquery for un-migrated rows (valueNumber NULL, value contains numeric string).
  *
  * TODO: After the backfill script has been run and all valueNumber columns are populated,
- * revert this to the clean Prisma-only version that queries valueNumber directly.
+ * remove the un-migrated fallback path entirely.
  */
 const buildNumberAttributeFilterWhereClause = async (
-  filter: TSegmentAttributeFilter
+  filter: TSegmentAttributeFilter,
+  environmentId: string
 ): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier, value } = filter;
   const { contactAttributeKey } = root;
   const { operator } = qualifier;
 
   const numericValue = typeof value === "number" ? value : Number(value);
-  const sqlOp = SQL_OPERATORS[operator];
 
-  if (!sqlOp) {
-    return {};
+  let valueNumberCondition: Prisma.FloatNullableFilter;
+
+  switch (operator) {
+    case "greaterThan":
+      valueNumberCondition = { gt: numericValue };
+      break;
+    case "greaterEqual":
+      valueNumberCondition = { gte: numericValue };
+      break;
+    case "lessThan":
+      valueNumberCondition = { lt: numericValue };
+      break;
+    case "lessEqual":
+      valueNumberCondition = { lte: numericValue };
+      break;
+    default:
+      return {};
   }
 
-  const matchingContactIds = await prisma.$queryRawUnsafe<{ contactId: string }[]>(
+  const migratedFilter: Prisma.ContactWhereInput = {
+    attributes: {
+      some: {
+        attributeKey: { key: contactAttributeKey },
+        valueNumber: valueNumberCondition,
+      },
+    },
+  };
+
+  const hasUnmigratedRows = await prisma.contactAttribute.findFirst({
+    where: {
+      attributeKey: {
+        key: contactAttributeKey,
+        environmentId,
+      },
+      valueNumber: null,
+    },
+    select: { id: true },
+  });
+
+  if (!hasUnmigratedRows) {
+    return migratedFilter;
+  }
+
+  const sqlOp = SQL_OPERATORS[operator];
+  const unmigratedMatchingIds = await prisma.$queryRawUnsafe<{ contactId: string }[]>(
     `
     SELECT DISTINCT ca."contactId"
     FROM "ContactAttribute" ca
     JOIN "ContactAttributeKey" cak ON ca."attributeKeyId" = cak.id
     WHERE cak.key = $1
-    AND (
-      (ca."valueNumber" IS NOT NULL AND ca."valueNumber" ${sqlOp} $2)
-      OR
-      (ca."valueNumber" IS NULL AND ca.value ~ $3 AND ca.value::double precision ${sqlOp} $2)
-    )
+    AND cak."environmentId" = $4
+    AND ca."valueNumber" IS NULL
+    AND ca.value ~ $3
+    AND ca.value::double precision ${sqlOp} $2
     `,
     contactAttributeKey,
     numericValue,
-    NUMBER_PATTERN_SQL
+    NUMBER_PATTERN_SQL,
+    environmentId
   );
 
-  const contactIds = matchingContactIds.map((r) => r.contactId);
-
-  if (contactIds.length === 0) {
-    // Return an impossible condition so the filter correctly excludes all contacts
-    return { id: "__NUMBER_FILTER_NO_MATCH__" };
+  if (unmigratedMatchingIds.length === 0) {
+    return migratedFilter;
   }
 
-  return { id: { in: contactIds } };
+  const contactIds = unmigratedMatchingIds.map((r) => r.contactId);
+
+  return {
+    OR: [migratedFilter, { id: { in: contactIds } }],
+  };
 };
 
 /**
  * Builds a Prisma where clause from a segment attribute filter
  */
 const buildAttributeFilterWhereClause = async (
-  filter: TSegmentAttributeFilter
+  filter: TSegmentAttributeFilter,
+  environmentId: string
 ): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier, value } = filter;
   const { contactAttributeKey } = root;
@@ -215,7 +256,7 @@ const buildAttributeFilterWhereClause = async (
 
   // Handle number operators
   if (["greaterThan", "greaterEqual", "lessThan", "lessEqual"].includes(operator)) {
-    return await buildNumberAttributeFilterWhereClause(filter);
+    return await buildNumberAttributeFilterWhereClause(filter, environmentId);
   }
 
   // For string operators, ensure value is a primitive (not an object or array)
@@ -253,7 +294,8 @@ const buildAttributeFilterWhereClause = async (
  * Builds a Prisma where clause from a person filter
  */
 const buildPersonFilterWhereClause = async (
-  filter: TSegmentPersonFilter
+  filter: TSegmentPersonFilter,
+  environmentId: string
 ): Promise<Prisma.ContactWhereInput> => {
   const { personIdentifier } = filter.root;
 
@@ -265,7 +307,7 @@ const buildPersonFilterWhereClause = async (
         contactAttributeKey: personIdentifier,
       },
     };
-    return await buildAttributeFilterWhereClause(personFilter);
+    return await buildAttributeFilterWhereClause(personFilter, environmentId);
   }
 
   return {};
@@ -314,6 +356,7 @@ const buildDeviceFilterWhereClause = (
 const buildSegmentFilterWhereClause = async (
   filter: TSegmentSegmentFilter,
   segmentPath: Set<string>,
+  environmentId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
@@ -337,7 +380,7 @@ const buildSegmentFilterWhereClause = async (
   const newPath = new Set(segmentPath);
   newPath.add(segmentId);
 
-  return processFilters(segment.filters, newPath, deviceType);
+  return processFilters(segment.filters, newPath, environmentId, deviceType);
 };
 
 /**
@@ -346,19 +389,25 @@ const buildSegmentFilterWhereClause = async (
 const processSingleFilter = async (
   filter: TSegmentFilter,
   segmentPath: Set<string>,
+  environmentId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
 
   switch (root.type) {
     case "attribute":
-      return await buildAttributeFilterWhereClause(filter as TSegmentAttributeFilter);
+      return await buildAttributeFilterWhereClause(filter as TSegmentAttributeFilter, environmentId);
     case "person":
-      return await buildPersonFilterWhereClause(filter as TSegmentPersonFilter);
+      return await buildPersonFilterWhereClause(filter as TSegmentPersonFilter, environmentId);
     case "device":
       return buildDeviceFilterWhereClause(filter as TSegmentDeviceFilter, deviceType);
     case "segment":
-      return await buildSegmentFilterWhereClause(filter as TSegmentSegmentFilter, segmentPath, deviceType);
+      return await buildSegmentFilterWhereClause(
+        filter as TSegmentSegmentFilter,
+        segmentPath,
+        environmentId,
+        deviceType
+      );
     default:
       return {};
   }
@@ -370,6 +419,7 @@ const processSingleFilter = async (
 const processFilters = async (
   filters: TBaseFilters,
   segmentPath: Set<string>,
+  environmentId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   if (filters.length === 0) return {};
@@ -386,10 +436,10 @@ const processFilters = async (
     // Process the resource based on its type
     if (isResourceFilter(resource)) {
       // If it's a single filter, process it directly
-      whereClause = await processSingleFilter(resource, segmentPath, deviceType);
+      whereClause = await processSingleFilter(resource, segmentPath, environmentId, deviceType);
     } else {
       // If it's a group of filters, process it recursively
-      whereClause = await processFilters(resource, segmentPath, deviceType);
+      whereClause = await processFilters(resource, segmentPath, environmentId, deviceType);
     }
 
     if (Object.keys(whereClause).length === 0) continue;
@@ -432,7 +482,7 @@ export const segmentFilterToPrismaQuery = reactCache(
 
       // Initialize an empty stack for tracking the current evaluation path
       const segmentPath = new Set<string>([segmentId]);
-      const filtersWhereClause = await processFilters(filters, segmentPath, deviceType);
+      const filtersWhereClause = await processFilters(filters, segmentPath, environmentId, deviceType);
 
       const whereClause = {
         AND: [baseWhereClause, filtersWhereClause],
