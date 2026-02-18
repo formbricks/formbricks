@@ -7,10 +7,16 @@ import { TCreateFeedbackRecordInput, THubFieldType as THubClientFieldType } from
 // Response data value types
 type TResponseValue = string | number | string[] | Record<string, string> | undefined;
 
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]*>/g, "").trim();
+}
+
 /**
- * Get the headline of an element from a survey
+ * Get the headline of an element from a survey, with HTML tags stripped
  */
 function getElementHeadline(survey: TSurvey, elementId: string): string {
+  let raw = "Untitled";
+
   // Try to find in blocks first
   if (survey.blocks && survey.blocks.length > 0) {
     for (const block of survey.blocks) {
@@ -19,9 +25,9 @@ function getElementHeadline(survey: TSurvey, elementId: string): string {
           if (element.id === elementId) {
             const headline = element.headline;
             if (!headline) return "Untitled";
-            if (typeof headline === "string") return headline;
-            if (typeof headline === "object" && headline.default) return headline.default;
-            return "Untitled";
+            if (typeof headline === "string") raw = headline;
+            else if (typeof headline === "object" && headline.default) raw = headline.default;
+            return stripHtmlTags(raw) || "Untitled";
           }
         }
       }
@@ -37,9 +43,9 @@ function getElementHeadline(survey: TSurvey, elementId: string): string {
       if (question.id === elementId) {
         const headline = question.headline;
         if (!headline) return "Untitled";
-        if (typeof headline === "string") return headline;
-        if (typeof headline === "object" && headline.default) return headline.default;
-        return "Untitled";
+        if (typeof headline === "string") raw = headline;
+        else if (typeof headline === "object" && headline.default) raw = headline.default;
+        return stripHtmlTags(raw) || "Untitled";
       }
     }
   }
@@ -178,26 +184,28 @@ export function transformResponseToFeedbackRecords(
     // Convert value to appropriate Hub fields
     const valueFields = convertValueToHubFields(value, mapping.hubFieldType as THubFieldType);
 
-    // Create the FeedbackRecord payload
+    // Build the FeedbackRecord payload, only including defined values
     const feedbackRecord: TCreateFeedbackRecordInput = {
-      collected_at: response.createdAt.toISOString(),
+      collected_at:
+        response.createdAt instanceof Date ? response.createdAt.toISOString() : String(response.createdAt),
       source_type: "formbricks",
       field_id: mapping.elementId,
       field_type: mapping.hubFieldType as THubClientFieldType,
       source_id: survey.id,
       source_name: survey.name,
       field_label: fieldLabel,
-      response_id: response.id,
-      language: response.language || undefined,
       ...valueFields,
     };
 
-    // Add tenant ID if provided
+    // Only add optional string fields if they have a truthy value
+    if (response.language && response.language !== "default") {
+      feedbackRecord.language = response.language;
+    }
+
     if (tenantId) {
       feedbackRecord.tenant_id = tenantId;
     }
 
-    // Add user identifier if available
     if (response.contactId) {
       feedbackRecord.user_identifier = response.contactId;
     }

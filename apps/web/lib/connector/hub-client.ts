@@ -1,9 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-
-// Hub API base URL - should be configurable via environment variable
-const HUB_API_URL = process.env.HUB_API_URL || "http://localhost:8080";
-const HUB_API_KEY = process.env.HUB_API_KEY || "";
+import { HUB_API_KEY, HUB_API_URL } from "@/lib/constants";
 
 // Hub field types (from OpenAPI spec)
 export type THubFieldType =
@@ -19,15 +16,16 @@ export type THubFieldType =
 
 // Create FeedbackRecord input
 export interface TCreateFeedbackRecordInput {
-  collected_at?: string; // ISO 8601 datetime, defaults to now
-  source_type: string; // Required
-  field_id: string; // Required
-  field_type: THubFieldType; // Required
+  collected_at?: string;
+  source_type: string;
+  field_id: string;
+  field_type: THubFieldType;
+  field_label?: string;
+  field_group_id?: string;
+  field_group_label?: string;
   tenant_id?: string;
-  response_id?: string;
   source_id?: string;
   source_name?: string;
-  field_label?: string;
   value_text?: string;
   value_number?: number;
   value_boolean?: boolean;
@@ -45,12 +43,13 @@ export interface TFeedbackRecordData {
   updated_at: string;
   source_type: string;
   field_id: string;
-  field_type: string;
+  field_type: THubFieldType;
+  field_label?: string;
+  field_group_id?: string;
+  field_group_label?: string;
   tenant_id?: string;
-  response_id?: string;
   source_id?: string;
   source_name?: string;
-  field_label?: string;
   value_text?: string;
   value_number?: number;
   value_boolean?: boolean;
@@ -82,14 +81,14 @@ export interface TUpdateFeedbackRecordInput {
 // List FeedbackRecords filters
 export interface TListFeedbackRecordsFilters {
   tenant_id?: string;
-  response_id?: string;
   source_type?: string;
   source_id?: string;
   field_id?: string;
-  field_type?: string;
+  field_group_id?: string;
+  field_type?: THubFieldType;
   user_identifier?: string;
-  since?: string; // ISO 8601
-  until?: string; // ISO 8601
+  since?: string;
+  until?: string;
   limit?: number;
   offset?: number;
 }
@@ -176,7 +175,10 @@ async function hubFetch<T>(
 
     return { data: null, error: null };
   } catch (error) {
-    logger.error("Hub API request failed", { url, error });
+    logger.error(
+      { url, error: error instanceof Error ? error.message : "Unknown error" },
+      "Hub API request failed"
+    );
     return {
       data: null,
       error: new HubApiError({
@@ -221,10 +223,10 @@ export async function listFeedbackRecords(
   const searchParams = new URLSearchParams();
 
   if (filters.tenant_id) searchParams.set("tenant_id", filters.tenant_id);
-  if (filters.response_id) searchParams.set("response_id", filters.response_id);
   if (filters.source_type) searchParams.set("source_type", filters.source_type);
   if (filters.source_id) searchParams.set("source_id", filters.source_id);
   if (filters.field_id) searchParams.set("field_id", filters.field_id);
+  if (filters.field_group_id) searchParams.set("field_group_id", filters.field_group_id);
   if (filters.field_type) searchParams.set("field_type", filters.field_type);
   if (filters.user_identifier) searchParams.set("user_identifier", filters.user_identifier);
   if (filters.since) searchParams.set("since", filters.since);

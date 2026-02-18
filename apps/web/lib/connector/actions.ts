@@ -4,8 +4,6 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import {
   TConnector,
-  TConnectorFieldMapping,
-  TConnectorFormbricksMapping,
   TConnectorWithMappings,
   ZConnectorCreateInput,
   ZConnectorFieldMappingCreateInput,
@@ -28,7 +26,6 @@ import {
   deleteConnector,
   deleteFieldMapping,
   deleteFormbricksMapping,
-  getConnector,
   getConnectorWithMappings,
   getConnectors,
   getConnectorsWithMappings,

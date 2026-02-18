@@ -23,13 +23,21 @@ export const SOURCE_OPTIONS: TSourceOption[] = [
     id: "webhook",
     name: "Webhook",
     description: "Receive feedback via webhook with custom mapping",
-    disabled: false,
+    disabled: true,
+    badge: {
+      text: "Coming soon",
+      type: "gray",
+    },
   },
   {
     id: "email",
     name: "Email",
     description: "Import feedback from email with custom mapping",
-    disabled: false,
+    disabled: true,
+    badge: {
+      text: "Coming soon",
+      type: "gray",
+    },
   },
   {
     id: "csv",
@@ -407,13 +415,6 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
     description: "Tenant/organization identifier for multi-tenant deployments",
   },
   {
-    id: "response_id",
-    name: "Response ID",
-    type: "string",
-    required: false,
-    description: "Groups multiple answers from a single submission",
-  },
-  {
     id: "source_id",
     name: "Source ID",
     type: "string",
@@ -434,6 +435,20 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
     type: "string",
     required: false,
     description: "Question text or field label for display",
+  },
+  {
+    id: "field_group_id",
+    name: "Field Group ID",
+    type: "string",
+    required: false,
+    description: "Stable identifier grouping related fields (for ranking, matrix, grid questions)",
+  },
+  {
+    id: "field_group_label",
+    name: "Field Group Label",
+    type: "string",
+    required: false,
+    description: "Human-readable question text for the group",
   },
   {
     id: "value_text",

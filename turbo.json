@@ -247,7 +247,9 @@
         "UNSPLASH_ACCESS_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "USER_MANAGEMENT_MINIMUM_ROLE"
+        "USER_MANAGEMENT_MINIMUM_ROLE",
+        "HUB_API_URL",
+        "HUB_API_KEY"
       ],
       "outputs": ["dist/**", ".next/**"]
     },
