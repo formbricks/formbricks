@@ -37,6 +37,7 @@ interface CreateChartDialogProps {
   onOpenChange: (open: boolean) => void;
   environmentId: string;
   chartId?: string;
+  defaultDashboardId?: string;
   onSuccess?: () => void;
 }
 
@@ -45,6 +46,7 @@ export function CreateChartDialog({
   onOpenChange,
   environmentId,
   chartId,
+  defaultDashboardId,
   onSuccess,
 }: CreateChartDialogProps) {
   const [selectedChartType, setSelectedChartType] = useState<string>("");
@@ -53,7 +55,7 @@ export function CreateChartDialog({
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [chartName, setChartName] = useState("");
   const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedDashboardId, setSelectedDashboardId] = useState<string>("");
+  const [selectedDashboardId, setSelectedDashboardId] = useState<string>(defaultDashboardId ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);

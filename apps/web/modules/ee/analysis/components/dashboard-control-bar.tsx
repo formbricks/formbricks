@@ -1,6 +1,6 @@
 "use client";
 
-import { CopyIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -9,6 +9,7 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { deleteDashboardAction } from "../actions";
 import { TDashboard } from "../types/analysis";
+import { CreateChartDialog } from "./create-chart-dialog";
 import { EditDashboardDialog } from "./edit-dashboard-dialog";
 
 interface DashboardControlBarProps {
@@ -27,6 +28,7 @@ export const DashboardControlBar = ({
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddChartDialogOpen, setIsAddChartDialogOpen] = useState(false);
 
   const handleDeleteDashboard = async () => {
     setIsDeleting(true);
@@ -52,6 +54,14 @@ export const DashboardControlBar = ({
   };
 
   const iconActions = [
+    {
+      icon: PlusIcon,
+      tooltip: t("common.add_chart"),
+      onClick: () => {
+        setIsAddChartDialogOpen(true);
+      },
+      isVisible: true,
+    },
     {
       icon: PencilIcon,
       tooltip: t("common.edit"),
@@ -97,6 +107,16 @@ export const DashboardControlBar = ({
         onSuccess={() => {
           setIsEditDialogOpen(false);
           onDashboardUpdate?.();
+          router.refresh();
+        }}
+      />
+      <CreateChartDialog
+        open={isAddChartDialogOpen}
+        onOpenChange={setIsAddChartDialogOpen}
+        environmentId={environmentId}
+        defaultDashboardId={dashboard.id}
+        onSuccess={() => {
+          setIsAddChartDialogOpen(false);
           router.refresh();
         }}
       />
