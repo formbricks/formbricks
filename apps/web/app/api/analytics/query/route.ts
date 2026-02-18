@@ -220,9 +220,17 @@ export async function POST(request: NextRequest) {
     let data: Record<string, unknown>[] | undefined;
     if (shouldExecuteQuery) {
       try {
+        console.log("[analytics/query] Executing Cube.js query:", JSON.stringify(cleanQuery, null, 2));
         data = await executeQuery(cleanQuery);
+        console.log(`[analytics/query] Query returned ${data?.length ?? 0} row(s)`);
       } catch (queryError: unknown) {
         const message = queryError instanceof Error ? queryError.message : "Unknown error";
+        console.error("[analytics/query] Query execution failed:", {
+          error: message,
+          stack: queryError instanceof Error ? queryError.stack : undefined,
+          query: cleanQuery,
+          cubeUrl: process.env.CUBEJS_API_URL || "http://localhost:4000 (default)",
+        });
         return NextResponse.json(
           {
             query: cleanQuery,

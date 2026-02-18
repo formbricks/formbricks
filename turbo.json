@@ -155,6 +155,7 @@
         "BASE_PATH",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
+        "CUBEJS_API_TOKEN",
         "CUBEJS_API_URL",
         "CRON_SECRET",
         "DATABASE_URL",

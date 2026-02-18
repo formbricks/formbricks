@@ -1,5 +1,6 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { executeQuery } from "@/app/api/analytics/_lib/cube-client";
 import { getUser } from "@/lib/user/service";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TChart, TChartConfig, TChartType, TCubeQuery, TDashboard, TWidgetType } from "../types/analysis";
@@ -95,6 +96,23 @@ export const getCharts = reactCache(async (environmentId: string): Promise<TChar
     };
   });
 });
+
+/**
+ * Executes a Cube.js query server-side and returns the result rows.
+ * Intended to be called from server components so data is fetched on
+ * the server rather than via client-side useEffect waterfalls.
+ */
+export async function executeWidgetQuery(
+  query: TCubeQuery
+): Promise<{ data: Record<string, unknown>[] } | { error: string }> {
+  try {
+    const data = await executeQuery(query as Record<string, unknown>);
+    return { data: Array.isArray(data) ? data : [] };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to execute query";
+    return { error: message };
+  }
+}
 
 /**
  * Fetches a single dashboard by ID.

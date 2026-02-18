@@ -20,6 +20,7 @@ const API_URL = getApiUrl();
 
 export function createCubeClient() {
   const token = process.env.CUBEJS_API_TOKEN ?? "";
+  console.log(`[CubeClient] Connecting to ${API_URL} (token ${token ? "set" : "empty"})`);
   return cubejs(token, {
     apiUrl: API_URL,
   });
@@ -29,7 +30,20 @@ export function createCubeClient() {
  * Execute a Cube.js query and return the table pivot data.
  */
 export async function executeQuery(query: Query) {
+  console.log("[CubeClient] executeQuery called with:", JSON.stringify(query, null, 2));
   const client = createCubeClient();
-  const resultSet = await client.load(query);
-  return resultSet.tablePivot();
+  try {
+    const resultSet = await client.load(query);
+    const rows = resultSet.tablePivot();
+    console.log(`[CubeClient] Query succeeded — ${rows.length} row(s) returned`);
+    return rows;
+  } catch (error) {
+    console.error("[CubeClient] Query failed:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      apiUrl: API_URL,
+      query,
+    });
+    throw error;
+  }
 }

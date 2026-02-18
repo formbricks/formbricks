@@ -661,10 +661,17 @@ export const executeQueryAction = authenticatedActionClient
       });
 
       try {
+        console.log("[executeQueryAction] Executing query:", JSON.stringify(parsedInput.query, null, 2));
         const data = await executeQuery(parsedInput.query as Record<string, unknown>);
+        console.log(`[executeQueryAction] Success — ${Array.isArray(data) ? data.length : 0} row(s)`);
         return { data };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to execute query";
+        console.error("[executeQueryAction] Failed:", {
+          error: message,
+          stack: error instanceof Error ? error.stack : undefined,
+          query: parsedInput.query,
+        });
         return { error: message };
       }
     }

@@ -13,7 +13,7 @@ const EnvLayout = async (props: {
   const params = await props.params;
   const { environmentId } = params;
 
-  if (environmentId === "undefined") {
+  if (!environmentId || environmentId === "undefined") {
     return redirect("/");
   }
 
