@@ -1,0 +1,55 @@
+{{- if (.Values.service).enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "formbricks.name" . }}
+  labels:
+    # Standard labels for tracking the service
+    {{- include "formbricks.labels" . | nindent 4 }}
+
+    # Additional labels from values
+    {{- if .Values.service.additionalLabels }}
+      {{- toYaml .Values.service.additionalLabels | nindent 4 }}
+    {{- end }}
+
+  # Annotations for service configuration
+  {{- if .Values.service.annotations }}
+  annotations:
+    {{- include "formbricks.tplvalues.render" ( dict "value" .Values.service.annotations  "context" $ ) | nindent 4 }}
+  {{- end }}
+
+spec:
+  # Define the service type (ClusterIP, NodePort, LoadBalancer)
+  type: {{ .Values.service.type }}
+
+  # Define how the service selects pods
+  selector:
+    {{- include "formbricks.selectorLabels" . | nindent 4 }}
+
+  # Include additional pod labels if defined
+  {{- if .Values.deployment.podLabels }}
+    {{- toYaml .Values.deployment.podLabels | nindent 4 }}
+  {{- end }}
+
+  # Define the exposed service ports
+  ports:
+  {{- range $name, $config := .Values.deployment.ports }}
+  {{- if $config.exposed }}
+    - name: {{ $name }}
+      protocol: {{ default "TCP" $config.protocol | quote }}
+      port: {{ default $config.port $config.containerPort }}
+      targetPort: {{ default $config.port $config.containerPort }}
+
+      # Define NodePort if service type is NodePort
+      {{- if $config.nodePort }}
+      nodePort: {{ $config.nodePort }}
+      {{- end }}
+  {{- end }}
+  {{- end }}
+
+  # Include additional manually defined service ports
+  {{- if .Values.service.ports }}
+    {{- toYaml .Values.service.ports | nindent 4 }}
+  {{- end }}
+{{- end }}

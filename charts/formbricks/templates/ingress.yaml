@@ -1,0 +1,45 @@
+{{- if (.Values.ingress).enabled -}}
+{{- $applicationNameTpl := include "formbricks.name" . -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "formbricks.name" . }}
+  namespace: {{ include "formbricks.namespace" . }}
+  labels:
+  {{- include "formbricks.labels" $ | nindent 4 }}
+{{- if .Values.ingress.additionalLabels }}
+{{ toYaml .Values.ingress.additionalLabels | indent 4 }}
+{{- end }}
+{{- if .Values.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.ingress.annotations | indent 4 }}
+{{- end }}
+spec:
+{{- if .Values.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+{{- end}}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ tpl .host $ }}
+      http:
+        paths:
+        {{- if .paths }}
+        {{- range .paths }}
+        - path: {{ .path }}
+          pathType: {{ default "ImplementationSpecific" (.pathType) }}
+          backend:
+            service:
+              name: {{ default $applicationNameTpl (.serviceName) }}
+              port:
+                name: {{ default "http" (.servicePort) }}
+        {{- end }}
+        {{- else }}
+        {{ fail "Specify paths for ingress host, check values.yaml" }}
+        {{- end }}
+    {{- end -}}
+  {{- if .Values.ingress.tls }}
+  tls:
+{{ include "formbricks.tplvalues.render" (dict "value" .Values.ingress.tls "context" $) | indent 3 }}
+  {{- end -}}
+{{- end -}}
