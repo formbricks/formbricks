@@ -1,3 +1,4 @@
+import { Delay } from "@suspensive/react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -95,7 +96,12 @@ export async function DashboardDetailPage({
               <div key={widget.id} className={getColSpan(widget.layout.w)}>
                 {widget.type === "chart" && widget.chart ? (
                   <DashboardWidget title={widget.title || widget.chart.name || "Widget"}>
-                    <Suspense fallback={<DashboardWidgetSkeleton />}>
+                    <Suspense
+                      fallback={
+                        <Delay ms={200}>
+                          <DashboardWidgetSkeleton />
+                        </Delay>
+                      }>
                       <DashboardWidgetData
                         dataPromise={widgetDataPromises.get(widget.id)!}
                         chartType={widget.chart.type}
