@@ -752,7 +752,12 @@
         "link_google_sheet": "Link Google Sheet",
         "link_new_sheet": "Link new Sheet",
         "no_integrations_yet": "Your google sheet integrations will appear here as soon as you add them. ⏲️",
-        "spreadsheet_url": "Spreadsheet URL"
+        "reconnect_button": "Reconnect",
+        "reconnect_button_description": "Your Google Sheets connection has expired. Please reconnect to continue syncing responses. Your existing spreadsheet links and data will be preserved.",
+        "reconnect_button_tooltip": "Reconnect the integration to refresh your access. Your existing spreadsheet links and data will be preserved.",
+        "spreadsheet_permission_error": "You don't have permission to access this spreadsheet. Please ensure the spreadsheet is shared with your Google account and you have write access to the spreadsheet.",
+        "spreadsheet_url": "Spreadsheet URL",
+        "token_expired_error": "Google Sheets refresh token has expired or been revoked. Please reconnect the integration."
       },
       "include_created_at": "Include Created At",
       "include_hidden_fields": "Include Hidden Fields",

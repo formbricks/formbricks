@@ -2,7 +2,12 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { ZString } from "@formbricks/types/common";
-import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  DatabaseError,
+  OperationNotAllowedError,
+  UnknownError,
+} from "@formbricks/types/errors";
 import {
   TIntegrationGoogleSheets,
   ZIntegrationGoogleSheets,
@@ -11,8 +16,8 @@ import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
+  GOOGLE_SHEET_MESSAGE_LIMIT,
 } from "@/lib/constants";
-import { GOOGLE_SHEET_MESSAGE_LIMIT } from "@/lib/constants";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
 import { truncateText } from "../utils/strings";
 import { validateInputs } from "../utils/validate";
@@ -81,6 +86,17 @@ export const writeData = async (
   }
 };
 
+export const validateGoogleSheetsConnection = async (
+  googleSheetIntegrationData: TIntegrationGoogleSheets
+): Promise<void> => {
+  validateInputs([googleSheetIntegrationData, ZIntegrationGoogleSheets]);
+  const integrationData = structuredClone(googleSheetIntegrationData);
+  integrationData.config.data.forEach((data) => {
+    data.createdAt = new Date(data.createdAt);
+  });
+  await authorize(integrationData);
+};
+
 export const getSpreadsheetNameById = async (
   googleSheetIntegrationData: TIntegrationGoogleSheets,
   spreadsheetId: string
@@ -94,7 +110,17 @@ export const getSpreadsheetNameById = async (
     return new Promise((resolve, reject) => {
       sheets.spreadsheets.get({ spreadsheetId }, (err, response) => {
         if (err) {
-          reject(new UnknownError(`Error while fetching spreadsheet data: ${err.message}`));
+          const msg = err.message?.toLowerCase() ?? "";
+          const isPermissionError =
+            msg.includes("permission") ||
+            msg.includes("caller does not have") ||
+            msg.includes("insufficient permission") ||
+            msg.includes("access denied");
+          if (isPermissionError) {
+            reject(new OperationNotAllowedError("insufficient_permission"));
+          } else {
+            reject(new UnknownError(`Error while fetching spreadsheet data: ${err.message}`));
+          }
           return;
         }
         const spreadsheetTitle = response.data.properties.title;
@@ -109,6 +135,11 @@ export const getSpreadsheetNameById = async (
   }
 };
 
+const isInvalidGrantError = (error: unknown): boolean => {
+  const err = error as { message?: string; response?: { data?: { error?: string } } };
+  return typeof err?.message === "string" && err.message.toLowerCase().includes("invalid_grant");
+};
+
 const authorize = async (googleSheetIntegrationData: TIntegrationGoogleSheets) => {
   const client_id = GOOGLE_SHEETS_CLIENT_ID;
   const client_secret = GOOGLE_SHEETS_CLIENT_SECRET;
@@ -118,17 +149,29 @@ const authorize = async (googleSheetIntegrationData: TIntegrationGoogleSheets) =
   oAuth2Client.setCredentials({
     refresh_token,
   });
-  const { credentials } = await oAuth2Client.refreshAccessToken();
-  await createOrUpdateIntegration(googleSheetIntegrationData.environmentId, {
-    type: "googleSheets",
-    config: {
-      data: googleSheetIntegrationData.config?.data ?? [],
-      email: googleSheetIntegrationData.config?.email ?? "",
-      key: credentials,
-    },
-  });
 
-  oAuth2Client.setCredentials(credentials);
+  try {
+    const { credentials } = await oAuth2Client.refreshAccessToken();
+    const mergedCredentials = {
+      ...credentials,
+      refresh_token: credentials.refresh_token ?? refresh_token,
+    };
+    await createOrUpdateIntegration(googleSheetIntegrationData.environmentId, {
+      type: "googleSheets",
+      config: {
+        data: googleSheetIntegrationData.config?.data ?? [],
+        email: googleSheetIntegrationData.config?.email ?? "",
+        key: mergedCredentials,
+      },
+    });
 
-  return oAuth2Client;
+    oAuth2Client.setCredentials(mergedCredentials);
+
+    return oAuth2Client;
+  } catch (error) {
+    if (isInvalidGrantError(error)) {
+      throw new AuthenticationError("invalid_grant");
+    }
+    throw error;
+  }
 };

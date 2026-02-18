@@ -752,7 +752,12 @@
         "link_google_sheet": "スプレッドシートをリンク",
         "link_new_sheet": "新しいシートをリンク",
         "no_integrations_yet": "Google スプレッドシート連携は、追加するとここに表示されます。⏲️",
-        "spreadsheet_url": "スプレッドシートURL"
+        "reconnect_button": "再接続",
+        "reconnect_button_description": "Google Sheetsの接続が期限切れになりました。回答の同期を続けるには再接続してください。既存のスプレッドシートリンクとデータは保持されます。",
+        "reconnect_button_tooltip": "統合を再接続してアクセスを更新します。既存のスプレッドシートリンクとデータは保持されます。",
+        "spreadsheet_permission_error": "このスプレッドシートにアクセスする権限がありません。スプレッドシートがGoogleアカウントと共有されており、書き込みアクセス権があることを確認してください。",
+        "spreadsheet_url": "スプレッドシートURL",
+        "token_expired_error": "Google Sheetsのリフレッシュトークンが期限切れになったか、取り消されました。統合を再接続してください。"
       },
       "include_created_at": "作成日時を含める",
       "include_hidden_fields": "非表示フィールドを含める",

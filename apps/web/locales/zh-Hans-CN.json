@@ -752,7 +752,12 @@
         "link_google_sheet": "链接 Google 表格",
         "link_new_sheet": "链接 新 表格",
         "no_integrations_yet": "您的 Google Sheet 集成会在您 添加 后 出现在这里。 ⏲️",
-        "spreadsheet_url": "电子表格 URL"
+        "reconnect_button": "重新连接",
+        "reconnect_button_description": "你的 Google Sheets 连接已过期。请重新连接以继续同步回复。你现有的表格链接和数据会被保留。",
+        "reconnect_button_tooltip": "重新连接集成以刷新你的访问权限。你现有的表格链接和数据会被保留。",
+        "spreadsheet_permission_error": "你没有权限访问此表格。请确保该表格已与你的 Google 账号共享，并且你拥有该表格的编辑权限。",
+        "spreadsheet_url": "电子表格 URL",
+        "token_expired_error": "Google Sheets 的刷新令牌已过期或被撤销。请重新连接集成。"
       },
       "include_created_at": "包括 创建 于",
       "include_hidden_fields": "包括 隐藏 字段",

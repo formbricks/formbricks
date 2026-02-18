@@ -752,7 +752,12 @@
         "link_google_sheet": "Ligar Folha do Google",
         "link_new_sheet": "Ligar nova Folha",
         "no_integrations_yet": "As suas integrações com o Google Sheets aparecerão aqui assim que as adicionar. ⏲️",
-        "spreadsheet_url": "URL da folha de cálculo"
+        "reconnect_button": "Reconectar",
+        "reconnect_button_description": "A tua ligação ao Google Sheets expirou. Por favor, reconecta para continuar a sincronizar respostas. As tuas ligações de folhas de cálculo e dados existentes serão preservados.",
+        "reconnect_button_tooltip": "Reconecta a integração para atualizar o teu acesso. As tuas ligações de folhas de cálculo e dados existentes serão preservados.",
+        "spreadsheet_permission_error": "Não tens permissão para aceder a esta folha de cálculo. Por favor, certifica-te de que a folha de cálculo está partilhada com a tua conta Google e que tens acesso de escrita à folha de cálculo.",
+        "spreadsheet_url": "URL da folha de cálculo",
+        "token_expired_error": "O token de atualização do Google Sheets expirou ou foi revogado. Por favor, reconecta a integração."
       },
       "include_created_at": "Incluir Criado Em",
       "include_hidden_fields": "Incluir Campos Ocultos",
