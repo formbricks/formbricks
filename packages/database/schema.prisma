@@ -869,6 +869,8 @@ model User {
   /// [Locale]
   locale                    String           @default("en-US")
   surveys                   Survey[]
+  charts                    Chart[]          @relation("chartCreatedBy")
+  dashboards                Dashboard[]      @relation("dashboardCreatedBy")
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?
   isActive                  Boolean          @default(true)
@@ -1038,6 +1040,7 @@ model Chart {
   query     Json              @default("{}")
   /// [ChartConfig] - Visualization configuration (colors, labels, formatting)
   config    Json              @default("{}")
+  creator   User?             @relation("chartCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   createdBy String?
   widgets   DashboardWidget[]
 
@@ -1062,6 +1065,7 @@ model Dashboard {
   description String?
   project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId   String
+  creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   createdBy   String?
   widgets     DashboardWidget[]
 
