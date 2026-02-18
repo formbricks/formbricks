@@ -225,10 +225,13 @@ describe("createResponseWithQuotaEvaluation V2", () => {
     });
   });
 
-  test("should create response and return it without quotaFull when no quota is full", async () => {
+  test("should create response and return it with quotaFull as null when no quota is full", async () => {
     const result = await createResponseWithQuotaEvaluation(mockResponseInput);
 
-    expect(result).toEqual(expectedResponse);
+    expect(result).toEqual({
+      ...expectedResponse,
+      quotaFull: null,
+    });
     expect(evaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponseInput.surveyId,
       responseId: expectedResponse.id,
@@ -261,5 +264,20 @@ describe("createResponseWithQuotaEvaluation V2", () => {
       responseFinished: expectedResponse.finished,
       tx: mockTx,
     });
+  });
+
+  test("should handle quota evaluation returning undefined quotaFull without throwing", async () => {
+    vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+      shouldEndSurvey: false,
+      quotaFull: undefined,
+    });
+
+    const result: TResponseWithQuotaFull = await createResponseWithQuotaEvaluation(mockResponseInput);
+
+    expect(result).toEqual({
+      ...expectedResponse,
+      quotaFull: undefined,
+    });
+    expect(result).toHaveProperty("quotaFull");
   });
 });

@@ -98,10 +98,11 @@ describe("updateResponseWithQuotaEvaluation", () => {
     });
   });
 
-  test("should return response without quotaFull when quota evaluation returns no quotaFull", async () => {
+  test("should return response with quotaFull as undefined when quota evaluation returns no quotaFull", async () => {
     mockUpdateResponse.mockResolvedValue(mockResponse);
     mockEvaluateResponseQuotas.mockResolvedValue({
       shouldEndSurvey: false,
+      quotaFull: undefined,
     });
 
     const result = await updateResponseWithQuotaEvaluation(mockResponseId, mockResponseInput);
@@ -117,8 +118,11 @@ describe("updateResponseWithQuotaEvaluation", () => {
       tx: mockTx,
     });
 
-    expect(result).toEqual(mockResponse);
-    expect(result).not.toHaveProperty("quotaFull");
+    expect(result).toEqual({
+      ...mockResponse,
+      quotaFull: undefined,
+    });
+    expect(result).toHaveProperty("quotaFull");
   });
 
   test("should use default language when response language is null", async () => {
@@ -126,6 +130,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
     mockUpdateResponse.mockResolvedValue(responseWithNullLanguage);
     mockEvaluateResponseQuotas.mockResolvedValue({
       shouldEndSurvey: false,
+      quotaFull: undefined,
     });
 
     const result = await updateResponseWithQuotaEvaluation(mockResponseId, mockResponseInput);
@@ -140,6 +145,9 @@ describe("updateResponseWithQuotaEvaluation", () => {
       tx: mockTx,
     });
 
-    expect(result).toEqual(responseWithNullLanguage);
+    expect(result).toEqual({
+      ...responseWithNullLanguage,
+      quotaFull: undefined,
+    });
   });
 });

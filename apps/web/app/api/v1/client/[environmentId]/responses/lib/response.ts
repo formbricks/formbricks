@@ -69,7 +69,7 @@ export const createResponseWithQuotaEvaluation = async (
 
     return {
       ...response,
-      ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
+      quotaFull: quotaResult.quotaFull,
     };
   });
 

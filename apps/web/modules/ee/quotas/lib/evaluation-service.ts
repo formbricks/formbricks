@@ -44,12 +44,12 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
     const quotas = await getQuotas(surveyId);
 
     if (!quotas || quotas.length === 0) {
-      return { shouldEndSurvey: false };
+      return { shouldEndSurvey: false, quotaFull: undefined };
     }
 
     const survey = await getSurvey(surveyId);
     if (!survey) {
-      return { shouldEndSurvey: false };
+      return { shouldEndSurvey: false, quotaFull: undefined };
     }
     const isDefaultLanguage = survey.languages.find((lang) => lang.default)?.language.code === language;
     const result = evaluateQuotas(survey, data, variables, quotas, isDefaultLanguage ? "default" : language);
@@ -74,6 +74,6 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
     };
   } catch (error) {
     logger.error({ error, responseId }, "Error evaluating quotas for response");
-    return { shouldEndSurvey: false };
+    return { shouldEndSurvey: false, quotaFull: undefined };
   }
 };

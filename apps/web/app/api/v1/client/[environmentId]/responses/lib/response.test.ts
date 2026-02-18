@@ -163,7 +163,7 @@ describe("createResponseWithQuotaEvaluation", () => {
     mockIsFormbricksCloud = false;
   });
 
-  test("should return response without quotaFull when no quota violations", async () => {
+  test("should return response with quotaFull as undefined when no quota violations", async () => {
     // Mock quota evaluation to return no violations
     vi.mocked(evaluateResponseQuotas).mockResolvedValue({
       shouldEndSurvey: false,
@@ -198,8 +198,9 @@ describe("createResponseWithQuotaEvaluation", () => {
       displayId: null,
       contact: null,
       tags: [],
+      quotaFull: undefined,
     });
-    expect(result).not.toHaveProperty("quotaFull");
+    expect(result).toHaveProperty("quotaFull");
   });
 
   test("should return response with quotaFull when quota is exceeded with endSurvey action", async () => {
