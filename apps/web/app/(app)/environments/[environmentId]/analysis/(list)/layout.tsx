@@ -1,4 +1,4 @@
-import { AnalysisLayoutClient } from "@/modules/ee/analysis/dashboards/components/analysis-layout-client";
+import { AnalysisLayoutClient } from "@/modules/ee/analysis/components/analysis-layout-client";
 
 export default function AnalysisLayout({
   children,
