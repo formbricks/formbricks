@@ -169,7 +169,7 @@ Here is what you need to be able to run Formbricks:
 
 ### Local Setup
 
-To get started locally, we've got a [guide to help you](https://formbricks.com/docs/developer-docs/contributing/get-started#local-machine-setup).
+To get started locally, we've got a [guide to help you](https://formbricks.com/docs/developer-docs/contributing/get-started#local-machine-setup). The dev stack (`pnpm db:up` or `pnpm go`) includes [Formbricks Hub](https://github.com/formbricks/hub) on port 8080; optional Hub env vars (e.g. `HUB_API_KEY`) are in `.env.example`. See [docker/README.md](docker/README.md#formbricks-hub) for details.
 
 ### Gitpod Setup
 
