@@ -2,6 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { FileSpreadsheetIcon, GlobeIcon, MailIcon, MessageSquareIcon, WebhookIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TSourceType } from "../types";
 
 interface SourcesTableDataRowProps {
@@ -30,23 +31,6 @@ function getSourceIcon(type: TSourceType) {
   }
 }
 
-function getSourceTypeLabel(type: TSourceType) {
-  switch (type) {
-    case "formbricks":
-      return "Formbricks";
-    case "webhook":
-      return "Webhook";
-    case "email":
-      return "Email";
-    case "csv":
-      return "CSV";
-    case "slack":
-      return "Slack";
-    default:
-      return type;
-  }
-}
-
 export function SourcesTableDataRow({
   id,
   name,
@@ -55,6 +39,25 @@ export function SourcesTableDataRow({
   createdAt,
   onClick,
 }: SourcesTableDataRowProps) {
+  const { t } = useTranslation();
+
+  const getSourceTypeLabel = (sourceType: TSourceType) => {
+    switch (sourceType) {
+      case "formbricks":
+        return t("environments.unify.formbricks_surveys");
+      case "webhook":
+        return t("environments.unify.webhook");
+      case "email":
+        return t("environments.unify.email");
+      case "csv":
+        return t("environments.unify.csv_import");
+      case "slack":
+        return t("environments.unify.slack_message");
+      default:
+        return sourceType;
+    }
+  };
+
   return (
     <div
       key={id}
@@ -75,7 +78,7 @@ export function SourcesTableDataRow({
         <span className="truncate font-medium text-slate-900">{name}</span>
       </div>
       <div className="col-span-2 hidden items-center justify-center text-sm text-slate-600 sm:flex">
-        {mappingsCount} {mappingsCount === 1 ? "field" : "fields"}
+        {mappingsCount} {mappingsCount === 1 ? t("environments.unify.field") : t("environments.unify.fields")}
       </div>
       <div className="col-span-3 hidden items-center justify-end pr-4 text-sm text-slate-500 sm:flex">
         {formatDistanceToNow(createdAt, { addSuffix: true })}

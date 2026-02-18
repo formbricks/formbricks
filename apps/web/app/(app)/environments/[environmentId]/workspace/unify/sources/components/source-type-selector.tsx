@@ -1,7 +1,8 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/modules/ui/components/badge";
-import { SOURCE_OPTIONS, TSourceType } from "../types";
+import { TSourceType, getSourceOptions } from "../types";
 
 interface SourceTypeSelectorProps {
   selectedType: TSourceType | null;
@@ -9,11 +10,14 @@ interface SourceTypeSelectorProps {
 }
 
 export function SourceTypeSelector({ selectedType, onSelectType }: SourceTypeSelectorProps) {
+  const { t } = useTranslation();
+  const sourceOptions = getSourceOptions(t);
+
   return (
     <div className="space-y-3">
-      <p className="text-sm text-slate-600">Select the type of feedback source you want to connect:</p>
+      <p className="text-sm text-slate-600">{t("environments.unify.select_source_type_prompt")}</p>
       <div className="space-y-2">
-        {SOURCE_OPTIONS.map((option) => (
+        {sourceOptions.map((option) => (
           <button
             key={option.id}
             type="button"

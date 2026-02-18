@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TConnectorWithMappings, TFormbricksConnector } from "@formbricks/types/connector";
 import {
   createConnectorAction,
@@ -25,23 +26,12 @@ interface SourcesSectionProps {
   environmentId: string;
 }
 
-// Transform connector from database to TSourceConnection for UI
 function connectorToSourceConnection(connector: TConnectorWithMappings): TSourceConnection {
-  // For webhook (and other field-mapping connectors), include field mappings
-  const mappings =
-    connector.type === "webhook" && "fieldMappings" in connector && connector.fieldMappings?.length
-      ? connector.fieldMappings.map((m) => ({
-          sourceFieldId: m.sourceFieldId,
-          targetFieldId: m.targetFieldId,
-          staticValue: m.staticValue ?? undefined,
-        }))
-      : [];
-
   return {
     id: connector.id,
     name: connector.name,
     type: connector.type as TSourceConnection["type"],
-    mappings,
+    mappings: [],
     createdAt: connector.createdAt,
     updatedAt: connector.updatedAt,
   };
@@ -71,6 +61,7 @@ function getFormbricksMappingData(connector: TConnectorWithMappings): {
 }
 
 export function SourcesSection({ environmentId }: SourcesSectionProps) {
+  const { t } = useTranslation();
   const [sources, setSources] = useState<TSourceConnection[]>([]);
   const [connectorsMap, setConnectorsMap] = useState<Map<string, TConnectorWithMappings>>(new Map());
   const [surveys, setSurveys] = useState<TUnifySurvey[]>([]);
@@ -103,7 +94,7 @@ export function SourcesSection({ environmentId }: SourcesSectionProps) {
       }
     } catch (error) {
       console.error("Failed to fetch data:", error);
-      toast.error("Failed to load data");
+      toast.error(t("environments.unify.failed_to_load_data"));
     } finally {
       setIsLoading(false);
     }
@@ -129,19 +120,19 @@ export function SourcesSection({ environmentId }: SourcesSectionProps) {
       });
 
       if (!result?.data) {
-        toast.error("Failed to create connector");
+        toast.error(t("environments.unify.failed_to_create_connector"));
         return;
       }
 
       const connectorResult = result.data;
       if ("error" in connectorResult && connectorResult.error) {
-        toast.error(connectorResult.error.message || "Failed to create connector");
+        toast.error(connectorResult.error.message || t("environments.unify.failed_to_create_connector"));
         return;
       }
 
       const connector = "data" in connectorResult ? connectorResult.data : connectorResult;
       if (!connector || !connector.id) {
-        toast.error("Failed to create connector - invalid response");
+        toast.error(t("environments.unify.failed_to_create_connector"));
         return;
       }
 
@@ -185,10 +176,10 @@ export function SourcesSection({ environmentId }: SourcesSectionProps) {
 
       // Refresh the list
       await fetchData();
-      toast.success("Connector created successfully");
+      toast.success(t("environments.unify.connector_created_successfully"));
     } catch (error) {
       console.error("Failed to create connector:", error);
-      toast.error("Failed to create connector");
+      toast.error(t("environments.unify.failed_to_create_connector"));
     }
   };
 
@@ -207,7 +198,7 @@ export function SourcesSection({ environmentId }: SourcesSectionProps) {
       });
 
       if (!result?.data) {
-        toast.error("Failed to update connector");
+        toast.error(t("environments.unify.failed_to_update_connector"));
         return;
       }
 
@@ -250,10 +241,10 @@ export function SourcesSection({ environmentId }: SourcesSectionProps) {
 
       // Refresh the list
       await fetchData();
-      toast.success("Connector updated successfully");
+      toast.success(t("environments.unify.connector_updated_successfully"));
     } catch (error) {
       console.error("Failed to update connector:", error);
-      toast.error("Failed to update connector");
+      toast.error(t("environments.unify.failed_to_update_connector"));
     }
   };
 
@@ -264,16 +255,16 @@ export function SourcesSection({ environmentId }: SourcesSectionProps) {
       });
 
       if (!result?.data) {
-        toast.error("Failed to delete connector");
+        toast.error(t("environments.unify.failed_to_delete_connector"));
         return;
       }
 
       // Refresh the list
       await fetchData();
-      toast.success("Connector deleted successfully");
+      toast.success(t("environments.unify.connector_deleted_successfully"));
     } catch (error) {
       console.error("Failed to delete connector:", error);
-      toast.error("Failed to delete connector");
+      toast.error(t("environments.unify.failed_to_delete_connector"));
     }
   };
 
@@ -284,7 +275,7 @@ export function SourcesSection({ environmentId }: SourcesSectionProps) {
   return (
     <PageContentWrapper>
       <PageHeader
-        pageTitle="Unify Feedback"
+        pageTitle={t("environments.unify.unify_feedback")}
         cta={
           <CreateSourceModal
             open={isCreateModalOpen}

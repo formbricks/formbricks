@@ -38,21 +38,6 @@ function getElementIcon(type: string) {
   }
 }
 
-function getStatusBadge(status: TUnifySurvey["status"]) {
-  switch (status) {
-    case "active":
-      return <Badge text="Active" type="success" size="tiny" />;
-    case "paused":
-      return <Badge text="Paused" type="warning" size="tiny" />;
-    case "draft":
-      return <Badge text="Draft" type="gray" size="tiny" />;
-    case "completed":
-      return <Badge text="Completed" type="gray" size="tiny" />;
-    default:
-      return null;
-  }
-}
-
 export function FormbricksSurveySelector({
   surveys,
   selectedSurveyId,
@@ -69,10 +54,8 @@ export function FormbricksSurveySelector({
 
   const handleSurveyClick = (survey: TUnifySurvey) => {
     if (selectedSurveyId === survey.id) {
-      // Toggle expand/collapse if already selected
       setExpandedSurveyId(expandedSurveyId === survey.id ? null : survey.id);
     } else {
-      // Select the survey and expand it
       onSurveySelect(survey.id);
       onDeselectAllElements();
       setExpandedSurveyId(survey.id);
@@ -81,15 +64,30 @@ export function FormbricksSurveySelector({
 
   const allElementsSelected = selectedSurvey && selectedElementIds.length === selectedSurvey.elements.length;
 
+  const getStatusBadge = (status: TUnifySurvey["status"]) => {
+    switch (status) {
+      case "active":
+        return <Badge text={t("environments.unify.status_active")} type="success" size="tiny" />;
+      case "paused":
+        return <Badge text={t("environments.unify.status_paused")} type="warning" size="tiny" />;
+      case "draft":
+        return <Badge text={t("environments.unify.status_draft")} type="gray" size="tiny" />;
+      case "completed":
+        return <Badge text={t("environments.unify.status_completed")} type="gray" size="tiny" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="grid grid-cols-2 gap-6">
       {/* Left: Survey List */}
       <div className="space-y-3">
-        <h4 className="text-sm font-medium text-slate-700">Select Survey</h4>
+        <h4 className="text-sm font-medium text-slate-700">{t("environments.unify.select_survey")}</h4>
         <div className="space-y-2">
           {surveys.length === 0 ? (
             <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
-              <p className="text-sm text-slate-500">No surveys found in this environment</p>
+              <p className="text-sm text-slate-500">{t("environments.unify.no_surveys_found")}</p>
             </div>
           ) : (
             surveys.map((survey) => {
@@ -118,7 +116,9 @@ export function FormbricksSurveySelector({
                         <span className="text-sm font-medium text-slate-900">{survey.name}</span>
                         {getStatusBadge(survey.status)}
                       </div>
-                      <p className="text-xs text-slate-500">{survey.elements.length} elements</p>
+                      <p className="text-xs text-slate-500">
+                        {t("environments.unify.n_elements", { count: survey.elements.length })}
+                      </p>
                     </div>
                     {isSelected && <CheckCircle2Icon className="text-brand-dark h-5 w-5" />}
                   </button>
@@ -132,7 +132,7 @@ export function FormbricksSurveySelector({
       {/* Right: Element Selection */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium text-slate-700">Select Elements</h4>
+          <h4 className="text-sm font-medium text-slate-700">{t("environments.unify.select_elements")}</h4>
           {selectedSurvey && (
             <button
               type="button"
@@ -140,18 +140,22 @@ export function FormbricksSurveySelector({
                 allElementsSelected ? onDeselectAllElements() : onSelectAllElements(selectedSurvey.id)
               }
               className="text-xs text-slate-500 hover:text-slate-700">
-              {allElementsSelected ? "Deselect all" : "Select all"}
+              {allElementsSelected
+                ? t("environments.unify.deselect_all")
+                : t("environments.unify.select_all")}
             </button>
           )}
         </div>
 
         {!selectedSurvey ? (
           <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
-            <p className="text-sm text-slate-500">Select a survey to see its elements</p>
+            <p className="text-sm text-slate-500">
+              {t("environments.unify.select_a_survey_to_see_elements")}
+            </p>
           </div>
         ) : selectedSurvey.elements.length === 0 ? (
           <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
-            <p className="text-sm text-slate-500">This survey has no question elements</p>
+            <p className="text-sm text-slate-500">{t("environments.unify.survey_has_no_elements")}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -183,7 +187,8 @@ export function FormbricksSurveySelector({
                       </span>
                       {element.required && (
                         <span className="text-xs text-red-500">
-                          <CircleIcon className="inline h-1.5 w-1.5 fill-current" /> Required
+                          <CircleIcon className="inline h-1.5 w-1.5 fill-current" />{" "}
+                          {t("environments.unify.required")}
                         </span>
                       )}
                     </div>
@@ -194,11 +199,15 @@ export function FormbricksSurveySelector({
 
             {selectedElementIds.length > 0 && (
               <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                <p className="text-xs text-blue-700">
-                  <strong>{selectedElementIds.length}</strong> element
-                  {selectedElementIds.length !== 1 ? "s" : ""} selected. Each response to these elements will
-                  create a FeedbackRecord in the Hub.
-                </p>
+                <p
+                  className="text-xs text-blue-700"
+                  dangerouslySetInnerHTML={{
+                    __html:
+                      selectedElementIds.length === 1
+                        ? t("environments.unify.element_selected", { count: selectedElementIds.length })
+                        : t("environments.unify.elements_selected", { count: selectedElementIds.length }),
+                  }}
+                />
               </div>
             )}
           </div>

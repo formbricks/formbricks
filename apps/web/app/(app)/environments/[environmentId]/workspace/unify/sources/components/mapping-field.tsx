@@ -3,6 +3,7 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { ChevronDownIcon, GripVerticalIcon, PencilIcon, XIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/modules/ui/components/input";
 import {
   Select,
@@ -72,6 +73,7 @@ export function DroppableTargetField({
   onStaticValueChange,
   isOver,
 }: DroppableTargetFieldProps) {
+  const { t } = useTranslation();
   const { setNodeRef, isOver: isOverCurrent } = useDroppable({
     id: field.id,
     data: field,
@@ -95,11 +97,11 @@ export function DroppableTargetField({
           <div className="flex items-center gap-2">
             <span className="font-medium text-slate-900">{field.name}</span>
             {field.required && <span className="text-xs text-red-500">*</span>}
-            <span className="text-xs text-slate-400">(enum)</span>
+            <span className="text-xs text-slate-400">({t("common.enum", "enum")})</span>
           </div>
           <Select value={mapping?.staticValue || ""} onValueChange={onStaticValueChange}>
             <SelectTrigger className="h-8 w-full bg-white">
-              <SelectValue placeholder="Select a value..." />
+              <SelectValue placeholder={t("environments.unify.select_a_value")} />
             </SelectTrigger>
             <SelectContent>
               {field.enumValues.map((value) => (
@@ -202,13 +204,13 @@ export function DroppableTargetField({
           {/* Show example values as quick select OR drop zone */}
           {!hasMapping && !isEditingStatic && (
             <div className="flex flex-wrap items-center gap-1">
-              <span className="text-xs text-slate-400">Drop field or</span>
+              <span className="text-xs text-slate-400">{t("environments.unify.drop_field_or")}</span>
               <button
                 type="button"
                 onClick={() => setIsEditingStatic(true)}
                 className="flex items-center gap-1 rounded px-1 py-0.5 text-xs text-slate-500 hover:bg-slate-200">
                 <PencilIcon className="h-3 w-3" />
-                set value
+                {t("environments.unify.set_value")}
               </button>
               {field.exampleStaticValues && field.exampleStaticValues.length > 0 && (
                 <>
@@ -233,7 +235,7 @@ export function DroppableTargetField({
 
   // Helper to get display label for static values
   const getStaticValueLabel = (value: string) => {
-    if (value === "$now") return "Feedback date";
+    if (value === "$now") return t("environments.unify.feedback_date");
     return value;
   };
 
@@ -282,7 +284,7 @@ export function DroppableTargetField({
         {/* Show drop zone with preset options */}
         {!hasDefaultMapping && (
           <div className="mt-1 flex flex-wrap items-center gap-1">
-            <span className="text-xs text-slate-400">Drop a field here</span>
+            <span className="text-xs text-slate-400">{t("environments.unify.drop_a_field_here")}</span>
             {field.exampleStaticValues && field.exampleStaticValues.length > 0 && (
               <>
                 <span className="text-xs text-slate-300">|</span>

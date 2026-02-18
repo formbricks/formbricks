@@ -1,48 +1,51 @@
+import { TFunction } from "i18next";
 import { THubFieldType, ZHubFieldType } from "@formbricks/types/connector";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 
 // Source types for the feedback source connections
 export type TSourceType = "formbricks" | "webhook" | "email" | "csv" | "slack";
 
-export const SOURCE_OPTIONS: {
+export interface TSourceOption {
   id: TSourceType;
   name: string;
   description: string;
   disabled: boolean;
   badge?: { text: string; type: "success" | "gray" | "warning" };
-}[] = [
+}
+
+export const getSourceOptions = (t: TFunction): TSourceOption[] => [
   {
     id: "formbricks",
-    name: "Formbricks Surveys",
-    description: "Connect feedback from your Formbricks surveys",
+    name: t("environments.unify.formbricks_surveys"),
+    description: t("environments.unify.source_connect_formbricks_description"),
     disabled: false,
   },
   {
     id: "webhook",
-    name: "Webhook",
-    description: "Receive feedback via webhook with custom mapping",
+    name: t("environments.unify.webhook"),
+    description: t("environments.unify.source_connect_webhook_description"),
     disabled: true,
-    badge: { text: "Coming soon", type: "gray" },
+    badge: { text: t("environments.unify.coming_soon"), type: "gray" },
   },
   {
     id: "email",
-    name: "Email",
-    description: "Import feedback from email with custom mapping",
+    name: t("environments.unify.email"),
+    description: t("environments.unify.source_connect_email_description"),
     disabled: true,
-    badge: { text: "Coming soon", type: "gray" },
+    badge: { text: t("environments.unify.coming_soon"), type: "gray" },
   },
   {
     id: "csv",
-    name: "CSV Import",
-    description: "Import feedback from CSV files",
+    name: t("environments.unify.csv_import"),
+    description: t("environments.unify.source_connect_csv_description"),
     disabled: false,
   },
   {
     id: "slack",
-    name: "Slack Message",
-    description: "Connect feedback from Slack channels",
+    name: t("environments.unify.slack_message"),
+    description: t("environments.unify.source_connect_slack_description"),
     disabled: true,
-    badge: { text: "Coming soon", type: "gray" },
+    badge: { text: t("environments.unify.coming_soon"), type: "gray" },
   },
 ];
 
@@ -226,69 +229,18 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
   },
 ];
 
-// Sample data for connector setup UIs
-export const SAMPLE_WEBHOOK_PAYLOAD = {
-  id: "resp_12345",
-  timestamp: "2024-01-15T10:30:00Z",
-  survey_id: "survey_abc",
-  survey_name: "Product Feedback Survey",
-  question_id: "q1",
-  question_text: "How satisfied are you with our product?",
-  answer_type: "rating",
-  answer_value: 4,
-  user_id: "user_xyz",
-  metadata: {
-    device: "mobile",
-    browser: "Safari",
-  },
-};
-
-export const EMAIL_SOURCE_FIELDS: TSourceField[] = [
-  { id: "subject", name: "Subject", type: "string", sampleValue: "Feature Request: Dark Mode" },
-  {
-    id: "body",
-    name: "Body (Text)",
-    type: "string",
-    sampleValue: "I would love to see a dark mode option...",
-  },
-];
-
 export const SAMPLE_CSV_COLUMNS = "timestamp,customer_id,rating,feedback_text,category";
 
 // AI suggested mappings per source type
-export const AI_SUGGESTED_MAPPINGS: Record<
-  TSourceType,
-  {
-    fieldMappings: Record<string, string>;
-    staticValues: Record<string, string>;
-  }
+export const AI_SUGGESTED_MAPPINGS: Partial<
+  Record<
+    TSourceType,
+    {
+      fieldMappings: Record<string, string>;
+      staticValues: Record<string, string>;
+    }
+  >
 > = {
-  webhook: {
-    fieldMappings: {
-      timestamp: "collected_at",
-      survey_id: "source_id",
-      survey_name: "source_name",
-      question_id: "field_id",
-      question_text: "field_label",
-      answer_value: "value_number",
-      user_id: "user_identifier",
-    },
-    staticValues: {
-      source_type: "survey",
-      field_type: "rating",
-    },
-  },
-  email: {
-    fieldMappings: {
-      subject: "field_label",
-      body: "value_text",
-    },
-    staticValues: {
-      collected_at: "$now",
-      source_type: "email",
-      field_type: "text",
-    },
-  },
   csv: {
     fieldMappings: {
       timestamp: "collected_at",
@@ -306,13 +258,6 @@ export const AI_SUGGESTED_MAPPINGS: Record<
     fieldMappings: {},
     staticValues: {
       source_type: "survey",
-    },
-  },
-  slack: {
-    fieldMappings: {},
-    staticValues: {
-      source_type: "support",
-      field_type: "text",
     },
   },
 };

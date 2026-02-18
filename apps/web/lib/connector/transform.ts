@@ -217,58 +217,6 @@ export function transformResponseToFeedbackRecords(
 }
 
 /**
- * Transform a webhook payload to a FeedbackRecord using field mappings
- *
- * @param payload - The incoming webhook payload
- * @param mappings - The field mappings for this connector
- * @returns FeedbackRecord payload to send to the Hub
- */
-export function transformWebhookPayloadToFeedbackRecord(
-  payload: Record<string, unknown>,
-  mappings: Array<{
-    sourceFieldId: string;
-    targetFieldId: string;
-    staticValue?: string | null;
-  }>
-): TCreateFeedbackRecordInput {
-  const feedbackRecord: Record<string, unknown> = {};
-
-  for (const mapping of mappings) {
-    let value: unknown;
-
-    if (mapping.staticValue) {
-      // Use static value
-      value = mapping.staticValue;
-
-      // Handle special static values
-      if (value === "$now") {
-        value = new Date().toISOString();
-      }
-    } else {
-      // Get value from payload using dot notation path
-      value = getNestedValue(payload, mapping.sourceFieldId);
-    }
-
-    if (value !== undefined && value !== null) {
-      feedbackRecord[mapping.targetFieldId] = value;
-    }
-  }
-
-  // Ensure required fields have defaults
-  if (!feedbackRecord.source_type) {
-    feedbackRecord.source_type = "webhook";
-  }
-  if (!feedbackRecord.collected_at) {
-    feedbackRecord.collected_at = new Date().toISOString();
-  }
-  if (!feedbackRecord.field_type) {
-    feedbackRecord.field_type = "text";
-  }
-
-  return feedbackRecord as TCreateFeedbackRecordInput;
-}
-
-/**
  * Transform a CSV row to a FeedbackRecord using field mappings
  *
  * @param row - The CSV row as an object (column name -> value)
@@ -332,52 +280,4 @@ export function transformCSVRowToFeedbackRecord(
   }
 
   return feedbackRecord as TCreateFeedbackRecordInput;
-}
-
-/**
- * Helper to get a nested value from an object using dot notation and array brackets
- * e.g., getNestedValue({user: {id: "123"}}, "user.id") => "123"
- * e.g., getNestedValue({items: [{name: "a"}]}, "items[0].name") => "a"
- */
-function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
-  let current: unknown = obj;
-
-  // Split by dots, but we need to handle array notation within each segment
-  const segments = path.split(".");
-
-  for (const segment of segments) {
-    if (current === null || current === undefined) {
-      return undefined;
-    }
-
-    // Check if segment contains array notation like "answers[0]" or just "[0]"
-    const arrayMatch = segment.match(/^([^\[]*)\[(\d+)\]$/);
-
-    if (arrayMatch) {
-      const [, propertyName, indexStr] = arrayMatch;
-      const index = parseInt(indexStr, 10);
-
-      // If there's a property name before the bracket, access it first
-      if (propertyName) {
-        if (typeof current !== "object") {
-          return undefined;
-        }
-        current = (current as Record<string, unknown>)[propertyName];
-      }
-
-      // Now access the array index
-      if (!Array.isArray(current)) {
-        return undefined;
-      }
-      current = current[index];
-    } else {
-      // Regular property access
-      if (typeof current !== "object") {
-        return undefined;
-      }
-      current = (current as Record<string, unknown>)[segment];
-    }
-  }
-
-  return current;
 }

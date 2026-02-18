@@ -1,10 +1,8 @@
 "use client";
 
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
-import { CopyIcon, MailIcon } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Badge } from "@/modules/ui/components/badge";
-import { Switch } from "@/modules/ui/components/switch";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FEEDBACK_RECORD_FIELDS, TFieldMapping, TSourceField, TSourceType } from "../types";
 import { DraggableSourceField, DroppableTargetField } from "./mapping-field";
 
@@ -13,36 +11,11 @@ interface MappingUIProps {
   mappings: TFieldMapping[];
   onMappingsChange: (mappings: TFieldMapping[]) => void;
   sourceType: TSourceType;
-  deriveFromAttachments?: boolean;
-  onDeriveFromAttachmentsChange?: (value: boolean) => void;
-  emailInboxId?: string;
 }
 
-export function MappingUI({
-  sourceFields,
-  mappings,
-  onMappingsChange,
-  sourceType,
-  deriveFromAttachments = false,
-  onDeriveFromAttachmentsChange,
-  emailInboxId,
-}: MappingUIProps) {
+export function MappingUI({ sourceFields, mappings, onMappingsChange, sourceType }: MappingUIProps) {
+  const { t } = useTranslation();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [emailCopied, setEmailCopied] = useState(false);
-
-  // Generate a stable random email ID if not provided
-  const generatedEmailId = useMemo(() => {
-    if (emailInboxId) return emailInboxId;
-    return `fb-${Math.random().toString(36).substring(2, 8)}`;
-  }, [emailInboxId]);
-
-  const inboxEmail = `${generatedEmailId}@inbox.formbricks.com`;
-
-  const handleCopyEmail = () => {
-    navigator.clipboard.writeText(inboxEmail);
-    setEmailCopied(true);
-    setTimeout(() => setEmailCopied(false), 2000);
-  };
 
   const requiredFields = FEEDBACK_RECORD_FIELDS.filter((f) => f.required);
   const optionalFields = FEEDBACK_RECORD_FIELDS.filter((f) => !f.required);
@@ -60,14 +33,11 @@ export function MappingUI({
     const sourceFieldId = active.id as string;
     const targetFieldId = over.id as string;
 
-    // Check if this target already has a mapping
     const existingMapping = mappings.find((m) => m.targetFieldId === targetFieldId);
     if (existingMapping) {
-      // Remove the existing mapping first
       const newMappings = mappings.filter((m) => m.targetFieldId !== targetFieldId);
       onMappingsChange([...newMappings, { sourceFieldId, targetFieldId }]);
     } else {
-      // Remove any existing mapping for this source field
       const newMappings = mappings.filter((m) => m.sourceFieldId !== sourceFieldId);
       onMappingsChange([...newMappings, { sourceFieldId, targetFieldId }]);
     }
@@ -78,9 +48,7 @@ export function MappingUI({
   };
 
   const handleStaticValueChange = (targetFieldId: string, staticValue: string) => {
-    // Remove any existing mapping for this target field
     const newMappings = mappings.filter((m) => m.targetFieldId !== targetFieldId);
-    // Add new static value mapping
     onMappingsChange([...newMappings, { targetFieldId, staticValue }]);
   };
 
@@ -99,48 +67,15 @@ export function MappingUI({
 
   const getSourceTypeLabel = () => {
     switch (sourceType) {
-      case "webhook":
-        return "Webhook Payload";
-      case "email":
-        return "Email Fields";
       case "csv":
-        return "CSV Columns";
+        return t("environments.unify.csv_columns");
       default:
-        return "Source Fields";
+        return t("environments.unify.source_fields");
     }
   };
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      {/* Email inbox address display */}
-      {sourceType === "email" && (
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-              <MailIcon className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-slate-900">Your feedback inbox</p>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Forward emails to this address to capture feedback automatically
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <code className="rounded bg-white px-2 py-1 font-mono text-sm text-blue-700">
-                  {inboxEmail}
-                </code>
-                <button
-                  type="button"
-                  onClick={handleCopyEmail}
-                  className="flex items-center gap-1 rounded px-2 py-1 text-xs text-blue-600 hover:bg-blue-100">
-                  <CopyIcon className="h-3 w-3" />
-                  {emailCopied ? "Copied!" : "Copy"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="grid grid-cols-2 gap-6">
         {/* Source Fields Panel */}
         <div className="space-y-3">
@@ -149,13 +84,9 @@ export function MappingUI({
           {sourceFields.length === 0 ? (
             <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
               <p className="text-sm text-slate-500">
-                {sourceType === "webhook"
-                  ? "Click 'Simulate webhook' to load sample fields"
-                  : sourceType === "email"
-                    ? "Click 'Load email fields' to see available fields"
-                    : sourceType === "csv"
-                      ? "Click 'Load sample CSV' to see columns"
-                      : "No source fields loaded yet"}
+                {sourceType === "csv"
+                  ? t("environments.unify.click_load_sample_csv")
+                  : t("environments.unify.no_source_fields_loaded")}
               </p>
             </div>
           ) : (
@@ -165,31 +96,19 @@ export function MappingUI({
               ))}
             </div>
           )}
-
-          {/* Email-specific options */}
-          {sourceType === "email" && onDeriveFromAttachmentsChange && (
-            <div className="mt-4 flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3">
-              <div className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-900">Derive context from attachments</span>
-                  <Badge text="AI" type="gray" size="tiny" />
-                </div>
-                <span className="text-xs text-slate-500">
-                  Extract additional context from email attachments using AI
-                </span>
-              </div>
-              <Switch checked={deriveFromAttachments} onCheckedChange={onDeriveFromAttachmentsChange} />
-            </div>
-          )}
         </div>
 
         {/* Target Fields Panel */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-slate-700">Hub Feedback Record Fields</h4>
+          <h4 className="text-sm font-medium text-slate-700">
+            {t("environments.unify.hub_feedback_record_fields")}
+          </h4>
 
           {/* Required Fields */}
           <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Required</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t("environments.unify.required")}
+            </p>
             {requiredFields.map((field) => (
               <DroppableTargetField
                 key={field.id}
@@ -204,7 +123,9 @@ export function MappingUI({
 
           {/* Optional Fields */}
           <div className="mt-4 space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Optional</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t("environments.unify.optional")}
+            </p>
             {optionalFields.map((field) => (
               <DroppableTargetField
                 key={field.id}

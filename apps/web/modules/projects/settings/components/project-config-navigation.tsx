@@ -79,7 +79,7 @@ export const ProjectConfigNavigation = ({
     },
     {
       id: "unify",
-      label: "Unify Feedback",
+      label: t("environments.unify.unify_feedback"),
       icon: <Cable className="h-5 w-5" />,
       href: `/environments/${environmentId}/workspace/unify`,
       current: pathname?.includes("/unify"),

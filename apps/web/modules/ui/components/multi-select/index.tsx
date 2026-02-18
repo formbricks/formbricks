@@ -38,7 +38,6 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   const [inputValue, setInputValue] = React.useState("");
   const [position, setPosition] = React.useState<{ top: number; left: number; width: number } | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const isSelectingRef = React.useRef(false);
   const [portalContainer, setPortalContainer] = React.useState<HTMLElement | null>(null);
 
   // Track if changes are user-initiated (not from value prop)
@@ -194,12 +193,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
             ref={inputRef}
             value={inputValue}
             onValueChange={setInputValue}
-            onBlur={(e) => {
-              // Don't close if we're selecting an option
-              if (!isSelectingRef.current) {
-                setOpen(false);
-              }
-            }}
+            onBlur={() => setOpen(false)}
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
             disabled={disabled}
@@ -230,18 +224,12 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        isSelectingRef.current = true;
                       }}
                       onSelect={() => {
                         if (disabled) return;
                         isUserInitiatedRef.current = true; // Mark as user-initiated
                         setSelected((prev) => [...prev, option]);
                         setInputValue("");
-                        // Reset the flag after a short delay to allow the selection to complete
-                        setTimeout(() => {
-                          isSelectingRef.current = false;
-                          setOpen(false);
-                        }, 100);
                       }}
                       className="cursor-pointer">
                       {option.label}

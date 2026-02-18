@@ -1,9 +1,8 @@
 "use client";
 
-import { CheckIcon, CopyIcon, PlusIcon, SparklesIcon, WebhookIcon } from "lucide-react";
-import { nanoid } from "nanoid";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
+import { PlusIcon, SparklesIcon } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -18,10 +17,7 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
   AI_SUGGESTED_MAPPINGS,
-  EMAIL_SOURCE_FIELDS,
   FEEDBACK_RECORD_FIELDS,
-  SAMPLE_CSV_COLUMNS,
-  SAMPLE_WEBHOOK_PAYLOAD,
   TCreateSourceStep,
   TFieldMapping,
   TSourceConnection,
@@ -29,27 +25,11 @@ import {
   TSourceType,
   TUnifySurvey,
 } from "../types";
-import { parseCSVColumnsToFields, parsePayloadToFields } from "../utils";
+import { parseCSVColumnsToFields } from "../utils";
 import { CsvSourceUI } from "./csv-source-ui";
 import { FormbricksSurveySelector } from "./formbricks-survey-selector";
 import { MappingUI } from "./mapping-ui";
 import { SourceTypeSelector } from "./source-type-selector";
-
-// Polling interval in milliseconds (3 seconds)
-const WEBHOOK_POLL_INTERVAL = 3000;
-
-// Sample webhook payload for cURL example
-const SAMPLE_CURL_PAYLOAD = {
-  timestamp: new Date().toISOString(),
-  source_type: "webhook",
-  field_id: "satisfaction_score",
-  field_type: "rating",
-  value_number: 4,
-  user_id: "user_123",
-  metadata: {
-    source: "api",
-  },
-};
 
 interface CreateSourceModalProps {
   open: boolean;
@@ -66,115 +46,24 @@ function getDefaultSourceName(type: TSourceType): string {
   switch (type) {
     case "formbricks":
       return "Formbricks Survey Connection";
-    case "webhook":
-      return "Webhook Connection";
-    case "email":
-      return "Email Connection";
     case "csv":
       return "CSV Import";
-    case "slack":
-      return "Slack Connection";
     default:
       return "New Source";
   }
 }
 
 export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys }: CreateSourceModalProps) {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState<TCreateSourceStep>("selectType");
   const [selectedType, setSelectedType] = useState<TSourceType | null>(null);
   const [sourceName, setSourceName] = useState("");
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
-  const [deriveFromAttachments, setDeriveFromAttachments] = useState(false);
 
   // Formbricks-specific state
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
-
-  // Webhook listener state
-  const [webhookSessionId, setWebhookSessionId] = useState<string | null>(null);
-  const [isListening, setIsListening] = useState(false);
-  const [webhookReceived, setWebhookReceived] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Generate webhook URL
-  const webhookUrl = webhookSessionId
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/unify/webhook-listener/${webhookSessionId}`
-    : "";
-
-  // Poll for webhook payload
-  const pollForWebhook = useCallback(async () => {
-    if (!webhookSessionId) return;
-
-    try {
-      const response = await fetch(`/api/unify/webhook-listener/${webhookSessionId}`);
-
-      if (response.status === 200) {
-        const data = await response.json();
-        if (data.payload) {
-          // Parse the received payload into source fields
-          const fields = parsePayloadToFields(data.payload);
-          setSourceFields(fields);
-          setWebhookReceived(true);
-          setIsListening(false);
-          toast.success("Webhook received! Fields loaded.");
-
-          // Stop polling
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-        }
-      }
-      // 204 means no payload yet, keep polling
-    } catch (error) {
-      console.error("Error polling for webhook:", error);
-    }
-  }, [webhookSessionId]);
-
-  // Start/stop polling based on listening state
-  useEffect(() => {
-    if (isListening && webhookSessionId) {
-      // Start polling
-      pollingIntervalRef.current = setInterval(pollForWebhook, WEBHOOK_POLL_INTERVAL);
-      // Also poll immediately
-      pollForWebhook();
-    }
-
-    return () => {
-      // Cleanup polling on unmount or when listening stops
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = null;
-      }
-    };
-  }, [isListening, webhookSessionId, pollForWebhook]);
-
-  // Generate session ID when webhook type is selected and modal opens
-  useEffect(() => {
-    if (open && selectedType === "webhook" && currentStep === "mapping" && !webhookSessionId) {
-      setWebhookSessionId(nanoid(21));
-      setIsListening(true);
-    }
-  }, [open, selectedType, currentStep, webhookSessionId]);
-
-  // Copy cURL command to clipboard
-  const handleCopyWebhookUrl = async () => {
-    if (!webhookUrl) return;
-    const curlCommand = `curl -X POST \\
-  "${webhookUrl}" \\
-  -H "Content-Type: application/json" \\
-  -d '${JSON.stringify(SAMPLE_CURL_PAYLOAD, null, 2)}'`;
-    try {
-      await navigator.clipboard.writeText(curlCommand);
-      setCopied(true);
-      toast.success("cURL command copied to clipboard");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Failed to copy");
-    }
-  };
 
   const resetForm = () => {
     setCurrentStep("selectType");
@@ -182,18 +71,8 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
     setSourceName("");
     setMappings([]);
     setSourceFields([]);
-    setDeriveFromAttachments(false);
     setSelectedSurveyId(null);
     setSelectedElementIds([]);
-    // Reset webhook state
-    setWebhookSessionId(null);
-    setIsListening(false);
-    setWebhookReceived(false);
-    setCopied(false);
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
-    }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -203,10 +82,11 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
     onOpenChange(newOpen);
   };
 
+  const isDisabledType = (type: TSourceType) => type === "webhook" || type === "email" || type === "slack";
+
   const handleNextStep = () => {
-    if (currentStep === "selectType" && selectedType && selectedType !== "slack") {
+    if (currentStep === "selectType" && selectedType && !isDisabledType(selectedType)) {
       if (selectedType === "formbricks") {
-        // For Formbricks, use the survey name if selected
         const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
         setSourceName(
           selectedSurvey ? `${selectedSurvey.name} Connection` : getDefaultSourceName(selectedType)
@@ -218,7 +98,6 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
     }
   };
 
-  // Formbricks handlers
   const handleSurveySelect = (surveyId: string | null) => {
     setSelectedSurveyId(surveyId);
   };
@@ -251,7 +130,6 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
   const handleCreateSource = () => {
     if (!selectedType || !sourceName.trim()) return;
 
-    // Check if all required fields are mapped (for non-Formbricks connectors)
     if (selectedType !== "formbricks") {
       const requiredFields = FEEDBACK_RECORD_FIELDS.filter((f) => f.required);
       const allRequiredMapped = requiredFields.every((field) =>
@@ -259,7 +137,6 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
       );
 
       if (!allRequiredMapped) {
-        // For now, we'll allow creating without all required fields for POC
         console.warn("Not all required fields are mapped");
       }
     }
@@ -273,7 +150,6 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
       updatedAt: new Date(),
     };
 
-    // Pass the Formbricks-specific data if applicable
     onCreateSource(
       newSource,
       selectedType === "formbricks" ? (selectedSurveyId ?? undefined) : undefined,
@@ -288,26 +164,15 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
     mappings.some((m) => m.targetFieldId === field.id && (m.sourceFieldId || m.staticValue))
   );
 
-  // Formbricks validation - need survey and at least one element selected
   const isFormbricksValid =
     selectedType === "formbricks" && selectedSurveyId && selectedElementIds.length > 0;
-
-  // CSV validation - need sourceFields loaded (CSV uploaded or sample loaded)
   const isCsvValid = selectedType === "csv" && sourceFields.length > 0;
 
   const handleLoadSourceFields = () => {
-    if (!selectedType) return;
-    let fields: TSourceField[];
-    if (selectedType === "webhook") {
-      fields = parsePayloadToFields(SAMPLE_WEBHOOK_PAYLOAD);
-    } else if (selectedType === "email") {
-      fields = EMAIL_SOURCE_FIELDS;
-    } else if (selectedType === "csv") {
-      fields = parseCSVColumnsToFields(SAMPLE_CSV_COLUMNS);
-    } else {
-      fields = parsePayloadToFields(SAMPLE_WEBHOOK_PAYLOAD);
+    if (selectedType === "csv") {
+      const fields = parseCSVColumnsToFields("timestamp,customer_id,rating,feedback_text,category");
+      setSourceFields(fields);
     }
-    setSourceFields(fields);
   };
 
   const handleSuggestMapping = () => {
@@ -317,7 +182,6 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
 
     const newMappings: TFieldMapping[] = [];
 
-    // Add field mappings from source fields
     for (const sourceField of sourceFields) {
       const suggestedTarget = suggestions.fieldMappings[sourceField.id];
       if (suggestedTarget) {
@@ -331,7 +195,6 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
       }
     }
 
-    // Add static value mappings
     for (const [targetFieldId, staticValue] of Object.entries(suggestions.staticValues)) {
       const targetExists = FEEDBACK_RECORD_FIELDS.find((f) => f.id === targetFieldId);
       if (targetExists) {
@@ -347,23 +210,10 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
     setMappings(newMappings);
   };
 
-  const getLoadButtonLabel = () => {
-    switch (selectedType) {
-      case "webhook":
-        return "Simulate webhook";
-      case "email":
-        return "Load email fields";
-      case "csv":
-        return "Load sample CSV";
-      default:
-        return "Load sample";
-    }
-  };
-
   return (
     <>
       <Button onClick={() => onOpenChange(true)} size="sm">
-        Add source
+        {t("environments.unify.add_source")}
         <PlusIcon className="ml-2 h-4 w-4" />
       </Button>
 
@@ -372,21 +222,21 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
           <DialogHeader>
             <DialogTitle>
               {currentStep === "selectType"
-                ? "Add Feedback Source"
+                ? t("environments.unify.add_feedback_source")
                 : selectedType === "formbricks"
-                  ? "Select Survey & Questions"
+                  ? t("environments.unify.select_survey_and_questions")
                   : selectedType === "csv"
-                    ? "Import CSV Data"
-                    : "Configure Mapping"}
+                    ? t("environments.unify.import_csv_data")
+                    : t("environments.unify.configure_mapping")}
             </DialogTitle>
             <DialogDescription>
               {currentStep === "selectType"
-                ? "Select the type of feedback source you want to connect."
+                ? t("environments.unify.select_source_type_description")
                 : selectedType === "formbricks"
-                  ? "Choose which survey questions should create FeedbackRecords."
+                  ? t("environments.unify.select_survey_questions_description")
                   : selectedType === "csv"
-                    ? "Upload a CSV file or set up automated S3 imports."
-                    : "Map source fields to Hub Feedback Record fields."}
+                    ? t("environments.unify.upload_csv_data_description")
+                    : t("environments.unify.configure_mapping")}
             </DialogDescription>
           </DialogHeader>
 
@@ -394,15 +244,14 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
             {currentStep === "selectType" ? (
               <SourceTypeSelector selectedType={selectedType} onSelectType={setSelectedType} />
             ) : selectedType === "formbricks" ? (
-              /* Formbricks Survey Selector UI */
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sourceName">Source Name</Label>
+                  <Label htmlFor="sourceName">{t("environments.unify.source_name")}</Label>
                   <Input
                     id="sourceName"
                     value={sourceName}
                     onChange={(e) => setSourceName(e.target.value)}
-                    placeholder="Enter a name for this source"
+                    placeholder={t("environments.unify.enter_name_for_source")}
                   />
                 </div>
 
@@ -419,15 +268,14 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
                 </div>
               </div>
             ) : selectedType === "csv" ? (
-              /* CSV Upload & S3 Integration UI */
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sourceName">Source Name</Label>
+                  <Label htmlFor="sourceName">{t("environments.unify.source_name")}</Label>
                   <Input
                     id="sourceName"
                     value={sourceName}
                     onChange={(e) => setSourceName(e.target.value)}
-                    placeholder="Enter a name for this source"
+                    placeholder={t("environments.unify.enter_name_for_source")}
                   />
                 </div>
 
@@ -442,140 +290,37 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
                 </div>
               </div>
             ) : (
-              /* Other source types (webhook, email) - Mapping UI */
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sourceName">Source Name</Label>
+                  <Label htmlFor="sourceName">{t("environments.unify.source_name")}</Label>
                   <Input
                     id="sourceName"
                     value={sourceName}
                     onChange={(e) => setSourceName(e.target.value)}
-                    placeholder="Enter a name for this source"
+                    placeholder={t("environments.unify.enter_name_for_source")}
                   />
                 </div>
 
-                {/* Webhook Listener UI */}
-                {selectedType === "webhook" && !webhookReceived && (
-                  <div className="space-y-6">
-                    {/* Centered waiting indicator */}
-                    <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 py-12">
-                      <span className="relative mb-4 flex h-16 w-16">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-slate-300 opacity-75"></span>
-                        <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-200">
-                          <WebhookIcon className="h-8 w-8 text-slate-600" />
-                        </span>
-                      </span>
-                      <p className="text-lg font-medium text-slate-700">Waiting for webhook...</p>
-                      <p className="mt-1 text-sm text-slate-500">Send a request to the URL below</p>
-                    </div>
-
-                    {/* cURL example at bottom */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-slate-700">Test with cURL</Label>
-                      <div className="relative">
-                        <pre className="overflow-auto rounded-lg border border-slate-300 bg-slate-900 p-3 text-xs text-slate-100">
-                          <code>{`curl -X POST "${webhookUrl || "..."}" \\
-  -H "Content-Type: application/json" \\
-  -d '${JSON.stringify(SAMPLE_CURL_PAYLOAD, null, 2)}'`}</code>
-                        </pre>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={handleCopyWebhookUrl}
-                          disabled={!webhookUrl}
-                          className="absolute right-2 top-2">
-                          {copied ? (
-                            <>
-                              <CheckIcon className="mr-1 h-3 w-3" />
-                              Copied
-                            </>
-                          ) : (
-                            <>
-                              <CopyIcon className="mr-1 h-3 w-3" />
-                              Copy
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Webhook received - show success + mapping UI */}
-                {selectedType === "webhook" && webhookReceived && (
-                  <div className="space-y-4">
-                    {/* Success indicator */}
-                    <div className="flex flex-col items-center justify-center rounded-lg border border-green-200 bg-green-50 py-6">
-                      <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-500">
-                        <CheckIcon className="h-6 w-6 text-white" />
-                      </div>
-                      <p className="text-lg font-medium text-green-700">Webhook received!</p>
-                      <p className="mt-1 text-sm text-green-600">
-                        {sourceFields.length} fields detected. Map them below.
-                      </p>
-                    </div>
-
-                    {/* AI suggest mapping button */}
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2">
                     {sourceFields.length > 0 && (
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={handleSuggestMapping} className="gap-2">
-                          <SparklesIcon className="h-4 w-4 text-purple-500" />
-                          Suggest mapping
-                          <Badge text="AI" type="gray" size="tiny" className="ml-1" />
-                        </Button>
-                      </div>
+                      <Button variant="outline" size="sm" onClick={handleSuggestMapping} className="gap-2">
+                        <SparklesIcon className="h-4 w-4 text-purple-500" />
+                        {t("environments.unify.suggest_mapping")}
+                        <Badge text="AI" type="gray" size="tiny" className="ml-1" />
+                      </Button>
                     )}
-
-                    {/* Mapping UI */}
-                    <div className="max-h-[40vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-                      <MappingUI
-                        sourceFields={sourceFields}
-                        mappings={mappings}
-                        onMappingsChange={setMappings}
-                        sourceType={selectedType}
-                        deriveFromAttachments={deriveFromAttachments}
-                        onDeriveFromAttachmentsChange={setDeriveFromAttachments}
-                      />
-                    </div>
                   </div>
-                )}
+                </div>
 
-                {/* Non-webhook types */}
-                {selectedType !== "webhook" && (
-                  <>
-                    {/* Action buttons */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={handleLoadSourceFields}>
-                          {getLoadButtonLabel()}
-                        </Button>
-                        {sourceFields.length > 0 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleSuggestMapping}
-                            className="gap-2">
-                            <SparklesIcon className="h-4 w-4 text-purple-500" />
-                            Suggest mapping
-                            <Badge text="AI" type="gray" size="tiny" className="ml-1" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Mapping UI */}
-                    <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-                      <MappingUI
-                        sourceFields={sourceFields}
-                        mappings={mappings}
-                        onMappingsChange={setMappings}
-                        sourceType={selectedType!}
-                        deriveFromAttachments={deriveFromAttachments}
-                        onDeriveFromAttachmentsChange={setDeriveFromAttachments}
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <MappingUI
+                    sourceFields={sourceFields}
+                    mappings={mappings}
+                    onMappingsChange={setMappings}
+                    sourceType={selectedType!}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -583,16 +328,16 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
           <DialogFooter>
             {currentStep === "mapping" && (
               <Button variant="outline" onClick={handleBack}>
-                Back
+                {t("common.back")}
               </Button>
             )}
             {currentStep === "selectType" ? (
-              <Button onClick={handleNextStep} disabled={!selectedType || selectedType === "slack"}>
+              <Button onClick={handleNextStep} disabled={!selectedType || isDisabledType(selectedType)}>
                 {selectedType === "formbricks"
-                  ? "Select questions"
+                  ? t("environments.unify.select_questions")
                   : selectedType === "csv"
-                    ? "Configure import"
-                    : "Create mapping"}
+                    ? t("environments.unify.configure_import")
+                    : t("environments.unify.create_mapping")}
               </Button>
             ) : (
               <Button
@@ -605,7 +350,7 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
                       ? !isCsvValid
                       : !allRequiredMapped)
                 }>
-                Setup connection
+                {t("environments.unify.setup_connection")}
               </Button>
             )}
           </DialogFooter>
