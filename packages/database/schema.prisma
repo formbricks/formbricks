@@ -647,6 +647,8 @@ model Project {
   logo                Json?
   projectTeams        ProjectTeam[]
   customHeadScripts   String? // Custom HTML scripts for link surveys (self-hosted only)
+  charts              Chart[]
+  dashboards          Dashboard[]
 
   @@unique([organizationId, name])
 }
@@ -867,6 +869,8 @@ model User {
   /// [Locale]
   locale                    String           @default("en-US")
   surveys                   Survey[]
+  charts                    Chart[]          @relation("chartCreatedBy")
+  dashboards                Dashboard[]      @relation("dashboardCreatedBy")
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?
   isActive                  Boolean          @default(true)
@@ -1003,4 +1007,93 @@ model ProjectTeam {
 
   @@id([projectId, teamId])
   @@index([teamId])
+}
+
+enum ChartType {
+  area
+  bar
+  line
+  pie
+  big_number
+}
+
+/// Represents a chart/visualization that can be used in multiple dashboards.
+/// Charts are reusable components that query analytics data.
+///
+/// @property id - Unique identifier for the chart
+/// @property name - Display name of the chart
+/// @property type - Type of visualization (bar, line, pie, etc.)
+/// @property project - The project this chart belongs to
+/// @property query - Cube.js query configuration (JSON)
+/// @property config - Chart-specific configuration (colors, labels, etc.)
+/// @property createdBy - User who created the chart
+/// @property dashboards - Dashboards that use this chart
+model Chart {
+  id        String            @id @default(cuid())
+  createdAt DateTime          @default(now()) @map(name: "created_at")
+  updatedAt DateTime          @updatedAt @map(name: "updated_at")
+  name      String
+  type      ChartType
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  /// [ChartQuery] - Cube.js query configuration
+  query     Json              @default("{}")
+  /// [ChartConfig] - Visualization configuration (colors, labels, formatting)
+  config    Json              @default("{}")
+  creator   User?             @relation("chartCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy String?
+  widgets   DashboardWidget[]
+
+  @@unique([projectId, name])
+  @@index([projectId, createdAt])
+}
+
+/// Represents a dashboard containing multiple charts.
+/// Dashboards aggregate analytics insights at the project level.
+///
+/// @property id - Unique identifier for the dashboard
+/// @property name - Display name of the dashboard
+/// @property description - Optional description
+/// @property project - The project this dashboard belongs to
+/// @property widgets - Charts on this dashboard
+/// @property createdBy - User who created the dashboard
+model Dashboard {
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now()) @map(name: "created_at")
+  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
+  name        String
+  description String?
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy   String?
+  widgets     DashboardWidget[]
+
+  @@unique([projectId, name])
+  @@index([projectId, createdAt])
+}
+
+/// Represents a chart widget on a dashboard.
+/// Widgets are positioned using a grid layout system.
+///
+/// @property id - Unique identifier for the widget
+/// @property dashboard - The dashboard this widget belongs to
+/// @property title - Optional title for the widget
+/// @property chart - The chart displayed in this widget
+/// @property layout - Grid layout configuration (x, y, width, height)
+/// @property order - Display order within the dashboard
+model DashboardWidget {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now()) @map(name: "created_at")
+  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  dashboardId String
+  title       String?
+  chart       Chart     @relation(fields: [chartId], references: [id], onDelete: Cascade)
+  chartId     String
+  /// [WidgetLayout] - Grid layout: { x, y, w, h }
+  layout      Json      @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
+  order       Int       @default(0)
+
+  @@index([dashboardId, order])
 }
