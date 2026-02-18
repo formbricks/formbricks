@@ -100,7 +100,7 @@ export const MainNavigation = ({
   const mainNavigation = useMemo(
     () => [
       {
-        name: "Ask",
+        name: t("common.ask"),
         href: `/environments/${environment.id}/surveys`,
         icon: MessageCircle,
         isActive: pathname?.includes("/surveys"),
@@ -108,7 +108,7 @@ export const MainNavigation = ({
       },
       {
         href: `/environments/${environment.id}/contacts`,
-        name: "Distribute",
+        name: t("common.distribute"),
         icon: UserIcon,
         isActive:
           pathname?.includes("/contacts") ||
@@ -116,13 +116,13 @@ export const MainNavigation = ({
           pathname?.includes("/attributes"),
       },
       {
-        name: "Unify",
+        name: t("common.unify"),
         href: `/environments/${environment.id}/workspace/unify`,
         icon: ShapesIcon,
         isActive: pathname?.includes("/unify") && !pathname?.includes("/analyze"),
       },
       {
-        name: "Configure",
+        name: t("common.configure"),
         href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
         isActive: pathname?.includes("/project"),

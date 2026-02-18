@@ -135,7 +135,7 @@ export const ProjectBreadcrumb = ({
     },
     {
       id: "unify",
-      label: "Unify Feedback",
+      label: t("common.unify"),
       href: `/environments/${currentEnvironmentId}/workspace/unify`,
     },
   ];

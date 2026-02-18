@@ -1,8 +1,8 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
+import { TSourceConnection } from "../types";
 import { SourcesTableDataRow } from "./sources-table-data-row";
-import { TSourceConnection } from "./types";
 
 interface SourcesTableProps {
   sources: TSourceConnection[];
@@ -14,8 +14,8 @@ export function SourcesTable({ sources, onSourceClick, isLoading = false }: Sour
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="grid h-12 grid-cols-12 content-center border-b border-slate-200 text-left text-sm font-semibold text-slate-900">
-        <div className="col-span-1 pl-6">Type</div>
-        <div className="col-span-6">Name</div>
+        <div className="col-span-2 pl-6">Type</div>
+        <div className="col-span-5">Name</div>
         <div className="col-span-2 hidden text-center sm:block">Mappings</div>
         <div className="col-span-3 hidden pr-6 text-right sm:block">Created</div>
       </div>

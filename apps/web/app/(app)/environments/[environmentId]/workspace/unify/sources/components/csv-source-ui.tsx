@@ -21,8 +21,8 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
+import { TFieldMapping, TSourceField } from "../types";
 import { MappingUI } from "./mapping-ui";
-import { TFieldMapping, TSourceField } from "./types";
 
 interface CsvSourceUIProps {
   sourceFields: TSourceField[];

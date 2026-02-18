@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/modules/ui/components/badge";
-import { SOURCE_OPTIONS, TSourceType } from "./types";
+import { SOURCE_OPTIONS, TSourceType } from "../types";
 
 interface SourceTypeSelectorProps {
   selectedType: TSourceType | null;

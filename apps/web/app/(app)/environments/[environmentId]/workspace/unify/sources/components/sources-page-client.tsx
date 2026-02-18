@@ -15,11 +15,11 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UnifyConfigNavigation } from "../../components/UnifyConfigNavigation";
 import { getSurveysForUnifyAction } from "../actions";
+import { TSourceConnection, TUnifySurvey } from "../types";
+import { elementTypeToHubFieldType } from "../utils";
 import { CreateSourceModal } from "./create-source-modal";
 import { EditSourceModal } from "./edit-source-modal";
 import { SourcesTable } from "./sources-table";
-import { TSourceConnection, TUnifySurvey } from "./types";
-import { elementTypeToHubFieldType } from "./types";
 
 interface SourcesSectionProps {
   environmentId: string;

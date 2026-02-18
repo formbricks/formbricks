@@ -11,8 +11,10 @@ import {
   StarIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { Badge } from "@/modules/ui/components/badge";
-import { TUnifySurvey, getElementTypeLabel } from "./types";
+import { TUnifySurvey } from "../types";
 
 interface FormbricksSurveySelectorProps {
   surveys: TUnifySurvey[];
@@ -60,6 +62,7 @@ export function FormbricksSurveySelector({
   onSelectAllElements,
   onDeselectAllElements,
 }: FormbricksSurveySelectorProps) {
+  const { t } = useTranslation();
   const [expandedSurveyId, setExpandedSurveyId] = useState<string | null>(null);
 
   const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
@@ -115,10 +118,7 @@ export function FormbricksSurveySelector({
                         <span className="text-sm font-medium text-slate-900">{survey.name}</span>
                         {getStatusBadge(survey.status)}
                       </div>
-                      <p className="text-xs text-slate-500">
-                        {survey.elements.length} elements
-                        {survey.responseCount > 0 && ` · ${survey.responseCount.toLocaleString()} responses`}
-                      </p>
+                      <p className="text-xs text-slate-500">{survey.elements.length} elements</p>
                     </div>
                     {isSelected && <CheckCircle2Icon className="text-brand-dark h-5 w-5" />}
                   </button>
@@ -178,7 +178,9 @@ export function FormbricksSurveySelector({
                   <div className="flex-1">
                     <p className="text-sm text-slate-900">{element.headline}</p>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">{getElementTypeLabel(element.type)}</span>
+                      <span className="text-xs text-slate-500">
+                        {getTSurveyElementTypeEnumName(element.type, t) ?? element.type}
+                      </span>
                       {element.required && (
                         <span className="text-xs text-red-500">
                           <CircleIcon className="inline h-1.5 w-1.5 fill-current" /> Required

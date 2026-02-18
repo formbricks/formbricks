@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { TFieldMapping, TSourceField, TTargetField } from "./types";
+import { TFieldMapping, TSourceField, TTargetField } from "../types";
 
 interface DraggableSourceFieldProps {
   field: TSourceField;

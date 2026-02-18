@@ -114,6 +114,7 @@ checksums:
     common/app_survey: f076d131d20bfdadb35fba29c8275232
     common/apply_filters: 6543c1e80038b3da0f4a42848d08d4d1
     common/are_you_sure: 6d5cd13628a7887711fd0c29f1123652
+    common/ask: 24150ae04c60dcd8688d93a8a3a2d238
     common/attributes: 86d0ae6fea0fbb119722ed3841f8385a
     common/back: f541015a827e37cb3b1234e56bc2aa3c
     common/billing: b01dbdd049ebbd4a349fa64d6ce65a3b
@@ -136,6 +137,7 @@ checksums:
     common/code: 343bc5386149b97cece2b093c39034b2
     common/collapse_rows: 24988527f9180f37aa55d2aa183ccb21
     common/completed: 0e4bbce9985f25eb673d9a054c8d5334
+    common/configure: e3ab18ebb36c218cd4897c620f5809ac
     common/confirm: 90930b51154032f119fa75c1bd422d8b
     common/connect: 8778ee245078a8be4a2ce855c8c56edc
     common/connect_formbricks: a9dd747575e7e035da69251366df6f95
@@ -171,6 +173,7 @@ checksums:
     common/disallow: 01c8ed3ce545ed836d3ccffc562c8a0c
     common/discard: de83a114a79d086e372c43dbfe9f47b4
     common/dismissed: f0e21b3fe28726c577a7238a63cc29c2
+    common/distribute: 0b702c85b5d4069d8367cb461c2ee0b1
     common/docs: 1563fcb5ddb5037b0709ccd3dd384a92
     common/documentation: 1563fcb5ddb5037b0709ccd3dd384a92
     common/domain: 402d46965eacc3af4c5df92e53e95712
@@ -400,6 +403,7 @@ checksums:
     common/top_right: 241f95c923846911aaf13af6109333e5
     common/try_again: 33dd8820e743e35a66e6977f69e9d3b5
     common/type: f04471a7ddac844b9ad145eb9911ef75
+    common/unify: bdb518a1e62f51049ccc4366b909fb0a
     common/unlock_more_workspaces_with_a_higher_plan: fe1590075b855bb4306c9388b65143b0
     common/update: 079fc039262fd31b10532929685c2d1b
     common/updated: 8aa8ff2dc2977ca4b269e80a513100b4

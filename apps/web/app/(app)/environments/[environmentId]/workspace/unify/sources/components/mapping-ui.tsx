@@ -5,8 +5,8 @@ import { CopyIcon, MailIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/modules/ui/components/badge";
 import { Switch } from "@/modules/ui/components/switch";
+import { FEEDBACK_RECORD_FIELDS, TFieldMapping, TSourceField, TSourceType } from "../types";
 import { DraggableSourceField, DroppableTargetField } from "./mapping-field";
-import { FEEDBACK_RECORD_FIELDS, TFieldMapping, TSourceField, TSourceType } from "./types";
 
 interface MappingUIProps {
   sourceFields: TSourceField[];

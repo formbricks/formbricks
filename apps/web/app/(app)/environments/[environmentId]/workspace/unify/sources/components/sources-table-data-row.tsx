@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { FileSpreadsheetIcon, GlobeIcon, MailIcon, MessageSquareIcon, WebhookIcon } from "lucide-react";
-import { TSourceType } from "./types";
+import { TSourceType } from "../types";
 
 interface SourcesTableDataRowProps {
   id: string;
@@ -67,13 +67,11 @@ export function SourcesTableDataRow({
           onClick();
         }
       }}>
-      <div className="col-span-1 flex items-center pl-4">
-        <div className="flex items-center gap-2">
-          {getSourceIcon(type)}
-          <span className="hidden text-xs text-slate-500 sm:inline">{getSourceTypeLabel(type)}</span>
-        </div>
+      <div className="col-span-2 flex items-center gap-2 pl-4">
+        {getSourceIcon(type)}
+        <span className="hidden truncate text-xs text-slate-500 sm:inline">{getSourceTypeLabel(type)}</span>
       </div>
-      <div className="col-span-6 flex items-center">
+      <div className="col-span-5 flex items-center">
         <span className="truncate font-medium text-slate-900">{name}</span>
       </div>
       <div className="col-span-2 hidden items-center justify-center text-sm text-slate-600 sm:flex">

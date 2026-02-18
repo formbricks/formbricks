@@ -24,8 +24,6 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { FormbricksSurveySelector } from "./formbricks-survey-selector";
-import { MappingUI } from "./mapping-ui";
 import {
   AI_SUGGESTED_MAPPINGS,
   EMAIL_SOURCE_FIELDS,
@@ -37,9 +35,10 @@ import {
   TSourceField,
   TSourceType,
   TUnifySurvey,
-  parseCSVColumnsToFields,
-  parsePayloadToFields,
-} from "./types";
+} from "../types";
+import { parseCSVColumnsToFields, parsePayloadToFields } from "../utils";
+import { FormbricksSurveySelector } from "./formbricks-survey-selector";
+import { MappingUI } from "./mapping-ui";
 
 // Polling interval in milliseconds (3 seconds)
 const WEBHOOK_POLL_INTERVAL = 3000;

@@ -232,5 +232,5 @@ export const ELEMENT_TYPE_TO_HUB_FIELD_TYPE: Record<string, THubFieldType> = {
 
 // Helper function to get Hub field type from element type
 export const getHubFieldTypeFromElementType = (elementType: string): THubFieldType => {
-  return ELEMENT_TYPE_TO_HUB_FIELD_TYPE[elementType] || "text";
+  return ELEMENT_TYPE_TO_HUB_FIELD_TYPE[elementType];
 };
