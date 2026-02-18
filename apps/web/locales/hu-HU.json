@@ -218,6 +218,7 @@
     "error": "Hiba",
     "error_component_description": "Ez az erőforrás nem létezik, vagy nem rendelkezik a hozzáféréshez szükséges jogosultságokkal.",
     "error_component_title": "Hiba az erőforrások betöltésekor",
+    "error_loading_data": "Hiba az adatok betöltése során",
     "error_rate_limit_description": "A kérések legnagyobb száma elérve. Próbálja meg később újra.",
     "error_rate_limit_title": "A sebességkorlát elérve",
     "expand_rows": "Sorok kinyitása",

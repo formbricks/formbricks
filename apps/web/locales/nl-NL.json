@@ -218,6 +218,7 @@
     "error": "Fout",
     "error_component_description": "Deze bron bestaat niet of u beschikt niet over de benodigde toegangsrechten.",
     "error_component_title": "Fout bij het laden van bronnen",
+    "error_loading_data": "Fout bij het laden van gegevens",
     "error_rate_limit_description": "Maximaal aantal verzoeken bereikt. Probeer het later opnieuw.",
     "error_rate_limit_title": "Tarieflimiet overschreden",
     "expand_rows": "Vouw rijen uit",

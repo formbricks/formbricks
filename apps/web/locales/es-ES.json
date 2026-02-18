@@ -218,6 +218,7 @@
     "error": "Error",
     "error_component_description": "Este recurso no existe o no tienes los derechos necesarios para acceder a él.",
     "error_component_title": "Error al cargar recursos",
+    "error_loading_data": "Error al cargar los datos",
     "error_rate_limit_description": "Número máximo de solicitudes alcanzado. Por favor, inténtalo de nuevo más tarde.",
     "error_rate_limit_title": "Límite de frecuencia excedido",
     "expand_rows": "Expandir filas",

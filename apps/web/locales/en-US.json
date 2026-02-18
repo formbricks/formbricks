@@ -218,6 +218,7 @@
     "error": "Error",
     "error_component_description": "This resource does not exist or you do not have the necessary rights to access it.",
     "error_component_title": "Error loading resources",
+    "error_loading_data": "Error loading data",
     "error_rate_limit_description": "Maximum number of requests reached. Please try again later.",
     "error_rate_limit_title": "Rate Limit Exceeded",
     "expand_rows": "Expand rows",

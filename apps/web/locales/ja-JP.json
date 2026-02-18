@@ -218,6 +218,7 @@
     "error": "エラー",
     "error_component_description": "この リソース は 存在 しない か、アクセス する ための 必要な 権限 が ありません。",
     "error_component_title": "リソース の 読み込み エラー",
+    "error_loading_data": "データの読み込みエラー",
     "error_rate_limit_description": "リクエストの最大数に達しました。後でもう一度試してください。",
     "error_rate_limit_title": "レート制限を超えました",
     "expand_rows": "行を展開",

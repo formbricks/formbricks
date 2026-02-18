@@ -218,6 +218,7 @@
     "error": "错误",
     "error_component_description": "这个资源不存在或您没有权限访问它。",
     "error_component_title": "错误 加载 资源",
+    "error_loading_data": "数据加载出错",
     "error_rate_limit_description": "请求 达到 最大 上限 ， 请 稍后 再试 。",
     "error_rate_limit_title": "速率 限制 超过",
     "expand_rows": "展开 行",

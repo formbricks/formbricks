@@ -218,6 +218,7 @@
     "error": "Erro",
     "error_component_description": "Esse recurso não existe ou você não tem permissão para acessá-lo.",
     "error_component_title": "Erro ao carregar recursos",
+    "error_loading_data": "Erro ao carregar dados",
     "error_rate_limit_description": "Número máximo de requisições atingido. Por favor, tente novamente mais tarde.",
     "error_rate_limit_title": "Limite de Taxa Excedido",
     "expand_rows": "Expandir linhas",

@@ -218,6 +218,7 @@
     "error": "錯誤",
     "error_component_description": "此資源不存在或您沒有存取權限。",
     "error_component_title": "載入資源錯誤",
+    "error_loading_data": "載入資料時發生錯誤",
     "error_rate_limit_description": "已達 到最大 請求 次數。請 稍後 再試。",
     "error_rate_limit_title": "限流超過",
     "expand_rows": "展開列",

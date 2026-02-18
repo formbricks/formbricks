@@ -218,6 +218,7 @@
     "error": "Eroare",
     "error_component_description": "Această resursă nu există sau nu aveți drepturile necesare pentru a o accesa.",
     "error_component_title": "Eroare la încărcarea resurselor",
+    "error_loading_data": "Eroare la încărcarea datelor",
     "error_rate_limit_description": "Numărul maxim de cereri atins. Vă rugăm să încercați din nou mai târziu.",
     "error_rate_limit_title": "Limită de cereri depășită",
     "expand_rows": "Extinde rândurile",

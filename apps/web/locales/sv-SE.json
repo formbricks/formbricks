@@ -218,6 +218,7 @@
     "error": "Fel",
     "error_component_description": "Denna resurs finns inte eller så har du inte de nödvändiga rättigheterna för att komma åt den.",
     "error_component_title": "Fel vid laddning av resurser",
+    "error_loading_data": "Fel vid inläsning av data",
     "error_rate_limit_description": "Maximalt antal förfrågningar har nåtts. Försök igen senare.",
     "error_rate_limit_title": "Begränsningsgräns överskriden",
     "expand_rows": "Visa rader",
