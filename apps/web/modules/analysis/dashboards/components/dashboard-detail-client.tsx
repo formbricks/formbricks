@@ -38,7 +38,7 @@ export function DashboardDetailClient({
   };
 
   return (
-    <PageContentWrapper>
+    <div>
       <GoBackButton url={`/environments/${environmentId}/analysis/dashboards`} />
       <PageHeader
         pageTitle={dashboard.name}
@@ -73,6 +73,6 @@ export function DashboardDetailClient({
           </div>
         )}
       </section>
-    </PageContentWrapper>
+    </div>
   );
 }

@@ -13,6 +13,7 @@ export async function DashboardDetailPage({
   if (!dashboard) {
     return notFound();
   }
+  
 
   return <DashboardDetailClient dashboard={dashboard} environmentId={environmentId} />;
 }
