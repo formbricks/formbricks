@@ -177,8 +177,13 @@ export const resolveStorageUrl = (
   return url;
 };
 
+// Matches the actual storage URL format: /storage/{id}/{public|private}/{filename...}
+const STORAGE_URL_PATTERN = /^\/storage\/[^/]+\/(public|private)\/.+/;
+
+const isStorageUrl = (value: string): boolean => STORAGE_URL_PATTERN.test(value);
+
 export const resolveStorageUrlAuto = (url: string): string => {
-  if (!url.startsWith("/storage/")) return url;
+  if (!isStorageUrl(url)) return url;
   const accessType = url.includes("/private/") ? "private" : "public";
   return resolveStorageUrl(url, accessType);
 };
@@ -191,10 +196,7 @@ export const resolveStorageUrlsInObject = <T>(obj: T): T => {
   if (obj === null || obj === undefined) return obj;
 
   if (typeof obj === "string") {
-    if (obj.startsWith("/storage/")) {
-      return resolveStorageUrlAuto(obj) as T;
-    }
-    return obj;
+    return resolveStorageUrlAuto(obj) as T;
   }
 
   if (typeof obj !== "object") return obj;
@@ -209,5 +211,6 @@ export const resolveStorageUrlsInObject = <T>(obj: T): T => {
   for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
     result[key] = resolveStorageUrlsInObject(value);
   }
+
   return result as T;
 };

@@ -440,6 +440,13 @@ describe("storage utils", () => {
       expect(resolveStorageUrlAuto("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
     });
 
+    test("should NOT transform free-text values that merely start with /storage/", () => {
+      expect(resolveStorageUrlAuto("/storage/help")).toBe("/storage/help");
+      expect(resolveStorageUrlAuto("/storage/")).toBe("/storage/");
+      expect(resolveStorageUrlAuto("/storage/some-text")).toBe("/storage/some-text");
+      expect(resolveStorageUrlAuto("/storage/foo/bar")).toBe("/storage/foo/bar");
+    });
+
     test("should resolve public storage URL", async () => {
       const { resolveStorageUrlAuto: actual } =
         await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
@@ -468,6 +475,26 @@ describe("storage utils", () => {
       expect(resolveStorageUrlsInObject(42)).toBe(42);
       expect(resolveStorageUrlsInObject(true)).toBe(true);
       expect(resolveStorageUrlsInObject("hello")).toBe("hello");
+    });
+
+    test("should NOT transform free-text that merely starts with /storage/", () => {
+      expect(resolveStorageUrlsInObject("/storage/help")).toBe("/storage/help");
+      expect(resolveStorageUrlsInObject("/storage/")).toBe("/storage/");
+
+      const input = {
+        questionId1: "/storage/",
+        questionId2: "/storage/help",
+        questionId3: "/storage/some-text",
+        questionId4: "/storage/foo/bar",
+        realUrl: "/storage/env-123/public/image.jpg",
+      };
+      const result = resolveStorageUrlsInObject(input);
+      expect(result.questionId1).toBe("/storage/");
+      expect(result.questionId2).toBe("/storage/help");
+      expect(result.questionId3).toBe("/storage/some-text");
+      expect(result.questionId4).toBe("/storage/foo/bar");
+      // realUrl still gets resolved because it matches the actual format
+      expect(result.realUrl).not.toBe("/storage/env-123/public/image.jpg");
     });
 
     test("should preserve Date instances", () => {
