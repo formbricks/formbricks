@@ -1,8 +1,13 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
-import { STRIPE_API_VERSION, STRIPE_PRICE_LOOKUP_KEYS, WEBAPP_URL } from "@/lib/constants";
+import { STRIPE_API_VERSION, WEBAPP_URL } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { getOrganization } from "@/lib/organization/service";
+import { ensureStripeCustomerForOrganization } from "@/modules/billing/lib/organization-billing";
+import {
+  CLOUD_STRIPE_PRICE_LOOKUP_KEYS,
+  TCloudUpgradePriceLookupKey,
+} from "@/modules/billing/lib/stripe-catalog";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
@@ -11,36 +16,60 @@ const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
 export const createSubscription = async (
   organizationId: string,
   environmentId: string,
-  priceLookupKey: STRIPE_PRICE_LOOKUP_KEYS
+  priceLookupKey: TCloudUpgradePriceLookupKey
 ) => {
   try {
     const organization = await getOrganization(organizationId);
     if (!organization) throw new Error("Organization not found.");
 
-    const priceObject = (
-      await stripe.prices.list({
-        lookup_keys: [priceLookupKey],
-      })
-    ).data[0];
+    const { customerId } = await ensureStripeCustomerForOrganization(organizationId);
+    if (!customerId) throw new Error("Stripe customer unavailable");
 
-    if (!priceObject) throw new Error("Price not found");
+    const lookupKeys = [priceLookupKey];
+
+    if (
+      priceLookupKey === CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_MONTHLY ||
+      priceLookupKey === CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_YEARLY
+    ) {
+      lookupKeys.push(CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_USAGE_RESPONSES);
+    }
+
+    if (
+      priceLookupKey === CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_MONTHLY ||
+      priceLookupKey === CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_YEARLY
+    ) {
+      lookupKeys.push(CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_USAGE_RESPONSES);
+    }
+
+    const prices = await stripe.prices.list({
+      lookup_keys: lookupKeys,
+      limit: 100,
+    });
+
+    if (prices.data.length !== lookupKeys.length) {
+      throw new Error(`One or more prices not found in Stripe for ${lookupKeys.join(", ")}`);
+    }
+
+    const getPriceIdByLookupKey = (lookupKey: string) => {
+      const price = prices.data.find((entry) => entry.lookup_key === lookupKey);
+      if (!price) throw new Error(`Price ${lookupKey} not found`);
+      return price.id;
+    };
 
     // Always create a checkout session - let Stripe handle existing customers
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: [
-        {
-          price: priceObject.id,
-          quantity: 1,
-        },
-      ],
+      line_items: lookupKeys.map((lookupKey) => ({
+        price: getPriceIdByLookupKey(lookupKey),
+        quantity: 1,
+      })),
       success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${environmentId}`,
       cancel_url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
-      customer: organization.billing.stripeCustomerId ?? undefined,
+      customer: customerId,
       allow_promotion_codes: true,
       subscription_data: {
         metadata: { organizationId },
-        trial_period_days: 15,
+        trial_period_days: 14,
       },
       metadata: { organizationId },
       billing_address_collection: "required",

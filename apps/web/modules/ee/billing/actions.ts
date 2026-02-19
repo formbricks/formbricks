@@ -3,12 +3,13 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { STRIPE_PRICE_LOOKUP_KEYS, WEBAPP_URL } from "@/lib/constants";
+import { WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { ZCloudUpgradePriceLookupKey } from "@/modules/billing/lib/stripe-catalog";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { createSubscription } from "@/modules/ee/billing/api/lib/create-subscription";
@@ -16,7 +17,7 @@ import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscri
 
 const ZUpgradePlanAction = z.object({
   environmentId: ZId,
-  priceLookupKey: z.nativeEnum(STRIPE_PRICE_LOOKUP_KEYS),
+  priceLookupKey: ZCloudUpgradePriceLookupKey,
 });
 
 export const upgradePlanAction = authenticatedActionClient.schema(ZUpgradePlanAction).action(

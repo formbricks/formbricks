@@ -17,6 +17,7 @@ import { BILLING_LIMITS, ITEMS_PER_PAGE, PROJECT_FEATURE_KEYS } from "@/lib/cons
 import { getProjects } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { getBillingPeriodStartDate } from "@/lib/utils/billing";
+import { ensureCloudStripeSetupForOrganization } from "@/modules/billing/lib/organization-billing";
 import { validateInputs } from "../utils/validate";
 
 export const select: Prisma.OrganizationSelect = {
@@ -127,6 +128,7 @@ export const createOrganization = async (
       data: {
         ...organizationInput,
         billing: {
+          billingMode: "stripe",
           plan: PROJECT_FEATURE_KEYS.FREE,
           limits: {
             projects: BILLING_LIMITS.FREE.PROJECTS,
@@ -142,6 +144,9 @@ export const createOrganization = async (
       },
       select,
     });
+
+    // Stripe setup is best-effort and must not block organization creation.
+    await ensureCloudStripeSetupForOrganization(organization.id);
 
     return organization;
   } catch (error) {
