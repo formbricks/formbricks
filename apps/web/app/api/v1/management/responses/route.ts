@@ -155,7 +155,6 @@ export const POST = withV1ApiWrapper({
         surveyResult.survey.blocks,
         responseInput.data,
         responseInput.language ?? "en",
-        responseInput.finished,
         surveyResult.survey.questions
       );
 
