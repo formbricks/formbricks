@@ -84,7 +84,7 @@ export const SurveyEditorPage = async (props) => {
     getSurveyFollowUpsPermission(organizationBilling.plan),
     getIsSpamProtectionEnabled(organizationBilling.plan),
     getIsQuotasEnabled(organizationBilling.plan),
-    getExternalUrlsPermission(organizationBilling.plan),
+    getExternalUrlsPermission(organizationBilling.plan, projectWithTeamIds.organizationId),
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
