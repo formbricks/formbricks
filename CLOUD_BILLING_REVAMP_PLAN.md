@@ -11,8 +11,8 @@
 - No long-term `legacy` runtime billing branch.
 
 ## Confidence Check
-- Current confidence: **~92%** for implementation start.
-- Remaining uncertainty: narrow migration execution details for custom-paid orgs (see **Open Questions**).
+- Current confidence: **~95%** for Iteration 1 start.
+- Remaining uncertainty: migration details for existing paid/custom orgs (post-Iteration-1).
 
 ## 1) Current State (Repository Audit)
 
@@ -275,7 +275,7 @@ Application timing:
 | D-019 | Iteration 1 migration scope | Migration script implementation is out of scope for Iteration 1 PR | Confirmed | PR must state deferred status explicitly |
 | D-020 | Iteration 1 runtime target | First implementation must be production-ready for new Cloud org signup + upgrade + entitlement gating | Confirmed | Existing org migration follows in later phase |
 
-## 10) Open Questions (Need Answers Before Build Starts)
+## 10) Open Questions (Post-Iteration-1, Not Blocking Iteration 1)
 
 1. Custom-paid migration catalog design:
 - Do we define a strict finite set of contract bundles/add-ons in Stripe first, then map every paid/custom org to one of them?
