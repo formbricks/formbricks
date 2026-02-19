@@ -5,7 +5,6 @@ import { AnalysisSecondaryNavigation } from "./analysis-secondary-navigation";
 
 interface AnalysisPageLayoutProps {
   pageTitle: string;
-  activeId: string;
   environmentId: string;
   cta?: ReactNode;
   children: ReactNode;
@@ -13,15 +12,14 @@ interface AnalysisPageLayoutProps {
 
 export function AnalysisPageLayout({
   pageTitle,
-  activeId,
   environmentId,
   cta,
   children,
-}: AnalysisPageLayoutProps) {
+}: Readonly<AnalysisPageLayoutProps>) {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={pageTitle} cta={cta}>
-        <AnalysisSecondaryNavigation activeId={activeId} environmentId={environmentId} />
+        <AnalysisSecondaryNavigation environmentId={environmentId} />
       </PageHeader>
       {children}
     </PageContentWrapper>
