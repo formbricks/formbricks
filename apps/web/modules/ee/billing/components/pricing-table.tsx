@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { cn } from "@/lib/cn";
+import { CLOUD_STRIPE_PRICE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
@@ -19,26 +20,29 @@ interface PricingTableProps {
   peopleCount: number;
   responseCount: number;
   projectCount: number;
-  stripePriceLookupKeys: {
-    STARTUP_MAY25_MONTHLY: string;
-    STARTUP_MAY25_YEARLY: string;
-  };
-  projectFeatureKeys: {
-    FREE: string;
-    STARTUP: string;
-    CUSTOM: string;
-  };
   hasBillingRights: boolean;
 }
+
+const getCurrentCloudPlan = (
+  organization: TOrganization
+): "hobby" | "pro" | "scale" | "trial" | "unknown" => {
+  if (organization.billing?.stripe?.plan) {
+    return organization.billing.stripe.plan;
+  }
+
+  if (organization.billing.plan === "free") return "hobby";
+  if (organization.billing.plan === "startup") return "pro";
+  if (organization.billing.plan === "custom") return "scale";
+
+  return "unknown";
+};
 
 export const PricingTable = ({
   environmentId,
   organization,
   peopleCount,
-  projectFeatureKeys,
   responseCount,
   projectCount,
-  stripePriceLookupKeys,
   hasBillingRights,
 }: PricingTableProps) => {
   const { t } = useTranslation();
@@ -52,6 +56,8 @@ export const PricingTable = ({
 
   const router = useRouter();
   const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
+
+  const currentCloudPlan = useMemo(() => getCurrentCloudPlan(organization), [organization]);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -74,7 +80,7 @@ export const PricingTable = ({
     }
   };
 
-  const upgradePlan = async (priceLookupKey) => {
+  const upgradePlan = async (priceLookupKey: string) => {
     try {
       const upgradePlanResponse = await upgradePlanAction({
         environmentId,
@@ -87,7 +93,7 @@ export const PricingTable = ({
 
       const { status, newPlan, url } = upgradePlanResponse.data;
 
-      if (status != 200) {
+      if (status !== 200) {
         throw new Error(t("common.something_went_wrong_please_try_again"));
       }
       if (!newPlan) {
@@ -106,23 +112,27 @@ export const PricingTable = ({
     }
   };
 
-  const onUpgrade = async (planId: string) => {
-    if (planId === "startup") {
+  const onUpgrade = async (planId: "hobby" | "pro" | "scale") => {
+    if (planId === "hobby") {
+      toast.error(t("environments.settings.billing.everybody_has_the_free_plan_by_default"));
+      return;
+    }
+
+    if (planId === "pro") {
       await upgradePlan(
         planPeriod === "monthly"
-          ? stripePriceLookupKeys.STARTUP_MAY25_MONTHLY
-          : stripePriceLookupKeys.STARTUP_MAY25_YEARLY
+          ? CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_MONTHLY
+          : CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_YEARLY
       );
       return;
     }
 
-    if (planId === "custom") {
-      window.location.href = "https://formbricks.com/custom-plan?source=billingView";
-      return;
-    }
-
-    if (planId === "free") {
-      toast.error(t("environments.settings.billing.everybody_has_the_free_plan_by_default"));
+    if (planId === "scale") {
+      await upgradePlan(
+        planPeriod === "monthly"
+          ? CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_MONTHLY
+          : CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_YEARLY
+      );
     }
   };
 
@@ -138,9 +148,9 @@ export const PricingTable = ({
       <div className="flex flex-col gap-8">
         <div className="flex flex-col">
           <div className="flex w-full">
-            <h2 className="mr-2 mb-3 inline-flex w-full text-2xl font-bold text-slate-700">
+            <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
               {t("environments.settings.billing.current_plan")}:{" "}
-              <span className="capitalize">{organization.billing.plan}</span>
+              <span className="capitalize">{currentCloudPlan}</span>
               {cancellingOn && (
                 <Badge
                   className="mx-2"
@@ -161,7 +171,7 @@ export const PricingTable = ({
               )}
             </h2>
 
-            {organization.billing.stripeCustomerId && organization.billing.plan === "free" && (
+            {organization.billing.stripeCustomerId && currentCloudPlan === "hobby" && (
               <div className="flex w-full justify-end">
                 <Button
                   size="sm"
@@ -203,7 +213,7 @@ export const PricingTable = ({
             <div
               className={cn(
                 "relative mx-8 mb-8 flex flex-col gap-4",
-                peopleUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
+                peopleUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">
                 {t("environments.settings.billing.monthly_identified_users")}
@@ -226,7 +236,7 @@ export const PricingTable = ({
             <div
               className={cn(
                 "relative mx-8 flex flex-col gap-4 pb-6",
-                projectsUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
+                projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">{t("common.workspaces")}</p>
               {organization.billing.limits.projects && (
@@ -264,19 +274,19 @@ export const PricingTable = ({
                 </button>
                 <button
                   aria-pressed={planPeriod === "yearly"}
-                  className={`flex-1 items-center rounded-md py-0.5 pr-2 pl-4 text-center whitespace-nowrap ${
+                  className={`flex-1 items-center whitespace-nowrap rounded-md py-0.5 pl-4 pr-2 text-center ${
                     planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
                   onClick={() => handleMonthlyToggle("yearly")}>
                   {t("environments.settings.billing.annually")}
                   <span className="ml-2 inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                    {t("environments.settings.billing.get_2_months_free")} 🔥
+                    {t("environments.settings.billing.get_2_months_free")} \ud83d\udd25
                   </span>
                 </button>
               </div>
               <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-3">
                 <div
-                  className="hidden lg:absolute lg:inset-x-px lg:top-4 lg:bottom-0 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
+                  className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
                   aria-hidden="true"
                 />
                 {getCloudPricingData(t).plans.map((plan) => (
@@ -287,8 +297,7 @@ export const PricingTable = ({
                     onUpgrade={async () => {
                       await onUpgrade(plan.id);
                     }}
-                    organization={organization}
-                    projectFeatureKeys={projectFeatureKeys}
+                    currentPlan={currentCloudPlan}
                     onManageSubscription={openCustomerPortal}
                   />
                 ))}
