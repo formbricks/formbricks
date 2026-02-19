@@ -1,3 +1,4 @@
+import { getTranslate } from "@/lingodotdev/server";
 import { getLocale } from "@/lingodotdev/language";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
