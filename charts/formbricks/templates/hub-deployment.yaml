@@ -32,6 +32,9 @@ spec:
         - name: hub
           image: {{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag | default "latest" }}
           imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
           ports:
             - name: http
               containerPort: 8080

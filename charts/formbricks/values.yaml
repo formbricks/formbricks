@@ -313,7 +313,8 @@ hub:
 
   image:
     repository: "ghcr.io/formbricks/hub"
-    tag: "latest"
+    # Pin to a semver tag for reproducible deployments; update on each Hub release.
+    tag: "1.0.0"
     pullPolicy: IfNotPresent
 
   # Secret containing API_KEY and DATABASE_URL for Hub. Use the same app secret (or same DATABASE_URL) to share the Formbricks database.

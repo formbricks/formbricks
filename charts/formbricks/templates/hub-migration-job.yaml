@@ -17,6 +17,7 @@ metadata:
 spec:
   ttlSecondsAfterFinished: {{ .Values.hub.migration.ttlSecondsAfterFinished | default 300 }}
   backoffLimit: {{ .Values.hub.migration.backoffLimit | default 3 }}
+  activeDeadlineSeconds: 300
   template:
     metadata:
       labels:
@@ -25,6 +26,9 @@ spec:
         app.kubernetes.io/component: hub-migration
     spec:
       restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       {{- if .Values.deployment.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
@@ -33,6 +37,10 @@ spec:
         - name: hub-migrate
           image: {{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag | default "latest" }}
           imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           command:
             - sh
             - -c
