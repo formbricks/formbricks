@@ -924,8 +924,14 @@ checksums:
     environments/settings/billing/logic_jumps_hidden_fields_recurring_surveys: f58485b1bbf76e3805d6105b5e8294e6
     environments/settings/billing/manage_card_details: 8d9e61ee37cada980edcdd16ffd7b2a0
     environments/settings/billing/manage_subscription: 31cafd367fc70d656d8dd979d537dc96
+    environments/settings/billing/month: ae7bef950efc406ff0980affabc1a64c
     environments/settings/billing/monthly: 818f1192e32bb855597f930d3e78806e
     environments/settings/billing/monthly_identified_users: 0795735f6b241d31edac576a77dd7e55
+    environments/settings/billing/plan_hobby: 3e96a8e688032f9bd21b436bc70c19d5
+    environments/settings/billing/plan_pro: 682b3c9feab30112b4454cb5bb7974b1
+    environments/settings/billing/plan_scale: 5f55a30a5bdf8f331b56bad9c073473c
+    environments/settings/billing/plan_trial: 4fd32760caf3bd7169935b0a6d2b5b67
+    environments/settings/billing/plan_unknown: 5cd12b882fe90320f93130c1b50e2e32
     environments/settings/billing/plan_upgraded_successfully: 52e2a258cc9ca8a512c288bf6f18cf37
     environments/settings/billing/premium_support_with_slas: 2e33d4442c16bfececa6cae7b2081e5d
     environments/settings/billing/remove_branding: 88b6b818750e478bfa153b33dd658280
@@ -942,6 +948,7 @@ checksums:
     environments/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
     environments/settings/billing/uptime_sla_99: 25ca4060e575e1a7eee47fceb5576d7c
     environments/settings/billing/website_surveys: f4d176cc66ffcc2abf44c0d5da1642e3
+    environments/settings/billing/year: ed86f5f60583f9d8ffdbeed306aa0ec7
     environments/settings/domain/customize_favicon_description: d3ac29934a66fd56294c0d8069fbc11e
     environments/settings/domain/customize_favicon_with_higher_plan: 43a6b834a8fd013c52923863d62248f3
     environments/settings/domain/description: f0b4d8c96da816f793cf1f4fdfaade34
