@@ -146,7 +146,6 @@ export const PUT = withV1ApiWrapper({
         result.survey.blocks,
         responseUpdate.data,
         responseUpdate.language ?? "en",
-        responseUpdate.finished,
         result.survey.questions
       );
 
