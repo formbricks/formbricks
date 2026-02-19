@@ -1,11 +1,10 @@
 import { Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { cache } from "@/lib/cache";
+import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import {
   getExistingContactResponse,
@@ -17,22 +16,8 @@ import {
 } from "./data";
 
 // Mock dependencies
-vi.mock("@formbricks/cache", () => ({
-  createCacheKey: {
-    organization: {
-      billing: vi.fn(),
-    },
-    custom: vi.fn(),
-  },
-}));
-
-// Helper to create branded CacheKey for tests
-const mockCacheKey = (key: string) => key as any;
-
-vi.mock("@/lib/cache", () => ({
-  cache: {
-    withCache: vi.fn(),
-  },
+vi.mock("@/modules/billing/lib/organization-billing", () => ({
+  getOrganizationBillingWithReadThroughSync: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/utils", () => ({
@@ -46,10 +31,6 @@ vi.mock("@formbricks/database", () => ({
     },
     response: {
       findFirst: vi.fn(),
-    },
-    organization: {
-      findFirst: vi.fn(),
-      findUnique: vi.fn(),
     },
   },
 }));
@@ -447,73 +428,43 @@ describe("data", () => {
       periodStart: new Date(),
     };
 
-    const mockOrganization = {
-      id: "org-1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      name: "Test Organization",
-      billing: mockBilling,
-      whitelabel: null,
-      isAIEnabled: true,
-    };
-
     test("should fetch organization billing successfully", async () => {
       const organizationId = "org-1";
-
-      vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
-      vi.mocked(cache.withCache).mockResolvedValue(mockBilling);
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as any);
+      vi.mocked(getOrganizationBillingWithReadThroughSync).mockResolvedValue(mockBilling as any);
 
       const result = await getOrganizationBilling(organizationId);
 
       expect(result).toEqual(mockBilling);
-      expect(createCacheKey.organization.billing).toHaveBeenCalledWith(organizationId);
-      expect(cache.withCache).toHaveBeenCalledWith(
-        expect.any(Function),
-        "billing-cache-key",
-        60 * 60 * 24 * 1000
-      );
+      expect(getOrganizationBillingWithReadThroughSync).toHaveBeenCalledWith(organizationId);
     });
 
     test("should throw ResourceNotFoundError when organization not found", async () => {
       const organizationId = "nonexistent-org";
-      vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
-      vi.mocked(cache.withCache).mockImplementation(async (fn) => {
-        vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
-        return await fn();
-      });
+      vi.mocked(getOrganizationBillingWithReadThroughSync).mockResolvedValue(null);
 
       await expect(getOrganizationBilling(organizationId)).rejects.toThrow(ResourceNotFoundError);
       await expect(getOrganizationBilling(organizationId)).rejects.toThrow("Organization");
-    });
-
-    test("should throw DatabaseError on Prisma error", async () => {
-      const organizationId = "org-1";
-      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
-        code: "P2025",
-        clientVersion: "5.0.0",
-      });
-
-      vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
-      vi.mocked(cache.withCache).mockImplementation(async (fn) => {
-        vi.mocked(prisma.organization.findUnique).mockRejectedValue(prismaError);
-        return await fn();
-      });
-
-      await expect(getOrganizationBilling(organizationId)).rejects.toThrow(DatabaseError);
     });
 
     test("should rethrow non-Prisma errors", async () => {
       const organizationId = "org-1";
       const genericError = new Error("Generic error");
 
-      vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
-      vi.mocked(cache.withCache).mockImplementation(async (fn) => {
-        vi.mocked(prisma.organization.findUnique).mockRejectedValue(genericError);
-        return await fn();
-      });
+      vi.mocked(getOrganizationBillingWithReadThroughSync).mockRejectedValue(genericError);
 
       await expect(getOrganizationBilling(organizationId)).rejects.toThrow(genericError);
+    });
+
+    test("should rethrow known database errors from sync service", async () => {
+      const organizationId = "org-1";
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: "P2025",
+        clientVersion: "5.0.0",
+      });
+
+      vi.mocked(getOrganizationBillingWithReadThroughSync).mockRejectedValue(prismaError);
+
+      await expect(getOrganizationBilling(organizationId)).rejects.toThrow(prismaError);
     });
   });
 });
