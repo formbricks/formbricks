@@ -145,8 +145,10 @@ export const createOrganization = async (
       select,
     });
 
-    // Stripe setup is best-effort and must not block organization creation.
-    await ensureCloudStripeSetupForOrganization(organization.id);
+    // Stripe setup is best-effort and should not block organization creation.
+    void Promise.resolve(ensureCloudStripeSetupForOrganization(organization.id)).catch((error) => {
+      logger.warn({ error, organizationId: organization.id }, "Background Stripe setup failed");
+    });
 
     return organization;
   } catch (error) {

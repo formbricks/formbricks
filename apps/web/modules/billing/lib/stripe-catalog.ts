@@ -1,10 +1,17 @@
 import { z } from "zod";
 
-export const CLOUD_STRIPE_PRODUCT_IDS = {
+const DEFAULT_CLOUD_STRIPE_PRODUCT_IDS = {
   HOBBY: "prod_ToYKB5ESOMZZk5",
   PRO: "prod_ToYKQ8WxS3ecgf",
   SCALE: "prod_ToYLW5uCQTMa6v",
   TRIAL: "prod_TodVcJiEnK5ABK",
+} as const;
+
+export const CLOUD_STRIPE_PRODUCT_IDS = {
+  HOBBY: process.env.CLOUD_STRIPE_PRODUCT_ID_HOBBY ?? DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.HOBBY,
+  PRO: process.env.CLOUD_STRIPE_PRODUCT_ID_PRO ?? DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.PRO,
+  SCALE: process.env.CLOUD_STRIPE_PRODUCT_ID_SCALE ?? DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.SCALE,
+  TRIAL: process.env.CLOUD_STRIPE_PRODUCT_ID_TRIAL ?? DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.TRIAL,
 } as const;
 
 export const CLOUD_STRIPE_PRICE_LOOKUP_KEYS = {
@@ -74,5 +81,6 @@ export const getLimitsFromCloudPlan = (
     return { projects: 5, responses: 5000, contacts: 10000 };
   }
 
+  // Unknown plans intentionally fall back to hobby limits as the safest default.
   return { projects: 1, responses: 250, contacts: null };
 };

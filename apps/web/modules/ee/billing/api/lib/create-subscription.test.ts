@@ -77,8 +77,32 @@ describe("createSubscription", () => {
         mode: "subscription",
         customer: "cus_1",
         line_items: [{ price: "price_pro_monthly", quantity: 1 }, { price: "price_pro_usage" }],
+        customer_update: { address: "auto", name: "auto" },
       })
     );
     expect(result.status).toBe(200);
+  });
+
+  test("returns newPlan false on checkout creation error", async () => {
+    mocks.pricesList.mockResolvedValue({
+      data: [
+        {
+          id: "price_pro_monthly",
+          lookup_key: CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_MONTHLY,
+          recurring: { usage_type: "licensed" },
+        },
+        {
+          id: "price_pro_usage",
+          lookup_key: CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_USAGE_RESPONSES,
+          recurring: { usage_type: "metered" },
+        },
+      ],
+    });
+    mocks.checkoutSessionCreate.mockRejectedValue(new Error("stripe down"));
+
+    const result = await createSubscription("org_1", "env_1", CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_MONTHLY);
+
+    expect(result.status).toBe(500);
+    expect(result.newPlan).toBe(false);
   });
 });

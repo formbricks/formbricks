@@ -2,6 +2,8 @@ import "server-only";
 import { type CacheKey, createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { type TOrganizationBilling } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import {
@@ -14,29 +16,8 @@ import { stripeClient } from "./stripe-client";
 
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
 
-type TStripeSnapshot = {
-  billingMode?: "stripe" | "legacy";
-  plan?: TCloudStripePlan;
-  subscriptionId?: string | null;
-  features?: string[];
-  lastStripeEventCreatedAt?: string | null;
-  lastSyncedAt?: string | null;
-  lastSyncedEventId?: string | null;
-};
-
-type TBillingJson = {
-  stripeCustomerId?: string | null;
-  plan?: string;
-  period?: "monthly" | "yearly";
-  limits?: {
-    projects?: number | null;
-    monthly?: {
-      responses?: number | null;
-      miu?: number | null;
-    };
-  };
+type TBillingJson = Omit<TOrganizationBilling, "periodStart"> & {
   periodStart?: string | Date | null;
-  stripe?: TStripeSnapshot;
 };
 
 const getBillingCacheKey = (organizationId: string) =>
@@ -49,6 +30,13 @@ const getDateFromBilling = (value: string | null | undefined): Date | null => {
   if (!value) return null;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const getBillingOrThrow = (organizationId: string, billing: unknown): TBillingJson => {
+  if (!billing) {
+    throw new ResourceNotFoundError("Organization", organizationId);
+  }
+  return billing as TBillingJson;
 };
 
 const listAllActiveEntitlements = async (customerId: string): Promise<string[]> => {
@@ -70,7 +58,8 @@ const listAllActiveEntitlements = async (customerId: string): Promise<string[]> 
       }
     }
 
-    startingAfter = result.has_more ? result.data[result.data.length - 1]?.id : undefined;
+    const lastItem = result.data.at(-1);
+    startingAfter = result.has_more && lastItem ? lastItem.id : undefined;
   } while (startingAfter);
 
   return [...new Set(featureLookupKeys)];
@@ -135,15 +124,18 @@ export const ensureStripeCustomerForOrganization = async (
     return { customerId: null };
   }
 
-  const billing = (organization.billing ?? {}) as TBillingJson;
+  const billing = getBillingOrThrow(organization.id, organization.billing);
   if (billing.stripeCustomerId) {
     return { customerId: billing.stripeCustomerId };
   }
 
-  const customer = await stripeClient.customers.create({
-    name: organization.name,
-    metadata: { organizationId: organization.id },
-  });
+  const customer = await stripeClient.customers.create(
+    {
+      name: organization.name,
+      metadata: { organizationId: organization.id },
+    },
+    { idempotencyKey: `ensure-customer-${organization.id}` }
+  );
 
   await prisma.organization.update({
     where: { id: organization.id },
@@ -154,7 +146,6 @@ export const ensureStripeCustomerForOrganization = async (
         billingMode: "stripe",
         stripe: {
           ...(billing.stripe ?? {}),
-          billingMode: "stripe",
           lastSyncedAt: new Date().toISOString(),
         },
       },
@@ -180,7 +171,7 @@ export const syncOrganizationBillingFromStripe = async (
 
   if (!organization) return null;
 
-  const billing = (organization.billing ?? {}) as TBillingJson;
+  const billing = getBillingOrThrow(organization.id, organization.billing);
   const customerId = billing.stripeCustomerId;
   if (!customerId) return billing;
 
@@ -222,7 +213,6 @@ export const syncOrganizationBillingFromStripe = async (
     },
     periodStart: periodStart.toISOString(),
     stripe: {
-      billingMode: "stripe",
       plan: cloudPlan,
       subscriptionId: subscription?.id ?? null,
       features: featureLookupKeys,
@@ -297,11 +287,6 @@ export const findOrganizationIdByStripeCustomerId = async (customerId: string): 
 
 export const ensureCloudStripeSetupForOrganization = async (organizationId: string): Promise<void> => {
   if (!IS_FORMBRICKS_CLOUD || !stripeClient) return;
-
-  try {
-    await ensureStripeCustomerForOrganization(organizationId);
-    await syncOrganizationBillingFromStripe(organizationId);
-  } catch (error) {
-    logger.warn({ error, organizationId }, "Failed to complete cloud Stripe setup for organization");
-  }
+  await ensureStripeCustomerForOrganization(organizationId);
+  await syncOrganizationBillingFromStripe(organizationId);
 };

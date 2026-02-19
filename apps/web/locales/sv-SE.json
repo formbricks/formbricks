@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "Logikhopp, dolda fält, återkommande enkäter, etc.",
         "manage_card_details": "Hantera kortuppgifter",
         "manage_subscription": "Hantera prenumeration",
+        "month": "Månad",
         "monthly": "Månadsvis",
         "monthly_identified_users": "Månadsvis identifierade användare",
+        "plan_hobby": "Hobby",
+        "plan_pro": "Pro",
+        "plan_scale": "Skala",
+        "plan_trial": "Testperiod",
+        "plan_unknown": "Okänd",
         "plan_upgraded_successfully": "Plan uppgraderad",
         "premium_support_with_slas": "Premiumsupport med SLA",
         "remove_branding": "Ta bort varumärke",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "Obegränsat antal arbetsytor",
         "upgrade": "Uppgradera",
         "uptime_sla_99": "Drifttids-SLA (99%)",
-        "website_surveys": "Webbplatsenkäter"
+        "website_surveys": "Webbplatsenkäter",
+        "year": "År"
       },
       "domain": {
         "customize_favicon_description": "Ladda upp en egen favicon för att anpassa din länkenkät och stärka ditt varumärke.",

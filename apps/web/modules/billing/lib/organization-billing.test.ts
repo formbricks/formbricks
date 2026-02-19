@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
@@ -99,10 +99,6 @@ describe("organization-billing", () => {
     mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   test("ensureStripeCustomerForOrganization returns null when org does not exist", async () => {
     mocks.prismaFindUnique.mockResolvedValue(null);
 
@@ -137,10 +133,13 @@ describe("organization-billing", () => {
     const result = await ensureStripeCustomerForOrganization("org_1");
 
     expect(result).toEqual({ customerId: "cus_new" });
-    expect(mocks.customersCreate).toHaveBeenCalledWith({
-      name: "Org 1",
-      metadata: { organizationId: "org_1" },
-    });
+    expect(mocks.customersCreate).toHaveBeenCalledWith(
+      {
+        name: "Org 1",
+        metadata: { organizationId: "org_1" },
+      },
+      { idempotencyKey: "ensure-customer-org_1" }
+    );
     expect(mocks.prismaUpdate).toHaveBeenCalledWith({
       where: { id: "org_1" },
       data: {
@@ -148,7 +147,6 @@ describe("organization-billing", () => {
           stripeCustomerId: "cus_new",
           billingMode: "stripe",
           stripe: expect.objectContaining({
-            billingMode: "stripe",
             lastSyncedAt: expect.any(String),
           }),
         }),
@@ -248,7 +246,6 @@ describe("organization-billing", () => {
             },
           },
           stripe: expect.objectContaining({
-            billingMode: "stripe",
             plan: "pro",
             subscriptionId: "sub_1",
             features: ["custom-links-in-surveys"],

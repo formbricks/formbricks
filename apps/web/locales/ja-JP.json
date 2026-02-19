@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "ロジックジャンプ、非表示フィールド、定期フォームなど。",
         "manage_card_details": "カード詳細を管理",
         "manage_subscription": "サブスクリプションを管理",
+        "month": "月",
         "monthly": "月間",
         "monthly_identified_users": "月間識別ユーザー数",
+        "plan_hobby": "Hobby",
+        "plan_pro": "Pro",
+        "plan_scale": "Scale",
+        "plan_trial": "Trial",
+        "plan_unknown": "不明",
         "plan_upgraded_successfully": "プランを正常にアップグレードしました",
         "premium_support_with_slas": "SLA付きプレミアムサポート",
         "remove_branding": "ブランディングを削除",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "無制限ワークスペース",
         "upgrade": "アップグレード",
         "uptime_sla_99": "稼働率SLA (99%)",
-        "website_surveys": "ウェブサイトフォーム"
+        "website_surveys": "ウェブサイトフォーム",
+        "year": "年"
       },
       "domain": {
         "customize_favicon_description": "カスタムファビコンをアップロードして、リンク調査の体験をパーソナライズし、ブランドプレゼンスを強化します。",

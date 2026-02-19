@@ -80,6 +80,10 @@ export const createSubscription = async (
       },
       metadata: { organizationId },
       billing_address_collection: "required",
+      customer_update: {
+        address: "auto",
+        name: "auto",
+      },
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
       payment_method_data: { allow_redisplay: "always" },
@@ -90,7 +94,7 @@ export const createSubscription = async (
     logger.error(err, "Error creating subscription");
     return {
       status: 500,
-      newPlan: true,
+      newPlan: false,
       url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
     };
   }

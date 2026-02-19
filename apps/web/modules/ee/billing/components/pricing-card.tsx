@@ -91,7 +91,10 @@ export const PricingCard = ({
             </p>
             <div className="text-sm leading-5">
               <p className={plan.featured ? "text-slate-700" : "text-slate-600"}>
-                / {planPeriod === "monthly" ? "Month" : "Year"}
+                /{" "}
+                {planPeriod === "monthly"
+                  ? t("environments.settings.billing.month")
+                  : t("environments.settings.billing.year")}
               </p>
             </div>
           </div>

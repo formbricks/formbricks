@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "邏輯跳躍、隱藏欄位、定期問卷等。",
         "manage_card_details": "管理卡片詳細資料",
         "manage_subscription": "管理訂閱",
+        "month": "月",
         "monthly": "每月",
         "monthly_identified_users": "每月識別使用者",
+        "plan_hobby": "興趣版",
+        "plan_pro": "專業版",
+        "plan_scale": "規模版",
+        "plan_trial": "試用版",
+        "plan_unknown": "未知",
         "plan_upgraded_successfully": "方案已成功升級",
         "premium_support_with_slas": "具有 SLA 的頂級支援",
         "remove_branding": "移除品牌",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "無限工作區",
         "upgrade": "升級",
         "uptime_sla_99": "正常運作時間 SLA (99%)",
-        "website_surveys": "網站問卷"
+        "website_surveys": "網站問卷",
+        "year": "年"
       },
       "domain": {
         "customize_favicon_description": "上傳自訂 Favicon，讓您的連結問卷體驗更具個人化，並強化品牌形象。",

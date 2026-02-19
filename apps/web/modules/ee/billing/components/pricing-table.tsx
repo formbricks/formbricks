@@ -40,6 +40,17 @@ const getCurrentCloudPlan = (
   return "unknown";
 };
 
+const getCurrentCloudPlanLabel = (
+  plan: "hobby" | "pro" | "scale" | "trial" | "unknown",
+  t: (key: string) => string
+) => {
+  if (plan === "hobby") return t("environments.settings.billing.plan_hobby");
+  if (plan === "pro") return t("environments.settings.billing.plan_pro");
+  if (plan === "scale") return t("environments.settings.billing.plan_scale");
+  if (plan === "trial") return t("environments.settings.billing.plan_trial");
+  return t("environments.settings.billing.plan_unknown");
+};
+
 export const PricingTable = ({
   environmentId,
   organization,
@@ -136,15 +147,18 @@ export const PricingTable = ({
           ? CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_MONTHLY
           : CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_YEARLY
       );
+      return;
     }
+
+    toast.error(`${t("environments.settings.billing.unable_to_upgrade_plan")}: ${planId}`);
   };
 
   const responsesUnlimitedCheck =
-    organization.billing.plan === "custom" && organization.billing.limits.monthly.responses === null;
+    currentCloudPlan === "scale" && organization.billing.limits.monthly.responses === null;
   const peopleUnlimitedCheck =
-    organization.billing.plan === "custom" && organization.billing.limits.monthly.miu === null;
+    currentCloudPlan === "scale" && organization.billing.limits.monthly.miu === null;
   const projectsUnlimitedCheck =
-    organization.billing.plan === "custom" && organization.billing.limits.projects === null;
+    currentCloudPlan === "scale" && organization.billing.limits.projects === null;
 
   return (
     <main>
@@ -153,7 +167,7 @@ export const PricingTable = ({
           <div className="flex w-full">
             <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
               {t("environments.settings.billing.current_plan")}:{" "}
-              <span className="capitalize">{currentCloudPlan}</span>
+              <span className="capitalize">{getCurrentCloudPlanLabel(currentCloudPlan, t)}</span>
               {cancellingOn && (
                 <Badge
                   className="mx-2"

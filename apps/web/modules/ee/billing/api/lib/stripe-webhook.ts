@@ -12,6 +12,14 @@ const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
 });
 
 const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET!;
+const relevantEvents = new Set([
+  "checkout.session.completed",
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+  "invoice.finalized",
+  "entitlements.active_entitlement_summary.updated",
+]);
 
 export const webhookHandler = async (requestBody: string, stripeSignature: string) => {
   let event: Stripe.Event;
@@ -23,15 +31,6 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     if (err instanceof Error) logger.error(err, "Error in Stripe webhook handler");
     return { status: 400, message: `Webhook Error: ${errorMessage}` };
   }
-
-  const relevantEvents = new Set([
-    "checkout.session.completed",
-    "customer.subscription.created",
-    "customer.subscription.updated",
-    "customer.subscription.deleted",
-    "invoice.finalized",
-    "entitlements.active_entitlement_summary.updated",
-  ]);
 
   if (!relevantEvents.has(event.type)) {
     return { status: 200, message: { received: true } };
@@ -60,10 +59,17 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     return { status: 200, message: { received: true } };
   }
 
-  await syncOrganizationBillingFromStripe(organizationId, {
-    id: event.id,
-    created: event.created,
-  });
+  try {
+    await syncOrganizationBillingFromStripe(organizationId, {
+      id: event.id,
+      created: event.created,
+    });
+  } catch (error) {
+    logger.error(
+      { error, eventId: event.id, organizationId, eventType: event.type },
+      "Failed to sync billing snapshot from Stripe webhook"
+    );
+  }
 
   return { status: 200, message: { received: true } };
 };

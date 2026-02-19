@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "Logik, versteckte Felder, wiederkehrende Umfragen, usw.",
         "manage_card_details": "Karteninformationen verwalten",
         "manage_subscription": "Abonnement verwalten",
+        "month": "Monat",
         "monthly": "Monatlich",
         "monthly_identified_users": "Monatlich identifizierte Nutzer",
+        "plan_hobby": "Hobby",
+        "plan_pro": "Pro",
+        "plan_scale": "Scale",
+        "plan_trial": "Trial",
+        "plan_unknown": "Unbekannt",
         "plan_upgraded_successfully": "Plan erfolgreich aktualisiert",
         "premium_support_with_slas": "Premium-Support mit SLAs",
         "remove_branding": "Branding entfernen",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "Unbegrenzte Projekte",
         "upgrade": "Upgrade",
         "uptime_sla_99": "Betriebszeit SLA (99%)",
-        "website_surveys": "Website-Umfragen"
+        "website_surveys": "Website-Umfragen",
+        "year": "Jahr"
       },
       "domain": {
         "customize_favicon_description": "Lade ein individuelles Favicon hoch, um deine Link-Umfrage zu personalisieren und deine Markenpräsenz zu stärken.",

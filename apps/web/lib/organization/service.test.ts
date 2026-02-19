@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
+import { ensureCloudStripeSetupForOrganization } from "@/modules/billing/lib/organization-billing";
 import {
   createOrganization,
   getOrganization,
@@ -29,6 +30,10 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/lib/user/service", () => ({
   updateUser: vi.fn(),
+}));
+
+vi.mock("@/modules/billing/lib/organization-billing", () => ({
+  ensureCloudStripeSetupForOrganization: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("Organization Service", () => {
@@ -196,6 +201,7 @@ describe("Organization Service", () => {
         },
         select: organizationSelect,
       });
+      expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
     });
 
     test("should throw DatabaseError on prisma error", async () => {

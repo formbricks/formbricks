@@ -98,9 +98,9 @@ export const selectSurvey = {
 } satisfies Prisma.SurveySelect;
 
 export const getOrganizationBilling = reactCache(
-  async (organizationId: string): Promise<Organization["billing"] | null> => {
+  async (organizationId: string): Promise<Organization["billing"]> => {
     const billing = await getOrganizationBillingWithReadThroughSync(organizationId);
-    if (!billing) throw new ResourceNotFoundError("Organization", null);
+    if (!billing) throw new ResourceNotFoundError("Organization", organizationId);
     return billing as Organization["billing"];
   }
 );

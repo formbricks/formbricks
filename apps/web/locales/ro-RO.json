@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "Salturi Logice, Câmpuri Ascunse, Sondaje Recurente, etc.",
         "manage_card_details": "Gestionați detaliile cardului",
         "manage_subscription": "Gestionați abonamentul",
+        "month": "Lună",
         "monthly": "Lunar",
         "monthly_identified_users": "Utilizatori identificați lunar",
+        "plan_hobby": "Hobby",
+        "plan_pro": "Pro",
+        "plan_scale": "Scală",
+        "plan_trial": "Trial",
+        "plan_unknown": "Necunoscut",
         "plan_upgraded_successfully": "Planul a fost upgradat cu succes",
         "premium_support_with_slas": "Suport premium cu SLA-uri",
         "remove_branding": "Eliminare branding",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "Workspaces nelimitate",
         "upgrade": "Actualizare",
         "uptime_sla_99": "Disponibilitate SLA (99%)",
-        "website_surveys": "Sondaje ale site-ului"
+        "website_surveys": "Sondaje ale site-ului",
+        "year": "An"
       },
       "domain": {
         "customize_favicon_description": "Încărcați un favicon personalizat pentru a oferi o experiență unică sondajului de linkuri și pentru a consolida prezența brandului.",

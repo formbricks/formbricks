@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "Logikai ugrások, rejtett mezők, ismétlődő kérdőívek stb.",
         "manage_card_details": "Kártya részleteinek kezelése",
         "manage_subscription": "Feliratkozás kezelése",
+        "month": "Hónap",
         "monthly": "Havonta",
         "monthly_identified_users": "Havonta azonosított felhasználók",
+        "plan_hobby": "Hobby",
+        "plan_pro": "Pro",
+        "plan_scale": "Scale",
+        "plan_trial": "Próbaverzió",
+        "plan_unknown": "Ismeretlen",
         "plan_upgraded_successfully": "A csomag sikeresen magasabbra váltva",
         "premium_support_with_slas": "Prémium támogatás SLA-kkal",
         "remove_branding": "Márkajel eltávolítása",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "Korlátlan munkaterület",
         "upgrade": "Frissítés",
         "uptime_sla_99": "Működési idő SLA (99%)",
-        "website_surveys": "Weboldal-kérdőívek"
+        "website_surveys": "Weboldal-kérdőívek",
+        "year": "Év"
       },
       "domain": {
         "customize_favicon_description": "Egyéni böngészőikon feltöltése a hivatkozás-kérdőív élményének személyre szabásához és a márka jelenlétének erősítéséhez.",

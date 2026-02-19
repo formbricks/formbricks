@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "Logische sprongen, verborgen velden, terugkerende enquêtes, enz.",
         "manage_card_details": "Beheer kaartgegevens",
         "manage_subscription": "Beheer abonnement",
+        "month": "Maand",
         "monthly": "Maandelijks",
         "monthly_identified_users": "Maandelijks geïdentificeerde gebruikers",
+        "plan_hobby": "Hobby",
+        "plan_pro": "Pro",
+        "plan_scale": "Scale",
+        "plan_trial": "Proefperiode",
+        "plan_unknown": "Onbekend",
         "plan_upgraded_successfully": "Plan geüpgraded",
         "premium_support_with_slas": "Premium ondersteuning met SLA's",
         "remove_branding": "Branding verwijderen",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "Onbeperkt werkruimtes",
         "upgrade": "Upgraden",
         "uptime_sla_99": "Uptime-SLA (99%)",
-        "website_surveys": "Website-enquêtes"
+        "website_surveys": "Website-enquêtes",
+        "year": "Jaar"
       },
       "domain": {
         "customize_favicon_description": "Upload een aangepaste favicon om je linkenquête-ervaring te personaliseren en je merkpresentie te versterken.",

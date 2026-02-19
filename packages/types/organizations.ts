@@ -14,7 +14,6 @@ export const ZOrganizationBillingMode = z.enum(["stripe", "legacy"]);
 export type TOrganizationBillingMode = z.infer<typeof ZOrganizationBillingMode>;
 
 export const ZOrganizationStripeBilling = z.object({
-  billingMode: ZOrganizationBillingMode.optional(),
   plan: ZCloudBillingPlan.optional(),
   subscriptionId: z.string().nullable().optional(),
   features: z.array(z.string()).optional(),
@@ -36,7 +35,7 @@ export type TOrganizationBillingPlanLimits = z.infer<typeof ZOrganizationBilling
 
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
-  billingMode: ZOrganizationBillingMode.default("stripe").optional(),
+  billingMode: ZOrganizationBillingMode.optional().default("stripe"),
   plan: ZOrganizationBillingPlan.default("free"),
   period: ZOrganizationBillingPeriod.default("monthly"),
   limits: ZOrganizationBillingPlanLimits.default({
