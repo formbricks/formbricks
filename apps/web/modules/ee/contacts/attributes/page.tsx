@@ -23,7 +23,7 @@ export const AttributesPage = async ({
 
   return (
     <ContactsPageLayout
-      pageTitle="Contacts"
+      pageTitle={t("common.contacts")}
       activeId="attributes"
       environmentId={params.environmentId}
       isContactsEnabled={isContactsEnabled}
