@@ -204,6 +204,10 @@ Rationale:
 
 ## 6) Definition Of Done (Implementation + Delivery)
 
+Application timing:
+- These gates apply when implementation work is complete and the implementation PR is ready for merge.
+- They are not required for planning-only updates.
+
 ### Code-level DoD (all touched `.ts` files)
 - No leftover legacy billing plan-string logic in touched code paths.
 - Strong typing only (`any` avoided unless explicitly justified and documented).
