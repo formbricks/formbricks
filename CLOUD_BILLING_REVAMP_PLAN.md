@@ -4,6 +4,7 @@
 - In scope: Formbricks Cloud billing, pricing, entitlements, metering, spending controls, billing UI, and migration of existing Cloud orgs.
 - Out of scope: Self-hosting license-server implementation details (but we keep the shared feature-access interface).
 - Iteration 1 scope focus: new Cloud orgs only (signup -> Stripe customer creation -> upgrade flow -> entitlement-based feature access).
+- Iteration 1 excludes contact limitations/metering; contacts remain unlimited for now.
 
 ## North Star
 - Stripe is the commercial source of truth for **all Cloud organizations** (free, standard paid, custom paid).
@@ -59,6 +60,27 @@
 - Webhooks are at-least-once and unordered; idempotency + dedupe are required.
 - Customer portal has limits for complex usage/multi-item plan changes.
 - Stripe billing thresholds and alerts do not provide guaranteed app-level hard-stop behavior.
+
+## 2.1) Pricing Reference (Agreed UI Baseline)
+
+This baseline is taken from the approved pricing design screenshot shared in this thread and should be reflected in the pricing table implementation.
+
+Billing periods:
+- Monthly and annual toggle.
+- Annual discount: "Get 2 months free" (annual = 10x monthly list price).
+
+Plans:
+- Hobby: `$0` (free)
+- Pro: `$89/month` or `$890/year`
+- Scale: `$390/month` or `$3,900/year`
+
+Included usage (Iteration 1):
+- Hobby: 1 workspace, 250 responses/month
+- Pro: 3 workspaces, 2,000 responses/month
+- Scale: 5 workspaces, 5,000 responses/month
+
+Important scope note:
+- Do **not** implement contact limits or contact metering in Iteration 1, even if pricing mockups mention contacts.
 
 ## 3) Target Architecture (Module-Aligned)
 
@@ -158,6 +180,7 @@ Rationale:
 1. **Foundation and cleanup boundary**
 - Keep billing settings route/page shell.
 - Inventory and map all `billing.plan` checks to feature keys.
+- Preflight Stripe environment validation: confirm API key/CLI context points to the intended Cloud Dev Sandbox account before hardcoding or storing product/price IDs.
 
 2. **Unified feature-access layer**
 - Implement `FeatureAccessProvider`.
@@ -235,6 +258,11 @@ Application timing:
 5. Address all blocking review comments and unresolved AI findings.
 6. Merge only after all required checks are green.
 
+### Stripe preflight (before implementation merge)
+- Confirm Stripe account context matches intended environment (Cloud Dev Sandbox).
+- Validate that referenced product/price IDs exist in that account.
+- Validate entitlement feature lookup keys used by code exist in that account.
+
 ## 7) First Slice Recommendation
 
 - Slice A: Build Stripe-backed `FeatureAccessProvider` + snapshot/read-through path in shadow mode.
@@ -274,6 +302,9 @@ Application timing:
 | D-018 | Definition of Done | Enforce DoD for touched `.ts` files + coverage and CI gates before merge | Confirmed | Includes lint/test/build + Code Rabbit resolution |
 | D-019 | Iteration 1 migration scope | Migration script implementation is out of scope for Iteration 1 PR | Confirmed | PR must state deferred status explicitly |
 | D-020 | Iteration 1 runtime target | First implementation must be production-ready for new Cloud org signup + upgrade + entitlement gating | Confirmed | Existing org migration follows in later phase |
+| D-021 | Pricing baseline | Use approved pricing UI baseline: Hobby free, Pro 89/890, Scale 390/3900, annual = 2 months free | Confirmed | Pricing table must match this reference |
+| D-022 | Contacts in Iteration 1 | No contact limits and no contact metering in Iteration 1 | Confirmed | Contacts shown in old mockups are non-binding for v1 |
+| D-023 | Stripe account preflight | Before implementation wiring, confirm we are targeting the intended Cloud Dev Sandbox Stripe account and IDs | Confirmed | Avoids wiring against wrong account/catalog |
 
 ## 10) Open Questions (Post-Iteration-1, Not Blocking Iteration 1)
 
