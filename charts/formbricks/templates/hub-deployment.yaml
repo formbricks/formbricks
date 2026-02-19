@@ -55,4 +55,28 @@ spec:
           resources:
             {{- toYaml .Values.hub.resources | nindent 12 }}
           {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
 {{- end }}

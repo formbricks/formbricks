@@ -309,7 +309,7 @@ serviceMonitor:
 # Formbricks Hub image: ghcr.io/formbricks/hub
 ##########################################################
 hub:
-  enabled: true
+  enabled: false
 
   image:
     repository: "ghcr.io/formbricks/hub"
