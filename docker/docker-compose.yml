@@ -29,6 +29,12 @@ x-environment: &environment
     # To use external Redis/Valkey: remove the redis service below and update this URL
     REDIS_URL: redis://redis:6379
 
+    # Formbricks Hub (port 8080): API key required. Use e.g. openssl rand -hex 32
+    HUB_API_KEY:
+
+    # Hub database URL (optional). Default: same Postgres as Formbricks. Set only if Hub uses a separate DB.
+    # HUB_DATABASE_URL:
+
     # Set the minimum log level(debug, info, warn, error, fatal)
     # LOG_LEVEL: info
 
@@ -202,7 +208,7 @@ x-environment: &environment
 services:
   postgres:
     restart: always
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg18
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:

@@ -1,7 +1,7 @@
 services:
   # PostgreSQL must load the vector library so Hub (and Formbricks) can use the pgvector extension.
   postgres:
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg18
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./docker/postgres-init-dev:/docker-entrypoint-initdb.d:ro
