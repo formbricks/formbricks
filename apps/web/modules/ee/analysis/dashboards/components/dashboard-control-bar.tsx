@@ -1,6 +1,6 @@
 "use client";
 
-import { CopyIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { CheckIcon, LibraryIcon, LockOpenIcon, PlusIcon, RefreshCwIcon, TrashIcon, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -10,25 +10,37 @@ import { IconBar } from "@/modules/ui/components/iconbar";
 import { deleteDashboardAction } from "../actions";
 import { TDashboard } from "@/modules/ee/analysis/types/analysis";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
-import { EditDashboardDialog } from "./edit-dashboard-dialog";
+import { AddExistingChartsDialog } from "./add-existing-charts-dialog";
 
 interface DashboardControlBarProps {
   environmentId: string;
   dashboard: TDashboard;
-  onDashboardUpdate?: () => void;
+  isEditing: boolean;
+  isSaving: boolean;
+  hasChanges: boolean;
+  onRefresh: () => void;
+  onEditToggle: () => void;
+  onSave: () => void;
+  onCancel: () => void;
 }
 
 export const DashboardControlBar = ({
   environmentId,
   dashboard,
-  onDashboardUpdate,
+  isEditing,
+  isSaving,
+  hasChanges,
+  onRefresh,
+  onEditToggle,
+  onSave,
+  onCancel,
 }: DashboardControlBarProps) => {
   const router = useRouter();
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isAddChartDialogOpen, setIsAddChartDialogOpen] = useState(false);
+  const [isCreateChartDialogOpen, setIsCreateChartDialogOpen] = useState(false);
+  const [isAddExistingDialogOpen, setIsAddExistingDialogOpen] = useState(false);
 
   const handleDeleteDashboard = async () => {
     setIsDeleting(true);
@@ -49,31 +61,51 @@ export const DashboardControlBar = ({
     }
   };
 
-  const handleDuplicate = async () => {
-    toast.success("Duplicate functionality coming soon");
-  };
+  const editModeActions = [
+    {
+      icon: CheckIcon,
+      tooltip: hasChanges ? t("common.save") : t("common.no_changes"),
+      onClick: onSave,
+      isVisible: true,
+      isLoading: isSaving,
+      disabled: isSaving || !hasChanges,
+    },
+    {
+      icon: XIcon,
+      tooltip: t("common.cancel"),
+      onClick: onCancel,
+      isVisible: true,
+      disabled: isSaving,
+    },
+  ];
 
-  const iconActions = [
+  const viewModeActions = [
+    {
+      icon: RefreshCwIcon,
+      tooltip: t("common.refresh"),
+      onClick: onRefresh,
+      isVisible: true,
+    },
+    {
+      icon: LockOpenIcon,
+      tooltip: t("common.unlock"),
+      onClick: onEditToggle,
+      isVisible: true,
+    },
+    {
+      icon: LibraryIcon,
+      tooltip: t("common.add_existing_chart"),
+      onClick: () => {
+        setIsAddExistingDialogOpen(true);
+      },
+      isVisible: true,
+    },
     {
       icon: PlusIcon,
-      tooltip: t("common.add_chart"),
+      tooltip: t("common.create_new_chart"),
       onClick: () => {
-        setIsAddChartDialogOpen(true);
+        setIsCreateChartDialogOpen(true);
       },
-      isVisible: true,
-    },
-    {
-      icon: PencilIcon,
-      tooltip: t("common.edit"),
-      onClick: () => {
-        setIsEditDialogOpen(true);
-      },
-      isVisible: true,
-    },
-    {
-      icon: CopyIcon,
-      tooltip: t("common.duplicate"),
-      onClick: handleDuplicate,
       isVisible: true,
     },
     {
@@ -88,7 +120,7 @@ export const DashboardControlBar = ({
 
   return (
     <>
-      <IconBar actions={iconActions} />
+      <IconBar actions={isEditing ? editModeActions : viewModeActions} />
       <DeleteDialog
         deleteWhat="Dashboard"
         open={isDeleteDialogOpen}
@@ -97,25 +129,22 @@ export const DashboardControlBar = ({
         text="Are you sure you want to delete this dashboard? This action cannot be undone."
         isDeleting={isDeleting}
       />
-      <EditDashboardDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        dashboardId={dashboard.id}
+      <AddExistingChartsDialog
+        open={isAddExistingDialogOpen}
+        onOpenChange={setIsAddExistingDialogOpen}
         environmentId={environmentId}
-        initialName={dashboard.name}
-        initialDescription={dashboard.description}
+        dashboard={dashboard}
         onSuccess={() => {
-          setIsEditDialogOpen(false);
-          onDashboardUpdate?.();
+          setIsAddExistingDialogOpen(false);
           router.refresh();
         }}
       />
       <CreateChartDialog
-        open={isAddChartDialogOpen}
-        onOpenChange={setIsAddChartDialogOpen}
+        open={isCreateChartDialogOpen}
+        onOpenChange={setIsCreateChartDialogOpen}
         environmentId={environmentId}
         onSuccess={() => {
-          setIsAddChartDialogOpen(false);
+          setIsCreateChartDialogOpen(false);
           router.refresh();
         }}
       />

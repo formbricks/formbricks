@@ -206,6 +206,91 @@ export const updateDashboardAction = authenticatedActionClient.schema(ZUpdateDas
   )
 );
 
+const ZUpdateWidgetLayoutsAction = z.object({
+  environmentId: ZId,
+  dashboardId: ZId,
+  widgets: z.array(
+    z.object({
+      id: z.string(),
+      layout: ZWidgetLayout,
+      order: z.number(),
+    })
+  ),
+});
+
+export const updateWidgetLayoutsAction = authenticatedActionClient.schema(ZUpdateWidgetLayoutsAction).action(
+  withAuditLogging(
+    "updated",
+    "dashboard",
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZUpdateWidgetLayoutsAction>;
+    }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId,
+          },
+        ],
+      });
+
+      const dashboard = await prisma.dashboard.findFirst({
+        where: { id: parsedInput.dashboardId, projectId },
+        include: { widgets: true },
+      });
+
+      if (!dashboard) {
+        throw new Error("Dashboard not found");
+      }
+
+      const widgetIds = parsedInput.widgets.map((w) => w.id);
+      const existingWidgetIds = dashboard.widgets.map((w) => w.id);
+      const invalidIds = widgetIds.filter((id) => !existingWidgetIds.includes(id));
+
+      if (invalidIds.length > 0) {
+        throw new Error(`Invalid widget IDs: ${invalidIds.join(", ")}`);
+      }
+
+      await prisma.$transaction(
+        parsedInput.widgets.map((widget) =>
+          prisma.dashboardWidget.update({
+            where: { id: widget.id },
+            data: {
+              layout: widget.layout,
+              order: widget.order,
+            },
+          })
+        )
+      );
+
+      const updatedDashboard = await prisma.dashboard.findFirst({
+        where: { id: parsedInput.dashboardId },
+        include: { widgets: true },
+      });
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.oldObject = dashboard;
+      ctx.auditLoggingCtx.newObject = updatedDashboard;
+      return { success: true, widgetCount: parsedInput.widgets.length };
+    }
+  )
+);
+
 const ZDeleteDashboardAction = z.object({
   environmentId: ZId,
   dashboardId: ZId,
