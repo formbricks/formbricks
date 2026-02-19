@@ -107,7 +107,7 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
   return {
     attributes: {
       some: {
-        attributeKey: { key: contactAttributeKey },
+        attributeKey: { key: contactAttributeKey, dataType: "date" },
         OR: [{ valueDate: dateCondition }, { valueDate: null, value: stringDateCondition }],
       },
     },
@@ -165,6 +165,7 @@ const buildNumberAttributeFilterWhereClause = async (
       attributeKey: {
         key: contactAttributeKey,
         environmentId,
+        dataType: "number",
       },
       valueNumber: null,
     },
@@ -183,6 +184,7 @@ const buildNumberAttributeFilterWhereClause = async (
     JOIN "ContactAttributeKey" cak ON ca."attributeKeyId" = cak.id
     WHERE cak.key = $1
     AND cak."environmentId" = $4
+    AND cak."dataType" = 'number'
     AND ca."valueNumber" IS NULL
     AND ca.value ~ $3
     AND ca.value::double precision ${sqlOp} $2
