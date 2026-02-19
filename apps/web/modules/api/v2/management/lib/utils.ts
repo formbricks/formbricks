@@ -12,8 +12,7 @@ type HasFindMany =
   | Prisma.TeamFindManyArgs
   | Prisma.ProjectTeamFindManyArgs
   | Prisma.UserFindManyArgs
-  | Prisma.ContactAttributeKeyFindManyArgs
-  | Prisma.ChartFindManyArgs;
+  | Prisma.ContactAttributeKeyFindManyArgs;
 
 export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: TGetFilter): T {
   const { limit, skip, sortBy, order, startDate, endDate, filterDateField = "createdAt" } = params || {};
