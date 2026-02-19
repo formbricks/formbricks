@@ -1276,6 +1276,7 @@ describe("segmentFilterToPrismaQuery", () => {
         attributeKey: {
           key: "age",
           environmentId: mockEnvironmentId,
+          dataType: "number",
         },
         valueNumber: null,
       },
@@ -1362,7 +1363,7 @@ describe("segmentFilterToPrismaQuery", () => {
             {
               attributes: {
                 some: {
-                  attributeKey: { key: "purchaseDate" },
+                  attributeKey: { key: "purchaseDate", dataType: "date" },
                   OR: [
                     { valueDate: { lt: new Date(targetDate) } },
                     { valueDate: null, value: { lt: new Date(targetDate).toISOString() } },
@@ -1406,7 +1407,7 @@ describe("segmentFilterToPrismaQuery", () => {
             {
               attributes: {
                 some: {
-                  attributeKey: { key: "signupDate" },
+                  attributeKey: { key: "signupDate", dataType: "date" },
                   OR: [
                     { valueDate: { gt: new Date(targetDate) } },
                     { valueDate: null, value: { gt: new Date(targetDate).toISOString() } },
@@ -1451,7 +1452,7 @@ describe("segmentFilterToPrismaQuery", () => {
             {
               attributes: {
                 some: {
-                  attributeKey: { key: "lastActivityDate" },
+                  attributeKey: { key: "lastActivityDate", dataType: "date" },
                   OR: [
                     { valueDate: { gte: new Date(startDate), lte: new Date(endDate) } },
                     {
