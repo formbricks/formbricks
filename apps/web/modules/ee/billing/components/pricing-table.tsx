@@ -283,7 +283,7 @@ export const PricingTable = ({
                   onClick={() => handleMonthlyToggle("yearly")}>
                   {t("environments.settings.billing.annually")}
                   <span className="ml-2 inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                    {t("environments.settings.billing.get_2_months_free")} \ud83d\udd25
+                    {t("environments.settings.billing.get_2_months_free")}
                   </span>
                 </button>
               </div>

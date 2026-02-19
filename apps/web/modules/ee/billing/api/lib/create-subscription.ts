@@ -50,19 +50,26 @@ export const createSubscription = async (
       throw new Error(`One or more prices not found in Stripe for ${lookupKeys.join(", ")}`);
     }
 
-    const getPriceIdByLookupKey = (lookupKey: string) => {
+    const getPriceByLookupKey = (lookupKey: string) => {
       const price = prices.data.find((entry) => entry.lookup_key === lookupKey);
       if (!price) throw new Error(`Price ${lookupKey} not found`);
-      return price.id;
+      return price;
     };
+
+    const lineItems = lookupKeys.map((lookupKey) => {
+      const price = getPriceByLookupKey(lookupKey);
+
+      if (price.recurring?.usage_type === "metered") {
+        return { price: price.id };
+      }
+
+      return { price: price.id, quantity: 1 };
+    });
 
     // Always create a checkout session - let Stripe handle existing customers
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: lookupKeys.map((lookupKey) => ({
-        price: getPriceIdByLookupKey(lookupKey),
-        quantity: 1,
-      })),
+      line_items: lineItems,
       success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${environmentId}`,
       cancel_url: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
       customer: customerId,
