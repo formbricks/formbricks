@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface AnalysisSecondaryNavigationProps {
@@ -6,15 +9,17 @@ interface AnalysisSecondaryNavigationProps {
 }
 
 export function AnalysisSecondaryNavigation({ activeId, environmentId }: AnalysisSecondaryNavigationProps) {
+  const { t } = useTranslation();
+
   const navigation = [
     {
       id: "dashboards",
-      label: "Dashboards",
+      label: t("common.dashboards"),
       href: `/environments/${environmentId}/analysis/dashboards`,
     },
     {
       id: "charts",
-      label: "Charts",
+      label: t("common.charts"),
       href: `/environments/${environmentId}/analysis/charts`,
     },
   ];

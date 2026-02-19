@@ -123,6 +123,7 @@ checksums:
     common/bottom_right: aaef9a70ef795affc806c6d1853d8373
     common/cancel: 2e2a849c2223911717de8caa2c71bade
     common/centered_modal: 982ff411cb7e91e30300c2ed56b7e507
+    common/charts: 1da4564d89264c89de4ed28d7451b43e
     common/choices: 8a7a77a71ec6eebc363c5dc0f8490a4d
     common/choose_environment: 5762cd499529815fc3e6a7feea39f90b
     common/choose_organization: a8f5db68012323bfbb1a0ad0fb194603
@@ -161,6 +162,7 @@ checksums:
     common/created_by: 6775c2fa7d495fea48f1ad816daea93b
     common/customer_success: 2b0c99a5f57e1d16cf0a998f9bb116c4
     common/dark_overlay: 173e84b526414dbc70dbf9737e443b60
+    common/dashboards: 4bc47e48559a6b688684dcb7ac4babc9
     common/date: 56f41c5d30a76295bb087b20b7bee4c3
     common/days: c95fe8aedde21a0b5653dbd0b3c58b48
     common/default: d9c6dc5c412fe94143dfd1d332ec81d4

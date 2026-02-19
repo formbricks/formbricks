@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { use } from "react";
+import { useTranslation } from "react-i18next";
 import { AnalysisPageLayout } from "./analysis-page-layout";
 
 interface AnalysisLayoutClientProps {
@@ -10,6 +11,7 @@ interface AnalysisLayoutClientProps {
 }
 
 export function AnalysisLayoutClient({ children, params }: AnalysisLayoutClientProps) {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const { environmentId } = use(params);
 
@@ -19,7 +21,7 @@ export function AnalysisLayoutClient({ children, params }: AnalysisLayoutClientP
   }
 
   return (
-    <AnalysisPageLayout pageTitle="Analysis" activeId={activeId} environmentId={environmentId}>
+    <AnalysisPageLayout pageTitle={t("common.analysis")} activeId={activeId} environmentId={environmentId}>
       {children}
     </AnalysisPageLayout>
   );
