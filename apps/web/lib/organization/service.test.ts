@@ -8,6 +8,7 @@ import {
   createOrganization,
   getOrganization,
   getOrganizationsByUserId,
+  select as organizationSelect,
   subscribeOrganizationMembersToSurveyResponses,
   updateOrganization,
 } from "./service";
@@ -43,6 +44,7 @@ describe("Organization Service", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         billing: {
+          billingMode: "stripe" as const,
           plan: PROJECT_FEATURE_KEYS.FREE,
           limits: {
             projects: BILLING_LIMITS.FREE.PROJECTS,
@@ -98,6 +100,7 @@ describe("Organization Service", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           billing: {
+            billingMode: "stripe",
             plan: PROJECT_FEATURE_KEYS.FREE,
             limits: {
               projects: BILLING_LIMITS.FREE.PROJECTS,
@@ -151,6 +154,7 @@ describe("Organization Service", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         billing: {
+          billingMode: "stripe" as const,
           plan: PROJECT_FEATURE_KEYS.FREE,
           limits: {
             projects: BILLING_LIMITS.FREE.PROJECTS,
@@ -176,6 +180,7 @@ describe("Organization Service", () => {
         data: {
           name: "Test Org",
           billing: {
+            billingMode: "stripe",
             plan: PROJECT_FEATURE_KEYS.FREE,
             limits: {
               projects: BILLING_LIMITS.FREE.PROJECTS,
@@ -189,7 +194,7 @@ describe("Organization Service", () => {
             period: "monthly",
           },
         },
-        select: expect.any(Object),
+        select: organizationSelect,
       });
     });
 
