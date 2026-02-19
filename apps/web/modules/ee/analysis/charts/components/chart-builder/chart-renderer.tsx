@@ -20,6 +20,18 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/
 const BRAND_DARK = "#00C4B8";
 const BRAND_LIGHT = "#00E6CA";
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(T|\s)/;
+
+function formatTickValue(value: unknown): string {
+  if (typeof value !== "string") return String(value ?? "");
+  if (!ISO_DATE_RE.test(value)) return value;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 interface ChartRendererProps {
   chartType: string;
   data: Record<string, unknown>[];
@@ -27,7 +39,7 @@ interface ChartRendererProps {
 
 export function ChartRenderer({ chartType, data }: ChartRendererProps) {
   if (!data || data.length === 0) {
-    return <div className="flex h-64 items-center justify-center text-gray-500">No data available</div>;
+    return <div className="flex h-full min-h-[200px] items-center justify-center text-gray-500">No data available</div>;
   }
 
   // Get the first data point to determine keys
@@ -71,13 +83,13 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
   switch (chartType) {
     case "bar":
       return (
-        <div className="h-64 min-h-[256px] w-full">
+        <div className="h-full w-full">
           <ChartContainer
             config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }}
             className="h-full w-full">
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
+              <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} tickFormatter={formatTickValue} />
               <YAxis tickLine={false} axisLine={false} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Bar dataKey={dataKey} fill={BRAND_DARK} radius={4} />
@@ -87,13 +99,13 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
       );
     case "line":
       return (
-        <div className="h-64 min-h-[256px] w-full">
+        <div className="h-full w-full">
           <ChartContainer
             config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }}
             className="h-full w-full">
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
+              <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} tickFormatter={formatTickValue} />
               <YAxis tickLine={false} axisLine={false} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Line
@@ -110,13 +122,13 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
       );
     case "area":
       return (
-        <div className="h-64 min-h-[256px] w-full">
+        <div className="h-full w-full">
           <ChartContainer
             config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }}
             className="h-full w-full">
             <AreaChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
+              <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} tickFormatter={formatTickValue} />
               <YAxis tickLine={false} axisLine={false} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Area
@@ -135,7 +147,7 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
     case "donut": {
       if (!dataKey || !xAxisKey) {
         return (
-          <div className="flex h-64 items-center justify-center text-gray-500">
+          <div className="flex h-full min-h-[200px] items-center justify-center text-gray-500">
             Unable to determine chart data structure
           </div>
         );
@@ -157,7 +169,7 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
 
       if (processedData.length === 0) {
         return (
-          <div className="flex h-64 items-center justify-center text-gray-500">No valid data to display</div>
+          <div className="flex h-full min-h-[200px] items-center justify-center text-gray-500">No valid data to display</div>
         );
       }
 
@@ -173,18 +185,18 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
       if (colors.length > 1) colors[1] = BRAND_LIGHT;
 
       return (
-        <div className="h-64 min-h-[256px] w-full min-w-0">
+        <div className="h-full w-full min-w-0">
           <ChartContainer
             config={{ [dataKey]: { label: dataKey, color: BRAND_DARK } }}
             className="h-full w-full min-w-0">
-            <PieChart width={400} height={256}>
+            <PieChart>
               <Pie
                 data={processedData}
                 dataKey={dataKey}
                 nameKey={xAxisKey}
                 cx="50%"
                 cy="50%"
-                outerRadius={80}
+                outerRadius="70%"
                 label={({ name, percent }) => {
                   if (!percent) return "";
                   return `${name}: ${(percent * 100).toFixed(0)}%`;
@@ -211,7 +223,7 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
     case "big_number": {
       const total = data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
       return (
-        <div className="flex h-64 items-center justify-center">
+        <div className="flex h-full min-h-[100px] items-center justify-center">
           <div className="text-center">
             <div className="text-4xl font-bold text-gray-900">{total.toLocaleString()}</div>
             <div className="mt-2 text-sm text-gray-500">{dataKey}</div>
@@ -221,7 +233,7 @@ export function ChartRenderer({ chartType, data }: ChartRendererProps) {
     }
     default:
       return (
-        <div className="flex h-64 items-center justify-center text-gray-500">
+        <div className="flex h-full min-h-[200px] items-center justify-center text-gray-500">
           Chart type &quot;{chartType}&quot; not yet supported
         </div>
       );

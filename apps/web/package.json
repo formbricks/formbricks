@@ -123,6 +123,7 @@
     "react-confetti": "6.4.0",
     "react-day-picker": "9.6.7",
     "react-dom": "19.2.3",
+    "react-grid-layout": "2.2.2",
     "react-hook-form": "7.56.2",
     "react-hot-toast": "2.5.2",
     "react-i18next": "15.7.3",
