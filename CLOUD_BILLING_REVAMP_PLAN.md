@@ -122,16 +122,16 @@ Introduce unified feature-access interface:
 - Optional temporary `migrationState` (`pending|ready|error`) is acceptable during rollout; remove after migration completion.
 - Do not keep a permanent `legacy` billing mode branch in runtime logic.
 
-## 3.1) Sync Model (No-Worker MVP)
+### 3.1) Sync Model (No-Worker MVP)
 
 1. Persist normalized billing snapshot per organization.
 2. Runtime checks use cache -> DB snapshot (not Stripe per request).
 3. On missing/stale snapshot, do read-through fetch from Stripe, then update DB + cache.
 4. On webhook:
-- verify signature
-- dedupe by `event.id`
-- use webhook as trigger, fetch canonical state from Stripe, overwrite snapshot
-- update `lastStripeEventCreatedAt`, `lastSyncedAt`, `lastSyncedEventId`
+  - verify signature
+  - dedupe by `event.id`
+  - use webhook as trigger, fetch canonical state from Stripe, overwrite snapshot
+  - update `lastStripeEventCreatedAt`, `lastSyncedAt`, `lastSyncedEventId`
 5. Add manual "Resync from Stripe" action for self-healing.
 
 Rationale:
@@ -213,7 +213,7 @@ Rationale:
 7. **Pricing + billing UI revamp**
 - Pricing table from Stripe products/prices.
 - Billing overview from Stripe-backed snapshot (usage, included, overage, cap state).
-- For migration pending orgs, show support/migration state messaging.
+- For migration-pending orgs, show support/migration state messaging.
 
 8. **Data migration and cutover**
 - Defer execution of Track A and Track B to post-Iteration-1.
@@ -250,10 +250,10 @@ Application timing:
 1. Create feature branch (`codex/...`).
 2. Implement in small, reviewable commits.
 3. Open PR with:
-- scope summary
-- migration notes
-- risk/rollback notes
-- test evidence (`pnpm lint`, `pnpm test`, `pnpm build`)
+  - scope summary
+  - migration notes
+  - risk/rollback notes
+  - test evidence (`pnpm lint`, `pnpm test`, `pnpm build`)
 4. Wait for CI and automated AI review (Code Rabbit).
 5. Address all blocking review comments and unresolved AI findings.
 6. Merge only after all required checks are green.
@@ -285,7 +285,7 @@ Application timing:
 | D-001 | Cloud source of truth | Stripe is source of truth for Cloud pricing + entitlements | Confirmed | Applies to free, paid, and custom Cloud orgs |
 | D-002 | Feature gating interface | Use `FeatureAccessProvider` (`hasFeature`) across app | Confirmed | Cloud Stripe-backed, self-hosted license-backed |
 | D-003 | Usage metering v1 | Meter `response_created` only; contacts not metered in v1 | Confirmed | Contacts remain unlimited for now |
-| D-004 | Spending cap enforcement | App-level `warn|pause` enforcement | Confirmed | Stripe does not provide app pause behavior |
+| D-004 | Spending cap enforcement | App-level `none\|warn\|pause` enforcement | Confirmed | Stripe does not provide app pause behavior |
 | D-005 | Permissions | Spending cap changes are owner-only | Confirmed | Managers excluded |
 | D-006 | Plan change semantics | Immediate upgrades, period-end downgrades | Confirmed | Matches requested behavior |
 | D-007 | Deployment separation | Billing stack active only with `IS_FORMBRICKS_CLOUD=1` | Confirmed | Self-hosted stays license-server driven |
@@ -354,3 +354,101 @@ Required behavior:
 - https://docs.stripe.com/api/idempotent_requests
 - https://docs.stripe.com/customer-management
 - https://docs.stripe.com/billing/subscriptions/integrating-customer-portal
+
+## 12) Cloud Dev Stripe Inventory Snapshot (2026-02-19)
+
+Account context:
+- Account ID: `acct_1Sqt6uCng0KywbKl`
+- Display name: `Cloud: Dev`
+- Mode: test mode (sandbox)
+
+Products:
+- Hobby: `prod_ToYKB5ESOMZZk5`
+- Pro: `prod_ToYKQ8WxS3ecgf`
+- Scale: `prod_ToYLW5uCQTMa6v`
+- Trial: `prod_TodVcJiEnK5ABK`
+
+Default prices:
+- Hobby default price: `price_1SqvE2Cng0KywbKllqlTjZyH` (`$0` monthly, lookup key: `price_hobby_monthly`)
+- Pro default price: `price_1SqvEJCng0KywbKlxoXyWHOA` (`price_pro_monthly`)
+- Scale default price: `price_1SqvF0Cng0KywbKluayrLH0e` (`price_scale_monthly`)
+- Trial default price: `price_1Sr0E3Cng0KywbKlNLxgUoov` (`$0` monthly, lookup key: `price_trial_free`)
+
+Base recurring prices:
+- Pro monthly: `price_1SqvEJCng0KywbKlxoXyWHOA` (`price_pro_monthly`) - `8900` cents USD
+- Pro yearly: `price_1Sr063Cng0KywbKlOFvVOFYO` (`price_pro_yearly`) - `89000` cents USD
+- Scale monthly: `price_1SqvF0Cng0KywbKluayrLH0e` (`price_scale_monthly`) - `39000` cents USD
+- Scale yearly: `price_1Sr04cCng0KywbKlB0GaUkuE` (`price_scale_yearly`) - `390000` cents USD
+
+Usage prices (response):
+- Pro responses: `price_1SrJ4XCng0KywbKlQDbf4ANf` (`price_pro_usage_responses`)
+- Scale responses: `price_1SrJ8YCng0KywbKlMDrE0Zf0` (`price_scale_usage_responses`)
+
+Usage prices (contacts, out of Iteration 1 scope):
+- Pro contacts: `price_1SrLeJCng0KywbKlKE0lLSmP` (`price_pro_usage_contacts`)
+- Scale contacts: `price_1SrLgzCng0KywbKllQZiy0k7` (`price_scale_usage_contacts`)
+
+Meters:
+- Responses meter ID: `mtr_test_61U0N9EKY7kwTxFa941Cng0KywbKlDpY`
+- Responses meter event name: `response_created`
+- Contacts meter ID: `mtr_test_61U0N9dEHRiN7BcX141Cng0KywbKlKYa`
+- Contacts meter event name: `unique_contact_identified`
+
+Billing alerts (configured):
+- `alrt_test_61U0Nbs7fDe3NgI3O41Cng0KywbKl1xQ` - `Free Tier: 80%`
+- `alrt_test_61U0NbIuIYELJmIai41Cng0KywbKlLvM` - `Free Tier: 90%`
+- `alrt_test_61U0NcGqpUZG5mY4D41Cng0KywbKlI3c` - `Free Tier: Limit reached`
+
+Entitlement feature lookup keys (catalog):
+- `integrations`
+- `unlimited-seats`
+- `workspace-limit-1`
+- `webhooks`
+- `custom-links-in-surveys`
+- `custom-redirect-url`
+- `api-access`
+- `verified-customer`
+- `spam-protection`
+- `two-fa`
+- `contacts`
+- `workspace-limit-5`
+- `workspace-limit-3`
+- `rbac`
+- `hide-branding`
+- `follow-ups`
+- `quota-management`
+
+Current product-feature assignments:
+- Hobby:
+  - `workspace-limit-1`
+- Pro:
+  - `contacts`, `custom-links-in-surveys`, `custom-redirect-url`, `follow-ups`, `hide-branding`, `two-fa`, `unlimited-seats`, `verified-customer`, `webhooks`, `workspace-limit-3`
+- Scale:
+  - `api-access`, `contacts`, `custom-links-in-surveys`, `custom-redirect-url`, `follow-ups`, `hide-branding`, `quota-management`, `rbac`, `spam-protection`, `two-fa`, `unlimited-seats`, `verified-customer`, `webhooks`, `workspace-limit-5`
+- Trial:
+  - `api-access`, `contacts`, `follow-ups`, `hide-branding`, `quota-management`, `rbac`, `spam-protection`, `two-fa`, `unlimited-seats`, `workspace-limit-5`
+
+Implementation notes from snapshot:
+- Iteration 1 should use response meter only (`response_created`) and ignore contact metering/limits.
+- Hobby and Trial default price lookup keys are now set (`price_hobby_monthly`, `price_trial_free`).
+- Scale already has `workspace-limit-5` and `rbac` in Stripe.
+- Important: product features list is paginated; always query with `limit=100` (or pagination) when validating entitlements.
+
+Response overage tiers (implementation reference):
+- Pro (`price_pro_usage_responses`, `tiers_mode=volume`):
+  - 0-2,000: $0
+  - 2,001-5,000: $0.08
+  - 5,001-7,500: $0.07
+  - 7,501-10,000: $0.06
+  - 10,001-15,000: $0.05
+  - 15,001-20,000: $0.04
+  - 20,001-50,000: $0.03
+  - 50,001+: $0.02
+- Scale (`price_scale_usage_responses`, `tiers_mode=graduated`):
+  - 0-5,000: $0
+  - 5,001-7,500: $0.06
+  - 7,501-10,000: $0.05
+  - 10,001-15,000: $0.04
+  - 15,001-20,000: $0.03
+  - 20,001-50,000: $0.02
+  - 50,001+: $0.01
