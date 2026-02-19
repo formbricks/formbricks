@@ -198,7 +198,6 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         questionsResponse.data.blocks,
         body.data,
         body.language ?? "en",
-        body.finished,
         questionsResponse.data.questions
       );
 

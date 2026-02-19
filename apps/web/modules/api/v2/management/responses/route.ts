@@ -134,7 +134,6 @@ export const POST = async (request: Request) =>
         surveyQuestions.data.blocks,
         body.data,
         body.language ?? "en",
-        body.finished,
         surveyQuestions.data.questions
       );
 
