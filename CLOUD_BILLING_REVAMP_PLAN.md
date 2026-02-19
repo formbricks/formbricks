@@ -3,6 +3,7 @@
 ## Scope
 - In scope: Formbricks Cloud billing, pricing, entitlements, metering, spending controls, billing UI, and migration of existing Cloud orgs.
 - Out of scope: Self-hosting license-server implementation details (but we keep the shared feature-access interface).
+- Iteration 1 scope focus: new Cloud orgs only (signup -> Stripe customer creation -> upgrade flow -> entitlement-based feature access).
 
 ## North Star
 - Stripe is the commercial source of truth for **all Cloud organizations** (free, standard paid, custom paid).
@@ -142,6 +143,16 @@ Rationale:
 - Do not implement full alternative billing policy engine for pending orgs.
 - Sunset migration state after all orgs are moved.
 
+### Iteration 1 decision
+- Migration execution scripts are explicitly out of scope for this first implementation PR.
+- The PR must include:
+  - a clear note that migration script implementation is deferred
+  - an outline/spec of what the migration script must do (inputs, safety checks, idempotency, outputs)
+- Runtime implementation target for Iteration 1:
+  - new Cloud org signup creates Stripe customer automatically
+  - Stripe-managed upgrade path works end-to-end
+  - entitlements are synced and used for feature access decisions
+
 ## 5) Implementation Plan (Simple Phases)
 
 1. **Foundation and cleanup boundary**
@@ -182,10 +193,10 @@ Rationale:
 - For migration pending orgs, show support/migration state messaging.
 
 8. **Data migration and cutover**
-- Run Track A script for free orgs.
-- Execute Track B assisted Stripe migrations for paid/custom orgs.
-- Remove old hardcoded billing logic and legacy webhook handlers.
-- Remove temporary migration gating once orgs are complete.
+- Defer execution of Track A and Track B to post-Iteration-1.
+- In Iteration 1 PR, include migration script specification and rollout checklist.
+- Remove old hardcoded billing logic and legacy webhook handlers for the new-user path.
+- Keep temporary migration handling only as documentation until migration execution starts.
 
 9. **Stabilization**
 - Add monitoring for webhook lag/failures, sync freshness, metering failures.
@@ -257,6 +268,8 @@ Rationale:
 | D-016 | Currency/tax | USD pricing with Stripe Tax enabled | Confirmed | Tax calculation delegated to Stripe |
 | D-017 | Stripe ownership | Founders team owns Stripe catalog/config | Confirmed | Process hardening to be defined |
 | D-018 | Definition of Done | Enforce DoD for touched `.ts` files + coverage and CI gates before merge | Confirmed | Includes lint/test/build + Code Rabbit resolution |
+| D-019 | Iteration 1 migration scope | Migration script implementation is out of scope for Iteration 1 PR | Confirmed | PR must state deferred status explicitly |
+| D-020 | Iteration 1 runtime target | First implementation must be production-ready for new Cloud org signup + upgrade + entitlement gating | Confirmed | Existing org migration follows in later phase |
 
 ## 10) Open Questions (Need Answers Before Build Starts)
 
@@ -264,12 +277,34 @@ Rationale:
 - Do we define a strict finite set of contract bundles/add-ons in Stripe first, then map every paid/custom org to one of them?
 - Or allow short-term customer-specific Stripe prices for outliers, then consolidate later?
 
-2. Migration timeline and freeze:
-- Should we enforce a temporary billing-change freeze during Track B migration window?
-- If yes, what exact dates/window should we target?
-
-3. Pending-org UX:
+2. Pending-org UX:
 - Confirm exact copy and support CTA for orgs in temporary `migrationState=pending`.
+
+## 10.1) Deferred Migration Script Specification (to include in Iteration 1 PR)
+
+Purpose:
+- Migrate existing Cloud orgs to Stripe-managed billing after Iteration 1 runtime is live.
+
+Required behavior:
+1. Guardrails:
+- hard-fail unless `IS_FORMBRICKS_CLOUD=1`
+- require explicit confirm flag
+- support `--dry-run`
+2. Free-org migration track:
+- ensure Stripe customer exists
+- ensure Stripe-managed free subscription exists
+- backfill normalized billing snapshot + sync metadata
+3. Paid/custom migration track:
+- map org to Stripe contract product/add-ons
+- create/update Stripe subscription as needed
+- trigger canonical app resync
+4. Safety:
+- idempotent and rerunnable
+- bounded concurrency + retry/backoff for 429/5xx
+- per-org success/failure logging
+5. Output:
+- summary counters (migrated/skipped/failed)
+- machine-readable failure report for manual follow-up
 
 ## 11) References (Stripe primary sources)
 
