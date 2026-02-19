@@ -133,6 +133,7 @@
     "allow": "Engedélyezés",
     "allow_users_to_exit_by_clicking_outside_the_survey": "Lehetővé tétel a felhasználók számára, hogy a kérdőíven kívülre kattintva kilépjenek",
     "an_unknown_error_occurred_while_deleting_table_items": "{type} típusok törlésekor ismeretlen hiba történt",
+    "analysis": "Elemzés",
     "and": "És",
     "and_response_limit_of": "és kérdéskorlátja ennek:",
     "anonymous": "Névtelen",
