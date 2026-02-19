@@ -9,7 +9,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import {
   createResponseWithQuotaEvaluation,
   getResponses,
@@ -54,7 +54,9 @@ export const GET = withV1ApiWrapper({
         allResponses.push(...environmentResponses);
       }
       return {
-        response: responses.successResponse(allResponses),
+        response: responses.successResponse(
+          allResponses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) }))
+        ),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {
