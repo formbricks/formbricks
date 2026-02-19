@@ -19,8 +19,7 @@ import {
   ZConnectorFormbricksMappingCreateInput,
   ZConnectorUpdateInput,
 } from "@formbricks/types/connector";
-import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -130,7 +129,7 @@ export const getConnectorsWithMappings = reactCache(
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
       });
 
-      return connectors as unknown as TConnectorWithMappings[];
+      return connectors;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -219,19 +218,13 @@ export const getConnectorsBySurveyId = reactCache(
   }
 );
 
-export enum ConnectorError {
-  CONNECTOR_NOT_FOUND = "CONNECTOR_NOT_FOUND",
-  DUPLICATE_MAPPING = "DUPLICATE_MAPPING",
-  UNEXPECTED_ERROR = "UNEXPECTED_ERROR",
-}
-
 /**
  * Create a new connector
  */
 export const createConnector = async (
   environmentId: string,
   data: TConnectorCreateInput
-): Promise<Result<TConnector, { code: ConnectorError; message: string }>> => {
+): Promise<TConnector> => {
   validateInputs([environmentId, ZId], [data, ZConnectorCreateInput]);
 
   try {
@@ -245,18 +238,17 @@ export const createConnector = async (
       select: selectConnector,
     });
 
-    return ok(connector as TConnector);
+    return connector;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return err({
-        code: ConnectorError.UNEXPECTED_ERROR,
-        message: error.message,
-      });
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        throw new InvalidInputError(`Connector with name ${data.name} already exists`);
+      }
+
+      throw new DatabaseError(error.message);
     }
-    return err({
-      code: ConnectorError.UNEXPECTED_ERROR,
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+
+    throw error;
   }
 };
 
@@ -266,7 +258,7 @@ export const createConnector = async (
 export const updateConnector = async (
   connectorId: string,
   data: TConnectorUpdateInput
-): Promise<Result<TConnector, { code: ConnectorError; message: string }>> => {
+): Promise<TConnector> => {
   validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput]);
 
   try {
@@ -284,33 +276,22 @@ export const updateConnector = async (
       select: selectConnector,
     });
 
-    return ok(connector as TConnector);
+    return connector as TConnector;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RecordNotFound) {
-        return err({
-          code: ConnectorError.CONNECTOR_NOT_FOUND,
-          message: "Connector not found",
-        });
+      if (error.code === PrismaErrorType.RecordDoesNotExist) {
+        throw new ResourceNotFoundError("Connector", connectorId);
       }
-      return err({
-        code: ConnectorError.UNEXPECTED_ERROR,
-        message: error.message,
-      });
+      throw new DatabaseError(error.message);
     }
-    return err({
-      code: ConnectorError.UNEXPECTED_ERROR,
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+    throw error;
   }
 };
 
 /**
  * Delete a connector
  */
-export const deleteConnector = async (
-  connectorId: string
-): Promise<Result<TConnector, { code: ConnectorError; message: string }>> => {
+export const deleteConnector = async (connectorId: string): Promise<TConnector> => {
   validateInputs([connectorId, ZId]);
 
   try {
@@ -321,24 +302,15 @@ export const deleteConnector = async (
       select: selectConnector,
     });
 
-    return ok(connector as TConnector);
+    return connector as TConnector;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RecordNotFound) {
-        return err({
-          code: ConnectorError.CONNECTOR_NOT_FOUND,
-          message: "Connector not found",
-        });
+      if (error.code === PrismaErrorType.RecordDoesNotExist) {
+        throw new ResourceNotFoundError("Connector", connectorId);
       }
-      return err({
-        code: ConnectorError.UNEXPECTED_ERROR,
-        message: error.message,
-      });
+      throw new DatabaseError(error.message);
     }
-    return err({
-      code: ConnectorError.UNEXPECTED_ERROR,
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+    throw error;
   }
 };
 
@@ -348,7 +320,7 @@ export const deleteConnector = async (
 export const createFormbricksMappings = async (
   connectorId: string,
   mappings: TConnectorFormbricksMappingCreateInput[]
-): Promise<Result<TConnectorFormbricksMapping[], { code: ConnectorError; message: string }>> => {
+): Promise<TConnectorFormbricksMapping[]> => {
   validateInputs([connectorId, ZId]);
   mappings.forEach((mapping) => validateInputs([mapping, ZConnectorFormbricksMappingCreateInput]));
 
@@ -367,24 +339,15 @@ export const createFormbricksMappings = async (
       )
     );
 
-    return ok(createdMappings as TConnectorFormbricksMapping[]);
+    return createdMappings as TConnectorFormbricksMapping[];
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        return err({
-          code: ConnectorError.DUPLICATE_MAPPING,
-          message: "A mapping for this survey element already exists",
-        });
+        throw new InvalidInputError("A mapping for this survey element already exists");
       }
-      return err({
-        code: ConnectorError.UNEXPECTED_ERROR,
-        message: error.message,
-      });
+      throw new DatabaseError(error.message);
     }
-    return err({
-      code: ConnectorError.UNEXPECTED_ERROR,
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+    throw error;
   }
 };
 
@@ -394,21 +357,18 @@ export const createFormbricksMappings = async (
 export const syncFormbricksMappings = async (
   connectorId: string,
   mappings: TConnectorFormbricksMappingCreateInput[]
-): Promise<Result<TConnectorFormbricksMapping[], { code: ConnectorError; message: string }>> => {
+): Promise<TConnectorFormbricksMapping[]> => {
   validateInputs([connectorId, ZId]);
   mappings.forEach((mapping) => validateInputs([mapping, ZConnectorFormbricksMappingCreateInput]));
 
   try {
-    // Delete all existing mappings and create new ones in a transaction
     const createdMappings = await prisma.$transaction(async (tx) => {
-      // Delete existing mappings
       await tx.connectorFormbricksMapping.deleteMany({
         where: {
           connectorId,
         },
       });
 
-      // Create new mappings
       const newMappings = await Promise.all(
         mappings.map((mapping) =>
           tx.connectorFormbricksMapping.create({
@@ -426,27 +386,19 @@ export const syncFormbricksMappings = async (
       return newMappings;
     });
 
-    return ok(createdMappings as TConnectorFormbricksMapping[]);
+    return createdMappings as TConnectorFormbricksMapping[];
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return err({
-        code: ConnectorError.UNEXPECTED_ERROR,
-        message: error.message,
-      });
+      throw new DatabaseError(error.message);
     }
-    return err({
-      code: ConnectorError.UNEXPECTED_ERROR,
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+    throw error;
   }
 };
 
 /**
  * Delete a Formbricks mapping
  */
-export const deleteFormbricksMapping = async (
-  mappingId: string
-): Promise<Result<TConnectorFormbricksMapping, { code: ConnectorError; message: string }>> => {
+export const deleteFormbricksMapping = async (mappingId: string): Promise<TConnectorFormbricksMapping> => {
   validateInputs([mappingId, ZId]);
 
   try {
@@ -456,24 +408,15 @@ export const deleteFormbricksMapping = async (
       },
     });
 
-    return ok(mapping as TConnectorFormbricksMapping);
+    return mapping as TConnectorFormbricksMapping;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RecordNotFound) {
-        return err({
-          code: ConnectorError.CONNECTOR_NOT_FOUND,
-          message: "Mapping not found",
-        });
+      if (error.code === PrismaErrorType.RecordDoesNotExist) {
+        throw new ResourceNotFoundError("FormbricksMapping", mappingId);
       }
-      return err({
-        code: ConnectorError.UNEXPECTED_ERROR,
-        message: error.message,
-      });
+      throw new DatabaseError(error.message);
     }
-    return err({
-      code: ConnectorError.UNEXPECTED_ERROR,
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+    throw error;
   }
 };
 
@@ -483,7 +426,7 @@ export const deleteFormbricksMapping = async (
 export const createFieldMappings = async (
   connectorId: string,
   mappings: TConnectorFieldMappingCreateInput[]
-): Promise<Result<TConnectorFieldMapping[], { code: ConnectorError; message: string }>> => {
+): Promise<TConnectorFieldMapping[]> => {
   validateInputs([connectorId, ZId]);
   mappings.forEach((mapping) => validateInputs([mapping, ZConnectorFieldMappingCreateInput]));
 
@@ -501,24 +444,15 @@ export const createFieldMappings = async (
       )
     );
 
-    return ok(createdMappings as TConnectorFieldMapping[]);
+    return createdMappings as TConnectorFieldMapping[];
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        return err({
-          code: ConnectorError.DUPLICATE_MAPPING,
-          message: "A mapping for this field already exists",
-        });
+        throw new InvalidInputError("A mapping for this field already exists");
       }
-      return err({
-        code: ConnectorError.UNEXPECTED_ERROR,
-        message: error.message,
-      });
+      throw new DatabaseError(error.message);
     }
-    return err({
-      code: ConnectorError.UNEXPECTED_ERROR,
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+    throw error;
   }
 };
 
@@ -528,21 +462,18 @@ export const createFieldMappings = async (
 export const syncFieldMappings = async (
   connectorId: string,
   mappings: TConnectorFieldMappingCreateInput[]
-): Promise<Result<TConnectorFieldMapping[], { code: ConnectorError; message: string }>> => {
+): Promise<TConnectorFieldMapping[]> => {
   validateInputs([connectorId, ZId]);
   mappings.forEach((mapping) => validateInputs([mapping, ZConnectorFieldMappingCreateInput]));
 
   try {
-    // Delete all existing mappings and create new ones in a transaction
     const createdMappings = await prisma.$transaction(async (tx) => {
-      // Delete existing mappings
       await tx.connectorFieldMapping.deleteMany({
         where: {
           connectorId,
         },
       });
 
-      // Create new mappings
       const newMappings = await Promise.all(
         mappings.map((mapping) =>
           tx.connectorFieldMapping.create({
@@ -559,27 +490,19 @@ export const syncFieldMappings = async (
       return newMappings;
     });
 
-    return ok(createdMappings as TConnectorFieldMapping[]);
+    return createdMappings as TConnectorFieldMapping[];
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return err({
-        code: ConnectorError.UNEXPECTED_ERROR,
-        message: error.message,
-      });
+      throw new DatabaseError(error.message);
     }
-    return err({
-      code: ConnectorError.UNEXPECTED_ERROR,
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+    throw error;
   }
 };
 
 /**
  * Delete a field mapping
  */
-export const deleteFieldMapping = async (
-  mappingId: string
-): Promise<Result<TConnectorFieldMapping, { code: ConnectorError; message: string }>> => {
+export const deleteFieldMapping = async (mappingId: string): Promise<TConnectorFieldMapping> => {
   validateInputs([mappingId, ZId]);
 
   try {
@@ -589,24 +512,177 @@ export const deleteFieldMapping = async (
       },
     });
 
-    return ok(mapping as TConnectorFieldMapping);
+    return mapping as TConnectorFieldMapping;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RecordNotFound) {
-        return err({
-          code: ConnectorError.CONNECTOR_NOT_FOUND,
-          message: "Mapping not found",
-        });
+      if (error.code === PrismaErrorType.RecordDoesNotExist) {
+        throw new ResourceNotFoundError("FieldMapping", mappingId);
       }
-      return err({
-        code: ConnectorError.UNEXPECTED_ERROR,
-        message: error.message,
-      });
+      throw new DatabaseError(error.message);
     }
-    return err({
-      code: ConnectorError.UNEXPECTED_ERROR,
-      message: error instanceof Error ? error.message : "Unknown error",
+    throw error;
+  }
+};
+
+// -- Composite functions --
+
+export type TFormbricksMappingsInput = {
+  type: "formbricks";
+  mappings: TConnectorFormbricksMappingCreateInput[];
+};
+
+export type TFieldMappingsInput = {
+  type: "field";
+  mappings: TConnectorFieldMappingCreateInput[];
+};
+
+export type TMappingsInput = TFormbricksMappingsInput | TFieldMappingsInput;
+
+/**
+ * Create a connector with its mappings in a single transaction.
+ * Accepts pre-resolved mapping data for both Formbricks and generic connector types.
+ */
+export const createConnectorWithMappings = async (
+  environmentId: string,
+  data: TConnectorCreateInput,
+  mappingsInput?: TMappingsInput
+): Promise<TConnectorWithMappings> => {
+  validateInputs([environmentId, ZId], [data, ZConnectorCreateInput]);
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const connector = await tx.connector.create({
+        data: {
+          name: data.name,
+          type: data.type,
+          environmentId,
+          config: data.config ?? Prisma.JsonNull,
+        },
+      });
+
+      if (mappingsInput?.type === "formbricks") {
+        await Promise.all(
+          mappingsInput.mappings.map((mapping) =>
+            tx.connectorFormbricksMapping.create({
+              data: {
+                connectorId: connector.id,
+                surveyId: mapping.surveyId,
+                elementId: mapping.elementId,
+                hubFieldType: mapping.hubFieldType,
+                customFieldLabel: mapping.customFieldLabel,
+              },
+            })
+          )
+        );
+      } else if (mappingsInput?.type === "field") {
+        await Promise.all(
+          mappingsInput.mappings.map((mapping) =>
+            tx.connectorFieldMapping.create({
+              data: {
+                connectorId: connector.id,
+                sourceFieldId: mapping.sourceFieldId,
+                targetFieldId: mapping.targetFieldId,
+                staticValue: mapping.staticValue,
+              },
+            })
+          )
+        );
+      }
+
+      return tx.connector.findUniqueOrThrow({
+        where: { id: connector.id },
+        select: selectConnectorWithFormbricksMappings,
+      });
     });
+
+    return result as unknown as TConnectorWithMappings;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        throw new InvalidInputError(`Connector with name ${data.name} already exists`);
+      }
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Update a connector and replace its mappings in a single transaction.
+ * Accepts pre-resolved mapping data for both Formbricks and generic connector types.
+ */
+export const updateConnectorWithMappings = async (
+  connectorId: string,
+  data: TConnectorUpdateInput,
+  mappingsInput?: TMappingsInput
+): Promise<TConnectorWithMappings> => {
+  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput]);
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.connector.update({
+        where: { id: connectorId },
+        data: {
+          name: data.name,
+          status: data.status,
+          config: data.config ?? undefined,
+          errorMessage: data.errorMessage,
+          lastSyncAt: data.lastSyncAt,
+        },
+      });
+
+      if (mappingsInput?.type === "formbricks") {
+        await tx.connectorFormbricksMapping.deleteMany({
+          where: { connectorId },
+        });
+
+        await Promise.all(
+          mappingsInput.mappings.map((mapping) =>
+            tx.connectorFormbricksMapping.create({
+              data: {
+                connectorId,
+                surveyId: mapping.surveyId,
+                elementId: mapping.elementId,
+                hubFieldType: mapping.hubFieldType,
+                customFieldLabel: mapping.customFieldLabel,
+              },
+            })
+          )
+        );
+      } else if (mappingsInput?.type === "field") {
+        await tx.connectorFieldMapping.deleteMany({
+          where: { connectorId },
+        });
+
+        await Promise.all(
+          mappingsInput.mappings.map((mapping) =>
+            tx.connectorFieldMapping.create({
+              data: {
+                connectorId,
+                sourceFieldId: mapping.sourceFieldId,
+                targetFieldId: mapping.targetFieldId,
+                staticValue: mapping.staticValue,
+              },
+            })
+          )
+        );
+      }
+
+      return tx.connector.findUniqueOrThrow({
+        where: { id: connectorId },
+        select: selectConnectorWithFormbricksMappings,
+      });
+    });
+
+    return result as unknown as TConnectorWithMappings;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.RecordDoesNotExist) {
+        throw new ResourceNotFoundError("Connector", connectorId);
+      }
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 };
 

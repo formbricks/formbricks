@@ -1960,8 +1960,8 @@ checksums:
     environments/unify/drop_field_or: 5287a8af30f2961ce5a8f14f73ddc353
     environments/unify/drop_zone_path: 8e60cc5a0b7b74fe624cfdc0b11a884d
     environments/unify/edit_source_connection: eb42476becc8de3de4ca9626828573f0
-    environments/unify/element_selected: d5efff66731075482ad9db319a3b6c70
-    environments/unify/elements_selected: 5de002e01cdddec927585d72715c47b8
+    environments/unify/element_selected: f194010dff50242e6f123e0a7da2094c
+    environments/unify/elements_selected: 058a38789415da7fc08b976cdcc1ac66
     environments/unify/email: e7f34943a0c2fb849db1839ff6ef5cb5
     environments/unify/enable_auto_sync: d23ed425a77525a905365631b068ab93
     environments/unify/enter_name_for_source: de6d02a0a8ccc99204ad831ca6dcdbd3
@@ -1983,7 +1983,7 @@ checksums:
     environments/unify/iam_setup_instructions: f165c08df18347c0692a45b9fc846a6c
     environments/unify/import_csv_data: e5f873b0e6116c5144677acf38607f2e
     environments/unify/load_sample_csv: ad21fa63f4a3df96a5939c753be21f4e
-    environments/unify/n_elements: a3f287f12125f237ba20da58c028a26c
+    environments/unify/n_elements: 4a0906410e783ec98f58367eb0ce0f8c
     environments/unify/no_source_fields_loaded: a597b1d16262cbe897001046eb3ff640
     environments/unify/no_sources_connected: 0e8a5612530bfc82091091f40f95012f
     environments/unify/no_surveys_found: 649a2f29b4c34525778d9177605fb326
@@ -2013,7 +2013,7 @@ checksums:
     environments/unify/select_survey_questions_description: 3386ed56085eabebefa3cc453269fc5b
     environments/unify/set_value: b8a86f8da957ebd599ece4b1b1936a78
     environments/unify/setup_connection: cce7d9c488d737d04e70bed929a46f8a
-    environments/unify/showing_rows: dc47661ac5509aa04ab145798e2e9aa7
+    environments/unify/showing_rows: 83d3440314d1e6f2721e034369a3a131
     environments/unify/slack_message: e9f42776940c8a2a265d794a1fa1ed32
     environments/unify/source_connect_csv_description: 2f9d1dd31668ac52578f16323157b746
     environments/unify/source_connect_email_description: ecf34ce9e57fa2571993fe12f4796e55
