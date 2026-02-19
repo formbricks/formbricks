@@ -5,7 +5,6 @@ import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import {
-  CLOUD_STRIPE_PRICE_LOOKUP_KEYS,
   type TCloudStripePlan,
   getCloudPlanFromProductId,
   getLegacyPlanFromCloudPlan,

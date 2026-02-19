@@ -25,7 +25,7 @@ export const createSubscription = async (
     const { customerId } = await ensureStripeCustomerForOrganization(organizationId);
     if (!customerId) throw new Error("Stripe customer unavailable");
 
-    const lookupKeys = [priceLookupKey];
+    const lookupKeys: string[] = [priceLookupKey];
 
     if (
       priceLookupKey === CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_MONTHLY ||

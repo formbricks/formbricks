@@ -38,7 +38,12 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
   }
 
   const eventObject = event.data.object as Stripe.Event.Data.Object;
-  const metadataOrgId = "metadata" in eventObject ? (eventObject.metadata?.organizationId ?? null) : null;
+  const metadataOrgId =
+    "metadata" in eventObject &&
+    eventObject.metadata &&
+    typeof (eventObject.metadata as Record<string, unknown>).organizationId === "string"
+      ? ((eventObject.metadata as Record<string, unknown>).organizationId as string)
+      : null;
   const customerId =
     "customer" in eventObject && typeof eventObject.customer === "string" ? eventObject.customer : null;
 

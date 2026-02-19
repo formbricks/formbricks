@@ -6,7 +6,10 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { cn } from "@/lib/cn";
-import { CLOUD_STRIPE_PRICE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
+import {
+  CLOUD_STRIPE_PRICE_LOOKUP_KEYS,
+  type TCloudUpgradePriceLookupKey,
+} from "@/modules/billing/lib/stripe-catalog";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
@@ -80,7 +83,7 @@ export const PricingTable = ({
     }
   };
 
-  const upgradePlan = async (priceLookupKey: string) => {
+  const upgradePlan = async (priceLookupKey: TCloudUpgradePriceLookupKey) => {
     try {
       const upgradePlanResponse = await upgradePlanAction({
         environmentId,
