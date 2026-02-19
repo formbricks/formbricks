@@ -224,6 +224,7 @@
     "failed_to_copy_to_clipboard": "クリップボードへのコピーに失敗しました",
     "failed_to_load_organizations": "組織の読み込みに失敗しました",
     "failed_to_load_workspaces": "ワークスペースの読み込みに失敗しました",
+    "filter": "フィルター",
     "finish": "完了",
     "follow_these": "こちらの手順に従って",
     "formbricks_version": "Formbricksバージョン",

@@ -224,6 +224,7 @@
     "failed_to_copy_to_clipboard": "Nem sikerült másolni a vágólapra",
     "failed_to_load_organizations": "Nem sikerült betölteni a szervezeteket",
     "failed_to_load_workspaces": "Nem sikerült a munkaterületek betöltése",
+    "filter": "Szűrő",
     "finish": "Befejezés",
     "follow_these": "Ezek követése",
     "formbricks_version": "Formbricks verziója",

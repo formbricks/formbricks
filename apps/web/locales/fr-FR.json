@@ -112,6 +112,7 @@
     "link_expired_description": "Le lien que vous avez utilisé n'est plus valide."
   },
   "common": {
+    "Filter": "Filtrer",
     "accepted": "Accepté",
     "account": "Compte",
     "account_settings": "Paramètres du compte",
@@ -224,6 +225,7 @@
     "failed_to_copy_to_clipboard": "Échec de la copie dans le presse-papiers",
     "failed_to_load_organizations": "Échec du chargement des organisations",
     "failed_to_load_workspaces": "Échec du chargement des projets",
+    "filter": "Filtre",
     "finish": "Terminer",
     "follow_these": "Suivez ceci",
     "formbricks_version": "Version de Formbricks",

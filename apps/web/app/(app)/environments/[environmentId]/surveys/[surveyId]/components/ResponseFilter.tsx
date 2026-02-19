@@ -241,7 +241,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <PopoverTriggerButton isOpen={isOpen}>
-          {t("common.filter")} <b>{activeFilterCount > 0 && `(${activeFilterCount})`}</b>
+          <span>{t("common.filter")}</span> <b>{activeFilterCount > 0 && `(${activeFilterCount})`}</b>
         </PopoverTriggerButton>
       </PopoverTrigger>
       <PopoverContent
