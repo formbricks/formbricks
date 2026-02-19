@@ -13,7 +13,6 @@ import {
   TConnectorFormbricksMappingCreateInput,
   TConnectorUpdateInput,
   TConnectorWithMappings,
-  TFormbricksConnector,
   ZConnectorCreateInput,
   ZConnectorFieldMappingCreateInput,
   ZConnectorFormbricksMappingCreateInput,
@@ -23,8 +22,7 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
-// Select object for Connector with Formbricks mappings
-const selectConnectorWithFormbricksMappings = {
+const selectConnectorWithMappings = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -32,7 +30,6 @@ const selectConnectorWithFormbricksMappings = {
   type: true,
   status: true,
   environmentId: true,
-  config: true,
   lastSyncAt: true,
   errorMessage: true,
   formbricksMappings: {
@@ -44,13 +41,6 @@ const selectConnectorWithFormbricksMappings = {
       elementId: true,
       hubFieldType: true,
       customFieldLabel: true,
-      survey: {
-        select: {
-          id: true,
-          name: true,
-          status: true,
-        },
-      },
     },
   },
   fieldMappings: {
@@ -74,7 +64,6 @@ const selectConnector = {
   type: true,
   status: true,
   environmentId: true,
-  config: true,
   lastSyncAt: true,
   errorMessage: true,
 } satisfies Prisma.ConnectorSelect;
@@ -121,7 +110,7 @@ export const getConnectorsWithMappings = reactCache(
         where: {
           environmentId,
         },
-        select: selectConnectorWithFormbricksMappings,
+        select: selectConnectorWithMappings,
         orderBy: {
           createdAt: "desc",
         },
@@ -129,7 +118,7 @@ export const getConnectorsWithMappings = reactCache(
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
       });
 
-      return connectors;
+      return connectors as TConnectorWithMappings[];
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -174,10 +163,10 @@ export const getConnectorWithMappings = reactCache(
         where: {
           id: connectorId,
         },
-        select: selectConnectorWithFormbricksMappings,
+        select: selectConnectorWithMappings,
       });
 
-      return connector as unknown as TConnectorWithMappings | null;
+      return connector as TConnectorWithMappings | null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -191,7 +180,7 @@ export const getConnectorWithMappings = reactCache(
  * Get all Formbricks connectors that have mappings for a specific survey
  */
 export const getConnectorsBySurveyId = reactCache(
-  async (surveyId: string): Promise<TFormbricksConnector[]> => {
+  async (surveyId: string): Promise<TConnectorWithMappings[]> => {
     validateInputs([surveyId, ZId]);
 
     try {
@@ -205,10 +194,10 @@ export const getConnectorsBySurveyId = reactCache(
             },
           },
         },
-        select: selectConnectorWithFormbricksMappings,
+        select: selectConnectorWithMappings,
       });
 
-      return connectors as unknown as TFormbricksConnector[];
+      return connectors as TConnectorWithMappings[];
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -233,12 +222,11 @@ export const createConnector = async (
         name: data.name,
         type: data.type,
         environmentId,
-        config: data.config ?? Prisma.JsonNull,
       },
       select: selectConnector,
     });
 
-    return connector;
+    return connector as TConnector;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
@@ -269,7 +257,6 @@ export const updateConnector = async (
       data: {
         name: data.name,
         status: data.status,
-        config: data.config ?? undefined,
         errorMessage: data.errorMessage,
         lastSyncAt: data.lastSyncAt,
       },
@@ -420,9 +407,6 @@ export const deleteFormbricksMapping = async (mappingId: string): Promise<TConne
   }
 };
 
-/**
- * Create field mappings for a connector (webhook, csv, email, slack)
- */
 export const createFieldMappings = async (
   connectorId: string,
   mappings: TConnectorFieldMappingCreateInput[]
@@ -556,7 +540,6 @@ export const createConnectorWithMappings = async (
           name: data.name,
           type: data.type,
           environmentId,
-          config: data.config ?? Prisma.JsonNull,
         },
       });
 
@@ -591,11 +574,11 @@ export const createConnectorWithMappings = async (
 
       return tx.connector.findUniqueOrThrow({
         where: { id: connector.id },
-        select: selectConnectorWithFormbricksMappings,
+        select: selectConnectorWithMappings,
       });
     });
 
-    return result as unknown as TConnectorWithMappings;
+    return result as TConnectorWithMappings;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
@@ -625,7 +608,6 @@ export const updateConnectorWithMappings = async (
         data: {
           name: data.name,
           status: data.status,
-          config: data.config ?? undefined,
           errorMessage: data.errorMessage,
           lastSyncAt: data.lastSyncAt,
         },
@@ -670,11 +652,11 @@ export const updateConnectorWithMappings = async (
 
       return tx.connector.findUniqueOrThrow({
         where: { id: connectorId },
-        select: selectConnectorWithFormbricksMappings,
+        select: selectConnectorWithMappings,
       });
     });
 
-    return result as unknown as TConnectorWithMappings;
+    return result as TConnectorWithMappings;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.RecordDoesNotExist) {

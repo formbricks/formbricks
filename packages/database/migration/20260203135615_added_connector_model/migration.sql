@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "public"."ConnectorType" AS ENUM ('formbricks', 'webhook', 'csv', 'email', 'slack');
+CREATE TYPE "public"."ConnectorType" AS ENUM ('formbricks', 'csv');
 
 -- CreateEnum
 CREATE TYPE "public"."ConnectorStatus" AS ENUM ('active', 'paused', 'error');
@@ -13,7 +13,6 @@ CREATE TABLE "public"."Connector" (
     "type" "public"."ConnectorType" NOT NULL,
     "status" "public"."ConnectorStatus" NOT NULL DEFAULT 'active',
     "environmentId" TEXT NOT NULL,
-    "config" JSONB,
     "last_sync_at" TIMESTAMP(3),
     "error_message" TEXT,
 

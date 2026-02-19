@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TConnectorWithMappings, TFormbricksConnector, THubTargetField } from "@formbricks/types/connector";
+import { TConnectorWithMappings, THubTargetField } from "@formbricks/types/connector";
 import {
   createConnectorWithMappingsAction,
   deleteConnectorAction,
@@ -40,21 +40,20 @@ function getFormbricksMappingData(connector: TConnectorWithMappings): {
   surveyId: string | null;
   elementIds: string[];
 } {
-  if (connector.type !== "formbricks" || !("formbricksMappings" in connector)) {
+  if (connector.type !== "formbricks") {
     return { surveyId: null, elementIds: [] };
   }
 
-  const formbricksConnector = connector as TFormbricksConnector;
-  const mappings = formbricksConnector.formbricksMappings || [];
+  const mappings = connector.formbricksMappings;
 
   if (mappings.length === 0) {
     return { surveyId: null, elementIds: [] };
   }
 
-  const surveyId = mappings[0].surveyId;
-  const elementIds = mappings.map((m) => m.elementId);
-
-  return { surveyId, elementIds };
+  return {
+    surveyId: mappings[0].surveyId,
+    elementIds: mappings.map((m) => m.elementId),
+  };
 }
 
 export function SourcesSection({ environmentId, initialConnectors, initialSurveys }: SourcesSectionProps) {

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Connector type enum
-export const ZConnectorType = z.enum(["formbricks", "webhook", "csv", "email", "slack"]);
+export const ZConnectorType = z.enum(["formbricks", "csv"]);
 export type TConnectorType = z.infer<typeof ZConnectorType>;
 
 // Connector status enum
@@ -53,7 +53,6 @@ export const ZConnector = z.object({
   type: ZConnectorType,
   status: ZConnectorStatus,
   environmentId: z.string().cuid2(),
-  config: z.record(z.unknown()).nullable(),
   lastSyncAt: z.date().nullable(),
   errorMessage: z.string().nullable(),
 });
@@ -71,7 +70,6 @@ export const ZConnectorFormbricksMapping = z.object({
 });
 export type TConnectorFormbricksMapping = z.infer<typeof ZConnectorFormbricksMapping>;
 
-// Generic field mapping (for webhook, csv, email, slack)
 export const ZConnectorFieldMapping = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -82,105 +80,16 @@ export const ZConnectorFieldMapping = z.object({
 });
 export type TConnectorFieldMapping = z.infer<typeof ZConnectorFieldMapping>;
 
-// Formbricks connector with mappings
-export const ZFormbricksConnector = ZConnector.extend({
-  type: z.literal("formbricks"),
+export const ZConnectorWithMappings = ZConnector.extend({
   formbricksMappings: z.array(ZConnectorFormbricksMapping),
-});
-export type TFormbricksConnector = z.infer<typeof ZFormbricksConnector>;
-
-// Webhook connector config
-export const ZWebhookConnectorConfig = z.object({
-  webhookSecret: z.string().optional(),
-  payloadSchema: z.record(z.unknown()).optional(),
-});
-export type TWebhookConnectorConfig = z.infer<typeof ZWebhookConnectorConfig>;
-
-// Webhook connector with config and mappings
-export const ZWebhookConnector = ZConnector.extend({
-  type: z.literal("webhook"),
-  config: ZWebhookConnectorConfig.nullable(),
   fieldMappings: z.array(ZConnectorFieldMapping),
 });
-export type TWebhookConnector = z.infer<typeof ZWebhookConnector>;
-
-// CSV connector config
-export const ZCSVConnectorConfig = z.object({
-  importMode: z.enum(["manual", "s3"]),
-  s3Config: z
-    .object({
-      bucketName: z.string(),
-      region: z.string(),
-      prefix: z.string().optional(),
-    })
-    .optional(),
-});
-export type TCSVConnectorConfig = z.infer<typeof ZCSVConnectorConfig>;
-
-// CSV connector with config and mappings
-export const ZCSVConnector = ZConnector.extend({
-  type: z.literal("csv"),
-  config: ZCSVConnectorConfig.nullable(),
-  fieldMappings: z.array(ZConnectorFieldMapping),
-});
-export type TCSVConnector = z.infer<typeof ZCSVConnector>;
-
-// Email connector config
-export const ZEmailConnectorConfig = z.object({
-  parseMode: z.string().optional(),
-});
-export type TEmailConnectorConfig = z.infer<typeof ZEmailConnectorConfig>;
-
-// Email connector with config and mappings
-export const ZEmailConnector = ZConnector.extend({
-  type: z.literal("email"),
-  config: ZEmailConnectorConfig.nullable(),
-  fieldMappings: z.array(ZConnectorFieldMapping),
-});
-export type TEmailConnector = z.infer<typeof ZEmailConnector>;
-
-// Slack connector config
-export const ZSlackConnectorConfig = z.object({
-  channelId: z.string().optional(),
-});
-export type TSlackConnectorConfig = z.infer<typeof ZSlackConnectorConfig>;
-
-// Slack connector with config and mappings
-export const ZSlackConnector = ZConnector.extend({
-  type: z.literal("slack"),
-  config: ZSlackConnectorConfig.nullable(),
-  fieldMappings: z.array(ZConnectorFieldMapping),
-});
-export type TSlackConnector = z.infer<typeof ZSlackConnector>;
-
-// Union type for any connector with its mappings
-export type TConnectorWithMappings =
-  | TFormbricksConnector
-  | TWebhookConnector
-  | TCSVConnector
-  | TEmailConnector
-  | TSlackConnector;
-
-// UI helper types - Formbricks mapping with joined survey/element data
-export const ZConnectorFormbricksMappingWithDetails = ZConnectorFormbricksMapping.extend({
-  survey: z.object({
-    id: z.string(),
-    name: z.string(),
-    status: z.string(),
-  }),
-  element: z.object({
-    id: z.string(),
-    headline: z.string(),
-    type: z.string(),
-  }),
-});
-export type TConnectorFormbricksMappingWithDetails = z.infer<typeof ZConnectorFormbricksMappingWithDetails>;
+export type TConnectorWithMappings = z.infer<typeof ZConnectorWithMappings>;
 
 // Create input schemas
 export const ZConnectorCreateInput = z.object({
   name: z.string().min(1),
   type: ZConnectorType,
-  config: z.record(z.unknown()).optional(),
 });
 export type TConnectorCreateInput = z.infer<typeof ZConnectorCreateInput>;
 
@@ -205,7 +114,6 @@ export type TConnectorFieldMappingCreateInput = z.infer<typeof ZConnectorFieldMa
 export const ZConnectorUpdateInput = z.object({
   name: z.string().min(1).optional(),
   status: ZConnectorStatus.optional(),
-  config: z.record(z.unknown()).optional(),
   errorMessage: z.string().nullable().optional(),
   lastSyncAt: z.date().nullable().optional(),
 });

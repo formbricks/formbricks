@@ -1009,10 +1009,7 @@ model ProjectTeam {
 
 enum ConnectorType {
   formbricks
-  webhook
   csv
-  email
-  slack
 }
 
 enum ConnectorStatus {
@@ -1041,8 +1038,6 @@ model Connector {
   status             ConnectorStatus              @default(active)
   environmentId      String
   environment        Environment                  @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  /// [ConnectorConfig]
-  config             Json?
   formbricksMappings ConnectorFormbricksMapping[]
   fieldMappings      ConnectorFieldMapping[]
   lastSyncAt         DateTime?                    @map(name: "last_sync_at")
