@@ -5,10 +5,14 @@ import { getSegment } from "../segments";
 import { segmentFilterToPrismaQuery } from "./prisma-query";
 
 const mockQueryRawUnsafe = vi.fn();
+const mockFindFirst = vi.fn();
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $queryRawUnsafe: (...args: unknown[]) => mockQueryRawUnsafe(...args),
+    contactAttribute: {
+      findFirst: (...args: unknown[]) => mockFindFirst(...args),
+    },
   },
 }));
 
@@ -26,7 +30,9 @@ describe("segmentFilterToPrismaQuery", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default mock: number filter raw SQL returns one matching contact
+    // Default: backfill is complete, no un-migrated rows
+    mockFindFirst.mockResolvedValue(null);
+    // Fallback path mock: raw SQL returns one matching contact when un-migrated rows exist
     mockQueryRawUnsafe.mockResolvedValue([{ contactId: "mock-contact-1" }]);
   });
 
@@ -145,7 +151,16 @@ describe("segmentFilterToPrismaQuery", () => {
             },
           },
         ],
-        OR: [{ id: { in: ["mock-contact-1"] } }],
+        OR: [
+          {
+            attributes: {
+              some: {
+                attributeKey: { key: "age" },
+                valueNumber: { gt: 30 },
+              },
+            },
+          },
+        ],
       });
     }
   });
@@ -757,7 +772,12 @@ describe("segmentFilterToPrismaQuery", () => {
       });
 
       expect(subgroup.AND[0].AND[2]).toStrictEqual({
-        id: { in: ["mock-contact-1"] },
+        attributes: {
+          some: {
+            attributeKey: { key: "age" },
+            valueNumber: { gte: 18 },
+          },
+        },
       });
 
       // Segment inclusion
@@ -1158,10 +1178,23 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
 
-      // Second subgroup (numeric operators - now use raw SQL subquery returning contact IDs)
+      // Second subgroup (numeric operators - uses clean Prisma filter post-backfill)
       const secondSubgroup = whereClause.AND?.[0];
       expect(secondSubgroup.AND[1].AND).toContainEqual({
-        id: { in: ["mock-contact-1"] },
+        attributes: {
+          some: {
+            attributeKey: { key: "loginCount" },
+            valueNumber: { gt: 5 },
+          },
+        },
+      });
+      expect(secondSubgroup.AND[1].AND).toContainEqual({
+        attributes: {
+          some: {
+            attributeKey: { key: "purchaseAmount" },
+            valueNumber: { lte: 1000 },
+          },
+        },
       });
 
       // Third subgroup (negation operators in OR clause)
@@ -1194,6 +1227,104 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
     }
+  });
+
+  test("number filter falls back to raw SQL when un-migrated rows exist", async () => {
+    mockFindFirst.mockResolvedValue({ id: "unmigrated-row-1" });
+    mockQueryRawUnsafe.mockResolvedValue([{ contactId: "mock-contact-1" }]);
+
+    const filters: TBaseFilters = [
+      {
+        id: "filter_1",
+        connector: null,
+        resource: {
+          id: "attr_1",
+          root: {
+            type: "attribute" as const,
+            contactAttributeKey: "age",
+          },
+          value: 25,
+          qualifier: {
+            operator: "greaterThan",
+          },
+        },
+      },
+    ];
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const filterClause = result.data.whereClause.AND?.[1] as any;
+      expect(filterClause.AND[0]).toEqual({
+        OR: [
+          {
+            attributes: {
+              some: {
+                attributeKey: { key: "age" },
+                valueNumber: { gt: 25 },
+              },
+            },
+          },
+          { id: { in: ["mock-contact-1"] } },
+        ],
+      });
+    }
+
+    expect(mockFindFirst).toHaveBeenCalledWith({
+      where: {
+        attributeKey: {
+          key: "age",
+          environmentId: mockEnvironmentId,
+          dataType: "number",
+        },
+        valueNumber: null,
+      },
+      select: { id: true },
+    });
+
+    expect(mockQueryRawUnsafe).toHaveBeenCalled();
+    const sqlCall = mockQueryRawUnsafe.mock.calls[0];
+    expect(sqlCall[0]).toContain('cak."environmentId" = $4');
+    expect(sqlCall[4]).toBe(mockEnvironmentId);
+  });
+
+  test("number filter uses clean Prisma query when backfill is complete", async () => {
+    const filters: TBaseFilters = [
+      {
+        id: "filter_1",
+        connector: null,
+        resource: {
+          id: "attr_1",
+          root: {
+            type: "attribute" as const,
+            contactAttributeKey: "score",
+          },
+          value: 100,
+          qualifier: {
+            operator: "lessEqual",
+          },
+        },
+      },
+    ];
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const filterClause = result.data.whereClause.AND?.[1] as any;
+      expect(filterClause.AND[0]).toEqual({
+        attributes: {
+          some: {
+            attributeKey: { key: "score" },
+            valueNumber: { lte: 100 },
+          },
+        },
+      });
+    }
+
+    expect(mockFindFirst).toHaveBeenCalled();
+    expect(mockQueryRawUnsafe).not.toHaveBeenCalled();
   });
 
   // ==========================================
@@ -1232,7 +1363,7 @@ describe("segmentFilterToPrismaQuery", () => {
             {
               attributes: {
                 some: {
-                  attributeKey: { key: "purchaseDate" },
+                  attributeKey: { key: "purchaseDate", dataType: "date" },
                   OR: [
                     { valueDate: { lt: new Date(targetDate) } },
                     { valueDate: null, value: { lt: new Date(targetDate).toISOString() } },
@@ -1276,7 +1407,7 @@ describe("segmentFilterToPrismaQuery", () => {
             {
               attributes: {
                 some: {
-                  attributeKey: { key: "signupDate" },
+                  attributeKey: { key: "signupDate", dataType: "date" },
                   OR: [
                     { valueDate: { gt: new Date(targetDate) } },
                     { valueDate: null, value: { gt: new Date(targetDate).toISOString() } },
@@ -1321,7 +1452,7 @@ describe("segmentFilterToPrismaQuery", () => {
             {
               attributes: {
                 some: {
-                  attributeKey: { key: "lastActivityDate" },
+                  attributeKey: { key: "lastActivityDate", dataType: "date" },
                   OR: [
                     { valueDate: { gte: new Date(startDate), lte: new Date(endDate) } },
                     {
@@ -1638,8 +1769,15 @@ describe("segmentFilterToPrismaQuery", () => {
           mode: "insensitive",
         });
 
-        // Number filter uses raw SQL subquery (transition code) returning contact IDs
-        expect(andConditions[1]).toEqual({ id: { in: ["mock-contact-1"] } });
+        // Number filter uses clean Prisma filter post-backfill
+        expect(andConditions[1]).toEqual({
+          attributes: {
+            some: {
+              attributeKey: { key: "purchaseCount" },
+              valueNumber: { gt: 5 },
+            },
+          },
+        });
 
         // Date filter uses OR fallback with 'valueDate' and string 'value'
         expect((andConditions[2] as unknown as any).attributes.some.OR[0].valueDate).toHaveProperty("gte");

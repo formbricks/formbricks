@@ -9,13 +9,13 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { ApiErrorDetails } from "@/modules/api/v2/types/api-error";
 
 /**
- * Validates response data against survey validation rules
- * Handles partial responses (in-progress) by only validating present fields when finished is false
+ * Validates response data against survey validation rules.
+ * Only validates elements that have data in responseData - never validates
+ * all survey elements regardless of completion status.
  *
  * @param blocks - Survey blocks containing elements with validation rules (preferred)
  * @param responseData - Response data to validate (keyed by element ID)
  * @param languageCode - Language code for error messages (defaults to "en")
- * @param finished - Whether the response is finished (defaults to true for management APIs)
  * @param questions - Survey questions (legacy format, used as fallback if blocks are empty)
  * @returns Validation error map keyed by element ID, or null if validation passes
  */
@@ -23,7 +23,6 @@ export const validateResponseData = (
   blocks: TSurveyBlock[] | undefined | null,
   responseData: TResponseData,
   languageCode: string = "en",
-  finished: boolean = true,
   questions?: TSurveyQuestion[] | undefined | null
 ): TValidationErrorMap | null => {
   // Use blocks if available, otherwise transform questions to blocks
@@ -42,11 +41,8 @@ export const validateResponseData = (
   // Extract elements from blocks
   const allElements = getElementsFromBlocks(blocksToUse);
 
-  // If response is not finished, only validate elements that are present in the response data
-  // This prevents "required" errors for fields the user hasn't reached yet
-  const elementsToValidate = finished
-    ? allElements
-    : allElements.filter((element) => Object.keys(responseData).includes(element.id));
+  // Always validate only elements that are present in responseData
+  const elementsToValidate = allElements.filter((element) => Object.keys(responseData).includes(element.id));
 
   // Validate selected elements
   const errorMap = validateBlockResponses(elementsToValidate, responseData, languageCode);

@@ -16,6 +16,7 @@ import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 
 const fetchAndAuthorizeSurvey = async (
   surveyId: string,
@@ -58,16 +59,18 @@ export const GET = withV1ApiWrapper({
 
       if (shouldTransformToQuestions) {
         return {
-          response: responses.successResponse({
-            ...result.survey,
-            questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
-            blocks: [],
-          }),
+          response: responses.successResponse(
+            resolveStorageUrlsInObject({
+              ...result.survey,
+              questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
+              blocks: [],
+            })
+          ),
         };
       }
 
       return {
-        response: responses.successResponse(result.survey),
+        response: responses.successResponse(resolveStorageUrlsInObject(result.survey)),
       };
     } catch (error) {
       return {
@@ -202,12 +205,12 @@ export const PUT = withV1ApiWrapper({
           };
 
           return {
-            response: responses.successResponse(surveyWithQuestions),
+            response: responses.successResponse(resolveStorageUrlsInObject(surveyWithQuestions)),
           };
         }
 
         return {
-          response: responses.successResponse(updatedSurvey),
+          response: responses.successResponse(resolveStorageUrlsInObject(updatedSurvey)),
         };
       } catch (error) {
         return {

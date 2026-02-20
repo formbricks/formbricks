@@ -8,6 +8,8 @@ import {
   isValidFileTypeForExtension,
   isValidImageFile,
   resolveStorageUrl,
+  resolveStorageUrlAuto,
+  resolveStorageUrlsInObject,
   sanitizeFileName,
   validateFileUploads,
   validateSingleFile,
@@ -406,7 +408,7 @@ describe("storage utils", () => {
       expect(resolveStorageUrl("")).toBe("");
     });
 
-    test("should return absolute URL unchanged (backward compatibility)", () => {
+    test("should return absolute URL unchanged", () => {
       const httpsUrl = "https://example.com/storage/env-123/public/image.jpg";
       const httpUrl = "http://example.com/storage/env-123/public/image.jpg";
 
@@ -415,14 +417,12 @@ describe("storage utils", () => {
     });
 
     test("should resolve relative /storage/ path to absolute URL", async () => {
-      // Use actual implementation with mocked dependencies
       const { resolveStorageUrl: actualResolveStorageUrl } =
         await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
 
       const relativePath = "/storage/env-123/public/image.jpg";
       const result = actualResolveStorageUrl(relativePath);
 
-      // Should prepend the base URL (from mocked WEBAPP_URL or getPublicDomain)
       expect(result).toContain("/storage/env-123/public/image.jpg");
       expect(result.startsWith("http")).toBe(true);
     });
@@ -430,6 +430,211 @@ describe("storage utils", () => {
     test("should return non-storage paths unchanged", () => {
       expect(resolveStorageUrl("/some/other/path")).toBe("/some/other/path");
       expect(resolveStorageUrl("relative/path.jpg")).toBe("relative/path.jpg");
+    });
+  });
+
+  describe("resolveStorageUrlAuto", () => {
+    test("should return non-storage strings unchanged", () => {
+      expect(resolveStorageUrlAuto("hello world")).toBe("hello world");
+      expect(resolveStorageUrlAuto("/some/other/path")).toBe("/some/other/path");
+      expect(resolveStorageUrlAuto("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
+    });
+
+    test("should NOT transform free-text values that merely start with /storage/", () => {
+      expect(resolveStorageUrlAuto("/storage/help")).toBe("/storage/help");
+      expect(resolveStorageUrlAuto("/storage/")).toBe("/storage/");
+      expect(resolveStorageUrlAuto("/storage/some-text")).toBe("/storage/some-text");
+      expect(resolveStorageUrlAuto("/storage/foo/bar")).toBe("/storage/foo/bar");
+    });
+
+    test("should resolve public storage URL", async () => {
+      const { resolveStorageUrlAuto: actual } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+
+      const result = actual("/storage/env-123/public/image.jpg");
+      expect(result).toContain("/storage/env-123/public/image.jpg");
+      expect(result.startsWith("http")).toBe(true);
+    });
+
+    test("should detect private access type from URL path", () => {
+      const privateUrl = "/storage/env-123/private/file.pdf";
+      const publicUrl = "/storage/env-123/public/image.jpg";
+
+      expect(privateUrl.includes("/private/")).toBe(true);
+      expect(publicUrl.includes("/private/")).toBe(false);
+    });
+  });
+
+  describe("resolveStorageUrlsInObject", () => {
+    test("should return null and undefined as-is", () => {
+      expect(resolveStorageUrlsInObject(null)).toBeNull();
+      expect(resolveStorageUrlsInObject(undefined)).toBeUndefined();
+    });
+
+    test("should return primitive values unchanged", () => {
+      expect(resolveStorageUrlsInObject(42)).toBe(42);
+      expect(resolveStorageUrlsInObject(true)).toBe(true);
+      expect(resolveStorageUrlsInObject("hello")).toBe("hello");
+    });
+
+    test("should NOT transform free-text that merely starts with /storage/", () => {
+      expect(resolveStorageUrlsInObject("/storage/help")).toBe("/storage/help");
+      expect(resolveStorageUrlsInObject("/storage/")).toBe("/storage/");
+
+      const input = {
+        questionId1: "/storage/",
+        questionId2: "/storage/help",
+        questionId3: "/storage/some-text",
+        questionId4: "/storage/foo/bar",
+        realUrl: "/storage/env-123/public/image.jpg",
+      };
+      const result = resolveStorageUrlsInObject(input);
+      expect(result.questionId1).toBe("/storage/");
+      expect(result.questionId2).toBe("/storage/help");
+      expect(result.questionId3).toBe("/storage/some-text");
+      expect(result.questionId4).toBe("/storage/foo/bar");
+      // realUrl still gets resolved because it matches the actual format
+      expect(result.realUrl).not.toBe("/storage/env-123/public/image.jpg");
+    });
+
+    test("should preserve Date instances", () => {
+      const date = new Date("2026-01-01");
+      expect(resolveStorageUrlsInObject(date)).toBe(date);
+    });
+
+    test("should resolve storage URL strings", async () => {
+      const { resolveStorageUrlsInObject: actual } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+
+      const result = actual("/storage/env-123/public/image.jpg");
+      expect(typeof result).toBe("string");
+      expect(result).toContain("/storage/env-123/public/image.jpg");
+      expect((result as string).startsWith("http")).toBe(true);
+    });
+
+    test("should resolve URLs in arrays", async () => {
+      const { resolveStorageUrlsInObject: actual } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+
+      const input = ["/storage/env-123/public/a.jpg", "plain text"];
+      const result = actual(input);
+
+      expect(result[0]).toContain("/storage/env-123/public/a.jpg");
+      expect(result[0].startsWith("http")).toBe(true);
+      expect(result[1]).toBe("plain text");
+    });
+
+    test("should resolve URLs in nested objects", async () => {
+      const { resolveStorageUrlsInObject: actual } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+
+      const input = {
+        name: "Test Survey",
+        welcomeCard: {
+          fileUrl: "/storage/env-123/public/welcome.png",
+          headline: "Hello",
+        },
+        elements: [
+          {
+            imageUrl: "/storage/env-123/public/q1.jpg",
+            choices: [
+              { id: "c1", imageUrl: "/storage/env-123/public/choice1.jpg" },
+              { id: "c2", imageUrl: "https://external.com/image.jpg" },
+            ],
+          },
+        ],
+        count: 5,
+        createdAt: new Date("2026-01-01"),
+      };
+
+      const result = actual(input);
+
+      expect(result.welcomeCard.fileUrl.startsWith("http")).toBe(true);
+      expect(result.welcomeCard.headline).toBe("Hello");
+      expect(result.elements[0].imageUrl.startsWith("http")).toBe(true);
+      expect(result.elements[0].choices[0].imageUrl.startsWith("http")).toBe(true);
+      expect(result.elements[0].choices[1].imageUrl).toBe("https://external.com/image.jpg");
+      expect(result.count).toBe(5);
+      expect(result.createdAt).toEqual(new Date("2026-01-01"));
+      expect(result.name).toBe("Test Survey");
+    });
+
+    test("should resolve URLs in deeply nested objects", async () => {
+      const { resolveStorageUrlsInObject: actual } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+
+      const input = {
+        level1: {
+          level2: {
+            level3: {
+              level4: {
+                level5: {
+                  imageUrl: "/storage/env-123/public/deep.png",
+                  items: [
+                    {
+                      nested: {
+                        url: "/storage/env-123/public/nested.jpg",
+                        label: "keep me",
+                      },
+                    },
+                    "plain string",
+                    42,
+                    null,
+                  ],
+                },
+              },
+              sibling: "/storage/env-123/public/sibling.png",
+            },
+          },
+          untouched: { a: { b: { c: "no change" } } },
+        },
+      };
+
+      const result = actual(input);
+
+      expect(result.level1.level2.level3.level4.level5.imageUrl).toContain(
+        "/storage/env-123/public/deep.png"
+      );
+      expect(result.level1.level2.level3.level4.level5.imageUrl.startsWith("http")).toBe(true);
+
+      // @ts-expect-error - items is an array of unknown types
+      expect(result.level1.level2.level3.level4.level5.items[0].nested.url).toContain(
+        "/storage/env-123/public/nested.jpg"
+      );
+      // @ts-expect-error - items is an array of unknown types
+      expect(result.level1.level2.level3.level4.level5.items[0].nested.url.startsWith("http")).toBe(true);
+      // @ts-expect-error - items is an array of unknown types
+      expect(result.level1.level2.level3.level4.level5.items[0].nested.label).toBe("keep me");
+
+      expect(result.level1.level2.level3.level4.level5.items[1]).toBe("plain string");
+      expect(result.level1.level2.level3.level4.level5.items[2]).toBe(42);
+      expect(result.level1.level2.level3.level4.level5.items[3]).toBeNull();
+
+      expect(result.level1.level2.level3.sibling).toContain("/storage/env-123/public/sibling.png");
+      expect(result.level1.level2.level3.sibling.startsWith("http")).toBe(true);
+
+      expect(result.level1.untouched.a.b.c).toBe("no change");
+    });
+
+    test("should handle response data with file upload URLs", async () => {
+      const { resolveStorageUrlsInObject: actual } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+
+      const responseData = {
+        questionId1: "text answer",
+        questionId2: 42,
+        fileUploadId: ["/storage/env-123/public/doc.pdf", "/storage/env-123/public/img.png"],
+      };
+
+      const result = actual(responseData);
+
+      expect(result.questionId1).toBe("text answer");
+      expect(result.questionId2).toBe(42);
+      const fileUrls = result.fileUploadId;
+      expect(fileUrls[0]).toContain("/storage/env-123/public/doc.pdf");
+      expect(fileUrls[0].startsWith("http")).toBe(true);
+      expect(fileUrls[1]).toContain("/storage/env-123/public/img.png");
+      expect(fileUrls[1].startsWith("http")).toBe(true);
     });
   });
 });
