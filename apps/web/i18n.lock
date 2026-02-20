@@ -150,7 +150,9 @@ checksums:
     common/copy_link: 57a37acfe6d7ed71d00fbbc8079fbb35
     common/count_attributes: 042fba9baffef5afe2c24f13d4f50697
     common/count_contacts: b1c413a4b06961b71b6aeee95d6775d7
+    common/count_members: 8cabb9805075f20e3977b919b3b2fdc5
     common/count_responses: 690118a456c01c5b4d437ae82b50b131
+    common/count_selections: c0f581d21468af2f46dad171921f71ba
     common/create_new_organization: 51dae7b33143686ee218abf5bea764a5
     common/create_segment: 9d8291cd4d778b53b73bbc84fd91c181
     common/create_survey: 1cfbba08d34876566d84b2960054a987
@@ -1913,6 +1915,7 @@ checksums:
     environments/surveys/summary/starts: 3153990a4ade414f501a7e63ab771362
     environments/surveys/summary/starts_tooltip: 0a7dd01320490dbbea923053fa1ccad6
     environments/surveys/summary/survey_reset_successfully: f53db36a28980ef4766215cf13f01e51
+    environments/surveys/summary/survey_results: b7d86f636beaee2b4d5746bdda058d07
     environments/surveys/summary/this_month: 50845a38865204a97773c44dcd2ebb90
     environments/surveys/summary/this_quarter: 9c77d94783dff2269c069389122cd7bd
     environments/surveys/summary/this_year: 1e69651c2ac722f8ce138f43cf2e02f9

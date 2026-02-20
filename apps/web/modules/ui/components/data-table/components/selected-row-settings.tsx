@@ -132,11 +132,11 @@ export const SelectedRowSettings = <T,>({
 
   let deleteWhatText: string;
   if (type === "response") {
-    deleteWhatText = t("common.count_responses", { value: selectedRowCount });
+    deleteWhatText = t("common.count_responses", { count: selectedRowCount });
   } else if (type === "contact") {
-    deleteWhatText = t("common.count_contacts", { value: selectedRowCount });
+    deleteWhatText = t("common.count_contacts", { count: selectedRowCount });
   } else {
-    deleteWhatText = t("common.count_attributes", { value: selectedRowCount });
+    deleteWhatText = t("common.count_attributes", { count: selectedRowCount });
   }
 
   return (
