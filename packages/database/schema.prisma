@@ -392,19 +392,20 @@ model Survey {
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  isVerifyEmailEnabled            Boolean          @default(false)
-  isSingleResponsePerEmailEnabled Boolean          @default(false)
-  isBackButtonHidden              Boolean          @default(false)
-  isCaptureIpEnabled              Boolean          @default(false)
+  isVerifyEmailEnabled            Boolean                      @default(false)
+  isSingleResponsePerEmailEnabled Boolean                      @default(false)
+  isBackButtonHidden              Boolean                      @default(false)
+  isCaptureIpEnabled              Boolean                      @default(false)
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
   followUps                       SurveyFollowUp[]
   /// [SurveyRecaptcha]
-  recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0.1}")
+  recaptcha                       Json?                        @default("{\"enabled\": false, \"threshold\":0.1}")
   /// [SurveyLinkMetadata]
-  metadata                        Json             @default("{}")
+  metadata                        Json                         @default("{}")
+  connectorMappings               ConnectorFormbricksMapping[]
 
   slug String? @unique
 
@@ -595,6 +596,7 @@ model Environment {
   segments          Segment[]
   integration       Integration[]
   ApiKeyEnvironment ApiKeyEnvironment[]
+  connectors        Connector[]
 
   @@index([projectId])
 }
@@ -1003,4 +1005,91 @@ model ProjectTeam {
 
   @@id([projectId, teamId])
   @@index([teamId])
+}
+
+enum ConnectorType {
+  formbricks
+  csv
+}
+
+enum ConnectorStatus {
+  active
+  paused
+  error
+}
+
+/// Base connector for all integration types.
+/// Connects external data sources to the Hub for feedback record creation.
+///
+/// @property id - Unique identifier for the connector
+/// @property name - Display name for the connector
+/// @property type - Type of connector (formbricks, webhook, csv, email, slack)
+/// @property status - Current state of the connector (active, paused, error)
+/// @property environment - The environment this connector belongs to
+/// @property config - Type-specific configuration (e.g., webhook secret, S3 config)
+/// @property formbricksMappings - Element mappings for Formbricks connectors
+/// @property fieldMappings - Field mappings for other connector types
+model Connector {
+  id                 String                       @id @default(cuid())
+  createdAt          DateTime                     @default(now()) @map(name: "created_at")
+  updatedAt          DateTime                     @updatedAt @map(name: "updated_at")
+  name               String
+  type               ConnectorType
+  status             ConnectorStatus              @default(active)
+  environmentId      String
+  environment        Environment                  @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  formbricksMappings ConnectorFormbricksMapping[]
+  fieldMappings      ConnectorFieldMapping[]
+  lastSyncAt         DateTime?                    @map(name: "last_sync_at")
+  errorMessage       String?                      @map(name: "error_message")
+
+  @@unique([environmentId, name])
+  @@index([environmentId])
+  @@index([type])
+}
+
+/// Maps survey elements to Hub FeedbackRecords for Formbricks connectors.
+/// Each row represents one element that will create FeedbackRecords when answered.
+///
+/// @property id - Unique identifier for the mapping
+/// @property connector - The parent connector
+/// @property survey - The survey containing the element
+/// @property elementId - The element ID within the survey (from blocks[].elements[].id)
+/// @property hubFieldType - The field_type to use in Hub (text, nps, rating, etc.)
+/// @property customFieldLabel - Optional override for the element headline as field_label in Hub
+model ConnectorFormbricksMapping {
+  id               String    @id @default(cuid())
+  createdAt        DateTime  @default(now()) @map(name: "created_at")
+  connectorId      String
+  connector        Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  surveyId         String
+  survey           Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  elementId        String
+  hubFieldType     String
+  customFieldLabel String?   @map(name: "custom_field_label")
+
+  @@unique([connectorId, surveyId, elementId])
+  @@index([connectorId])
+  @@index([surveyId])
+}
+
+/// Generic field mapping for Webhook, CSV, Email, Slack connectors.
+/// Maps source fields to Hub FeedbackRecord fields.
+///
+/// @property id - Unique identifier for the mapping
+/// @property connector - The parent connector
+/// @property sourceFieldId - Field path for webhook (e.g., "user.id"), column name for CSV
+/// @property targetFieldId - Hub field (collected_at, field_id, value_text, etc.)
+/// @property staticValue - If set, use this value instead of reading from sourceFieldId
+model ConnectorFieldMapping {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  connectorId   String
+  connector     Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  sourceFieldId String    @map(name: "source_field_id")
+  targetFieldId String    @map(name: "target_field_id")
+  staticValue   String?   @map(name: "static_value")
+
+  @@unique([connectorId, sourceFieldId, targetFieldId])
+  @@index([connectorId])
 }

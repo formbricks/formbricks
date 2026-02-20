@@ -82,7 +82,7 @@ export function SurveyContainer({
         aria-live="assertive"
         className={cn(
           hasOverlay ? "pointer-events-auto" : "pointer-events-none",
-          isModal && "fixed inset-0 z-999999 flex items-end"
+          isModal && "z-999999 fixed inset-0 flex items-end"
         )}>
         <div
           className={cn(

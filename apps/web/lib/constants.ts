@@ -41,6 +41,9 @@ export const GITHUB_SECRET = env.GITHUB_SECRET;
 export const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
 export const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 
+export const HUB_API_URL = env.HUB_API_URL || "http://localhost:8080";
+export const HUB_API_KEY = env.HUB_API_KEY;
+
 export const AZUREAD_CLIENT_ID = env.AZUREAD_CLIENT_ID;
 export const AZUREAD_CLIENT_SECRET = env.AZUREAD_CLIENT_SECRET;
 export const AZUREAD_TENANT_ID = env.AZUREAD_TENANT_ID;

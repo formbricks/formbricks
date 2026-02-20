@@ -329,3 +329,25 @@ export const getSegment = reactCache(async (segmentId: string): Promise<{ enviro
     throw error;
   }
 });
+
+export const getConnector = reactCache(
+  async (connectorId: string): Promise<{ environmentId: string } | null> => {
+    validateInputs([connectorId, ZId]);
+    try {
+      const connector = await prisma.connector.findUnique({
+        where: {
+          id: connectorId,
+        },
+        select: { environmentId: true },
+      });
+
+      return connector;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);

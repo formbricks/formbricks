@@ -132,7 +132,7 @@ export const UploadContactsAttributes = ({
 
   return (
     <>
-      <span className="overflow-hidden font-medium text-ellipsis text-slate-700">{csvColumn}</span>
+      <span className="overflow-hidden text-ellipsis font-medium text-slate-700">{csvColumn}</span>
       <div className="flex items-center gap-2">
         <UploadContactsAttributeCombobox
           open={open}
