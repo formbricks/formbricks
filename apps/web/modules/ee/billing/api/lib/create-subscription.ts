@@ -31,7 +31,6 @@ export const createSubscription = async (
       customer: customerId,
       status: "all",
       limit: 100,
-      expand: ["data.items.data.price.product"],
     });
 
     const hasPaidSubscriptionHistory = existingSubscriptions.data.some((subscription) =>

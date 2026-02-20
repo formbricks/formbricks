@@ -100,7 +100,6 @@ const resolveCurrentSubscription = async (customerId: string) => {
     customer: customerId,
     status: "all",
     limit: 20,
-    expand: ["data.items.data.price.product"],
   });
 
   const preferred = [...subscriptions.data]
@@ -371,7 +370,6 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     customer: customerId,
     status: "all",
     limit: 20,
-    expand: ["data.items.data.price.product"],
   });
 
   const activeSubscriptions = subscriptions.data.filter((subscription) =>
