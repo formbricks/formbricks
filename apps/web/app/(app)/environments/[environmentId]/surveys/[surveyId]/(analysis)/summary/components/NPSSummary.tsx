@@ -123,8 +123,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
                       </div>
                     </div>
                     <p className="flex w-32 items-end justify-end text-slate-600">
-                      {elementSummary[group]?.count}{" "}
-                      {elementSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
+                      {t("common.count_responses", { value: elementSummary[group]?.count })}
                     </p>
                   </div>
                   <ProgressBar

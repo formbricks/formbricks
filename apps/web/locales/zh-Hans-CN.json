@@ -177,6 +177,7 @@
     "copy_link": "复制 链接",
     "count_attributes": "{value, plural, one {{value} 个属性} other {{value} 个属性}}",
     "count_contacts": "{value, plural, other {{value} 联系人} }",
+    "count_members": "{value, plural, one {{value} 位成员} other {{value} 位成员}}",
     "count_responses": "{value, plural, other {{value} 回复} }",
     "create_new_organization": "创建 新的 组织",
     "create_segment": "创建 细分",

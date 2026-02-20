@@ -177,6 +177,7 @@
     "copy_link": "Hivatkozás másolása",
     "count_attributes": "{value, plural, one {{value} attribútum} other {{value} attribútum}}",
     "count_contacts": "{value, plural, one {{value} partner} other {{value} partner}}",
+    "count_members": "{value, plural, one {{value} tag} other {{value} tag}}",
     "count_responses": "{value, plural, one {{value} válasz} other {{value} válasz}}",
     "create_new_organization": "Új szervezet létrehozása",
     "create_segment": "Szakasz létrehozása",

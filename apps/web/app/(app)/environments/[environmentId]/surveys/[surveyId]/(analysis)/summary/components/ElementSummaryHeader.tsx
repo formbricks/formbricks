@@ -48,7 +48,7 @@ export const ElementSummaryHeader = ({
         {showResponses && (
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxIcon className="mr-2 h-4 w-4" />
-            {`${elementSummary.responseCount} ${t("common.responses")}`}
+            {t("common.count_responses", { value: elementSummary.responseCount })}
           </div>
         )}
         {additionalInfo}

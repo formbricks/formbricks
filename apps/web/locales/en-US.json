@@ -177,6 +177,7 @@
     "copy_link": "Copy Link",
     "count_attributes": "{value, plural, one {{value} attribute} other {{value} attributes}}",
     "count_contacts": "{value, plural, one {{value} contact} other {{value} contacts}}",
+    "count_members": "{value, plural, one {{value} member} other {{value} members}}",
     "count_responses": "{value, plural, one {{value} response} other {{value} responses}}",
     "create_new_organization": "Create new organization",
     "create_segment": "Create segment",

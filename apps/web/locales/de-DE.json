@@ -177,6 +177,7 @@
     "copy_link": "Link kopieren",
     "count_attributes": "{value, plural, one {{value} Attribut} other {{value} Attribute}}",
     "count_contacts": "{value, plural, one {{value} Kontakt} other {{value} Kontakte}}",
+    "count_members": "{value, plural, one {{value} Mitglied} other {{value} Mitglieder}}",
     "count_responses": "{value, plural, one {{value} Antwort} other {{value} Antworten}}",
     "create_new_organization": "Neue Organisation erstellen",
     "create_segment": "Segment erstellen",

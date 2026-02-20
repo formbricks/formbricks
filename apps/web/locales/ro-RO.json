@@ -177,6 +177,7 @@
     "copy_link": "Copiază legătura",
     "count_attributes": "{value, plural, one {{value} atribut} few {{value} atribute} other {{value} de atribute}}",
     "count_contacts": "{value, plural, one {# contact} other {# contacte} }",
+    "count_members": "{value, plural, one {{value} membru} few {{value} membri} other {{value} de membri}}",
     "count_responses": "{value, plural, one {# răspuns} other {# răspunsuri} }",
     "create_new_organization": "Creează organizație nouă",
     "create_segment": "Creați segment",

@@ -177,6 +177,7 @@
     "copy_link": "Скопировать ссылку",
     "count_attributes": "{value, plural, one {{value} атрибут} few {{value} атрибута} many {{value} атрибутов} other {{value} атрибута}}",
     "count_contacts": "{value, plural, one {{value} контакт} few {{value} контакта} many {{value} контактов} other {{value} контактов}}",
+    "count_members": "{value, plural, one {{value} участник} few {{value} участника} many {{value} участников} other {{value} участника}}",
     "count_responses": "{value, plural, one {{value} ответ} few {{value} ответа} many {{value} ответов} other {{value} ответов}}",
     "create_new_organization": "Создать новую организацию",
     "create_segment": "Создать сегмент",

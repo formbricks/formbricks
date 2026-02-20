@@ -198,7 +198,7 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
                         </div>
                       </div>
                       <p className="flex w-32 items-end justify-end text-slate-600">
-                        {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}
+                        {t("common.count_responses", { value: result.count })}
                       </p>
                     </div>
                     <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
@@ -215,8 +215,7 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
             <div className="text flex justify-between px-2">
               <p className="font-semibold text-slate-700">{t("common.dismissed")}</p>
               <p className="flex w-32 items-end justify-end text-slate-600">
-                {elementSummary.dismissed.count}{" "}
-                {elementSummary.dismissed.count === 1 ? t("common.response") : t("common.responses")}
+                {t("common.count_responses", { value: elementSummary.dismissed.count })}
               </p>
             </div>
           </div>

@@ -177,6 +177,7 @@
     "copy_link": "Kopieer link",
     "count_attributes": "{value, plural, one {{value} attribuut} other {{value} attributen}}",
     "count_contacts": "{value, plural, one {{value} contact} other {{value} contacten}}",
+    "count_members": "{value, plural, one {{value} lid} other {{value} leden}}",
     "count_responses": "{value, plural, one {{value} reactie} other {{value} reacties}}",
     "create_new_organization": "Creëer een nieuwe organisatie",
     "create_segment": "Segment maken",

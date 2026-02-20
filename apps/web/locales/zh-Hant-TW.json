@@ -177,6 +177,7 @@
     "copy_link": "複製連結",
     "count_attributes": "{value, plural, one {{value} 個屬性} other {{value} 個屬性}}",
     "count_contacts": "{value, plural, other {{value} 聯絡人} }",
+    "count_members": "{value, plural, one {{value} 位成員} other {{value} 位成員}}",
     "count_responses": "{value, plural, other {{value} 回應} }",
     "create_new_organization": "建立新組織",
     "create_segment": "建立區隔",
