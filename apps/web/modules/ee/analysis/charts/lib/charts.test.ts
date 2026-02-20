@@ -1,5 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 
 vi.mock("server-only", () => ({}));
 
@@ -37,17 +39,28 @@ const mockChartId = "chart-abc-123";
 const mockProjectId = "project-abc-123";
 const mockUserId = "user-abc-123";
 
+const selectChart = {
+  id: true,
+  name: true,
+  type: true,
+  query: true,
+  config: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
 const mockChart = {
   id: mockChartId,
   name: "Test Chart",
   type: "bar",
   query: { measures: ["Responses.count"] },
   config: { showLegend: true },
-  projectId: mockProjectId,
-  createdBy: mockUserId,
   createdAt: new Date("2025-01-01"),
   updatedAt: new Date("2025-01-01"),
 };
+
+const makePrismaError = (code: string) =>
+  new Prisma.PrismaClientKnownRequestError("mock error", { code, clientVersion: "5.0.0" });
 
 describe("Chart Service", () => {
   beforeEach(() => {
@@ -78,6 +91,45 @@ describe("Chart Service", () => {
           config: { showLegend: true },
           createdBy: mockUserId,
         },
+        select: selectChart,
+      });
+    });
+
+    test("throws InvalidInputError on unique constraint violation", async () => {
+      vi.mocked(prisma.chart.create).mockRejectedValue(
+        makePrismaError(PrismaErrorType.UniqueConstraintViolation)
+      );
+      const { createChart } = await import("./charts");
+
+      await expect(
+        createChart({
+          projectId: mockProjectId,
+          name: "Duplicate",
+          type: "bar",
+          query: {},
+          config: {},
+          createdBy: mockUserId,
+        })
+      ).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+    });
+
+    test("throws DatabaseError on other Prisma errors", async () => {
+      vi.mocked(prisma.chart.create).mockRejectedValue(makePrismaError("P9999"));
+      const { createChart } = await import("./charts");
+
+      await expect(
+        createChart({
+          projectId: mockProjectId,
+          name: "Test",
+          type: "bar",
+          query: {},
+          config: {},
+          createdBy: mockUserId,
+        })
+      ).rejects.toMatchObject({
+        name: "DatabaseError",
       });
     });
   });
@@ -94,10 +146,12 @@ describe("Chart Service", () => {
       expect(result).toEqual({ chart: mockChart, updatedChart });
       expect(mockTxChart.findFirst).toHaveBeenCalledWith({
         where: { id: mockChartId, projectId: mockProjectId },
+        select: selectChart,
       });
       expect(mockTxChart.update).toHaveBeenCalledWith({
         where: { id: mockChartId },
         data: { name: "Updated Chart", type: undefined, query: undefined, config: undefined },
+        select: selectChart,
       });
     });
 
@@ -112,6 +166,17 @@ describe("Chart Service", () => {
       });
       expect(mockTxChart.update).not.toHaveBeenCalled();
     });
+
+    test("throws InvalidInputError on unique constraint violation", async () => {
+      mockTxChart.findFirst.mockResolvedValue(mockChart);
+      mockTxChart.update.mockRejectedValue(makePrismaError(PrismaErrorType.UniqueConstraintViolation));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb({ chart: mockTxChart }));
+      const { updateChart } = await import("./charts");
+
+      await expect(updateChart(mockChartId, mockProjectId, { name: "Taken Name" })).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+    });
   });
 
   describe("duplicateChart", () => {
@@ -123,8 +188,13 @@ describe("Chart Service", () => {
 
       await duplicateChart(mockChartId, mockProjectId, mockUserId);
 
+      expect(prisma.chart.findFirst).toHaveBeenCalledWith({
+        where: { id: mockChartId, projectId: mockProjectId },
+        select: selectChart,
+      });
       expect(prisma.chart.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ name: "Test Chart (copy)" }),
+        select: selectChart,
       });
     });
 
@@ -141,6 +211,7 @@ describe("Chart Service", () => {
 
       expect(prisma.chart.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ name: "Test Chart (copy 2)" }),
+        select: selectChart,
       });
     });
 
@@ -160,6 +231,7 @@ describe("Chart Service", () => {
 
       expect(prisma.chart.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ name: "Test Chart (copy 3)" }),
+        select: selectChart,
       });
     });
 
@@ -202,6 +274,10 @@ describe("Chart Service", () => {
       const result = await deleteChart(mockChartId, mockProjectId);
 
       expect(result).toEqual(mockChart);
+      expect(mockTxChart.findFirst).toHaveBeenCalledWith({
+        where: { id: mockChartId, projectId: mockProjectId },
+        select: selectChart,
+      });
       expect(mockTxChart.delete).toHaveBeenCalledWith({ where: { id: mockChartId } });
     });
 
@@ -216,28 +292,29 @@ describe("Chart Service", () => {
       });
       expect(mockTxChart.delete).not.toHaveBeenCalled();
     });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      mockTxChart.findFirst.mockRejectedValue(makePrismaError("P9999"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb({ chart: mockTxChart }));
+      const { deleteChart } = await import("./charts");
+
+      await expect(deleteChart(mockChartId, mockProjectId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
   });
 
   describe("getChart", () => {
     test("returns a chart successfully", async () => {
-      const chartResult = {
-        id: mockChartId,
-        name: "Test Chart",
-        type: "bar",
-        query: { measures: ["Responses.count"] },
-        config: { showLegend: true },
-        createdAt: new Date("2025-01-01"),
-        updatedAt: new Date("2025-01-01"),
-      };
-      vi.mocked(prisma.chart.findFirst).mockResolvedValue(chartResult as any);
+      vi.mocked(prisma.chart.findFirst).mockResolvedValue(mockChart as any);
       const { getChart } = await import("./charts");
 
       const result = await getChart(mockChartId, mockProjectId);
 
-      expect(result).toEqual(chartResult);
+      expect(result).toEqual(mockChart);
       expect(prisma.chart.findFirst).toHaveBeenCalledWith({
         where: { id: mockChartId, projectId: mockProjectId },
-        select: expect.objectContaining({ id: true, name: true, type: true }),
+        select: selectChart,
       });
     });
 
@@ -249,6 +326,15 @@ describe("Chart Service", () => {
         name: "ResourceNotFoundError",
         resourceType: "Chart",
         resourceId: mockChartId,
+      });
+    });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      vi.mocked(prisma.chart.findFirst).mockRejectedValue(makePrismaError("P9999"));
+      const { getChart } = await import("./charts");
+
+      await expect(getChart(mockChartId, mockProjectId)).rejects.toMatchObject({
+        name: "DatabaseError",
       });
     });
   });
@@ -283,6 +369,15 @@ describe("Chart Service", () => {
       const result = await getCharts(mockProjectId);
 
       expect(result).toEqual([]);
+    });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      vi.mocked(prisma.chart.findMany).mockRejectedValue(makePrismaError("P9999"));
+      const { getCharts } = await import("./charts");
+
+      await expect(getCharts(mockProjectId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
     });
   });
 });

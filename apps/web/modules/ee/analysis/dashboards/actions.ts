@@ -7,6 +7,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { checkProjectAccess } from "@/modules/ee/analysis/lib/access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { ZDashboardUpdateInput } from "../types/analysis";
 import {
   addChartToDashboard,
   createDashboard,
@@ -55,12 +56,12 @@ export const createDashboardAction = authenticatedActionClient.schema(ZCreateDas
   )
 );
 
-const ZUpdateDashboardAction = z.object({
-  environmentId: ZId,
-  dashboardId: ZId,
-  name: z.string().min(1).optional(),
-  description: z.string().optional().nullable(),
-});
+const ZUpdateDashboardAction = z
+  .object({
+    environmentId: ZId,
+    dashboardId: ZId,
+  })
+  .merge(ZDashboardUpdateInput);
 
 export const updateDashboardAction = authenticatedActionClient.schema(ZUpdateDashboardAction).action(
   withAuditLogging(

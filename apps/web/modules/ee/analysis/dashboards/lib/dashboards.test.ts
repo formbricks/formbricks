@@ -1,5 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 
 vi.mock("server-only", () => ({}));
 
@@ -58,15 +60,24 @@ const mockProjectId = "project-abc-123";
 const mockUserId = "user-abc-123";
 const mockChartId = "chart-abc-123";
 
+const selectDashboard = {
+  id: true,
+  name: true,
+  description: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
 const mockDashboard = {
   id: mockDashboardId,
   name: "Test Dashboard",
   description: "A test dashboard",
-  projectId: mockProjectId,
-  createdBy: mockUserId,
   createdAt: new Date("2025-01-01"),
   updatedAt: new Date("2025-01-01"),
 };
+
+const makePrismaError = (code: string) =>
+  new Prisma.PrismaClientKnownRequestError("mock error", { code, clientVersion: "5.0.0" });
 
 describe("Dashboard Service", () => {
   beforeEach(() => {
@@ -93,6 +104,7 @@ describe("Dashboard Service", () => {
           projectId: mockProjectId,
           createdBy: mockUserId,
         },
+        select: selectDashboard,
       });
     });
 
@@ -115,6 +127,39 @@ describe("Dashboard Service", () => {
           projectId: mockProjectId,
           createdBy: mockUserId,
         },
+        select: selectDashboard,
+      });
+    });
+
+    test("throws InvalidInputError on unique constraint violation", async () => {
+      vi.mocked(prisma.dashboard.create).mockRejectedValue(
+        makePrismaError(PrismaErrorType.UniqueConstraintViolation)
+      );
+      const { createDashboard } = await import("./dashboards");
+
+      await expect(
+        createDashboard({
+          projectId: mockProjectId,
+          name: "Duplicate",
+          createdBy: mockUserId,
+        })
+      ).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+    });
+
+    test("throws DatabaseError on other Prisma errors", async () => {
+      vi.mocked(prisma.dashboard.create).mockRejectedValue(makePrismaError("P9999"));
+      const { createDashboard } = await import("./dashboards");
+
+      await expect(
+        createDashboard({
+          projectId: mockProjectId,
+          name: "Test",
+          createdBy: mockUserId,
+        })
+      ).rejects.toMatchObject({
+        name: "DatabaseError",
       });
     });
   });
@@ -131,10 +176,12 @@ describe("Dashboard Service", () => {
       expect(result).toEqual({ dashboard: mockDashboard, updatedDashboard });
       expect(mockTxDashboard.findFirst).toHaveBeenCalledWith({
         where: { id: mockDashboardId, projectId: mockProjectId },
+        select: selectDashboard,
       });
       expect(mockTxDashboard.update).toHaveBeenCalledWith({
         where: { id: mockDashboardId },
         data: { name: "Updated Dashboard", description: undefined },
+        select: selectDashboard,
       });
     });
 
@@ -151,6 +198,21 @@ describe("Dashboard Service", () => {
       });
       expect(mockTxDashboard.update).not.toHaveBeenCalled();
     });
+
+    test("throws InvalidInputError on unique constraint violation", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxDashboard.update.mockRejectedValue(makePrismaError(PrismaErrorType.UniqueConstraintViolation));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { updateDashboard } = await import("./dashboards");
+
+      await expect(
+        updateDashboard(mockDashboardId, mockProjectId, { name: "Taken Name" })
+      ).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+    });
   });
 
   describe("deleteDashboard", () => {
@@ -162,6 +224,10 @@ describe("Dashboard Service", () => {
       const result = await deleteDashboard(mockDashboardId, mockProjectId);
 
       expect(result).toEqual(mockDashboard);
+      expect(mockTxDashboard.findFirst).toHaveBeenCalledWith({
+        where: { id: mockDashboardId, projectId: mockProjectId },
+        select: selectDashboard,
+      });
       expect(mockTxDashboard.delete).toHaveBeenCalledWith({ where: { id: mockDashboardId } });
     });
 
@@ -175,6 +241,18 @@ describe("Dashboard Service", () => {
         resourceId: mockDashboardId,
       });
       expect(mockTxDashboard.delete).not.toHaveBeenCalled();
+    });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      mockTxDashboard.findFirst.mockRejectedValue(makePrismaError("P9999"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { deleteDashboard } = await import("./dashboards");
+
+      await expect(deleteDashboard(mockDashboardId, mockProjectId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
     });
   });
 
@@ -221,6 +299,15 @@ describe("Dashboard Service", () => {
         resourceId: mockDashboardId,
       });
     });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      vi.mocked(prisma.dashboard.findFirst).mockRejectedValue(makePrismaError("P9999"));
+      const { getDashboard } = await import("./dashboards");
+
+      await expect(getDashboard(mockDashboardId, mockProjectId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
   });
 
   describe("getDashboards", () => {
@@ -253,6 +340,15 @@ describe("Dashboard Service", () => {
       const result = await getDashboards(mockProjectId);
 
       expect(result).toEqual([]);
+    });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      vi.mocked(prisma.dashboard.findMany).mockRejectedValue(makePrismaError("P9999"));
+      const { getDashboards } = await import("./dashboards");
+
+      await expect(getDashboards(mockProjectId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
     });
   });
 
@@ -351,6 +447,28 @@ describe("Dashboard Service", () => {
         resourceId: mockDashboardId,
       });
       expect(mockTxWidget.create).not.toHaveBeenCalled();
+    });
+
+    test("throws InvalidInputError on unique constraint violation", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.aggregate.mockResolvedValue({ _max: { order: null } });
+      mockTxWidget.create.mockRejectedValue(makePrismaError(PrismaErrorType.UniqueConstraintViolation));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await expect(
+        addChartToDashboard({
+          dashboardId: mockDashboardId,
+          chartId: mockChartId,
+          projectId: mockProjectId,
+          layout: mockLayout,
+        })
+      ).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
     });
   });
 });

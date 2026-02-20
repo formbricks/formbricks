@@ -15,7 +15,7 @@ import {
 } from "@/modules/ee/analysis/charts/lib/charts";
 import { checkProjectAccess } from "@/modules/ee/analysis/lib/access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { ZChartType } from "../types/analysis";
+import { ZChartType, ZChartUpdateInput } from "../types/analysis";
 
 const ZCreateChartAction = z.object({
   environmentId: ZId,
@@ -60,14 +60,12 @@ export const createChartAction = authenticatedActionClient.schema(ZCreateChartAc
   )
 );
 
-const ZUpdateChartAction = z.object({
-  environmentId: ZId,
-  chartId: ZId,
-  name: z.string().min(1).optional(),
-  type: ZChartType.optional(),
-  query: ZChartQuery.optional(),
-  config: ZChartConfig.optional(),
-});
+const ZUpdateChartAction = z
+  .object({
+    environmentId: ZId,
+    chartId: ZId,
+  })
+  .merge(ZChartUpdateInput);
 
 export const updateChartAction = authenticatedActionClient.schema(ZUpdateChartAction).action(
   withAuditLogging(
