@@ -224,6 +224,7 @@
     "failed_to_copy_to_clipboard": "Error al copiar al portapapeles",
     "failed_to_load_organizations": "Error al cargar organizaciones",
     "failed_to_load_workspaces": "Error al cargar los proyectos",
+    "filter": "Filtro",
     "finish": "Finalizar",
     "follow_these": "Sigue estos",
     "formbricks_version": "Versión de Formbricks",

@@ -224,6 +224,7 @@
     "failed_to_copy_to_clipboard": "复制到剪贴板失败",
     "failed_to_load_organizations": "加载组织失败",
     "failed_to_load_workspaces": "加载工作区失败",
+    "filter": "筛选",
     "finish": "完成",
     "follow_these": "遵循 这些",
     "formbricks_version": "Formbricks 版本",

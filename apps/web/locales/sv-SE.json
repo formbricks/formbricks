@@ -224,6 +224,7 @@
     "failed_to_copy_to_clipboard": "Misslyckades att kopiera till urklipp",
     "failed_to_load_organizations": "Misslyckades att ladda organisationer",
     "failed_to_load_workspaces": "Det gick inte att ladda arbetsytor",
+    "filter": "Filter",
     "finish": "Slutför",
     "follow_these": "Följ dessa",
     "formbricks_version": "Formbricks-version",

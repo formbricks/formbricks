@@ -224,6 +224,7 @@
     "failed_to_copy_to_clipboard": "Nu s-a reușit copierea în clipboard",
     "failed_to_load_organizations": "Nu s-a reușit încărcarea organizațiilor",
     "failed_to_load_workspaces": "Nu s-au putut încărca workspaces",
+    "filter": "Filtru",
     "finish": "Finalizează",
     "follow_these": "Urmați acestea",
     "formbricks_version": "Versiunea Formbricks",
