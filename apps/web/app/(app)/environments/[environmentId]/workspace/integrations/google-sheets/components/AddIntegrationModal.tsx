@@ -20,6 +20,10 @@ import {
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/environments/[environmentId]/workspace/integrations/google-sheets/lib/util";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
+import {
+  GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
+  GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
+} from "@/lib/googleSheet/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -120,9 +124,9 @@ export const AddIntegrationModal = ({
 
   const showErrorMessageToast = (response: Awaited<ReturnType<typeof getSpreadsheetNameByIdAction>>) => {
     const errorMessage = getFormattedErrorMessage(response);
-    if (errorMessage === "invalid_grant") {
+    if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
       toast.error(t("environments.integrations.google_sheets.token_expired_error"));
-    } else if (errorMessage === "insufficient_permission") {
+    } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION) {
       toast.error(t("environments.integrations.google_sheets.spreadsheet_permission_error"));
     } else {
       toast.error(errorMessage);

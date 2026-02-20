@@ -62,13 +62,13 @@ export const GET = async (req: Request) => {
   const userInfo = await oauth2.userinfo.get();
   const userEmail = userInfo.data.email;
 
-  const integrationType = "googleSheets" as const;
-  const existingIntegration = await getIntegrationByType(environmentId, integrationType);
-  const existingConfig = existingIntegration?.config as TIntegrationGoogleSheetsConfig;
-
   if (!userEmail) {
     return responses.internalServerErrorResponse("Failed to get user email");
   }
+
+  const integrationType = "googleSheets" as const;
+  const existingIntegration = await getIntegrationByType(environmentId, integrationType);
+  const existingConfig = existingIntegration?.config as TIntegrationGoogleSheetsConfig;
 
   const googleSheetIntegration = {
     type: integrationType,
