@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRightIcon,
+  ChartBar,
   ChevronRightIcon,
   Cog,
   LogOutIcon,
@@ -115,6 +116,13 @@ export const MainNavigation = ({
           pathname?.includes("/attributes"),
       },
       {
+        name: t("common.analysis"),
+        href: `/environments/${environment.id}/analysis`,
+        icon: ChartBar,
+        isActive: pathname?.includes("/analysis"),
+        isHidden: false,
+      },
+      {
         name: t("common.configuration"),
         href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
@@ -188,7 +196,7 @@ export const MainNavigation = ({
                 size="icon"
                 onClick={toggleSidebar}
                 className={cn(
-                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:ring-0 focus:ring-transparent focus:outline-none"
+                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
                 )}>
                 {isCollapsed ? (
                   <PanelLeftOpenIcon strokeWidth={1.5} />

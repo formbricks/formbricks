@@ -32,6 +32,7 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
 
 TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
 We are using SonarQube to identify code smells and security hotspots.
+Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonly<MyProps>)`).
 
 ## Architecture & Patterns
 
