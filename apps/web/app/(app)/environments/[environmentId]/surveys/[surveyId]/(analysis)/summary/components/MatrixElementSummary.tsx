@@ -31,7 +31,7 @@ export const MatrixElementSummary = ({ elementSummary, survey, setFilter }: Matr
     if (label) {
       return label;
     } else if (percentage !== undefined && totalResponsesForRow !== undefined) {
-      return t("common.count_responses", { value: Math.round((percentage / 100) * totalResponsesForRow) });
+      return t("common.count_responses", { count: Math.round((percentage / 100) * totalResponsesForRow) });
     }
     return "";
   };

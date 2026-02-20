@@ -40,7 +40,7 @@ export const AccessTable = ({ teams }: AccessTableProps) => {
             <TableRow key={team.id} className="border-slate-200 hover:bg-transparent">
               <TableCell className="font-medium">{team.name}</TableCell>
               <TableCell>
-                {t("common.count_members", { value: team.memberCount })}
+                {t("common.count_members", { count: team.memberCount })}
               </TableCell>
               <TableCell>
                 <IdBadge id={team.id} />
