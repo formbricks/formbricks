@@ -755,7 +755,12 @@
         "link_google_sheet": "Leagă Google Sheet",
         "link_new_sheet": "Leagă un nou Sheet",
         "no_integrations_yet": "Integrațiile tale Google Sheet vor apărea aici de îndată ce le vei adăuga. ⏲️",
-        "spreadsheet_url": "URL foaie de calcul"
+        "reconnect_button": "Reconectează",
+        "reconnect_button_description": "Conexiunea ta cu Google Sheets a expirat. Te rugăm să te reconectezi pentru a continua sincronizarea răspunsurilor. Linkurile și datele existente din foile de calcul vor fi păstrate.",
+        "reconnect_button_tooltip": "Reconectează integrarea pentru a-ți reîmprospăta accesul. Linkurile și datele existente din foile de calcul vor fi păstrate.",
+        "spreadsheet_permission_error": "Nu ai permisiunea de a accesa această foaie de calcul. Asigură-te că foaia de calcul este partajată cu contul tău Google și că ai acces de scriere la aceasta.",
+        "spreadsheet_url": "URL foaie de calcul",
+        "token_expired_error": "Tokenul de reîmprospătare Google Sheets a expirat sau a fost revocat. Te rugăm să reconectezi integrarea."
       },
       "include_created_at": "Include data creării",
       "include_hidden_fields": "Include câmpuri ascunse",

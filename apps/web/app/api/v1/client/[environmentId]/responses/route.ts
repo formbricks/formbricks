@@ -41,7 +41,6 @@ const validateResponse = (responseInputData: TResponseInput, survey: TSurvey) =>
     survey.blocks,
     responseInputData.data,
     responseInputData.language ?? "en",
-    responseInputData.finished,
     survey.questions
   );
 

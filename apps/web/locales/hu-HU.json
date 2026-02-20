@@ -755,7 +755,12 @@
         "link_google_sheet": "Google Táblázatok összekapcsolása",
         "link_new_sheet": "Új táblázat összekapcsolása",
         "no_integrations_yet": "A Google Táblázatok integrációi itt fognak megjelenni, amint hozzáadja azokat. ⏲️",
-        "spreadsheet_url": "Táblázat URL-e"
+        "reconnect_button": "Újrakapcsolódás",
+        "reconnect_button_description": "A Google Táblázatok kapcsolata lejárt. Kérjük, csatlakozzon újra a válaszok szinkronizálásának folytatásához. A meglévő táblázathivatkozások és adatok megmaradnak.",
+        "reconnect_button_tooltip": "Csatlakoztassa újra az integrációt a hozzáférés frissítéséhez. A meglévő táblázathivatkozások és adatok megmaradnak.",
+        "spreadsheet_permission_error": "Nincs jogosultsága a táblázat eléréséhez. Kérjük, győződjön meg arról, hogy a táblázat meg van osztva a Google-fiókjával, és írási jogosultsággal rendelkezik a táblázathoz.",
+        "spreadsheet_url": "Táblázat URL-e",
+        "token_expired_error": "A Google Táblázatok frissítési tokenje lejárt vagy visszavonásra került. Kérjük, csatlakoztassa újra az integrációt."
       },
       "include_created_at": "Létrehozva felvétele",
       "include_hidden_fields": "Rejtett mezők felvétele",
