@@ -752,7 +752,12 @@
         "link_google_sheet": "Link da Planilha do Google",
         "link_new_sheet": "Vincular nova planilha",
         "no_integrations_yet": "Suas integrações do Google Sheets vão aparecer aqui assim que você adicioná-las. ⏲️",
-        "spreadsheet_url": "URL da planilha"
+        "reconnect_button": "Reconectar",
+        "reconnect_button_description": "Sua conexão com o Google Sheets expirou. Reconecte para continuar sincronizando respostas. Seus links de planilhas e dados existentes serão preservados.",
+        "reconnect_button_tooltip": "Reconecte a integração para atualizar seu acesso. Seus links de planilhas e dados existentes serão preservados.",
+        "spreadsheet_permission_error": "Você não tem permissão para acessar esta planilha. Certifique-se de que a planilha está compartilhada com sua conta do Google e que você tem acesso de escrita à planilha.",
+        "spreadsheet_url": "URL da planilha",
+        "token_expired_error": "O token de atualização do Google Sheets expirou ou foi revogado. Reconecte a integração."
       },
       "include_created_at": "Incluir Data de Criação",
       "include_hidden_fields": "Incluir Campos Ocultos",

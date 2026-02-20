@@ -752,7 +752,12 @@
         "link_google_sheet": "Vincular Google Sheet",
         "link_new_sheet": "Vincular nueva hoja",
         "no_integrations_yet": "Tus integraciones de Google Sheet aparecerán aquí tan pronto como las añadas. ⏲️",
-        "spreadsheet_url": "URL de la hoja de cálculo"
+        "reconnect_button": "Reconectar",
+        "reconnect_button_description": "Tu conexión con Google Sheets ha caducado. Reconecta para continuar sincronizando respuestas. Tus enlaces de hojas de cálculo y datos existentes se conservarán.",
+        "reconnect_button_tooltip": "Reconecta la integración para actualizar tu acceso. Tus enlaces de hojas de cálculo y datos existentes se conservarán.",
+        "spreadsheet_permission_error": "No tienes permiso para acceder a esta hoja de cálculo. Asegúrate de que la hoja de cálculo esté compartida con tu cuenta de Google y de que tengas acceso de escritura a la hoja de cálculo.",
+        "spreadsheet_url": "URL de la hoja de cálculo",
+        "token_expired_error": "El token de actualización de Google Sheets ha caducado o ha sido revocado. Reconecta la integración."
       },
       "include_created_at": "Incluir fecha de creación",
       "include_hidden_fields": "Incluir campos ocultos",

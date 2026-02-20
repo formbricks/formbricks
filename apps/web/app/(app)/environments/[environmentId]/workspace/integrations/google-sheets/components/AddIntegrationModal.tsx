@@ -20,6 +20,10 @@ import {
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/environments/[environmentId]/workspace/integrations/google-sheets/lib/util";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
+import {
+  GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
+  GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
+} from "@/lib/googleSheet/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -118,6 +122,17 @@ export const AddIntegrationModal = ({
     resetForm();
   }, [selectedIntegration, surveys]);
 
+  const showErrorMessageToast = (response: Awaited<ReturnType<typeof getSpreadsheetNameByIdAction>>) => {
+    const errorMessage = getFormattedErrorMessage(response);
+    if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
+      toast.error(t("environments.integrations.google_sheets.token_expired_error"));
+    } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION) {
+      toast.error(t("environments.integrations.google_sheets.spreadsheet_permission_error"));
+    } else {
+      toast.error(errorMessage);
+    }
+  };
+
   const linkSheet = async () => {
     try {
       if (!isValidGoogleSheetsUrl(spreadsheetUrl)) {
@@ -129,6 +144,7 @@ export const AddIntegrationModal = ({
       if (selectedElements.length === 0) {
         throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
+      setIsLinkingSheet(true);
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
       const spreadsheetNameResponse = await getSpreadsheetNameByIdAction({
         googleSheetIntegration,
@@ -137,13 +153,11 @@ export const AddIntegrationModal = ({
       });
 
       if (!spreadsheetNameResponse?.data) {
-        const errorMessage = getFormattedErrorMessage(spreadsheetNameResponse);
-        throw new Error(errorMessage);
+        showErrorMessageToast(spreadsheetNameResponse);
+        return;
       }
 
       const spreadsheetName = spreadsheetNameResponse.data;
-
-      setIsLinkingSheet(true);
       integrationData.spreadsheetId = spreadsheetId;
       integrationData.spreadsheetName = spreadsheetName;
       integrationData.surveyId = selectedSurvey.id;
@@ -280,7 +294,7 @@ export const AddIntegrationModal = ({
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
-                    <div className="mt-1 max-h-[15vh] overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200">
+                    <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                         {surveyElements.map((question) => (
                           <div key={question.id} className="my-1 flex items-center space-x-2">
