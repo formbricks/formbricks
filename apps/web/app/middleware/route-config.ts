@@ -7,6 +7,7 @@ const PUBLIC_ROUTES = {
   SURVEY_ROUTES: [
     /^\/s\/[^/]+/, // /s/[surveyId] - survey pages
     /^\/c\/[^/]+/, // /c/[jwt] - contact survey pages
+    /^\/p\/[^/]+/, // /p/[prettyUrl] - pretty URL pages
   ],
 
   // API routes accessible from public domain

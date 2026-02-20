@@ -755,7 +755,12 @@
         "link_google_sheet": "連結 Google 試算表",
         "link_new_sheet": "連結新試算表",
         "no_integrations_yet": "您的 Google 試算表整合將在您新增後立即顯示在此處。⏲️",
-        "spreadsheet_url": "試算表網址"
+        "reconnect_button": "重新連線",
+        "reconnect_button_description": "你的 Google Sheets 連線已過期。請重新連線以繼續同步回應。你現有的試算表連結和資料都會被保留。",
+        "reconnect_button_tooltip": "重新連線整合以刷新存取權限。你現有的試算表連結和資料都會被保留。",
+        "spreadsheet_permission_error": "你沒有權限存取這個試算表。請確認該試算表已與你的 Google 帳戶分享，且你擁有寫入權限。",
+        "spreadsheet_url": "試算表網址",
+        "token_expired_error": "Google Sheets 的刷新權杖已過期或被撤銷。請重新連線整合。"
       },
       "include_created_at": "包含建立於",
       "include_hidden_fields": "包含隱藏欄位",
