@@ -2018,6 +2018,7 @@
         "starts": "开始",
         "starts_tooltip": "调查 被 开始 的 次数",
         "survey_reset_successfully": "调查已重置成功！{responseCount} 个 反馈 和 {displayCount} 个 显示 已删除。",
+        "survey_results": "{surveyName} 结果",
         "this_month": "本月",
         "this_quarter": "本季度",
         "this_year": "今年",

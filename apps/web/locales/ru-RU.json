@@ -2018,6 +2018,7 @@
         "starts": "Запуски",
         "starts_tooltip": "Количество запусков опроса.",
         "survey_reset_successfully": "Опрос успешно сброшен! {responseCount} ответов и {displayCount} показов были удалены.",
+        "survey_results": "Результаты {surveyName}",
         "this_month": "В этом месяце",
         "this_quarter": "В этом квартале",
         "this_year": "В этом году",

@@ -2018,6 +2018,7 @@
         "starts": "Begint",
         "starts_tooltip": "Aantal keren dat de enquête is gestart.",
         "survey_reset_successfully": "Enquête opnieuw ingesteld! {responseCount} reacties en {displayCount} displays zijn verwijderd.",
+        "survey_results": "Resultaten van {surveyName}",
         "this_month": "Deze maand",
         "this_quarter": "Dit kwartaal",
         "this_year": "Dit jaar",

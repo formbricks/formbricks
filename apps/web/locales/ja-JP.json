@@ -2018,6 +2018,7 @@
         "starts": "開始",
         "starts_tooltip": "フォームが開始された回数。",
         "survey_reset_successfully": "フォームを正常にリセットしました！{responseCount} 件の回答と {displayCount} 件の表示が削除されました。",
+        "survey_results": "{surveyName}の結果",
         "this_month": "今月",
         "this_quarter": "今四半期",
         "this_year": "今年",

@@ -2018,6 +2018,7 @@
         "starts": "Starts",
         "starts_tooltip": "Number of times the survey has been started.",
         "survey_reset_successfully": "Survey reset successfully. {responseCount} responses and {displayCount} displays were deleted.",
+        "survey_results": "{surveyName} Results",
         "this_month": "This month",
         "this_quarter": "This quarter",
         "this_year": "This year",

@@ -2018,6 +2018,7 @@
         "starts": "Inicios",
         "starts_tooltip": "Número de veces que se ha iniciado la encuesta.",
         "survey_reset_successfully": "¡Encuesta restablecida correctamente! Se eliminaron {responseCount} respuestas y {displayCount} visualizaciones.",
+        "survey_results": "Resultados de {surveyName}",
         "this_month": "Este mes",
         "this_quarter": "Este trimestre",
         "this_year": "Este año",

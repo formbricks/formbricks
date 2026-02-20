@@ -2018,6 +2018,7 @@
         "starts": "Începuturi",
         "starts_tooltip": "Număr de ori când sondajul a fost început.",
         "survey_reset_successfully": "Resetarea chestionarului realizată cu succes! Au fost șterse {responseCount} răspunsuri și {displayCount} afișări.",
+        "survey_results": "Rezultatele {surveyName}",
         "this_month": "Luna aceasta",
         "this_quarter": "Trimestrul acesta",
         "this_year": "Anul acesta",

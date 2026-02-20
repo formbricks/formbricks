@@ -1915,6 +1915,7 @@ checksums:
     environments/surveys/summary/starts: 3153990a4ade414f501a7e63ab771362
     environments/surveys/summary/starts_tooltip: 0a7dd01320490dbbea923053fa1ccad6
     environments/surveys/summary/survey_reset_successfully: f53db36a28980ef4766215cf13f01e51
+    environments/surveys/summary/survey_results: b7d86f636beaee2b4d5746bdda058d07
     environments/surveys/summary/this_month: 50845a38865204a97773c44dcd2ebb90
     environments/surveys/summary/this_quarter: 9c77d94783dff2269c069389122cd7bd
     environments/surveys/summary/this_year: 1e69651c2ac722f8ce138f43cf2e02f9

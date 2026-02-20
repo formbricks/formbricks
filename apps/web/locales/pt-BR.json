@@ -2018,6 +2018,7 @@
         "starts": "começa",
         "starts_tooltip": "Número de vezes que a pesquisa foi iniciada.",
         "survey_reset_successfully": "Pesquisa redefinida com sucesso! {responseCount} respostas e {displayCount} exibições foram deletadas.",
+        "survey_results": "Resultados de {surveyName}",
         "this_month": "Este mês",
         "this_quarter": "Este trimestre",
         "this_year": "Este ano",

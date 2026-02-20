@@ -2018,6 +2018,7 @@
         "starts": "開始次數",
         "starts_tooltip": "問卷已開始的次數。",
         "survey_reset_successfully": "調查 重置 成功！{responseCount} 條回應和 {displayCount} 個顯示被刪除。",
+        "survey_results": "{surveyName} 結果",
         "this_month": "本月",
         "this_quarter": "本季",
         "this_year": "今年",

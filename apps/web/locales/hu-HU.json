@@ -2018,6 +2018,7 @@
         "starts": "Elkezdések",
         "starts_tooltip": "A kérdőív elkezdési alkalmainak száma.",
         "survey_reset_successfully": "A kérdőív sikeresen visszaállítva. {responseCount} válasz és {displayCount} megjelenítés lett törölve.",
+        "survey_results": "{surveyName} eredményei",
         "this_month": "Ez a hónap",
         "this_quarter": "Ez a negyedév",
         "this_year": "Ez az év",

@@ -2018,6 +2018,7 @@
         "starts": "Startet",
         "starts_tooltip": "So oft wurde die Umfrage gestartet.",
         "survey_reset_successfully": "Umfrage erfolgreich zurückgesetzt! {responseCount} Antworten und {displayCount} Anzeigen wurden gelöscht.",
+        "survey_results": "{surveyName}-Ergebnisse",
         "this_month": "Dieser Monat",
         "this_quarter": "Dieses Quartal",
         "this_year": "Dieses Jahr",
