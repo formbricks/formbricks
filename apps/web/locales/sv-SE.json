@@ -179,6 +179,7 @@
     "count_contacts": "{value, plural, one {{value} kontakt} other {{value} kontakter}}",
     "count_members": "{value, plural, one {{value} medlem} other {{value} medlemmar}}",
     "count_responses": "{value, plural, one {{value} svar} other {{value} svar}}",
+    "count_selections": "{value, plural, one {{value} val} other {{value} val}}",
     "create_new_organization": "Skapa ny organisation",
     "create_segment": "Skapa segment",
     "create_survey": "Skapa enkät",

@@ -152,6 +152,7 @@ checksums:
     common/count_contacts: b1c413a4b06961b71b6aeee95d6775d7
     common/count_members: 8cabb9805075f20e3977b919b3b2fdc5
     common/count_responses: 690118a456c01c5b4d437ae82b50b131
+    common/count_selections: c0f581d21468af2f46dad171921f71ba
     common/create_new_organization: 51dae7b33143686ee218abf5bea764a5
     common/create_segment: 9d8291cd4d778b53b73bbc84fd91c181
     common/create_survey: 1cfbba08d34876566d84b2960054a987

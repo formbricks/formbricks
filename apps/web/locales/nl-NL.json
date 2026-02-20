@@ -179,6 +179,7 @@
     "count_contacts": "{value, plural, one {{value} contact} other {{value} contacten}}",
     "count_members": "{value, plural, one {{value} lid} other {{value} leden}}",
     "count_responses": "{value, plural, one {{value} reactie} other {{value} reacties}}",
+    "count_selections": "{value, plural, one {{value} selectie} other {{value} selecties}}",
     "create_new_organization": "Creëer een nieuwe organisatie",
     "create_segment": "Segment maken",
     "create_survey": "Enquête maken",

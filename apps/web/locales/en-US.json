@@ -179,6 +179,7 @@
     "count_contacts": "{value, plural, one {{value} contact} other {{value} contacts}}",
     "count_members": "{value, plural, one {{value} member} other {{value} members}}",
     "count_responses": "{value, plural, one {{value} response} other {{value} responses}}",
+    "count_selections": "{value, plural, one {{value} selection} other {{value} selections}}",
     "create_new_organization": "Create new organization",
     "create_segment": "Create segment",
     "create_survey": "Create survey",

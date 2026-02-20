@@ -179,6 +179,7 @@
     "count_contacts": "{value, plural, one {# contact} other {# contacte} }",
     "count_members": "{value, plural, one {{value} membru} few {{value} membri} other {{value} de membri}}",
     "count_responses": "{value, plural, one {# răspuns} other {# răspunsuri} }",
+    "count_selections": "{value, plural, one {{value} selecție} few {{value} selecții} other {{value} de selecții}}",
     "create_new_organization": "Creează organizație nouă",
     "create_segment": "Creați segment",
     "create_survey": "Creează sondaj",

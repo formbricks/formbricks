@@ -179,6 +179,7 @@
     "count_contacts": "{value, plural, other {{value} 聯絡人} }",
     "count_members": "{value, plural, one {{value} 位成員} other {{value} 位成員}}",
     "count_responses": "{value, plural, other {{value} 回應} }",
+    "count_selections": "{value, plural, one {{value} 個選項} other {{value} 個選項}}",
     "create_new_organization": "建立新組織",
     "create_segment": "建立區隔",
     "create_survey": "建立問卷",

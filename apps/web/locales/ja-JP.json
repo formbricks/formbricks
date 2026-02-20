@@ -179,6 +179,7 @@
     "count_contacts": "{count, plural, other {# 件の連絡先}}",
     "count_members": "{value, plural, other {{value}人のメンバー}}",
     "count_responses": "{count, plural, other {# 件の回答}}",
+    "count_selections": "{value, plural, other {{value}件選択中}}",
     "create_new_organization": "新しい組織を作成",
     "create_segment": "セグメントを作成",
     "create_survey": "フォームを作成",
