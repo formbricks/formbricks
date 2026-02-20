@@ -27,4 +27,17 @@ describe("executeQuery", () => {
     expect(mockTablePivot).toHaveBeenCalled();
     expect(result).toEqual([{ id: "1", count: 42 }]);
   });
+
+  test("preserves API URL when it already contains /cubejs-api/v1", async () => {
+    const fullUrl = "https://cube.example.com/cubejs-api/v1";
+    vi.stubEnv("CUBEJS_API_URL", fullUrl);
+    const { executeQuery } = await import("./cube-client");
+
+    await executeQuery({ measures: ["FeedbackRecords.count"] });
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const cubejs = ((await vi.importMock("@cubejs-client/core")) as any).default;
+    expect(cubejs).toHaveBeenCalledWith(expect.any(String), { apiUrl: fullUrl });
+    vi.unstubAllEnvs();
+  });
 });
