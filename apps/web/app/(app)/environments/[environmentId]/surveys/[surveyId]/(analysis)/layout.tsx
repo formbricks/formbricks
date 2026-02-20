@@ -4,7 +4,7 @@ import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { useTranslation } from "react-i18next";
+import { getTranslate } from "@/lingodotdev/server";
 
 type Props = {
   params: Promise<{ surveyId: string; environmentId: string }>;
@@ -15,7 +15,7 @@ export const generateMetadata = async (props: Props): Promise<Metadata> => {
   const session = await getServerSession(authOptions);
   const survey = await getSurvey(params.surveyId);
   const responseCount = await getResponseCountBySurveyId(params.surveyId);
-  const { t } = useTranslation();
+  const t = await getTranslate();
 
   if (session) {
     return {
