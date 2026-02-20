@@ -292,6 +292,15 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult
           case "quota":
             targetId = auditLoggingCtx.quotaId;
             break;
+          case "chart":
+            targetId = auditLoggingCtx.chartId;
+            break;
+          case "dashboard":
+            targetId = auditLoggingCtx.dashboardId;
+            break;
+          case "dashboardWidget":
+            targetId = auditLoggingCtx.dashboardWidgetId;
+            break;
           default:
             targetId = UNKNOWN_DATA;
             break;

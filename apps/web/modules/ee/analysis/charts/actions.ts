@@ -1,35 +1,21 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { ZChartConfig, ZChartQuery } from "@formbricks/types/dashboard";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import {
+  createChart,
+  deleteChart,
+  duplicateChart,
+  getChart,
+  getCharts,
+  updateChart,
+} from "@/modules/ee/analysis/charts/lib/charts";
+import { checkProjectAccess } from "@/modules/ee/analysis/lib/access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ZChartType } from "../types/analysis";
-
-const checkProjectAccess = async (
-  userId: string,
-  environmentId: string,
-  minPermission: "read" | "readWrite" | "manage"
-) => {
-  const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-  const projectId = await getProjectIdFromEnvironmentId(environmentId);
-
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      { type: "organization", roles: ["owner", "manager"] },
-      { type: "projectTeam", minPermission, projectId },
-    ],
-  });
-
-  return { organizationId, projectId };
-};
 
 const ZCreateChartAction = z.object({
   environmentId: ZId,
@@ -56,19 +42,18 @@ export const createChartAction = authenticatedActionClient.schema(ZCreateChartAc
         "readWrite"
       );
 
-      const chart = await prisma.chart.create({
-        data: {
-          name: parsedInput.name,
-          type: parsedInput.type,
-          projectId,
-          query: parsedInput.query,
-          config: parsedInput.config || {},
-          createdBy: ctx.user.id,
-        },
-      });
+      const chart = await createChart(
+        projectId,
+        parsedInput.name,
+        parsedInput.type,
+        parsedInput.query,
+        parsedInput.config || {},
+        ctx.user.id
+      );
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.chartId = chart.id;
       ctx.auditLoggingCtx.newObject = chart;
       return chart;
     }
@@ -101,26 +86,16 @@ export const updateChartAction = authenticatedActionClient.schema(ZUpdateChartAc
         "readWrite"
       );
 
-      const chart = await prisma.chart.findFirst({
-        where: { id: parsedInput.chartId, projectId },
-      });
-
-      if (!chart) {
-        throw new Error("Chart not found");
-      }
-
-      const updatedChart = await prisma.chart.update({
-        where: { id: parsedInput.chartId },
-        data: {
-          ...(parsedInput.name !== undefined && { name: parsedInput.name }),
-          ...(parsedInput.type !== undefined && { type: parsedInput.type }),
-          ...(parsedInput.query !== undefined && { query: parsedInput.query }),
-          ...(parsedInput.config !== undefined && { config: parsedInput.config }),
-        },
+      const { chart, updatedChart } = await updateChart(parsedInput.chartId, projectId, {
+        name: parsedInput.name,
+        type: parsedInput.type,
+        query: parsedInput.query,
+        config: parsedInput.config,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.chartId = parsedInput.chartId;
       ctx.auditLoggingCtx.oldObject = chart;
       ctx.auditLoggingCtx.newObject = updatedChart;
       return updatedChart;
@@ -150,27 +125,11 @@ export const duplicateChartAction = authenticatedActionClient.schema(ZDuplicateC
         "readWrite"
       );
 
-      const sourceChart = await prisma.chart.findFirst({
-        where: { id: parsedInput.chartId, projectId },
-      });
-
-      if (!sourceChart) {
-        throw new Error("Chart not found");
-      }
-
-      const duplicatedChart = await prisma.chart.create({
-        data: {
-          name: `${sourceChart.name} (copy)`,
-          type: sourceChart.type,
-          projectId,
-          query: sourceChart.query as object,
-          config: (sourceChart.config as object) || {},
-          createdBy: ctx.user.id,
-        },
-      });
+      const duplicatedChart = await duplicateChart(parsedInput.chartId, projectId, ctx.user.id);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.chartId = duplicatedChart.id;
       ctx.auditLoggingCtx.newObject = duplicatedChart;
       return duplicatedChart;
     }
@@ -199,20 +158,11 @@ export const deleteChartAction = authenticatedActionClient.schema(ZDeleteChartAc
         "readWrite"
       );
 
-      const chart = await prisma.chart.findFirst({
-        where: { id: parsedInput.chartId, projectId },
-      });
-
-      if (!chart) {
-        throw new Error("Chart not found");
-      }
-
-      await prisma.chart.delete({
-        where: { id: parsedInput.chartId },
-      });
+      const chart = await deleteChart(parsedInput.chartId, projectId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.chartId = parsedInput.chartId;
       ctx.auditLoggingCtx.oldObject = chart;
       return { success: true };
     }
@@ -236,24 +186,7 @@ export const getChartAction = authenticatedActionClient
     }) => {
       const { projectId } = await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
 
-      const chart = await prisma.chart.findFirst({
-        where: { id: parsedInput.chartId, projectId },
-        select: {
-          id: true,
-          name: true,
-          type: true,
-          query: true,
-          config: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
-
-      if (!chart) {
-        throw new Error("Chart not found");
-      }
-
-      return chart;
+      return getChart(parsedInput.chartId, projectId);
     }
   );
 
@@ -273,21 +206,6 @@ export const getChartsAction = authenticatedActionClient
     }) => {
       const { projectId } = await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
 
-      return prisma.chart.findMany({
-        where: { projectId },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          type: true,
-          createdAt: true,
-          updatedAt: true,
-          query: true,
-          config: true,
-          widgets: {
-            select: { dashboardId: true },
-          },
-        },
-      });
+      return getCharts(projectId);
     }
   );

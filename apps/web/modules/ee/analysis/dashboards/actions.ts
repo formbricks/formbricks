@@ -4,31 +4,11 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { ZWidgetLayout } from "@formbricks/types/dashboard";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { checkProjectAccess } from "@/modules/ee/analysis/lib/access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-
-const checkProjectAccess = async (
-  userId: string,
-  environmentId: string,
-  minPermission: "read" | "readWrite" | "manage"
-) => {
-  const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-  const projectId = await getProjectIdFromEnvironmentId(environmentId);
-
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      { type: "organization", roles: ["owner", "manager"] },
-      { type: "projectTeam", minPermission, projectId },
-    ],
-  });
-
-  return { organizationId, projectId };
-};
 
 const ZCreateDashboardAction = z.object({
   environmentId: ZId,
@@ -64,6 +44,7 @@ export const createDashboardAction = authenticatedActionClient.schema(ZCreateDas
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.dashboardId = dashboard.id;
       ctx.auditLoggingCtx.newObject = dashboard;
       return dashboard;
     }
@@ -99,7 +80,7 @@ export const updateDashboardAction = authenticatedActionClient.schema(ZUpdateDas
       });
 
       if (!dashboard) {
-        throw new Error("Dashboard not found");
+        throw new ResourceNotFoundError("Dashboard", parsedInput.dashboardId);
       }
 
       const updatedDashboard = await prisma.dashboard.update({
@@ -112,6 +93,7 @@ export const updateDashboardAction = authenticatedActionClient.schema(ZUpdateDas
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.dashboardId = parsedInput.dashboardId;
       ctx.auditLoggingCtx.oldObject = dashboard;
       ctx.auditLoggingCtx.newObject = updatedDashboard;
       return updatedDashboard;
@@ -146,7 +128,7 @@ export const deleteDashboardAction = authenticatedActionClient.schema(ZDeleteDas
       });
 
       if (!dashboard) {
-        throw new Error("Dashboard not found");
+        throw new ResourceNotFoundError("Dashboard", parsedInput.dashboardId);
       }
 
       await prisma.dashboard.delete({
@@ -155,6 +137,7 @@ export const deleteDashboardAction = authenticatedActionClient.schema(ZDeleteDas
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.dashboardId = parsedInput.dashboardId;
       ctx.auditLoggingCtx.oldObject = dashboard;
       return { success: true };
     }
@@ -230,7 +213,7 @@ export const getDashboardAction = authenticatedActionClient
       });
 
       if (!dashboard) {
-        throw new Error("Dashboard not found");
+        throw new ResourceNotFoundError("Dashboard", parsedInput.dashboardId);
       }
 
       return dashboard;
@@ -245,56 +228,60 @@ const ZAddChartToDashboardAction = z.object({
   layout: ZWidgetLayout.optional().default({ x: 0, y: 0, w: 4, h: 3 }),
 });
 
-export const addChartToDashboardAction = authenticatedActionClient
-  .schema(ZAddChartToDashboardAction)
-  .action(
-    withAuditLogging(
-      "created",
-      "dashboardWidget",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: z.infer<typeof ZAddChartToDashboardAction>;
-      }) => {
-        const { organizationId, projectId } = await checkProjectAccess(
-          ctx.user.id,
-          parsedInput.environmentId,
-          "readWrite"
-        );
+export const addChartToDashboardAction = authenticatedActionClient.schema(ZAddChartToDashboardAction).action(
+  withAuditLogging(
+    "created",
+    "dashboardWidget",
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZAddChartToDashboardAction>;
+    }) => {
+      const { organizationId, projectId } = await checkProjectAccess(
+        ctx.user.id,
+        parsedInput.environmentId,
+        "readWrite"
+      );
 
-        const [chart, dashboard] = await Promise.all([
-          prisma.chart.findFirst({ where: { id: parsedInput.chartId, projectId } }),
-          prisma.dashboard.findFirst({ where: { id: parsedInput.dashboardId, projectId } }),
-        ]);
+      const [chart, dashboard] = await Promise.all([
+        prisma.chart.findFirst({ where: { id: parsedInput.chartId, projectId } }),
+        prisma.dashboard.findFirst({ where: { id: parsedInput.dashboardId, projectId } }),
+      ]);
 
-        if (!chart) {
-          throw new Error("Chart not found");
-        }
-        if (!dashboard) {
-          throw new Error("Dashboard not found");
-        }
-
-        const maxOrder = await prisma.dashboardWidget.aggregate({
-          where: { dashboardId: parsedInput.dashboardId },
-          _max: { order: true },
-        });
-
-        const widget = await prisma.dashboardWidget.create({
-          data: {
-            dashboardId: parsedInput.dashboardId,
-            chartId: parsedInput.chartId,
-            title: parsedInput.title,
-            layout: parsedInput.layout,
-            order: (maxOrder._max.order ?? -1) + 1,
-          },
-        });
-
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.projectId = projectId;
-        ctx.auditLoggingCtx.newObject = widget;
-        return widget;
+      if (!chart) {
+        throw new ResourceNotFoundError("Chart", parsedInput.chartId);
       }
-    )
-  );
+      if (!dashboard) {
+        throw new ResourceNotFoundError("Dashboard", parsedInput.dashboardId);
+      }
+
+      const widget = await prisma.$transaction(
+        async (tx) => {
+          const maxOrder = await tx.dashboardWidget.aggregate({
+            where: { dashboardId: parsedInput.dashboardId },
+            _max: { order: true },
+          });
+
+          return tx.dashboardWidget.create({
+            data: {
+              dashboardId: parsedInput.dashboardId,
+              chartId: parsedInput.chartId,
+              title: parsedInput.title,
+              layout: parsedInput.layout,
+              order: (maxOrder._max.order ?? -1) + 1,
+            },
+          });
+        },
+        { isolationLevel: "Serializable" }
+      );
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
+      ctx.auditLoggingCtx.newObject = widget;
+      return widget;
+    }
+  )
+);

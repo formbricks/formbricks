@@ -587,9 +587,7 @@ async function main(): Promise<void> {
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],
-        timeDimensions: [
-          { dimension: "FeedbackRecords.createdAt", granularity: "week" },
-        ],
+        timeDimensions: [{ dimension: "FeedbackRecords.createdAt", granularity: "week" }],
       },
       config: {
         xAxisLabel: "Week",
@@ -676,9 +674,7 @@ async function main(): Promise<void> {
       query: {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.channel"],
-        timeDimensions: [
-          { dimension: "FeedbackRecords.createdAt", granularity: "month" },
-        ],
+        timeDimensions: [{ dimension: "FeedbackRecords.createdAt", granularity: "month" }],
       },
       config: {
         stacked: true,
@@ -716,66 +712,91 @@ async function main(): Promise<void> {
   });
 
   // Widgets for Overview dashboard
-  await prisma.dashboardWidget.createMany({
-    skipDuplicates: true,
-    data: [
-      {
-        dashboardId: dashboardOverview.id,
-        chartId: chartNpsScore.id,
-        title: "Current NPS",
-        layout: { x: 0, y: 0, w: 2, h: 2 },
-        order: 0,
-      },
-      {
-        dashboardId: dashboardOverview.id,
-        chartId: chartResponsesOverTime.id,
-        title: "Weekly Responses",
-        layout: { x: 2, y: 0, w: 4, h: 3 },
-        order: 1,
-      },
-      {
-        dashboardId: dashboardOverview.id,
-        chartId: chartSatisfactionDist.id,
-        title: "Satisfaction Breakdown",
-        layout: { x: 0, y: 3, w: 3, h: 3 },
-        order: 2,
-      },
-      {
-        dashboardId: dashboardOverview.id,
-        chartId: chartTopChannels.id,
-        title: "Channel Trends",
-        layout: { x: 3, y: 3, w: 3, h: 3 },
-        order: 3,
-      },
-    ],
+  await prisma.dashboardWidget.upsert({
+    where: { id: SEED_IDS.WIDGET_OVERVIEW_NPS },
+    update: {},
+    create: {
+      id: SEED_IDS.WIDGET_OVERVIEW_NPS,
+      dashboardId: dashboardOverview.id,
+      chartId: chartNpsScore.id,
+      title: "Current NPS",
+      layout: { x: 0, y: 0, w: 2, h: 2 },
+      order: 0,
+    },
+  });
+  await prisma.dashboardWidget.upsert({
+    where: { id: SEED_IDS.WIDGET_OVERVIEW_RESPONSES },
+    update: {},
+    create: {
+      id: SEED_IDS.WIDGET_OVERVIEW_RESPONSES,
+      dashboardId: dashboardOverview.id,
+      chartId: chartResponsesOverTime.id,
+      title: "Weekly Responses",
+      layout: { x: 2, y: 0, w: 4, h: 3 },
+      order: 1,
+    },
+  });
+  await prisma.dashboardWidget.upsert({
+    where: { id: SEED_IDS.WIDGET_OVERVIEW_SATISFACTION },
+    update: {},
+    create: {
+      id: SEED_IDS.WIDGET_OVERVIEW_SATISFACTION,
+      dashboardId: dashboardOverview.id,
+      chartId: chartSatisfactionDist.id,
+      title: "Satisfaction Breakdown",
+      layout: { x: 0, y: 3, w: 3, h: 3 },
+      order: 2,
+    },
+  });
+  await prisma.dashboardWidget.upsert({
+    where: { id: SEED_IDS.WIDGET_OVERVIEW_CHANNELS },
+    update: {},
+    create: {
+      id: SEED_IDS.WIDGET_OVERVIEW_CHANNELS,
+      dashboardId: dashboardOverview.id,
+      chartId: chartTopChannels.id,
+      title: "Channel Trends",
+      layout: { x: 3, y: 3, w: 3, h: 3 },
+      order: 3,
+    },
   });
 
   // Widgets for Survey Performance dashboard
-  await prisma.dashboardWidget.createMany({
-    skipDuplicates: true,
-    data: [
-      {
-        dashboardId: dashboardSurveyPerf.id,
-        chartId: chartCompletionRate.id,
-        title: "Completion by Survey",
-        layout: { x: 0, y: 0, w: 6, h: 3 },
-        order: 0,
-      },
-      {
-        dashboardId: dashboardSurveyPerf.id,
-        chartId: chartResponsesOverTime.id,
-        title: "Response Volume",
-        layout: { x: 0, y: 3, w: 4, h: 3 },
-        order: 1,
-      },
-      {
-        dashboardId: dashboardSurveyPerf.id,
-        chartId: chartNpsScore.id,
-        title: "NPS Tracker",
-        layout: { x: 4, y: 3, w: 2, h: 2 },
-        order: 2,
-      },
-    ],
+  await prisma.dashboardWidget.upsert({
+    where: { id: SEED_IDS.WIDGET_SURVPERF_COMPLETION },
+    update: {},
+    create: {
+      id: SEED_IDS.WIDGET_SURVPERF_COMPLETION,
+      dashboardId: dashboardSurveyPerf.id,
+      chartId: chartCompletionRate.id,
+      title: "Completion by Survey",
+      layout: { x: 0, y: 0, w: 6, h: 3 },
+      order: 0,
+    },
+  });
+  await prisma.dashboardWidget.upsert({
+    where: { id: SEED_IDS.WIDGET_SURVPERF_RESPONSES },
+    update: {},
+    create: {
+      id: SEED_IDS.WIDGET_SURVPERF_RESPONSES,
+      dashboardId: dashboardSurveyPerf.id,
+      chartId: chartResponsesOverTime.id,
+      title: "Response Volume",
+      layout: { x: 0, y: 3, w: 4, h: 3 },
+      order: 1,
+    },
+  });
+  await prisma.dashboardWidget.upsert({
+    where: { id: SEED_IDS.WIDGET_SURVPERF_NPS },
+    update: {},
+    create: {
+      id: SEED_IDS.WIDGET_SURVPERF_NPS,
+      dashboardId: dashboardSurveyPerf.id,
+      chartId: chartNpsScore.id,
+      title: "NPS Tracker",
+      layout: { x: 4, y: 3, w: 2, h: 2 },
+      order: 2,
+    },
   });
 
   logger.info(`\n${"=".repeat(50)}`);

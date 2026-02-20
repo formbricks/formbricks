@@ -13,7 +13,6 @@ type HasFindMany =
   | Prisma.ProjectTeamFindManyArgs
   | Prisma.UserFindManyArgs
   | Prisma.ContactAttributeKeyFindManyArgs
-  | Prisma.ContactAttributeKeyFindManyArgs
   | Prisma.ChartFindManyArgs
   | Prisma.DashboardFindManyArgs;
 
