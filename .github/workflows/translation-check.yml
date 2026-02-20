@@ -10,7 +10,10 @@ on:
       - "apps/web/**/*.ts"
       - "apps/web/**/*.tsx"
       - "apps/web/locales/**/*.json"
-      - "scan-translations.ts"
+      - "packages/surveys/src/**/*.{ts,tsx}"
+      - "packages/surveys/locales/**/*.json"
+      - "packages/email/**/*.{ts,tsx}"
+      - "packages/i18n-utils/src/**"
   push:
     branches:
       - main
@@ -18,7 +21,10 @@ on:
       - "apps/web/**/*.ts"
       - "apps/web/**/*.tsx"
       - "apps/web/locales/**/*.json"
-      - "scan-translations.ts"
+      - "packages/surveys/src/**/*.{ts,tsx}"
+      - "packages/surveys/locales/**/*.json"
+      - "packages/email/**/*.{ts,tsx}"
+      - "packages/i18n-utils/src/**"
 
 jobs:
   validate-translations:
@@ -33,8 +39,6 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Setup Node.js 22.x
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
