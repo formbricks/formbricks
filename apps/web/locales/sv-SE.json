@@ -755,7 +755,12 @@
         "link_google_sheet": "Länka Google Kalkylark",
         "link_new_sheet": "Länka nytt kalkylark",
         "no_integrations_yet": "Dina Google Kalkylark-integrationer visas här så snart du lägger till dem. ⏲️",
-        "spreadsheet_url": "Kalkylblads-URL"
+        "reconnect_button": "Återanslut",
+        "reconnect_button_description": "Din Google Sheets-anslutning har gått ut. Återanslut för att fortsätta synkronisera svar. Dina befintliga kalkylarkslänkar och data kommer att sparas.",
+        "reconnect_button_tooltip": "Återanslut integrationen för att uppdatera din åtkomst. Dina befintliga kalkylarkslänkar och data kommer att sparas.",
+        "spreadsheet_permission_error": "Du har inte behörighet att komma åt det här kalkylarket. Kontrollera att kalkylarket är delat med ditt Google-konto och att du har skrivrättigheter till kalkylarket.",
+        "spreadsheet_url": "Kalkylblads-URL",
+        "token_expired_error": "Google Sheets refresh token har gått ut eller återkallats. Återanslut integrationen."
       },
       "include_created_at": "Inkludera Skapad vid",
       "include_hidden_fields": "Inkludera dolda fält",

@@ -137,6 +137,11 @@ const checkRequiredField = (
     return null;
   }
 
+  // CTA elements never block progression (informational only)
+  if (element.type === TSurveyElementTypeEnum.CTA) {
+    return null;
+  }
+
   if (element.type === TSurveyElementTypeEnum.Ranking) {
     return validateRequiredRanking(value, t);
   }

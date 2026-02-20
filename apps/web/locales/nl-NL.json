@@ -755,7 +755,12 @@
         "link_google_sheet": "Link Google Spreadsheet",
         "link_new_sheet": "Nieuw blad koppelen",
         "no_integrations_yet": "Uw Google Spreadsheet-integraties verschijnen hier zodra u ze toevoegt. ⏲️",
-        "spreadsheet_url": "Spreadsheet-URL"
+        "reconnect_button": "Maak opnieuw verbinding",
+        "reconnect_button_description": "Je Google Sheets-verbinding is verlopen. Maak opnieuw verbinding om door te gaan met het synchroniseren van antwoorden. Je bestaande spreadsheetlinks en gegevens blijven behouden.",
+        "reconnect_button_tooltip": "Maak opnieuw verbinding met de integratie om je toegang te vernieuwen. Je bestaande spreadsheetlinks en gegevens blijven behouden.",
+        "spreadsheet_permission_error": "Je hebt geen toestemming om deze spreadsheet te openen. Zorg ervoor dat de spreadsheet is gedeeld met je Google-account en dat je schrijftoegang hebt tot de spreadsheet.",
+        "spreadsheet_url": "Spreadsheet-URL",
+        "token_expired_error": "Het vernieuwingstoken van Google Sheets is verlopen of ingetrokken. Maak opnieuw verbinding met de integratie."
       },
       "include_created_at": "Inclusief gemaakt op",
       "include_hidden_fields": "Inclusief verborgen velden",

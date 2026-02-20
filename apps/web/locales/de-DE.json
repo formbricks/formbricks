@@ -755,7 +755,12 @@
         "link_google_sheet": "Tabelle verlinken",
         "link_new_sheet": "Neues Blatt verknüpfen",
         "no_integrations_yet": "Deine verknüpften Tabellen werden hier angezeigt, sobald Du sie hinzufügst ⏲️",
-        "spreadsheet_url": "Tabellen-URL"
+        "reconnect_button": "Erneut verbinden",
+        "reconnect_button_description": "Deine Google Sheets-Verbindung ist abgelaufen. Bitte verbinde dich erneut, um weiterhin Antworten zu synchronisieren. Deine bestehenden Tabellen-Links und Daten bleiben erhalten.",
+        "reconnect_button_tooltip": "Verbinde die Integration erneut, um deinen Zugriff zu aktualisieren. Deine bestehenden Tabellen-Links und Daten bleiben erhalten.",
+        "spreadsheet_permission_error": "Du hast keine Berechtigung, auf diese Tabelle zuzugreifen. Bitte stelle sicher, dass die Tabelle mit deinem Google-Konto geteilt ist und du Schreibzugriff auf die Tabelle hast.",
+        "spreadsheet_url": "Tabellen-URL",
+        "token_expired_error": "Das Google Sheets-Aktualisierungstoken ist abgelaufen oder wurde widerrufen. Bitte verbinde die Integration erneut."
       },
       "include_created_at": "Erstellungsdatum einbeziehen",
       "include_hidden_fields": "Versteckte Felder (hidden fields) einbeziehen",

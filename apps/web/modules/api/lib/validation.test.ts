@@ -95,7 +95,7 @@ describe("validateResponseData", () => {
     mockGetElementsFromBlocks.mockReturnValue(mockElements);
     mockValidateBlockResponses.mockReturnValue({});
 
-    validateResponseData([], mockResponseData, "en", true, mockQuestions);
+    validateResponseData([], mockResponseData, "en", mockQuestions);
 
     expect(mockTransformQuestionsToBlocks).toHaveBeenCalledWith(mockQuestions, []);
     expect(mockGetElementsFromBlocks).toHaveBeenCalledWith(transformedBlocks);
@@ -105,15 +105,15 @@ describe("validateResponseData", () => {
     mockGetElementsFromBlocks.mockReturnValue(mockElements);
     mockValidateBlockResponses.mockReturnValue({});
 
-    validateResponseData(mockBlocks, mockResponseData, "en", true, mockQuestions);
+    validateResponseData(mockBlocks, mockResponseData, "en", mockQuestions);
 
     expect(mockTransformQuestionsToBlocks).not.toHaveBeenCalled();
   });
 
   test("should return null when both blocks and questions are empty", () => {
-    expect(validateResponseData([], mockResponseData, "en", true, [])).toBeNull();
-    expect(validateResponseData(null, mockResponseData, "en", true, [])).toBeNull();
-    expect(validateResponseData(undefined, mockResponseData, "en", true, null)).toBeNull();
+    expect(validateResponseData([], mockResponseData, "en", [])).toBeNull();
+    expect(validateResponseData(null, mockResponseData, "en", [])).toBeNull();
+    expect(validateResponseData(undefined, mockResponseData, "en", null)).toBeNull();
   });
 
   test("should use default language code", () => {
@@ -125,25 +125,58 @@ describe("validateResponseData", () => {
     expect(mockValidateBlockResponses).toHaveBeenCalledWith(mockElements, mockResponseData, "en");
   });
 
-  test("should validate only present fields when finished is false", () => {
+  test("should validate only fields present in responseData", () => {
     const partialResponseData: TResponseData = { element1: "test" };
-    const partialElements = [mockElements[0]];
+    const elementsToValidate = [mockElements[0]];
     mockGetElementsFromBlocks.mockReturnValue(mockElements);
     mockValidateBlockResponses.mockReturnValue({});
 
-    validateResponseData(mockBlocks, partialResponseData, "en", false);
+    validateResponseData(mockBlocks, partialResponseData, "en");
 
-    expect(mockValidateBlockResponses).toHaveBeenCalledWith(partialElements, partialResponseData, "en");
+    expect(mockValidateBlockResponses).toHaveBeenCalledWith(elementsToValidate, partialResponseData, "en");
   });
 
-  test("should validate all fields when finished is true", () => {
-    const partialResponseData: TResponseData = { element1: "test" };
-    mockGetElementsFromBlocks.mockReturnValue(mockElements);
+  test("should never validate elements not in responseData", () => {
+    const blocksWithTwoElements: TSurveyBlock[] = [
+      ...mockBlocks,
+      {
+        id: "block2",
+        name: "Block 2",
+        elements: [
+          {
+            id: "element2",
+            type: TSurveyElementTypeEnum.OpenText,
+            headline: { default: "Q2" },
+            required: true,
+            inputType: "text",
+            charLimit: { enabled: false },
+          },
+        ],
+      },
+    ];
+    const allElements = [
+      ...mockElements,
+      {
+        id: "element2",
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: { default: "Q2" },
+        required: true,
+        inputType: "text",
+        charLimit: { enabled: false },
+      },
+    ];
+    const responseDataWithOnlyElement1: TResponseData = { element1: "test" };
+    mockGetElementsFromBlocks.mockReturnValue(allElements);
     mockValidateBlockResponses.mockReturnValue({});
 
-    validateResponseData(mockBlocks, partialResponseData, "en", true);
+    validateResponseData(blocksWithTwoElements, responseDataWithOnlyElement1, "en");
 
-    expect(mockValidateBlockResponses).toHaveBeenCalledWith(mockElements, partialResponseData, "en");
+    // Only element1 should be validated, not element2 (even though it's required)
+    expect(mockValidateBlockResponses).toHaveBeenCalledWith(
+      [allElements[0]],
+      responseDataWithOnlyElement1,
+      "en"
+    );
   });
 });
 

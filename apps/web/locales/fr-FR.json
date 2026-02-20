@@ -755,7 +755,12 @@
         "link_google_sheet": "Lien Google Sheet",
         "link_new_sheet": "Lier une nouvelle feuille",
         "no_integrations_yet": "Vos intégrations Google Sheets apparaîtront ici dès que vous les ajouterez. ⏲️",
-        "spreadsheet_url": "URL de la feuille de calcul"
+        "reconnect_button": "Reconnecter",
+        "reconnect_button_description": "Votre connexion Google Sheets a expiré. Veuillez vous reconnecter pour continuer à synchroniser les réponses. Vos liens de feuilles de calcul et données existants seront préservés.",
+        "reconnect_button_tooltip": "Reconnectez l'intégration pour actualiser votre accès. Vos liens de feuilles de calcul et données existants seront préservés.",
+        "spreadsheet_permission_error": "Vous n'avez pas la permission d'accéder à cette feuille de calcul. Veuillez vous assurer que la feuille de calcul est partagée avec votre compte Google et que vous disposez d'un accès en écriture.",
+        "spreadsheet_url": "URL de la feuille de calcul",
+        "token_expired_error": "Le jeton d'actualisation Google Sheets a expiré ou a été révoqué. Veuillez reconnecter l'intégration."
       },
       "include_created_at": "Inclure la date de création",
       "include_hidden_fields": "Inclure les champs cachés",
