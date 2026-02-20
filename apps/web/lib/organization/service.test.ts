@@ -204,6 +204,41 @@ describe("Organization Service", () => {
       expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
     });
 
+    test("should still return organization when Stripe setup fails", async () => {
+      const mockOrganization = {
+        id: "org1",
+        name: "Test Org",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        billing: {
+          billingMode: "stripe" as const,
+          plan: PROJECT_FEATURE_KEYS.FREE,
+          limits: {
+            projects: BILLING_LIMITS.FREE.PROJECTS,
+            monthly: {
+              responses: BILLING_LIMITS.FREE.RESPONSES,
+              miu: BILLING_LIMITS.FREE.MIU,
+            },
+          },
+          stripeCustomerId: null,
+          periodStart: new Date(),
+          period: "monthly" as const,
+        },
+        isAIEnabled: false,
+        whitelabel: false,
+      };
+
+      vi.mocked(prisma.organization.create).mockResolvedValue(mockOrganization);
+      vi.mocked(ensureCloudStripeSetupForOrganization).mockRejectedValueOnce(
+        new Error("stripe temporarily unavailable")
+      );
+
+      const result = await createOrganization({ name: "Test Org" });
+
+      expect(result).toEqual(mockOrganization);
+      expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
+    });
+
     test("should throw DatabaseError on prisma error", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
         code: "P2002",
