@@ -310,6 +310,7 @@ serviceMonitor:
 ##########################################################
 hub:
   enabled: false
+  replicas: 1
 
   image:
     repository: "ghcr.io/formbricks/hub"
@@ -327,6 +328,7 @@ hub:
   migration:
     ttlSecondsAfterFinished: 300
     backoffLimit: 3
+    activeDeadlineSeconds: 900
 
   resources:
     limits:

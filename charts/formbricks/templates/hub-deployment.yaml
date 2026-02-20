@@ -1,4 +1,7 @@
 {{- if .Values.hub.enabled }}
+{{- if not .Values.hub.existingSecret }}
+{{- fail "hub.existingSecret must be set when hub.enabled=true" }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -12,7 +15,7 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.hub.replicas | default 1 }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "formbricks.hubname" . }}

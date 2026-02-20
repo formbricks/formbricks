@@ -258,7 +258,7 @@ services:
     entrypoint: ["sh", "-c"]
     command: ["if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres \"$$DATABASE_URL\" up && /usr/local/bin/river migrate-up --database-url \"$$DATABASE_URL\"; else echo 'Migration tools (goose/river) not in image, skipping migrations.'; fi"]
     environment:
-      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?schema=public}
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
     depends_on:
       postgres:
         condition: service_healthy
@@ -276,7 +276,7 @@ services:
       - "8080:8080"
     environment:
       API_KEY: ${HUB_API_KEY:?HUB_API_KEY is required to run Hub}
-      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?schema=public}
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
 
 volumes:
   postgres:

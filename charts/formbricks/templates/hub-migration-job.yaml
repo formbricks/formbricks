@@ -17,7 +17,7 @@ metadata:
 spec:
   ttlSecondsAfterFinished: {{ .Values.hub.migration.ttlSecondsAfterFinished | default 300 }}
   backoffLimit: {{ .Values.hub.migration.backoffLimit | default 3 }}
-  activeDeadlineSeconds: 300
+  activeDeadlineSeconds: {{ .Values.hub.migration.activeDeadlineSeconds | default 900 }}
   template:
     metadata:
       labels:
