@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { generateWebhookSecret } from "@/lib/crypto";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -24,6 +25,7 @@ import { ZWebhookInput } from "@/modules/integrations/webhooks/types/webhooks";
 const ZCreateWebhookAction = z.object({
   environmentId: ZId,
   webhookInput: ZWebhookInput,
+  webhookSecret: z.string().optional(),
 });
 
 export const createWebhookAction = authenticatedActionClient.schema(ZCreateWebhookAction).action(
@@ -47,7 +49,11 @@ export const createWebhookAction = authenticatedActionClient.schema(ZCreateWebho
           },
         ],
       });
-      const webhook = await createWebhook(parsedInput.environmentId, parsedInput.webhookInput);
+      const webhook = await createWebhook(
+        parsedInput.environmentId,
+        parsedInput.webhookInput,
+        parsedInput.webhookSecret
+      );
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.newObject = parsedInput.webhookInput;
       return webhook;
@@ -131,10 +137,23 @@ export const updateWebhookAction = authenticatedActionClient.schema(ZUpdateWebho
 
 const ZTestEndpointAction = z.object({
   url: z.string(),
+  webhookId: ZId.optional(),
 });
 
 export const testEndpointAction = authenticatedActionClient
   .schema(ZTestEndpointAction)
   .action(async ({ parsedInput }) => {
-    return testEndpoint(parsedInput.url);
+    let secret: string | undefined;
+
+    if (parsedInput.webhookId) {
+      const webhookResult = await getWebhook(parsedInput.webhookId);
+      if (webhookResult.ok) {
+        secret = webhookResult.data.secret ?? undefined;
+      }
+    } else {
+      secret = generateWebhookSecret();
+    }
+
+    await testEndpoint(parsedInput.url, secret);
+    return { success: true, secret };
   });

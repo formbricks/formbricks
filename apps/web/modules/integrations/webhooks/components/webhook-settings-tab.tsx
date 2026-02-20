@@ -58,16 +58,19 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleTestEndpoint = async (sendSuccessToast: boolean) => {
+  const handleTestEndpoint = async (sendSuccessToast: boolean): Promise<boolean> => {
     try {
       const { valid, error } = validWebHookURL(testEndpointInput);
       if (!valid) {
         toast.error(error ?? t("common.something_went_wrong_please_try_again"));
-        return;
+        return false;
       }
       setHittingEndpoint(true);
-      const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
-      if (!testEndpointActionResult?.data) {
+      const testEndpointActionResult = await testEndpointAction({
+        url: testEndpointInput,
+        webhookId: webhook.id,
+      });
+      if (!testEndpointActionResult?.data?.success) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
         throw new Error(errorMessage);
       }
@@ -220,7 +223,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
                 />
                 <button
                   type="button"
-                  className="absolute top-1/2 right-3 -translate-y-1/2 transform"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transform"
                   onClick={() => setShowSecret(!showSecret)}>
                   {showSecret ? (
                     <EyeOff className="h-5 w-5 text-slate-400" />
