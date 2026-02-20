@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "Переходы по логике, скрытые поля, повторяющиеся опросы и др.",
         "manage_card_details": "Управление данными карты",
         "manage_subscription": "Управление подпиской",
+        "month": "Месяц",
         "monthly": "Ежемесячно",
         "monthly_identified_users": "Ежемесячно идентифицированные пользователи",
+        "plan_hobby": "Хобби",
+        "plan_pro": "Pro",
+        "plan_scale": "Scale",
+        "plan_trial": "Пробный",
+        "plan_unknown": "Неизвестно",
         "plan_upgraded_successfully": "Тариф успешно обновлён",
         "premium_support_with_slas": "Премиум-поддержка с SLA",
         "remove_branding": "Удалить брендинг",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "Неограниченное количество рабочих пространств",
         "upgrade": "Обновить",
         "uptime_sla_99": "SLA по времени безотказной работы (99%)",
-        "website_surveys": "Опросы на сайте"
+        "website_surveys": "Опросы на сайте",
+        "year": "Год"
       },
       "domain": {
         "customize_favicon_description": "Загрузите свой favicon, чтобы персонализировать опросы по ссылке и усилить узнаваемость бренда.",

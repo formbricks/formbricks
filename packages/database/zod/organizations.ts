@@ -10,6 +10,7 @@ export const ZOrganizationWhiteLabel = z.object({
 
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
+  billingMode: z.enum(["stripe", "legacy"]).optional().default("stripe"),
   plan: z.enum(["free", "startup", "scale", "enterprise"]).default("free"),
   period: z.enum(["monthly", "yearly"]).default("monthly"),
   limits: z
@@ -28,6 +29,17 @@ export const ZOrganizationBilling = z.object({
       },
     }),
   periodStart: z.coerce.date().nullable(),
+  stripe: z
+    .object({
+      billingMode: z.enum(["stripe", "legacy"]).optional(),
+      plan: z.enum(["hobby", "pro", "scale", "trial", "unknown"]).optional(),
+      subscriptionId: z.string().nullable().optional(),
+      features: z.array(z.string()).optional(),
+      lastStripeEventCreatedAt: z.string().nullable().optional(),
+      lastSyncedAt: z.string().nullable().optional(),
+      lastSyncedEventId: z.string().nullable().optional(),
+    })
+    .optional(),
 });
 
 export const ZOrganization = z.object({

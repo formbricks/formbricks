@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "Saltos lógicos, campos ocultos, encuestas recurrentes, etc.",
         "manage_card_details": "Gestionar detalles de tarjeta",
         "manage_subscription": "Gestionar suscripción",
+        "month": "Mes",
         "monthly": "Mensual",
         "monthly_identified_users": "Usuarios identificados mensuales",
+        "plan_hobby": "Hobby",
+        "plan_pro": "Pro",
+        "plan_scale": "Scale",
+        "plan_trial": "Prueba",
+        "plan_unknown": "Desconocido",
         "plan_upgraded_successfully": "Plan actualizado con éxito",
         "premium_support_with_slas": "Soporte premium con SLA",
         "remove_branding": "Eliminar marca",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "Proyectos ilimitados",
         "upgrade": "Actualizar",
         "uptime_sla_99": "Acuerdo de nivel de servicio de tiempo de actividad (99 %)",
-        "website_surveys": "Encuestas de sitio web"
+        "website_surveys": "Encuestas de sitio web",
+        "year": "Año"
       },
       "domain": {
         "customize_favicon_description": "Sube un favicon personalizado para personalizar la experiencia de tu encuesta por enlace y fortalecer la presencia de tu marca.",

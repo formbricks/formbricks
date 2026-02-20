@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "Pulos Lógicos, Campos Ocultos, Pesquisas Recorrentes, etc.",
         "manage_card_details": "Gerenciar Detalhes do Cartão",
         "manage_subscription": "Gerenciar Assinatura",
+        "month": "mês",
         "monthly": "mensal",
         "monthly_identified_users": "Usuários Identificados Mensalmente",
+        "plan_hobby": "Hobby",
+        "plan_pro": "Pro",
+        "plan_scale": "Scale",
+        "plan_trial": "Trial",
+        "plan_unknown": "desconhecido",
         "plan_upgraded_successfully": "Plano atualizado com sucesso",
         "premium_support_with_slas": "Suporte premium com SLAs",
         "remove_branding": "Remover Marca",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "Projetos ilimitados",
         "upgrade": "Atualizar",
         "uptime_sla_99": "Tempo de atividade SLA (99%)",
-        "website_surveys": "Pesquisas de Site"
+        "website_surveys": "Pesquisas de Site",
+        "year": "ano"
       },
       "domain": {
         "customize_favicon_description": "Faça o upload de um favicon personalizado para personalizar a experiência da sua pesquisa por link e fortalecer a presença da sua marca.",

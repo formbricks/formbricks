@@ -4,10 +4,12 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
+import { ensureCloudStripeSetupForOrganization } from "@/modules/billing/lib/organization-billing";
 import {
   createOrganization,
   getOrganization,
   getOrganizationsByUserId,
+  select as organizationSelect,
   subscribeOrganizationMembersToSurveyResponses,
   updateOrganization,
 } from "./service";
@@ -30,6 +32,10 @@ vi.mock("@/lib/user/service", () => ({
   updateUser: vi.fn(),
 }));
 
+vi.mock("@/modules/billing/lib/organization-billing", () => ({
+  ensureCloudStripeSetupForOrganization: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("Organization Service", () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -43,6 +49,7 @@ describe("Organization Service", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         billing: {
+          billingMode: "stripe" as const,
           plan: PROJECT_FEATURE_KEYS.FREE,
           limits: {
             projects: BILLING_LIMITS.FREE.PROJECTS,
@@ -98,6 +105,7 @@ describe("Organization Service", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           billing: {
+            billingMode: "stripe",
             plan: PROJECT_FEATURE_KEYS.FREE,
             limits: {
               projects: BILLING_LIMITS.FREE.PROJECTS,
@@ -151,6 +159,7 @@ describe("Organization Service", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         billing: {
+          billingMode: "stripe" as const,
           plan: PROJECT_FEATURE_KEYS.FREE,
           limits: {
             projects: BILLING_LIMITS.FREE.PROJECTS,
@@ -176,6 +185,7 @@ describe("Organization Service", () => {
         data: {
           name: "Test Org",
           billing: {
+            billingMode: "stripe",
             plan: PROJECT_FEATURE_KEYS.FREE,
             limits: {
               projects: BILLING_LIMITS.FREE.PROJECTS,
@@ -189,8 +199,44 @@ describe("Organization Service", () => {
             period: "monthly",
           },
         },
-        select: expect.any(Object),
+        select: organizationSelect,
       });
+      expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
+    });
+
+    test("should still return organization when Stripe setup fails", async () => {
+      const mockOrganization = {
+        id: "org1",
+        name: "Test Org",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        billing: {
+          billingMode: "stripe" as const,
+          plan: PROJECT_FEATURE_KEYS.FREE,
+          limits: {
+            projects: BILLING_LIMITS.FREE.PROJECTS,
+            monthly: {
+              responses: BILLING_LIMITS.FREE.RESPONSES,
+              miu: BILLING_LIMITS.FREE.MIU,
+            },
+          },
+          stripeCustomerId: null,
+          periodStart: new Date(),
+          period: "monthly" as const,
+        },
+        isAIEnabled: false,
+        whitelabel: false,
+      };
+
+      vi.mocked(prisma.organization.create).mockResolvedValue(mockOrganization);
+      vi.mocked(ensureCloudStripeSetupForOrganization).mockRejectedValueOnce(
+        new Error("stripe temporarily unavailable")
+      );
+
+      const result = await createOrganization({ name: "Test Org" });
+
+      expect(result).toEqual(mockOrganization);
+      expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
     });
 
     test("should throw DatabaseError on prisma error", async () => {

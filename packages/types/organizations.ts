@@ -7,6 +7,21 @@ export type TOrganizationBillingPlan = z.infer<typeof ZOrganizationBillingPlan>;
 export const ZOrganizationBillingPeriod = z.enum(["monthly", "yearly"]);
 export type TOrganizationBillingPeriod = z.infer<typeof ZOrganizationBillingPeriod>;
 
+export const ZCloudBillingPlan = z.enum(["hobby", "pro", "scale", "trial", "unknown"]);
+export type TCloudBillingPlan = z.infer<typeof ZCloudBillingPlan>;
+
+export const ZOrganizationBillingMode = z.enum(["stripe", "legacy"]);
+export type TOrganizationBillingMode = z.infer<typeof ZOrganizationBillingMode>;
+
+export const ZOrganizationStripeBilling = z.object({
+  plan: ZCloudBillingPlan.optional(),
+  subscriptionId: z.string().nullable().optional(),
+  features: z.array(z.string()).optional(),
+  lastStripeEventCreatedAt: z.string().nullable().optional(),
+  lastSyncedAt: z.string().nullable().optional(),
+  lastSyncedEventId: z.string().nullable().optional(),
+});
+
 // responses and miu can be null to support the unlimited plan
 export const ZOrganizationBillingPlanLimits = z.object({
   projects: z.number().nullable(),
@@ -20,6 +35,7 @@ export type TOrganizationBillingPlanLimits = z.infer<typeof ZOrganizationBilling
 
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
+  billingMode: ZOrganizationBillingMode.optional().default("stripe"),
   plan: ZOrganizationBillingPlan.default("free"),
   period: ZOrganizationBillingPeriod.default("monthly"),
   limits: ZOrganizationBillingPlanLimits.default({
@@ -30,6 +46,7 @@ export const ZOrganizationBilling = z.object({
     },
   }),
   periodStart: z.date(),
+  stripe: ZOrganizationStripeBilling.optional(),
 });
 
 export type TOrganizationBilling = z.infer<typeof ZOrganizationBilling>;

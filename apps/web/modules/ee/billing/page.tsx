@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { PROJECT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@/lib/constants";
 import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
@@ -48,8 +47,6 @@ export const PricingPage = async (props) => {
         peopleCount={peopleCount}
         responseCount={responseCount}
         projectCount={projectCount}
-        stripePriceLookupKeys={STRIPE_PRICE_LOOKUP_KEYS}
-        projectFeatureKeys={PROJECT_FEATURE_KEYS}
         hasBillingRights={hasBillingRights}
       />
     </PageContentWrapper>

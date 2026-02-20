@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "Logic Jumps, Hidden Fields, Recurring Surveys, etc.",
         "manage_card_details": "Manage Card Details",
         "manage_subscription": "Manage Subscription",
+        "month": "Month",
         "monthly": "Monthly",
         "monthly_identified_users": "Monthly Identified Users",
+        "plan_hobby": "Hobby",
+        "plan_pro": "Pro",
+        "plan_scale": "Scale",
+        "plan_trial": "Trial",
+        "plan_unknown": "Unknown",
         "plan_upgraded_successfully": "Plan upgraded successfully",
         "premium_support_with_slas": "Premium support with SLAs",
         "remove_branding": "Remove Branding",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "Unlimited Workspaces",
         "upgrade": "Upgrade",
         "uptime_sla_99": "Uptime SLA (99%)",
-        "website_surveys": "Website Surveys"
+        "website_surveys": "Website Surveys",
+        "year": "Year"
       },
       "domain": {
         "customize_favicon_description": "Upload a custom favicon to personalize your link survey experience and strengthen your brand presence.",

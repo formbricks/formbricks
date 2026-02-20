@@ -979,8 +979,14 @@
         "logic_jumps_hidden_fields_recurring_surveys": "逻辑 跳转 , 隐藏 字段 , 定期 调查 , 等",
         "manage_card_details": "管理卡片详情",
         "manage_subscription": "管理 订阅",
+        "month": "月",
         "monthly": "每月",
         "monthly_identified_users": "每月 已识别的 用户",
+        "plan_hobby": "兴趣版",
+        "plan_pro": "专业版",
+        "plan_scale": "规模版",
+        "plan_trial": "试用版",
+        "plan_unknown": "未知",
         "plan_upgraded_successfully": "计划 升级 成功",
         "premium_support_with_slas": "优质支持与 SLAs",
         "remove_branding": "移除 品牌",
@@ -996,7 +1002,8 @@
         "unlimited_workspaces": "无限工作区",
         "upgrade": "升级",
         "uptime_sla_99": "正常运行时间 SLA (99%)",
-        "website_surveys": "网站 调查"
+        "website_surveys": "网站 调查",
+        "year": "年"
       },
       "domain": {
         "customize_favicon_description": "上传自定义 Favicon，个性化您的链接问卷体验，提升品牌形象。",

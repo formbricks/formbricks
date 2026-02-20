@@ -3,6 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 
 export const selectSurvey = {
@@ -97,29 +98,10 @@ export const selectSurvey = {
 } satisfies Prisma.SurveySelect;
 
 export const getOrganizationBilling = reactCache(
-  async (organizationId: string): Promise<Organization["billing"] | null> => {
-    try {
-      const organization = await prisma.organization.findFirst({
-        where: {
-          id: organizationId,
-        },
-        select: {
-          billing: true,
-        },
-      });
-
-      if (!organization) {
-        throw new ResourceNotFoundError("Organization", null);
-      }
-
-      return organization.billing;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
+  async (organizationId: string): Promise<Organization["billing"]> => {
+    const billing = await getOrganizationBillingWithReadThroughSync(organizationId);
+    if (!billing) throw new ResourceNotFoundError("Organization", organizationId);
+    return billing as Organization["billing"];
   }
 );
 

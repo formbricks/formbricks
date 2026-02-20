@@ -2,6 +2,7 @@ import { Organization } from "@prisma/client";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { hasCloudEntitlementWithLicenseGuard } from "@/modules/billing/lib/feature-access";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { checkSpamProtectionPermission, getExternalUrlsPermission } from "./permission";
@@ -12,6 +13,10 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 
 vi.mock("@/modules/survey/lib/survey", () => ({
   getOrganizationBilling: vi.fn(),
+}));
+
+vi.mock("@/modules/billing/lib/feature-access", () => ({
+  hasCloudEntitlementWithLicenseGuard: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -86,6 +91,18 @@ describe("getExternalUrlsPermission - Formbricks Cloud", () => {
   test("should return true for any non-free plan string in Formbricks Cloud", async () => {
     const result = await getExternalUrlsPermission("custom-plan");
     expect(result).toBe(true);
+  });
+
+  test("should return true when org-aware entitlement checks return true", async () => {
+    vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValue(true);
+    const result = await getExternalUrlsPermission("free", "org_123");
+    expect(result).toBe(true);
+  });
+
+  test("should return false when one org-aware entitlement check fails", async () => {
+    vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const result = await getExternalUrlsPermission("free", "org_123");
+    expect(result).toBe(false);
   });
 });
 
