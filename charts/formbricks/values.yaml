@@ -305,6 +305,39 @@ serviceMonitor:
       port: metrics
 
 ##########################################################
+# Hub API Configuration
+# Formbricks Hub image: ghcr.io/formbricks/hub
+##########################################################
+hub:
+  enabled: false
+  replicas: 1
+
+  image:
+    repository: "ghcr.io/formbricks/hub"
+    # Pin to a semver tag for reproducible deployments; update on each Hub release.
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  # Secret containing API_KEY and DATABASE_URL for Hub. Use the same app secret (or same DATABASE_URL) to share the Formbricks database.
+  existingSecret: ""
+
+  # Optional env vars (non-secret). Use existingSecret for API_KEY and DATABASE_URL.
+  env: {}
+
+  # Migration job runs goose + river before Hub API starts (pre-install/pre-upgrade hook). Requires existingSecret with DATABASE_URL.
+  migration:
+    ttlSecondsAfterFinished: 300
+    backoffLimit: 3
+    activeDeadlineSeconds: 900
+
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      memory: 256Mi
+      cpu: "100m"
+
+##########################################################
 # PostgreSQL Configuration
 ##########################################################
 postgresql:

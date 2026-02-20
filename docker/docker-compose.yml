@@ -29,6 +29,12 @@ x-environment: &environment
     # To use external Redis/Valkey: remove the redis service below and update this URL
     REDIS_URL: redis://redis:6379
 
+    # Formbricks Hub (port 8080): API key required. Use e.g. openssl rand -hex 32
+    HUB_API_KEY:
+
+    # Hub database URL (optional). Default: same Postgres as Formbricks. Set only if Hub uses a separate DB.
+    # HUB_DATABASE_URL:
+
     # Set the minimum log level(debug, info, warn, error, fatal)
     # LOG_LEVEL: info
 
@@ -202,7 +208,7 @@ x-environment: &environment
 services:
   postgres:
     restart: always
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg18
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
@@ -244,6 +250,33 @@ services:
     volumes:
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
+
+  # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
+  hub-migrate:
+    image: ghcr.io/formbricks/hub:latest
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command: ["if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres \"$$DATABASE_URL\" up && /usr/local/bin/river migrate-up --database-url \"$$DATABASE_URL\"; else echo 'Migration tools (goose/river) not in image, skipping migrations.'; fi"]
+    environment:
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Formbricks Hub API (ghcr.io/formbricks/hub). Set HUB_API_KEY. By default shares the Formbricks database; set HUB_DATABASE_URL to use a separate DB.
+  hub:
+    restart: always
+    image: ghcr.io/formbricks/hub:latest
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      API_KEY: ${HUB_API_KEY:?HUB_API_KEY is required to run Hub}
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
 
 volumes:
   postgres:
