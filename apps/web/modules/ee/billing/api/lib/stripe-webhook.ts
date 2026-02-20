@@ -4,6 +4,7 @@ import { STRIPE_API_VERSION } from "@/lib/constants";
 import { env } from "@/lib/env";
 import {
   findOrganizationIdByStripeCustomerId,
+  reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe,
 } from "@/modules/billing/lib/organization-billing";
 
@@ -60,6 +61,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
   }
 
   try {
+    await reconcileCloudStripeSubscriptionsForOrganization(organizationId, event.id);
     await syncOrganizationBillingFromStripe(organizationId, {
       id: event.id,
       created: event.created,

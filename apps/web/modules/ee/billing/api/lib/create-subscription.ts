@@ -6,7 +6,9 @@ import { getOrganization } from "@/lib/organization/service";
 import { ensureStripeCustomerForOrganization } from "@/modules/billing/lib/organization-billing";
 import {
   CLOUD_STRIPE_PRICE_LOOKUP_KEYS,
+  CLOUD_STRIPE_PRODUCT_IDS,
   TCloudUpgradePriceLookupKey,
+  getCloudPlanFromProductId,
 } from "@/modules/billing/lib/stripe-catalog";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
@@ -24,6 +26,24 @@ export const createSubscription = async (
 
     const { customerId } = await ensureStripeCustomerForOrganization(organizationId);
     if (!customerId) throw new Error("Stripe customer unavailable");
+
+    const existingSubscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 100,
+      expand: ["data.items.data.price.product"],
+    });
+
+    const hasPaidSubscriptionHistory = existingSubscriptions.data.some((subscription) =>
+      subscription.items.data.some((item) => {
+        const product = item.price.product;
+        const productId = typeof product === "string" ? product : product.id;
+
+        // "unknown" products are treated as paid history to avoid repeated free trials.
+        const plan = getCloudPlanFromProductId(productId);
+        return plan !== "hobby" && productId !== CLOUD_STRIPE_PRODUCT_IDS.HOBBY;
+      })
+    );
 
     const lookupKeys: string[] = [priceLookupKey];
 
@@ -76,7 +96,7 @@ export const createSubscription = async (
       allow_promotion_codes: true,
       subscription_data: {
         metadata: { organizationId },
-        trial_period_days: 14,
+        ...(hasPaidSubscriptionHistory ? {} : { trial_period_days: 14 }),
       },
       metadata: { organizationId },
       billing_address_collection: "required",

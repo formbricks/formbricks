@@ -7,6 +7,8 @@ import { type TOrganizationBilling } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import {
+  CLOUD_PLAN_LEVEL,
+  CLOUD_STRIPE_PRICE_LOOKUP_KEYS,
   type TCloudStripePlan,
   getCloudPlanFromProductId,
   getLegacyPlanFromCloudPlan,
@@ -15,6 +17,7 @@ import {
 import { stripeClient } from "./stripe-client";
 
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set<string>(["trialing", "active", "past_due", "unpaid", "paused"]);
 
 type TBillingJson = Omit<TOrganizationBilling, "periodStart"> & {
   periodStart?: string | Date | null;
@@ -65,6 +68,31 @@ const listAllActiveEntitlements = async (customerId: string): Promise<string[]> 
   return [...new Set(featureLookupKeys)];
 };
 
+const getSubscriptionTopPlanLevel = (
+  subscription: {
+    items: {
+      data: Array<{
+        price: {
+          product: string | { id: string };
+        };
+      }>;
+    };
+  } | null
+): number => {
+  if (!subscription) return CLOUD_PLAN_LEVEL.unknown;
+
+  let topLevel = CLOUD_PLAN_LEVEL.unknown;
+
+  for (const item of subscription.items.data) {
+    const product = item.price.product;
+    const productId = typeof product === "string" ? product : product.id;
+    const plan = getCloudPlanFromProductId(productId);
+    topLevel = Math.max(topLevel, CLOUD_PLAN_LEVEL[plan]);
+  }
+
+  return topLevel;
+};
+
 const resolveCurrentSubscription = async (customerId: string) => {
   if (!stripeClient) return null;
 
@@ -75,9 +103,18 @@ const resolveCurrentSubscription = async (customerId: string) => {
     expand: ["data.items.data.price.product"],
   });
 
-  const preferred = subscriptions.data.find((subscription) =>
-    ["trialing", "active", "past_due", "unpaid"].includes(subscription.status)
-  );
+  const preferred = [...subscriptions.data]
+    .filter((subscription) => ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status))
+    .sort((left, right) => {
+      const leftLevel = getSubscriptionTopPlanLevel(left);
+      const rightLevel = getSubscriptionTopPlanLevel(right);
+
+      if (leftLevel !== rightLevel) {
+        return rightLevel - leftLevel;
+      }
+
+      return right.created - left.created;
+    })[0];
 
   return preferred ?? null;
 };
@@ -106,6 +143,34 @@ const resolveBillingPeriod = (subscription: Awaited<ReturnType<typeof resolveCur
 const resolvePeriodStart = (subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>) => {
   if (!subscription?.current_period_start) return new Date();
   return new Date(subscription.current_period_start * 1000);
+};
+
+const ensureHobbySubscription = async (
+  organizationId: string,
+  customerId: string,
+  idempotencySuffix: string
+): Promise<void> => {
+  if (!stripeClient) return;
+
+  const hobbyPrices = await stripeClient.prices.list({
+    lookup_keys: [CLOUD_STRIPE_PRICE_LOOKUP_KEYS.HOBBY_MONTHLY],
+    active: true,
+    limit: 1,
+  });
+
+  const hobbyPrice = hobbyPrices.data[0];
+  if (!hobbyPrice) {
+    throw new Error(`Stripe price lookup key not found: ${CLOUD_STRIPE_PRICE_LOOKUP_KEYS.HOBBY_MONTHLY}`);
+  }
+
+  await stripeClient.subscriptions.create(
+    {
+      customer: customerId,
+      items: [{ price: hobbyPrice.id, quantity: 1 }],
+      metadata: { organizationId },
+    },
+    { idempotencyKey: `ensure-hobby-subscription-${organizationId}-${idempotencySuffix}` }
+  );
 };
 
 export const ensureStripeCustomerForOrganization = async (
@@ -285,8 +350,66 @@ export const findOrganizationIdByStripeCustomerId = async (customerId: string): 
   return organization?.id ?? null;
 };
 
+export const reconcileCloudStripeSubscriptionsForOrganization = async (
+  organizationId: string,
+  idempotencySuffix = "reconcile"
+): Promise<void> => {
+  if (!IS_FORMBRICKS_CLOUD || !stripeClient) return;
+
+  const organization = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { id: true, billing: true },
+  });
+
+  if (!organization) return;
+
+  const billing = getBillingOrThrow(organization.id, organization.billing);
+  const customerId = billing.stripeCustomerId;
+  if (!customerId) return;
+
+  const subscriptions = await stripeClient.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 20,
+    expand: ["data.items.data.price.product"],
+  });
+
+  const activeSubscriptions = subscriptions.data.filter((subscription) =>
+    ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)
+  );
+
+  const subscriptionsWithPlanLevel = activeSubscriptions.map((subscription) => ({
+    subscription,
+    planLevel: getSubscriptionTopPlanLevel(subscription),
+  }));
+
+  const hasPaidOrTrialSubscription = subscriptionsWithPlanLevel.some(
+    ({ planLevel }) => planLevel > CLOUD_PLAN_LEVEL.hobby || planLevel === CLOUD_PLAN_LEVEL.unknown
+  );
+
+  if (hasPaidOrTrialSubscription) {
+    const hobbySubscriptions = subscriptionsWithPlanLevel.filter(
+      ({ planLevel }) => planLevel === CLOUD_PLAN_LEVEL.hobby
+    );
+
+    await Promise.all(
+      hobbySubscriptions.map(({ subscription }) =>
+        stripeClient.subscriptions.cancel(subscription.id, {
+          prorate: false,
+        })
+      )
+    );
+    return;
+  }
+
+  if (subscriptionsWithPlanLevel.length === 0) {
+    await ensureHobbySubscription(organization.id, customerId, idempotencySuffix);
+  }
+};
+
 export const ensureCloudStripeSetupForOrganization = async (organizationId: string): Promise<void> => {
   if (!IS_FORMBRICKS_CLOUD || !stripeClient) return;
   await ensureStripeCustomerForOrganization(organizationId);
+  await reconcileCloudStripeSubscriptionsForOrganization(organizationId, "bootstrap");
   await syncOrganizationBillingFromStripe(organizationId);
 };
