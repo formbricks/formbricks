@@ -1,5 +1,12 @@
-import { LinkSurveyLayout, viewport } from "@/modules/survey/link/layout";
+import { Viewport } from "next";
+import { LinkSurveyLayout } from "@/modules/survey/link/layout";
 
-export { viewport };
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1.0,
+  maximumScale: 1.0,
+  userScalable: false,
+  viewportFit: "contain",
+};
 
 export default LinkSurveyLayout;
