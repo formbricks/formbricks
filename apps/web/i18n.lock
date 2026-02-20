@@ -714,7 +714,12 @@ checksums:
     environments/integrations/google_sheets/link_google_sheet: fa78146ae26ce5b1d2aaf2678f628943
     environments/integrations/google_sheets/link_new_sheet: 8ad2ea8708f50ed184c00b84577b325e
     environments/integrations/google_sheets/no_integrations_yet: ea46f7747937baf48a47a4c1b1776aee
+    environments/integrations/google_sheets/reconnect_button: 8992a0f250278c116cb26be448b68ba2
+    environments/integrations/google_sheets/reconnect_button_description: 851fd2fda57211293090f371d5b2c734
+    environments/integrations/google_sheets/reconnect_button_tooltip: 210dd97470fde8264d2c076db3c98fde
+    environments/integrations/google_sheets/spreadsheet_permission_error: 94f0007a187d3b9a7ab8200fe26aad20
     environments/integrations/google_sheets/spreadsheet_url: b1665f96e6ecce23ea2d9196f4a3e5dd
+    environments/integrations/google_sheets/token_expired_error: 555d34c18c554ec8ac66614f21bd44fc
     environments/integrations/include_created_at: 8011355b13e28e638d74e6f3d68a2bbf
     environments/integrations/include_hidden_fields: 25f0ea5ca1c6ead2cd121f8754cb8d72
     environments/integrations/include_metadata: 750091d965d7cc8d02468b5239816dc5

@@ -112,7 +112,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
     survey.blocks,
     responseInputData.data,
     responseInputData.language ?? "en",
-    responseInputData.finished,
     survey.questions
   );
 
