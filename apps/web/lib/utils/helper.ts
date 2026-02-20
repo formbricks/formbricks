@@ -349,12 +349,3 @@ export const getProjectIdFromConnectorId = async (connectorId: string) => {
 
   return await getProjectIdFromEnvironmentId(connector.environmentId);
 };
-
-export const getEnvironmentIdFromConnectorId = async (connectorId: string) => {
-  const connector = await getConnector(connectorId);
-  if (!connector) {
-    throw new ResourceNotFoundError("connector", connectorId);
-  }
-
-  return connector.environmentId;
-};

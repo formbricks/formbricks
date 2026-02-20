@@ -1,9 +1,9 @@
 "use client";
 
-import { PlusIcon, SparklesIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/modules/ui/components/badge";
+import { TConnectorType } from "@formbricks/types/connector";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -16,59 +16,55 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
-  AI_SUGGESTED_MAPPINGS,
   FEEDBACK_RECORD_FIELDS,
-  TCreateSourceStep,
+  TCreateConnectorStep,
   TFieldMapping,
-  TSourceConnection,
   TSourceField,
-  TSourceType,
   TUnifySurvey,
 } from "../types";
 import { parseCSVColumnsToFields } from "../utils";
-import { CsvSourceUI } from "./csv-source-ui";
+import { ConnectorTypeSelector } from "./connector-type-selector";
+import { CsvConnectorUI } from "./csv-connector-ui";
 import { FormbricksSurveySelector } from "./formbricks-survey-selector";
-import { MappingUI } from "./mapping-ui";
-import { SourceTypeSelector } from "./source-type-selector";
 
-interface CreateSourceModalProps {
+interface CreateConnectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateSource: (
-    source: TSourceConnection,
-    selectedSurveyId?: string,
-    selectedElementIds?: string[]
-  ) => void;
+  onCreateConnector: (data: {
+    name: string;
+    type: TConnectorType;
+    surveyId?: string;
+    elementIds?: string[];
+    fieldMappings?: TFieldMapping[];
+  }) => void;
   surveys: TUnifySurvey[];
 }
 
-function getDefaultSourceName(type: TSourceType): string {
-  switch (type) {
-    case "formbricks":
-      return "Formbricks Survey Connection";
-    case "csv":
-      return "CSV Import";
-    default:
-      return "New Source";
-  }
-}
+const DEFAULT_CONNECTOR_NAME = {
+  formbricks: "Formbricks Survey Connection",
+  csv: "CSV Import",
+};
 
-export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys }: CreateSourceModalProps) {
+export const CreateConnectorModal = ({
+  open,
+  onOpenChange,
+  onCreateConnector,
+  surveys,
+}: CreateConnectorModalProps) => {
   const { t } = useTranslation();
-  const [currentStep, setCurrentStep] = useState<TCreateSourceStep>("selectType");
-  const [selectedType, setSelectedType] = useState<TSourceType | null>(null);
-  const [sourceName, setSourceName] = useState("");
+  const [currentStep, setCurrentStep] = useState<TCreateConnectorStep>("selectType");
+  const [selectedType, setSelectedType] = useState<TConnectorType | null>(null);
+  const [connectorName, setConnectorName] = useState("");
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
 
-  // Formbricks-specific state
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
 
   const resetForm = () => {
     setCurrentStep("selectType");
     setSelectedType(null);
-    setSourceName("");
+    setConnectorName("");
     setMappings([]);
     setSourceFields([]);
     setSelectedSurveyId(null);
@@ -82,18 +78,18 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
     onOpenChange(newOpen);
   };
 
-  const isDisabledType = (type: TSourceType) => type === "webhook" || type === "email" || type === "slack";
-
   const handleNextStep = () => {
-    if (currentStep === "selectType" && selectedType && !isDisabledType(selectedType)) {
+    if (currentStep === "selectType" && selectedType) {
       if (selectedType === "formbricks") {
         const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
-        setSourceName(
-          selectedSurvey ? `${selectedSurvey.name} Connection` : getDefaultSourceName(selectedType)
+
+        setConnectorName(
+          selectedSurvey ? `${selectedSurvey.name} Connection` : DEFAULT_CONNECTOR_NAME[selectedType]
         );
       } else {
-        setSourceName(getDefaultSourceName(selectedType));
+        setConnectorName(DEFAULT_CONNECTOR_NAME[selectedType]);
       }
+
       setCurrentStep("mapping");
     }
   };
@@ -127,34 +123,25 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
     }
   };
 
-  const handleCreateSource = () => {
-    if (!selectedType || !sourceName.trim()) return;
+  const handleCreate = () => {
+    if (!selectedType || !connectorName.trim()) return;
 
     if (selectedType !== "formbricks") {
       const requiredFields = FEEDBACK_RECORD_FIELDS.filter((f) => f.required);
-      const allRequiredMapped = requiredFields.every((field) =>
-        mappings.some((m) => m.targetFieldId === field.id)
-      );
+      const allRequired = requiredFields.every((field) => mappings.some((m) => m.targetFieldId === field.id));
 
-      if (!allRequiredMapped) {
+      if (!allRequired) {
         console.warn("Not all required fields are mapped");
       }
     }
 
-    const newSource: TSourceConnection = {
-      id: crypto.randomUUID(),
-      name: sourceName.trim(),
+    onCreateConnector({
+      name: connectorName.trim(),
       type: selectedType,
-      mappings,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    onCreateSource(
-      newSource,
-      selectedType === "formbricks" ? (selectedSurveyId ?? undefined) : undefined,
-      selectedType === "formbricks" ? selectedElementIds : undefined
-    );
+      surveyId: selectedType === "formbricks" ? (selectedSurveyId ?? undefined) : undefined,
+      elementIds: selectedType === "formbricks" ? selectedElementIds : undefined,
+      fieldMappings: selectedType !== "formbricks" && mappings.length > 0 ? mappings : undefined,
+    });
     resetForm();
     onOpenChange(false);
   };
@@ -173,41 +160,6 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
       const fields = parseCSVColumnsToFields("timestamp,customer_id,rating,feedback_text,category");
       setSourceFields(fields);
     }
-  };
-
-  const handleSuggestMapping = () => {
-    if (!selectedType) return;
-    const suggestions = AI_SUGGESTED_MAPPINGS[selectedType];
-    if (!suggestions) return;
-
-    const newMappings: TFieldMapping[] = [];
-
-    for (const sourceField of sourceFields) {
-      const suggestedTarget = suggestions.fieldMappings[sourceField.id];
-      if (suggestedTarget) {
-        const targetExists = FEEDBACK_RECORD_FIELDS.find((f) => f.id === suggestedTarget);
-        if (targetExists) {
-          newMappings.push({
-            sourceFieldId: sourceField.id,
-            targetFieldId: suggestedTarget,
-          });
-        }
-      }
-    }
-
-    for (const [targetFieldId, staticValue] of Object.entries(suggestions.staticValues)) {
-      const targetExists = FEEDBACK_RECORD_FIELDS.find((f) => f.id === targetFieldId);
-      if (targetExists) {
-        if (!newMappings.some((m) => m.targetFieldId === targetFieldId)) {
-          newMappings.push({
-            targetFieldId,
-            staticValue,
-          });
-        }
-      }
-    }
-
-    setMappings(newMappings);
   };
 
   return (
@@ -242,15 +194,15 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
 
           <div className="py-4">
             {currentStep === "selectType" ? (
-              <SourceTypeSelector selectedType={selectedType} onSelectType={setSelectedType} />
+              <ConnectorTypeSelector selectedType={selectedType} onSelectType={setSelectedType} />
             ) : selectedType === "formbricks" ? (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sourceName">{t("environments.unify.source_name")}</Label>
+                  <Label htmlFor="connectorName">{t("environments.unify.source_name")}</Label>
                   <Input
-                    id="sourceName"
-                    value={sourceName}
-                    onChange={(e) => setSourceName(e.target.value)}
+                    id="connectorName"
+                    value={connectorName}
+                    onChange={(e) => setConnectorName(e.target.value)}
                     placeholder={t("environments.unify.enter_name_for_source")}
                   />
                 </div>
@@ -270,17 +222,17 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
             ) : selectedType === "csv" ? (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sourceName">{t("environments.unify.source_name")}</Label>
+                  <Label htmlFor="connectorName">{t("environments.unify.source_name")}</Label>
                   <Input
-                    id="sourceName"
-                    value={sourceName}
-                    onChange={(e) => setSourceName(e.target.value)}
+                    id="connectorName"
+                    value={connectorName}
+                    onChange={(e) => setConnectorName(e.target.value)}
                     placeholder={t("environments.unify.enter_name_for_source")}
                   />
                 </div>
 
                 <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <CsvSourceUI
+                  <CsvConnectorUI
                     sourceFields={sourceFields}
                     mappings={mappings}
                     onMappingsChange={setMappings}
@@ -289,40 +241,7 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
                   />
                 </div>
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sourceName">{t("environments.unify.source_name")}</Label>
-                  <Input
-                    id="sourceName"
-                    value={sourceName}
-                    onChange={(e) => setSourceName(e.target.value)}
-                    placeholder={t("environments.unify.enter_name_for_source")}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    {sourceFields.length > 0 && (
-                      <Button variant="outline" size="sm" onClick={handleSuggestMapping} className="gap-2">
-                        <SparklesIcon className="h-4 w-4 text-purple-500" />
-                        {t("environments.unify.suggest_mapping")}
-                        <Badge text="AI" type="gray" size="tiny" className="ml-1" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <MappingUI
-                    sourceFields={sourceFields}
-                    mappings={mappings}
-                    onMappingsChange={setMappings}
-                    sourceType={selectedType!}
-                  />
-                </div>
-              </div>
-            )}
+            ) : null}
           </div>
 
           <DialogFooter>
@@ -332,7 +251,7 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
               </Button>
             )}
             {currentStep === "selectType" ? (
-              <Button onClick={handleNextStep} disabled={!selectedType || isDisabledType(selectedType)}>
+              <Button onClick={handleNextStep} disabled={!selectedType}>
                 {selectedType === "formbricks"
                   ? t("environments.unify.select_questions")
                   : selectedType === "csv"
@@ -341,9 +260,9 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
               </Button>
             ) : (
               <Button
-                onClick={handleCreateSource}
+                onClick={handleCreate}
                 disabled={
-                  !sourceName.trim() ||
+                  !connectorName.trim() ||
                   (selectedType === "formbricks"
                     ? !isFormbricksValid
                     : selectedType === "csv"
@@ -358,4 +277,4 @@ export function CreateSourceModal({ open, onOpenChange, onCreateSource, surveys 
       </Dialog>
     </>
   );
-}
+};

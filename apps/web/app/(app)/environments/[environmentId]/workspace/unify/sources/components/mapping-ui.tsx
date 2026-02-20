@@ -3,17 +3,18 @@
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FEEDBACK_RECORD_FIELDS, TFieldMapping, TSourceField, TSourceType } from "../types";
+import { TConnectorType } from "@formbricks/types/connector";
+import { FEEDBACK_RECORD_FIELDS, TFieldMapping, TSourceField } from "../types";
 import { DraggableSourceField, DroppableTargetField } from "./mapping-field";
 
 interface MappingUIProps {
   sourceFields: TSourceField[];
   mappings: TFieldMapping[];
   onMappingsChange: (mappings: TFieldMapping[]) => void;
-  sourceType: TSourceType;
+  connectorType: TConnectorType;
 }
 
-export function MappingUI({ sourceFields, mappings, onMappingsChange, sourceType }: MappingUIProps) {
+export function MappingUI({ sourceFields, mappings, onMappingsChange, connectorType }: MappingUIProps) {
   const { t } = useTranslation();
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -53,38 +54,36 @@ export function MappingUI({ sourceFields, mappings, onMappingsChange, sourceType
   };
 
   const getSourceFieldById = (id: string) => sourceFields.find((f) => f.id === id);
+
   const getMappingForTarget = (targetFieldId: string) => {
     return mappings.find((m) => m.targetFieldId === targetFieldId) ?? null;
   };
+
   const getMappedSourceField = (targetFieldId: string) => {
     const mapping = getMappingForTarget(targetFieldId);
     return mapping?.sourceFieldId ? getSourceFieldById(mapping.sourceFieldId) : null;
   };
+
   const isSourceFieldMapped = (sourceFieldId: string) =>
     mappings.some((m) => m.sourceFieldId === sourceFieldId);
 
   const activeField = activeId ? getSourceFieldById(activeId) : null;
-
-  const getSourceTypeLabel = () => {
-    switch (sourceType) {
-      case "csv":
-        return t("environments.unify.csv_columns");
-      default:
-        return t("environments.unify.source_fields");
-    }
-  };
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="grid grid-cols-2 gap-6">
         {/* Source Fields Panel */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-slate-700">{getSourceTypeLabel()}</h4>
+          <h4 className="text-sm font-medium text-slate-700">
+            {connectorType === "csv"
+              ? t("environments.unify.csv_columns")
+              : t("environments.unify.source_fields")}
+          </h4>
 
           {sourceFields.length === 0 ? (
             <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
               <p className="text-sm text-slate-500">
-                {sourceType === "csv"
+                {connectorType === "csv"
                   ? t("environments.unify.click_load_sample_csv")
                   : t("environments.unify.no_source_fields_loaded")}
               </p>

@@ -2,16 +2,16 @@
 
 import { Loader2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TSourceConnection } from "../types";
-import { SourcesTableDataRow } from "./sources-table-data-row";
+import { TConnectorWithMappings } from "@formbricks/types/connector";
+import { ConnectorsTableDataRow } from "./connectors-table-data-row";
 
-interface SourcesTableProps {
-  sources: TSourceConnection[];
-  onSourceClick: (source: TSourceConnection) => void;
+interface ConnectorsTableProps {
+  connectors: TConnectorWithMappings[];
+  onConnectorClick: (connector: TConnectorWithMappings) => void;
   isLoading?: boolean;
 }
 
-export function SourcesTable({ sources, onSourceClick, isLoading = false }: SourcesTableProps) {
+export function ConnectorsTable({ connectors, onConnectorClick, isLoading = false }: ConnectorsTableProps) {
   const { t } = useTranslation();
 
   return (
@@ -26,21 +26,21 @@ export function SourcesTable({ sources, onSourceClick, isLoading = false }: Sour
         <div className="flex h-32 items-center justify-center">
           <Loader2Icon className="h-6 w-6 animate-spin text-slate-500" />
         </div>
-      ) : sources.length === 0 ? (
+      ) : connectors.length === 0 ? (
         <div className="flex h-32 items-center justify-center">
           <p className="text-sm text-slate-500">{t("environments.unify.no_sources_connected")}</p>
         </div>
       ) : (
         <div className="divide-y divide-slate-100">
-          {sources.map((source) => (
-            <SourcesTableDataRow
-              key={source.id}
-              id={source.id}
-              name={source.name}
-              type={source.type}
-              mappingsCount={source.mappings.length}
-              createdAt={source.createdAt}
-              onClick={() => onSourceClick(source)}
+          {connectors.map((connector) => (
+            <ConnectorsTableDataRow
+              key={connector.id}
+              id={connector.id}
+              name={connector.name}
+              type={connector.type}
+              mappingsCount={connector.formbricksMappings.length + connector.fieldMappings.length}
+              createdAt={connector.createdAt}
+              onClick={() => onConnectorClick(connector)}
             />
           ))}
         </div>

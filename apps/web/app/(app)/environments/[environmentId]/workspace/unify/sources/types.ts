@@ -1,55 +1,6 @@
-import { TFunction } from "i18next";
 import { THubFieldType, ZHubFieldType } from "@formbricks/types/connector";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 
-// Source types for the feedback source connections
-export type TSourceType = "formbricks" | "webhook" | "email" | "csv" | "slack";
-
-export interface TSourceOption {
-  id: TSourceType;
-  name: string;
-  description: string;
-  disabled: boolean;
-  badge?: { text: string; type: "success" | "gray" | "warning" };
-}
-
-export const getSourceOptions = (t: TFunction): TSourceOption[] => [
-  {
-    id: "formbricks",
-    name: t("environments.unify.formbricks_surveys"),
-    description: t("environments.unify.source_connect_formbricks_description"),
-    disabled: false,
-  },
-  {
-    id: "webhook",
-    name: t("environments.unify.webhook"),
-    description: t("environments.unify.source_connect_webhook_description"),
-    disabled: true,
-    badge: { text: t("environments.unify.coming_soon"), type: "gray" },
-  },
-  {
-    id: "email",
-    name: t("environments.unify.email"),
-    description: t("environments.unify.source_connect_email_description"),
-    disabled: true,
-    badge: { text: t("environments.unify.coming_soon"), type: "gray" },
-  },
-  {
-    id: "csv",
-    name: t("environments.unify.csv_import"),
-    description: t("environments.unify.source_connect_csv_description"),
-    disabled: false,
-  },
-  {
-    id: "slack",
-    name: t("environments.unify.slack_message"),
-    description: t("environments.unify.source_connect_slack_description"),
-    disabled: true,
-    badge: { text: t("environments.unify.coming_soon"), type: "gray" },
-  },
-];
-
-// Unify Survey types that work with real survey data
 export interface TUnifySurveyElement {
   id: string;
   type: TSurveyElementTypeEnum;
@@ -65,23 +16,12 @@ export interface TUnifySurvey {
   createdAt: Date;
 }
 
-// Field mapping types
 export interface TFieldMapping {
   targetFieldId: string;
   sourceFieldId?: string;
   staticValue?: string;
 }
 
-export interface TSourceConnection {
-  id: string;
-  name: string;
-  type: TSourceType;
-  mappings: TFieldMapping[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Field types for the Hub target schema
 export type TTargetFieldType = "string" | "enum" | "timestamp" | "float64" | "boolean" | "jsonb" | "string[]";
 
 export interface TTargetField {
@@ -101,7 +41,6 @@ export interface TSourceField {
   sampleValue?: string;
 }
 
-// Target fields based on the FeedbackRecord Hub schema
 export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
   {
     id: "collected_at",
@@ -231,36 +170,4 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
 
 export const SAMPLE_CSV_COLUMNS = "timestamp,customer_id,rating,feedback_text,category";
 
-// AI suggested mappings per source type
-export const AI_SUGGESTED_MAPPINGS: Partial<
-  Record<
-    TSourceType,
-    {
-      fieldMappings: Record<string, string>;
-      staticValues: Record<string, string>;
-    }
-  >
-> = {
-  csv: {
-    fieldMappings: {
-      timestamp: "collected_at",
-      customer_id: "user_identifier",
-      rating: "value_number",
-      feedback_text: "value_text",
-      category: "field_label",
-    },
-    staticValues: {
-      source_type: "survey",
-      field_type: "rating",
-    },
-  },
-  formbricks: {
-    fieldMappings: {},
-    staticValues: {
-      source_type: "survey",
-    },
-  },
-};
-
-// Modal step types
-export type TCreateSourceStep = "selectType" | "mapping";
+export type TCreateConnectorStep = "selectType" | "mapping";

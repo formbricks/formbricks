@@ -1,60 +1,48 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { FileSpreadsheetIcon, GlobeIcon, MailIcon, MessageSquareIcon, WebhookIcon } from "lucide-react";
+import { FileSpreadsheetIcon, GlobeIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TSourceType } from "../types";
+import { TConnectorType } from "@formbricks/types/connector";
 
-interface SourcesTableDataRowProps {
+interface ConnectorsTableDataRowProps {
   id: string;
   name: string;
-  type: TSourceType;
+  type: TConnectorType;
   mappingsCount: number;
   createdAt: Date;
   onClick: () => void;
 }
 
-function getSourceIcon(type: TSourceType) {
+function getConnectorIcon(type: TConnectorType) {
   switch (type) {
     case "formbricks":
       return <GlobeIcon className="h-4 w-4 text-slate-500" />;
-    case "webhook":
-      return <WebhookIcon className="h-4 w-4 text-slate-500" />;
-    case "email":
-      return <MailIcon className="h-4 w-4 text-slate-500" />;
     case "csv":
       return <FileSpreadsheetIcon className="h-4 w-4 text-slate-500" />;
-    case "slack":
-      return <MessageSquareIcon className="h-4 w-4 text-slate-500" />;
     default:
       return <GlobeIcon className="h-4 w-4 text-slate-500" />;
   }
 }
 
-export function SourcesTableDataRow({
+export function ConnectorsTableDataRow({
   id,
   name,
   type,
   mappingsCount,
   createdAt,
   onClick,
-}: SourcesTableDataRowProps) {
+}: ConnectorsTableDataRowProps) {
   const { t } = useTranslation();
 
-  const getSourceTypeLabel = (sourceType: TSourceType) => {
-    switch (sourceType) {
+  const getConnectorTypeLabel = (connectorType: TConnectorType) => {
+    switch (connectorType) {
       case "formbricks":
         return t("environments.unify.formbricks_surveys");
-      case "webhook":
-        return t("environments.unify.webhook");
-      case "email":
-        return t("environments.unify.email");
       case "csv":
         return t("environments.unify.csv_import");
-      case "slack":
-        return t("environments.unify.slack_message");
       default:
-        return sourceType;
+        return connectorType;
     }
   };
 
@@ -71,8 +59,10 @@ export function SourcesTableDataRow({
         }
       }}>
       <div className="col-span-2 flex items-center gap-2 pl-4">
-        {getSourceIcon(type)}
-        <span className="hidden truncate text-xs text-slate-500 sm:inline">{getSourceTypeLabel(type)}</span>
+        {getConnectorIcon(type)}
+        <span className="hidden truncate text-xs text-slate-500 sm:inline">
+          {getConnectorTypeLabel(type)}
+        </span>
       </div>
       <div className="col-span-5 flex items-center">
         <span className="truncate font-medium text-slate-900">{name}</span>

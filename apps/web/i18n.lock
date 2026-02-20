@@ -1937,8 +1937,6 @@ checksums:
     environments/unify/are_you_sure: 6d5cd13628a7887711fd0c29f1123652
     environments/unify/automated: 040d99fc1e8649d9bfac6e45759ff119
     environments/unify/aws_region: 6d7132311a69d6288cee9dbfec27227a
-    environments/unify/back: f541015a827e37cb3b1234e56bc2aa3c
-    environments/unify/cancel: 2e2a849c2223911717de8caa2c71bade
     environments/unify/change_file: c5163ac18bf443370228a8ecbb0b07da
     environments/unify/click_load_sample_csv: 0ee0bf93f10f02863fc658b359706316
     environments/unify/click_to_upload: 74a7e7d79a88b6bbfd9f22084bffdb9b
@@ -1969,11 +1967,6 @@ checksums:
     environments/unify/every_30_minutes: 6bba217e921f55cad68948d6136d23c0
     environments/unify/every_5_minutes: 4ecba56de234044216c3db522f542109
     environments/unify/every_hour: 1314cadc59cef3d1f63f59c30f58fba1
-    environments/unify/failed_to_copy: 6233aaa405266fade46ee80a0ab171e8
-    environments/unify/failed_to_create_connector: 9b6c42dc8f7cf10c23c0f480bb76a053
-    environments/unify/failed_to_delete_connector: 3980284a3b92a56a15d73ca5a9fe145b
-    environments/unify/failed_to_load_data: b9e0e9d299cb74625db5bc54765614ab
-    environments/unify/failed_to_update_connector: 3ea1730a7df00707db7538191c37eb3d
     environments/unify/feedback_date: 4ada116cc8375dd67483108eeb0ddfe8
     environments/unify/field: 87d7b2d449e2231e5d75ff64015a8cf3
     environments/unify/fields: 3b02117e12872bf0cd2b6056728216e8
@@ -2028,7 +2021,6 @@ checksums:
     environments/unify/status_completed: 0e4bbce9985f25eb673d9a054c8d5334
     environments/unify/status_draft: e8a92958ad300aacfe46c2bf6644927e
     environments/unify/status_paused: edb1f7b7219e1c9b7aa67159090d6991
-    environments/unify/suggest_mapping: 85b08aa84423b425bb7a353f1526d637
     environments/unify/survey_has_no_elements: 0379106932976c0a61119a20992d4b18
     environments/unify/test_connection: 6bddfcf3e2a1e806057514093a3fe071
     environments/unify/unify_feedback: cd68c8ce0445767e7dcfb4de789903d5

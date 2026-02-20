@@ -1,7 +1,7 @@
 import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { SourcesSection } from "./components/sources-page-client";
+import { ConnectorsSection } from "./components/connectors-page-client";
 import { transformToUnifySurvey } from "./lib";
 
 export default async function UnifySourcesPage(props: { params: Promise<{ environmentId: string }> }) {
@@ -17,7 +17,7 @@ export default async function UnifySourcesPage(props: { params: Promise<{ enviro
   const unifySurveys = surveys.map(transformToUnifySurvey);
 
   return (
-    <SourcesSection
+    <ConnectorsSection
       environmentId={params.environmentId}
       initialConnectors={connectors}
       initialSurveys={unifySurveys}

@@ -1,28 +1,29 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { TConnectorType } from "@formbricks/types/connector";
 import { Badge } from "@/modules/ui/components/badge";
-import { TSourceType, getSourceOptions } from "../types";
+import { getConnectorOptions } from "../utils";
 
-interface SourceTypeSelectorProps {
-  selectedType: TSourceType | null;
-  onSelectType: (type: TSourceType) => void;
+interface ConnectorTypeSelectorProps {
+  selectedType: TConnectorType | null;
+  onSelectType: (type: TConnectorType) => void;
 }
 
-export function SourceTypeSelector({ selectedType, onSelectType }: SourceTypeSelectorProps) {
+export function ConnectorTypeSelector({ selectedType, onSelectType }: ConnectorTypeSelectorProps) {
   const { t } = useTranslation();
-  const sourceOptions = getSourceOptions(t);
+  const connectorOptions = getConnectorOptions(t);
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-slate-600">{t("environments.unify.select_source_type_prompt")}</p>
       <div className="space-y-2">
-        {sourceOptions.map((option) => (
+        {connectorOptions.map((option) => (
           <button
             key={option.id}
             type="button"
             disabled={option.disabled}
-            onClick={() => onSelectType(option.id)}
+            onClick={() => onSelectType(option.id as TConnectorType)}
             className={`flex w-full items-center justify-between rounded-lg border p-4 text-left transition-colors ${
               selectedType === option.id
                 ? "border-brand-dark bg-slate-50"

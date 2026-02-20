@@ -24,7 +24,7 @@ import { Switch } from "@/modules/ui/components/switch";
 import { TFieldMapping, TSourceField } from "../types";
 import { MappingUI } from "./mapping-ui";
 
-interface CsvSourceUIProps {
+interface CsvConnectorUIProps {
   sourceFields: TSourceField[];
   mappings: TFieldMapping[];
   onMappingsChange: (mappings: TFieldMapping[]) => void;
@@ -32,13 +32,13 @@ interface CsvSourceUIProps {
   onLoadSampleCSV: () => void;
 }
 
-export function CsvSourceUI({
+export function CsvConnectorUI({
   sourceFields,
   mappings,
   onMappingsChange,
   onSourceFieldsChange,
   onLoadSampleCSV,
-}: CsvSourceUIProps) {
+}: CsvConnectorUIProps) {
   const { t } = useTranslation();
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<string[][]>([]);
@@ -46,7 +46,6 @@ export function CsvSourceUI({
   const [s3AutoSync, setS3AutoSync] = useState(false);
   const [s3Copied, setS3Copied] = useState(false);
 
-  // Mock S3 bucket details
   const s3BucketName = "formbricks-feedback-imports";
   const s3Path = `s3://${s3BucketName}/feedback/incoming/`;
 
@@ -73,11 +72,10 @@ export function CsvSourceUI({
     const reader = new FileReader();
     reader.onload = (e) => {
       const csv = e.target?.result as string;
-      const lines = csv.split("\n").slice(0, 6); // Preview first 5 rows + header
+      const lines = csv.split("\n").slice(0, 6);
       const preview = lines.map((line) => line.split(",").map((cell) => cell.trim()));
       setCsvPreview(preview);
 
-      // Extract columns and create source fields
       if (preview.length > 0) {
         const headers = preview[0];
         const fields: TSourceField[] = headers.map((header) => ({
@@ -112,11 +110,9 @@ export function CsvSourceUI({
     setShowMapping(true);
   };
 
-  // If mapping is shown, show the mapping UI
   if (showMapping && sourceFields.length > 0) {
     return (
       <div className="space-y-4">
-        {/* File info bar */}
         {csvFile && (
           <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-2">
             <div className="flex items-center gap-2">
@@ -138,7 +134,6 @@ export function CsvSourceUI({
           </div>
         )}
 
-        {/* CSV Preview Table */}
         {csvPreview.length > 0 && (
           <div className="overflow-hidden rounded-lg border border-slate-200">
             <div className="overflow-x-auto">
@@ -173,21 +168,18 @@ export function CsvSourceUI({
           </div>
         )}
 
-        {/* Mapping UI */}
         <MappingUI
           sourceFields={sourceFields}
           mappings={mappings}
           onMappingsChange={onMappingsChange}
-          sourceType="csv"
+          connectorType="csv"
         />
       </div>
     );
   }
 
-  // Upload and S3 setup UI
   return (
     <div className="space-y-6">
-      {/* Manual Upload Section */}
       <div className="space-y-3">
         <h4 className="text-sm font-medium text-slate-700">{t("environments.unify.upload_csv_file")}</h4>
         <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6">
@@ -218,14 +210,12 @@ export function CsvSourceUI({
         </div>
       </div>
 
-      {/* Divider */}
       <div className="flex items-center gap-4">
         <div className="h-px flex-1 bg-slate-200" />
         <span className="text-xs font-medium uppercase text-slate-400">{t("environments.unify.or")}</span>
         <div className="h-px flex-1 bg-slate-200" />
       </div>
 
-      {/* S3 Integration Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <CloudIcon className="h-5 w-5 text-slate-500" />
@@ -238,7 +228,6 @@ export function CsvSourceUI({
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <p className="mb-4 text-sm text-slate-600">{t("environments.unify.s3_bucket_description")}</p>
 
-          {/* S3 Path Display */}
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label className="text-xs">{t("environments.unify.drop_zone_path")}</Label>
@@ -253,7 +242,6 @@ export function CsvSourceUI({
               </div>
             </div>
 
-            {/* S3 Settings */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">{t("environments.unify.aws_region")}</Label>
@@ -290,7 +278,6 @@ export function CsvSourceUI({
               </div>
             </div>
 
-            {/* Auto-sync toggle */}
             <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3">
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-slate-900">
@@ -303,7 +290,6 @@ export function CsvSourceUI({
               <Switch checked={s3AutoSync} onCheckedChange={setS3AutoSync} />
             </div>
 
-            {/* IAM Instructions */}
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
               <div className="flex items-start gap-2">
                 <SettingsIcon className="mt-0.5 h-4 w-4 text-amber-600" />
@@ -321,7 +307,6 @@ export function CsvSourceUI({
               </div>
             </div>
 
-            {/* Test Connection */}
             <div className="flex justify-end">
               <Button variant="outline" size="sm" className="gap-2">
                 <RefreshCwIcon className="h-4 w-4" />
