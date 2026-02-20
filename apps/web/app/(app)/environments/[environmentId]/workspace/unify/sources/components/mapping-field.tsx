@@ -151,7 +151,7 @@ export function DroppableTargetField({
           {mapping?.staticValue && !mappedSourceField && (
             <div className="flex items-center gap-1">
               <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700">
-                = "{mapping.staticValue}"
+                = &ldquo;{mapping.staticValue}&rdquo;
               </span>
               <button
                 type="button"
