@@ -151,7 +151,7 @@ export const getErrorResponseFromStorageError = (
 
 /**
  * Resolves a storage URL to an absolute URL.
- * - If already absolute, returns as-is (backward compatibility for old data)
+ * - If already absolute, returns as-is
  * - If relative (/storage/...), prepends the appropriate base URL
  * @param url The storage URL (relative or absolute)
  * @param accessType The access type to determine which base URL to use (defaults to "public")
@@ -163,7 +163,7 @@ export const resolveStorageUrl = (
 ): string => {
   if (!url) return "";
 
-  // Already absolute URL - return as-is (backward compatibility for old data)
+  // Already absolute URL - return as-is
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
@@ -175,4 +175,42 @@ export const resolveStorageUrl = (
   }
 
   return url;
+};
+
+// Matches the actual storage URL format: /storage/{id}/{public|private}/{filename...}
+const STORAGE_URL_PATTERN = /^\/storage\/[^/]+\/(public|private)\/.+/;
+
+const isStorageUrl = (value: string): boolean => STORAGE_URL_PATTERN.test(value);
+
+export const resolveStorageUrlAuto = (url: string): string => {
+  if (!isStorageUrl(url)) return url;
+  const accessType = url.includes("/private/") ? "private" : "public";
+  return resolveStorageUrl(url, accessType);
+};
+
+/**
+ * Recursively walks an object/array and resolves all relative storage URLs
+ * Preserves the original structure; skips Date instances and non-object primitives.
+ */
+export const resolveStorageUrlsInObject = <T>(obj: T): T => {
+  if (obj === null || obj === undefined) return obj;
+
+  if (typeof obj === "string") {
+    return resolveStorageUrlAuto(obj) as T;
+  }
+
+  if (typeof obj !== "object") return obj;
+
+  if (obj instanceof Date) return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => resolveStorageUrlsInObject(item)) as T;
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+    result[key] = resolveStorageUrlsInObject(value);
+  }
+
+  return result as T;
 };

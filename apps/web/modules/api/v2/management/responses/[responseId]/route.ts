@@ -15,7 +15,7 @@ import {
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
@@ -51,7 +51,10 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         return handleApiError(request, response.error as ApiErrorResponseV2);
       }
 
-      return responses.successResponse(response);
+      return responses.successResponse({
+        ...response,
+        data: { ...response.data, data: resolveStorageUrlsInObject(response.data.data) },
+      });
     },
   });
 
@@ -243,7 +246,10 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         auditLog.newObject = response.data;
       }
 
-      return responses.successResponse(response);
+      return responses.successResponse({
+        ...response,
+        data: { ...response.data, data: resolveStorageUrlsInObject(response.data.data) },
+      });
     },
     action: "updated",
     targetType: "response",
