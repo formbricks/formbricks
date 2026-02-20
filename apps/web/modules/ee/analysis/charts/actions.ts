@@ -42,14 +42,14 @@ export const createChartAction = authenticatedActionClient.schema(ZCreateChartAc
         "readWrite"
       );
 
-      const chart = await createChart(
+      const chart = await createChart({
         projectId,
-        parsedInput.name,
-        parsedInput.type,
-        parsedInput.query,
-        parsedInput.config || {},
-        ctx.user.id
-      );
+        name: parsedInput.name,
+        type: parsedInput.type,
+        query: parsedInput.query,
+        config: parsedInput.config,
+        createdBy: ctx.user.id,
+      });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;

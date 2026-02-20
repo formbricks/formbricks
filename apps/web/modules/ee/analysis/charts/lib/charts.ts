@@ -6,7 +6,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { TChartType } from "../../types/analysis";
 
-const selectChart = {
+export const selectChart = {
   id: true,
   name: true,
   type: true,
@@ -16,24 +16,24 @@ const selectChart = {
   updatedAt: true,
 } as const;
 
-export const createChart = async (
-  projectId: string,
-  name: string,
-  type: TChartType,
-  query: TChartQuery,
-  config: TChartConfig,
-  createdBy: string
-) => {
-  validateInputs([projectId, ZId], [createdBy, ZId]);
+export const createChart = async (data: {
+  projectId: string;
+  name: string;
+  type: TChartType;
+  query: TChartQuery;
+  config: TChartConfig;
+  createdBy: string;
+}) => {
+  validateInputs([data.projectId, ZId], [data.createdBy, ZId]);
 
   return prisma.chart.create({
     data: {
-      name,
-      type,
-      projectId,
-      query,
-      config: config || {},
-      createdBy,
+      name: data.name,
+      type: data.type,
+      projectId: data.projectId,
+      query: data.query,
+      config: data.config,
+      createdBy: data.createdBy,
     },
   });
 };
@@ -62,10 +62,10 @@ export const updateChart = async (
     const updatedChart = await tx.chart.update({
       where: { id: chartId },
       data: {
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.type !== undefined && { type: data.type }),
-        ...(data.query !== undefined && { query: data.query }),
-        ...(data.config !== undefined && { config: data.config }),
+        name: data.name,
+        type: data.type,
+        query: data.query,
+        config: data.config,
       },
     });
 
@@ -74,7 +74,7 @@ export const updateChart = async (
 };
 
 const getUniqueCopyName = async (baseName: string, projectId: string): Promise<string> => {
-  const stripped = baseName.replace(/\s+\(copy(?:\s+\d+)?\)$/, "");
+  const stripped = baseName.replace(/ \(copy(?: \d+)?\)$/, "");
 
   const existing = await prisma.chart.findMany({
     where: {
@@ -111,15 +111,13 @@ export const duplicateChart = async (chartId: string, projectId: string, created
 
   const uniqueName = await getUniqueCopyName(sourceChart.name, projectId);
 
-  return prisma.chart.create({
-    data: {
-      name: uniqueName,
-      type: sourceChart.type,
-      projectId,
-      query: sourceChart.query as object,
-      config: (sourceChart.config as object) || {},
-      createdBy,
-    },
+  return createChart({
+    projectId,
+    name: uniqueName,
+    type: sourceChart.type as TChartType,
+    query: sourceChart.query as TChartQuery,
+    config: (sourceChart.config as TChartConfig) ?? {},
+    createdBy,
   });
 };
 

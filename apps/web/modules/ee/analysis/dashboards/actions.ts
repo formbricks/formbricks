@@ -1,14 +1,20 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { ZWidgetLayout } from "@formbricks/types/dashboard";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { checkProjectAccess } from "@/modules/ee/analysis/lib/access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import {
+  addChartToDashboard,
+  createDashboard,
+  deleteDashboard,
+  getDashboard,
+  getDashboards,
+  updateDashboard,
+} from "./lib/dashboards";
 
 const ZCreateDashboardAction = z.object({
   environmentId: ZId,
@@ -33,13 +39,11 @@ export const createDashboardAction = authenticatedActionClient.schema(ZCreateDas
         "readWrite"
       );
 
-      const dashboard = await prisma.dashboard.create({
-        data: {
-          name: parsedInput.name,
-          description: parsedInput.description,
-          projectId,
-          createdBy: ctx.user.id,
-        },
+      const dashboard = await createDashboard({
+        projectId,
+        name: parsedInput.name,
+        description: parsedInput.description,
+        createdBy: ctx.user.id,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -75,20 +79,9 @@ export const updateDashboardAction = authenticatedActionClient.schema(ZUpdateDas
         "readWrite"
       );
 
-      const dashboard = await prisma.dashboard.findFirst({
-        where: { id: parsedInput.dashboardId, projectId },
-      });
-
-      if (!dashboard) {
-        throw new ResourceNotFoundError("Dashboard", parsedInput.dashboardId);
-      }
-
-      const updatedDashboard = await prisma.dashboard.update({
-        where: { id: parsedInput.dashboardId },
-        data: {
-          ...(parsedInput.name !== undefined && { name: parsedInput.name }),
-          ...(parsedInput.description !== undefined && { description: parsedInput.description }),
-        },
+      const { dashboard, updatedDashboard } = await updateDashboard(parsedInput.dashboardId, projectId, {
+        name: parsedInput.name,
+        description: parsedInput.description,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -123,17 +116,7 @@ export const deleteDashboardAction = authenticatedActionClient.schema(ZDeleteDas
         "readWrite"
       );
 
-      const dashboard = await prisma.dashboard.findFirst({
-        where: { id: parsedInput.dashboardId, projectId },
-      });
-
-      if (!dashboard) {
-        throw new ResourceNotFoundError("Dashboard", parsedInput.dashboardId);
-      }
-
-      await prisma.dashboard.delete({
-        where: { id: parsedInput.dashboardId },
-      });
+      const dashboard = await deleteDashboard(parsedInput.dashboardId, projectId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
@@ -160,18 +143,7 @@ export const getDashboardsAction = authenticatedActionClient
     }) => {
       const { projectId } = await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
 
-      return prisma.dashboard.findMany({
-        where: { projectId },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          createdAt: true,
-          updatedAt: true,
-          _count: { select: { widgets: true } },
-        },
-      });
+      return getDashboards(projectId);
     }
   );
 
@@ -192,31 +164,7 @@ export const getDashboardAction = authenticatedActionClient
     }) => {
       const { projectId } = await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
 
-      const dashboard = await prisma.dashboard.findFirst({
-        where: { id: parsedInput.dashboardId, projectId },
-        include: {
-          widgets: {
-            orderBy: { order: "asc" },
-            include: {
-              chart: {
-                select: {
-                  id: true,
-                  name: true,
-                  type: true,
-                  query: true,
-                  config: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      if (!dashboard) {
-        throw new ResourceNotFoundError("Dashboard", parsedInput.dashboardId);
-      }
-
-      return dashboard;
+      return getDashboard(parsedInput.dashboardId, projectId);
     }
   );
 
@@ -245,37 +193,13 @@ export const addChartToDashboardAction = authenticatedActionClient.schema(ZAddCh
         "readWrite"
       );
 
-      const [chart, dashboard] = await Promise.all([
-        prisma.chart.findFirst({ where: { id: parsedInput.chartId, projectId } }),
-        prisma.dashboard.findFirst({ where: { id: parsedInput.dashboardId, projectId } }),
-      ]);
-
-      if (!chart) {
-        throw new ResourceNotFoundError("Chart", parsedInput.chartId);
-      }
-      if (!dashboard) {
-        throw new ResourceNotFoundError("Dashboard", parsedInput.dashboardId);
-      }
-
-      const widget = await prisma.$transaction(
-        async (tx) => {
-          const maxOrder = await tx.dashboardWidget.aggregate({
-            where: { dashboardId: parsedInput.dashboardId },
-            _max: { order: true },
-          });
-
-          return tx.dashboardWidget.create({
-            data: {
-              dashboardId: parsedInput.dashboardId,
-              chartId: parsedInput.chartId,
-              title: parsedInput.title,
-              layout: parsedInput.layout,
-              order: (maxOrder._max.order ?? -1) + 1,
-            },
-          });
-        },
-        { isolationLevel: "Serializable" }
-      );
+      const widget = await addChartToDashboard({
+        dashboardId: parsedInput.dashboardId,
+        chartId: parsedInput.chartId,
+        projectId,
+        title: parsedInput.title,
+        layout: parsedInput.layout,
+      });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
