@@ -11,7 +11,7 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { ResponseSection } from "./components/response-section";
+import { ActivitySection } from "./components/activity-section";
 
 export const SingleContactPage = async (props: {
   params: Promise<{ environmentId: string; contactId: string }>;
@@ -64,7 +64,7 @@ export const SingleContactPage = async (props: {
       <section className="pb-24 pt-6">
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
-          <ResponseSection
+          <ActivitySection
             environment={environment}
             contactId={params.contactId}
             environmentTags={environmentTags}

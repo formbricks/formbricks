@@ -9,6 +9,7 @@ import { getSurveySummaryAction } from "@/app/(app)/environments/[environmentId]
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import ScrollToTop from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
+import { SummaryImpressions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryImpressions";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -57,7 +58,7 @@ export const SummaryPage = ({
     initialSurveySummary || defaultSurveySummary
   );
 
-  const [tab, setTab] = useState<"dropOffs" | "quotas" | undefined>(undefined);
+  const [tab, setTab] = useState<"dropOffs" | "quotas" | "impressions" | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
@@ -121,6 +122,9 @@ export const SummaryPage = ({
         setTab={setTab}
         isQuotasAllowed={isQuotasAllowed}
       />
+      {tab === "impressions" && (
+        <SummaryImpressions surveyId={surveyId} environmentId={environment.id} locale={locale} />
+      )}
       {tab === "dropOffs" && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
       {isQuotasAllowed && tab === "quotas" && <QuotasSummary quotas={surveySummary.quotas} />}
       <div className="flex gap-1.5">

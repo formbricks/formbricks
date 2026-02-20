@@ -10,8 +10,8 @@ interface SummaryMetadataProps {
   surveySummary: TSurveySummary["meta"];
   quotasCount: number;
   isLoading: boolean;
-  tab: "dropOffs" | "quotas" | undefined;
-  setTab: React.Dispatch<React.SetStateAction<"dropOffs" | "quotas" | undefined>>;
+  tab: "dropOffs" | "quotas" | "impressions" | undefined;
+  setTab: React.Dispatch<React.SetStateAction<"dropOffs" | "quotas" | "impressions" | undefined>>;
   isQuotasAllowed: boolean;
 }
 
@@ -53,7 +53,7 @@ export const SummaryMetadata = ({
   const { t } = useTranslation();
   const dropoffCountValue = dropOffCount === 0 ? <span>-</span> : dropOffCount;
 
-  const handleTabChange = (val: "dropOffs" | "quotas") => {
+  const handleTabChange = (val: "dropOffs" | "quotas" | "impressions") => {
     const change = tab === val ? undefined : val;
     setTab(change);
   };
@@ -65,12 +65,16 @@ export const SummaryMetadata = ({
           `grid gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-x-2 lg:grid-cols-3 2xl:grid-cols-5`,
           isQuotasAllowed && quotasCount > 0 && "2xl:grid-cols-6"
         )}>
-        <StatCard
+        <InteractiveCard
+          key="impressions"
+          tab="impressions"
           label={t("environments.surveys.summary.impressions")}
           percentage={null}
           value={displayCount === 0 ? <span>-</span> : displayCount}
           tooltipText={t("environments.surveys.summary.impressions_tooltip")}
           isLoading={isLoading}
+          onClick={() => handleTabChange("impressions")}
+          isActive={tab === "impressions"}
         />
         <StatCard
           label={t("environments.surveys.summary.starts")}
