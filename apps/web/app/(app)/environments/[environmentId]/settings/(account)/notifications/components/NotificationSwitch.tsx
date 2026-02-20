@@ -30,7 +30,7 @@ export const NotificationSwitch = ({
   const isChecked =
     notificationType === "unsubscribedOrganizationIds"
       ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProjectOrOrganizationId)
-      : notificationSettings[notificationType][surveyOrProjectOrOrganizationId] === true;
+      : notificationSettings[notificationType]?.[surveyOrProjectOrOrganizationId] === true;
 
   const handleSwitchChange = async () => {
     setIsLoading(true);
@@ -49,8 +49,11 @@ export const NotificationSwitch = ({
         ];
       }
     } else {
-      updatedNotificationSettings[notificationType][surveyOrProjectOrOrganizationId] =
-        !updatedNotificationSettings[notificationType][surveyOrProjectOrOrganizationId];
+      updatedNotificationSettings[notificationType] = {
+        ...updatedNotificationSettings[notificationType],
+        [surveyOrProjectOrOrganizationId]:
+          !updatedNotificationSettings[notificationType]?.[surveyOrProjectOrOrganizationId],
+      };
     }
 
     const updatedNotificationSettingsActionResponse = await updateNotificationSettingsAction({
@@ -78,7 +81,7 @@ export const NotificationSwitch = ({
     ) {
       switch (notificationType) {
         case "alert":
-          if (notificationSettings[notificationType][surveyOrProjectOrOrganizationId] === true) {
+          if (notificationSettings[notificationType]?.[surveyOrProjectOrOrganizationId] === true) {
             handleSwitchChange();
             toast.success(
               t(
