@@ -82,7 +82,7 @@ export const ProjectBreadcrumb = ({
       getProjectsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
         if (result?.data) {
           // Sort projects by name
-          const sorted = result.data.toSorted((a, b) => a.name.localeCompare(b.name));
+          const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
           setProjects(sorted);
         } else {
           // Handle server errors or validation errors
