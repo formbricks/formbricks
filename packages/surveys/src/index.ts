@@ -6,6 +6,52 @@ import { FILE_PICK_EVENT } from "@/lib/constants";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import { addCustomThemeToDom, addStylesToDom, setStyleNonce } from "@/lib/styles";
 
+// Polyfill for webkit messageHandlers to prevent errors in browsers that don't fully support it
+// (e.g., Instagram's iOS in-app browser). This prevents TypeError when accessing unregistered handlers.
+if (typeof window !== "undefined") {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- WebKit types are not standard
+  const win = window as any;
+
+  // Create a Proxy that safely handles access to potentially undefined message handlers
+  const createMessageHandlersProxy = (originalHandlers: any = {}) => {
+    return new Proxy(originalHandlers, {
+      get(target, prop) {
+        const handler = target[prop as keyof typeof target];
+
+        // If the handler doesn't exist, return a safe mock object with a no-op postMessage
+        if (!handler) {
+          return {
+            postMessage: () => {
+              // Silently ignore - the message handler is not registered in this environment
+              console.debug(`WebKit message handler "${String(prop)}" is not available in this environment`);
+            },
+          };
+        }
+
+        return handler;
+      },
+    });
+  };
+
+  // Handle three scenarios:
+  // 1. window.webkit doesn't exist at all (Instagram iOS browser)
+  // 2. window.webkit exists but messageHandlers doesn't
+  // 3. Both exist but handlers might be missing
+  if (!win.webkit) {
+    // Scenario 1: Create the entire webkit object with proxied messageHandlers
+    win.webkit = {
+      messageHandlers: createMessageHandlersProxy(),
+    };
+  } else if (!win.webkit.messageHandlers) {
+    // Scenario 2: webkit exists but messageHandlers doesn't
+    win.webkit.messageHandlers = createMessageHandlersProxy();
+  } else {
+    // Scenario 3: Both exist, wrap existing messageHandlers with proxy
+    const originalMessageHandlers = win.webkit.messageHandlers;
+    win.webkit.messageHandlers = createMessageHandlersProxy(originalMessageHandlers);
+  }
+}
+
 export const renderSurveyInline = (props: SurveyContainerProps) => {
   const inlineProps: SurveyContainerProps = {
     ...props,
