@@ -81,7 +81,7 @@ export const OrganizationBreadcrumb = ({
       getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
         if (result?.data) {
           // Sort organizations by name
-          const sorted = result.data.toSorted((a, b) => a.name.localeCompare(b.name));
+          const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
           setOrganizations(sorted);
         } else {
           // Handle server errors or validation errors
