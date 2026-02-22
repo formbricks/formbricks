@@ -15,7 +15,7 @@ export const generateContactTableColumns = (
   const userColumn: ColumnDef<TContactTableData> = {
     id: "contactsTableUser",
     accessorKey: "contactsTableUser",
-    header: "ID",
+    header: t("common.id"),
     cell: ({ row }) => {
       const contactId = row.original.id;
       return <HighlightedText value={contactId} searchValue={searchValue} />;
@@ -25,7 +25,7 @@ export const generateContactTableColumns = (
   const userIdColumn: ColumnDef<TContactTableData> = {
     id: "userId",
     accessorKey: "userId",
-    header: "User ID",
+    header: t("common.user_id"),
     cell: ({ row }) => {
       const userId = row.original.userId;
       return <IdBadge id={userId} />;
@@ -35,7 +35,7 @@ export const generateContactTableColumns = (
   const emailColumn: ColumnDef<TContactTableData> = {
     id: "email",
     accessorKey: "email",
-    header: "Email",
+    header: t("common.email"),
     cell: ({ row }) => {
       const email = row.original.email;
       if (email) {
@@ -47,7 +47,7 @@ export const generateContactTableColumns = (
   const firstNameColumn: ColumnDef<TContactTableData> = {
     id: "firstName",
     accessorKey: "firstName",
-    header: "First Name",
+    header: t("common.first_name"),
     cell: ({ row }) => {
       const firstName = row.original.firstName;
       return <HighlightedText value={firstName} searchValue={searchValue} />;
@@ -57,7 +57,7 @@ export const generateContactTableColumns = (
   const lastNameColumn: ColumnDef<TContactTableData> = {
     id: "lastName",
     accessorKey: "lastName",
-    header: "Last Name",
+    header: t("common.last_name"),
     cell: ({ row }) => {
       const lastName = row.original.lastName;
       return <HighlightedText value={lastName} searchValue={searchValue} />;

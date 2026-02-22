@@ -32,7 +32,7 @@ export const SegmentsPage = async ({
 
   return (
     <ContactsPageLayout
-      pageTitle="Contacts"
+      pageTitle={t("common.contacts")}
       activeId="segments"
       environmentId={params.environmentId}
       isContactsEnabled={isContactsEnabled}

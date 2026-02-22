@@ -1,3 +1,4 @@
+import { getTranslate } from "@/lingodotdev/server";
 import { getLocale } from "@/lingodotdev/language";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
@@ -23,7 +24,7 @@ export const AttributesPage = async ({
 
   return (
     <ContactsPageLayout
-      pageTitle="Contacts"
+      pageTitle={t("common.contacts")}
       activeId="attributes"
       environmentId={params.environmentId}
       isContactsEnabled={isContactsEnabled}
