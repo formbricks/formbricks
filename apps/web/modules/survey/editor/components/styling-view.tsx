@@ -141,7 +141,8 @@ export const StylingView = ({
     });
 
     return () => subscription.unsubscribe();
-  }, [form, setLocalSurvey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const defaultProjectStyling = useMemo(() => {
     const { styling: projectStyling } = project;
