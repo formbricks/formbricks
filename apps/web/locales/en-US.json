@@ -224,6 +224,7 @@
     "failed_to_copy_to_clipboard": "Failed to copy to clipboard",
     "failed_to_load_organizations": "Failed to load organizations",
     "failed_to_load_workspaces": "Failed to load workspaces",
+    "filter": "Filter",
     "finish": "Finish",
     "follow_these": "Follow these",
     "formbricks_version": "Formbricks Version",
