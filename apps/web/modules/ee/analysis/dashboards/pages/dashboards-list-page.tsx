@@ -1,25 +1,26 @@
 import { Delay } from "@suspensive/react";
-import { Suspense } from "react";
+import { Suspense, use } from "react";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { TDashboardWithCount } from "../../types/analysis";
 import { CreateDashboardButton } from "../components/create-dashboard-button";
 import { DashboardsListSkeleton } from "../components/dashboards-list-skeleton";
 import { DashboardsTable } from "../components/dashboards-table";
 import { getDashboards } from "../lib/dashboards";
 
 interface DashboardsListContentProps {
-  projectId: string;
+  dashboardsPromise: Promise<TDashboardWithCount[]>;
   environmentId: string;
   isReadOnly: boolean;
 }
 
-const DashboardsListContent = async ({
-  projectId,
+const DashboardsListContent = ({
+  dashboardsPromise,
   environmentId,
   isReadOnly,
 }: Readonly<DashboardsListContentProps>) => {
-  const dashboards = await getDashboards(projectId);
+  const dashboards = use(dashboardsPromise);
 
   return <DashboardsTable dashboards={dashboards} environmentId={environmentId} isReadOnly={isReadOnly} />;
 };
@@ -28,6 +29,8 @@ export const DashboardsListPage = async (props: { params: Promise<{ environmentI
   const { environmentId } = await props.params;
   const t = await getTranslate();
   const { project, isReadOnly } = await getEnvironmentAuth(environmentId);
+
+  const dashboardsPromise = getDashboards(project.id);
 
   return (
     <AnalysisPageLayout
@@ -48,7 +51,11 @@ export const DashboardsListPage = async (props: { params: Promise<{ environmentI
             />
           </Delay>
         }>
-        <DashboardsListContent projectId={project.id} environmentId={environmentId} isReadOnly={isReadOnly} />
+        <DashboardsListContent
+          dashboardsPromise={dashboardsPromise}
+          environmentId={environmentId}
+          isReadOnly={isReadOnly}
+        />
       </Suspense>
     </AnalysisPageLayout>
   );
