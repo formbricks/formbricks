@@ -349,7 +349,7 @@ postgresql:
   fullnameOverride: "formbricks-postgresql"
   image:
     repository: pgvector/pgvector
-    tag: 0.8.0-pg17
+    tag: pg18
   auth:
     username: formbricks
     database: formbricks
