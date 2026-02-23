@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { generateWebhookSecret } from "@/lib/crypto";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -143,14 +144,32 @@ const ZTestEndpointAction = z.object({
 
 export const testEndpointAction = authenticatedActionClient
   .schema(ZTestEndpointAction)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ ctx, parsedInput }) => {
     let secret: string | undefined;
 
     if (parsedInput.webhookId) {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: await getOrganizationIdFromWebhookId(parsedInput.webhookId),
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "read",
+            projectId: await getProjectIdFromWebhookId(parsedInput.webhookId),
+          },
+        ],
+      });
+
       const webhookResult = await getWebhook(parsedInput.webhookId);
-      if (webhookResult.ok) {
-        secret = webhookResult.data.secret ?? undefined;
+      if (!webhookResult.ok) {
+        throw new ResourceNotFoundError("Webhook", parsedInput.webhookId);
       }
+
+      secret = webhookResult.data.secret ?? undefined;
     } else {
       // New webhook, use the provided secret or generate a new one
       secret = parsedInput.secret ?? generateWebhookSecret();
