@@ -183,10 +183,11 @@ export const ZFeedbackCSVData = z
     message: `Maximum ${MAX_CSV_VALUES.RECORDS.toLocaleString()} records allowed.`,
   })
   .superRefine((rows, ctx) => {
-    const firstRowKeys = Object.keys(rows[0]).sort().join(",");
+    const localeSort = (a: string, b: string) => a.localeCompare(b);
+    const firstRowKeys = Object.keys(rows[0]).sort(localeSort).join(",");
 
     for (let i = 1; i < rows.length; i++) {
-      const rowKeys = Object.keys(rows[i]).sort().join(",");
+      const rowKeys = Object.keys(rows[i]).sort(localeSort).join(",");
       if (rowKeys !== firstRowKeys) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
