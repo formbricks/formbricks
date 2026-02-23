@@ -15,7 +15,7 @@ import {
   ZAddWidgetInput,
   ZDashboardCreateInput,
   ZDashboardUpdateInput,
-} from "../../types/analysis";
+} from "@/modules/ee/analysis/types/analysis";
 
 const selectDashboard = {
   id: true,

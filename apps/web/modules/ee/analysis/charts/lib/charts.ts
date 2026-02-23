@@ -14,7 +14,7 @@ import {
   ZChartCreateInput,
   ZChartType,
   ZChartUpdateInput,
-} from "../../types/analysis";
+} from "@/modules/ee/analysis/types/analysis";
 
 export const selectChart = {
   id: true,

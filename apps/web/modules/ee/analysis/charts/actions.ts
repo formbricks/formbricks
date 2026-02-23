@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZChartConfig, ZChartQuery } from "@formbricks/types/dashboard";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
@@ -15,14 +14,11 @@ import {
 } from "@/modules/ee/analysis/charts/lib/charts";
 import { checkProjectAccess } from "@/modules/ee/analysis/lib/access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { ZChartType, ZChartUpdateInput } from "../types/analysis";
+import { ZChartCreateInput, ZChartUpdateInput } from "../types/analysis";
 
 const ZCreateChartAction = z.object({
   environmentId: ZId,
-  name: z.string().min(1),
-  type: ZChartType,
-  query: ZChartQuery,
-  config: ZChartConfig.optional().default({}),
+  chartInput: ZChartCreateInput,
 });
 
 export const createChartAction = authenticatedActionClient.schema(ZCreateChartAction).action(
@@ -42,14 +38,7 @@ export const createChartAction = authenticatedActionClient.schema(ZCreateChartAc
         "readWrite"
       );
 
-      const chart = await createChart({
-        projectId,
-        name: parsedInput.name,
-        type: parsedInput.type,
-        query: parsedInput.query,
-        config: parsedInput.config,
-        createdBy: ctx.user.id,
-      });
+      const chart = await createChart(parsedInput.chartInput);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
@@ -60,12 +49,11 @@ export const createChartAction = authenticatedActionClient.schema(ZCreateChartAc
   )
 );
 
-const ZUpdateChartAction = z
-  .object({
-    environmentId: ZId,
-    chartId: ZId,
-  })
-  .merge(ZChartUpdateInput);
+const ZUpdateChartAction = z.object({
+  environmentId: ZId,
+  chartId: ZId,
+  chartUpdateInput: ZChartUpdateInput,
+});
 
 export const updateChartAction = authenticatedActionClient.schema(ZUpdateChartAction).action(
   withAuditLogging(
@@ -84,12 +72,11 @@ export const updateChartAction = authenticatedActionClient.schema(ZUpdateChartAc
         "readWrite"
       );
 
-      const { chart, updatedChart } = await updateChart(parsedInput.chartId, projectId, {
-        name: parsedInput.name,
-        type: parsedInput.type,
-        query: parsedInput.query,
-        config: parsedInput.config,
-      });
+      const { chart, updatedChart } = await updateChart(
+        parsedInput.chartId,
+        projectId,
+        parsedInput.chartUpdateInput
+      );
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
