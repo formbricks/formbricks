@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import {
   TConnectorWithMappings,
@@ -30,6 +31,7 @@ import {
 
 const ZDeleteConnectorAction = z.object({
   connectorId: ZId,
+  environmentId: ZId,
 });
 
 export const deleteConnectorAction = authenticatedActionClient
@@ -59,7 +61,7 @@ export const deleteConnectorAction = authenticatedActionClient
         ],
       });
 
-      return deleteConnector(parsedInput.connectorId);
+      return deleteConnector(parsedInput.connectorId, parsedInput.environmentId);
     }
   );
 
@@ -75,17 +77,22 @@ const resolveFormbricksMappingsInput = async (
   const elements = getElementsFromBlocks(survey.blocks);
   const elementMap = new Map(elements.map((el) => [el.id, el]));
 
-  return {
-    type: "formbricks",
-    mappings: elementIds.map((elementId) => {
-      const element = elementMap.get(elementId);
+  const mappings = elementIds
+    .filter((elementId) => {
+      if (elementMap.has(elementId)) return true;
+      logger.warn({ surveyId, elementId }, "Skipping unknown elementId when building connector mappings");
+      return false;
+    })
+    .map((elementId) => {
+      const element = elementMap.get(elementId)!;
       return {
         surveyId,
         elementId,
-        hubFieldType: getHubFieldTypeFromElementType(element?.type ?? "openText"),
+        hubFieldType: getHubFieldTypeFromElementType(element.type),
       };
-    }),
-  };
+    });
+
+  return { type: "formbricks", mappings };
 };
 
 const ZCreateConnectorWithMappingsAction = z.object({
@@ -129,13 +136,15 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
       let mappingsInput: TMappingsInput | undefined;
 
-      if (parsedInput.formbricksMappings) {
+      const { formbricksMappings, fieldMappings } = parsedInput;
+
+      if (formbricksMappings) {
         mappingsInput = await resolveFormbricksMappingsInput(
-          parsedInput.formbricksMappings.surveyId,
-          parsedInput.formbricksMappings.elementIds
+          formbricksMappings.surveyId,
+          formbricksMappings.elementIds
         );
-      } else if (parsedInput.fieldMappings && parsedInput.fieldMappings.length > 0) {
-        mappingsInput = { type: "field", mappings: parsedInput.fieldMappings };
+      } else if (fieldMappings?.length) {
+        mappingsInput = { type: "field", mappings: fieldMappings };
       }
 
       return createConnectorWithMappings(
@@ -148,6 +157,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
 const ZUpdateConnectorWithMappingsAction = z.object({
   connectorId: ZId,
+  environmentId: ZId,
   connectorInput: ZConnectorUpdateInput,
   formbricksMappings: z
     .object({
@@ -196,6 +206,11 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
         mappingsInput = { type: "field", mappings: parsedInput.fieldMappings };
       }
 
-      return updateConnectorWithMappings(parsedInput.connectorId, parsedInput.connectorInput, mappingsInput);
+      return updateConnectorWithMappings(
+        parsedInput.connectorId,
+        parsedInput.environmentId,
+        parsedInput.connectorInput,
+        mappingsInput
+      );
     }
   );

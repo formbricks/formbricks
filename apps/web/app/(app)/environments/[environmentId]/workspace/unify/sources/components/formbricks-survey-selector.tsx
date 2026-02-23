@@ -11,7 +11,7 @@ import {
   StarIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { Badge } from "@/modules/ui/components/badge";
 import { TUnifySurvey } from "../types";
@@ -199,15 +199,17 @@ export function FormbricksSurveySelector({
 
             {selectedElementIds.length > 0 && (
               <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                <p
-                  className="text-xs text-blue-700"
-                  dangerouslySetInnerHTML={{
-                    __html:
+                <p className="text-xs text-blue-700">
+                  <Trans
+                    i18nKey={
                       selectedElementIds.length === 1
-                        ? t("environments.unify.element_selected", { count: selectedElementIds.length })
-                        : t("environments.unify.elements_selected", { count: selectedElementIds.length }),
-                  }}
-                />
+                        ? "environments.unify.element_selected"
+                        : "environments.unify.elements_selected"
+                    }
+                    values={{ count: selectedElementIds.length }}
+                    components={{ strong: <strong /> }}
+                  />
+                </p>
               </div>
             )}
           </div>

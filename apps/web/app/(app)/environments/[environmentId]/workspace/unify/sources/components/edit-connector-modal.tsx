@@ -26,6 +26,7 @@ interface EditConnectorModalProps {
   onOpenChange: (open: boolean) => void;
   onUpdateConnector: (data: {
     connectorId: string;
+    environmentId: string;
     name: string;
     surveyId?: string;
     elementIds?: string[];
@@ -85,7 +86,14 @@ export function EditConnectorModal({
         setSourceFields([]);
         setMappings([]);
       } else if (connector.type === "csv") {
-        setSourceFields(parseCSVColumnsToFields(SAMPLE_CSV_COLUMNS));
+        const columnsFromMappings = [
+          ...new Set(connector.fieldMappings.map((m) => m.sourceFieldId).filter(Boolean)),
+        ];
+        setSourceFields(
+          columnsFromMappings.length > 0
+            ? parseCSVColumnsToFields(columnsFromMappings.join(","))
+            : parseCSVColumnsToFields(SAMPLE_CSV_COLUMNS)
+        );
         setMappings(
           connector.fieldMappings.map((m) => ({
             sourceFieldId: m.sourceFieldId,
@@ -145,6 +153,7 @@ export function EditConnectorModal({
 
     await onUpdateConnector({
       connectorId: connector.id,
+      environmentId: connector.environmentId,
       name: connectorName.trim(),
       surveyId: connector.type === "formbricks" ? (selectedSurveyId ?? undefined) : undefined,
       elementIds: connector.type === "formbricks" ? selectedElementIds : undefined,

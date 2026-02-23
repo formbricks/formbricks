@@ -73,6 +73,7 @@ export function ConnectorsSection({
 
   const handleUpdateConnector = async (data: {
     connectorId: string;
+    environmentId: string;
     name: string;
     surveyId?: string;
     elementIds?: string[];
@@ -80,6 +81,7 @@ export function ConnectorsSection({
   }) => {
     const result = await updateConnectorWithMappingsAction({
       connectorId: data.connectorId,
+      environmentId,
       connectorInput: {
         name: data.name,
       },
@@ -106,7 +108,7 @@ export function ConnectorsSection({
   };
 
   const handleDeleteConnector = async (connectorId: string) => {
-    const result = await deleteConnectorAction({ connectorId });
+    const result = await deleteConnectorAction({ connectorId, environmentId });
 
     if (!result?.data) {
       toast.error(getFormattedErrorMessage(result));

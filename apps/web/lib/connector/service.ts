@@ -120,14 +120,16 @@ export const getConnectorsBySurveyId = reactCache(
 
 export const updateConnector = async (
   connectorId: string,
+  environmentId: string,
   data: TConnectorUpdateInput
 ): Promise<TConnector> => {
-  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput]);
+  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput], [environmentId, ZId]);
 
   try {
     const connector = await prisma.connector.update({
       where: {
         id: connectorId,
+        environmentId,
       },
       data: {
         name: data.name,
@@ -150,13 +152,14 @@ export const updateConnector = async (
   }
 };
 
-export const deleteConnector = async (connectorId: string): Promise<TConnector> => {
-  validateInputs([connectorId, ZId]);
+export const deleteConnector = async (connectorId: string, environmentId: string): Promise<TConnector> => {
+  validateInputs([connectorId, ZId], [environmentId, ZId]);
 
   try {
     const connector = await prisma.connector.delete({
       where: {
         id: connectorId,
+        environmentId,
       },
       select: selectConnector,
     });
@@ -253,15 +256,16 @@ export const createConnectorWithMappings = async (
 
 export const updateConnectorWithMappings = async (
   connectorId: string,
+  environmentId: string,
   data: TConnectorUpdateInput,
   mappingsInput?: TMappingsInput
 ): Promise<TConnectorWithMappings> => {
-  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput]);
+  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput], [environmentId, ZId]);
 
   try {
     const result = await prisma.$transaction(async (tx) => {
       await tx.connector.update({
-        where: { id: connectorId },
+        where: { id: connectorId, environmentId },
         data: {
           name: data.name,
           status: data.status,

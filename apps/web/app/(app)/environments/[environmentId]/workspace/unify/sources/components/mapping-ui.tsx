@@ -34,14 +34,10 @@ export function MappingUI({ sourceFields, mappings, onMappingsChange, connectorT
     const sourceFieldId = active.id as string;
     const targetFieldId = over.id as string;
 
-    const existingMapping = mappings.find((m) => m.targetFieldId === targetFieldId);
-    if (existingMapping) {
-      const newMappings = mappings.filter((m) => m.targetFieldId !== targetFieldId);
-      onMappingsChange([...newMappings, { sourceFieldId, targetFieldId }]);
-    } else {
-      const newMappings = mappings.filter((m) => m.sourceFieldId !== sourceFieldId);
-      onMappingsChange([...newMappings, { sourceFieldId, targetFieldId }]);
-    }
+    const newMappings = mappings.filter(
+      (m) => m.sourceFieldId !== sourceFieldId && m.targetFieldId !== targetFieldId
+    );
+    onMappingsChange([...newMappings, { sourceFieldId, targetFieldId }]);
   };
 
   const handleRemoveMapping = (targetFieldId: string) => {

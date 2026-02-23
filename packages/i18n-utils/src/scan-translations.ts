@@ -46,6 +46,10 @@ const TRANSLATION_PATTERNS = [
   /i18nKey\s*=\s*\{\s*["'](?<temp1>[^"']+)["']\s*\}/g,
 ];
 
+// Extracts string literals from dynamic i18nKey={...} expressions (e.g. ternaries)
+const I18N_KEY_BLOCK_PATTERN = /i18nKey\s*=\s*\{([\s\S]*?)\}/g;
+const STRING_LITERAL_PATTERN = /["']([^"']+)["']/g;
+
 // Directories and files to exclude from scanning
 const EXCLUDE_DIRS = [
   "**/node_modules/**",
@@ -129,6 +133,21 @@ export function extractKeysFromContent(content: string): string[] {
       const key = match[1];
       // Skip dynamic keys (containing variables like ${}, {{}} etc.)
       if (!key.includes("${") && !key.includes("{{") && !key.includes("}")) {
+        keys.push(key);
+      }
+    }
+  }
+
+  // Extract keys from dynamic i18nKey={...} expressions (e.g. ternaries, conditionals)
+  I18N_KEY_BLOCK_PATTERN.lastIndex = 0;
+  let blockMatch: RegExpExecArray | null = null;
+  while ((blockMatch = I18N_KEY_BLOCK_PATTERN.exec(contentWithoutComments)) !== null) {
+    const blockContent = blockMatch[1];
+    STRING_LITERAL_PATTERN.lastIndex = 0;
+    let strMatch: RegExpExecArray | null = null;
+    while ((strMatch = STRING_LITERAL_PATTERN.exec(blockContent)) !== null) {
+      const key = strMatch[1];
+      if (key.includes(".") && !key.includes("${") && !key.includes(" ")) {
         keys.push(key);
       }
     }

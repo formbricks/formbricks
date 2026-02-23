@@ -16,11 +16,11 @@ import { transformResponseToFeedbackRecords } from "./transform";
  * @param survey - The survey
  * @param environmentId - The environment ID (used as tenant_id)
  */
-export async function handleConnectorPipeline(
+export const handleConnectorPipeline = async (
   response: TResponse,
   survey: TSurvey,
   environmentId: string
-): Promise<void> {
+): Promise<void> => {
   try {
     // Get all active Formbricks connectors for this survey
     const connectors = await getConnectorsBySurveyId(survey.id);
@@ -83,10 +83,16 @@ export async function handleConnectorPipeline(
             }
           });
 
-          // Update connector with error message if all failed
           if (successes === 0) {
-            await updateConnector(connector.id, {
+            await updateConnector(connector.id, environmentId, {
+              status: "error",
               errorMessage: `Failed to send FeedbackRecords to Hub: ${results[0].error?.message || "Unknown error"}`,
+            });
+          } else {
+            await updateConnector(connector.id, environmentId, {
+              status: "active",
+              errorMessage: `Partial failure: ${successes}/${feedbackRecords.length} records sent`,
+              lastSyncAt: new Date(),
             });
           }
         } else {
@@ -100,8 +106,8 @@ export async function handleConnectorPipeline(
             `Connector pipeline: Successfully sent ${successes} FeedbackRecords to Hub`
           );
 
-          // Clear any previous error and update lastSyncAt
-          await updateConnector(connector.id, {
+          await updateConnector(connector.id, environmentId, {
+            status: "active",
             errorMessage: null,
             lastSyncAt: new Date(),
           });
@@ -118,7 +124,7 @@ export async function handleConnectorPipeline(
         );
 
         // Update connector with error
-        await updateConnector(connector.id, {
+        await updateConnector(connector.id, environmentId, {
           status: "error",
           errorMessage: error instanceof Error ? error.message : "Unknown error",
         });
@@ -135,4 +141,4 @@ export async function handleConnectorPipeline(
       "Connector pipeline: Failed to handle connectors"
     );
   }
-}
+};

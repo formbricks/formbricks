@@ -9,11 +9,10 @@ import { TCreateFeedbackRecordInput } from "./hub-client";
 
 type TResponseValue = string | number | string[] | Record<string, string> | undefined;
 
-const getElementHeadline = (survey: TSurvey, elementId: string): string => {
-  const elements = getElementsFromBlocks(survey.blocks);
-  const element = elements.find((el) => el.id === elementId);
-  if (!element?.headline) return "Untitled";
+type TSurveyElement = ReturnType<typeof getElementsFromBlocks>[number];
 
+const getHeadlineFromElement = (element: TSurveyElement | undefined): string => {
+  if (!element?.headline) return "Untitled";
   const raw = getLocalizedValue(element.headline, "default");
   return getTextContent(raw) || "Untitled";
 };
@@ -91,13 +90,15 @@ export function transformResponseToFeedbackRecords(
   if (!responseData) return [];
 
   const surveyMappings = mappings.filter((m) => m.surveyId === survey.id);
+  const elements = getElementsFromBlocks(survey.blocks);
+  const elementMap = new Map(elements.map((el) => [el.id, el]));
   const feedbackRecords: TCreateFeedbackRecordInput[] = [];
 
   for (const mapping of surveyMappings) {
     const value = extractResponseValue(responseData, mapping.elementId);
     if (value === undefined || value === null || value === "") continue;
 
-    const fieldLabel = mapping.customFieldLabel || getElementHeadline(survey, mapping.elementId);
+    const fieldLabel = mapping.customFieldLabel || getHeadlineFromElement(elementMap.get(mapping.elementId));
     const valueFields = convertValueToHubFields(value, mapping.hubFieldType);
 
     const feedbackRecord: TCreateFeedbackRecordInput = {
