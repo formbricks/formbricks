@@ -70,8 +70,10 @@ export const DashboardDropdownMenu = ({
 
   return (
     <div
+      role="presentation"
       data-testid={`${dashboardName.toLowerCase().split(" ").join("-")}-dashboard-actions`}
-      onClick={(e) => e.stopPropagation()}>
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild>
           <div className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50">

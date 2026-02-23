@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 
 interface CreateDashboardDialogProps {
   open: boolean;
@@ -47,9 +48,7 @@ export const CreateDashboardDialog = ({
         </DialogHeader>
         <DialogBody className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="dashboard-name" className="text-sm font-medium text-gray-900">
-              {t("environments.analysis.dashboards.dashboard_name")}
-            </label>
+            <Label htmlFor="dashboard-name">{t("environments.analysis.dashboards.dashboard_name")}</Label>
             <Input
               id="dashboard-name"
               placeholder={t("environments.analysis.dashboards.dashboard_name_placeholder")}
@@ -64,9 +63,9 @@ export const CreateDashboardDialog = ({
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="dashboard-description" className="text-sm font-medium text-gray-900">
+            <Label htmlFor="dashboard-description">
               {t("environments.analysis.dashboards.description_optional")}
-            </label>
+            </Label>
             <Input
               id="dashboard-description"
               placeholder={t("environments.analysis.dashboards.description_placeholder")}

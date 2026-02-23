@@ -45,7 +45,18 @@ export const DashboardsListPage = async (props: { params: Promise<{ environmentI
       pageTitle={t("common.analysis")}
       environmentId={environmentId}
       cta={!isReadOnly ? <CreateDashboardButton environmentId={environmentId} /> : undefined}>
-      <Suspense fallback={<DashboardsListSkeleton />}>
+      <Suspense
+        fallback={
+          <DashboardsListSkeleton
+            columnHeaders={[
+              t("common.title"),
+              t("common.charts"),
+              t("common.created_by"),
+              t("common.created"),
+              t("common.updated"),
+            ]}
+          />
+        }>
         <DashboardsListContent projectId={project.id} environmentId={environmentId} isReadOnly={isReadOnly} />
       </Suspense>
     </AnalysisPageLayout>
