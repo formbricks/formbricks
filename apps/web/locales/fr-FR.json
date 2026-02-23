@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} attribut} other {{value} attributs}}",
     "count_contacts": "{value, plural, one {# contact} other {# contacts} }",
     "count_responses": "{value, plural, other {# réponses}}",
+    "create": "Créer",
     "create_new_organization": "Créer une nouvelle organisation",
     "create_segment": "Créer un segment",
     "create_survey": "Créer un sondage",
@@ -189,6 +190,7 @@
     "created_by": "Créé par",
     "customer_success": "Succès Client",
     "dark_overlay": "Foncée",
+    "dashboard": "Tableau de bord",
     "dashboards": "Tableaux de bord",
     "date": "Date",
     "days": "jours",
@@ -306,6 +308,7 @@
     "on": "Sur",
     "only_one_file_allowed": "Un seul fichier est autorisé",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Seules les propriétaires, les gestionnaires et les membres ayant accès à la gestion peuvent effectuer cette action.",
+    "open_options": "Ouvrir les options",
     "option_id": "Identifiant de l'option",
     "option_ids": "Identifiants des options",
     "optional": "Facultatif",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "Vous pouvez suivre l'action du code partout dans votre application en utilisant",
       "your_survey_would_be_shown_on_this_url": "Votre enquête serait affichée sur cette URL.",
       "your_survey_would_not_be_shown": "Votre enquête ne serait pas affichée."
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "Créer un tableau de bord",
+        "create_dashboard_description": "Saisissez un nom pour votre nouveau tableau de bord.",
+        "create_failed": "Échec de la création du tableau de bord",
+        "create_success": "Tableau de bord créé avec succès !",
+        "dashboard_name": "Nom du tableau de bord",
+        "dashboard_name_placeholder": "Mon tableau de bord",
+        "delete_confirmation": "Êtes-vous sûr de vouloir supprimer ce tableau de bord ? Cette action est irréversible.",
+        "delete_failed": "Échec de la suppression du tableau de bord",
+        "delete_success": "Tableau de bord supprimé avec succès",
+        "description_optional": "Description (facultatif)",
+        "description_placeholder": "Description du tableau de bord",
+        "duplicate_failed": "Échec de la duplication du tableau de bord",
+        "duplicate_success": "Tableau de bord dupliqué avec succès !",
+        "no_dashboards_found": "Aucun tableau de bord trouvé.",
+        "please_enter_name": "Veuillez saisir un nom de tableau de bord"
+      }
     },
     "connect": {
       "congrats": "Félicitations !",

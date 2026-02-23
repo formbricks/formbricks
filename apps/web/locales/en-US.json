@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} attribute} other {{value} attributes}}",
     "count_contacts": "{value, plural, one {{value} contact} other {{value} contacts}}",
     "count_responses": "{value, plural, one {{value} response} other {{value} responses}}",
+    "create": "Create",
     "create_new_organization": "Create new organization",
     "create_segment": "Create segment",
     "create_survey": "Create survey",
@@ -189,6 +190,7 @@
     "created_by": "Created by",
     "customer_success": "Customer Success",
     "dark_overlay": "Dark overlay",
+    "dashboard": "Dashboard",
     "dashboards": "Dashboards",
     "date": "Date",
     "days": "days",
@@ -306,6 +308,7 @@
     "on": "On",
     "only_one_file_allowed": "Only one file is allowed",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Only owners and managers can perform this action.",
+    "open_options": "Open options",
     "option_id": "Option ID",
     "option_ids": "Option IDs",
     "optional": "Optional",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "You can track code action anywhere in your app using",
       "your_survey_would_be_shown_on_this_url": "Your survey would be shown on this URL.",
       "your_survey_would_not_be_shown": "Your survey would not be shown."
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "Create Dashboard",
+        "create_dashboard_description": "Enter a name for your new dashboard.",
+        "create_failed": "Failed to create dashboard",
+        "create_success": "Dashboard created successfully!",
+        "dashboard_name": "Dashboard Name",
+        "dashboard_name_placeholder": "My dashboard",
+        "delete_confirmation": "Are you sure you want to delete this dashboard? This action cannot be undone.",
+        "delete_failed": "Failed to delete dashboard",
+        "delete_success": "Dashboard deleted successfully",
+        "description_optional": "Description (Optional)",
+        "description_placeholder": "Dashboard description",
+        "duplicate_failed": "Failed to duplicate dashboard",
+        "duplicate_success": "Dashboard duplicated successfully!",
+        "no_dashboards_found": "No dashboards found.",
+        "please_enter_name": "Please enter a dashboard name"
+      }
     },
     "connect": {
       "congrats": "Congrats!",

@@ -17,12 +17,15 @@ import {
   ZDashboardUpdateInput,
 } from "@/modules/ee/analysis/types/analysis";
 
+const MAX_NAME_ATTEMPTS = 5;
+
 const selectDashboard = {
   id: true,
   name: true,
   description: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
 } as const;
 
 export const createDashboard = async (data: TDashboardCreateInput): Promise<TDashboard> => {
@@ -166,10 +169,75 @@ export const getDashboards = async (projectId: string): Promise<TDashboardWithCo
       orderBy: { createdAt: "desc" },
       select: {
         ...selectDashboard,
+        creator: { select: { name: true } },
         _count: { select: { widgets: true } },
       },
     });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+export const duplicateDashboard = async (
+  dashboardId: string,
+  projectId: string,
+  createdBy: string
+): Promise<TDashboard> => {
+  validateInputs([dashboardId, ZId], [projectId, ZId], [createdBy, ZId]);
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const source = await tx.dashboard.findFirst({
+        where: { id: dashboardId, projectId },
+        include: {
+          widgets: { orderBy: { order: "asc" } },
+        },
+      });
+
+      if (!source) {
+        throw new ResourceNotFoundError("Dashboard", dashboardId);
+      }
+
+      const baseName = `${source.name} (copy)`;
+      let name = baseName;
+      let suffix = 1;
+
+      while (await tx.dashboard.findFirst({ where: { projectId, name } })) {
+        suffix++;
+        if (suffix > MAX_NAME_ATTEMPTS) {
+          name = `${baseName} ${suffix}`;
+          break;
+        }
+        name = `${baseName} ${suffix}`;
+      }
+
+      const newDashboard = await tx.dashboard.create({
+        data: {
+          name,
+          description: source.description,
+          projectId,
+          createdBy,
+          widgets: {
+            create: source.widgets.map((widget) => ({
+              chartId: widget.chartId,
+              title: widget.title,
+              layout: widget.layout ?? { x: 0, y: 0, w: 4, h: 3 },
+              order: widget.order,
+            })),
+          },
+        },
+        select: selectDashboard,
+      });
+
+      return newDashboard;
+    });
+  } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      throw error;
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }

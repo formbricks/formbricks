@@ -153,6 +153,7 @@ checksums:
     common/count_attributes: 042fba9baffef5afe2c24f13d4f50697
     common/count_contacts: b1c413a4b06961b71b6aeee95d6775d7
     common/count_responses: 690118a456c01c5b4d437ae82b50b131
+    common/create: 757ccd28dd533ff3a933355273c1e32a
     common/create_new_organization: 51dae7b33143686ee218abf5bea764a5
     common/create_segment: 9d8291cd4d778b53b73bbc84fd91c181
     common/create_survey: 1cfbba08d34876566d84b2960054a987
@@ -162,6 +163,7 @@ checksums:
     common/created_by: 6775c2fa7d495fea48f1ad816daea93b
     common/customer_success: 2b0c99a5f57e1d16cf0a998f9bb116c4
     common/dark_overlay: 173e84b526414dbc70dbf9737e443b60
+    common/dashboard: c9380ea68c8c76ea451bd9613329a07c
     common/dashboards: 4bc47e48559a6b688684dcb7ac4babc9
     common/date: 56f41c5d30a76295bb087b20b7bee4c3
     common/days: c95fe8aedde21a0b5653dbd0b3c58b48
@@ -279,6 +281,7 @@ checksums:
     common/on: 1929bcf2fba8003c043b446a851bcb4f
     common/only_one_file_allowed: 171be177f2e96c4bb4c4a47b3bf6c8c9
     common/only_owners_managers_and_manage_access_members_can_perform_this_action: 3c16fc506e871935f6183793e73b6709
+    common/open_options: a4578c0afbfdf4a76d5952a53085b72a
     common/option_id: ed21d97b8ab035ba89fb3f5f073229bd
     common/option_ids: e68c25215ce81ea7ad82ff7be0a0bf2d
     common/optional: 396fb9a0472daf401c392bdc3e248943
@@ -577,6 +580,21 @@ checksums:
     environments/actions/you_can_track_code_action_anywhere_in_your_app_using: 3c0bbf160b8ddbeef142403103b70554
     environments/actions/your_survey_would_be_shown_on_this_url: 766fdeeb52d170c156af5d035a1f8c37
     environments/actions/your_survey_would_not_be_shown: af44fe160f449ff9557ebe5d3686832d
+    environments/analysis/dashboards/create_dashboard: 9396aec1ea4a9b05ada94483655d1373
+    environments/analysis/dashboards/create_dashboard_description: d29f60615f6d8c96cc4265541e75ec26
+    environments/analysis/dashboards/create_failed: 7b58f15568047a35220b3a47cc3b0f71
+    environments/analysis/dashboards/create_success: 1fa4dea7702ba03a8a3533295276ff1b
+    environments/analysis/dashboards/dashboard_name: a2d344bc03f27706b42d7d6a8d0fc752
+    environments/analysis/dashboards/dashboard_name_placeholder: 02954eeb5671f1c00e3f69b47319916e
+    environments/analysis/dashboards/delete_confirmation: 468a0fb0e24a985cc47a778b50b334ba
+    environments/analysis/dashboards/delete_failed: b108acc28b1f9abcb544a358a958b54b
+    environments/analysis/dashboards/delete_success: 9d161634daab9ea9d17fbfb413eeeffa
+    environments/analysis/dashboards/description_optional: d5519551a79f18fc414dc127b773485f
+    environments/analysis/dashboards/description_placeholder: 90a599e6b1695e2b026fb1300d1d5903
+    environments/analysis/dashboards/duplicate_failed: 6ebaf8ad373b156f88f1ed79a5efd441
+    environments/analysis/dashboards/duplicate_success: 37cbb14143776d4c215432673e32ebd9
+    environments/analysis/dashboards/no_dashboards_found: e049ec0356009c3a0aa2c729d916efc6
+    environments/analysis/dashboards/please_enter_name: b9211ed8a0882c0e0109beba48685d68
     environments/connect/congrats: c2f5b597aabdf298cf9f0452863e2dc6
     environments/connect/connection_successful_message: fa1f29883e15e8697c6c477bdf5cb645
     environments/connect/do_it_later: ab4accfbe53d924ab3ffaf9ea78a75f3

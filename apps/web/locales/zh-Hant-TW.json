@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} 個屬性} other {{value} 個屬性}}",
     "count_contacts": "{value, plural, other {{value} 聯絡人} }",
     "count_responses": "{value, plural, other {{value} 回應} }",
+    "create": "建立",
     "create_new_organization": "建立新組織",
     "create_segment": "建立區隔",
     "create_survey": "建立問卷",
@@ -189,6 +190,7 @@
     "created_by": "建立者",
     "customer_success": "客戶成功",
     "dark_overlay": "深色覆蓋",
+    "dashboard": "儀表板",
     "dashboards": "儀表板",
     "date": "日期",
     "days": "天",
@@ -306,6 +308,7 @@
     "on": "開啟",
     "only_one_file_allowed": "僅允許一個檔案",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "只有擁有者、管理員和管理存取權限的成員才能執行此操作。",
+    "open_options": "開啟選項",
     "option_id": "選項 ID",
     "option_ids": "選項 IDs",
     "optional": "選填",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "您可以使用以下方式在您的應用程式中的任何位置追蹤程式碼操作",
       "your_survey_would_be_shown_on_this_url": "您的問卷將顯示在此網址。",
       "your_survey_would_not_be_shown": "您的問卷將不會顯示。"
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "建立儀表板",
+        "create_dashboard_description": "請輸入新儀表板的名稱。",
+        "create_failed": "建立儀表板失敗",
+        "create_success": "儀表板建立成功！",
+        "dashboard_name": "儀表板名稱",
+        "dashboard_name_placeholder": "我的儀表板",
+        "delete_confirmation": "你確定要刪除此儀表板嗎？此操作無法復原。",
+        "delete_failed": "刪除儀表板失敗",
+        "delete_success": "儀表板刪除成功",
+        "description_optional": "描述（選填）",
+        "description_placeholder": "儀表板描述",
+        "duplicate_failed": "複製儀表板失敗",
+        "duplicate_success": "儀表板複製成功！",
+        "no_dashboards_found": "找不到儀表板。",
+        "please_enter_name": "請輸入儀表板名稱"
+      }
     },
     "connect": {
       "congrats": "恭喜！",

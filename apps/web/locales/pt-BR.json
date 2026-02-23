@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} atributo} other {{value} atributos}}",
     "count_contacts": "{value, plural, one {# contato} other {# contatos} }",
     "count_responses": "{value, plural, other {# respostas}}",
+    "create": "Criar",
     "create_new_organization": "Criar nova organização",
     "create_segment": "Criar segmento",
     "create_survey": "Criar pesquisa",
@@ -189,6 +190,7 @@
     "created_by": "Criado por",
     "customer_success": "Sucesso do Cliente",
     "dark_overlay": "sobreposição escura",
+    "dashboard": "Painel",
     "dashboards": "Painéis",
     "date": "Encontro",
     "days": "dias",
@@ -306,6 +308,7 @@
     "on": "ligado",
     "only_one_file_allowed": "É permitido apenas um arquivo",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Apenas proprietários, gerentes e membros com acesso de gerenciamento podem realizar essa ação.",
+    "open_options": "Abrir opções",
     "option_id": "ID da opção",
     "option_ids": "IDs da Opção",
     "optional": "Opcional",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "Você pode rastrear ações de código em qualquer lugar do seu app usando",
       "your_survey_would_be_shown_on_this_url": "Sua pesquisa seria exibida neste URL.",
       "your_survey_would_not_be_shown": "Sua pesquisa não seria exibida."
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "Criar painel",
+        "create_dashboard_description": "Digite um nome para o seu novo painel.",
+        "create_failed": "Falha ao criar painel",
+        "create_success": "Painel criado com sucesso!",
+        "dashboard_name": "Nome do painel",
+        "dashboard_name_placeholder": "Meu painel",
+        "delete_confirmation": "Tem certeza de que deseja excluir este painel? Esta ação não pode ser desfeita.",
+        "delete_failed": "Falha ao excluir painel",
+        "delete_success": "Painel excluído com sucesso",
+        "description_optional": "Descrição (opcional)",
+        "description_placeholder": "Descrição do painel",
+        "duplicate_failed": "Falha ao duplicar painel",
+        "duplicate_success": "Painel duplicado com sucesso!",
+        "no_dashboards_found": "Nenhum painel encontrado.",
+        "please_enter_name": "Por favor, digite um nome para o painel"
+      }
     },
     "connect": {
       "congrats": "Parabéns!",

@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} Attribut} other {{value} Attribute}}",
     "count_contacts": "{value, plural, one {{value} Kontakt} other {{value} Kontakte}}",
     "count_responses": "{value, plural, one {{value} Antwort} other {{value} Antworten}}",
+    "create": "Erstellen",
     "create_new_organization": "Neue Organisation erstellen",
     "create_segment": "Segment erstellen",
     "create_survey": "Umfrage erstellen",
@@ -189,6 +190,7 @@
     "created_by": "Erstellt von",
     "customer_success": "Kundenerfolg",
     "dark_overlay": "Dunkle Überlagerung",
+    "dashboard": "Dashboard",
     "dashboards": "Dashboards",
     "date": "Datum",
     "days": "Tage",
@@ -306,6 +308,7 @@
     "on": "An",
     "only_one_file_allowed": "Es ist nur eine Datei erlaubt",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Nur Eigentümer, Manager und Mitglieder mit Zugriff auf das Management können diese Aktion ausführen.",
+    "open_options": "Optionen öffnen",
     "option_id": "Option-ID",
     "option_ids": "Option-IDs",
     "optional": "Optional",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "Du kannst Code-Aktionen überall in deiner App tracken mit",
       "your_survey_would_be_shown_on_this_url": "Ihre Umfrage wäre unter dieser URL angezeigt.",
       "your_survey_would_not_be_shown": "Ihre Umfrage wäre nicht angezeigt."
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "Dashboard erstellen",
+        "create_dashboard_description": "Gib einen Namen für dein neues Dashboard ein.",
+        "create_failed": "Dashboard konnte nicht erstellt werden",
+        "create_success": "Dashboard erfolgreich erstellt!",
+        "dashboard_name": "Dashboard-Name",
+        "dashboard_name_placeholder": "Mein Dashboard",
+        "delete_confirmation": "Bist du sicher, dass du dieses Dashboard löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "delete_failed": "Dashboard konnte nicht gelöscht werden",
+        "delete_success": "Dashboard erfolgreich gelöscht",
+        "description_optional": "Beschreibung (optional)",
+        "description_placeholder": "Dashboard-Beschreibung",
+        "duplicate_failed": "Dashboard konnte nicht dupliziert werden",
+        "duplicate_success": "Dashboard erfolgreich dupliziert!",
+        "no_dashboards_found": "Keine Dashboards gefunden.",
+        "please_enter_name": "Bitte gib einen Dashboard-Namen ein"
+      }
     },
     "connect": {
       "congrats": "Glückwunsch!",
