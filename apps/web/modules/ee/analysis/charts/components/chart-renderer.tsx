@@ -47,7 +47,9 @@ function ChartTooltipRow({ value, dataKey }: Readonly<{ value: unknown; dataKey:
 
 /** Creates a tooltip formatter bound to dataKey for Cartesian charts. Defined at module level to avoid Sonar "component in parent" warnings. */
 function createTooltipFormatter(dataKey: string) {
-  return (value: unknown) => <ChartTooltipRow value={value} dataKey={dataKey} />;
+  const Formatter = (value: unknown) => <ChartTooltipRow value={value} dataKey={dataKey} />;
+  Formatter.displayName = "ChartTooltipFormatter";
+  return Formatter;
 }
 
 /** Tooltip content for bar/line/area charts with formatted label and value. Extracted to avoid inline component definitions. */

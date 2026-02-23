@@ -6,7 +6,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 vi.mock("server-only", () => ({}));
 
 var mockTxChart: {
-  // NOSONAR / test code
+  // NOSONAR S1135 - var required for vi.mock hoisting
   findFirst: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
@@ -361,7 +361,14 @@ describe("Chart Service", () => {
       expect(prisma.chart.findMany).toHaveBeenCalledWith({
         where: { projectId: mockProjectId },
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          query: true,
+          config: true,
+          createdAt: true,
+          updatedAt: true,
           creator: { select: { name: true } },
         },
       });

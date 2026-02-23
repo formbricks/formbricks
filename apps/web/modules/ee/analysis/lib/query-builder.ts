@@ -78,7 +78,7 @@ export function buildCubeQuery(config: ChartBuilderState): TCubeQuery {
       };
 
       if (f.operator !== "set" && f.operator !== "notSet" && f.values) {
-        filter.values = f.values.map((v) => String(v));
+        filter.values = f.values.map(String);
       }
 
       return filter;
