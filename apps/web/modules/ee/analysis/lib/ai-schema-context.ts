@@ -54,6 +54,6 @@ ${operatorsText}
 - Always include at least one measure. If unspecified, default to \`${CUBE_NAME}.count\`.
 - Use dimension IDs exactly as shown (e.g. \`FeedbackRecords.sentiment\`, \`FeedbackRecords.collectedAt\`).
 - For time-based questions, add a timeDimension with dimension \`${CUBE_NAME}.collectedAt\`, an appropriate granularity, and a dateRange preset or custom range.
-- Choose the most appropriate chart type: bar, line, area, pie, donut, or kpi (for single-number queries).
+- Choose the most appropriate chart type: bar, line, area, pie, or big_number (for single-number queries).
 - Filters must use the exact operator strings from the schema.`;
 }

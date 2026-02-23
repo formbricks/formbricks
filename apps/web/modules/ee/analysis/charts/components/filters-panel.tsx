@@ -173,7 +173,7 @@ export function FiltersPanel({
 
           return (
             <div
-              key={`${filter.field}-${filter.operator}-${JSON.stringify(filter.values ?? null)}`}
+              key={filter.operator + index}
               className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
               <Select
                 value={filter.field}

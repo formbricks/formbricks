@@ -4,6 +4,7 @@
 import { TCubeFilter, TCubeQuery, TTimeDimension } from "../types/analysis";
 
 export interface CustomMeasure {
+  id?: string;
   field: string;
   aggregation: string;
   alias?: string;

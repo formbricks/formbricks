@@ -1,5 +1,6 @@
 "use client";
 
+import { format, isValid, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import {
   Area,
@@ -18,11 +19,49 @@ import {
 import {
   CHART_BRAND_DARK,
   CHART_BRAND_LIGHT,
+  formatCellValue,
   preparePieData,
   resolveChartKeys,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
+
+function ChartTooltipRow({ value, dataKey }: Readonly<{ value: unknown; dataKey: string }>) {
+  return (
+    <>
+      <div
+        className="h-2.5 w-2.5 shrink-0 rounded-[2px] border border-current"
+        style={{
+          backgroundColor: CHART_BRAND_DARK,
+          borderColor: CHART_BRAND_DARK,
+        }}
+      />
+      <div className="flex flex-1 items-center justify-between leading-none">
+        <span className="text-muted-foreground">{formatCubeColumnHeader(dataKey)}</span>
+        <span className="text-foreground font-mono font-medium tabular-nums">{formatCellValue(value)}</span>
+      </div>
+    </>
+  );
+}
+
+/** Creates a tooltip formatter bound to dataKey for Cartesian charts. Defined at module level to avoid Sonar "component in parent" warnings. */
+function createTooltipFormatter(dataKey: string) {
+  return (value: unknown) => <ChartTooltipRow value={value} dataKey={dataKey} />;
+}
+
+/** Tooltip content for bar/line/area charts with formatted label and value. Extracted to avoid inline component definitions. */
+function CartesianChartTooltip({
+  dataKey,
+  formatXAxisTick,
+}: Readonly<{ dataKey: string; formatXAxisTick: (value: unknown) => string }>) {
+  return (
+    <ChartTooltipContent
+      labelFormatter={(val) => formatXAxisTick(val)}
+      formatter={createTooltipFormatter(dataKey)}
+    />
+  );
+}
 
 interface ChartRendererProps {
   chartType: string;
@@ -40,19 +79,42 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
   }
 
   const { xAxisKey, dataKey } = resolveChartKeys(data, chartType);
+  const chartConfig = {
+    [dataKey]: {
+      label: formatCubeColumnHeader(dataKey),
+      color: CHART_BRAND_DARK,
+    },
+  };
+
+  const formatXAxisTick = (value: unknown): string => {
+    if (value == null) return "";
+    let str: string;
+    if (typeof value === "string") str = value;
+    else if (typeof value === "number") str = String(value);
+    else return "";
+    const date = parseISO(str);
+    if (isValid(date)) return format(date, "MMM d, yyyy");
+    return str;
+  };
 
   switch (chartType) {
     case "bar":
       return (
         <div className="h-64 min-h-[256px] w-full">
-          <ChartContainer
-            config={{ [dataKey]: { label: dataKey, color: CHART_BRAND_DARK } }}
-            className="h-full w-full">
+          <ChartContainer config={chartConfig} className="h-full w-full">
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
+              <XAxis
+                dataKey={xAxisKey}
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tickFormatter={formatXAxisTick}
+              />
               <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip
+                content={<CartesianChartTooltip dataKey={dataKey} formatXAxisTick={formatXAxisTick} />}
+              />
               <Bar dataKey={dataKey} fill={CHART_BRAND_DARK} radius={4} />
             </BarChart>
           </ChartContainer>
@@ -61,14 +123,20 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
     case "line":
       return (
         <div className="h-64 min-h-[256px] w-full">
-          <ChartContainer
-            config={{ [dataKey]: { label: dataKey, color: CHART_BRAND_DARK } }}
-            className="h-full w-full">
+          <ChartContainer config={chartConfig} className="h-full w-full">
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
+              <XAxis
+                dataKey={xAxisKey}
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tickFormatter={formatXAxisTick}
+              />
               <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip
+                content={<CartesianChartTooltip dataKey={dataKey} formatXAxisTick={formatXAxisTick} />}
+              />
               <Line
                 type="monotone"
                 dataKey={dataKey}
@@ -84,14 +152,20 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
     case "area":
       return (
         <div className="h-64 min-h-[256px] w-full">
-          <ChartContainer
-            config={{ [dataKey]: { label: dataKey, color: CHART_BRAND_DARK } }}
-            className="h-full w-full">
+          <ChartContainer config={chartConfig} className="h-full w-full">
             <AreaChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey={xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
+              <XAxis
+                dataKey={xAxisKey}
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tickFormatter={formatXAxisTick}
+              />
               <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip
+                content={<CartesianChartTooltip dataKey={dataKey} formatXAxisTick={formatXAxisTick} />}
+              />
               <Area
                 type="monotone"
                 dataKey={dataKey}
@@ -125,9 +199,7 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
 
       return (
         <div className="h-64 min-h-[256px] w-full min-w-0">
-          <ChartContainer
-            config={{ [dataKey]: { label: dataKey, color: CHART_BRAND_DARK } }}
-            className="h-full w-full min-w-0">
+          <ChartContainer config={chartConfig} className="h-full w-full min-w-0">
             <PieChart width={400} height={256}>
               <Pie
                 data={processedData}
@@ -148,10 +220,10 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
               </Pie>
               <ChartTooltip
                 content={<ChartTooltipContent />}
-                formatter={(value: number | string, name: string) => {
-                  const numValue = Number(value);
-                  return [numValue.toLocaleString(), name];
-                }}
+                formatter={(value: number | string, name: string) => [
+                  formatCellValue(value),
+                  formatCubeColumnHeader(name),
+                ]}
               />
             </PieChart>
           </ChartContainer>

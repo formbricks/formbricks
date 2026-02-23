@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
 import { ChartDialogFooterWithModals } from "@/modules/ee/analysis/charts/components/chart-dialog-footer-with-modals";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
+import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
 import { AnalyticsResponse, TCubeQuery } from "@/modules/ee/analysis/types/analysis";
 import {
   Dialog,
@@ -13,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { Input } from "@/modules/ui/components/input";
 
 interface EditChartViewProps {
   open: boolean;
@@ -21,6 +23,8 @@ interface EditChartViewProps {
   chartData: AnalyticsResponse;
   chartName: string;
   onChartNameChange: (name: string) => void;
+  selectedChartType: string;
+  onChartTypeChange: (type: string) => void;
   onChartGenerated: (data: AnalyticsResponse) => void;
   onAdvancedBuilderSave: (savedChartId: string) => void;
   onAdvancedBuilderAddToDashboard: (savedChartId: string, dashboardId?: string) => void;
@@ -43,6 +47,8 @@ export function EditChartView({
   chartData,
   chartName,
   onChartNameChange,
+  selectedChartType,
+  onChartTypeChange,
   onChartGenerated,
   onAdvancedBuilderSave,
   onAdvancedBuilderAddToDashboard,
@@ -67,9 +73,22 @@ export function EditChartView({
         </DialogHeader>
         <DialogBody>
           <div className="grid gap-4 px-1">
+            <div className="space-y-2">
+              <label htmlFor="edit-chart-name" className="text-sm font-medium text-gray-900">
+                {t("environments.analysis.charts.chart_name")}
+              </label>
+              <Input
+                id="edit-chart-name"
+                value={chartName}
+                onChange={(e) => onChartNameChange(e.target.value)}
+                placeholder={t("environments.analysis.charts.chart_name_placeholder")}
+                className="w-full"
+              />
+            </div>
+            <ManualChartBuilder selectedChartType={selectedChartType} onChartTypeSelect={onChartTypeChange} />
             <AdvancedChartBuilder
               environmentId={environmentId}
-              initialChartType={chartData.chartType || ""}
+              initialChartType={selectedChartType || chartData.chartType || ""}
               initialQuery={chartData.query as TCubeQuery | undefined}
               hidePreview={true}
               onChartGenerated={onChartGenerated}
@@ -92,6 +111,7 @@ export function EditChartView({
           onSaveDialogOpenChange={onSaveDialogOpenChange}
           isAddToDashboardDialogOpen={isAddToDashboardDialogOpen}
           onAddToDashboardDialogOpenChange={onAddToDashboardDialogOpenChange}
+          onDirectSave={onSave}
         />
       </DialogContent>
     </Dialog>

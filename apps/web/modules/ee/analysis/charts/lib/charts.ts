@@ -236,10 +236,9 @@ export const getCharts = reactCache(async (environmentId: string): Promise<TChar
     const charts = await prisma.chart.findMany({
       where: { projectId: project.id },
       orderBy: { createdAt: "desc" },
-      include: {
-        creator: {
-          select: { name: true },
-        },
+      select: {
+        ...selectChart,
+        creator: { select: { name: true } },
       },
     });
     return charts.map((chart) => ({

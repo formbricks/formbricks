@@ -1,3 +1,4 @@
+import { format, isValid, parseISO } from "date-fns";
 import type { TApiChartType, TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 
 // Chart brand colors (used by chart rendering utilities)
@@ -15,6 +16,7 @@ export const mapChartType = (apiType: string): TChartType => {
     pie: "pie",
     donut: "pie",
     kpi: "big_number",
+    big_number: "big_number",
   };
   return mapping[apiType] || "bar";
 };
@@ -80,3 +82,20 @@ export const preparePieData = (
   if (colors.length > 1) colors[1] = CHART_BRAND_LIGHT;
   return { processedData, colors };
 };
+
+/**
+ * Format a cell value for display in tables and tooltips.
+ * ISO date strings become "MMM d, yyyy"; numbers stay as-is (formatted); objects are stringified.
+ */
+export function formatCellValue(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "number") return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  if (typeof value === "string") {
+    const date = parseISO(value);
+    if (isValid(date)) return format(date, "MMM d, yyyy");
+    return value;
+  }
+  if (typeof value === "object") return JSON.stringify(value);
+  if (typeof value === "boolean" || typeof value === "bigint") return String(value);
+  return "";
+}

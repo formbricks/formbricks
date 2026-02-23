@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { CHART_TYPES } from "@/modules/ee/analysis/charts/lib/chart-types";
 
@@ -14,9 +15,12 @@ export function ManualChartBuilder({
   selectedChartType,
   onChartTypeSelect,
 }: Readonly<ManualChartBuilderProps>) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
-      <h2 className="font-medium text-gray-900">Choose chart type</h2>
+      <h2 className="font-medium text-gray-900">
+        {t("environments.analysis.charts.chart_builder_choose_chart_type")}
+      </h2>
 
       <div className="rounded-lg border border-gray-200 bg-white p-4">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
@@ -36,7 +40,9 @@ export function ManualChartBuilder({
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded bg-gray-100">
                   <chart.icon className="h-6 w-6 text-gray-600" strokeWidth={1.5} />
                 </div>
-                <span className="text-xs font-medium text-gray-700">{chart.name}</span>
+                <span className="text-xs font-medium text-gray-700">
+                  {t(`environments.analysis.charts.chart_type_${chart.id}`)}
+                </span>
               </button>
             );
           })}

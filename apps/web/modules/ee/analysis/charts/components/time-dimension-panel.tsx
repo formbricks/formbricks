@@ -82,15 +82,6 @@ export function TimeDimensionPanel({
     }
   };
 
-  const handleCustomDateChange = () => {
-    if (customStartDate && customEndDate && timeDimension) {
-      onTimeDimensionChange({
-        ...timeDimension,
-        dateRange: [customStartDate, customEndDate],
-      });
-    }
-  };
-
   if (!timeDimension) {
     return (
       <div className="space-y-4">
@@ -200,8 +191,11 @@ export function TimeDimensionPanel({
                     <Calendar
                       onChange={(date: Date) => {
                         setCustomStartDate(date);
-                        if (date && customEndDate) {
-                          handleCustomDateChange();
+                        if (timeDimension && date && customEndDate) {
+                          onTimeDimensionChange({
+                            ...timeDimension,
+                            dateRange: [date, customEndDate],
+                          });
                         }
                       }}
                       value={customStartDate || undefined}
@@ -222,8 +216,11 @@ export function TimeDimensionPanel({
                     <Calendar
                       onChange={(date: Date) => {
                         setCustomEndDate(date);
-                        if (customStartDate && date) {
-                          handleCustomDateChange();
+                        if (timeDimension && customStartDate && date) {
+                          onTimeDimensionChange({
+                            ...timeDimension,
+                            dateRange: [customStartDate, date],
+                          });
                         }
                       }}
                       value={customEndDate || undefined}

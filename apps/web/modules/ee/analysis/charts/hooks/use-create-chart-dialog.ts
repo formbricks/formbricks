@@ -13,7 +13,7 @@ import {
 } from "@/modules/ee/analysis/charts/actions";
 import { mapChartType, mapDatabaseChartTypeToApi } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
-import { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
+import type { AnalyticsResponse, TApiChartType } from "@/modules/ee/analysis/types/analysis";
 
 export interface UseCreateChartDialogProps {
   open: boolean;
@@ -52,7 +52,7 @@ export function useCreateChartDialog({
         if (result?.data) {
           setDashboards(result.data.map((d) => ({ id: d.id, name: d.name })));
         } else if (result?.serverError) {
-          toast.error(result.serverError);
+          toast.error(getFormattedErrorMessage(result));
         }
       });
     }
@@ -72,18 +72,17 @@ export function useCreateChartDialog({
               query: chart.query,
             });
 
-            if (queryResult?.data?.error || queryResult?.serverError) {
+            if (queryResult?.serverError) {
               toast.error(
-                (queryResult?.data as { error?: string })?.error ||
-                  queryResult?.serverError ||
+                getFormattedErrorMessage(queryResult) ||
                   t("environments.analysis.charts.failed_to_load_chart_data")
               );
               setIsLoadingChart(false);
               return;
             }
 
-            if (queryResult?.data && "data" in queryResult.data && Array.isArray(queryResult.data.data)) {
-              const data = queryResult.data.data;
+            const data = Array.isArray(queryResult?.data) ? queryResult.data : undefined;
+            if (data) {
               const loadedChartData: AnalyticsResponse = {
                 query: chart.query,
                 chartType: mapDatabaseChartTypeToApi(chart.type),
@@ -91,12 +90,13 @@ export function useCreateChartDialog({
               };
 
               setChartData(loadedChartData);
+              setSelectedChartType(loadedChartData.chartType ?? "");
               setCurrentChartId(chart.id);
             } else {
               toast.error(t("environments.analysis.charts.no_data_returned_for_chart"));
             }
           } else if (result?.serverError) {
-            toast.error(result.serverError);
+            toast.error(getFormattedErrorMessage(result));
           }
           setIsLoadingChart(false);
         })
@@ -116,7 +116,9 @@ export function useCreateChartDialog({
 
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
-    setChartName(data.chartType ? `Chart ${new Date().toLocaleString()}` : "");
+    if (!currentChartId) {
+      setChartName(data.chartType ? `Chart ${new Date().toLocaleString()}` : "");
+    }
     setSelectedChartType(data.chartType);
   };
 
@@ -209,7 +211,10 @@ export function useCreateChartDialog({
         });
 
         if (!chartResult?.data) {
-          toast.error(chartResult?.serverError || t("environments.analysis.charts.failed_to_save_chart"));
+          toast.error(
+            (chartResult && getFormattedErrorMessage(chartResult)) ||
+              t("environments.analysis.charts.failed_to_save_chart")
+          );
           setIsSaving(false);
           return;
         }
@@ -228,7 +233,8 @@ export function useCreateChartDialog({
 
       if (!widgetResult?.data) {
         toast.error(
-          widgetResult?.serverError || t("environments.analysis.charts.failed_to_add_chart_to_dashboard")
+          (widgetResult && getFormattedErrorMessage(widgetResult)) ||
+            t("environments.analysis.charts.failed_to_add_chart_to_dashboard")
         );
         return;
       }
@@ -272,6 +278,11 @@ export function useCreateChartDialog({
     onSuccess?.();
   };
 
+  const handleChartTypeChange = (type: TApiChartType) => {
+    setSelectedChartType(type);
+    setChartData((prev) => (prev ? { ...prev, chartType: type } : null));
+  };
+
   return {
     chartData,
     chartName,
@@ -296,5 +307,6 @@ export function useCreateChartDialog({
     handleClose,
     handleAdvancedBuilderSave,
     handleAdvancedBuilderAddToDashboard,
+    handleChartTypeChange,
   };
 }

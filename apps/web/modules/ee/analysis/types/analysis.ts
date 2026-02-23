@@ -93,7 +93,7 @@ export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
 
 // ── Charts UI (query execution, AI response) ─────────────────────────────────
 
-export const ZApiChartType = z.enum(["bar", "line", "donut", "kpi", "area", "pie"]);
+export const ZApiChartType = z.enum(["bar", "line", "donut", "kpi", "area", "pie", "big_number"]);
 export type TApiChartType = z.infer<typeof ZApiChartType>;
 
 export const ZTimeDimension = z.object({

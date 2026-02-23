@@ -7,6 +7,7 @@ import React, { useEffect, useReducer, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/dashboard";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createChartAction, executeQueryAction } from "@/modules/ee/analysis/charts/actions";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
@@ -16,7 +17,7 @@ import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-
 import { SaveChartDialog } from "@/modules/ee/analysis/charts/components/save-chart-dialog";
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
 import { CHART_TYPES } from "@/modules/ee/analysis/charts/lib/chart-types";
-import { mapChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { formatCellValue, mapChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import {
   ChartBuilderState,
@@ -26,6 +27,7 @@ import {
   buildCubeQuery,
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
+import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { AnalyticsResponse, TChartDataRow, TCubeQuery } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
@@ -143,9 +145,11 @@ export function AdvancedChartBuilder({
         environmentId,
         query: initialQuery as TChartQuery,
       }).then((result) => {
-        const actionData = result?.data as { data?: TChartDataRow[] } | undefined;
-        const rawData = actionData && "data" in actionData ? actionData.data : actionData;
-        const data = Array.isArray(rawData) ? rawData : [];
+        if (result?.serverError) {
+          setError(getFormattedErrorMessage(result));
+          return;
+        }
+        const data = Array.isArray(result?.data) ? result.data : [];
         if (data.length > 0) {
           setChartData(data);
           setQuery(initialQuery);
@@ -194,17 +198,6 @@ export function AdvancedChartBuilder({
     if (stateHash === lastStateRef.current) return;
     lastStateRef.current = stateHash;
 
-    if (chartData && Array.isArray(chartData) && chartData.length > 0 && query) {
-      if (onChartGenerated) {
-        const analyticsResponse: AnalyticsResponse = {
-          query,
-          chartType: state.chartType as AnalyticsResponse["chartType"],
-          data: chartData,
-        };
-        onChartGenerated(analyticsResponse);
-      }
-    }
-
     if (state.selectedMeasures.length === 0 && state.customMeasures.length === 0) {
       return;
     }
@@ -218,9 +211,7 @@ export function AdvancedChartBuilder({
       query: updatedQuery as TChartQuery,
     })
       .then((result) => {
-        const actionData = result?.data as { data?: TChartDataRow[] } | undefined;
-        const rawData = actionData && "data" in actionData ? actionData.data : actionData;
-        const data = Array.isArray(rawData) ? rawData : [];
+        const data = Array.isArray(result?.data) ? result.data : [];
         if (data.length > 0) {
           setChartData(data);
           setQuery(updatedQuery);
@@ -233,7 +224,7 @@ export function AdvancedChartBuilder({
             onChartGenerated(analyticsResponse);
           }
         } else if (result?.serverError) {
-          setError(result.serverError);
+          setError(getFormattedErrorMessage(result));
         }
       })
       .catch((err: unknown) => {
@@ -256,8 +247,6 @@ export function AdvancedChartBuilder({
     isInitialized,
     environmentId,
     onChartGenerated,
-    chartData,
-    query,
   ]);
 
   useEffect(() => {
@@ -266,7 +255,7 @@ export function AdvancedChartBuilder({
         if (result?.data) {
           setDashboards(result.data.map((d) => ({ id: d.id, name: d.name })));
         } else if (result?.serverError) {
-          toast.error(result.serverError);
+          toast.error(getFormattedErrorMessage(result));
         }
       });
     }
@@ -296,18 +285,13 @@ export function AdvancedChartBuilder({
         query: cubeQuery as TChartQuery,
       });
 
-      const actionData = result?.data as { data?: TChartDataRow[]; error?: string } | undefined;
-      const rawData = actionData && "data" in actionData ? actionData.data : actionData;
       if (result?.serverError) {
-        setError(result.serverError);
-        toast.error(result.serverError);
+        const errorMsg = getFormattedErrorMessage(result);
+        setError(errorMsg);
+        toast.error(errorMsg);
         setChartData(null);
-      } else if (actionData?.error) {
-        setError(actionData.error);
-        toast.error(actionData.error);
-        setChartData(null);
-      } else if (rawData !== undefined && Array.isArray(rawData)) {
-        const data = rawData;
+      } else if (result?.data !== undefined && Array.isArray(result.data)) {
+        const data = result.data;
         setChartData(data);
         setError(null);
         toast.success(t("environments.analysis.charts.query_executed_successfully"));
@@ -357,7 +341,10 @@ export function AdvancedChartBuilder({
       });
 
       if (!result?.data) {
-        toast.error(result?.serverError || t("environments.analysis.charts.failed_to_save_chart"));
+        toast.error(
+          (result && getFormattedErrorMessage(result)) ||
+            t("environments.analysis.charts.failed_to_save_chart")
+        );
         return;
       }
 
@@ -400,7 +387,10 @@ export function AdvancedChartBuilder({
       });
 
       if (!chartResult?.data) {
-        toast.error(chartResult?.serverError || t("environments.analysis.charts.failed_to_save_chart"));
+        toast.error(
+          (chartResult && getFormattedErrorMessage(chartResult)) ||
+            t("environments.analysis.charts.failed_to_save_chart")
+        );
         return;
       }
 
@@ -412,7 +402,8 @@ export function AdvancedChartBuilder({
 
       if (!widgetResult?.data) {
         toast.error(
-          widgetResult?.serverError || t("environments.analysis.charts.failed_to_add_chart_to_dashboard")
+          (widgetResult && getFormattedErrorMessage(widgetResult)) ||
+            t("environments.analysis.charts.failed_to_add_chart_to_dashboard")
         );
         return;
       }
@@ -561,7 +552,7 @@ export function AdvancedChartBuilder({
                               <th
                                 key={key}
                                 className="border-b border-gray-200 px-3 py-2 text-left font-medium">
-                                {key}
+                                {formatCubeColumnHeader(key)}
                               </th>
                             ))}
                         </tr>
@@ -577,7 +568,7 @@ export function AdvancedChartBuilder({
                               <tr key={`row-${idx}-${rowKey}`} className="border-b border-gray-100">
                                 {Object.entries(row).map(([key, value]) => (
                                   <td key={`${rowKey}-${key}`} className="px-3 py-2">
-                                    {value?.toString() ?? "-"}
+                                    {formatCellValue(value) || "-"}
                                   </td>
                                 ))}
                               </tr>

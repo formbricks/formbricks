@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon, SaveIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { SaveChartDialog } from "@/modules/ee/analysis/charts/components/save-chart-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -19,6 +20,8 @@ interface ChartDialogFooterWithModalsProps {
   onSaveDialogOpenChange: (open: boolean) => void;
   isAddToDashboardDialogOpen: boolean;
   onAddToDashboardDialogOpenChange: (open: boolean) => void;
+  /** When provided (editing), Save runs this directly; otherwise Save opens name dialog */
+  onDirectSave?: () => void;
 }
 
 export function ChartDialogFooterWithModals({
@@ -34,17 +37,27 @@ export function ChartDialogFooterWithModals({
   onSaveDialogOpenChange,
   isAddToDashboardDialogOpen,
   onAddToDashboardDialogOpenChange,
+  onDirectSave,
 }: Readonly<ChartDialogFooterWithModalsProps>) {
+  const { t } = useTranslation();
+  const handleSaveClick = () => {
+    if (onDirectSave) {
+      onDirectSave();
+    } else {
+      onSaveDialogOpenChange(true);
+    }
+  };
+
   return (
     <>
       <DialogFooter>
         <Button variant="outline" onClick={() => onAddToDashboardDialogOpenChange(true)} disabled={isSaving}>
           <PlusIcon className="mr-2 h-4 w-4" />
-          Add to Dashboard
+          {t("environments.analysis.charts.add_to_dashboard")}
         </Button>
-        <Button onClick={() => onSaveDialogOpenChange(true)} disabled={isSaving}>
+        <Button onClick={handleSaveClick} disabled={isSaving}>
           <SaveIcon className="mr-2 h-4 w-4" />
-          Save Chart
+          {t("environments.analysis.charts.save_chart")}
         </Button>
       </DialogFooter>
 

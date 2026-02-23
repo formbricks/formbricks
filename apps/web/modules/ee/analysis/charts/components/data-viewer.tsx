@@ -2,15 +2,15 @@
 
 import { DatabaseIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 
 interface DataViewerProps {
   data: TChartDataRow[];
-  isOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
 }
 
-export function DataViewer({ data }: Readonly<Omit<DataViewerProps, "isOpen" | "onOpenChange">>) {
+export function DataViewer({ data }: Readonly<DataViewerProps>) {
   const { t } = useTranslation();
   if (!data || data.length === 0) {
     return (
@@ -37,7 +37,7 @@ export function DataViewer({ data }: Readonly<Omit<DataViewerProps, "isOpen" | "
             <tr>
               {columns.map((key) => (
                 <th key={key} className="border-b border-gray-200 px-3 py-2 text-left font-semibold">
-                  {key}
+                  {formatCubeColumnHeader(key)}
                 </th>
               ))}
             </tr>
@@ -49,7 +49,7 @@ export function DataViewer({ data }: Readonly<Omit<DataViewerProps, "isOpen" | "
                 <tr key={`data-row-${rowKey}-${index}`} className="border-b border-gray-100 hover:bg-gray-50">
                   {Object.entries(row).map(([key, value]) => (
                     <td key={`cell-${key}-${rowKey}`} className="px-3 py-2">
-                      {typeof value === "object" ? JSON.stringify(value) : String(value)}
+                      {formatCellValue(value)}
                     </td>
                   ))}
                 </tr>

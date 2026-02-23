@@ -193,3 +193,29 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
   if (dimension) return dimension;
   return FEEDBACK_FIELDS.measures.find((m) => m.id === id);
 }
+
+const TIME_GRANULARITY_LABELS: Record<string, string> = {
+  hour: "Hour",
+  day: "Day",
+  week: "Week",
+  month: "Month",
+  quarter: "Quarter",
+  year: "Year",
+};
+
+/**
+ * Format a Cube.js column key for display (e.g. FeedbackRecords.collectedAt.day → "Day").
+ */
+export function formatCubeColumnHeader(key: string): string {
+  const granularity = TIME_GRANULARITIES.find((g) => key.endsWith(`.${g}`));
+  if (granularity && TIME_GRANULARITY_LABELS[granularity]) {
+    return TIME_GRANULARITY_LABELS[granularity];
+  }
+  const field = getFieldById(key);
+  if (field) return field.label;
+  const lastSegment = key.split(".").pop() ?? key;
+  return lastSegment
+    .replaceAll(/([A-Z])/g, " $1")
+    .replace(/^./, (s) => s.toUpperCase())
+    .trim();
+}

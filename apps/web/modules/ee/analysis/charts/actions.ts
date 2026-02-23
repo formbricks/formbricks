@@ -226,11 +226,9 @@ export const executeQueryAction = authenticatedActionClient
       await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
 
       try {
-        const data = await executeQuery(parsedInput.query as Record<string, unknown>);
-        return { data };
+        return await executeQuery(parsedInput.query as Record<string, unknown>);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to execute query";
-        return { error: message };
+        throw error instanceof Error ? error : new Error("Failed to execute query");
       }
     }
   );
@@ -249,7 +247,7 @@ const ZGenerateAIQueryResponse = z.object({
       })
     )
     .nullable(),
-  chartType: z.enum(["bar", "line", "donut", "kpi", "area", "pie"]),
+  chartType: z.enum(["bar", "line", "area", "pie", "big_number"]),
   filters: z
     .array(
       z.object({
@@ -314,7 +312,7 @@ const AI_QUERY_JSON_SCHEMA = {
     },
     chartType: {
       type: "string" as const,
-      enum: ["bar", "line", "donut", "kpi", "area", "pie"],
+      enum: ["bar", "line", "area", "pie", "big_number"],
       description: "Suggested chart type for visualization",
     },
     filters: {

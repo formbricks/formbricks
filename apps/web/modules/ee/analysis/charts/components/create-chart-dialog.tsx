@@ -34,6 +34,7 @@ export function CreateChartDialog({
     setChartName,
     selectedChartType,
     setSelectedChartType,
+    handleChartTypeChange,
     isSaveDialogOpen,
     setIsSaveDialogOpen,
     isAddToDashboardDialogOpen,
@@ -65,6 +66,8 @@ export function CreateChartDialog({
         chartData={chartData}
         chartName={chartName}
         onChartNameChange={setChartName}
+        selectedChartType={selectedChartType}
+        onChartTypeChange={handleChartTypeChange}
         onChartGenerated={handleChartGenerated}
         onAdvancedBuilderSave={handleAdvancedBuilderSave}
         onAdvancedBuilderAddToDashboard={handleAdvancedBuilderAddToDashboard}

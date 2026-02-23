@@ -50,6 +50,7 @@ export function MeasuresPanel({
     onCustomMeasuresChange([
       ...customMeasures,
       {
+        id: `measure-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         field: dimensionOptions[0]?.value || "",
         aggregation: "avg",
       },
@@ -105,7 +106,7 @@ export function MeasuresPanel({
             <div className="space-y-2">
               {customMeasures.map((measure, index) => (
                 <div
-                  key={measure.field ?? `custom-measure-${index}`}
+                  key={measure.id ?? `custom-measure-${index}`}
                   className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
                   <Select
                     value={measure.field}
