@@ -60,7 +60,10 @@ const convertValueToHubFields = (
       return {};
 
     case "date":
-      if (typeof value === "string") return { value_date: value };
+      if (typeof value === "string") {
+        const date = new Date(value);
+        if (!Number.isNaN(date.getTime())) return { value_date: date.toISOString() };
+      }
       if (value instanceof Date) return { value_date: value.toISOString() };
       return {};
 

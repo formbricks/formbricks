@@ -2058,6 +2058,7 @@
       "copy": "Копировать",
       "create_mapping": "Создать сопоставление",
       "csv_columns": "Столбцы CSV",
+      "csv_file_too_large": "Файл CSV слишком большой. Максимальный размер — 2 МБ.",
       "csv_files_only": "Только файлы CSV",
       "csv_import": "Импорт CSV",
       "delete_source": "Удалить источник",

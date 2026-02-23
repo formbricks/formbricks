@@ -1,5 +1,6 @@
 "use client";
 
+import { parse } from "csv-parse/sync";
 import {
   ArrowUpFromLineIcon,
   CloudIcon,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -21,7 +23,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
-import { TFieldMapping, TSourceField } from "../types";
+import { MAX_CSV_VALUES, TFieldMapping, TSourceField, ZFeedbackCSVData } from "../types";
 import { MappingUI } from "./mapping-ui";
 
 interface CsvConnectorUIProps {
@@ -43,6 +45,7 @@ export function CsvConnectorUI({
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<string[][]>([]);
   const [showMapping, setShowMapping] = useState(false);
+  const [csvError, setCsvError] = useState("");
   const [s3AutoSync, setS3AutoSync] = useState(false);
   const [s3Copied, setS3Copied] = useState(false);
 
@@ -63,29 +66,57 @@ export function CsvConnectorUI({
   };
 
   const processCSVFile = (file: File) => {
+    setCsvError("");
+
     if (!file.name.endsWith(".csv")) {
+      setCsvError(t("environments.unify.csv_files_only"));
       return;
     }
 
-    setCsvFile(file);
+    if (file.type && file.type !== "text/csv" && !file.type.includes("csv")) {
+      setCsvError(t("environments.unify.csv_files_only"));
+      return;
+    }
+
+    if (file.size > MAX_CSV_VALUES.FILE_SIZE) {
+      setCsvError(t("environments.unify.csv_file_too_large"));
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const csv = e.target?.result as string;
-      const lines = csv.split("\n").slice(0, 6);
-      const preview = lines.map((line) => line.split(",").map((cell) => cell.trim()));
-      setCsvPreview(preview);
 
-      if (preview.length > 0) {
-        const headers = preview[0];
+      try {
+        const records = parse(csv, { columns: true, skip_empty_lines: true });
+
+        const result = ZFeedbackCSVData.safeParse(records);
+        if (!result.success) {
+          setCsvError(result.error.errors[0].message);
+          return;
+        }
+
+        const validRecords = result.data;
+        const headers = Object.keys(validRecords[0]);
+
+        const preview: string[][] = [
+          headers,
+          ...validRecords.slice(0, 5).map((row) => headers.map((h) => row[h] ?? "")),
+        ];
+        setCsvFile(file);
+        setCsvPreview(preview);
+
         const fields: TSourceField[] = headers.map((header) => ({
           id: header,
           name: header,
           type: "string",
-          sampleValue: preview[1]?.[headers.indexOf(header)] || "",
+          sampleValue: validRecords[0][header] ?? "",
         }));
         onSourceFieldsChange(fields);
         setShowMapping(true);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to parse CSV";
+        setCsvError(message);
       }
     };
     reader.readAsText(file);
@@ -126,6 +157,7 @@ export function CsvConnectorUI({
               onClick={() => {
                 setCsvFile(null);
                 setCsvPreview([]);
+                setCsvError("");
                 setShowMapping(false);
                 onSourceFieldsChange([]);
               }}>
@@ -180,6 +212,11 @@ export function CsvConnectorUI({
 
   return (
     <div className="space-y-6">
+      {csvError && (
+        <Alert variant="error" size="small">
+          {csvError}
+        </Alert>
+      )}
       <div className="space-y-3">
         <h4 className="text-sm font-medium text-slate-700">{t("environments.unify.upload_csv_file")}</h4>
         <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6">

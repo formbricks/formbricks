@@ -36,7 +36,7 @@ interface CreateConnectorModalProps {
     surveyId?: string;
     elementIds?: string[];
     fieldMappings?: TFieldMapping[];
-  }) => void;
+  }) => Promise<void>;
   surveys: TUnifySurvey[];
 }
 
@@ -123,7 +123,7 @@ export const CreateConnectorModal = ({
     }
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!selectedType || !connectorName.trim()) return;
 
     if (selectedType !== "formbricks") {
@@ -135,7 +135,7 @@ export const CreateConnectorModal = ({
       }
     }
 
-    onCreateConnector({
+    await onCreateConnector({
       name: connectorName.trim(),
       type: selectedType,
       surveyId: selectedType === "formbricks" ? (selectedSurveyId ?? undefined) : undefined,

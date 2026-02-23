@@ -2058,6 +2058,7 @@
       "copy": "複製",
       "create_mapping": "建立對應關係",
       "csv_columns": "CSV 欄位",
+      "csv_file_too_large": "CSV 檔案過大，最大限制為 2MB。",
       "csv_files_only": "僅限 CSV 檔案",
       "csv_import": "CSV 匯入",
       "delete_source": "刪除來源",

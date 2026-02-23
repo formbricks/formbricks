@@ -30,8 +30,8 @@ interface EditConnectorModalProps {
     surveyId?: string;
     elementIds?: string[];
     fieldMappings?: TFieldMapping[];
-  }) => void;
-  onDeleteConnector: (connectorId: string) => void;
+  }) => Promise<void>;
+  onDeleteConnector: (connectorId: string) => Promise<void>;
   surveys: TUnifySurvey[];
 }
 
@@ -140,10 +140,10 @@ export function EditConnectorModal({
     setSelectedElementIds([]);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!connector || !connectorName.trim()) return;
 
-    onUpdateConnector({
+    await onUpdateConnector({
       connectorId: connector.id,
       name: connectorName.trim(),
       surveyId: connector.type === "formbricks" ? (selectedSurveyId ?? undefined) : undefined,
@@ -153,9 +153,9 @@ export function EditConnectorModal({
     handleOpenChange(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!connector) return;
-    onDeleteConnector(connector.id);
+    await onDeleteConnector(connector.id);
     handleOpenChange(false);
   };
 

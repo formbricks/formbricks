@@ -2058,6 +2058,7 @@
       "copy": "コピー",
       "create_mapping": "マッピングを作成",
       "csv_columns": "CSV列",
+      "csv_file_too_large": "CSVファイルが大きすぎます。最大サイズは2MBです。",
       "csv_files_only": "CSVファイルのみ",
       "csv_import": "CSVインポート",
       "delete_source": "ソースを削除",

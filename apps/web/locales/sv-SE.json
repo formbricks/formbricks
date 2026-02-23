@@ -2058,6 +2058,7 @@
       "copy": "Kopiera",
       "create_mapping": "Skapa mappning",
       "csv_columns": "CSV-kolumner",
+      "csv_file_too_large": "CSV-filen är för stor. Maxstorlek är 2 MB.",
       "csv_files_only": "Endast CSV-filer",
       "csv_import": "CSV-import",
       "delete_source": "Ta bort källa",

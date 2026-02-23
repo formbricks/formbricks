@@ -2058,6 +2058,7 @@
       "copy": "Copiază",
       "create_mapping": "Creează mapare",
       "csv_columns": "Coloane CSV",
+      "csv_file_too_large": "Fișierul CSV este prea mare. Dimensiunea maximă este de 2 MB.",
       "csv_files_only": "Doar fișiere CSV",
       "csv_import": "Import CSV",
       "delete_source": "Șterge sursa",

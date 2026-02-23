@@ -2058,6 +2058,7 @@
       "copy": "Kopiëren",
       "create_mapping": "Koppeling aanmaken",
       "csv_columns": "CSV kolommen",
+      "csv_file_too_large": "CSV-bestand is te groot. Maximale grootte is 2MB.",
       "csv_files_only": "Alleen CSV bestanden",
       "csv_import": "CSV import",
       "delete_source": "Bron verwijderen",

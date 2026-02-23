@@ -2058,6 +2058,7 @@
       "copy": "Copy",
       "create_mapping": "Create mapping",
       "csv_columns": "CSV Columns",
+      "csv_file_too_large": "CSV file is too large. Maximum size is 2MB.",
       "csv_files_only": "CSV files only",
       "csv_import": "CSV Import",
       "delete_source": "Delete source",

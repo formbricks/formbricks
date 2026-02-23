@@ -2058,6 +2058,7 @@
       "copy": "Másolás",
       "create_mapping": "Leképezés létrehozása",
       "csv_columns": "CSV oszlopok",
+      "csv_file_too_large": "A CSV fájl túl nagy. A maximális méret 2 MB.",
       "csv_files_only": "Csak CSV fájlok",
       "csv_import": "CSV importálás",
       "delete_source": "Forrás törlése",

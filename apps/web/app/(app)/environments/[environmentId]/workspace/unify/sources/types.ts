@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { THubFieldType, ZHubFieldType } from "@formbricks/types/connector";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 
@@ -169,5 +170,41 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
 ];
 
 export const SAMPLE_CSV_COLUMNS = "timestamp,customer_id,rating,feedback_text,category";
+
+export const MAX_CSV_VALUES = {
+  FILE_SIZE: 2_097_152, // 2MB (2 * 1024 * 1024)
+  RECORDS: 1_000, // 1,000 records
+} as const;
+
+export const ZFeedbackCSVData = z
+  .array(z.record(z.string(), z.string()))
+  .min(1, { message: "CSV must contain at least one data row." })
+  .max(MAX_CSV_VALUES.RECORDS, {
+    message: `Maximum ${MAX_CSV_VALUES.RECORDS.toLocaleString()} records allowed.`,
+  })
+  .superRefine((rows, ctx) => {
+    const firstRowKeys = Object.keys(rows[0]).sort().join(",");
+
+    for (let i = 1; i < rows.length; i++) {
+      const rowKeys = Object.keys(rows[i]).sort().join(",");
+      if (rowKeys !== firstRowKeys) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Row ${(i + 1).toString()} has inconsistent columns. All rows must have the same headers.`,
+        });
+        return;
+      }
+    }
+
+    const emptyHeaders = Object.keys(rows[0]).filter((k) => k.trim() === "");
+    if (emptyHeaders.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "CSV contains empty column headers. All columns must have a name.",
+      });
+    }
+  });
+
+export type TFeedbackCSVData = z.infer<typeof ZFeedbackCSVData>;
 
 export type TCreateConnectorStep = "selectType" | "mapping";

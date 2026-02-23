@@ -2058,6 +2058,7 @@
       "copy": "复制",
       "create_mapping": "创建映射",
       "csv_columns": "CSV 列",
+      "csv_file_too_large": "CSV 文件过大，最大支持 2MB。",
       "csv_files_only": "仅限 CSV 文件",
       "csv_import": "CSV 导入",
       "delete_source": "删除来源",

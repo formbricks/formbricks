@@ -2058,6 +2058,7 @@
       "copy": "Copier",
       "create_mapping": "Créer un mappage",
       "csv_columns": "Colonnes CSV",
+      "csv_file_too_large": "Le fichier CSV est trop volumineux. La taille maximale est de 2 Mo.",
       "csv_files_only": "Fichiers CSV uniquement",
       "csv_import": "Importation CSV",
       "delete_source": "Supprimer la source",
