@@ -141,18 +141,18 @@ function DropdownVariant({
   };
 
   return (
-    <div className="space-y-2">
+    <div>
       <ElementError errorMessage={errorMessage} dir={dir} />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
             disabled={disabled}
-            className="rounded-input bg-option-bg rounded-option border-option-border h-input my-0 w-full justify-between border"
+            className="rounded-input w-full justify-between"
             aria-invalid={Boolean(errorMessage)}
             aria-label={headline}>
-            <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
-            <ChevronDown className="label-headline ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <span className="truncate">{displayText}</span>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
