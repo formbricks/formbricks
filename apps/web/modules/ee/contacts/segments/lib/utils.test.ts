@@ -75,7 +75,7 @@ const createBaseFilter = (
   connector: "and" | "or" | null = "and",
   id?: string
 ): TBaseFilter => ({
-  id: id ?? (isResourceFilter(resource) ? resource.id : `group-${Math.random()}`), // Use filter ID or random for group
+  id: id ?? (isResourceFilter(resource) ? resource.id : `group-${crypto.randomUUID()}`), // Use filter ID or UUID for group
   connector,
   resource,
 });

@@ -57,12 +57,7 @@ function CartesianChartTooltip({
   dataKey,
   formatXAxisTick,
 }: Readonly<{ dataKey: string; formatXAxisTick: (value: unknown) => string }>) {
-  return (
-    <ChartTooltipContent
-      labelFormatter={(val) => formatXAxisTick(val)}
-      formatter={createTooltipFormatter(dataKey)}
-    />
-  );
+  return <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={createTooltipFormatter(dataKey)} />;
 }
 
 interface ChartRendererProps {

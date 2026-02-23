@@ -35,6 +35,13 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
     setEditingChartId(undefined);
   };
 
+  const handleRowKeyDown = (e: React.KeyboardEvent, chartId: string) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleChartClick(chartId);
+    }
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
@@ -51,9 +58,15 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
       ) : (
         <>
           {filteredCharts.map((chart) => (
+            // Cannot use native <button>; row contains dropdown trigger (nested interactive invalid)
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role, jsx-a11y/no-static-element-interactions
             <div
               key={chart.id}
+              role="button"
+              tabIndex={0}
               onClick={() => handleChartClick(chart.id)}
+              onKeyDown={(e) => handleRowKeyDown(e, chart.id)}
+              aria-label={t("environments.analysis.charts.open_chart", { name: chart.name })}
               className="grid h-12 w-full cursor-pointer grid-cols-7 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-100">
               <div className="col-span-3 flex items-center pl-6 text-sm">
                 <div className="flex items-center gap-4">
@@ -80,9 +93,7 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
                   }).replace("about", "")}
                 </div>
               </div>
-              <div
-                className="col-span-1 my-auto flex items-center justify-end pr-6"
-                onClick={(e) => e.stopPropagation()}>
+              <div className="col-span-1 my-auto flex items-center justify-end pr-6">
                 <ChartDropdownMenu
                   environmentId={environmentId}
                   chart={chart}

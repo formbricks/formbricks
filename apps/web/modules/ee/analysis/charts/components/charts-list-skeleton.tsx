@@ -1,4 +1,5 @@
 const SKELETON_ROWS = 5;
+const SKELETON_ROW_KEYS = Array.from({ length: SKELETON_ROWS }, (_, i) => `skeleton-row-${i}`);
 
 function SkeletonRow() {
   return (
@@ -31,8 +32,8 @@ export function ChartsListSkeleton() {
         <div className="col-span-1 hidden text-center sm:block">Updated</div>
         <div className="col-span-1" />
       </div>
-      {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
-        <SkeletonRow key={i} />
+      {SKELETON_ROW_KEYS.map((key) => (
+        <SkeletonRow key={key} />
       ))}
     </div>
   );
