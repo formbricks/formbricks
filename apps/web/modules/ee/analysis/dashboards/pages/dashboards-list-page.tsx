@@ -1,3 +1,4 @@
+import { Delay } from "@suspensive/react";
 import { Suspense } from "react";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
@@ -35,15 +36,17 @@ export const DashboardsListPage = async (props: { params: Promise<{ environmentI
       cta={isReadOnly ? undefined : <CreateDashboardButton environmentId={environmentId} />}>
       <Suspense
         fallback={
-          <DashboardsListSkeleton
-            columnHeaders={[
-              t("common.title"),
-              t("common.charts"),
-              t("common.created_by"),
-              t("common.created"),
-              t("common.updated"),
-            ]}
-          />
+          <Delay ms={200}>
+            <DashboardsListSkeleton
+              columnHeaders={[
+                t("common.title"),
+                t("common.charts"),
+                t("common.created_by"),
+                t("common.created"),
+                t("common.updated"),
+              ]}
+            />
+          </Delay>
         }>
         <DashboardsListContent projectId={project.id} environmentId={environmentId} isReadOnly={isReadOnly} />
       </Suspense>
