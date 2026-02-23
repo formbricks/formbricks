@@ -2,7 +2,6 @@
 
 import { CopyIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -28,7 +27,6 @@ export const DashboardDropdownMenu = ({
   dashboardName,
 }: Readonly<DashboardDropdownMenuProps>) => {
   const { t } = useTranslation();
-  const router = useRouter();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
@@ -39,7 +37,6 @@ export const DashboardDropdownMenu = ({
     try {
       const result = await duplicateDashboardAction({ environmentId, dashboardId });
       if (result?.data) {
-        router.refresh();
         toast.success(t("environments.analysis.dashboards.duplicate_success"));
       } else {
         toast.error(result?.serverError || t("environments.analysis.dashboards.duplicate_failed"));
@@ -56,7 +53,7 @@ export const DashboardDropdownMenu = ({
     try {
       const result = await deleteDashboardAction({ environmentId, dashboardId });
       if (result?.data) {
-        router.refresh();
+        setDeleteDialogOpen(false);
         toast.success(t("environments.analysis.dashboards.delete_success"));
       } else {
         toast.error(result?.serverError || t("environments.analysis.dashboards.delete_failed"));

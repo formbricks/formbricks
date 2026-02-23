@@ -1,23 +1,25 @@
-const SKELETON_ROWS = 5;
+const SKELETON_ROWS = 3;
 
 const SkeletonRow = () => {
   return (
-    <div className="grid h-12 w-full animate-pulse grid-cols-8 content-center p-2">
-      <div className="col-span-3 flex items-center gap-4 pl-6">
-        <div className="h-5 w-5 rounded bg-gray-200" />
-        <div className="h-4 w-36 rounded bg-gray-200" />
-      </div>
-      <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
-        <div className="h-4 w-6 rounded bg-gray-200" />
-      </div>
-      <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
-        <div className="h-4 w-16 rounded bg-gray-200" />
-      </div>
-      <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
-        <div className="h-4 w-24 rounded bg-gray-200" />
-      </div>
-      <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
-        <div className="h-4 w-20 rounded bg-gray-200" />
+    <div className="grid h-12 w-full animate-pulse grid-cols-8 content-center">
+      <div className="col-span-7 grid grid-cols-7 content-center p-2">
+        <div className="col-span-3 flex items-center gap-4 pl-6">
+          <div className="h-5 w-5 rounded bg-gray-200" />
+          <div className="h-4 w-36 rounded bg-gray-200" />
+        </div>
+        <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
+          <div className="h-4 w-6 rounded bg-gray-200" />
+        </div>
+        <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
+          <div className="h-4 w-16 rounded bg-gray-200" />
+        </div>
+        <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
+          <div className="h-4 w-24 rounded bg-gray-200" />
+        </div>
+        <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
+          <div className="h-4 w-20 rounded bg-gray-200" />
+        </div>
       </div>
       <div className="col-span-1" />
     </div>

@@ -39,35 +39,38 @@ export const DashboardsTable = async ({
           const createdByName = dashboard.createdBy ? (userMap.get(dashboard.createdBy) ?? null) : null;
 
           return (
-            <Link
+            <div
               key={dashboard.id}
-              href={`/environments/${environmentId}/analysis/dashboards/${dashboard.id}`}
-              className="grid h-12 w-full cursor-pointer grid-cols-8 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-100">
-              <div className="col-span-3 flex items-center pl-6 text-sm">
-                <div className="flex items-center gap-4">
-                  <div className="w-8 flex-shrink-0 text-slate-500">
-                    <BarChart3Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="font-medium text-slate-900">{dashboard.name}</div>
-                    {dashboard.description && (
-                      <div className="text-xs font-medium text-slate-500">{dashboard.description}</div>
-                    )}
+              className="grid h-12 w-full grid-cols-8 content-center text-left transition-colors ease-in-out hover:bg-slate-100">
+              <Link
+                href={`/environments/${environmentId}/analysis/dashboards/${dashboard.id}`}
+                className="col-span-7 grid cursor-pointer grid-cols-7 content-center p-2">
+                <div className="col-span-3 flex items-center pl-6 text-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 flex-shrink-0 text-slate-500">
+                      <BarChart3Icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="font-medium text-slate-900">{dashboard.name}</div>
+                      {dashboard.description && (
+                        <div className="text-xs font-medium text-slate-500">{dashboard.description}</div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-                <div className="text-slate-900">{dashboard._count.widgets}</div>
-              </div>
-              <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-                <div className="text-slate-900">{createdByName || "-"}</div>
-              </div>
-              <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
-                <div className="text-slate-900">{convertDateString(dashboard.createdAt.toISOString())}</div>
-              </div>
-              <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
-                <div className="text-slate-900">{timeSinceDate(dashboard.updatedAt)}</div>
-              </div>
+                <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+                  <div className="text-slate-900">{dashboard._count.widgets}</div>
+                </div>
+                <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+                  <div className="text-slate-900">{createdByName || "-"}</div>
+                </div>
+                <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
+                  <div className="text-slate-900">{convertDateString(dashboard.createdAt.toISOString())}</div>
+                </div>
+                <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
+                  <div className="text-slate-900">{timeSinceDate(dashboard.updatedAt)}</div>
+                </div>
+              </Link>
               <div className="col-span-1 my-auto flex items-center justify-end pr-6">
                 {!isReadOnly && (
                   <DashboardDropdownMenu
@@ -77,7 +80,7 @@ export const DashboardsTable = async ({
                   />
                 )}
               </div>
-            </Link>
+            </div>
           );
         })
       )}
