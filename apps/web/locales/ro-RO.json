@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} atribut} few {{value} atribute} other {{value} de atribute}}",
     "count_contacts": "{value, plural, one {# contact} other {# contacte} }",
     "count_responses": "{value, plural, one {# răspuns} other {# răspunsuri} }",
+    "create": "Creează",
     "create_new_organization": "Creează organizație nouă",
     "create_segment": "Creați segment",
     "create_survey": "Creează sondaj",
@@ -189,6 +190,7 @@
     "created_by": "Creat de",
     "customer_success": "Succesul Clientului",
     "dark_overlay": "Suprapunere întunecată",
+    "dashboard": "Tablou de bord",
     "dashboards": "Tablouri de bord",
     "date": "Dată",
     "days": "zile",
@@ -306,6 +308,7 @@
     "on": "Pe",
     "only_one_file_allowed": "Este permis doar un fișier",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Doar proprietarii și managerii pot efectua această acțiune.",
+    "open_options": "Deschide opțiunile",
     "option_id": "ID opțiune",
     "option_ids": "ID-uri opțiuni",
     "optional": "Opțional",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "Puteți urmări acțiunea codului oriunde în aplicația dvs. folosind",
       "your_survey_would_be_shown_on_this_url": "Sondajul dumneavoastră ar fi afișat pe acest URL.",
       "your_survey_would_not_be_shown": "Sondajul dumneavoastră nu va fi afișat."
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "Creează tablou de bord",
+        "create_dashboard_description": "Introdu un nume pentru noul tău tablou de bord.",
+        "create_failed": "Crearea tabloului de bord a eșuat",
+        "create_success": "Tablou de bord creat cu succes!",
+        "dashboard_name": "Nume tablou de bord",
+        "dashboard_name_placeholder": "Tabloul meu de bord",
+        "delete_confirmation": "Ești sigur că vrei să ștergi acest tablou de bord? Această acțiune nu poate fi anulată.",
+        "delete_failed": "Ștergerea tabloului de bord a eșuat",
+        "delete_success": "Tablou de bord șters cu succes",
+        "description_optional": "Descriere (opțional)",
+        "description_placeholder": "Descriere tablou de bord",
+        "duplicate_failed": "Duplicarea tabloului de bord a eșuat",
+        "duplicate_success": "Tablou de bord duplicat cu succes!",
+        "no_dashboards_found": "Nu s-a găsit niciun tablou de bord.",
+        "please_enter_name": "Te rugăm să introduci un nume pentru tablou de bord"
+      }
     },
     "connect": {
       "congrats": "Felicitări!",

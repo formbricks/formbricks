@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} 个属性} other {{value} 个属性}}",
     "count_contacts": "{value, plural, other {{value} 联系人} }",
     "count_responses": "{value, plural, other {{value} 回复} }",
+    "create": "创建",
     "create_new_organization": "创建 新的 组织",
     "create_segment": "创建 细分",
     "create_survey": "创建 调查",
@@ -189,6 +190,7 @@
     "created_by": "由 创建",
     "customer_success": "客户成功",
     "dark_overlay": "深色遮罩层",
+    "dashboard": "Dashboard",
     "dashboards": "仪表盘",
     "date": "日期",
     "days": "天",
@@ -306,6 +308,7 @@
     "on": "开启",
     "only_one_file_allowed": "只 允许 一个 文件",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "只有 所有者 和 管理者 可以 执行 此 操作。",
+    "open_options": "打开选项",
     "option_id": "选项 ID",
     "option_ids": "选项 ID",
     "optional": "可选",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "您 可以 在 应用 中 使用 代码 操作 进行 跟踪",
       "your_survey_would_be_shown_on_this_url": "您的 调查 会 显示 在 此 URL 上",
       "your_survey_would_not_be_shown": "您的 调查 不会 显示。"
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "创建 Dashboard",
+        "create_dashboard_description": "请输入新 Dashboard 的名称。",
+        "create_failed": "创建 Dashboard 失败",
+        "create_success": "Dashboard 创建成功！",
+        "dashboard_name": "Dashboard 名称",
+        "dashboard_name_placeholder": "我的 Dashboard",
+        "delete_confirmation": "确定要删除此 Dashboard 吗？此操作无法撤销。",
+        "delete_failed": "删除 Dashboard 失败",
+        "delete_success": "Dashboard 删除成功",
+        "description_optional": "描述（可选）",
+        "description_placeholder": "Dashboard 描述",
+        "duplicate_failed": "复制 Dashboard 失败",
+        "duplicate_success": "Dashboard 复制成功！",
+        "no_dashboards_found": "未找到 Dashboard。",
+        "please_enter_name": "请输入 Dashboard 名称"
+      }
     },
     "connect": {
       "congrats": "恭喜!",

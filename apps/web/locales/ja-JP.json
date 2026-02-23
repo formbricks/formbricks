@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, other {{value}個の属性}}",
     "count_contacts": "{count, plural, other {# 件の連絡先}}",
     "count_responses": "{count, plural, other {# 件の回答}}",
+    "create": "作成",
     "create_new_organization": "新しい組織を作成",
     "create_segment": "セグメントを作成",
     "create_survey": "フォームを作成",
@@ -189,6 +190,7 @@
     "created_by": "作成者",
     "customer_success": "カスタマーサクセス",
     "dark_overlay": "暗いオーバーレイ",
+    "dashboard": "ダッシュボード",
     "dashboards": "ダッシュボード",
     "date": "日付",
     "days": "日",
@@ -306,6 +308,7 @@
     "on": "オン",
     "only_one_file_allowed": "ファイルは1つのみ許可されています",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "このアクションを実行できるのは、オーナーと管理者のみです。",
+    "open_options": "オプションを開く",
     "option_id": "オプションID",
     "option_ids": "オプションID",
     "optional": "任意",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "アプリ内のどこでも、コードアクションを追跡できます。使用するのは",
       "your_survey_would_be_shown_on_this_url": "あなたのフォームはこのURLに表示されます。",
       "your_survey_would_not_be_shown": "あなたのフォームは表示されません。"
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "ダッシュボードを作成",
+        "create_dashboard_description": "新しいダッシュボードの名前を入力してください。",
+        "create_failed": "ダッシュボードの作成に失敗しました",
+        "create_success": "ダッシュボードを正常に作成しました！",
+        "dashboard_name": "ダッシュボード名",
+        "dashboard_name_placeholder": "マイダッシュボード",
+        "delete_confirmation": "このダッシュボードを削除してもよろしいですか？この操作は元に戻せません。",
+        "delete_failed": "ダッシュボードの削除に失敗しました",
+        "delete_success": "ダッシュボードを正常に削除しました",
+        "description_optional": "説明（任意）",
+        "description_placeholder": "ダッシュボードの説明",
+        "duplicate_failed": "ダッシュボードの複製に失敗しました",
+        "duplicate_success": "ダッシュボードを正常に複製しました！",
+        "no_dashboards_found": "ダッシュボードが見つかりません。",
+        "please_enter_name": "ダッシュボード名を入力してください"
+      }
     },
     "connect": {
       "congrats": "おめでとうございます！",

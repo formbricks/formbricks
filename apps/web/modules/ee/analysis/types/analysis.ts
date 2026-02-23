@@ -65,6 +65,7 @@ export type TDashboard = {
   description: string | null;
   createdAt: Date;
   updatedAt: Date;
+  createdBy: string | null;
 };
 
 export type TDashboardWithCount = TDashboard & {

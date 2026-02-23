@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZWidgetLayout } from "@formbricks/types/dashboard";
@@ -12,6 +13,7 @@ import {
   addChartToDashboard,
   createDashboard,
   deleteDashboard,
+  duplicateDashboard,
   getDashboard,
   getDashboards,
   updateDashboard,
@@ -46,6 +48,8 @@ export const createDashboardAction = authenticatedActionClient.schema(ZCreateDas
         description: parsedInput.description,
         createdBy: ctx.user.id,
       });
+
+      revalidatePath(`/environments/${parsedInput.environmentId}/analysis/dashboards`);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
@@ -119,11 +123,48 @@ export const deleteDashboardAction = authenticatedActionClient.schema(ZDeleteDas
 
       const dashboard = await deleteDashboard(parsedInput.dashboardId, projectId);
 
+      revalidatePath(`/environments/${parsedInput.environmentId}/analysis/dashboards`);
+
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
       ctx.auditLoggingCtx.dashboardId = parsedInput.dashboardId;
       ctx.auditLoggingCtx.oldObject = dashboard;
       return { success: true };
+    }
+  )
+);
+
+const ZDuplicateDashboardAction = z.object({
+  environmentId: ZId,
+  dashboardId: ZId,
+});
+
+export const duplicateDashboardAction = authenticatedActionClient.schema(ZDuplicateDashboardAction).action(
+  withAuditLogging(
+    "created",
+    "dashboard",
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZDuplicateDashboardAction>;
+    }) => {
+      const { organizationId, projectId } = await checkProjectAccess(
+        ctx.user.id,
+        parsedInput.environmentId,
+        "readWrite"
+      );
+
+      const dashboard = await duplicateDashboard(parsedInput.dashboardId, projectId, ctx.user.id);
+
+      revalidatePath(`/environments/${parsedInput.environmentId}/analysis/dashboards`);
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.dashboardId = dashboard.id;
+      ctx.auditLoggingCtx.newObject = dashboard;
+      return dashboard;
     }
   )
 );
