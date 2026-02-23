@@ -1,6 +1,5 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import crypto from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
@@ -209,7 +208,7 @@ export const duplicateDashboard = async (
       while (await tx.dashboard.findFirst({ where: { projectId, name } })) {
         suffix++;
         if (suffix > MAX_NAME_ATTEMPTS) {
-          name = `${baseName} ${crypto.randomUUID().slice(0, 8)}`;
+          name = `${baseName} ${suffix}`;
           break;
         }
         name = `${baseName} ${suffix}`;
