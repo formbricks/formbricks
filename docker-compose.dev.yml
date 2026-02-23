@@ -36,23 +36,25 @@ services:
     volumes:
       - minio-data:/data
 
-  # Cube connects to the Formbricks Hub Postgres which owns the feedback_records table.
-  # The CUBEJS_DB_* defaults below must match the Hub's Postgres credentials.
-  # Override via env vars if your Hub database uses different credentials or runs on another host.
+  # Cube connects to the Hub DB Postgres which owns the feedback_records table.
+  # Uses the superset_formbricks_hub network to reach formbricks_hub_postgres directly.
+  # Ensure the Formbricks Hub stack is running (docker compose -p superset up, or similar).
   #
   # SECURITY: CUBEJS_API_SECRET has no default and must be set explicitly (e.g. in .env).
   # Never use a weak secret in production/staging. Generate with: openssl rand -hex 32
   cube:
     image: cubejs/cube:v1.6.6
+    env_file:
+      - apps/web/.env
     ports:
       - 4000:4000
       - 4001:4001 # Cube Playground UI (dev only)
     environment:
       CUBEJS_DB_TYPE: postgres
-      CUBEJS_DB_HOST: ${CUBEJS_DB_HOST:-postgres}
-      CUBEJS_DB_NAME: ${CUBEJS_DB_NAME:-postgres}
-      CUBEJS_DB_USER: ${CUBEJS_DB_USER:-postgres}
-      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-postgres}
+      CUBEJS_DB_HOST: ${CUBEJS_DB_HOST:-formbricks_hub_postgres}
+      CUBEJS_DB_NAME: ${CUBEJS_DB_NAME:-hub}
+      CUBEJS_DB_USER: ${CUBEJS_DB_USER:-formbricks}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-formbricks_dev}
       CUBEJS_DB_PORT: ${CUBEJS_DB_PORT:-5432}
       CUBEJS_DEV_MODE: "true"
       CUBEJS_API_SECRET: ${CUBEJS_API_SECRET}
@@ -61,8 +63,14 @@ services:
       - ./cube/cube.js:/cube/conf/cube.js
       - ./cube/schema:/cube/conf/model
     restart: on-failure
-    depends_on:
-      - postgres
+    networks:
+      - default
+      - hub
+
+networks:
+  hub:
+    external: true
+    name: superset_formbricks_hub
 
 volumes:
   postgres:
