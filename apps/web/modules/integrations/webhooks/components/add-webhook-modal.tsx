@@ -53,6 +53,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
   const [createdWebhook, setCreatedWebhook] = useState<Webhook | null>(null);
+  const [webhookSecret, setWebhookSecret] = useState<string | undefined>();
 
   const handleTestEndpoint = async (
     sendSuccessToast: boolean
@@ -64,7 +65,10 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         return { success: false };
       }
       setHittingEndpoint(true);
-      const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
+      const testEndpointActionResult = await testEndpointAction({
+        url: testEndpointInput,
+        secret: webhookSecret,
+      });
       if (!testEndpointActionResult?.data) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
         throw new Error(errorMessage);
@@ -72,6 +76,9 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success(t("environments.integrations.webhooks.endpoint_pinged"));
       setEndpointAccessible(true);
+      if (testEndpointActionResult.data.secret) {
+        setWebhookSecret(testEndpointActionResult.data.secret);
+      }
       return testEndpointActionResult.data;
     } catch (err) {
       setHittingEndpoint(false);
@@ -170,6 +177,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
     setSelectedTriggers([]);
     setSelectedAllSurveys(false);
     setCreatedWebhook(null);
+    setWebhookSecret(undefined);
   };
 
   // Show success dialog with secret after webhook creation

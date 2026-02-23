@@ -138,6 +138,7 @@ export const updateWebhookAction = authenticatedActionClient.schema(ZUpdateWebho
 const ZTestEndpointAction = z.object({
   url: z.string(),
   webhookId: ZId.optional(),
+  secret: z.string().optional(),
 });
 
 export const testEndpointAction = authenticatedActionClient
@@ -151,7 +152,8 @@ export const testEndpointAction = authenticatedActionClient
         secret = webhookResult.data.secret ?? undefined;
       }
     } else {
-      secret = generateWebhookSecret();
+      // New webhook, use the provided secret or generate a new one
+      secret = parsedInput.secret ?? generateWebhookSecret();
     }
 
     await testEndpoint(parsedInput.url, secret);
