@@ -609,7 +609,6 @@ checksums:
     environments/contacts/contacts_table_refresh: 6a959475991dd4ab28ad881bae569a09
     environments/contacts/contacts_table_refresh_success: 40951396e88e5c8fdafa0b3bb4fadca8
     environments/contacts/create_attribute: 87320615901f95b4f35ee83c290a3a6c
-    environments/contacts/create_key: 0d385c354af8963acbe35cd646710f86
     environments/contacts/create_new_attribute: c17d407dacd0b90f360f9f5e899d662f
     environments/contacts/create_new_attribute_description: cc19d76bb6940537bbe3461191f25d26
     environments/contacts/custom_attributes: fffc7722742d1291b102dc737cf2fc9e

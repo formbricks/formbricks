@@ -645,7 +645,6 @@
       "contacts_table_refresh": "連絡先を更新",
       "contacts_table_refresh_success": "連絡先を正常に更新しました",
       "create_attribute": "属性を作成",
-      "create_key": "キーを作成",
       "create_new_attribute": "新しい属性を作成",
       "create_new_attribute_description": "セグメンテーション用の新しい属性を作成します。",
       "custom_attributes": "カスタム属性",
