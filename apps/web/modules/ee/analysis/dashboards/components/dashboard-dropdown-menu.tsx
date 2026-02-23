@@ -69,19 +69,19 @@ export const DashboardDropdownMenu = ({
   };
 
   return (
-    <div
-      role="presentation"
-      data-testid={`${dashboardName.toLowerCase().split(" ").join("-")}-dashboard-actions`}
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}>
+    <div data-testid={`${dashboardName.toLowerCase().split(" ").join("-")}-dashboard-actions`}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild>
-          <div className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50">
+          <button
+            type="button"
+            className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}>
             <span className="sr-only">{t("common.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
-          </div>
+          </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="inline-block w-auto min-w-max">
+        <DropdownMenuContent className="inline-block w-auto min-w-max" align="end">
           <DropdownMenuGroup>
             <DropdownMenuItem>
               <Link

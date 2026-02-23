@@ -39,49 +39,58 @@ export const CreateDashboardDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent width="narrow">
         <DialogHeader>
           <DialogTitle>{t("environments.analysis.dashboards.create_dashboard")}</DialogTitle>
           <DialogDescription>
             {t("environments.analysis.dashboards.create_dashboard_description")}
           </DialogDescription>
         </DialogHeader>
-        <DialogBody className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="dashboard-name">{t("environments.analysis.dashboards.dashboard_name")}</Label>
-            <Input
-              id="dashboard-name"
-              placeholder={t("environments.analysis.dashboards.dashboard_name_placeholder")}
-              value={dashboardName}
-              onChange={(e) => onDashboardNameChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && dashboardName.trim() && !isCreating) {
-                  onCreate();
-                }
-              }}
-              autoFocus
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dashboard-description">
-              {t("environments.analysis.dashboards.description_optional")}
-            </Label>
-            <Input
-              id="dashboard-description"
-              placeholder={t("environments.analysis.dashboards.description_placeholder")}
-              value={dashboardDescription}
-              onChange={(e) => onDashboardDescriptionChange(e.target.value)}
-            />
-          </div>
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isCreating}>
-            {t("common.cancel")}
-          </Button>
-          <Button onClick={onCreate} loading={isCreating} disabled={!dashboardName.trim()}>
-            {t("common.create")}
-          </Button>
-        </DialogFooter>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (dashboardName.trim() && !isCreating) {
+              onCreate();
+            }
+          }}
+          className="space-y-4">
+          <DialogBody className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="dashboard-name">{t("environments.analysis.dashboards.dashboard_name")}</Label>
+              <Input
+                id="dashboard-name"
+                placeholder={t("environments.analysis.dashboards.dashboard_name_placeholder")}
+                value={dashboardName}
+                onChange={(e) => onDashboardNameChange(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dashboard-description">
+                {t("environments.analysis.dashboards.description_optional")}
+              </Label>
+              <Input
+                id="dashboard-description"
+                placeholder={t("environments.analysis.dashboards.description_placeholder")}
+                value={dashboardDescription}
+                onChange={(e) => onDashboardDescriptionChange(e.target.value)}
+              />
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => onOpenChange(false)}
+              disabled={isCreating}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" loading={isCreating} disabled={!dashboardName.trim()}>
+              {t("common.create")}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

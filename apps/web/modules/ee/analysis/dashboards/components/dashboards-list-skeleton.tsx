@@ -40,7 +40,7 @@ export const DashboardsListSkeleton = ({ columnHeaders }: Readonly<DashboardsLis
         <div className="col-span-1" />
       </div>
       {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
-        <SkeletonRow key={i} />
+        <SkeletonRow key={`skeleton-row-${String(i)}`} />
       ))}
     </div>
   );
