@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { createDashboardAction } from "../actions";
 import { CreateDashboardDialog } from "./create-dashboard-dialog";
@@ -44,7 +45,8 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
       });
 
       if (!result?.data) {
-        toast.error(result?.serverError || t("environments.analysis.dashboards.create_failed"));
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage);
         return;
       }
 
