@@ -167,6 +167,7 @@ export const getDashboards = async (projectId: string): Promise<TDashboardWithCo
       orderBy: { createdAt: "desc" },
       select: {
         ...selectDashboard,
+        creator: { select: { name: true } },
         _count: { select: { widgets: true } },
       },
     });

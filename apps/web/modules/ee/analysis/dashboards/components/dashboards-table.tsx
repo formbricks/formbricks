@@ -9,14 +9,12 @@ interface DashboardsTableProps {
   dashboards: TDashboardWithCount[];
   environmentId: string;
   isReadOnly: boolean;
-  userMap: Map<string, string | null>;
 }
 
 export const DashboardsTable = async ({
   dashboards,
   environmentId,
   isReadOnly,
-  userMap,
 }: Readonly<DashboardsTableProps>) => {
   const t = await getTranslate();
 
@@ -36,8 +34,6 @@ export const DashboardsTable = async ({
         </p>
       ) : (
         dashboards.map((dashboard) => {
-          const createdByName = dashboard.createdBy ? (userMap.get(dashboard.createdBy) ?? null) : null;
-
           return (
             <div
               key={dashboard.id}
@@ -62,7 +58,7 @@ export const DashboardsTable = async ({
                   <div className="text-slate-900">{dashboard._count.widgets}</div>
                 </div>
                 <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-                  <div className="text-slate-900">{createdByName || "-"}</div>
+                  <div className="text-slate-900">{dashboard.creator?.name || "-"}</div>
                 </div>
                 <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
                   <div className="text-slate-900">{convertDateString(dashboard.createdAt.toISOString())}</div>

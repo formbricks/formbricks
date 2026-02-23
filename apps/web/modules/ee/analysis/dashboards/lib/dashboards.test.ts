@@ -441,10 +441,10 @@ describe("Dashboard Service", () => {
   });
 
   describe("getDashboards", () => {
-    test("returns all dashboards for a project", async () => {
+    test("returns all dashboards for a project with creator", async () => {
       const dashboards = [
-        { ...mockDashboard, _count: { widgets: 3 } },
-        { ...mockDashboard, id: "dash-2", name: "Dashboard 2", _count: { widgets: 0 } },
+        { ...mockDashboard, creator: { name: "Alice" }, _count: { widgets: 3 } },
+        { ...mockDashboard, id: "dash-2", name: "Dashboard 2", creator: null, _count: { widgets: 0 } },
       ];
       vi.mocked(prisma.dashboard.findMany).mockResolvedValue(dashboards as any);
       const { getDashboards } = await import("./dashboards");
@@ -458,6 +458,7 @@ describe("Dashboard Service", () => {
         select: expect.objectContaining({
           id: true,
           name: true,
+          creator: { select: { name: true } },
           _count: { select: { widgets: true } },
         }),
       });

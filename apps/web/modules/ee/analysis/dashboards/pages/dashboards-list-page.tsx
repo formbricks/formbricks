@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -21,18 +20,7 @@ const DashboardsListContent = async ({
 }: Readonly<DashboardsListContentProps>) => {
   const dashboards = await getDashboards(projectId);
 
-  const userIds = [...new Set(dashboards.map((d) => d.createdBy).filter(Boolean) as string[])];
-  const users = await Promise.all(userIds.map((id) => getUser(id)));
-  const userMap = new Map(users.filter(Boolean).map((u) => [u!.id, u!.name]));
-
-  return (
-    <DashboardsTable
-      dashboards={dashboards}
-      environmentId={environmentId}
-      isReadOnly={isReadOnly}
-      userMap={userMap}
-    />
-  );
+  return <DashboardsTable dashboards={dashboards} environmentId={environmentId} isReadOnly={isReadOnly} />;
 };
 
 export const DashboardsListPage = async (props: { params: Promise<{ environmentId: string }> }) => {

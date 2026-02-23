@@ -69,11 +69,7 @@ export const DashboardDropdownMenu = ({
     <div data-testid={`${dashboardName.toLowerCase().split(" ").join("-")}-dashboard-actions`}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild>
-          <button
-            type="button"
-            className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}>
+          <button type="button" className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50">
             <span className="sr-only">{t("common.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </button>
