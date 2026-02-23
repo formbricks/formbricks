@@ -1,5 +1,4 @@
 const SKELETON_ROWS = 5;
-const SKELETON_ROW_KEYS = Array.from({ length: SKELETON_ROWS }, (_, i) => `skeleton-row-${i}`);
 
 function SkeletonRow() {
   return (
@@ -22,18 +21,22 @@ function SkeletonRow() {
   );
 }
 
-export function ChartsListSkeleton() {
+interface ChartsListSkeletonProps {
+  columnHeaders: string[];
+}
+
+export function ChartsListSkeleton({ columnHeaders }: Readonly<ChartsListSkeletonProps>) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
-        <div className="col-span-3 pl-6">Title</div>
-        <div className="col-span-1 hidden text-center sm:block">Created By</div>
-        <div className="col-span-1 hidden text-center sm:block">Created</div>
-        <div className="col-span-1 hidden text-center sm:block">Updated</div>
+        <div className="col-span-3 pl-6">{columnHeaders[0]}</div>
+        <div className="col-span-1 hidden text-center sm:block">{columnHeaders[1]}</div>
+        <div className="col-span-1 hidden text-center sm:block">{columnHeaders[2]}</div>
+        <div className="col-span-1 hidden text-center sm:block">{columnHeaders[3]}</div>
         <div className="col-span-1" />
       </div>
-      {SKELETON_ROW_KEYS.map((key) => (
-        <SkeletonRow key={key} />
+      {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+        <SkeletonRow key={`skeleton-row-${String(i)}`} />
       ))}
     </div>
   );

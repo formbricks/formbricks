@@ -18,7 +18,7 @@ export function CreateChartButton({ environmentId }: Readonly<CreateChartButtonP
     <>
       <Button onClick={() => setIsDialogOpen(true)}>
         <PlusIcon className="mr-2 h-4 w-4" />
-        {t("common.chart")}
+        {t("environments.analysis.charts.create_chart")}
       </Button>
       <CreateChartDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} environmentId={environmentId} />
     </>

@@ -76,6 +76,7 @@
     "@radix-ui/react-toggle-group": "1.1.9",
     "@radix-ui/react-tooltip": "1.2.6",
     "@sentry/nextjs": "10.5.0",
+    "@suspensive/react": "3.19.0",
     "@t3-oss/env-nextjs": "0.13.4",
     "@tailwindcss/forms": "0.5.10",
     "@tailwindcss/typography": "0.5.16",

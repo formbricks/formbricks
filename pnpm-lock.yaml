@@ -298,6 +298,9 @@ importers:
       '@sentry/nextjs':
         specifier: 10.5.0
         version: 10.5.0(@opentelemetry/context-async-hooks@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.99.8(esbuild@0.25.12))
+      '@suspensive/react':
+        specifier: 3.19.0
+        version: 3.19.0(react@19.2.3)
       '@t3-oss/env-nextjs':
         specifier: 0.13.4
         version: 0.13.4(arktype@2.1.29)(typescript@5.8.3)(zod@3.24.4)
@@ -5491,6 +5494,11 @@ packages:
 
   '@streamparser/json@0.0.20':
     resolution: {integrity: sha512-VqAAkydywPpkw63WQhPVKCD3SdwXuihCUVZbbiY3SfSTGQyHmwRoq27y4dmJdZuJwd5JIlQoMPyGvMbUPY0RKQ==}
+
+  '@suspensive/react@3.19.0':
+    resolution: {integrity: sha512-EzR7KuJj0k8MtS+COcrt7aANh4MLUlA2B1mIZVlPUdUuhFnbU8AvvmG5Knl2e6JFttpZBoB0keUovQxg99EKHA==}
+    peerDependencies:
+      react: ^18 || ^19
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -18100,6 +18108,10 @@ snapshots:
       storybook: 10.1.11(@testing-library/dom@8.20.1)(prettier@3.5.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
 
   '@streamparser/json@0.0.20': {}
+
+  '@suspensive/react@3.19.0(react@19.2.3)':
+    dependencies:
+      react: 19.2.3
 
   '@swc/helpers@0.5.15':
     dependencies:
