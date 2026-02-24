@@ -9,6 +9,7 @@ import {
   getFormattedErrorMessage,
   getOrganizationIdFromActionClassId,
   getOrganizationIdFromApiKeyId,
+  getOrganizationIdFromConnectorId,
   getOrganizationIdFromContactId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromIntegrationId,
@@ -24,6 +25,7 @@ import {
   getOrganizationIdFromWebhookId,
   getProductIdFromContactId,
   getProjectIdFromActionClassId,
+  getProjectIdFromConnectorId,
   getProjectIdFromContactId,
   getProjectIdFromEnvironmentId,
   getProjectIdFromIntegrationId,
@@ -54,6 +56,7 @@ vi.mock("@/lib/utils/services", () => ({
   getLanguage: vi.fn(),
   getTeam: vi.fn(),
   getTag: vi.fn(),
+  getConnector: vi.fn(),
 }));
 
 describe("Helper Utilities", () => {
@@ -382,6 +385,31 @@ describe("Helper Utilities", () => {
       const orgId = await getOrganizationIdFromQuotaId("quota1");
       expect(orgId).toBe("org1");
     });
+
+    test("getOrganizationIdFromConnectorId returns organization ID through environment and project", async () => {
+      vi.mocked(services.getConnector).mockResolvedValueOnce({
+        environmentId: "env1",
+      });
+      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
+        projectId: "project1",
+      });
+      vi.mocked(services.getProject).mockResolvedValueOnce({
+        organizationId: "org1",
+      });
+
+      const orgId = await getOrganizationIdFromConnectorId("connector1");
+      expect(orgId).toBe("org1");
+      expect(services.getConnector).toHaveBeenCalledWith("connector1");
+      expect(services.getEnvironment).toHaveBeenCalledWith("env1");
+      expect(services.getProject).toHaveBeenCalledWith("project1");
+    });
+
+    test("getOrganizationIdFromConnectorId throws error when connector not found", async () => {
+      vi.mocked(services.getConnector).mockResolvedValueOnce(null);
+
+      await expect(getOrganizationIdFromConnectorId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
+      expect(services.getConnector).toHaveBeenCalledWith("nonexistent");
+    });
   });
 
   describe("Project ID retrieval functions", () => {
@@ -586,6 +614,27 @@ describe("Helper Utilities", () => {
 
       const projectId = await getProjectIdFromQuotaId("quota1");
       expect(projectId).toBe("project1");
+    });
+
+    test("getProjectIdFromConnectorId returns project ID through environment", async () => {
+      vi.mocked(services.getConnector).mockResolvedValueOnce({
+        environmentId: "env1",
+      });
+      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
+        projectId: "project1",
+      });
+
+      const projectId = await getProjectIdFromConnectorId("connector1");
+      expect(projectId).toBe("project1");
+      expect(services.getConnector).toHaveBeenCalledWith("connector1");
+      expect(services.getEnvironment).toHaveBeenCalledWith("env1");
+    });
+
+    test("getProjectIdFromConnectorId throws error when connector not found", async () => {
+      vi.mocked(services.getConnector).mockResolvedValueOnce(null);
+
+      await expect(getProjectIdFromConnectorId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
+      expect(services.getConnector).toHaveBeenCalledWith("nonexistent");
     });
   });
 

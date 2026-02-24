@@ -33,6 +33,8 @@ export const env = createEnv({
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
     HTTP_PROXY: z.string().url().optional(),
     HTTPS_PROXY: z.string().url().optional(),
+    HUB_API_URL: z.string().url().optional(),
+    HUB_API_KEY: z.string().optional(),
     IMPRINT_URL: z
       .string()
       .url()
@@ -161,6 +163,8 @@ export const env = createEnv({
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
     HTTP_PROXY: process.env.HTTP_PROXY,
     HTTPS_PROXY: process.env.HTTPS_PROXY,
+    HUB_API_URL: process.env.HUB_API_URL,
+    HUB_API_KEY: process.env.HUB_API_KEY,
     IMPRINT_URL: process.env.IMPRINT_URL,
     IMPRINT_ADDRESS: process.env.IMPRINT_ADDRESS,
     INVITE_DISABLED: process.env.INVITE_DISABLED,

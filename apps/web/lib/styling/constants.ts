@@ -180,8 +180,7 @@ export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Recor
     ...(b && !saved.buttonTextColor && { buttonTextColor: { light: isLight(b) ? "#0f172a" : "#ffffff" } }),
     ...(i && !saved.optionBgColor && { optionBgColor: { light: i } }),
     ...(b && !saved.progressIndicatorBgColor && { progressIndicatorBgColor: { light: b } }),
-    ...(b &&
-      !saved.progressTrackBgColor && { progressTrackBgColor: { light: mixColor(b, "#ffffff", 0.8) } }),
+    ...(b && !saved.progressTrackBgColor && { progressTrackBgColor: { light: mixColor(b, "#ffffff", 0.8) } }),
   };
 };
 

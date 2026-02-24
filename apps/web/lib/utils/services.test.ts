@@ -8,6 +8,7 @@ import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 import {
   getActionClass,
   getApiKey,
+  getConnector,
   getContact,
   getEnvironment,
   getIntegration,
@@ -76,6 +77,9 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
     },
     contact: {
+      findUnique: vi.fn(),
+    },
+    connector: {
       findUnique: vi.fn(),
     },
     segment: {
@@ -554,6 +558,48 @@ describe("Service Functions", () => {
       );
 
       await expect(getSegment(segmentId)).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe("getConnector", () => {
+    const connectorId = "connector123";
+
+    test("returns the connector when found", async () => {
+      const mockConnector = { environmentId: "env123" };
+      vi.mocked(prisma.connector.findUnique).mockResolvedValue(mockConnector);
+
+      const result = await getConnector(connectorId);
+      expect(validateInputs).toHaveBeenCalled();
+      expect(prisma.connector.findUnique).toHaveBeenCalledWith({
+        where: { id: connectorId },
+        select: { environmentId: true },
+      });
+      expect(result).toEqual(mockConnector);
+    });
+
+    test("returns null when connector not found", async () => {
+      vi.mocked(prisma.connector.findUnique).mockResolvedValue(null);
+
+      const result = await getConnector(connectorId);
+      expect(result).toBeNull();
+    });
+
+    test("throws DatabaseError when Prisma throws a known request error", async () => {
+      vi.mocked(prisma.connector.findUnique).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Error", {
+          code: "P2002",
+          clientVersion: "4.7.0",
+        })
+      );
+
+      await expect(getConnector(connectorId)).rejects.toThrow(DatabaseError);
+    });
+
+    test("rethrows unknown errors", async () => {
+      const unknownError = new Error("Something unexpected");
+      vi.mocked(prisma.connector.findUnique).mockRejectedValue(unknownError);
+
+      await expect(getConnector(connectorId)).rejects.toThrow(unknownError);
     });
   });
 });
