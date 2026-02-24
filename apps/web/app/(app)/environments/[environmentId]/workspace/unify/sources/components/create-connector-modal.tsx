@@ -40,11 +40,6 @@ interface CreateConnectorModalProps {
   surveys: TUnifySurvey[];
 }
 
-const DEFAULT_CONNECTOR_NAME = {
-  formbricks: "Formbricks Survey Connection",
-  csv: "CSV Import",
-};
-
 export const CreateConnectorModal = ({
   open,
   onOpenChange,
@@ -52,6 +47,11 @@ export const CreateConnectorModal = ({
   surveys,
 }: CreateConnectorModalProps) => {
   const { t } = useTranslation();
+
+  const defaultConnectorName: Record<TConnectorType, string> = {
+    formbricks: t("environments.unify.default_connector_name_formbricks"),
+    csv: t("environments.unify.default_connector_name_csv"),
+  };
   const [currentStep, setCurrentStep] = useState<TCreateConnectorStep>("selectType");
   const [selectedType, setSelectedType] = useState<TConnectorType | null>(null);
   const [connectorName, setConnectorName] = useState("");
@@ -84,10 +84,12 @@ export const CreateConnectorModal = ({
         const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
 
         setConnectorName(
-          selectedSurvey ? `${selectedSurvey.name} Connection` : DEFAULT_CONNECTOR_NAME[selectedType]
+          selectedSurvey
+            ? `${selectedSurvey.name} ${t("environments.unify.connection")}`
+            : defaultConnectorName[selectedType]
         );
       } else {
-        setConnectorName(DEFAULT_CONNECTOR_NAME[selectedType]);
+        setConnectorName(defaultConnectorName[selectedType]);
       }
 
       setCurrentStep("mapping");
@@ -207,7 +209,7 @@ export const CreateConnectorModal = ({
                   />
                 </div>
 
-                <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <FormbricksSurveySelector
                     surveys={surveys}
                     selectedSurveyId={selectedSurveyId}

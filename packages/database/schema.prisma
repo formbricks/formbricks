@@ -412,6 +412,7 @@ model Survey {
   customHeadScripts     String?
   customHeadScriptsMode SurveyScriptMode? @default(add)
 
+  @@unique([id, environmentId])
   @@index([environmentId, updatedAt])
   @@index([segmentId])
 }
@@ -1018,6 +1019,18 @@ enum ConnectorStatus {
   error
 }
 
+enum HubFieldType {
+  text
+  categorical
+  nps
+  csat
+  ces
+  rating
+  number
+  boolean
+  date
+}
+
 /// Base connector for all integration types.
 /// Connects external data sources to the Hub for feedback record creation.
 ///
@@ -1043,8 +1056,8 @@ model Connector {
   lastSyncAt         DateTime?                    @map(name: "last_sync_at")
   errorMessage       String?                      @map(name: "error_message")
 
+  @@unique([id, environmentId])
   @@unique([environmentId, name])
-  @@index([environmentId])
   @@index([type])
 }
 
@@ -1058,18 +1071,19 @@ model Connector {
 /// @property hubFieldType - The field_type to use in Hub (text, nps, rating, etc.)
 /// @property customFieldLabel - Optional override for the element headline as field_label in Hub
 model ConnectorFormbricksMapping {
-  id               String    @id @default(cuid())
-  createdAt        DateTime  @default(now()) @map(name: "created_at")
+  id               String       @id @default(cuid())
+  createdAt        DateTime     @default(now()) @map(name: "created_at")
   connectorId      String
-  connector        Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  environmentId    String
+  connector        Connector    @relation(fields: [connectorId, environmentId], references: [id, environmentId], onDelete: Cascade)
   surveyId         String
-  survey           Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  survey           Survey       @relation(fields: [surveyId, environmentId], references: [id, environmentId], onDelete: Cascade)
   elementId        String
-  hubFieldType     String
-  customFieldLabel String?   @map(name: "custom_field_label")
+  hubFieldType     HubFieldType
+  customFieldLabel String?      @map(name: "custom_field_label")
 
-  @@unique([connectorId, surveyId, elementId])
-  @@index([connectorId])
+  @@unique([environmentId, connectorId, surveyId, elementId])
+  @@index([environmentId, surveyId])
   @@index([surveyId])
 }
 
@@ -1085,11 +1099,11 @@ model ConnectorFieldMapping {
   id            String    @id @default(cuid())
   createdAt     DateTime  @default(now()) @map(name: "created_at")
   connectorId   String
-  connector     Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  environmentId String
+  connector     Connector @relation(fields: [connectorId, environmentId], references: [id, environmentId], onDelete: Cascade)
   sourceFieldId String    @map(name: "source_field_id")
   targetFieldId String    @map(name: "target_field_id")
   staticValue   String?   @map(name: "static_value")
 
-  @@unique([connectorId, sourceFieldId, targetFieldId])
-  @@index([connectorId])
+  @@unique([environmentId, connectorId, sourceFieldId, targetFieldId])
 }

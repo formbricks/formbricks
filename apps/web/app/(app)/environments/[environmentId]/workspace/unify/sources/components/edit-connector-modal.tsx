@@ -98,6 +98,7 @@ export function EditConnectorModal({
           connector.fieldMappings.map((m) => ({
             sourceFieldId: m.sourceFieldId,
             targetFieldId: m.targetFieldId,
+            staticValue: m.staticValue ?? undefined,
           }))
         );
         setSelectedSurveyId(null);
@@ -202,7 +203,7 @@ export function EditConnectorModal({
           </div>
 
           {connector.type === "formbricks" ? (
-            <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <FormbricksSurveySelector
                 surveys={surveys}
                 selectedSurveyId={selectedSurveyId}

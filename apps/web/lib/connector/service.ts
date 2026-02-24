@@ -213,6 +213,7 @@ export const createConnectorWithMappings = async (
             tx.connectorFormbricksMapping.create({
               data: {
                 connectorId: connector.id,
+                environmentId,
                 surveyId: mapping.surveyId,
                 elementId: mapping.elementId,
                 hubFieldType: mapping.hubFieldType,
@@ -227,6 +228,7 @@ export const createConnectorWithMappings = async (
             tx.connectorFieldMapping.create({
               data: {
                 connectorId: connector.id,
+                environmentId,
                 sourceFieldId: mapping.sourceFieldId,
                 targetFieldId: mapping.targetFieldId,
                 staticValue: mapping.staticValue,
@@ -276,7 +278,7 @@ export const updateConnectorWithMappings = async (
 
       if (mappingsInput?.type === "formbricks") {
         await tx.connectorFormbricksMapping.deleteMany({
-          where: { connectorId },
+          where: { connectorId, environmentId },
         });
 
         await Promise.all(
@@ -284,6 +286,7 @@ export const updateConnectorWithMappings = async (
             tx.connectorFormbricksMapping.create({
               data: {
                 connectorId,
+                environmentId,
                 surveyId: mapping.surveyId,
                 elementId: mapping.elementId,
                 hubFieldType: mapping.hubFieldType,
@@ -294,7 +297,7 @@ export const updateConnectorWithMappings = async (
         );
       } else if (mappingsInput?.type === "field") {
         await tx.connectorFieldMapping.deleteMany({
-          where: { connectorId },
+          where: { connectorId, environmentId },
         });
 
         await Promise.all(
@@ -302,6 +305,7 @@ export const updateConnectorWithMappings = async (
             tx.connectorFieldMapping.create({
               data: {
                 connectorId,
+                environmentId,
                 sourceFieldId: mapping.sourceFieldId,
                 targetFieldId: mapping.targetFieldId,
                 staticValue: mapping.staticValue,

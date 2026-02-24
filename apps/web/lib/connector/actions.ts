@@ -10,7 +10,7 @@ import {
   ZConnectorUpdateInput,
   getHubFieldTypeFromElementType,
 } from "@formbricks/types/connector";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -19,6 +19,7 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import {
   getOrganizationIdFromConnectorId,
   getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromSurveyId,
   getProjectIdFromConnectorId,
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
@@ -139,6 +140,11 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
       const { formbricksMappings, fieldMappings } = parsedInput;
 
       if (formbricksMappings) {
+        const organizationIdFromSurvey = await getOrganizationIdFromSurveyId(formbricksMappings.surveyId);
+        if (organizationIdFromSurvey !== organizationId) {
+          throw new AuthorizationError("You are not authorized to access this survey");
+        }
+
         mappingsInput = await resolveFormbricksMappingsInput(
           formbricksMappings.surveyId,
           formbricksMappings.elementIds
@@ -198,6 +204,13 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
       let mappingsInput: TMappingsInput | undefined;
 
       if (parsedInput.formbricksMappings) {
+        const organizationIdFromSurvey = await getOrganizationIdFromSurveyId(
+          parsedInput.formbricksMappings.surveyId
+        );
+        if (organizationIdFromSurvey !== organizationId) {
+          throw new AuthorizationError("You are not authorized to access this survey");
+        }
+
         mappingsInput = await resolveFormbricksMappingsInput(
           parsedInput.formbricksMappings.surveyId,
           parsedInput.formbricksMappings.elementIds

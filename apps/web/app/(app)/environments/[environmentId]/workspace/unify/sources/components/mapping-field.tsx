@@ -97,7 +97,7 @@ export function DroppableTargetField({
           <div className="flex items-center gap-2">
             <span className="font-medium text-slate-900">{field.name}</span>
             {field.required && <span className="text-xs text-red-500">*</span>}
-            <span className="text-xs text-slate-400">enum</span>
+            <span className="text-xs text-slate-400">{t("environments.unify.enum")}</span>
           </div>
           <Select value={mapping?.staticValue || ""} onValueChange={onStaticValueChange}>
             <SelectTrigger className="h-8 w-full bg-white">
@@ -170,7 +170,9 @@ export function DroppableTargetField({
                 value={customValue}
                 onChange={(e) => setCustomValue(e.target.value)}
                 placeholder={
-                  field.exampleStaticValues ? `e.g., ${field.exampleStaticValues[0]}` : "Enter value..."
+                  field.exampleStaticValues
+                    ? `e.g., ${field.exampleStaticValues[0]}`
+                    : t("environments.unify.enter_value")
                 }
                 className="h-7 text-xs"
                 autoFocus

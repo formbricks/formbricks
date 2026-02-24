@@ -1,9 +1,32 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
 import { FileSpreadsheetIcon, GlobeIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TConnectorType } from "@formbricks/types/connector";
+
+const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
+  { amount: 60, unit: "seconds" },
+  { amount: 60, unit: "minutes" },
+  { amount: 24, unit: "hours" },
+  { amount: 7, unit: "days" },
+  { amount: 4.345, unit: "weeks" },
+  { amount: 12, unit: "months" },
+  { amount: Number.POSITIVE_INFINITY, unit: "years" },
+];
+
+function getRelativeTime(date: Date, locale: string): string {
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  let duration = (date.getTime() - Date.now()) / 1000;
+
+  for (const division of RELATIVE_TIME_DIVISIONS) {
+    if (Math.abs(duration) < division.amount) {
+      return formatter.format(Math.round(duration), division.unit);
+    }
+    duration /= division.amount;
+  }
+
+  return formatter.format(Math.round(duration), "years");
+}
 
 interface ConnectorsTableDataRowProps {
   id: string;
@@ -33,7 +56,7 @@ export function ConnectorsTableDataRow({
   createdAt,
   onClick,
 }: ConnectorsTableDataRowProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const getConnectorTypeLabel = (connectorType: TConnectorType) => {
     switch (connectorType) {
@@ -65,13 +88,13 @@ export function ConnectorsTableDataRow({
         </span>
       </div>
       <div className="col-span-5 flex items-center">
-        <span className="truncate font-medium text-slate-900">{name}</span>
+        <span className="truncate text-sm font-medium text-slate-900">{name}</span>
       </div>
       <div className="col-span-2 hidden items-center justify-center text-sm text-slate-600 sm:flex">
         {mappingsCount} {mappingsCount === 1 ? t("environments.unify.field") : t("environments.unify.fields")}
       </div>
       <div className="col-span-3 hidden items-center justify-end pr-4 text-sm text-slate-500 sm:flex">
-        {formatDistanceToNow(createdAt, { addSuffix: true })}
+        {getRelativeTime(createdAt, i18n.language)}
       </div>
     </div>
   );

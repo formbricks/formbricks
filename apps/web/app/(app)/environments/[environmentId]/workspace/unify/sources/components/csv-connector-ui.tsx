@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
-import { MAX_CSV_VALUES, TFieldMapping, TSourceField, ZFeedbackCSVData } from "../types";
+import { MAX_CSV_VALUES, TFieldMapping, TSourceField, createFeedbackCSVDataSchema } from "../types";
 import { MappingUI } from "./mapping-ui";
 
 interface CsvConnectorUIProps {
@@ -90,7 +90,7 @@ export function CsvConnectorUI({
       try {
         const records = parse(csv, { columns: true, skip_empty_lines: true });
 
-        const result = ZFeedbackCSVData.safeParse(records);
+        const result = createFeedbackCSVDataSchema(t).safeParse(records);
         if (!result.success) {
           setCsvError(result.error.errors[0].message);
           return;

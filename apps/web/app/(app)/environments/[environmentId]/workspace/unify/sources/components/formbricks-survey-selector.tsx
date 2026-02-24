@@ -80,11 +80,13 @@ export function FormbricksSurveySelector({
   };
 
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid h-[50vh] grid-cols-2 gap-6">
       {/* Left: Survey List */}
-      <div className="space-y-3">
-        <h4 className="text-sm font-medium text-slate-700">{t("environments.unify.select_survey")}</h4>
-        <div className="space-y-2">
+      <div className="flex flex-col gap-3 overflow-hidden">
+        <h4 className="shrink-0 text-sm font-medium text-slate-700">
+          {t("environments.unify.select_survey")}
+        </h4>
+        <div className="space-y-2 overflow-y-auto pr-1">
           {surveys.length === 0 ? (
             <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
               <p className="text-sm text-slate-500">{t("environments.unify.no_surveys_found")}</p>
@@ -130,8 +132,8 @@ export function FormbricksSurveySelector({
       </div>
 
       {/* Right: Element Selection */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 overflow-hidden">
+        <div className="flex shrink-0 items-center justify-between">
           <h4 className="text-sm font-medium text-slate-700">{t("environments.unify.select_elements")}</h4>
           {selectedSurvey && (
             <button
@@ -148,17 +150,17 @@ export function FormbricksSurveySelector({
         </div>
 
         {!selectedSurvey ? (
-          <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
+          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
             <p className="text-sm text-slate-500">
               {t("environments.unify.select_a_survey_to_see_elements")}
             </p>
           </div>
         ) : selectedSurvey.elements.length === 0 ? (
-          <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
+          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
             <p className="text-sm text-slate-500">{t("environments.unify.survey_has_no_elements")}</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-auto pr-1">
             {selectedSurvey.elements.map((element) => {
               const isSelected = selectedElementIds.includes(element.id);
 
