@@ -129,7 +129,7 @@ function SingleSelect({
     );
 
   // Shared className for option labels
-  const optionLabelClassName = "font-option  font-option-weight text-option-label";
+  const optionLabelClassName = "font-option font-option-weight text-option-label";
 
   // Get selected option label for dropdown display
   const selectedOption = options.find((opt) => opt.id === selectedValue);
@@ -160,10 +160,10 @@ function SingleSelect({
                 <Button
                   variant="outline"
                   disabled={disabled}
-                  className="rounded-input w-full justify-between"
+                  className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
-                  <span className="truncate">{displayText}</span>
+                  <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
