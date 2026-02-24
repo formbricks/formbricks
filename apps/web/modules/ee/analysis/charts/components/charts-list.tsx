@@ -79,7 +79,7 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
                 </div>
               </div>
               <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-                <div className="ph-no-capture text-slate-900">{chart.creator.name || "-"}</div>
+                <div className="ph-no-capture text-slate-900">{chart.creator?.name ?? "-"}</div>
               </div>
               <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
                 <div className="ph-no-capture text-slate-900">

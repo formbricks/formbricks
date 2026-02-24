@@ -69,8 +69,9 @@ export function TimeDimensionPanel({
     }
   };
 
-  const handleGranularityChange = (granularity: TimeDimensionConfig["granularity"]) => {
+  const handleGranularityChange = (value: string) => {
     if (timeDimension) {
+      const granularity = value === "none" ? undefined : (value as TimeDimensionConfig["granularity"]);
       onTimeDimensionChange({ ...timeDimension, granularity });
     }
   };
@@ -129,13 +130,12 @@ export function TimeDimensionPanel({
           <label className="text-sm font-medium text-gray-700">
             {t("environments.analysis.charts.granularity")}
           </label>
-          <Select
-            value={timeDimension.granularity}
-            onValueChange={(value) => handleGranularityChange(value as TimeDimensionConfig["granularity"])}>
+          <Select value={timeDimension.granularity ?? "none"} onValueChange={handleGranularityChange}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">{t("environments.analysis.charts.no_grouping")}</SelectItem>
               {TIME_GRANULARITIES.map((gran) => (
                 <SelectItem key={gran} value={gran}>
                   {gran.charAt(0).toUpperCase() + gran.slice(1)}

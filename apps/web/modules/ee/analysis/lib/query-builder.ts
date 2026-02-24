@@ -1,7 +1,7 @@
 /**
  * Query builder utility to construct Cube.js queries from chart builder state.
  */
-import { TCubeFilter, TCubeQuery, TTimeDimension } from "../types/analysis";
+import { TChartQuery, TCubeFilter, TMemberFilter, TTimeDimension } from "@formbricks/types/dashboard";
 
 export interface CustomMeasure {
   id?: string;
@@ -14,14 +14,14 @@ export type TFilterFieldType = "string" | "number" | "time";
 
 export interface FilterRow {
   field: string;
-  operator: TCubeFilter["operator"];
+  operator: TMemberFilter["operator"];
   values: string[] | number[] | null;
 }
 
 export interface TimeDimensionConfig {
   dimension: string;
-  granularity: "hour" | "day" | "week" | "month" | "quarter" | "year";
-  dateRange: string | [Date, Date];
+  granularity?: "second" | "minute" | "hour" | "day" | "week" | "month" | "quarter" | "year";
+  dateRange?: string | [Date, Date];
 }
 
 export interface ChartBuilderState {
@@ -36,11 +36,22 @@ export interface ChartBuilderState {
   orderBy?: { field: string; direction: "asc" | "desc" };
 }
 
+function buildMemberFilter(f: FilterRow): TMemberFilter {
+  const filter: TMemberFilter = {
+    member: f.field,
+    operator: f.operator,
+  };
+  if (f.operator !== "set" && f.operator !== "notSet" && f.values) {
+    filter.values = f.values.map(String);
+  }
+  return filter;
+}
+
 /**
  * Build a Cube.js query from chart builder state.
  */
-export function buildCubeQuery(config: ChartBuilderState): TCubeQuery {
-  const query: TCubeQuery = {
+export function buildCubeQuery(config: ChartBuilderState): TChartQuery {
+  const query: TChartQuery = {
     measures: [...config.selectedMeasures],
   };
 
@@ -51,8 +62,11 @@ export function buildCubeQuery(config: ChartBuilderState): TCubeQuery {
   if (config.timeDimension) {
     const timeDim: TTimeDimension = {
       dimension: config.timeDimension.dimension,
-      granularity: config.timeDimension.granularity,
     };
+
+    if (config.timeDimension.granularity) {
+      timeDim.granularity = config.timeDimension.granularity;
+    }
 
     if (typeof config.timeDimension.dateRange === "string") {
       timeDim.dateRange = config.timeDimension.dateRange;
@@ -71,27 +85,27 @@ export function buildCubeQuery(config: ChartBuilderState): TCubeQuery {
   }
 
   if (config.filters.length > 0) {
-    query.filters = config.filters.map((f) => {
-      const filter: TCubeFilter = {
-        member: f.field,
-        operator: f.operator,
-      };
+    const memberFilters = config.filters.map(buildMemberFilter);
 
-      if (f.operator !== "set" && f.operator !== "notSet" && f.values) {
-        filter.values = f.values.map(String);
-      }
-
-      return filter;
-    });
+    if (config.filterLogic === "or") {
+      query.filters = [{ or: memberFilters } as TCubeFilter];
+    } else {
+      query.filters = memberFilters;
+    }
   }
 
   return query;
 }
 
+function isMemberFilter(f: TCubeFilter): f is TMemberFilter {
+  return "member" in f;
+}
+
 /**
  * Parse a Cube.js query back into ChartBuilderState.
+ * Preserves absent granularity / dateRange instead of injecting defaults.
  */
-export function parseQueryToState(query: TCubeQuery, chartType?: string): Partial<ChartBuilderState> {
+export function parseQueryToState(query: TChartQuery, chartType?: string): Partial<ChartBuilderState> {
   const state: Partial<ChartBuilderState> = {
     chartType: chartType || "",
     selectedMeasures: query.measures || [],
@@ -103,75 +117,38 @@ export function parseQueryToState(query: TCubeQuery, chartType?: string): Partia
   };
 
   if (query.filters && query.filters.length > 0) {
-    state.filters = query.filters.map((f) => ({
-      field: f.member,
-      operator: f.operator,
-      values: f.values || null,
-    }));
+    const first = query.filters[0];
+
+    if (!isMemberFilter(first) && "or" in first && query.filters.length === 1) {
+      state.filterLogic = "or";
+      state.filters = (first.or as TMemberFilter[]).map((f) => ({
+        field: f.member,
+        operator: f.operator,
+        values: f.values || null,
+      }));
+    } else {
+      state.filterLogic = "and";
+      state.filters = query.filters.filter(isMemberFilter).map((f) => ({
+        field: f.member,
+        operator: f.operator,
+        values: f.values || null,
+      }));
+    }
   }
 
   if (query.timeDimensions && query.timeDimensions.length > 0) {
     const timeDim = query.timeDimensions[0];
-    state.timeDimension = {
+    const config: TimeDimensionConfig = {
       dimension: timeDim.dimension,
-      granularity: timeDim.granularity || "day",
-      dateRange: (timeDim.dateRange || "last 30 days") as TimeDimensionConfig["dateRange"],
     };
+    if (timeDim.granularity) {
+      config.granularity = timeDim.granularity;
+    }
+    if (timeDim.dateRange) {
+      config.dateRange = timeDim.dateRange as TimeDimensionConfig["dateRange"];
+    }
+    state.timeDimension = config;
   }
 
   return state;
-}
-
-/**
- * Convert date preset string to date range.
- */
-export function getDateRangeFromPreset(preset: string): [Date, Date] | null {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  switch (preset) {
-    case "today": {
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return [today, tomorrow];
-    }
-    case "yesterday": {
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      return [yesterday, today];
-    }
-    case "last 7 days": {
-      const sevenDaysAgo = new Date(today);
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      return [sevenDaysAgo, today];
-    }
-    case "last 30 days": {
-      const thirtyDaysAgo = new Date(today);
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      return [thirtyDaysAgo, today];
-    }
-    case "this month": {
-      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      return [firstDay, lastDay];
-    }
-    case "last month": {
-      const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      return [firstDayLastMonth, firstDayThisMonth];
-    }
-    case "this quarter": {
-      const quarter = Math.floor(now.getMonth() / 3);
-      const firstDay = new Date(now.getFullYear(), quarter * 3, 1);
-      const lastDay = new Date(now.getFullYear(), (quarter + 1) * 3, 1);
-      return [firstDay, lastDay];
-    }
-    case "this year": {
-      const firstDay = new Date(now.getFullYear(), 0, 1);
-      const lastDay = new Date(now.getFullYear() + 1, 0, 1);
-      return [firstDay, lastDay];
-    }
-    default:
-      return null;
-  }
 }

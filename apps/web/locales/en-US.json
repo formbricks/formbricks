@@ -691,6 +691,7 @@
         "no_data_available": "No data available",
         "no_data_returned": "No data returned from query",
         "no_data_returned_for_chart": "No data returned for chart",
+        "no_grouping": "None (filter only)",
         "no_valid_data_to_display": "No valid data to display",
         "not_contains": "not contains",
         "not_equals": "not equals",

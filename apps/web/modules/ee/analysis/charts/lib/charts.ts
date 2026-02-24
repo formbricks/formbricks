@@ -1,6 +1,5 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
@@ -229,7 +228,7 @@ export const getChart = async (chartId: string, projectId: string): Promise<TCha
  * Fetches all charts for the given environment (for list/dashboard UI).
  * Uses getEnvironmentAuth for access check and enriches with creator names.
  */
-export const getCharts = reactCache(async (environmentId: string): Promise<TChartWithCreator[]> => {
+export const getCharts = async (environmentId: string): Promise<TChartWithCreator[]> => {
   try {
     const { project } = await getEnvironmentAuth(environmentId);
 
@@ -241,12 +240,7 @@ export const getCharts = reactCache(async (environmentId: string): Promise<TChar
         creator: { select: { name: true } },
       },
     });
-    return charts.map((chart) => ({
-      ...chart,
-      creator: {
-        name: chart.creator?.name ?? null,
-      },
-    }));
+    return charts;
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       throw error;
@@ -256,4 +250,4 @@ export const getCharts = reactCache(async (environmentId: string): Promise<TChar
     }
     throw error;
   }
-});
+};

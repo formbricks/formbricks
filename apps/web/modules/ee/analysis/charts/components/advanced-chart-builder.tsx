@@ -28,7 +28,7 @@ import {
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
-import type { AnalyticsResponse, TChartDataRow, TCubeQuery } from "@/modules/ee/analysis/types/analysis";
+import type { AnalyticsResponse, TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
@@ -38,7 +38,7 @@ const AVAILABLE_CHART_TYPES = CHART_TYPES.filter((type) => !["table", "map", "sc
 interface AdvancedChartBuilderProps {
   environmentId: string;
   initialChartType?: string;
-  initialQuery?: TCubeQuery;
+  initialQuery?: TChartQuery;
   hidePreview?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
   onSave?: (chartId: string) => void;
@@ -113,7 +113,7 @@ export function AdvancedChartBuilder({
 
   const [state, dispatch] = useReducer(chartBuilderReducer, getInitialState());
   const [chartData, setChartData] = useState<TChartDataRow[] | null>(null);
-  const [query, setQuery] = useState<TCubeQuery | null>(initialQuery || null);
+  const [query, setQuery] = useState<TChartQuery | null>(initialQuery || null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

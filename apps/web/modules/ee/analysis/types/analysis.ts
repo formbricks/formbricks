@@ -39,9 +39,11 @@ export const ZChart = z.object({
 export type TChart = z.infer<typeof ZChart>;
 
 export const ZChartWithCreator = ZChart.extend({
-  creator: z.object({
-    name: z.string().nullable(),
-  }),
+  creator: z
+    .object({
+      name: z.string().nullable(),
+    })
+    .nullable(),
 });
 export type TChartWithCreator = z.infer<typeof ZChartWithCreator>;
 
@@ -95,28 +97,6 @@ export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
 
 export const ZApiChartType = z.enum(["bar", "line", "donut", "kpi", "area", "pie", "big_number"]);
 export type TApiChartType = z.infer<typeof ZApiChartType>;
-
-export const ZTimeDimension = z.object({
-  dimension: z.string(),
-  granularity: z.enum(["hour", "day", "week", "month", "quarter", "year"]).optional(),
-  dateRange: z.union([z.string(), z.tuple([z.string(), z.string()])]).optional(),
-});
-export type TTimeDimension = z.infer<typeof ZTimeDimension>;
-
-export const ZCubeFilter = z.object({
-  member: z.string(),
-  operator: z.string(),
-  values: z.array(z.string()).optional(),
-});
-export type TCubeFilter = z.infer<typeof ZCubeFilter>;
-
-export const ZCubeQuery = z.object({
-  measures: z.array(z.string()),
-  dimensions: z.array(z.string()).optional(),
-  timeDimensions: z.array(ZTimeDimension).optional(),
-  filters: z.array(ZCubeFilter).optional(),
-});
-export type TCubeQuery = z.infer<typeof ZCubeQuery>;
 
 /** Row from Cube.js tablePivot - keys are measure/dimension names, values are primitives */
 export type TChartDataRow = Record<string, string | number | null | boolean | undefined>;

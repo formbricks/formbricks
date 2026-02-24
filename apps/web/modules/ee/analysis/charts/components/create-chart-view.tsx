@@ -6,7 +6,7 @@ import { AIQuerySection } from "@/modules/ee/analysis/charts/components/ai-query
 import { ChartDialogFooterWithModals } from "@/modules/ee/analysis/charts/components/chart-dialog-footer-with-modals";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
-import { AnalyticsResponse, TCubeQuery } from "@/modules/ee/analysis/types/analysis";
+import { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import {
   Dialog,
   DialogBody,
@@ -112,7 +112,7 @@ export function CreateChartView({
               <AdvancedChartBuilder
                 environmentId={environmentId}
                 initialChartType={selectedChartType || chartData?.chartType || ""}
-                initialQuery={chartData?.query as TCubeQuery | undefined}
+                initialQuery={chartData?.query}
                 hidePreview={true}
                 onChartGenerated={handleAdvancedChartGenerated}
                 onSave={onAdvancedBuilderSave}
