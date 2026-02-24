@@ -111,8 +111,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Backwards-compat: legacy variables still used by some consumers/tests
   appendCssVariable("subheading-color", styling.questionColor?.light);
 
-  if (styling.questionColor?.light) {
-    appendCssVariable("placeholder-color", mixColor(styling.questionColor.light, "#ffffff", 0.3));
+  const placeholderBaseColor = styling.inputTextColor?.light ?? styling.questionColor?.light;
+  if (placeholderBaseColor) {
+    appendCssVariable("placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
+    appendCssVariable("input-placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
   }
 
   appendCssVariable("border-color", styling.inputBorderColor?.light);
@@ -192,8 +194,13 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   }
 
   // Buttons (Advanced)
-  appendCssVariable("button-bg-color", styling.buttonBgColor?.light);
-  appendCssVariable("button-text-color", styling.buttonTextColor?.light);
+  const buttonBg = styling.buttonBgColor?.light ?? styling.brandColor?.light;
+  let buttonText = styling.buttonTextColor?.light;
+  if (buttonText === undefined && buttonBg) {
+    buttonText = isLight(buttonBg) ? "#0f172a" : "#ffffff";
+  }
+  appendCssVariable("button-bg-color", buttonBg);
+  appendCssVariable("button-text-color", buttonText);
   if (styling.buttonBorderRadius !== undefined)
     appendCssVariable("button-border-radius", formatDimension(styling.buttonBorderRadius));
   if (styling.buttonHeight !== undefined)
@@ -209,7 +216,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   // Inputs (Advanced)
   appendCssVariable("input-background-color", styling.inputBgColor?.light ?? styling.inputColor?.light);
-  appendCssVariable("input-text-color", styling.inputTextColor?.light);
+  const inputTextColor = styling.inputTextColor?.light ?? styling.questionColor?.light;
+  appendCssVariable("input-text-color", inputTextColor);
+  if (inputTextColor) {
+    appendCssVariable("input-placeholder-color", mixColor(inputTextColor, "#ffffff", 0.3));
+  }
   if (styling.inputBorderRadius !== undefined)
     appendCssVariable("input-border-radius", formatDimension(styling.inputBorderRadius));
   if (styling.inputHeight !== undefined)
@@ -225,8 +236,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   appendCssVariable("input-shadow", styling.inputShadow);
 
   // Options (Advanced)
-  appendCssVariable("option-bg-color", styling.optionBgColor?.light);
-  appendCssVariable("option-label-color", styling.optionLabelColor?.light);
+  appendCssVariable("option-bg-color", styling.optionBgColor?.light ?? styling.inputColor?.light);
+  appendCssVariable("option-label-color", styling.optionLabelColor?.light ?? styling.questionColor?.light);
   if (styling.optionBorderRadius !== undefined)
     appendCssVariable("option-border-radius", formatDimension(styling.optionBorderRadius));
   if (styling.optionPaddingX !== undefined)
@@ -277,8 +288,15 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Implicitly set the progress track border radius to the roundness of the card
   appendCssVariable("progress-track-border-radius", formatDimension(roundness));
 
-  appendCssVariable("progress-track-bg-color", styling.progressTrackBgColor?.light);
-  appendCssVariable("progress-indicator-bg-color", styling.progressIndicatorBgColor?.light);
+  appendCssVariable(
+    "progress-track-bg-color",
+    styling.progressTrackBgColor?.light ??
+      (styling.brandColor?.light ? mixColor(styling.brandColor.light, "#ffffff", 0.8) : undefined)
+  );
+  appendCssVariable(
+    "progress-indicator-bg-color",
+    styling.progressIndicatorBgColor?.light ?? styling.brandColor?.light
+  );
 
   // Close the #fbjs variable block
   cssVariables += "}\n";
@@ -304,7 +322,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     headlineDecls += "  font-size: var(--fb-element-headline-font-size) !important;\n";
   if (styling.elementHeadlineFontWeight !== undefined && styling.elementHeadlineFontWeight !== null)
     headlineDecls += "  font-weight: var(--fb-element-headline-font-weight) !important;\n";
-  if (styling.elementHeadlineColor?.light)
+  if (styling.elementHeadlineColor?.light || styling.questionColor?.light)
     headlineDecls += "  color: var(--fb-element-headline-color) !important;\n";
   addRule("#fbjs .label-headline,\n#fbjs .label-headline *", headlineDecls);
 
@@ -314,7 +332,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     descriptionDecls += "  font-size: var(--fb-element-description-font-size) !important;\n";
   if (styling.elementDescriptionFontWeight !== undefined && styling.elementDescriptionFontWeight !== null)
     descriptionDecls += "  font-weight: var(--fb-element-description-font-weight) !important;\n";
-  if (styling.elementDescriptionColor?.light)
+  if (styling.elementDescriptionColor?.light || styling.questionColor?.light)
     descriptionDecls += "  color: var(--fb-element-description-color) !important;\n";
   addRule("#fbjs .label-description,\n#fbjs .label-description *", descriptionDecls);
 
@@ -324,7 +342,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     upperDecls += "  font-size: var(--fb-element-upper-label-font-size) !important;\n";
   if (styling.elementUpperLabelFontWeight !== undefined && styling.elementUpperLabelFontWeight !== null)
     upperDecls += "  font-weight: var(--fb-element-upper-label-font-weight) !important;\n";
-  if (styling.elementUpperLabelColor?.light) {
+  if (styling.elementUpperLabelColor?.light || styling.questionColor?.light) {
     upperDecls += "  color: var(--fb-element-upper-label-color) !important;\n";
     upperDecls += "  opacity: var(--fb-element-upper-label-opacity, 1) !important;\n";
   }
@@ -332,9 +350,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   // --- Buttons ---
   let buttonDecls = "";
-  if (styling.buttonBgColor?.light)
+  if (styling.buttonBgColor?.light || styling.brandColor?.light)
     buttonDecls += "  background-color: var(--fb-button-bg-color) !important;\n";
-  if (styling.buttonTextColor?.light) buttonDecls += "  color: var(--fb-button-text-color) !important;\n";
+  if (styling.buttonTextColor?.light || styling.brandColor?.light)
+    buttonDecls += "  color: var(--fb-button-text-color) !important;\n";
   if (styling.buttonBorderRadius !== undefined)
     buttonDecls += "  border-radius: var(--fb-button-border-radius) !important;\n";
   if (styling.buttonHeight !== undefined) buttonDecls += "  height: var(--fb-button-height) !important;\n";
@@ -355,11 +374,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // --- Options ---
   if (styling.optionBorderRadius !== undefined)
     addRule("#fbjs .rounded-option", "  border-radius: var(--fb-option-border-radius) !important;\n");
-  if (styling.optionBgColor?.light)
+  if (styling.optionBgColor?.light || styling.inputColor?.light)
     addRule("#fbjs .bg-option-bg", "  background-color: var(--fb-option-bg-color) !important;\n");
 
   let optionLabelDecls = "";
-  if (styling.optionLabelColor?.light)
+  if (styling.optionLabelColor?.light || styling.questionColor?.light)
     optionLabelDecls += "  color: var(--fb-option-label-color) !important;\n";
   if (styling.optionFontSize !== undefined)
     optionLabelDecls += "  font-size: var(--fb-option-font-size) !important;\n";
@@ -385,7 +404,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     addRule("#fbjs .border-input-border", "  border-color: var(--fb-input-border-color) !important;\n");
 
   let inputTextDecls = "";
-  if (styling.inputTextColor?.light) inputTextDecls += "  color: var(--fb-input-text-color) !important;\n";
+  if (styling.inputTextColor?.light || styling.questionColor?.light)
+    inputTextDecls += "  color: var(--fb-input-text-color) !important;\n";
   if (styling.inputFontSize !== undefined)
     inputTextDecls += "  font-size: var(--fb-input-font-size) !important;\n";
   addRule("#fbjs .text-input-text", inputTextDecls);

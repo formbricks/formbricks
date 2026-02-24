@@ -44,13 +44,10 @@ const validateResponse = (
     ...responseUpdateInput.data,
   };
 
-  const isFinished = responseUpdateInput.finished ?? false;
-
   const validationErrors = validateResponseData(
     survey.blocks,
     mergedData,
     responseUpdateInput.language ?? response.language ?? "en",
-    isFinished,
     survey.questions
   );
 

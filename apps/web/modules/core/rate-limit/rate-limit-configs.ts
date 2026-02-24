@@ -30,4 +30,4 @@ export const rateLimitConfigs = {
     upload: { interval: 60, allowedPerInterval: 5, namespace: "storage:upload" }, // 5 per minute
     delete: { interval: 60, allowedPerInterval: 5, namespace: "storage:delete" }, // 5 per minute
   },
-};
+} as const;

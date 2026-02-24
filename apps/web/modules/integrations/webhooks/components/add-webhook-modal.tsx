@@ -53,16 +53,22 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
   const [createdWebhook, setCreatedWebhook] = useState<Webhook | null>(null);
+  const [webhookSecret, setWebhookSecret] = useState<string | undefined>();
 
-  const handleTestEndpoint = async (sendSuccessToast: boolean) => {
+  const handleTestEndpoint = async (
+    sendSuccessToast: boolean
+  ): Promise<{ success: boolean; secret?: string }> => {
     try {
       const { valid, error } = validWebHookURL(testEndpointInput);
       if (!valid) {
         toast.error(error ?? t("common.something_went_wrong_please_try_again"));
-        return;
+        return { success: false };
       }
       setHittingEndpoint(true);
-      const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
+      const testEndpointActionResult = await testEndpointAction({
+        url: testEndpointInput,
+        secret: webhookSecret,
+      });
       if (!testEndpointActionResult?.data) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
         throw new Error(errorMessage);
@@ -70,7 +76,10 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success(t("environments.integrations.webhooks.endpoint_pinged"));
       setEndpointAccessible(true);
-      return true;
+      if (testEndpointActionResult.data.secret) {
+        setWebhookSecret(testEndpointActionResult.data.secret);
+      }
+      return testEndpointActionResult.data;
     } catch (err) {
       setHittingEndpoint(false);
       toast.error(
@@ -83,7 +92,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       );
       console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), err.message);
       setEndpointAccessible(false);
-      return false;
+      return { success: false };
     }
   };
 
@@ -127,8 +136,8 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           throw new Error(t("environments.integrations.webhooks.discord_webhook_not_supported"));
         }
 
-        const endpointHitSuccessfully = await handleTestEndpoint(false);
-        if (!endpointHitSuccessfully) return;
+        const testResult = await handleTestEndpoint(false);
+        if (!testResult.success) return;
 
         const updatedData: TWebhookInput = {
           name: data.name,
@@ -141,6 +150,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         const createWebhookActionResult = await createWebhookAction({
           environmentId,
           webhookInput: updatedData,
+          webhookSecret: testResult.secret,
         });
         if (createWebhookActionResult?.data) {
           router.refresh();
@@ -167,6 +177,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
     setSelectedTriggers([]);
     setSelectedAllSurveys(false);
     setCreatedWebhook(null);
+    setWebhookSecret(undefined);
   };
 
   // Show success dialog with secret after webhook creation

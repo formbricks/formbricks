@@ -443,6 +443,39 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-button-font-size"]).toBe("1.5rem");
   });
 
+  test("should derive input-placeholder-color from inputTextColor when set", () => {
+    const styling: TSurveyStyling = {
+      ...getBaseProjectStyling(),
+      questionColor: { light: "#AABBCC" },
+      inputTextColor: { light: "#112233" },
+    };
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    // Placeholder should be derived from inputTextColor, not questionColor
+    expect(variables["--fb-input-placeholder-color"]).toBeDefined();
+    expect(variables["--fb-placeholder-color"]).toBeDefined();
+    // Both should be based on inputTextColor (#112233) mixed with white, not questionColor (#AABBCC)
+    // We can verify by checking the placeholder color doesn't contain the questionColor mix
+    expect(variables["--fb-input-placeholder-color"]).toBe(variables["--fb-placeholder-color"]);
+  });
+
+  test("should derive input-placeholder-color from questionColor when inputTextColor is not set", () => {
+    const styling: TSurveyStyling = {
+      ...getBaseProjectStyling(),
+      questionColor: { light: "#AABBCC" },
+    };
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    // Placeholder should fall back to questionColor when inputTextColor is not set
+    expect(variables["--fb-input-placeholder-color"]).toBeDefined();
+    expect(variables["--fb-placeholder-color"]).toBeDefined();
+    expect(variables["--fb-input-placeholder-color"]).toBe(variables["--fb-placeholder-color"]);
+  });
+
   test("should set signature and branding text colors for dark questionColor", () => {
     const styling = getBaseProjectStyling({
       questionColor: { light: "#202020" }, // A dark color

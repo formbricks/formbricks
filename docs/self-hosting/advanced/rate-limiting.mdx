@@ -1,41 +1,94 @@
 ---
 title: "Rate Limiting"
-description: "Rate limiting for Formbricks"
+description: "Current request rate limits in Formbricks"
 icon: "timer"
 ---
 
-To protect the platform from abuse and ensure fair usage, rate limiting is enforced by default on an IP-address basis. If a client exceeds the allowed number of requests within the specified time window, the API will return a `429 Too Many Requests` status code.
+Formbricks applies request rate limits to protect against abuse and keep API usage fair.
 
-## Default Rate Limits
+Rate limits are scoped by identifier, depending on the endpoint:
 
-The following rate limits apply to various endpoints:
+- IP hash (for unauthenticated/client-side routes and public actions)
+- API key ID (for authenticated API calls)
+- User ID (for authenticated session-based calls and server actions)
+- Organization ID (for follow-up email dispatch)
 
-| **Endpoint**            | **Rate Limit** | **Time Window** |
-| ----------------------- | -------------- | --------------- |
-| `POST /login`           | 30 requests    | 15 minutes      |
-| `POST /signup`          | 30 requests    | 60 minutes      |
-| `POST /verify-email`    | 10 requests    | 60 minutes      |
-| `POST /forgot-password` | 5 requests     | 60 minutes      |
-| `GET /client-side-api`  | 100 requests   | 1 minute        |
-| `POST /share`           | 100 requests   | 60 minutes      |
+When a limit is exceeded, the API returns `429 Too Many Requests`.
 
-If a request exceeds the defined rate limit, the server will respond with:
+## Management API Rate Limits
+
+These are the current limits for Management APIs:
+
+| **Route Group** | **Limit** | **Window** | **Identifier** |
+| --- | --- | --- | --- |
+| `/api/v1/management/*` (except `/api/v1/management/storage`), `/api/v1/webhooks/*`, `/api/v1/integrations/*`, `/api/v1/management/me` | 100 requests | 1 minute | API key ID or session user ID |
+| `/api/v2/management/*` (and other v2 authenticated routes that use `authenticatedApiClient`) | 100 requests | 1 minute | API key ID |
+| `POST /api/v1/management/storage` | 5 requests | 1 minute | API key ID or session user ID |
+
+## All Enforced Limits
+
+| **Config** | **Limit** | **Window** | **Identifier** | **Used For** |
+| --- | --- | --- | --- | --- |
+| `auth.login` | 10 requests | 15 minutes | IP hash | Email/password login flow (`/api/auth/callback/credentials`) |
+| `auth.signup` | 30 requests | 60 minutes | IP hash | Signup server action |
+| `auth.forgotPassword` | 5 requests | 60 minutes | IP hash | Forgot password server action |
+| `auth.verifyEmail` | 10 requests | 60 minutes | IP hash | Email verification callback + resend verification action |
+| `api.v1` | 100 requests | 1 minute | API key ID or session user ID | v1 management, webhooks, integrations, and `/api/v1/management/me` |
+| `api.v2` | 100 requests | 1 minute | API key ID | v2 authenticated API wrapper (`authenticatedApiClient`) |
+| `api.client` | 100 requests | 1 minute | IP hash | v1 client API routes (except `/api/v1/client/og` and storage upload override), plus v2 routes that re-use those v1 handlers |
+| `storage.upload` | 5 requests | 1 minute | IP hash or authenticated ID | Client storage upload and management storage upload |
+| `storage.delete` | 5 requests | 1 minute | API key ID or session user ID | `DELETE /storage/[environmentId]/[accessType]/[fileName]` |
+| `actions.emailUpdate` | 3 requests | 60 minutes | User ID | Profile email update action |
+| `actions.surveyFollowUp` | 50 requests | 60 minutes | Organization ID | Survey follow-up email processing |
+| `actions.sendLinkSurveyEmail` | 10 requests | 60 minutes | IP hash | Link survey email send action |
+| `actions.licenseRecheck` | 5 requests | 1 minute | User ID | Enterprise license recheck action |
+
+## Current Endpoint Exceptions
+
+The following routes are currently not rate-limited by the server-side limiter:
+
+- `GET /api/v1/client/og` (explicitly excluded)
+- `POST /api/v2/client/[environmentId]/responses`
+- `POST /api/v2/client/[environmentId]/displays`
+- `GET /api/v2/health`
+
+## 429 Response Shape
+
+v1-style endpoints return:
 
 ```json
 {
-  "code": 429,
-  "error": "Too many requests, Please try after a while!"
+  "code": "too_many_requests",
+  "message": "Maximum number of requests reached. Please try again later.",
+  "details": {}
+}
+```
+
+v2-style endpoints return:
+
+```json
+{
+  "error": {
+    "code": 429,
+    "message": "Too Many Requests"
+  }
 }
 ```
 
 ## Disabling Rate Limiting
 
-For self-hosters, rate limiting can be disabled if necessary. However, we **strongly recommend keeping rate limiting enabled in production environments** to prevent abuse.
+For self-hosters, rate limiting can be disabled if necessary. We strongly recommend keeping it enabled in production.
 
-To disable rate limiting, set the following environment variable:
+Set:
 
 ```bash
 RATE_LIMITING_DISABLED=1
 ```
 
-After making this change, restart your server to apply the new setting.
+After changing this value, restart the server.
+
+## Operational Notes
+
+- Redis/Valkey is required for robust rate limiting (`REDIS_URL`).
+- If Redis is unavailable at runtime, rate-limiter checks currently fail open (requests are allowed through without enforcement).
+- Authentication failure audit logging uses a separate throttle (`shouldLogAuthFailure()`) and is intentionally **fail-closed**: when Redis is unavailable or errors occur, audit log entries are **skipped entirely** rather than written without throttle control. This prevents spam while preserving the hash-integrity chain required for compliance. In other words, if Redis is down, no authentication-failure audit logs will be recorded—requests themselves are still allowed (fail-open rate limiting above), but the audit trail for those failures will not be written.

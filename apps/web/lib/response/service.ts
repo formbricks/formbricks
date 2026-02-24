@@ -22,6 +22,7 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteFile } from "@/modules/storage/service";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -408,9 +409,10 @@ export const getResponseDownloadFile = async (
     if (survey.isVerifyEmailEnabled) {
       headers.push("Verified Email");
     }
+    const resolvedResponses = responses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) }));
     const jsonData = getResponsesJson(
       survey,
-      responses,
+      resolvedResponses,
       elements,
       userAttributes,
       hiddenFields,

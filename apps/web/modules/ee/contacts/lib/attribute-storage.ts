@@ -54,7 +54,6 @@ export const prepareNewSDKAttributeForStorage = (
 };
 
 const handleStringType = (value: TRawValue): TAttributeStorageColumns => {
-  // String type - only use value column
   let stringValue: string;
 
   if (value instanceof Date) {

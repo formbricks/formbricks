@@ -40,7 +40,10 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     isLoadingScript = true;
     try {
       const scriptUrl = props.appUrl ? `${props.appUrl}/js/surveys.umd.cjs` : "/js/surveys.umd.cjs";
-      const response = await fetch(scriptUrl);
+      const response = await fetch(
+        scriptUrl,
+        process.env.NODE_ENV === "development" ? { cache: "no-store" } : {}
+      );
 
       if (!response.ok) {
         throw new Error("Failed to load the surveys package");
