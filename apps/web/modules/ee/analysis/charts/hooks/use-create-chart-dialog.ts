@@ -40,7 +40,7 @@ export function useCreateChartDialog({
   onSuccess,
 }: Readonly<UseCreateChartDialogProps>) {
   const { t } = useTranslation();
-  const [selectedChartType, setSelectedChartType] = useState<string>("");
+  const [selectedChartType, setSelectedChartType] = useState<TApiChartType | "">("");
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);

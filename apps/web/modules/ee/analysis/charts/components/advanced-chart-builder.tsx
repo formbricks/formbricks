@@ -28,16 +28,13 @@ import {
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
-import type { AnalyticsResponse, TChartDataRow } from "@/modules/ee/analysis/types/analysis";
+import type { AnalyticsResponse, TApiChartType, TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
-// Filter out table, map, and scatter charts
-const AVAILABLE_CHART_TYPES = CHART_TYPES.filter((type) => !["table", "map", "scatter"].includes(type.id));
-
 interface AdvancedChartBuilderProps {
   environmentId: string;
-  initialChartType?: string;
+  initialChartType?: TApiChartType;
   initialQuery?: TChartQuery;
   hidePreview?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
@@ -46,7 +43,7 @@ interface AdvancedChartBuilderProps {
 }
 
 type Action =
-  | { type: "SET_CHART_TYPE"; payload: string }
+  | { type: "SET_CHART_TYPE"; payload: TApiChartType }
   | { type: "SET_MEASURES"; payload: string[] }
   | { type: "SET_CUSTOM_MEASURES"; payload: CustomMeasure[] }
   | { type: "SET_DIMENSIONS"; payload: string[] }
@@ -141,9 +138,10 @@ export function AdvancedChartBuilder({
   useEffect(() => {
     if (initialQuery && !isInitialized) {
       setIsInitialized(true);
+      const chartType = state.chartType;
       executeQueryAction({
         environmentId,
-        query: initialQuery as TChartQuery,
+        query: initialQuery,
       }).then((result) => {
         if (result?.serverError) {
           setError(getFormattedErrorMessage(result));
@@ -154,19 +152,14 @@ export function AdvancedChartBuilder({
           setChartData(data);
           setQuery(initialQuery);
           lastStateRef.current = JSON.stringify({
-            chartType: state.chartType,
+            chartType,
             measures: state.selectedMeasures,
             dimensions: state.selectedDimensions,
             filters: state.filters,
             timeDimension: state.timeDimension,
           });
-          if (onChartGenerated) {
-            const analyticsResponse: AnalyticsResponse = {
-              query: initialQuery,
-              chartType: state.chartType as AnalyticsResponse["chartType"],
-              data,
-            };
-            onChartGenerated(analyticsResponse);
+          if (onChartGenerated && chartType) {
+            onChartGenerated({ query: initialQuery, chartType, data });
           }
         }
       });
@@ -202,26 +195,22 @@ export function AdvancedChartBuilder({
       return;
     }
 
+    const chartType = state.chartType;
     const updatedQuery = buildCubeQuery(state);
     setIsLoading(true);
     setError(null);
 
     executeQueryAction({
       environmentId,
-      query: updatedQuery as TChartQuery,
+      query: updatedQuery,
     })
       .then((result) => {
         const data = Array.isArray(result?.data) ? result.data : [];
         if (data.length > 0) {
           setChartData(data);
           setQuery(updatedQuery);
-          if (onChartGenerated) {
-            const analyticsResponse: AnalyticsResponse = {
-              query: updatedQuery,
-              chartType: state.chartType as AnalyticsResponse["chartType"],
-              data,
-            };
-            onChartGenerated(analyticsResponse);
+          if (onChartGenerated && chartType) {
+            onChartGenerated({ query: updatedQuery, chartType, data });
           }
         } else if (result?.serverError) {
           setError(getFormattedErrorMessage(result));
@@ -282,7 +271,7 @@ export function AdvancedChartBuilder({
 
       const result = await executeQueryAction({
         environmentId,
-        query: cubeQuery as TChartQuery,
+        query: cubeQuery,
       });
 
       if (result?.serverError) {
@@ -296,13 +285,8 @@ export function AdvancedChartBuilder({
         setError(null);
         toast.success(t("environments.analysis.charts.query_executed_successfully"));
 
-        if (onChartGenerated) {
-          const analyticsResponse: AnalyticsResponse = {
-            query: cubeQuery,
-            chartType: state.chartType as AnalyticsResponse["chartType"],
-            data,
-          };
-          onChartGenerated(analyticsResponse);
+        if (onChartGenerated && state.chartType) {
+          onChartGenerated({ query: cubeQuery, chartType: state.chartType, data });
         }
       } else {
         throw new Error(t("environments.analysis.charts.no_data_returned"));
@@ -436,7 +420,7 @@ export function AdvancedChartBuilder({
               {t("environments.analysis.charts.chart_builder_choose_chart_type")}
             </h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {AVAILABLE_CHART_TYPES.map((chart) => {
+              {CHART_TYPES.map((chart) => {
                 const isSelected = state.chartType === chart.id;
                 return (
                   <button
@@ -514,7 +498,7 @@ export function AdvancedChartBuilder({
             </div>
           )}
 
-          {chartData && Array.isArray(chartData) && chartData.length > 0 && !isLoading && (
+          {chartData && Array.isArray(chartData) && chartData.length > 0 && !isLoading && state.chartType && (
             <div className="space-y-4">
               <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <ChartRenderer chartType={state.chartType} data={chartData} />

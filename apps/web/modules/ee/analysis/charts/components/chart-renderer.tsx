@@ -1,6 +1,7 @@
 "use client";
 
 import { format, isValid, parseISO } from "date-fns";
+import type { ElementType, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Area,
@@ -24,8 +25,20 @@ import {
   resolveChartKeys,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
-import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
+import type { TApiChartType, TChartDataRow } from "@/modules/ee/analysis/types/analysis";
+import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
+
+function formatXAxisTick(value: unknown): string {
+  if (value == null) return "";
+  let str: string;
+  if (typeof value === "string") str = value;
+  else if (typeof value === "number") str = String(value);
+  else return "";
+  const date = parseISO(str);
+  if (isValid(date)) return format(date, "MMM d, yyyy");
+  return str;
+}
 
 function ChartTooltipRow({ value, dataKey }: Readonly<{ value: unknown; dataKey: string }>) {
   return (
@@ -53,20 +66,55 @@ function createTooltipFormatter(dataKey: string) {
 }
 
 /** Tooltip content for bar/line/area charts with formatted label and value. Extracted to avoid inline component definitions. */
-function CartesianChartTooltip({
-  dataKey,
-  formatXAxisTick,
-}: Readonly<{ dataKey: string; formatXAxisTick: (value: unknown) => string }>) {
+function CartesianChartTooltip({ dataKey }: Readonly<{ dataKey: string }>) {
   return <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={createTooltipFormatter(dataKey)} />;
 }
 
+/** Shared layout for bar, line, and area charts to avoid duplicating grid/axis/tooltip boilerplate. */
+function CartesianChart({
+  data,
+  xAxisKey,
+  dataKey,
+  chartConfig,
+  chart: Chart,
+  children,
+}: Readonly<{
+  data: TChartDataRow[];
+  xAxisKey: string;
+  dataKey: string;
+  chartConfig: ChartConfig;
+  chart: ElementType;
+  children: ReactNode;
+}>) {
+  return (
+    <div className="h-64 w-full">
+      <ChartContainer config={chartConfig} className="h-full w-full">
+        <Chart data={data}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis
+            dataKey={xAxisKey}
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+            tickFormatter={formatXAxisTick}
+          />
+          <YAxis tickLine={false} axisLine={false} />
+          <ChartTooltip content={<CartesianChartTooltip dataKey={dataKey} />} />
+          {children}
+        </Chart>
+      </ChartContainer>
+    </div>
+  );
+}
+
 interface ChartRendererProps {
-  chartType: string;
+  chartType: TApiChartType;
   data: TChartDataRow[];
 }
 
-export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>) => {
+export function ChartRenderer({ chartType, data }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
+
   if (!data || data.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center text-gray-500">
@@ -76,114 +124,63 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
   }
 
   const { xAxisKey, dataKey } = resolveChartKeys(data, chartType);
-  const chartConfig = {
+  const chartConfig: ChartConfig = {
     [dataKey]: {
       label: formatCubeColumnHeader(dataKey),
       color: CHART_BRAND_DARK,
     },
   };
 
-  const formatXAxisTick = (value: unknown): string => {
-    if (value == null) return "";
-    let str: string;
-    if (typeof value === "string") str = value;
-    else if (typeof value === "number") str = String(value);
-    else return "";
-    const date = parseISO(str);
-    if (isValid(date)) return format(date, "MMM d, yyyy");
-    return str;
-  };
-
   switch (chartType) {
     case "bar":
       return (
-        <div className="h-64 min-h-[256px] w-full">
-          <ChartContainer config={chartConfig} className="h-full w-full">
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey={xAxisKey}
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tickFormatter={formatXAxisTick}
-              />
-              <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip
-                content={<CartesianChartTooltip dataKey={dataKey} formatXAxisTick={formatXAxisTick} />}
-              />
-              <Bar dataKey={dataKey} fill={CHART_BRAND_DARK} radius={4} />
-            </BarChart>
-          </ChartContainer>
-        </div>
+        <CartesianChart
+          chart={BarChart}
+          data={data}
+          xAxisKey={xAxisKey}
+          dataKey={dataKey}
+          chartConfig={chartConfig}>
+          <Bar dataKey={dataKey} fill={CHART_BRAND_DARK} radius={4} />
+        </CartesianChart>
       );
     case "line":
       return (
-        <div className="h-64 min-h-[256px] w-full">
-          <ChartContainer config={chartConfig} className="h-full w-full">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey={xAxisKey}
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tickFormatter={formatXAxisTick}
-              />
-              <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip
-                content={<CartesianChartTooltip dataKey={dataKey} formatXAxisTick={formatXAxisTick} />}
-              />
-              <Line
-                type="monotone"
-                dataKey={dataKey}
-                stroke={CHART_BRAND_DARK}
-                strokeWidth={3}
-                dot={{ fill: CHART_BRAND_DARK, r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ChartContainer>
-        </div>
+        <CartesianChart
+          chart={LineChart}
+          data={data}
+          xAxisKey={xAxisKey}
+          dataKey={dataKey}
+          chartConfig={chartConfig}>
+          <Line
+            type="monotone"
+            dataKey={dataKey}
+            stroke={CHART_BRAND_DARK}
+            strokeWidth={3}
+            dot={{ fill: CHART_BRAND_DARK, r: 4 }}
+            activeDot={{ r: 6 }}
+          />
+        </CartesianChart>
       );
     case "area":
       return (
-        <div className="h-64 min-h-[256px] w-full">
-          <ChartContainer config={chartConfig} className="h-full w-full">
-            <AreaChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey={xAxisKey}
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tickFormatter={formatXAxisTick}
-              />
-              <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip
-                content={<CartesianChartTooltip dataKey={dataKey} formatXAxisTick={formatXAxisTick} />}
-              />
-              <Area
-                type="monotone"
-                dataKey={dataKey}
-                stroke={CHART_BRAND_DARK}
-                fill={CHART_BRAND_LIGHT}
-                fillOpacity={0.4}
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ChartContainer>
-        </div>
+        <CartesianChart
+          chart={AreaChart}
+          data={data}
+          xAxisKey={xAxisKey}
+          dataKey={dataKey}
+          chartConfig={chartConfig}>
+          <Area
+            type="monotone"
+            dataKey={dataKey}
+            stroke={CHART_BRAND_DARK}
+            fill={CHART_BRAND_LIGHT}
+            fillOpacity={0.4}
+            strokeWidth={2}
+          />
+        </CartesianChart>
       );
     case "pie":
     case "donut": {
-      if (!dataKey || !xAxisKey) {
-        return (
-          <div className="flex h-64 items-center justify-center text-gray-500">
-            {t("environments.analysis.charts.unable_to_determine_chart_data_structure")}
-          </div>
-        );
-      }
       const pieResult = preparePieData(data, dataKey);
       if (!pieResult) {
         return (
@@ -195,9 +192,9 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
       const { processedData, colors } = pieResult;
 
       return (
-        <div className="h-64 min-h-[256px] w-full min-w-0">
+        <div className="h-64 w-full min-w-0">
           <ChartContainer config={chartConfig} className="h-full w-full min-w-0">
-            <PieChart width={400} height={256}>
+            <PieChart>
               <Pie
                 data={processedData}
                 dataKey={dataKey}
@@ -234,7 +231,7 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
             <div className="text-4xl font-bold text-gray-900">{total.toLocaleString()}</div>
-            <div className="mt-2 text-sm text-gray-500">{dataKey}</div>
+            <div className="mt-2 text-sm text-gray-500">{formatCubeColumnHeader(dataKey)}</div>
           </div>
         </div>
       );
@@ -246,4 +243,4 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
         </div>
       );
   }
-};
+}

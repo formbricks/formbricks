@@ -3,13 +3,12 @@
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { CHART_TYPES } from "@/modules/ee/analysis/charts/lib/chart-types";
+import type { TApiChartType } from "@/modules/ee/analysis/types/analysis";
 
 interface ManualChartBuilderProps {
-  selectedChartType: string;
-  onChartTypeSelect: (type: string) => void;
+  selectedChartType: TApiChartType | "";
+  onChartTypeSelect: (type: TApiChartType) => void;
 }
-
-const AVAILABLE_CHART_TYPES = CHART_TYPES.filter((type) => !["table", "map", "scatter"].includes(type.id));
 
 export function ManualChartBuilder({
   selectedChartType,
@@ -24,7 +23,7 @@ export function ManualChartBuilder({
 
       <div className="rounded-lg border border-gray-200 bg-white p-4">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {AVAILABLE_CHART_TYPES.map((chart) => {
+          {CHART_TYPES.map((chart) => {
             const isSelected = selectedChartType === chart.id;
             return (
               <button

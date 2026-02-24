@@ -97,7 +97,18 @@ export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
 
 // ── Charts UI (query execution, AI response) ─────────────────────────────────
 
-export const ZApiChartType = z.enum(["bar", "line", "donut", "kpi", "area", "pie", "big_number"]);
+export const ZApiChartType = z.enum([
+  "bar",
+  "line",
+  "donut",
+  "kpi",
+  "area",
+  "pie",
+  "big_number",
+  "table",
+  "scatter",
+  "map",
+]);
 export type TApiChartType = z.infer<typeof ZApiChartType>;
 
 /** Row from Cube.js tablePivot - keys are measure/dimension names, values are primitives */

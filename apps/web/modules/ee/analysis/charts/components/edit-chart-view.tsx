@@ -5,7 +5,7 @@ import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/ad
 import { ChartDialogFooterWithModals } from "@/modules/ee/analysis/charts/components/chart-dialog-footer-with-modals";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
-import { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
+import type { AnalyticsResponse, TApiChartType } from "@/modules/ee/analysis/types/analysis";
 import {
   Dialog,
   DialogBody,
@@ -26,8 +26,8 @@ interface EditChartViewProps {
   isLoadingChart?: boolean;
   chartName: string;
   onChartNameChange: (name: string) => void;
-  selectedChartType: string;
-  onChartTypeChange: (type: string) => void;
+  selectedChartType: TApiChartType | "";
+  onChartTypeChange: (type: TApiChartType) => void;
   onChartGenerated: (data: AnalyticsResponse) => void;
   onAdvancedBuilderSave: (savedChartId: string) => void;
   onAdvancedBuilderAddToDashboard: (savedChartId: string, dashboardId?: string) => void;
@@ -93,7 +93,7 @@ export function EditChartView({
             <ManualChartBuilder selectedChartType={selectedChartType} onChartTypeSelect={onChartTypeChange} />
             <AdvancedChartBuilder
               environmentId={environmentId}
-              initialChartType={selectedChartType || chartData?.chartType || ""}
+              initialChartType={selectedChartType || chartData?.chartType}
               initialQuery={chartData?.query ?? initialQuery}
               hidePreview={true}
               onChartGenerated={onChartGenerated}
