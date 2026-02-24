@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowDownUpIcon, EyeIcon } from "lucide-react";
-import Link from "next/link";
+import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TDisplay } from "@formbricks/types/displays";
@@ -12,12 +11,11 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { useMembershipRole } from "@/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { timeSince } from "@/lib/time";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
-import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { EmptyState } from "@/modules/ui/components/empty-state";
+import { DisplayCard } from "./display-card";
+import { ResponseSurveyCard } from "./response-survey-card";
 
 type TTimelineItem =
   | { type: "display"; data: Pick<TDisplay, "id" | "createdAt" | "surveyId"> }
@@ -48,10 +46,8 @@ export const ActivityTimeline = ({
   const [responses, setResponses] = useState(initialResponses);
   const [isReversed, setIsReversed] = useState(false);
 
-  // Fetch membership role once for the environment
   const { membershipRole } = useMembershipRole(environment.id, user.id);
 
-  // Compute isReadOnly once for all responses
   const isReadOnly = useMemo(() => {
     const { isMember } = getAccessFlags(membershipRole);
     const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
@@ -138,83 +134,5 @@ export const ActivityTimeline = ({
         </div>
       )}
     </div>
-  );
-};
-
-const DisplayCard = ({
-  display,
-  surveys,
-  environmentId,
-  locale,
-}: {
-  display: Pick<TDisplay, "id" | "createdAt" | "surveyId">;
-  surveys: TSurvey[];
-  environmentId: string;
-  locale: TUserLocale;
-}) => {
-  const { t } = useTranslation();
-  const survey = surveys.find((s) => s.id === display.surveyId);
-
-  return (
-    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
-          <EyeIcon className="h-4 w-4 text-slate-600" />
-        </div>
-        <div>
-          <p className="text-xs text-slate-500">{t("environments.contacts.survey_viewed")}</p>
-          {survey ? (
-            <Link
-              href={`/environments/${environmentId}/surveys/${survey.id}/summary`}
-              className="text-sm font-medium text-slate-700 hover:underline">
-              {survey.name}
-            </Link>
-          ) : (
-            <span className="text-sm font-medium text-slate-500">{t("common.unknown_survey")}</span>
-          )}
-        </div>
-      </div>
-      <span className="text-sm text-slate-500">{timeSince(display.createdAt.toString(), locale)}</span>
-    </div>
-  );
-};
-
-const ResponseSurveyCard = ({
-  response,
-  surveys,
-  user,
-  environmentTags,
-  environment,
-  updateResponseList,
-  updateResponse,
-  locale,
-  isReadOnly,
-}: {
-  response: TResponseWithQuotas;
-  surveys: TSurvey[];
-  user: TUser;
-  environmentTags: TTag[];
-  environment: TEnvironment;
-  updateResponseList: (responseIds: string[]) => void;
-  updateResponse: (responseId: string, response: TResponseWithQuotas) => void;
-  locale: TUserLocale;
-  isReadOnly: boolean;
-}) => {
-  const survey = surveys.find((s) => s.id === response.surveyId);
-
-  if (!survey) return null;
-
-  return (
-    <SingleResponseCard
-      response={response}
-      survey={replaceHeadlineRecall(survey, "default")}
-      user={user}
-      environmentTags={environmentTags}
-      environment={environment}
-      updateResponseList={updateResponseList}
-      updateResponse={updateResponse}
-      isReadOnly={isReadOnly}
-      locale={locale}
-    />
   );
 };
