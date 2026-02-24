@@ -285,6 +285,7 @@
       "outputs": []
     },
     "db:seed": {
+      "cache": false,
       "env": ["ALLOW_SEED"],
       "outputs": []
     },

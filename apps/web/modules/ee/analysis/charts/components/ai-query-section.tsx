@@ -9,7 +9,6 @@ import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface AIQuerySectionProps {
   environmentId: string;
@@ -82,13 +81,6 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
           {t("common.generate")}
         </Button>
       </div>
-
-      {isGenerating && (
-        <div className="flex flex-col items-center justify-center gap-2 py-12">
-          <LoadingSpinner className="h-8 w-8" />
-          <span className="text-sm text-gray-500">{t("environments.analysis.charts.generating_chart")}</span>
-        </div>
-      )}
     </div>
   );
 }

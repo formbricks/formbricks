@@ -25,22 +25,22 @@ interface ChartDropdownMenuProps {
   onInteractionStart?: () => void;
 }
 
-export const ChartDropdownMenu = ({
+export function ChartDropdownMenu({
   environmentId,
   chart,
   onEdit,
   onInteractionStart,
-}: Readonly<ChartDropdownMenuProps>) => {
+}: Readonly<ChartDropdownMenuProps>) {
   const { t } = useTranslation();
   const router = useRouter();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
-  const handleDeleteChart = async (chartId: string) => {
-    setLoading(true);
+  const handleDeleteChart = async () => {
+    setIsDeleting(true);
     try {
-      const result = await deleteChartAction({ environmentId, chartId });
+      const result = await deleteChartAction({ environmentId, chartId: chart.id });
       if (result?.data) {
         toast.success(t("environments.analysis.charts.chart_deleted_successfully"));
         setDeleteDialogOpen(false);
@@ -51,18 +51,13 @@ export const ChartDropdownMenu = ({
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
     } finally {
-      setLoading(false);
+      setIsDeleting(false);
     }
-  };
-
-  const closeDropdown = () => {
-    setTimeout(() => setIsDropDownOpen(false), 0);
   };
 
   const handleDuplicateChart = async () => {
     onInteractionStart?.();
-    closeDropdown();
-    setLoading(true);
+    setIsDuplicating(true);
     try {
       const result = await duplicateChartAction({ environmentId, chartId: chart.id });
       if (result?.data) {
@@ -76,73 +71,47 @@ export const ChartDropdownMenu = ({
     } catch {
       toast.error(t("environments.analysis.charts.chart_duplication_error"));
     } finally {
-      setLoading(false);
+      setIsDuplicating(false);
     }
   };
 
   const handleEdit = () => {
     onInteractionStart?.();
-    closeDropdown();
-    setTimeout(() => onEdit?.(chart.id), 0);
+    onEdit?.(chart.id);
   };
 
   const handleOpenDeleteDialog = () => {
     onInteractionStart?.();
-    closeDropdown();
-    setTimeout(() => setDeleteDialogOpen(true), 0);
+    setDeleteDialogOpen(true);
   };
 
   return (
-    <div
-      id={`${chart.name.toLowerCase().split(" ").join("-")}-chart-actions`}
-      data-testid="chart-dropdown-menu">
-      <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
+    <div id={`chart-${chart.id}-actions`} data-testid="chart-dropdown-menu">
+      <DropdownMenu>
         <DropdownMenuTrigger className="z-10" asChild>
           <Button variant="outline" className="px-2" onClick={(e) => e.stopPropagation()}>
             <span className="sr-only">{t("environments.analysis.charts.open_options")}</span>
-            <MoreVertical className="h-4 w-4" aria-hidden="true" />
+            <MoreVertical className="size-4" aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
-            <DropdownMenuItem>
-              <button
-                type="button"
-                className="flex w-full items-center"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleEdit();
-                }}>
-                <SquarePenIcon className="mr-2 size-4" />
-                {t("common.edit")}
-              </button>
+            <DropdownMenuItem icon={<SquarePenIcon className="size-4" />} onClick={handleEdit}>
+              {t("common.edit")}
             </DropdownMenuItem>
 
-            <DropdownMenuItem>
-              <button
-                type="button"
-                className="flex w-full items-center"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleDuplicateChart();
-                }}
-                disabled={loading}>
-                <CopyIcon className="mr-2 h-4 w-4" />
-                {t("common.duplicate")}
-              </button>
+            <DropdownMenuItem
+              icon={<CopyIcon className="size-4" />}
+              onClick={handleDuplicateChart}
+              disabled={isDuplicating}>
+              {t("common.duplicate")}
             </DropdownMenuItem>
 
-            <DropdownMenuItem>
-              <button
-                type="button"
-                className="flex w-full items-center"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleOpenDeleteDialog();
-                }}>
-                <TrashIcon className="mr-2 h-4 w-4" />
-                {t("common.delete")}
-              </button>
+            <DropdownMenuItem
+              icon={<TrashIcon className="size-4" />}
+              onClick={handleOpenDeleteDialog}
+              disabled={isDeleting}>
+              {t("common.delete")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -152,10 +121,10 @@ export const ChartDropdownMenu = ({
         deleteWhat={t("common.chart")}
         open={isDeleteDialogOpen}
         setOpen={setDeleteDialogOpen}
-        onDelete={() => handleDeleteChart(chart.id)}
+        onDelete={handleDeleteChart}
         text={t("environments.analysis.charts.delete_chart_confirmation")}
-        isDeleting={loading}
+        isDeleting={isDeleting}
       />
     </div>
   );
-};
+}
