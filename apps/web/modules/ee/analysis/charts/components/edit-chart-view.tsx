@@ -66,7 +66,7 @@ export function EditChartView({
   const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-7xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto" width="wide">
         <DialogHeader>
           <DialogTitle>{t("environments.analysis.charts.edit_chart_title")}</DialogTitle>
           <DialogDescription>{t("environments.analysis.charts.edit_chart_description")}</DialogDescription>
