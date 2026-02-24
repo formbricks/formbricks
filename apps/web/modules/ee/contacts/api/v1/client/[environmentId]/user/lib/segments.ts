@@ -37,47 +37,6 @@ export const getSegments = reactCache(
     )
 );
 
-/**
- * Checks if a contact matches a segment using Prisma query
- * This leverages native DB types (valueDate, valueNumber) for accurate comparisons
- * Device filters are evaluated at query build time using the provided deviceType
- */
-const isContactInSegment = async (
-  contactId: string,
-  segmentId: string,
-  filters: TBaseFilters,
-  environmentId: string,
-  deviceType: "phone" | "desktop"
-): Promise<boolean> => {
-  // If no filters, segment matches all contacts
-  if (!filters || filters.length === 0) {
-    return true;
-  }
-
-  const queryResult = await segmentFilterToPrismaQuery(segmentId, filters, environmentId, deviceType);
-
-  if (!queryResult.ok) {
-    logger.warn(
-      { segmentId, environmentId, error: queryResult.error },
-      "Failed to build Prisma query for segment"
-    );
-    return false;
-  }
-
-  const { whereClause } = queryResult.data;
-
-  // Check if this specific contact matches the segment filters
-  const matchingContact = await prisma.contact.findFirst({
-    where: {
-      id: contactId,
-      ...whereClause,
-    },
-    select: { id: true },
-  });
-
-  return matchingContact !== null;
-};
-
 export const getPersonSegmentIds = async (
   environmentId: string,
   contactId: string,
@@ -89,23 +48,70 @@ export const getPersonSegmentIds = async (
 
     const segments = await getSegments(environmentId);
 
-    // fast path; if there are no segments, return an empty array
-    if (!segments || !Array.isArray(segments)) {
+    if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return [];
     }
 
-    // Device filters are evaluated at query build time using the provided deviceType
-    const segmentPromises = segments.map(async (segment) => {
-      const filters = segment.filters;
-      const isIncluded = await isContactInSegment(contactId, segment.id, filters, environmentId, deviceType);
-      return isIncluded ? segment.id : null;
-    });
+    // Phase 1: Build all Prisma where clauses concurrently.
+    // This converts segment filters into where clauses without per-contact DB queries.
+    const segmentWithClauses = await Promise.all(
+      segments.map(async (segment) => {
+        const filters = segment.filters as TBaseFilters | null;
 
-    const results = await Promise.all(segmentPromises);
+        if (!filters || filters.length === 0) {
+          return { segmentId: segment.id, whereClause: {} as Prisma.ContactWhereInput };
+        }
 
-    return results.filter((id): id is string => id !== null);
+        const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, environmentId, deviceType);
+
+        if (!queryResult.ok) {
+          logger.warn(
+            { segmentId: segment.id, environmentId, error: queryResult.error },
+            "Failed to build Prisma query for segment"
+          );
+          return { segmentId: segment.id, whereClause: null };
+        }
+
+        return { segmentId: segment.id, whereClause: queryResult.data.whereClause };
+      })
+    );
+
+    // Separate segments into: always-match (no filters), needs-DB-check, and failed-to-build
+    const alwaysMatchIds: string[] = [];
+    const toCheck: { segmentId: string; whereClause: Prisma.ContactWhereInput }[] = [];
+
+    for (const item of segmentWithClauses) {
+      if (item.whereClause === null) {
+        continue;
+      }
+
+      if (Object.keys(item.whereClause).length === 0) {
+        alwaysMatchIds.push(item.segmentId);
+      } else {
+        toCheck.push({ segmentId: item.segmentId, whereClause: item.whereClause });
+      }
+    }
+
+    if (toCheck.length === 0) {
+      return alwaysMatchIds;
+    }
+
+    // Phase 2: Batch all contact-match checks into a single DB transaction.
+    // Replaces N individual findFirst queries with one batched round-trip.
+    const batchResults = await prisma.$transaction(
+      toCheck.map(({ whereClause }) =>
+        prisma.contact.findFirst({
+          where: { id: contactId, ...whereClause },
+          select: { id: true },
+        })
+      )
+    );
+
+    // Phase 3: Collect matching segment IDs
+    const dbMatchIds = toCheck.filter((_, i) => batchResults[i] !== null).map(({ segmentId }) => segmentId);
+
+    return [...alwaysMatchIds, ...dbMatchIds];
   } catch (error) {
-    // Log error for debugging but don't throw to prevent "segments is not iterable" error
     logger.warn(
       {
         environmentId,
