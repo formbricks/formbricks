@@ -2,94 +2,39 @@
 
 import { AlertCircleIcon, InfoIcon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TDisplayWithContact } from "@formbricks/types/displays";
 import { TUserLocale } from "@formbricks/types/user";
-import { getDisplaysWithContactAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { timeSince } from "@/lib/time";
 import { Button } from "@/modules/ui/components/button";
 
-const DISPLAYS_PER_PAGE = 15;
-
 interface SummaryImpressionsProps {
-  surveyId: string;
+  displays: TDisplayWithContact[];
+  isLoading: boolean;
+  hasMore: boolean;
+  displaysError: string | null;
   environmentId: string;
   locale: TUserLocale;
+  onLoadMore: () => void;
+  onRetry: () => void;
 }
 
-export const SummaryImpressions = ({ surveyId, environmentId, locale }: SummaryImpressionsProps) => {
+const getDisplayContactIdentifier = (display: TDisplayWithContact): string => {
+  if (!display.contact) return "";
+  return display.contact.attributes?.email || display.contact.attributes?.userId || display.contact.id;
+};
+
+export const SummaryImpressions = ({
+  displays,
+  isLoading,
+  hasMore,
+  displaysError,
+  environmentId,
+  locale,
+  onLoadMore,
+  onRetry,
+}: SummaryImpressionsProps) => {
   const { t } = useTranslation();
-  const [displays, setDisplays] = useState<TDisplayWithContact[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [displaysError, setDisplaysError] = useState<string | null>(null);
-
-  const fetchDisplays = useCallback(
-    async (offset: number) => {
-      try {
-        const response = await getDisplaysWithContactAction({
-          surveyId,
-          limit: DISPLAYS_PER_PAGE,
-          offset,
-        });
-
-        if (response?.serverError) {
-          const errorMessage = response.serverError || t("common.something_went_wrong");
-          throw new Error(errorMessage);
-        }
-
-        if (response?.data) {
-          return response.data;
-        }
-
-        return [];
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
-        setDisplaysError(errorMessage);
-        toast.error(errorMessage);
-        throw error;
-      }
-    },
-    [surveyId, t]
-  );
-
-  const loadInitialDisplays = useCallback(async () => {
-    setIsLoading(true);
-    setDisplaysError(null);
-    try {
-      const data = await fetchDisplays(0);
-      setDisplays(data);
-      setHasMore(data.length === DISPLAYS_PER_PAGE);
-    } catch {
-      // Error is already handled in fetchDisplays
-      setDisplays([]);
-      setHasMore(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchDisplays]);
-
-  useEffect(() => {
-    loadInitialDisplays();
-  }, [loadInitialDisplays]);
-
-  const handleLoadMore = async () => {
-    try {
-      const data = await fetchDisplays(displays.length);
-      setDisplays((prev) => [...prev, ...data]);
-      setHasMore(data.length === DISPLAYS_PER_PAGE);
-    } catch {
-      // Error is already handled in fetchDisplays
-      setHasMore(false);
-    }
-  };
-
-  const getDisplayContactIdentifier = (display: TDisplayWithContact): string => {
-    if (!display.contact) return "";
-    return display.contact.attributes?.email || display.contact.attributes?.userId || display.contact.id;
-  };
 
   const renderContent = () => {
     if (displaysError) {
@@ -101,7 +46,7 @@ export const SummaryImpressions = ({ surveyId, environmentId, locale }: SummaryI
               <span className="text-sm font-medium">{t("common.error_loading_data")}</span>
             </div>
             <p className="text-sm text-slate-500">{displaysError}</p>
-            <Button onClick={loadInitialDisplays} variant="secondary" size="sm">
+            <Button onClick={onRetry} variant="secondary" size="sm">
               {t("common.try_again")}
             </Button>
           </div>
@@ -149,7 +94,7 @@ export const SummaryImpressions = ({ surveyId, environmentId, locale }: SummaryI
 
         {hasMore && (
           <div className="flex justify-center border-t border-slate-100 py-4">
-            <Button onClick={handleLoadMore} variant="secondary" size="sm">
+            <Button onClick={onLoadMore} variant="secondary" size="sm">
               {t("common.load_more")}
             </Button>
           </div>
