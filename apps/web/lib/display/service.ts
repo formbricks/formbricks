@@ -1,8 +1,9 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { ZId, ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import { TDisplay, TDisplayFilters, TDisplayWithContact } from "@formbricks/types/displays";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";
@@ -23,13 +24,12 @@ export const getDisplayCountBySurveyId = reactCache(
       const displayCount = await prisma.display.count({
         where: {
           surveyId: surveyId,
-          ...(filters &&
-            filters.createdAt && {
-              createdAt: {
-                gte: filters.createdAt.min,
-                lte: filters.createdAt.max,
-              },
-            }),
+          ...(filters?.createdAt && {
+            createdAt: {
+              gte: filters.createdAt.min,
+              lte: filters.createdAt.max,
+            },
+          }),
         },
       });
       return displayCount;
@@ -69,7 +69,11 @@ export const getDisplaysByContactId = reactCache(
 
 export const getDisplaysBySurveyIdWithContact = reactCache(
   async (surveyId: string, limit?: number, offset?: number): Promise<TDisplayWithContact[]> => {
-    validateInputs([surveyId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+    validateInputs(
+      [surveyId, ZId],
+      [limit, z.number().int().min(1).optional()],
+      [offset, z.number().int().nonnegative().optional()]
+    );
 
     try {
       const displays = await prisma.display.findMany({
