@@ -8,6 +8,7 @@ vi.mock("server-only", () => ({}));
 var mockTxDashboard: {
   // NOSONAR / test code
   findFirst: ReturnType<typeof vi.fn>;
+  create: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
 };
@@ -21,7 +22,7 @@ var mockTxWidget: {
 };
 
 vi.mock("@formbricks/database", () => {
-  const txDash = { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() };
+  const txDash = { findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() };
   const txChart = { findFirst: vi.fn() };
   const txWidget = { aggregate: vi.fn(), create: vi.fn() };
   mockTxDashboard = txDash;
@@ -66,6 +67,7 @@ const selectDashboard = {
   description: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
 };
 
 const mockDashboard = {
@@ -74,6 +76,7 @@ const mockDashboard = {
   description: "A test dashboard",
   createdAt: new Date("2025-01-01"),
   updatedAt: new Date("2025-01-01"),
+  createdBy: mockUserId,
 };
 
 const makePrismaError = (code: string) =>
@@ -256,6 +259,133 @@ describe("Dashboard Service", () => {
     });
   });
 
+  describe("duplicateDashboard", () => {
+    const mockWidgets = [
+      {
+        id: "widget-1",
+        chartId: mockChartId,
+        title: "Widget 1",
+        layout: { x: 0, y: 0, w: 4, h: 3 },
+        order: 0,
+      },
+      {
+        id: "widget-2",
+        chartId: "chart-2",
+        title: null,
+        layout: { x: 4, y: 0, w: 4, h: 3 },
+        order: 1,
+      },
+    ];
+
+    const sourceDashboard = {
+      ...mockDashboard,
+      widgets: mockWidgets,
+    };
+
+    const duplicatedDashboard = {
+      ...mockDashboard,
+      id: "dashboard-new-123",
+      name: "Test Dashboard (copy)",
+    };
+
+    test("duplicates a dashboard with all widgets", async () => {
+      mockTxDashboard.findFirst.mockResolvedValueOnce(sourceDashboard).mockResolvedValueOnce(null);
+      mockTxDashboard.create.mockResolvedValue(duplicatedDashboard);
+      const { duplicateDashboard } = await import("./dashboards");
+
+      const result = await duplicateDashboard(mockDashboardId, mockProjectId, mockUserId);
+
+      expect(result).toEqual(duplicatedDashboard);
+      expect(mockTxDashboard.create).toHaveBeenCalledWith({
+        data: {
+          name: "Test Dashboard (copy)",
+          description: mockDashboard.description,
+          projectId: mockProjectId,
+          createdBy: mockUserId,
+          widgets: {
+            create: [
+              {
+                chartId: mockChartId,
+                title: "Widget 1",
+                layout: { x: 0, y: 0, w: 4, h: 3 },
+                order: 0,
+              },
+              {
+                chartId: "chart-2",
+                title: null,
+                layout: { x: 4, y: 0, w: 4, h: 3 },
+                order: 1,
+              },
+            ],
+          },
+        },
+        select: selectDashboard,
+      });
+    });
+
+    test("duplicates a dashboard with no widgets", async () => {
+      const sourceNoWidgets = { ...mockDashboard, widgets: [] };
+      mockTxDashboard.findFirst.mockResolvedValueOnce(sourceNoWidgets).mockResolvedValueOnce(null);
+      mockTxDashboard.create.mockResolvedValue(duplicatedDashboard);
+      const { duplicateDashboard } = await import("./dashboards");
+
+      const result = await duplicateDashboard(mockDashboardId, mockProjectId, mockUserId);
+
+      expect(result).toEqual(duplicatedDashboard);
+      expect(mockTxDashboard.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          widgets: { create: [] },
+        }),
+        select: selectDashboard,
+      });
+    });
+
+    test("increments copy suffix when name already exists", async () => {
+      const existingCopy = { id: "existing", name: "Test Dashboard (copy)" };
+      mockTxDashboard.findFirst
+        .mockResolvedValueOnce(sourceDashboard)
+        .mockResolvedValueOnce(existingCopy)
+        .mockResolvedValueOnce(null);
+      mockTxDashboard.create.mockResolvedValue({
+        ...duplicatedDashboard,
+        name: "Test Dashboard (copy) 2",
+      });
+      const { duplicateDashboard } = await import("./dashboards");
+
+      const result = await duplicateDashboard(mockDashboardId, mockProjectId, mockUserId);
+
+      expect(result.name).toBe("Test Dashboard (copy) 2");
+      expect(mockTxDashboard.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ name: "Test Dashboard (copy) 2" }),
+        select: selectDashboard,
+      });
+    });
+
+    test("throws ResourceNotFoundError when source dashboard does not exist", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue(null);
+      const { duplicateDashboard } = await import("./dashboards");
+
+      await expect(duplicateDashboard(mockDashboardId, mockProjectId, mockUserId)).rejects.toMatchObject({
+        name: "ResourceNotFoundError",
+        resourceType: "Dashboard",
+        resourceId: mockDashboardId,
+      });
+      expect(mockTxDashboard.create).not.toHaveBeenCalled();
+    });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      mockTxDashboard.findFirst.mockRejectedValue(makePrismaError("P9999"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { duplicateDashboard } = await import("./dashboards");
+
+      await expect(duplicateDashboard(mockDashboardId, mockProjectId, mockUserId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
+  });
+
   describe("getDashboard", () => {
     test("returns a dashboard with widgets", async () => {
       const dashboardWithWidgets = {
@@ -311,10 +441,10 @@ describe("Dashboard Service", () => {
   });
 
   describe("getDashboards", () => {
-    test("returns all dashboards for a project", async () => {
+    test("returns all dashboards for a project with creator", async () => {
       const dashboards = [
-        { ...mockDashboard, _count: { widgets: 3 } },
-        { ...mockDashboard, id: "dash-2", name: "Dashboard 2", _count: { widgets: 0 } },
+        { ...mockDashboard, creator: { name: "Alice" }, _count: { widgets: 3 } },
+        { ...mockDashboard, id: "dash-2", name: "Dashboard 2", creator: null, _count: { widgets: 0 } },
       ];
       vi.mocked(prisma.dashboard.findMany).mockResolvedValue(dashboards as any);
       const { getDashboards } = await import("./dashboards");
@@ -328,6 +458,7 @@ describe("Dashboard Service", () => {
         select: expect.objectContaining({
           id: true,
           name: true,
+          creator: { select: { name: true } },
           _count: { select: { widgets: true } },
         }),
       });

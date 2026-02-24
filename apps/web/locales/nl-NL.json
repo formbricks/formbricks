@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} attribuut} other {{value} attributen}}",
     "count_contacts": "{value, plural, one {{value} contact} other {{value} contacten}}",
     "count_responses": "{value, plural, one {{value} reactie} other {{value} reacties}}",
+    "create": "Creëren",
     "create_new_organization": "Creëer een nieuwe organisatie",
     "create_segment": "Segment maken",
     "create_survey": "Enquête maken",
@@ -189,6 +190,7 @@
     "created_by": "Gemaakt door",
     "customer_success": "Klant succes",
     "dark_overlay": "Donkere overlay",
+    "dashboard": "Dashboard",
     "dashboards": "Dashboards",
     "date": "Datum",
     "days": "dagen",
@@ -306,6 +308,7 @@
     "on": "Op",
     "only_one_file_allowed": "Er is slechts één bestand toegestaan",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Alleen eigenaren en beheerders kunnen deze actie uitvoeren.",
+    "open_options": "Opties openen",
     "option_id": "Optie-ID",
     "option_ids": "Optie-ID's",
     "optional": "Optioneel",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "U kunt code-actie overal in uw app volgen met behulp van",
       "your_survey_would_be_shown_on_this_url": "Uw enquête wordt op deze URL weergegeven.",
       "your_survey_would_not_be_shown": "Uw enquête wordt niet getoond."
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "Dashboard creëren",
+        "create_dashboard_description": "Voer een naam in voor je nieuwe dashboard.",
+        "create_failed": "Dashboard creëren mislukt",
+        "create_success": "Dashboard succesvol aangemaakt!",
+        "dashboard_name": "Dashboardnaam",
+        "dashboard_name_placeholder": "Mijn dashboard",
+        "delete_confirmation": "Weet je zeker dat je dit dashboard wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+        "delete_failed": "Dashboard verwijderen mislukt",
+        "delete_success": "Dashboard succesvol verwijderd",
+        "description_optional": "Beschrijving (optioneel)",
+        "description_placeholder": "Dashboardbeschrijving",
+        "duplicate_failed": "Dashboard dupliceren mislukt",
+        "duplicate_success": "Dashboard succesvol gedupliceerd!",
+        "no_dashboards_found": "Geen dashboards gevonden.",
+        "please_enter_name": "Voer een dashboardnaam in"
+      }
     },
     "connect": {
       "congrats": "Gefeliciteerd!",

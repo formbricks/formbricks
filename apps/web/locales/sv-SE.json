@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} attribut} other {{value} attribut}}",
     "count_contacts": "{value, plural, one {{value} kontakt} other {{value} kontakter}}",
     "count_responses": "{value, plural, one {{value} svar} other {{value} svar}}",
+    "create": "Skapa",
     "create_new_organization": "Skapa ny organisation",
     "create_segment": "Skapa segment",
     "create_survey": "Skapa enkät",
@@ -189,6 +190,7 @@
     "created_by": "Skapad av",
     "customer_success": "Kundframgång",
     "dark_overlay": "Mörkt överlägg",
+    "dashboard": "Instrumentpanel",
     "dashboards": "Instrumentpaneler",
     "date": "Datum",
     "days": "dagar",
@@ -306,6 +308,7 @@
     "on": "På",
     "only_one_file_allowed": "Endast en fil är tillåten",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Endast ägare och chefer kan utföra denna åtgärd.",
+    "open_options": "Öppna alternativ",
     "option_id": "Alternativ-ID",
     "option_ids": "Alternativ-ID:n",
     "optional": "Valfritt",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "Du kan spåra kodåtgärder var som helst i din app med",
       "your_survey_would_be_shown_on_this_url": "Din enkät skulle visas på denna URL.",
       "your_survey_would_not_be_shown": "Din enkät skulle inte visas."
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "Skapa instrumentpanel",
+        "create_dashboard_description": "Ange ett namn för din nya instrumentpanel.",
+        "create_failed": "Det gick inte att skapa instrumentpanelen",
+        "create_success": "Instrumentpanelen har skapats!",
+        "dashboard_name": "Instrumentpanelens namn",
+        "dashboard_name_placeholder": "Min instrumentpanel",
+        "delete_confirmation": "Är du säker på att du vill ta bort den här instrumentpanelen? Den här åtgärden kan inte ångras.",
+        "delete_failed": "Det gick inte att ta bort instrumentpanelen",
+        "delete_success": "Instrumentpanelen har tagits bort",
+        "description_optional": "Beskrivning (valfritt)",
+        "description_placeholder": "Beskrivning av instrumentpanelen",
+        "duplicate_failed": "Det gick inte att duplicera instrumentpanelen",
+        "duplicate_success": "Instrumentpanelen har duplicerats!",
+        "no_dashboards_found": "Inga instrumentpaneler hittades.",
+        "please_enter_name": "Ange ett namn på instrumentpanelen"
+      }
     },
     "connect": {
       "congrats": "Grattis!",

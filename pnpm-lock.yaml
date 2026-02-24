@@ -569,6 +569,9 @@ importers:
       resize-observer-polyfill:
         specifier: 1.5.1
         version: 1.5.1
+      tailwindcss-animate:
+        specifier: 1.0.7
+        version: 1.0.7(tailwindcss@3.4.17(ts-node@10.9.2(@types/node@22.15.18)(typescript@5.8.3)))
       ts-node:
         specifier: 10.9.2
         version: 10.9.2(@types/node@22.15.18)(typescript@5.8.3)
@@ -11013,6 +11016,11 @@ packages:
 
   tailwind-merge@3.2.0:
     resolution: {integrity: sha512-FQT/OVqCD+7edmmJpsgCsY820RTD5AkBryuG5IUqR5YQZSdj5xlH5nLgH7YPths7WsLPSpSBNneJdM8aS8aeFA==}
+
+  tailwindcss-animate@1.0.7:
+    resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
+    peerDependencies:
+      tailwindcss: '>=3.0.0 || insiders'
 
   tailwindcss@3.4.17:
     resolution: {integrity: sha512-w33E2aCvSDP0tW9RZuNXadXlkHXqFzSkQew/aIa2i/Sj8fThxwovwlXHSPXTbAHwEIhBFXAedUhP2tueAKP8Og==}
@@ -24366,6 +24374,10 @@ snapshots:
   tagged-tag@1.0.0: {}
 
   tailwind-merge@3.2.0: {}
+
+  tailwindcss-animate@1.0.7(tailwindcss@3.4.17(ts-node@10.9.2(@types/node@22.15.18)(typescript@5.8.3))):
+    dependencies:
+      tailwindcss: 3.4.17(ts-node@10.9.2(@types/node@22.15.18)(typescript@5.8.3))
 
   tailwindcss@3.4.17(ts-node@10.9.2(@types/node@22.15.18)(typescript@5.8.3)):
     dependencies:

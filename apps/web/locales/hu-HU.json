@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} attribútum} other {{value} attribútum}}",
     "count_contacts": "{value, plural, one {{value} partner} other {{value} partner}}",
     "count_responses": "{value, plural, one {{value} válasz} other {{value} válasz}}",
+    "create": "Létrehozás",
     "create_new_organization": "Új szervezet létrehozása",
     "create_segment": "Szakasz létrehozása",
     "create_survey": "Kérdőív létrehozása",
@@ -189,6 +190,7 @@
     "created_by": "Létrehozta",
     "customer_success": "Ügyfélsiker",
     "dark_overlay": "Sötét rávetítés",
+    "dashboard": "Vezérlőpult",
     "dashboards": "Irányítópultok",
     "date": "Dátum",
     "days": "napok",
@@ -306,6 +308,7 @@
     "on": "Be",
     "only_one_file_allowed": "Csak egy fájl engedélyezett",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Csak tulajdonosok és kezelők hajthatják végre ezt a műveletet.",
+    "open_options": "Beállítások megnyitása",
     "option_id": "Választásazonosító",
     "option_ids": "Választásazonosítók",
     "optional": "Elhagyható",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "A kódműveletet bárhol követheti az alkalmazásában a következő használatával:",
       "your_survey_would_be_shown_on_this_url": "A kérdőív ezen az URL-en jelenne meg.",
       "your_survey_would_not_be_shown": "A kérdőív nem jelenne meg."
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "Vezérlőpult létrehozása",
+        "create_dashboard_description": "Adjon nevet az új vezérlőpultnak.",
+        "create_failed": "A vezérlőpult létrehozása sikertelen",
+        "create_success": "A vezérlőpult sikeresen létrehozva!",
+        "dashboard_name": "Vezérlőpult neve",
+        "dashboard_name_placeholder": "Saját vezérlőpult",
+        "delete_confirmation": "Biztosan törölni szeretné ezt a vezérlőpultot? Ez a művelet nem vonható vissza.",
+        "delete_failed": "A vezérlőpult törlése sikertelen",
+        "delete_success": "A vezérlőpult sikeresen törölve",
+        "description_optional": "Leírás (opcionális)",
+        "description_placeholder": "Vezérlőpult leírása",
+        "duplicate_failed": "A vezérlőpult másolása sikertelen",
+        "duplicate_success": "A vezérlőpult sikeresen lemásolva!",
+        "no_dashboards_found": "Nem található vezérlőpult.",
+        "please_enter_name": "Kérjük, adjon nevet a vezérlőpultnak"
+      }
     },
     "connect": {
       "congrats": "Gratulálunk!",
