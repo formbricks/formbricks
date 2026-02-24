@@ -168,7 +168,7 @@ function SingleSelect({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-option-bg z-50 w-[var(--radix-dropdown-menu-trigger-width)]"
+                className="bg-option-bg max-h-[300px] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
                 align="start">
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
                   {options
@@ -181,8 +181,9 @@ function SingleSelect({
                           key={option.id}
                           value={option.id}
                           id={optionId}
+                          dir={dir}
                           disabled={disabled}>
-                          <span className={optionLabelClassName}>{option.label}</span>
+                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
                         </DropdownMenuRadioItem>
                       );
                     })}
@@ -190,8 +191,11 @@ function SingleSelect({
                     <DropdownMenuRadioItem
                       value={otherOptionId}
                       id={`${inputId}-${otherOptionId}`}
+                      dir={dir}
                       disabled={disabled}>
-                      <span className={optionLabelClassName}>{otherValue || otherOptionLabel}</span>
+                      <span className="font-input font-input-weight text-input-text">
+                        {otherValue || otherOptionLabel}
+                      </span>
                     </DropdownMenuRadioItem>
                   ) : null}
                   {options
@@ -204,8 +208,9 @@ function SingleSelect({
                           key={option.id}
                           value={option.id}
                           id={optionId}
+                          dir={dir}
                           disabled={disabled}>
-                          <span className={optionLabelClassName}>{option.label}</span>
+                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
                         </DropdownMenuRadioItem>
                       );
                     })}
