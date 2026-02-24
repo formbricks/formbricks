@@ -207,7 +207,7 @@ export const ChartRenderer = ({ chartType, data }: Readonly<ChartRendererProps>)
                 outerRadius={80}
                 label={({ name, percent }) => {
                   if (!percent) return "";
-                  return `${name}: ${(percent * 100).toFixed(0)}%`;
+                  return `${formatXAxisTick(name)}: ${(percent * 100).toFixed(0)}%`;
                 }}>
                 {processedData.map((row, index) => {
                   const rowKey = row[xAxisKey] ?? `row-${index}`;
