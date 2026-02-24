@@ -22,9 +22,15 @@ interface ChartDropdownMenuProps {
   environmentId: string;
   chart: TChartWithCreator;
   onEdit?: (chartId: string) => void;
+  onInteractionStart?: () => void;
 }
 
-export const ChartDropdownMenu = ({ environmentId, chart, onEdit }: Readonly<ChartDropdownMenuProps>) => {
+export const ChartDropdownMenu = ({
+  environmentId,
+  chart,
+  onEdit,
+  onInteractionStart,
+}: Readonly<ChartDropdownMenuProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -54,6 +60,7 @@ export const ChartDropdownMenu = ({ environmentId, chart, onEdit }: Readonly<Cha
   };
 
   const handleDuplicateChart = async () => {
+    onInteractionStart?.();
     closeDropdown();
     setLoading(true);
     try {
@@ -74,11 +81,13 @@ export const ChartDropdownMenu = ({ environmentId, chart, onEdit }: Readonly<Cha
   };
 
   const handleEdit = () => {
+    onInteractionStart?.();
     closeDropdown();
     setTimeout(() => onEdit?.(chart.id), 0);
   };
 
   const handleOpenDeleteDialog = () => {
+    onInteractionStart?.();
     closeDropdown();
     setTimeout(() => setDeleteDialogOpen(true), 0);
   };

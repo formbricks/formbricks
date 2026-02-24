@@ -93,7 +93,9 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
                   }).replace("about", "")}
                 </div>
               </div>
-              <div className="col-span-1 my-auto flex items-center justify-end pr-6">
+              <div
+                className="col-span-1 my-auto flex items-center justify-end pr-6"
+                onClick={(e) => e.stopPropagation()}>
                 <ChartDropdownMenu
                   environmentId={environmentId}
                   chart={chart}
