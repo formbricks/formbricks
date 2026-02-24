@@ -50,13 +50,10 @@ function getConnectorIcon(type: TConnectorType) {
   }
 }
 
-const STATUS_BADGE_CONFIG: Record<
-  TConnectorStatus,
-  { textKey: string; type: "success" | "warning" | "error" }
-> = {
-  active: { textKey: "environments.unify.status_active", type: "success" },
-  paused: { textKey: "environments.unify.status_paused", type: "warning" },
-  error: { textKey: `environments.unify.status_error`, type: "error" },
+const STATUS_BADGE_TYPE: Record<TConnectorStatus, "success" | "warning" | "error"> = {
+  active: "success",
+  paused: "warning",
+  error: "error",
 };
 
 export function ConnectorsTableDataRow({
@@ -69,6 +66,17 @@ export function ConnectorsTableDataRow({
   onClick,
 }: ConnectorsTableDataRowProps) {
   const { t, i18n } = useTranslation();
+
+  const getStatusLabel = (s: TConnectorStatus) => {
+    switch (s) {
+      case "active":
+        return t("environments.unify.status_active");
+      case "paused":
+        return t("environments.unify.status_paused");
+      case "error":
+        return t("environments.unify.status_error");
+    }
+  };
 
   const getConnectorTypeLabel = (connectorType: TConnectorType) => {
     switch (connectorType) {
@@ -103,11 +111,7 @@ export function ConnectorsTableDataRow({
         <span className="truncate text-sm font-medium text-slate-900">{name}</span>
       </div>
       <div className="col-span-2 hidden items-center justify-center sm:flex">
-        <Badge
-          text={t(STATUS_BADGE_CONFIG[status].textKey)}
-          type={STATUS_BADGE_CONFIG[status].type}
-          size="tiny"
-        />
+        <Badge text={getStatusLabel(status)} type={STATUS_BADGE_TYPE[status]} size="tiny" />
       </div>
       <div className="col-span-2 hidden items-center justify-center text-sm text-slate-600 sm:flex">
         {mappingsCount} {mappingsCount === 1 ? t("environments.unify.field") : t("environments.unify.fields")}
