@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import {
+  TConnectorFormbricksMapping,
   TConnectorWithMappings,
   ZConnectorCreateInput,
   ZConnectorFieldMappingCreateInput,
@@ -11,6 +12,9 @@ import {
   getHubFieldTypeFromElementType,
 } from "@formbricks/types/connector";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -23,12 +27,15 @@ import {
   getProjectIdFromConnectorId,
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
+import { createFeedbackRecordsBatch } from "./hub-client";
 import {
   TMappingsInput,
   createConnectorWithMappings,
   deleteConnector,
+  getConnectorWithMappingsById,
   updateConnectorWithMappings,
 } from "./service";
+import { transformResponseToFeedbackRecords } from "./transform";
 
 const ZDeleteConnectorAction = z.object({
   connectorId: ZId,
@@ -155,7 +162,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
       return createConnectorWithMappings(
         parsedInput.environmentId,
-        parsedInput.connectorInput,
+        { ...parsedInput.connectorInput, createdBy: ctx.user.id },
         mappingsInput
       );
     }
@@ -225,5 +232,209 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
         parsedInput.connectorInput,
         mappingsInput
       );
+    }
+  );
+
+const ZDuplicateConnectorAction = z.object({
+  connectorId: ZId,
+  environmentId: ZId,
+});
+
+export const duplicateConnectorAction = authenticatedActionClient
+  .schema(ZDuplicateConnectorAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZDuplicateConnectorAction>;
+    }): Promise<TConnectorWithMappings> => {
+      const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: await getProjectIdFromConnectorId(parsedInput.connectorId),
+          },
+        ],
+      });
+
+      const source = await getConnectorWithMappingsById(parsedInput.connectorId, parsedInput.environmentId);
+      if (!source) {
+        throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+      }
+
+      let mappingsInput: TMappingsInput | undefined;
+
+      if (source.type === "formbricks" && source.formbricksMappings.length > 0) {
+        mappingsInput = {
+          type: "formbricks",
+          mappings: source.formbricksMappings.map((m) => ({
+            surveyId: m.surveyId,
+            elementId: m.elementId,
+            hubFieldType: m.hubFieldType,
+            customFieldLabel: m.customFieldLabel ?? undefined,
+          })),
+        };
+      } else if (source.fieldMappings.length > 0) {
+        mappingsInput = {
+          type: "field",
+          mappings: source.fieldMappings.map((m) => ({
+            sourceFieldId: m.sourceFieldId,
+            targetFieldId: m.targetFieldId,
+            staticValue: m.staticValue ?? undefined,
+          })),
+        };
+      }
+
+      return createConnectorWithMappings(
+        parsedInput.environmentId,
+        { name: `${source.name} (copy)`, type: source.type, createdBy: ctx.user.id },
+        mappingsInput
+      );
+    }
+  );
+
+const ZGetResponseCountAction = z.object({
+  surveyId: ZId,
+  environmentId: ZId,
+});
+
+export const getResponseCountAction = authenticatedActionClient
+  .schema(ZGetResponseCountAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZGetResponseCountAction>;
+    }): Promise<number> => {
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          },
+        ],
+      });
+
+      return getResponseCountBySurveyId(parsedInput.surveyId);
+    }
+  );
+
+const IMPORT_BATCH_SIZE = 50;
+
+const processBatch = async (
+  responses: TResponse[],
+  survey: TSurvey,
+  mappings: TConnectorFormbricksMapping[]
+): Promise<{ successes: number; failures: number; skipped: number }> => {
+  let successes = 0;
+  let failures = 0;
+  const expectedRecords = responses.length * mappings.length;
+
+  const allRecords = responses.flatMap((response) =>
+    transformResponseToFeedbackRecords(response, survey, mappings)
+  );
+
+  if (allRecords.length > 0) {
+    const { results } = await createFeedbackRecordsBatch(allRecords);
+    successes = results.filter((r) => r.data !== null).length;
+    failures = results.filter((r) => r.error !== null).length;
+  }
+
+  return { successes, failures, skipped: expectedRecords - allRecords.length };
+};
+
+const importAllResponses = async (
+  surveyId: string,
+  survey: TSurvey,
+  mappings: TConnectorFormbricksMapping[]
+): Promise<{ successes: number; failures: number; skipped: number }> => {
+  let successes = 0;
+  let failures = 0;
+  let skipped = 0;
+  let offset = 0;
+
+  while (true) {
+    const responses = await getResponses(surveyId, IMPORT_BATCH_SIZE, offset);
+    if (responses.length === 0) break;
+
+    const batch = await processBatch(responses, survey, mappings);
+    successes += batch.successes;
+    failures += batch.failures;
+    skipped += batch.skipped;
+
+    if (responses.length < IMPORT_BATCH_SIZE) break;
+    offset += IMPORT_BATCH_SIZE;
+  }
+
+  return { successes, failures, skipped };
+};
+
+const ZImportHistoricalResponsesAction = z.object({
+  connectorId: ZId,
+  environmentId: ZId,
+  surveyId: ZId,
+});
+
+export const importHistoricalResponsesAction = authenticatedActionClient
+  .schema(ZImportHistoricalResponsesAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZImportHistoricalResponsesAction>;
+    }): Promise<{ successes: number; failures: number; skipped: number }> => {
+      const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: await getProjectIdFromConnectorId(parsedInput.connectorId),
+          },
+        ],
+      });
+
+      const connector = await getConnectorWithMappingsById(
+        parsedInput.connectorId,
+        parsedInput.environmentId
+      );
+      if (!connector) {
+        throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+      }
+
+      const survey = await getSurvey(parsedInput.surveyId);
+      if (!survey) {
+        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+      }
+
+      return importAllResponses(parsedInput.surveyId, survey, connector.formbricksMappings);
     }
   );

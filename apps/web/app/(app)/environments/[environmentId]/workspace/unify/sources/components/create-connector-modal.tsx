@@ -1,9 +1,12 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { Loader2Icon, PlusIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TConnectorType } from "@formbricks/types/connector";
+import { TConnectorType, UNSUPPORTED_CONNECTOR_ELEMENT_TYPES } from "@formbricks/types/connector";
+import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/connector/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -36,8 +39,9 @@ interface CreateConnectorModalProps {
     surveyId?: string;
     elementIds?: string[];
     fieldMappings?: TFieldMapping[];
-  }) => Promise<void>;
+  }) => Promise<string | undefined>;
   surveys: TUnifySurvey[];
+  environmentId: string;
 }
 
 export const CreateConnectorModal = ({
@@ -45,6 +49,7 @@ export const CreateConnectorModal = ({
   onOpenChange,
   onCreateConnector,
   surveys,
+  environmentId,
 }: CreateConnectorModalProps) => {
   const { t } = useTranslation();
 
@@ -61,6 +66,30 @@ export const CreateConnectorModal = ({
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
 
+  const [responseCount, setResponseCount] = useState<number | null>(null);
+  const [importHistorical, setImportHistorical] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  const fetchResponseCount = useCallback(
+    async (surveyId: string) => {
+      setResponseCount(null);
+      const result = await getResponseCountAction({ surveyId, environmentId });
+      if (result?.data !== undefined) {
+        setResponseCount(result.data);
+      }
+    },
+    [environmentId]
+  );
+
+  useEffect(() => {
+    if (selectedSurveyId && selectedType === "formbricks") {
+      fetchResponseCount(selectedSurveyId);
+    } else {
+      setResponseCount(null);
+    }
+  }, [selectedSurveyId, selectedType, fetchResponseCount]);
+
   const resetForm = () => {
     setCurrentStep("selectType");
     setSelectedType(null);
@@ -69,13 +98,19 @@ export const CreateConnectorModal = ({
     setSourceFields([]);
     setSelectedSurveyId(null);
     setSelectedElementIds([]);
+    setResponseCount(null);
+    setImportHistorical(false);
+    setIsImporting(false);
+    setIsCreating(false);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
+    if (!newOpen && !isImporting) {
       resetForm();
     }
-    onOpenChange(newOpen);
+    if (!isImporting) {
+      onOpenChange(newOpen);
+    }
   };
 
   const handleNextStep = () => {
@@ -98,6 +133,7 @@ export const CreateConnectorModal = ({
 
   const handleSurveySelect = (surveyId: string | null) => {
     setSelectedSurveyId(surveyId);
+    setImportHistorical(false);
   };
 
   const handleElementToggle = (elementId: string) => {
@@ -109,7 +145,11 @@ export const CreateConnectorModal = ({
   const handleSelectAllElements = (surveyId: string) => {
     const survey = surveys.find((s) => s.id === surveyId);
     if (survey) {
-      setSelectedElementIds(survey.elements.map((e) => e.id));
+      setSelectedElementIds(
+        survey.elements
+          .filter((e) => !(UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(e.type))
+          .map((e) => e.id)
+      );
     }
   };
 
@@ -137,13 +177,40 @@ export const CreateConnectorModal = ({
       }
     }
 
-    await onCreateConnector({
+    setIsCreating(true);
+
+    const connectorId = await onCreateConnector({
       name: connectorName.trim(),
       type: selectedType,
       surveyId: selectedType === "formbricks" ? (selectedSurveyId ?? undefined) : undefined,
       elementIds: selectedType === "formbricks" ? selectedElementIds : undefined,
       fieldMappings: selectedType !== "formbricks" && mappings.length > 0 ? mappings : undefined,
     });
+
+    if (connectorId && importHistorical && selectedSurveyId && selectedType === "formbricks") {
+      setIsImporting(true);
+      const importResult = await importHistoricalResponsesAction({
+        connectorId,
+        environmentId,
+        surveyId: selectedSurveyId,
+      });
+
+      setIsImporting(false);
+
+      if (importResult?.data) {
+        toast.success(
+          t("environments.unify.historical_import_complete", {
+            successes: importResult.data.successes,
+            failures: importResult.data.failures,
+            skipped: importResult.data.skipped,
+          })
+        );
+      } else {
+        toast.error(getFormattedErrorMessage(importResult));
+      }
+    }
+
+    setIsCreating(false);
     resetForm();
     onOpenChange(false);
   };
@@ -164,6 +231,11 @@ export const CreateConnectorModal = ({
     }
   };
 
+  const totalFeedbackRecords =
+    responseCount !== null && selectedElementIds.length > 0
+      ? responseCount * selectedElementIds.length
+      : null;
+
   return (
     <>
       <Button onClick={() => onOpenChange(true)} size="sm">
@@ -173,6 +245,17 @@ export const CreateConnectorModal = ({
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-3xl">
+          {isImporting && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center rounded-lg bg-white/80">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2Icon className="h-8 w-8 animate-spin text-slate-500" />
+                <p className="text-sm font-medium text-slate-700">
+                  {t("environments.unify.importing_historical_data")}
+                </p>
+              </div>
+            </div>
+          )}
+
           <DialogHeader>
             <DialogTitle>
               {currentStep === "selectType"
@@ -220,6 +303,29 @@ export const CreateConnectorModal = ({
                     onDeselectAllElements={handleDeselectAllElements}
                   />
                 </div>
+
+                {responseCount !== null && responseCount > 0 && selectedElementIds.length > 0 && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <p className="mb-2 text-xs text-amber-800">
+                      {t("environments.unify.existing_responses_info", {
+                        responseCount,
+                        elementCount: selectedElementIds.length,
+                        total: totalFeedbackRecords,
+                      })}
+                    </p>
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={importHistorical}
+                        onChange={(e) => setImportHistorical(e.target.checked)}
+                        className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                      />
+                      <span className="text-sm font-medium text-amber-900">
+                        {t("environments.unify.import_existing_responses")}
+                      </span>
+                    </label>
+                  </div>
+                )}
               </div>
             ) : selectedType === "csv" ? (
               <div className="space-y-4">
@@ -248,14 +354,14 @@ export const CreateConnectorModal = ({
 
           <DialogFooter>
             {currentStep === "mapping" && (
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} disabled={isCreating || isImporting}>
                 {t("common.back")}
               </Button>
             )}
             {currentStep === "selectType" ? (
               <Button onClick={handleNextStep} disabled={!selectedType}>
                 {selectedType === "formbricks"
-                  ? t("environments.unify.select_questions")
+                  ? t("environments.unify.select_elements")
                   : selectedType === "csv"
                     ? t("environments.unify.configure_import")
                     : t("environments.unify.create_mapping")}
@@ -264,6 +370,8 @@ export const CreateConnectorModal = ({
               <Button
                 onClick={handleCreate}
                 disabled={
+                  isCreating ||
+                  isImporting ||
                   !connectorName.trim() ||
                   (selectedType === "formbricks"
                     ? !isFormbricksValid
@@ -271,6 +379,7 @@ export const CreateConnectorModal = ({
                       ? !isCsvValid
                       : !allRequiredMapped)
                 }>
+                {isCreating && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
                 {t("environments.unify.setup_connection")}
               </Button>
             )}

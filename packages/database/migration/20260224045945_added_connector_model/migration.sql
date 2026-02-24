@@ -17,8 +17,7 @@ CREATE TABLE "public"."Connector" (
     "status" "public"."ConnectorStatus" NOT NULL DEFAULT 'active',
     "environmentId" TEXT NOT NULL,
     "last_sync_at" TIMESTAMP(3),
-    "error_message" TEXT,
-
+    "created_by" TEXT,
     CONSTRAINT "Connector_pkey" PRIMARY KEY ("id")
 );
 
@@ -65,8 +64,9 @@ CREATE UNIQUE INDEX "ConnectorFieldMapping_environmentId_connectorId_source_fiel
 -- Survey composite unique (for composite FK from ConnectorFormbricksMapping)
 CREATE UNIQUE INDEX "Survey_id_environmentId_key" ON "public"."Survey"("id", "environmentId");
 
--- Foreign keys: Connector -> Environment
+-- Foreign keys: Connector -> Environment, Connector -> User (creator)
 ALTER TABLE "public"."Connector" ADD CONSTRAINT "Connector_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "public"."Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."Connector" ADD CONSTRAINT "Connector_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- Foreign keys: ConnectorFormbricksMapping -> Connector (composite), Survey (composite)
 ALTER TABLE "public"."ConnectorFormbricksMapping" ADD CONSTRAINT "ConnectorFormbricksMapping_connectorId_environmentId_fkey" FOREIGN KEY ("connectorId", "environmentId") REFERENCES "public"."Connector"("id", "environmentId") ON DELETE CASCADE ON UPDATE CASCADE;

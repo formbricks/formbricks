@@ -12,8 +12,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { UNSUPPORTED_CONNECTOR_ELEMENT_TYPES } from "@formbricks/types/connector";
 import { getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { Badge } from "@/modules/ui/components/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { TUnifySurvey } from "../types";
 
 interface FormbricksSurveySelectorProps {
@@ -38,6 +40,10 @@ function getElementIcon(type: string) {
   }
 }
 
+const isUnsupportedType = (type: string): boolean => {
+  return (UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(type);
+};
+
 export function FormbricksSurveySelector({
   surveys,
   selectedSurveyId,
@@ -51,6 +57,9 @@ export function FormbricksSurveySelector({
   const [expandedSurveyId, setExpandedSurveyId] = useState<string | null>(null);
 
   const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
+  const supportedElements = selectedSurvey?.elements.filter((e) => !isUnsupportedType(e.type)) ?? [];
+  const allSupportedSelected =
+    supportedElements.length > 0 && supportedElements.every((e) => selectedElementIds.includes(e.id));
 
   const handleSurveyClick = (survey: TUnifySurvey) => {
     if (selectedSurveyId === survey.id) {
@@ -62,7 +71,9 @@ export function FormbricksSurveySelector({
     }
   };
 
-  const allElementsSelected = selectedSurvey && selectedElementIds.length === selectedSurvey.elements.length;
+  const handleSelectAllSupported = (surveyId: string) => {
+    onSelectAllElements(surveyId);
+  };
 
   const getStatusBadge = (status: TUnifySurvey["status"]) => {
     switch (status) {
@@ -78,6 +89,9 @@ export function FormbricksSurveySelector({
         return null;
     }
   };
+
+  const getSupportedElementCount = (survey: TUnifySurvey) =>
+    survey.elements.filter((e) => !isUnsupportedType(e.type)).length;
 
   return (
     <div className="grid h-[50vh] grid-cols-2 gap-6">
@@ -119,7 +133,9 @@ export function FormbricksSurveySelector({
                         {getStatusBadge(survey.status)}
                       </div>
                       <p className="text-xs text-slate-500">
-                        {t("environments.unify.n_elements", { count: survey.elements.length })}
+                        {t("environments.unify.n_supported_elements", {
+                          count: getSupportedElementCount(survey),
+                        })}
                       </p>
                     </div>
                     {isSelected && <CheckCircle2Icon className="text-brand-dark h-5 w-5" />}
@@ -135,14 +151,14 @@ export function FormbricksSurveySelector({
       <div className="flex flex-col gap-3 overflow-hidden">
         <div className="flex shrink-0 items-center justify-between">
           <h4 className="text-sm font-medium text-slate-700">{t("environments.unify.select_elements")}</h4>
-          {selectedSurvey && (
+          {selectedSurvey && supportedElements.length > 0 && (
             <button
               type="button"
               onClick={() =>
-                allElementsSelected ? onDeselectAllElements() : onSelectAllElements(selectedSurvey.id)
+                allSupportedSelected ? onDeselectAllElements() : handleSelectAllSupported(selectedSurvey.id)
               }
               className="text-xs text-slate-500 hover:text-slate-700">
-              {allElementsSelected
+              {allSupportedSelected
                 ? t("environments.unify.deselect_all")
                 : t("environments.unify.select_all")}
             </button>
@@ -161,43 +177,66 @@ export function FormbricksSurveySelector({
           </div>
         ) : (
           <div className="space-y-2 overflow-y-auto pr-1">
-            {selectedSurvey.elements.map((element) => {
-              const isSelected = selectedElementIds.includes(element.id);
+            <TooltipProvider delayDuration={200}>
+              {selectedSurvey.elements.map((element) => {
+                const isSelected = selectedElementIds.includes(element.id);
+                const unsupported = isUnsupportedType(element.type);
 
-              return (
-                <button
-                  key={element.id}
-                  type="button"
-                  onClick={() => onElementToggle(element.id)}
-                  className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                    isSelected
-                      ? "border-green-300 bg-green-50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}>
-                  <div
-                    className={`flex h-5 w-5 items-center justify-center rounded ${
-                      isSelected ? "bg-green-500 text-white" : "border border-slate-300 bg-white"
+                const button = (
+                  <button
+                    key={element.id}
+                    type="button"
+                    disabled={unsupported}
+                    onClick={() => onElementToggle(element.id)}
+                    className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                      unsupported
+                        ? "cursor-not-allowed border-slate-100 bg-slate-50 opacity-50"
+                        : isSelected
+                          ? "border-green-300 bg-green-50"
+                          : "border-slate-200 bg-white hover:border-slate-300"
                     }`}>
-                    {isSelected && <CheckIcon className="h-3 w-3" />}
-                  </div>
-                  <div className="flex items-center gap-2">{getElementIcon(element.type)}</div>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-900">{element.headline}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">
-                        {getTSurveyElementTypeEnumName(element.type, t) ?? element.type}
-                      </span>
-                      {element.required && (
-                        <span className="text-xs text-red-500">
-                          <CircleIcon className="inline h-1.5 w-1.5 fill-current" />{" "}
-                          {t("environments.unify.required")}
-                        </span>
-                      )}
+                    <div
+                      className={`flex h-5 w-5 items-center justify-center rounded ${
+                        unsupported
+                          ? "border border-slate-200 bg-slate-100"
+                          : isSelected
+                            ? "bg-green-500 text-white"
+                            : "border border-slate-300 bg-white"
+                      }`}>
+                      {isSelected && !unsupported && <CheckIcon className="h-3 w-3" />}
                     </div>
-                  </div>
-                </button>
-              );
-            })}
+                    <div className="flex items-center gap-2">{getElementIcon(element.type)}</div>
+                    <div className="flex-1">
+                      <p className={`text-sm ${unsupported ? "text-slate-400" : "text-slate-900"}`}>
+                        {element.headline}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs ${unsupported ? "text-slate-300" : "text-slate-500"}`}>
+                          {getTSurveyElementTypeEnumName(element.type, t) ?? element.type}
+                        </span>
+                        {element.required && (
+                          <span className="text-xs text-red-500">
+                            <CircleIcon className="inline h-1.5 w-1.5 fill-current" />{" "}
+                            {t("environments.unify.required")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+
+                if (unsupported) {
+                  return (
+                    <Tooltip key={element.id}>
+                      <TooltipTrigger asChild>{button}</TooltipTrigger>
+                      <TooltipContent>{t("environments.unify.question_type_not_supported")}</TooltipContent>
+                    </Tooltip>
+                  );
+                }
+
+                return button;
+              })}
+            </TooltipProvider>
 
             {selectedElementIds.length > 0 && (
               <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
