@@ -235,7 +235,7 @@ function DropdownVariant({
           disabled={disabled}
           aria-required={required}
           dir={dir}
-          className="w-full"
+          className="mt-2 w-full"
         />
       ) : null}
     </div>

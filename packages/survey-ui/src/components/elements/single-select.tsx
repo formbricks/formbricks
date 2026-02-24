@@ -226,7 +226,7 @@ function SingleSelect({
                 placeholder={otherOptionPlaceholder}
                 disabled={disabled}
                 dir={dir}
-                className="w-full"
+                className="mt-2 w-full"
               />
             ) : null}
           </>
