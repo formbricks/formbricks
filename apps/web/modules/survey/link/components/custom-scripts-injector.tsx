@@ -13,6 +13,9 @@ interface CustomScriptsInjectorProps {
  * Injects custom HTML scripts into the document head for link surveys.
  * Supports merging project and survey scripts or replacing project scripts with survey scripts.
  *
+ * User-provided scripts are wrapped in try-catch blocks to prevent runtime errors
+ * (e.g., calls to deprecated browser APIs) from breaking the survey experience.
+ *
  * @param projectScripts - Scripts configured at the workspace/project level
  * @param surveyScripts - Scripts configured at the survey level
  * @param scriptsMode - "add" merges both, "replace" uses only survey scripts
@@ -58,8 +61,20 @@ export const CustomScriptsInjector = ({
 
         // Copy inline script content
         if (script.textContent) {
-          newScript.textContent = script.textContent;
+          // Wrap inline scripts in try-catch to prevent user script errors from breaking the survey
+          newScript.textContent = `
+            try {
+              ${script.textContent}
+            } catch (error) {
+              console.warn('[Formbricks] Error in custom script:', error);
+            }
+          `;
         }
+
+        // Add error handler for external scripts loaded via src
+        newScript.onerror = (error) => {
+          console.warn("[Formbricks] Error loading external script:", error);
+        };
 
         document.head.appendChild(newScript);
       });
