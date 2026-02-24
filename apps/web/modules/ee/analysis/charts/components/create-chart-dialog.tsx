@@ -4,12 +4,15 @@ import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/
 import { CreateChartView } from "@/modules/ee/analysis/charts/components/create-chart-view";
 import { EditChartView } from "@/modules/ee/analysis/charts/components/edit-chart-view";
 import { useCreateChartDialog } from "@/modules/ee/analysis/charts/hooks/use-create-chart-dialog";
+import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 export interface CreateChartDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   environmentId: string;
   chartId?: string;
+  /** Pre-loaded chart metadata from list; skips getChartAction when provided */
+  initialChart?: TChartWithCreator;
   onSuccess?: () => void;
 }
 
@@ -18,6 +21,7 @@ export function CreateChartDialog({
   onOpenChange,
   environmentId,
   chartId,
+  initialChart,
   onSuccess,
 }: Readonly<CreateChartDialogProps>) {
   const hook = useCreateChartDialog({
@@ -25,6 +29,7 @@ export function CreateChartDialog({
     onOpenChange,
     environmentId,
     chartId,
+    initialChart,
     onSuccess,
   });
 
@@ -33,6 +38,7 @@ export function CreateChartDialog({
     chartName,
     setChartName,
     selectedChartType,
+    initialQuery,
     setSelectedChartType,
     handleChartTypeChange,
     isSaveDialogOpen,
@@ -53,17 +59,19 @@ export function CreateChartDialog({
     handleAdvancedBuilderAddToDashboard,
   } = hook;
 
-  if (chartId && isLoadingChart) {
+  if (chartId && isLoadingChart && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;
   }
 
-  if (chartId && chartData) {
+  if (chartId && (chartData || initialChart)) {
     return (
       <EditChartView
         open={open}
         onClose={handleClose}
         environmentId={environmentId}
-        chartData={chartData}
+        chartData={chartData ?? null}
+        initialQuery={initialQuery}
+        isLoadingChart={isLoadingChart}
         chartName={chartName}
         onChartNameChange={setChartName}
         selectedChartType={selectedChartType}

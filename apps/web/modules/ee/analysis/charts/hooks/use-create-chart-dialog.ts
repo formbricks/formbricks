@@ -13,13 +13,19 @@ import {
 } from "@/modules/ee/analysis/charts/actions";
 import { mapChartType, mapDatabaseChartTypeToApi } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
-import type { AnalyticsResponse, TApiChartType } from "@/modules/ee/analysis/types/analysis";
+import type {
+  AnalyticsResponse,
+  TApiChartType,
+  TChartWithCreator,
+} from "@/modules/ee/analysis/types/analysis";
 
 export interface UseCreateChartDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   environmentId: string;
   chartId?: string;
+  /** Pre-loaded chart metadata; when provided for edit, skips getChartAction */
+  initialChart?: TChartWithCreator;
   defaultDashboardId?: string;
   onSuccess?: () => void;
 }
@@ -29,6 +35,7 @@ export function useCreateChartDialog({
   onOpenChange,
   environmentId,
   chartId,
+  initialChart,
   defaultDashboardId,
   onSuccess,
 }: Readonly<UseCreateChartDialogProps>) {
@@ -60,59 +67,74 @@ export function useCreateChartDialog({
 
   useEffect(() => {
     if (open && chartId) {
+      const chartMetadata = initialChart?.id === chartId ? initialChart : undefined;
+
+      if (chartMetadata) {
+        setChartName(chartMetadata.name);
+        setSelectedChartType(mapDatabaseChartTypeToApi(chartMetadata.type));
+        setCurrentChartId(chartMetadata.id);
+      }
+
       setIsLoadingChart(true);
-      getChartAction({ environmentId, chartId })
-        .then(async (result) => {
-          if (result?.data) {
-            const chart = result.data;
-            setChartName(chart.name);
 
-            const queryResult = await executeQueryAction({
-              environmentId,
-              query: chart.query,
-            });
-
-            if (queryResult?.serverError) {
-              toast.error(
-                getFormattedErrorMessage(queryResult) ||
-                  t("environments.analysis.charts.failed_to_load_chart_data")
-              );
-              setIsLoadingChart(false);
-              return;
-            }
-
-            const data = Array.isArray(queryResult?.data) ? queryResult.data : undefined;
-            if (data) {
-              const loadedChartData: AnalyticsResponse = {
-                query: chart.query,
-                chartType: mapDatabaseChartTypeToApi(chart.type),
-                data: data,
-              };
-
-              setChartData(loadedChartData);
-              setSelectedChartType(loadedChartData.chartType ?? "");
-              setCurrentChartId(chart.id);
-            } else {
-              toast.error(t("environments.analysis.charts.no_data_returned_for_chart"));
-            }
-          } else if (result?.serverError) {
-            toast.error(getFormattedErrorMessage(result));
-          }
-          setIsLoadingChart(false);
-        })
-        .catch((error: unknown) => {
-          const message =
-            error instanceof Error ? error.message : t("environments.analysis.charts.failed_to_load_chart");
-          toast.error(message);
-          setIsLoadingChart(false);
+      const loadChartData = async (query: TChartWithCreator["query"], chartType: string) => {
+        const queryResult = await executeQueryAction({
+          environmentId,
+          query,
         });
+
+        if (queryResult?.serverError) {
+          toast.error(
+            getFormattedErrorMessage(queryResult) ||
+              t("environments.analysis.charts.failed_to_load_chart_data")
+          );
+          setIsLoadingChart(false);
+          return;
+        }
+
+        const data = Array.isArray(queryResult?.data) ? queryResult.data : undefined;
+        if (data) {
+          setChartData({
+            query,
+            chartType: mapDatabaseChartTypeToApi(chartType),
+            data,
+          });
+        } else {
+          toast.error(t("environments.analysis.charts.no_data_returned_for_chart"));
+        }
+        setIsLoadingChart(false);
+      };
+
+      if (chartMetadata) {
+        loadChartData(chartMetadata.query, chartMetadata.type);
+      } else {
+        getChartAction({ environmentId, chartId })
+          .then(async (result) => {
+            if (result?.data) {
+              const chart = result.data;
+              setChartName(chart.name);
+              setSelectedChartType(mapDatabaseChartTypeToApi(chart.type));
+              setCurrentChartId(chart.id);
+              await loadChartData(chart.query, chart.type);
+            } else if (result?.serverError) {
+              toast.error(getFormattedErrorMessage(result));
+              setIsLoadingChart(false);
+            }
+          })
+          .catch((error: unknown) => {
+            const message =
+              error instanceof Error ? error.message : t("environments.analysis.charts.failed_to_load_chart");
+            toast.error(message);
+            setIsLoadingChart(false);
+          });
+      }
     } else if (open && !chartId) {
       setChartData(null);
       setChartName("");
       setSelectedChartType("");
       setCurrentChartId(undefined);
     }
-  }, [open, chartId, environmentId]);
+  }, [open, chartId, environmentId, initialChart]);
 
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
@@ -283,11 +305,14 @@ export function useCreateChartDialog({
     setChartData((prev) => (prev ? { ...prev, chartType: type } : null));
   };
 
+  const initialQuery = initialChart && initialChart.id === chartId ? initialChart.query : undefined;
+
   return {
     chartData,
     chartName,
     setChartName,
     selectedChartType,
+    initialQuery,
     setSelectedChartType,
     currentChartId,
     setCurrentChartId,

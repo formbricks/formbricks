@@ -20,7 +20,10 @@ interface EditChartViewProps {
   open: boolean;
   onClose: () => void;
   environmentId: string;
-  chartData: AnalyticsResponse;
+  chartData: AnalyticsResponse | null;
+  /** Query from initialChart when chartData is still loading */
+  initialQuery?: AnalyticsResponse["query"];
+  isLoadingChart?: boolean;
   chartName: string;
   onChartNameChange: (name: string) => void;
   selectedChartType: string;
@@ -45,6 +48,8 @@ export function EditChartView({
   onClose,
   environmentId,
   chartData,
+  initialQuery,
+  isLoadingChart = false,
   chartName,
   onChartNameChange,
   selectedChartType,
@@ -88,14 +93,14 @@ export function EditChartView({
             <ManualChartBuilder selectedChartType={selectedChartType} onChartTypeSelect={onChartTypeChange} />
             <AdvancedChartBuilder
               environmentId={environmentId}
-              initialChartType={selectedChartType || chartData.chartType || ""}
-              initialQuery={chartData.query}
+              initialChartType={selectedChartType || chartData?.chartType || ""}
+              initialQuery={chartData?.query ?? initialQuery}
               hidePreview={true}
               onChartGenerated={onChartGenerated}
               onSave={onAdvancedBuilderSave}
               onAddToDashboard={onAdvancedBuilderAddToDashboard}
             />
-            <ChartPreview chartData={chartData} />
+            <ChartPreview chartData={chartData} isLoading={isLoadingChart} />
           </div>
         </DialogBody>
         <ChartDialogFooterWithModals

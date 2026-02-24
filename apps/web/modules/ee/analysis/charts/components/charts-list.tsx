@@ -114,6 +114,7 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
         onOpenChange={setIsEditDialogOpen}
         environmentId={environmentId}
         chartId={editingChartId}
+        initialChart={editingChartId ? filteredCharts.find((c) => c.id === editingChartId) : undefined}
         onSuccess={handleEditSuccess}
       />
     </div>
