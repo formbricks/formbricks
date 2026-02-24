@@ -18,9 +18,10 @@ export function ConnectorsTable({ connectors, onConnectorClick, isLoading = fals
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="grid h-12 grid-cols-12 content-center border-b border-slate-200 text-left text-sm font-semibold text-slate-900">
         <div className="col-span-2 pl-6">{t("common.type")}</div>
-        <div className="col-span-5">{t("common.name")}</div>
+        <div className="col-span-4">{t("common.name")}</div>
+        <div className="col-span-2 hidden text-center sm:block">{t("common.status")}</div>
         <div className="col-span-2 hidden text-center sm:block">{t("common.mappings")}</div>
-        <div className="col-span-3 hidden pr-6 text-right sm:block">{t("common.created")}</div>
+        <div className="col-span-2 hidden pr-6 text-right sm:block">{t("common.created")}</div>
       </div>
       {isLoading ? (
         <div className="flex h-32 items-center justify-center">
@@ -38,6 +39,7 @@ export function ConnectorsTable({ connectors, onConnectorClick, isLoading = fals
               id={connector.id}
               name={connector.name}
               type={connector.type}
+              status={connector.status}
               mappingsCount={connector.formbricksMappings.length + connector.fieldMappings.length}
               createdAt={connector.createdAt}
               onClick={() => onConnectorClick(connector)}

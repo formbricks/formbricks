@@ -2,7 +2,8 @@
 
 import { FileSpreadsheetIcon, GlobeIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TConnectorType } from "@formbricks/types/connector";
+import { TConnectorStatus, TConnectorType } from "@formbricks/types/connector";
+import { Badge } from "@/modules/ui/components/badge";
 
 const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
   { amount: 60, unit: "seconds" },
@@ -32,6 +33,7 @@ interface ConnectorsTableDataRowProps {
   id: string;
   name: string;
   type: TConnectorType;
+  status: TConnectorStatus;
   mappingsCount: number;
   createdAt: Date;
   onClick: () => void;
@@ -48,10 +50,20 @@ function getConnectorIcon(type: TConnectorType) {
   }
 }
 
+const STATUS_BADGE_CONFIG: Record<
+  TConnectorStatus,
+  { textKey: string; type: "success" | "warning" | "error" }
+> = {
+  active: { textKey: "environments.unify.status_active", type: "success" },
+  paused: { textKey: "environments.unify.status_paused", type: "warning" },
+  error: { textKey: `environments.unify.status_error`, type: "error" },
+};
+
 export function ConnectorsTableDataRow({
   id,
   name,
   type,
+  status,
   mappingsCount,
   createdAt,
   onClick,
@@ -87,13 +99,20 @@ export function ConnectorsTableDataRow({
           {getConnectorTypeLabel(type)}
         </span>
       </div>
-      <div className="col-span-5 flex items-center">
+      <div className="col-span-4 flex items-center">
         <span className="truncate text-sm font-medium text-slate-900">{name}</span>
+      </div>
+      <div className="col-span-2 hidden items-center justify-center sm:flex">
+        <Badge
+          text={t(STATUS_BADGE_CONFIG[status].textKey)}
+          type={STATUS_BADGE_CONFIG[status].type}
+          size="tiny"
+        />
       </div>
       <div className="col-span-2 hidden items-center justify-center text-sm text-slate-600 sm:flex">
         {mappingsCount} {mappingsCount === 1 ? t("environments.unify.field") : t("environments.unify.fields")}
       </div>
-      <div className="col-span-3 hidden items-center justify-end pr-4 text-sm text-slate-500 sm:flex">
+      <div className="col-span-2 hidden items-center justify-end pr-4 text-sm text-slate-500 sm:flex">
         {getRelativeTime(createdAt, i18n.language)}
       </div>
     </div>

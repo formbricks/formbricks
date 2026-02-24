@@ -17,31 +17,10 @@ export const getConnectorOptions = (t: TFunction): TConnectorOption[] => [
     disabled: false,
   },
   {
-    id: "webhook",
-    name: t("environments.unify.webhook"),
-    description: t("environments.unify.source_connect_webhook_description"),
-    disabled: true,
-    badge: { text: t("environments.unify.coming_soon"), type: "gray" },
-  },
-  {
-    id: "email",
-    name: t("environments.unify.email"),
-    description: t("environments.unify.source_connect_email_description"),
-    disabled: true,
-    badge: { text: t("environments.unify.coming_soon"), type: "gray" },
-  },
-  {
     id: "csv",
     name: t("environments.unify.csv_import"),
     description: t("environments.unify.source_connect_csv_description"),
     disabled: false,
-  },
-  {
-    id: "slack",
-    name: t("environments.unify.slack_message"),
-    description: t("environments.unify.source_connect_slack_description"),
-    disabled: true,
-    badge: { text: t("environments.unify.coming_soon"), type: "gray" },
   },
 ];
 
