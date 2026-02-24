@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChartDropdownMenu } from "@/modules/ee/analysis/charts/components/chart-dropdown-menu";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
-import { CHART_TYPE_ICONS } from "@/modules/ee/analysis/charts/lib/chart-types";
+import { CHART_TYPES } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 interface ChartsListProps {
@@ -21,7 +21,7 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
   const filteredCharts = charts;
 
   const getChartIcon = (type: string) => {
-    const IconComponent = CHART_TYPE_ICONS[type] || BarChart3Icon;
+    const IconComponent = CHART_TYPES.find((c) => c.id === type)?.icon ?? BarChart3Icon;
     return <IconComponent className="h-5 w-5" />;
   };
 

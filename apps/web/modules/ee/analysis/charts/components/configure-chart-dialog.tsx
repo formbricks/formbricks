@@ -32,9 +32,6 @@ export function ConfigureChartDialog({
   onReset,
 }: Readonly<ConfigureChartDialogProps>) {
   const { t } = useTranslation();
-  const availableTypes = CHART_TYPES.filter((type) =>
-    ["bar", "line", "area", "pie", "big_number"].includes(type.id)
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,7 +47,7 @@ export function ConfigureChartDialog({
                 {t("environments.analysis.charts.configure_type_label")}
               </h4>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                {availableTypes.map((chart) => {
+                {CHART_TYPES.map((chart) => {
                   const isSelected = (configuredChartType || currentChartType) === chart.id;
                   return (
                     <button

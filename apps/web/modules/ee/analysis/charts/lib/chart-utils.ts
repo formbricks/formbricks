@@ -1,68 +1,20 @@
 import { format, isValid, parseISO } from "date-fns";
-import type { TApiChartType, TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
+import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
+import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 
-// Chart brand colors (used by chart rendering utilities)
 export const CHART_BRAND_DARK = "#00C4B8";
 export const CHART_BRAND_LIGHT = "#00E6CA";
 
-/**
- * Map API chart type (used in AnalyticsResponse) to database chart type (Prisma enum).
- */
-export const mapChartType = (apiType: string): TChartType => {
-  const mapping: Record<string, TChartType> = {
-    bar: "bar",
-    line: "line",
-    area: "area",
-    pie: "pie",
-    donut: "pie",
-    kpi: "big_number",
-    big_number: "big_number",
-  };
-  return mapping[apiType] || "bar";
-};
-
-/**
- * Reverse mapping from database chart type to API chart type (for rendering).
- */
-export const mapDatabaseChartTypeToApi = (dbType: string): TApiChartType => {
-  const mapping: Record<string, TApiChartType> = {
-    bar: "bar",
-    line: "line",
-    area: "area",
-    pie: "pie",
-    big_number: "kpi",
-    table: "bar",
-  };
-  return mapping[dbType] || "bar";
+/** Validate a chart type string, defaulting to "bar" if unrecognised. */
+export const resolveChartType = (raw: string): TChartType => {
+  const parsed = ZChartType.safeParse(raw);
+  return parsed.success ? parsed.data : "bar";
 };
 
 const isNumericValue = (val: TChartDataRow[string]): boolean => {
   if (val === null || val === undefined || val === "") return false;
   const num = Number(val);
   return !Number.isNaN(num) && Number.isFinite(num);
-};
-
-export const resolveChartKeys = (
-  data: TChartDataRow[],
-  chartType: string
-): { xAxisKey: string; dataKey: string } => {
-  const firstRow = data[0];
-  const keys = Object.keys(firstRow).filter((k) => k !== "date" && k !== "time");
-
-  if (chartType === "pie" || chartType === "donut") {
-    const numericKey = keys.find((key) => isNumericValue(firstRow[key]));
-    const nonNumericKey = keys.find((key) => key !== numericKey && firstRow[key] !== undefined);
-    const xAxisKey =
-      nonNumericKey || (numericKey ? (keys.find((k) => k !== numericKey) ?? null) : null) || keys[0] || "key";
-    const dataKey = numericKey || keys[1] || keys[0] || "value";
-    return { xAxisKey, dataKey };
-  }
-
-  let xAxisKey = keys[0] ?? "key";
-  if (firstRow.date) xAxisKey = "date";
-  else if (firstRow.time) xAxisKey = "time";
-  const dataKey = keys.find((k) => k !== xAxisKey) || keys[0] || "value";
-  return { xAxisKey, dataKey };
 };
 
 export const preparePieData = (

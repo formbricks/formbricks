@@ -17,7 +17,7 @@ import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-
 import { SaveChartDialog } from "@/modules/ee/analysis/charts/components/save-chart-dialog";
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
 import { CHART_TYPES } from "@/modules/ee/analysis/charts/lib/chart-types";
-import { formatCellValue, mapChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { formatCellValue, resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import {
   ChartBuilderState,
@@ -28,13 +28,13 @@ import {
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
-import type { AnalyticsResponse, TApiChartType, TChartDataRow } from "@/modules/ee/analysis/types/analysis";
+import type { AnalyticsResponse, TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface AdvancedChartBuilderProps {
   environmentId: string;
-  initialChartType?: TApiChartType;
+  initialChartType?: TChartType;
   initialQuery?: TChartQuery;
   hidePreview?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
@@ -43,7 +43,7 @@ interface AdvancedChartBuilderProps {
 }
 
 type Action =
-  | { type: "SET_CHART_TYPE"; payload: TApiChartType }
+  | { type: "SET_CHART_TYPE"; payload: TChartType }
   | { type: "SET_MEASURES"; payload: string[] }
   | { type: "SET_CUSTOM_MEASURES"; payload: CustomMeasure[] }
   | { type: "SET_DIMENSIONS"; payload: string[] }
@@ -318,7 +318,7 @@ export function AdvancedChartBuilder({
         environmentId,
         chartInput: {
           name: chartName,
-          type: mapChartType(state.chartType),
+          type: resolveChartType(state.chartType),
           query,
           config: {},
         },
@@ -364,7 +364,7 @@ export function AdvancedChartBuilder({
         environmentId,
         chartInput: {
           name: chartName || `Chart ${new Date().toLocaleString()}`,
-          type: mapChartType(state.chartType),
+          type: resolveChartType(state.chartType),
           query,
           config: {},
         },
@@ -498,78 +498,83 @@ export function AdvancedChartBuilder({
             </div>
           )}
 
-          {chartData && Array.isArray(chartData) && chartData.length > 0 && !isLoading && state.chartType && (
-            <div className="space-y-4">
-              <div className="rounded-lg border border-gray-200 bg-white p-4">
-                <ChartRenderer chartType={state.chartType} data={chartData} />
-              </div>
+          {chartData &&
+            Array.isArray(chartData) &&
+            chartData.length > 0 &&
+            !isLoading &&
+            state.chartType &&
+            query && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-gray-200 bg-white p-4">
+                  <ChartRenderer chartType={state.chartType} data={chartData} query={query} />
+                </div>
 
-              <Collapsible.Root open={showQuery} onOpenChange={setShowQuery}>
-                <Collapsible.CollapsibleTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start">
-                    <CodeIcon className="mr-2 h-4 w-4" />
-                    {showQuery ? t("common.hide") : t("common.view")} Query
-                  </Button>
-                </Collapsible.CollapsibleTrigger>
-                <Collapsible.CollapsibleContent className="mt-2">
-                  <pre className="max-h-64 overflow-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs">
-                    {JSON.stringify(query, null, 2)}
-                  </pre>
-                </Collapsible.CollapsibleContent>
-              </Collapsible.Root>
+                <Collapsible.Root open={showQuery} onOpenChange={setShowQuery}>
+                  <Collapsible.CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <CodeIcon className="mr-2 h-4 w-4" />
+                      {showQuery ? t("common.hide") : t("common.view")} Query
+                    </Button>
+                  </Collapsible.CollapsibleTrigger>
+                  <Collapsible.CollapsibleContent className="mt-2">
+                    <pre className="max-h-64 overflow-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs">
+                      {JSON.stringify(query, null, 2)}
+                    </pre>
+                  </Collapsible.CollapsibleContent>
+                </Collapsible.Root>
 
-              <Collapsible.Root open={showData} onOpenChange={setShowData}>
-                <Collapsible.CollapsibleTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start">
-                    <DatabaseIcon className="mr-2 h-4 w-4" />
-                    {showData ? t("common.hide") : t("common.view")} Data
-                  </Button>
-                </Collapsible.CollapsibleTrigger>
-                <Collapsible.CollapsibleContent className="mt-2">
-                  <div className="max-h-64 overflow-auto rounded-lg border border-gray-200">
-                    <table className="w-full text-xs">
-                      <thead className="bg-gray-50">
-                        <tr>
+                <Collapsible.Root open={showData} onOpenChange={setShowData}>
+                  <Collapsible.CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <DatabaseIcon className="mr-2 h-4 w-4" />
+                      {showData ? t("common.hide") : t("common.view")} Data
+                    </Button>
+                  </Collapsible.CollapsibleTrigger>
+                  <Collapsible.CollapsibleContent className="mt-2">
+                    <div className="max-h-64 overflow-auto rounded-lg border border-gray-200">
+                      <table className="w-full text-xs">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            {Array.isArray(chartData) &&
+                              chartData.length > 0 &&
+                              Object.keys(chartData[0]).map((key) => (
+                                <th
+                                  key={key}
+                                  className="border-b border-gray-200 px-3 py-2 text-left font-medium">
+                                  {formatCubeColumnHeader(key)}
+                                </th>
+                              ))}
+                          </tr>
+                        </thead>
+                        <tbody>
                           {Array.isArray(chartData) &&
-                            chartData.length > 0 &&
-                            Object.keys(chartData[0]).map((key) => (
-                              <th
-                                key={key}
-                                className="border-b border-gray-200 px-3 py-2 text-left font-medium">
-                                {formatCubeColumnHeader(key)}
-                              </th>
-                            ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Array.isArray(chartData) &&
-                          chartData.slice(0, 10).map((row, idx) => {
-                            const rowKey = Object.values(row)
-                              .slice(0, 3)
-                              .map((v) => String(v || ""))
-                              .join("-");
-                            return (
-                              <tr key={`row-${idx}-${rowKey}`} className="border-b border-gray-100">
-                                {Object.entries(row).map(([key, value]) => (
-                                  <td key={`${rowKey}-${key}`} className="px-3 py-2">
-                                    {formatCellValue(value) || "-"}
-                                  </td>
-                                ))}
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                    {Array.isArray(chartData) && chartData.length > 10 && (
-                      <div className="bg-gray-50 px-3 py-2 text-xs text-gray-500">
-                        {t("environments.analysis.charts.showing_first_10_of", { count: chartData.length })}
-                      </div>
-                    )}
-                  </div>
-                </Collapsible.CollapsibleContent>
-              </Collapsible.Root>
-            </div>
-          )}
+                            chartData.slice(0, 10).map((row, idx) => {
+                              const rowKey = Object.values(row)
+                                .slice(0, 3)
+                                .map((v) => String(v || ""))
+                                .join("-");
+                              return (
+                                <tr key={`row-${idx}-${rowKey}`} className="border-b border-gray-100">
+                                  {Object.entries(row).map(([key, value]) => (
+                                    <td key={`${rowKey}-${key}`} className="px-3 py-2">
+                                      {formatCellValue(value) || "-"}
+                                    </td>
+                                  ))}
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                      {Array.isArray(chartData) && chartData.length > 10 && (
+                        <div className="bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                          {t("environments.analysis.charts.showing_first_10_of", { count: chartData.length })}
+                        </div>
+                      )}
+                    </div>
+                  </Collapsible.CollapsibleContent>
+                </Collapsible.Root>
+              </div>
+            )}
 
           {!chartData && !isLoading && !error && (
             <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500">

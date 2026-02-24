@@ -3,11 +3,11 @@
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { CHART_TYPES } from "@/modules/ee/analysis/charts/lib/chart-types";
-import type { TApiChartType } from "@/modules/ee/analysis/types/analysis";
+import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
 interface ManualChartBuilderProps {
-  selectedChartType: TApiChartType | "";
-  onChartTypeSelect: (type: TApiChartType) => void;
+  selectedChartType: TChartType | "";
+  onChartTypeSelect: (type: TChartType) => void;
 }
 
 export function ManualChartBuilder({

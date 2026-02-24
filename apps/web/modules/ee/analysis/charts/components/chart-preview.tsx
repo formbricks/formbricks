@@ -55,7 +55,7 @@ export function ChartPreview({ chartData, isLoading = false }: Readonly<ChartPre
         </div>
 
         <TabsContent value="chart" className="mt-0">
-          <ChartRenderer chartType={chartData.chartType} data={data} />
+          <ChartRenderer chartType={chartData.chartType} data={data} query={chartData.query} />
         </TabsContent>
 
         <TabsContent value="data" className="mt-0">

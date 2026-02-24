@@ -11,13 +11,9 @@ import {
   getChartAction,
   updateChartAction,
 } from "@/modules/ee/analysis/charts/actions";
-import { mapChartType, mapDatabaseChartTypeToApi } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
-import type {
-  AnalyticsResponse,
-  TApiChartType,
-  TChartWithCreator,
-} from "@/modules/ee/analysis/types/analysis";
+import type { AnalyticsResponse, TChartType, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 export interface UseCreateChartDialogProps {
   open: boolean;
@@ -40,7 +36,7 @@ export function useCreateChartDialog({
   onSuccess,
 }: Readonly<UseCreateChartDialogProps>) {
   const { t } = useTranslation();
-  const [selectedChartType, setSelectedChartType] = useState<TApiChartType | "">("");
+  const [selectedChartType, setSelectedChartType] = useState<TChartType | "">("");
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
@@ -71,7 +67,7 @@ export function useCreateChartDialog({
 
       if (chartMetadata) {
         setChartName(chartMetadata.name);
-        setSelectedChartType(mapDatabaseChartTypeToApi(chartMetadata.type));
+        setSelectedChartType(resolveChartType(chartMetadata.type));
         setCurrentChartId(chartMetadata.id);
       }
 
@@ -96,7 +92,7 @@ export function useCreateChartDialog({
         if (data) {
           setChartData({
             query,
-            chartType: mapDatabaseChartTypeToApi(chartType),
+            chartType: resolveChartType(chartType),
             data,
           });
         } else {
@@ -113,7 +109,7 @@ export function useCreateChartDialog({
             if (result?.data) {
               const chart = result.data;
               setChartName(chart.name);
-              setSelectedChartType(mapDatabaseChartTypeToApi(chart.type));
+              setSelectedChartType(resolveChartType(chart.type));
               setCurrentChartId(chart.id);
               await loadChartData(chart.query, chart.type);
             } else if (result?.serverError) {
@@ -158,7 +154,7 @@ export function useCreateChartDialog({
           chartId: currentChartId,
           chartUpdateInput: {
             name: chartName.trim(),
-            type: mapChartType(chartData.chartType),
+            type: resolveChartType(chartData.chartType),
             query: chartData.query,
             config: {},
           },
@@ -179,7 +175,7 @@ export function useCreateChartDialog({
           environmentId,
           chartInput: {
             name: chartName.trim(),
-            type: mapChartType(chartData.chartType),
+            type: resolveChartType(chartData.chartType),
             query: chartData.query,
             config: {},
           },
@@ -226,7 +222,7 @@ export function useCreateChartDialog({
           environmentId,
           chartInput: {
             name: chartName.trim(),
-            type: mapChartType(chartData.chartType),
+            type: resolveChartType(chartData.chartType),
             query: chartData.query,
             config: {},
           },
@@ -300,7 +296,7 @@ export function useCreateChartDialog({
     onSuccess?.();
   };
 
-  const handleChartTypeChange = (type: TApiChartType) => {
+  const handleChartTypeChange = (type: TChartType) => {
     setSelectedChartType(type);
     setChartData((prev) => (prev ? { ...prev, chartType: type } : null));
   };

@@ -17,7 +17,7 @@ import {
 } from "@/modules/ee/analysis/charts/lib/charts";
 import { checkProjectAccess } from "@/modules/ee/analysis/lib/access";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
-import { ZChartCreateInput, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
+import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 /** Client-facing chart input (projectId and createdBy are resolved server-side) */
@@ -247,7 +247,7 @@ const ZGenerateAIQueryResponse = z.object({
       })
     )
     .nullable(),
-  chartType: z.enum(["bar", "line", "area", "pie", "big_number"]),
+  chartType: ZChartType,
   filters: z
     .array(
       z.object({
@@ -312,7 +312,7 @@ const AI_QUERY_JSON_SCHEMA = {
     },
     chartType: {
       type: "string" as const,
-      enum: ["bar", "line", "area", "pie", "big_number"],
+      enum: [...ZChartType.options],
       description: "Suggested chart type for visualization",
     },
     filters: {

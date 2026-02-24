@@ -17,15 +17,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { TChartQuery } from "@formbricks/types/dashboard";
 import {
   CHART_BRAND_DARK,
   CHART_BRAND_LIGHT,
   formatCellValue,
   preparePieData,
-  resolveChartKeys,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
-import type { TApiChartType, TChartDataRow } from "@/modules/ee/analysis/types/analysis";
+import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
 
@@ -108,11 +108,12 @@ function CartesianChart({
 }
 
 interface ChartRendererProps {
-  chartType: TApiChartType;
+  chartType: TChartType;
   data: TChartDataRow[];
+  query: TChartQuery;
 }
 
-export function ChartRenderer({ chartType, data }: Readonly<ChartRendererProps>) {
+export function ChartRenderer({ chartType, data, query }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
 
   if (!data || data.length === 0) {
@@ -123,7 +124,12 @@ export function ChartRenderer({ chartType, data }: Readonly<ChartRendererProps>)
     );
   }
 
-  const { xAxisKey, dataKey } = resolveChartKeys(data, chartType);
+  const dataKey = query.measures?.[0] ?? Object.keys(data[0])[0] ?? "value";
+  const xAxisKey =
+    query.dimensions?.[0] ??
+    query.timeDimensions?.[0]?.dimension ??
+    Object.keys(data[0]).find((k) => k !== dataKey) ??
+    "key";
   const chartConfig: ChartConfig = {
     [dataKey]: {
       label: formatCubeColumnHeader(dataKey),
@@ -179,8 +185,7 @@ export function ChartRenderer({ chartType, data }: Readonly<ChartRendererProps>)
           />
         </CartesianChart>
       );
-    case "pie":
-    case "donut": {
+    case "pie": {
       const pieResult = preparePieData(data, dataKey);
       if (!pieResult) {
         return (
@@ -224,7 +229,6 @@ export function ChartRenderer({ chartType, data }: Readonly<ChartRendererProps>)
         </div>
       );
     }
-    case "kpi":
     case "big_number": {
       const total = data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
       return (

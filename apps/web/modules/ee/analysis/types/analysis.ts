@@ -2,7 +2,8 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/dashboard";
 
-export const ZChartType = z.enum(["area", "bar", "line", "pie", "big_number"]);
+export const CHART_TYPE_IDS = ["area", "bar", "line", "pie", "big_number"] as const;
+export const ZChartType = z.enum(CHART_TYPE_IDS);
 export type TChartType = z.infer<typeof ZChartType>;
 
 // ── Chart input schemas ─────────────────────────────────────────────────────
@@ -97,26 +98,12 @@ export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
 
 // ── Charts UI (query execution, AI response) ─────────────────────────────────
 
-export const ZApiChartType = z.enum([
-  "bar",
-  "line",
-  "donut",
-  "kpi",
-  "area",
-  "pie",
-  "big_number",
-  "table",
-  "scatter",
-  "map",
-]);
-export type TApiChartType = z.infer<typeof ZApiChartType>;
-
 /** Row from Cube.js tablePivot - keys are measure/dimension names, values are primitives */
 export type TChartDataRow = Record<string, string | number | null | boolean | undefined>;
 
 export interface AnalyticsResponse {
   query: z.infer<typeof ZChartQuery>;
-  chartType: TApiChartType;
+  chartType: TChartType;
   data?: TChartDataRow[];
   error?: string;
 }

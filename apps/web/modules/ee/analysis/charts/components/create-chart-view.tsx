@@ -6,7 +6,7 @@ import { AIQuerySection } from "@/modules/ee/analysis/charts/components/ai-query
 import { ChartDialogFooterWithModals } from "@/modules/ee/analysis/charts/components/chart-dialog-footer-with-modals";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
-import type { AnalyticsResponse, TApiChartType } from "@/modules/ee/analysis/types/analysis";
+import type { AnalyticsResponse, TChartType } from "@/modules/ee/analysis/types/analysis";
 import {
   Dialog,
   DialogBody,
@@ -24,8 +24,8 @@ interface CreateChartViewProps {
   chartData: AnalyticsResponse | null;
   chartName: string;
   onChartNameChange: (name: string) => void;
-  selectedChartType: TApiChartType | "";
-  onSelectedChartTypeChange: (type: TApiChartType) => void;
+  selectedChartType: TChartType | "";
+  onSelectedChartTypeChange: (type: TChartType) => void;
   shouldShowAdvancedBuilder: boolean;
   onChartGenerated: (data: AnalyticsResponse) => void;
   onAdvancedBuilderSave: (savedChartId: string) => void;

@@ -2,7 +2,7 @@
  * Query builder utility to construct Cube.js queries from chart builder state.
  */
 import { TChartQuery, TCubeFilter, TMemberFilter, TTimeDimension } from "@formbricks/types/dashboard";
-import type { TApiChartType } from "@/modules/ee/analysis/types/analysis";
+import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
 export interface CustomMeasure {
   id?: string;
@@ -26,7 +26,7 @@ export interface TimeDimensionConfig {
 }
 
 export interface ChartBuilderState {
-  chartType: TApiChartType | "";
+  chartType: TChartType | "";
   selectedMeasures: string[];
   customMeasures: CustomMeasure[];
   selectedDimensions: string[];
@@ -106,7 +106,7 @@ function isMemberFilter(f: TCubeFilter): f is TMemberFilter {
  * Parse a Cube.js query back into ChartBuilderState.
  * Preserves absent granularity / dateRange instead of injecting defaults.
  */
-export function parseQueryToState(query: TChartQuery, chartType?: TApiChartType): Partial<ChartBuilderState> {
+export function parseQueryToState(query: TChartQuery, chartType?: TChartType): Partial<ChartBuilderState> {
   const state: Partial<ChartBuilderState> = {
     chartType: chartType || "",
     selectedMeasures: query.measures || [],
