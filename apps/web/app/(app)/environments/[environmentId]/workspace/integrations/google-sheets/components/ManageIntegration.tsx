@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2Icon } from "lucide-react";
+import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -12,15 +12,19 @@ import { TUserLocale } from "@formbricks/types/user";
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/workspace/integrations/actions";
 import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptyState } from "@/modules/ui/components/empty-state";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface ManageIntegrationProps {
   googleSheetIntegration: TIntegrationGoogleSheets;
   setOpenAddIntegrationModal: (v: boolean) => void;
   setIsConnected: (v: boolean) => void;
   setSelectedIntegration: (v: (TIntegrationGoogleSheetsConfigData & { index: number }) | null) => void;
+  showReconnectButton: boolean;
+  handleGoogleAuthorization: () => void;
   locale: TUserLocale;
 }
 
@@ -29,6 +33,8 @@ export const ManageIntegration = ({
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
+  showReconnectButton,
+  handleGoogleAuthorization,
   locale,
 }: ManageIntegrationProps) => {
   const { t } = useTranslation();
@@ -68,7 +74,17 @@ export const ManageIntegration = ({
 
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end">
+      {showReconnectButton && (
+        <Alert variant="warning" size="small" className="mb-4 w-full">
+          <AlertDescription>
+            {t("environments.integrations.google_sheets.reconnect_button_description")}
+          </AlertDescription>
+          <AlertButton onClick={handleGoogleAuthorization}>
+            {t("environments.integrations.google_sheets.reconnect_button")}
+          </AlertButton>
+        </Alert>
+      )}
+      <div className="flex w-full justify-end space-x-2">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">
@@ -77,6 +93,19 @@ export const ManageIntegration = ({
             })}
           </span>
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={handleGoogleAuthorization}>
+                <RefreshCcwIcon className="mr-2 h-4 w-4" />
+                {t("environments.integrations.google_sheets.reconnect_button")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t("environments.integrations.google_sheets.reconnect_button_tooltip")}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <Button
           onClick={() => {
             setSelectedIntegration(null);

@@ -136,28 +136,48 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
 
   const { description, environmentId, filters, isPrivate, surveyId, title } = segmentCreateInput;
 
-  let data: Prisma.SegmentCreateArgs["data"] = {
-    environmentId,
-    title,
-    description,
-    isPrivate,
-    filters,
-  };
-
-  if (surveyId) {
-    data = {
-      ...data,
-      surveys: {
-        connect: {
-          id: surveyId,
-        },
-      },
-    };
-  }
+  const surveyConnect = surveyId ? { surveys: { connect: { id: surveyId } } } : {};
 
   try {
+    // Private segments use upsert because auto-save may have already created a
+    // default (empty-filter) segment via connectOrCreate before the user publishes.
+    // Without upsert the second create hits the (environmentId, title) unique constraint.
+    if (isPrivate) {
+      const segment = await prisma.segment.upsert({
+        where: {
+          environmentId_title: {
+            environmentId,
+            title,
+          },
+        },
+        create: {
+          environmentId,
+          title,
+          description,
+          isPrivate,
+          filters,
+          ...surveyConnect,
+        },
+        update: {
+          description,
+          filters,
+          ...surveyConnect,
+        },
+        select: selectSegment,
+      });
+
+      return transformPrismaSegment(segment);
+    }
+
     const segment = await prisma.segment.create({
-      data,
+      data: {
+        environmentId,
+        title,
+        description,
+        isPrivate,
+        filters,
+        ...surveyConnect,
+      },
       select: selectSegment,
     });
 

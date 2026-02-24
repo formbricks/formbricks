@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { generateWebhookSecret } from "@/lib/crypto";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -24,6 +26,7 @@ import { ZWebhookInput } from "@/modules/integrations/webhooks/types/webhooks";
 const ZCreateWebhookAction = z.object({
   environmentId: ZId,
   webhookInput: ZWebhookInput,
+  webhookSecret: z.string().optional(),
 });
 
 export const createWebhookAction = authenticatedActionClient.schema(ZCreateWebhookAction).action(
@@ -47,7 +50,11 @@ export const createWebhookAction = authenticatedActionClient.schema(ZCreateWebho
           },
         ],
       });
-      const webhook = await createWebhook(parsedInput.environmentId, parsedInput.webhookInput);
+      const webhook = await createWebhook(
+        parsedInput.environmentId,
+        parsedInput.webhookInput,
+        parsedInput.webhookSecret
+      );
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.newObject = parsedInput.webhookInput;
       return webhook;
@@ -131,10 +138,43 @@ export const updateWebhookAction = authenticatedActionClient.schema(ZUpdateWebho
 
 const ZTestEndpointAction = z.object({
   url: z.string(),
+  webhookId: ZId.optional(),
+  secret: z.string().optional(),
 });
 
 export const testEndpointAction = authenticatedActionClient
   .schema(ZTestEndpointAction)
-  .action(async ({ parsedInput }) => {
-    return testEndpoint(parsedInput.url);
+  .action(async ({ ctx, parsedInput }) => {
+    let secret: string | undefined;
+
+    if (parsedInput.webhookId) {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: await getOrganizationIdFromWebhookId(parsedInput.webhookId),
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "read",
+            projectId: await getProjectIdFromWebhookId(parsedInput.webhookId),
+          },
+        ],
+      });
+
+      const webhookResult = await getWebhook(parsedInput.webhookId);
+      if (!webhookResult.ok) {
+        throw new ResourceNotFoundError("Webhook", parsedInput.webhookId);
+      }
+
+      secret = webhookResult.data.secret ?? undefined;
+    } else {
+      // New webhook, use the provided secret or generate a new one
+      secret = parsedInput.secret ?? generateWebhookSecret();
+    }
+
+    await testEndpoint(parsedInput.url, secret);
+    return { success: true, secret };
   });

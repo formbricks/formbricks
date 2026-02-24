@@ -18,6 +18,7 @@ import { convertDatesInObject } from "@/lib/time";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { sendResponseFinishedEmail } from "@/modules/email";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { handleIntegrations } from "./lib/handleIntegrations";
@@ -95,12 +96,15 @@ export const POST = async (request: Request) => {
     ]);
   };
 
+  const resolvedResponseData = resolveStorageUrlsInObject(response.data);
+
   const webhookPromises = webhooks.map((webhook) => {
     const body = JSON.stringify({
       webhookId: webhook.id,
       event,
       data: {
         ...response,
+        data: resolvedResponseData,
         survey: {
           title: survey.name,
           type: survey.type,

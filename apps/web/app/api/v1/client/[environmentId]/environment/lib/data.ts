@@ -10,6 +10,7 @@ import {
   TJsEnvironmentStateSurvey,
 } from "@formbricks/types/js";
 import { validateInputs } from "@/lib/utils/validate";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 
 /**
@@ -177,14 +178,14 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
           overlay: environmentData.project.overlay,
           placement: environmentData.project.placement,
           inAppSurveyBranding: environmentData.project.inAppSurveyBranding,
-          styling: environmentData.project.styling,
+          styling: resolveStorageUrlsInObject(environmentData.project.styling),
         },
       },
       organization: {
         id: environmentData.project.organization.id,
         billing: environmentData.project.organization.billing,
       },
-      surveys: transformedSurveys,
+      surveys: resolveStorageUrlsInObject(transformedSurveys),
       actionClasses: environmentData.actionClasses as TJsEnvironmentStateActionClass[],
     };
   } catch (error) {

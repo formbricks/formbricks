@@ -1,3 +1,4 @@
+import { getDisplaysByContactId } from "@/lib/display/service";
 import { getResponsesByContactId } from "@/lib/response/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/contact-attributes";
@@ -17,8 +18,12 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
     throw new Error(t("environments.contacts.contact_not_found"));
   }
 
-  const responses = await getResponsesByContactId(contactId);
+  const [responses, displays] = await Promise.all([
+    getResponsesByContactId(contactId),
+    getDisplaysByContactId(contactId),
+  ]);
   const numberOfResponses = responses?.length || 0;
+  const numberOfDisplays = displays?.length || 0;
 
   const systemAttributes = attributesWithKeyInfo
     .filter((attr) => attr.type === "default")
@@ -84,6 +89,11 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
       <div>
         <dt className="text-sm font-medium text-slate-500">{t("common.responses")}</dt>
         <dd className="mt-1 text-sm text-slate-900">{numberOfResponses}</dd>
+      </div>
+
+      <div>
+        <dt className="text-sm font-medium text-slate-500">{t("environments.contacts.displays")}</dt>
+        <dd className="mt-1 text-sm text-slate-900">{numberOfDisplays}</dd>
       </div>
     </div>
   );
