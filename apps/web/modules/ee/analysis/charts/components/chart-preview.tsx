@@ -18,40 +18,57 @@ export function ChartPreview({ chartData, isLoading = false }: Readonly<ChartPre
   const [activeTab, setActiveTab] = useState<"chart" | "data">("chart");
   const { t } = useTranslation();
 
-  return (
-    <div className="mt-6 space-y-4">
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">{t("environments.analysis.charts.chart_preview")}</h3>
+  const data = chartData?.data ?? [];
+
+  const handleTabChange = (value: string) => {
+    if (value === "chart" || value === "data") {
+      setActiveTab(value);
+    }
+  };
+
+  const renderContent = () => {
+    if (isLoading || !chartData) {
+      return (
+        <div className="flex h-48 items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      );
+    }
+
+    if (chartData.error) {
+      return (
+        <div className="flex h-48 items-center justify-center text-sm text-red-600">{chartData.error}</div>
+      );
+    }
+
+    return (
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <div className="mb-4 flex justify-end">
+          <TabsList>
+            <TabsTrigger value="chart" icon={<BarChart className="h-4 w-4" />}>
+              {t("environments.analysis.charts.chart")}
+            </TabsTrigger>
+            <TabsTrigger value="data" icon={<DatabaseIcon className="h-4 w-4" />}>
+              {t("environments.analysis.charts.chart_data_tab")}
+            </TabsTrigger>
+          </TabsList>
         </div>
 
-        {isLoading ? (
-          <div className="flex h-48 items-center justify-center">
-            <LoadingSpinner />
-          </div>
-        ) : (
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "chart" | "data")}>
-            <div className="mb-4 flex justify-end">
-              <TabsList>
-                <TabsTrigger value="chart" icon={<BarChart className="h-4 w-4" />}>
-                  {t("environments.analysis.charts.chart")}
-                </TabsTrigger>
-                <TabsTrigger value="data" icon={<DatabaseIcon className="h-4 w-4" />}>
-                  {t("environments.analysis.charts.chart_data_tab")}
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        <TabsContent value="chart" className="mt-0">
+          <ChartRenderer chartType={chartData.chartType} data={data} />
+        </TabsContent>
 
-            <TabsContent value="chart" className="mt-0">
-              <ChartRenderer chartType={chartData?.chartType ?? "bar"} data={chartData?.data ?? []} />
-            </TabsContent>
+        <TabsContent value="data" className="mt-0">
+          <DataViewer data={data} />
+        </TabsContent>
+      </Tabs>
+    );
+  };
 
-            <TabsContent value="data" className="mt-0">
-              <DataViewer data={chartData?.data ?? []} />
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-6">
+      <h3 className="mb-4 font-semibold text-gray-900">{t("environments.analysis.charts.chart_preview")}</h3>
+      {renderContent()}
     </div>
   );
 }
