@@ -17,6 +17,19 @@ interface PricingCardProps {
   onManageSubscription: () => Promise<void>;
 }
 
+const getDisplayPlanLevel = (plan: "hobby" | "pro" | "scale" | "trial" | "unknown") => {
+  if (plan === "hobby") return 0;
+  if (plan === "pro" || plan === "trial") return 1;
+  if (plan === "scale") return 2;
+  return -1;
+};
+
+const getTargetPlanLevel = (plan: TPricingPlan["id"]) => {
+  if (plan === "hobby") return 0;
+  if (plan === "pro") return 1;
+  return 2;
+};
+
 export const PricingCard = ({
   planPeriod,
   plan,
@@ -37,6 +50,26 @@ export const PricingCard = ({
     return currentPlan === plan.id;
   }, [currentPlan, plan.id]);
 
+  const ctaLabel = useMemo(() => {
+    if (plan.id === "hobby") {
+      return plan.CTA ?? t("environments.settings.billing.upgrade");
+    }
+
+    const currentLevel = getDisplayPlanLevel(currentPlan);
+    const targetLevel = getTargetPlanLevel(plan.id);
+    const canStartTrial = currentLevel <= 0;
+
+    if (canStartTrial) {
+      return plan.CTA ?? t("common.start_free_trial");
+    }
+
+    if (targetLevel > currentLevel) {
+      return t("environments.settings.billing.upgrade");
+    }
+
+    return t("environments.settings.billing.switch_plan");
+  }, [currentPlan, plan.CTA, plan.id, t]);
+
   const CTAButton = useMemo(() => {
     if (isCurrentPlan) {
       return null;
@@ -52,10 +85,10 @@ export const PricingCard = ({
           setLoading(false);
         }}
         className="flex justify-center">
-        {plan.CTA ?? t("environments.settings.billing.upgrade")}
+        {ctaLabel}
       </Button>
     );
-  }, [isCurrentPlan, loading, onUpgrade, plan.CTA, plan.featured, t]);
+  }, [ctaLabel, isCurrentPlan, loading, onUpgrade, plan.featured]);
 
   return (
     <div
