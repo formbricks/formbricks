@@ -437,4 +437,22 @@ describe("updateAttributes", () => {
     expect(result.success).toBe(true);
     expect(result.messages).toContainEqual({ code: "email_or_userid_required", params: {} });
   });
+
+  test("coerces boolean attribute values to strings", async () => {
+    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
+    vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+    vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
+    vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
+    vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
+
+    const attributes = { name: true, email: "john@example.com" };
+    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+
+    expect(result.success).toBe(true);
+    expect(prisma.$transaction).toHaveBeenCalled();
+    const transactionCall = vi.mocked(prisma.$transaction).mock.calls[0][0];
+    // Both name (coerced from boolean) and email should be upserted
+    expect(transactionCall).toHaveLength(2);
+  });
 });
