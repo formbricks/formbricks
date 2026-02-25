@@ -12,9 +12,10 @@ import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 interface ChartsListProps {
   charts: TChartWithCreator[];
   environmentId: string;
+  isReadOnly: boolean;
 }
 
-export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>) {
+export function ChartsList({ charts, environmentId, isReadOnly }: Readonly<ChartsListProps>) {
   const [editingChartId, setEditingChartId] = useState<string | undefined>(undefined);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { t } = useTranslation();
@@ -96,14 +97,16 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
               <div
                 className="col-span-1 my-auto flex items-center justify-end pr-6"
                 onClick={(e) => e.stopPropagation()}>
-                <ChartDropdownMenu
-                  environmentId={environmentId}
-                  chart={chart}
-                  onEdit={(chartId) => {
-                    setEditingChartId(chartId);
-                    setIsEditDialogOpen(true);
-                  }}
-                />
+                {!isReadOnly && (
+                  <ChartDropdownMenu
+                    environmentId={environmentId}
+                    chart={chart}
+                    onEdit={(chartId) => {
+                      setEditingChartId(chartId);
+                      setIsEditDialogOpen(true);
+                    }}
+                  />
+                )}
               </div>
             </div>
           ))}

@@ -1,20 +1,30 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TDisplayWithContact } from "@formbricks/types/displays";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { getSurveySummaryAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import {
+  getDisplaysWithContactAction,
+  getSurveySummaryAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import ScrollToTop from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
+import { SummaryImpressions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryImpressions";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { QuotasSummary } from "@/modules/ee/quotas/components/quotas-summary";
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
+
+const DISPLAYS_PER_PAGE = 15;
 
 const defaultSurveySummary: TSurveySummary = {
   meta: {
@@ -51,16 +61,75 @@ export const SummaryPage = ({
   initialSurveySummary,
   isQuotasAllowed,
 }: SummaryPageProps) => {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
 
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(
     initialSurveySummary || defaultSurveySummary
   );
 
-  const [tab, setTab] = useState<"dropOffs" | "quotas" | undefined>(undefined);
+  const [tab, setTab] = useState<"dropOffs" | "quotas" | "impressions" | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
+
+  const [displays, setDisplays] = useState<TDisplayWithContact[]>([]);
+  const [isDisplaysLoading, setIsDisplaysLoading] = useState(false);
+  const [hasMoreDisplays, setHasMoreDisplays] = useState(true);
+  const [displaysError, setDisplaysError] = useState<string | null>(null);
+  const displaysFetchedRef = useRef(false);
+
+  const fetchDisplays = useCallback(
+    async (offset: number) => {
+      const response = await getDisplaysWithContactAction({
+        surveyId,
+        limit: DISPLAYS_PER_PAGE,
+        offset,
+      });
+
+      if (!response?.data) {
+        const errorMessage = getFormattedErrorMessage(response);
+        throw new Error(errorMessage);
+      }
+
+      return response?.data ?? [];
+    },
+    [surveyId]
+  );
+
+  const loadInitialDisplays = useCallback(async () => {
+    setIsDisplaysLoading(true);
+    setDisplaysError(null);
+    try {
+      const data = await fetchDisplays(0);
+      setDisplays(data);
+      setHasMoreDisplays(data.length === DISPLAYS_PER_PAGE);
+    } catch (error) {
+      toast.error(error);
+      setDisplays([]);
+      setHasMoreDisplays(false);
+    } finally {
+      setIsDisplaysLoading(false);
+    }
+  }, [fetchDisplays, t]);
+
+  const handleLoadMoreDisplays = useCallback(async () => {
+    try {
+      const data = await fetchDisplays(displays.length);
+      setDisplays((prev) => [...prev, ...data]);
+      setHasMoreDisplays(data.length === DISPLAYS_PER_PAGE);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
+      toast.error(errorMessage);
+    }
+  }, [fetchDisplays, displays.length, t]);
+
+  useEffect(() => {
+    if (tab === "impressions" && !displaysFetchedRef.current) {
+      displaysFetchedRef.current = true;
+      loadInitialDisplays();
+    }
+  }, [tab, loadInitialDisplays]);
 
   // Only fetch data when filters change or when there's no initial data
   useEffect(() => {
@@ -121,6 +190,18 @@ export const SummaryPage = ({
         setTab={setTab}
         isQuotasAllowed={isQuotasAllowed}
       />
+      {tab === "impressions" && (
+        <SummaryImpressions
+          displays={displays}
+          isLoading={isDisplaysLoading}
+          hasMore={hasMoreDisplays}
+          displaysError={displaysError}
+          environmentId={environment.id}
+          locale={locale}
+          onLoadMore={handleLoadMoreDisplays}
+          onRetry={loadInitialDisplays}
+        />
+      )}
       {tab === "dropOffs" && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
       {isQuotasAllowed && tab === "quotas" && <QuotasSummary quotas={surveySummary.quotas} />}
       <div className="flex gap-1.5">

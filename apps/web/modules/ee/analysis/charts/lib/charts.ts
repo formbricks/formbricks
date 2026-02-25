@@ -11,6 +11,7 @@ import {
   TChartCreateInput,
   TChartUpdateInput,
   TChartWithCreator,
+  TChartWithWidgets,
   ZChartCreateInput,
   ZChartType,
   ZChartUpdateInput,
@@ -245,6 +246,28 @@ export const getCharts = async (environmentId: string): Promise<TChartWithCreato
     if (error instanceof ResourceNotFoundError) {
       throw error;
     }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+export const getChartsWithCreator = async (projectId: string): Promise<TChartWithCreator[]> => {
+  validateInputs([projectId, ZId]);
+
+  try {
+    return await prisma.chart.findMany({
+      where: { projectId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        ...selectChart,
+        creator: {
+          select: { name: true },
+        },
+      },
+    });
+  } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }

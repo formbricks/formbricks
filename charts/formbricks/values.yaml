@@ -215,6 +215,42 @@ autoscaling:
           periodSeconds: 60 # Add at most 2 pods every minute
 
 ##########################################################
+# Pod Disruption Budget (PDB)
+#
+# Ensures a minimum number of pods remain available during
+# voluntary disruptions (node drains, cluster upgrades, etc.).
+#
+# IMPORTANT:
+#   - minAvailable and maxUnavailable are MUTUALLY EXCLUSIVE.
+#     Setting both will cause a helm install/upgrade failure.
+#     To switch, set the unused one to null in your override file.
+#   - Accepts an integer (e.g., 1) or a percentage string (e.g., "25%").
+#   - For PDB to provide real HA protection, ensure
+#     autoscaling.minReplicas >= 2 (or deployment.replicas >= 2
+#     if HPA is disabled). With only 1 replica and minAvailable: 1,
+#     the PDB will block ALL node drains and cluster upgrades.
+##########################################################
+pdb:
+  enabled: true
+  additionalLabels: {}
+  annotations: {}
+
+  # Minimum pods that must remain available during disruptions.
+  # Set to null and configure maxUnavailable instead if preferred.
+  minAvailable: 1
+
+  # Maximum pods that can be unavailable during disruptions.
+  # Mutually exclusive with minAvailable — uncomment and set
+  # minAvailable to null to use this instead.
+  # maxUnavailable: 1
+
+  # Eviction policy for unhealthy pods (Kubernetes 1.27+).
+  # "IfHealthy"    — unhealthy pods count toward the budget (default).
+  # "AlwaysAllow"  — unhealthy pods can always be evicted,
+  #                  preventing them from blocking node drain.
+  # unhealthyPodEvictionPolicy: AlwaysAllow
+
+##########################################################
 # Service Configuration
 ##########################################################
 service:

@@ -2,14 +2,15 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
+import { TFunction } from "i18next";
 import { UsersIcon } from "lucide-react";
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 
-export const generateSegmentTableColumns = (): ColumnDef<TSegmentWithSurveyNames>[] => {
+export const generateSegmentTableColumns = (t: TFunction): ColumnDef<TSegmentWithSurveyNames>[] => {
   const titleColumn: ColumnDef<TSegmentWithSurveyNames> = {
     id: "title",
     accessorKey: "title",
-    header: "Title",
+    header: t("common.title"),
     cell: ({ row }) => {
       return (
         <div className="flex items-center gap-4">
@@ -30,7 +31,7 @@ export const generateSegmentTableColumns = (): ColumnDef<TSegmentWithSurveyNames
   const updatedAtColumn: ColumnDef<TSegmentWithSurveyNames> = {
     id: "updatedAt",
     accessorKey: "updatedAt",
-    header: "Updated",
+    header: t("common.updated_at"),
     cell: ({ row }) => {
       return (
         <span className="text-sm text-slate-900">
@@ -43,7 +44,7 @@ export const generateSegmentTableColumns = (): ColumnDef<TSegmentWithSurveyNames
   const createdAtColumn: ColumnDef<TSegmentWithSurveyNames> = {
     id: "createdAt",
     accessorKey: "createdAt",
-    header: "Created",
+    header: t("common.created_at"),
     cell: ({ row }) => {
       return (
         <span className="text-sm text-slate-900">{format(row.original.createdAt, "do 'of' MMMM, yyyy")}</span>

@@ -94,7 +94,7 @@ export function ChartDropdownMenu({
             <MoreVertical className="size-4" aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="inline-block w-auto min-w-max">
+        <DropdownMenuContent className="inline-block w-auto min-w-max" align="end">
           <DropdownMenuGroup>
             <DropdownMenuItem icon={<SquarePenIcon className="size-4" />} onClick={handleEdit}>
               {t("common.edit")}

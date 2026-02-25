@@ -1,4 +1,4 @@
-const DashboardDetailPage = async (props: { params: Promise<{ dashboardId: string }> }) => {
+const DashboardDetailPage = async (props: Readonly<{ params: Promise<{ dashboardId: string }> }>) => {
   const { dashboardId } = await props.params;
 
   return (

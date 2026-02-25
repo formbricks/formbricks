@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { getDisplaysBySurveyIdWithContact } from "@/lib/display/service";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -105,4 +106,32 @@ export const getResponseCountAction = authenticatedActionClient
     });
 
     return getResponseCountBySurveyId(parsedInput.surveyId, parsedInput.filterCriteria);
+  });
+
+const ZGetDisplaysWithContactAction = z.object({
+  surveyId: ZId,
+  limit: z.number().int().min(1).max(100),
+  offset: z.number().int().nonnegative(),
+});
+
+export const getDisplaysWithContactAction = authenticatedActionClient
+  .schema(ZGetDisplaysWithContactAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
+    });
+
+    return getDisplaysBySurveyIdWithContact(parsedInput.surveyId, parsedInput.limit, parsedInput.offset);
   });

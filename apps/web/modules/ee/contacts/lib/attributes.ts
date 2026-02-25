@@ -130,7 +130,12 @@ export const updateAttributes = async (
   const messages: TAttributeUpdateMessage[] = [];
   const errors: TAttributeUpdateMessage[] = [];
 
-  // Convert email and userId to strings for lookup (they should always be strings, but handle numbers gracefully)
+  // Coerce boolean values to strings (SDK may send booleans for string attributes)
+  const coercedAttributes: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(contactAttributesParam)) {
+    coercedAttributes[key] = typeof value === "boolean" ? String(value) : value;
+  }
+
   const emailValue =
     contactAttributesParam.email === null || contactAttributesParam.email === undefined
       ? null
@@ -154,7 +159,7 @@ export const updateAttributes = async (
   const userIdExists = !!existingUserIdAttribute;
 
   // Remove email and/or userId from attributes if they already exist on another contact
-  let contactAttributes = { ...contactAttributesParam };
+  let contactAttributes = { ...coercedAttributes };
 
   // Determine what the final email and userId values will be after this update
   // Only consider a value as "submitted" if it was explicitly included in the attributes
