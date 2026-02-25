@@ -401,5 +401,14 @@ describe("Chart Service", () => {
         }),
       });
     });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      vi.mocked(prisma.chart.findMany).mockRejectedValue(makePrismaError("P9999"));
+      const { getChartsWithCreator } = await import("./charts");
+
+      await expect(getChartsWithCreator(mockProjectId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
   });
 });

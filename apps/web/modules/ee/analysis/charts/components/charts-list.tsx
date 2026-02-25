@@ -1,10 +1,9 @@
 "use client";
 
-import { format } from "date-fns";
 import { BarChart3Icon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { timeSinceDate } from "@/lib/time";
+import { convertDateString, timeSinceDate } from "@/lib/time";
 import { ChartDropdownMenu } from "@/modules/ee/analysis/charts/components/chart-dropdown-menu";
 import { CHART_TYPE_ICONS } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
@@ -12,9 +11,10 @@ import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 interface ChartsListProps {
   charts: TChartWithCreator[];
   environmentId: string;
+  isReadOnly: boolean;
 }
 
-export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>) {
+export function ChartsList({ charts, environmentId, isReadOnly }: Readonly<ChartsListProps>) {
   const { t } = useTranslation();
 
   const getChartIcon = (type: string) => {
@@ -74,16 +74,17 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
               </div>
               <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
                 <div className="ph-no-capture text-slate-900">
-                  {format(new Date(chart.createdAt), "do 'of' MMMM, yyyy")}
+                  {convertDateString(chart.createdAt.toISOString())}
                 </div>
               </div>
               <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
                 <div className="ph-no-capture text-slate-900">{timeSinceDate(new Date(chart.updatedAt))}</div>
               </div>
+              {/* Stops click/key propagation so dropdown actions don't trigger the row handler */}
               <div // NOSONAR
                 className="col-span-1 my-auto flex items-center justify-end pr-6"
                 onClick={(e) => e.stopPropagation()}>
-                <ChartDropdownMenu environmentId={environmentId} chart={chart} />
+                {!isReadOnly && <ChartDropdownMenu environmentId={environmentId} chart={chart} />}
               </div>
             </div>
           ))}

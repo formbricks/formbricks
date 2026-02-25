@@ -12,12 +12,17 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 interface ChartsListContentProps {
   chartsPromise: Promise<TChartWithCreator[]>;
   environmentId: string;
+  isReadOnly: boolean;
 }
 
-const ChartsListContent = ({ chartsPromise, environmentId }: Readonly<ChartsListContentProps>) => {
+const ChartsListContent = ({
+  chartsPromise,
+  environmentId,
+  isReadOnly,
+}: Readonly<ChartsListContentProps>) => {
   const charts = use(chartsPromise);
 
-  return <ChartsList charts={charts} environmentId={environmentId} />;
+  return <ChartsList charts={charts} environmentId={environmentId} isReadOnly={isReadOnly} />;
 };
 
 interface ChartsListPageProps {
@@ -47,7 +52,11 @@ export async function ChartsListPage({ environmentId }: Readonly<ChartsListPageP
             />
           </Delay>
         }>
-        <ChartsListContent chartsPromise={chartsPromise} environmentId={environmentId} />
+        <ChartsListContent
+          chartsPromise={chartsPromise}
+          environmentId={environmentId}
+          isReadOnly={isReadOnly}
+        />
       </Suspense>
     </AnalysisPageLayout>
   );
