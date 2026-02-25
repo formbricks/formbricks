@@ -198,41 +198,57 @@ export const EditProfileDetailsForm = ({
           <FormField
             control={form.control}
             name="locale"
-            render={({ field }) => (
-              <FormItem className="mt-4">
-                <FormLabel>{t("common.language")}</FormLabel>
-                <FormControl>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="h-10 w-full border border-slate-300 px-3 text-left">
-                        <div className="flex w-full items-center justify-between">
-                          {appLanguages.find((l) => l.code === field.value)?.label["en-US"] ?? "NA"}
-                          <ChevronDownIcon className="h-4 w-4 text-slate-500" />
-                        </div>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="min-w-[var(--radix-dropdown-menu-trigger-width)] bg-white text-slate-700"
-                      align="start">
-                      <DropdownMenuRadioGroup value={field.value} onValueChange={field.onChange}>
-                        {appLanguages.map((lang) => (
-                          <DropdownMenuRadioItem
-                            key={lang.code}
-                            value={lang.code}
-                            className="min-h-8 cursor-pointer">
-                            {lang.label["en-US"]}
-                          </DropdownMenuRadioItem>
-                        ))}
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </FormControl>
-                <FormError />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const selectedLanguage = appLanguages.find((l) => l.code === field.value);
+              const sortedAppLanguages = [...appLanguages].sort((a, b) =>
+                a.label["en-US"].localeCompare(b.label["en-US"])
+              );
+
+              return (
+                <FormItem className="mt-4">
+                  <FormLabel>{t("common.language")}</FormLabel>
+                  <FormControl>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-10 w-full border border-slate-300 px-3 text-left">
+                          <div className="flex w-full items-center justify-between">
+                            {selectedLanguage ? (
+                              <>
+                                {selectedLanguage.label["en-US"]}
+                                {selectedLanguage.label.native !== selectedLanguage.label["en-US"] &&
+                                  ` (${selectedLanguage.label.native})`}
+                              </>
+                            ) : (
+                              "NA"
+                            )}
+                            <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                          </div>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="min-w-[var(--radix-dropdown-menu-trigger-width)] bg-white text-slate-700"
+                        align="start">
+                        <DropdownMenuRadioGroup value={field.value} onValueChange={field.onChange}>
+                          {sortedAppLanguages.map((lang) => (
+                            <DropdownMenuRadioItem
+                              key={lang.code}
+                              value={lang.code}
+                              className="min-h-8 cursor-pointer">
+                              {lang.label["en-US"]}
+                              {lang.label.native !== lang.label["en-US"] && ` (${lang.label.native})`}
+                            </DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </FormControl>
+                  <FormError />
+                </FormItem>
+              );
+            }}
           />
 
           {isPasswordResetEnabled && (
