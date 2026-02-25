@@ -122,7 +122,7 @@ export function EditChartView({
           dashboards={dashboards}
           selectedDashboardId={selectedDashboardId}
           onDashboardSelect={onDashboardSelect}
-          onAdd={onAddToDashboard}
+          onConfirm={onAddToDashboard}
           isSaving={isSaving}
         />
       </DialogContent>

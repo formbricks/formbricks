@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { TDashboard } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -27,10 +26,10 @@ interface AddToDashboardDialogProps {
   onOpenChange: (open: boolean) => void;
   chartName: string;
   onChartNameChange: (name: string) => void;
-  dashboards: Pick<TDashboard, "id" | "name">[];
+  dashboards: Array<{ id: string; name: string }>;
   selectedDashboardId: string;
   onDashboardSelect: (id: string) => void;
-  onAdd: () => void;
+  onConfirm: () => void;
   isSaving: boolean;
 }
 
@@ -42,13 +41,13 @@ export function AddToDashboardDialog({
   dashboards,
   selectedDashboardId,
   onDashboardSelect,
-  onAdd,
+  onConfirm,
   isSaving,
 }: Readonly<AddToDashboardDialogProps>) {
   const { t } = useTranslation();
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => !isSaving && onOpenChange(open)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("environments.analysis.charts.add_chart_to_dashboard")}</DialogTitle>
@@ -57,7 +56,7 @@ export function AddToDashboardDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <div className="m-1 space-y-4">
+          <div className="space-y-4">
             <div>
               <Label htmlFor="chart-name">{t("environments.analysis.charts.chart_name")}</Label>
               <Input
@@ -83,7 +82,7 @@ export function AddToDashboardDialog({
                     }
                   />
                 </SelectTrigger>
-                <SelectContent position="popper" className="z-[100] max-h-[200px]">
+                <SelectContent position="popper" className="max-h-[200px]">
                   {dashboards.length === 0 ? (
                     <div className="px-2 py-1.5 text-sm text-gray-500">
                       {t("environments.analysis.charts.no_dashboards_available")}
@@ -109,7 +108,7 @@ export function AddToDashboardDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={onAdd} loading={isSaving} disabled={!selectedDashboardId || !chartName.trim()}>
+          <Button onClick={onConfirm} loading={isSaving} disabled={!selectedDashboardId || !chartName.trim()}>
             {t("environments.analysis.charts.add_to_dashboard")}
           </Button>
         </DialogFooter>
