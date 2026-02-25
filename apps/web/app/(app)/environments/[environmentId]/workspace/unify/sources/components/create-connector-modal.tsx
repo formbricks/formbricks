@@ -5,8 +5,13 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TConnectorType, UNSUPPORTED_CONNECTOR_ELEMENT_TYPES } from "@formbricks/types/connector";
-import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/connector/actions";
+import {
+  getResponseCountAction,
+  importCsvDataAction,
+  importHistoricalResponsesAction,
+} from "@/lib/connector/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -25,7 +30,7 @@ import {
   TSourceField,
   TUnifySurvey,
 } from "../types";
-import { parseCSVColumnsToFields } from "../utils";
+import { TEnumValidationError, parseCSVColumnsToFields, validateEnumMappings } from "../utils";
 import { ConnectorTypeSelector } from "./connector-type-selector";
 import { CsvConnectorUI } from "./csv-connector-ui";
 import { FormbricksSurveySelector } from "./formbricks-survey-selector";
@@ -144,6 +149,10 @@ export const CreateConnectorModal = ({
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
 
+  const [csvParsedData, setCsvParsedData] = useState<Record<string, string>[]>([]);
+
+  const [enumValidationErrors, setEnumValidationErrors] = useState<TEnumValidationError[]>([]);
+
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [importHistorical, setImportHistorical] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -178,6 +187,8 @@ export const CreateConnectorModal = ({
     setConnectorName("");
     setMappings([]);
     setSourceFields([]);
+    setCsvParsedData([]);
+    setEnumValidationErrors([]);
     setSelectedSurveyId(null);
     setSelectedElementIds([]);
     setResponseCount(null);
@@ -256,8 +267,39 @@ export const CreateConnectorModal = ({
     }
   };
 
+  const handleCsvImport = async (connectorId: string) => {
+    setIsImporting(true);
+    const importResult = await importCsvDataAction({
+      connectorId,
+      environmentId,
+      csvData: csvParsedData,
+    });
+    setIsImporting(false);
+
+    if (importResult?.data) {
+      toast.success(
+        t("environments.unify.csv_import_complete", {
+          successes: importResult.data.successes,
+          failures: importResult.data.failures,
+          skipped: importResult.data.skipped,
+        })
+      );
+    } else {
+      toast.error(getFormattedErrorMessage(importResult));
+    }
+  };
+
   const handleCreate = async () => {
     if (!selectedType || !connectorName.trim()) return;
+
+    if (selectedType === "csv" && csvParsedData.length > 0) {
+      const errors = validateEnumMappings(mappings, csvParsedData);
+      if (errors.length > 0) {
+        setEnumValidationErrors(errors);
+        return;
+      }
+      setEnumValidationErrors([]);
+    }
 
     setIsCreating(true);
 
@@ -271,6 +313,10 @@ export const CreateConnectorModal = ({
 
     if (connectorId && importHistorical && selectedSurveyId && selectedType === "formbricks") {
       await handleHistoricalImport(connectorId, selectedSurveyId);
+    }
+
+    if (connectorId && selectedType === "csv" && csvParsedData.length > 0) {
+      await handleCsvImport(connectorId);
     }
 
     setIsCreating(false);
@@ -313,7 +359,7 @@ export const CreateConnectorModal = ({
               <div className="flex flex-col items-center gap-3">
                 <Loader2Icon className="h-8 w-8 animate-spin text-slate-500" />
                 <p className="text-sm font-medium text-slate-700">
-                  {t("environments.unify.importing_historical_data")}
+                  {t("environments.unify.importing_data")}
                 </p>
               </div>
             </div>
@@ -385,11 +431,45 @@ export const CreateConnectorModal = ({
                   <CsvConnectorUI
                     sourceFields={sourceFields}
                     mappings={mappings}
-                    onMappingsChange={setMappings}
+                    onMappingsChange={(m) => {
+                      setMappings(m);
+                      setEnumValidationErrors([]);
+                    }}
                     onSourceFieldsChange={setSourceFields}
                     onLoadSampleCSV={handleLoadSourceFields}
+                    onParsedDataChange={setCsvParsedData}
                   />
                 </div>
+
+                {enumValidationErrors.length > 0 && (
+                  <Alert variant="error" size="small">
+                    {enumValidationErrors.map((err) => {
+                      const uniqueValues = [...new Set(err.invalidEntries.map((e) => e.value))];
+                      const rowNumbers = err.invalidEntries.slice(0, 5).map((e) => e.row);
+                      return (
+                        <div key={err.targetFieldName} className="text-xs">
+                          <p className="font-medium">
+                            {t("environments.unify.invalid_enum_values", {
+                              field: err.targetFieldName,
+                            })}
+                          </p>
+                          <p>
+                            {t("environments.unify.invalid_values_found", {
+                              values: uniqueValues.join(", "),
+                              rows: rowNumbers.join(", "),
+                              extra: err.invalidEntries.length > 5 ? `+${err.invalidEntries.length - 5}` : "",
+                            })}
+                          </p>
+                          <p className="mt-1 text-slate-500">
+                            {t("environments.unify.allowed_values", {
+                              values: err.allowedValues.join(", "),
+                            })}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </Alert>
+                )}
               </div>
             )}
           </div>

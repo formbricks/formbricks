@@ -24,12 +24,14 @@ import {
   getProjectIdFromConnectorId,
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
+import { importCsvData } from "./csv-import";
 import { importHistoricalResponses } from "./import";
 import {
   TMappingsInput,
   createConnectorWithMappings,
   deleteConnector,
   getConnectorWithMappingsById,
+  updateConnector,
   updateConnectorWithMappings,
 } from "./service";
 
@@ -382,5 +384,58 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       }
 
       return importHistoricalResponses(connector, survey);
+    }
+  );
+
+const ZImportCsvDataAction = z.object({
+  connectorId: ZId,
+  environmentId: ZId,
+  csvData: z.array(z.record(z.string())).min(1),
+});
+
+export const importCsvDataAction = authenticatedActionClient
+  .schema(ZImportCsvDataAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZImportCsvDataAction>;
+    }) => {
+      const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: await getProjectIdFromConnectorId(parsedInput.connectorId),
+          },
+        ],
+      });
+
+      const connector = await getConnectorWithMappingsById(
+        parsedInput.connectorId,
+        parsedInput.environmentId
+      );
+      if (!connector) {
+        throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+      }
+
+      const result = await importCsvData(connector, parsedInput.csvData);
+
+      if (result.successes > 0) {
+        await updateConnector(parsedInput.connectorId, parsedInput.environmentId, {
+          lastSyncAt: new Date(),
+        });
+      }
+
+      return result;
     }
   );

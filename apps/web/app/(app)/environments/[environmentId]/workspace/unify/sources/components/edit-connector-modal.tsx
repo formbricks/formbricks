@@ -17,6 +17,7 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { SAMPLE_CSV_COLUMNS, TFieldMapping, TSourceField, TUnifySurvey } from "../types";
 import { parseCSVColumnsToFields } from "../utils";
+import { CsvImportSection } from "./csv-import-section";
 import { FormbricksSurveySelector } from "./formbricks-survey-selector";
 import { MappingUI } from "./mapping-ui";
 
@@ -215,13 +216,19 @@ export function EditConnectorModal({
               />
             </div>
           ) : (
-            <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <MappingUI
-                sourceFields={sourceFields}
-                mappings={mappings}
-                onMappingsChange={setMappings}
-                connectorType={connector.type}
-              />
+            <div className="space-y-4">
+              <div className="max-h-[40vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <MappingUI
+                  sourceFields={sourceFields}
+                  mappings={mappings}
+                  onMappingsChange={setMappings}
+                  connectorType={connector.type}
+                />
+              </div>
+
+              {connector.type === "csv" && (
+                <CsvImportSection connectorId={connector.id} environmentId={connector.environmentId} />
+              )}
             </div>
           )}
         </div>

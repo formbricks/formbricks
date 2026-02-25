@@ -65,14 +65,14 @@ interface DroppableTargetFieldProps {
   isOver?: boolean;
 }
 
-export function DroppableTargetField({
+export const DroppableTargetField = ({
   field,
   mappedSourceField,
   mapping,
   onRemoveMapping,
   onStaticValueChange,
   isOver,
-}: DroppableTargetFieldProps) {
+}: DroppableTargetFieldProps) => {
   const { t } = useTranslation();
   const { setNodeRef, isOver: isOverCurrent } = useDroppable({
     id: field.id,
@@ -85,13 +85,19 @@ export function DroppableTargetField({
   const isActive = isOver || isOverCurrent;
   const hasMapping = mappedSourceField || mapping?.staticValue;
 
-  // Handle enum field type - show dropdown
+  // Handle enum field type - support both column mapping and static dropdown
   if (field.type === "enum" && field.enumValues) {
+    const hasEnumMapping = mappedSourceField || mapping?.staticValue;
+
     return (
       <div
         ref={setNodeRef}
         className={`flex items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
-          mapping?.staticValue ? "border-green-300 bg-green-50" : "border-dashed border-slate-300 bg-slate-50"
+          isActive
+            ? "border-brand-dark bg-slate-100"
+            : hasEnumMapping
+              ? "border-green-300 bg-green-50"
+              : "border-dashed border-slate-300 bg-slate-50"
         }`}>
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -99,18 +105,31 @@ export function DroppableTargetField({
             {field.required && <span className="text-xs text-red-500">*</span>}
             <span className="text-xs text-slate-400">{t("environments.unify.enum")}</span>
           </div>
-          <Select value={mapping?.staticValue || ""} onValueChange={onStaticValueChange}>
-            <SelectTrigger className="h-8 w-full bg-white">
-              <SelectValue placeholder={t("environments.unify.select_a_value")} />
-            </SelectTrigger>
-            <SelectContent>
-              {field.enumValues.map((value) => (
-                <SelectItem key={value} value={value}>
-                  {value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+          {mappedSourceField && !mapping?.staticValue ? (
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-green-700">&larr; {mappedSourceField.name}</span>
+              <button
+                type="button"
+                onClick={onRemoveMapping}
+                className="ml-1 rounded p-0.5 hover:bg-green-100">
+                <XIcon className="h-3 w-3 text-green-600" />
+              </button>
+            </div>
+          ) : (
+            <Select value={mapping?.staticValue || ""} onValueChange={onStaticValueChange}>
+              <SelectTrigger className="h-8 w-full bg-white">
+                <SelectValue placeholder={t("environments.unify.select_a_value")} />
+              </SelectTrigger>
+              <SelectContent>
+                {field.enumValues.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
     );

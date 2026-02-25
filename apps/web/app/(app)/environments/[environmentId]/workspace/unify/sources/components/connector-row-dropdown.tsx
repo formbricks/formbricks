@@ -1,17 +1,34 @@
 "use client";
 
-import { CopyIcon, MoreVertical, PauseIcon, PlayIcon, SquarePenIcon, TrashIcon } from "lucide-react";
+import {
+  CopyIcon,
+  FileSpreadsheetIcon,
+  MoreVertical,
+  PauseIcon,
+  PlayIcon,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { CsvImportSection } from "./csv-import-section";
 
 interface ConnectorRowDropdownProps {
   connector: TConnectorWithMappings;
@@ -30,6 +47,7 @@ export function ConnectorRowDropdown({
 }: ConnectorRowDropdownProps) {
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCsvImportDialogOpen, setIsCsvImportDialogOpen] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -101,6 +119,27 @@ export function ConnectorRowDropdown({
               </button>
             </DropdownMenuItem>
 
+            {connector.type === "csv" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      setIsCsvImportDialogOpen(true);
+                    }}>
+                    <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
+                    {t("environments.unify.import_csv_data")}
+                  </button>
+                </DropdownMenuItem>
+              </>
+            )}
+
+            <DropdownMenuSeparator />
+
             <DropdownMenuItem>
               <button
                 type="button"
@@ -125,6 +164,22 @@ export function ConnectorRowDropdown({
         onDelete={handleDelete}
         isDeleting={isDeleting}
       />
+
+      {connector.type === "csv" && (
+        <Dialog open={isCsvImportDialogOpen} onOpenChange={setIsCsvImportDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("environments.unify.import_csv_data")}</DialogTitle>
+              <DialogDescription>{t("environments.unify.upload_csv_data_description")}</DialogDescription>
+            </DialogHeader>
+            <CsvImportSection
+              connectorId={connector.id}
+              environmentId={connector.environmentId}
+              onImportComplete={() => setIsCsvImportDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
