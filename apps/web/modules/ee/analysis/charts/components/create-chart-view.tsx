@@ -165,7 +165,7 @@ export function CreateChartView({
               dashboards={dashboards}
               selectedDashboardId={selectedDashboardId}
               onDashboardSelect={onDashboardSelect}
-              onAdd={onAddToDashboard}
+              onConfirm={onAddToDashboard}
               isSaving={isSaving}
             />
           </>

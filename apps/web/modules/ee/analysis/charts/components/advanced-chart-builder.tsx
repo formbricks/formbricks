@@ -574,7 +574,7 @@ export function AdvancedChartBuilder({
           dashboards={saveDashboard.dashboards}
           selectedDashboardId={saveDashboard.selectedDashboardId}
           onDashboardSelect={saveDashboard.setSelectedDashboardId}
-          onAdd={saveDashboard.handleAddToDashboard}
+          onConfirm={saveDashboard.handleAddToDashboard}
           isSaving={saveDashboard.isSaving}
         />
       )}
