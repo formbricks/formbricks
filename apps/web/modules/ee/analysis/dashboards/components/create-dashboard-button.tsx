@@ -19,14 +19,12 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [dashboardName, setDashboardName] = useState("");
-  const [dashboardDescription, setDashboardDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   const handleOpenChange = (open: boolean) => {
     setIsCreateDialogOpen(open);
     if (!open) {
       setDashboardName("");
-      setDashboardDescription("");
     }
   };
 
@@ -41,7 +39,6 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
       const result = await createDashboardAction({
         environmentId,
         name: dashboardName.trim(),
-        description: dashboardDescription.trim() || undefined,
       });
 
       if (!result?.data) {
@@ -71,8 +68,6 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
         onOpenChange={handleOpenChange}
         dashboardName={dashboardName}
         onDashboardNameChange={setDashboardName}
-        dashboardDescription={dashboardDescription}
-        onDashboardDescriptionChange={setDashboardDescription}
         onCreate={handleCreate}
         isCreating={isCreating}
       />

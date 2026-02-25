@@ -64,7 +64,6 @@ const mockChartId = "chart-abc-123";
 const selectDashboard = {
   id: true,
   name: true,
-  description: true,
   createdAt: true,
   updatedAt: true,
   createdBy: true,
@@ -73,7 +72,6 @@ const selectDashboard = {
 const mockDashboard = {
   id: mockDashboardId,
   name: "Test Dashboard",
-  description: "A test dashboard",
   createdAt: new Date("2025-01-01"),
   updatedAt: new Date("2025-01-01"),
   createdBy: mockUserId,
@@ -95,7 +93,6 @@ describe("Dashboard Service", () => {
       const result = await createDashboard({
         projectId: mockProjectId,
         name: "Test Dashboard",
-        description: "A test dashboard",
         createdBy: mockUserId,
       });
 
@@ -103,30 +100,6 @@ describe("Dashboard Service", () => {
       expect(prisma.dashboard.create).toHaveBeenCalledWith({
         data: {
           name: "Test Dashboard",
-          description: "A test dashboard",
-          projectId: mockProjectId,
-          createdBy: mockUserId,
-        },
-        select: selectDashboard,
-      });
-    });
-
-    test("creates a dashboard without description", async () => {
-      const dashboardNoDesc = { ...mockDashboard, description: undefined };
-      vi.mocked(prisma.dashboard.create).mockResolvedValue(dashboardNoDesc as any);
-      const { createDashboard } = await import("./dashboards");
-
-      const result = await createDashboard({
-        projectId: mockProjectId,
-        name: "Test Dashboard",
-        createdBy: mockUserId,
-      });
-
-      expect(result).toEqual(dashboardNoDesc);
-      expect(prisma.dashboard.create).toHaveBeenCalledWith({
-        data: {
-          name: "Test Dashboard",
-          description: undefined,
           projectId: mockProjectId,
           createdBy: mockUserId,
         },
@@ -183,7 +156,7 @@ describe("Dashboard Service", () => {
       });
       expect(mockTxDashboard.update).toHaveBeenCalledWith({
         where: { id: mockDashboardId },
-        data: { name: "Updated Dashboard", description: undefined },
+        data: { name: "Updated Dashboard" },
         select: selectDashboard,
       });
     });
@@ -299,7 +272,6 @@ describe("Dashboard Service", () => {
       expect(mockTxDashboard.create).toHaveBeenCalledWith({
         data: {
           name: "Test Dashboard (copy)",
-          description: mockDashboard.description,
           projectId: mockProjectId,
           createdBy: mockUserId,
           widgets: {

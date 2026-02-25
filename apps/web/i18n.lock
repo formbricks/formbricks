@@ -95,6 +95,8 @@ checksums:
     common/activity: 1948763de8e531483a798b68195e297e
     common/add: 87c4a663507f2bcbbf79934af8164e13
     common/add_action: 66fefc4dd6a7b939c2224272cf0d2669
+    common/add_existing_chart: 1b03e93f3afa087baffab4cebe519b74
+    common/add_existing_chart_description: b1292a1d6df2e03ad7b399689312c37f
     common/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
     common/add_logo: c8665aa9afd0d5a13528bdc96daefa53
     common/add_member: 11979625770516ca287e929381778e02
@@ -154,6 +156,7 @@ checksums:
     common/count_contacts: b1c413a4b06961b71b6aeee95d6775d7
     common/count_responses: 690118a456c01c5b4d437ae82b50b131
     common/create: 757ccd28dd533ff3a933355273c1e32a
+    common/create_new_chart: e03c0fdf4b861454c09707d66fb9bf4c
     common/create_new_organization: 51dae7b33143686ee218abf5bea764a5
     common/create_segment: 9d8291cd4d778b53b73bbc84fd91c181
     common/create_survey: 1cfbba08d34876566d84b2960054a987
@@ -202,6 +205,7 @@ checksums:
     common/failed_to_copy_to_clipboard: de836a7d628d36c832809252f188f784
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
     common/failed_to_load_workspaces: 6ee3448097394517dc605074cd4e6ea4
+    common/feature_coming_soon: b86516fd8286fbae4061af58f64ab484
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/follow_these: 3a730b242bb17a3f95e01bf0dae86885
     common/formbricks_version: d9967c797f3e49ca0cae78bc0ebd19cb
@@ -263,6 +267,7 @@ checksums:
     common/new_version_available: 399ddfc4232712e18ddab2587356b3dc
     common/next: 89ddbcf710eba274963494f312bdc8a9
     common/no_background_image_found: 4108a781a9022c65671a826d4e299d5b
+    common/no_changes: 17709e3e2fbd133ddb8b3291d13de7f6
     common/no_code: f602144ab7d28a5b19a446bf74b4dcc4
     common/no_files_uploaded: c97be829e195a41b2f6b6717b87a232b
     common/no_overlay: 03cde9e91f08e4dd539d788e1e01407f
@@ -324,6 +329,7 @@ checksums:
     common/quotas_description: a2caa44fa74664b3b6007e813f31a754
     common/read_docs: d06513c266fdd9056e0500eab838ebac
     common/recipients: f90e7f266be3f5a724858f21a9fd855e
+    common/refresh: c0aec3f31be4c984bae9a482572d2857
     common/remove: dba2fe5fe9f83f8078c687f28cba4b52
     common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
     common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
@@ -344,6 +350,7 @@ checksums:
     common/save_changes: 53dd9f4f0a4accc822fa5c1f2f6d118a
     common/saving: 27ad05746d65e2f3f17d327eb181725d
     common/search: 49dd6c21604b5e8d4153ff1aff2177e1
+    common/search_charts: 51c3934f12f050fb2476d62da335a65c
     common/security: 4b34923fef858a2b9a4a914c3e822889
     common/segment: e8908115453de180bbda7478ba4c2d50
     common/segments: 271db72d5b973fbc5fadab216177eaae
@@ -407,6 +414,7 @@ checksums:
     common/top_right: 241f95c923846911aaf13af6109333e5
     common/try_again: 33dd8820e743e35a66e6977f69e9d3b5
     common/type: f04471a7ddac844b9ad145eb9911ef75
+    common/unlock: 7641f077222283cbded112429a3e625d
     common/unlock_more_workspaces_with_a_higher_plan: fe1590075b855bb4306c9388b65143b0
     common/update: 079fc039262fd31b10532929685c2d1b
     common/updated: 8aa8ff2dc2977ca4b269e80a513100b4
@@ -580,12 +588,23 @@ checksums:
     environments/actions/you_can_track_code_action_anywhere_in_your_app_using: 3c0bbf160b8ddbeef142403103b70554
     environments/actions/your_survey_would_be_shown_on_this_url: 766fdeeb52d170c156af5d035a1f8c37
     environments/actions/your_survey_would_not_be_shown: af44fe160f449ff9557ebe5d3686832d
+    environments/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
+    environments/analysis/dashboards/charts_add_failed: c4fda79ede798ab6747a989f083a0947
+    environments/analysis/dashboards/charts_add_partial_failure: b1a9fc6fe18ab20fe16c16e91a05c195
+    environments/analysis/dashboards/charts_added_to_dashboard: 917abab80231adf5af51e812352fc77b
+    environments/analysis/dashboards/charts_load_failed: 190bf9c13d3c3cf18126a263591d6757
     environments/analysis/dashboards/create_dashboard: 9396aec1ea4a9b05ada94483655d1373
     environments/analysis/dashboards/create_dashboard_description: d29f60615f6d8c96cc4265541e75ec26
     environments/analysis/dashboards/create_failed: 7b58f15568047a35220b3a47cc3b0f71
     environments/analysis/dashboards/create_success: 1fa4dea7702ba03a8a3533295276ff1b
+    environments/analysis/dashboards/dashboard: c9380ea68c8c76ea451bd9613329a07c
+    environments/analysis/dashboards/dashboard_delete_confirmation: 468a0fb0e24a985cc47a778b50b334ba
     environments/analysis/dashboards/dashboard_name: a2d344bc03f27706b42d7d6a8d0fc752
     environments/analysis/dashboards/dashboard_name_placeholder: 02954eeb5671f1c00e3f69b47319916e
+    environments/analysis/dashboards/dashboard_name_required: 4a56c3ce1d73ad915815f5de4bcff566
+    environments/analysis/dashboards/dashboard_save_failed: 2b6c7be7947bc7ebb0389b71b5922ba6
+    environments/analysis/dashboards/dashboard_saved: 6eb27743b6b12d3d0a20b430319890b8
+    environments/analysis/dashboards/dashboard_update_failed: 3ae941235220d0701b87791ed3bfd044
     environments/analysis/dashboards/delete_confirmation: 468a0fb0e24a985cc47a778b50b334ba
     environments/analysis/dashboards/delete_failed: b108acc28b1f9abcb544a358a958b54b
     environments/analysis/dashboards/delete_success: 9d161634daab9ea9d17fbfb413eeeffa
@@ -593,8 +612,12 @@ checksums:
     environments/analysis/dashboards/description_placeholder: 90a599e6b1695e2b026fb1300d1d5903
     environments/analysis/dashboards/duplicate_failed: 6ebaf8ad373b156f88f1ed79a5efd441
     environments/analysis/dashboards/duplicate_success: 37cbb14143776d4c215432673e32ebd9
+    environments/analysis/dashboards/no_charts_exist: 6b794305103a28131590edbab2b3b168
     environments/analysis/dashboards/no_dashboards_found: e049ec0356009c3a0aa2c729d916efc6
+    environments/analysis/dashboards/no_data_description: d58a2a10492637491223bbe7aba571b4
+    environments/analysis/dashboards/no_data_title: f8d0c0d2040415dc50798176b533ea8b
     environments/analysis/dashboards/please_enter_name: b9211ed8a0882c0e0109beba48685d68
+    environments/analysis/dashboards/widget_layouts_save_failed: 7ed27ae9aaf83e8180c2e41f16a67766
     environments/connect/congrats: c2f5b597aabdf298cf9f0452863e2dc6
     environments/connect/connection_successful_message: fa1f29883e15e8697c6c477bdf5cb645
     environments/connect/do_it_later: ab4accfbe53d924ab3ffaf9ea78a75f3

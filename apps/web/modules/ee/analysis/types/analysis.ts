@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/dashboard";
+import { TWidgetLayout, ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/dashboard";
 
 export const ZChartType = z.enum(["area", "bar", "line", "pie", "big_number"]);
 export type TChartType = z.infer<typeof ZChartType>;
@@ -46,14 +46,12 @@ export type TChartWithWidgets = TChart & {
 export const ZDashboardCreateInput = z.object({
   projectId: ZId,
   name: z.string().min(1),
-  description: z.string().optional(),
   createdBy: ZId,
 });
 export type TDashboardCreateInput = z.infer<typeof ZDashboardCreateInput>;
 
 export const ZDashboardUpdateInput = z.object({
   name: z.string().min(1).optional(),
-  description: z.string().optional().nullable(),
 });
 export type TDashboardUpdateInput = z.infer<typeof ZDashboardUpdateInput>;
 
@@ -62,7 +60,6 @@ export type TDashboardUpdateInput = z.infer<typeof ZDashboardUpdateInput>;
 export type TDashboard = {
   id: string;
   name: string;
-  description: string | null;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string | null;
@@ -83,3 +80,19 @@ export const ZAddWidgetInput = z.object({
   layout: ZWidgetLayout,
 });
 export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
+
+// ── Widget output type (matches getDashboard widget include) ────────────────
+
+export type TDashboardWidget = {
+  id: string;
+  dashboardId: string;
+  chartId: string;
+  title: string | null;
+  layout: TWidgetLayout;
+  order: number;
+  chart: TChart;
+};
+
+export type TDashboardDetail = TDashboard & {
+  widgets: TDashboardWidget[];
+};

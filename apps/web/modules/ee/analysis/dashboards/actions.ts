@@ -19,12 +19,12 @@ import {
   getDashboard,
   getDashboards,
   updateDashboard,
+  updateWidgetLayouts,
 } from "./lib/dashboards";
 
 const ZCreateDashboardAction = z.object({
   environmentId: ZId,
   name: z.string().min(1),
-  description: z.string().optional(),
 });
 
 export const createDashboardAction = authenticatedActionClient.schema(ZCreateDashboardAction).action(
@@ -47,7 +47,6 @@ export const createDashboardAction = authenticatedActionClient.schema(ZCreateDas
       const dashboard = await createDashboard({
         projectId,
         name: parsedInput.name,
-        description: parsedInput.description,
         createdBy: ctx.user.id,
       });
 
@@ -88,7 +87,6 @@ export const updateDashboardAction = authenticatedActionClient.schema(ZUpdateDas
 
       const { dashboard, updatedDashboard } = await updateDashboard(parsedInput.dashboardId, projectId, {
         name: parsedInput.name,
-        description: parsedInput.description,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -97,6 +95,51 @@ export const updateDashboardAction = authenticatedActionClient.schema(ZUpdateDas
       ctx.auditLoggingCtx.oldObject = dashboard;
       ctx.auditLoggingCtx.newObject = updatedDashboard;
       return updatedDashboard;
+    }
+  )
+);
+
+const ZUpdateWidgetLayoutsAction = z.object({
+  environmentId: ZId,
+  dashboardId: ZId,
+  widgets: z.array(
+    z.object({
+      id: z.string(),
+      layout: ZWidgetLayout,
+      order: z.number(),
+    })
+  ),
+});
+
+export const updateWidgetLayoutsAction = authenticatedActionClient.schema(ZUpdateWidgetLayoutsAction).action(
+  withAuditLogging(
+    "updated",
+    "dashboard",
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZUpdateWidgetLayoutsAction>;
+    }) => {
+      const { organizationId, projectId } = await checkProjectAccess(
+        ctx.user.id,
+        parsedInput.environmentId,
+        "readWrite"
+      );
+
+      const dashboard = await getDashboard(parsedInput.dashboardId, projectId);
+
+      const result = await updateWidgetLayouts(parsedInput.dashboardId, projectId, parsedInput.widgets);
+
+      const updatedDashboard = await getDashboard(parsedInput.dashboardId, projectId);
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.dashboardId = parsedInput.dashboardId;
+      ctx.auditLoggingCtx.oldObject = dashboard;
+      ctx.auditLoggingCtx.newObject = updatedDashboard;
+      return { success: true, widgetCount: result.widgetCount };
     }
   )
 );

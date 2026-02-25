@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
+import { TWidgetLayout } from "@formbricks/types/dashboard";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
@@ -22,7 +23,6 @@ const MAX_NAME_ATTEMPTS = 5;
 const selectDashboard = {
   id: true,
   name: true,
-  description: true,
   createdAt: true,
   updatedAt: true,
   createdBy: true,
@@ -35,7 +35,6 @@ export const createDashboard = async (data: TDashboardCreateInput): Promise<TDas
     return await prisma.dashboard.create({
       data: {
         name: data.name,
-        description: data.description,
         projectId: data.projectId,
         createdBy: data.createdBy,
       },
@@ -74,7 +73,6 @@ export const updateDashboard = async (
         where: { id: dashboardId },
         data: {
           name: data.name,
-          description: data.description,
         },
         select: selectDashboard,
       });
@@ -217,7 +215,6 @@ export const duplicateDashboard = async (
       const newDashboard = await tx.dashboard.create({
         data: {
           name,
-          description: source.description,
           projectId,
           createdBy,
           widgets: {
@@ -245,6 +242,60 @@ export const duplicateDashboard = async (
   }
 };
 
+export const updateWidgetLayouts = async (
+  dashboardId: string,
+  projectId: string,
+  widgets: { id: string; layout: TWidgetLayout; order: number }[]
+): Promise<{ widgetCount: number }> => {
+  validateInputs([dashboardId, ZId], [projectId, ZId]);
+
+  try {
+    const dashboard = await prisma.dashboard.findFirst({
+      where: { id: dashboardId, projectId },
+      include: { widgets: { select: { id: true } } },
+    });
+
+    if (!dashboard) {
+      throw new ResourceNotFoundError("Dashboard", dashboardId);
+    }
+
+    const existingWidgetIds = new Set(dashboard.widgets.map((w) => w.id));
+    const updatedWidgetIds = new Set(widgets.map((w) => w.id));
+
+    const invalidIds = widgets.filter((w) => !existingWidgetIds.has(w.id)).map((w) => w.id);
+    if (invalidIds.length > 0) {
+      throw new InvalidInputError(`Invalid widget IDs: ${invalidIds.join(", ")}`);
+    }
+
+    const removedWidgetIds = dashboard.widgets.filter((w) => !updatedWidgetIds.has(w.id)).map((w) => w.id);
+
+    await prisma.$transaction([
+      ...widgets.map((widget) =>
+        prisma.dashboardWidget.update({
+          where: { id: widget.id },
+          data: {
+            layout: widget.layout,
+            order: widget.order,
+          },
+        })
+      ),
+      ...(removedWidgetIds.length > 0
+        ? [prisma.dashboardWidget.deleteMany({ where: { id: { in: removedWidgetIds } } })]
+        : []),
+    ]);
+
+    return { widgetCount: widgets.length };
+  } catch (error) {
+    if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
+      throw error;
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
 export const addChartToDashboard = async (data: TAddWidgetInput) => {
   validateInputs([data, ZAddWidgetInput]);
 
@@ -263,17 +314,28 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
           throw new ResourceNotFoundError("Dashboard", data.dashboardId);
         }
 
-        const maxOrder = await tx.dashboardWidget.aggregate({
-          where: { dashboardId: data.dashboardId },
-          _max: { order: true },
-        });
+        const [maxOrder, existingWidgets] = await Promise.all([
+          tx.dashboardWidget.aggregate({
+            where: { dashboardId: data.dashboardId },
+            _max: { order: true },
+          }),
+          tx.dashboardWidget.findMany({
+            where: { dashboardId: data.dashboardId },
+            select: { layout: true },
+          }),
+        ]);
+
+        const bottomY = existingWidgets.reduce((max, w) => {
+          const layout = w.layout as { y: number; h: number };
+          return Math.max(max, (layout.y ?? 0) + (layout.h ?? 0));
+        }, 0);
 
         return tx.dashboardWidget.create({
           data: {
             dashboardId: data.dashboardId,
             chartId: data.chartId,
             title: data.title,
-            layout: data.layout,
+            layout: { ...data.layout, y: bottomY },
             order: (maxOrder._max.order ?? -1) + 1,
           },
         });

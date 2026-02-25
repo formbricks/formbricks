@@ -1,11 +1,7 @@
-const DashboardDetailPage = async (props: { params: Promise<{ dashboardId: string }> }) => {
-  const { dashboardId } = await props.params;
+import { DashboardDetailPage } from "@/modules/ee/analysis/dashboards/pages/dashboard-detail-page";
 
-  return (
-    <div className="flex items-center justify-center py-12 text-sm text-slate-500">
-      Dashboard detail for {dashboardId} will appear here.
-    </div>
-  );
+const Page = (props: { params: Promise<{ environmentId: string; dashboardId: string }> }) => {
+  return <DashboardDetailPage params={props.params} />;
 };
 
-export default DashboardDetailPage;
+export default Page;
