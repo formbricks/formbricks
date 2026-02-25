@@ -150,6 +150,7 @@
     "bottom_right": "Inferior derecha",
     "cancel": "Cancelar",
     "centered_modal": "Modal centrado",
+    "chart": "Gráfico",
     "charts": "Gráficos",
     "choices": "Opciones",
     "choose_environment": "Elegir entorno",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "Tu encuesta no se mostraría."
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "Próximamente",
+        "chart_deleted_successfully": "Gráfico eliminado correctamente",
+        "chart_deletion_error": "Error al eliminar el gráfico",
+        "chart_duplicated_successfully": "Gráfico duplicado correctamente",
+        "chart_duplication_error": "Error al duplicar el gráfico",
+        "chart_type_area": "Gráfico de área",
+        "chart_type_bar": "Gráfico de barras",
+        "chart_type_big_number": "Número grande",
+        "chart_type_line": "Gráfico de líneas",
+        "chart_type_pie": "Gráfico circular",
+        "create_chart": "Crear gráfico",
+        "delete_chart_confirmation": "¿Estás seguro de que quieres eliminar este gráfico?",
+        "no_charts_found": "No se encontraron gráficos.",
+        "open_options": "Abrir opciones del gráfico"
+      },
       "dashboards": {
         "create_dashboard": "Crear panel de control",
         "create_dashboard_description": "Introduce un nombre para tu panel de control nuevo.",

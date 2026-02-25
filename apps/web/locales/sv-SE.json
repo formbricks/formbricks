@@ -150,6 +150,7 @@
     "bottom_right": "Nedre höger",
     "cancel": "Avbryt",
     "centered_modal": "Centrerad modal",
+    "chart": "Diagram",
     "charts": "Diagram",
     "choices": "Val",
     "choose_environment": "Välj miljö",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "Din enkät skulle inte visas."
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "Kommer snart",
+        "chart_deleted_successfully": "Diagrammet har tagits bort",
+        "chart_deletion_error": "Det gick inte att ta bort diagrammet",
+        "chart_duplicated_successfully": "Diagrammet har duplicerats",
+        "chart_duplication_error": "Det gick inte att duplicera diagrammet",
+        "chart_type_area": "Ytdiagram",
+        "chart_type_bar": "Stapeldiagram",
+        "chart_type_big_number": "Stort tal",
+        "chart_type_line": "Linjediagram",
+        "chart_type_pie": "Cirkeldiagram",
+        "create_chart": "Skapa diagram",
+        "delete_chart_confirmation": "Är du säker på att du vill ta bort det här diagrammet?",
+        "no_charts_found": "Inga diagram hittades.",
+        "open_options": "Öppna diagramalternativ"
+      },
       "dashboards": {
         "create_dashboard": "Skapa instrumentpanel",
         "create_dashboard_description": "Ange ett namn för din nya instrumentpanel.",

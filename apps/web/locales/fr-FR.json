@@ -112,7 +112,6 @@
     "link_expired_description": "Le lien que vous avez utilisé n'est plus valide."
   },
   "common": {
-    "Filter": "Filtrer",
     "accepted": "Accepté",
     "account": "Compte",
     "account_settings": "Paramètres du compte",
@@ -151,6 +150,7 @@
     "bottom_right": "En bas à droite",
     "cancel": "Annuler",
     "centered_modal": "Au centre",
+    "chart": "Graphique",
     "charts": "Graphiques",
     "choices": "Choix",
     "choose_environment": "Choisir l'environnement",
@@ -621,6 +621,22 @@
       "your_survey_would_not_be_shown": "Votre enquête ne serait pas affichée."
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "À venir bientôt",
+        "chart_deleted_successfully": "Graphique supprimé avec succès",
+        "chart_deletion_error": "Échec de la suppression du graphique",
+        "chart_duplicated_successfully": "Graphique dupliqué avec succès",
+        "chart_duplication_error": "Échec de la duplication du graphique",
+        "chart_type_area": "Graphique en aires",
+        "chart_type_bar": "Graphique à barres",
+        "chart_type_big_number": "Grand nombre",
+        "chart_type_line": "Graphique linéaire",
+        "chart_type_pie": "Graphique circulaire",
+        "create_chart": "Créer un graphique",
+        "delete_chart_confirmation": "Êtes-vous sûr de vouloir supprimer ce graphique ?",
+        "no_charts_found": "Aucun graphique trouvé.",
+        "open_options": "Ouvrir les options du graphique"
+      },
       "dashboards": {
         "create_dashboard": "Créer un tableau de bord",
         "create_dashboard_description": "Saisissez un nom pour votre nouveau tableau de bord.",

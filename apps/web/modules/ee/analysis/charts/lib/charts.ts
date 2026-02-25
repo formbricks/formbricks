@@ -10,6 +10,7 @@ import {
   TChart,
   TChartCreateInput,
   TChartUpdateInput,
+  TChartWithCreator,
   TChartWithWidgets,
   ZChartCreateInput,
   ZChartType,
@@ -234,6 +235,28 @@ export const getCharts = async (projectId: string): Promise<TChartWithWidgets[]>
         ...selectChart,
         widgets: {
           select: { dashboardId: true },
+        },
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+export const getChartsWithCreator = async (projectId: string): Promise<TChartWithCreator[]> => {
+  validateInputs([projectId, ZId]);
+
+  try {
+    return await prisma.chart.findMany({
+      where: { projectId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        ...selectChart,
+        creator: {
+          select: { name: true },
         },
       },
     });

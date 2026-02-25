@@ -150,6 +150,7 @@
     "bottom_right": "Unten rechts",
     "cancel": "Abbrechen",
     "centered_modal": "Zentriertes Modalfenster",
+    "chart": "Diagramm",
     "charts": "Diagramme",
     "choices": "Entscheidungen",
     "choose_environment": "Umgebung auswählen",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "Ihre Umfrage wäre nicht angezeigt."
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "Kommt bald",
+        "chart_deleted_successfully": "Diagramm erfolgreich gelöscht",
+        "chart_deletion_error": "Diagramm konnte nicht gelöscht werden",
+        "chart_duplicated_successfully": "Diagramm erfolgreich dupliziert",
+        "chart_duplication_error": "Diagramm konnte nicht dupliziert werden",
+        "chart_type_area": "Flächendiagramm",
+        "chart_type_bar": "Balkendiagramm",
+        "chart_type_big_number": "Große Zahl",
+        "chart_type_line": "Liniendiagramm",
+        "chart_type_pie": "Kreisdiagramm",
+        "create_chart": "Diagramm erstellen",
+        "delete_chart_confirmation": "Bist du sicher, dass du dieses Diagramm löschen möchtest?",
+        "no_charts_found": "Keine Diagramme gefunden.",
+        "open_options": "Diagrammoptionen öffnen"
+      },
       "dashboards": {
         "create_dashboard": "Dashboard erstellen",
         "create_dashboard_description": "Gib einen Namen für dein neues Dashboard ein.",

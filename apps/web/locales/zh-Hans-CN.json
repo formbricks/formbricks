@@ -150,6 +150,7 @@
     "bottom_right": "右下",
     "cancel": "取消",
     "centered_modal": "居中 模态",
+    "chart": "图表",
     "charts": "图表",
     "choices": "选项",
     "choose_environment": "选择 环境",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "您的 调查 不会 显示。"
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "即将推出",
+        "chart_deleted_successfully": "图表删除成功",
+        "chart_deletion_error": "图表删除失败",
+        "chart_duplicated_successfully": "图表复制成功",
+        "chart_duplication_error": "图表复制失败",
+        "chart_type_area": "面积图",
+        "chart_type_bar": "柱状图",
+        "chart_type_big_number": "大数字",
+        "chart_type_line": "折线图",
+        "chart_type_pie": "饼图",
+        "create_chart": "创建图表",
+        "delete_chart_confirmation": "你确定要删除这个图表吗？",
+        "no_charts_found": "未找到图表。",
+        "open_options": "打开图表选项"
+      },
       "dashboards": {
         "create_dashboard": "创建 Dashboard",
         "create_dashboard_description": "请输入新 Dashboard 的名称。",

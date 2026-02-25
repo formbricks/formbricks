@@ -112,7 +112,6 @@
     "link_expired_description": "Ссылка, которой вы воспользовались, больше не действительна."
   },
   "common": {
-    "Filter": "Фильтр",
     "accepted": "Принято",
     "account": "Аккаунт",
     "account_settings": "Настройки аккаунта",
@@ -151,6 +150,7 @@
     "bottom_right": "Внизу справа",
     "cancel": "Отмена",
     "centered_modal": "Центрированное модальное окно",
+    "chart": "График",
     "charts": "Графики",
     "choices": "Варианты",
     "choose_environment": "Выберите среду",
@@ -621,6 +621,22 @@
       "your_survey_would_not_be_shown": "Ваш опрос не будет отображаться."
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "Скоро будет",
+        "chart_deleted_successfully": "График успешно удалён",
+        "chart_deletion_error": "Не удалось удалить график",
+        "chart_duplicated_successfully": "График успешно дублирован",
+        "chart_duplication_error": "Не удалось дублировать график",
+        "chart_type_area": "График областью",
+        "chart_type_bar": "Столбчатая диаграмма",
+        "chart_type_big_number": "Большое число",
+        "chart_type_line": "Линейный график",
+        "chart_type_pie": "Круговая диаграмма",
+        "create_chart": "Создать график",
+        "delete_chart_confirmation": "Ты уверен, что хочешь удалить этот график?",
+        "no_charts_found": "Графики не найдены.",
+        "open_options": "Открыть настройки графика"
+      },
       "dashboards": {
         "create_dashboard": "Создать панель управления",
         "create_dashboard_description": "Введите название для новой панели управления.",

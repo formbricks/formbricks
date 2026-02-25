@@ -150,6 +150,7 @@
     "bottom_right": "Canto Inferior Direito",
     "cancel": "Cancelar",
     "centered_modal": "Modal Centralizado",
+    "chart": "Gráfico",
     "charts": "Gráficos",
     "choices": "Escolhas",
     "choose_environment": "Escolher ambiente",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "Sua pesquisa não seria exibida."
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "Em breve",
+        "chart_deleted_successfully": "Gráfico excluído com sucesso",
+        "chart_deletion_error": "Falha ao excluir gráfico",
+        "chart_duplicated_successfully": "Gráfico duplicado com sucesso",
+        "chart_duplication_error": "Falha ao duplicar gráfico",
+        "chart_type_area": "Gráfico de área",
+        "chart_type_bar": "Gráfico de barras",
+        "chart_type_big_number": "Número grande",
+        "chart_type_line": "Gráfico de linhas",
+        "chart_type_pie": "Gráfico de pizza",
+        "create_chart": "Criar gráfico",
+        "delete_chart_confirmation": "Tem certeza de que deseja excluir este gráfico?",
+        "no_charts_found": "Nenhum gráfico encontrado.",
+        "open_options": "Abrir opções do gráfico"
+      },
       "dashboards": {
         "create_dashboard": "Criar painel",
         "create_dashboard_description": "Digite um nome para o seu novo painel.",
