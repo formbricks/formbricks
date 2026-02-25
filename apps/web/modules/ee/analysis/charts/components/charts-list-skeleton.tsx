@@ -22,7 +22,7 @@ const SkeletonRow = () => {
 };
 
 interface ChartsListSkeletonProps {
-  columnHeaders: string[];
+  columnHeaders: [string, string, string, string];
 }
 
 export const ChartsListSkeleton = ({ columnHeaders }: Readonly<ChartsListSkeletonProps>) => {

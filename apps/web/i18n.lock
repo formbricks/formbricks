@@ -589,6 +589,7 @@ checksums:
     environments/actions/your_survey_would_not_be_shown: af44fe160f449ff9557ebe5d3686832d
     environments/analysis/charts/action_coming_soon: ee2b0671e00972773210c5be5a9ccb89
     environments/analysis/charts/chart_deleted_successfully: 79148f471cd9acc2c8d0d033fb85437e
+    environments/analysis/charts/chart_deletion_error: 267eb65c168e726075d7cea678dd32e0
     environments/analysis/charts/chart_duplicated_successfully: 755c4ce5bf533764d549a53c33e32165
     environments/analysis/charts/chart_duplication_error: 90d7166c85188b52f821c9d9f53ff8c4
     environments/analysis/charts/chart_type_area: 535754c6425f045f17e1dcb551840c93

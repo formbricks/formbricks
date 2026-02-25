@@ -58,7 +58,9 @@ export function ChartDropdownMenu({ environmentId, chart }: Readonly<ChartDropdo
         setDeleteDialogOpen(false);
         router.refresh();
       } else {
-        toast.error(getFormattedErrorMessage(result));
+        const msg =
+          getFormattedErrorMessage(result) || t("environments.analysis.charts.chart_deletion_error");
+        toast.error(msg);
       }
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));

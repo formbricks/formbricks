@@ -624,6 +624,7 @@
       "charts": {
         "action_coming_soon": "Hamarosan",
         "chart_deleted_successfully": "A diagram sikeresen törölve",
+        "chart_deletion_error": "A diagram törlése sikertelen",
         "chart_duplicated_successfully": "A diagram sikeresen duplikálva",
         "chart_duplication_error": "A diagram duplikálása sikertelen",
         "chart_type_area": "Területdiagram",

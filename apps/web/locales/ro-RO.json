@@ -624,6 +624,7 @@
       "charts": {
         "action_coming_soon": "În curând",
         "chart_deleted_successfully": "Graficul a fost șters cu succes",
+        "chart_deletion_error": "Nu s-a putut șterge graficul",
         "chart_duplicated_successfully": "Graficul a fost duplicat cu succes",
         "chart_duplication_error": "Nu s-a putut duplica graficul",
         "chart_type_area": "Grafic de tip arie",

@@ -624,6 +624,7 @@
       "charts": {
         "action_coming_soon": "Kommt bald",
         "chart_deleted_successfully": "Diagramm erfolgreich gelöscht",
+        "chart_deletion_error": "Diagramm konnte nicht gelöscht werden",
         "chart_duplicated_successfully": "Diagramm erfolgreich dupliziert",
         "chart_duplication_error": "Diagramm konnte nicht dupliziert werden",
         "chart_type_area": "Flächendiagramm",

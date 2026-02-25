@@ -624,6 +624,7 @@
       "charts": {
         "action_coming_soon": "Binnenkort beschikbaar",
         "chart_deleted_successfully": "Grafiek succesvol verwijderd",
+        "chart_deletion_error": "Verwijderen van grafiek mislukt",
         "chart_duplicated_successfully": "Grafiek succesvol gedupliceerd",
         "chart_duplication_error": "Dupliceren van grafiek mislukt",
         "chart_type_area": "Vlakdiagram",

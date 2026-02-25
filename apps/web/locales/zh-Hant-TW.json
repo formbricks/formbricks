@@ -624,6 +624,7 @@
       "charts": {
         "action_coming_soon": "即將推出",
         "chart_deleted_successfully": "圖表已成功刪除",
+        "chart_deletion_error": "刪除圖表失敗",
         "chart_duplicated_successfully": "圖表已成功複製",
         "chart_duplication_error": "圖表複製失敗",
         "chart_type_area": "區域圖",

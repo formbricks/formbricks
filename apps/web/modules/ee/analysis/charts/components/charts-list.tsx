@@ -1,9 +1,10 @@
 "use client";
 
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { BarChart3Icon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { timeSinceDate } from "@/lib/time";
 import { ChartDropdownMenu } from "@/modules/ee/analysis/charts/components/chart-dropdown-menu";
 import { CHART_TYPE_ICONS } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
@@ -77,11 +78,7 @@ export function ChartsList({ charts, environmentId }: Readonly<ChartsListProps>)
                 </div>
               </div>
               <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
-                <div className="ph-no-capture text-slate-900">
-                  {formatDistanceToNow(new Date(chart.updatedAt), {
-                    addSuffix: true,
-                  }).replace("about", "")}
-                </div>
+                <div className="ph-no-capture text-slate-900">{timeSinceDate(new Date(chart.updatedAt))}</div>
               </div>
               <div // NOSONAR
                 className="col-span-1 my-auto flex items-center justify-end pr-6"

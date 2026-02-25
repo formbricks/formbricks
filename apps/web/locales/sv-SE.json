@@ -624,6 +624,7 @@
       "charts": {
         "action_coming_soon": "Kommer snart",
         "chart_deleted_successfully": "Diagrammet har tagits bort",
+        "chart_deletion_error": "Det gick inte att ta bort diagrammet",
         "chart_duplicated_successfully": "Diagrammet har duplicerats",
         "chart_duplication_error": "Det gick inte att duplicera diagrammet",
         "chart_type_area": "Ytdiagram",

@@ -624,6 +624,7 @@
       "charts": {
         "action_coming_soon": "近日公開",
         "chart_deleted_successfully": "チャートを削除しました",
+        "chart_deletion_error": "チャートの削除に失敗しました",
         "chart_duplicated_successfully": "チャートを複製しました",
         "chart_duplication_error": "チャートの複製に失敗しました",
         "chart_type_area": "エリアチャート",

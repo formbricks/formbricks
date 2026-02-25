@@ -624,6 +624,7 @@
       "charts": {
         "action_coming_soon": "Próximamente",
         "chart_deleted_successfully": "Gráfico eliminado correctamente",
+        "chart_deletion_error": "Error al eliminar el gráfico",
         "chart_duplicated_successfully": "Gráfico duplicado correctamente",
         "chart_duplication_error": "Error al duplicar el gráfico",
         "chart_type_area": "Gráfico de área",

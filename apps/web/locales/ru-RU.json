@@ -624,6 +624,7 @@
       "charts": {
         "action_coming_soon": "Скоро будет",
         "chart_deleted_successfully": "График успешно удалён",
+        "chart_deletion_error": "Не удалось удалить график",
         "chart_duplicated_successfully": "График успешно дублирован",
         "chart_duplication_error": "Не удалось дублировать график",
         "chart_type_area": "График областью",
