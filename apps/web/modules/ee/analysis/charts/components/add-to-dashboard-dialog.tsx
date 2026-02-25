@@ -65,6 +65,7 @@ export function AddToDashboardDialog({
                 placeholder={t("environments.analysis.charts.chart_name_placeholder")}
                 value={chartName}
                 onChange={(e) => onChartNameChange(e.target.value)}
+                maxLength={255}
               />
             </div>
             <div>
@@ -72,7 +73,7 @@ export function AddToDashboardDialog({
               <Select value={selectedDashboardId} onValueChange={onDashboardSelect}>
                 <SelectTrigger
                   id="dashboard-select"
-                  className="mt-2 w-full bg-white"
+                  className="mt-2 w-full"
                   disabled={dashboards.length === 0}>
                   <SelectValue
                     placeholder={
@@ -83,17 +84,11 @@ export function AddToDashboardDialog({
                   />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[200px]">
-                  {dashboards.length === 0 ? (
-                    <div className="px-2 py-1.5 text-sm text-gray-500">
-                      {t("environments.analysis.charts.no_dashboards_available")}
-                    </div>
-                  ) : (
-                    dashboards.map((dashboard) => (
-                      <SelectItem key={dashboard.id} value={dashboard.id}>
-                        {dashboard.name}
-                      </SelectItem>
-                    ))
-                  )}
+                  {dashboards.map((dashboard) => (
+                    <SelectItem key={dashboard.id} value={dashboard.id}>
+                      {dashboard.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {dashboards.length === 0 && (
