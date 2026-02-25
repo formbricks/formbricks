@@ -10,6 +10,20 @@ export const SEED_IDS = {
   SURVEY_CSAT: "clseedsurveycsat000000",
   SURVEY_DRAFT: "clseedsurveydraft00000",
   SURVEY_COMPLETED: "clseedsurveycomplete00",
+  CHART_RESPONSES_OVER_TIME: "clseedchartresptime00",
+  CHART_SATISFACTION_DIST: "clseedchartsatdist000",
+  CHART_NPS_SCORE: "clseedchartnpsscore00",
+  CHART_COMPLETION_RATE: "clseedchartcomplete00",
+  CHART_TOP_CHANNELS: "clseedcharttopchann00",
+  DASHBOARD_OVERVIEW: "clseeddashovervieww00",
+  DASHBOARD_SURVEY_PERF: "clseeddashsurvperf000",
+  WIDGET_OVERVIEW_NPS: "clseedwidgetovwnps000",
+  WIDGET_OVERVIEW_RESPONSES: "clseedwidgetovwresp00",
+  WIDGET_OVERVIEW_SATISFACTION: "clseedwidgetovwsat000",
+  WIDGET_OVERVIEW_CHANNELS: "clseedwidgetovwchan00",
+  WIDGET_SURVPERF_COMPLETION: "clseedwidgetspcomp000",
+  WIDGET_SURVPERF_RESPONSES: "clseedwidgetspresp000",
+  WIDGET_SURVPERF_NPS: "clseedwidgetspnps0000",
 } as const;
 
 export const SEED_CREDENTIALS = {

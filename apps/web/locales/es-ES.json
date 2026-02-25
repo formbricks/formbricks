@@ -180,6 +180,7 @@
     "count_attributes": "{value, plural, one {{value} atributo} other {{value} atributos}}",
     "count_contacts": "{value, plural, one {{value} contacto} other {{value} contactos}}",
     "count_responses": "{value, plural, one {{value} respuesta} other {{value} respuestas}}",
+    "create": "Crear",
     "create_new_organization": "Crear organización nueva",
     "create_segment": "Crear segmento",
     "create_survey": "Crear encuesta",
@@ -189,6 +190,7 @@
     "created_by": "Creado por",
     "customer_success": "Éxito del cliente",
     "dark_overlay": "Superposición oscura",
+    "dashboard": "Panel de control",
     "dashboards": "Paneles",
     "date": "Fecha",
     "days": "días",
@@ -306,6 +308,7 @@
     "on": "Activado",
     "only_one_file_allowed": "Solo se permite un archivo",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Solo los propietarios y gestores pueden realizar esta acción.",
+    "open_options": "Abrir opciones",
     "option_id": "ID de opción",
     "option_ids": "IDs de opciones",
     "optional": "Opcional",
@@ -609,6 +612,25 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "Puedes seguir la acción de código en cualquier parte de tu aplicación usando",
       "your_survey_would_be_shown_on_this_url": "Tu encuesta se mostraría en esta URL.",
       "your_survey_would_not_be_shown": "Tu encuesta no se mostraría."
+    },
+    "analysis": {
+      "dashboards": {
+        "create_dashboard": "Crear panel de control",
+        "create_dashboard_description": "Introduce un nombre para tu panel de control nuevo.",
+        "create_failed": "Error al crear el panel de control",
+        "create_success": "Panel de control creado correctamente",
+        "dashboard_name": "Nombre del panel de control",
+        "dashboard_name_placeholder": "Mi panel de control",
+        "delete_confirmation": "¿Estás seguro de que quieres eliminar este panel de control? Esta acción no se puede deshacer.",
+        "delete_failed": "Error al eliminar el panel de control",
+        "delete_success": "Panel de control eliminado correctamente",
+        "description_optional": "Descripción (opcional)",
+        "description_placeholder": "Descripción del panel de control",
+        "duplicate_failed": "Error al duplicar el panel de control",
+        "duplicate_success": "Panel de control duplicado correctamente",
+        "no_dashboards_found": "No se han encontrado paneles de control.",
+        "please_enter_name": "Por favor, introduce un nombre para el panel de control"
+      }
     },
     "connect": {
       "congrats": "¡Enhorabuena!",

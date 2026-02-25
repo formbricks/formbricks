@@ -12,6 +12,7 @@ let cubeClient: CubeApi | null = null;
 
 function getCubeClient(): CubeApi {
   if (!cubeClient) {
+    // TODO: This will fail silently if the token is not set. We need to fix this before going to production.
     const token = process.env.CUBEJS_API_TOKEN ?? "";
     cubeClient = cubejs(token, { apiUrl: getApiUrl() });
   }
