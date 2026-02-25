@@ -61,7 +61,7 @@ export const getPersonSegmentIds = async (
     for (const segment of segments) {
       const filters = segment.filters as TBaseFilters;
 
-      if (!filters || filters.length === 0) {
+      if (!filters?.length) {
         alwaysMatchIds.push(segment.id);
         continue;
       }
