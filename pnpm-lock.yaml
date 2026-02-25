@@ -160,6 +160,9 @@ importers:
       '@formbricks/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@formbricks/hub':
+        specifier: ^0.3.0
+        version: 0.3.0
       '@formbricks/i18n-utils':
         specifier: workspace:*
         version: link:../../packages/i18n-utils
@@ -2336,6 +2339,9 @@ packages:
 
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
+
+  '@formbricks/hub@0.3.0':
+    resolution: {integrity: sha512-SfLQghsLILSiN/53mUHgkUbUcCar5l2bGC8DDSV9Y9NWdau+r+zFIYFEoSxhlMzlwhI+uvt/gkbVKShERBeoRQ==}
 
   '@formkit/auto-animate@0.8.2':
     resolution: {integrity: sha512-SwPWfeRa5veb1hOIBMdzI+73te5puUBHmqqaF1Bu7FjvxlYSz/kJcZKSa9Cg60zL0uRNeJL2SbRxV6Jp6Q1nFQ==}
@@ -13884,6 +13890,8 @@ snapshots:
   '@formatjs/intl-localematcher@0.6.2':
     dependencies:
       tslib: 2.8.1
+
+  '@formbricks/hub@0.3.0': {}
 
   '@formkit/auto-animate@0.8.2': {}
 

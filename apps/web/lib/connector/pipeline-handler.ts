@@ -1,10 +1,57 @@
 import "server-only";
+import FormbricksHub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { createFeedbackRecordsBatch } from "./hub-client";
+import { env } from "@/lib/env";
 import { getConnectorsBySurveyId, updateConnector } from "./service";
 import { transformResponseToFeedbackRecords } from "./transform";
+
+type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams;
+type FeedbackRecordData = FormbricksHub.FeedbackRecordData;
+
+function getHubClient(): FormbricksHub | null {
+  const apiKey = env.HUB_API_KEY;
+  if (!apiKey) return null;
+  return new FormbricksHub({
+    apiKey,
+    baseURL: env.HUB_API_URL ?? undefined,
+  });
+}
+
+async function createFeedbackRecordsBatch(inputs: FeedbackRecordCreateParams[]): Promise<{
+  results: Array<{
+    data: FeedbackRecordData | null;
+    error: { status: number; message: string; detail: string } | null;
+  }>;
+}> {
+  const client = getHubClient();
+  const errorNoConfig = {
+    status: 0,
+    message: "HUB_API_KEY is not set; Hub integration is disabled.",
+    detail: "HUB_API_KEY is not set; Hub integration is disabled.",
+  };
+
+  if (!client) {
+    return {
+      results: inputs.map(() => ({ data: null, error: errorNoConfig })),
+    };
+  }
+
+  const results = await Promise.all(
+    inputs.map(async (input) => {
+      try {
+        const data = await client.feedbackRecords.create(input);
+        return { data, error: null as { status: number; message: string; detail: string } | null };
+      } catch (err) {
+        const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+        const message = err instanceof Error ? err.message : String(err);
+        return { data: null, error: { status, message, detail: message } };
+      }
+    })
+  );
+  return { results };
+}
 
 /**
  * Handle connector pipeline for a survey response
