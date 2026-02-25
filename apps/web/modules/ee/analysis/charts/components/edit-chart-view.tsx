@@ -26,6 +26,7 @@ interface EditChartViewProps {
   /** Query from initialChart when chartData is still loading */
   initialQuery?: AnalyticsResponse["query"];
   isLoadingChart?: boolean;
+  chartLoadError?: string | null;
   chartName: string;
   onChartNameChange: (name: string) => void;
   selectedChartType: TChartType | "";
@@ -50,6 +51,7 @@ export function EditChartView({
   chartData,
   initialQuery,
   isLoadingChart = false,
+  chartLoadError,
   chartName,
   onChartNameChange,
   selectedChartType,
@@ -104,7 +106,7 @@ export function EditChartView({
               onSave={onAdvancedBuilderSave}
               onAddToDashboard={onAdvancedBuilderAddToDashboard}
             />
-            <ChartPreview chartData={chartData} isLoading={isLoadingChart} />
+            <ChartPreview chartData={chartData} isLoading={isLoadingChart} error={chartLoadError} />
           </div>
         </DialogBody>
         <ChartDialogFooter

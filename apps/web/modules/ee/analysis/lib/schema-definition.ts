@@ -62,28 +62,10 @@ export const FEEDBACK_FIELDS = {
       description: "Unique identifier linking related feedback records",
     },
     {
-      id: "FeedbackRecords.rating",
-      label: "Rating",
-      type: "number",
-      description: "Rating value from feedback",
-    },
-    {
       id: "FeedbackRecords.npsValue",
       label: "NPS Value",
       type: "number",
       description: "Raw NPS score value (0-10)",
-    },
-    {
-      id: "FeedbackRecords.surveyName",
-      label: "Survey Name",
-      type: "string",
-      description: "Name of the survey",
-    },
-    {
-      id: "FeedbackRecords.channel",
-      label: "Channel",
-      type: "string",
-      description: "Channel through which feedback was collected",
     },
     {
       id: "FeedbackRecords.collectedAt",
@@ -134,12 +116,6 @@ export const FEEDBACK_FIELDS = {
       label: "Average Score",
       type: "number",
       description: "Average NPS score",
-    },
-    {
-      id: "FeedbackRecords.completionRate",
-      label: "Completion Rate",
-      type: "number",
-      description: "Survey completion rate percentage",
     },
   ] as MeasureDefinition[],
   customAggregations: ["count", "countDistinct", "sum", "avg", "min", "max"],

@@ -45,6 +45,7 @@ export function useCreateChartDialog({
   const [selectedDashboardId, setSelectedDashboardId] = useState<string>(defaultDashboardId ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingChart, setIsLoadingChart] = useState(false);
+  const [chartLoadError, setChartLoadError] = useState<string | null>(null);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);
   const router = useRouter();
   const shouldShowAdvancedBuilder = !!selectedChartType || !!chartData;
@@ -72,6 +73,7 @@ export function useCreateChartDialog({
       }
 
       setIsLoadingChart(true);
+      setChartLoadError(null);
 
       const loadChartData = async (query: TChartWithCreator["query"], chartType: string) => {
         const queryResult = await executeQueryAction({
@@ -80,10 +82,11 @@ export function useCreateChartDialog({
         });
 
         if (queryResult?.serverError) {
-          toast.error(
+          const errorMsg =
             getFormattedErrorMessage(queryResult) ||
-              t("environments.analysis.charts.failed_to_load_chart_data")
-          );
+            t("environments.analysis.charts.failed_to_load_chart_data");
+          toast.error(errorMsg);
+          setChartLoadError(errorMsg);
           setIsLoadingChart(false);
           return;
         }
@@ -96,7 +99,9 @@ export function useCreateChartDialog({
             data,
           });
         } else {
-          toast.error(t("environments.analysis.charts.no_data_returned_for_chart"));
+          const errorMsg = t("environments.analysis.charts.no_data_returned_for_chart");
+          toast.error(errorMsg);
+          setChartLoadError(errorMsg);
         }
         setIsLoadingChart(false);
       };
@@ -121,6 +126,7 @@ export function useCreateChartDialog({
             const message =
               error instanceof Error ? error.message : t("environments.analysis.charts.failed_to_load_chart");
             toast.error(message);
+            setChartLoadError(message);
             setIsLoadingChart(false);
           });
       }
@@ -321,6 +327,7 @@ export function useCreateChartDialog({
     setSelectedDashboardId,
     isSaving,
     isLoadingChart,
+    chartLoadError,
     shouldShowAdvancedBuilder,
     handleChartGenerated,
     handleSaveChart,

@@ -12,9 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/component
 interface ChartPreviewProps {
   chartData: AnalyticsResponse | null;
   isLoading?: boolean;
+  error?: string | null;
 }
 
-export function ChartPreview({ chartData, isLoading = false }: Readonly<ChartPreviewProps>) {
+export function ChartPreview({ chartData, isLoading = false, error }: Readonly<ChartPreviewProps>) {
   const [activeTab, setActiveTab] = useState<"chart" | "data">("chart");
   const { t } = useTranslation();
 
@@ -27,7 +28,7 @@ export function ChartPreview({ chartData, isLoading = false }: Readonly<ChartPre
   };
 
   const renderContent = () => {
-    if (isLoading || !chartData) {
+    if (isLoading) {
       return (
         <div className="flex h-48 items-center justify-center">
           <LoadingSpinner />
@@ -35,9 +36,19 @@ export function ChartPreview({ chartData, isLoading = false }: Readonly<ChartPre
       );
     }
 
-    if (chartData.error) {
+    if (error || chartData?.error) {
       return (
-        <div className="flex h-48 items-center justify-center text-sm text-red-600">{chartData.error}</div>
+        <div className="flex h-48 items-center justify-center text-sm text-red-600">
+          {error || chartData?.error}
+        </div>
+      );
+    }
+
+    if (!chartData) {
+      return (
+        <div className="flex h-48 items-center justify-center text-sm text-gray-500">
+          {t("environments.analysis.charts.no_data_available")}
+        </div>
       );
     }
 

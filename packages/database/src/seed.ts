@@ -573,12 +573,77 @@ async function main(): Promise<void> {
   await generateResponses(SEED_IDS.SURVEY_CSAT, 50);
   await generateResponses(SEED_IDS.SURVEY_COMPLETED, 50);
 
+  // feedback_records table (used by CubeJS for analytics charts)
+  logger.info("Seeding feedback_records table for CubeJS...");
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS feedback_records (
+      id TEXT PRIMARY KEY,
+      sentiment TEXT,
+      source_type TEXT,
+      source_name TEXT,
+      field_type TEXT,
+      collected_at TIMESTAMPTZ,
+      value_number DOUBLE PRECISION,
+      response_id TEXT,
+      user_identifier TEXT,
+      emotion TEXT,
+      metadata JSONB DEFAULT '{}'::jsonb
+    )
+  `);
+
+  await prisma.$executeRawUnsafe(`DELETE FROM feedback_records`);
+
+  const sentiments = ["positive", "negative", "neutral"];
+  const sourceTypes = ["survey", "nps_campaign", "in_app"];
+  const sourceNames = ["Onboarding Survey", "Q4 NPS", "Feature Feedback", "Support Follow-up"];
+  const fieldTypes = ["nps", "text", "rating"];
+  const emotions = ["happy", "frustrated", "neutral", "satisfied", "confused"];
+  const topics = [
+    ["usability", "onboarding"],
+    ["pricing"],
+    ["performance", "bugs"],
+    ["feature-request"],
+    ["documentation"],
+  ];
+  const userIds = ["user-alice", "user-bob", "user-carol", "user-dave", "user-eve"];
+
+  const feedbackValues: string[] = [];
+  for (let i = 0; i < 100; i++) {
+    const id = `fb_seed_${String(i).padStart(3, "0")}`;
+    const sentiment = sentiments[i % sentiments.length];
+    const sourceType = sourceTypes[i % sourceTypes.length];
+    const sourceName = sourceNames[i % sourceNames.length];
+    const fieldType = fieldTypes[i % fieldTypes.length];
+    const daysAgo = Math.floor(Math.random() * 180);
+    const collectedAt = new Date(Date.now() - daysAgo * 86400000).toISOString();
+    const valueNumber = Math.floor(Math.random() * 11);
+    const responseId = `resp_seed_${String(i).padStart(3, "0")}`;
+    const userIdentifier = userIds[i % userIds.length];
+    const emotion = emotions[i % emotions.length];
+    const topicList = topics[i % topics.length];
+    const metadata = JSON.stringify({ topics: topicList }).replace(/'/g, "''");
+
+    feedbackValues.push(
+      `('${id}','${sentiment}','${sourceType}','${sourceName}','${fieldType}','${collectedAt}',${valueNumber},'${responseId}','${userIdentifier}','${emotion}','${metadata}'::jsonb)`
+    );
+  }
+
+  await prisma.$executeRawUnsafe(
+    `INSERT INTO feedback_records (id, sentiment, source_type, source_name, field_type, collected_at, value_number, response_id, user_identifier, emotion, metadata) VALUES ${feedbackValues.join(",\n")} ON CONFLICT (id) DO NOTHING`
+  );
+
   // Charts & Dashboards
   logger.info("Seeding charts and dashboards...");
 
   const chartResponsesOverTime = await prisma.chart.upsert({
     where: { id: SEED_IDS.CHART_RESPONSES_OVER_TIME },
-    update: {},
+    update: {
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "week" }],
+      },
+    },
     create: {
       id: SEED_IDS.CHART_RESPONSES_OVER_TIME,
       name: "Responses Over Time",
@@ -587,7 +652,7 @@ async function main(): Promise<void> {
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],
-        timeDimensions: [{ dimension: "FeedbackRecords.createdAt", granularity: "week" }],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "week" }],
       },
       config: {
         xAxisLabel: "Week",
@@ -600,7 +665,12 @@ async function main(): Promise<void> {
 
   const chartSatisfactionDist = await prisma.chart.upsert({
     where: { id: SEED_IDS.CHART_SATISFACTION_DIST },
-    update: {},
+    update: {
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.sentiment"],
+      },
+    },
     create: {
       id: SEED_IDS.CHART_SATISFACTION_DIST,
       name: "Satisfaction Distribution",
@@ -609,7 +679,7 @@ async function main(): Promise<void> {
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],
-        dimensions: ["FeedbackRecords.rating"],
+        dimensions: ["FeedbackRecords.sentiment"],
       },
       config: {
         showLegend: true,
@@ -641,7 +711,12 @@ async function main(): Promise<void> {
 
   const chartCompletionRate = await prisma.chart.upsert({
     where: { id: SEED_IDS.CHART_COMPLETION_RATE },
-    update: {},
+    update: {
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.sourceName"],
+      },
+    },
     create: {
       id: SEED_IDS.CHART_COMPLETION_RATE,
       name: "Survey Completion Rate",
@@ -649,8 +724,8 @@ async function main(): Promise<void> {
       projectId: project.id,
       createdBy: SEED_IDS.USER_MANAGER,
       query: {
-        measures: ["FeedbackRecords.completionRate"],
-        dimensions: ["FeedbackRecords.surveyName"],
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.sourceName"],
       },
       config: {
         xAxisLabel: "Survey",
@@ -664,7 +739,13 @@ async function main(): Promise<void> {
 
   const chartTopChannels = await prisma.chart.upsert({
     where: { id: SEED_IDS.CHART_TOP_CHANNELS },
-    update: {},
+    update: {
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.sourceType"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "month" }],
+      },
+    },
     create: {
       id: SEED_IDS.CHART_TOP_CHANNELS,
       name: "Responses by Channel",
@@ -673,8 +754,8 @@ async function main(): Promise<void> {
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],
-        dimensions: ["FeedbackRecords.channel"],
-        timeDimensions: [{ dimension: "FeedbackRecords.createdAt", granularity: "month" }],
+        dimensions: ["FeedbackRecords.sourceType"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "month" }],
       },
       config: {
         stacked: true,

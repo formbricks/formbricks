@@ -174,10 +174,14 @@ export function AdvancedChartBuilder({
     }
   }, [initialChartType, initialQuery, isInitialized]);
 
-  // Initialize: execute initialQuery once (deps intentionally minimal to avoid redundant runs)
+  // Initialize: execute initialQuery once (deps intentionally minimal to avoid redundant runs).
+  // Skip when hidePreview is true because the parent component handles data loading.
   useEffect(() => {
     if (!initialQuery || isInitialized) return;
     setIsInitialized(true);
+
+    if (hidePreview) return;
+
     const chartType = state.chartType;
     const requestId = ++requestIdRef.current;
 

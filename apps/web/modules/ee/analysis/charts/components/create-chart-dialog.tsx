@@ -50,6 +50,7 @@ export function CreateChartDialog({
     setSelectedDashboardId,
     isSaving,
     isLoadingChart,
+    chartLoadError,
     shouldShowAdvancedBuilder,
     handleChartGenerated,
     handleSaveChart,
@@ -72,6 +73,7 @@ export function CreateChartDialog({
         chartData={chartData ?? null}
         initialQuery={initialQuery}
         isLoadingChart={isLoadingChart}
+        chartLoadError={chartLoadError}
         chartName={chartName}
         onChartNameChange={setChartName}
         selectedChartType={selectedChartType}
