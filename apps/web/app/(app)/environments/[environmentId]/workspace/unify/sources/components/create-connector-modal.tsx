@@ -44,6 +44,84 @@ interface CreateConnectorModalProps {
   environmentId: string;
 }
 
+const getDialogTitle = (
+  step: TCreateConnectorStep,
+  type: TConnectorType | null,
+  t: (key: string) => string
+): string => {
+  if (step === "selectType") return t("environments.unify.add_feedback_source");
+  if (type === "formbricks") return t("environments.unify.select_survey_and_questions");
+  if (type === "csv") return t("environments.unify.import_csv_data");
+  return t("environments.unify.configure_mapping");
+};
+
+const getDialogDescription = (
+  step: TCreateConnectorStep,
+  type: TConnectorType | null,
+  t: (key: string) => string
+): string => {
+  if (step === "selectType") return t("environments.unify.select_source_type_description");
+  if (type === "formbricks") return t("environments.unify.select_survey_questions_description");
+  if (type === "csv") return t("environments.unify.upload_csv_data_description");
+  return t("environments.unify.configure_mapping");
+};
+
+const getNextStepButtonLabel = (type: TConnectorType | null, t: (key: string) => string): string => {
+  if (type === "formbricks") return t("environments.unify.select_elements");
+  if (type === "csv") return t("environments.unify.configure_import");
+  return t("environments.unify.create_mapping");
+};
+
+const getCreateDisabled = (
+  type: TConnectorType | null,
+  isFormbricksValid: boolean,
+  isCsvValid: boolean,
+  allRequiredMapped: boolean
+): boolean => {
+  if (type === "formbricks") return !isFormbricksValid;
+  if (type === "csv") return !isCsvValid;
+  return !allRequiredMapped;
+};
+
+interface HistoricalImportSectionProps {
+  responseCount: number;
+  elementCount: number;
+  totalFeedbackRecords: number;
+  importHistorical: boolean;
+  onImportHistoricalChange: (checked: boolean) => void;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}
+
+const HistoricalImportSection = ({
+  responseCount,
+  elementCount,
+  totalFeedbackRecords,
+  importHistorical,
+  onImportHistoricalChange,
+  t,
+}: HistoricalImportSectionProps) => (
+  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+    <p className="mb-2 text-xs text-amber-800">
+      {t("environments.unify.existing_responses_info", {
+        responseCount,
+        elementCount,
+        total: totalFeedbackRecords,
+      })}
+    </p>
+    <label className="flex cursor-pointer items-center gap-2">
+      <input
+        type="checkbox"
+        checked={importHistorical}
+        onChange={(e) => onImportHistoricalChange(e.target.checked)}
+        className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+      />
+      <span className="text-sm font-medium text-amber-900">
+        {t("environments.unify.import_existing_responses")}
+      </span>
+    </label>
+  </div>
+);
+
 export const CreateConnectorModal = ({
   open,
   onOpenChange,
@@ -109,30 +187,21 @@ export const CreateConnectorModal = ({
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen && !isImporting) {
-      resetForm();
-    }
-    if (!isImporting) {
-      onOpenChange(newOpen);
-    }
+    if (isImporting) return;
+    if (!newOpen) resetForm();
+    onOpenChange(newOpen);
   };
 
   const handleNextStep = () => {
-    if (currentStep === "selectType" && selectedType) {
-      if (selectedType === "formbricks") {
-        const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
+    if (currentStep !== "selectType" || !selectedType) return;
 
-        setConnectorName(
-          selectedSurvey
-            ? `${selectedSurvey.name} ${t("environments.unify.connection")}`
-            : defaultConnectorName[selectedType]
-        );
-      } else {
-        setConnectorName(defaultConnectorName[selectedType]);
-      }
-
-      setCurrentStep("mapping");
-    }
+    const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
+    setConnectorName(
+      selectedType === "formbricks" && selectedSurvey
+        ? `${selectedSurvey.name} ${t("environments.unify.connection")}`
+        : defaultConnectorName[selectedType]
+    );
+    setCurrentStep("mapping");
   };
 
   const handleSurveySelect = (surveyId: string | null) => {
@@ -169,17 +238,26 @@ export const CreateConnectorModal = ({
     }
   };
 
+  const handleHistoricalImport = async (connectorId: string, surveyId: string) => {
+    setIsImporting(true);
+    const importResult = await importHistoricalResponsesAction({ connectorId, environmentId, surveyId });
+    setIsImporting(false);
+
+    if (importResult?.data) {
+      toast.success(
+        t("environments.unify.historical_import_complete", {
+          successes: importResult.data.successes,
+          failures: importResult.data.failures,
+          skipped: importResult.data.skipped,
+        })
+      );
+    } else {
+      toast.error(getFormattedErrorMessage(importResult));
+    }
+  };
+
   const handleCreate = async () => {
     if (!selectedType || !connectorName.trim()) return;
-
-    if (selectedType !== "formbricks") {
-      const requiredFields = FEEDBACK_RECORD_FIELDS.filter((f) => f.required);
-      const allRequired = requiredFields.every((field) => mappings.some((m) => m.targetFieldId === field.id));
-
-      if (!allRequired) {
-        console.warn("Not all required fields are mapped");
-      }
-    }
 
     setIsCreating(true);
 
@@ -192,26 +270,7 @@ export const CreateConnectorModal = ({
     });
 
     if (connectorId && importHistorical && selectedSurveyId && selectedType === "formbricks") {
-      setIsImporting(true);
-      const importResult = await importHistoricalResponsesAction({
-        connectorId,
-        environmentId,
-        surveyId: selectedSurveyId,
-      });
-
-      setIsImporting(false);
-
-      if (importResult?.data) {
-        toast.success(
-          t("environments.unify.historical_import_complete", {
-            successes: importResult.data.successes,
-            failures: importResult.data.failures,
-            skipped: importResult.data.skipped,
-          })
-        );
-      } else {
-        toast.error(getFormattedErrorMessage(importResult));
-      }
+      await handleHistoricalImport(connectorId, selectedSurveyId);
     }
 
     setIsCreating(false);
@@ -261,30 +320,16 @@ export const CreateConnectorModal = ({
           )}
 
           <DialogHeader>
-            <DialogTitle>
-              {currentStep === "selectType"
-                ? t("environments.unify.add_feedback_source")
-                : selectedType === "formbricks"
-                  ? t("environments.unify.select_survey_and_questions")
-                  : selectedType === "csv"
-                    ? t("environments.unify.import_csv_data")
-                    : t("environments.unify.configure_mapping")}
-            </DialogTitle>
-            <DialogDescription>
-              {currentStep === "selectType"
-                ? t("environments.unify.select_source_type_description")
-                : selectedType === "formbricks"
-                  ? t("environments.unify.select_survey_questions_description")
-                  : selectedType === "csv"
-                    ? t("environments.unify.upload_csv_data_description")
-                    : t("environments.unify.configure_mapping")}
-            </DialogDescription>
+            <DialogTitle>{getDialogTitle(currentStep, selectedType, t)}</DialogTitle>
+            <DialogDescription>{getDialogDescription(currentStep, selectedType, t)}</DialogDescription>
           </DialogHeader>
 
           <div className="py-4">
-            {currentStep === "selectType" ? (
+            {currentStep === "selectType" && (
               <ConnectorTypeSelector selectedType={selectedType} onSelectType={setSelectedType} />
-            ) : selectedType === "formbricks" ? (
+            )}
+
+            {currentStep === "mapping" && selectedType === "formbricks" && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="connectorName">{t("environments.unify.source_name")}</Label>
@@ -308,30 +353,23 @@ export const CreateConnectorModal = ({
                   />
                 </div>
 
-                {responseCount !== null && responseCount > 0 && selectedElementIds.length > 0 && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                    <p className="mb-2 text-xs text-amber-800">
-                      {t("environments.unify.existing_responses_info", {
-                        responseCount,
-                        elementCount: selectedElementIds.length,
-                        total: totalFeedbackRecords,
-                      })}
-                    </p>
-                    <label className="flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={importHistorical}
-                        onChange={(e) => setImportHistorical(e.target.checked)}
-                        className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-                      />
-                      <span className="text-sm font-medium text-amber-900">
-                        {t("environments.unify.import_existing_responses")}
-                      </span>
-                    </label>
-                  </div>
-                )}
+                {responseCount !== null &&
+                  responseCount > 0 &&
+                  selectedElementIds.length > 0 &&
+                  totalFeedbackRecords !== null && (
+                    <HistoricalImportSection
+                      responseCount={responseCount}
+                      elementCount={selectedElementIds.length}
+                      totalFeedbackRecords={totalFeedbackRecords}
+                      importHistorical={importHistorical}
+                      onImportHistoricalChange={setImportHistorical}
+                      t={t}
+                    />
+                  )}
               </div>
-            ) : selectedType === "csv" ? (
+            )}
+
+            {currentStep === "mapping" && selectedType === "csv" && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="connectorName">{t("environments.unify.source_name")}</Label>
@@ -353,7 +391,7 @@ export const CreateConnectorModal = ({
                   />
                 </div>
               </div>
-            ) : null}
+            )}
           </div>
 
           <DialogFooter>
@@ -364,11 +402,7 @@ export const CreateConnectorModal = ({
             )}
             {currentStep === "selectType" ? (
               <Button onClick={handleNextStep} disabled={!selectedType}>
-                {selectedType === "formbricks"
-                  ? t("environments.unify.select_elements")
-                  : selectedType === "csv"
-                    ? t("environments.unify.configure_import")
-                    : t("environments.unify.create_mapping")}
+                {getNextStepButtonLabel(selectedType, t)}
               </Button>
             ) : (
               <Button
@@ -377,11 +411,7 @@ export const CreateConnectorModal = ({
                   isCreating ||
                   isImporting ||
                   !connectorName.trim() ||
-                  (selectedType === "formbricks"
-                    ? !isFormbricksValid
-                    : selectedType === "csv"
-                      ? !isCsvValid
-                      : !allRequiredMapped)
+                  getCreateDisabled(selectedType, !!isFormbricksValid, isCsvValid, allRequiredMapped)
                 }>
                 {isCreating && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
                 {t("environments.unify.setup_connection")}
