@@ -68,19 +68,19 @@ export const getLegacyPlanFromCloudPlan = (plan: TCloudStripePlan): string => {
 
 export const getLimitsFromCloudPlan = (
   plan: TCloudStripePlan
-): { projects: number | null; responses: number | null; contacts: number | null } => {
+): { projects: number | null; responses: number | null } => {
   if (plan === "hobby") {
-    return { projects: 1, responses: 250, contacts: null };
+    return { projects: 1, responses: 250 };
   }
 
   if (plan === "pro" || plan === "trial") {
-    return { projects: 3, responses: 2000, contacts: 5000 };
+    return { projects: 3, responses: 2000 };
   }
 
   if (plan === "scale") {
-    return { projects: 5, responses: 5000, contacts: 10000 };
+    return { projects: 5, responses: 5000 };
   }
 
   // Unknown plans intentionally fall back to hobby limits as the safest default.
-  return { projects: 1, responses: 250, contacts: null };
+  return { projects: 1, responses: 250 };
 };

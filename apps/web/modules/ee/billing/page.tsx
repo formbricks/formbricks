@@ -1,10 +1,7 @@
 import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import {
-  getMonthlyActiveOrganizationPeopleCount,
-  getMonthlyOrganizationResponseCount,
-} from "@/lib/organization/service";
+import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -22,8 +19,7 @@ export const PricingPage = async (props) => {
     notFound();
   }
 
-  const [peopleCount, responseCount, projectCount] = await Promise.all([
-    getMonthlyActiveOrganizationPeopleCount(organization.id),
+  const [responseCount, projectCount] = await Promise.all([
     getMonthlyOrganizationResponseCount(organization.id),
     getOrganizationProjectsCount(organization.id),
   ]);
@@ -44,7 +40,6 @@ export const PricingPage = async (props) => {
       <PricingTable
         organization={organization}
         environmentId={params.environmentId}
-        peopleCount={peopleCount}
         responseCount={responseCount}
         projectCount={projectCount}
         hasBillingRights={hasBillingRights}

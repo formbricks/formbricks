@@ -258,7 +258,7 @@ describe("organization-billing", () => {
             projects: 3,
             monthly: {
               responses: 2000,
-              miu: 5000,
+              miu: null,
             },
           },
           stripe: expect.objectContaining({

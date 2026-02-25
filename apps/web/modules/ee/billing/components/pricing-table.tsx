@@ -20,7 +20,6 @@ import { PricingCard } from "./pricing-card";
 interface PricingTableProps {
   organization: TOrganization;
   environmentId: string;
-  peopleCount: number;
   responseCount: number;
   projectCount: number;
   hasBillingRights: boolean;
@@ -54,7 +53,6 @@ const getCurrentCloudPlanLabel = (
 export const PricingTable = ({
   environmentId,
   organization,
-  peopleCount,
   responseCount,
   projectCount,
   hasBillingRights,
@@ -155,8 +153,6 @@ export const PricingTable = ({
 
   const responsesUnlimitedCheck =
     currentCloudPlan === "scale" && organization.billing.limits.monthly.responses === null;
-  const peopleUnlimitedCheck =
-    currentCloudPlan === "scale" && organization.billing.limits.monthly.miu === null;
   const projectsUnlimitedCheck =
     currentCloudPlan === "scale" && organization.billing.limits.projects === null;
 
@@ -224,29 +220,6 @@ export const PricingTable = ({
                   size="normal"
                   text={t("environments.settings.billing.unlimited_responses")}
                 />
-              )}
-            </div>
-
-            <div
-              className={cn(
-                "relative mx-8 mb-8 flex flex-col gap-4",
-                peopleUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
-              )}>
-              <p className="text-md font-semibold text-slate-700">
-                {t("environments.settings.billing.monthly_identified_users")}
-              </p>
-              {organization.billing.limits.monthly.miu && (
-                <BillingSlider
-                  className="slider-class mb-8"
-                  value={peopleCount}
-                  max={organization.billing.limits.monthly.miu * 1.5}
-                  freeTierLimit={organization.billing.limits.monthly.miu}
-                  metric={"MIU"}
-                />
-              )}
-
-              {peopleUnlimitedCheck && (
-                <Badge type="success" size="normal" text={t("environments.settings.billing.unlimited_miu")} />
               )}
             </div>
 

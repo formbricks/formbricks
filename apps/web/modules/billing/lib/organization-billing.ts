@@ -271,8 +271,9 @@ export const syncOrganizationBillingFromStripe = async (
       projects: limits.projects,
       monthly: {
         responses: limits.responses,
-        // We intentionally keep legacy "miu" field for backwards compatibility in current app code.
-        miu: limits.contacts,
+        // MIU/contact metering is out of scope for the current cloud billing rollout.
+        // Keep the legacy field for compatibility but do not sync a contact limit from Stripe.
+        miu: null,
       },
     },
     periodStart: periodStart.toISOString(),
