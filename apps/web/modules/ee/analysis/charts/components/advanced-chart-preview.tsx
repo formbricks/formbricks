@@ -2,6 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CodeIcon, DatabaseIcon } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
@@ -17,10 +18,6 @@ interface AdvancedChartPreviewProps {
   chartData: TChartDataRow[] | null;
   chartType: TChartType | "";
   query: TChartQuery | null;
-  showQuery: boolean;
-  onShowQueryChange: (open: boolean) => void;
-  showData: boolean;
-  onShowDataChange: (open: boolean) => void;
 }
 
 export function AdvancedChartPreview({
@@ -29,12 +26,10 @@ export function AdvancedChartPreview({
   chartData,
   chartType,
   query,
-  showQuery,
-  onShowQueryChange,
-  showData,
-  onShowDataChange,
 }: Readonly<AdvancedChartPreviewProps>) {
   const { t } = useTranslation();
+  const [showQuery, setShowQuery] = useState(false);
+  const [showData, setShowData] = useState(false);
   const hasData = chartData && chartData.length > 0 && !isLoading && chartType && query;
   const isEmpty = !chartData && !isLoading && !error;
 
@@ -63,7 +58,7 @@ export function AdvancedChartPreview({
           <QueryViewer
             query={query}
             isOpen={showQuery}
-            onOpenChange={onShowQueryChange}
+            onOpenChange={setShowQuery}
             trigger={
               <Collapsible.CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-start">
@@ -75,7 +70,7 @@ export function AdvancedChartPreview({
             }
           />
 
-          <Collapsible.Root open={showData} onOpenChange={onShowDataChange}>
+          <Collapsible.Root open={showData} onOpenChange={setShowData}>
             <Collapsible.CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full justify-start">
                 <DatabaseIcon className="mr-2 h-4 w-4" />

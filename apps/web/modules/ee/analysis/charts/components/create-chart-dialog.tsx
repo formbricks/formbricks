@@ -56,8 +56,6 @@ export function CreateChartDialog({
     handleSaveChart,
     handleAddToDashboard,
     handleClose,
-    handleAdvancedBuilderSave,
-    handleAdvancedBuilderAddToDashboard,
   } = hook;
 
   if (chartId && isLoadingChart && !initialChart) {
@@ -79,8 +77,6 @@ export function CreateChartDialog({
         selectedChartType={selectedChartType}
         onChartTypeChange={handleChartTypeChange}
         onChartGenerated={handleChartGenerated}
-        onAdvancedBuilderSave={handleAdvancedBuilderSave}
-        onAdvancedBuilderAddToDashboard={handleAdvancedBuilderAddToDashboard}
         dashboards={dashboards}
         selectedDashboardId={selectedDashboardId}
         onDashboardSelect={setSelectedDashboardId}
@@ -106,8 +102,6 @@ export function CreateChartDialog({
       onSelectedChartTypeChange={setSelectedChartType}
       shouldShowAdvancedBuilder={shouldShowAdvancedBuilder}
       onChartGenerated={handleChartGenerated}
-      onAdvancedBuilderSave={handleAdvancedBuilderSave}
-      onAdvancedBuilderAddToDashboard={handleAdvancedBuilderAddToDashboard}
       dashboards={dashboards}
       selectedDashboardId={selectedDashboardId}
       onDashboardSelect={setSelectedDashboardId}

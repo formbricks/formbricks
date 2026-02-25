@@ -63,6 +63,7 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
 
       <form className="flex gap-4" onSubmit={handleSubmit}>
         <Input
+          autoFocus
           placeholder={t("environments.analysis.charts.ai_query_placeholder")}
           value={userQuery}
           onChange={(e) => setUserQuery(e.target.value)}

@@ -32,8 +32,6 @@ interface CreateChartViewProps {
   onSelectedChartTypeChange: (type: TChartType) => void;
   shouldShowAdvancedBuilder: boolean;
   onChartGenerated: (data: AnalyticsResponse) => void;
-  onAdvancedBuilderSave: (savedChartId: string) => void;
-  onAdvancedBuilderAddToDashboard: (savedChartId: string, _dashboardId?: string) => void;
   dashboards: Array<{ id: string; name: string }>;
   selectedDashboardId: string;
   onDashboardSelect: (id: string) => void;
@@ -58,8 +56,6 @@ export function CreateChartView({
   onSelectedChartTypeChange,
   shouldShowAdvancedBuilder,
   onChartGenerated,
-  onAdvancedBuilderSave,
-  onAdvancedBuilderAddToDashboard,
   dashboards,
   selectedDashboardId,
   onDashboardSelect,
@@ -125,12 +121,10 @@ export function CreateChartView({
             {shouldShowAdvancedBuilder && (
               <AdvancedChartBuilder
                 environmentId={environmentId}
-                initialChartType={selectedChartType || chartData?.chartType}
+                chartType={selectedChartType || chartData?.chartType || ""}
                 initialQuery={chartData?.query}
                 hidePreview={true}
                 onChartGenerated={handleAdvancedChartGenerated}
-                onSave={onAdvancedBuilderSave}
-                onAddToDashboard={onAdvancedBuilderAddToDashboard}
               />
             )}
 

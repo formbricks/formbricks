@@ -288,20 +288,6 @@ export function useCreateChartDialog({
     }
   };
 
-  const handleAdvancedBuilderSave = (savedChartId: string) => {
-    setCurrentChartId(savedChartId);
-    setIsSaveDialogOpen(false);
-    onOpenChange(false);
-    onSuccess?.();
-  };
-
-  const handleAdvancedBuilderAddToDashboard = (savedChartId: string) => {
-    setCurrentChartId(savedChartId);
-    setIsAddToDashboardDialogOpen(false);
-    onOpenChange(false);
-    onSuccess?.();
-  };
-
   const handleChartTypeChange = (type: TChartType) => {
     setSelectedChartType(type);
     setChartData((prev) => (prev ? { ...prev, chartType: type } : null));
@@ -333,8 +319,6 @@ export function useCreateChartDialog({
     handleSaveChart,
     handleAddToDashboard,
     handleClose,
-    handleAdvancedBuilderSave,
-    handleAdvancedBuilderAddToDashboard,
     handleChartTypeChange,
   };
 }

@@ -32,8 +32,6 @@ interface EditChartViewProps {
   selectedChartType: TChartType | "";
   onChartTypeChange: (type: TChartType) => void;
   onChartGenerated: (data: AnalyticsResponse) => void;
-  onAdvancedBuilderSave: (savedChartId: string) => void;
-  onAdvancedBuilderAddToDashboard: (savedChartId: string, dashboardId?: string) => void;
   dashboards: Array<{ id: string; name: string }>;
   selectedDashboardId: string;
   onDashboardSelect: (id: string) => void;
@@ -57,8 +55,6 @@ export function EditChartView({
   selectedChartType,
   onChartTypeChange,
   onChartGenerated,
-  onAdvancedBuilderSave,
-  onAdvancedBuilderAddToDashboard,
   dashboards,
   selectedDashboardId,
   onDashboardSelect,
@@ -99,12 +95,10 @@ export function EditChartView({
             </div>
             <AdvancedChartBuilder
               environmentId={environmentId}
-              initialChartType={selectedChartType || chartData?.chartType}
+              chartType={selectedChartType || chartData?.chartType || ""}
               initialQuery={chartData?.query ?? initialQuery}
               hidePreview={true}
               onChartGenerated={onChartGenerated}
-              onSave={onAdvancedBuilderSave}
-              onAddToDashboard={onAdvancedBuilderAddToDashboard}
             />
             <ChartPreview chartData={chartData} isLoading={isLoadingChart} error={chartLoadError} />
           </div>
