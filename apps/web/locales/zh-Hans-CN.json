@@ -635,7 +635,6 @@
         "create_chart": "创建图表",
         "delete_chart_confirmation": "你确定要删除这个图表吗？",
         "no_charts_found": "未找到图表。",
-        "open_chart": "打开图表 {{name}}",
         "open_options": "打开图表选项"
       },
       "dashboards": {

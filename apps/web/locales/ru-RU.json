@@ -635,7 +635,6 @@
         "create_chart": "Создать график",
         "delete_chart_confirmation": "Ты уверен, что хочешь удалить этот график?",
         "no_charts_found": "Графики не найдены.",
-        "open_chart": "Открыть график {{name}}",
         "open_options": "Открыть настройки графика"
       },
       "dashboards": {

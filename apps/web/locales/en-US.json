@@ -635,7 +635,6 @@
         "create_chart": "Create Chart",
         "delete_chart_confirmation": "Are you sure you want to delete this chart?",
         "no_charts_found": "No charts found.",
-        "open_chart": "Open chart {{name}}",
         "open_options": "Open chart options"
       },
       "dashboards": {

@@ -635,7 +635,6 @@
         "create_chart": "チャートを作成",
         "delete_chart_confirmation": "このチャートを削除してもよろしいですか？",
         "no_charts_found": "チャートが見つかりません。",
-        "open_chart": "チャート「{{name}}」を開く",
         "open_options": "チャートオプションを開く"
       },
       "dashboards": {

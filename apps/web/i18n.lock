@@ -600,7 +600,6 @@ checksums:
     environments/analysis/charts/create_chart: ca7fdcc964e01f42ea9709924221edba
     environments/analysis/charts/delete_chart_confirmation: f7fd7b0a08e81c9b392b08c9c1ad2147
     environments/analysis/charts/no_charts_found: d4a27d5b56e49ebdd38bf28791dbcc42
-    environments/analysis/charts/open_chart: bc3bed1517ad63c1bcccfbbc430ab333
     environments/analysis/charts/open_options: 2c6a35fec9b9d008e41728594bcd07d7
     environments/analysis/dashboards/create_dashboard: 9396aec1ea4a9b05ada94483655d1373
     environments/analysis/dashboards/create_dashboard_description: d29f60615f6d8c96cc4265541e75ec26

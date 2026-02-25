@@ -635,7 +635,6 @@
         "create_chart": "Skapa diagram",
         "delete_chart_confirmation": "Är du säker på att du vill ta bort det här diagrammet?",
         "no_charts_found": "Inga diagram hittades.",
-        "open_chart": "Öppna diagram {{name}}",
         "open_options": "Öppna diagramalternativ"
       },
       "dashboards": {

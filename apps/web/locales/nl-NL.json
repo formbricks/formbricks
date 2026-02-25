@@ -635,7 +635,6 @@
         "create_chart": "Diagram maken",
         "delete_chart_confirmation": "Weet je zeker dat je deze grafiek wilt verwijderen?",
         "no_charts_found": "Geen diagrammen gevonden.",
-        "open_chart": "Open diagram {{name}}",
         "open_options": "Open diagramopties"
       },
       "dashboards": {

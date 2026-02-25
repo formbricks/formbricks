@@ -635,7 +635,6 @@
         "create_chart": "Creează grafic",
         "delete_chart_confirmation": "Ești sigur că vrei să ștergi acest grafic?",
         "no_charts_found": "Nu s-au găsit grafice.",
-        "open_chart": "Deschide graficul {{name}}",
         "open_options": "Deschide opțiunile graficului"
       },
       "dashboards": {

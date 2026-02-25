@@ -635,7 +635,6 @@
         "create_chart": "Diagram létrehozása",
         "delete_chart_confirmation": "Biztosan törölni szeretnéd ezt a diagramot?",
         "no_charts_found": "Nem található diagram.",
-        "open_chart": "{{name}} diagram megnyitása",
         "open_options": "Diagram beállításainak megnyitása"
       },
       "dashboards": {

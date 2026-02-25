@@ -635,7 +635,6 @@
         "create_chart": "Criar gráfico",
         "delete_chart_confirmation": "Tens a certeza de que queres eliminar este gráfico?",
         "no_charts_found": "Nenhum gráfico encontrado.",
-        "open_chart": "Abrir gráfico {{name}}",
         "open_options": "Abrir opções do gráfico"
       },
       "dashboards": {
