@@ -125,7 +125,8 @@ describe("handleConnectorPipeline", () => {
   });
 
   test("continues when transform returns no feedback records", async () => {
-    vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
+    const connector = createConnector();
+    vi.mocked(getConnectorsBySurveyId).mockResolvedValue([connector]);
     vi.mocked(transformResponseToFeedbackRecords).mockReturnValue([]);
 
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
@@ -133,11 +134,25 @@ describe("handleConnectorPipeline", () => {
     expect(transformResponseToFeedbackRecords).toHaveBeenCalledWith(
       mockResponse,
       mockSurvey,
-      createConnector().formbricksMappings,
+      connector.formbricksMappings,
       "env-1"
     );
     expect(mockFeedbackRecordsCreate).not.toHaveBeenCalled();
     expect(updateConnector).not.toHaveBeenCalled();
+  });
+
+  test("updates connector to error when HUB_API_KEY is not set", async () => {
+    vi.mocked(env).HUB_API_KEY = undefined as any;
+    vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
+    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+
+    await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
+
+    expect(mockFeedbackRecordsCreate).not.toHaveBeenCalled();
+    expect(updateConnector).toHaveBeenCalledWith("conn-1", "env-1", {
+      status: "error",
+      errorMessage: expect.stringContaining("HUB_API_KEY"),
+    });
   });
 
   test("sends records to Hub and updates connector to active on full success", async () => {
@@ -153,20 +168,6 @@ describe("handleConnectorPipeline", () => {
       status: "active",
       errorMessage: null,
       lastSyncAt: expect.any(Date),
-    });
-  });
-
-  test("updates connector to error when HUB_API_KEY is not set", async () => {
-    vi.mocked(env).HUB_API_KEY = undefined as any;
-    vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
-    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
-
-    await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
-
-    expect(mockFeedbackRecordsCreate).not.toHaveBeenCalled();
-    expect(updateConnector).toHaveBeenCalledWith("conn-1", "env-1", {
-      status: "error",
-      errorMessage: expect.stringContaining("HUB_API_KEY"),
     });
   });
 

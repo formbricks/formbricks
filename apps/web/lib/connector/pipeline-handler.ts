@@ -1,27 +1,18 @@
 import "server-only";
+
 import FormbricksHub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { env } from "@/lib/env";
 import { getConnectorsBySurveyId, updateConnector } from "./service";
+import { getHubClient } from "./hub-client";
 import { transformResponseToFeedbackRecords } from "./transform";
 
 type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams;
-type FeedbackRecordData = FormbricksHub.FeedbackRecordData;
-
-function getHubClient(): FormbricksHub | null {
-  const apiKey = env.HUB_API_KEY;
-  if (!apiKey) return null;
-  return new FormbricksHub({
-    apiKey,
-    baseURL: env.HUB_API_URL ?? undefined,
-  });
-}
 
 async function createFeedbackRecordsBatch(inputs: FeedbackRecordCreateParams[]): Promise<{
   results: Array<{
-    data: FeedbackRecordData | null;
+    data: FormbricksHub.FeedbackRecordData | null;
     error: { status: number; message: string; detail: string } | null;
   }>;
 }> {
