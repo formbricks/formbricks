@@ -74,9 +74,13 @@ export const CreateConnectorModal = ({
   const fetchResponseCount = useCallback(
     async (surveyId: string) => {
       setResponseCount(null);
-      const result = await getResponseCountAction({ surveyId, environmentId });
-      if (result?.data !== undefined) {
-        setResponseCount(result.data);
+      try {
+        const result = await getResponseCountAction({ surveyId, environmentId });
+        if (result?.data !== undefined) {
+          setResponseCount(result.data);
+        }
+      } catch {
+        setResponseCount(null);
       }
     },
     [environmentId]

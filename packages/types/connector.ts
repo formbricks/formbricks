@@ -127,6 +127,7 @@ export type TConnectorUpdateInput = z.infer<typeof ZConnectorUpdateInput>;
 export const UNSUPPORTED_CONNECTOR_ELEMENT_TYPES = [
   TSurveyElementTypeEnum.ContactInfo,
   TSurveyElementTypeEnum.Address,
+  TSurveyElementTypeEnum.Cal,
   TSurveyElementTypeEnum.CTA,
   TSurveyElementTypeEnum.FileUpload,
   TSurveyElementTypeEnum.Consent,

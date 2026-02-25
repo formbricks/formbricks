@@ -4,7 +4,6 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import {
-  TConnectorFormbricksMapping,
   TConnectorWithMappings,
   ZConnectorCreateInput,
   ZConnectorFieldMappingCreateInput,
@@ -12,9 +11,7 @@ import {
   getHubFieldTypeFromElementType,
 } from "@formbricks/types/connector";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -27,7 +24,7 @@ import {
   getProjectIdFromConnectorId,
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
-import { createFeedbackRecordsBatch } from "./hub-client";
+import { importHistoricalResponses } from "./import";
 import {
   TMappingsInput,
   createConnectorWithMappings,
@@ -35,7 +32,6 @@ import {
   getConnectorWithMappingsById,
   updateConnectorWithMappings,
 } from "./service";
-import { transformResponseToFeedbackRecords } from "./transform";
 
 const ZDeleteConnectorAction = z.object({
   connectorId: ZId,
@@ -339,56 +335,6 @@ export const getResponseCountAction = authenticatedActionClient
     }
   );
 
-const IMPORT_BATCH_SIZE = 50;
-
-const processBatch = async (
-  responses: TResponse[],
-  survey: TSurvey,
-  mappings: TConnectorFormbricksMapping[]
-): Promise<{ successes: number; failures: number; skipped: number }> => {
-  let successes = 0;
-  let failures = 0;
-  const expectedRecords = responses.length * mappings.length;
-
-  const allRecords = responses.flatMap((response) =>
-    transformResponseToFeedbackRecords(response, survey, mappings)
-  );
-
-  if (allRecords.length > 0) {
-    const { results } = await createFeedbackRecordsBatch(allRecords);
-    successes = results.filter((r) => r.data !== null).length;
-    failures = results.filter((r) => r.error !== null).length;
-  }
-
-  return { successes, failures, skipped: expectedRecords - allRecords.length };
-};
-
-const importAllResponses = async (
-  surveyId: string,
-  survey: TSurvey,
-  mappings: TConnectorFormbricksMapping[]
-): Promise<{ successes: number; failures: number; skipped: number }> => {
-  let successes = 0;
-  let failures = 0;
-  let skipped = 0;
-  let offset = 0;
-
-  while (true) {
-    const responses = await getResponses(surveyId, IMPORT_BATCH_SIZE, offset);
-    if (responses.length === 0) break;
-
-    const batch = await processBatch(responses, survey, mappings);
-    successes += batch.successes;
-    failures += batch.failures;
-    skipped += batch.skipped;
-
-    if (responses.length < IMPORT_BATCH_SIZE) break;
-    offset += IMPORT_BATCH_SIZE;
-  }
-
-  return { successes, failures, skipped };
-};
-
 const ZImportHistoricalResponsesAction = z.object({
   connectorId: ZId,
   environmentId: ZId,
@@ -404,7 +350,7 @@ export const importHistoricalResponsesAction = authenticatedActionClient
     }: {
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZImportHistoricalResponsesAction>;
-    }): Promise<{ successes: number; failures: number; skipped: number }> => {
+    }) => {
       const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -435,6 +381,6 @@ export const importHistoricalResponsesAction = authenticatedActionClient
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
 
-      return importAllResponses(parsedInput.surveyId, survey, connector.formbricksMappings);
+      return importHistoricalResponses(connector, survey);
     }
   );
