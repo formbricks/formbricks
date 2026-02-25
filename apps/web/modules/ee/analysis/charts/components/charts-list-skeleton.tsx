@@ -1,6 +1,6 @@
-const SKELETON_ROWS = 5;
+const SKELETON_ROWS = 3;
 
-function SkeletonRow() {
+const SkeletonRow = () => {
   return (
     <div className="grid h-12 w-full animate-pulse grid-cols-7 content-center p-2">
       <div className="col-span-3 flex items-center gap-4 pl-6">
@@ -8,7 +8,7 @@ function SkeletonRow() {
         <div className="h-4 w-36 rounded bg-gray-200" />
       </div>
       <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
-        <div className="h-4 w-16 rounded bg-gray-200" />
+        <div className="h-4 w-20 rounded bg-gray-200" />
       </div>
       <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">
         <div className="h-4 w-24 rounded bg-gray-200" />
@@ -19,13 +19,13 @@ function SkeletonRow() {
       <div className="col-span-1" />
     </div>
   );
-}
+};
 
 interface ChartsListSkeletonProps {
-  columnHeaders: string[];
+  columnHeaders: [string, string, string, string];
 }
 
-export function ChartsListSkeleton({ columnHeaders }: Readonly<ChartsListSkeletonProps>) {
+export const ChartsListSkeleton = ({ columnHeaders }: Readonly<ChartsListSkeletonProps>) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
@@ -40,4 +40,4 @@ export function ChartsListSkeleton({ columnHeaders }: Readonly<ChartsListSkeleto
       ))}
     </div>
   );
-}
+};

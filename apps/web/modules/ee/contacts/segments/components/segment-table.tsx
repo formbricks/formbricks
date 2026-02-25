@@ -26,7 +26,7 @@ export function SegmentTable({
   const [editingSegment, setEditingSegment] = useState<TSegmentWithSurveyNames | null>(null);
 
   const columns = useMemo(() => {
-    return generateSegmentTableColumns();
+    return generateSegmentTableColumns(t);
   }, []);
 
   const table = useReactTable({

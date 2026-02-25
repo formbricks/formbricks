@@ -36,6 +36,7 @@ export function ChartDropdownMenu({
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [isDropDownOpen, setIsDropDownOpen] = useState(false);
 
   const handleDeleteChart = async () => {
     setIsDeleting(true);
@@ -46,7 +47,9 @@ export function ChartDropdownMenu({
         setDeleteDialogOpen(false);
         router.refresh();
       } else {
-        toast.error(getFormattedErrorMessage(result));
+        const msg =
+          getFormattedErrorMessage(result) || t("environments.analysis.charts.chart_deletion_error");
+        toast.error(msg);
       }
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
@@ -87,14 +90,14 @@ export function ChartDropdownMenu({
 
   return (
     <div id={`chart-${chart.id}-actions`} data-testid="chart-dropdown-menu">
-      <DropdownMenu>
+      <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild>
           <Button variant="outline" className="px-2" onClick={(e) => e.stopPropagation()}>
             <span className="sr-only">{t("environments.analysis.charts.open_options")}</span>
             <MoreVertical className="size-4" aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="inline-block w-auto min-w-max">
+        <DropdownMenuContent className="inline-block w-auto min-w-max" align="end">
           <DropdownMenuGroup>
             <DropdownMenuItem icon={<SquarePenIcon className="size-4" />} onClick={handleEdit}>
               {t("common.edit")}
@@ -102,14 +105,20 @@ export function ChartDropdownMenu({
 
             <DropdownMenuItem
               icon={<CopyIcon className="size-4" />}
-              onClick={handleDuplicateChart}
+              onClick={() => {
+                setIsDropDownOpen(false);
+                handleDuplicateChart();
+              }}
               disabled={isDuplicating}>
               {t("common.duplicate")}
             </DropdownMenuItem>
 
             <DropdownMenuItem
               icon={<TrashIcon className="size-4" />}
-              onClick={handleOpenDeleteDialog}
+              onClick={() => {
+                setIsDropDownOpen(false);
+                handleOpenDeleteDialog();
+              }}
               disabled={isDeleting}>
               {t("common.delete")}
             </DropdownMenuItem>

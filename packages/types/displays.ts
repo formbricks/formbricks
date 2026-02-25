@@ -30,3 +30,17 @@ export const ZDisplayFilters = z.object({
 });
 
 export type TDisplayFilters = z.infer<typeof ZDisplayFilters>;
+
+export const ZDisplayWithContact = z.object({
+  id: z.string().cuid2(),
+  createdAt: z.date(),
+  surveyId: z.string(),
+  contact: z
+    .object({
+      id: z.string(),
+      attributes: z.record(z.string()),
+    })
+    .nullable(),
+});
+
+export type TDisplayWithContact = z.infer<typeof ZDisplayWithContact>;

@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { type Prisma, PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { hash as hashPassword } from "bcryptjs";
 import { logger } from "@formbricks/logger";
 import { SEED_CREDENTIALS, SEED_IDS } from "./seed/constants";
 
@@ -373,7 +373,7 @@ async function main(): Promise<void> {
   });
 
   // Users
-  const passwordHash = await bcrypt.hash(SEED_CREDENTIALS.ADMIN.password, 10);
+  const passwordHash = await hashPassword(SEED_CREDENTIALS.ADMIN.password, 10);
 
   await prisma.user.upsert({
     where: { id: SEED_IDS.USER_ADMIN },
@@ -625,7 +625,7 @@ async function main(): Promise<void> {
     const metadata = JSON.stringify({ topics: topicList }).replace(/'/g, "''");
 
     feedbackValues.push(
-      `('${id}','${sentiment}','${sourceType}','${sourceName}','${fieldType}','${collectedAt}',${valueNumber},'${responseId}','${userIdentifier}','${emotion}','${metadata}'::jsonb)`
+      `('${id}','${sentiment}','${sourceType}','${sourceName}','${fieldType}','${collectedAt}',${String(valueNumber)},'${responseId}','${userIdentifier}','${emotion}','${metadata}'::jsonb)`
     );
   }
 

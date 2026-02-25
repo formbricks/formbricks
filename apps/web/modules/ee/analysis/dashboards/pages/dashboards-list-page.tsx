@@ -25,8 +25,11 @@ const DashboardsListContent = ({
   return <DashboardsTable dashboards={dashboards} environmentId={environmentId} isReadOnly={isReadOnly} />;
 };
 
-export const DashboardsListPage = async (props: { params: Promise<{ environmentId: string }> }) => {
-  const { environmentId } = await props.params;
+interface DashboardsListPageProps {
+  environmentId: string;
+}
+
+export const DashboardsListPage = async ({ environmentId }: Readonly<DashboardsListPageProps>) => {
   const t = await getTranslate();
   const { project, isReadOnly } = await getEnvironmentAuth(environmentId);
 
