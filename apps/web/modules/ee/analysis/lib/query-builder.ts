@@ -1,7 +1,7 @@
 /**
  * Query builder utility to construct Cube.js queries from chart builder state.
  */
-import { TChartQuery, TCubeFilter, TMemberFilter, TTimeDimension } from "@formbricks/types/dashboard";
+import { TChartQuery, TCubeFilter, TMemberFilter, TTimeDimension } from "@formbricks/types/analysis";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
 export interface CustomMeasure {

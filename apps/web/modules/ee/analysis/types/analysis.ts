@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
-import { ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/dashboard";
 
 export const CHART_TYPE_IDS = ["area", "bar", "line", "pie", "big_number"] as const;
 export const ZChartType = z.enum(CHART_TYPE_IDS);

@@ -2,11 +2,12 @@
 
 import OpenAI from "openai";
 import { z } from "zod";
+import { ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
-import { ZChartQuery } from "@formbricks/types/dashboard";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { validateQueryMembers } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   createChart,
   deleteChart,
@@ -224,6 +225,8 @@ export const executeQueryAction = authenticatedActionClient
       parsedInput: z.infer<typeof ZExecuteQueryAction>;
     }) => {
       await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
+
+      validateQueryMembers(parsedInput.query);
 
       try {
         return await executeQuery(parsedInput.query as Record<string, unknown>);

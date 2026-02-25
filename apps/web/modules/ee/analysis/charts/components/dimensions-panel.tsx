@@ -17,20 +17,18 @@ export function DimensionsPanel({ selectedDimensions, onDimensionsChange }: Read
   }));
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-medium text-gray-900">{t("environments.analysis.charts.dimensions")}</h3>
+    <div className="space-y-2">
+      <h3 className="text-md font-semibold text-gray-900">{t("environments.analysis.charts.dimensions")}</h3>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">
-          {t("environments.analysis.charts.group_by")}
-        </label>
+        <label className="text-sm">{t("environments.analysis.charts.group_by")}</label>
         <MultiSelect
           options={dimensionOptions}
           value={selectedDimensions}
           onChange={onDimensionsChange}
           placeholder={t("environments.analysis.charts.select_measures")}
         />
-        <p className="text-xs text-gray-500">{t("environments.analysis.charts.group_by_description")}</p>
+        <p className="text-sm text-gray-500">{t("environments.analysis.charts.group_by_description")}</p>
       </div>
     </div>
   );

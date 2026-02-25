@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { CHART_TYPES } from "@/modules/ee/analysis/charts/lib/chart-types";
+import { getChartTypes } from "@/modules/ee/analysis/charts/lib/chart-types";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -32,6 +32,7 @@ export function ConfigureChartDialog({
   onReset,
 }: Readonly<ConfigureChartDialogProps>) {
   const { t } = useTranslation();
+  const chartTypes = getChartTypes(t);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,11 +44,11 @@ export function ConfigureChartDialog({
         <DialogBody>
           <div className="space-y-6">
             <div>
-              <h4 className="mb-3 text-sm font-medium text-gray-900">
+              <h4 className="text-md mb-3 font-semibold text-gray-900">
                 {t("environments.analysis.charts.configure_type_label")}
               </h4>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                {CHART_TYPES.map((chart) => {
+                {chartTypes.map((chart) => {
                   const isSelected = (configuredChartType || currentChartType) === chart.id;
                   return (
                     <button
@@ -60,28 +61,23 @@ export function ConfigureChartDialog({
                           ? "border-brand-dark bg-brand-dark/5 ring-brand-dark ring-2"
                           : "border-gray-200"
                       )}
-                      aria-label={t(`environments.analysis.charts.chart_type_${chart.id}`)}>
+                      aria-label={chart.label}>
                       <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
                         <chart.icon className="h-5 w-5 text-gray-600" strokeWidth={1.5} />
                       </div>
-                      <span className="text-xs font-medium text-gray-700">
-                        {t(`environments.analysis.charts.chart_type_${chart.id}`)}
-                      </span>
+                      <span className="text-sm font-medium text-gray-700">{chart.label}</span>
                     </button>
                   );
                 })}
               </div>
               <div className="mt-3 flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={onReset} className="text-xs">
+                <Button variant="ghost" size="sm" onClick={onReset} className="text-sm">
                   {t("environments.analysis.charts.reset_to_ai_suggestion")}
                 </Button>
                 {configuredChartType && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-sm text-gray-500">
                     {t("environments.analysis.charts.original")}:{" "}
-                    {t(`environments.analysis.charts.chart_type_${currentChartType}`, {
-                      defaultValue:
-                        CHART_TYPES.find((c) => c.id === currentChartType)?.name ?? currentChartType,
-                    })}
+                    {chartTypes.find((c) => c.id === currentChartType)?.label ?? currentChartType}
                   </span>
                 )}
               </div>

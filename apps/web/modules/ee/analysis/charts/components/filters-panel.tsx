@@ -151,9 +151,9 @@ export function FiltersPanel({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-gray-900">{t("environments.analysis.charts.filters")}</h3>
+        <h3 className="text-md font-semibold text-gray-900">{t("environments.analysis.charts.filters")}</h3>
         <Select value={filterLogic} onValueChange={(value) => onFilterLogicChange(value as "and" | "or")}>
           <SelectTrigger className="w-[100px]">
             <SelectValue />

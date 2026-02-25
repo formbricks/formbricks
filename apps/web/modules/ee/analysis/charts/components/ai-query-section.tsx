@@ -1,7 +1,7 @@
 "use client";
 
 import { ActivityIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -18,9 +18,17 @@ interface AIQuerySectionProps {
 export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQuerySectionProps>) {
   const [userQuery, setUserQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const mountedRef = useRef(true);
   const { t } = useTranslation();
 
-  const handleGenerate = async () => {
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!userQuery.trim()) return;
     setIsGenerating(true);
     try {
@@ -29,6 +37,8 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
         prompt: userQuery.trim(),
       });
 
+      if (!mountedRef.current) return;
+
       if (result?.data) {
         onChartGenerated(result.data);
       } else {
@@ -36,11 +46,14 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
         toast.error(errorMessage);
       }
     } catch (error: unknown) {
+      if (!mountedRef.current) return;
       const message =
-        error instanceof Error ? error.message : t("environments.analysis.charts.failed_to_execute_query");
+        error instanceof Error ? error.message : t("common.something_went_wrong_please_try_again");
       toast.error(message);
     } finally {
-      setIsGenerating(false);
+      if (mountedRef.current) {
+        setIsGenerating(false);
+      }
     }
   };
 
@@ -60,27 +73,22 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <form className="flex gap-4" onSubmit={handleSubmit}>
         <Input
           placeholder={t("environments.analysis.charts.ai_query_placeholder")}
           value={userQuery}
           onChange={(e) => setUserQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && userQuery.trim() && !isGenerating) {
-              handleGenerate();
-            }
-          }}
           className="flex-1"
           disabled={isGenerating}
         />
         <Button
+          type="submit"
           disabled={!userQuery.trim() || isGenerating}
           loading={isGenerating}
-          className="bg-brand-dark hover:bg-brand-dark/90"
-          onClick={handleGenerate}>
+          className="bg-brand-dark hover:bg-brand-dark/90">
           {t("common.generate")}
         </Button>
-      </div>
+      </form>
     </div>
   );
 }

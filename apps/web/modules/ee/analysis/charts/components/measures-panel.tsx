@@ -68,15 +68,13 @@ export function MeasuresPanel({
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-medium text-gray-900">{t("environments.analysis.charts.measures")}</h3>
+    <div className="space-y-2">
+      <h3 className="text-md font-semibold text-gray-900">{t("environments.analysis.charts.measures")}</h3>
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* Predefined Measures */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            {t("environments.analysis.charts.predefined_measures")}
-          </label>
+          <label className="text-sm">{t("environments.analysis.charts.predefined_measures")}</label>
           <MultiSelect
             options={measureOptions}
             value={selectedMeasures}
@@ -88,9 +86,7 @@ export function MeasuresPanel({
         {/* Custom Measures */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">
-              {t("environments.analysis.charts.custom_aggregations")}
-            </label>
+            <label className="text-sm">{t("environments.analysis.charts.custom_aggregations")}</label>
             <Button
               type="button"
               variant="outline"

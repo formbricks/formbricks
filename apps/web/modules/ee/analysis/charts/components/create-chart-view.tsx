@@ -1,11 +1,14 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
 import { AIQuerySection } from "@/modules/ee/analysis/charts/components/ai-query-section";
-import { ChartDialogFooterWithModals } from "@/modules/ee/analysis/charts/components/chart-dialog-footer-with-modals";
+import { ChartBuilderGuide } from "@/modules/ee/analysis/charts/components/chart-builder-guide";
+import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
+import { SaveChartDialog } from "@/modules/ee/analysis/charts/components/save-chart-dialog";
 import type { AnalyticsResponse, TChartType } from "@/modules/ee/analysis/types/analysis";
 import {
   Dialog,
@@ -103,10 +106,13 @@ export function CreateChartView({
               </div>
             </div>
 
-            <ManualChartBuilder
-              selectedChartType={selectedChartType}
-              onChartTypeSelect={onSelectedChartTypeChange}
-            />
+            <div className="space-y-2">
+              <ChartBuilderGuide />
+              <ManualChartBuilder
+                selectedChartType={selectedChartType}
+                onChartTypeSelect={onSelectedChartTypeChange}
+              />
+            </div>
 
             {shouldShowAdvancedBuilder && (
               <AdvancedChartBuilder
@@ -125,20 +131,32 @@ export function CreateChartView({
         </DialogBody>
 
         {chartData && (
-          <ChartDialogFooterWithModals
-            chartName={chartName}
-            onChartNameChange={onChartNameChange}
-            dashboards={dashboards}
-            selectedDashboardId={selectedDashboardId}
-            onDashboardSelect={onDashboardSelect}
-            onAddToDashboard={onAddToDashboard}
-            onSave={onSave}
-            isSaving={isSaving}
-            isSaveDialogOpen={isSaveDialogOpen}
-            onSaveDialogOpenChange={onSaveDialogOpenChange}
-            isAddToDashboardDialogOpen={isAddToDashboardDialogOpen}
-            onAddToDashboardDialogOpenChange={onAddToDashboardDialogOpenChange}
-          />
+          <>
+            <ChartDialogFooter
+              onSaveClick={() => onSaveDialogOpenChange(true)}
+              onAddToDashboardClick={() => onAddToDashboardDialogOpenChange(true)}
+              isSaving={isSaving}
+            />
+            <SaveChartDialog
+              open={isSaveDialogOpen}
+              onOpenChange={onSaveDialogOpenChange}
+              chartName={chartName}
+              onChartNameChange={onChartNameChange}
+              onSave={onSave}
+              isSaving={isSaving}
+            />
+            <AddToDashboardDialog
+              isOpen={isAddToDashboardDialogOpen}
+              onOpenChange={onAddToDashboardDialogOpenChange}
+              chartName={chartName}
+              onChartNameChange={onChartNameChange}
+              dashboards={dashboards}
+              selectedDashboardId={selectedDashboardId}
+              onDashboardSelect={onDashboardSelect}
+              onAdd={onAddToDashboard}
+              isSaving={isSaving}
+            />
+          </>
         )}
       </DialogContent>
     </Dialog>

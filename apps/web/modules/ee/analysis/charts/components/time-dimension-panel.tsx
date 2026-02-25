@@ -85,8 +85,10 @@ export function TimeDimensionPanel({
 
   if (!timeDimension) {
     return (
-      <div className="space-y-4">
-        <h3 className="font-medium text-gray-900">{t("environments.analysis.charts.time_dimension")}</h3>
+      <div className="space-y-2">
+        <h3 className="text-md font-semibold text-gray-900">
+          {t("environments.analysis.charts.time_dimension")}
+        </h3>
         <div>
           <Button type="button" variant="outline" onClick={handleEnableTimeDimension}>
             {t("environments.analysis.charts.enable_time_dimension")}
@@ -97,9 +99,11 @@ export function TimeDimensionPanel({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-gray-900">{t("environments.analysis.charts.time_dimension")}</h3>
+        <h3 className="text-md font-semibold text-gray-900">
+          {t("environments.analysis.charts.time_dimension")}
+        </h3>
         <Button type="button" variant="ghost" size="sm" onClick={handleDisableTimeDimension}>
           {t("common.disable")}
         </Button>
@@ -108,9 +112,7 @@ export function TimeDimensionPanel({
       <div className="space-y-3">
         {/* Field Selector */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            {t("environments.analysis.charts.field")}
-          </label>
+          <label className="text-sm">{t("environments.analysis.charts.field")}</label>
           <Select value={timeDimension.dimension} onValueChange={handleDimensionChange}>
             <SelectTrigger className="w-full">
               <SelectValue />
@@ -127,9 +129,7 @@ export function TimeDimensionPanel({
 
         {/* Granularity Selector */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            {t("environments.analysis.charts.granularity")}
-          </label>
+          <label className="text-sm">{t("environments.analysis.charts.granularity")}</label>
           <Select value={timeDimension.granularity ?? "none"} onValueChange={handleGranularityChange}>
             <SelectTrigger className="w-full">
               <SelectValue />
@@ -147,9 +147,7 @@ export function TimeDimensionPanel({
 
         {/* Date Range */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            {t("environments.analysis.charts.date_range")}
-          </label>
+          <label className="text-sm">{t("environments.analysis.charts.date_range")}</label>
           <div className="space-y-2">
             <Select
               value={dateRangeType}

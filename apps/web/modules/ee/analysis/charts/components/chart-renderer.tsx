@@ -17,7 +17,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { TChartQuery } from "@formbricks/types/dashboard";
+import { TChartQuery } from "@formbricks/types/analysis";
 import {
   CHART_BRAND_DARK,
   CHART_BRAND_LIGHT,

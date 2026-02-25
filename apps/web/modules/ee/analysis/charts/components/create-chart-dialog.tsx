@@ -85,8 +85,6 @@ export function CreateChartDialog({
         onAddToDashboard={handleAddToDashboard}
         onSave={handleSaveChart}
         isSaving={isSaving}
-        isSaveDialogOpen={isSaveDialogOpen}
-        onSaveDialogOpenChange={setIsSaveDialogOpen}
         isAddToDashboardDialogOpen={isAddToDashboardDialogOpen}
         onAddToDashboardDialogOpenChange={setIsAddToDashboardDialogOpen}
       />

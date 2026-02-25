@@ -1,8 +1,10 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
-import { ChartDialogFooterWithModals } from "@/modules/ee/analysis/charts/components/chart-dialog-footer-with-modals";
+import { ChartBuilderGuide } from "@/modules/ee/analysis/charts/components/chart-builder-guide";
+import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
 import type { AnalyticsResponse, TChartType } from "@/modules/ee/analysis/types/analysis";
@@ -37,8 +39,6 @@ interface EditChartViewProps {
   onAddToDashboard: () => void;
   onSave: () => void;
   isSaving: boolean;
-  isSaveDialogOpen: boolean;
-  onSaveDialogOpenChange: (open: boolean) => void;
   isAddToDashboardDialogOpen: boolean;
   onAddToDashboardDialogOpenChange: (open: boolean) => void;
 }
@@ -63,8 +63,6 @@ export function EditChartView({
   onAddToDashboard,
   onSave,
   isSaving,
-  isSaveDialogOpen,
-  onSaveDialogOpenChange,
   isAddToDashboardDialogOpen,
   onAddToDashboardDialogOpenChange,
 }: Readonly<EditChartViewProps>) {
@@ -79,7 +77,7 @@ export function EditChartView({
         <DialogBody>
           <div className="grid gap-4 px-1">
             <div className="space-y-2">
-              <label htmlFor="edit-chart-name" className="text-sm font-medium text-gray-900">
+              <label htmlFor="edit-chart-name" className="text-sm">
                 {t("environments.analysis.charts.chart_name")}
               </label>
               <Input
@@ -90,7 +88,13 @@ export function EditChartView({
                 className="w-full"
               />
             </div>
-            <ManualChartBuilder selectedChartType={selectedChartType} onChartTypeSelect={onChartTypeChange} />
+            <div className="space-y-2">
+              <ChartBuilderGuide />
+              <ManualChartBuilder
+                selectedChartType={selectedChartType}
+                onChartTypeSelect={onChartTypeChange}
+              />
+            </div>
             <AdvancedChartBuilder
               environmentId={environmentId}
               initialChartType={selectedChartType || chartData?.chartType}
@@ -103,20 +107,21 @@ export function EditChartView({
             <ChartPreview chartData={chartData} isLoading={isLoadingChart} />
           </div>
         </DialogBody>
-        <ChartDialogFooterWithModals
+        <ChartDialogFooter
+          onSaveClick={onSave}
+          onAddToDashboardClick={() => onAddToDashboardDialogOpenChange(true)}
+          isSaving={isSaving}
+        />
+        <AddToDashboardDialog
+          isOpen={isAddToDashboardDialogOpen}
+          onOpenChange={onAddToDashboardDialogOpenChange}
           chartName={chartName}
           onChartNameChange={onChartNameChange}
           dashboards={dashboards}
           selectedDashboardId={selectedDashboardId}
           onDashboardSelect={onDashboardSelect}
-          onAddToDashboard={onAddToDashboard}
-          onSave={onSave}
+          onAdd={onAddToDashboard}
           isSaving={isSaving}
-          isSaveDialogOpen={isSaveDialogOpen}
-          onSaveDialogOpenChange={onSaveDialogOpenChange}
-          isAddToDashboardDialogOpen={isAddToDashboardDialogOpen}
-          onAddToDashboardDialogOpenChange={onAddToDashboardDialogOpenChange}
-          onDirectSave={onSave}
         />
       </DialogContent>
     </Dialog>

@@ -1,4 +1,5 @@
 import { format, isValid, parseISO } from "date-fns";
+import type { TChartQuery } from "@formbricks/types/analysis";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 
@@ -50,4 +51,45 @@ export function formatCellValue(value: unknown): string {
   if (typeof value === "object") return JSON.stringify(value);
   if (typeof value === "boolean" || typeof value === "bigint") return String(value);
   return "";
+}
+
+const ALLOWED_CUBE_PREFIX = "FeedbackRecords.";
+
+function validateMember(member: string): boolean {
+  return member.startsWith(ALLOWED_CUBE_PREFIX);
+}
+
+/**
+ * Validates that all measures, dimensions, segments, timeDimensions, and filters
+ * use only members starting with FeedbackRecords.
+ * @throws Error if any member is invalid
+ */
+export function validateQueryMembers(query: TChartQuery): void {
+  const invalid: string[] = [];
+  for (const m of query.measures ?? []) {
+    if (!validateMember(m)) invalid.push(m);
+  }
+  for (const d of query.dimensions ?? []) {
+    if (!validateMember(d)) invalid.push(d);
+  }
+  for (const s of query.segments ?? []) {
+    if (!validateMember(s)) invalid.push(s);
+  }
+  for (const td of query.timeDimensions ?? []) {
+    if (!validateMember(td.dimension)) invalid.push(td.dimension);
+  }
+  const checkFilters = (f: TChartQuery["filters"]): void => {
+    if (!f) return;
+    for (const item of f) {
+      if ("member" in item && typeof item.member === "string" && !validateMember(item.member)) {
+        invalid.push(item.member);
+      }
+      if ("and" in item && Array.isArray(item.and)) checkFilters(item.and);
+      if ("or" in item && Array.isArray(item.or)) checkFilters(item.or);
+    }
+  };
+  checkFilters(query.filters);
+  if (invalid.length > 0) {
+    throw new Error(`Invalid query members (must start with ${ALLOWED_CUBE_PREFIX}): ${invalid.join(", ")}`);
+  }
 }

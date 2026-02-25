@@ -1,8 +1,8 @@
 /* eslint-disable import/no-relative-packages -- required for importing types */
 /* eslint-disable @typescript-eslint/no-namespace -- using namespaces is required for prisma-json-types-generator */
 import { type TActionClassNoCodeConfig } from "../types/action-classes";
+import type { TChartConfig, TChartQuery, TWidgetLayout } from "../types/analysis";
 import type { TOrganizationAccess } from "../types/api-key";
-import type { TChartConfig, TChartQuery, TWidgetLayout } from "../types/dashboard";
 import { type TIntegrationConfig } from "../types/integration";
 import { type TOrganizationBilling } from "../types/organizations";
 import { type TProjectConfig, type TProjectStyling } from "../types/project";

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { TDashboard } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import {
   Select,
   SelectContent,
@@ -20,17 +22,12 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 
-interface Dashboard {
-  id: string;
-  name: string;
-}
-
 interface AddToDashboardDialogProps {
-  open: boolean;
+  isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   chartName: string;
   onChartNameChange: (name: string) => void;
-  dashboards: Dashboard[];
+  dashboards: Pick<TDashboard, "id" | "name">[];
   selectedDashboardId: string;
   onDashboardSelect: (id: string) => void;
   onAdd: () => void;
@@ -38,7 +35,7 @@ interface AddToDashboardDialogProps {
 }
 
 export function AddToDashboardDialog({
-  open,
+  isOpen,
   onOpenChange,
   chartName,
   onChartNameChange,
@@ -51,7 +48,7 @@ export function AddToDashboardDialog({
   const { t } = useTranslation();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("environments.analysis.charts.add_chart_to_dashboard")}</DialogTitle>
@@ -60,24 +57,24 @@ export function AddToDashboardDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <div className="space-y-4">
+          <div className="m-1 space-y-4">
             <div>
-              <label htmlFor="chart-name" className="mb-2 block text-sm font-medium text-gray-700">
-                {t("environments.analysis.charts.chart_name")}
-              </label>
+              <Label htmlFor="chart-name">{t("environments.analysis.charts.chart_name")}</Label>
               <Input
                 id="chart-name"
+                className="mt-2"
                 placeholder={t("environments.analysis.charts.chart_name_placeholder")}
                 value={chartName}
                 onChange={(e) => onChartNameChange(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="dashboard-select" className="mb-2 block text-sm font-medium text-gray-700">
-                {t("environments.analysis.charts.dashboard")}
-              </label>
+              <Label htmlFor="dashboard-select">{t("environments.analysis.charts.dashboard")}</Label>
               <Select value={selectedDashboardId} onValueChange={onDashboardSelect}>
-                <SelectTrigger id="dashboard-select" className="w-full bg-white">
+                <SelectTrigger
+                  id="dashboard-select"
+                  className="mt-2 w-full bg-white"
+                  disabled={dashboards.length === 0}>
                   <SelectValue
                     placeholder={
                       dashboards.length === 0
@@ -112,7 +109,7 @@ export function AddToDashboardDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={onAdd} loading={isSaving} disabled={!selectedDashboardId}>
+          <Button onClick={onAdd} loading={isSaving} disabled={!selectedDashboardId || !chartName.trim()}>
             {t("environments.analysis.charts.add_to_dashboard")}
           </Button>
         </DialogFooter>

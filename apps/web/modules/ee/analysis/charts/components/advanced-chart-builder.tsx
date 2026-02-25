@@ -1,24 +1,20 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { CodeIcon, DatabaseIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TChartQuery } from "@formbricks/types/dashboard";
+import type { TChartQuery } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createChartAction, executeQueryAction } from "@/modules/ee/analysis/charts/actions";
+import { executeQueryAction } from "@/modules/ee/analysis/charts/actions";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
-import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
+import { AdvancedChartPreview } from "@/modules/ee/analysis/charts/components/advanced-chart-preview";
+import { ChartTypeSelector } from "@/modules/ee/analysis/charts/components/chart-type-selector";
 import { DimensionsPanel } from "@/modules/ee/analysis/charts/components/dimensions-panel";
 import { FiltersPanel } from "@/modules/ee/analysis/charts/components/filters-panel";
 import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-panel";
 import { SaveChartDialog } from "@/modules/ee/analysis/charts/components/save-chart-dialog";
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
-import { CHART_TYPES } from "@/modules/ee/analysis/charts/lib/chart-types";
-import { formatCellValue, resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
+import { useSaveDashboardDialogs } from "@/modules/ee/analysis/charts/hooks/use-save-dashboard-dialogs";
 import {
   ChartBuilderState,
   type CustomMeasure,
@@ -27,16 +23,18 @@ import {
   buildCubeQuery,
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
-import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { AnalyticsResponse, TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+
+const DEBOUNCE_MS = 300;
 
 interface AdvancedChartBuilderProps {
   environmentId: string;
   initialChartType?: TChartType;
   initialQuery?: TChartQuery;
   hidePreview?: boolean;
+  /** Must be stable (memoized) to avoid effect re-runs on every parent render */
   onChartGenerated?: (data: AnalyticsResponse) => void;
   onSave?: (chartId: string) => void;
   onAddToDashboard?: (chartId: string, dashboardId: string) => void;
@@ -49,7 +47,24 @@ type Action =
   | { type: "SET_DIMENSIONS"; payload: string[] }
   | { type: "SET_FILTERS"; payload: FilterRow[] }
   | { type: "SET_FILTER_LOGIC"; payload: "and" | "or" }
-  | { type: "SET_TIME_DIMENSION"; payload: TimeDimensionConfig | null };
+  | { type: "SET_TIME_DIMENSION"; payload: TimeDimensionConfig | null }
+  | { type: "QUERY_START" }
+  | { type: "QUERY_SUCCESS"; payload: { data: TChartDataRow[]; query: TChartQuery } }
+  | { type: "QUERY_ERROR"; payload: string };
+
+interface QueryState {
+  chartData: TChartDataRow[] | null;
+  query: TChartQuery | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+const initialQueryState: QueryState = {
+  chartData: null,
+  query: null,
+  isLoading: false,
+  error: null,
+};
 
 const initialState: ChartBuilderState = {
   chartType: "",
@@ -61,7 +76,7 @@ const initialState: ChartBuilderState = {
   timeDimension: null,
 };
 
-function chartBuilderReducer(state: ChartBuilderState, action: Action): ChartBuilderState {
+const chartBuilderReducer = (state: ChartBuilderState, action: Action): ChartBuilderState => {
   switch (action.type) {
     case "SET_CHART_TYPE":
       return { ...state, chartType: action.payload };
@@ -80,7 +95,25 @@ function chartBuilderReducer(state: ChartBuilderState, action: Action): ChartBui
     default:
       return state;
   }
-}
+};
+
+const queryReducer = (state: QueryState, action: Action): QueryState => {
+  switch (action.type) {
+    case "QUERY_START":
+      return { ...state, isLoading: true, error: null };
+    case "QUERY_SUCCESS":
+      return {
+        chartData: action.payload.data,
+        query: action.payload.query,
+        isLoading: false,
+        error: null,
+      };
+    case "QUERY_ERROR":
+      return { ...state, isLoading: false, error: action.payload };
+    default:
+      return state;
+  }
+};
 
 export function AdvancedChartBuilder({
   environmentId,
@@ -91,9 +124,12 @@ export function AdvancedChartBuilder({
   onSave,
   onAddToDashboard,
 }: Readonly<AdvancedChartBuilderProps>) {
-  const router = useRouter();
+  const { t } = useTranslation();
+  const onChartGeneratedRef = useRef(onChartGenerated);
+  onChartGeneratedRef.current = onChartGenerated;
+  const prevInitialChartTypeRef = useRef(initialChartType);
 
-  const getInitialState = (): ChartBuilderState => {
+  const getInitialState = useCallback((): ChartBuilderState => {
     if (initialQuery) {
       const parsedState = parseQueryToState(initialQuery, initialChartType);
       return {
@@ -102,55 +138,59 @@ export function AdvancedChartBuilder({
         chartType: parsedState.chartType || initialChartType || "",
       };
     }
-    return {
-      ...initialState,
-      chartType: initialChartType || "",
-    };
-  };
+    return { ...initialState, chartType: initialChartType || "" };
+  }, [initialQuery, initialChartType]);
 
   const [state, dispatch] = useReducer(chartBuilderReducer, getInitialState());
-  const [chartData, setChartData] = useState<TChartDataRow[] | null>(null);
-  const [query, setQuery] = useState<TChartQuery | null>(initialQuery || null);
+  const [queryState, dispatchQuery] = useReducer(queryReducer, {
+    ...initialQueryState,
+    query: initialQuery || null,
+  });
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
-  const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
-  const [chartName, setChartName] = useState("");
-  const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedDashboardId, setSelectedDashboardId] = useState<string>("");
-  const [isSaving, setIsSaving] = useState(false);
   const [showQuery, setShowQuery] = useState(false);
   const [showData, setShowData] = useState(false);
-  const lastStateRef = React.useRef<string>("");
+  const lastStateRef = useRef<string>("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef(0);
 
-  // Sync initialChartType prop changes to state
+  const saveDashboard = useSaveDashboardDialogs({
+    environmentId,
+    getChartInput: () => {
+      if (!queryState.chartData || !queryState.query || !state.chartType) return null;
+      return { query: queryState.query, chartType: state.chartType };
+    },
+    onSave,
+    onAddToDashboard,
+  });
+
+  // Sync initialChartType only when the prop changes (not when state diverges)
   useEffect(() => {
-    if (initialChartType && initialChartType !== state.chartType) {
+    if (initialChartType && initialChartType !== prevInitialChartTypeRef.current) {
+      prevInitialChartTypeRef.current = initialChartType;
       dispatch({ type: "SET_CHART_TYPE", payload: initialChartType });
       if (!initialQuery && !isInitialized) {
         setIsInitialized(true);
       }
     }
-  }, [initialChartType, state.chartType, initialQuery, isInitialized]);
+  }, [initialChartType, initialQuery, isInitialized]);
 
-  // Initialize: If initialQuery is provided (from AI), execute it and set chart data
+  // Initialize: execute initialQuery once (deps intentionally minimal to avoid redundant runs)
   useEffect(() => {
-    if (initialQuery && !isInitialized) {
-      setIsInitialized(true);
-      const chartType = state.chartType;
-      executeQueryAction({
-        environmentId,
-        query: initialQuery,
-      }).then((result) => {
+    if (!initialQuery || isInitialized) return;
+    setIsInitialized(true);
+    const chartType = state.chartType;
+    const requestId = ++requestIdRef.current;
+
+    executeQueryAction({ environmentId, query: initialQuery })
+      .then((result) => {
+        if (requestId !== requestIdRef.current) return;
         if (result?.serverError) {
-          setError(getFormattedErrorMessage(result));
+          dispatchQuery({ type: "QUERY_ERROR", payload: getFormattedErrorMessage(result) });
           return;
         }
         const data = Array.isArray(result?.data) ? result.data : [];
         if (data.length > 0) {
-          setChartData(data);
-          setQuery(initialQuery);
+          dispatchQuery({ type: "QUERY_SUCCESS", payload: { data, query: initialQuery } });
           lastStateRef.current = JSON.stringify({
             chartType,
             measures: state.selectedMeasures,
@@ -158,27 +198,24 @@ export function AdvancedChartBuilder({
             filters: state.filters,
             timeDimension: state.timeDimension,
           });
-          if (onChartGenerated && chartType) {
-            onChartGenerated({ query: initialQuery, chartType, data });
+          if (onChartGeneratedRef.current && chartType) {
+            onChartGeneratedRef.current({ query: initialQuery, chartType, data });
           }
         }
+      })
+      .catch((err: unknown) => {
+        if (requestId !== requestIdRef.current) return;
+        const message =
+          err instanceof Error ? err.message : t("environments.analysis.charts.failed_to_execute_query");
+        dispatchQuery({ type: "QUERY_ERROR", payload: message });
       });
-    }
-  }, [
-    initialQuery,
-    environmentId,
-    isInitialized,
-    state.chartType,
-    state.selectedMeasures,
-    state.selectedDimensions,
-    state.filters,
-    state.timeDimension,
-    onChartGenerated,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init runs once; state/onChartGenerated via ref
+  }, [initialQuery, environmentId, isInitialized]);
 
-  // Update preview reactively when state changes (after initialization)
+  // Reactive query with debounce and cancellation
   useEffect(() => {
     if (!isInitialized || !state.chartType) return;
+    if (state.selectedMeasures.length === 0 && state.customMeasures.length === 0) return;
 
     const stateHash = JSON.stringify({
       chartType: state.chartType,
@@ -187,44 +224,47 @@ export function AdvancedChartBuilder({
       filters: state.filters,
       timeDimension: state.timeDimension,
     });
-
     if (stateHash === lastStateRef.current) return;
     lastStateRef.current = stateHash;
 
-    if (state.selectedMeasures.length === 0 && state.customMeasures.length === 0) {
-      return;
-    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+      const chartType = state.chartType;
+      const updatedQuery = buildCubeQuery(state);
+      const requestId = ++requestIdRef.current;
+      dispatchQuery({ type: "QUERY_START" });
 
-    const chartType = state.chartType;
-    const updatedQuery = buildCubeQuery(state);
-    setIsLoading(true);
-    setError(null);
-
-    executeQueryAction({
-      environmentId,
-      query: updatedQuery,
-    })
-      .then((result) => {
-        const data = Array.isArray(result?.data) ? result.data : [];
-        if (data.length > 0) {
-          setChartData(data);
-          setQuery(updatedQuery);
-          if (onChartGenerated && chartType) {
-            onChartGenerated({ query: updatedQuery, chartType, data });
+      executeQueryAction({ environmentId, query: updatedQuery })
+        .then((result) => {
+          if (requestId !== requestIdRef.current) return;
+          if (result?.serverError) {
+            dispatchQuery({ type: "QUERY_ERROR", payload: getFormattedErrorMessage(result) });
+            return;
           }
-        } else if (result?.serverError) {
-          setError(getFormattedErrorMessage(result));
-        }
-      })
-      .catch((err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : t("environments.analysis.charts.failed_to_execute_query");
-        setError(message);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- state excluded to avoid sync loops
+          const data = Array.isArray(result?.data) ? result.data : [];
+          if (data.length > 0) {
+            dispatchQuery({ type: "QUERY_SUCCESS", payload: { data, query: updatedQuery } });
+            if (onChartGeneratedRef.current && chartType) {
+              onChartGeneratedRef.current({ query: updatedQuery, chartType, data });
+            }
+          }
+        })
+        .catch((err: unknown) => {
+          if (requestId !== requestIdRef.current) return;
+          const message =
+            err instanceof Error ? err.message : t("environments.analysis.charts.failed_to_execute_query");
+          dispatchQuery({ type: "QUERY_ERROR", payload: message });
+        });
+    }, DEBOUNCE_MS);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounced; onChartGenerated via ref
   }, [
     state.chartType,
     state.selectedMeasures,
@@ -235,22 +275,39 @@ export function AdvancedChartBuilder({
     state.timeDimension,
     isInitialized,
     environmentId,
-    onChartGenerated,
   ]);
 
-  useEffect(() => {
-    if (isAddToDashboardDialogOpen) {
-      getDashboardsAction({ environmentId }).then((result) => {
-        if (result?.data) {
-          setDashboards(result.data.map((d) => ({ id: d.id, name: d.name })));
-        } else if (result?.serverError) {
-          toast.error(getFormattedErrorMessage(result));
-        }
-      });
-    }
-  }, [isAddToDashboardDialogOpen, environmentId]);
-
-  const { t } = useTranslation();
+  const processQueryResult = useCallback(
+    (
+      result: Awaited<ReturnType<typeof executeQueryAction>>,
+      cubeQuery: TChartQuery,
+      chartType: TChartType,
+      requestId: number
+    ) => {
+      if (requestId !== requestIdRef.current) return;
+      if (result?.serverError) {
+        const errorMsg = getFormattedErrorMessage(result);
+        dispatchQuery({ type: "QUERY_ERROR", payload: errorMsg });
+        toast.error(errorMsg);
+        return;
+      }
+      const data = Array.isArray(result?.data) ? result.data : [];
+      if (data.length === 0) {
+        dispatchQuery({
+          type: "QUERY_ERROR",
+          payload: t("environments.analysis.charts.no_data_returned"),
+        });
+        toast.error(t("environments.analysis.charts.no_data_returned"));
+        return;
+      }
+      dispatchQuery({ type: "QUERY_SUCCESS", payload: { data, query: cubeQuery } });
+      toast.success(t("environments.analysis.charts.query_executed_successfully"));
+      if (onChartGeneratedRef.current && chartType) {
+        onChartGeneratedRef.current({ query: cubeQuery, chartType, data });
+      }
+    },
+    [t]
+  );
 
   const handleRunQuery = async () => {
     if (!state.chartType) {
@@ -262,185 +319,34 @@ export function AdvancedChartBuilder({
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
+    dispatchQuery({ type: "QUERY_START" });
+    const cubeQuery = buildCubeQuery(state);
+    const chartType = state.chartType;
+    const requestId = ++requestIdRef.current;
 
     try {
-      const cubeQuery = buildCubeQuery(state);
-      setQuery(cubeQuery);
-
-      const result = await executeQueryAction({
-        environmentId,
-        query: cubeQuery,
-      });
-
-      if (result?.serverError) {
-        const errorMsg = getFormattedErrorMessage(result);
-        setError(errorMsg);
-        toast.error(errorMsg);
-        setChartData(null);
-      } else if (result?.data !== undefined && Array.isArray(result.data)) {
-        const data = result.data;
-        setChartData(data);
-        setError(null);
-        toast.success(t("environments.analysis.charts.query_executed_successfully"));
-
-        if (onChartGenerated && state.chartType) {
-          onChartGenerated({ query: cubeQuery, chartType: state.chartType, data });
-        }
-      } else {
-        throw new Error(t("environments.analysis.charts.no_data_returned"));
-      }
+      const result = await executeQueryAction({ environmentId, query: cubeQuery });
+      processQueryResult(result, cubeQuery, chartType, requestId);
     } catch (err: unknown) {
-      const errorMessage =
+      if (requestId !== requestIdRef.current) return;
+      const message =
         err instanceof Error ? err.message : t("environments.analysis.charts.failed_to_execute_query");
-      setError(errorMessage);
-      toast.error(errorMessage);
-      setChartData(null);
-    } finally {
-      setIsLoading(false);
+      dispatchQuery({ type: "QUERY_ERROR", payload: message });
+      toast.error(message);
     }
   };
 
-  const handleSaveChart = async () => {
-    if (!chartData || !chartName.trim()) {
-      toast.error(t("environments.analysis.charts.please_enter_chart_name"));
-      return;
-    }
-    if (!query) {
-      toast.error(t("environments.analysis.charts.please_run_query_first"));
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const result = await createChartAction({
-        environmentId,
-        chartInput: {
-          name: chartName,
-          type: resolveChartType(state.chartType),
-          query,
-          config: {},
-        },
-      });
-
-      if (!result?.data) {
-        toast.error(
-          (result && getFormattedErrorMessage(result)) ||
-            t("environments.analysis.charts.failed_to_save_chart")
-        );
-        return;
-      }
-
-      toast.success(t("environments.analysis.charts.chart_saved_successfully"));
-      setIsSaveDialogOpen(false);
-      if (onSave) {
-        onSave(result.data.id);
-      } else {
-        router.push(`/environments/${environmentId}/analysis/charts`);
-      }
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : t("environments.analysis.charts.failed_to_save_chart");
-      toast.error(errorMessage);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleAddToDashboard = async () => {
-    if (!chartData || !selectedDashboardId) {
-      toast.error(t("environments.analysis.charts.please_select_dashboard"));
-      return;
-    }
-    if (!query) {
-      toast.error(t("environments.analysis.charts.please_run_query_first"));
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const chartResult = await createChartAction({
-        environmentId,
-        chartInput: {
-          name: chartName || `Chart ${new Date().toLocaleString()}`,
-          type: resolveChartType(state.chartType),
-          query,
-          config: {},
-        },
-      });
-
-      if (!chartResult?.data) {
-        toast.error(
-          (chartResult && getFormattedErrorMessage(chartResult)) ||
-            t("environments.analysis.charts.failed_to_save_chart")
-        );
-        return;
-      }
-
-      const widgetResult = await addChartToDashboardAction({
-        environmentId,
-        chartId: chartResult.data.id,
-        dashboardId: selectedDashboardId,
-      });
-
-      if (!widgetResult?.data) {
-        toast.error(
-          (widgetResult && getFormattedErrorMessage(widgetResult)) ||
-            t("environments.analysis.charts.failed_to_add_chart_to_dashboard")
-        );
-        return;
-      }
-
-      toast.success(t("environments.analysis.charts.chart_added_to_dashboard"));
-      setIsAddToDashboardDialogOpen(false);
-      if (onAddToDashboard) {
-        onAddToDashboard(chartResult.data.id, selectedDashboardId);
-      } else {
-        router.push(`/environments/${environmentId}/analysis/dashboards/${selectedDashboardId}`);
-      }
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : t("environments.analysis.charts.failed_to_add_chart_to_dashboard");
-      toast.error(errorMessage);
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const { chartData, query, isLoading, error } = queryState;
+  const showSaveDashboard = !onSave || !onAddToDashboard;
 
   return (
-    <div className={hidePreview ? "space-y-4" : "grid gap-4 lg:grid-cols-2"}>
-      {/* Left Column: Configuration */}
-      <div className="space-y-4">
+    <div className={hidePreview ? "space-y-2" : "grid gap-4 lg:grid-cols-2"}>
+      <div className="space-y-2">
         {!hidePreview && (
-          <div className="space-y-4">
-            <h2 className="font-medium text-gray-900">
-              {t("environments.analysis.charts.chart_builder_choose_chart_type")}
-            </h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {CHART_TYPES.map((chart) => {
-                const isSelected = state.chartType === chart.id;
-                return (
-                  <button
-                    key={chart.id}
-                    type="button"
-                    onClick={() => dispatch({ type: "SET_CHART_TYPE", payload: chart.id })}
-                    className={`rounded-md border p-4 text-center transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                      isSelected
-                        ? "border-brand-dark ring-brand-dark bg-brand-dark/5 ring-1"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}>
-                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded bg-gray-100">
-                      <chart.icon className="h-6 w-6 text-gray-600" strokeWidth={1.5} />
-                    </div>
-                    <span className="text-xs font-medium text-gray-700">{chart.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <ChartTypeSelector
+            selectedChartType={state.chartType}
+            onChartTypeSelect={(chartType) => dispatch({ type: "SET_CHART_TYPE", payload: chartType })}
+          />
         )}
 
         <MeasuresPanel
@@ -471,12 +377,12 @@ export function AdvancedChartBuilder({
           <Button onClick={handleRunQuery} disabled={isLoading || !state.chartType}>
             {isLoading ? <LoadingSpinner /> : t("environments.analysis.charts.run_query")}
           </Button>
-          {chartData && !onSave && !onAddToDashboard && (
+          {chartData && showSaveDashboard && (
             <>
-              <Button variant="outline" onClick={() => setIsSaveDialogOpen(true)}>
+              <Button variant="outline" onClick={() => saveDashboard.setIsSaveDialogOpen(true)}>
                 {t("environments.analysis.charts.save_chart")}
               </Button>
-              <Button variant="outline" onClick={() => setIsAddToDashboardDialogOpen(true)}>
+              <Button variant="outline" onClick={() => saveDashboard.setIsAddToDashboardDialogOpen(true)}>
                 {t("environments.analysis.charts.add_to_dashboard")}
               </Button>
             </>
@@ -485,127 +391,40 @@ export function AdvancedChartBuilder({
       </div>
 
       {!hidePreview && (
-        <div className="space-y-4">
-          <h3 className="font-medium text-gray-900">{t("environments.analysis.charts.chart_preview")}</h3>
-
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>
-          )}
-
-          {isLoading && (
-            <div className="flex h-64 items-center justify-center">
-              <LoadingSpinner />
-            </div>
-          )}
-
-          {chartData &&
-            Array.isArray(chartData) &&
-            chartData.length > 0 &&
-            !isLoading &&
-            state.chartType &&
-            query && (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <ChartRenderer chartType={state.chartType} data={chartData} query={query} />
-                </div>
-
-                <Collapsible.Root open={showQuery} onOpenChange={setShowQuery}>
-                  <Collapsible.CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start">
-                      <CodeIcon className="mr-2 h-4 w-4" />
-                      {showQuery ? t("common.hide") : t("common.view")} Query
-                    </Button>
-                  </Collapsible.CollapsibleTrigger>
-                  <Collapsible.CollapsibleContent className="mt-2">
-                    <pre className="max-h-64 overflow-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs">
-                      {JSON.stringify(query, null, 2)}
-                    </pre>
-                  </Collapsible.CollapsibleContent>
-                </Collapsible.Root>
-
-                <Collapsible.Root open={showData} onOpenChange={setShowData}>
-                  <Collapsible.CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start">
-                      <DatabaseIcon className="mr-2 h-4 w-4" />
-                      {showData ? t("common.hide") : t("common.view")} Data
-                    </Button>
-                  </Collapsible.CollapsibleTrigger>
-                  <Collapsible.CollapsibleContent className="mt-2">
-                    <div className="max-h-64 overflow-auto rounded-lg border border-gray-200">
-                      <table className="w-full text-xs">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            {Array.isArray(chartData) &&
-                              chartData.length > 0 &&
-                              Object.keys(chartData[0]).map((key) => (
-                                <th
-                                  key={key}
-                                  className="border-b border-gray-200 px-3 py-2 text-left font-medium">
-                                  {formatCubeColumnHeader(key)}
-                                </th>
-                              ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {Array.isArray(chartData) &&
-                            chartData.slice(0, 10).map((row, idx) => {
-                              const rowKey = Object.values(row)
-                                .slice(0, 3)
-                                .map((v) => String(v || ""))
-                                .join("-");
-                              return (
-                                <tr key={`row-${idx}-${rowKey}`} className="border-b border-gray-100">
-                                  {Object.entries(row).map(([key, value]) => (
-                                    <td key={`${rowKey}-${key}`} className="px-3 py-2">
-                                      {formatCellValue(value) || "-"}
-                                    </td>
-                                  ))}
-                                </tr>
-                              );
-                            })}
-                        </tbody>
-                      </table>
-                      {Array.isArray(chartData) && chartData.length > 10 && (
-                        <div className="bg-gray-50 px-3 py-2 text-xs text-gray-500">
-                          {t("environments.analysis.charts.showing_first_10_of", { count: chartData.length })}
-                        </div>
-                      )}
-                    </div>
-                  </Collapsible.CollapsibleContent>
-                </Collapsible.Root>
-              </div>
-            )}
-
-          {!chartData && !isLoading && !error && (
-            <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500">
-              {t("environments.analysis.charts.advanced_chart_builder_config_prompt")}
-            </div>
-          )}
-        </div>
+        <AdvancedChartPreview
+          error={error}
+          isLoading={isLoading}
+          chartData={chartData}
+          chartType={state.chartType}
+          query={query}
+          showQuery={showQuery}
+          onShowQueryChange={setShowQuery}
+          showData={showData}
+          onShowDataChange={setShowData}
+        />
       )}
 
       {!onSave && (
         <SaveChartDialog
-          open={isSaveDialogOpen}
-          onOpenChange={setIsSaveDialogOpen}
-          chartName={chartName}
-          onChartNameChange={setChartName}
-          onSave={handleSaveChart}
-          isSaving={isSaving}
+          open={saveDashboard.isSaveDialogOpen}
+          onOpenChange={saveDashboard.setIsSaveDialogOpen}
+          chartName={saveDashboard.chartName}
+          onChartNameChange={saveDashboard.setChartName}
+          onSave={saveDashboard.handleSaveChart}
+          isSaving={saveDashboard.isSaving}
         />
       )}
-
       {!onAddToDashboard && (
         <AddToDashboardDialog
-          open={isAddToDashboardDialogOpen}
-          onOpenChange={setIsAddToDashboardDialogOpen}
-          chartName={chartName}
-          onChartNameChange={setChartName}
-          dashboards={dashboards}
-          selectedDashboardId={selectedDashboardId}
-          onDashboardSelect={setSelectedDashboardId}
-          onAdd={handleAddToDashboard}
-          isSaving={isSaving}
+          isOpen={saveDashboard.isAddToDashboardDialogOpen}
+          onOpenChange={saveDashboard.setIsAddToDashboardDialogOpen}
+          chartName={saveDashboard.chartName}
+          onChartNameChange={saveDashboard.setChartName}
+          dashboards={saveDashboard.dashboards}
+          selectedDashboardId={saveDashboard.selectedDashboardId}
+          onDashboardSelect={saveDashboard.setSelectedDashboardId}
+          onAdd={saveDashboard.handleAddToDashboard}
+          isSaving={saveDashboard.isSaving}
         />
       )}
     </div>
