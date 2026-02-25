@@ -225,3 +225,7 @@ export const appLanguages = [
     },
   },
 ];
+
+export const sortedAppLanguages = [...appLanguages].sort((a, b) =>
+  a.label["en-US"].localeCompare(b.label["en-US"])
+);

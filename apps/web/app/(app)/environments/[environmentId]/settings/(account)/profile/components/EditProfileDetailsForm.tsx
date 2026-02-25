@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TUser, TUserUpdateInput, ZUser, ZUserEmail } from "@formbricks/types/user";
 import { PasswordConfirmationModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/password-confirmation-modal";
-import { appLanguages } from "@/lib/i18n/utils";
+import { appLanguages, sortedAppLanguages } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { Button } from "@/modules/ui/components/button";
@@ -200,9 +200,6 @@ export const EditProfileDetailsForm = ({
             name="locale"
             render={({ field }) => {
               const selectedLanguage = appLanguages.find((l) => l.code === field.value);
-              const sortedAppLanguages = [...appLanguages].sort((a, b) =>
-                a.label["en-US"].localeCompare(b.label["en-US"])
-              );
 
               return (
                 <FormItem className="mt-4">
@@ -222,7 +219,7 @@ export const EditProfileDetailsForm = ({
                                   ` (${selectedLanguage.label.native})`}
                               </>
                             ) : (
-                              "NA"
+                              t("common.select")
                             )}
                             <ChevronDownIcon className="h-4 w-4 text-slate-500" />
                           </div>
