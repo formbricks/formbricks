@@ -234,7 +234,7 @@ export const SurveyMenuBar = ({
 
           toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
         } else {
-          toast.error(currentError.message, {
+          toast.error(t(`validation.${currentError.message}`, { defaultValue: currentError.message }), {
             className: "w-fit !max-w-md",
           });
         }
@@ -242,7 +242,7 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      toast.error(currentError.message);
+      toast.error(t(`validation.${currentError.message}`, { defaultValue: currentError.message }));
       return false;
     }
 

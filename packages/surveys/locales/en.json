@@ -77,5 +77,32 @@
     "value_must_equal": "Value must equal {value}",
     "value_must_not_contain": "Value must not contain {value}",
     "value_must_not_equal": "Value must not equal {value}"
-  }
+  },
+  "validation": {
+  "question_id_not_allowed": "Question id is not allowed",
+  "question_id_no_spaces": "Question id not allowed, avoid using spaces.",
+  "question_id_alphanumeric_only": "Question id not allowed, use only alphanumeric characters, hyphens, or underscores.",
+  "welcome_card_must_have_headline": "Welcome card must have a headline",
+  "hidden_field_id_not_allowed": "Hidden field id is not allowed",
+  "hidden_field_id_no_spaces": "Hidden field id not allowed, avoid using spaces.",
+  "variable_name_format": "Variable name can only contain lowercase letters, numbers, and underscores",
+  "conditional_logic_value_must_be_string": "Conditional Logic: Value must be a string for text variable",
+  "conditional_logic_value_must_be_number": "Conditional Logic: Value must be a number for number variable",
+  "conditional_logic_cannot_divide_by_zero": "Conditional Logic: Cannot divide by zero",
+  "conditional_logic_target_cannot_be_empty": "Conditional Logic: Target question id cannot be empty",
+  "multiple_choice_min_two_choices": "Multiple Choice Question must have at least two choices",
+  "picture_selection_min_two_choices": "Picture Selection question must have atleast 2 choices",
+  "cal_username_required": "Cal user name is required",
+  "ranking_min_two_options": "Ranking Question must have at least two options",
+  "ranking_max_25_options": "Ranking Question can have at most 25 options",
+  "question_ids_must_be_unique": "Question IDs must be unique",
+  "block_ids_must_be_unique": "Block IDs must be unique",
+  "ending_ids_must_be_unique": "Ending IDs must be unique",
+  "variable_ids_must_be_unique": "Variable IDs must be unique",
+  "variable_names_must_be_unique": "Variable names must be unique",
+  "response_limit_greater_than_zero": "Response limit must be greater than 0",
+  "pin_must_be_four_digits": "PIN must be a four digit number",
+  "survey_must_have_questions_or_blocks": "Survey must have either questions or blocks with elements",
+  "survey_cannot_have_both": "Survey cannot have both questions and blocks. Use one model."
+}
 }
