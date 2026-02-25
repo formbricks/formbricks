@@ -1,7 +1,7 @@
 "use client";
 
 import { ActivityIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -18,14 +18,7 @@ interface AIQuerySectionProps {
 export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQuerySectionProps>) {
   const [userQuery, setUserQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const mountedRef = useRef(true);
   const { t } = useTranslation();
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,8 +30,6 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
         prompt: userQuery.trim(),
       });
 
-      if (!mountedRef.current) return;
-
       if (result?.data) {
         onChartGenerated(result.data);
       } else {
@@ -46,14 +37,11 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
         toast.error(errorMessage);
       }
     } catch (error: unknown) {
-      if (!mountedRef.current) return;
       const message =
         error instanceof Error ? error.message : t("common.something_went_wrong_please_try_again");
       toast.error(message);
     } finally {
-      if (mountedRef.current) {
-        setIsGenerating(false);
-      }
+      setIsGenerating(false);
     }
   };
 

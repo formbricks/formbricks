@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
@@ -71,6 +72,13 @@ export function CreateChartView({
   onAddToDashboardDialogOpenChange,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
+  const chartPreviewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chartData) {
+      chartPreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [chartData]);
 
   const handleAdvancedChartGenerated = (data: AnalyticsResponse) => {
     onChartGenerated(data);
@@ -126,7 +134,11 @@ export function CreateChartView({
               />
             )}
 
-            {chartData && <ChartPreview chartData={chartData} />}
+            {chartData && (
+              <div ref={chartPreviewRef}>
+                <ChartPreview chartData={chartData} />
+              </div>
+            )}
           </div>
         </DialogBody>
 

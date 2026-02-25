@@ -8,6 +8,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { executeQueryAction } from "@/modules/ee/analysis/charts/actions";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { AdvancedChartPreview } from "@/modules/ee/analysis/charts/components/advanced-chart-preview";
+import { ChartBuilderGuide } from "@/modules/ee/analysis/charts/components/chart-builder-guide";
 import { ChartTypeSelector } from "@/modules/ee/analysis/charts/components/chart-type-selector";
 import { DimensionsPanel } from "@/modules/ee/analysis/charts/components/dimensions-panel";
 import { FiltersPanel } from "@/modules/ee/analysis/charts/components/filters-panel";
@@ -23,7 +24,9 @@ import {
   buildCubeQuery,
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
+import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
 import type { AnalyticsResponse, TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
@@ -149,6 +152,10 @@ export function AdvancedChartBuilder({
   const [isInitialized, setIsInitialized] = useState(false);
   const [showQuery, setShowQuery] = useState(false);
   const [showData, setShowData] = useState(false);
+  const [dimensionsOpen, setDimensionsOpen] = useState(false);
+  const [timeDimensionOpen, setTimeDimensionOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [customAggregationsOpen, setCustomAggregationsOpen] = useState(false);
   const lastStateRef = useRef<string>("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
@@ -174,13 +181,54 @@ export function AdvancedChartBuilder({
     }
   }, [initialChartType, initialQuery, isInitialized]);
 
+  // Sync section open states when loading from initialQuery
+  useEffect(() => {
+    if (!initialQuery) return;
+    const parsed = parseQueryToState(initialQuery, initialChartType);
+    setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
+    setTimeDimensionOpen(parsed.timeDimension != null);
+    setFiltersOpen((parsed.filters?.length ?? 0) > 0);
+    // Only set customAggregationsOpen to true when parsed has custom measures.
+    // Never set to false here: parseQueryToState always returns customMeasures: [] because
+    // Cube.js query format doesn't store custom measure definitions, so we'd incorrectly
+    // turn off the toggle after running a query that uses custom measures.
+    if ((parsed.customMeasures?.length ?? 0) > 0) {
+      setCustomAggregationsOpen(true);
+    }
+  }, [initialQuery, initialChartType]);
+
+  // Keep time dimension toggle in sync when panel's disable clears the config
+  useEffect(() => {
+    if (state.timeDimension == null) setTimeDimensionOpen(false);
+  }, [state.timeDimension]);
+
+  // Turn off filter toggle when the last filter is deleted
+  useEffect(() => {
+    if (state.filters.length === 0 && filtersOpen) setFiltersOpen(false);
+  }, [state.filters.length, filtersOpen]);
+
+  // Turn off custom aggregations toggle when the last custom measure is removed
+  useEffect(() => {
+    if (state.customMeasures.length === 0 && customAggregationsOpen) setCustomAggregationsOpen(false);
+  }, [state.customMeasures.length, customAggregationsOpen]);
+
   // Initialize: execute initialQuery once (deps intentionally minimal to avoid redundant runs).
   // Skip when hidePreview is true because the parent component handles data loading.
   useEffect(() => {
     if (!initialQuery || isInitialized) return;
     setIsInitialized(true);
 
-    if (hidePreview) return;
+    if (hidePreview) {
+      // Sync lastStateRef so the reactive effect does not re-run the same query on mount.
+      lastStateRef.current = JSON.stringify({
+        chartType: state.chartType,
+        measures: state.selectedMeasures,
+        dimensions: state.selectedDimensions,
+        filters: state.filters,
+        timeDimension: state.timeDimension,
+      });
+      return;
+    }
 
     const chartType = state.chartType;
     const requestId = ++requestIdRef.current;
@@ -252,6 +300,11 @@ export function AdvancedChartBuilder({
             if (onChartGeneratedRef.current && chartType) {
               onChartGeneratedRef.current({ query: updatedQuery, chartType, data });
             }
+          } else {
+            dispatchQuery({
+              type: "QUERY_ERROR",
+              payload: t("environments.analysis.charts.no_data_returned"),
+            });
           }
         })
         .catch((err: unknown) => {
@@ -345,39 +398,133 @@ export function AdvancedChartBuilder({
 
   return (
     <div className={hidePreview ? "space-y-2" : "grid gap-4 lg:grid-cols-2"}>
-      <div className="space-y-2">
+      <div className="mx-1 space-y-2">
         {!hidePreview && (
-          <ChartTypeSelector
-            selectedChartType={state.chartType}
-            onChartTypeSelect={(chartType) => dispatch({ type: "SET_CHART_TYPE", payload: chartType })}
-          />
+          <>
+            <ChartBuilderGuide />
+            <ChartTypeSelector
+              selectedChartType={state.chartType}
+              onChartTypeSelect={(chartType) => dispatch({ type: "SET_CHART_TYPE", payload: chartType })}
+            />
+          </>
         )}
 
-        <MeasuresPanel
-          selectedMeasures={state.selectedMeasures}
-          customMeasures={state.customMeasures}
-          onMeasuresChange={(measures) => dispatch({ type: "SET_MEASURES", payload: measures })}
-          onCustomMeasuresChange={(measures) => dispatch({ type: "SET_CUSTOM_MEASURES", payload: measures })}
-        />
+        <div className="mt-4 flex w-full flex-col gap-3 overflow-hidden rounded-lg border bg-slate-50 p-4">
+          <MeasuresPanel
+            selectedMeasures={state.selectedMeasures}
+            customMeasures={state.customMeasures}
+            customAggregationsOpen={customAggregationsOpen}
+            onCustomAggregationsOpenChange={(open) => {
+              setCustomAggregationsOpen(open);
+              if (!open) {
+                dispatch({ type: "SET_CUSTOM_MEASURES", payload: [] });
+              } else if (state.customMeasures.length === 0) {
+                const dimensionOptions = FEEDBACK_FIELDS.dimensions
+                  .filter((d) => d.type === "number")
+                  .map((d) => d.id);
+                dispatch({
+                  type: "SET_CUSTOM_MEASURES",
+                  payload: [
+                    {
+                      id: `measure-${crypto.randomUUID()}`,
+                      field: dimensionOptions[0] ?? "",
+                      aggregation: "avg",
+                    },
+                  ],
+                });
+              }
+            }}
+            onMeasuresChange={(measures) => dispatch({ type: "SET_MEASURES", payload: measures })}
+            onCustomMeasuresChange={(measures) =>
+              dispatch({ type: "SET_CUSTOM_MEASURES", payload: measures })
+            }
+          />
+        </div>
 
-        <DimensionsPanel
-          selectedDimensions={state.selectedDimensions}
-          onDimensionsChange={(dimensions) => dispatch({ type: "SET_DIMENSIONS", payload: dimensions })}
-        />
+        <AdvancedOptionToggle
+          isChecked={dimensionsOpen}
+          onToggle={(checked) => {
+            setDimensionsOpen(checked);
+            if (!checked) dispatch({ type: "SET_DIMENSIONS", payload: [] });
+          }}
+          htmlId="chart-dimensions-toggle"
+          title={t("environments.analysis.charts.dimensions")}
+          description={t("environments.analysis.charts.dimensions_toggle_description")}
+          customContainerClass="mt-2 px-0"
+          childrenContainerClass="flex-col gap-3 p-4"
+          childBorder>
+          <DimensionsPanel
+            hideTitle
+            selectedDimensions={state.selectedDimensions}
+            onDimensionsChange={(dimensions) => dispatch({ type: "SET_DIMENSIONS", payload: dimensions })}
+          />
+        </AdvancedOptionToggle>
 
-        <TimeDimensionPanel
-          timeDimension={state.timeDimension}
-          onTimeDimensionChange={(config) => dispatch({ type: "SET_TIME_DIMENSION", payload: config })}
-        />
+        <AdvancedOptionToggle
+          isChecked={timeDimensionOpen}
+          onToggle={(checked) => {
+            setTimeDimensionOpen(checked);
+            if (!checked) dispatch({ type: "SET_TIME_DIMENSION", payload: null });
+            else if (!state.timeDimension) {
+              dispatch({
+                type: "SET_TIME_DIMENSION",
+                payload: {
+                  dimension: "FeedbackRecords.collectedAt",
+                  granularity: "day",
+                  dateRange: "last 30 days",
+                },
+              });
+            }
+          }}
+          htmlId="chart-time-dimension-toggle"
+          title={t("environments.analysis.charts.time_dimension")}
+          description={t("environments.analysis.charts.time_dimension_toggle_description")}
+          customContainerClass="mt-2 px-0"
+          childrenContainerClass="flex-col gap-3 p-4"
+          childBorder>
+          <TimeDimensionPanel
+            hideTitle
+            timeDimension={state.timeDimension}
+            onTimeDimensionChange={(config) => dispatch({ type: "SET_TIME_DIMENSION", payload: config })}
+          />
+        </AdvancedOptionToggle>
 
-        <FiltersPanel
-          filters={state.filters}
-          filterLogic={state.filterLogic}
-          onFiltersChange={(filters) => dispatch({ type: "SET_FILTERS", payload: filters })}
-          onFilterLogicChange={(logic) => dispatch({ type: "SET_FILTER_LOGIC", payload: logic })}
-        />
+        <AdvancedOptionToggle
+          isChecked={filtersOpen}
+          onToggle={(checked) => {
+            setFiltersOpen(checked);
+            if (!checked) {
+              dispatch({ type: "SET_FILTERS", payload: [] });
+            } else if (state.filters.length === 0) {
+              const firstField = FEEDBACK_FIELDS.dimensions[0] ?? FEEDBACK_FIELDS.measures[0];
+              dispatch({
+                type: "SET_FILTERS",
+                payload: [
+                  {
+                    field: firstField?.id ?? "",
+                    operator: "equals" as const,
+                    values: null,
+                  },
+                ],
+              });
+            }
+          }}
+          htmlId="chart-filters-toggle"
+          title={t("environments.analysis.charts.filters")}
+          description={t("environments.analysis.charts.filters_toggle_description")}
+          customContainerClass="mt-2 px-0"
+          childrenContainerClass="flex-col gap-3 p-4"
+          childBorder>
+          <FiltersPanel
+            hideTitle
+            filters={state.filters}
+            filterLogic={state.filterLogic}
+            onFiltersChange={(filters) => dispatch({ type: "SET_FILTERS", payload: filters })}
+            onFilterLogicChange={(logic) => dispatch({ type: "SET_FILTER_LOGIC", payload: logic })}
+          />
+        </AdvancedOptionToggle>
 
-        <div className="flex gap-2">
+        <div className="mt-4 flex justify-end gap-2">
           <Button onClick={handleRunQuery} disabled={isLoading || !state.chartType}>
             {isLoading ? <LoadingSpinner /> : t("environments.analysis.charts.run_query")}
           </Button>

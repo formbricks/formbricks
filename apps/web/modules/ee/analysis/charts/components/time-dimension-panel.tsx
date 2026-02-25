@@ -25,11 +25,13 @@ import {
 interface TimeDimensionPanelProps {
   timeDimension: TimeDimensionConfig | null;
   onTimeDimensionChange: (config: TimeDimensionConfig | null) => void;
+  hideTitle?: boolean;
 }
 
 export function TimeDimensionPanel({
   timeDimension,
   onTimeDimensionChange,
+  hideTitle = false,
 }: Readonly<TimeDimensionPanelProps>) {
   const { t } = useTranslation();
   const [dateRangeType, setDateRangeType] = useState<"preset" | "custom">(
@@ -59,10 +61,6 @@ export function TimeDimensionPanel({
     }
   };
 
-  const handleDisableTimeDimension = () => {
-    onTimeDimensionChange(null);
-  };
-
   const handleDimensionChange = (dimension: string) => {
     if (timeDimension) {
       onTimeDimensionChange({ ...timeDimension, dimension });
@@ -86,9 +84,11 @@ export function TimeDimensionPanel({
   if (!timeDimension) {
     return (
       <div className="space-y-2">
-        <h3 className="text-md font-semibold text-gray-900">
-          {t("environments.analysis.charts.time_dimension")}
-        </h3>
+        {!hideTitle && (
+          <h3 className="text-md font-semibold text-gray-900">
+            {t("environments.analysis.charts.time_dimension")}
+          </h3>
+        )}
         <div>
           <Button type="button" variant="outline" onClick={handleEnableTimeDimension}>
             {t("environments.analysis.charts.enable_time_dimension")}
@@ -99,22 +99,19 @@ export function TimeDimensionPanel({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
+    <div className="w-full space-y-2">
+      {!hideTitle && (
         <h3 className="text-md font-semibold text-gray-900">
           {t("environments.analysis.charts.time_dimension")}
         </h3>
-        <Button type="button" variant="ghost" size="sm" onClick={handleDisableTimeDimension}>
-          {t("common.disable")}
-        </Button>
-      </div>
+      )}
 
       <div className="space-y-3">
         {/* Field Selector */}
         <div className="space-y-2">
           <label className="text-sm">{t("environments.analysis.charts.field")}</label>
           <Select value={timeDimension.dimension} onValueChange={handleDimensionChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -131,7 +128,7 @@ export function TimeDimensionPanel({
         <div className="space-y-2">
           <label className="text-sm">{t("environments.analysis.charts.granularity")}</label>
           <Select value={timeDimension.granularity ?? "none"} onValueChange={handleGranularityChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -152,7 +149,7 @@ export function TimeDimensionPanel({
             <Select
               value={dateRangeType}
               onValueChange={(value) => setDateRangeType(value as "preset" | "custom")}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full bg-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -163,7 +160,7 @@ export function TimeDimensionPanel({
 
             {dateRangeType === "preset" ? (
               <Select value={presetValue} onValueChange={handlePresetChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder={t("environments.analysis.charts.select_preset")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -172,13 +169,18 @@ export function TimeDimensionPanel({
                       {preset.label}
                     </SelectItem>
                   ))}
+                  {presetValue && !DATE_PRESETS.some((p) => p.value === presetValue) && (
+                    <SelectItem key={presetValue} value={presetValue}>
+                      {presetValue}
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <Button variant="outline" className="w-full justify-start bg-white text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {customStartDate
                         ? format(customStartDate, "MMM dd, yyyy")
@@ -203,7 +205,7 @@ export function TimeDimensionPanel({
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <Button variant="outline" className="w-full justify-start bg-white text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {customEndDate
                         ? format(customEndDate, "MMM dd, yyyy")

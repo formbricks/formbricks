@@ -23,6 +23,7 @@ interface FiltersPanelProps {
   filterLogic: "and" | "or";
   onFiltersChange: (filters: FilterRow[]) => void;
   onFilterLogicChange: (logic: "and" | "or") => void;
+  hideTitle?: boolean;
 }
 
 export function FiltersPanel({
@@ -30,6 +31,7 @@ export function FiltersPanel({
   filterLogic,
   onFiltersChange,
   onFilterLogicChange,
+  hideTitle = false,
 }: Readonly<FiltersPanelProps>) {
   const { t } = useTranslation();
   const fieldOptions = [
@@ -98,7 +100,7 @@ export function FiltersPanel({
               values: e.target.value ? [Number(e.target.value)] : null,
             })
           }
-          className="w-[150px]"
+          className="w-[150px] bg-white"
         />
       );
     }
@@ -114,7 +116,7 @@ export function FiltersPanel({
               values: e.target.value ? [e.target.value] : null,
             })
           }
-          className="w-[200px]"
+          className="w-[200px] bg-white"
         />
       );
     }
@@ -130,7 +132,7 @@ export function FiltersPanel({
               values: e.target.value ? [e.target.value] : null,
             })
           }
-          className="w-[200px]"
+          className="w-[200px] bg-white"
         />
       );
     }
@@ -150,20 +152,29 @@ export function FiltersPanel({
     );
   };
 
+  const hasFilters = filters.length > 0;
+  const hasMultipleFilters = filters.length > 1;
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h3 className="text-md font-semibold text-gray-900">{t("environments.analysis.charts.filters")}</h3>
-        <Select value={filterLogic} onValueChange={(value) => onFilterLogicChange(value as "and" | "or")}>
-          <SelectTrigger className="w-[100px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="and">{t("common.and")}</SelectItem>
-            <SelectItem value="or">{t("environments.analysis.charts.or_filter_logic")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="w-full space-y-2">
+      {hasMultipleFilters && (
+        <div className={`flex items-center ${hideTitle ? "justify-end" : "justify-between"}`}>
+          {!hideTitle && (
+            <h3 className="text-md font-semibold text-gray-900">
+              {t("environments.analysis.charts.filters")}
+            </h3>
+          )}
+          <Select value={filterLogic} onValueChange={(value) => onFilterLogicChange(value as "and" | "or")}>
+            <SelectTrigger className="w-[100px] bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="and">{t("common.and")}</SelectItem>
+              <SelectItem value="or">{t("environments.analysis.charts.or_filter_logic")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="space-y-3">
         {filters.map((filter, index) => {
@@ -187,7 +198,7 @@ export function FiltersPanel({
                     values: null,
                   });
                 }}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[200px] bg-white">
                   <SelectValue placeholder={t("environments.analysis.charts.select_field")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -206,7 +217,7 @@ export function FiltersPanel({
                     operator: value,
                   })
                 }>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px] bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -241,10 +252,12 @@ export function FiltersPanel({
           );
         })}
 
-        <Button type="button" variant="outline" size="sm" onClick={handleAddFilter} className="h-8">
-          <Plus className="h-4 w-4" />
-          {t("environments.analysis.charts.add_filter")}
-        </Button>
+        {hasFilters && (
+          <Button type="button" variant="outline" size="sm" onClick={handleAddFilter} className="h-8">
+            <Plus className="h-4 w-4" />
+            {t("environments.analysis.charts.add_filter")}
+          </Button>
+        )}
       </div>
     </div>
   );

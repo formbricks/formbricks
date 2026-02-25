@@ -7,9 +7,14 @@ import { MultiSelect } from "@/modules/ui/components/multi-select";
 interface DimensionsPanelProps {
   selectedDimensions: string[];
   onDimensionsChange: (dimensions: string[]) => void;
+  hideTitle?: boolean;
 }
 
-export function DimensionsPanel({ selectedDimensions, onDimensionsChange }: Readonly<DimensionsPanelProps>) {
+export function DimensionsPanel({
+  selectedDimensions,
+  onDimensionsChange,
+  hideTitle = false,
+}: Readonly<DimensionsPanelProps>) {
   const { t } = useTranslation();
   const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
     value: d.id,
@@ -17,9 +22,12 @@ export function DimensionsPanel({ selectedDimensions, onDimensionsChange }: Read
   }));
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-md font-semibold text-gray-900">{t("environments.analysis.charts.dimensions")}</h3>
-
+    <div className="w-full space-y-2">
+      {!hideTitle && (
+        <h3 className="text-md font-semibold text-gray-900">
+          {t("environments.analysis.charts.dimensions")}
+        </h3>
+      )}
       <div className="space-y-2">
         <label className="text-sm">{t("environments.analysis.charts.group_by")}</label>
         <MultiSelect

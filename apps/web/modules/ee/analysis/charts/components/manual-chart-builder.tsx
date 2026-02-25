@@ -18,10 +18,6 @@ export function ManualChartBuilder({
   const chartTypes = getChartTypes(t);
   return (
     <div className="space-y-2">
-      <h2 className="text-md font-semibold text-gray-900">
-        {t("environments.analysis.charts.chart_builder_choose_chart_type")}
-      </h2>
-
       <div className="rounded-lg border border-gray-200 bg-white p-4">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {chartTypes.map((chart) => {
