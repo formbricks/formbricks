@@ -380,4 +380,26 @@ describe("Chart Service", () => {
       });
     });
   });
+
+  describe("getChartsWithCreator", () => {
+    test("returns charts with creator info", async () => {
+      const chartsWithCreator = [
+        { ...mockChart, creator: { name: "Alice" } },
+        { ...mockChart, id: "chart-2", name: "Chart 2", creator: null },
+      ];
+      vi.mocked(prisma.chart.findMany).mockResolvedValue(chartsWithCreator as any);
+      const { getChartsWithCreator } = await import("./charts");
+
+      const result = await getChartsWithCreator(mockProjectId);
+
+      expect(result).toEqual(chartsWithCreator);
+      expect(prisma.chart.findMany).toHaveBeenCalledWith({
+        where: { projectId: mockProjectId },
+        orderBy: { createdAt: "desc" },
+        select: expect.objectContaining({
+          creator: { select: { name: true } },
+        }),
+      });
+    });
+  });
 });

@@ -41,6 +41,10 @@ export type TChartWithWidgets = TChart & {
   widgets: { dashboardId: string }[];
 };
 
+export type TChartWithCreator = TChart & {
+  creator: { name: string } | null;
+};
+
 // ── Dashboard input schemas ─────────────────────────────────────────────────
 
 export const ZDashboardCreateInput = z.object({

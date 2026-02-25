@@ -150,6 +150,7 @@
     "bottom_right": "Dreapta Jos",
     "cancel": "Anulare",
     "centered_modal": "Modală centralizată",
+    "chart": "Grafic",
     "charts": "Grafice",
     "choices": "Alegeri",
     "choose_environment": "Alege mediul",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "Sondajul dumneavoastră nu va fi afișat."
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "În curând",
+        "chart_deleted_successfully": "Graficul a fost șters cu succes",
+        "chart_duplicated_successfully": "Graficul a fost duplicat cu succes",
+        "chart_duplication_error": "Nu s-a putut duplica graficul",
+        "chart_type_area": "Grafic de tip arie",
+        "chart_type_bar": "Grafic de tip bară",
+        "chart_type_big_number": "Număr mare",
+        "chart_type_line": "Grafic de tip linie",
+        "chart_type_pie": "Grafic de tip plăcintă",
+        "create_chart": "Creează grafic",
+        "delete_chart_confirmation": "Ești sigur că vrei să ștergi acest grafic?",
+        "no_charts_found": "Nu s-au găsit grafice.",
+        "open_chart": "Deschide graficul {{name}}",
+        "open_options": "Deschide opțiunile graficului"
+      },
       "dashboards": {
         "create_dashboard": "Creează tablou de bord",
         "create_dashboard_description": "Introdu un nume pentru noul tău tablou de bord.",

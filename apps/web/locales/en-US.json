@@ -150,6 +150,7 @@
     "bottom_right": "Bottom Right",
     "cancel": "Cancel",
     "centered_modal": "Centered Modal",
+    "chart": "Chart",
     "charts": "Charts",
     "choices": "Choices",
     "choose_environment": "Choose environment",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "Your survey would not be shown."
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "Coming soon",
+        "chart_deleted_successfully": "Chart deleted successfully",
+        "chart_duplicated_successfully": "Chart duplicated successfully",
+        "chart_duplication_error": "Failed to duplicate chart",
+        "chart_type_area": "Area Chart",
+        "chart_type_bar": "Bar Chart",
+        "chart_type_big_number": "Big Number",
+        "chart_type_line": "Line Chart",
+        "chart_type_pie": "Pie Chart",
+        "create_chart": "Create Chart",
+        "delete_chart_confirmation": "Are you sure you want to delete this chart?",
+        "no_charts_found": "No charts found.",
+        "open_chart": "Open chart {{name}}",
+        "open_options": "Open chart options"
+      },
       "dashboards": {
         "create_dashboard": "Create Dashboard",
         "create_dashboard_description": "Enter a name for your new dashboard.",

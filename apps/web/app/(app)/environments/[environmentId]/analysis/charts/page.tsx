@@ -1,9 +1,6 @@
-const ChartsPage = () => {
-  return (
-    <div className="flex items-center justify-center py-12 text-sm text-slate-500">
-      Charts will appear here.
-    </div>
-  );
-};
+import { ChartsListPage } from "@/modules/ee/analysis/charts/components/charts-list-page";
 
-export default ChartsPage;
+export default async function ChartsPage({ params }: { params: Promise<{ environmentId: string }> }) {
+  const { environmentId } = await params;
+  return <ChartsListPage environmentId={environmentId} />;
+}

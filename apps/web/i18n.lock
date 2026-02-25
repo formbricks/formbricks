@@ -123,6 +123,7 @@ checksums:
     common/bottom_right: aaef9a70ef795affc806c6d1853d8373
     common/cancel: 2e2a849c2223911717de8caa2c71bade
     common/centered_modal: 982ff411cb7e91e30300c2ed56b7e507
+    common/chart: 6f4d9c56e45ceb8fc22d2f74454cd813
     common/charts: 1da4564d89264c89de4ed28d7451b43e
     common/choices: 8a7a77a71ec6eebc363c5dc0f8490a4d
     common/choose_environment: 5762cd499529815fc3e6a7feea39f90b
@@ -203,6 +204,7 @@ checksums:
     common/failed_to_copy_to_clipboard: de836a7d628d36c832809252f188f784
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
     common/failed_to_load_workspaces: 6ee3448097394517dc605074cd4e6ea4
+    common/filter: 626325a05e4c8800f7ede7012b0cadaf
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/first_name: cf040a5d6a9fd696be400380cc99f54b
     common/follow_these: 3a730b242bb17a3f95e01bf0dae86885
@@ -585,6 +587,20 @@ checksums:
     environments/actions/you_can_track_code_action_anywhere_in_your_app_using: 3c0bbf160b8ddbeef142403103b70554
     environments/actions/your_survey_would_be_shown_on_this_url: 766fdeeb52d170c156af5d035a1f8c37
     environments/actions/your_survey_would_not_be_shown: af44fe160f449ff9557ebe5d3686832d
+    environments/analysis/charts/action_coming_soon: ee2b0671e00972773210c5be5a9ccb89
+    environments/analysis/charts/chart_deleted_successfully: 79148f471cd9acc2c8d0d033fb85437e
+    environments/analysis/charts/chart_duplicated_successfully: 755c4ce5bf533764d549a53c33e32165
+    environments/analysis/charts/chart_duplication_error: 90d7166c85188b52f821c9d9f53ff8c4
+    environments/analysis/charts/chart_type_area: 535754c6425f045f17e1dcb551840c93
+    environments/analysis/charts/chart_type_bar: c11d460595d3ddfe8efd67ac068574c5
+    environments/analysis/charts/chart_type_big_number: 9d17fb96241507c955dca25e143ae67a
+    environments/analysis/charts/chart_type_line: f42dd53238ed4d44def306a61d47d5c4
+    environments/analysis/charts/chart_type_pie: 068a797404233ccf68d07ad63af7b50c
+    environments/analysis/charts/create_chart: ca7fdcc964e01f42ea9709924221edba
+    environments/analysis/charts/delete_chart_confirmation: f7fd7b0a08e81c9b392b08c9c1ad2147
+    environments/analysis/charts/no_charts_found: d4a27d5b56e49ebdd38bf28791dbcc42
+    environments/analysis/charts/open_chart: bc3bed1517ad63c1bcccfbbc430ab333
+    environments/analysis/charts/open_options: 2c6a35fec9b9d008e41728594bcd07d7
     environments/analysis/dashboards/create_dashboard: 9396aec1ea4a9b05ada94483655d1373
     environments/analysis/dashboards/create_dashboard_description: d29f60615f6d8c96cc4265541e75ec26
     environments/analysis/dashboards/create_failed: 7b58f15568047a35220b3a47cc3b0f71

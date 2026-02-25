@@ -150,6 +150,7 @@
     "bottom_right": "右下",
     "cancel": "取消",
     "centered_modal": "置中彈窗",
+    "chart": "圖表",
     "charts": "圖表",
     "choices": "選項",
     "choose_environment": "選擇環境",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "您的問卷將不會顯示。"
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "即將推出",
+        "chart_deleted_successfully": "圖表已成功刪除",
+        "chart_duplicated_successfully": "圖表已成功複製",
+        "chart_duplication_error": "圖表複製失敗",
+        "chart_type_area": "區域圖",
+        "chart_type_bar": "長條圖",
+        "chart_type_big_number": "大數字",
+        "chart_type_line": "折線圖",
+        "chart_type_pie": "圓餅圖",
+        "create_chart": "建立圖表",
+        "delete_chart_confirmation": "你確定要刪除此圖表嗎？",
+        "no_charts_found": "找不到圖表。",
+        "open_chart": "開啟圖表 {{name}}",
+        "open_options": "開啟圖表選項"
+      },
       "dashboards": {
         "create_dashboard": "建立儀表板",
         "create_dashboard_description": "請輸入新儀表板的名稱。",

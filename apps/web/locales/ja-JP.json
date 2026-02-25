@@ -150,6 +150,7 @@
     "bottom_right": "右下",
     "cancel": "キャンセル",
     "centered_modal": "中央モーダル",
+    "chart": "チャート",
     "charts": "チャート",
     "choices": "選択肢",
     "choose_environment": "環境を選択",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "あなたのフォームは表示されません。"
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "近日公開",
+        "chart_deleted_successfully": "チャートを削除しました",
+        "chart_duplicated_successfully": "チャートを複製しました",
+        "chart_duplication_error": "チャートの複製に失敗しました",
+        "chart_type_area": "エリアチャート",
+        "chart_type_bar": "棒グラフ",
+        "chart_type_big_number": "大きな数値",
+        "chart_type_line": "折れ線グラフ",
+        "chart_type_pie": "円グラフ",
+        "create_chart": "チャートを作成",
+        "delete_chart_confirmation": "このチャートを削除してもよろしいですか？",
+        "no_charts_found": "チャートが見つかりません。",
+        "open_chart": "チャート「{{name}}」を開く",
+        "open_options": "チャートオプションを開く"
+      },
       "dashboards": {
         "create_dashboard": "ダッシュボードを作成",
         "create_dashboard_description": "新しいダッシュボードの名前を入力してください。",

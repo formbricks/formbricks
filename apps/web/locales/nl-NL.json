@@ -150,6 +150,7 @@
     "bottom_right": "Rechtsonder",
     "cancel": "Annuleren",
     "centered_modal": "Gecentreerd modaal",
+    "chart": "Grafiek",
     "charts": "Grafieken",
     "choices": "Keuzes",
     "choose_environment": "Kies omgeving",
@@ -620,6 +621,22 @@
       "your_survey_would_not_be_shown": "Uw enquête wordt niet getoond."
     },
     "analysis": {
+      "charts": {
+        "action_coming_soon": "Binnenkort beschikbaar",
+        "chart_deleted_successfully": "Grafiek succesvol verwijderd",
+        "chart_duplicated_successfully": "Grafiek succesvol gedupliceerd",
+        "chart_duplication_error": "Dupliceren van grafiek mislukt",
+        "chart_type_area": "Vlakdiagram",
+        "chart_type_bar": "Staafdiagram",
+        "chart_type_big_number": "Groot getal",
+        "chart_type_line": "Lijndiagram",
+        "chart_type_pie": "Cirkeldiagram",
+        "create_chart": "Diagram maken",
+        "delete_chart_confirmation": "Weet je zeker dat je deze grafiek wilt verwijderen?",
+        "no_charts_found": "Geen diagrammen gevonden.",
+        "open_chart": "Open diagram {{name}}",
+        "open_options": "Open diagramopties"
+      },
       "dashboards": {
         "create_dashboard": "Dashboard creëren",
         "create_dashboard_description": "Voer een naam in voor je nieuwe dashboard.",
