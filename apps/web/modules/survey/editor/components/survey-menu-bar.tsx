@@ -1,7 +1,7 @@
 "use client";
 
 import { Project } from "@prisma/client";
-import { isEqual } from "lodash";
+import { isEqual, snakeCase } from "lodash";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -234,15 +234,20 @@ export const SurveyMenuBar = ({
 
           toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
         } else {
-          toast.error(t(`validation.${currentError.message}`, { defaultValue: currentError.message }), {
-            className: "w-fit !max-w-md",
-          });
+          toast.error(
+            t(`validation.${snakeCase(currentError.message)}`, { defaultValue: currentError.message }),
+            {
+              className: "w-fit !max-w-md",
+            }
+          );
         }
 
         return false;
       }
 
-      toast.error(t(`validation.${currentError.message}`, { defaultValue: currentError.message }));
+      toast.error(
+        t(`validation.${snakeCase(currentError.message)}`, { defaultValue: currentError.message })
+      );
       return false;
     }
 

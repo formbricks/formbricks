@@ -91,7 +91,7 @@
   "conditional_logic_cannot_divide_by_zero": "Conditional Logic: Cannot divide by zero",
   "conditional_logic_target_cannot_be_empty": "Conditional Logic: Target question id cannot be empty",
   "multiple_choice_min_two_choices": "Multiple Choice Question must have at least two choices",
-  "picture_selection_min_two_choices": "Picture Selection question must have atleast 2 choices",
+  "picture_selection_min_two_choices": "Picture Selection question must have at least 2 choices",
   "cal_username_required": "Cal user name is required",
   "ranking_min_two_options": "Ranking Question must have at least two options",
   "ranking_max_25_options": "Ranking Question can have at most 25 options",
