@@ -29,7 +29,7 @@ interface EditChartViewProps {
   chartLoadError?: string | null;
   chartName: string;
   onChartNameChange: (name: string) => void;
-  selectedChartType: TChartType | "";
+  selectedChartType: TChartType;
   onChartTypeChange: (type: TChartType) => void;
   onChartGenerated: (data: AnalyticsResponse) => void;
   dashboards: Array<{ id: string; name: string }>;
@@ -95,7 +95,7 @@ export function EditChartView({
             </div>
             <AdvancedChartBuilder
               environmentId={environmentId}
-              chartType={selectedChartType || chartData?.chartType || ""}
+              chartType={selectedChartType}
               initialQuery={chartData?.query ?? initialQuery}
               hidePreview={true}
               onChartGenerated={onChartGenerated}

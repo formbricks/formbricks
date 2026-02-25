@@ -5,7 +5,7 @@ import { getChartTypes } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
 interface ChartTypeSelectorProps {
-  selectedChartType: TChartType | "";
+  selectedChartType: TChartType;
   onChartTypeSelect: (chartType: TChartType) => void;
 }
 

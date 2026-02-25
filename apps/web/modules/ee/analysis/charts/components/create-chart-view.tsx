@@ -28,9 +28,8 @@ interface CreateChartViewProps {
   chartData: AnalyticsResponse | null;
   chartName: string;
   onChartNameChange: (name: string) => void;
-  selectedChartType: TChartType | "";
+  selectedChartType?: TChartType;
   onSelectedChartTypeChange: (type: TChartType) => void;
-  shouldShowAdvancedBuilder: boolean;
   onChartGenerated: (data: AnalyticsResponse) => void;
   dashboards: Array<{ id: string; name: string }>;
   selectedDashboardId: string;
@@ -54,7 +53,6 @@ export function CreateChartView({
   onChartNameChange,
   selectedChartType,
   onSelectedChartTypeChange,
-  shouldShowAdvancedBuilder,
   onChartGenerated,
   dashboards,
   selectedDashboardId,
@@ -118,10 +116,10 @@ export function CreateChartView({
               />
             </div>
 
-            {shouldShowAdvancedBuilder && (
+            {selectedChartType && (
               <AdvancedChartBuilder
                 environmentId={environmentId}
-                chartType={selectedChartType || chartData?.chartType || ""}
+                chartType={selectedChartType}
                 initialQuery={chartData?.query}
                 hidePreview={true}
                 onChartGenerated={handleAdvancedChartGenerated}

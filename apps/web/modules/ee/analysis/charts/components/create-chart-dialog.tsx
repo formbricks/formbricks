@@ -4,6 +4,7 @@ import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/
 import { CreateChartView } from "@/modules/ee/analysis/charts/components/create-chart-view";
 import { EditChartView } from "@/modules/ee/analysis/charts/components/edit-chart-view";
 import { useCreateChartDialog } from "@/modules/ee/analysis/charts/hooks/use-create-chart-dialog";
+import { DEFAULT_CHART_TYPE } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 export interface CreateChartDialogProps {
@@ -51,7 +52,6 @@ export function CreateChartDialog({
     isSaving,
     isLoadingChart,
     chartLoadError,
-    shouldShowAdvancedBuilder,
     handleChartGenerated,
     handleSaveChart,
     handleAddToDashboard,
@@ -74,7 +74,7 @@ export function CreateChartDialog({
         chartLoadError={chartLoadError}
         chartName={chartName}
         onChartNameChange={setChartName}
-        selectedChartType={selectedChartType}
+        selectedChartType={selectedChartType ?? DEFAULT_CHART_TYPE}
         onChartTypeChange={handleChartTypeChange}
         onChartGenerated={handleChartGenerated}
         dashboards={dashboards}
@@ -100,7 +100,6 @@ export function CreateChartDialog({
       onChartNameChange={setChartName}
       selectedChartType={selectedChartType}
       onSelectedChartTypeChange={setSelectedChartType}
-      shouldShowAdvancedBuilder={shouldShowAdvancedBuilder}
       onChartGenerated={handleChartGenerated}
       dashboards={dashboards}
       selectedDashboardId={selectedDashboardId}

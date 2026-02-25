@@ -16,7 +16,7 @@ interface AdvancedChartPreviewProps {
   error: string | null;
   isLoading: boolean;
   chartData: TChartDataRow[] | null;
-  chartType: TChartType | "";
+  chartType: TChartType;
   query: TChartQuery | null;
 }
 

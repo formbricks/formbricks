@@ -1,6 +1,7 @@
 "use client";
 
 import { useReducer, useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { AdvancedChartPreview } from "@/modules/ee/analysis/charts/components/advanced-chart-preview";
@@ -16,6 +17,7 @@ import {
   type CustomMeasure,
   type FilterRow,
   type TimeDimensionConfig,
+  buildCubeQuery,
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
 import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
@@ -26,19 +28,28 @@ import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface AdvancedChartBuilderProps {
   environmentId: string;
-  chartType: TChartType | "";
+  chartType: TChartType;
   initialQuery?: TChartQuery;
   hidePreview?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
 }
 
+const ACTION = {
+  SET_MEASURES: "SET_MEASURES",
+  SET_CUSTOM_MEASURES: "SET_CUSTOM_MEASURES",
+  SET_DIMENSIONS: "SET_DIMENSIONS",
+  SET_FILTERS: "SET_FILTERS",
+  SET_FILTER_LOGIC: "SET_FILTER_LOGIC",
+  SET_TIME_DIMENSION: "SET_TIME_DIMENSION",
+} as const;
+
 type Action =
-  | { type: "SET_MEASURES"; payload: string[] }
-  | { type: "SET_CUSTOM_MEASURES"; payload: CustomMeasure[] }
-  | { type: "SET_DIMENSIONS"; payload: string[] }
-  | { type: "SET_FILTERS"; payload: FilterRow[] }
-  | { type: "SET_FILTER_LOGIC"; payload: "and" | "or" }
-  | { type: "SET_TIME_DIMENSION"; payload: TimeDimensionConfig | null };
+  | { type: typeof ACTION.SET_MEASURES; payload: string[] }
+  | { type: typeof ACTION.SET_CUSTOM_MEASURES; payload: CustomMeasure[] }
+  | { type: typeof ACTION.SET_DIMENSIONS; payload: string[] }
+  | { type: typeof ACTION.SET_FILTERS; payload: FilterRow[] }
+  | { type: typeof ACTION.SET_FILTER_LOGIC; payload: "and" | "or" }
+  | { type: typeof ACTION.SET_TIME_DIMENSION; payload: TimeDimensionConfig | null };
 
 const initialState: ChartBuilderState = {
   selectedMeasures: [],
@@ -51,17 +62,17 @@ const initialState: ChartBuilderState = {
 
 const chartBuilderReducer = (state: ChartBuilderState, action: Action): ChartBuilderState => {
   switch (action.type) {
-    case "SET_MEASURES":
+    case ACTION.SET_MEASURES:
       return { ...state, selectedMeasures: action.payload };
-    case "SET_CUSTOM_MEASURES":
+    case ACTION.SET_CUSTOM_MEASURES:
       return { ...state, customMeasures: action.payload };
-    case "SET_DIMENSIONS":
+    case ACTION.SET_DIMENSIONS:
       return { ...state, selectedDimensions: action.payload };
-    case "SET_FILTERS":
+    case ACTION.SET_FILTERS:
       return { ...state, filters: action.payload };
-    case "SET_FILTER_LOGIC":
+    case ACTION.SET_FILTER_LOGIC:
       return { ...state, filterLogic: action.payload };
-    case "SET_TIME_DIMENSION":
+    case ACTION.SET_TIME_DIMENSION:
       return { ...state, timeDimension: action.payload };
     default:
       return state;
@@ -83,13 +94,18 @@ export function AdvancedChartBuilder({
     initialQuery ? { ...initialState, ...parsedInitial } : initialState
   );
 
-  const { chartData, query, isLoading, error, runQuery } = useChartQuery({
-    environmentId,
-    chartType,
-    state,
-    initialQuery,
-    onChartGenerated,
-  });
+  const { chartData, query, isLoading, error, runQuery } = useChartQuery(environmentId, initialQuery);
+
+  const handleRunQuery = async () => {
+    if (state.selectedMeasures.length === 0) {
+      toast.error(t("environments.analysis.charts.please_select_at_least_one_measure"));
+      return;
+    }
+    const result = await runQuery(buildCubeQuery(state));
+    if (result) {
+      onChartGenerated?.({ ...result, chartType });
+    }
+  };
 
   const [dimensionsOpen, setDimensionsOpen] = useState(
     () => (parsedInitial?.selectedDimensions?.length ?? 0) > 0
@@ -115,13 +131,13 @@ export function AdvancedChartBuilder({
             customAggregationsOpen={customAggregationsOpen}
             onCustomAggregationsOpenChange={() => {
               if (customAggregationsOpen) {
-                dispatch({ type: "SET_CUSTOM_MEASURES", payload: [] });
+                dispatch({ type: ACTION.SET_CUSTOM_MEASURES, payload: [] });
               } else if (state.customMeasures.length === 0) {
                 const dimensionOptions = FEEDBACK_FIELDS.dimensions
                   .filter((d) => d.type === "number")
                   .map((d) => d.id);
                 dispatch({
-                  type: "SET_CUSTOM_MEASURES",
+                  type: ACTION.SET_CUSTOM_MEASURES,
                   payload: [
                     {
                       id: `measure-${crypto.randomUUID()}`,
@@ -132,9 +148,9 @@ export function AdvancedChartBuilder({
                 });
               }
             }}
-            onMeasuresChange={(measures) => dispatch({ type: "SET_MEASURES", payload: measures })}
+            onMeasuresChange={(measures) => dispatch({ type: ACTION.SET_MEASURES, payload: measures })}
             onCustomMeasuresChange={(measures) =>
-              dispatch({ type: "SET_CUSTOM_MEASURES", payload: measures })
+              dispatch({ type: ACTION.SET_CUSTOM_MEASURES, payload: measures })
             }
           />
         </div>
@@ -143,7 +159,7 @@ export function AdvancedChartBuilder({
           isChecked={dimensionsOpen}
           onToggle={(checked) => {
             setDimensionsOpen(checked);
-            if (!checked) dispatch({ type: "SET_DIMENSIONS", payload: [] });
+            if (!checked) dispatch({ type: ACTION.SET_DIMENSIONS, payload: [] });
           }}
           htmlId="chart-dimensions-toggle"
           title={t("environments.analysis.charts.dimensions")}
@@ -154,17 +170,19 @@ export function AdvancedChartBuilder({
           <DimensionsPanel
             hideTitle
             selectedDimensions={state.selectedDimensions}
-            onDimensionsChange={(dimensions) => dispatch({ type: "SET_DIMENSIONS", payload: dimensions })}
+            onDimensionsChange={(dimensions) =>
+              dispatch({ type: ACTION.SET_DIMENSIONS, payload: dimensions })
+            }
           />
         </AdvancedOptionToggle>
 
         <AdvancedOptionToggle
           isChecked={timeDimensionOpen}
           onToggle={() => {
-            if (timeDimensionOpen) dispatch({ type: "SET_TIME_DIMENSION", payload: null });
+            if (timeDimensionOpen) dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: null });
             else if (!state.timeDimension) {
               dispatch({
-                type: "SET_TIME_DIMENSION",
+                type: ACTION.SET_TIME_DIMENSION,
                 payload: {
                   dimension: "FeedbackRecords.collectedAt",
                   granularity: "day",
@@ -182,7 +200,7 @@ export function AdvancedChartBuilder({
           <TimeDimensionPanel
             hideTitle
             timeDimension={state.timeDimension}
-            onTimeDimensionChange={(config) => dispatch({ type: "SET_TIME_DIMENSION", payload: config })}
+            onTimeDimensionChange={(config) => dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: config })}
           />
         </AdvancedOptionToggle>
 
@@ -190,11 +208,11 @@ export function AdvancedChartBuilder({
           isChecked={filtersOpen}
           onToggle={() => {
             if (filtersOpen) {
-              dispatch({ type: "SET_FILTERS", payload: [] });
+              dispatch({ type: ACTION.SET_FILTERS, payload: [] });
             } else if (state.filters.length === 0) {
               const firstField = FEEDBACK_FIELDS.dimensions[0] ?? FEEDBACK_FIELDS.measures[0];
               dispatch({
-                type: "SET_FILTERS",
+                type: ACTION.SET_FILTERS,
                 payload: [
                   {
                     field: firstField?.id ?? "",
@@ -215,12 +233,12 @@ export function AdvancedChartBuilder({
             hideTitle
             filters={state.filters}
             filterLogic={state.filterLogic}
-            onFiltersChange={(filters) => dispatch({ type: "SET_FILTERS", payload: filters })}
-            onFilterLogicChange={(logic) => dispatch({ type: "SET_FILTER_LOGIC", payload: logic })}
+            onFiltersChange={(filters) => dispatch({ type: ACTION.SET_FILTERS, payload: filters })}
+            onFilterLogicChange={(logic) => dispatch({ type: ACTION.SET_FILTER_LOGIC, payload: logic })}
           />
         </AdvancedOptionToggle>
 
-        <Button onClick={runQuery} disabled={isLoading || !chartType}>
+        <Button onClick={handleRunQuery} disabled={isLoading}>
           {isLoading ? <LoadingSpinner /> : t("environments.analysis.charts.run_query")}
         </Button>
       </div>

@@ -6,7 +6,7 @@ import { getChartTypes } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
 interface ManualChartBuilderProps {
-  selectedChartType: TChartType | "";
+  selectedChartType?: TChartType;
   onChartTypeSelect: (type: TChartType) => void;
 }
 

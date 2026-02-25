@@ -36,7 +36,7 @@ export function useCreateChartDialog({
   onSuccess,
 }: Readonly<UseCreateChartDialogProps>) {
   const { t } = useTranslation();
-  const [selectedChartType, setSelectedChartType] = useState<TChartType | "">("");
+  const [selectedChartType, setSelectedChartType] = useState<TChartType | undefined>();
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
@@ -48,7 +48,6 @@ export function useCreateChartDialog({
   const [chartLoadError, setChartLoadError] = useState<string | null>(null);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);
   const router = useRouter();
-  const shouldShowAdvancedBuilder = !!selectedChartType || !!chartData;
 
   useEffect(() => {
     if (isAddToDashboardDialogOpen) {
@@ -133,7 +132,7 @@ export function useCreateChartDialog({
     } else if (open && !chartId) {
       setChartData(null);
       setChartName("");
-      setSelectedChartType("");
+      setSelectedChartType(undefined);
       setCurrentChartId(undefined);
     }
   }, [open, chartId, environmentId, initialChart]);
@@ -282,7 +281,7 @@ export function useCreateChartDialog({
     if (!isSaving) {
       setChartData(null);
       setChartName("");
-      setSelectedChartType("");
+      setSelectedChartType(undefined);
       setCurrentChartId(undefined);
       onOpenChange(false);
     }
@@ -314,7 +313,6 @@ export function useCreateChartDialog({
     isSaving,
     isLoadingChart,
     chartLoadError,
-    shouldShowAdvancedBuilder,
     handleChartGenerated,
     handleSaveChart,
     handleAddToDashboard,
