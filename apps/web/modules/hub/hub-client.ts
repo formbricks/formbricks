@@ -1,5 +1,4 @@
 import "server-only";
-
 import FormbricksHub from "@formbricks/hub";
 import { env } from "@/lib/env";
 

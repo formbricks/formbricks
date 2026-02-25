@@ -3,27 +3,10 @@ import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
-vi.mock("@formbricks/hub", () => {
-  const create = vi.fn();
-  class APIError extends Error {
-    status: number;
-    constructor(message: string, status: number) {
-      super(message);
-      this.name = "APIError";
-      this.status = status;
-    }
-  }
-  const Mock = vi.fn(() => ({ feedbackRecords: { create } }));
-  (Mock as unknown as { APIError: typeof APIError }).APIError = APIError;
-  (Mock as unknown as { __create: typeof create }).__create = create;
-  return { default: Mock };
-});
+const mockCreateFeedbackRecordsBatch = vi.fn();
 
-vi.mock("@/lib/env", () => ({
-  env: {
-    HUB_API_KEY: "test-key",
-    HUB_API_URL: undefined,
-  },
+vi.mock("@/modules/hub", () => ({
+  createFeedbackRecordsBatch: (...args: unknown[]) => mockCreateFeedbackRecordsBatch(...args),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -46,9 +29,6 @@ vi.mock("./transform", () => ({
 const { getConnectorsBySurveyId, updateConnector } = await import("./service");
 const { transformResponseToFeedbackRecords } = await import("./transform");
 const { handleConnectorPipeline } = await import("./pipeline-handler");
-const hubModule = await import("@formbricks/hub");
-const mockFeedbackRecordsCreate = (hubModule.default as unknown as { __create: ReturnType<typeof vi.fn> })
-  .__create;
 
 const mockResponse = {
   id: "resp-1",
@@ -62,8 +42,6 @@ const mockSurvey = {
   name: "Test Survey",
   blocks: [{ id: "block-1", name: "Block", elements: [{ id: "el-1", headline: { default: "Question?" } }] }],
 } as unknown as TSurvey;
-
-const env = await import("@/lib/env").then((m) => m.env);
 
 function createConnector(
   overrides: Partial<Pick<TConnectorWithMappings, "id" | "formbricksMappings">> = {}
@@ -108,11 +86,15 @@ const oneFeedbackRecord = [
   },
 ];
 
+const noConfigError = {
+  status: 0,
+  message: "HUB_API_KEY is not set; Hub integration is disabled.",
+  detail: "HUB_API_KEY is not set; Hub integration is disabled.",
+};
+
 describe("handleConnectorPipeline", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(env).HUB_API_KEY = "test-key";
-    vi.mocked(env).HUB_API_URL = undefined;
   });
 
   test("returns early when no connectors for survey", async () => {
@@ -121,6 +103,7 @@ describe("handleConnectorPipeline", () => {
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
 
     expect(transformResponseToFeedbackRecords).not.toHaveBeenCalled();
+    expect(mockCreateFeedbackRecordsBatch).not.toHaveBeenCalled();
     expect(updateConnector).not.toHaveBeenCalled();
   });
 
@@ -137,18 +120,20 @@ describe("handleConnectorPipeline", () => {
       connector.formbricksMappings,
       "env-1"
     );
-    expect(mockFeedbackRecordsCreate).not.toHaveBeenCalled();
+    expect(mockCreateFeedbackRecordsBatch).not.toHaveBeenCalled();
     expect(updateConnector).not.toHaveBeenCalled();
   });
 
-  test("updates connector to error when HUB_API_KEY is not set", async () => {
-    vi.mocked(env).HUB_API_KEY = undefined as any;
+  test("updates connector to error when Hub returns no-config (HUB_API_KEY not set)", async () => {
     vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
     vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+    mockCreateFeedbackRecordsBatch.mockResolvedValue({
+      results: oneFeedbackRecord.map(() => ({ data: null, error: noConfigError })),
+    });
 
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
 
-    expect(mockFeedbackRecordsCreate).not.toHaveBeenCalled();
+    expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledWith(oneFeedbackRecord);
     expect(updateConnector).toHaveBeenCalledWith("conn-1", "env-1", {
       status: "error",
       errorMessage: expect.stringContaining("HUB_API_KEY"),
@@ -158,12 +143,13 @@ describe("handleConnectorPipeline", () => {
   test("sends records to Hub and updates connector to active on full success", async () => {
     vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
     vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
-    mockFeedbackRecordsCreate.mockResolvedValue({ id: "hub-1", ...oneFeedbackRecord[0] });
+    mockCreateFeedbackRecordsBatch.mockResolvedValue({
+      results: [{ data: { id: "hub-1", ...oneFeedbackRecord[0] }, error: null }],
+    });
 
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
 
-    expect(mockFeedbackRecordsCreate).toHaveBeenCalledTimes(1);
-    expect(mockFeedbackRecordsCreate).toHaveBeenCalledWith(oneFeedbackRecord[0]);
+    expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledWith(oneFeedbackRecord);
     expect(updateConnector).toHaveBeenCalledWith("conn-1", "env-1", {
       status: "active",
       errorMessage: null,
@@ -174,7 +160,11 @@ describe("handleConnectorPipeline", () => {
   test("updates connector to error when all Hub creates fail", async () => {
     vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
     vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
-    mockFeedbackRecordsCreate.mockRejectedValue(new Error("Hub unavailable"));
+    mockCreateFeedbackRecordsBatch.mockResolvedValue({
+      results: [
+        { data: null, error: { status: 500, message: "Hub unavailable", detail: "Hub unavailable" } },
+      ],
+    });
 
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
 
@@ -203,9 +193,12 @@ describe("handleConnectorPipeline", () => {
       }),
     ]);
     vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(twoRecords as any);
-    mockFeedbackRecordsCreate
-      .mockResolvedValueOnce({ id: "hub-1" })
-      .mockRejectedValueOnce(new Error("Rate limited"));
+    mockCreateFeedbackRecordsBatch.mockResolvedValue({
+      results: [
+        { data: { id: "hub-1" }, error: null },
+        { data: null, error: { status: 429, message: "Rate limited", detail: "Rate limited" } },
+      ],
+    });
 
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
 
