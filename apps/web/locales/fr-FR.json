@@ -112,7 +112,6 @@
     "link_expired_description": "Le lien que vous avez utilisé n'est plus valide."
   },
   "common": {
-    "Filter": "Filtrer",
     "accepted": "Accepté",
     "account": "Compte",
     "account_settings": "Paramètres du compte",
@@ -192,6 +191,7 @@
     "days": "jours",
     "default": "Par défaut",
     "delete": "Supprimer",
+    "delete_what": "Supprimer {deleteWhat}",
     "description": "Description",
     "dev_env": "Environnement de développement",
     "development": "Développement",
@@ -1082,7 +1082,7 @@
         "email_customization_preview_email_heading": "Salut {userName}",
         "email_customization_preview_email_text": "Cette est une prévisualisation d'e-mail pour vous montrer quel logo sera rendu dans les e-mails.",
         "error_deleting_organization_please_try_again": "Erreur lors de la suppression de l'organisation. Veuillez réessayer.",
-        "from_your_organization": "de votre organisation",
+        "from_your_organization": "{memberName} de votre organisation",
         "invitation_sent_once_more": "Invitation envoyée une fois de plus.",
         "invite_deleted_successfully": "Invitation supprimée avec succès",
         "invite_expires_on": "L'invitation expire le {date}",

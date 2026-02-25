@@ -112,7 +112,6 @@
     "link_expired_description": "Ссылка, которой вы воспользовались, больше не действительна."
   },
   "common": {
-    "Filter": "Фильтр",
     "accepted": "Принято",
     "account": "Аккаунт",
     "account_settings": "Настройки аккаунта",
@@ -192,6 +191,7 @@
     "days": "дни",
     "default": "По умолчанию",
     "delete": "Удалить",
+    "delete_what": "Удалить {deleteWhat}",
     "description": "Описание",
     "dev_env": "Dev Environment",
     "development": "Разработка",
@@ -1082,7 +1082,7 @@
         "email_customization_preview_email_heading": "Привет, {userName}",
         "email_customization_preview_email_text": "Это предварительный просмотр письма, чтобы показать, какой логотип будет отображаться в письмах.",
         "error_deleting_organization_please_try_again": "Ошибка при удалении организации. Пожалуйста, попробуйте ещё раз.",
-        "from_your_organization": "из вашей организации",
+        "from_your_organization": "{memberName} из вашей организации",
         "invitation_sent_once_more": "Приглашение отправлено ещё раз.",
         "invite_deleted_successfully": "Приглашение успешно удалено",
         "invite_expires_on": "Приглашение истекает {date}",
