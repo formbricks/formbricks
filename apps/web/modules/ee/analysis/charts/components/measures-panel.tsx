@@ -26,6 +26,23 @@ interface MeasuresPanelProps {
   hideTitle?: boolean;
 }
 
+const measureOptions = FEEDBACK_FIELDS.measures.map((m) => ({
+  value: m.id,
+  label: [m.label, m.description].filter(Boolean).join(" - "),
+}));
+
+const dimensionOptions = FEEDBACK_FIELDS.dimensions
+  .filter((d) => d.type === "number")
+  .map((d) => ({
+    value: d.id,
+    label: d.label,
+  }));
+
+const aggregationOptions = FEEDBACK_FIELDS.customAggregations.map((agg) => ({
+  value: agg,
+  label: agg.charAt(0).toUpperCase() + agg.slice(1),
+}));
+
 export function MeasuresPanel({
   selectedMeasures,
   customMeasures,
@@ -36,22 +53,6 @@ export function MeasuresPanel({
   hideTitle = false,
 }: Readonly<MeasuresPanelProps>) {
   const { t } = useTranslation();
-  const measureOptions = FEEDBACK_FIELDS.measures.map((m) => ({
-    value: m.id,
-    label: [m.label, m.description].filter(Boolean).join(" - "),
-  }));
-
-  const dimensionOptions = FEEDBACK_FIELDS.dimensions
-    .filter((d) => d.type === "number")
-    .map((d) => ({
-      value: d.id,
-      label: d.label,
-    }));
-
-  const aggregationOptions = FEEDBACK_FIELDS.customAggregations.map((agg) => ({
-    value: agg,
-    label: agg.charAt(0).toUpperCase() + agg.slice(1),
-  }));
 
   const handleAddCustomMeasure = () => {
     onCustomMeasuresChange([
