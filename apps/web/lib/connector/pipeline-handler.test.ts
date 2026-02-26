@@ -55,7 +55,6 @@ function createConnector(
     status: "active",
     environmentId: "env-1",
     lastSyncAt: null,
-    errorMessage: null,
     formbricksMappings: [
       {
         id: "map-1",
@@ -124,7 +123,7 @@ describe("handleConnectorPipeline", () => {
     expect(updateConnector).not.toHaveBeenCalled();
   });
 
-  test("updates connector to error when Hub returns no-config (HUB_API_KEY not set)", async () => {
+  test("does not update connector when Hub returns no-config (HUB_API_KEY not set)", async () => {
     vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
     vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
     mockCreateFeedbackRecordsBatch.mockResolvedValue({
@@ -134,13 +133,10 @@ describe("handleConnectorPipeline", () => {
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
 
     expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledWith(oneFeedbackRecord);
-    expect(updateConnector).toHaveBeenCalledWith("conn-1", "env-1", {
-      status: "error",
-      errorMessage: expect.stringContaining("HUB_API_KEY"),
-    });
+    expect(updateConnector).not.toHaveBeenCalled();
   });
 
-  test("sends records to Hub and updates connector to active on full success", async () => {
+  test("sends records to Hub and updates lastSyncAt on full success", async () => {
     vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
     vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
     mockCreateFeedbackRecordsBatch.mockResolvedValue({
@@ -151,13 +147,11 @@ describe("handleConnectorPipeline", () => {
 
     expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledWith(oneFeedbackRecord);
     expect(updateConnector).toHaveBeenCalledWith("conn-1", "env-1", {
-      status: "active",
-      errorMessage: null,
       lastSyncAt: expect.any(Date),
     });
   });
 
-  test("updates connector to error when all Hub creates fail", async () => {
+  test("does not update connector when all Hub creates fail", async () => {
     vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
     vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
     mockCreateFeedbackRecordsBatch.mockResolvedValue({
@@ -168,13 +162,10 @@ describe("handleConnectorPipeline", () => {
 
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
 
-    expect(updateConnector).toHaveBeenCalledWith("conn-1", "env-1", {
-      status: "error",
-      errorMessage: expect.stringContaining("Failed to send FeedbackRecords"),
-    });
+    expect(updateConnector).not.toHaveBeenCalled();
   });
 
-  test("updates connector to active with partial message when some creates fail", async () => {
+  test("updates lastSyncAt on partial failure when some creates succeed", async () => {
     const twoRecords = [...oneFeedbackRecord, { ...oneFeedbackRecord[0], field_id: "el-2", value_number: 3 }];
     const baseMapping = {
       createdAt: new Date(),
@@ -203,13 +194,11 @@ describe("handleConnectorPipeline", () => {
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
 
     expect(updateConnector).toHaveBeenCalledWith("conn-1", "env-1", {
-      status: "active",
-      errorMessage: "Partial failure: 1/2 records sent",
       lastSyncAt: expect.any(Date),
     });
   });
 
-  test("updates connector to error when transform throws", async () => {
+  test("does not update connector when transform throws", async () => {
     vi.mocked(getConnectorsBySurveyId).mockResolvedValue([createConnector()]);
     vi.mocked(transformResponseToFeedbackRecords).mockImplementation(() => {
       throw new Error("Transform failed");
@@ -217,9 +206,6 @@ describe("handleConnectorPipeline", () => {
 
     await handleConnectorPipeline(mockResponse, mockSurvey, "env-1");
 
-    expect(updateConnector).toHaveBeenCalledWith("conn-1", "env-1", {
-      status: "error",
-      errorMessage: "Transform failed",
-    });
+    expect(updateConnector).not.toHaveBeenCalled();
   });
 });
