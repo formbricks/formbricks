@@ -35,7 +35,7 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {
-    "zod": "3.24.4",
+    "zod": "3.25.76",
     "pino": "10.0.0",
     "pino-opentelemetry-transport": "2.0.0",
     "pino-pretty": "13.1.1"
