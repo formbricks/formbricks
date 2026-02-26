@@ -303,7 +303,7 @@ importers:
         version: 3.19.0(react@19.2.3)
       '@t3-oss/env-nextjs':
         specifier: 0.13.4
-        version: 0.13.4(arktype@2.1.29)(typescript@5.8.3)(zod@3.24.4)
+        version: 0.13.4(arktype@2.1.29)(typescript@5.8.3)(zod@3.25.76)
       '@tailwindcss/forms':
         specifier: 0.5.10
         version: 0.5.10(tailwindcss@3.4.17(ts-node@10.9.2(@types/node@22.15.18)(typescript@5.8.3)))
@@ -396,7 +396,7 @@ importers:
         version: 4.24.12(patch_hash=7ac5717a8d7d2049442182b5d83ab492d33fe774ff51ff5ea3884628b77df87b)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(nodemailer@7.0.11)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-safe-action:
         specifier: 7.10.8
-        version: 7.10.8(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@3.24.4)
+        version: 7.10.8(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@3.25.76)
       node-fetch:
         specifier: 3.3.2
         version: 3.3.2
@@ -494,11 +494,11 @@ importers:
         specifier: file:vendor/xlsx-0.20.3.tgz
         version: file:apps/web/vendor/xlsx-0.20.3.tgz
       zod:
-        specifier: 3.24.4
-        version: 3.24.4
+        specifier: 3.25.76
+        version: 3.25.76
       zod-openapi:
         specifier: 4.2.4
-        version: 4.2.4(zod@3.24.4)
+        version: 4.2.4(zod@3.25.76)
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -597,8 +597,8 @@ importers:
         specifier: 5.8.1
         version: 5.8.1
       zod:
-        specifier: 3.24.4
-        version: 3.24.4
+        specifier: 3.25.76
+        version: 3.25.76
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -700,11 +700,11 @@ importers:
         specifier: 11.1.0
         version: 11.1.0
       zod:
-        specifier: 3.24.4
-        version: 3.24.4
+        specifier: 3.25.76
+        version: 3.25.76
       zod-openapi:
         specifier: 4.2.4
-        version: 4.2.4(zod@3.24.4)
+        version: 4.2.4(zod@3.25.76)
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -844,8 +844,8 @@ importers:
         specifier: 13.1.1
         version: 13.1.1
       zod:
-        specifier: 3.24.4
-        version: 3.24.4
+        specifier: 3.25.76
+        version: 3.25.76
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -1082,11 +1082,11 @@ importers:
         specifier: 7.0.1
         version: 7.0.1
       zod:
-        specifier: 3.24.4
-        version: 3.24.4
+        specifier: 3.25.76
+        version: 3.25.76
       zod-openapi:
         specifier: 4.2.4
-        version: 4.2.4(zod@3.24.4)
+        version: 4.2.4(zod@3.25.76)
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -11940,8 +11940,8 @@ packages:
     peerDependencies:
       zod: ^3.21.4
 
-  zod@3.24.4:
-    resolution: {integrity: sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg==}
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
 snapshots:
 
@@ -18125,19 +18125,19 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@t3-oss/env-core@0.13.4(arktype@2.1.29)(typescript@5.8.3)(zod@3.24.4)':
+  '@t3-oss/env-core@0.13.4(arktype@2.1.29)(typescript@5.8.3)(zod@3.25.76)':
     dependencies:
       arktype: 2.1.29
     optionalDependencies:
       typescript: 5.8.3
-      zod: 3.24.4
+      zod: 3.25.76
 
-  '@t3-oss/env-nextjs@0.13.4(arktype@2.1.29)(typescript@5.8.3)(zod@3.24.4)':
+  '@t3-oss/env-nextjs@0.13.4(arktype@2.1.29)(typescript@5.8.3)(zod@3.25.76)':
     dependencies:
-      '@t3-oss/env-core': 0.13.4(arktype@2.1.29)(typescript@5.8.3)(zod@3.24.4)
+      '@t3-oss/env-core': 0.13.4(arktype@2.1.29)(typescript@5.8.3)(zod@3.25.76)
     optionalDependencies:
       typescript: 5.8.3
-      zod: 3.24.4
+      zod: 3.25.76
     transitivePeerDependencies:
       - arktype
 
@@ -22492,13 +22492,13 @@ snapshots:
     optionalDependencies:
       nodemailer: 7.0.11
 
-  next-safe-action@7.10.8(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@3.24.4):
+  next-safe-action@7.10.8(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@3.25.76):
     dependencies:
       next: 16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
     optionalDependencies:
-      zod: 3.24.4
+      zod: 3.25.76
 
   next@16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
@@ -25455,8 +25455,8 @@ snapshots:
 
   yoga-layout@3.2.1: {}
 
-  zod-openapi@4.2.4(zod@3.24.4):
+  zod-openapi@4.2.4(zod@3.25.76):
     dependencies:
-      zod: 3.24.4
+      zod: 3.25.76
 
-  zod@3.24.4: {}
+  zod@3.25.76: {}
