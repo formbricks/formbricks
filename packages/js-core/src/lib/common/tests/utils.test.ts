@@ -1078,7 +1078,7 @@ describe("utils.ts", () => {
       targetElement.className = "test other";
 
       targetElement.matches = vi.fn((selector) => {
-        return selector === ".test" || selector === ".other";
+        return selector === ".test" || selector === ".other" || selector === ".test .other";
       });
       targetElement.closest = vi.fn(() => null); // not needed but consistent with mock environment
 
