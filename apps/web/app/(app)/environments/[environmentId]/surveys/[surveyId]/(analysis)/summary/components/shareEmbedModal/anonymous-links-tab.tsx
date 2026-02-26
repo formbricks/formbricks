@@ -352,7 +352,7 @@ export const AnonymousLinksTab = ({
             },
             {
               title: t("environments.surveys.share.anonymous_links.custom_start_point"),
-              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/start-at-question",
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/start-at-block",
             },
           ]}
         />
