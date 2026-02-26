@@ -14,7 +14,6 @@ import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
 import {
   type ChartBuilderState,
-  type CustomMeasure,
   type FilterRow,
   type TimeDimensionConfig,
   buildCubeQuery,
@@ -36,7 +35,6 @@ interface AdvancedChartBuilderProps {
 
 const ACTION = {
   SET_MEASURES: "SET_MEASURES",
-  SET_CUSTOM_MEASURES: "SET_CUSTOM_MEASURES",
   SET_DIMENSIONS: "SET_DIMENSIONS",
   SET_FILTERS: "SET_FILTERS",
   SET_FILTER_LOGIC: "SET_FILTER_LOGIC",
@@ -46,7 +44,6 @@ const ACTION = {
 
 type Action =
   | { type: typeof ACTION.SET_MEASURES; payload: string[] }
-  | { type: typeof ACTION.SET_CUSTOM_MEASURES; payload: CustomMeasure[] }
   | { type: typeof ACTION.SET_DIMENSIONS; payload: string[] }
   | { type: typeof ACTION.SET_FILTERS; payload: FilterRow[] }
   | { type: typeof ACTION.SET_FILTER_LOGIC; payload: "and" | "or" }
@@ -55,7 +52,6 @@ type Action =
 
 const initialState: ChartBuilderState = {
   selectedMeasures: [],
-  customMeasures: [],
   selectedDimensions: [],
   filters: [],
   filterLogic: "and",
@@ -66,8 +62,6 @@ const chartBuilderReducer = (state: ChartBuilderState, action: Action): ChartBui
   switch (action.type) {
     case ACTION.SET_MEASURES:
       return { ...state, selectedMeasures: action.payload };
-    case ACTION.SET_CUSTOM_MEASURES:
-      return { ...state, customMeasures: action.payload };
     case ACTION.SET_DIMENSIONS:
       return { ...state, selectedDimensions: action.payload };
     case ACTION.SET_FILTERS:
@@ -132,7 +126,6 @@ export function AdvancedChartBuilder({
   );
   const timeDimensionOpen = state.timeDimension != null;
   const filtersOpen = state.filters.length > 0;
-  const customAggregationsOpen = state.customMeasures.length > 0;
 
   return (
     <div className={hidePreview ? "space-y-2" : "grid gap-4 lg:grid-cols-2"}>
@@ -147,31 +140,7 @@ export function AdvancedChartBuilder({
         <div className="mt-4 flex w-full flex-col gap-3 overflow-hidden rounded-lg border bg-slate-50 p-4">
           <MeasuresPanel
             selectedMeasures={state.selectedMeasures}
-            customMeasures={state.customMeasures}
-            customAggregationsOpen={customAggregationsOpen}
-            onCustomAggregationsOpenChange={() => {
-              if (customAggregationsOpen) {
-                dispatch({ type: ACTION.SET_CUSTOM_MEASURES, payload: [] });
-              } else if (state.customMeasures.length === 0) {
-                const dimensionOptions = FEEDBACK_FIELDS.dimensions
-                  .filter((d) => d.type === "number")
-                  .map((d) => d.id);
-                dispatch({
-                  type: ACTION.SET_CUSTOM_MEASURES,
-                  payload: [
-                    {
-                      id: `measure-${crypto.randomUUID()}`,
-                      field: dimensionOptions[0] ?? "",
-                      aggregation: "avg",
-                    },
-                  ],
-                });
-              }
-            }}
             onMeasuresChange={(measures) => dispatch({ type: ACTION.SET_MEASURES, payload: measures })}
-            onCustomMeasuresChange={(measures) =>
-              dispatch({ type: ACTION.SET_CUSTOM_MEASURES, payload: measures })
-            }
           />
         </div>
 
@@ -235,6 +204,7 @@ export function AdvancedChartBuilder({
                 type: ACTION.SET_FILTERS,
                 payload: [
                   {
+                    id: crypto.randomUUID(),
                     field: firstField?.id ?? "",
                     operator: "equals" as const,
                     values: null,

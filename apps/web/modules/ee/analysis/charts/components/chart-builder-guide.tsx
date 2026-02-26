@@ -41,11 +41,8 @@ export function ChartBuilderGuide({ trigger }: Readonly<ChartBuilderGuideProps>)
                 <h3 className="text-md mb-1 font-semibold text-gray-900">
                   {t("environments.analysis.charts.guide_measures")}
                 </h3>
-                <p className="mb-2 text-sm text-gray-600">
-                  {t("environments.analysis.charts.guide_measures_predefined")}
-                </p>
                 <p className="text-sm text-gray-600">
-                  {t("environments.analysis.charts.guide_measures_custom")}
+                  {t("environments.analysis.charts.guide_measures_predefined")}
                 </p>
               </section>
 
@@ -88,10 +85,6 @@ export function ChartBuilderGuide({ trigger }: Readonly<ChartBuilderGuideProps>)
                   <div>
                     <dt className="inline font-medium text-gray-900">Dimension: </dt>
                     <dd className="inline">{t("environments.analysis.charts.guide_term_dimension")}</dd>
-                  </div>
-                  <div>
-                    <dt className="inline font-medium text-gray-900">Custom aggregation: </dt>
-                    <dd className="inline">{t("environments.analysis.charts.guide_term_custom")}</dd>
                   </div>
                   <div>
                     <dt className="inline font-medium text-gray-900">Time dimension: </dt>

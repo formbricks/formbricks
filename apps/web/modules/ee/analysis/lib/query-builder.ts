@@ -3,16 +3,10 @@
  */
 import { TChartQuery, TCubeFilter, TMemberFilter, TTimeDimension } from "@formbricks/types/analysis";
 
-export interface CustomMeasure {
-  id?: string;
-  field: string;
-  aggregation: string;
-  alias?: string;
-}
-
 export type TFilterFieldType = "string" | "number" | "time";
 
 export interface FilterRow {
+  id: string;
   field: string;
   operator: TMemberFilter["operator"];
   values: string[] | number[] | null;
@@ -26,7 +20,6 @@ export interface TimeDimensionConfig {
 
 export interface ChartBuilderState {
   selectedMeasures: string[];
-  customMeasures: CustomMeasure[];
   selectedDimensions: string[];
   filters: FilterRow[];
   filterLogic: "and" | "or";
@@ -107,7 +100,6 @@ function isMemberFilter(f: TCubeFilter): f is TMemberFilter {
 export function parseQueryToState(query: TChartQuery): Partial<ChartBuilderState> {
   const state: Partial<ChartBuilderState> = {
     selectedMeasures: query.measures || [],
-    customMeasures: [],
     selectedDimensions: query.dimensions || [],
     filters: [],
     filterLogic: "and",
@@ -120,6 +112,7 @@ export function parseQueryToState(query: TChartQuery): Partial<ChartBuilderState
     if (!isMemberFilter(first) && "or" in first && query.filters.length === 1) {
       state.filterLogic = "or";
       state.filters = (first.or as TMemberFilter[]).map((f) => ({
+        id: crypto.randomUUID(),
         field: f.member,
         operator: f.operator,
         values: f.values || null,
@@ -127,6 +120,7 @@ export function parseQueryToState(query: TChartQuery): Partial<ChartBuilderState
     } else {
       state.filterLogic = "and";
       state.filters = query.filters.filter(isMemberFilter).map((f) => ({
+        id: crypto.randomUUID(),
         field: f.member,
         operator: f.operator,
         values: f.values || null,

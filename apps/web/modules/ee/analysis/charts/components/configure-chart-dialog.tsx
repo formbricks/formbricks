@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { getChartTypes } from "@/modules/ee/analysis/charts/lib/chart-types";
+import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -17,9 +18,9 @@ import {
 interface ConfigureChartDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentChartType: string;
-  configuredChartType: string | null;
-  onChartTypeSelect: (type: string) => void;
+  currentChartType: TChartType;
+  configuredChartType: TChartType | null;
+  onChartTypeSelect: (type: TChartType) => void;
   onReset: () => void;
 }
 

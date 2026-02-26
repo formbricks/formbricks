@@ -74,10 +74,5 @@ describe("schema-definition", () => {
       expect(FEEDBACK_FIELDS.dimensions.length).toBeGreaterThan(0);
       expect(FEEDBACK_FIELDS.measures.length).toBeGreaterThan(0);
     });
-
-    test("customAggregations has expected values", () => {
-      expect(FEEDBACK_FIELDS.customAggregations).toContain("count");
-      expect(FEEDBACK_FIELDS.customAggregations).toContain("avg");
-    });
   });
 });

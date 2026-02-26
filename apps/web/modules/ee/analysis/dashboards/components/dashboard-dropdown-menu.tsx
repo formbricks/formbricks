@@ -2,9 +2,11 @@
 
 import { CopyIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -28,6 +30,7 @@ export const DashboardDropdownMenu = ({
   dashboardName,
 }: Readonly<DashboardDropdownMenuProps>) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
@@ -39,8 +42,11 @@ export const DashboardDropdownMenu = ({
       const result = await duplicateDashboardAction({ environmentId, dashboardId });
       if (result?.data) {
         toast.success(t("environments.analysis.dashboards.duplicate_success"));
+        router.refresh();
       } else {
-        toast.error(result?.serverError || t("environments.analysis.dashboards.duplicate_failed"));
+        toast.error(
+          getFormattedErrorMessage(result) || t("environments.analysis.dashboards.duplicate_failed")
+        );
       }
     } catch {
       toast.error(t("environments.analysis.dashboards.duplicate_failed"));
@@ -56,8 +62,9 @@ export const DashboardDropdownMenu = ({
       if (result?.data) {
         setIsDeleteDialogOpen(false);
         toast.success(t("environments.analysis.dashboards.delete_success"));
+        router.refresh();
       } else {
-        toast.error(result?.serverError || t("environments.analysis.dashboards.delete_failed"));
+        toast.error(getFormattedErrorMessage(result) || t("environments.analysis.dashboards.delete_failed"));
       }
     } catch {
       toast.error(t("environments.analysis.dashboards.delete_failed"));

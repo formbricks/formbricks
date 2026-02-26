@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 
-const timeFieldOptions = FEEDBACK_FIELDS.dimensions.filter((d) => d.type === "time");
+const TIME_FIELD_OPTIONS = FEEDBACK_FIELDS.dimensions.filter((d) => d.type === "time");
 
 interface TimeDimensionPanelProps {
   timeDimension: TimeDimensionConfig | null;
@@ -115,9 +115,9 @@ export function TimeDimensionPanel({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {timeFieldOptions.map((field) => (
+              {TIME_FIELD_OPTIONS.map((field) => (
                 <SelectItem key={field.id} value={field.id}>
-                  {field.label}
+                  {t(field.labelKey)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -135,7 +135,7 @@ export function TimeDimensionPanel({
               <SelectItem value="none">{t("environments.analysis.charts.no_grouping")}</SelectItem>
               {TIME_GRANULARITIES.map((gran) => (
                 <SelectItem key={gran} value={gran}>
-                  {gran.charAt(0).toUpperCase() + gran.slice(1)}
+                  {t(`environments.analysis.charts.granularity_${gran}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -166,7 +166,7 @@ export function TimeDimensionPanel({
                 <SelectContent>
                   {DATE_PRESETS.map((preset) => (
                     <SelectItem key={preset.value} value={preset.value}>
-                      {preset.label}
+                      {t(preset.labelKey)}
                     </SelectItem>
                   ))}
                   {presetValue && !DATE_PRESETS.some((p) => p.value === presetValue) && (
@@ -191,12 +191,14 @@ export function TimeDimensionPanel({
                     <Calendar
                       onChange={(date: Date) => {
                         setCustomStartDate(date);
-                        if (timeDimension && date && customEndDate) {
+                        const end = customEndDate ?? date;
+                        if (timeDimension) {
                           onTimeDimensionChange({
                             ...timeDimension,
-                            dateRange: [date, customEndDate],
+                            dateRange: [date, end],
                           });
                         }
+                        if (!customEndDate) setCustomEndDate(end);
                       }}
                       value={customStartDate || undefined}
                     />
@@ -216,12 +218,14 @@ export function TimeDimensionPanel({
                     <Calendar
                       onChange={(date: Date) => {
                         setCustomEndDate(date);
-                        if (timeDimension && customStartDate && date) {
+                        const start = customStartDate ?? date;
+                        if (timeDimension) {
                           onTimeDimensionChange({
                             ...timeDimension,
-                            dateRange: [customStartDate, date],
+                            dateRange: [start, date],
                           });
                         }
+                        if (!customStartDate) setCustomStartDate(start);
                       }}
                       value={customEndDate || undefined}
                       minDate={customStartDate || undefined}

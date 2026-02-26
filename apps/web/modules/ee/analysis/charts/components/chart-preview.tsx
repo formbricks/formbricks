@@ -3,6 +3,7 @@
 import { BarChart, DatabaseIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ChartErrorBoundary } from "@/modules/ee/analysis/charts/components/chart-error-boundary";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
 import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
 import { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
@@ -66,7 +67,9 @@ export function ChartPreview({ chartData, isLoading = false, error }: Readonly<C
         </div>
 
         <TabsContent value="chart" className="mt-0">
-          <ChartRenderer chartType={chartData.chartType} data={data} query={chartData.query} />
+          <ChartErrorBoundary fallbackMessage={t("environments.analysis.charts.chart_render_error")}>
+            <ChartRenderer chartType={chartData.chartType} data={data} query={chartData.query} />
+          </ChartErrorBoundary>
         </TabsContent>
 
         <TabsContent value="data" className="mt-0">

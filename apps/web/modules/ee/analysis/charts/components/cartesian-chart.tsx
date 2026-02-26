@@ -1,6 +1,7 @@
 "use client";
 
 import { type ElementType, type ReactNode, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   CHART_BRAND_DARK,
@@ -23,6 +24,7 @@ const ChartTooltipRow = ({
   dataKey,
   color,
 }: Readonly<{ value: unknown; dataKey: string; color?: string }>) => {
+  const { t } = useTranslation();
   const indicatorColor = color ?? CHART_BRAND_DARK;
   return (
     <>
@@ -34,7 +36,7 @@ const ChartTooltipRow = ({
         }}
       />
       <div className="flex flex-1 items-center justify-between leading-none">
-        <span className="text-muted-foreground">{formatCubeColumnHeader(dataKey)}</span>
+        <span className="text-muted-foreground">{formatCubeColumnHeader(dataKey, t)}</span>
         <span className="text-foreground font-mono font-medium tabular-nums">{formatCellValue(value)}</span>
       </div>
     </>
@@ -88,8 +90,6 @@ export function CartesianChart({
   chartProps = {},
 }: Readonly<CartesianChartProps>) {
   const isMultiMeasure = dataKeys.length > 1;
-  const legendVisible = showLegend;
-  const gridVisible = true;
   const tooltipContent = isMultiMeasure ? (
     <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={multiMeasureTooltipFormatter} />
   ) : (
@@ -100,7 +100,7 @@ export function CartesianChart({
     <div className="h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
         <Chart data={data} {...chartProps}>
-          {gridVisible && <CartesianGrid strokeDasharray="3 3" vertical={false} />}
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey={xAxisKey}
             tickLine={false}
@@ -110,7 +110,7 @@ export function CartesianChart({
           />
           <YAxis tickLine={false} axisLine={false} />
           <ChartTooltip content={tooltipContent} />
-          {legendVisible && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
+          {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
         </Chart>
       </ChartContainer>

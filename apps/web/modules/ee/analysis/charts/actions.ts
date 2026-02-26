@@ -3,7 +3,7 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { Output, generateText } from "ai";
 import { z } from "zod";
-import { ZChartQuery } from "@formbricks/types/analysis";
+import { type TChartQuery, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -328,6 +328,8 @@ export const generateAIChartAction = authenticatedActionClient
           })),
         }),
       };
+
+      validateQueryMembers(cleanQuery as TChartQuery);
 
       const data = await executeQuery(cleanQuery);
 

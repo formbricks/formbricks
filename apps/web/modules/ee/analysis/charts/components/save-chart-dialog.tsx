@@ -49,6 +49,7 @@ export function SaveChartDialog({
             placeholder={t("environments.analysis.charts.chart_name_placeholder")}
             value={chartName}
             onChange={(e) => onChartNameChange(e.target.value)}
+            maxLength={255}
             onKeyDown={(e) => {
               if (e.key === "Enter" && chartName.trim() && !isSaving) {
                 onSave();

@@ -6,7 +6,6 @@ describe("query-builder", () => {
     test("builds minimal query with measures only", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
-        customMeasures: [],
         selectedDimensions: [],
         filters: [],
         filterLogic: "and",
@@ -22,7 +21,6 @@ describe("query-builder", () => {
     test("adds dimensions when present", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
-        customMeasures: [],
         selectedDimensions: ["FeedbackRecords.sentiment"],
         filters: [],
         filterLogic: "and",
@@ -35,7 +33,6 @@ describe("query-builder", () => {
     test("adds time dimension with string dateRange", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
-        customMeasures: [],
         selectedDimensions: [],
         filters: [],
         filterLogic: "and",
@@ -54,7 +51,6 @@ describe("query-builder", () => {
     test("adds time dimension with Date array dateRange", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
-        customMeasures: [],
         selectedDimensions: [],
         filters: [],
         filterLogic: "and",
@@ -77,11 +73,10 @@ describe("query-builder", () => {
     test("adds AND filters as member filters", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
-        customMeasures: [],
         selectedDimensions: [],
         filters: [
-          { field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
-          { field: "FeedbackRecords.sourceType", operator: "set", values: null },
+          { id: "f1", field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
+          { id: "f2", field: "FeedbackRecords.sourceType", operator: "set", values: null },
         ],
         filterLogic: "and",
         timeDimension: null,
@@ -96,9 +91,8 @@ describe("query-builder", () => {
     test("adds OR filters wrapped in or", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
-        customMeasures: [],
         selectedDimensions: [],
-        filters: [{ field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] }],
+        filters: [{ id: "f1", field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] }],
         filterLogic: "or",
         timeDimension: null,
       };
@@ -128,7 +122,7 @@ describe("query-builder", () => {
       };
       const state = parseQueryToState(query);
       expect(state.filterLogic).toBe("and");
-      expect(state.filters).toEqual([
+      expect(state.filters?.map(({ field, operator, values }) => ({ field, operator, values }))).toEqual([
         { field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
       ]);
     });
@@ -144,7 +138,7 @@ describe("query-builder", () => {
       };
       const state = parseQueryToState(query);
       expect(state.filterLogic).toBe("or");
-      expect(state.filters).toEqual([
+      expect(state.filters?.map(({ field, operator, values }) => ({ field, operator, values }))).toEqual([
         { field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
       ]);
     });
@@ -173,9 +167,8 @@ describe("query-builder", () => {
     test("buildCubeQuery then parseQueryToState restores state", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
-        customMeasures: [],
         selectedDimensions: ["FeedbackRecords.sentiment"],
-        filters: [{ field: "FeedbackRecords.sourceType", operator: "equals", values: ["survey"] }],
+        filters: [{ id: "f1", field: "FeedbackRecords.sourceType", operator: "equals", values: ["survey"] }],
         filterLogic: "and",
         timeDimension: {
           dimension: "FeedbackRecords.collectedAt",
@@ -190,7 +183,9 @@ describe("query-builder", () => {
       expect(restored.selectedDimensions).toEqual(config.selectedDimensions);
       expect(restored.filterLogic).toBe(config.filterLogic);
       expect(restored.timeDimension).toEqual(config.timeDimension);
-      expect(restored.filters).toEqual(config.filters);
+      expect(restored.filters?.map(({ field, operator, values }) => ({ field, operator, values }))).toEqual(
+        config.filters.map(({ field, operator, values }) => ({ field, operator, values }))
+      );
     });
   });
 });

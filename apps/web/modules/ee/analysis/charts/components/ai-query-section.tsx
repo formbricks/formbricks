@@ -68,6 +68,7 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
           value={userQuery}
           onChange={(e) => setUserQuery(e.target.value)}
           className="flex-1"
+          maxLength={2000}
           disabled={isGenerating}
         />
         <Button
