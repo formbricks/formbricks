@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import {
   TConnectorWithMappings,
+  THubFieldType,
   ZConnectorCreateInput,
   ZConnectorFieldMappingCreateInput,
   ZConnectorUpdateInput,
@@ -72,7 +73,7 @@ export const deleteConnectorAction = authenticatedActionClient
 const resolveSurveyMappings = async (
   surveyId: string,
   elementIds: string[]
-): Promise<{ surveyId: string; elementId: string; hubFieldType: string }[]> => {
+): Promise<{ surveyId: string; elementId: string; hubFieldType: THubFieldType }[]> => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
     throw new ResourceNotFoundError("Survey", surveyId);
