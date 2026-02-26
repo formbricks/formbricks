@@ -46,6 +46,18 @@ export const preparePieData = (
   return { processedData, colors };
 };
 
+/** Format a value for x-axis ticks; ISO date strings become "MMM d, yyyy", others pass through. */
+export function formatXAxisTick(value: TChartDataRow[string]): string {
+  if (value == null) return "";
+  let str: string;
+  if (typeof value === "string") str = value;
+  else if (typeof value === "number") str = String(value);
+  else return "";
+  const date = parseISO(str);
+  if (isValid(date)) return format(date, "MMM d, yyyy");
+  return str;
+}
+
 /**
  * Format a cell value for display in tables and tooltips.
  * ISO date strings become "MMM d, yyyy"; numbers stay as-is (formatted); objects are stringified.

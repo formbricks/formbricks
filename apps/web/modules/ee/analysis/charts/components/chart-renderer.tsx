@@ -1,145 +1,20 @@
 "use client";
 
-import { format, isValid, parseISO } from "date-fns";
-import type { ElementType, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { TChartQuery } from "@formbricks/types/analysis";
+import { Area, AreaChart, Bar, BarChart, Cell, Line, LineChart, Pie, PieChart } from "recharts";
+import type { TChartQuery } from "@formbricks/types/analysis";
+import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
   formatCellValue,
+  formatXAxisTick,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/modules/ui/components/chart";
-
-function formatXAxisTick(value: unknown): string {
-  if (value == null) return "";
-  let str: string;
-  if (typeof value === "string") str = value;
-  else if (typeof value === "number") str = String(value);
-  else return "";
-  const date = parseISO(str);
-  if (isValid(date)) return format(date, "MMM d, yyyy");
-  return str;
-}
-
-function ChartTooltipRow({
-  value,
-  dataKey,
-  color,
-}: Readonly<{ value: unknown; dataKey: string; color?: string }>) {
-  const indicatorColor = color ?? CHART_BRAND_DARK;
-  return (
-    <>
-      <div
-        className="h-2.5 w-2.5 shrink-0 rounded-[2px] border border-current"
-        style={{
-          backgroundColor: indicatorColor,
-          borderColor: indicatorColor,
-        }}
-      />
-      <div className="flex flex-1 items-center justify-between leading-none">
-        <span className="text-muted-foreground">{formatCubeColumnHeader(dataKey)}</span>
-        <span className="text-foreground font-mono font-medium tabular-nums">{formatCellValue(value)}</span>
-      </div>
-    </>
-  );
-}
-
-/** Creates a tooltip formatter bound to dataKey for Cartesian charts. Defined at module level to avoid Sonar "component in parent" warnings. */
-function createTooltipFormatter(dataKey: string) {
-  const Formatter = (value: unknown) => <ChartTooltipRow value={value} dataKey={dataKey} />;
-  Formatter.displayName = "ChartTooltipFormatter";
-  return Formatter;
-}
-
-/** Tooltip content for single-measure Cartesian charts. */
-function SingleMeasureTooltip({ dataKey }: Readonly<{ dataKey: string }>) {
-  return <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={createTooltipFormatter(dataKey)} />;
-}
-
-/** Tooltip formatter for multi-measure charts; uses each payload item's dataKey and color. */
-function multiMeasureTooltipFormatter(
-  value: unknown,
-  name: string,
-  item: { dataKey?: string; color?: string; payload?: { fill?: string } }
-) {
-  const key = item?.dataKey ?? name;
-  const color = item?.color ?? item?.payload?.fill;
-  return <ChartTooltipRow value={value} dataKey={key} color={color} />;
-}
-
-/** Shared layout for bar, line, and area charts. Supports single or multiple measures. */
-function CartesianChart({
-  data,
-  xAxisKey,
-  dataKeys,
-  chartConfig,
-  chart: Chart,
-  children,
-  showLegend = false,
-  chartProps = {},
-}: Readonly<{
-  data: TChartDataRow[];
-  xAxisKey: string;
-  dataKeys: string[];
-  chartConfig: ChartConfig;
-  chart: ElementType;
-  children: ReactNode;
-  showLegend?: boolean;
-  chartProps?: Record<string, unknown>;
-}>) {
-  const isMultiMeasure = dataKeys.length > 1;
-  const tooltipContent = isMultiMeasure ? (
-    <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={multiMeasureTooltipFormatter} />
-  ) : (
-    <SingleMeasureTooltip dataKey={dataKeys[0]} />
-  );
-
-  return (
-    <div className="h-64 w-full">
-      <ChartContainer config={chartConfig} className="h-full w-full">
-        <Chart data={data} {...chartProps}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis
-            dataKey={xAxisKey}
-            tickLine={false}
-            tickMargin={10}
-            axisLine={false}
-            tickFormatter={formatXAxisTick}
-          />
-          <YAxis tickLine={false} axisLine={false} />
-          <ChartTooltip content={tooltipContent} />
-          {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
-          {children}
-        </Chart>
-      </ChartContainer>
-    </div>
-  );
-}
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
 
 interface ChartRendererProps {
   chartType: TChartType;
@@ -164,11 +39,13 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
     measureIds.length > 0
       ? measureIds
       : [rowKeys.find((k) => k !== query.dimensions?.[0]) ?? rowKeys[0]].filter(Boolean);
+  const timeDim = query.timeDimensions?.[0];
+  const timeDimKey = timeDim?.granularity
+    ? `${timeDim.dimension}.${timeDim.granularity}`
+    : timeDim?.dimension;
+
   const xAxisKey =
-    query.dimensions?.[0] ??
-    query.timeDimensions?.[0]?.dimension ??
-    rowKeys.find((k) => !dataKeys.includes(k)) ??
-    "key";
+    query.dimensions?.[0] ?? timeDimKey ?? rowKeys.find((k) => !dataKeys.includes(k)) ?? rowKeys[0] ?? "key";
   const chartConfig: ChartConfig = Object.fromEntries(
     dataKeys.map((key, i) => [
       key,
@@ -242,7 +119,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
               type="monotone"
               dataKey={key}
               stroke={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length]}
-              fill={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i]}
+              fill={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length]}
               fillOpacity={0.4}
               strokeWidth={2}
             />
@@ -294,7 +171,10 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       );
     }
     case "big_number": {
-      const total = data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
+      const total =
+        data.length === 1
+          ? Number(data[0]?.[dataKey]) || 0
+          : data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
       return (
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
