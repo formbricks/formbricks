@@ -1,6 +1,7 @@
 "use server";
 
-import OpenAI from "openai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { Output, generateText } from "ai";
 import { z } from "zod";
 import { ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
@@ -273,93 +274,6 @@ const ZGenerateAIQueryResponse = z.object({
     .nullable(),
 });
 
-const AI_QUERY_JSON_SCHEMA = {
-  type: "object" as const,
-  additionalProperties: false,
-  properties: {
-    measures: {
-      type: "array" as const,
-      items: { type: "string" as const },
-      description: "List of measures to query",
-    },
-    dimensions: {
-      anyOf: [{ type: "array" as const, items: { type: "string" as const } }, { type: "null" as const }],
-      description: "List of dimensions to query",
-    },
-    timeDimensions: {
-      anyOf: [
-        {
-          type: "array" as const,
-          items: {
-            type: "object" as const,
-            additionalProperties: false,
-            properties: {
-              dimension: { type: "string" as const },
-              granularity: {
-                anyOf: [
-                  {
-                    type: "string" as const,
-                    enum: ["hour", "day", "week", "month", "quarter", "year"],
-                  },
-                  { type: "null" as const },
-                ],
-              },
-              dateRange: { anyOf: [{ type: "string" as const }, { type: "null" as const }] },
-            },
-            required: ["dimension", "granularity", "dateRange"],
-          },
-        },
-        { type: "null" as const },
-      ],
-      description: "Time dimensions with granularity and date range",
-    },
-    chartType: {
-      type: "string" as const,
-      enum: [...ZChartType.options],
-      description: "Suggested chart type for visualization",
-    },
-    filters: {
-      anyOf: [
-        {
-          type: "array" as const,
-          items: {
-            type: "object" as const,
-            additionalProperties: false,
-            properties: {
-              member: { type: "string" as const },
-              operator: {
-                type: "string" as const,
-                enum: [
-                  "equals",
-                  "notEquals",
-                  "contains",
-                  "notContains",
-                  "set",
-                  "notSet",
-                  "gt",
-                  "gte",
-                  "lt",
-                  "lte",
-                ],
-              },
-              values: {
-                anyOf: [
-                  { type: "array" as const, items: { type: "string" as const } },
-                  { type: "null" as const },
-                ],
-              },
-            },
-            required: ["member", "operator", "values"],
-          },
-        },
-        { type: "null" as const },
-      ],
-      description: "Filters to apply to the query",
-    },
-  },
-  required: ["measures", "dimensions", "timeDimensions", "chartType", "filters"],
-};
-
 const ZGenerateAIChartAction = z.object({
   environmentId: ZId,
   prompt: z.string().min(1).max(2000),
@@ -381,71 +295,39 @@ export const generateAIChartAction = authenticatedActionClient
         throw new Error("OPENAI_API_KEY is not configured");
       }
 
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
       const schemaContext = generateSchemaContext();
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: schemaContext },
-          { role: "user", content: `User request: "${parsedInput.prompt}"` },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "generate_cube_query",
-              description: "Generate a Cube.js query based on the user request",
-              parameters: AI_QUERY_JSON_SCHEMA,
-              strict: true,
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "generate_cube_query" } },
+      const { output } = await generateText({
+        model: openai("gpt-4o-mini"),
+        output: Output.object({ schema: ZGenerateAIQueryResponse }),
+        system: schemaContext,
+        prompt: `User request: "${parsedInput.prompt}"`,
       });
 
-      const toolCall = completion.choices[0]?.message?.tool_calls?.[0];
-      if (toolCall?.function?.name !== "generate_cube_query") {
-        throw new Error("Failed to generate structured output from OpenAI");
-      }
+      const measures = output.measures.length > 0 ? output.measures : [`${CUBE_NAME}.count`];
 
-      const rawQuery = JSON.parse(toolCall.function.arguments);
-      const validated = ZGenerateAIQueryResponse.parse(rawQuery);
+      const { chartType, ...cubeQuery } = { ...output, measures };
 
-      if (!validated.measures || validated.measures.length === 0) {
-        validated.measures = [`${CUBE_NAME}.count`];
-      }
-
-      const { chartType, ...cubeQuery } = validated;
-
+      // Strip nulls/empty arrays so Cube.js receives only present fields
       const cleanQuery: Record<string, unknown> = {
         measures: cubeQuery.measures,
+        ...(cubeQuery.dimensions?.length && { dimensions: cubeQuery.dimensions }),
+        ...(cubeQuery.filters?.length && {
+          filters: cubeQuery.filters.map(({ member, operator, values }) => ({
+            member,
+            operator,
+            ...(values != null && { values }),
+          })),
+        }),
+        ...(cubeQuery.timeDimensions?.length && {
+          timeDimensions: cubeQuery.timeDimensions.map(({ dimension, granularity, dateRange }) => ({
+            dimension,
+            ...(granularity != null && { granularity }),
+            ...(dateRange != null && { dateRange }),
+          })),
+        }),
       };
-
-      if (Array.isArray(cubeQuery.dimensions) && cubeQuery.dimensions.length > 0) {
-        cleanQuery.dimensions = cubeQuery.dimensions;
-      }
-
-      if (Array.isArray(cubeQuery.filters) && cubeQuery.filters.length > 0) {
-        cleanQuery.filters = cubeQuery.filters.map(
-          (f: { member: string; operator: string; values?: string[] | null }) => {
-            const cleaned: Record<string, unknown> = { member: f.member, operator: f.operator };
-            if (f.values !== null && f.values !== undefined) cleaned.values = f.values;
-            return cleaned;
-          }
-        );
-      }
-
-      if (Array.isArray(cubeQuery.timeDimensions) && cubeQuery.timeDimensions.length > 0) {
-        cleanQuery.timeDimensions = cubeQuery.timeDimensions.map(
-          (td: { dimension: string; granularity?: string | null; dateRange?: string | null }) => {
-            const cleaned: Record<string, unknown> = { dimension: td.dimension };
-            if (td.granularity !== null && td.granularity !== undefined) cleaned.granularity = td.granularity;
-            if (td.dateRange !== null && td.dateRange !== undefined) cleaned.dateRange = td.dateRange;
-            return cleaned;
-          }
-        );
-      }
 
       const data = await executeQuery(cleanQuery);
 
