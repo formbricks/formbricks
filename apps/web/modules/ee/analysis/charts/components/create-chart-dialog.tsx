@@ -99,7 +99,7 @@ export function CreateChartDialog({
       chartName={chartName}
       onChartNameChange={setChartName}
       selectedChartType={selectedChartType}
-      onSelectedChartTypeChange={setSelectedChartType}
+      onSelectedChartTypeChange={handleChartTypeChange}
       onChartGenerated={handleChartGenerated}
       dashboards={dashboards}
       selectedDashboardId={selectedDashboardId}

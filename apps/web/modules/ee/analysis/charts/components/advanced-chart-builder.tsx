@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
@@ -41,6 +41,7 @@ const ACTION = {
   SET_FILTERS: "SET_FILTERS",
   SET_FILTER_LOGIC: "SET_FILTER_LOGIC",
   SET_TIME_DIMENSION: "SET_TIME_DIMENSION",
+  INIT_FROM_QUERY: "INIT_FROM_QUERY",
 } as const;
 
 type Action =
@@ -49,7 +50,8 @@ type Action =
   | { type: typeof ACTION.SET_DIMENSIONS; payload: string[] }
   | { type: typeof ACTION.SET_FILTERS; payload: FilterRow[] }
   | { type: typeof ACTION.SET_FILTER_LOGIC; payload: "and" | "or" }
-  | { type: typeof ACTION.SET_TIME_DIMENSION; payload: TimeDimensionConfig | null };
+  | { type: typeof ACTION.SET_TIME_DIMENSION; payload: TimeDimensionConfig | null }
+  | { type: typeof ACTION.INIT_FROM_QUERY; payload: Partial<ChartBuilderState> };
 
 const initialState: ChartBuilderState = {
   selectedMeasures: [],
@@ -74,6 +76,8 @@ const chartBuilderReducer = (state: ChartBuilderState, action: Action): ChartBui
       return { ...state, filterLogic: action.payload };
     case ACTION.SET_TIME_DIMENSION:
       return { ...state, timeDimension: action.payload };
+    case ACTION.INIT_FROM_QUERY:
+      return { ...state, ...action.payload };
     default:
       return state;
   }
@@ -95,6 +99,16 @@ export function AdvancedChartBuilder({
   );
 
   const { chartData, query, isLoading, error, runQuery } = useChartQuery(environmentId, initialQuery);
+
+  const appliedInitialQueryRef = useRef<TChartQuery | null>(null);
+  useEffect(() => {
+    if (!initialQuery) return;
+    if (appliedInitialQueryRef.current === initialQuery) return;
+    appliedInitialQueryRef.current = initialQuery;
+    const parsed = parseQueryToState(initialQuery);
+    dispatch({ type: ACTION.INIT_FROM_QUERY, payload: parsed });
+    setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
+  }, [initialQuery]);
 
   const handleRunQuery = async () => {
     if (state.selectedMeasures.length === 0) {
