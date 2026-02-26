@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
@@ -99,6 +99,12 @@ export function AdvancedChartBuilder({
   );
 
   const { chartData, query, isLoading, error, runQuery } = useChartQuery(environmentId, initialQuery);
+
+  const currentQuery = useMemo(() => buildCubeQuery(state), [state]);
+  const hasConfigChanged = useMemo(() => {
+    if (!query) return true;
+    return JSON.stringify(currentQuery) !== JSON.stringify(query);
+  }, [currentQuery, query]);
 
   const appliedInitialQueryRef = useRef<TChartQuery | null>(null);
   useEffect(() => {
@@ -252,8 +258,8 @@ export function AdvancedChartBuilder({
           />
         </AdvancedOptionToggle>
 
-        <Button onClick={handleRunQuery} disabled={isLoading}>
-          {isLoading ? <LoadingSpinner /> : t("environments.analysis.charts.run_query")}
+        <Button onClick={handleRunQuery} disabled={isLoading || !hasConfigChanged}>
+          {isLoading ? <LoadingSpinner /> : t("environments.analysis.charts.generate_chart")}
         </Button>
       </div>
 

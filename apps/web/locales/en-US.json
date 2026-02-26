@@ -691,6 +691,7 @@
         "field": "Field",
         "filters": "Filters",
         "filters_toggle_description": "Only include data that meets the following conditions.",
+        "generate_chart": "Generate Chart",
         "generating_chart": "Generating chart...",
         "granularity": "Granularity",
         "greater_than": "greater than",
