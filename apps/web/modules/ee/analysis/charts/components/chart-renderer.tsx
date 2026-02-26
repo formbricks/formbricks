@@ -2,12 +2,11 @@
 
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Line, LineChart, Pie, PieChart } from "recharts";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
-  formatCellValue,
   formatXAxisTick,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
@@ -16,36 +15,48 @@ import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/anal
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
 
+const formatPieLabel = ({ name, percent }: { name: string; percent?: number }): string => {
+  if (percent == null) return "";
+  return `${formatXAxisTick(name)}: ${(percent * 100).toFixed(0)}%`;
+};
+
 interface ChartRendererProps {
   chartType: TChartType;
   data: TChartDataRow[];
   query: TChartQuery;
+  config?: TChartConfig;
 }
 
-export function ChartRenderer({ chartType, data, query }: Readonly<ChartRendererProps>) {
+export function ChartRenderer({ chartType, data, query, config }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
 
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center text-gray-500">
+      <div className="text-muted-foreground flex h-64 items-center justify-center">
         {t("environments.analysis.charts.no_data_available")}
       </div>
     );
   }
 
   const rowKeys = Object.keys(data[0] ?? {});
-  const measureIds = query.measures?.filter((m) => rowKeys.includes(m)) ?? [];
-  const dataKeys =
-    measureIds.length > 0
-      ? measureIds
-      : [rowKeys.find((k) => k !== query.dimensions?.[0]) ?? rowKeys[0]].filter(Boolean);
   const timeDim = query.timeDimensions?.[0];
   const timeDimKey = timeDim?.granularity
     ? `${timeDim.dimension}.${timeDim.granularity}`
     : timeDim?.dimension;
 
-  const xAxisKey =
-    query.dimensions?.[0] ?? timeDimKey ?? rowKeys.find((k) => !dataKeys.includes(k)) ?? rowKeys[0] ?? "key";
+  const xAxisKey = query.dimensions?.[0] ?? timeDimKey ?? rowKeys[0] ?? "key";
+
+  const measureIds = query.measures?.filter((m) => rowKeys.includes(m)) ?? [];
+  const dataKeys = measureIds.length > 0 ? measureIds : rowKeys.filter((k) => k !== xAxisKey);
+
+  if (dataKeys.length === 0) {
+    return (
+      <div className="text-muted-foreground flex h-64 items-center justify-center">
+        {t("environments.analysis.charts.no_data_available")}
+      </div>
+    );
+  }
+
   const chartConfig: ChartConfig = Object.fromEntries(
     dataKeys.map((key, i) => [
       key,
@@ -55,7 +66,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       },
     ])
   );
-  const dataKey = dataKeys[0] ?? "value";
+  const dataKey = dataKeys[0];
   const isMultiMeasure = dataKeys.length > 1;
 
   switch (chartType) {
@@ -68,7 +79,8 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           dataKeys={dataKeys}
           chartConfig={chartConfig}
           showLegend={isMultiMeasure}
-          chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
+          chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}
+          visualConfig={config}>
           {dataKeys.map((key, i) => (
             <Bar
               key={key}
@@ -87,7 +99,8 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend={isMultiMeasure}>
+          showLegend={isMultiMeasure}
+          visualConfig={config}>
           {dataKeys.map((key, i) => {
             const color = chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
             return (
@@ -112,7 +125,8 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend={isMultiMeasure}>
+          showLegend={isMultiMeasure}
+          visualConfig={config}>
           {dataKeys.map((key, i) => (
             <Area
               key={key}
@@ -130,7 +144,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       const pieResult = preparePieData(data, dataKey);
       if (!pieResult) {
         return (
-          <div className="flex h-64 items-center justify-center text-gray-500">
+          <div className="text-muted-foreground flex h-64 items-center justify-center">
             {t("environments.analysis.charts.no_valid_data_to_display")}
           </div>
         );
@@ -148,10 +162,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                 cx="50%"
                 cy="50%"
                 outerRadius={80}
-                label={({ name, percent }) => {
-                  if (!percent) return "";
-                  return `${formatXAxisTick(name)}: ${(percent * 100).toFixed(0)}%`;
-                }}>
+                label={formatPieLabel}>
                 {processedData.map((row, index) => {
                   const rowKey = row[xAxisKey] ?? `row-${index}`;
                   const uniqueKey = `${xAxisKey}-${String(rowKey)}-${index}`;
@@ -159,11 +170,11 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                 })}
               </Pie>
               <ChartTooltip
-                content={<ChartTooltipContent />}
-                formatter={(value: number | string, name: string) => [
-                  formatCellValue(value),
-                  formatCubeColumnHeader(name),
-                ]}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value, name) => [String(value), formatCubeColumnHeader(String(name))]}
+                  />
+                }
               />
             </PieChart>
           </ChartContainer>
@@ -175,18 +186,19 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         data.length === 1
           ? Number(data[0]?.[dataKey]) || 0
           : data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
+      const formatted = `${config?.prefix ?? ""}${total.toLocaleString()}${config?.suffix ?? ""}`;
       return (
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
-            <div className="text-4xl font-bold text-gray-900">{total.toLocaleString()}</div>
-            <div className="mt-2 text-sm text-gray-500">{formatCubeColumnHeader(dataKey)}</div>
+            <div className="text-foreground text-4xl font-bold">{formatted}</div>
+            <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey)}</div>
           </div>
         </div>
       );
     }
     default:
       return (
-        <div className="flex h-64 items-center justify-center text-gray-500">
+        <div className="text-muted-foreground flex h-64 items-center justify-center">
           {t("environments.analysis.charts.chart_type_not_supported", { chartType })}
         </div>
       );

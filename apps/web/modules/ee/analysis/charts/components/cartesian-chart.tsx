@@ -1,7 +1,8 @@
 "use client";
 
 import { type ElementType, type ReactNode, useMemo } from "react";
-import { CartesianGrid, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Label, XAxis, YAxis } from "recharts";
+import type { TChartConfig } from "@formbricks/types/analysis";
 import {
   CHART_BRAND_DARK,
   formatCellValue,
@@ -74,6 +75,7 @@ export interface CartesianChartProps {
   children: ReactNode;
   showLegend?: boolean;
   chartProps?: Record<string, unknown>;
+  visualConfig?: TChartConfig;
 }
 
 /** Shared layout for bar, line, and area charts. Supports single or multiple measures. */
@@ -86,8 +88,11 @@ export function CartesianChart({
   children,
   showLegend = false,
   chartProps = {},
+  visualConfig,
 }: Readonly<CartesianChartProps>) {
   const isMultiMeasure = dataKeys.length > 1;
+  const legendVisible = visualConfig?.showLegend ?? showLegend;
+  const gridVisible = visualConfig?.showGrid ?? true;
   const tooltipContent = isMultiMeasure ? (
     <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={multiMeasureTooltipFormatter} />
   ) : (
@@ -98,17 +103,24 @@ export function CartesianChart({
     <div className="h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
         <Chart data={data} {...chartProps}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          {gridVisible && <CartesianGrid strokeDasharray="3 3" vertical={false} />}
           <XAxis
             dataKey={xAxisKey}
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tickFormatter={formatXAxisTick}
-          />
-          <YAxis tickLine={false} axisLine={false} />
+            tickFormatter={formatXAxisTick}>
+            {visualConfig?.xAxisLabel && (
+              <Label value={visualConfig.xAxisLabel} offset={-5} position="insideBottom" />
+            )}
+          </XAxis>
+          <YAxis tickLine={false} axisLine={false}>
+            {visualConfig?.yAxisLabel && (
+              <Label value={visualConfig.yAxisLabel} angle={-90} position="insideLeft" />
+            )}
+          </YAxis>
           <ChartTooltip content={tooltipContent} />
-          {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
+          {legendVisible && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
         </Chart>
       </ChartContainer>
