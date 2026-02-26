@@ -3,7 +3,7 @@ import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { importCsvData } from "./csv-import";
 
-vi.mock("./hub-client", () => ({
+vi.mock("@/modules/hub", () => ({
   createFeedbackRecordsBatch: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("./csv-transform", () => ({
   transformCsvRowsToFeedbackRecords: vi.fn(),
 }));
 
-const { createFeedbackRecordsBatch } = vi.mocked(await import("./hub-client"));
+const { createFeedbackRecordsBatch } = vi.mocked(await import("@/modules/hub"));
 const { transformCsvRowsToFeedbackRecords } = vi.mocked(await import("./csv-transform"));
 
 const NOW = new Date("2026-02-25T10:00:00.000Z");
@@ -109,7 +109,10 @@ describe("importCsvData", () => {
       results: [{ data: { id: "fb" }, error: null }],
     } as never);
 
-    await importCsvData(makeConnector(), Array.from({ length: 120 }, () => ({})));
+    await importCsvData(
+      makeConnector(),
+      Array.from({ length: 120 }, () => ({}))
+    );
 
     expect(createFeedbackRecordsBatch).toHaveBeenCalledTimes(3);
     expect(createFeedbackRecordsBatch.mock.calls[0][0]).toHaveLength(50);

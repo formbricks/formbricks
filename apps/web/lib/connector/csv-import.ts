@@ -1,9 +1,9 @@
 import "server-only";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TImportResult } from "./import";
-import { createFeedbackRecordsBatch } from "./hub-client";
+import { createFeedbackRecordsBatch } from "@/modules/hub";
 import { transformCsvRowsToFeedbackRecords } from "./csv-transform";
+import { TImportResult } from "./import";
 
 const CSV_BATCH_SIZE = 50;
 
