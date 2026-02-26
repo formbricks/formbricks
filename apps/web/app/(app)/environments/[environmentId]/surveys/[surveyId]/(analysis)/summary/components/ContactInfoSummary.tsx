@@ -16,6 +16,7 @@ interface ContactInfoSummaryProps {
   environmentId: string;
   survey: TSurvey;
   locale: TUserLocale;
+  isPublic?: boolean;
 }
 
 export const ContactInfoSummary = ({
@@ -23,6 +24,7 @@ export const ContactInfoSummary = ({
   environmentId,
   survey,
   locale,
+  isPublic,
 }: ContactInfoSummaryProps) => {
   const { t } = useTranslation();
   return (
@@ -46,7 +48,14 @@ export const ContactInfoSummary = ({
                   key={response.id}
                   className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 last:border-transparent md:text-base">
                   <div className="pl-4 md:pl-6">
-                    {response.contact ? (
+                    {isPublic || !response.contact ? (
+                      <div className="group flex items-center">
+                        <div className="hidden md:flex">
+                          <PersonAvatar personId="anonymous" />
+                        </div>
+                        <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
+                      </div>
+                    ) : (
                       <Link
                         className="ph-no-capture group flex items-center"
                         href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
@@ -57,13 +66,6 @@ export const ContactInfoSummary = ({
                           {getContactIdentifier(response.contact, response.contactAttributes)}
                         </p>
                       </Link>
-                    ) : (
-                      <div className="group flex items-center">
-                        <div className="hidden md:flex">
-                          <PersonAvatar personId="anonymous" />
-                        </div>
-                        <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
-                      </div>
                     )}
                   </div>
                   <div className="ph-no-capture col-span-2 pl-6 font-semibold">

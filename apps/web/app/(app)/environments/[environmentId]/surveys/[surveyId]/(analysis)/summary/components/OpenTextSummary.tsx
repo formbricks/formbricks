@@ -19,9 +19,16 @@ interface OpenTextSummaryProps {
   environmentId: string;
   survey: TSurvey;
   locale: TUserLocale;
+  isPublic?: boolean;
 }
 
-export const OpenTextSummary = ({ elementSummary, environmentId, survey, locale }: OpenTextSummaryProps) => {
+export const OpenTextSummary = ({
+  elementSummary,
+  environmentId,
+  survey,
+  locale,
+  isPublic,
+}: OpenTextSummaryProps) => {
   const { t } = useTranslation();
   const [visibleResponses, setVisibleResponses] = useState(10);
 
@@ -54,7 +61,14 @@ export const OpenTextSummary = ({ elementSummary, environmentId, survey, locale 
               {elementSummary.samples.slice(0, visibleResponses).map((response) => (
                 <TableRow key={response.id}>
                   <TableCell className="w-1/4">
-                    {response.contact ? (
+                    {isPublic || !response.contact ? (
+                      <div className="group flex items-center">
+                        <div className="hidden md:flex">
+                          <PersonAvatar personId="anonymous" />
+                        </div>
+                        <p className="break-normal text-slate-600 md:ml-2">{t("common.anonymous")}</p>
+                      </div>
+                    ) : (
                       <Link
                         className="ph-no-capture group flex items-center"
                         href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
@@ -65,13 +79,6 @@ export const OpenTextSummary = ({ elementSummary, environmentId, survey, locale 
                           {getContactIdentifier(response.contact, response.contactAttributes)}
                         </p>
                       </Link>
-                    ) : (
-                      <div className="group flex items-center">
-                        <div className="hidden md:flex">
-                          <PersonAvatar personId="anonymous" />
-                        </div>
-                        <p className="break-normal text-slate-600 md:ml-2">{t("common.anonymous")}</p>
-                      </div>
                     )}
                   </TableCell>
                   <TableCell className="w-2/4 font-medium">

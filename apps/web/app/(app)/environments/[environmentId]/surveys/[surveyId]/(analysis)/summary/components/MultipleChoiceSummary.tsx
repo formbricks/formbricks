@@ -28,6 +28,7 @@ interface MultipleChoiceSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
+  isPublic?: boolean;
 }
 
 export const MultipleChoiceSummary = ({
@@ -36,6 +37,7 @@ export const MultipleChoiceSummary = ({
   surveyType,
   survey,
   setFilter,
+  isPublic,
 }: MultipleChoiceSummaryProps) => {
   const { t } = useTranslation();
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
@@ -142,7 +144,7 @@ export const MultipleChoiceSummary = ({
                           {surveyType === "app" && otherValue.contact && (
                             <Link
                               href={
-                                otherValue.contact.id
+                                !isPublic && otherValue.contact.id
                                   ? `/environments/${environmentId}/contacts/${otherValue.contact.id}`
                                   : { pathname: null }
                               }
@@ -151,9 +153,13 @@ export const MultipleChoiceSummary = ({
                                 <span>{otherValue.value}</span>
                               </div>
                               <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
-                                {otherValue.contact.id && <PersonAvatar personId={otherValue.contact.id} />}
+                                {!isPublic && otherValue.contact.id && (
+                                  <PersonAvatar personId={otherValue.contact.id} />
+                                )}
                                 <span>
-                                  {getContactIdentifier(otherValue.contact, otherValue.contactAttributes)}
+                                  {isPublic
+                                    ? t("common.anonymous")
+                                    : getContactIdentifier(otherValue.contact, otherValue.contactAttributes)}
                                 </span>
                               </div>
                             </Link>

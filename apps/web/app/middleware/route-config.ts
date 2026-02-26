@@ -10,6 +10,11 @@ const PUBLIC_ROUTES = {
     /^\/p\/[^/]+/, // /p/[prettyUrl] - pretty URL pages
   ],
 
+  // Shared results routes
+  SHARE_ROUTES: [
+    /^\/share\/results\/[^/]+/, // /share/results/[token] - public results page
+  ],
+
   // API routes accessible from public domain
   API_ROUTES: [
     /^\/api\/v[12]\/client\//, // /api/v1/client/** and /api/v2/client/**
