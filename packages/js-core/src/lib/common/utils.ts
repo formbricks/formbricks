@@ -310,15 +310,13 @@ export const evaluateNoCodeConfigClick = (
   let matchedElement: HTMLElement = targetElement;
 
   if (cssSelector) {
-    // Split selectors that start with a . or # including the . or #
-    const individualSelectors = cssSelector
-      .split(/(?=[.#])/) // split before each . or #
-      .map((sel) => sel.trim()); // remove leftover whitespace
-
-    const matchesDirectly = individualSelectors.every((sel) => targetElement.matches(sel));
-
+    let matchesDirectly = false;
+    try {
+      matchesDirectly = targetElement.matches(cssSelector);
+    } catch {
+      matchesDirectly = false;
+    }
     if (!matchesDirectly) {
-      // Walk up the DOM to find the nearest ancestor that matches the full selector
       const ancestor = targetElement.closest(cssSelector);
       if (!ancestor) return false;
       matchedElement = ancestor as HTMLElement;
