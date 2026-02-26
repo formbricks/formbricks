@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     environment: "node",
     environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
-    exclude: ["playwright/**", "node_modules/**"],
+    exclude: ["playwright/**", "node_modules/**", ".next/**"],
     setupFiles: ["./vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
     coverage: {

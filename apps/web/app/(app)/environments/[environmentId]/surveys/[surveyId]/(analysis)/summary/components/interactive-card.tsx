@@ -4,9 +4,9 @@ import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { BaseCard } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/base-card";
 
 interface InteractiveCardProps {
-  tab: "dropOffs" | "quotas";
+  tab: "dropOffs" | "quotas" | "impressions";
   label: string;
-  percentage: number;
+  percentage: number | null;
   value: React.ReactNode;
   tooltipText: string;
   isLoading: boolean;

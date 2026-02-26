@@ -241,7 +241,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <PopoverTriggerButton isOpen={isOpen}>
-          Filter <b>{activeFilterCount > 0 && `(${activeFilterCount})`}</b>
+          {t("common.filter")} <b>{activeFilterCount > 0 && `(${activeFilterCount})`}</b>
         </PopoverTriggerButton>
       </PopoverTrigger>
       <PopoverContent
@@ -329,7 +329,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
               </div>
               {i !== filterValue.filter.length - 1 && (
                 <div className="my-4 flex items-center">
-                  <p className="mr-4 font-semibold text-slate-800">and</p>
+                  <p className="mr-4 font-semibold text-slate-800">{t("common.and")}</p>
                   <hr className="w-full text-slate-600" />
                 </div>
               )}
