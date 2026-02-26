@@ -1,4 +1,5 @@
 import { TFunction } from "i18next";
+import { THubFieldType } from "@formbricks/types/connector";
 import { FEEDBACK_RECORD_FIELDS, TFieldMapping, TSourceField } from "./types";
 
 export interface TConnectorOption {
@@ -58,7 +59,7 @@ export const validateEnumMappings = (
 
     for (let i = 0; i < csvData.length; i++) {
       const value = csvData[i][mapping.sourceFieldId]?.trim();
-      if (value && !allowedValues.has(value)) {
+      if (value && !allowedValues.has(value as THubFieldType)) {
         invalidEntries.push({ row: i + 1, value });
       }
     }

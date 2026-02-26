@@ -1,5 +1,5 @@
 import { TConnectorFieldMapping, THubTargetField } from "@formbricks/types/connector";
-import { TCreateFeedbackRecordInput } from "./hub-client";
+import { FeedbackRecordCreateParams } from "@/modules/hub";
 
 const NUMERIC_FIELDS = new Set<THubTargetField>(["value_number"]);
 const BOOLEAN_FIELDS = new Set<THubTargetField>(["value_boolean"]);
@@ -56,7 +56,7 @@ const resolveValue = (
 export const transformCsvRowToFeedbackRecord = (
   row: Record<string, string>,
   mappings: TConnectorFieldMapping[]
-): TCreateFeedbackRecordInput | null => {
+): FeedbackRecordCreateParams | null => {
   const record: Record<string, string | number | boolean | Record<string, unknown> | undefined> = {};
 
   for (const mapping of mappings) {
@@ -78,7 +78,7 @@ export const transformCsvRowToFeedbackRecord = (
     return null;
   }
 
-  return record as unknown as TCreateFeedbackRecordInput;
+  return record as unknown as FeedbackRecordCreateParams;
 };
 
 /**
@@ -88,8 +88,8 @@ export const transformCsvRowToFeedbackRecord = (
 export const transformCsvRowsToFeedbackRecords = (
   rows: Record<string, string>[],
   mappings: TConnectorFieldMapping[]
-): { records: TCreateFeedbackRecordInput[]; skipped: number } => {
-  const records: TCreateFeedbackRecordInput[] = [];
+): { records: FeedbackRecordCreateParams[]; skipped: number } => {
+  const records: FeedbackRecordCreateParams[] = [];
   let skipped = 0;
 
   for (const row of rows) {
