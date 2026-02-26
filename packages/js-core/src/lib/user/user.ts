@@ -10,6 +10,12 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
   const logger = Logger.getInstance();
   const updateQueue = UpdateQueue.getInstance();
 
+  const MAX_USER_ID_LENGTH = 255;
+  if (userId.length > MAX_USER_ID_LENGTH) {
+    logger.error(`UserId exceeds maximum length of ${MAX_USER_ID_LENGTH} characters`);
+    return okVoid();
+  }
+
   const {
     data: { userId: currentUserId },
   } = appConfig.get().user;

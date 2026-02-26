@@ -100,7 +100,7 @@ export type TJsPersonState = z.infer<typeof ZJsPersonState>;
 
 export const ZJsUserIdentifyInput = z.object({
   environmentId: z.string().cuid(),
-  userId: z.string(),
+  userId: z.string().max(255),
 });
 
 export type TJsPersonIdentifyInput = z.infer<typeof ZJsUserIdentifyInput>;
@@ -145,7 +145,7 @@ export const ZJsEnvironmentSyncParams = z.object({
 export type TJsEnvironmentSyncParams = z.infer<typeof ZJsEnvironmentSyncParams>;
 
 export const ZJsPersonSyncParams = ZJsEnvironmentSyncParams.extend({
-  userId: z.string(),
+  userId: z.string().max(255),
   attributes: ZAttributes.optional(),
 });
 
