@@ -75,15 +75,15 @@ export function formatCellValue(value: unknown): string {
   return "";
 }
 
-const ALLOWED_CUBE_PREFIX = "FeedbackRecords.";
+const ALLOWED_CUBE_PREFIXES = ["FeedbackRecords.", "TopicsUnnested."];
 
 function validateMember(member: string): boolean {
-  return member.startsWith(ALLOWED_CUBE_PREFIX);
+  return ALLOWED_CUBE_PREFIXES.some((prefix) => member.startsWith(prefix));
 }
 
 /**
  * Validates that all measures, dimensions, segments, timeDimensions, and filters
- * use only members starting with FeedbackRecords.
+ * use only members from FeedbackRecords or joined cubes (e.g. TopicsUnnested).
  * @throws Error if any member is invalid
  */
 export function validateQueryMembers(query: TChartQuery): void {
@@ -112,6 +112,8 @@ export function validateQueryMembers(query: TChartQuery): void {
   };
   checkFilters(query.filters);
   if (invalid.length > 0) {
-    throw new Error(`Invalid query members (must start with ${ALLOWED_CUBE_PREFIX}): ${invalid.join(", ")}`);
+    throw new Error(
+      `Invalid query members (must start with FeedbackRecords. or TopicsUnnested.): ${invalid.join(", ")}`
+    );
   }
 }

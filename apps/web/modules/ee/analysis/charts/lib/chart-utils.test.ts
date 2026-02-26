@@ -117,9 +117,13 @@ describe("chart-utils", () => {
       );
     });
 
+    test("allows TopicsUnnested dimensions (joined cube)", () => {
+      expect(() => validateQueryMembers({ dimensions: ["TopicsUnnested.topic"] })).not.toThrow();
+    });
+
     test("throws for invalid dimension", () => {
-      expect(() => validateQueryMembers({ dimensions: ["TopicsUnnested.topic"] })).toThrow(
-        /Invalid query members.*TopicsUnnested\.topic/
+      expect(() => validateQueryMembers({ dimensions: ["OtherCube.field"] })).toThrow(
+        /Invalid query members.*OtherCube\.field/
       );
     });
 
