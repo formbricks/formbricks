@@ -7,13 +7,19 @@ import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createChartAction,
+  deleteChartAction,
   executeQueryAction,
   getChartAction,
   updateChartAction,
 } from "@/modules/ee/analysis/charts/actions";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
-import type { AnalyticsResponse, TChartType, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import type {
+  AnalyticsResponse,
+  TChart,
+  TChartType,
+  TChartWithCreator,
+} from "@/modules/ee/analysis/types/analysis";
 
 export interface UseChartDialogProps {
   open: boolean;
@@ -34,22 +40,24 @@ export function useChartDialog({
   onSuccess,
 }: Readonly<UseChartDialogProps>) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [selectedChartType, setSelectedChartType] = useState<TChartType | undefined>();
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [chartName, setChartName] = useState("");
   const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedDashboardId, setSelectedDashboardId] = useState<string>("");
+  const [selectedDashboardId, setSelectedDashboardId] = useState<string | undefined>();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [chartLoadError, setChartLoadError] = useState<string | null>(null);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);
-  const router = useRouter();
 
   useEffect(() => {
+    let cancelled = false;
     if (isAddToDashboardDialogOpen) {
       getDashboardsAction({ environmentId }).then((result) => {
+        if (cancelled) return;
         if (result?.data) {
           setDashboards(result.data.map((d) => ({ id: d.id, name: d.name })));
         } else if (result?.serverError) {
@@ -57,29 +65,47 @@ export function useChartDialog({
         }
       });
     }
+    return () => {
+      cancelled = true;
+    };
   }, [isAddToDashboardDialogOpen, environmentId]);
 
   useEffect(() => {
     let cancelled = false;
 
-    if (open && chartId) {
-      const chartMetadata = initialChart?.id === chartId ? initialChart : undefined;
+    if (!open) return;
 
-      if (chartMetadata) {
-        setChartName(chartMetadata.name);
-        setSelectedChartType(resolveChartType(chartMetadata.type));
-        setCurrentChartId(chartMetadata.id);
+    if (!chartId) {
+      setChartData(null);
+      setChartName("");
+      setSelectedChartType(undefined);
+      setCurrentChartId(undefined);
+      return;
+    }
+
+    const fetchChartById = async (id: string): Promise<TChart> => {
+      const result = await getChartAction({ environmentId, chartId: id });
+      if (!result?.data) {
+        throw new Error(
+          getFormattedErrorMessage(result) || t("environments.analysis.charts.failed_to_load_chart")
+        );
       }
+      return result.data;
+    };
 
+    const load = async () => {
       setIsLoadingChart(true);
       setChartLoadError(null);
 
-      const loadChartData = async (query: TChartWithCreator["query"], chartType: string) => {
-        const queryResult = await executeQueryAction({
-          environmentId,
-          query,
-        });
+      try {
+        const chart = initialChart?.id === chartId ? initialChart : await fetchChartById(chartId);
+        if (cancelled) return;
 
+        setChartName(chart.name);
+        setSelectedChartType(resolveChartType(chart.type));
+        setCurrentChartId(chart.id);
+
+        const queryResult = await executeQueryAction({ environmentId, query: chart.query });
         if (cancelled) return;
 
         if (queryResult?.serverError) {
@@ -88,67 +114,38 @@ export function useChartDialog({
             t("environments.analysis.charts.failed_to_load_chart_data");
           toast.error(errorMsg);
           setChartLoadError(errorMsg);
-          setIsLoadingChart(false);
           return;
         }
 
-        const data = Array.isArray(queryResult?.data) ? queryResult.data : undefined;
-        if (data) {
-          setChartData({
-            query,
-            chartType: resolveChartType(chartType),
-            data,
-          });
-        } else {
+        if (!Array.isArray(queryResult?.data)) {
           const errorMsg = t("environments.analysis.charts.no_data_returned_for_chart");
           toast.error(errorMsg);
           setChartLoadError(errorMsg);
+          return;
         }
-        setIsLoadingChart(false);
-      };
 
-      if (chartMetadata) {
-        loadChartData(chartMetadata.query, chartMetadata.type);
-      } else {
-        getChartAction({ environmentId, chartId })
-          .then(async (result) => {
-            if (cancelled) return;
-
-            if (result?.data) {
-              const chart = result.data;
-              setChartName(chart.name);
-              setSelectedChartType(resolveChartType(chart.type));
-              setCurrentChartId(chart.id);
-              await loadChartData(chart.query, chart.type);
-            } else if (result?.serverError) {
-              const errorMsg =
-                getFormattedErrorMessage(result) || t("environments.analysis.charts.failed_to_load_chart");
-              toast.error(errorMsg);
-              setChartLoadError(errorMsg);
-              setIsLoadingChart(false);
-            }
-          })
-          .catch((error: unknown) => {
-            if (cancelled) return;
-
-            const message =
-              error instanceof Error ? error.message : t("environments.analysis.charts.failed_to_load_chart");
-            toast.error(message);
-            setChartLoadError(message);
-            setIsLoadingChart(false);
-          });
+        setChartData({
+          query: chart.query,
+          chartType: resolveChartType(chart.type),
+          data: queryResult.data,
+        });
+      } catch (error: unknown) {
+        if (cancelled) return;
+        const message =
+          error instanceof Error ? error.message : t("environments.analysis.charts.failed_to_load_chart");
+        toast.error(message);
+        setChartLoadError(message);
+      } finally {
+        if (!cancelled) setIsLoadingChart(false);
       }
-    } else if (open && !chartId) {
-      setChartData(null);
-      setChartName("");
-      setSelectedChartType(undefined);
-      setCurrentChartId(undefined);
-    }
+    };
 
+    load();
     return () => {
       cancelled = true;
     };
-  }, [open, chartId, environmentId, initialChart, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, chartId, environmentId, initialChart]);
 
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
@@ -174,7 +171,7 @@ export function useChartDialog({
           chartId: currentChartId,
           chartUpdateInput: {
             name: chartName.trim(),
-            type: resolveChartType(chartData.chartType),
+            type: chartData.chartType,
             query: chartData.query,
             config: {},
           },
@@ -187,15 +184,12 @@ export function useChartDialog({
         }
 
         toast.success(t("environments.analysis.charts.chart_updated_successfully"));
-        setIsSaveDialogOpen(false);
-        onOpenChange(false);
-        onSuccess?.();
       } else {
         const result = await createChartAction({
           environmentId,
           chartInput: {
             name: chartName.trim(),
-            type: resolveChartType(chartData.chartType),
+            type: chartData.chartType,
             query: chartData.query,
             config: {},
           },
@@ -209,10 +203,12 @@ export function useChartDialog({
 
         setCurrentChartId(result.data.id);
         toast.success(t("environments.analysis.charts.chart_saved_successfully"));
-        setIsSaveDialogOpen(false);
-        onOpenChange(false);
-        router.refresh();
       }
+
+      setIsSaveDialogOpen(false);
+      onOpenChange(false);
+      router.refresh();
+      onSuccess?.();
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : t("environments.analysis.charts.failed_to_save_chart");
@@ -222,52 +218,60 @@ export function useChartDialog({
     }
   };
 
+  const cleanupOrphanChart = async (orphanChartId: string) => {
+    await deleteChartAction({ environmentId, chartId: orphanChartId }).catch(() => {});
+    setCurrentChartId(undefined);
+  };
+
+  /** Returns the chart ID to use (existing or newly created), or null on failure. */
+  const ensureChartForDashboard = async (data: AnalyticsResponse): Promise<string | null> => {
+    if (currentChartId) return currentChartId;
+
+    const chartResult = await createChartAction({
+      environmentId,
+      chartInput: {
+        name: chartName.trim(),
+        type: data.chartType,
+        query: data.query,
+        config: {},
+      },
+    });
+
+    if (!chartResult?.data) {
+      toast.error(
+        (chartResult && getFormattedErrorMessage(chartResult)) ||
+          t("environments.analysis.charts.failed_to_save_chart")
+      );
+      return null;
+    }
+
+    setCurrentChartId(chartResult.data.id);
+    return chartResult.data.id;
+  };
+
   const handleAddToDashboard = async () => {
     if (!chartData || !selectedDashboardId) {
       toast.error(t("environments.analysis.charts.please_select_dashboard"));
       return;
     }
 
+    if (!currentChartId && !chartName.trim()) {
+      toast.error(t("environments.analysis.charts.please_enter_chart_name"));
+      return;
+    }
+
     setIsSaving(true);
+    let newlyCreatedChartId: string | null = null;
     try {
-      let chartIdToUse = currentChartId;
-
-      if (!chartIdToUse) {
-        if (!chartName.trim()) {
-          toast.error(t("environments.analysis.charts.please_enter_chart_name"));
-          setIsSaving(false);
-          return;
-        }
-
-        const chartResult = await createChartAction({
-          environmentId,
-          chartInput: {
-            name: chartName.trim(),
-            type: resolveChartType(chartData.chartType),
-            query: chartData.query,
-            config: {},
-          },
-        });
-
-        if (!chartResult?.data) {
-          toast.error(
-            (chartResult && getFormattedErrorMessage(chartResult)) ||
-              t("environments.analysis.charts.failed_to_save_chart")
-          );
-          setIsSaving(false);
-          return;
-        }
-
-        chartIdToUse = chartResult.data.id;
-        setCurrentChartId(chartResult.data.id);
-      }
+      const chartIdToUse = await ensureChartForDashboard(chartData);
+      if (!chartIdToUse) return;
+      if (!currentChartId) newlyCreatedChartId = chartIdToUse;
 
       const widgetResult = await addChartToDashboardAction({
         environmentId,
         chartId: chartIdToUse,
         dashboardId: selectedDashboardId,
         title: chartName.trim(),
-        layout: { x: 0, y: 0, w: 4, h: 3 },
       });
 
       if (!widgetResult?.data) {
@@ -275,12 +279,14 @@ export function useChartDialog({
           (widgetResult && getFormattedErrorMessage(widgetResult)) ||
             t("environments.analysis.charts.failed_to_add_chart_to_dashboard")
         );
+        if (newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
         return;
       }
 
       toast.success(t("environments.analysis.charts.chart_added_to_dashboard"));
       setIsAddToDashboardDialogOpen(false);
       onOpenChange(false);
+      router.refresh();
       onSuccess?.();
     } catch (error: unknown) {
       const message =
@@ -288,6 +294,7 @@ export function useChartDialog({
           ? error.message
           : t("environments.analysis.charts.failed_to_add_chart_to_dashboard");
       toast.error(message);
+      if (newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
     } finally {
       setIsSaving(false);
     }
