@@ -41,7 +41,7 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
                   key={key}
                   scope="col"
                   className="border-b border-gray-200 px-3 py-2 text-left font-semibold">
-                  {formatCubeColumnHeader(key, t)}
+                  {formatCubeColumnHeader(key)}
                 </th>
               ))}
             </tr>

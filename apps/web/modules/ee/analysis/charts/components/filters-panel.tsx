@@ -1,12 +1,10 @@
 "use client";
 
 import { Plus, TrashIcon } from "lucide-react";
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { FilterRow, TFilterFieldType } from "@/modules/ee/analysis/lib/query-builder";
 import {
   FEEDBACK_FIELDS,
-  type FilterOperator,
   getFieldById,
   getFilterOperatorsForType,
 } from "@/modules/ee/analysis/lib/schema-definition";
@@ -28,18 +26,18 @@ interface FiltersPanelProps {
   hideTitle?: boolean;
 }
 
-const OPERATOR_LABEL_KEYS: Record<FilterOperator, string> = {
-  equals: "environments.analysis.charts.equals",
-  notEquals: "environments.analysis.charts.not_equals",
-  contains: "environments.analysis.charts.contains",
-  notContains: "environments.analysis.charts.not_contains",
-  set: "environments.analysis.charts.is_set",
-  notSet: "environments.analysis.charts.is_not_set",
-  gt: "environments.analysis.charts.greater_than",
-  gte: "environments.analysis.charts.greater_than_or_equal",
-  lt: "environments.analysis.charts.less_than",
-  lte: "environments.analysis.charts.less_than_or_equal",
-};
+const FIELD_OPTIONS = [
+  ...FEEDBACK_FIELDS.dimensions.map((d) => ({
+    value: d.id,
+    label: d.label,
+    type: d.type,
+  })),
+  ...FEEDBACK_FIELDS.measures.map((m) => ({
+    value: m.id,
+    label: m.label,
+    type: "number" as TFilterFieldType,
+  })),
+];
 
 export function FiltersPanel({
   filters,
@@ -50,24 +48,8 @@ export function FiltersPanel({
 }: Readonly<FiltersPanelProps>) {
   const { t } = useTranslation();
 
-  const fieldOptions = useMemo(
-    () => [
-      ...FEEDBACK_FIELDS.dimensions.map((d) => ({
-        value: d.id,
-        label: t(d.labelKey),
-        type: d.type,
-      })),
-      ...FEEDBACK_FIELDS.measures.map((m) => ({
-        value: m.id,
-        label: t(m.labelKey),
-        type: "number" as TFilterFieldType,
-      })),
-    ],
-    [t]
-  );
-
   const handleAddFilter = () => {
-    const firstField = fieldOptions[0];
+    const firstField = FIELD_OPTIONS[0];
     onFiltersChange([
       ...filters,
       {
@@ -172,7 +154,7 @@ export function FiltersPanel({
                   <SelectValue placeholder={t("environments.analysis.charts.select_field")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {fieldOptions.map((option) => (
+                  {FIELD_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -193,7 +175,16 @@ export function FiltersPanel({
                 <SelectContent>
                   {operators.map((op) => (
                     <SelectItem key={op} value={op}>
-                      {t(OPERATOR_LABEL_KEYS[op])}
+                      {op === "equals" && t("environments.analysis.charts.equals")}
+                      {op === "notEquals" && t("environments.analysis.charts.not_equals")}
+                      {op === "contains" && t("environments.analysis.charts.contains")}
+                      {op === "notContains" && t("environments.analysis.charts.not_contains")}
+                      {op === "set" && t("environments.analysis.charts.is_set")}
+                      {op === "notSet" && t("environments.analysis.charts.is_not_set")}
+                      {op === "gt" && t("environments.analysis.charts.greater_than")}
+                      {op === "gte" && t("environments.analysis.charts.greater_than_or_equal")}
+                      {op === "lt" && t("environments.analysis.charts.less_than")}
+                      {op === "lte" && t("environments.analysis.charts.less_than_or_equal")}
                     </SelectItem>
                   ))}
                 </SelectContent>

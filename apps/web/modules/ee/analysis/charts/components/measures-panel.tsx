@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
@@ -18,14 +17,10 @@ export function MeasuresPanel({
 }: Readonly<MeasuresPanelProps>) {
   const { t } = useTranslation();
 
-  const measureOptions = useMemo(
-    () =>
-      FEEDBACK_FIELDS.measures.map((m) => ({
-        value: m.id,
-        label: [t(m.labelKey), m.description].filter(Boolean).join(" - "),
-      })),
-    [t]
-  );
+  const measureOptions = FEEDBACK_FIELDS.measures.map((m) => ({
+    value: m.id,
+    label: [m.label, m.description].filter(Boolean).join(" - "),
+  }));
 
   return (
     <div className="w-full space-y-2">

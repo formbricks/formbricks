@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
 import { Label } from "@/modules/ui/components/label";
@@ -19,14 +18,10 @@ export function DimensionsPanel({
 }: Readonly<DimensionsPanelProps>) {
   const { t } = useTranslation();
 
-  const dimensionOptions = useMemo(
-    () =>
-      FEEDBACK_FIELDS.dimensions.map((d) => ({
-        value: d.id,
-        label: [t(d.labelKey), d.description].filter(Boolean).join(" - "),
-      })),
-    [t]
-  );
+  const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
+    value: d.id,
+    label: [d.label, d.description].filter(Boolean).join(" - "),
+  }));
 
   return (
     <div className="w-full space-y-2">

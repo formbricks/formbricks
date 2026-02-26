@@ -60,7 +60,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
     dataKeys.map((key, i) => [
       key,
       {
-        label: formatCubeColumnHeader(key, t),
+        label: formatCubeColumnHeader(key),
         color: CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
       },
     ])
@@ -168,7 +168,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    formatter={(value, name) => [String(value), formatCubeColumnHeader(String(name), t)]}
+                    formatter={(value, name) => [String(value), formatCubeColumnHeader(String(name))]}
                   />
                 }
               />
@@ -187,7 +187,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
             <div className="text-foreground text-4xl font-bold">{formatted}</div>
-            <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>
+            <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey)}</div>
           </div>
         </div>
       );
