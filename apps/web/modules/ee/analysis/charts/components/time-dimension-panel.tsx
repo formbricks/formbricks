@@ -9,8 +9,10 @@ import type { TimeDimensionConfig } from "@/modules/ee/analysis/lib/query-builde
 import {
   DATE_PRESETS,
   FEEDBACK_FIELDS,
-  GRANULARITY_LABELS,
   TIME_GRANULARITIES,
+  getTranslatedDatePresetLabel,
+  getTranslatedFieldLabel,
+  getTranslatedGranularityLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { Button } from "@/modules/ui/components/button";
 import "@/modules/ui/components/date-picker/styles.css";
@@ -118,7 +120,7 @@ export function TimeDimensionPanel({
             <SelectContent>
               {TIME_FIELD_OPTIONS.map((field) => (
                 <SelectItem key={field.id} value={field.id}>
-                  {field.label}
+                  {getTranslatedFieldLabel(field.id, t)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -136,7 +138,7 @@ export function TimeDimensionPanel({
               <SelectItem value="none">{t("environments.analysis.charts.no_grouping")}</SelectItem>
               {TIME_GRANULARITIES.map((gran) => (
                 <SelectItem key={gran} value={gran}>
-                  {GRANULARITY_LABELS[gran]}
+                  {getTranslatedGranularityLabel(gran, t)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -167,7 +169,7 @@ export function TimeDimensionPanel({
                 <SelectContent>
                   {DATE_PRESETS.map((preset) => (
                     <SelectItem key={preset.value} value={preset.value}>
-                      {preset.label}
+                      {getTranslatedDatePresetLabel(preset.value, t)}
                     </SelectItem>
                   ))}
                   {presetValue && !DATE_PRESETS.some((p) => p.value === presetValue) && (

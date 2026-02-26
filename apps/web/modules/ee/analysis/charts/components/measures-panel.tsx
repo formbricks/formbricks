@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
+import { FEEDBACK_FIELDS, getTranslatedFieldLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 
 interface MeasuresPanelProps {
@@ -19,7 +19,7 @@ export function MeasuresPanel({
 
   const measureOptions = FEEDBACK_FIELDS.measures.map((m) => ({
     value: m.id,
-    label: [m.label, m.description].filter(Boolean).join(" - "),
+    label: [getTranslatedFieldLabel(m.id, t), m.description].filter(Boolean).join(" - "),
   }));
 
   return (

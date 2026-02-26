@@ -7,6 +7,7 @@ import {
   FEEDBACK_FIELDS,
   getFieldById,
   getFilterOperatorsForType,
+  getTranslatedFieldLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -26,19 +27,6 @@ interface FiltersPanelProps {
   hideTitle?: boolean;
 }
 
-const FIELD_OPTIONS = [
-  ...FEEDBACK_FIELDS.dimensions.map((d) => ({
-    value: d.id,
-    label: d.label,
-    type: d.type,
-  })),
-  ...FEEDBACK_FIELDS.measures.map((m) => ({
-    value: m.id,
-    label: m.label,
-    type: "number" as TFilterFieldType,
-  })),
-];
-
 export function FiltersPanel({
   filters,
   filterLogic,
@@ -48,8 +36,21 @@ export function FiltersPanel({
 }: Readonly<FiltersPanelProps>) {
   const { t } = useTranslation();
 
+  const fieldOptions = [
+    ...FEEDBACK_FIELDS.dimensions.map((d) => ({
+      value: d.id,
+      label: getTranslatedFieldLabel(d.id, t),
+      type: d.type,
+    })),
+    ...FEEDBACK_FIELDS.measures.map((m) => ({
+      value: m.id,
+      label: getTranslatedFieldLabel(m.id, t),
+      type: "number" as TFilterFieldType,
+    })),
+  ];
+
   const handleAddFilter = () => {
-    const firstField = FIELD_OPTIONS[0];
+    const firstField = fieldOptions[0];
     onFiltersChange([
       ...filters,
       {
@@ -154,7 +155,7 @@ export function FiltersPanel({
                   <SelectValue placeholder={t("environments.analysis.charts.select_field")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {FIELD_OPTIONS.map((option) => (
+                  {fieldOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>

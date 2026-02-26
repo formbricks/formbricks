@@ -1,6 +1,7 @@
 "use client";
 
 import { type ElementType, type ReactNode, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   CHART_BRAND_DARK,
@@ -23,6 +24,7 @@ const ChartTooltipRow = ({
   dataKey,
   color,
 }: Readonly<{ value: unknown; dataKey: string; color?: string }>) => {
+  const { t } = useTranslation();
   const indicatorColor = color ?? CHART_BRAND_DARK;
   return (
     <>
@@ -34,7 +36,7 @@ const ChartTooltipRow = ({
         }}
       />
       <div className="flex flex-1 items-center justify-between leading-none">
-        <span className="text-muted-foreground">{formatCubeColumnHeader(dataKey)}</span>
+        <span className="text-muted-foreground">{formatCubeColumnHeader(dataKey, t)}</span>
         <span className="text-foreground font-mono font-medium tabular-nums">{formatCellValue(value)}</span>
       </div>
     </>

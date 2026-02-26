@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
+import { FEEDBACK_FIELDS, getTranslatedFieldLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 
@@ -20,7 +20,7 @@ export function DimensionsPanel({
 
   const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
     value: d.id,
-    label: [d.label, d.description].filter(Boolean).join(" - "),
+    label: [getTranslatedFieldLabel(d.id, t), d.description].filter(Boolean).join(" - "),
   }));
 
   return (

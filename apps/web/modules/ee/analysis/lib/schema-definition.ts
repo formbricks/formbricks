@@ -2,6 +2,7 @@
  * Schema definitions for FeedbackRecords fields.
  * Used by the advanced chart builder to provide field metadata and operators.
  */
+import type { TFunction } from "i18next";
 
 export interface FieldDefinition {
   id: string;
@@ -179,16 +180,76 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
 }
 
 /**
- * Format a Cube.js column key for display (e.g. FeedbackRecords.collectedAt.day → "Day").
+ * Translate a field/measure ID. Each t() call uses a literal key so the i18n scanner can detect it.
  */
-export function formatCubeColumnHeader(key: string): string {
+export function getTranslatedFieldLabel(id: string, t: TFunction): string {
+  const labels: Record<string, string> = {
+    "FeedbackRecords.sentiment": t("environments.analysis.charts.field_label_sentiment"),
+    "FeedbackRecords.sourceType": t("environments.analysis.charts.field_label_source_type"),
+    "FeedbackRecords.sourceName": t("environments.analysis.charts.field_label_source_name"),
+    "FeedbackRecords.fieldType": t("environments.analysis.charts.field_label_field_type"),
+    "FeedbackRecords.emotion": t("environments.analysis.charts.field_label_emotion"),
+    "FeedbackRecords.userIdentifier": t("environments.analysis.charts.field_label_user_identifier"),
+    "FeedbackRecords.responseId": t("environments.analysis.charts.field_label_response_id"),
+    "FeedbackRecords.npsValue": t("environments.analysis.charts.field_label_nps_value"),
+    "FeedbackRecords.collectedAt": t("environments.analysis.charts.field_label_collected_at"),
+    "TopicsUnnested.topic": t("environments.analysis.charts.field_label_topic"),
+    "FeedbackRecords.count": t("environments.analysis.charts.field_label_count"),
+    "FeedbackRecords.promoterCount": t("environments.analysis.charts.field_label_promoter_count"),
+    "FeedbackRecords.detractorCount": t("environments.analysis.charts.field_label_detractor_count"),
+    "FeedbackRecords.passiveCount": t("environments.analysis.charts.field_label_passive_count"),
+    "FeedbackRecords.npsScore": t("environments.analysis.charts.field_label_nps_score"),
+    "FeedbackRecords.averageScore": t("environments.analysis.charts.field_label_average_score"),
+  };
+  return labels[id] ?? getFieldById(id)?.label ?? id;
+}
+
+/**
+ * Translate a time granularity value.
+ */
+export function getTranslatedGranularityLabel(granularity: string, t: TFunction): string {
+  const labels: Record<string, string> = {
+    hour: t("environments.analysis.charts.granularity_hour"),
+    day: t("environments.analysis.charts.granularity_day"),
+    week: t("environments.analysis.charts.granularity_week"),
+    month: t("environments.analysis.charts.granularity_month"),
+    quarter: t("environments.analysis.charts.granularity_quarter"),
+    year: t("environments.analysis.charts.granularity_year"),
+  };
+  return labels[granularity] ?? GRANULARITY_LABELS[granularity] ?? granularity;
+}
+
+/**
+ * Translate a date preset value.
+ */
+export function getTranslatedDatePresetLabel(value: string, t: TFunction): string {
+  const labels: Record<string, string> = {
+    today: t("environments.analysis.charts.date_preset_today"),
+    yesterday: t("environments.analysis.charts.date_preset_yesterday"),
+    "last 7 days": t("environments.analysis.charts.date_preset_last_7_days"),
+    "last 30 days": t("environments.analysis.charts.date_preset_last_30_days"),
+    "this month": t("environments.analysis.charts.date_preset_this_month"),
+    "last month": t("environments.analysis.charts.date_preset_last_month"),
+    "this quarter": t("environments.analysis.charts.date_preset_this_quarter"),
+    "this year": t("environments.analysis.charts.date_preset_this_year"),
+  };
+  return labels[value] ?? value;
+}
+
+/**
+ * Format a Cube.js column key for display (e.g. FeedbackRecords.collectedAt.day → "Day").
+ * When `t` is provided, returns translated labels.
+ */
+export function formatCubeColumnHeader(key: string, t?: TFunction): string {
   const granularity = TIME_GRANULARITIES.find((g) => key.endsWith(`.${g}`));
   if (granularity) {
-    return GRANULARITY_LABELS[granularity] ?? granularity;
+    return t
+      ? getTranslatedGranularityLabel(granularity, t)
+      : (GRANULARITY_LABELS[granularity] ?? granularity);
   }
   const field = getFieldById(key);
   if (field) {
-    return field.label;
+    return t ? getTranslatedFieldLabel(key, t) : field.label;
   }
   const lastSegment = key.split(".").pop() ?? key;
   return lastSegment

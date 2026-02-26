@@ -592,14 +592,12 @@ checksums:
     environments/analysis/charts/OR: 0208d355f231c386b19390f0bea41b95
     environments/analysis/charts/add_chart_to_dashboard: c2a517ada86cdda60e49bec655ca9a6d
     environments/analysis/charts/add_chart_to_dashboard_description: 08980a1849757e9aec21fca5881c6be4
-    environments/analysis/charts/add_custom_measure: fbddbfc2b439f4d99b83f13013e11673
     environments/analysis/charts/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
     environments/analysis/charts/add_to_dashboard: 9941c3d30895bb8e25ce8d4e03d33a08
     environments/analysis/charts/advanced_chart_builder_config_prompt: c2fe2c1a076f27d3ae62a4db75474b0a
     environments/analysis/charts/ai_query_placeholder: 24c3d18f514cb3a9953f04c3b04503a2
     environments/analysis/charts/ai_query_section_description: 66d06342f29bf6658793403856521fd7
     environments/analysis/charts/ai_query_section_title: c0e450a47af7c2a516b77f73cf54db1b
-    environments/analysis/charts/alias_optional: 32e1868b5298081bf5d16f5bef1bf39a
     environments/analysis/charts/apply_changes: ed3da8072dbd27dc0c959777cdcbebf3
     environments/analysis/charts/chart: 6f4d9c56e45ceb8fc22d2f74454cd813
     environments/analysis/charts/chart_added_to_dashboard: 7bc429ab605cb89a9232c26be008cc00
@@ -613,6 +611,7 @@ checksums:
     environments/analysis/charts/chart_name: cdb36e2f121a7b9c28298e15ab8218dc
     environments/analysis/charts/chart_name_placeholder: 7370d4f88f27aea337ba1c36465c3f8b
     environments/analysis/charts/chart_preview: 1b7faae244d31e43f758f50b94132413
+    environments/analysis/charts/chart_render_error: 01e9ece0c86a1fedf301afa0dbbf6aeb
     environments/analysis/charts/chart_saved_successfully: 2489c853c0b36790e3592ac6ea31cc61
     environments/analysis/charts/chart_type_area: 535754c6425f045f17e1dcb551840c93
     environments/analysis/charts/chart_type_bar: c11d460595d3ddfe8efd67ac068574c5
@@ -627,12 +626,18 @@ checksums:
     environments/analysis/charts/contains: 06dd606c0a8f81f9a03b414e9ae89440
     environments/analysis/charts/create_chart: ca7fdcc964e01f42ea9709924221edba
     environments/analysis/charts/create_chart_description: b9680bd8905dea180fa59a86f61de34e
-    environments/analysis/charts/custom_aggregations: 2cdff455b9f59a2adcffc5f70fcb8656
-    environments/analysis/charts/custom_aggregations_toggle_description: 510fe39f2b4dcb2953846d124ef262ab
     environments/analysis/charts/custom_range: 99f4d72b64621406acc162cceeb1fed7
     environments/analysis/charts/dashboard: c9380ea68c8c76ea451bd9613329a07c
     environments/analysis/charts/dashboard_select_placeholder: 9b875f2f10050d650ae63be53fe0d4e8
     environments/analysis/charts/data_label: b7b46ab6ce9606032c8f81f6f6afbb9b
+    environments/analysis/charts/date_preset_last_30_days: a738894cfc5e592052f1e16787744568
+    environments/analysis/charts/date_preset_last_7_days: 3631df3109bfecfe358ba15dcf8bd6f5
+    environments/analysis/charts/date_preset_last_month: 848086395b28875c050d56e3933dae61
+    environments/analysis/charts/date_preset_this_month: 50845a38865204a97773c44dcd2ebb90
+    environments/analysis/charts/date_preset_this_quarter: 9c77d94783dff2269c069389122cd7bd
+    environments/analysis/charts/date_preset_this_year: 1e69651c2ac722f8ce138f43cf2e02f9
+    environments/analysis/charts/date_preset_today: 142173f9752e18e92109623a3ee68cad
+    environments/analysis/charts/date_preset_yesterday: eeb58908e68ff96c1b7e8f90e389afb7
     environments/analysis/charts/date_range: 9b3aa5954144de586931f60ef9594e99
     environments/analysis/charts/delete_chart_confirmation: f7fd7b0a08e81c9b392b08c9c1ad2147
     environments/analysis/charts/dimensions: f09d837ac25f58986a769bd48ea15022
@@ -650,10 +655,32 @@ checksums:
     environments/analysis/charts/failed_to_load_chart_data: ea980a6d12b1b1efed90d991dd0dd0fd
     environments/analysis/charts/failed_to_save_chart: e237cf1a56a8f9ee30067fdb0757f7c5
     environments/analysis/charts/field: cfd632297d7809a3539e90c9cd4728d9
+    environments/analysis/charts/field_label_average_score: 5b5aa7322549521d1e813b1c8312d443
+    environments/analysis/charts/field_label_collected_at: b41902ddb4586ba4a4611d726b5014aa
+    environments/analysis/charts/field_label_count: 9c5848662eb8024ddf360f7e4001a968
+    environments/analysis/charts/field_label_detractor_count: eedb15bc383eb0f14d43043e6666c62a
+    environments/analysis/charts/field_label_emotion: eb3a31ead51b5c8a8d365d5f904e9206
+    environments/analysis/charts/field_label_field_type: 2581066dc304c853a4a817c20996fa08
+    environments/analysis/charts/field_label_nps_score: 9c8d0b0b460f9689bd66e81d45e0a2df
+    environments/analysis/charts/field_label_nps_value: cb7404025044400e3d7d5600f3133e4f
+    environments/analysis/charts/field_label_passive_count: ceb71da8d1382eb2097089dc3ecf76da
+    environments/analysis/charts/field_label_promoter_count: c393131a4bd3a25bf6b297beed20e34f
+    environments/analysis/charts/field_label_response_id: 73375099cc976dc7203b8e27f5f709e0
+    environments/analysis/charts/field_label_sentiment: 9ba5719c80c0136c2d0644217619aff6
+    environments/analysis/charts/field_label_source_name: 157675beca12efcd8ec512c5256b1a61
+    environments/analysis/charts/field_label_source_type: d1ff69af76c687eb189db72030717570
+    environments/analysis/charts/field_label_topic: 7f542b783cd528f00f4f485e35b48dc1
+    environments/analysis/charts/field_label_user_identifier: b0174469c95038766744fb7e64005aec
     environments/analysis/charts/filters: acf5accc113ff3c1992688058576732c
     environments/analysis/charts/filters_toggle_description: ea18bdb212a6a85620125cab89a4b1c1
     environments/analysis/charts/generate_chart: 8b0ca95be31a8401b13eafa26cf01d31
     environments/analysis/charts/granularity: 9eb09aef092e7803ce4acb7965cbbaa9
+    environments/analysis/charts/granularity_day: 47648cd60fc313bc3f05b70357a1d675
+    environments/analysis/charts/granularity_hour: ec3113f22fc51d01f0c615c5496f8f87
+    environments/analysis/charts/granularity_month: ae7bef950efc406ff0980affabc1a64c
+    environments/analysis/charts/granularity_quarter: 7a68ec90d7c90b92b7bb873834a00381
+    environments/analysis/charts/granularity_week: 436fdd694160827dd6ea4644cdd0a8f8
+    environments/analysis/charts/granularity_year: ed86f5f60583f9d8ffdbeed306aa0ec7
     environments/analysis/charts/greater_than: a4c18b3b45fcaf7c83bf489cf2b506d4
     environments/analysis/charts/greater_than_or_equal: d453e26d136847560148168797fece51
     environments/analysis/charts/group_by: 3f1cedea7783018ce83f2fab0051a738
@@ -666,10 +693,8 @@ checksums:
     environments/analysis/charts/guide_filters: acf5accc113ff3c1992688058576732c
     environments/analysis/charts/guide_filters_desc: 0c18f563b477cd9a0f2309c31174cd93
     environments/analysis/charts/guide_measures: 2e4d2701ebb196e5a9122f03727e93d7
-    environments/analysis/charts/guide_measures_custom: 20348eea581f155f8d39b2a2582e5c71
     environments/analysis/charts/guide_measures_predefined: cb8b80a960a466aca9ad75d3e870f74b
     environments/analysis/charts/guide_quick_ref: 6538588cf9323d85bf11b794448d846d
-    environments/analysis/charts/guide_term_custom: ffa019239646b47224f3a957349e735f
     environments/analysis/charts/guide_term_dimension: 64bd5923ae7aa2cdbf967aca977e4945
     environments/analysis/charts/guide_term_filter: c8dc27ccd08e7ec1e268dfd286660e79
     environments/analysis/charts/guide_term_measure: ca94a6e1afcb8a7ddb0d79039ecd3bfb
