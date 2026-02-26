@@ -45,14 +45,14 @@ const getShareUrl = (token: string): string => {
 const getLinkStatus = (
   link: TSurveyResultShareLink,
   t: (key: string) => string
-): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } => {
+): { label: string; variant: "success" | "warning" | "error" | "gray" } => {
   if (link.revokedAt) {
-    return { label: t("environments.surveys.summary.share_results.revoked"), variant: "destructive" };
+    return { label: t("environments.surveys.summary.share_results.revoked"), variant: "error" };
   }
   if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
-    return { label: t("environments.surveys.summary.share_results.expired"), variant: "secondary" };
+    return { label: t("environments.surveys.summary.share_results.expired"), variant: "warning" };
   }
-  return { label: t("environments.surveys.summary.share_results.active"), variant: "default" };
+  return { label: t("environments.surveys.summary.share_results.active"), variant: "success" };
 };
 
 export const ShareResultsModal = ({ surveyId, open, setOpen }: ShareResultsModalProps) => {
@@ -230,7 +230,7 @@ export const ShareResultsModal = ({ surveyId, open, setOpen }: ShareResultsModal
                                   {link.label ||
                                     t("environments.surveys.summary.share_results.untitled_link")}
                                 </p>
-                                <Badge variant={status.variant} size="tiny" text={status.label} type="pill" />
+                                <Badge type={status.variant} size="tiny" text={status.label} />
                               </div>
                               <p className="mt-0.5 text-xs text-slate-500">
                                 {t("environments.surveys.summary.share_results.created")}{" "}

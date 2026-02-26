@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TSurveyResultShareLink,
   TSurveyResultShareLinkExpiresIn,

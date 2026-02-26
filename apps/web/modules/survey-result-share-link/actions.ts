@@ -2,10 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import {
-  ZCreateSurveyResultShareLink,
-  ZSurveyResultShareLinkExpiresIn,
-} from "@formbricks/types/survey-result-share-link";
+import { ZCreateSurveyResultShareLink } from "@formbricks/types/survey-result-share-link";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";

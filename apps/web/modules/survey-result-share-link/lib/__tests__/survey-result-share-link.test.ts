@@ -9,7 +9,7 @@ import {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { createResultShareToken, verifyResultShareToken } from "@/lib/jwt";
+import { verifyResultShareToken } from "@/lib/jwt";
 import {
   createSurveyResultShareLink,
   getSurveyResultShareLinks,
