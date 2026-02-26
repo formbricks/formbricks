@@ -3,6 +3,8 @@ import { ActivityIcon, AreaChartIcon, BarChart3Icon, LineChartIcon, PieChartIcon
 import type React from "react";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
+export const DEFAULT_CHART_TYPE: TChartType = "area";
+
 export const CHART_TYPE_ICONS: Record<
   TChartType,
   React.ComponentType<{ className?: string; strokeWidth?: number }>
@@ -14,9 +16,7 @@ export const CHART_TYPE_ICONS: Record<
   big_number: ActivityIcon,
 };
 
-export function getChartTypes(
-  t: TFunction
-): readonly {
+export function getChartTypes(t: TFunction): readonly {
   id: TChartType;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   label: string;

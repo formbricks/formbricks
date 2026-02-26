@@ -38,7 +38,7 @@ export async function ChartsListPage({ environmentId }: Readonly<ChartsListPageP
     <AnalysisPageLayout
       pageTitle={t("common.analysis")}
       environmentId={environmentId}
-      cta={isReadOnly ? undefined : <CreateChartButton />}>
+      cta={isReadOnly ? undefined : <CreateChartButton environmentId={environmentId} />}>
       <Suspense
         fallback={
           <Delay ms={200}>

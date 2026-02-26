@@ -6,7 +6,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 vi.mock("server-only", () => ({}));
 
 var mockTxChart: {
-  // NOSONAR / test code
+  // NOSONAR S1135 - var required for vi.mock hoisting
   findFirst: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
@@ -33,6 +33,10 @@ vi.mock("@formbricks/database", () => {
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
+}));
+
+vi.mock("@/modules/environments/lib/utils", () => ({
+  getEnvironmentAuth: () => Promise.resolve({ project: { id: "project-abc-123" } }),
 }));
 
 const mockChartId = "chart-abc-123";
@@ -341,24 +345,32 @@ describe("Chart Service", () => {
 
   describe("getCharts", () => {
     test("returns all charts for a project", async () => {
-      const charts = [
-        { ...mockChart, widgets: [{ dashboardId: "dash-1" }] },
-        { ...mockChart, id: "chart-2", name: "Chart 2", widgets: [] },
+      const chartsFromDb = [
+        { ...mockChart, creator: { name: "User 1" } },
+        { ...mockChart, id: "chart-2", name: "Chart 2", creator: { name: null } },
       ];
-      vi.mocked(prisma.chart.findMany).mockResolvedValue(charts as any);
+      vi.mocked(prisma.chart.findMany).mockResolvedValue(chartsFromDb as any);
       const { getCharts } = await import("./charts");
 
       const result = await getCharts(mockProjectId);
 
-      expect(result).toEqual(charts);
+      expect(result).toEqual([
+        { ...mockChart, creator: { name: "User 1" } },
+        { ...mockChart, id: "chart-2", name: "Chart 2", creator: { name: null } },
+      ]);
       expect(prisma.chart.findMany).toHaveBeenCalledWith({
         where: { projectId: mockProjectId },
         orderBy: { createdAt: "desc" },
-        select: expect.objectContaining({
+        select: {
           id: true,
           name: true,
-          widgets: { select: { dashboardId: true } },
-        }),
+          type: true,
+          query: true,
+          config: true,
+          createdAt: true,
+          updatedAt: true,
+          creator: { select: { name: true } },
+        },
       });
     });
 

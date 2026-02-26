@@ -2,8 +2,8 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { ZChartConfig, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
-import { ZChartConfig, ZChartQuery } from "@formbricks/types/dashboard";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import {
@@ -11,11 +11,11 @@ import {
   TChartCreateInput,
   TChartUpdateInput,
   TChartWithCreator,
-  TChartWithWidgets,
   ZChartCreateInput,
   ZChartType,
   ZChartUpdateInput,
 } from "@/modules/ee/analysis/types/analysis";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 
 export const selectChart = {
   id: true,
@@ -224,21 +224,27 @@ export const getChart = async (chartId: string, projectId: string): Promise<TCha
   }
 };
 
-export const getCharts = async (projectId: string): Promise<TChartWithWidgets[]> => {
-  validateInputs([projectId, ZId]);
-
+/**
+ * Fetches all charts for the given environment (for list/dashboard UI).
+ * Uses getEnvironmentAuth for access check and enriches with creator names.
+ */
+export const getCharts = async (environmentId: string): Promise<TChartWithCreator[]> => {
   try {
-    return await prisma.chart.findMany({
-      where: { projectId },
+    const { project } = await getEnvironmentAuth(environmentId);
+
+    const charts = await prisma.chart.findMany({
+      where: { projectId: project.id },
       orderBy: { createdAt: "desc" },
       select: {
         ...selectChart,
-        widgets: {
-          select: { dashboardId: true },
-        },
+        creator: { select: { name: true } },
       },
     });
+    return charts;
   } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      throw error;
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }

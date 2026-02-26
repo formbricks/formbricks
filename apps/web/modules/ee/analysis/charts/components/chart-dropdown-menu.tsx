@@ -21,17 +21,38 @@ import {
 interface ChartDropdownMenuProps {
   environmentId: string;
   chart: TChartWithCreator;
+  onEdit?: () => void;
 }
 
-export function ChartDropdownMenu({ environmentId, chart }: Readonly<ChartDropdownMenuProps>) {
+export function ChartDropdownMenu({ environmentId, chart, onEdit }: Readonly<ChartDropdownMenuProps>) {
   const { t } = useTranslation();
   const router = useRouter();
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
 
-  const handleDuplicate = async () => {
+  const handleDeleteChart = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteChartAction({ environmentId, chartId: chart.id });
+      if (result?.data) {
+        toast.success(t("environments.analysis.charts.chart_deleted_successfully"));
+        setIsDeleteDialogOpen(false);
+        router.refresh();
+      } else {
+        const msg =
+          getFormattedErrorMessage(result) || t("environments.analysis.charts.chart_deletion_error");
+        toast.error(msg);
+      }
+    } catch {
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDuplicateChart = async () => {
     setIsDuplicating(true);
     try {
       const result = await duplicateChartAction({ environmentId, chartId: chart.id });
@@ -50,30 +71,6 @@ export function ChartDropdownMenu({ environmentId, chart }: Readonly<ChartDropdo
     }
   };
 
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      const result = await deleteChartAction({ environmentId, chartId: chart.id });
-      if (result?.data) {
-        toast.success(t("environments.analysis.charts.chart_deleted_successfully"));
-        setDeleteDialogOpen(false);
-        router.refresh();
-      } else {
-        const msg =
-          getFormattedErrorMessage(result) || t("environments.analysis.charts.chart_deletion_error");
-        toast.error(msg);
-      }
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleEdit = () => {
-    toast(t("environments.analysis.charts.action_coming_soon"));
-  };
-
   return (
     <div id={`chart-${chart.id}-actions`} data-testid="chart-dropdown-menu">
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
@@ -85,15 +82,22 @@ export function ChartDropdownMenu({ environmentId, chart }: Readonly<ChartDropdo
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max" align="end">
           <DropdownMenuGroup>
-            <DropdownMenuItem icon={<SquarePenIcon className="size-4" />} onClick={handleEdit}>
-              {t("common.edit")}
-            </DropdownMenuItem>
+            {onEdit && (
+              <DropdownMenuItem
+                icon={<SquarePenIcon className="size-4" />}
+                onClick={() => {
+                  setIsDropDownOpen(false);
+                  onEdit();
+                }}>
+                {t("common.edit")}
+              </DropdownMenuItem>
+            )}
 
             <DropdownMenuItem
               icon={<CopyIcon className="size-4" />}
               onClick={() => {
                 setIsDropDownOpen(false);
-                handleDuplicate();
+                handleDuplicateChart();
               }}
               disabled={isDuplicating}>
               {t("common.duplicate")}
@@ -103,7 +107,7 @@ export function ChartDropdownMenu({ environmentId, chart }: Readonly<ChartDropdo
               icon={<TrashIcon className="size-4" />}
               onClick={() => {
                 setIsDropDownOpen(false);
-                setDeleteDialogOpen(true);
+                setIsDeleteDialogOpen(true);
               }}
               disabled={isDeleting}>
               {t("common.delete")}
@@ -115,8 +119,8 @@ export function ChartDropdownMenu({ environmentId, chart }: Readonly<ChartDropdo
       <DeleteDialog
         deleteWhat={t("common.chart")}
         open={isDeleteDialogOpen}
-        setOpen={setDeleteDialogOpen}
-        onDelete={handleDelete}
+        setOpen={setIsDeleteDialogOpen}
+        onDelete={handleDeleteChart}
         text={t("environments.analysis.charts.delete_chart_confirmation")}
         isDeleting={isDeleting}
       />

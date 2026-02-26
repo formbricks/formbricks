@@ -1,21 +1,26 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
-import toast from "react-hot-toast";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { Button } from "@/modules/ui/components/button";
 
-export function CreateChartButton() {
+interface CreateChartButtonProps {
+  environmentId: string;
+}
+
+export function CreateChartButton({ environmentId }: Readonly<CreateChartButtonProps>) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { t } = useTranslation();
 
-  const handleClick = () => {
-    toast(t("environments.analysis.charts.action_coming_soon"));
-  };
-
   return (
-    <Button onClick={handleClick}>
-      <PlusIcon className="mr-2 h-4 w-4" />
-      {t("environments.analysis.charts.create_chart")}
-    </Button>
+    <>
+      <Button onClick={() => setIsDialogOpen(true)}>
+        <PlusIcon className="mr-2 h-4 w-4" />
+        {t("environments.analysis.charts.create_chart")}
+      </Button>
+      <CreateChartDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} environmentId={environmentId} />
+    </>
   );
 }
