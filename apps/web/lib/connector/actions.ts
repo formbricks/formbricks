@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import {
   TConnectorWithMappings,
+  THubFieldType,
   ZConnectorCreateInput,
   ZConnectorFieldMappingCreateInput,
   ZConnectorUpdateInput,
@@ -71,10 +72,10 @@ export const deleteConnectorAction = authenticatedActionClient
     }
   );
 
-const resolveFormbricksMappingsInput = async (
+const resolveSurveyMappings = async (
   surveyId: string,
   elementIds: string[]
-): Promise<TMappingsInput> => {
+): Promise<{ surveyId: string; elementId: string; hubFieldType: THubFieldType }[]> => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
     throw new ResourceNotFoundError("Survey", surveyId);
@@ -83,7 +84,7 @@ const resolveFormbricksMappingsInput = async (
   const elements = getElementsFromBlocks(survey.blocks);
   const elementMap = new Map(elements.map((el) => [el.id, el]));
 
-  const mappings = elementIds
+  return elementIds
     .filter((elementId) => {
       if (elementMap.has(elementId)) return true;
       logger.warn({ surveyId, elementId }, "Skipping unknown elementId when building connector mappings");
@@ -97,19 +98,26 @@ const resolveFormbricksMappingsInput = async (
         hubFieldType: getHubFieldTypeFromElementType(element.type),
       };
     });
-
-  return { type: "formbricks", mappings };
 };
+
+const resolveFormbricksMappingsInput = async (
+  entries: { surveyId: string; elementIds: string[] }[]
+): Promise<TMappingsInput> => {
+  const allMappings = await Promise.all(
+    entries.map(({ surveyId, elementIds }) => resolveSurveyMappings(surveyId, elementIds))
+  );
+  return { type: "formbricks", mappings: allMappings.flat() };
+};
+
+const ZFormbricksSurveyMapping = z.object({
+  surveyId: ZId,
+  elementIds: z.array(z.string()).min(1),
+});
 
 const ZCreateConnectorWithMappingsAction = z.object({
   environmentId: ZId,
   connectorInput: ZConnectorCreateInput,
-  formbricksMappings: z
-    .object({
-      surveyId: ZId,
-      elementIds: z.array(z.string()).min(1),
-    })
-    .optional(),
+  formbricksMappings: z.array(ZFormbricksSurveyMapping).min(1).optional(),
   fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
 });
 
@@ -144,16 +152,17 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
       const { formbricksMappings, fieldMappings } = parsedInput;
 
-      if (formbricksMappings) {
-        const organizationIdFromSurvey = await getOrganizationIdFromSurveyId(formbricksMappings.surveyId);
-        if (organizationIdFromSurvey !== organizationId) {
-          throw new AuthorizationError("You are not authorized to access this survey");
-        }
-
-        mappingsInput = await resolveFormbricksMappingsInput(
-          formbricksMappings.surveyId,
-          formbricksMappings.elementIds
+      if (formbricksMappings?.length) {
+        await Promise.all(
+          formbricksMappings.map(async ({ surveyId }) => {
+            const orgId = await getOrganizationIdFromSurveyId(surveyId);
+            if (orgId !== organizationId) {
+              throw new AuthorizationError("You are not authorized to access this survey");
+            }
+          })
         );
+
+        mappingsInput = await resolveFormbricksMappingsInput(formbricksMappings);
       } else if (fieldMappings?.length) {
         mappingsInput = { type: "field", mappings: fieldMappings };
       }
@@ -170,12 +179,7 @@ const ZUpdateConnectorWithMappingsAction = z.object({
   connectorId: ZId,
   environmentId: ZId,
   connectorInput: ZConnectorUpdateInput,
-  formbricksMappings: z
-    .object({
-      surveyId: ZId,
-      elementIds: z.array(z.string()).min(1),
-    })
-    .optional(),
+  formbricksMappings: z.array(ZFormbricksSurveyMapping).min(1).optional(),
   fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
 });
 
@@ -208,18 +212,17 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
 
       let mappingsInput: TMappingsInput | undefined;
 
-      if (parsedInput.formbricksMappings) {
-        const organizationIdFromSurvey = await getOrganizationIdFromSurveyId(
-          parsedInput.formbricksMappings.surveyId
+      if (parsedInput.formbricksMappings?.length) {
+        await Promise.all(
+          parsedInput.formbricksMappings.map(async ({ surveyId }) => {
+            const orgId = await getOrganizationIdFromSurveyId(surveyId);
+            if (orgId !== organizationId) {
+              throw new AuthorizationError("You are not authorized to access this survey");
+            }
+          })
         );
-        if (organizationIdFromSurvey !== organizationId) {
-          throw new AuthorizationError("You are not authorized to access this survey");
-        }
 
-        mappingsInput = await resolveFormbricksMappingsInput(
-          parsedInput.formbricksMappings.surveyId,
-          parsedInput.formbricksMappings.elementIds
-        );
+        mappingsInput = await resolveFormbricksMappingsInput(parsedInput.formbricksMappings);
       } else if (parsedInput.fieldMappings && parsedInput.fieldMappings.length > 0) {
         mappingsInput = { type: "field", mappings: parsedInput.fieldMappings };
       }

@@ -2,8 +2,8 @@ import "server-only";
 import { TConnectorFormbricksMapping, TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { createFeedbackRecordsBatch } from "@/modules/hub";
 import { getResponses } from "../response/service";
-import { createFeedbackRecordsBatch } from "./hub-client";
 import { transformResponseToFeedbackRecords } from "./transform";
 
 const IMPORT_BATCH_SIZE = 50;

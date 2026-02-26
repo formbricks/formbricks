@@ -8,7 +8,7 @@ vi.mock("../response/service", () => ({
   getResponses: vi.fn(),
 }));
 
-vi.mock("./hub-client", () => ({
+vi.mock("@/modules/hub", () => ({
   createFeedbackRecordsBatch: vi.fn(),
 }));
 
@@ -17,7 +17,7 @@ vi.mock("./transform", () => ({
 }));
 
 const { getResponses } = vi.mocked(await import("../response/service"));
-const { createFeedbackRecordsBatch } = vi.mocked(await import("./hub-client"));
+const { createFeedbackRecordsBatch } = vi.mocked(await import("@/modules/hub"));
 const { transformResponseToFeedbackRecords } = vi.mocked(await import("./transform"));
 
 const ENV_ID = "clxxxxxxxxxxxxxxxx001";

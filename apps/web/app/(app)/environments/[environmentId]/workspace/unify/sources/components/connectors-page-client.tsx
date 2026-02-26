@@ -39,8 +39,7 @@ export function ConnectorsSection({
   const handleCreateConnector = async (data: {
     name: string;
     type: TConnectorType;
-    surveyId?: string;
-    elementIds?: string[];
+    surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
     const result = await createConnectorWithMappingsAction({
@@ -50,9 +49,7 @@ export function ConnectorsSection({
         type: data.type,
       },
       formbricksMappings:
-        data.type === "formbricks" && data.surveyId && data.elementIds?.length
-          ? { surveyId: data.surveyId, elementIds: data.elementIds }
-          : undefined,
+        data.type === "formbricks" && data.surveyMappings?.length ? data.surveyMappings : undefined,
       fieldMappings:
         data.type !== "formbricks" && data.fieldMappings?.length
           ? data.fieldMappings.map((m) => ({
@@ -77,8 +74,7 @@ export function ConnectorsSection({
     connectorId: string;
     environmentId: string;
     name: string;
-    surveyId?: string;
-    elementIds?: string[];
+    surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => {
     const result = await updateConnectorWithMappingsAction({
@@ -87,10 +83,7 @@ export function ConnectorsSection({
       connectorInput: {
         name: data.name,
       },
-      formbricksMappings:
-        data.surveyId && data.elementIds?.length
-          ? { surveyId: data.surveyId, elementIds: data.elementIds }
-          : undefined,
+      formbricksMappings: data.surveyMappings?.length ? data.surveyMappings : undefined,
       fieldMappings: data.fieldMappings?.length
         ? data.fieldMappings.map((m) => ({
             sourceFieldId: m.sourceFieldId || "",
@@ -185,7 +178,6 @@ export function ConnectorsSection({
         open={editingConnector !== null}
         onOpenChange={(open) => !open && setEditingConnector(null)}
         onUpdateConnector={handleUpdateConnector}
-        onDeleteConnector={handleDeleteConnector}
         surveys={initialSurveys}
       />
     </PageContentWrapper>

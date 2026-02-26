@@ -29,15 +29,13 @@ interface EditConnectorModalProps {
     connectorId: string;
     environmentId: string;
     name: string;
-    surveyId?: string;
-    elementIds?: string[];
+    surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => Promise<void>;
-  onDeleteConnector: (connectorId: string) => Promise<void>;
   surveys: TUnifySurvey[];
 }
 
-function getConnectorIcon(type: TConnectorType) {
+const getConnectorIcon = (type: TConnectorType) => {
   switch (type) {
     case "formbricks":
       return <GlobeIcon className="h-5 w-5 text-slate-500" />;
@@ -46,9 +44,9 @@ function getConnectorIcon(type: TConnectorType) {
     default:
       return <GlobeIcon className="h-5 w-5 text-slate-500" />;
   }
-}
+};
 
-function getConnectorTypeLabelKey(type: TConnectorType): string {
+const getConnectorTypeLabelKey = (type: TConnectorType): string => {
   switch (type) {
     case "formbricks":
       return "environments.unify.formbricks_surveys";
@@ -57,24 +55,35 @@ function getConnectorTypeLabelKey(type: TConnectorType): string {
     default:
       return type;
   }
-}
+};
 
-export function EditConnectorModal({
+const groupMappingsBySurvey = (
+  mappings: { surveyId: string; elementId: string }[]
+): Record<string, string[]> => {
+  const grouped: Record<string, string[]> = {};
+  for (const m of mappings) {
+    if (!grouped[m.surveyId]) grouped[m.surveyId] = [];
+    grouped[m.surveyId].push(m.elementId);
+  }
+  return grouped;
+};
+
+export const EditConnectorModal = ({
   connector,
   open,
   onOpenChange,
   onUpdateConnector,
-  onDeleteConnector,
   surveys,
-}: EditConnectorModalProps) {
+}: EditConnectorModalProps) => {
   const { t } = useTranslation();
   const [connectorName, setConnectorName] = useState("");
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
-  const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
+  const [elementIdsBySurvey, setElementIdsBySurvey] = useState<Record<string, string[]>>({});
+
+  const selectedElementIds = selectedSurveyId ? (elementIdsBySurvey[selectedSurveyId] ?? []) : [];
 
   useEffect(() => {
     if (connector) {
@@ -83,7 +92,7 @@ export function EditConnectorModal({
       if (connector.type === "formbricks") {
         const fbMappings = connector.formbricksMappings;
         setSelectedSurveyId(fbMappings.length > 0 ? fbMappings[0].surveyId : null);
-        setSelectedElementIds(fbMappings.map((m) => m.elementId));
+        setElementIdsBySurvey(groupMappingsBySurvey(fbMappings));
         setSourceFields([]);
         setMappings([]);
       } else if (connector.type === "csv") {
@@ -103,12 +112,12 @@ export function EditConnectorModal({
           }))
         );
         setSelectedSurveyId(null);
-        setSelectedElementIds([]);
+        setElementIdsBySurvey({});
       } else {
         setSourceFields([]);
         setMappings([]);
         setSelectedSurveyId(null);
-        setSelectedElementIds([]);
+        setElementIdsBySurvey({});
       }
     }
   }, [connector]);
@@ -117,9 +126,8 @@ export function EditConnectorModal({
     setConnectorName("");
     setMappings([]);
     setSourceFields([]);
-    setShowDeleteConfirm(false);
     setSelectedSurveyId(null);
-    setSelectedElementIds([]);
+    setElementIdsBySurvey({});
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -134,39 +142,51 @@ export function EditConnectorModal({
   };
 
   const handleElementToggle = (elementId: string) => {
-    setSelectedElementIds((prev) =>
-      prev.includes(elementId) ? prev.filter((id) => id !== elementId) : [...prev, elementId]
-    );
+    if (!selectedSurveyId) return;
+    setElementIdsBySurvey((prev) => {
+      const current = prev[selectedSurveyId] ?? [];
+      return {
+        ...prev,
+        [selectedSurveyId]: current.includes(elementId)
+          ? current.filter((id) => id !== elementId)
+          : [...current, elementId],
+      };
+    });
   };
 
   const handleSelectAllElements = (surveyId: string) => {
     const survey = surveys.find((s) => s.id === surveyId);
     if (survey) {
-      setSelectedElementIds(survey.elements.map((e) => e.id));
+      setElementIdsBySurvey((prev) => ({
+        ...prev,
+        [surveyId]: survey.elements.map((e) => e.id),
+      }));
     }
   };
 
   const handleDeselectAllElements = () => {
-    setSelectedElementIds([]);
+    if (!selectedSurveyId) return;
+    setElementIdsBySurvey((prev) => ({
+      ...prev,
+      [selectedSurveyId]: [],
+    }));
   };
 
   const handleUpdate = async () => {
     if (!connector || !connectorName.trim()) return;
 
+    const surveyMappings = Object.entries(elementIdsBySurvey)
+      .filter(([, ids]) => ids.length > 0)
+      .map(([surveyId, elementIds]) => ({ surveyId, elementIds }));
+
     await onUpdateConnector({
       connectorId: connector.id,
       environmentId: connector.environmentId,
       name: connectorName.trim(),
-      surveyId: connector.type === "formbricks" ? (selectedSurveyId ?? undefined) : undefined,
-      elementIds: connector.type === "formbricks" ? selectedElementIds : undefined,
+      surveyMappings:
+        connector.type === "formbricks" && surveyMappings.length > 0 ? surveyMappings : undefined,
       fieldMappings: connector.type !== "formbricks" && mappings.length > 0 ? mappings : undefined,
     });
-    handleOpenChange(false);
-  };
-
-  const handleDelete = async () => {
-    if (!connector) return;
-    await onDeleteConnector(connector.id);
     handleOpenChange(false);
   };
 
@@ -233,29 +253,13 @@ export function EditConnectorModal({
           )}
         </div>
 
-        <DialogFooter className="flex justify-between">
-          <div>
-            {showDeleteConfirm ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-red-600">{t("environments.unify.are_you_sure")}</span>
-                <Button variant="destructive" size="sm" onClick={handleDelete}>
-                  {t("environments.unify.yes_delete")}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowDeleteConfirm(false)}>
-                  {t("common.cancel")}
-                </Button>
-              </div>
-            ) : (
-              <Button variant="outline" onClick={() => setShowDeleteConfirm(true)}>
-                {t("environments.unify.delete_source")}
-              </Button>
-            )}
-          </div>
+        <DialogFooter>
           <Button
             onClick={handleUpdate}
             disabled={
               !connectorName.trim() ||
-              (connector.type === "formbricks" && (!selectedSurveyId || selectedElementIds.length === 0))
+              (connector.type === "formbricks" &&
+                !Object.values(elementIdsBySurvey).some((ids) => ids.length > 0))
             }>
             {t("environments.unify.save_changes")}
           </Button>
@@ -263,4 +267,4 @@ export function EditConnectorModal({
       </DialogContent>
     </Dialog>
   );
-}
+};

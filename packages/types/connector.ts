@@ -124,7 +124,7 @@ export const ZConnectorUpdateInput = z.object({
 export type TConnectorUpdateInput = z.infer<typeof ZConnectorUpdateInput>;
 
 // Element types that cannot be mapped to Hub fields
-export const UNSUPPORTED_CONNECTOR_ELEMENT_TYPES = [
+export const UNSUPPORTED_CONNECTOR_ELEMENT_TYPES: readonly TSurveyElementTypeEnum[] = [
   TSurveyElementTypeEnum.ContactInfo,
   TSurveyElementTypeEnum.Address,
   TSurveyElementTypeEnum.Cal,

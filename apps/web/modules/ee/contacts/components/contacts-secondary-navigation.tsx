@@ -31,14 +31,14 @@ export const ContactsSecondaryNavigation = async ({
       href: `/environments/${environmentId}/contacts`,
     },
     {
-      id: "segments",
-      label: t("common.segments"),
-      href: `/environments/${environmentId}/segments`,
-    },
-    {
       id: "attributes",
       label: t("common.attributes"),
       href: `/environments/${environmentId}/attributes`,
+    },
+    {
+      id: "segments",
+      label: t("common.segments"),
+      href: `/environments/${environmentId}/segments`,
     },
   ];
 

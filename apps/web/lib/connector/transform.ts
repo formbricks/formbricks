@@ -6,7 +6,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
-import { TCreateFeedbackRecordInput } from "./hub-client";
+import type { FeedbackRecordCreateParams } from "@/modules/hub";
 
 const getHeadlineFromElement = (element?: TSurveyElement): string => {
   if (!element?.headline) return "Untitled";
@@ -23,7 +23,7 @@ const convertValueToHubFields = (
   value: TResponseDataValue,
   hubFieldType: THubFieldType
 ): Partial<
-  Pick<TCreateFeedbackRecordInput, "value_text" | "value_number" | "value_boolean" | "value_date">
+  Pick<FeedbackRecordCreateParams, "value_text" | "value_number" | "value_boolean" | "value_date">
 > => {
   if (value === undefined || value === null) {
     return {};
@@ -82,14 +82,14 @@ export function transformResponseToFeedbackRecords(
   survey: TSurvey,
   mappings: TConnectorFormbricksMapping[],
   tenantId?: string
-): TCreateFeedbackRecordInput[] {
+): FeedbackRecordCreateParams[] {
   const responseData = response.data;
   if (!responseData) return [];
 
   const surveyMappings = mappings.filter((m) => m.surveyId === survey.id);
   const elements = getElementsFromBlocks(survey.blocks);
   const elementMap = new Map(elements.map((el) => [el.id, el]));
-  const feedbackRecords: TCreateFeedbackRecordInput[] = [];
+  const feedbackRecords: FeedbackRecordCreateParams[] = [];
 
   for (const mapping of surveyMappings) {
     const value = extractResponseValue(responseData, mapping.elementId);
@@ -98,7 +98,7 @@ export function transformResponseToFeedbackRecords(
     const fieldLabel = mapping.customFieldLabel || getHeadlineFromElement(elementMap.get(mapping.elementId));
     const valueFields = convertValueToHubFields(value, mapping.hubFieldType);
 
-    const feedbackRecord: TCreateFeedbackRecordInput = {
+    const feedbackRecord: FeedbackRecordCreateParams = {
       collected_at:
         response.createdAt instanceof Date ? response.createdAt.toISOString() : String(response.createdAt),
       source_type: "formbricks",
