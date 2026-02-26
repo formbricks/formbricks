@@ -42,6 +42,9 @@ export function SaveChartDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
+          <label htmlFor="save-chart-name" className="sr-only">
+            {t("environments.analysis.charts.chart_name")}
+          </label>
           <Input
             placeholder={t("environments.analysis.charts.chart_name_placeholder")}
             value={chartName}

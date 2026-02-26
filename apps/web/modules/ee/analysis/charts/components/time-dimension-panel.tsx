@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 
+const timeFieldOptions = FEEDBACK_FIELDS.dimensions.filter((d) => d.type === "time");
+
 interface TimeDimensionPanelProps {
   timeDimension: TimeDimensionConfig | null;
   onTimeDimensionChange: (config: TimeDimensionConfig | null) => void;
@@ -46,8 +48,6 @@ export function TimeDimensionPanel({
   const [presetValue, setPresetValue] = useState<string>(
     timeDimension && typeof timeDimension.dateRange === "string" ? timeDimension.dateRange : ""
   );
-
-  const timeFieldOptions = FEEDBACK_FIELDS.dimensions.filter((d) => d.type === "time");
 
   const handleEnableTimeDimension = () => {
     if (!timeDimension) {
