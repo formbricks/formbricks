@@ -13,7 +13,7 @@ const globalForHub = globalThis as unknown as {
  * null and does not cache that result so a later call with the key set
  * can create the client.
  */
-export function getHubClient(): FormbricksHub | null {
+export const getHubClient = (): FormbricksHub | null => {
   if (globalForHub.formbricksHubClient) {
     return globalForHub.formbricksHubClient;
   }
@@ -22,4 +22,4 @@ export function getHubClient(): FormbricksHub | null {
   const client = new FormbricksHub({ apiKey, baseURL: env.HUB_API_URL });
   globalForHub.formbricksHubClient = client;
   return client;
-}
+};

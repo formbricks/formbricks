@@ -15,19 +15,19 @@ const NO_CONFIG_ERROR = {
   detail: "HUB_API_KEY is not set; Hub integration is disabled.",
 } as const;
 
-function createResultFromError(err: unknown): CreateFeedbackRecordResult {
+const createResultFromError = (err: unknown): CreateFeedbackRecordResult => {
   const status = err instanceof FormbricksHub.APIError ? err.status : 0;
   const message = err instanceof Error ? err.message : String(err);
   return { data: null, error: { status, message, detail: message } };
-}
+};
 
 /**
  * Create a single feedback record in the Hub.
  * Returns a result shape with data or error; logs failures.
  */
-export async function createFeedbackRecord(
+export const createFeedbackRecord = async (
   input: FeedbackRecordCreateParams
-): Promise<CreateFeedbackRecordResult> {
+): Promise<CreateFeedbackRecordResult> => {
   const client = getHubClient();
   if (!client) {
     return { data: null, error: { ...NO_CONFIG_ERROR } };
@@ -39,15 +39,15 @@ export async function createFeedbackRecord(
     logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
     return createResultFromError(err);
   }
-}
+};
 
 /**
  * Create multiple feedback records in the Hub in parallel.
  * Returns an array of results (data or error) per input; logs failures.
  */
-export async function createFeedbackRecordsBatch(
+export const createFeedbackRecordsBatch = async (
   inputs: FeedbackRecordCreateParams[]
-): Promise<{ results: CreateFeedbackRecordResult[] }> {
+): Promise<{ results: CreateFeedbackRecordResult[] }> => {
   const client = getHubClient();
   if (!client) {
     return {
@@ -67,4 +67,4 @@ export async function createFeedbackRecordsBatch(
     })
   );
   return { results };
-}
+};
